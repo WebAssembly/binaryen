@@ -36,23 +36,6 @@
 
 using namespace wasm;
 
-static void canonicalize(std::string input, std::string output) {
-  // reading and writing may alter the size
-  int counter = 0;
-  while (1) {
-    auto oldSize = file_size(input);
-    auto code = system(("bin/wasm-opt --dce --vacuum " + input + " -o " + output).c_str());
-    assert(code == 0);
-    auto newSize = file_size(output);
-    if (newSize <= oldSize) break;
-    std::cerr << "|  <canonicalization: " << oldSize << " => " << newSize << ">\n";
-    // do more work, now the input is the output
-    input = output;
-    counter++;
-    assert(counter < 100);
-  }
-}
-
 struct ProgramResult {
   int code;
   std::string output;
@@ -140,30 +123,31 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
-      //"--simplify-locals-notee --vacuum",
-      //"--simplify-locals-nostructure --vacuum",
-      //"--simplify-locals-notee-nostructure --vacuum",
-      //"--vacuum"
+      "--vacuum"
     };
     auto oldSize = file_size(working);
     bool more = true;
     while (more) {
       //std::cerr << "|    starting passes loop iteration\n";
       more = false;
-      for (auto pass : passes) {
-        auto currCommand = "bin/wasm-opt --dce --vacuum " + working + " -o " + test + " " + pass;
-        if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
-        if (!ProgramResult(currCommand).failed()) {
-          canonicalize(test, test);
-          auto newSize = file_size(test);
-          if (newSize < oldSize) {
-            // the pass didn't fail, and the size looks smaller, so promising
-            // see if it is still has the property we are preserving
-            if (ProgramResult(command) == expected) {
-              std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
-              copy_file(test, working);
-              more = true;
-              oldSize = newSize;
+      // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
+      for (auto shrinking : { false, true }) {
+        for (auto pass : passes) {
+          std::string currCommand = "bin/wasm-opt ";
+          if (shrinking) currCommand += " --dce --vacuum ";
+          currCommand += working + " -o " + test + " " + pass;
+          if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
+          if (!ProgramResult(currCommand).failed()) {
+            auto newSize = file_size(test);
+            if (newSize < oldSize) {
+              // the pass didn't fail, and the size looks smaller, so promising
+              // see if it is still has the property we are preserving
+              if (ProgramResult(command) == expected) {
+                std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
+                copy_file(test, working);
+                more = true;
+                oldSize = newSize;
+              }
             }
           }
         }
@@ -221,14 +205,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     ModuleWriter writer;
     writer.setBinary(true);
     writer.write(*getModule(), test);
-    canonicalize(test, test);
-    if (file_size(test) > file_size(working)) {
-      // sometimes a destructive change increases the size (e.g. replace a small node with a const
-      // that happens to take more bytes), but this should not risk an infinite loop since we
-      // are actually changing behavior in a breaking way each time we find a destructive reduction
-      //std::cerr << "|      odd sizes " << file_size(test) << " !>! " << file_size(working) << '\n';
-      //return false;
-    }
+    // note that it is ok for the destructively-reduced module to be bigger
+    // than the previous - each destructive reduction removes logical code,
+    // and so is strictly better, even if the wasm binary format happens to
+    // encode things slightly less efficiently.
     // test it
     out.getFromExecution(command);
     return out == expected;
@@ -536,20 +516,6 @@ int main(int argc, const char* argv[]) {
 
   std::cerr << "|expected result:\n" << expected << '\n';
 
-  // sanity check - we should start with an invalid module, and one
-  // that we can read and write TODO: allow reducing things we can't
-  // even do that with
-  std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
-  {
-    canonicalize(input, test);
-    ProgramResult result(command);
-    if (result != expected) {
-      Fatal() << "running command on the canonicalized module should give the same results: " << result;
-    }
-    // we'll work on the canonicalized one
-    copy_file(test, working);
-  }
-
   std::cerr << "|checking that command has different behavior on invalid binary\n";
   {
     {
@@ -562,15 +528,14 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  // copy test file (that was just written) to working, which we will use from now on
-  // starting from the binary binaryen output canonicalizes, so we are not on text
-  // input or input from somewhere else
-  std::cerr << "|canonicalized input size: " << file_size(working) << "\n";
+  copy_file(input, working);
+  std::cerr << "|input size: " << file_size(working) << "\n";
 
   std::cerr << "|starting reduction!\n";
 
   int factor = 4096;
   size_t lastDestructiveReductions = 0;
+  size_t lastPostPassesSize = 0;
 
   while (1) {
     Reducer reducer(command, test, working, verbose);
@@ -584,11 +549,19 @@ int main(int argc, const char* argv[]) {
     reducer.reduceUsingPasses();
     auto newSize = file_size(working);
     auto passProgress = oldSize - newSize;
+    std::cerr << "|  after pass reduction: " << newSize << "\n";
+
+    // check if the full cycle (destructive/passes) has helped or not
+    if (lastPostPassesSize && newSize >= lastPostPassesSize) {
+      std::cerr << "|  progress has stopped, halting\n";
+      break;
+    }
+    lastPostPassesSize = newSize;
 
     // if destructive reductions lead to useful proportionate pass reductions, keep
     // going at the same factor, as pass reductions are far faster
     std::cerr << "|  pass progress: " << passProgress << ", last destructive: " << lastDestructiveReductions << '\n';
-    if (passProgress >= 2 * lastDestructiveReductions) {
+    if (passProgress >= 4 * lastDestructiveReductions) {
       // don't change
       std::cerr << "|  progress is good, do not quickly decrease factor\n";
     } else {
