@@ -169,11 +169,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     Module wasm;
     ModuleReader reader;
     reader.read(working, wasm);
-    // clean up
-    PassRunner runner(&wasm);
-    runner.add("dce");
-    runner.add("vacuum");
-    runner.run();
     // prepare
     reduced = 0;
     builder = make_unique<Builder>(wasm);
@@ -574,6 +569,8 @@ int main(int argc, const char* argv[]) {
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 
+  bool stopping = false;
+
   while (1) {
     Reducer reducer(command, test, working, verbose, debugInfo);
 
@@ -588,10 +585,19 @@ int main(int argc, const char* argv[]) {
     auto passProgress = oldSize - newSize;
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
+    // always stop after a pass reduction attempt, for final cleanup
+    if (stopping) break;
+
     // check if the full cycle (destructive/passes) has helped or not
     if (lastPostPassesSize && newSize >= lastPostPassesSize) {
-      std::cerr << "|  progress has stopped, halting\n";
-      break;
+      std::cerr << "|  progress has stopped, skipping to the end\n";
+      if (factor == 1) {
+        // this is after doing work with factor 1, so after the remaining work, stop
+        stopping = true;
+      } else {
+        // just try to remove all we can and finish up
+        factor = 1;
+      }
     }
     lastPostPassesSize = newSize;
 
@@ -622,12 +628,11 @@ int main(int argc, const char* argv[]) {
       if (lastDestructiveReductions > 0) break;
       // we failed to reduce destructively
       if (factor == 1) {
-        factor = 0; // halt
+        stopping = true;
         break;
       }
       factor = std::max(1, factor / 4); // quickly now, try to find *something* we can reduce
     }
-    if (factor == 0) break; // halt
 
     std::cerr << "|  destructive reduction led to size: " << file_size(working) << '\n';
   }
