@@ -226,8 +226,12 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
         return; // already unreachable, stop here
       }
       // most nodes become unreachable if a child is unreachable,
-      // but exceptions exists
+      // but exceptions exist
       if (auto* block = curr->dynCast<Block>()) {
+        // if the block has a fallthrough, it can keep its type
+        if (isConcreteWasmType(block->list.back()->type)) {
+          return; // did not turn
+        }
         // if the block has breaks, it can keep its type
         if (!block->name.is() || blockInfos[block->name].numBreaks == 0) {
           curr->type = unreachable;
@@ -255,7 +259,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       return; // nothing concrete to change to unreachable
     }
     if (curr->name.is() && blockInfos[curr->name].numBreaks > 0) {
-      return;// has a break, not unreachable
+      return; // has a break, not unreachable
     }
     // look for a fallthrough
     makeBlockUnreachableIfNoFallThrough(curr);
@@ -265,9 +269,13 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (curr->type == unreachable) {
       return; // no change possible
     }
+    if (!curr->list.empty() &&
+        isConcreteWasmType(curr->list.back()->type)) {
+      return; // should keep type due to fallthrough, even if has an unreachable child
+    }
     for (auto* child : curr->list) {
       if (child->type == unreachable) {
-        // no fallthrough, this block is now unreachable
+        // no fallthrough, and an unreachable, => this block is now unreachable
         changeTypeTo(curr, unreachable);
         return;
       }
