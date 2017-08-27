@@ -33,6 +33,7 @@
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ast/literal-utils.h"
+#include "wasm-validator.h"
 
 using namespace wasm;
 
@@ -402,6 +403,24 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       } else {
         std::cerr << "|      removed export " << exp.name << '\n';
         noteReduction();
+      }
+    }
+    // try to remove functions
+    std::cerr << "|    try to remove functions\n";
+    std::vector<Function> functions;
+    for (auto& func : curr->functions) {
+      if (!shouldTryToReduce(10000)) continue;
+      functions.push_back(*func);
+    }
+    for (auto& func : functions) {
+      curr->removeFunction(func.name);
+      WasmValidator validator;
+      validator.quiet = true;
+      if (validator.validate(*curr) && writeAndTestReduction()) {
+        std::cerr << "|      removed function " << func.name << '\n';
+        noteReduction();
+      } else {
+        curr->addFunction(new Function(func));
       }
     }
   }
