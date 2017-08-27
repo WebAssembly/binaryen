@@ -871,6 +871,17 @@
       (get_local $x)
     )
   )
+  (func $if-return-but-unreachable (param $var$0 i64)
+   (if
+    (unreachable)
+    (set_local $var$0
+     (get_local $var$0)
+    )
+    (set_local $var$0
+     (i64.const 1)
+    )
+   )
+  )
 )
 (module
   (memory 256 256 shared)

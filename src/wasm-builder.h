@@ -164,14 +164,14 @@ public:
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
-    ret->type = none;
+    ret->finalize();
     return ret;
   }
   SetLocal* makeTeeLocal(Index index, Expression* value) {
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
-    ret->type = value->type;
+    ret->setTee(true);
     return ret;
   }
   GetGlobal* makeGetGlobal(Name name, WasmType type) {
