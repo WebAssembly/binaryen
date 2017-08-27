@@ -192,6 +192,7 @@ def get_platform():
           'win32': 'windows',
           'cygwin': 'windows'}[sys.platform]
 
+
 def has_shell_timeout():
   return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
 
