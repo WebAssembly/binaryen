@@ -188,8 +188,6 @@ static void handleUnreachable(Block* block) {
       seeker.walk(expr);
       if (!seeker.found) {
         block->type = unreachable;
-      } else {
-        assert(block->type == seeker.valueType);
       }
       return;
     }
