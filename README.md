@@ -147,22 +147,22 @@ When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to W
 
 Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly backend into WebAssembly. You can receive `.s` output from `llc`, and then run `s2wasm` on that:
 
-````
+```
 llc code.ll -march=wasm32 -filetype=asm -o code.s
 s2wasm code.s > code.wast
-````
+```
 
 You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.). You can use either normal Emscripten, including it's "fastcomp" fork of LLVM, or you can use "vanilla" LLVM, that is, pure upstream LLVM without Emscripten's additions. With Vanilla LLVM, you can build with
 
-````
+```
 ./emcc input.cpp -s BINARYEN=1
-````
+```
 
 With normal Emscripten, you will need to tell it to use the WebAssembly backend, since its default is asm.js, by setting an env var,
 
-````
+```
 EMCC_WASM_BACKEND=1 ./emcc input.cpp -s BINARYEN=1
-````
+```
 
 (without the env var, the `BINARYEN` option will make it use the asm.js backend, then `asm2wasm`).
 
