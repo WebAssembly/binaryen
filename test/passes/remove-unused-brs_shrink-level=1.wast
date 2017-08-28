@@ -93,5 +93,25 @@
     )
    )
   )
+  (func $br-if-unreachable-pair
+   (block $label$14
+    (br_if $label$14
+     (unreachable)
+    )
+    (br_if $label$14
+     (i32.const 0)
+    )
+   )
+  )
+  (func $br-if-unreachable-pair2
+   (block $label$14
+    (br_if $label$14
+     (i32.const 0)
+    )
+    (br_if $label$14
+     (unreachable)
+    )
+   )
+  )
 )
 

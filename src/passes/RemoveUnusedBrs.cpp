@@ -482,9 +482,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // a "selectified" condition that executes both.
             for (Index i = 0; i < list.size() - 1; i++) {
               auto* br1 = list[i]->dynCast<Break>();
-              if (!br1 || !br1->condition) continue;
+              // avoid unreachable brs, as they are dead code anyhow, and after merging
+              // them the outer scope could need type changes
+              if (!br1 || !br1->condition || br1->type == unreachable) continue;
               auto* br2 = list[i + 1]->dynCast<Break>();
-              if (!br2 || !br2->condition) continue;
+              if (!br2 || !br2->condition || br2->type == unreachable) continue;
               if (br1->name == br2->name) {
                 assert(!br1->value && !br2->value);
                 if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
