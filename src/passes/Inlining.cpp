@@ -155,7 +155,6 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
   auto* block = Builder(*module).makeBlock();
-  block->type = call->type;
   block->name = Name(std::string("__inlined_func$") + from->name.str);
   *action.callSite = block;
   // set up a locals mapping
@@ -191,6 +190,16 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   auto* contents = ExpressionManipulator::copy(from->body, *module);
   updater.walk(contents);
   block->list.push_back(contents);
+  block->type = call->type;
+  // if the function returned a value, we just set the block containing the
+  // inlined code to have that type. or, if the function was void and
+  // contained void, that is fine too. a bad case is a void function in which
+  // we have unreachable code, so we would be replacing a void call with an
+  // unreachable; we need to handle
+  if (contents->type == unreachable && block->type == none) {
+    // make the block reachable by adding a break to it
+    block->list.push_back(builder.makeBreak(block->name));
+  }
   return block;
 }
 
