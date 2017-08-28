@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010106-1.c"
+	.file	"20010106-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -18,7 +18,7 @@ f:                                      # @f
 # BB#1:                                 # %switch.lookup
 	i32.const	$push9=, 2
 	i32.shl 	$push2=, $0, $pop9
-	i32.const	$push3=, .Lswitch.table
+	i32.const	$push3=, .Lswitch.table.f
 	i32.add 	$push4=, $pop2, $pop3
 	i32.load	$push5=, 0($pop4)
 	return  	$pop5
@@ -29,9 +29,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -43,11 +43,11 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
-	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+                                        # -- End function
+	.type	.Lswitch.table.f,@object # @switch.table.f
+	.section	.rodata..Lswitch.table.f,"a",@progbits
 	.p2align	4
-.Lswitch.table:
+.Lswitch.table.f:
 	.int32	33                      # 0x21
 	.int32	0                       # 0x0
 	.int32	7                       # 0x7
@@ -55,9 +55,9 @@ main:                                   # @main
 	.int32	3                       # 0x3
 	.int32	15                      # 0xf
 	.int32	9                       # 0x9
-	.size	.Lswitch.table, 28
+	.size	.Lswitch.table.f, 28
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

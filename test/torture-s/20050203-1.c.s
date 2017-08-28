@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050203-1.c"
+	.file	"20050203-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
-	i32.const	$push3=, 0
-	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push10=, $pop4, $pop5
+	i32.sub 	$push10=, $pop3, $pop5
 	tee_local	$push9=, $0=, $pop10
 	i32.store	__stack_pointer($pop6), $pop9
 	i32.const	$push7=, 15
@@ -35,9 +35,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.type	foo,@function
+	.type	foo,@function           # -- Begin function foo
 foo:                                    # @foo
 	.param  	i32
 # BB#0:                                 # %entry
@@ -47,9 +47,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.type	bar,@function
+	.type	bar,@function           # -- Begin function bar
 bar:                                    # @bar
 # BB#0:                                 # %entry
 	#APP
@@ -58,8 +58,8 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	abort, void

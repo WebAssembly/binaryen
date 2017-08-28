@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980205.c"
+	.file	"980205.c"
 	.section	.text.fdouble,"ax",@progbits
-	.hidden	fdouble
+	.hidden	fdouble                 # -- Begin function fdouble
 	.globl	fdouble
 	.type	fdouble,@function
 fdouble:                                # @fdouble
@@ -9,13 +9,12 @@ fdouble:                                # @fdouble
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
+	i32.const	$push11=, 0
+	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 16
-	i32.sub 	$push20=, $pop11, $pop12
+	i32.sub 	$push20=, $pop10, $pop12
 	tee_local	$push19=, $2=, $pop20
 	i32.store	__stack_pointer($pop13), $pop19
-	i32.store	12($2), $1
 	i32.const	$push1=, 7
 	i32.add 	$push2=, $1, $pop1
 	i32.const	$push3=, -8
@@ -46,9 +45,9 @@ fdouble:                                # @fdouble
 	.endfunc
 .Lfunc_end0:
 	.size	fdouble, .Lfunc_end0-fdouble
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -56,10 +55,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
-	i32.const	$push3=, 0
-	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push8=, $pop4, $pop5
+	i32.sub 	$push8=, $pop3, $pop5
 	tee_local	$push7=, $0=, $pop8
 	i32.store	__stack_pointer($pop6), $pop7
 	i64.const	$push0=, 4611686018427387904
@@ -72,8 +71,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

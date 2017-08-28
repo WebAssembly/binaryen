@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021118-2.c"
+	.file	"20021118-2.c"
 	.section	.text.t1,"ax",@progbits
-	.hidden	t1
+	.hidden	t1                      # -- Begin function t1
 	.globl	t1
 	.type	t1,@function
 t1:                                     # @t1
@@ -26,9 +26,9 @@ t1:                                     # @t1
 	.endfunc
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
-
+                                        # -- End function
 	.section	.text.t2,"ax",@progbits
-	.hidden	t2
+	.hidden	t2                      # -- Begin function t2
 	.globl	t2
 	.type	t2,@function
 t2:                                     # @t2
@@ -55,9 +55,9 @@ t2:                                     # @t2
 	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
-
+                                        # -- End function
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -76,9 +76,9 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end2:
 	.size	f1, .Lfunc_end2-f1
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -101,9 +101,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
-
+                                        # -- End function
 	.section	.text.f3,"ax",@progbits
-	.hidden	f3
+	.hidden	f3                      # -- Begin function f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -122,9 +122,9 @@ f3:                                     # @f3
 	.endfunc
 .Lfunc_end4:
 	.size	f3, .Lfunc_end4-f3
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -136,8 +136,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

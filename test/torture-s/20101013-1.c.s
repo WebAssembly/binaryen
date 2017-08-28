@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101013-1.c"
+	.file	"20101013-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,17 +13,17 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.build_ref_for_offset,"ax",@progbits
-	.type	build_ref_for_offset,@function
+	.type	build_ref_for_offset,@function # -- Begin function build_ref_for_offset
 build_ref_for_offset:                   # @build_ref_for_offset
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
-	i32.const	$push3=, 0
-	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push13=, $pop4, $pop5
+	i32.sub 	$push13=, $pop3, $pop5
 	tee_local	$push12=, $0=, $pop13
 	i32.store	__stack_pointer($pop6), $pop12
 	i32.const	$push10=, 8
@@ -41,9 +41,9 @@ build_ref_for_offset:                   # @build_ref_for_offset
 	.endfunc
 .Lfunc_end1:
 	.size	build_ref_for_offset, .Lfunc_end1-build_ref_for_offset
-
+                                        # -- End function
 	.section	.text.get_addr_base_and_unit_offset,"ax",@progbits
-	.type	get_addr_base_and_unit_offset,@function
+	.type	get_addr_base_and_unit_offset,@function # -- Begin function get_addr_base_and_unit_offset
 get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 	.param  	i32
 # BB#0:                                 # %entry
@@ -53,9 +53,9 @@ get_addr_base_and_unit_offset:          # @get_addr_base_and_unit_offset
 	.endfunc
 .Lfunc_end2:
 	.size	get_addr_base_and_unit_offset, .Lfunc_end2-get_addr_base_and_unit_offset
-
+                                        # -- End function
 	.section	.text.build_int_cst,"ax",@progbits
-	.type	build_int_cst,@function
+	.type	build_int_cst,@function # -- Begin function build_int_cst
 build_int_cst:                          # @build_int_cst
 	.param  	i64
 # BB#0:                                 # %entry
@@ -72,7 +72,7 @@ build_int_cst:                          # @build_int_cst
 	.endfunc
 .Lfunc_end3:
 	.size	build_int_cst, .Lfunc_end3-build_int_cst
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

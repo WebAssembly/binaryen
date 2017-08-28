@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041011-1.c"
+	.file	"20041011-1.c"
 	.section	.text.t1,"ax",@progbits
-	.hidden	t1
+	.hidden	t1                      # -- Begin function t1
 	.globl	t1
 	.type	t1,@function
 t1:                                     # @t1
@@ -12,7 +12,7 @@ t1:                                     # @t1
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label0
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
 	i64.extend_u/i32	$push1=, $pop0
@@ -157,9 +157,9 @@ t1:                                     # @t1
 	.endfunc
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
-
+                                        # -- End function
 	.section	.text.t2,"ax",@progbits
-	.hidden	t2
+	.hidden	t2                      # -- Begin function t2
 	.globl	t2
 	.type	t2,@function
 t2:                                     # @t2
@@ -170,7 +170,7 @@ t2:                                     # @t2
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label2
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push4=, -1
 	i32.add 	$push0=, $0, $pop4
 	i64.extend_u/i32	$2=, $pop0
@@ -315,9 +315,9 @@ t2:                                     # @t2
 	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
-
+                                        # -- End function
 	.section	.text.t3,"ax",@progbits
-	.hidden	t3
+	.hidden	t3                      # -- Begin function t3
 	.globl	t3
 	.type	t3,@function
 t3:                                     # @t3
@@ -328,7 +328,7 @@ t3:                                     # @t3
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label4
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
 	i64.extend_u/i32	$push1=, $pop0
@@ -473,9 +473,9 @@ t3:                                     # @t3
 	.endfunc
 .Lfunc_end2:
 	.size	t3, .Lfunc_end2-t3
-
+                                        # -- End function
 	.section	.text.t4,"ax",@progbits
-	.hidden	t4
+	.hidden	t4                      # -- Begin function t4
 	.globl	t4
 	.type	t4,@function
 t4:                                     # @t4
@@ -486,7 +486,7 @@ t4:                                     # @t4
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label6
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push4=, -1
 	i32.add 	$push0=, $0, $pop4
 	i64.extend_u/i32	$2=, $pop0
@@ -631,9 +631,9 @@ t4:                                     # @t4
 	.endfunc
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4
-
+                                        # -- End function
 	.section	.text.t5,"ax",@progbits
-	.hidden	t5
+	.hidden	t5                      # -- Begin function t5
 	.globl	t5
 	.type	t5,@function
 t5:                                     # @t5
@@ -644,7 +644,7 @@ t5:                                     # @t5
 	block   	
 	i32.eqz 	$push67=, $0
 	br_if   	0, $pop67       # 0: down to label8
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push3=, -1
 	i32.add 	$push0=, $0, $pop3
 	i64.extend_u/i32	$2=, $pop0
@@ -787,9 +787,9 @@ t5:                                     # @t5
 	.endfunc
 .Lfunc_end4:
 	.size	t5, .Lfunc_end4-t5
-
+                                        # -- End function
 	.section	.text.t6,"ax",@progbits
-	.hidden	t6
+	.hidden	t6                      # -- Begin function t6
 	.globl	t6
 	.type	t6,@function
 t6:                                     # @t6
@@ -800,7 +800,7 @@ t6:                                     # @t6
 	block   	
 	i32.eqz 	$push67=, $0
 	br_if   	0, $pop67       # 0: down to label10
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push3=, -1
 	i32.add 	$push0=, $0, $pop3
 	i64.extend_u/i32	$push1=, $pop0
@@ -943,9 +943,9 @@ t6:                                     # @t6
 	.endfunc
 .Lfunc_end5:
 	.size	t6, .Lfunc_end5-t6
-
+                                        # -- End function
 	.section	.text.t7,"ax",@progbits
-	.hidden	t7
+	.hidden	t7                      # -- Begin function t7
 	.globl	t7
 	.type	t7,@function
 t7:                                     # @t7
@@ -956,7 +956,7 @@ t7:                                     # @t7
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label12
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
 	i64.extend_u/i32	$push1=, $pop0
@@ -1101,9 +1101,9 @@ t7:                                     # @t7
 	.endfunc
 .Lfunc_end6:
 	.size	t7, .Lfunc_end6-t7
-
+                                        # -- End function
 	.section	.text.t8,"ax",@progbits
-	.hidden	t8
+	.hidden	t8                      # -- Begin function t8
 	.globl	t8
 	.type	t8,@function
 t8:                                     # @t8
@@ -1114,7 +1114,7 @@ t8:                                     # @t8
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label14
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
 	i64.extend_u/i32	$push1=, $pop0
@@ -1259,9 +1259,9 @@ t8:                                     # @t8
 	.endfunc
 .Lfunc_end7:
 	.size	t8, .Lfunc_end7-t8
-
+                                        # -- End function
 	.section	.text.t9,"ax",@progbits
-	.hidden	t9
+	.hidden	t9                      # -- Begin function t9
 	.globl	t9
 	.type	t9,@function
 t9:                                     # @t9
@@ -1272,7 +1272,7 @@ t9:                                     # @t9
 	block   	
 	i32.eqz 	$push69=, $0
 	br_if   	0, $pop69       # 0: down to label16
-# BB#1:                                 # %while.body.preheader
+# BB#1:                                 # %while.body.lr.ph
 	i32.const	$push5=, -1
 	i32.add 	$push0=, $0, $pop5
 	i64.extend_u/i32	$push1=, $pop0
@@ -1417,9 +1417,9 @@ t9:                                     # @t9
 	.endfunc
 .Lfunc_end8:
 	.size	t9, .Lfunc_end8-t9
-
+                                        # -- End function
 	.section	.text.t10,"ax",@progbits
-	.hidden	t10
+	.hidden	t10                     # -- Begin function t10
 	.globl	t10
 	.type	t10,@function
 t10:                                    # @t10
@@ -1576,9 +1576,9 @@ t10:                                    # @t10
 	.endfunc
 .Lfunc_end9:
 	.size	t10, .Lfunc_end9-t10
-
+                                        # -- End function
 	.section	.text.t11,"ax",@progbits
-	.hidden	t11
+	.hidden	t11                     # -- Begin function t11
 	.globl	t11
 	.type	t11,@function
 t11:                                    # @t11
@@ -1735,9 +1735,9 @@ t11:                                    # @t11
 	.endfunc
 .Lfunc_end10:
 	.size	t11, .Lfunc_end10-t11
-
+                                        # -- End function
 	.section	.text.neg,"ax",@progbits
-	.hidden	neg
+	.hidden	neg                     # -- Begin function neg
 	.globl	neg
 	.type	neg,@function
 neg:                                    # @neg
@@ -1750,9 +1750,9 @@ neg:                                    # @neg
 	.endfunc
 .Lfunc_end11:
 	.size	neg, .Lfunc_end11-neg
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -1945,14 +1945,14 @@ main:                                   # @main
 	i32.const	$push99=, 0
 	call    	exit@FUNCTION, $pop99
 	unreachable
-.LBB12_24:                              # %if.then94
+.LBB12_24:                              # %if.then
 	end_block                       # label22:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
-
+                                        # -- End function
 	.hidden	gvol                    # @gvol
 	.type	gvol,@object
 	.section	.bss.gvol,"aw",@nobits
@@ -1972,6 +1972,6 @@ gull:
 	.size	gull, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-13.c"
+	.file	"va-arg-13.c"
 	.section	.text.dummy,"ax",@progbits
-	.hidden	dummy
+	.hidden	dummy                   # -- Begin function dummy
 	.globl	dummy
 	.type	dummy,@function
 dummy:                                  # @dummy
@@ -21,9 +21,9 @@ dummy:                                  # @dummy
 	.endfunc
 .Lfunc_end0:
 	.size	dummy, .Lfunc_end0-dummy
-
+                                        # -- End function
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -31,10 +31,10 @@ test:                                   # @test
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
-	i32.const	$push7=, 0
-	i32.load	$push8=, __stack_pointer($pop7)
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
 	i32.const	$push9=, 16
-	i32.sub 	$push16=, $pop8, $pop9
+	i32.sub 	$push16=, $pop7, $pop9
 	tee_local	$push15=, $2=, $pop16
 	i32.store	__stack_pointer($pop10), $pop15
 	i32.store	4($2), $1
@@ -58,16 +58,16 @@ test:                                   # @test
 	i32.add 	$push12=, $2, $pop11
 	i32.store	__stack_pointer($pop13), $pop12
 	return
-.LBB1_3:                                # %if.then.i14
+.LBB1_3:                                # %if.then.i
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	test, .Lfunc_end1-test
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -75,10 +75,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push7=, $pop3, $pop4
+	i32.sub 	$push7=, $pop2, $pop4
 	tee_local	$push6=, $0=, $pop7
 	i32.store	__stack_pointer($pop5), $pop6
 	i32.const	$push0=, 1234
@@ -90,8 +90,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

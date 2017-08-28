@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070623-1.c"
+	.file	"20070623-1.c"
 	.section	.text.nge,"ax",@progbits
-	.hidden	nge
+	.hidden	nge                     # -- Begin function nge
 	.globl	nge
 	.type	nge,@function
 nge:                                    # @nge
@@ -16,9 +16,9 @@ nge:                                    # @nge
 	.endfunc
 .Lfunc_end0:
 	.size	nge, .Lfunc_end0-nge
-
+                                        # -- End function
 	.section	.text.ngt,"ax",@progbits
-	.hidden	ngt
+	.hidden	ngt                     # -- Begin function ngt
 	.globl	ngt
 	.type	ngt,@function
 ngt:                                    # @ngt
@@ -33,9 +33,9 @@ ngt:                                    # @ngt
 	.endfunc
 .Lfunc_end1:
 	.size	ngt, .Lfunc_end1-ngt
-
+                                        # -- End function
 	.section	.text.nle,"ax",@progbits
-	.hidden	nle
+	.hidden	nle                     # -- Begin function nle
 	.globl	nle
 	.type	nle,@function
 nle:                                    # @nle
@@ -50,9 +50,9 @@ nle:                                    # @nle
 	.endfunc
 .Lfunc_end2:
 	.size	nle, .Lfunc_end2-nle
-
+                                        # -- End function
 	.section	.text.nlt,"ax",@progbits
-	.hidden	nlt
+	.hidden	nlt                     # -- Begin function nlt
 	.globl	nlt
 	.type	nlt,@function
 nlt:                                    # @nlt
@@ -67,9 +67,9 @@ nlt:                                    # @nlt
 	.endfunc
 .Lfunc_end3:
 	.size	nlt, .Lfunc_end3-nlt
-
+                                        # -- End function
 	.section	.text.neq,"ax",@progbits
-	.hidden	neq
+	.hidden	neq                     # -- Begin function neq
 	.globl	neq
 	.type	neq,@function
 neq:                                    # @neq
@@ -84,9 +84,9 @@ neq:                                    # @neq
 	.endfunc
 .Lfunc_end4:
 	.size	neq, .Lfunc_end4-neq
-
+                                        # -- End function
 	.section	.text.nne,"ax",@progbits
-	.hidden	nne
+	.hidden	nne                     # -- Begin function nne
 	.globl	nne
 	.type	nne,@function
 nne:                                    # @nne
@@ -101,9 +101,9 @@ nne:                                    # @nne
 	.endfunc
 .Lfunc_end5:
 	.size	nne, .Lfunc_end5-nne
-
+                                        # -- End function
 	.section	.text.ngeu,"ax",@progbits
-	.hidden	ngeu
+	.hidden	ngeu                    # -- Begin function ngeu
 	.globl	ngeu
 	.type	ngeu,@function
 ngeu:                                   # @ngeu
@@ -118,9 +118,9 @@ ngeu:                                   # @ngeu
 	.endfunc
 .Lfunc_end6:
 	.size	ngeu, .Lfunc_end6-ngeu
-
+                                        # -- End function
 	.section	.text.ngtu,"ax",@progbits
-	.hidden	ngtu
+	.hidden	ngtu                    # -- Begin function ngtu
 	.globl	ngtu
 	.type	ngtu,@function
 ngtu:                                   # @ngtu
@@ -135,9 +135,9 @@ ngtu:                                   # @ngtu
 	.endfunc
 .Lfunc_end7:
 	.size	ngtu, .Lfunc_end7-ngtu
-
+                                        # -- End function
 	.section	.text.nleu,"ax",@progbits
-	.hidden	nleu
+	.hidden	nleu                    # -- Begin function nleu
 	.globl	nleu
 	.type	nleu,@function
 nleu:                                   # @nleu
@@ -152,9 +152,9 @@ nleu:                                   # @nleu
 	.endfunc
 .Lfunc_end8:
 	.size	nleu, .Lfunc_end8-nleu
-
+                                        # -- End function
 	.section	.text.nltu,"ax",@progbits
-	.hidden	nltu
+	.hidden	nltu                    # -- Begin function nltu
 	.globl	nltu
 	.type	nltu,@function
 nltu:                                   # @nltu
@@ -169,9 +169,9 @@ nltu:                                   # @nltu
 	.endfunc
 .Lfunc_end9:
 	.size	nltu, .Lfunc_end9-nltu
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -301,15 +301,15 @@ main:                                   # @main
 	i32.const	$push32=, 0
 	call    	exit@FUNCTION, $pop32
 	unreachable
-.LBB10_21:                              # %if.then75
+.LBB10_21:                              # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

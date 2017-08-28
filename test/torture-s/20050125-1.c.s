@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050125-1.c"
+	.file	"20050125-1.c"
 	.section	.text.seterr,"ax",@progbits
-	.hidden	seterr
+	.hidden	seterr                  # -- Begin function seterr
 	.globl	seterr
 	.type	seterr,@function
 seterr:                                 # @seterr
@@ -14,9 +14,9 @@ seterr:                                 # @seterr
 	.endfunc
 .Lfunc_end0:
 	.size	seterr, .Lfunc_end0-seterr
-
+                                        # -- End function
 	.section	.text.bracket_empty,"ax",@progbits
-	.hidden	bracket_empty
+	.hidden	bracket_empty           # -- Begin function bracket_empty
 	.globl	bracket_empty
 	.type	bracket_empty,@function
 bracket_empty:                          # @bracket_empty
@@ -48,9 +48,9 @@ bracket_empty:                          # @bracket_empty
 	.endfunc
 .Lfunc_end1:
 	.size	bracket_empty, .Lfunc_end1-bracket_empty
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -62,6 +62,6 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/divcmp-4.c"
+	.file	"divcmp-4.c"
 	.section	.text.test1,"ax",@progbits
-	.hidden	test1
+	.hidden	test1                   # -- Begin function test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -16,9 +16,9 @@ test1:                                  # @test1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
-
+                                        # -- End function
 	.section	.text.test2,"ax",@progbits
-	.hidden	test2
+	.hidden	test2                   # -- Begin function test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -33,9 +33,9 @@ test2:                                  # @test2
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
-
+                                        # -- End function
 	.section	.text.test3,"ax",@progbits
-	.hidden	test3
+	.hidden	test3                   # -- Begin function test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -50,9 +50,9 @@ test3:                                  # @test3
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
-
+                                        # -- End function
 	.section	.text.test4,"ax",@progbits
-	.hidden	test4
+	.hidden	test4                   # -- Begin function test4
 	.globl	test4
 	.type	test4,@function
 test4:                                  # @test4
@@ -67,9 +67,9 @@ test4:                                  # @test4
 	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
-
+                                        # -- End function
 	.section	.text.test5,"ax",@progbits
-	.hidden	test5
+	.hidden	test5                   # -- Begin function test5
 	.globl	test5
 	.type	test5,@function
 test5:                                  # @test5
@@ -82,9 +82,9 @@ test5:                                  # @test5
 	.endfunc
 .Lfunc_end4:
 	.size	test5, .Lfunc_end4-test5
-
+                                        # -- End function
 	.section	.text.test6,"ax",@progbits
-	.hidden	test6
+	.hidden	test6                   # -- Begin function test6
 	.globl	test6
 	.type	test6,@function
 test6:                                  # @test6
@@ -97,9 +97,9 @@ test6:                                  # @test6
 	.endfunc
 .Lfunc_end5:
 	.size	test6, .Lfunc_end5-test6
-
+                                        # -- End function
 	.section	.text.test7,"ax",@progbits
-	.hidden	test7
+	.hidden	test7                   # -- Begin function test7
 	.globl	test7
 	.type	test7,@function
 test7:                                  # @test7
@@ -112,9 +112,9 @@ test7:                                  # @test7
 	.endfunc
 .Lfunc_end6:
 	.size	test7, .Lfunc_end6-test7
-
+                                        # -- End function
 	.section	.text.test8,"ax",@progbits
-	.hidden	test8
+	.hidden	test8                   # -- Begin function test8
 	.globl	test8
 	.type	test8,@function
 test8:                                  # @test8
@@ -127,9 +127,9 @@ test8:                                  # @test8
 	.endfunc
 .Lfunc_end7:
 	.size	test8, .Lfunc_end7-test8
-
+                                        # -- End function
 	.section	.text.test9,"ax",@progbits
-	.hidden	test9
+	.hidden	test9                   # -- Begin function test9
 	.globl	test9
 	.type	test9,@function
 test9:                                  # @test9
@@ -142,9 +142,9 @@ test9:                                  # @test9
 	.endfunc
 .Lfunc_end8:
 	.size	test9, .Lfunc_end8-test9
-
+                                        # -- End function
 	.section	.text.test10,"ax",@progbits
-	.hidden	test10
+	.hidden	test10                  # -- Begin function test10
 	.globl	test10
 	.type	test10,@function
 test10:                                 # @test10
@@ -157,9 +157,9 @@ test10:                                 # @test10
 	.endfunc
 .Lfunc_end9:
 	.size	test10, .Lfunc_end9-test10
-
+                                        # -- End function
 	.section	.text.test11,"ax",@progbits
-	.hidden	test11
+	.hidden	test11                  # -- Begin function test11
 	.globl	test11
 	.type	test11,@function
 test11:                                 # @test11
@@ -172,9 +172,9 @@ test11:                                 # @test11
 	.endfunc
 .Lfunc_end10:
 	.size	test11, .Lfunc_end10-test11
-
+                                        # -- End function
 	.section	.text.test12,"ax",@progbits
-	.hidden	test12
+	.hidden	test12                  # -- Begin function test12
 	.globl	test12
 	.type	test12,@function
 test12:                                 # @test12
@@ -187,9 +187,9 @@ test12:                                 # @test12
 	.endfunc
 .Lfunc_end11:
 	.size	test12, .Lfunc_end11-test12
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -200,6 +200,6 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end12:
 	.size	main, .Lfunc_end12-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

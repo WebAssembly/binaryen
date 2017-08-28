@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20120808-1.c"
+	.file	"20120808-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push35=, 0
-	i32.const	$push32=, 0
-	i32.load	$push33=, __stack_pointer($pop32)
+	i32.const	$push33=, 0
+	i32.load	$push32=, __stack_pointer($pop33)
 	i32.const	$push34=, 32
-	i32.sub 	$push41=, $pop33, $pop34
+	i32.sub 	$push41=, $pop32, $pop34
 	tee_local	$push40=, $5=, $pop41
 	i32.store	__stack_pointer($pop35), $pop40
 	i32.const	$push0=, 24
@@ -131,7 +131,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	d                       # @d
 	.type	d,@object
 	.section	.bss.d,"aw",@nobits
@@ -160,6 +160,6 @@ cp:
 	.size	cp, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

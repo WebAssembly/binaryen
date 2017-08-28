@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001017-2.c"
+	.file	"20001017-2.c"
 	.section	.text.fn_4parms,"ax",@progbits
-	.hidden	fn_4parms
+	.hidden	fn_4parms               # -- Begin function fn_4parms
 	.globl	fn_4parms
 	.type	fn_4parms,@function
 fn_4parms:                              # @fn_4parms
@@ -31,9 +31,9 @@ fn_4parms:                              # @fn_4parms
 	.endfunc
 .Lfunc_end0:
 	.size	fn_4parms, .Lfunc_end0-fn_4parms
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,7 +44,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

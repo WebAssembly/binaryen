@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
+	.file	"pr41239.c"
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -10,10 +10,10 @@ test:                                   # @test
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push14=, 0
-	i32.const	$push11=, 0
-	i32.load	$push12=, __stack_pointer($pop11)
+	i32.const	$push12=, 0
+	i32.load	$push11=, __stack_pointer($pop12)
 	i32.const	$push13=, 16
-	i32.sub 	$push21=, $pop12, $pop13
+	i32.sub 	$push21=, $pop11, $pop13
 	tee_local	$push20=, $3=, $pop21
 	i32.store	__stack_pointer($pop14), $pop20
 	i32.load	$1=, 4($0)
@@ -51,9 +51,9 @@ test:                                   # @test
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
-
+                                        # -- End function
 	.section	.text.fn1,"ax",@progbits
-	.hidden	fn1
+	.hidden	fn1                     # -- Begin function fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
@@ -72,9 +72,9 @@ fn1:                                    # @fn1
 	.endfunc
 .Lfunc_end1:
 	.size	fn1, .Lfunc_end1-fn1
-
+                                        # -- End function
 	.section	.text.fn2,"ax",@progbits
-	.hidden	fn2
+	.hidden	fn2                     # -- Begin function fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
@@ -94,9 +94,9 @@ fn2:                                    # @fn2
 	.endfunc
 .Lfunc_end2:
 	.size	fn2, .Lfunc_end2-fn2
-
+                                        # -- End function
 	.section	.text.fn3,"ax",@progbits
-	.hidden	fn3
+	.hidden	fn3                     # -- Begin function fn3
 	.globl	fn3
 	.type	fn3,@function
 fn3:                                    # @fn3
@@ -110,9 +110,9 @@ fn3:                                    # @fn3
 	.endfunc
 .Lfunc_end3:
 	.size	fn3, .Lfunc_end3-fn3
-
+                                        # -- End function
 	.section	.text.fn4,"ax",@progbits
-	.hidden	fn4
+	.hidden	fn4                     # -- Begin function fn4
 	.globl	fn4
 	.type	fn4,@function
 fn4:                                    # @fn4
@@ -126,9 +126,9 @@ fn4:                                    # @fn4
 	.endfunc
 .Lfunc_end4:
 	.size	fn4, .Lfunc_end4-fn4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -136,10 +136,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push11=, $pop6, $pop7
+	i32.sub 	$push11=, $pop5, $pop7
 	tee_local	$push10=, $0=, $pop11
 	i32.store	__stack_pointer($pop8), $pop10
 	i32.const	$push2=, 8
@@ -156,7 +156,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -184,6 +184,6 @@ main:                                   # @main
 	.size	.Lmain.s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071220-1.c"
+	.file	"20071220-1.c"
 	.section	.text.baz,"ax",@progbits
-	.hidden	baz
+	.hidden	baz                     # -- Begin function baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -15,9 +15,9 @@ baz:                                    # @baz
 	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
-
+                                        # -- End function
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -29,9 +29,9 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.type	bar,@function
+	.type	bar,@function           # -- Begin function bar
 bar:                                    # @bar
 	.result 	i32
 	.local  	i32
@@ -45,9 +45,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end2:
 	.size	bar, .Lfunc_end2-bar
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -59,9 +59,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -76,7 +76,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.type	bar.b,@object           # @bar.b
 	.section	.data.bar.b,"aw",@progbits
 	.p2align	2
@@ -85,4 +85,4 @@ bar.b:
 	.size	bar.b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

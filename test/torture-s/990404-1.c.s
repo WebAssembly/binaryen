@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990404-1.c"
+	.file	"990404-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,42 +47,42 @@ main:                                   # @main
 	i32.const	$push53=, 0
 	i32.const	$push52=, 0
 	i32.gt_s	$push51=, $0, $pop52
-	tee_local	$push50=, $1=, $pop51
+	tee_local	$push50=, $0=, $pop51
 	i32.select	$push49=, $pop54, $pop53, $pop50
-	tee_local	$push48=, $0=, $pop49
-	i32.gt_s	$push47=, $2, $0
-	tee_local	$push46=, $0=, $pop47
+	tee_local	$push48=, $1=, $pop49
+	i32.gt_s	$push47=, $2, $1
+	tee_local	$push46=, $2=, $pop47
 	i32.select	$push45=, $pop57, $pop48, $pop46
-	tee_local	$push44=, $2=, $pop45
-	i32.gt_s	$push43=, $3, $2
-	tee_local	$push42=, $2=, $pop43
+	tee_local	$push44=, $1=, $pop45
+	i32.gt_s	$push43=, $3, $1
+	tee_local	$push42=, $3=, $pop43
 	i32.select	$push41=, $pop60, $pop44, $pop42
-	tee_local	$push40=, $3=, $pop41
-	i32.gt_s	$push39=, $4, $3
-	tee_local	$push38=, $3=, $pop39
+	tee_local	$push40=, $1=, $pop41
+	i32.gt_s	$push39=, $4, $1
+	tee_local	$push38=, $4=, $pop39
 	i32.select	$push37=, $pop63, $pop40, $pop38
-	tee_local	$push36=, $4=, $pop37
-	i32.gt_s	$push35=, $5, $4
-	tee_local	$push34=, $4=, $pop35
+	tee_local	$push36=, $1=, $pop37
+	i32.gt_s	$push35=, $5, $1
+	tee_local	$push34=, $5=, $pop35
 	i32.select	$push33=, $pop66, $pop36, $pop34
-	tee_local	$push32=, $5=, $pop33
-	i32.gt_s	$push31=, $6, $5
-	tee_local	$push30=, $5=, $pop31
+	tee_local	$push32=, $1=, $pop33
+	i32.gt_s	$push31=, $6, $1
+	tee_local	$push30=, $6=, $pop31
 	i32.select	$push29=, $pop69, $pop32, $pop30
-	tee_local	$push28=, $6=, $pop29
-	i32.gt_s	$push27=, $7, $6
-	tee_local	$push26=, $6=, $pop27
+	tee_local	$push28=, $1=, $pop29
+	i32.gt_s	$push27=, $7, $1
+	tee_local	$push26=, $7=, $pop27
 	i32.select	$push25=, $pop72, $pop28, $pop26
-	tee_local	$push24=, $7=, $pop25
-	i32.gt_s	$push23=, $8, $7
-	tee_local	$push22=, $7=, $pop23
+	tee_local	$push24=, $1=, $pop25
+	i32.gt_s	$push23=, $8, $1
+	tee_local	$push22=, $8=, $pop23
 	i32.select	$push21=, $pop75, $pop24, $pop22
-	tee_local	$push20=, $8=, $pop21
-	i32.gt_s	$push19=, $9, $8
-	tee_local	$push18=, $8=, $pop19
+	tee_local	$push20=, $1=, $pop21
+	i32.gt_s	$push19=, $9, $1
+	tee_local	$push18=, $9=, $pop19
 	i32.select	$push17=, $pop78, $pop20, $pop18
-	tee_local	$push16=, $9=, $pop17
-	i32.gt_s	$push15=, $10, $9
+	tee_local	$push16=, $1=, $pop17
+	i32.gt_s	$push15=, $10, $1
 	tee_local	$push14=, $10=, $pop15
 	i32.select	$push9=, $pop81, $pop16, $pop14
 	i32.eqz 	$push103=, $pop9
@@ -99,15 +99,15 @@ main:                                   # @main
 	i32.const	$push95=, 2
 	i32.const	$push94=, 1
 	i32.const	$push93=, 0
-	i32.select	$push0=, $pop93, $12, $1
-	i32.select	$push1=, $pop94, $pop0, $0
-	i32.select	$push2=, $pop95, $pop1, $2
-	i32.select	$push3=, $pop96, $pop2, $3
-	i32.select	$push4=, $pop97, $pop3, $4
-	i32.select	$push5=, $pop98, $pop4, $5
-	i32.select	$push6=, $pop99, $pop5, $6
-	i32.select	$push7=, $pop100, $pop6, $7
-	i32.select	$push8=, $pop101, $pop7, $8
+	i32.select	$push0=, $pop93, $12, $0
+	i32.select	$push1=, $pop94, $pop0, $2
+	i32.select	$push2=, $pop95, $pop1, $3
+	i32.select	$push3=, $pop96, $pop2, $4
+	i32.select	$push4=, $pop97, $pop3, $5
+	i32.select	$push5=, $pop98, $pop4, $6
+	i32.select	$push6=, $pop99, $pop5, $7
+	i32.select	$push7=, $pop100, $pop6, $8
+	i32.select	$push8=, $pop101, $pop7, $9
 	i32.select	$push92=, $pop102, $pop8, $10
 	tee_local	$push91=, $12=, $pop92
 	i32.const	$push90=, 2
@@ -120,7 +120,7 @@ main:                                   # @main
 	i32.add 	$push86=, $11, $pop87
 	tee_local	$push85=, $11=, $pop86
 	i32.const	$push84=, 10
-	i32.lt_s	$push12=, $pop85, $pop84
+	i32.lt_u	$push12=, $pop85, $pop84
 	br_if   	0, $pop12       # 0: up to label1
 # BB#3:                                 # %if.then11
 	end_loop
@@ -134,7 +134,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
@@ -154,6 +154,6 @@ x:
 	.size	x, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

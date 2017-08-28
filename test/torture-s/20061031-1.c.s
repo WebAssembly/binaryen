@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20061031-1.c"
+	.file	"20061031-1.c"
 	.section	.text.ff,"ax",@progbits
-	.hidden	ff
+	.hidden	ff                      # -- Begin function ff
 	.globl	ff
 	.type	ff,@function
 ff:                                     # @ff
@@ -13,9 +13,9 @@ ff:                                     # @ff
 	.endfunc
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -40,19 +40,21 @@ f:                                      # @f
 	i32.add 	$push2=, $1, $0
 	i32.const	$push7=, 65535
 	i32.and 	$push3=, $pop2, $pop7
-	br_if   	0, $pop3        # 0: down to label1
-# BB#3:                                 # %if.then.1
+	i32.eqz 	$push8=, $pop3
+	br_if   	0, $pop8        # 0: down to label1
+# BB#3:                                 # %for.inc.1
+	return
+.LBB1_4:                                # %if.then.1
+	end_block                       # label1:
 	#APP
 	#NO_APP
-.LBB1_4:                                # %for.inc.1
-	end_block                       # label1:
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -65,7 +67,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	nunmap                  # @nunmap
 	.type	nunmap,@object
 	.section	.rodata.nunmap,"a",@progbits
@@ -75,4 +77,4 @@ nunmap:
 	.size	nunmap, 3
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr53160.c"
+	.file	"pr53160.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -13,9 +13,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,7 +30,7 @@ main:                                   # @main
 # BB#1:                                 # %if.then
 	i32.const	$push5=, 0
 	i32.load	$drop=, b($pop5)
-.LBB1_2:                                # %for.end
+.LBB1_2:                                # %if.end
 	end_block                       # label0:
 	i32.const	$push18=, 0
 	i32.const	$push1=, -1
@@ -64,7 +64,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	c                       # @c
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
@@ -146,5 +146,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

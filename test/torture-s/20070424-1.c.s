@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20070424-1.c"
+	.file	"20070424-1.c"
 	.section	.text.do_exit,"ax",@progbits
-	.hidden	do_exit
+	.hidden	do_exit                 # -- Begin function do_exit
 	.globl	do_exit
 	.type	do_exit,@function
 do_exit:                                # @do_exit
@@ -12,9 +12,9 @@ do_exit:                                # @do_exit
 	.endfunc
 .Lfunc_end0:
 	.size	do_exit, .Lfunc_end0-do_exit
-
+                                        # -- End function
 	.section	.text.do_abort,"ax",@progbits
-	.hidden	do_abort
+	.hidden	do_abort                # -- Begin function do_abort
 	.globl	do_abort
 	.type	do_abort,@function
 do_abort:                               # @do_abort
@@ -24,9 +24,9 @@ do_abort:                               # @do_abort
 	.endfunc
 .Lfunc_end1:
 	.size	do_abort, .Lfunc_end1-do_abort
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -45,9 +45,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -58,8 +58,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	abort, void

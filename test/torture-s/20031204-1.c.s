@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031204-1.c"
+	.file	"20031204-1.c"
 	.section	.text.in_aton,"ax",@progbits
-	.hidden	in_aton
+	.hidden	in_aton                 # -- Begin function in_aton
 	.globl	in_aton
 	.type	in_aton,@function
 in_aton:                                # @in_aton
@@ -13,9 +13,9 @@ in_aton:                                # @in_aton
 	.endfunc
 .Lfunc_end0:
 	.size	in_aton, .Lfunc_end0-in_aton
-
+                                        # -- End function
 	.section	.text.root_nfs_parse_addr,"ax",@progbits
-	.hidden	root_nfs_parse_addr
+	.hidden	root_nfs_parse_addr     # -- Begin function root_nfs_parse_addr
 	.globl	root_nfs_parse_addr
 	.type	root_nfs_parse_addr,@function
 root_nfs_parse_addr:                    # @root_nfs_parse_addr
@@ -25,7 +25,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	copy_local	$4=, $0
-.LBB1_1:                                # %while.cond1.preheader
+.LBB1_1:                                # %while.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_2 Depth 2
 	block   	
@@ -82,7 +82,7 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	i32.const	$push39=, 46
 	i32.eq  	$push9=, $pop8, $pop39
 	i32.or  	$push10=, $pop7, $pop9
-	i32.add 	$push38=, $pop10, $1
+	i32.add 	$push38=, $1, $pop10
 	tee_local	$push37=, $1=, $pop38
 	i32.const	$push36=, 4
 	i32.lt_s	$push11=, $pop37, $pop36
@@ -131,9 +131,9 @@ root_nfs_parse_addr:                    # @root_nfs_parse_addr
 	.endfunc
 .Lfunc_end1:
 	.size	root_nfs_parse_addr, .Lfunc_end1-root_nfs_parse_addr
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -142,7 +142,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$0=, 0
 	i32.const	$3=, main.addr
-.LBB2_1:                                # %while.cond1.preheader.i
+.LBB2_1:                                # %while.body.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_2 Depth 2
 	block   	
@@ -199,7 +199,7 @@ main:                                   # @main
 	i32.const	$push41=, 46
 	i32.eq  	$push9=, $pop8, $pop41
 	i32.or  	$push10=, $pop7, $pop9
-	i32.add 	$push40=, $pop10, $0
+	i32.add 	$push40=, $0, $pop10
 	tee_local	$push39=, $0=, $pop40
 	i32.const	$push38=, 4
 	i32.lt_s	$push11=, $pop39, $pop38
@@ -249,7 +249,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	main.addr,@object       # @main.addr
 	.section	.data.main.addr,"aw",@progbits
 	.p2align	4
@@ -258,6 +258,6 @@ main.addr:
 	.size	main.addr, 19
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strcpy, i32, i32, i32
 	.functype	abort, void

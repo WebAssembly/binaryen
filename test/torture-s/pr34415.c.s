@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34415.c"
+	.file	"pr34415.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -10,35 +10,35 @@ foo:                                    # @foo
 	.local  	i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
                                         # implicit-def: %vreg64
-	i32.const	$5=, 1
+	i32.const	$4=, 1
 .LBB0_1:                                # %for.cond
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_4 Depth 2
 	loop    	i32             # label0:
-	copy_local	$push25=, $0
-	tee_local	$push24=, $1=, $pop25
-	copy_local	$0=, $pop24
+	copy_local	$push24=, $0
+	tee_local	$push23=, $1=, $pop24
+	copy_local	$5=, $pop23
 	block   	
-	i32.load8_s	$push23=, 0($1)
-	tee_local	$push22=, $2=, $pop23
-	i32.const	$push21=, -32
-	i32.add 	$push0=, $pop22, $pop21
-	i32.const	$push20=, -97
-	i32.add 	$push1=, $2, $pop20
-	i32.const	$push19=, 255
-	i32.and 	$push2=, $pop1, $pop19
-	i32.const	$push18=, 26
-	i32.lt_u	$push3=, $pop2, $pop18
-	i32.select	$push17=, $pop0, $2, $pop3
-	tee_local	$push16=, $3=, $pop17
-	i32.const	$push15=, 66
-	i32.eq  	$push4=, $pop16, $pop15
+	i32.load8_s	$push22=, 0($1)
+	tee_local	$push21=, $0=, $pop22
+	i32.const	$push20=, -32
+	i32.add 	$push0=, $pop21, $pop20
+	i32.const	$push19=, -97
+	i32.add 	$push1=, $0, $pop19
+	i32.const	$push18=, 255
+	i32.and 	$push2=, $pop1, $pop18
+	i32.const	$push17=, 26
+	i32.lt_u	$push3=, $pop2, $pop17
+	i32.select	$push16=, $pop0, $0, $pop3
+	tee_local	$push15=, $2=, $pop16
+	i32.const	$push14=, 66
+	i32.eq  	$push4=, $pop15, $pop14
 	br_if   	0, $pop4        # 0: down to label1
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
 	block   	
-	i32.const	$push26=, 65
-	i32.ne  	$push5=, $3, $pop26
+	i32.const	$push25=, 65
+	i32.ne  	$push5=, $2, $pop25
 	br_if   	0, $pop5        # 0: down to label2
 # BB#3:                                 # %do.body.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
@@ -47,46 +47,47 @@ foo:                                    # @foo
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label3:
-	i32.const	$push30=, 1
-	i32.add 	$push29=, $0, $pop30
-	tee_local	$push28=, $0=, $pop29
-	i32.load8_u	$push6=, 0($pop28)
-	i32.const	$push27=, 43
-	i32.eq  	$push7=, $pop6, $pop27
-	br_if   	0, $pop7        # 0: up to label3
+	i32.load8_u	$2=, 1($0)
+	i32.const	$push29=, 1
+	i32.add 	$push28=, $0, $pop29
+	tee_local	$push27=, $5=, $pop28
+	copy_local	$0=, $pop27
+	i32.const	$push26=, 43
+	i32.eq  	$push6=, $2, $pop26
+	br_if   	0, $pop6        # 0: up to label3
 	br      	2               # 2: down to label1
 .LBB0_5:                                # %for.end
 	end_loop
 	end_block                       # label2:
 	block   	
-	i32.const	$push8=, 3
-	i32.lt_s	$push9=, $5, $pop8
-	br_if   	0, $pop9        # 0: down to label4
+	i32.const	$push7=, 3
+	i32.lt_s	$push8=, $4, $pop7
+	br_if   	0, $pop8        # 0: down to label4
 # BB#6:                                 # %land.lhs.true17
-	i32.const	$push10=, 58
-	i32.eq  	$push11=, $2, $pop10
-	i32.select	$push12=, $4, $1, $pop11
-	return  	$pop12
+	i32.const	$push9=, 58
+	i32.eq  	$push10=, $0, $pop9
+	i32.select	$push11=, $3, $1, $pop10
+	return  	$pop11
 .LBB0_7:                                # %if.end22
 	end_block                       # label4:
 	return  	$1
-.LBB0_8:                                # %cleanup.thread
+.LBB0_8:                                # %cleanup.cont
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_block                       # label1:
-	i32.const	$push14=, 1
-	i32.add 	$5=, $5, $pop14
 	i32.const	$push13=, 1
-	i32.add 	$0=, $0, $pop13
-	copy_local	$4=, $1
+	i32.add 	$4=, $4, $pop13
+	i32.const	$push12=, 1
+	i32.add 	$0=, $5, $pop12
+	copy_local	$3=, $1
 	br      	0               # 0: up to label0
 .LBB0_9:
 	end_loop
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -100,7 +101,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -108,4 +109,4 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

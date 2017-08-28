@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr17133.c"
+	.file	"pr17133.c"
 	.section	.text.pure_alloc,"ax",@progbits
-	.hidden	pure_alloc
+	.hidden	pure_alloc              # -- Begin function pure_alloc
 	.globl	pure_alloc
 	.type	pure_alloc,@function
 pure_alloc:                             # @pure_alloc
@@ -47,9 +47,9 @@ pure_alloc:                             # @pure_alloc
 	.endfunc
 .Lfunc_end0:
 	.size	pure_alloc, .Lfunc_end0-pure_alloc
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -57,49 +57,51 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push13=, 0
-	i32.load	$push1=, foo($pop13)
-	i32.const	$push12=, 2
-	i32.add 	$push11=, $pop1, $pop12
-	tee_local	$push10=, $0=, $pop11
-	i32.store	foo($pop0), $pop10
+	i32.const	$push14=, 0
+	i32.load	$push1=, foo($pop14)
+	i32.const	$push13=, 2
+	i32.add 	$push12=, $pop1, $pop13
+	tee_local	$push11=, $0=, $pop12
+	i32.store	foo($pop0), $pop11
 	block   	
 	block   	
-	block   	
-	i32.const	$push9=, 0
-	i32.load	$push8=, baz($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.ge_u	$push2=, $0, $pop7
-	br_if   	0, $pop2        # 0: down to label4
+	i32.const	$push10=, 0
+	i32.load	$push9=, baz($pop10)
+	tee_local	$push8=, $1=, $pop9
+	i32.ge_u	$push2=, $0, $pop8
+	br_if   	0, $pop2        # 0: down to label3
 # BB#1:                                 # %pure_alloc.exit
-	br_if   	1, $0           # 1: down to label3
-# BB#2:                                 # %if.then
-	call    	abort@FUNCTION
-	unreachable
+	i32.eqz 	$push16=, $0
+	br_if   	1, $pop16       # 1: down to label2
+# BB#2:                                 # %if.end
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_3:                                # %if.end.lr.ph.i
-	end_block                       # label4:
-	i32.const	$push14=, 2
-	i32.le_u	$push3=, $1, $pop14
-	br_if   	1, $pop3        # 1: down to label2
+	end_block                       # label3:
+	block   	
+	i32.const	$push15=, 2
+	i32.le_u	$push3=, $1, $pop15
+	br_if   	0, $pop3        # 0: down to label4
 # BB#4:                                 # %pure_alloc.exit.thread.split
 	i32.const	$push5=, 0
 	i32.const	$push4=, 2
 	i32.store	foo($pop5), $pop4
-.LBB1_5:                                # %if.end
-	end_block                       # label3:
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB1_6:                                # %if.end.i
+.LBB1_5:                                # %if.end.i
                                         # =>This Inner Loop Header: Depth=1
-	end_block                       # label2:
-	loop    	i32             # label5:
+	end_block                       # label4:
+	loop    	                # label5:
 	br      	0               # 0: up to label5
-.LBB1_7:
+.LBB1_6:                                # %if.then
 	end_loop
+	end_block                       # label2:
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	foo                     # @foo
 	.type	foo,@object
 	.section	.bss.foo,"aw",@nobits
@@ -128,5 +130,5 @@ baz:
 	.size	baz, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

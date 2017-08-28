@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-2.c"
+	.file	"simd-2.c"
 	.section	.text.verify,"ax",@progbits
-	.hidden	verify
+	.hidden	verify                  # -- Begin function verify
 	.globl	verify
 	.type	verify,@function
 verify:                                 # @verify
@@ -28,9 +28,9 @@ verify:                                 # @verify
 	.endfunc
 .Lfunc_end0:
 	.size	verify, .Lfunc_end0-verify
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -544,65 +544,65 @@ main:                                   # @main
 	call    	verify@FUNCTION, $pop136, $pop134, $pop132, $pop130, $pop140, $pop139, $pop138, $pop137
 	i32.const	$push377=, 0
 	i32.const	$push376=, 0
-	i32.load16_u	$push142=, i+14($pop376)
+	i32.load16_u	$push142=, j+14($pop376)
 	i32.const	$push375=, 0
-	i32.load16_u	$push141=, j+14($pop375)
+	i32.load16_u	$push141=, i+14($pop375)
 	i32.xor 	$push374=, $pop142, $pop141
 	tee_local	$push373=, $0=, $pop374
 	i32.store16	k+14($pop377), $pop373
 	i32.const	$push372=, 0
 	i32.const	$push371=, 0
-	i32.load16_u	$push144=, i+12($pop371)
+	i32.load16_u	$push144=, j+12($pop371)
 	i32.const	$push370=, 0
-	i32.load16_u	$push143=, j+12($pop370)
+	i32.load16_u	$push143=, i+12($pop370)
 	i32.xor 	$push369=, $pop144, $pop143
 	tee_local	$push368=, $1=, $pop369
 	i32.store16	k+12($pop372), $pop368
 	i32.const	$push367=, 0
 	i32.const	$push366=, 0
-	i32.load16_u	$push146=, i+10($pop366)
+	i32.load16_u	$push146=, j+10($pop366)
 	i32.const	$push365=, 0
-	i32.load16_u	$push145=, j+10($pop365)
+	i32.load16_u	$push145=, i+10($pop365)
 	i32.xor 	$push364=, $pop146, $pop145
 	tee_local	$push363=, $2=, $pop364
 	i32.store16	k+10($pop367), $pop363
 	i32.const	$push362=, 0
 	i32.const	$push361=, 0
-	i32.load16_u	$push148=, i+8($pop361)
+	i32.load16_u	$push148=, j+8($pop361)
 	i32.const	$push360=, 0
-	i32.load16_u	$push147=, j+8($pop360)
+	i32.load16_u	$push147=, i+8($pop360)
 	i32.xor 	$push359=, $pop148, $pop147
 	tee_local	$push358=, $3=, $pop359
 	i32.store16	k+8($pop362), $pop358
 	i32.const	$push357=, 0
 	i32.const	$push356=, 0
-	i32.load16_u	$push150=, i+6($pop356)
+	i32.load16_u	$push150=, j+6($pop356)
 	i32.const	$push355=, 0
-	i32.load16_u	$push149=, j+6($pop355)
+	i32.load16_u	$push149=, i+6($pop355)
 	i32.xor 	$push354=, $pop150, $pop149
 	tee_local	$push353=, $4=, $pop354
 	i32.store16	k+6($pop357), $pop353
 	i32.const	$push352=, 0
 	i32.const	$push351=, 0
-	i32.load16_u	$push152=, i+4($pop351)
+	i32.load16_u	$push152=, j+4($pop351)
 	i32.const	$push350=, 0
-	i32.load16_u	$push151=, j+4($pop350)
+	i32.load16_u	$push151=, i+4($pop350)
 	i32.xor 	$push349=, $pop152, $pop151
 	tee_local	$push348=, $5=, $pop349
 	i32.store16	k+4($pop352), $pop348
 	i32.const	$push347=, 0
 	i32.const	$push346=, 0
-	i32.load16_u	$push154=, i+2($pop346)
+	i32.load16_u	$push154=, j+2($pop346)
 	i32.const	$push345=, 0
-	i32.load16_u	$push153=, j+2($pop345)
+	i32.load16_u	$push153=, i+2($pop345)
 	i32.xor 	$push344=, $pop154, $pop153
 	tee_local	$push343=, $6=, $pop344
 	i32.store16	k+2($pop347), $pop343
 	i32.const	$push342=, 0
 	i32.const	$push341=, 0
-	i32.load16_u	$push156=, i($pop341)
+	i32.load16_u	$push156=, j($pop341)
 	i32.const	$push340=, 0
-	i32.load16_u	$push155=, j($pop340)
+	i32.load16_u	$push155=, i($pop340)
 	i32.xor 	$push339=, $pop156, $pop155
 	tee_local	$push338=, $7=, $pop339
 	i32.store16	k($pop342), $pop338
@@ -835,7 +835,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.data.i,"aw",@progbits
@@ -887,6 +887,6 @@ res:
 	.size	res, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

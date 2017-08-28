@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-6.c"
+	.file	"complex-6.c"
 	.section	.text.ctest_float,"ax",@progbits
-	.hidden	ctest_float
+	.hidden	ctest_float             # -- Begin function ctest_float
 	.globl	ctest_float
 	.type	ctest_float,@function
 ctest_float:                            # @ctest_float
@@ -16,9 +16,9 @@ ctest_float:                            # @ctest_float
 	.endfunc
 .Lfunc_end0:
 	.size	ctest_float, .Lfunc_end0-ctest_float
-
+                                        # -- End function
 	.section	.text.test_float,"ax",@progbits
-	.hidden	test_float
+	.hidden	test_float              # -- Begin function test_float
 	.globl	test_float
 	.type	test_float,@function
 test_float:                             # @test_float
@@ -27,9 +27,9 @@ test_float:                             # @test_float
 	.endfunc
 .Lfunc_end1:
 	.size	test_float, .Lfunc_end1-test_float
-
+                                        # -- End function
 	.section	.text.ctest_double,"ax",@progbits
-	.hidden	ctest_double
+	.hidden	ctest_double            # -- Begin function ctest_double
 	.globl	ctest_double
 	.type	ctest_double,@function
 ctest_double:                           # @ctest_double
@@ -44,9 +44,9 @@ ctest_double:                           # @ctest_double
 	.endfunc
 .Lfunc_end2:
 	.size	ctest_double, .Lfunc_end2-ctest_double
-
+                                        # -- End function
 	.section	.text.test_double,"ax",@progbits
-	.hidden	test_double
+	.hidden	test_double             # -- Begin function test_double
 	.globl	test_double
 	.type	test_double,@function
 test_double:                            # @test_double
@@ -55,9 +55,9 @@ test_double:                            # @test_double
 	.endfunc
 .Lfunc_end3:
 	.size	test_double, .Lfunc_end3-test_double
-
+                                        # -- End function
 	.section	.text.ctest_long_double,"ax",@progbits
-	.hidden	ctest_long_double
+	.hidden	ctest_long_double       # -- Begin function ctest_long_double
 	.globl	ctest_long_double
 	.type	ctest_long_double,@function
 ctest_long_double:                      # @ctest_long_double
@@ -65,10 +65,10 @@ ctest_long_double:                      # @ctest_long_double
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push18=, 0
-	i32.const	$push15=, 0
-	i32.load	$push16=, __stack_pointer($pop15)
+	i32.const	$push16=, 0
+	i32.load	$push15=, __stack_pointer($pop16)
 	i32.const	$push17=, 16
-	i32.sub 	$push26=, $pop16, $pop17
+	i32.sub 	$push26=, $pop15, $pop17
 	tee_local	$push25=, $2=, $pop26
 	i32.store	__stack_pointer($pop18), $pop25
 	i64.const	$push5=, 0
@@ -102,9 +102,9 @@ ctest_long_double:                      # @ctest_long_double
 	.endfunc
 .Lfunc_end4:
 	.size	ctest_long_double, .Lfunc_end4-ctest_long_double
-
+                                        # -- End function
 	.section	.text.test_long_double,"ax",@progbits
-	.hidden	test_long_double
+	.hidden	test_long_double        # -- Begin function test_long_double
 	.globl	test_long_double
 	.type	test_long_double,@function
 test_long_double:                       # @test_long_double
@@ -113,9 +113,9 @@ test_long_double:                       # @test_long_double
 	.endfunc
 .Lfunc_end5:
 	.size	test_long_double, .Lfunc_end5-test_long_double
-
+                                        # -- End function
 	.section	.text.ctest_int,"ax",@progbits
-	.hidden	ctest_int
+	.hidden	ctest_int               # -- Begin function ctest_int
 	.globl	ctest_int
 	.type	ctest_int,@function
 ctest_int:                              # @ctest_int
@@ -131,9 +131,9 @@ ctest_int:                              # @ctest_int
 	.endfunc
 .Lfunc_end6:
 	.size	ctest_int, .Lfunc_end6-ctest_int
-
+                                        # -- End function
 	.section	.text.test_int,"ax",@progbits
-	.hidden	test_int
+	.hidden	test_int                # -- Begin function test_int
 	.globl	test_int
 	.type	test_int,@function
 test_int:                               # @test_int
@@ -142,9 +142,9 @@ test_int:                               # @test_int
 	.endfunc
 .Lfunc_end7:
 	.size	test_int, .Lfunc_end7-test_int
-
+                                        # -- End function
 	.section	.text.ctest_long_int,"ax",@progbits
-	.hidden	ctest_long_int
+	.hidden	ctest_long_int          # -- Begin function ctest_long_int
 	.globl	ctest_long_int
 	.type	ctest_long_int,@function
 ctest_long_int:                         # @ctest_long_int
@@ -160,9 +160,9 @@ ctest_long_int:                         # @ctest_long_int
 	.endfunc
 .Lfunc_end8:
 	.size	ctest_long_int, .Lfunc_end8-ctest_long_int
-
+                                        # -- End function
 	.section	.text.test_long_int,"ax",@progbits
-	.hidden	test_long_int
+	.hidden	test_long_int           # -- Begin function test_long_int
 	.globl	test_long_int
 	.type	test_long_int,@function
 test_long_int:                          # @test_long_int
@@ -171,9 +171,9 @@ test_long_int:                          # @test_long_int
 	.endfunc
 .Lfunc_end9:
 	.size	test_long_int, .Lfunc_end9-test_long_int
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -187,7 +187,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
-
+                                        # -- End function
 	.hidden	err                     # @err
 	.type	err,@object
 	.section	.bss.err,"aw",@nobits
@@ -198,4 +198,4 @@ err:
 	.size	err, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

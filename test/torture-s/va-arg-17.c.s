@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-17.c"
+	.file	"va-arg-17.c"
 	.section	.text.vafunction,"ax",@progbits
-	.hidden	vafunction
+	.hidden	vafunction              # -- Begin function vafunction
 	.globl	vafunction
 	.type	vafunction,@function
 vafunction:                             # @vafunction
@@ -9,13 +9,12 @@ vafunction:                             # @vafunction
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push43=, 0
-	i32.const	$push40=, 0
-	i32.load	$push41=, __stack_pointer($pop40)
+	i32.const	$push41=, 0
+	i32.load	$push40=, __stack_pointer($pop41)
 	i32.const	$push42=, 16
-	i32.sub 	$push52=, $pop41, $pop42
+	i32.sub 	$push52=, $pop40, $pop42
 	tee_local	$push51=, $4=, $pop52
 	i32.store	__stack_pointer($pop43), $pop51
-	i32.store	12($4), $1
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, -8
@@ -107,16 +106,16 @@ vafunction:                             # @vafunction
 	i32.add 	$push45=, $4, $pop44
 	i32.store	__stack_pointer($pop46), $pop45
 	return
-.LBB0_10:                               # %if.then40
+.LBB0_10:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	vafunction, .Lfunc_end0-vafunction
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -124,10 +123,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push27=, 0
-	i32.const	$push24=, 0
-	i32.load	$push25=, __stack_pointer($pop24)
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
 	i32.const	$push26=, 80
-	i32.sub 	$push29=, $pop25, $pop26
+	i32.sub 	$push29=, $pop24, $pop26
 	tee_local	$push28=, $0=, $pop29
 	i32.store	__stack_pointer($pop27), $pop28
 	i32.const	$push0=, 64
@@ -169,8 +168,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

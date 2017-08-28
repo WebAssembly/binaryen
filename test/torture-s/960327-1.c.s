@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960327-1.c"
+	.file	"960327-1.c"
 	.section	.text.g,"ax",@progbits
-	.hidden	g
+	.hidden	g                       # -- Begin function g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -12,66 +12,59 @@ g:                                      # @g
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
 	.local  	i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push19=, 0
-	i32.const	$push16=, 0
-	i32.load	$push17=, __stack_pointer($pop16)
-	i32.const	$push18=, 16
-	i32.sub 	$push26=, $pop17, $pop18
-	tee_local	$push25=, $3=, $pop26
-	i32.store	__stack_pointer($pop19), $pop25
-	i32.const	$push2=, 12
-	i32.add 	$push3=, $3, $pop2
+	i32.const	$push14=, 0
+	i32.const	$push12=, 0
+	i32.load	$push11=, __stack_pointer($pop12)
+	i32.const	$push13=, 16
+	i32.sub 	$push20=, $pop11, $pop13
+	tee_local	$push19=, $3=, $pop20
+	i32.store	__stack_pointer($pop14), $pop19
 	i32.const	$push0=, 0
-	i32.load16_u	$push1=, .Lf.s+12($pop0):p2align=0
-	i32.store16	0($pop3), $pop1
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $3, $pop5
-	i32.const	$push24=, 0
-	i32.load	$push4=, .Lf.s+8($pop24):p2align=0
-	i32.store	0($pop6), $pop4
-	i32.const	$push23=, 0
-	i64.load	$push7=, .Lf.s($pop23):p2align=0
-	i64.store	0($3):p2align=2, $pop7
-	i32.const	$push8=, 13
-	i32.add 	$2=, $3, $pop8
+	i64.load	$push1=, .Lf.s+6($pop0):p2align=0
+	i64.store	6($3):p2align=1, $pop1
+	i32.const	$push18=, 0
+	i64.load	$push2=, .Lf.s($pop18):p2align=0
+	i64.store	0($3), $pop2
+	i32.const	$push3=, 13
+	i32.add 	$2=, $3, $pop3
 .LBB1_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push31=, -2
-	i32.add 	$1=, $2, $pop31
-	i32.const	$push30=, -1
-	i32.add 	$push29=, $2, $pop30
-	tee_local	$push28=, $0=, $pop29
-	copy_local	$2=, $pop28
-	i32.load8_u	$push9=, 0($1)
-	i32.const	$push27=, 48
-	i32.eq  	$push10=, $pop9, $pop27
-	br_if   	0, $pop10       # 0: up to label0
+	i32.const	$push25=, -2
+	i32.add 	$1=, $2, $pop25
+	i32.const	$push24=, -1
+	i32.add 	$push23=, $2, $pop24
+	tee_local	$push22=, $0=, $pop23
+	copy_local	$2=, $pop22
+	i32.load8_u	$push4=, 0($1)
+	i32.const	$push21=, 48
+	i32.eq  	$push5=, $pop4, $pop21
+	br_if   	0, $pop5        # 0: up to label0
 # BB#2:                                 # %while.end
 	end_loop
-	i32.const	$push11=, 88
-	i32.store16	0($0):p2align=0, $pop11
+	i32.const	$push6=, 88
+	i32.store16	0($0):p2align=0, $pop6
 	block   	
-	i32.const	$push12=, 12
-	i32.add 	$push13=, $3, $pop12
-	i32.load8_u	$push14=, 0($pop13)
-	i32.const	$push32=, 88
-	i32.ne  	$push15=, $pop14, $pop32
-	br_if   	0, $pop15       # 0: down to label1
+	i32.const	$push7=, 12
+	i32.add 	$push8=, $3, $pop7
+	i32.load8_u	$push9=, 0($pop8)
+	i32.const	$push26=, 88
+	i32.ne  	$push10=, $pop9, $pop26
+	br_if   	0, $pop10       # 0: down to label1
 # BB#3:                                 # %if.end
-	i32.const	$push22=, 0
-	i32.const	$push20=, 16
-	i32.add 	$push21=, $3, $pop20
-	i32.store	__stack_pointer($pop22), $pop21
+	i32.const	$push17=, 0
+	i32.const	$push15=, 16
+	i32.add 	$push16=, $3, $pop15
+	i32.store	__stack_pointer($pop17), $pop16
 	return  	$2
 .LBB1_4:                                # %if.then
 	end_block                       # label1:
@@ -80,9 +73,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -95,7 +88,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	.Lf.s,@object           # @f.s
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .Lf.s:
@@ -103,6 +96,6 @@ main:                                   # @main
 	.size	.Lf.s, 14
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

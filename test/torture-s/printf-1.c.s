@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/printf-1.c"
+	.file	"printf-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push45=, 0
-	i32.const	$push42=, 0
-	i32.load	$push43=, __stack_pointer($pop42)
+	i32.const	$push43=, 0
+	i32.load	$push42=, __stack_pointer($pop43)
 	i32.const	$push44=, 176
-	i32.sub 	$push74=, $pop43, $pop44
+	i32.sub 	$push74=, $pop42, $pop44
 	tee_local	$push73=, $0=, $pop74
 	i32.store	__stack_pointer($pop45), $pop73
 	i32.const	$push72=, .Lstr
@@ -146,14 +146,14 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop48), $pop47
 	i32.const	$push92=, 0
 	return  	$pop92
-.LBB0_11:                               # %if.then50
+.LBB0_11:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	.L.str.1,@object        # @.str.1
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str.1:
@@ -196,7 +196,7 @@ main:                                   # @main
 	.size	.Lstr, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	printf, i32, i32
 	.functype	abort, void
 	.functype	puts, i32, i32

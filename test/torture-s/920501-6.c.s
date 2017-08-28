@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-6.c"
+	.file	"920501-6.c"
 	.section	.text.str2llu,"ax",@progbits
-	.hidden	str2llu
+	.hidden	str2llu                 # -- Begin function str2llu
 	.globl	str2llu
 	.type	str2llu,@function
 str2llu:                                # @str2llu
@@ -46,9 +46,9 @@ str2llu:                                # @str2llu
 	.endfunc
 .Lfunc_end0:
 	.size	str2llu, .Lfunc_end0-str2llu
-
+                                        # -- End function
 	.section	.text.sqrtllu,"ax",@progbits
-	.hidden	sqrtllu
+	.hidden	sqrtllu                 # -- Begin function sqrtllu
 	.globl	sqrtllu
 	.type	sqrtllu,@function
 sqrtllu:                                # @sqrtllu
@@ -71,19 +71,19 @@ sqrtllu:                                # @sqrtllu
 	br_if   	0, $pop0        # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop
-	i64.const	$push20=, 1
-	i64.const	$push19=, 1
-	i64.shr_u	$push4=, $2, $pop19
-	i64.shl 	$push18=, $pop20, $pop4
-	tee_local	$push17=, $1=, $pop18
 	i64.const	$push2=, 0
-	i64.const	$push16=, 1
-	i64.and 	$push1=, $2, $pop16
+	i64.const	$push20=, 1
+	i64.and 	$push1=, $2, $pop20
 	i64.sub 	$push3=, $pop2, $pop1
+	i64.const	$push19=, 1
+	i64.const	$push18=, 1
+	i64.shr_u	$push4=, $2, $pop18
+	i64.shl 	$push17=, $pop19, $pop4
+	tee_local	$push16=, $2=, $pop17
 	i64.const	$push15=, 1
-	i64.shr_u	$push5=, $1, $pop15
+	i64.shr_u	$push5=, $pop16, $pop15
 	i64.and 	$push6=, $pop3, $pop5
-	i64.add 	$2=, $pop17, $pop6
+	i64.add 	$2=, $pop6, $2
 .LBB1_3:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
@@ -102,9 +102,9 @@ sqrtllu:                                # @sqrtllu
 	.endfunc
 .Lfunc_end1:
 	.size	sqrtllu, .Lfunc_end1-sqrtllu
-
+                                        # -- End function
 	.section	.text.plist,"ax",@progbits
-	.hidden	plist
+	.hidden	plist                   # -- Begin function plist
 	.globl	plist
 	.type	plist,@function
 plist:                                  # @plist
@@ -116,9 +116,9 @@ plist:                                  # @plist
 	block   	
 	i64.gt_u	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label4
-# BB#1:                                 # %for.cond.i.preheader.preheader
+# BB#1:                                 # %for.body.preheader
 	copy_local	$4=, $2
-.LBB2_2:                                # %for.cond.i.preheader
+.LBB2_2:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB2_3 Depth 2
                                         #     Child Loop BB2_5 Depth 2
@@ -221,26 +221,26 @@ plist:                                  # @plist
 	.endfunc
 .Lfunc_end2:
 	.size	plist, .Lfunc_end2-plist
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32, i32, i64, i64, i64, i32, i32
-# BB#0:                                 # %for.cond.i.preheader.i.preheader
+# BB#0:                                 # %for.body.lr.ph.i
 	i32.const	$push30=, 0
-	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
+	i32.const	$push28=, 0
+	i32.load	$push27=, __stack_pointer($pop28)
 	i32.const	$push29=, 80
-	i32.sub 	$push32=, $pop28, $pop29
+	i32.sub 	$push32=, $pop27, $pop29
 	tee_local	$push31=, $8=, $pop32
 	i32.store	__stack_pointer($pop30), $pop31
 	i64.const	$4=, 1234111111
 	copy_local	$3=, $8
-.LBB3_1:                                # %for.cond.i.preheader.i
+.LBB3_1:                                # %for.body.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB3_2 Depth 2
                                         #     Child Loop BB3_4 Depth 2
@@ -367,8 +367,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

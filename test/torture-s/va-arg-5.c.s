@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-5.c"
+	.file	"va-arg-5.c"
 	.section	.text.va_double,"ax",@progbits
-	.hidden	va_double
+	.hidden	va_double               # -- Begin function va_double
 	.globl	va_double
 	.type	va_double,@function
 va_double:                              # @va_double
@@ -10,13 +10,12 @@ va_double:                              # @va_double
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push23=, 0
-	i32.const	$push20=, 0
-	i32.load	$push21=, __stack_pointer($pop20)
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 16
-	i32.sub 	$push32=, $pop21, $pop22
+	i32.sub 	$push32=, $pop20, $pop22
 	tee_local	$push31=, $4=, $pop32
 	i32.store	__stack_pointer($pop23), $pop31
-	i32.store	12($4), $1
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, -8
@@ -63,16 +62,16 @@ va_double:                              # @va_double
 	i32.add 	$push25=, $4, $pop24
 	i32.store	__stack_pointer($pop26), $pop25
 	return  	$4
-.LBB0_5:                                # %if.then15
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	va_double, .Lfunc_end0-va_double
-
+                                        # -- End function
 	.section	.text.va_long_double,"ax",@progbits
-	.hidden	va_long_double
+	.hidden	va_long_double          # -- Begin function va_long_double
 	.globl	va_long_double
 	.type	va_long_double,@function
 va_long_double:                         # @va_long_double
@@ -81,13 +80,12 @@ va_long_double:                         # @va_long_double
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push37=, 0
-	i32.const	$push34=, 0
-	i32.load	$push35=, __stack_pointer($pop34)
+	i32.const	$push35=, 0
+	i32.load	$push34=, __stack_pointer($pop35)
 	i32.const	$push36=, 16
-	i32.sub 	$push46=, $pop35, $pop36
+	i32.sub 	$push46=, $pop34, $pop36
 	tee_local	$push45=, $4=, $pop46
 	i32.store	__stack_pointer($pop37), $pop45
-	i32.store	12($4), $1
 	i32.const	$push0=, 15
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, -16
@@ -148,16 +146,16 @@ va_long_double:                         # @va_long_double
 	i32.add 	$push39=, $4, $pop38
 	i32.store	__stack_pointer($pop40), $pop39
 	return  	$1
-.LBB1_5:                                # %if.then15
+.LBB1_5:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	va_long_double, .Lfunc_end1-va_long_double
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -165,10 +163,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push30=, 0
-	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
+	i32.const	$push28=, 0
+	i32.load	$push27=, __stack_pointer($pop28)
 	i32.const	$push29=, 96
-	i32.sub 	$push40=, $pop28, $pop29
+	i32.sub 	$push40=, $pop27, $pop29
 	tee_local	$push39=, $0=, $pop40
 	i32.store	__stack_pointer($pop30), $pop39
 	i32.const	$push31=, 64
@@ -225,8 +223,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

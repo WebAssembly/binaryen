@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991201-1.c"
+	.file	"991201-1.c"
 	.section	.text.reset_palette,"ax",@progbits
-	.hidden	reset_palette
+	.hidden	reset_palette           # -- Begin function reset_palette
 	.globl	reset_palette
 	.type	reset_palette,@function
 reset_palette:                          # @reset_palette
@@ -51,9 +51,9 @@ reset_palette:                          # @reset_palette
 	.endfunc
 .Lfunc_end0:
 	.size	reset_palette, .Lfunc_end0-reset_palette
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -72,9 +72,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -88,7 +88,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a_con                   # @a_con
 	.type	a_con,@object
 	.section	.bss.a_con,"aw",@nobits
@@ -197,6 +197,6 @@ default_blu:
 	.size	default_blu, 64
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

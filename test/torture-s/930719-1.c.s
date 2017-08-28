@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930719-1.c"
+	.file	"930719-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -12,7 +12,7 @@ f:                                      # @f
 	block   	
 	block   	
 	br_if   	0, $0           # 0: down to label2
-# BB#1:                                 # %while.cond.preheader
+# BB#1:                                 # %if.end
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $1, $pop0
 	br_if   	1, $pop1        # 1: down to label1
@@ -36,9 +36,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -50,7 +50,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

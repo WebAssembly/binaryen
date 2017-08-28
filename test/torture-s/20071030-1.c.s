@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071030-1.c"
+	.file	"20071030-1.c"
 	.section	.text.CalcPing,"ax",@progbits
-	.hidden	CalcPing
+	.hidden	CalcPing                # -- Begin function CalcPing
 	.globl	CalcPing
 	.type	CalcPing,@function
 CalcPing:                               # @CalcPing
@@ -33,7 +33,7 @@ CalcPing:                               # @CalcPing
 	f32.gt  	$push18=, $1, $pop19
 	tee_local	$push17=, $2=, $pop18
 	f32.select	$5=, $pop4, $5, $pop17
-	i32.add 	$4=, $2, $4
+	i32.add 	$4=, $4, $2
 	i32.const	$push16=, 24
 	i32.add 	$push15=, $3, $pop16
 	tee_local	$push14=, $3=, $pop15
@@ -59,9 +59,9 @@ CalcPing:                               # @CalcPing
 	.endfunc
 .Lfunc_end0:
 	.size	CalcPing, .Lfunc_end0-CalcPing
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -69,10 +69,10 @@ main:                                   # @main
 	.local  	f32, i32, i32, i32, f32, i32
 # BB#0:                                 # %if.end.i
 	i32.const	$push17=, 0
-	i32.const	$push14=, 0
-	i32.load	$push15=, __stack_pointer($pop14)
+	i32.const	$push15=, 0
+	i32.load	$push14=, __stack_pointer($pop15)
 	i32.const	$push16=, 1552
-	i32.sub 	$push30=, $pop15, $pop16
+	i32.sub 	$push30=, $pop14, $pop16
 	tee_local	$push29=, $5=, $pop30
 	i32.store	__stack_pointer($pop17), $pop29
 	i32.const	$3=, 0
@@ -102,7 +102,7 @@ main:                                   # @main
 	f32.gt  	$push36=, $0, $pop37
 	tee_local	$push35=, $1=, $pop36
 	f32.select	$4=, $pop4, $4, $pop35
-	i32.add 	$3=, $1, $3
+	i32.add 	$3=, $3, $1
 	i32.const	$push34=, 24
 	i32.add 	$push33=, $2, $pop34
 	tee_local	$push32=, $2=, $pop33
@@ -137,7 +137,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

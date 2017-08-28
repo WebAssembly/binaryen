@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/931004-9.c"
+	.file	"931004-9.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -43,62 +43,56 @@ f:                                      # @f
 	i32.ne  	$push19=, $4, $pop18
 	br_if   	0, $pop19       # 0: down to label0
 # BB#7:                                 # %if.end34
-	return  	$1
-.LBB0_8:                                # %if.then33
+	return  	$2
+.LBB0_8:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push13=, 0
 	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
-	i32.const	$push12=, 16
-	i32.sub 	$push21=, $pop11, $pop12
-	tee_local	$push20=, $0=, $pop21
-	i32.store	__stack_pointer($pop13), $pop20
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
+	i32.const	$push9=, 16
+	i32.sub 	$push18=, $pop7, $pop9
+	tee_local	$push17=, $0=, $pop18
+	i32.store	__stack_pointer($pop10), $pop17
 	i32.const	$push0=, 5130
 	i32.store16	8($0), $pop0
-	i32.const	$push1=, 21
-	i32.store8	11($0), $pop1
-	i32.const	$push2=, 22
-	i32.store8	13($0), $pop2
-	i32.const	$push3=, 11
-	i32.store8	10($0), $pop3
-	i32.const	$push4=, 12
-	i32.store8	12($0), $pop4
-	i32.load16_u	$push5=, 8($0)
-	i32.store16	6($0), $pop5
-	i32.load16_u	$push6=, 10($0)
-	i32.store16	4($0), $pop6
-	i32.load16_u	$push7=, 12($0)
-	i32.store16	2($0), $pop7
-	i32.const	$push14=, 6
-	i32.add 	$push15=, $0, $pop14
-	i32.const	$push16=, 4
-	i32.add 	$push17=, $0, $pop16
-	i32.const	$push18=, 2
-	i32.add 	$push19=, $0, $pop18
-	i32.const	$push8=, 123
-	i32.call	$drop=, f@FUNCTION, $0, $pop15, $pop17, $pop19, $pop8
-	i32.const	$push9=, 0
-	call    	exit@FUNCTION, $pop9
+	i32.const	$push1=, 369890571
+	i32.store	10($0):p2align=1, $pop1
+	i32.load16_u	$push2=, 8($0)
+	i32.store16	6($0), $pop2
+	i32.load16_u	$push3=, 10($0)
+	i32.store16	4($0), $pop3
+	i32.load16_u	$push4=, 12($0)
+	i32.store16	2($0), $pop4
+	i32.const	$push11=, 6
+	i32.add 	$push12=, $0, $pop11
+	i32.const	$push13=, 4
+	i32.add 	$push14=, $0, $pop13
+	i32.const	$push15=, 2
+	i32.add 	$push16=, $0, $pop15
+	i32.const	$push5=, 123
+	i32.call	$drop=, f@FUNCTION, $0, $pop12, $pop14, $pop16, $pop5
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950607-2.c"
+	.file	"950607-2.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -9,9 +9,8 @@ f:                                      # @f
 	.result 	i32
 	.local  	i32, i64
 # BB#0:                                 # %entry
-	i32.const	$push20=, 0
-	i32.const	$push17=, 1
-	i32.const	$push16=, 2
+	i32.const	$push21=, 0
+	i32.const	$push19=, 2
 	i32.load	$push10=, 4($2)
 	i32.load	$push28=, 4($0)
 	tee_local	$push27=, $3=, $pop28
@@ -32,19 +31,20 @@ f:                                      # @f
 	i64.mul 	$push6=, $pop5, $pop2
 	i64.sub 	$push24=, $pop13, $pop6
 	tee_local	$push23=, $4=, $pop24
+	i64.const	$push16=, 63
+	i64.shr_u	$push17=, $pop23, $pop16
+	i32.wrap/i64	$push18=, $pop17
+	i32.sub 	$push20=, $pop19, $pop18
 	i64.const	$push14=, 0
-	i64.lt_s	$push15=, $pop23, $pop14
-	i32.select	$push18=, $pop17, $pop16, $pop15
-	i64.const	$push22=, 0
-	i64.gt_s	$push19=, $4, $pop22
-	i32.select	$push21=, $pop20, $pop18, $pop19
-                                        # fallthrough-return: $pop21
+	i64.gt_s	$push15=, $4, $pop14
+	i32.select	$push22=, $pop21, $pop20, $pop15
+                                        # fallthrough-return: $pop22
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -56,7 +56,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

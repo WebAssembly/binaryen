@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930513-2.c"
+	.file	"930513-2.c"
 	.section	.text.sub3,"ax",@progbits
-	.hidden	sub3
+	.hidden	sub3                    # -- Begin function sub3
 	.globl	sub3
 	.type	sub3,@function
 sub3:                                   # @sub3
@@ -14,9 +14,9 @@ sub3:                                   # @sub3
 	.endfunc
 .Lfunc_end0:
 	.size	sub3, .Lfunc_end0-sub3
-
+                                        # -- End function
 	.section	.text.eq,"ax",@progbits
-	.hidden	eq
+	.hidden	eq                      # -- Begin function eq
 	.globl	eq
 	.type	eq,@function
 eq:                                     # @eq
@@ -41,9 +41,9 @@ eq:                                     # @eq
 	.endfunc
 .Lfunc_end1:
 	.size	eq, .Lfunc_end1-eq
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -67,7 +67,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	eq.i,@object            # @eq.i
 	.section	.bss.eq.i,"aw",@nobits
 	.p2align	2
@@ -76,6 +76,6 @@ eq.i:
 	.size	eq.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

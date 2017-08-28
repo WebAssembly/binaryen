@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000403-1.c"
+	.file	"20000403-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,22 +16,22 @@ main:                                   # @main
 	i32.load	$push3=, bb($pop7)
 	i32.sub 	$push4=, $pop2, $pop3
 	i32.const	$push6=, 0
-	i32.le_s	$push5=, $pop4, $pop6
+	i32.gt_s	$push5=, $pop4, $pop6
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %if.end
+# BB#1:                                 # %if.then
+	call    	abort@FUNCTION
+	unreachable
+.LBB0_2:                                # %if.end
+	end_block                       # label0:
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
-	unreachable
-.LBB0_2:                                # %if.then
-	end_block                       # label0:
-	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.seqgt,"ax",@progbits
-	.hidden	seqgt
+	.hidden	seqgt                   # -- Begin function seqgt
 	.globl	seqgt
 	.type	seqgt,@function
 seqgt:                                  # @seqgt
@@ -46,9 +46,9 @@ seqgt:                                  # @seqgt
 	.endfunc
 .Lfunc_end1:
 	.size	seqgt, .Lfunc_end1-seqgt
-
+                                        # -- End function
 	.section	.text.seqgt2,"ax",@progbits
-	.hidden	seqgt2
+	.hidden	seqgt2                  # -- Begin function seqgt2
 	.globl	seqgt2
 	.type	seqgt2,@function
 seqgt2:                                 # @seqgt2
@@ -63,7 +63,7 @@ seqgt2:                                 # @seqgt2
 	.endfunc
 .Lfunc_end2:
 	.size	seqgt2, .Lfunc_end2-seqgt2
-
+                                        # -- End function
 	.hidden	aa                      # @aa
 	.type	aa,@object
 	.section	.data.aa,"aw",@progbits
@@ -83,6 +83,6 @@ bb:
 	.size	bb, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

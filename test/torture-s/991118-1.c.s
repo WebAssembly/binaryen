@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991118-1.c"
+	.file	"991118-1.c"
 	.section	.text.sub,"ax",@progbits
-	.hidden	sub
+	.hidden	sub                     # -- Begin function sub
 	.globl	sub
 	.type	sub,@function
 sub:                                    # @sub
@@ -15,9 +15,9 @@ sub:                                    # @sub
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub
-
+                                        # -- End function
 	.section	.text.sub2,"ax",@progbits
-	.hidden	sub2
+	.hidden	sub2                    # -- Begin function sub2
 	.globl	sub2
 	.type	sub2,@function
 sub2:                                   # @sub2
@@ -31,9 +31,9 @@ sub2:                                   # @sub2
 	.endfunc
 .Lfunc_end1:
 	.size	sub2, .Lfunc_end1-sub2
-
+                                        # -- End function
 	.section	.text.sub3,"ax",@progbits
-	.hidden	sub3
+	.hidden	sub3                    # -- Begin function sub3
 	.globl	sub3
 	.type	sub3,@function
 sub3:                                   # @sub3
@@ -47,9 +47,9 @@ sub3:                                   # @sub3
 	.endfunc
 .Lfunc_end2:
 	.size	sub3, .Lfunc_end2-sub3
-
+                                        # -- End function
 	.section	.text.sub4,"ax",@progbits
-	.hidden	sub4
+	.hidden	sub4                    # -- Begin function sub4
 	.globl	sub4
 	.type	sub4,@function
 sub4:                                   # @sub4
@@ -63,9 +63,9 @@ sub4:                                   # @sub4
 	.endfunc
 .Lfunc_end3:
 	.size	sub4, .Lfunc_end3-sub4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -164,14 +164,14 @@ main:                                   # @main
 	i32.const	$push40=, 0
 	call    	exit@FUNCTION, $pop40
 	unreachable
-.LBB4_9:                                # %if.then46
+.LBB4_9:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.hidden	tmp                     # @tmp
 	.type	tmp,@object
 	.section	.data.tmp,"aw",@progbits
@@ -237,6 +237,6 @@ tmp4:
 	.size	tmp4, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

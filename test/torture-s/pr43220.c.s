@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43220.c"
+	.file	"pr43220.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,57 +16,57 @@ main:                                   # @main
 .LBB0_1:                                # %lab
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push44=, 1000
-	i32.rem_s	$push0=, $2, $pop44
-	i32.const	$push43=, 2
-	i32.shl 	$push42=, $pop0, $pop43
-	tee_local	$push41=, $0=, $pop42
-	i32.const	$push40=, 19
-	i32.add 	$push1=, $pop41, $pop40
-	i32.const	$push39=, -16
-	i32.and 	$push2=, $pop1, $pop39
-	i32.sub 	$push38=, $3, $pop2
-	tee_local	$push37=, $1=, $pop38
-	copy_local	$drop=, $pop37
-	i32.const	$push36=, 1
-	i32.store	0($1), $pop36
-	i32.const	$push35=, 0
-	i32.store	p($pop35), $1
-	i32.add 	$push4=, $1, $0
-	i32.const	$push34=, 2
-	i32.store	0($pop4), $pop34
-	copy_local	$push3=, $3
-	copy_local	$push33=, $pop3
-	tee_local	$push32=, $3=, $pop33
-	i32.const	$push31=, 1
-	i32.add 	$push5=, $2, $pop31
-	i32.const	$push30=, 1000
-	i32.rem_s	$push6=, $pop5, $pop30
-	i32.const	$push29=, 2
-	i32.shl 	$push28=, $pop6, $pop29
-	tee_local	$push27=, $0=, $pop28
-	i32.const	$push26=, 19
-	i32.add 	$push7=, $pop27, $pop26
-	i32.const	$push25=, -16
-	i32.and 	$push8=, $pop7, $pop25
-	i32.sub 	$push24=, $pop32, $pop8
-	tee_local	$push23=, $1=, $pop24
-	copy_local	$drop=, $pop23
-	i32.const	$push22=, 1
-	i32.store	0($1), $pop22
-	i32.const	$push21=, 0
-	i32.store	p($pop21), $1
-	i32.add 	$push10=, $1, $0
-	i32.const	$push20=, 2
-	i32.store	0($pop10), $pop20
-	copy_local	$push9=, $3
-	copy_local	$3=, $pop9
-	i32.const	$push19=, 2
-	i32.add 	$push18=, $2, $pop19
-	tee_local	$push17=, $2=, $pop18
-	i32.const	$push16=, 1000000
-	i32.lt_s	$push11=, $pop17, $pop16
-	br_if   	0, $pop11       # 0: up to label0
+	i32.const	$push42=, 1000
+	i32.rem_s	$push1=, $2, $pop42
+	i32.const	$push41=, 2
+	i32.shl 	$push40=, $pop1, $pop41
+	tee_local	$push39=, $0=, $pop40
+	i32.const	$push38=, 19
+	i32.add 	$push2=, $pop39, $pop38
+	i32.const	$push37=, -16
+	i32.and 	$push3=, $pop2, $pop37
+	i32.sub 	$push36=, $3, $pop3
+	tee_local	$push35=, $1=, $pop36
+	copy_local	$drop=, $pop35
+	i32.const	$push34=, 1
+	i32.store	0($1), $pop34
+	i32.const	$push33=, 0
+	i32.store	p($pop33), $1
+	i32.add 	$push5=, $1, $0
+	i32.const	$push32=, 2
+	i32.store	0($pop5), $pop32
+	copy_local	$push4=, $3
+	copy_local	$push31=, $pop4
+	tee_local	$push30=, $3=, $pop31
+	i32.const	$push29=, 1
+	i32.add 	$push6=, $2, $pop29
+	i32.const	$push28=, 1000
+	i32.rem_s	$push7=, $pop6, $pop28
+	i32.const	$push27=, 2
+	i32.shl 	$push26=, $pop7, $pop27
+	tee_local	$push25=, $0=, $pop26
+	i32.const	$push24=, 19
+	i32.add 	$push8=, $pop25, $pop24
+	i32.const	$push23=, -16
+	i32.and 	$push9=, $pop8, $pop23
+	i32.sub 	$push22=, $pop30, $pop9
+	tee_local	$push21=, $1=, $pop22
+	copy_local	$drop=, $pop21
+	i32.const	$push20=, 1
+	i32.store	0($1), $pop20
+	i32.const	$push19=, 0
+	i32.store	p($pop19), $1
+	i32.add 	$push11=, $1, $0
+	i32.const	$push18=, 2
+	i32.store	0($pop11), $pop18
+	i32.const	$push17=, 999998
+	i32.lt_u	$1=, $2, $pop17
+	copy_local	$push10=, $3
+	copy_local	$3=, $pop10
+	i32.const	$push16=, 2
+	i32.add 	$push0=, $2, $pop16
+	copy_local	$2=, $pop0
+	br_if   	0, $1           # 0: up to label0
 # BB#2:                                 # %if.end
 	end_loop
 	i32.const	$push12=, 0
@@ -74,7 +74,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	p                       # @p
 	.type	p,@object
 	.section	.bss.p,"aw",@nobits
@@ -85,4 +85,4 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

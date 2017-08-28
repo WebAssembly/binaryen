@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36691.c"
+	.file	"pr36691.c"
 	.section	.text.func_1,"ax",@progbits
-	.hidden	func_1
+	.hidden	func_1                  # -- Begin function func_1
 	.globl	func_1
 	.type	func_1,@function
 func_1:                                 # @func_1
@@ -13,9 +13,9 @@ func_1:                                 # @func_1
 	.endfunc
 .Lfunc_end0:
 	.size	func_1, .Lfunc_end0-func_1
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -29,7 +29,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	g_5                     # @g_5
 	.type	g_5,@object
 	.section	.bss.g_5,"aw",@nobits
@@ -39,4 +39,4 @@ g_5:
 	.size	g_5, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

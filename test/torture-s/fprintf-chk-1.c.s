@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-chk-1.c"
+	.file	"fprintf-chk-1.c"
 	.section	.text.__fprintf_chk,"ax",@progbits
-	.hidden	__fprintf_chk
+	.hidden	__fprintf_chk           # -- Begin function __fprintf_chk
 	.globl	__fprintf_chk
 	.type	__fprintf_chk,@function
 __fprintf_chk:                          # @__fprintf_chk
@@ -10,10 +10,10 @@ __fprintf_chk:                          # @__fprintf_chk
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push11=, $pop3, $pop4
+	i32.sub 	$push11=, $pop2, $pop4
 	tee_local	$push10=, $4=, $pop11
 	i32.store	__stack_pointer($pop5), $pop10
 	block   	
@@ -38,9 +38,9 @@ __fprintf_chk:                          # @__fprintf_chk
 	.endfunc
 .Lfunc_end0:
 	.size	__fprintf_chk, .Lfunc_end0-__fprintf_chk
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -48,10 +48,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push57=, 0
-	i32.const	$push54=, 0
-	i32.load	$push55=, __stack_pointer($pop54)
+	i32.const	$push55=, 0
+	i32.load	$push54=, __stack_pointer($pop55)
 	i32.const	$push56=, 224
-	i32.sub 	$push95=, $pop55, $pop56
+	i32.sub 	$push95=, $pop54, $pop56
 	tee_local	$push94=, $1=, $pop95
 	i32.store	__stack_pointer($pop57), $pop94
 	i32.const	$push93=, 0
@@ -386,14 +386,14 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop60), $pop59
 	i32.const	$push199=, 0
 	return  	$pop199
-.LBB1_34:                               # %if.then115
+.LBB1_34:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	should_optimize         # @should_optimize
 	.type	should_optimize,@object
 	.section	.bss.should_optimize,"aw",@nobits
@@ -445,7 +445,8 @@ should_optimize:
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	vfprintf, i32, i32, i32, i32
 	.import_global	stdout
+	.size	stdout, 4

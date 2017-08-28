@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/strlen-1.c"
+	.file	"strlen-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -10,7 +10,7 @@ main:                                   # @main
 # BB#0:                                 # %entry
 	i32.const	$1=, 0
 	i32.const	$2=, u
-.LBB0_1:                                # %for.cond1.preheader
+.LBB0_1:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
 	block   	
@@ -18,29 +18,28 @@ main:                                   # @main
 	i32.const	$push7=, u
 	i32.add 	$0=, $1, $pop7
 	i32.const	$3=, 0
-.LBB0_2:                                # %for.cond4.preheader
+.LBB0_2:                                # %for.body3
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label2:
 	block   	
 	block   	
 	block   	
-	i32.eqz 	$push23=, $1
-	br_if   	0, $pop23       # 0: down to label5
-# BB#3:                                 # %for.body6.preheader
+	br_if   	0, $1           # 0: down to label5
+# BB#3:                                 #   in Loop: Header=BB0_2 Depth=2
+	i32.const	$4=, u
+	br_if   	1, $3           # 1: down to label4
+	br      	2               # 2: down to label3
+.LBB0_4:                                # %for.body6.lr.ph
                                         #   in Loop: Header=BB0_2 Depth=2
+	end_block                       # label5:
 	i32.const	$push9=, u
 	i32.const	$push8=, 0
 	i32.call	$drop=, memset@FUNCTION, $pop9, $pop8, $1
 	copy_local	$4=, $2
-	br_if   	1, $3           # 1: down to label4
-	br      	2               # 2: down to label3
-.LBB0_4:                                #   in Loop: Header=BB0_2 Depth=2
-	end_block                       # label5:
-	i32.const	$4=, u
-	i32.eqz 	$push24=, $3
-	br_if   	1, $pop24       # 1: down to label3
-.LBB0_5:                                # %for.body9.preheader
+	i32.eqz 	$push23=, $3
+	br_if   	1, $pop23       # 1: down to label3
+.LBB0_5:                                # %for.body9.lr.ph
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_block                       # label4:
 	i32.const	$push10=, 97
@@ -89,7 +88,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	u,@object               # @u
 	.section	.bss.u,"aw",@nobits
 	.p2align	4
@@ -98,7 +97,7 @@ u:
 	.size	u, 96
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strlen, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

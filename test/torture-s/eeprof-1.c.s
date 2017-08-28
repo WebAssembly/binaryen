@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/eeprof-1.c"
+	.file	"eeprof-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -21,9 +21,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.nfoo,"ax",@progbits
-	.hidden	nfoo
+	.hidden	nfoo                    # -- Begin function nfoo
 	.globl	nfoo
 	.type	nfoo,@function
 nfoo:                                   # @nfoo
@@ -79,16 +79,16 @@ nfoo:                                   # @nfoo
 	br_if   	0, $pop17       # 0: down to label1
 # BB#8:                                 # %if.end18
 	return
-.LBB1_9:                                # %if.then17
+.LBB1_9:                                # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	nfoo, .Lfunc_end1-nfoo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -148,16 +148,16 @@ main:                                   # @main
 # BB#8:                                 # %if.end20
 	i32.const	$push33=, 0
 	return  	$pop33
-.LBB2_9:                                # %if.then19
+.LBB2_9:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.section	.text.__cyg_profile_func_enter,"ax",@progbits
-	.hidden	__cyg_profile_func_enter
+	.hidden	__cyg_profile_func_enter # -- Begin function __cyg_profile_func_enter
 	.globl	__cyg_profile_func_enter
 	.type	__cyg_profile_func_enter,@function
 __cyg_profile_func_enter:               # @__cyg_profile_func_enter
@@ -175,9 +175,9 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	.endfunc
 .Lfunc_end3:
 	.size	__cyg_profile_func_enter, .Lfunc_end3-__cyg_profile_func_enter
-
+                                        # -- End function
 	.section	.text.__cyg_profile_func_exit,"ax",@progbits
-	.hidden	__cyg_profile_func_exit
+	.hidden	__cyg_profile_func_exit # -- Begin function __cyg_profile_func_exit
 	.globl	__cyg_profile_func_exit
 	.type	__cyg_profile_func_exit,@function
 __cyg_profile_func_exit:                # @__cyg_profile_func_exit
@@ -195,9 +195,9 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.endfunc
 .Lfunc_end4:
 	.size	__cyg_profile_func_exit, .Lfunc_end4-__cyg_profile_func_exit
-
+                                        # -- End function
 	.section	.text.foo2,"ax",@progbits
-	.type	foo2,@function
+	.type	foo2,@function          # -- Begin function foo2
 foo2:                                   # @foo2
 # BB#0:                                 # %entry
 	block   	
@@ -243,14 +243,14 @@ foo2:                                   # @foo2
 	br_if   	0, $pop16       # 0: down to label3
 # BB#7:                                 # %if.end15
 	return
-.LBB5_8:                                # %if.then14
+.LBB5_8:                                # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end5:
 	.size	foo2, .Lfunc_end5-foo2
-
+                                        # -- End function
 	.hidden	last_fn_entered         # @last_fn_entered
 	.type	last_fn_entered,@object
 	.section	.bss.last_fn_entered,"aw",@nobits
@@ -288,5 +288,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

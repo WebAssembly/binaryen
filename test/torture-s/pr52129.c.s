@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr52129.c"
+	.file	"pr52129.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -40,9 +40,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -51,14 +51,14 @@ bar:                                    # @bar
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push16=, $pop5, $pop6
+	i32.sub 	$push16=, $pop4, $pop6
 	tee_local	$push15=, $6=, $pop16
 	i32.store	__stack_pointer($pop7), $pop15
 	i64.load	$push0=, 0($3):p2align=2
-	i64.store	8($6):p2align=2, $pop0
+	i64.store	8($6), $pop0
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $6, $pop11
 	i32.add 	$push14=, $5, $4
@@ -75,9 +75,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -85,15 +85,15 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push16=, $pop6, $pop7
+	i32.sub 	$push16=, $pop5, $pop7
 	tee_local	$push15=, $0=, $pop16
 	i32.store	__stack_pointer($pop8), $pop15
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0):p2align=2
-	i64.store	8($0):p2align=2, $pop1
+	i64.store	8($0), $pop1
 	i32.const	$push4=, t+2
 	i32.const	$push12=, 8
 	i32.add 	$push13=, $0, $pop12
@@ -109,7 +109,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	t                       # @t
 	.type	t,@object
 	.section	.bss.t,"aw",@nobits
@@ -127,5 +127,5 @@ t:
 	.size	.Lmain.s, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

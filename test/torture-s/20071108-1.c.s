@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071108-1.c"
+	.file	"20071108-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -12,9 +12,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -25,9 +25,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -43,9 +43,9 @@ test:                                   # @test
 	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -53,10 +53,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %lor.lhs.false
 	i32.const	$push10=, 0
-	i32.const	$push7=, 0
-	i32.load	$push8=, __stack_pointer($pop7)
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
 	i32.const	$push9=, 16
-	i32.sub 	$push25=, $pop8, $pop9
+	i32.sub 	$push25=, $pop7, $pop9
 	tee_local	$push24=, $1=, $pop25
 	i32.store	__stack_pointer($pop10), $pop24
 	block   	
@@ -97,7 +97,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	foo.s,@object           # @foo.s
 	.section	.bss.foo.s,"aw",@nobits
 	.p2align	2
@@ -106,5 +106,5 @@ foo.s:
 	.size	foo.s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

@@ -1,22 +1,30 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memset-2.c"
+	.file	"memset-2.c"
 	.section	.text.reset,"ax",@progbits
-	.hidden	reset
+	.hidden	reset                   # -- Begin function reset
 	.globl	reset
 	.type	reset,@function
 reset:                                  # @reset
 # BB#0:                                 # %entry
-	i32.const	$push2=, u
-	i32.const	$push1=, 97
-	i32.const	$push0=, 31
-	i32.call	$drop=, memset@FUNCTION, $pop2, $pop1, $pop0
+	i32.const	$push1=, 0
+	i64.const	$push0=, 7016996765293437281
+	i64.store	u+23($pop1):p2align=0, $pop0
+	i32.const	$push7=, 0
+	i64.const	$push6=, 7016996765293437281
+	i64.store	u+16($pop7), $pop6
+	i32.const	$push5=, 0
+	i64.const	$push4=, 7016996765293437281
+	i64.store	u+8($pop5), $pop4
+	i32.const	$push3=, 0
+	i64.const	$push2=, 7016996765293437281
+	i64.store	u($pop3), $pop2
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	reset, .Lfunc_end0-reset
-
+                                        # -- End function
 	.section	.text.check,"ax",@progbits
-	.hidden	check
+	.hidden	check                   # -- Begin function check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -48,20 +56,20 @@ check:                                  # @check
 	tee_local	$push31=, $3=, $pop32
 	i32.lt_s	$push4=, $pop31, $0
 	br_if   	0, $pop4        # 0: up to label4
-# BB#4:                                 # %for.cond3.preheader.loopexit
+# BB#4:                                 # %for.end.loopexit
 	end_loop
 	i32.const	$push5=, u
 	i32.add 	$0=, $3, $pop5
 	i32.const	$push34=, 1
-	i32.ge_s	$push6=, $1, $pop34
-	br_if   	1, $pop6        # 1: down to label2
+	i32.ge_s	$push7=, $1, $pop34
+	br_if   	1, $pop7        # 1: down to label2
 	br      	2               # 2: down to label1
 .LBB1_5:
 	end_block                       # label3:
 	i32.const	$0=, u
 	i32.const	$push35=, 1
-	i32.lt_s	$push7=, $1, $pop35
-	br_if   	1, $pop7        # 1: down to label1
+	i32.lt_s	$push6=, $1, $pop35
+	br_if   	1, $pop6        # 1: down to label1
 .LBB1_6:                                # %for.body6.preheader
 	end_block                       # label2:
 	i32.const	$3=, 0
@@ -79,10 +87,10 @@ check:                                  # @check
 	tee_local	$push36=, $3=, $pop37
 	i32.lt_s	$push11=, $pop36, $1
 	br_if   	0, $pop11       # 0: up to label5
-# BB#9:                                 # %for.body19.preheader.loopexit
+# BB#9:                                 # %for.end15.loopexit
 	end_loop
 	i32.add 	$0=, $0, $3
-.LBB1_10:                               # %for.body19.preheader
+.LBB1_10:                               # %for.end15
 	end_block                       # label1:
 	i32.load8_u	$push12=, 0($0)
 	i32.const	$push39=, 97
@@ -125,772 +133,833 @@ check:                                  # @check
 	br_if   	0, $pop27       # 0: down to label0
 # BB#18:                                # %for.inc25.7
 	return
-.LBB1_19:                               # %if.then23
+.LBB1_19:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	check, .Lfunc_end1-check
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32
+	.local  	i32, i32, i32, i32, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$5=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label6:
+	i32.const	$push67=, 0
+	i64.const	$push66=, 7016996765293437281
+	i64.store	u+23($pop67):p2align=0, $pop66
+	i32.const	$push65=, 0
+	i64.const	$push64=, 7016996765293437281
+	i64.store	u+16($pop65), $pop64
+	i32.const	$push63=, 0
+	i64.const	$push62=, 7016996765293437281
+	i64.store	u+8($pop63), $pop62
+	i32.const	$push61=, 0
+	i64.const	$push60=, 7016996765293437281
+	i64.store	u($pop61), $pop60
 	i32.const	$push59=, u
-	i32.const	$push58=, 97
-	i32.const	$push57=, 31
-	i32.call	$push0=, memset@FUNCTION, $pop59, $pop58, $pop57
-	i32.add 	$push56=, $5, $pop0
-	tee_local	$push55=, $0=, $pop56
+	i32.add 	$push58=, $5, $pop59
+	tee_local	$push57=, $2=, $pop58
+	i32.const	$push56=, 0
+	i32.store8	0($pop57), $pop56
+	i32.const	$push55=, 1
 	i32.const	$push54=, 0
-	i32.store8	0($pop55), $pop54
-	i32.const	$push53=, 1
-	i32.const	$push52=, 0
-	call    	check@FUNCTION, $5, $pop53, $pop52
-	i32.const	$push51=, 0
-	i32.load8_u	$push4=, A($pop51)
-	i32.store8	0($0), $pop4
-	i32.const	$push50=, 1
-	i32.const	$push49=, 65
-	call    	check@FUNCTION, $5, $pop50, $pop49
+	call    	check@FUNCTION, $5, $pop55, $pop54
+	i32.const	$push53=, 0
+	i32.load8_u	$push0=, A($pop53)
+	i32.store8	0($2), $pop0
+	i32.const	$push52=, 1
+	i32.const	$push51=, 65
+	call    	check@FUNCTION, $5, $pop52, $pop51
+	i32.const	$push50=, 66
+	i32.store8	0($2), $pop50
+	i32.const	$push49=, 1
 	i32.const	$push48=, 66
-	i32.store8	0($0), $pop48
+	call    	check@FUNCTION, $5, $pop49, $pop48
 	i32.const	$push47=, 1
-	i32.const	$push46=, 66
-	call    	check@FUNCTION, $5, $pop47, $pop46
-	i32.const	$push45=, 1
-	i32.add 	$push44=, $5, $pop45
-	tee_local	$push43=, $5=, $pop44
-	i32.const	$push42=, 8
-	i32.ne  	$push5=, $pop43, $pop42
-	br_if   	0, $pop5        # 0: up to label6
+	i32.add 	$push46=, $5, $pop47
+	tee_local	$push45=, $5=, $pop46
+	i32.const	$push44=, 8
+	i32.ne  	$push1=, $pop45, $pop44
+	br_if   	0, $pop1        # 0: up to label6
 # BB#2:                                 # %for.body18.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_3:                                # %for.body18
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label7:
-	i32.const	$push78=, u
-	i32.const	$push77=, 97
-	i32.const	$push76=, 31
-	i32.call	$push1=, memset@FUNCTION, $pop78, $pop77, $pop76
-	i32.add 	$push75=, $5, $pop1
-	tee_local	$push74=, $0=, $pop75
-	i32.const	$push73=, 0
-	i32.store16	0($pop74):p2align=0, $pop73
-	i32.const	$push72=, 2
-	i32.const	$push71=, 0
-	call    	check@FUNCTION, $5, $pop72, $pop71
-	i32.const	$push70=, 0
-	i32.load8_u	$push6=, A($pop70)
-	i32.const	$push69=, 257
-	i32.mul 	$push7=, $pop6, $pop69
-	i32.store16	0($0):p2align=0, $pop7
-	i32.const	$push68=, 2
-	i32.const	$push67=, 65
-	call    	check@FUNCTION, $5, $pop68, $pop67
-	i32.const	$push66=, 16962
-	i32.store16	0($0):p2align=0, $pop66
-	i32.const	$push65=, 2
-	i32.const	$push64=, 66
-	call    	check@FUNCTION, $5, $pop65, $pop64
-	i32.const	$push63=, 1
-	i32.add 	$push62=, $5, $pop63
-	tee_local	$push61=, $5=, $pop62
-	i32.const	$push60=, 8
-	i32.ne  	$push8=, $pop61, $pop60
-	br_if   	0, $pop8        # 0: up to label7
+	i32.const	$push92=, 0
+	i64.const	$push91=, 7016996765293437281
+	i64.store	u+23($pop92):p2align=0, $pop91
+	i32.const	$push90=, 0
+	i64.const	$push89=, 7016996765293437281
+	i64.store	u+16($pop90), $pop89
+	i32.const	$push88=, 0
+	i64.const	$push87=, 7016996765293437281
+	i64.store	u+8($pop88), $pop87
+	i32.const	$push86=, 0
+	i64.const	$push85=, 7016996765293437281
+	i64.store	u($pop86), $pop85
+	i32.const	$push84=, u
+	i32.add 	$push83=, $5, $pop84
+	tee_local	$push82=, $2=, $pop83
+	i32.const	$push81=, 0
+	i32.store16	0($pop82):p2align=0, $pop81
+	i32.const	$push80=, 2
+	i32.const	$push79=, 0
+	call    	check@FUNCTION, $5, $pop80, $pop79
+	i32.const	$push78=, 0
+	i32.load8_u	$push2=, A($pop78)
+	i32.const	$push77=, 257
+	i32.mul 	$push3=, $pop2, $pop77
+	i32.store16	0($2):p2align=0, $pop3
+	i32.const	$push76=, 2
+	i32.const	$push75=, 65
+	call    	check@FUNCTION, $5, $pop76, $pop75
+	i32.const	$push74=, 16962
+	i32.store16	0($2):p2align=0, $pop74
+	i32.const	$push73=, 2
+	i32.const	$push72=, 66
+	call    	check@FUNCTION, $5, $pop73, $pop72
+	i32.const	$push71=, 1
+	i32.add 	$push70=, $5, $pop71
+	tee_local	$push69=, $5=, $pop70
+	i32.const	$push68=, 8
+	i32.ne  	$push4=, $pop69, $pop68
+	br_if   	0, $pop4        # 0: up to label7
 # BB#4:                                 # %for.body44.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_5:                                # %for.body44
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label8:
-	i32.const	$push104=, u
-	i32.const	$push103=, 97
-	i32.const	$push102=, 31
-	i32.call	$1=, memset@FUNCTION, $pop104, $pop103, $pop102
-	i32.const	$push101=, u+2
-	i32.add 	$push100=, $5, $pop101
-	tee_local	$push99=, $0=, $pop100
-	i32.const	$push98=, 0
-	i32.store8	0($pop99), $pop98
-	i32.add 	$push97=, $5, $1
-	tee_local	$push96=, $1=, $pop97
-	i32.const	$push95=, 0
-	i32.store16	0($pop96):p2align=0, $pop95
-	i32.const	$push94=, 3
-	i32.const	$push93=, 0
-	call    	check@FUNCTION, $5, $pop94, $pop93
-	i32.const	$push92=, 0
-	i32.load8_u	$push91=, A($pop92)
-	tee_local	$push90=, $2=, $pop91
-	i32.store8	0($0), $pop90
-	i32.const	$push89=, 257
-	i32.mul 	$push9=, $2, $pop89
-	i32.store16	0($1):p2align=0, $pop9
-	i32.const	$push88=, 3
-	i32.const	$push87=, 65
-	call    	check@FUNCTION, $5, $pop88, $pop87
-	i32.const	$push86=, 66
-	i32.store8	0($0), $pop86
-	i32.const	$push85=, 16962
-	i32.store16	0($1):p2align=0, $pop85
-	i32.const	$push84=, 3
-	i32.const	$push83=, 66
-	call    	check@FUNCTION, $5, $pop84, $pop83
-	i32.const	$push82=, 1
-	i32.add 	$push81=, $5, $pop82
-	tee_local	$push80=, $5=, $pop81
-	i32.const	$push79=, 8
-	i32.ne  	$push10=, $pop80, $pop79
-	br_if   	0, $pop10       # 0: up to label8
+	i32.const	$push124=, 0
+	i64.const	$push123=, 7016996765293437281
+	i64.store	u+23($pop124):p2align=0, $pop123
+	i32.const	$push122=, 0
+	i64.const	$push121=, 7016996765293437281
+	i64.store	u+16($pop122), $pop121
+	i32.const	$push120=, 0
+	i64.const	$push119=, 7016996765293437281
+	i64.store	u+8($pop120), $pop119
+	i32.const	$push118=, 0
+	i64.const	$push117=, 7016996765293437281
+	i64.store	u($pop118), $pop117
+	i32.const	$push116=, u+2
+	i32.add 	$push115=, $5, $pop116
+	tee_local	$push114=, $2=, $pop115
+	i32.const	$push113=, 0
+	i32.store8	0($pop114), $pop113
+	i32.const	$push112=, u
+	i32.add 	$push111=, $5, $pop112
+	tee_local	$push110=, $3=, $pop111
+	i32.const	$push109=, 0
+	i32.store16	0($pop110):p2align=0, $pop109
+	i32.const	$push108=, 3
+	i32.const	$push107=, 0
+	call    	check@FUNCTION, $5, $pop108, $pop107
+	i32.const	$push106=, 0
+	i32.load8_u	$push105=, A($pop106)
+	tee_local	$push104=, $0=, $pop105
+	i32.store8	0($2), $pop104
+	i32.const	$push103=, 257
+	i32.mul 	$push5=, $0, $pop103
+	i32.store16	0($3):p2align=0, $pop5
+	i32.const	$push102=, 3
+	i32.const	$push101=, 65
+	call    	check@FUNCTION, $5, $pop102, $pop101
+	i32.const	$push100=, 66
+	i32.store8	0($2), $pop100
+	i32.const	$push99=, 16962
+	i32.store16	0($3):p2align=0, $pop99
+	i32.const	$push98=, 3
+	i32.const	$push97=, 66
+	call    	check@FUNCTION, $5, $pop98, $pop97
+	i32.const	$push96=, 1
+	i32.add 	$push95=, $5, $pop96
+	tee_local	$push94=, $5=, $pop95
+	i32.const	$push93=, 8
+	i32.ne  	$push6=, $pop94, $pop93
+	br_if   	0, $pop6        # 0: up to label8
 # BB#6:                                 # %for.body70.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_7:                                # %for.body70
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label9:
-	i32.const	$push123=, u
-	i32.const	$push122=, 97
-	i32.const	$push121=, 31
-	i32.call	$push2=, memset@FUNCTION, $pop123, $pop122, $pop121
-	i32.add 	$push120=, $5, $pop2
-	tee_local	$push119=, $0=, $pop120
-	i32.const	$push118=, 0
-	i32.store	0($pop119):p2align=0, $pop118
-	i32.const	$push117=, 4
-	i32.const	$push116=, 0
-	call    	check@FUNCTION, $5, $pop117, $pop116
-	i32.const	$push115=, 0
-	i32.load8_u	$push11=, A($pop115)
-	i32.const	$push114=, 16843009
-	i32.mul 	$push12=, $pop11, $pop114
-	i32.store	0($0):p2align=0, $pop12
-	i32.const	$push113=, 4
-	i32.const	$push112=, 65
-	call    	check@FUNCTION, $5, $pop113, $pop112
-	i32.const	$push111=, 1111638594
-	i32.store	0($0):p2align=0, $pop111
-	i32.const	$push110=, 4
-	i32.const	$push109=, 66
-	call    	check@FUNCTION, $5, $pop110, $pop109
-	i32.const	$push108=, 1
-	i32.add 	$push107=, $5, $pop108
-	tee_local	$push106=, $5=, $pop107
-	i32.const	$push105=, 8
-	i32.ne  	$push13=, $pop106, $pop105
-	br_if   	0, $pop13       # 0: up to label9
+	i32.const	$push149=, 0
+	i64.const	$push148=, 7016996765293437281
+	i64.store	u+23($pop149):p2align=0, $pop148
+	i32.const	$push147=, 0
+	i64.const	$push146=, 7016996765293437281
+	i64.store	u+16($pop147), $pop146
+	i32.const	$push145=, 0
+	i64.const	$push144=, 7016996765293437281
+	i64.store	u+8($pop145), $pop144
+	i32.const	$push143=, 0
+	i64.const	$push142=, 7016996765293437281
+	i64.store	u($pop143), $pop142
+	i32.const	$push141=, u
+	i32.add 	$push140=, $5, $pop141
+	tee_local	$push139=, $2=, $pop140
+	i32.const	$push138=, 0
+	i32.store	0($pop139):p2align=0, $pop138
+	i32.const	$push137=, 4
+	i32.const	$push136=, 0
+	call    	check@FUNCTION, $5, $pop137, $pop136
+	i32.const	$push135=, 0
+	i32.load8_u	$push7=, A($pop135)
+	i32.const	$push134=, 16843009
+	i32.mul 	$push8=, $pop7, $pop134
+	i32.store	0($2):p2align=0, $pop8
+	i32.const	$push133=, 4
+	i32.const	$push132=, 65
+	call    	check@FUNCTION, $5, $pop133, $pop132
+	i32.const	$push131=, 1111638594
+	i32.store	0($2):p2align=0, $pop131
+	i32.const	$push130=, 4
+	i32.const	$push129=, 66
+	call    	check@FUNCTION, $5, $pop130, $pop129
+	i32.const	$push128=, 1
+	i32.add 	$push127=, $5, $pop128
+	tee_local	$push126=, $5=, $pop127
+	i32.const	$push125=, 8
+	i32.ne  	$push9=, $pop126, $pop125
+	br_if   	0, $pop9        # 0: up to label9
 # BB#8:                                 # %for.body96.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_9:                                # %for.body96
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label10:
-	i32.const	$push149=, u
-	i32.const	$push148=, 97
-	i32.const	$push147=, 31
-	i32.call	$1=, memset@FUNCTION, $pop149, $pop148, $pop147
-	i32.const	$push146=, u+4
-	i32.add 	$push145=, $5, $pop146
-	tee_local	$push144=, $0=, $pop145
-	i32.const	$push143=, 0
-	i32.store8	0($pop144), $pop143
-	i32.add 	$push142=, $5, $1
-	tee_local	$push141=, $1=, $pop142
-	i32.const	$push140=, 0
-	i32.store	0($pop141):p2align=0, $pop140
-	i32.const	$push139=, 5
-	i32.const	$push138=, 0
-	call    	check@FUNCTION, $5, $pop139, $pop138
-	i32.const	$push137=, 0
-	i32.load8_u	$push136=, A($pop137)
-	tee_local	$push135=, $2=, $pop136
-	i32.store8	0($0), $pop135
-	i32.const	$push134=, 16843009
-	i32.mul 	$push14=, $2, $pop134
-	i32.store	0($1):p2align=0, $pop14
-	i32.const	$push133=, 5
-	i32.const	$push132=, 65
-	call    	check@FUNCTION, $5, $pop133, $pop132
-	i32.const	$push131=, 66
-	i32.store8	0($0), $pop131
-	i32.const	$push130=, 1111638594
-	i32.store	0($1):p2align=0, $pop130
-	i32.const	$push129=, 5
-	i32.const	$push128=, 66
-	call    	check@FUNCTION, $5, $pop129, $pop128
-	i32.const	$push127=, 1
-	i32.add 	$push126=, $5, $pop127
-	tee_local	$push125=, $5=, $pop126
-	i32.const	$push124=, 8
-	i32.ne  	$push15=, $pop125, $pop124
-	br_if   	0, $pop15       # 0: up to label10
-# BB#10:                                # %for.body122.preheader
-	end_loop
-	i32.const	$5=, 0
-.LBB2_11:                               # %for.body122
-                                        # =>This Inner Loop Header: Depth=1
-	loop    	                # label11:
-	i32.const	$push176=, u
-	i32.const	$push175=, 97
-	i32.const	$push174=, 31
-	i32.call	$1=, memset@FUNCTION, $pop176, $pop175, $pop174
+	i32.const	$push181=, 0
+	i64.const	$push180=, 7016996765293437281
+	i64.store	u+23($pop181):p2align=0, $pop180
+	i32.const	$push179=, 0
+	i64.const	$push178=, 7016996765293437281
+	i64.store	u+16($pop179), $pop178
+	i32.const	$push177=, 0
+	i64.const	$push176=, 7016996765293437281
+	i64.store	u+8($pop177), $pop176
+	i32.const	$push175=, 0
+	i64.const	$push174=, 7016996765293437281
+	i64.store	u($pop175), $pop174
 	i32.const	$push173=, u+4
 	i32.add 	$push172=, $5, $pop173
-	tee_local	$push171=, $0=, $pop172
+	tee_local	$push171=, $2=, $pop172
 	i32.const	$push170=, 0
-	i32.store16	0($pop171):p2align=0, $pop170
-	i32.add 	$push169=, $5, $1
-	tee_local	$push168=, $1=, $pop169
-	i32.const	$push167=, 0
-	i32.store	0($pop168):p2align=0, $pop167
-	i32.const	$push166=, 6
-	i32.const	$push165=, 0
-	call    	check@FUNCTION, $5, $pop166, $pop165
+	i32.store8	0($pop171), $pop170
+	i32.const	$push169=, u
+	i32.add 	$push168=, $5, $pop169
+	tee_local	$push167=, $3=, $pop168
+	i32.const	$push166=, 0
+	i32.store	0($pop167):p2align=0, $pop166
+	i32.const	$push165=, 5
 	i32.const	$push164=, 0
-	i32.load8_u	$push163=, A($pop164)
-	tee_local	$push162=, $2=, $pop163
-	i32.const	$push161=, 257
-	i32.mul 	$push16=, $pop162, $pop161
-	i32.store16	0($0):p2align=0, $pop16
+	call    	check@FUNCTION, $5, $pop165, $pop164
+	i32.const	$push163=, 0
+	i32.load8_u	$push162=, A($pop163)
+	tee_local	$push161=, $0=, $pop162
+	i32.store8	0($2), $pop161
 	i32.const	$push160=, 16843009
-	i32.mul 	$push17=, $2, $pop160
-	i32.store	0($1):p2align=0, $pop17
-	i32.const	$push159=, 6
+	i32.mul 	$push10=, $0, $pop160
+	i32.store	0($3):p2align=0, $pop10
+	i32.const	$push159=, 5
 	i32.const	$push158=, 65
 	call    	check@FUNCTION, $5, $pop159, $pop158
-	i32.const	$push157=, 16962
-	i32.store16	0($0):p2align=0, $pop157
+	i32.const	$push157=, 66
+	i32.store8	0($2), $pop157
 	i32.const	$push156=, 1111638594
-	i32.store	0($1):p2align=0, $pop156
-	i32.const	$push155=, 6
+	i32.store	0($3):p2align=0, $pop156
+	i32.const	$push155=, 5
 	i32.const	$push154=, 66
 	call    	check@FUNCTION, $5, $pop155, $pop154
 	i32.const	$push153=, 1
 	i32.add 	$push152=, $5, $pop153
 	tee_local	$push151=, $5=, $pop152
 	i32.const	$push150=, 8
-	i32.ne  	$push18=, $pop151, $pop150
-	br_if   	0, $pop18       # 0: up to label11
+	i32.ne  	$push11=, $pop151, $pop150
+	br_if   	0, $pop11       # 0: up to label10
+# BB#10:                                # %for.body122.preheader
+	end_loop
+	i32.const	$5=, 0
+.LBB2_11:                               # %for.body122
+                                        # =>This Inner Loop Header: Depth=1
+	loop    	                # label11:
+	i32.const	$push214=, 0
+	i64.const	$push213=, 7016996765293437281
+	i64.store	u+23($pop214):p2align=0, $pop213
+	i32.const	$push212=, 0
+	i64.const	$push211=, 7016996765293437281
+	i64.store	u+16($pop212), $pop211
+	i32.const	$push210=, 0
+	i64.const	$push209=, 7016996765293437281
+	i64.store	u+8($pop210), $pop209
+	i32.const	$push208=, 0
+	i64.const	$push207=, 7016996765293437281
+	i64.store	u($pop208), $pop207
+	i32.const	$push206=, u+4
+	i32.add 	$push205=, $5, $pop206
+	tee_local	$push204=, $2=, $pop205
+	i32.const	$push203=, 0
+	i32.store16	0($pop204):p2align=0, $pop203
+	i32.const	$push202=, u
+	i32.add 	$push201=, $5, $pop202
+	tee_local	$push200=, $3=, $pop201
+	i32.const	$push199=, 0
+	i32.store	0($pop200):p2align=0, $pop199
+	i32.const	$push198=, 6
+	i32.const	$push197=, 0
+	call    	check@FUNCTION, $5, $pop198, $pop197
+	i32.const	$push196=, 0
+	i32.load8_u	$push195=, A($pop196)
+	tee_local	$push194=, $0=, $pop195
+	i32.const	$push193=, 257
+	i32.mul 	$push12=, $pop194, $pop193
+	i32.store16	0($2):p2align=0, $pop12
+	i32.const	$push192=, 16843009
+	i32.mul 	$push13=, $0, $pop192
+	i32.store	0($3):p2align=0, $pop13
+	i32.const	$push191=, 6
+	i32.const	$push190=, 65
+	call    	check@FUNCTION, $5, $pop191, $pop190
+	i32.const	$push189=, 16962
+	i32.store16	0($2):p2align=0, $pop189
+	i32.const	$push188=, 1111638594
+	i32.store	0($3):p2align=0, $pop188
+	i32.const	$push187=, 6
+	i32.const	$push186=, 66
+	call    	check@FUNCTION, $5, $pop187, $pop186
+	i32.const	$push185=, 1
+	i32.add 	$push184=, $5, $pop185
+	tee_local	$push183=, $5=, $pop184
+	i32.const	$push182=, 8
+	i32.ne  	$push14=, $pop183, $pop182
+	br_if   	0, $pop14       # 0: up to label11
 # BB#12:                                # %for.body148.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_13:                               # %for.body148
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label12:
-	i32.const	$push208=, u
-	i32.const	$push207=, 97
-	i32.const	$push206=, 31
-	i32.call	$2=, memset@FUNCTION, $pop208, $pop207, $pop206
-	i32.const	$push205=, u+6
-	i32.add 	$push204=, $5, $pop205
-	tee_local	$push203=, $0=, $pop204
-	i32.const	$push202=, 0
-	i32.store8	0($pop203), $pop202
-	i32.const	$push201=, u+4
-	i32.add 	$push200=, $5, $pop201
-	tee_local	$push199=, $1=, $pop200
-	i32.const	$push198=, 0
-	i32.store16	0($pop199):p2align=0, $pop198
-	i32.add 	$push197=, $5, $2
-	tee_local	$push196=, $2=, $pop197
-	i32.const	$push195=, 0
-	i32.store	0($pop196):p2align=0, $pop195
-	i32.const	$push194=, 7
-	i32.const	$push193=, 0
-	call    	check@FUNCTION, $5, $pop194, $pop193
-	i32.const	$push192=, 0
-	i32.load8_u	$push191=, A($pop192)
-	tee_local	$push190=, $3=, $pop191
-	i32.store8	0($0), $pop190
-	i32.const	$push189=, 257
-	i32.mul 	$push19=, $3, $pop189
-	i32.store16	0($1):p2align=0, $pop19
-	i32.const	$push188=, 16843009
-	i32.mul 	$push20=, $3, $pop188
-	i32.store	0($2):p2align=0, $pop20
-	i32.const	$push187=, 7
-	i32.const	$push186=, 65
-	call    	check@FUNCTION, $5, $pop187, $pop186
-	i32.const	$push185=, 66
-	i32.store8	0($0), $pop185
-	i32.const	$push184=, 16962
-	i32.store16	0($1):p2align=0, $pop184
-	i32.const	$push183=, 1111638594
-	i32.store	0($2):p2align=0, $pop183
-	i32.const	$push182=, 7
-	i32.const	$push181=, 66
-	call    	check@FUNCTION, $5, $pop182, $pop181
-	i32.const	$push180=, 1
-	i32.add 	$push179=, $5, $pop180
-	tee_local	$push178=, $5=, $pop179
-	i32.const	$push177=, 8
-	i32.ne  	$push21=, $pop178, $pop177
-	br_if   	0, $pop21       # 0: up to label12
+	i32.const	$push252=, 0
+	i64.const	$push251=, 7016996765293437281
+	i64.store	u+23($pop252):p2align=0, $pop251
+	i32.const	$push250=, 0
+	i64.const	$push249=, 7016996765293437281
+	i64.store	u+16($pop250), $pop249
+	i32.const	$push248=, 0
+	i64.const	$push247=, 7016996765293437281
+	i64.store	u+8($pop248), $pop247
+	i32.const	$push246=, 0
+	i64.const	$push245=, 7016996765293437281
+	i64.store	u($pop246), $pop245
+	i32.const	$push244=, u+6
+	i32.add 	$push243=, $5, $pop244
+	tee_local	$push242=, $2=, $pop243
+	i32.const	$push241=, 0
+	i32.store8	0($pop242), $pop241
+	i32.const	$push240=, u+4
+	i32.add 	$push239=, $5, $pop240
+	tee_local	$push238=, $3=, $pop239
+	i32.const	$push237=, 0
+	i32.store16	0($pop238):p2align=0, $pop237
+	i32.const	$push236=, u
+	i32.add 	$push235=, $5, $pop236
+	tee_local	$push234=, $0=, $pop235
+	i32.const	$push233=, 0
+	i32.store	0($pop234):p2align=0, $pop233
+	i32.const	$push232=, 7
+	i32.const	$push231=, 0
+	call    	check@FUNCTION, $5, $pop232, $pop231
+	i32.const	$push230=, 0
+	i32.load8_u	$push229=, A($pop230)
+	tee_local	$push228=, $1=, $pop229
+	i32.store8	0($2), $pop228
+	i32.const	$push227=, 257
+	i32.mul 	$push15=, $1, $pop227
+	i32.store16	0($3):p2align=0, $pop15
+	i32.const	$push226=, 16843009
+	i32.mul 	$push16=, $1, $pop226
+	i32.store	0($0):p2align=0, $pop16
+	i32.const	$push225=, 7
+	i32.const	$push224=, 65
+	call    	check@FUNCTION, $5, $pop225, $pop224
+	i32.const	$push223=, 66
+	i32.store8	0($2), $pop223
+	i32.const	$push222=, 16962
+	i32.store16	0($3):p2align=0, $pop222
+	i32.const	$push221=, 1111638594
+	i32.store	0($0):p2align=0, $pop221
+	i32.const	$push220=, 7
+	i32.const	$push219=, 66
+	call    	check@FUNCTION, $5, $pop220, $pop219
+	i32.const	$push218=, 1
+	i32.add 	$push217=, $5, $pop218
+	tee_local	$push216=, $5=, $pop217
+	i32.const	$push215=, 8
+	i32.ne  	$push17=, $pop216, $pop215
+	br_if   	0, $pop17       # 0: up to label12
 # BB#14:                                # %for.body174.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_15:                               # %for.body174
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label13:
-	i32.const	$push230=, u
-	i32.const	$push229=, 97
-	i32.const	$push228=, 31
-	i32.call	$push3=, memset@FUNCTION, $pop230, $pop229, $pop228
-	i32.add 	$push227=, $5, $pop3
-	tee_local	$push226=, $0=, $pop227
-	i64.const	$push225=, 0
-	i64.store	0($pop226):p2align=0, $pop225
-	i32.const	$push224=, 8
-	i32.const	$push223=, 0
-	call    	check@FUNCTION, $5, $pop224, $pop223
-	i32.const	$push222=, u+4
-	i32.add 	$push22=, $5, $pop222
-	i32.const	$push221=, 0
-	i32.load8_u	$push23=, A($pop221)
-	i32.const	$push220=, 16843009
-	i32.mul 	$push219=, $pop23, $pop220
-	tee_local	$push218=, $1=, $pop219
-	i32.store	0($pop22):p2align=0, $pop218
-	i32.store	0($0):p2align=0, $1
-	i32.const	$push217=, 8
-	i32.const	$push216=, 65
-	call    	check@FUNCTION, $5, $pop217, $pop216
-	i64.const	$push215=, 4774451407313060418
-	i64.store	0($0):p2align=0, $pop215
-	i32.const	$push214=, 8
-	i32.const	$push213=, 66
-	call    	check@FUNCTION, $5, $pop214, $pop213
-	i32.const	$push212=, 1
-	i32.add 	$push211=, $5, $pop212
-	tee_local	$push210=, $5=, $pop211
-	i32.const	$push209=, 8
-	i32.ne  	$push24=, $pop210, $pop209
-	br_if   	0, $pop24       # 0: up to label13
+	i32.const	$push277=, 0
+	i64.const	$push276=, 7016996765293437281
+	i64.store	u+23($pop277):p2align=0, $pop276
+	i32.const	$push275=, 0
+	i64.const	$push274=, 7016996765293437281
+	i64.store	u+16($pop275), $pop274
+	i32.const	$push273=, 0
+	i64.const	$push272=, 7016996765293437281
+	i64.store	u+8($pop273), $pop272
+	i32.const	$push271=, 0
+	i64.const	$push270=, 7016996765293437281
+	i64.store	u($pop271), $pop270
+	i32.const	$push269=, u
+	i32.add 	$push268=, $5, $pop269
+	tee_local	$push267=, $2=, $pop268
+	i64.const	$push266=, 0
+	i64.store	0($pop267):p2align=0, $pop266
+	i32.const	$push265=, 8
+	i32.const	$push264=, 0
+	call    	check@FUNCTION, $5, $pop265, $pop264
+	i32.const	$push263=, 0
+	i64.load8_u	$push18=, A($pop263)
+	i64.const	$push262=, 72340172838076673
+	i64.mul 	$push19=, $pop18, $pop262
+	i64.store	0($2):p2align=0, $pop19
+	i32.const	$push261=, 8
+	i32.const	$push260=, 65
+	call    	check@FUNCTION, $5, $pop261, $pop260
+	i64.const	$push259=, 4774451407313060418
+	i64.store	0($2):p2align=0, $pop259
+	i32.const	$push258=, 8
+	i32.const	$push257=, 66
+	call    	check@FUNCTION, $5, $pop258, $pop257
+	i32.const	$push256=, 1
+	i32.add 	$push255=, $5, $pop256
+	tee_local	$push254=, $5=, $pop255
+	i32.const	$push253=, 8
+	i32.ne  	$push20=, $pop254, $pop253
+	br_if   	0, $pop20       # 0: up to label13
 # BB#16:                                # %for.body200.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_17:                               # %for.body200
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label14:
-	i32.const	$push263=, u
-	i32.const	$push262=, 97
-	i32.const	$push261=, 31
-	i32.call	$2=, memset@FUNCTION, $pop263, $pop262, $pop261
-	i32.const	$push260=, u+8
-	i32.add 	$push259=, $5, $pop260
-	tee_local	$push258=, $0=, $pop259
-	i32.const	$push257=, 0
-	i32.store8	0($pop258), $pop257
-	i32.const	$push256=, u+4
-	i32.add 	$push255=, $5, $pop256
-	tee_local	$push254=, $1=, $pop255
-	i32.const	$push253=, 0
-	i32.store	0($pop254):p2align=0, $pop253
-	i32.add 	$push252=, $5, $2
-	tee_local	$push251=, $2=, $pop252
-	i32.const	$push250=, 0
-	i32.store	0($pop251):p2align=0, $pop250
-	i32.const	$push249=, 9
-	i32.const	$push248=, 0
-	call    	check@FUNCTION, $5, $pop249, $pop248
-	i32.const	$push247=, 0
-	i32.load8_u	$push246=, A($pop247)
-	tee_local	$push245=, $3=, $pop246
-	i32.store8	0($0), $pop245
-	i32.const	$push244=, 16843009
-	i32.mul 	$push243=, $3, $pop244
-	tee_local	$push242=, $3=, $pop243
-	i32.store	0($1):p2align=0, $pop242
-	i32.store	0($2):p2align=0, $3
-	i32.const	$push241=, 9
-	i32.const	$push240=, 65
-	call    	check@FUNCTION, $5, $pop241, $pop240
-	i32.const	$push239=, 66
-	i32.store8	0($0), $pop239
-	i32.const	$push238=, 1111638594
-	i32.store	0($1):p2align=0, $pop238
-	i32.const	$push237=, 1111638594
-	i32.store	0($2):p2align=0, $pop237
-	i32.const	$push236=, 9
-	i32.const	$push235=, 66
-	call    	check@FUNCTION, $5, $pop236, $pop235
-	i32.const	$push234=, 1
-	i32.add 	$push233=, $5, $pop234
-	tee_local	$push232=, $5=, $pop233
-	i32.const	$push231=, 8
-	i32.ne  	$push25=, $pop232, $pop231
-	br_if   	0, $pop25       # 0: up to label14
+	i32.const	$push310=, 0
+	i64.const	$push309=, 7016996765293437281
+	i64.store	u+23($pop310):p2align=0, $pop309
+	i32.const	$push308=, 0
+	i64.const	$push307=, 7016996765293437281
+	i64.store	u+16($pop308), $pop307
+	i32.const	$push306=, 0
+	i64.const	$push305=, 7016996765293437281
+	i64.store	u+8($pop306), $pop305
+	i32.const	$push304=, 0
+	i64.const	$push303=, 7016996765293437281
+	i64.store	u($pop304), $pop303
+	i32.const	$push302=, u+8
+	i32.add 	$push301=, $5, $pop302
+	tee_local	$push300=, $2=, $pop301
+	i32.const	$push299=, 0
+	i32.store8	0($pop300), $pop299
+	i32.const	$push298=, u
+	i32.add 	$push297=, $5, $pop298
+	tee_local	$push296=, $3=, $pop297
+	i64.const	$push295=, 0
+	i64.store	0($pop296):p2align=0, $pop295
+	i32.const	$push294=, 9
+	i32.const	$push293=, 0
+	call    	check@FUNCTION, $5, $pop294, $pop293
+	i32.const	$push292=, 0
+	i32.load8_u	$push291=, A($pop292)
+	tee_local	$push290=, $0=, $pop291
+	i32.store8	0($2), $pop290
+	i64.extend_u/i32	$push21=, $0
+	i64.const	$push289=, 255
+	i64.and 	$push22=, $pop21, $pop289
+	i64.const	$push288=, 72340172838076673
+	i64.mul 	$push23=, $pop22, $pop288
+	i64.store	0($3):p2align=0, $pop23
+	i32.const	$push287=, 9
+	i32.const	$push286=, 65
+	call    	check@FUNCTION, $5, $pop287, $pop286
+	i32.const	$push285=, 66
+	i32.store8	0($2), $pop285
+	i64.const	$push284=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop284
+	i32.const	$push283=, 9
+	i32.const	$push282=, 66
+	call    	check@FUNCTION, $5, $pop283, $pop282
+	i32.const	$push281=, 1
+	i32.add 	$push280=, $5, $pop281
+	tee_local	$push279=, $5=, $pop280
+	i32.const	$push278=, 8
+	i32.ne  	$push24=, $pop279, $pop278
+	br_if   	0, $pop24       # 0: up to label14
 # BB#18:                                # %for.body226.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_19:                               # %for.body226
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label15:
-	i32.const	$push297=, u
-	i32.const	$push296=, 97
-	i32.const	$push295=, 31
-	i32.call	$2=, memset@FUNCTION, $pop297, $pop296, $pop295
-	i32.const	$push294=, u+8
-	i32.add 	$push293=, $5, $pop294
-	tee_local	$push292=, $0=, $pop293
-	i32.const	$push291=, 0
-	i32.store16	0($pop292):p2align=0, $pop291
-	i32.const	$push290=, u+4
-	i32.add 	$push289=, $5, $pop290
-	tee_local	$push288=, $1=, $pop289
-	i32.const	$push287=, 0
-	i32.store	0($pop288):p2align=0, $pop287
-	i32.add 	$push286=, $5, $2
-	tee_local	$push285=, $2=, $pop286
-	i32.const	$push284=, 0
-	i32.store	0($pop285):p2align=0, $pop284
-	i32.const	$push283=, 10
-	i32.const	$push282=, 0
-	call    	check@FUNCTION, $5, $pop283, $pop282
-	i32.const	$push281=, 0
-	i32.load8_u	$push280=, A($pop281)
-	tee_local	$push279=, $3=, $pop280
-	i32.const	$push278=, 257
-	i32.mul 	$push26=, $pop279, $pop278
-	i32.store16	0($0):p2align=0, $pop26
-	i32.const	$push277=, 16843009
-	i32.mul 	$push276=, $3, $pop277
-	tee_local	$push275=, $3=, $pop276
-	i32.store	0($1):p2align=0, $pop275
-	i32.store	0($2):p2align=0, $3
-	i32.const	$push274=, 10
-	i32.const	$push273=, 65
-	call    	check@FUNCTION, $5, $pop274, $pop273
-	i32.const	$push272=, 16962
-	i32.store16	0($0):p2align=0, $pop272
-	i32.const	$push271=, 1111638594
-	i32.store	0($1):p2align=0, $pop271
-	i32.const	$push270=, 1111638594
-	i32.store	0($2):p2align=0, $pop270
-	i32.const	$push269=, 10
-	i32.const	$push268=, 66
-	call    	check@FUNCTION, $5, $pop269, $pop268
-	i32.const	$push267=, 1
-	i32.add 	$push266=, $5, $pop267
-	tee_local	$push265=, $5=, $pop266
-	i32.const	$push264=, 8
-	i32.ne  	$push27=, $pop265, $pop264
-	br_if   	0, $pop27       # 0: up to label15
+	i32.const	$push343=, 0
+	i64.const	$push342=, 7016996765293437281
+	i64.store	u+23($pop343):p2align=0, $pop342
+	i32.const	$push341=, 0
+	i64.const	$push340=, 7016996765293437281
+	i64.store	u+16($pop341), $pop340
+	i32.const	$push339=, 0
+	i64.const	$push338=, 7016996765293437281
+	i64.store	u+8($pop339), $pop338
+	i32.const	$push337=, 0
+	i64.const	$push336=, 7016996765293437281
+	i64.store	u($pop337), $pop336
+	i32.const	$push335=, u+8
+	i32.add 	$push334=, $5, $pop335
+	tee_local	$push333=, $2=, $pop334
+	i32.const	$push332=, 0
+	i32.store16	0($pop333):p2align=0, $pop332
+	i32.const	$push331=, u
+	i32.add 	$push330=, $5, $pop331
+	tee_local	$push329=, $3=, $pop330
+	i64.const	$push328=, 0
+	i64.store	0($pop329):p2align=0, $pop328
+	i32.const	$push327=, 10
+	i32.const	$push326=, 0
+	call    	check@FUNCTION, $5, $pop327, $pop326
+	i32.const	$push325=, 0
+	i32.load8_u	$push324=, A($pop325)
+	tee_local	$push323=, $0=, $pop324
+	i32.const	$push322=, 257
+	i32.mul 	$push25=, $pop323, $pop322
+	i32.store16	0($2):p2align=0, $pop25
+	i64.extend_u/i32	$push26=, $0
+	i64.const	$push321=, 72340172838076673
+	i64.mul 	$push27=, $pop26, $pop321
+	i64.store	0($3):p2align=0, $pop27
+	i32.const	$push320=, 10
+	i32.const	$push319=, 65
+	call    	check@FUNCTION, $5, $pop320, $pop319
+	i32.const	$push318=, 16962
+	i32.store16	0($2):p2align=0, $pop318
+	i64.const	$push317=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop317
+	i32.const	$push316=, 10
+	i32.const	$push315=, 66
+	call    	check@FUNCTION, $5, $pop316, $pop315
+	i32.const	$push314=, 1
+	i32.add 	$push313=, $5, $pop314
+	tee_local	$push312=, $5=, $pop313
+	i32.const	$push311=, 8
+	i32.ne  	$push28=, $pop312, $pop311
+	br_if   	0, $pop28       # 0: up to label15
 # BB#20:                                # %for.body252.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_21:                               # %for.body252
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label16:
-	i32.const	$push336=, u
-	i32.const	$push335=, 97
-	i32.const	$push334=, 31
-	i32.call	$3=, memset@FUNCTION, $pop336, $pop335, $pop334
-	i32.const	$push333=, u+10
-	i32.add 	$push332=, $5, $pop333
-	tee_local	$push331=, $0=, $pop332
-	i32.const	$push330=, 0
-	i32.store8	0($pop331), $pop330
-	i32.const	$push329=, u+8
-	i32.add 	$push328=, $5, $pop329
-	tee_local	$push327=, $1=, $pop328
-	i32.const	$push326=, 0
-	i32.store16	0($pop327):p2align=0, $pop326
-	i32.const	$push325=, u+4
-	i32.add 	$push324=, $5, $pop325
-	tee_local	$push323=, $2=, $pop324
-	i32.const	$push322=, 0
-	i32.store	0($pop323):p2align=0, $pop322
-	i32.add 	$push321=, $5, $3
-	tee_local	$push320=, $3=, $pop321
-	i32.const	$push319=, 0
-	i32.store	0($pop320):p2align=0, $pop319
-	i32.const	$push318=, 11
-	i32.const	$push317=, 0
-	call    	check@FUNCTION, $5, $pop318, $pop317
-	i32.const	$push316=, 0
-	i32.load8_u	$push315=, A($pop316)
-	tee_local	$push314=, $4=, $pop315
-	i32.store8	0($0), $pop314
-	i32.const	$push313=, 257
-	i32.mul 	$push28=, $4, $pop313
-	i32.store16	0($1):p2align=0, $pop28
-	i32.const	$push312=, 16843009
-	i32.mul 	$push311=, $4, $pop312
-	tee_local	$push310=, $4=, $pop311
-	i32.store	0($2):p2align=0, $pop310
-	i32.store	0($3):p2align=0, $4
-	i32.const	$push309=, 11
-	i32.const	$push308=, 65
-	call    	check@FUNCTION, $5, $pop309, $pop308
-	i32.const	$push307=, 66
-	i32.store8	0($0), $pop307
-	i32.const	$push306=, 16962
-	i32.store16	0($1):p2align=0, $pop306
-	i32.const	$push305=, 1111638594
-	i32.store	0($2):p2align=0, $pop305
-	i32.const	$push304=, 1111638594
-	i32.store	0($3):p2align=0, $pop304
-	i32.const	$push303=, 11
-	i32.const	$push302=, 66
-	call    	check@FUNCTION, $5, $pop303, $pop302
-	i32.const	$push301=, 1
-	i32.add 	$push300=, $5, $pop301
-	tee_local	$push299=, $5=, $pop300
-	i32.const	$push298=, 8
-	i32.ne  	$push29=, $pop299, $pop298
-	br_if   	0, $pop29       # 0: up to label16
+	i32.const	$push381=, 0
+	i64.const	$push380=, 7016996765293437281
+	i64.store	u+23($pop381):p2align=0, $pop380
+	i32.const	$push379=, 0
+	i64.const	$push378=, 7016996765293437281
+	i64.store	u+16($pop379), $pop378
+	i32.const	$push377=, 0
+	i64.const	$push376=, 7016996765293437281
+	i64.store	u+8($pop377), $pop376
+	i32.const	$push375=, 0
+	i64.const	$push374=, 7016996765293437281
+	i64.store	u($pop375), $pop374
+	i32.const	$push373=, u+10
+	i32.add 	$push372=, $5, $pop373
+	tee_local	$push371=, $2=, $pop372
+	i32.const	$push370=, 0
+	i32.store8	0($pop371), $pop370
+	i32.const	$push369=, u+8
+	i32.add 	$push368=, $5, $pop369
+	tee_local	$push367=, $3=, $pop368
+	i32.const	$push366=, 0
+	i32.store16	0($pop367):p2align=0, $pop366
+	i32.const	$push365=, u
+	i32.add 	$push364=, $5, $pop365
+	tee_local	$push363=, $0=, $pop364
+	i64.const	$push362=, 0
+	i64.store	0($pop363):p2align=0, $pop362
+	i32.const	$push361=, 11
+	i32.const	$push360=, 0
+	call    	check@FUNCTION, $5, $pop361, $pop360
+	i32.const	$push359=, 0
+	i32.load8_u	$push358=, A($pop359)
+	tee_local	$push357=, $1=, $pop358
+	i32.store8	0($2), $pop357
+	i32.const	$push356=, 257
+	i32.mul 	$push29=, $1, $pop356
+	i32.store16	0($3):p2align=0, $pop29
+	i64.extend_u/i32	$push30=, $1
+	i64.const	$push355=, 72340172838076673
+	i64.mul 	$push31=, $pop30, $pop355
+	i64.store	0($0):p2align=0, $pop31
+	i32.const	$push354=, 11
+	i32.const	$push353=, 65
+	call    	check@FUNCTION, $5, $pop354, $pop353
+	i32.const	$push352=, 66
+	i32.store8	0($2), $pop352
+	i32.const	$push351=, 16962
+	i32.store16	0($3):p2align=0, $pop351
+	i64.const	$push350=, 4774451407313060418
+	i64.store	0($0):p2align=0, $pop350
+	i32.const	$push349=, 11
+	i32.const	$push348=, 66
+	call    	check@FUNCTION, $5, $pop349, $pop348
+	i32.const	$push347=, 1
+	i32.add 	$push346=, $5, $pop347
+	tee_local	$push345=, $5=, $pop346
+	i32.const	$push344=, 8
+	i32.ne  	$push32=, $pop345, $pop344
+	br_if   	0, $pop32       # 0: up to label16
 # BB#22:                                # %for.body278.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_23:                               # %for.body278
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label17:
-	i32.const	$push363=, u
-	i32.const	$push362=, 97
-	i32.const	$push361=, 31
-	i32.call	$1=, memset@FUNCTION, $pop363, $pop362, $pop361
-	i32.const	$push360=, u+4
-	i32.add 	$push359=, $5, $pop360
-	tee_local	$push358=, $0=, $pop359
-	i64.const	$push357=, 0
-	i64.store	0($pop358):p2align=0, $pop357
-	i32.add 	$push356=, $5, $1
-	tee_local	$push355=, $1=, $pop356
-	i32.const	$push354=, 0
-	i32.store	0($pop355):p2align=0, $pop354
-	i32.const	$push353=, 12
-	i32.const	$push352=, 0
-	call    	check@FUNCTION, $5, $pop353, $pop352
-	i32.const	$push351=, u+8
-	i32.add 	$push30=, $5, $pop351
-	i32.const	$push350=, 0
-	i32.load8_u	$push31=, A($pop350)
-	i32.const	$push349=, 16843009
-	i32.mul 	$push348=, $pop31, $pop349
-	tee_local	$push347=, $2=, $pop348
-	i32.store	0($pop30):p2align=0, $pop347
-	i32.store	0($0):p2align=0, $2
-	i32.store	0($1):p2align=0, $2
-	i32.const	$push346=, 12
-	i32.const	$push345=, 65
-	call    	check@FUNCTION, $5, $pop346, $pop345
-	i64.const	$push344=, 4774451407313060418
-	i64.store	0($0):p2align=0, $pop344
-	i32.const	$push343=, 1111638594
-	i32.store	0($1):p2align=0, $pop343
-	i32.const	$push342=, 12
-	i32.const	$push341=, 66
-	call    	check@FUNCTION, $5, $pop342, $pop341
-	i32.const	$push340=, 1
-	i32.add 	$push339=, $5, $pop340
-	tee_local	$push338=, $5=, $pop339
-	i32.const	$push337=, 8
-	i32.ne  	$push32=, $pop338, $pop337
-	br_if   	0, $pop32       # 0: up to label17
+	i32.const	$push414=, 0
+	i64.const	$push413=, 7016996765293437281
+	i64.store	u+23($pop414):p2align=0, $pop413
+	i32.const	$push412=, 0
+	i64.const	$push411=, 7016996765293437281
+	i64.store	u+16($pop412), $pop411
+	i32.const	$push410=, 0
+	i64.const	$push409=, 7016996765293437281
+	i64.store	u+8($pop410), $pop409
+	i32.const	$push408=, 0
+	i64.const	$push407=, 7016996765293437281
+	i64.store	u($pop408), $pop407
+	i32.const	$push406=, u+8
+	i32.add 	$push405=, $5, $pop406
+	tee_local	$push404=, $2=, $pop405
+	i32.const	$push403=, 0
+	i32.store	0($pop404):p2align=0, $pop403
+	i32.const	$push402=, u
+	i32.add 	$push401=, $5, $pop402
+	tee_local	$push400=, $3=, $pop401
+	i64.const	$push399=, 0
+	i64.store	0($pop400):p2align=0, $pop399
+	i32.const	$push398=, 12
+	i32.const	$push397=, 0
+	call    	check@FUNCTION, $5, $pop398, $pop397
+	i32.const	$push396=, 0
+	i32.load8_u	$push395=, A($pop396)
+	tee_local	$push394=, $0=, $pop395
+	i32.const	$push393=, 16843009
+	i32.mul 	$push33=, $pop394, $pop393
+	i32.store	0($2):p2align=0, $pop33
+	i64.extend_u/i32	$push34=, $0
+	i64.const	$push392=, 72340172838076673
+	i64.mul 	$push35=, $pop34, $pop392
+	i64.store	0($3):p2align=0, $pop35
+	i32.const	$push391=, 12
+	i32.const	$push390=, 65
+	call    	check@FUNCTION, $5, $pop391, $pop390
+	i32.const	$push389=, 1111638594
+	i32.store	0($2):p2align=0, $pop389
+	i64.const	$push388=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop388
+	i32.const	$push387=, 12
+	i32.const	$push386=, 66
+	call    	check@FUNCTION, $5, $pop387, $pop386
+	i32.const	$push385=, 1
+	i32.add 	$push384=, $5, $pop385
+	tee_local	$push383=, $5=, $pop384
+	i32.const	$push382=, 8
+	i32.ne  	$push36=, $pop383, $pop382
+	br_if   	0, $pop36       # 0: up to label17
 # BB#24:                                # %for.body304.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_25:                               # %for.body304
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label18:
-	i32.const	$push397=, u
-	i32.const	$push396=, 97
-	i32.const	$push395=, 31
-	i32.call	$2=, memset@FUNCTION, $pop397, $pop396, $pop395
-	i32.const	$push394=, u+12
-	i32.add 	$push393=, $5, $pop394
-	tee_local	$push392=, $0=, $pop393
-	i32.const	$push391=, 0
-	i32.store8	0($pop392), $pop391
-	i32.const	$push390=, u+4
-	i32.add 	$push389=, $5, $pop390
-	tee_local	$push388=, $1=, $pop389
-	i64.const	$push387=, 0
-	i64.store	0($pop388):p2align=0, $pop387
-	i32.add 	$push386=, $5, $2
-	tee_local	$push385=, $2=, $pop386
-	i32.const	$push384=, 0
-	i32.store	0($pop385):p2align=0, $pop384
-	i32.const	$push383=, 13
-	i32.const	$push382=, 0
-	call    	check@FUNCTION, $5, $pop383, $pop382
-	i32.const	$push381=, 0
-	i32.load8_u	$push380=, A($pop381)
-	tee_local	$push379=, $3=, $pop380
-	i32.store8	0($0), $pop379
-	i32.const	$push378=, u+8
-	i32.add 	$push33=, $5, $pop378
-	i32.const	$push377=, 16843009
-	i32.mul 	$push376=, $3, $pop377
-	tee_local	$push375=, $3=, $pop376
-	i32.store	0($pop33):p2align=0, $pop375
-	i32.store	0($1):p2align=0, $3
-	i32.store	0($2):p2align=0, $3
-	i32.const	$push374=, 13
-	i32.const	$push373=, 65
-	call    	check@FUNCTION, $5, $pop374, $pop373
-	i32.const	$push372=, 66
-	i32.store8	0($0), $pop372
-	i64.const	$push371=, 4774451407313060418
-	i64.store	0($1):p2align=0, $pop371
-	i32.const	$push370=, 1111638594
-	i32.store	0($2):p2align=0, $pop370
-	i32.const	$push369=, 13
-	i32.const	$push368=, 66
-	call    	check@FUNCTION, $5, $pop369, $pop368
-	i32.const	$push367=, 1
-	i32.add 	$push366=, $5, $pop367
-	tee_local	$push365=, $5=, $pop366
-	i32.const	$push364=, 8
-	i32.ne  	$push34=, $pop365, $pop364
-	br_if   	0, $pop34       # 0: up to label18
+	i32.const	$push446=, 0
+	i64.const	$push445=, 7016996765293437281
+	i64.store	u+23($pop446):p2align=0, $pop445
+	i32.const	$push444=, 0
+	i64.const	$push443=, 7016996765293437281
+	i64.store	u+16($pop444), $pop443
+	i32.const	$push442=, 0
+	i64.const	$push441=, 7016996765293437281
+	i64.store	u+8($pop442), $pop441
+	i32.const	$push440=, 0
+	i64.const	$push439=, 7016996765293437281
+	i64.store	u($pop440), $pop439
+	i32.const	$push438=, u+5
+	i32.add 	$push437=, $5, $pop438
+	tee_local	$push436=, $2=, $pop437
+	i64.const	$push435=, 0
+	i64.store	0($pop436):p2align=0, $pop435
+	i32.const	$push434=, u
+	i32.add 	$push433=, $5, $pop434
+	tee_local	$push432=, $3=, $pop433
+	i64.const	$push431=, 0
+	i64.store	0($pop432):p2align=0, $pop431
+	i32.const	$push430=, 13
+	i32.const	$push429=, 0
+	call    	check@FUNCTION, $5, $pop430, $pop429
+	i32.const	$push428=, 0
+	i64.load8_u	$push37=, A($pop428)
+	i64.const	$push427=, 72340172838076673
+	i64.mul 	$push426=, $pop37, $pop427
+	tee_local	$push425=, $4=, $pop426
+	i64.store	0($2):p2align=0, $pop425
+	i64.store	0($3):p2align=0, $4
+	i32.const	$push424=, 13
+	i32.const	$push423=, 65
+	call    	check@FUNCTION, $5, $pop424, $pop423
+	i64.const	$push422=, 4774451407313060418
+	i64.store	0($2):p2align=0, $pop422
+	i64.const	$push421=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop421
+	i32.const	$push420=, 13
+	i32.const	$push419=, 66
+	call    	check@FUNCTION, $5, $pop420, $pop419
+	i32.const	$push418=, 1
+	i32.add 	$push417=, $5, $pop418
+	tee_local	$push416=, $5=, $pop417
+	i32.const	$push415=, 8
+	i32.ne  	$push38=, $pop416, $pop415
+	br_if   	0, $pop38       # 0: up to label18
 # BB#26:                                # %for.body330.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_27:                               # %for.body330
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label19:
-	i32.const	$push432=, u
-	i32.const	$push431=, 97
-	i32.const	$push430=, 31
-	i32.call	$2=, memset@FUNCTION, $pop432, $pop431, $pop430
-	i32.const	$push429=, u+12
-	i32.add 	$push428=, $5, $pop429
-	tee_local	$push427=, $0=, $pop428
-	i32.const	$push426=, 0
-	i32.store16	0($pop427):p2align=0, $pop426
-	i32.const	$push425=, u+4
-	i32.add 	$push424=, $5, $pop425
-	tee_local	$push423=, $1=, $pop424
-	i64.const	$push422=, 0
-	i64.store	0($pop423):p2align=0, $pop422
-	i32.add 	$push421=, $5, $2
-	tee_local	$push420=, $2=, $pop421
-	i32.const	$push419=, 0
-	i32.store	0($pop420):p2align=0, $pop419
-	i32.const	$push418=, 14
-	i32.const	$push417=, 0
-	call    	check@FUNCTION, $5, $pop418, $pop417
-	i32.const	$push416=, 0
-	i32.load8_u	$push415=, A($pop416)
-	tee_local	$push414=, $3=, $pop415
-	i32.const	$push413=, 257
-	i32.mul 	$push35=, $pop414, $pop413
-	i32.store16	0($0):p2align=0, $pop35
-	i32.const	$push412=, u+8
-	i32.add 	$push36=, $5, $pop412
-	i32.const	$push411=, 16843009
-	i32.mul 	$push410=, $3, $pop411
-	tee_local	$push409=, $3=, $pop410
-	i32.store	0($pop36):p2align=0, $pop409
-	i32.store	0($1):p2align=0, $3
-	i32.store	0($2):p2align=0, $3
-	i32.const	$push408=, 14
-	i32.const	$push407=, 65
-	call    	check@FUNCTION, $5, $pop408, $pop407
-	i32.const	$push406=, 16962
-	i32.store16	0($0):p2align=0, $pop406
-	i64.const	$push405=, 4774451407313060418
-	i64.store	0($1):p2align=0, $pop405
-	i32.const	$push404=, 1111638594
-	i32.store	0($2):p2align=0, $pop404
-	i32.const	$push403=, 14
-	i32.const	$push402=, 66
-	call    	check@FUNCTION, $5, $pop403, $pop402
-	i32.const	$push401=, 1
-	i32.add 	$push400=, $5, $pop401
-	tee_local	$push399=, $5=, $pop400
-	i32.const	$push398=, 8
-	i32.ne  	$push37=, $pop399, $pop398
-	br_if   	0, $pop37       # 0: up to label19
+	i32.const	$push478=, 0
+	i64.const	$push477=, 7016996765293437281
+	i64.store	u+23($pop478):p2align=0, $pop477
+	i32.const	$push476=, 0
+	i64.const	$push475=, 7016996765293437281
+	i64.store	u+16($pop476), $pop475
+	i32.const	$push474=, 0
+	i64.const	$push473=, 7016996765293437281
+	i64.store	u+8($pop474), $pop473
+	i32.const	$push472=, 0
+	i64.const	$push471=, 7016996765293437281
+	i64.store	u($pop472), $pop471
+	i32.const	$push470=, u+6
+	i32.add 	$push469=, $5, $pop470
+	tee_local	$push468=, $2=, $pop469
+	i64.const	$push467=, 0
+	i64.store	0($pop468):p2align=0, $pop467
+	i32.const	$push466=, u
+	i32.add 	$push465=, $5, $pop466
+	tee_local	$push464=, $3=, $pop465
+	i64.const	$push463=, 0
+	i64.store	0($pop464):p2align=0, $pop463
+	i32.const	$push462=, 14
+	i32.const	$push461=, 0
+	call    	check@FUNCTION, $5, $pop462, $pop461
+	i32.const	$push460=, 0
+	i64.load8_u	$push39=, A($pop460)
+	i64.const	$push459=, 72340172838076673
+	i64.mul 	$push458=, $pop39, $pop459
+	tee_local	$push457=, $4=, $pop458
+	i64.store	0($2):p2align=0, $pop457
+	i64.store	0($3):p2align=0, $4
+	i32.const	$push456=, 14
+	i32.const	$push455=, 65
+	call    	check@FUNCTION, $5, $pop456, $pop455
+	i64.const	$push454=, 4774451407313060418
+	i64.store	0($2):p2align=0, $pop454
+	i64.const	$push453=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop453
+	i32.const	$push452=, 14
+	i32.const	$push451=, 66
+	call    	check@FUNCTION, $5, $pop452, $pop451
+	i32.const	$push450=, 1
+	i32.add 	$push449=, $5, $pop450
+	tee_local	$push448=, $5=, $pop449
+	i32.const	$push447=, 8
+	i32.ne  	$push40=, $pop448, $pop447
+	br_if   	0, $pop40       # 0: up to label19
 # BB#28:                                # %for.body356.preheader
 	end_loop
 	i32.const	$5=, 0
 .LBB2_29:                               # %for.body356
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label20:
-	i32.const	$push472=, u
-	i32.const	$push471=, 97
-	i32.const	$push470=, 31
-	i32.call	$3=, memset@FUNCTION, $pop472, $pop471, $pop470
-	i32.const	$push469=, u+14
-	i32.add 	$push468=, $5, $pop469
-	tee_local	$push467=, $0=, $pop468
-	i32.const	$push466=, 0
-	i32.store8	0($pop467), $pop466
-	i32.const	$push465=, u+12
-	i32.add 	$push464=, $5, $pop465
-	tee_local	$push463=, $1=, $pop464
-	i32.const	$push462=, 0
-	i32.store16	0($pop463):p2align=0, $pop462
-	i32.const	$push461=, u+4
-	i32.add 	$push460=, $5, $pop461
-	tee_local	$push459=, $2=, $pop460
-	i64.const	$push458=, 0
-	i64.store	0($pop459):p2align=0, $pop458
-	i32.add 	$push457=, $5, $3
-	tee_local	$push456=, $3=, $pop457
-	i32.const	$push455=, 0
-	i32.store	0($pop456):p2align=0, $pop455
-	i32.const	$push454=, 15
-	i32.const	$push453=, 0
-	call    	check@FUNCTION, $5, $pop454, $pop453
-	i32.const	$push452=, 0
-	i32.load8_u	$push451=, A($pop452)
-	tee_local	$push450=, $4=, $pop451
-	i32.store8	0($0), $pop450
-	i32.const	$push449=, 257
-	i32.mul 	$push38=, $4, $pop449
-	i32.store16	0($1):p2align=0, $pop38
-	i32.const	$push448=, u+8
-	i32.add 	$push39=, $5, $pop448
-	i32.const	$push447=, 16843009
-	i32.mul 	$push446=, $4, $pop447
-	tee_local	$push445=, $4=, $pop446
-	i32.store	0($pop39):p2align=0, $pop445
-	i32.store	0($2):p2align=0, $4
-	i32.store	0($3):p2align=0, $4
-	i32.const	$push444=, 15
-	i32.const	$push443=, 65
-	call    	check@FUNCTION, $5, $pop444, $pop443
-	i32.const	$push442=, 66
-	i32.store8	0($0), $pop442
-	i32.const	$push441=, 16962
-	i32.store16	0($1):p2align=0, $pop441
-	i64.const	$push440=, 4774451407313060418
-	i64.store	0($2):p2align=0, $pop440
-	i32.const	$push439=, 1111638594
-	i32.store	0($3):p2align=0, $pop439
-	i32.const	$push438=, 15
-	i32.const	$push437=, 66
-	call    	check@FUNCTION, $5, $pop438, $pop437
-	i32.const	$push436=, 1
-	i32.add 	$push435=, $5, $pop436
-	tee_local	$push434=, $5=, $pop435
-	i32.const	$push433=, 8
-	i32.ne  	$push40=, $pop434, $pop433
-	br_if   	0, $pop40       # 0: up to label20
+	i32.const	$push510=, 0
+	i64.const	$push509=, 7016996765293437281
+	i64.store	u+23($pop510):p2align=0, $pop509
+	i32.const	$push508=, 0
+	i64.const	$push507=, 7016996765293437281
+	i64.store	u+16($pop508), $pop507
+	i32.const	$push506=, 0
+	i64.const	$push505=, 7016996765293437281
+	i64.store	u+8($pop506), $pop505
+	i32.const	$push504=, 0
+	i64.const	$push503=, 7016996765293437281
+	i64.store	u($pop504), $pop503
+	i32.const	$push502=, u+7
+	i32.add 	$push501=, $5, $pop502
+	tee_local	$push500=, $2=, $pop501
+	i64.const	$push499=, 0
+	i64.store	0($pop500):p2align=0, $pop499
+	i32.const	$push498=, u
+	i32.add 	$push497=, $5, $pop498
+	tee_local	$push496=, $3=, $pop497
+	i64.const	$push495=, 0
+	i64.store	0($pop496):p2align=0, $pop495
+	i32.const	$push494=, 15
+	i32.const	$push493=, 0
+	call    	check@FUNCTION, $5, $pop494, $pop493
+	i32.const	$push492=, 0
+	i64.load8_u	$push41=, A($pop492)
+	i64.const	$push491=, 72340172838076673
+	i64.mul 	$push490=, $pop41, $pop491
+	tee_local	$push489=, $4=, $pop490
+	i64.store	0($2):p2align=0, $pop489
+	i64.store	0($3):p2align=0, $4
+	i32.const	$push488=, 15
+	i32.const	$push487=, 65
+	call    	check@FUNCTION, $5, $pop488, $pop487
+	i64.const	$push486=, 4774451407313060418
+	i64.store	0($2):p2align=0, $pop486
+	i64.const	$push485=, 4774451407313060418
+	i64.store	0($3):p2align=0, $pop485
+	i32.const	$push484=, 15
+	i32.const	$push483=, 66
+	call    	check@FUNCTION, $5, $pop484, $pop483
+	i32.const	$push482=, 1
+	i32.add 	$push481=, $5, $pop482
+	tee_local	$push480=, $5=, $pop481
+	i32.const	$push479=, 8
+	i32.ne  	$push42=, $pop480, $pop479
+	br_if   	0, $pop42       # 0: up to label20
 # BB#30:                                # %for.end378
 	end_loop
-	i32.const	$push41=, 0
-	call    	exit@FUNCTION, $pop41
+	i32.const	$push43=, 0
+	call    	exit@FUNCTION, $pop43
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	A                       # @A
 	.type	A,@object
 	.section	.data.A,"aw",@progbits
@@ -907,6 +976,6 @@ u:
 	.size	u, 32
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

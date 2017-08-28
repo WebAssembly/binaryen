@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041201-1.c"
+	.file	"20041201-1.c"
 	.section	.text.checkScc2,"ax",@progbits
-	.hidden	checkScc2
+	.hidden	checkScc2               # -- Begin function checkScc2
 	.globl	checkScc2
 	.type	checkScc2,@function
 checkScc2:                              # @checkScc2
@@ -39,9 +39,9 @@ checkScc2:                              # @checkScc2
 	.endfunc
 .Lfunc_end0:
 	.size	checkScc2, .Lfunc_end0-checkScc2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -80,7 +80,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	s                       # @s
 	.type	s,@object
 	.section	.data.s,"aw",@progbits
@@ -93,4 +93,4 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

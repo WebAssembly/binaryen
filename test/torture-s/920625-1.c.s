@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920625-1.c"
+	.file	"920625-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push21=, 0
-	i32.const	$push18=, 0
-	i32.load	$push19=, __stack_pointer($pop18)
+	i32.const	$push19=, 0
+	i32.load	$push18=, __stack_pointer($pop19)
 	i32.const	$push20=, 128
-	i32.sub 	$push64=, $pop19, $pop20
+	i32.sub 	$push64=, $pop18, $pop20
 	tee_local	$push63=, $0=, $pop64
 	i32.store	__stack_pointer($pop21), $pop63
 	i32.const	$push22=, 112
@@ -29,29 +29,29 @@ main:                                   # @main
 	i32.const	$push61=, 0
 	i64.load	$push4=, pts+24($pop61)
 	i64.store	0($pop5), $pop4
-	i32.const	$push60=, 0
-	i64.load	$push6=, pts($pop60)
-	i64.store	112($0), $pop6
-	i32.const	$push59=, 0
-	i64.load	$push7=, pts+16($pop59)
-	i64.store	96($0), $pop7
 	i32.const	$push26=, 80
 	i32.add 	$push27=, $0, $pop26
-	i32.const	$push58=, 8
-	i32.add 	$push8=, $pop27, $pop58
-	i32.const	$push57=, 0
-	i64.load	$push9=, pts+40($pop57)
-	i64.store	0($pop8), $pop9
-	i32.const	$push56=, 0
-	i64.load	$push10=, pts+32($pop56)
-	i64.store	80($0), $pop10
+	i32.const	$push60=, 8
+	i32.add 	$push7=, $pop27, $pop60
+	i32.const	$push59=, 0
+	i64.load	$push6=, pts+40($pop59)
+	i64.store	0($pop7), $pop6
 	i32.const	$push28=, 64
 	i32.add 	$push29=, $0, $pop28
-	i32.const	$push55=, 8
-	i32.add 	$push11=, $pop29, $pop55
+	i32.const	$push58=, 8
+	i32.add 	$push9=, $pop29, $pop58
+	i32.const	$push57=, 0
+	i64.load	$push8=, pts+56($pop57)
+	i64.store	0($pop9), $pop8
+	i32.const	$push56=, 0
+	i64.load	$push10=, pts($pop56)
+	i64.store	112($0), $pop10
+	i32.const	$push55=, 0
+	i64.load	$push11=, pts+16($pop55)
+	i64.store	96($0), $pop11
 	i32.const	$push54=, 0
-	i64.load	$push12=, pts+56($pop54)
-	i64.store	0($pop11), $pop12
+	i64.load	$push12=, pts+32($pop54)
+	i64.store	80($0), $pop12
 	i32.const	$push53=, 0
 	i64.load	$push13=, pts+48($pop53)
 	i64.store	64($0), $pop13
@@ -72,16 +72,16 @@ main:                                   # @main
 	call    	va1@FUNCTION, $0, $pop39
 	i32.const	$push52=, 0
 	i64.load	$push14=, ipts($pop52)
-	i64.store	40($0):p2align=2, $pop14
+	i64.store	40($0), $pop14
 	i32.const	$push51=, 0
 	i64.load	$push15=, ipts+8($pop51)
-	i64.store	32($0):p2align=2, $pop15
+	i64.store	32($0), $pop15
 	i32.const	$push50=, 0
 	i64.load	$push16=, ipts+16($pop50)
-	i64.store	24($0):p2align=2, $pop16
+	i64.store	24($0), $pop16
 	i32.const	$push49=, 0
 	i64.load	$push17=, ipts+24($pop49)
-	i64.store	16($0):p2align=2, $pop17
+	i64.store	16($0), $pop17
 	i32.const	$push40=, 16
 	i32.add 	$push41=, $0, $pop40
 	i32.store	12($0), $pop41
@@ -101,18 +101,18 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.va1,"ax",@progbits
-	.type	va1,@function
+	.type	va1,@function           # -- Begin function va1
 va1:                                    # @va1
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push44=, 0
-	i32.const	$push41=, 0
-	i32.load	$push42=, __stack_pointer($pop41)
+	i32.const	$push42=, 0
+	i32.load	$push41=, __stack_pointer($pop42)
 	i32.const	$push43=, 16
-	i32.sub 	$push52=, $pop42, $pop43
+	i32.sub 	$push52=, $pop41, $pop43
 	tee_local	$push51=, $2=, $pop52
 	i32.store	__stack_pointer($pop44), $pop51
 	i32.store	12($2), $1
@@ -200,18 +200,18 @@ va1:                                    # @va1
 	.endfunc
 .Lfunc_end1:
 	.size	va1, .Lfunc_end1-va1
-
+                                        # -- End function
 	.section	.text.va2,"ax",@progbits
-	.type	va2,@function
+	.type	va2,@function           # -- Begin function va2
 va2:                                    # @va2
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push41=, 0
-	i32.const	$push38=, 0
-	i32.load	$push39=, __stack_pointer($pop38)
+	i32.const	$push39=, 0
+	i32.load	$push38=, __stack_pointer($pop39)
 	i32.const	$push40=, 16
-	i32.sub 	$push47=, $pop39, $pop40
+	i32.sub 	$push47=, $pop38, $pop40
 	tee_local	$push46=, $2=, $pop47
 	i32.store	__stack_pointer($pop41), $pop46
 	i32.store	12($2), $1
@@ -294,7 +294,7 @@ va2:                                    # @va2
 	.endfunc
 .Lfunc_end2:
 	.size	va2, .Lfunc_end2-va2
-
+                                        # -- End function
 	.hidden	pts                     # @pts
 	.type	pts,@object
 	.section	.data.pts,"aw",@progbits
@@ -328,6 +328,6 @@ ipts:
 	.size	ipts, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	abort, void

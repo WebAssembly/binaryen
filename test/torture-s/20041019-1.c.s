@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041019-1.c"
+	.file	"20041019-1.c"
 	.section	.text.test_store_ccp,"ax",@progbits
-	.hidden	test_store_ccp
+	.hidden	test_store_ccp          # -- Begin function test_store_ccp
 	.globl	test_store_ccp
 	.type	test_store_ccp,@function
 test_store_ccp:                         # @test_store_ccp
@@ -9,10 +9,10 @@ test_store_ccp:                         # @test_store_ccp
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
+	i32.const	$push11=, 0
+	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 16
-	i32.sub 	$push22=, $pop11, $pop12
+	i32.sub 	$push22=, $pop10, $pop12
 	tee_local	$push21=, $1=, $pop22
 	i32.const	$push17=, 12
 	i32.add 	$push18=, $pop21, $pop17
@@ -38,9 +38,9 @@ test_store_ccp:                         # @test_store_ccp
 	.endfunc
 .Lfunc_end0:
 	.size	test_store_ccp, .Lfunc_end0-test_store_ccp
-
+                                        # -- End function
 	.section	.text.test_store_copy_prop,"ax",@progbits
-	.hidden	test_store_copy_prop
+	.hidden	test_store_copy_prop    # -- Begin function test_store_copy_prop
 	.globl	test_store_copy_prop
 	.type	test_store_copy_prop,@function
 test_store_copy_prop:                   # @test_store_copy_prop
@@ -48,10 +48,10 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push20=, $pop9, $pop10
+	i32.sub 	$push20=, $pop8, $pop10
 	tee_local	$push19=, $2=, $pop20
 	i32.const	$push15=, 12
 	i32.add 	$push16=, $pop19, $pop15
@@ -75,9 +75,9 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	.endfunc
 .Lfunc_end1:
 	.size	test_store_copy_prop, .Lfunc_end1-test_store_copy_prop
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -88,6 +88,6 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
