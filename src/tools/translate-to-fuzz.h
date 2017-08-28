@@ -259,16 +259,16 @@ private:
     labelIndex = 0;
     assert(breakableStack.empty());
     assert(hangStack.empty());
+    // with small chance, make the body unreachable
+    auto bodyType = func->result;
+    if (oneIn(10)) {
+      bodyType = unreachable;
+    }
     // with reasonable chance make the body a block
     if (oneIn(2)) {
-      func->body = makeBlock(func->result);
+      func->body = makeBlock(bodyType);
     } else {
-      // with very small chance, make the body unreachable
-      if (oneIn(20)) {
-        func->body = make(unreachable);
-      } else {
-        func->body = make(func->result);
-      }
+      func->body = make(bodyType);
     }
     if (HANG_LIMIT > 0) {
       func->body = builder.makeSequence(
