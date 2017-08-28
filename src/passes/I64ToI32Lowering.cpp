@@ -50,6 +50,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void doWalkModule(Module* module) {
     if (!builder) builder = make_unique<Builder>(*module);
+    // add new globals for high bits
+    for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
+      auto& curr = module->globals[i];
+      if (curr->type != i64) continue;
+      curr->type = i32;
+      auto* high = new Global(*curr);
+      high->name = makeHighName(curr->name);
+      module->addGlobal(high);
+    }
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
   }
 
@@ -66,15 +75,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     std::swap(params, curr->params);
     if (curr->result == i64) {
       curr->result = i32;
-    }
-  }
-
-  void visitGlobal(Global* curr) {
-    if (curr->type == i64) {
-      curr->type = i32;
-      auto* high = new Global(*curr);
-      high->name = makeHighName(curr->name);
-      getModule()->addGlobal(high);
     }
   }
 

@@ -253,8 +253,7 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
     for (auto& curr : module->globals) {
-      // TODO: Stop parsing from inserting nullptr into globals
-      if (curr) self->walkGlobal(curr.get());
+      self->walkGlobal(curr.get());
     }
     for (auto& curr : module->functions) {
       self->walkFunction(curr.get());
