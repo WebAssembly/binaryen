@@ -28,7 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Wasm2AsmBuilder::Flags builderFlags = { false, false };
+  Wasm2AsmBuilder::Flags builderFlags;
   Options options("wasm2asm", "Transform .wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",

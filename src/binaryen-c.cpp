@@ -939,7 +939,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  Wasm2AsmBuilder::Flags builderFlags = { false, false };
+  Wasm2AsmBuilder::Flags builderFlags;
   Wasm2AsmBuilder wasm2asm(builderFlags);
   Ref asmjs = wasm2asm.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
