@@ -723,15 +723,13 @@ private:
       return ret;
     }
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-    // First, normalize input to f64
-    auto input = ensureDouble(value);
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
     if (trapMode == FloatTrapMode::JS) {
       // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
       CallImport *ret = allocator.alloc<CallImport>();
       ret->target = F64_TO_INT;
-      ret->operands.push_back(input);
+      ret->operands.push_back(ensureDouble(value));
       ret->type = i32;
       static bool addedImport = false;
       if (!addedImport) {
@@ -747,45 +745,60 @@ private:
       return ret;
     }
     assert(trapMode == FloatTrapMode::Clamp);
+    WasmType type = value->type;
+    bool isF64 = type == f64;
+    Name name = isF64 ? F64_TO_INT : F32_TO_INT;
+    UnaryOp truncOp = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+    BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
+    BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
+    BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
+    int32_t iMin = std::numeric_limits<int32_t>::min();
+    int32_t iMax = std::numeric_limits<int32_t>::max();
+    Literal fMin = isF64 ? Literal(double(iMin) - 1)
+                         : Literal( float(iMin) - 1);
+    Literal fMax = isF64 ? Literal(double(iMax) + 1)
+                         : Literal( float(iMax) + 1);
     Call *ret = allocator.alloc<Call>();
-    ret->target = F64_TO_INT;
-    ret->operands.push_back(input);
+    ret->target = name;
+    ret->operands.push_back(value);
     ret->type = i32;
-    static bool added = false;
-    if (!added) {
-      added = true;
+    static std::set<Name> addedFunctions;
+    if (addedFunctions.count(name) == 0) {
+      addedFunctions.insert(name);
       auto func = new Function;
-      func->name = ret->target;
-      func->params.push_back(f64);
+      func->name = name;
+      func->params.push_back(type);
       func->result = i32;
-      func->body = builder.makeUnary(TruncSFloat64ToInt32,
-        builder.makeGetLocal(0, f64)
+      func->body = builder.makeUnary(truncOp,
+        builder.makeGetLocal(0, type)
       );
       // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
       func->body = builder.makeIf(
-        builder.makeBinary(LeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::min()) - 1))
+        builder.makeBinary(leOp,
+          builder.makeGetLocal(0, type),
+          builder.makeConst(fMin)
         ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))),
+        builder.makeConst(Literal(iMin)),
         func->body
       );
       // too big XXX see above
       func->body = builder.makeIf(
-        builder.makeBinary(GeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::max()) + 1))
+        builder.makeBinary(geOp,
+          builder.makeGetLocal(0, type),
+          builder.makeConst(fMax)
         ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything out of range => to the min
+        // NB: min here as well. anything out of range => to the min
+        builder.makeConst(Literal(iMin)),
         func->body
       );
       // nan
       func->body = builder.makeIf(
-        builder.makeBinary(NeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeGetLocal(0, f64)
+        builder.makeBinary(neOp,
+          builder.makeGetLocal(0, type),
+          builder.makeGetLocal(0, type)
         ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything invalid => to the min
+        // NB: min here as well. anything invalid => to the min
+        builder.makeConst(Literal(iMin)),
         func->body
       );
       wasm.addFunction(func);
