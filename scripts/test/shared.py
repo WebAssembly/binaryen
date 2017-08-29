@@ -105,7 +105,8 @@ if not options.binaryen_bin:
 options.binaryen_bin = os.path.normpath(options.binaryen_bin)
 
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
-if all(not os.path.isfile(os.path.join(options.binaryen_bin, f)) for f in wasm_dis_filenames):
+if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
+           for f in wasm_dis_filenames):
   warn('Binaryen not found (or has not been successfully built to bin/ ?')
 
 # Locate Binaryen source directory if not specified.
