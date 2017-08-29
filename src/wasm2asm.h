@@ -109,9 +109,8 @@ class Wasm2AsmBuilder {
 
 public:
   struct Flags {
-    Flags() : debug(false), pedantic(false) {}
-    bool debug: 1;
-    bool pedantic: 1;
+    bool debug = false;
+    bool pedantic = false;
   };
 
   Wasm2AsmBuilder(Flags f) : flags(f) {}
