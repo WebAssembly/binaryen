@@ -80,7 +80,8 @@
   (func $untaken-break-should-have-value (result i32)
     (block $x (result i32)
       (block
-        (br_if $x ;; ok to not have a value, since an untaken branch. but must emit valid binary for wasm
+        (br_if $x
+          (i32.const 0)
           (unreachable)
         )
       )
@@ -95,6 +96,7 @@
    )
    (block $label$0 (result i32)
     (br_if $label$0
+     (i32.const 0)
      (return
       (i32.const -32)
      )
@@ -103,12 +105,28 @@
   )
   (func $br_table_unreachable_to_also_unreachable (result i32)
     (block $a (result i32)
-      (block $b
+      (block $b (result i32)
         (br_table $a $b ;; seems to send a value, but is not taken
           (unreachable)
           (unreachable)
         )
       )
+    )
+  )
+  (func $untaken-br_if (result i32)
+    (block $label$8 (result i32)
+     (block $label$9
+      (drop
+       (if
+        (i32.const 0)
+        (br_if $label$8
+         (unreachable)
+         (i32.const 0)
+        )
+        (unreachable)
+       )
+      )
+     )
     )
   )
 )

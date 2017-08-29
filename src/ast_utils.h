@@ -62,7 +62,7 @@ struct ExpressionAnalyzer {
     if (auto* br = curr->dynCast<Break>()) {
       if (!br->condition) return true;
     } else if (auto* block = curr->dynCast<Block>()) {
-      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BranchUtils::BranchSeeker::has(block, block->name)) return true;
+      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BranchUtils::BranchSeeker::hasTaken(block, block->name)) return true;
     }
     return false;
   }
@@ -101,51 +101,59 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   std::map<Name, WasmType> breakValues;
 
   void visitBlock(Block *curr) {
+    if (curr->list.size() == 0) {
+      curr->type = none;
+      return;
+    }
     // do this quickly, without any validation
+    auto old = curr->type;
+    // last element determines type
+    curr->type = curr->list.back()->type;
+    // if concrete, it doesn't matter if we have an unreachable child, and we
+    // don't need to look at breaks
+    if (isConcreteWasmType(curr->type)) return;
+    // otherwise, we have no final fallthrough element to determine the type,
+    // could be determined by breaks
     if (curr->name.is()) {
       auto iter = breakValues.find(curr->name);
       if (iter != breakValues.end()) {
         // there is a break to here
-        curr->type = iter->second;
+        auto type = iter->second;
+        if (type == unreachable) {
+          // all we have are breaks with values of type unreachable, and no
+          // concrete fallthrough either. we must have had an existing type, then
+          curr->type = old;
+          assert(isConcreteWasmType(curr->type));
+        } else {
+          curr->type = type;
+        }
         return;
       }
     }
-    // nothing branches here
-    if (curr->list.size() > 0) {
-      // last element determines type
-      curr->type = curr->list.back()->type;
-      // if concrete, it doesn't matter if we have an unreachable child
-      if (isConcreteWasmType(curr->type)) return;
-      // if we have an unreachable child, we are unreachable
-      // (we don't need to recurse into children, they can't
-      // break to us)
+    if (curr->type == unreachable) return;
+    // type is none, but we might be unreachable
+    if (curr->type == none) {
       for (auto* child : curr->list) {
         if (child->type == unreachable) {
           curr->type = unreachable;
-          return;
+          break;
         }
       }
-    } else {
-      curr->type = none;
     }
   }
   void visitIf(If *curr) { curr->finalize(); }
   void visitLoop(Loop *curr) { curr->finalize(); }
   void visitBreak(Break *curr) {
     curr->finalize();
-    if (BranchUtils::isBranchTaken(curr)) {
-      breakValues[curr->name] = getValueType(curr->value);
-    }
+    updateBreakValueType(curr->name, getValueType(curr->value));
   }
   void visitSwitch(Switch *curr) {
     curr->finalize();
-    if (BranchUtils::isBranchTaken(curr)) {
-      auto valueType = getValueType(curr->value);
-      for (auto target : curr->targets) {
-        breakValues[target] = valueType;
-      }
-      breakValues[curr->default_] = valueType;
+    auto valueType = getValueType(curr->value);
+    for (auto target : curr->targets) {
+      updateBreakValueType(target, valueType);
     }
+    updateBreakValueType(curr->default_, valueType);
   }
   void visitCall(Call *curr) { curr->finalize(); }
   void visitCallImport(CallImport *curr) { curr->finalize(); }
@@ -169,7 +177,13 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
 
   WasmType getValueType(Expression* value) {
-    return value && value->type != unreachable ? value->type : none;
+    return value ? value->type : none;
+  }
+
+  void updateBreakValueType(Name name, WasmType type) {
+    if (type != unreachable || breakValues.count(name) == 0) {
+      breakValues[name] = type;
+    }
   }
 };
 

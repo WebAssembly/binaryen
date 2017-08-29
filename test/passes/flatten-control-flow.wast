@@ -773,4 +773,11 @@
     (i32.const 1)
    )
   )
+  (func $switch-unreachable
+   (block $label$3
+    (br_table $label$3
+     (unreachable)
+    )
+   )
+  )
 )

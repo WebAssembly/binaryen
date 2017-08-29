@@ -116,13 +116,12 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   }
 
   void visitBreak(Break* curr) {
-    if (curr->name == targetName && BranchUtils::isBranchTaken(curr)) {
+    if (curr->name == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
   void visitSwitch(Switch* curr) {
-    if (!BranchUtils::isBranchTaken(curr)) return;
     for (auto name : curr->targets) {
       if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }
@@ -183,10 +182,7 @@ static void handleUnreachable(Block* block) {
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      BranchUtils::BranchSeeker seeker(block->name);
-      Expression* expr = block;
-      seeker.walk(expr);
-      if (!seeker.found) {
+      if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
         block->type = unreachable;
       }
       return;

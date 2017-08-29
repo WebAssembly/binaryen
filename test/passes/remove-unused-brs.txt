@@ -1037,11 +1037,23 @@
    )
   )
  )
- (func $untaken-br-with-concrete-last-element (type $2) (result i32)
-  (block $label$8 (result i32)
-   (block $label$11 (result i32)
+ (func $untaken-br-with-concrete-last-element (type $1)
+  (block $label$8
+   (block $label$11
     (block $label$14
      (br_if $label$8
+      (br $label$8)
+     )
+    )
+   )
+  )
+ )
+ (func $untaken-br-with-concrete-last-element2 (type $2) (result i32)
+  (block $label$8 (result i32)
+   (block $label$11 (result i32)
+    (block $label$14 (result i32)
+     (br_if $label$14
+      (i32.const 102)
       (br $label$11
        (i32.const 103)
       )

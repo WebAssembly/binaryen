@@ -1174,4 +1174,11 @@
    (get_local $2)
   )
  )
+ (func $switch-unreachable (type $1)
+  (block $label$3
+   (block
+    (unreachable)
+   )
+  )
+ )
 )

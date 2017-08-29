@@ -599,9 +599,6 @@
      (drop
       (if (result i32)
        (br_if $label$0
-        (i32.load8_s
-         (i32.const 1634541608)
-        )
         (loop $label$9
          (br $label$9)
         )

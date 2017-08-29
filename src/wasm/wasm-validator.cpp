@@ -128,11 +128,7 @@ void WasmValidator::visitIf(If *curr) {
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  if (!BranchUtils::isBranchTaken(curr)) {
-    // if not actually taken, just note the name
-    namedBreakTargets.insert(name);
-    return;
-  }
+  namedBreakTargets.insert(name);
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -554,7 +550,7 @@ void WasmValidator::visitFunction(Function *curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist (even if not taken)")) {
+  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist")) {
     std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
   }
   returnType = unreachable;
