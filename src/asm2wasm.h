@@ -515,7 +515,7 @@ public:
        preprocessor(preprocessor),
        debug(debug),
        trapMode(trapMode),
-       trapContext(trapMode, wasm, allocator, builder),
+       trapContext(trapMode, wasm),
        passOptions(passOptions),
        legalizeJavaScriptFFI(legalizeJavaScriptFFI),
        runOptimizationPasses(runOptimizationPasses),

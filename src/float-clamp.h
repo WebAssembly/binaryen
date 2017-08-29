@@ -22,9 +22,12 @@
 #define wasm_float_clamp_h
 
 #include "mixed_arena.h"
+#include "pass.h"
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "wasm-printing.h"
 #include "wasm-type.h"
+#include "asmjs/shared-constants.h"
 #include "support/name.h"
 
 namespace wasm {
@@ -39,14 +42,13 @@ struct FloatTrapContext {
   FloatTrapMode trapMode;
   Module& wasm;
   MixedArena& allocator;
-  Builder& builder;
+  Builder builder;
 
-  FloatTrapContext(FloatTrapMode trapMode, Module& wasm,
-                   MixedArena& allocator, Builder& builder)
+  FloatTrapContext(FloatTrapMode trapMode, Module& wasm)
     : trapMode(trapMode),
       wasm(wasm),
-      allocator(allocator),
-      builder(builder) {}
+      allocator(wasm.allocator),
+      builder(wasm) {}
 };
 
 Name I64S_REM("i64s-rem"),
@@ -54,7 +56,7 @@ Name I64S_REM("i64s-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
-void ensureBinaryFunc(FloatTrapContext const& context,
+void ensureBinaryFunc(FloatTrapContext& context,
                       Name name, BinaryOp op, WasmType type) {
   static std::set<Name> addedFunctions;
   if (addedFunctions.count(name) != 0) {
@@ -111,7 +113,7 @@ void ensureBinaryFunc(FloatTrapContext const& context,
 
 // Some binary opts might trap, so emit them safely if necessary
 Expression* makeTrappingI32Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext const& context) {
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     return context.builder.makeBinary(op, left, right);
   }
@@ -122,7 +124,7 @@ Expression* makeTrappingI32Binary(
     case BinaryOp::RemUInt32: call->target = I32U_REM; break;
     case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
     case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
-    default: WASM_UNREACHABLE();
+    default: return context.builder.makeBinary(op, left, right);
   }
   call->operands.push_back(left);
   call->operands.push_back(right);
@@ -132,7 +134,7 @@ Expression* makeTrappingI32Binary(
 }
 
 Expression* makeTrappingI64Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext const& context) {
+    BinaryOp op, Expression* left, Expression* right, FloatTrapContext& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     return context.builder.makeBinary(op, left, right);
   }
@@ -151,6 +153,21 @@ Expression* makeTrappingI64Binary(
   ensureBinaryFunc(context, call->target, op, i64);
   return call;
 }
+
+struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
+  bool isFunctionParallel() override { return false; }
+
+  Pass* create() override { return new BinaryenTrapMode; }
+
+  void visitUnary(Unary* curr) {
+  }
+  void visitBinary(Binary* curr) {
+    FloatTrapContext context(FloatTrapMode::Clamp, *getModule());
+    replaceCurrent(
+      makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
+    );
+  }
+};
 
 } // namespace wasm
 

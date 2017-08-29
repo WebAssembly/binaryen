@@ -18,6 +18,7 @@
 // wasm2asm console tool
 //
 
+#include "float-clamp.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -143,6 +144,10 @@ int main(int argc, const char *argv[]) {
 
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
+
+  PassRunner runner(&(linker.getOutput().wasm));
+  runner.add<BinaryenTrapMode>();
+  runner.run();
 
   for (const auto& m : archiveLibraries) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
