@@ -102,9 +102,11 @@ if not options.binaryen_bin:
   else:
     options.binaryen_bin = 'bin'
 
+options.binaryen_bin = os.path.normpath(options.binaryen_bin)
+
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
-if all(map(lambda f: not os.path.isfile(os.path.join(options.binaryen_bin, f)),
-           wasm_dis_filenames)):
+if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
+           for f in wasm_dis_filenames):
   warn('Binaryen not found (or has not been successfully built to bin/ ?')
 
 # Locate Binaryen source directory if not specified.
@@ -151,6 +153,7 @@ NODEJS = which('nodejs') or which('node')
 MOZJS = which('mozjs')
 EMCC = which('emcc')
 
+BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
