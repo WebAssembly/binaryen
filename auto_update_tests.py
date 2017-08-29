@@ -5,7 +5,7 @@ import os, sys, subprocess, difflib
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, BINARYAN_INSTALL_DIR)
+    WASM_CTOR_EVAL, WASM_MERGE, BINARYEN_INSTALL_DIR)
 
 print '[ processing and updating testcases... ]\n'
 
@@ -144,7 +144,7 @@ print '\n[ checking example testcases... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'example'))):
   output_file = os.path.join('bin', 'example')
-  libdir = os.path.join(BINARYAN_INSTALL_DIR, 'lib')
+  libdir = os.path.join(BINARYEN_INSTALL_DIR, 'lib')
   cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-L' + libdir, '-pthread', '-o', output_file]
   if t.endswith('.txt'):
     # check if there is a trace in the file, if so, we should build it

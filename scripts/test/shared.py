@@ -152,7 +152,7 @@ NODEJS = which('nodejs') or which('node')
 MOZJS = which('mozjs')
 EMCC = which('emcc')
 
-BINARYAN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
+BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
