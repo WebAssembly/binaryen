@@ -76,4 +76,13 @@
     (drop (get_local $z))
   )
 )
+(module
+ (func $main (result i32)
+  (call $func_51)
+  (i32.const 0)
+ )
+ (func $func_51
+  (unreachable) ;; void function but having unreachable body, when inlined, type must be fixed
+ )
+)
 
