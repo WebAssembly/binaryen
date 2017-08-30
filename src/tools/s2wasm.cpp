@@ -147,7 +147,7 @@ int main(int argc, const char *argv[]) {
 
   Module* wasm = &(linker.getOutput().wasm);
   PassRunner runner(wasm);
-  runner.add<BinaryenTrapMode>(FloatTrapContext(FloatTrapMode::Clamp, *wasm));
+  runner.add<BinaryenTrapMode>(FloatTrapContext(FloatTrapMode::Allow, *wasm));
   runner.run();
   addAddedFunctions(*wasm);
 

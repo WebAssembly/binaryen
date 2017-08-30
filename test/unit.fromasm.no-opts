@@ -402,18 +402,6 @@
    )
   )
  )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if (result i32)
-   (i32.eqz
-    (get_local $1)
-   )
-   (i32.const 0)
-   (i32.div_u
-    (get_local $0)
-    (get_local $1)
-   )
-  )
- )
  (func $big_uint_div_u (result i32)
   (local $x i32)
   (set_local $x
@@ -2087,6 +2075,18 @@
  (func $ii (param $x i32) (result i32)
   (return
    (get_local $x)
+  )
+ )
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (get_local $1)
+   )
+   (i32.const 0)
+   (i32.div_u
+    (get_local $0)
+    (get_local $1)
+   )
   )
  )
  (func $legalstub$conversions (param $0 i32) (param $1 f64) (param $2 f64)

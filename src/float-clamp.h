@@ -192,6 +192,7 @@ void addAddedFunctions(Module& wasm) {
   for (const auto& pair : addedFunctions) {
     wasm.addFunction(pair.second);
   }
+  addedFunctions.clear();
 }
 
 } // namespace wasm
