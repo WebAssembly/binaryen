@@ -194,13 +194,12 @@ def fetch_waterfall():
                  'darwin': 'mac',
                  'win32': 'windows',
                  'cygwin': 'windows'}[sys.platform]
-  try:
-    local_rev_path = os.path.join(options.binaryen_test, 'local-revision')
-    local_rev = open(local_rev_path).read().strip()
-  except:
-    local_rev = None
-  if local_rev == rev:
-    return
+  local_rev_path = os.path.join(WATERFALL_BUILD_DIR, 'local-revision')
+  if os.path.exists(local_rev_path):
+    with open(local_rev_path) as f:
+      local_rev = f.read().strip()
+    if local_rev == rev:
+      return
   # fetch it
   basename = 'wasm-binaries-' + rev + '.tbz2'
   url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds',
@@ -216,8 +215,8 @@ def fetch_waterfall():
   subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)],
                         cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
-  with open(os.path.join(options.binaryen_test, 'local-revision'), 'w') as o:
-    o.write(rev)
+  with open(local_rev_path, 'w') as o:
+    o.write(rev + '\n')
 
 
 has_vanilla_llvm = False
