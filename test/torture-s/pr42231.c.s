@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42231.c"
+	.file	"pr42231.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -33,9 +33,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.CallFunctionRec,"ax",@progbits
-	.type	CallFunctionRec,@function
+	.type	CallFunctionRec,@function # -- Begin function CallFunctionRec
 CallFunctionRec:                        # @CallFunctionRec
 	.param  	i32
 	.result 	i32
@@ -67,9 +67,9 @@ CallFunctionRec:                        # @CallFunctionRec
 	.endfunc
 .Lfunc_end1:
 	.size	CallFunctionRec, .Lfunc_end1-CallFunctionRec
-
+                                        # -- End function
 	.section	.text.storemax,"ax",@progbits
-	.type	storemax,@function
+	.type	storemax,@function      # -- Begin function storemax
 storemax:                               # @storemax
 	.param  	i32
 # BB#0:                                 # %entry
@@ -87,7 +87,7 @@ storemax:                               # @storemax
 	.endfunc
 .Lfunc_end2:
 	.size	storemax, .Lfunc_end2-storemax
-
+                                        # -- End function
 	.type	max,@object             # @max
 	.section	.bss.max,"aw",@nobits
 	.p2align	2
@@ -96,5 +96,5 @@ max:
 	.size	max, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

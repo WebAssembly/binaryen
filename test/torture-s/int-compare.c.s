@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/int-compare.c"
+	.file	"int-compare.c"
 	.section	.text.gt,"ax",@progbits
-	.hidden	gt
+	.hidden	gt                      # -- Begin function gt
 	.globl	gt
 	.type	gt,@function
 gt:                                     # @gt
@@ -13,9 +13,9 @@ gt:                                     # @gt
 	.endfunc
 .Lfunc_end0:
 	.size	gt, .Lfunc_end0-gt
-
+                                        # -- End function
 	.section	.text.ge,"ax",@progbits
-	.hidden	ge
+	.hidden	ge                      # -- Begin function ge
 	.globl	ge
 	.type	ge,@function
 ge:                                     # @ge
@@ -27,9 +27,9 @@ ge:                                     # @ge
 	.endfunc
 .Lfunc_end1:
 	.size	ge, .Lfunc_end1-ge
-
+                                        # -- End function
 	.section	.text.lt,"ax",@progbits
-	.hidden	lt
+	.hidden	lt                      # -- Begin function lt
 	.globl	lt
 	.type	lt,@function
 lt:                                     # @lt
@@ -41,9 +41,9 @@ lt:                                     # @lt
 	.endfunc
 .Lfunc_end2:
 	.size	lt, .Lfunc_end2-lt
-
+                                        # -- End function
 	.section	.text.le,"ax",@progbits
-	.hidden	le
+	.hidden	le                      # -- Begin function le
 	.globl	le
 	.type	le,@function
 le:                                     # @le
@@ -55,9 +55,9 @@ le:                                     # @le
 	.endfunc
 .Lfunc_end3:
 	.size	le, .Lfunc_end3-le
-
+                                        # -- End function
 	.section	.text.true,"ax",@progbits
-	.hidden	true
+	.hidden	true                    # -- Begin function true
 	.globl	true
 	.type	true,@function
 true:                                   # @true
@@ -75,9 +75,9 @@ true:                                   # @true
 	.endfunc
 .Lfunc_end4:
 	.size	true, .Lfunc_end4-true
-
+                                        # -- End function
 	.section	.text.false,"ax",@progbits
-	.hidden	false
+	.hidden	false                   # -- Begin function false
 	.globl	false
 	.type	false,@function
 false:                                  # @false
@@ -94,9 +94,9 @@ false:                                  # @false
 	.endfunc
 .Lfunc_end5:
 	.size	false, .Lfunc_end5-false
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -108,9 +108,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end6:
 	.size	f, .Lfunc_end6-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -122,8 +122,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46909-1.c"
+	.file	"pr46909-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -25,9 +25,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -40,29 +40,27 @@ main:                                   # @main
 	block   	
 	loop    	                # label1:
 	i32.const	$push11=, 4
-	i32.add 	$push4=, $1, $pop11
-	i32.call	$push5=, foo@FUNCTION, $pop4
-	i32.const	$push10=, 1
-	i32.eqz 	$push1=, $1
-	i32.const	$push9=, 1
-	i32.shl 	$push2=, $pop1, $pop9
-	i32.sub 	$push3=, $pop10, $pop2
-	i32.ne  	$push6=, $pop5, $pop3
-	br_if   	1, $pop6        # 1: down to label0
+	i32.add 	$push10=, $1, $pop11
+	tee_local	$push9=, $0=, $pop10
+	i32.call	$push3=, foo@FUNCTION, $pop9
+	i32.const	$push8=, 1
+	i32.eqz 	$push0=, $1
+	i32.const	$push7=, 1
+	i32.shl 	$push1=, $pop0, $pop7
+	i32.sub 	$push2=, $pop8, $pop1
+	i32.ne  	$push4=, $pop3, $pop2
+	br_if   	1, $pop4        # 1: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push14=, 5
-	i32.add 	$0=, $1, $pop14
 	i32.const	$push13=, 1
-	i32.add 	$push0=, $1, $pop13
-	copy_local	$1=, $pop0
-	i32.const	$push12=, 9
-	i32.le_s	$push7=, $0, $pop12
-	br_if   	0, $pop7        # 0: up to label1
+	i32.add 	$1=, $1, $pop13
+	i32.const	$push12=, 8
+	i32.le_s	$push5=, $0, $pop12
+	br_if   	0, $pop5        # 0: up to label1
 # BB#3:                                 # %for.end
 	end_loop
-	i32.const	$push8=, 0
-	return  	$pop8
+	i32.const	$push6=, 0
+	return  	$pop6
 .LBB1_4:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -70,7 +68,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

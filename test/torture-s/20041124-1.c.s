@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20041124-1.c"
+	.file	"20041124-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -14,9 +14,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -24,10 +24,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push13=, 0
-	i32.const	$push10=, 0
-	i32.load	$push11=, __stack_pointer($pop10)
+	i32.const	$push11=, 0
+	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 16
-	i32.sub 	$push18=, $pop11, $pop12
+	i32.sub 	$push18=, $pop10, $pop12
 	tee_local	$push17=, $0=, $pop18
 	i32.store	__stack_pointer($pop13), $pop17
 	i32.const	$push14=, 8
@@ -60,7 +60,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	gs                      # @gs
 	.type	gs,@object
 	.section	.data.gs,"aw",@progbits
@@ -72,6 +72,6 @@ gs:
 	.size	gs, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

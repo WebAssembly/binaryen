@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/vrp-5.c"
+	.file	"vrp-5.c"
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -18,20 +18,20 @@ test:                                   # @test
 # BB#2:                                 # %if.end3
 	i32.const	$push2=, 0
 	i32.sub 	$push3=, $pop2, $1
-	i32.ne  	$push4=, $0, $pop3
+	i32.ne  	$push4=, $pop3, $0
 	br_if   	0, $pop4        # 0: down to label0
 # BB#3:                                 # %if.end6
 	return
-.LBB0_4:                                # %if.then5
+.LBB0_4:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -44,8 +44,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

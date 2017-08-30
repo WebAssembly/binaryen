@@ -1,63 +1,64 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/ashldi-1.c"
+	.file	"ashldi-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i64, i32, i32
+	.local  	i32, i32, i32, i64
 # BB#0:                                 # %entry
-	i64.const	$0=, 0
-	i32.const	$2=, .Lswitch.table
+	i64.const	$3=, -1
+	i32.const	$1=, .Lswitch.table.main
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label1:
-	i64.const	$push6=, 81985529216486895
-	i64.shl 	$push0=, $pop6, $0
-	i64.load	$push1=, 0($2)
-	i64.ne  	$push2=, $pop0, $pop1
-	br_if   	1, $pop2        # 1: down to label0
+	i64.const	$push10=, 81985529216486895
+	i64.const	$push9=, 1
+	i64.add 	$push8=, $3, $pop9
+	tee_local	$push7=, $3=, $pop8
+	i64.shl 	$push1=, $pop10, $pop7
+	i64.load	$push2=, 0($1)
+	i64.ne  	$push3=, $pop1, $pop2
+	br_if   	1, $pop3        # 1: down to label0
 # BB#2:                                 # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push11=, 8
-	i32.add 	$2=, $2, $pop11
-	i64.const	$push10=, 1
-	i64.add 	$push9=, $0, $pop10
-	tee_local	$push8=, $0=, $pop9
-	i64.const	$push7=, 64
-	i64.lt_s	$push3=, $pop8, $pop7
-	br_if   	0, $pop3        # 0: up to label1
-# BB#3:                                 # %constant_shift.exit.preheader
+	i32.const	$push12=, 8
+	i32.add 	$1=, $1, $pop12
+	i64.const	$push11=, 63
+	i64.lt_u	$push4=, $3, $pop11
+	br_if   	0, $pop4        # 0: up to label1
+# BB#3:                                 # %for.body4.preheader
 	end_loop
-	i32.const	$2=, 0
-	i32.const	$1=, .Lswitch.table
-.LBB0_4:                                # %constant_shift.exit
+	i32.const	$1=, 0
+	i32.const	$0=, .Lswitch.table.main
+.LBB0_4:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
-	block   	
-	loop    	                # label3:
-	i32.const	$push12=, 1
-	i32.eqz 	$push18=, $pop12
-	br_if   	1, $pop18       # 1: down to label2
-# BB#5:                                 # %for.cond2
+	loop    	                # label2:
+	i32.const	$push13=, 64
+	i32.ge_u	$push5=, $1, $pop13
+	br_if   	1, $pop5        # 1: down to label0
+# BB#5:                                 # %switch.lookup
+                                        #   in Loop: Header=BB0_4 Depth=1
+	i32.const	$push14=, 1
+	i32.eqz 	$push18=, $pop14
+	br_if   	1, $pop18       # 1: down to label0
+# BB#6:                                 # %for.cond2
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push17=, 8
-	i32.add 	$1=, $1, $pop17
-	i32.const	$push16=, 1
-	i32.add 	$push15=, $2, $pop16
-	tee_local	$push14=, $2=, $pop15
-	i32.const	$push13=, 63
-	i32.le_s	$push4=, $pop14, $pop13
-	br_if   	0, $pop4        # 0: up to label3
-# BB#6:                                 # %for.end13
+	i32.add 	$0=, $0, $pop17
+	i32.const	$push16=, 62
+	i32.gt_u	$2=, $1, $pop16
+	i32.const	$push15=, 1
+	i32.add 	$push0=, $1, $pop15
+	copy_local	$1=, $pop0
+	i32.eqz 	$push19=, $2
+	br_if   	0, $pop19       # 0: up to label2
+# BB#7:                                 # %for.end13
 	end_loop
-	i32.const	$push5=, 0
-	call    	exit@FUNCTION, $pop5
-	unreachable
-.LBB0_7:                                # %if.then9
-	end_block                       # label2:
-	call    	abort@FUNCTION
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 .LBB0_8:                                # %if.then
 	end_block                       # label0:
@@ -66,11 +67,11 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
-	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+                                        # -- End function
+	.type	.Lswitch.table.main,@object # @switch.table.main
+	.section	.rodata..Lswitch.table.main,"a",@progbits
 	.p2align	4
-.Lswitch.table:
+.Lswitch.table.main:
 	.int64	81985529216486895       # 0x123456789abcdef
 	.int64	163971058432973790      # 0x2468acf13579bde
 	.int64	327942116865947580      # 0x48d159e26af37bc
@@ -135,9 +136,9 @@ main:                                   # @main
 	.int64	-2305843009213693952    # 0xe000000000000000
 	.int64	-4611686018427387904    # 0xc000000000000000
 	.int64	-9223372036854775808    # 0x8000000000000000
-	.size	.Lswitch.table, 512
+	.size	.Lswitch.table.main, 512
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58831.c"
+	.file	"pr58831.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -19,9 +19,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.fn2,"ax",@progbits
-	.type	fn2,@function
+	.type	fn2,@function           # -- Begin function fn2
 fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
@@ -34,9 +34,9 @@ fn2:                                    # @fn2
 	.endfunc
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
-
+                                        # -- End function
 	.section	.text.fn1,"ax",@progbits
-	.type	fn1,@function
+	.type	fn1,@function           # -- Begin function fn1
 fn1:                                    # @fn1
 	.param  	i32
 	.local  	i32
@@ -73,7 +73,7 @@ fn1:                                    # @fn1
 	.endfunc
 .Lfunc_end2:
 	.size	fn1, .Lfunc_end2-fn1
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
@@ -174,4 +174,4 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

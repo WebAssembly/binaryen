@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071219-1.c"
+	.file	"20071219-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -46,19 +46,19 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.test1,"ax",@progbits
-	.hidden	test1
+	.hidden	test1                   # -- Begin function test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
 	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push17=, 0
-	i32.const	$push14=, 0
-	i32.load	$push15=, __stack_pointer($pop14)
+	i32.const	$push15=, 0
+	i32.load	$push14=, __stack_pointer($pop15)
 	i32.const	$push16=, 64
-	i32.sub 	$push49=, $pop15, $pop16
+	i32.sub 	$push49=, $pop14, $pop16
 	tee_local	$push48=, $6=, $pop49
 	i32.store	__stack_pointer($pop17), $pop48
 	i32.const	$push21=, 32
@@ -125,19 +125,19 @@ test1:                                  # @test1
 	.endfunc
 .Lfunc_end1:
 	.size	test1, .Lfunc_end1-test1
-
+                                        # -- End function
 	.section	.text.test2,"ax",@progbits
-	.hidden	test2
+	.hidden	test2                   # -- Begin function test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
 	.local  	i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push24=, 0
-	i32.const	$push21=, 0
-	i32.load	$push22=, __stack_pointer($pop21)
+	i32.const	$push22=, 0
+	i32.load	$push21=, __stack_pointer($pop22)
 	i32.const	$push23=, 64
-	i32.sub 	$push62=, $pop22, $pop23
+	i32.sub 	$push62=, $pop21, $pop23
 	tee_local	$push61=, $6=, $pop62
 	i32.store	__stack_pointer($pop24), $pop61
 	i32.const	$push28=, 32
@@ -197,18 +197,18 @@ test2:                                  # @test2
 	i32.const	$push42=, 0
 	i32.load	$push41=, p($pop42)
 	tee_local	$push40=, $5=, $pop41
-	i32.const	$push39=, 24
+	i32.const	$push39=, 8
 	i32.add 	$push14=, $pop40, $pop39
-	i32.load8_u	$push15=, 0($pop14)
-	i32.store8	0($2), $pop15
+	i64.load	$push15=, 0($pop14):p2align=0
+	i64.store	0($4), $pop15
 	i32.const	$push38=, 16
 	i32.add 	$push16=, $5, $pop38
 	i64.load	$push17=, 0($pop16):p2align=0
 	i64.store	0($3), $pop17
-	i32.const	$push37=, 8
+	i32.const	$push37=, 24
 	i32.add 	$push18=, $5, $pop37
-	i64.load	$push19=, 0($pop18):p2align=0
-	i64.store	0($4), $pop19
+	i32.load8_u	$push19=, 0($pop18)
+	i32.store8	0($2), $pop19
 	i64.load	$push20=, 0($5):p2align=0
 	i64.store	0($6), $pop20
 	i32.const	$push36=, 0
@@ -221,128 +221,108 @@ test2:                                  # @test2
 	.endfunc
 .Lfunc_end2:
 	.size	test2, .Lfunc_end2-test2
-
+                                        # -- End function
 	.section	.text.test3,"ax",@progbits
-	.hidden	test3
+	.hidden	test3                   # -- Begin function test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push32=, 0
-	i32.const	$push29=, 0
-	i32.load	$push30=, __stack_pointer($pop29)
-	i32.const	$push31=, 64
-	i32.sub 	$push82=, $pop30, $pop31
-	tee_local	$push81=, $8=, $pop82
-	i32.store	__stack_pointer($pop32), $pop81
-	i32.const	$push36=, 32
-	i32.add 	$push37=, $8, $pop36
+	i32.const	$push21=, 0
+	i32.const	$push19=, 0
+	i32.load	$push18=, __stack_pointer($pop19)
+	i32.const	$push20=, 64
+	i32.sub 	$push65=, $pop18, $pop20
+	tee_local	$push64=, $8=, $pop65
+	i32.store	__stack_pointer($pop21), $pop64
+	i32.const	$push25=, 32
+	i32.add 	$push26=, $8, $pop25
 	i32.const	$push0=, 24
-	i32.add 	$push80=, $pop37, $pop0
-	tee_local	$push79=, $0=, $pop80
+	i32.add 	$push63=, $pop26, $pop0
+	tee_local	$push62=, $0=, $pop63
 	i32.const	$push1=, 0
-	i32.store8	0($pop79), $pop1
-	i32.const	$push38=, 32
-	i32.add 	$push39=, $8, $pop38
+	i32.store8	0($pop62), $pop1
+	i32.const	$push27=, 32
+	i32.add 	$push28=, $8, $pop27
 	i32.const	$push2=, 16
-	i32.add 	$push78=, $pop39, $pop2
-	tee_local	$push77=, $1=, $pop78
+	i32.add 	$push61=, $pop28, $pop2
+	tee_local	$push60=, $1=, $pop61
 	i64.const	$push3=, 0
-	i64.store	0($pop77), $pop3
-	i32.const	$push40=, 32
-	i32.add 	$push41=, $8, $pop40
+	i64.store	0($pop60), $pop3
+	i32.const	$push29=, 32
+	i32.add 	$push30=, $8, $pop29
 	i32.const	$push4=, 8
-	i32.add 	$push76=, $pop41, $pop4
-	tee_local	$push75=, $2=, $pop76
-	i64.const	$push74=, 0
-	i64.store	0($pop75), $pop74
-	i64.const	$push73=, 0
-	i64.store	32($8), $pop73
-	i32.const	$push42=, 32
-	i32.add 	$push43=, $8, $pop42
-	i32.const	$push72=, 0
-	call    	foo@FUNCTION, $pop43, $pop72
-	i32.const	$push71=, 24
-	i32.add 	$push70=, $8, $pop71
-	tee_local	$push69=, $3=, $pop70
+	i32.add 	$push59=, $pop30, $pop4
+	tee_local	$push58=, $2=, $pop59
+	i64.const	$push57=, 0
+	i64.store	0($pop58), $pop57
+	i64.const	$push56=, 0
+	i64.store	32($8), $pop56
+	i32.const	$push31=, 32
+	i32.add 	$push32=, $8, $pop31
+	i32.const	$push55=, 0
+	call    	foo@FUNCTION, $pop32, $pop55
+	i32.const	$push54=, 24
+	i32.add 	$push53=, $8, $pop54
+	tee_local	$push52=, $3=, $pop53
 	i32.load8_u	$push5=, 0($0)
-	i32.store8	0($pop69), $pop5
-	i32.const	$push68=, 16
-	i32.add 	$push67=, $8, $pop68
-	tee_local	$push66=, $4=, $pop67
+	i32.store8	0($pop52), $pop5
+	i32.const	$push51=, 16
+	i32.add 	$push50=, $8, $pop51
+	tee_local	$push49=, $4=, $pop50
 	i64.load	$push6=, 0($1)
-	i64.store	0($pop66), $pop6
-	i32.const	$push65=, 8
-	i32.add 	$push64=, $8, $pop65
-	tee_local	$push63=, $5=, $pop64
+	i64.store	0($pop49), $pop6
+	i32.const	$push48=, 8
+	i32.add 	$push47=, $8, $pop48
+	tee_local	$push46=, $5=, $pop47
 	i64.load	$push7=, 0($2)
-	i64.store	0($pop63), $pop7
+	i64.store	0($pop46), $pop7
 	i64.load	$push8=, 32($8)
 	i64.store	0($8), $pop8
 	i32.const	$push9=, 1
 	call    	foo@FUNCTION, $8, $pop9
-	i32.const	$push62=, 0
-	i32.load	$push61=, p($pop62)
-	tee_local	$push60=, $6=, $pop61
-	i32.load	$push10=, 32($8)
-	i32.store	0($pop60):p2align=0, $pop10
-	i32.const	$push59=, 24
-	i32.add 	$push58=, $6, $pop59
-	tee_local	$push57=, $7=, $pop58
-	i32.load8_u	$push11=, 0($0)
-	i32.store8	0($pop57), $pop11
-	i32.const	$push12=, 20
-	i32.add 	$push13=, $6, $pop12
-	i32.const	$push44=, 32
-	i32.add 	$push45=, $8, $pop44
-	i32.const	$push56=, 20
-	i32.add 	$push14=, $pop45, $pop56
-	i32.load	$push15=, 0($pop14)
-	i32.store	0($pop13):p2align=0, $pop15
-	i32.const	$push55=, 16
-	i32.add 	$push54=, $6, $pop55
-	tee_local	$push53=, $0=, $pop54
-	i32.load	$push16=, 0($1)
-	i32.store	0($pop53):p2align=0, $pop16
-	i32.const	$push17=, 12
-	i32.add 	$push18=, $6, $pop17
-	i32.const	$push46=, 32
-	i32.add 	$push47=, $8, $pop46
-	i32.const	$push52=, 12
-	i32.add 	$push19=, $pop47, $pop52
-	i32.load	$push20=, 0($pop19)
-	i32.store	0($pop18):p2align=0, $pop20
-	i32.const	$push51=, 8
-	i32.add 	$push50=, $6, $pop51
-	tee_local	$push49=, $1=, $pop50
-	i32.load	$push21=, 0($2)
-	i32.store	0($pop49):p2align=0, $pop21
-	i32.const	$push22=, 4
-	i32.add 	$push23=, $6, $pop22
-	i32.load	$push24=, 36($8)
-	i32.store	0($pop23):p2align=0, $pop24
-	i32.load8_u	$push25=, 0($3)
-	i32.store8	0($7), $pop25
-	i64.load	$push26=, 0($4)
-	i64.store	0($0):p2align=0, $pop26
-	i64.load	$push27=, 0($5)
-	i64.store	0($1):p2align=0, $pop27
-	i64.load	$push28=, 0($8)
-	i64.store	0($6):p2align=0, $pop28
-	i32.const	$push48=, 0
-	call    	foo@FUNCTION, $8, $pop48
-	i32.const	$push35=, 0
-	i32.const	$push33=, 64
-	i32.add 	$push34=, $8, $pop33
-	i32.store	__stack_pointer($pop35), $pop34
+	i32.const	$push45=, 0
+	i32.load	$push44=, p($pop45)
+	tee_local	$push43=, $6=, $pop44
+	i64.load	$push10=, 32($8)
+	i64.store	0($pop43):p2align=0, $pop10
+	i32.const	$push42=, 16
+	i32.add 	$push41=, $6, $pop42
+	tee_local	$push40=, $7=, $pop41
+	i64.load	$push11=, 0($1)
+	i64.store	0($pop40):p2align=0, $pop11
+	i32.const	$push39=, 8
+	i32.add 	$push38=, $6, $pop39
+	tee_local	$push37=, $1=, $pop38
+	i64.load	$push12=, 0($2)
+	i64.store	0($pop37):p2align=0, $pop12
+	i32.const	$push36=, 24
+	i32.add 	$push35=, $6, $pop36
+	tee_local	$push34=, $2=, $pop35
+	i32.load8_u	$push13=, 0($0)
+	i32.store8	0($pop34), $pop13
+	i64.load	$push14=, 0($8)
+	i64.store	0($6):p2align=0, $pop14
+	i32.load8_u	$push15=, 0($3)
+	i32.store8	0($2), $pop15
+	i64.load	$push16=, 0($4)
+	i64.store	0($7):p2align=0, $pop16
+	i64.load	$push17=, 0($5)
+	i64.store	0($1):p2align=0, $pop17
+	i32.const	$push33=, 0
+	call    	foo@FUNCTION, $8, $pop33
+	i32.const	$push24=, 0
+	i32.const	$push22=, 64
+	i32.add 	$push23=, $8, $pop22
+	i32.store	__stack_pointer($pop24), $pop23
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	test3, .Lfunc_end3-test3
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -356,7 +336,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.hidden	p                       # @p
 	.type	p,@object
 	.section	.bss.p,"aw",@nobits
@@ -367,5 +347,5 @@ p:
 	.size	p, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

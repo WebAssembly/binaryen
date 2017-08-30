@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/951115-1.c"
+	.file	"951115-1.c"
 	.section	.text.g,"ax",@progbits
-	.hidden	g
+	.hidden	g                       # -- Begin function g
 	.globl	g
 	.type	g,@function
 g:                                      # @g
@@ -16,9 +16,9 @@ g:                                      # @g
 	.endfunc
 .Lfunc_end0:
 	.size	g, .Lfunc_end0-g
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -33,9 +33,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -50,7 +50,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	var                     # @var
 	.type	var,@object
 	.section	.bss.var,"aw",@nobits
@@ -61,5 +61,5 @@ var:
 	.size	var, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020129-1.c"
+	.file	"20020129-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -66,43 +66,40 @@ foo:                                    # @foo
 	i32.const	$push18=, -1
 	i32.store	0($pop12), $pop18
 	return
-.LBB0_8:                                # %if.then26
+.LBB0_8:                                # %if.then6
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
 	i32.const	$push1=, 0
-	i32.const	$push0=, 145
-	i32.store	y+12($pop1), $pop0
-	i32.const	$push10=, 0
-	i32.const	$push2=, 6
-	i32.store	y($pop10), $pop2
-	i32.const	$push9=, 0
-	i32.const	$push3=, 2448
-	i32.store	y+16($pop9), $pop3
+	i32.const	$push0=, 6
+	i32.store	y($pop1), $pop0
 	i32.const	$push8=, 0
-	i32.const	$push4=, -1
-	i32.store	x+12($pop8), $pop4
-	i32.const	$push6=, x
-	i32.const	$push5=, y
-	call    	foo@FUNCTION, $pop6, $pop5
+	i64.const	$push2=, 10514079940753
+	i64.store	y+12($pop8):p2align=2, $pop2
 	i32.const	$push7=, 0
-	call    	exit@FUNCTION, $pop7
+	i32.const	$push3=, -1
+	i32.store	x+12($pop7), $pop3
+	i32.const	$push5=, x
+	i32.const	$push4=, y
+	call    	foo@FUNCTION, $pop5, $pop4
+	i32.const	$push6=, 0
+	call    	exit@FUNCTION, $pop6
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	y                       # @y
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
@@ -122,6 +119,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

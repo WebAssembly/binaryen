@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/fprintf-1.c"
+	.file	"fprintf-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push47=, 0
-	i32.const	$push44=, 0
-	i32.load	$push45=, __stack_pointer($pop44)
+	i32.const	$push45=, 0
+	i32.load	$push44=, __stack_pointer($pop45)
 	i32.const	$push46=, 144
-	i32.sub 	$push75=, $pop45, $pop46
+	i32.sub 	$push75=, $pop44, $pop46
 	tee_local	$push74=, $1=, $pop75
 	i32.store	__stack_pointer($pop47), $pop74
 	i32.const	$push1=, .L.str
@@ -151,14 +151,14 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop50), $pop49
 	i32.const	$push98=, 0
 	return  	$pop98
-.LBB0_12:                               # %if.then50
+.LBB0_12:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -201,9 +201,10 @@ main:                                   # @main
 	.size	.L.str.7, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	fwrite, i32, i32, i32, i32, i32
 	.functype	fputc, i32, i32, i32
 	.import_global	stdout
+	.size	stdout, 4

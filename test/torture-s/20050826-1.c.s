@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050826-1.c"
+	.file	"20050826-1.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -19,11 +19,10 @@ bar:                                    # @bar
 	i32.const	$0=, 0
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
-	block   	
-	loop    	                # label2:
+	loop    	                # label1:
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
-	br_if   	1, $pop5        # 1: down to label1
+	br_if   	1, $pop5        # 1: down to label0
 # BB#3:                                 # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.const	$push10=, 1
@@ -31,24 +30,20 @@ bar:                                    # @bar
 	tee_local	$push8=, $0=, $pop9
 	i32.const	$push7=, 2040
 	i32.le_u	$push6=, $pop8, $pop7
-	br_if   	0, $pop6        # 0: up to label2
+	br_if   	0, $pop6        # 0: up to label1
 # BB#4:                                 # %for.end
 	end_loop
 	return
-.LBB0_5:                                # %if.then2
-	end_block                       # label1:
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_6:                                # %if.then
+.LBB0_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -74,6 +69,7 @@ foo:                                    # @foo
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
 	i32.store	a+1($pop15):p2align=0, $pop5
 	block   	
+	block   	
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
 	i64.const	$push7=, 368664092428289
@@ -83,13 +79,12 @@ foo:                                    # @foo
 	i32.const	$1=, 8
 .LBB1_2:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	
-	loop    	                # label5:
+	loop    	                # label4:
 	i32.const	$push23=, -7
 	i32.add 	$push9=, $1, $pop23
 	i32.const	$push22=, 2040
 	i32.gt_u	$push10=, $pop9, $pop22
-	br_if   	1, $pop10       # 1: down to label4
+	br_if   	2, $pop10       # 2: down to label2
 # BB#3:                                 # %for.cond.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push25=, a
@@ -99,25 +94,22 @@ foo:                                    # @foo
 	copy_local	$1=, $pop0
 	i32.load8_u	$push12=, 0($0)
 	i32.eqz 	$push26=, $pop12
-	br_if   	0, $pop26       # 0: up to label5
-# BB#4:                                 # %if.then2.i
+	br_if   	0, $pop26       # 0: up to label4
+.LBB1_4:                                # %if.then.i
 	end_loop
-	call    	abort@FUNCTION
-	unreachable
-.LBB1_5:                                # %bar.exit
-	end_block                       # label4:
-	i32.const	$push11=, 0
-	return  	$pop11
-.LBB1_6:                                # %if.then.i
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+.LBB1_5:                                # %bar.exit
+	end_block                       # label2:
+	i32.const	$push11=, 0
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -143,6 +135,7 @@ main:                                   # @main
 	i32.load	$push5=, .L.str.1($pop14):p2align=0
 	i32.store	a+1($pop15):p2align=0, $pop5
 	block   	
+	block   	
 	i32.const	$push13=, 0
 	i64.load	$push6=, a($pop13):p2align=0
 	i64.const	$push7=, 368664092428289
@@ -152,13 +145,12 @@ main:                                   # @main
 	i32.const	$1=, 8
 .LBB2_2:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
-	block   	
-	loop    	                # label8:
+	loop    	                # label7:
 	i32.const	$push23=, -7
 	i32.add 	$push9=, $1, $pop23
 	i32.const	$push22=, 2040
 	i32.gt_u	$push10=, $pop9, $pop22
-	br_if   	1, $pop10       # 1: down to label7
+	br_if   	2, $pop10       # 2: down to label5
 # BB#3:                                 # %for.cond.i.for.body.i_crit_edge.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.const	$push25=, a
@@ -168,23 +160,20 @@ main:                                   # @main
 	copy_local	$1=, $pop0
 	i32.load8_u	$push12=, 0($0)
 	i32.eqz 	$push26=, $pop12
-	br_if   	0, $pop26       # 0: up to label8
-# BB#4:                                 # %if.then2.i.i
+	br_if   	0, $pop26       # 0: up to label7
+.LBB2_4:                                # %if.then.i.i
 	end_loop
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_5:                                # %foo.exit
-	end_block                       # label7:
-	i32.const	$push11=, 0
-	return  	$pop11
-.LBB2_6:                                # %if.then.i.i
 	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+.LBB2_5:                                # %foo.exit
+	end_block                       # label5:
+	i32.const	$push11=, 0
+                                        # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -206,6 +195,6 @@ a:
 	.size	.L.str.1, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

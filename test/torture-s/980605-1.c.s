@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980605-1.c"
+	.file	"980605-1.c"
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -26,9 +26,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end0:
 	.size	f2, .Lfunc_end0-f2
-
+                                        # -- End function
 	.section	.text.getval,"ax",@progbits
-	.hidden	getval
+	.hidden	getval                  # -- Begin function getval
 	.globl	getval
 	.type	getval,@function
 getval:                                 # @getval
@@ -47,19 +47,19 @@ getval:                                 # @getval
 	.endfunc
 .Lfunc_end1:
 	.size	getval, .Lfunc_end1-getval
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push12=, 0
-	i32.const	$push9=, 0
-	i32.load	$push10=, __stack_pointer($pop9)
+	i32.const	$push10=, 0
+	i32.load	$push9=, __stack_pointer($pop10)
 	i32.const	$push11=, 16
-	i32.sub 	$push23=, $pop10, $pop11
+	i32.sub 	$push23=, $pop9, $pop11
 	tee_local	$push22=, $1=, $pop23
 	i32.store	__stack_pointer($pop12), $pop22
 	i32.const	$push0=, 0
@@ -95,9 +95,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end2:
 	.size	f, .Lfunc_end2-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -110,7 +110,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
@@ -135,7 +135,7 @@ buf:
 	.size	.L.str, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	sprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

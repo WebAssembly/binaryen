@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050502-1.c"
+	.file	"20050502-1.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -19,9 +19,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.baz,"ax",@progbits
-	.hidden	baz
+	.hidden	baz                     # -- Begin function baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -34,9 +34,9 @@ baz:                                    # @baz
 	.endfunc
 .Lfunc_end1:
 	.size	baz, .Lfunc_end1-baz
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -78,7 +78,7 @@ foo:                                    # @foo
 	i32.call	$push10=, baz@FUNCTION, $pop9
 	i32.eqz 	$push32=, $pop10
 	br_if   	2, $pop32       # 2: down to label0
-.LBB2_5:                                # %while.cond.backedge
+.LBB2_5:                                # %if.end23
                                         #   in Loop: Header=BB2_3 Depth=1
 	end_block                       # label2:
 	i32.add 	$push12=, $1, $7
@@ -94,7 +94,7 @@ foo:                                    # @foo
 	i32.eq  	$push14=, $pop25, $pop24
 	i32.and 	$push15=, $pop14, $2
 	br_if   	1, $pop15       # 1: down to label0
-# BB#6:                                 # %while.cond.backedge
+# BB#6:                                 # %if.end23
                                         #   in Loop: Header=BB2_3 Depth=1
 	i32.const	$push31=, 34
 	i32.eq  	$push13=, $5, $pop31
@@ -111,9 +111,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end2:
 	.size	foo, .Lfunc_end2-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -121,10 +121,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push41=, 0
-	i32.const	$push38=, 0
-	i32.load	$push39=, __stack_pointer($pop38)
+	i32.const	$push39=, 0
+	i32.load	$push38=, __stack_pointer($pop39)
 	i32.const	$push40=, 80
-	i32.sub 	$push76=, $pop39, $pop40
+	i32.sub 	$push76=, $pop38, $pop40
 	tee_local	$push75=, $0=, $pop76
 	i32.store	__stack_pointer($pop41), $pop75
 	i32.const	$push0=, .L.str
@@ -234,14 +234,14 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop44), $pop43
 	i32.const	$push37=, 0
 	return  	$pop37
-.LBB3_11:                               # %if.then38
+.LBB3_11:                               # %if.then
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -319,6 +319,6 @@ main:                                   # @main
 	.size	.L.str.14, 7
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

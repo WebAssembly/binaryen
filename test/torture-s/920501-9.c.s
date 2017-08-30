@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-9.c"
+	.file	"920501-9.c"
 	.section	.text.proc1,"ax",@progbits
-	.hidden	proc1
+	.hidden	proc1                   # -- Begin function proc1
 	.globl	proc1
 	.type	proc1,@function
 proc1:                                  # @proc1
@@ -12,9 +12,9 @@ proc1:                                  # @proc1
 	.endfunc
 .Lfunc_end0:
 	.size	proc1, .Lfunc_end0-proc1
-
+                                        # -- End function
 	.section	.text.proc2,"ax",@progbits
-	.hidden	proc2
+	.hidden	proc2                   # -- Begin function proc2
 	.globl	proc2
 	.type	proc2,@function
 proc2:                                  # @proc2
@@ -25,9 +25,9 @@ proc2:                                  # @proc2
 	.endfunc
 .Lfunc_end1:
 	.size	proc2, .Lfunc_end1-proc2
-
+                                        # -- End function
 	.section	.text.proc3,"ax",@progbits
-	.hidden	proc3
+	.hidden	proc3                   # -- Begin function proc3
 	.globl	proc3
 	.type	proc3,@function
 proc3:                                  # @proc3
@@ -38,9 +38,9 @@ proc3:                                  # @proc3
 	.endfunc
 .Lfunc_end2:
 	.size	proc3, .Lfunc_end2-proc3
-
+                                        # -- End function
 	.section	.text.proc4,"ax",@progbits
-	.hidden	proc4
+	.hidden	proc4                   # -- Begin function proc4
 	.globl	proc4
 	.type	proc4,@function
 proc4:                                  # @proc4
@@ -51,9 +51,9 @@ proc4:                                  # @proc4
 	.endfunc
 .Lfunc_end3:
 	.size	proc4, .Lfunc_end3-proc4
-
+                                        # -- End function
 	.section	.text.proc5,"ax",@progbits
-	.hidden	proc5
+	.hidden	proc5                   # -- Begin function proc5
 	.globl	proc5
 	.type	proc5,@function
 proc5:                                  # @proc5
@@ -64,9 +64,9 @@ proc5:                                  # @proc5
 	.endfunc
 .Lfunc_end4:
 	.size	proc5, .Lfunc_end4-proc5
-
+                                        # -- End function
 	.section	.text.print_longlong,"ax",@progbits
-	.hidden	print_longlong
+	.hidden	print_longlong          # -- Begin function print_longlong
 	.globl	print_longlong
 	.type	print_longlong,@function
 print_longlong:                         # @print_longlong
@@ -75,10 +75,10 @@ print_longlong:                         # @print_longlong
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 32
-	i32.sub 	$push16=, $pop5, $pop6
+	i32.sub 	$push16=, $pop4, $pop6
 	tee_local	$push15=, $4=, $pop16
 	i32.store	__stack_pointer($pop7), $pop15
 	i32.wrap/i64	$3=, $0
@@ -114,9 +114,9 @@ print_longlong:                         # @print_longlong
 	.endfunc
 .Lfunc_end5:
 	.size	print_longlong, .Lfunc_end5-print_longlong
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -124,10 +124,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push20=, 0
-	i32.const	$push17=, 0
-	i32.load	$push18=, __stack_pointer($pop17)
+	i32.const	$push18=, 0
+	i32.load	$push17=, __stack_pointer($pop18)
 	i32.const	$push19=, 192
-	i32.sub 	$push51=, $pop18, $pop19
+	i32.sub 	$push51=, $pop17, $pop19
 	tee_local	$push50=, $0=, $pop51
 	i32.store	__stack_pointer($pop20), $pop50
 	i32.const	$push0=, 1
@@ -202,14 +202,14 @@ main:                                   # @main
 	i32.const	$push16=, 0
 	call    	exit@FUNCTION, $pop16
 	unreachable
-.LBB6_6:                                # %if.then34
+.LBB6_6:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -247,7 +247,7 @@ main:                                   # @main
 	.size	.L.str.6, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

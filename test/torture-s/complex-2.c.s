@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/complex-2.c"
+	.file	"complex-2.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -19,9 +19,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -39,7 +39,7 @@ main:                                   # @main
 	f64.const	$push7=, 0x1p0
 	f64.ne  	$push3=, $pop0, $pop7
 	br_if   	0, $pop3        # 0: down to label0
-# BB#2:                                 # %if.end26
+# BB#2:                                 # %if.end25
 	i32.const	$push4=, 0
 	call    	exit@FUNCTION, $pop4
 	unreachable
@@ -50,7 +50,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	ag                      # @ag
 	.type	ag,@object
 	.section	.data.ag,"aw",@progbits
@@ -72,6 +72,6 @@ bg:
 	.size	bg, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

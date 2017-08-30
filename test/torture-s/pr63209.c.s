@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr63209.c"
+	.file	"pr63209.c"
 	.section	.text.Predictor,"ax",@progbits
-	.hidden	Predictor
+	.hidden	Predictor               # -- Begin function Predictor
 	.globl	Predictor
 	.type	Predictor,@function
 Predictor:                              # @Predictor
@@ -24,15 +24,15 @@ Predictor:                              # @Predictor
 	i32.shr_u	$push8=, $1, $pop13
 	i32.const	$push12=, 255
 	i32.and 	$push9=, $pop8, $pop12
-	i32.le_s	$push10=, $pop7, $pop9
-	i32.select	$push11=, $pop16, $0, $pop10
+	i32.gt_s	$push10=, $pop7, $pop9
+	i32.select	$push11=, $0, $pop16, $pop10
                                         # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
 	.size	Predictor, .Lfunc_end0-Predictor
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,7 +47,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	main.top,@object        # @main.top
 	.section	.rodata.main.top,"a",@progbits
 	.p2align	2
@@ -57,4 +57,4 @@ main.top:
 	.size	main.top, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

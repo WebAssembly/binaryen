@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/zero-struct-1.c"
+	.file	"zero-struct-1.c"
 	.section	.text.h,"ax",@progbits
-	.hidden	h
+	.hidden	h                       # -- Begin function h
 	.globl	h
 	.type	h,@function
 h:                                      # @h
@@ -22,9 +22,9 @@ h:                                      # @h
 	.endfunc
 .Lfunc_end0:
 	.size	h, .Lfunc_end0-h
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -56,14 +56,14 @@ main:                                   # @main
 # BB#2:                                 # %if.end3
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB1_3:                                # %if.then2
+.LBB1_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	y                       # @y
 	.type	y,@object
 	.section	.bss.y,"aw",@nobits
@@ -91,5 +91,5 @@ ff:
 	.size	ff, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

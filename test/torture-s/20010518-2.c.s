@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010518-2.c"
+	.file	"20010518-2.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,36 +9,36 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push29=, 0
-	i32.const	$push26=, 0
-	i32.load	$push27=, __stack_pointer($pop26)
+	i32.const	$push27=, 0
+	i32.load	$push26=, __stack_pointer($pop27)
 	i32.const	$push28=, 48
-	i32.sub 	$push35=, $pop27, $pop28
+	i32.sub 	$push35=, $pop26, $pop28
 	tee_local	$push34=, $0=, $pop35
 	i32.store	__stack_pointer($pop29), $pop34
-	i32.const	$push0=, 1
-	i32.store16	28($0), $pop0
 	i32.const	$push33=, 2
 	i32.store	24($0), $pop33
-	i32.const	$push1=, 3
-	i32.store16	22($0), $pop1
-	i32.const	$push2=, 4
-	i32.store16	20($0), $pop2
-	i32.const	$push3=, 0
-	i32.store	16($0), $pop3
-	i32.const	$push32=, 0
-	i32.store8	15($0), $pop32
-	i32.const	$push31=, 0
-	i32.store8	14($0), $pop31
-	i32.load16_u	$push4=, 28($0)
-	i32.store16	46($0), $pop4
-	i32.load	$push5=, 24($0)
-	i32.store	40($0), $pop5
-	i32.load16_u	$push6=, 22($0)
-	i32.store16	38($0), $pop6
+	i32.const	$push0=, 1
+	i32.store16	28($0), $pop0
+	i32.load16_u	$push1=, 28($0)
+	i32.store16	46($0), $pop1
+	i32.const	$push2=, 3
+	i32.store16	22($0), $pop2
+	i32.load	$push3=, 24($0)
+	i32.store	40($0), $pop3
+	i32.const	$push4=, 4
+	i32.store16	20($0), $pop4
+	i32.load16_u	$push5=, 22($0)
+	i32.store16	38($0), $pop5
+	i32.const	$push6=, 0
+	i32.store	16($0), $pop6
 	i32.load16_u	$push7=, 20($0)
 	i32.store16	36($0), $pop7
+	i32.const	$push32=, 0
+	i32.store8	15($0), $pop32
 	i32.load	$push8=, 16($0)
 	i32.store	32($0), $pop8
+	i32.const	$push31=, 0
+	i32.store8	14($0), $pop31
 	i32.load8_u	$push9=, 15($0)
 	i32.store8	31($0), $pop9
 	i32.load8_u	$push10=, 14($0)
@@ -81,8 +81,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

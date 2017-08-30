@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960909-1.c"
+	.file	"960909-1.c"
 	.section	.text.ffs,"ax",@progbits
-	.hidden	ffs
+	.hidden	ffs                     # -- Begin function ffs
 	.globl	ffs
 	.type	ffs,@function
 ffs:                                    # @ffs
@@ -12,7 +12,7 @@ ffs:                                    # @ffs
 	block   	
 	i32.eqz 	$push8=, $0
 	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %for.cond.preheader
+# BB#1:                                 # %if.end
 	i32.const	$2=, 1
 	block   	
 	i32.const	$push3=, 1
@@ -43,9 +43,9 @@ ffs:                                    # @ffs
 	.endfunc
 .Lfunc_end0:
 	.size	ffs, .Lfunc_end0-ffs
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -64,9 +64,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -78,8 +78,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

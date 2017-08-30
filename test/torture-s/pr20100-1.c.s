@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr20100-1.c"
+	.file	"pr20100-1.c"
 	.section	.text.frob,"ax",@progbits
-	.hidden	frob
+	.hidden	frob                    # -- Begin function frob
 	.globl	frob
 	.type	frob,@function
 frob:                                   # @frob
@@ -18,7 +18,7 @@ frob:                                   # @frob
 	i32.load8_u	$push3=, e($pop12)
 	i32.const	$push4=, -1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.eq  	$push6=, $0, $pop5
+	i32.eq  	$push6=, $pop5, $0
 	i32.select	$push11=, $pop13, $pop2, $pop6
 	tee_local	$push10=, $0=, $pop11
 	i32.store16	g($pop14), $pop10
@@ -29,9 +29,9 @@ frob:                                   # @frob
 	.endfunc
 .Lfunc_end0:
 	.size	frob, .Lfunc_end0-frob
-
+                                        # -- End function
 	.section	.text.get_n,"ax",@progbits
-	.hidden	get_n
+	.hidden	get_n                   # -- Begin function get_n
 	.globl	get_n
 	.type	get_n,@function
 get_n:                                  # @get_n
@@ -64,7 +64,7 @@ get_n:                                  # @get_n
 	tee_local	$push25=, $2=, $pop26
 	i32.const	$push24=, 1
 	i32.add 	$push4=, $pop25, $pop24
-	i32.eq  	$push3=, $2, $1
+	i32.eq  	$push3=, $1, $2
 	i32.select	$2=, $pop28, $pop4, $pop3
 	i32.const	$push23=, 1
 	i32.add 	$push22=, $3, $pop23
@@ -93,9 +93,9 @@ get_n:                                  # @get_n
 	.endfunc
 .Lfunc_end1:
 	.size	get_n, .Lfunc_end1-get_n
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -116,7 +116,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	g,@object               # @g
 	.section	.bss.g,"aw",@nobits
 	.p2align	1
@@ -140,5 +140,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

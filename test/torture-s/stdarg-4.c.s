@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/stdarg-4.c"
+	.file	"stdarg-4.c"
 	.section	.text.f1i,"ax",@progbits
-	.hidden	f1i
+	.hidden	f1i                     # -- Begin function f1i
 	.globl	f1i
 	.type	f1i,@function
 f1i:                                    # @f1i
@@ -13,35 +13,35 @@ f1i:                                    # @f1i
 	i32.const	$push2=, -8
 	i32.and 	$push17=, $pop1, $pop2
 	tee_local	$push16=, $0=, $pop17
-	i32.load	$push3=, 8($pop16)
+	i32.const	$push8=, 19
+	i32.add 	$push9=, $pop16, $pop8
+	i32.const	$push15=, -8
+	i32.and 	$push10=, $pop9, $pop15
+	f64.load	$push11=, 0($pop10)
+	i32.load	$push3=, 8($0)
 	f64.load	$push4=, 0($0)
 	i32.trunc_s/f64	$push5=, $pop4
 	i32.add 	$push6=, $pop3, $pop5
 	f64.convert_s/i32	$push7=, $pop6
-	i32.const	$push8=, 19
-	i32.add 	$push9=, $0, $pop8
-	i32.const	$push15=, -8
-	i32.and 	$push10=, $pop9, $pop15
-	f64.load	$push11=, 0($pop10)
-	f64.add 	$push12=, $pop7, $pop11
+	f64.add 	$push12=, $pop11, $pop7
 	i32.trunc_s/f64	$push13=, $pop12
 	i32.store	x($pop14), $pop13
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f1i, .Lfunc_end0-f1i
-
+                                        # -- End function
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
 	.param  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push15=, 0
-	i32.load	$push16=, __stack_pointer($pop15)
+	i32.const	$push16=, 0
+	i32.load	$push15=, __stack_pointer($pop16)
 	i32.const	$push17=, 16
-	i32.sub 	$push18=, $pop16, $pop17
+	i32.sub 	$push18=, $pop15, $pop17
 	i32.store	12($pop18), $1
 	i32.const	$push14=, 0
 	i32.const	$push0=, 7
@@ -66,36 +66,37 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
-
+                                        # -- End function
 	.section	.text.f2i,"ax",@progbits
-	.hidden	f2i
+	.hidden	f2i                     # -- Begin function f2i
 	.globl	f2i
 	.type	f2i,@function
 f2i:                                    # @f2i
 	.param  	i32
+	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push10=, 0
-	i32.load	$push5=, 4($0)
-	i32.load	$push4=, 0($0)
-	i32.add 	$push6=, $pop5, $pop4
-	f64.convert_s/i32	$push7=, $pop6
-	i32.const	$push0=, 15
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, -8
-	i32.and 	$push25=, $pop1, $pop2
-	tee_local	$push24=, $0=, $pop25
-	f64.load	$push3=, 0($pop24)
+	i32.const	$push4=, 15
+	i32.add 	$push5=, $0, $pop4
+	i32.const	$push6=, -8
+	i32.and 	$push25=, $pop5, $pop6
+	tee_local	$push24=, $1=, $pop25
+	f64.load	$push7=, 0($pop24)
+	i32.load	$push1=, 4($0)
+	i32.load	$push0=, 0($0)
+	i32.add 	$push2=, $pop1, $pop0
+	f64.convert_s/i32	$push3=, $pop2
 	f64.add 	$push8=, $pop7, $pop3
 	i32.trunc_s/f64	$push9=, $pop8
 	i32.store	y($pop10), $pop9
 	i32.const	$push23=, 0
 	i32.const	$push16=, 27
-	i32.add 	$push17=, $0, $pop16
+	i32.add 	$push17=, $1, $pop16
 	i32.const	$push22=, -8
 	i32.and 	$push18=, $pop17, $pop22
 	f64.load	$push19=, 0($pop18)
-	i32.load	$push11=, 16($0)
-	f64.load	$push12=, 8($0)
+	i32.load	$push11=, 16($1)
+	f64.load	$push12=, 8($1)
 	i32.trunc_s/f64	$push13=, $pop12
 	i32.add 	$push14=, $pop11, $pop13
 	f64.convert_s/i32	$push15=, $pop14
@@ -106,19 +107,19 @@ f2i:                                    # @f2i
 	.endfunc
 .Lfunc_end2:
 	.size	f2i, .Lfunc_end2-f2i
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
 	.param  	i32, i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push22=, 0
-	i32.load	$push23=, __stack_pointer($pop22)
+	i32.const	$push23=, 0
+	i32.load	$push22=, __stack_pointer($pop23)
 	i32.const	$push24=, 16
-	i32.sub 	$push25=, $pop23, $pop24
+	i32.sub 	$push25=, $pop22, $pop24
 	i32.store	12($pop25), $1
 	i32.const	$push10=, 0
 	i32.const	$push4=, 15
@@ -152,9 +153,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
-
+                                        # -- End function
 	.section	.text.f3h,"ax",@progbits
-	.hidden	f3h
+	.hidden	f3h                     # -- Begin function f3h
 	.globl	f3h
 	.type	f3h,@function
 f3h:                                    # @f3h
@@ -169,9 +170,9 @@ f3h:                                    # @f3h
 	.endfunc
 .Lfunc_end4:
 	.size	f3h, .Lfunc_end4-f3h
-
+                                        # -- End function
 	.section	.text.f3,"ax",@progbits
-	.hidden	f3
+	.hidden	f3                      # -- Begin function f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -180,10 +181,10 @@ f3:                                     # @f3
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push35=, 0
-	i32.const	$push32=, 0
-	i32.load	$push33=, __stack_pointer($pop32)
+	i32.const	$push33=, 0
+	i32.load	$push32=, __stack_pointer($pop33)
 	i32.const	$push34=, 16
-	i32.sub 	$push40=, $pop33, $pop34
+	i32.sub 	$push40=, $pop32, $pop34
 	tee_local	$push39=, $2=, $pop40
 	i32.store	__stack_pointer($pop35), $pop39
 	i32.store	12($2), $1
@@ -198,11 +199,11 @@ f3:                                     # @f3
 	block   	
 	block   	
 	block   	
-	br_table 	$0, 4, 0, 1, 3, 2, 4 # 4: down to label1
+	br_table 	$0, 4, 0, 2, 3, 1, 4 # 4: down to label1
                                         # 0: down to label5
-                                        # 1: down to label4
-                                        # 3: down to label2
                                         # 2: down to label3
+                                        # 3: down to label2
+                                        # 1: down to label4
 .LBB5_2:                                # %sw.bb2
 	end_block                       # label5:
 	i32.load	$push42=, 12($2)
@@ -214,28 +215,12 @@ f3:                                     # @f3
 	i32.const	$push31=, 1
 	i32.add 	$1=, $pop30, $pop31
 	br      	3               # 3: down to label1
-.LBB5_3:                                # %sw.bb4
+.LBB5_3:                                # %sw.bb18
 	end_block                       # label4:
-	i32.load	$push44=, 12($2)
-	tee_local	$push43=, $0=, $pop44
-	i32.const	$push21=, 4
-	i32.add 	$push22=, $pop43, $pop21
-	i32.store	12($2), $pop22
-	i32.load	$1=, 0($0)
-	i32.const	$push23=, 8
-	i32.add 	$push24=, $0, $pop23
-	i32.store	12($2), $pop24
-	i32.load	$push25=, 4($0)
-	i32.add 	$push26=, $1, $pop25
-	i32.const	$push27=, 2
-	i32.add 	$1=, $pop26, $pop27
-	br      	2               # 2: down to label1
-.LBB5_4:                                # %sw.bb18
-	end_block                       # label3:
-	i32.load	$push47=, 12($2)
-	tee_local	$push46=, $0=, $pop47
+	i32.load	$push45=, 12($2)
+	tee_local	$push44=, $0=, $pop45
 	i32.const	$push2=, 4
-	i32.add 	$push3=, $pop46, $pop2
+	i32.add 	$push3=, $pop44, $pop2
 	i32.store	12($2), $pop3
 	i32.load	$1=, 0($0)
 	i32.const	$push4=, 16
@@ -247,8 +232,24 @@ f3:                                     # @f3
 	i32.add 	$push9=, $pop7, $pop8
 	i32.load	$push10=, 12($0)
 	i32.add 	$push11=, $pop9, $pop10
-	i32.const	$push45=, 4
-	i32.add 	$1=, $pop11, $pop45
+	i32.const	$push43=, 4
+	i32.add 	$1=, $pop11, $pop43
+	br      	2               # 2: down to label1
+.LBB5_4:                                # %sw.bb4
+	end_block                       # label3:
+	i32.load	$push47=, 12($2)
+	tee_local	$push46=, $0=, $pop47
+	i32.const	$push21=, 4
+	i32.add 	$push22=, $pop46, $pop21
+	i32.store	12($2), $pop22
+	i32.load	$1=, 0($0)
+	i32.const	$push23=, 8
+	i32.add 	$push24=, $0, $pop23
+	i32.store	12($2), $pop24
+	i32.load	$push25=, 4($0)
+	i32.add 	$push26=, $1, $pop25
+	i32.const	$push27=, 2
+	i32.add 	$1=, $pop26, $pop27
 	br      	1               # 1: down to label1
 .LBB5_5:                                # %sw.bb10
 	end_block                       # label2:
@@ -281,9 +282,9 @@ f3:                                     # @f3
 	.endfunc
 .Lfunc_end5:
 	.size	f3, .Lfunc_end5-f3
-
+                                        # -- End function
 	.section	.text.f4,"ax",@progbits
-	.hidden	f4
+	.hidden	f4                      # -- Begin function f4
 	.globl	f4
 	.type	f4,@function
 f4:                                     # @f4
@@ -291,10 +292,10 @@ f4:                                     # @f4
 	.local  	i32, f64, i32
 # BB#0:                                 # %entry
 	i32.const	$push37=, 0
-	i32.const	$push34=, 0
-	i32.load	$push35=, __stack_pointer($pop34)
+	i32.const	$push35=, 0
+	i32.load	$push34=, __stack_pointer($pop35)
 	i32.const	$push36=, 16
-	i32.sub 	$push42=, $pop35, $pop36
+	i32.sub 	$push42=, $pop34, $pop36
 	tee_local	$push41=, $4=, $pop42
 	i32.store	__stack_pointer($pop37), $pop41
 	i32.store	12($4), $1
@@ -338,9 +339,9 @@ f4:                                     # @f4
 	i32.add 	$push48=, $1, $pop10
 	tee_local	$push47=, $0=, $pop48
 	i32.store	12($4), $pop47
-	f64.convert_s/i32	$push12=, $2
 	f64.load	$push11=, 8($1)
-	f64.add 	$3=, $pop12, $pop11
+	f64.convert_s/i32	$push12=, $2
+	f64.add 	$3=, $pop11, $pop12
 .LBB6_4:                                # %sw.epilog
 	end_block                       # label7:
 	i32.const	$push19=, 0
@@ -377,9 +378,9 @@ f4:                                     # @f4
 	.endfunc
 .Lfunc_end6:
 	.size	f4, .Lfunc_end6-f4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -387,10 +388,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push79=, 0
-	i32.const	$push76=, 0
-	i32.load	$push77=, __stack_pointer($pop76)
+	i32.const	$push77=, 0
+	i32.load	$push76=, __stack_pointer($pop77)
 	i32.const	$push78=, 224
-	i32.sub 	$push106=, $pop77, $pop78
+	i32.sub 	$push106=, $pop76, $pop78
 	tee_local	$push105=, $0=, $pop106
 	i32.store	__stack_pointer($pop79), $pop105
 	i32.const	$push83=, 192
@@ -561,14 +562,14 @@ main:                                   # @main
 	i32.store	__stack_pointer($pop82), $pop81
 	i32.const	$push75=, 0
 	return  	$pop75
-.LBB7_13:                               # %if.then32
+.LBB7_13:                               # %if.then
 	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end7:
 	.size	main, .Lfunc_end7-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
@@ -588,5 +589,5 @@ y:
 	.size	y, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

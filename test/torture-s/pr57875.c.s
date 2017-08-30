@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57875.c"
+	.file	"pr57875.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -49,7 +49,7 @@ main:                                   # @main
 	i32.const	$push22=, 0
 	i32.const	$push21=, 0
 	i32.load8_u	$push1=, e($pop21)
-	i32.and 	$push2=, $pop1, $3
+	i32.and 	$push2=, $3, $pop1
 	i32.store8	e($pop22), $pop2
 .LBB0_7:                                # %for.inc
                                         #   in Loop: Header=BB0_2 Depth=1
@@ -91,7 +91,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
@@ -155,5 +155,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

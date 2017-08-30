@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030714-1.c"
+	.file	"20030714-1.c"
 	.section	.text.RenderBox_setStyle,"ax",@progbits
-	.hidden	RenderBox_setStyle
+	.hidden	RenderBox_setStyle      # -- Begin function RenderBox_setStyle
 	.globl	RenderBox_setStyle
 	.type	RenderBox_setStyle,@function
 RenderBox_setStyle:                     # @RenderBox_setStyle
@@ -72,9 +72,9 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	.endfunc
 .Lfunc_end0:
 	.size	RenderBox_setStyle, .Lfunc_end0-RenderBox_setStyle
-
+                                        # -- End function
 	.section	.text.RenderObject_setStyle,"ax",@progbits
-	.hidden	RenderObject_setStyle
+	.hidden	RenderObject_setStyle   # -- Begin function RenderObject_setStyle
 	.globl	RenderObject_setStyle
 	.type	RenderObject_setStyle,@function
 RenderObject_setStyle:                  # @RenderObject_setStyle
@@ -84,9 +84,9 @@ RenderObject_setStyle:                  # @RenderObject_setStyle
 	.endfunc
 .Lfunc_end1:
 	.size	RenderObject_setStyle, .Lfunc_end1-RenderObject_setStyle
-
+                                        # -- End function
 	.section	.text.removeFromSpecialObjects,"ax",@progbits
-	.hidden	removeFromSpecialObjects
+	.hidden	removeFromSpecialObjects # -- Begin function removeFromSpecialObjects
 	.globl	removeFromSpecialObjects
 	.type	removeFromSpecialObjects,@function
 removeFromSpecialObjects:               # @removeFromSpecialObjects
@@ -96,9 +96,9 @@ removeFromSpecialObjects:               # @removeFromSpecialObjects
 	.endfunc
 .Lfunc_end2:
 	.size	removeFromSpecialObjects, .Lfunc_end2-removeFromSpecialObjects
-
+                                        # -- End function
 	.section	.text.RenderBox_isTableCell,"ax",@progbits
-	.hidden	RenderBox_isTableCell
+	.hidden	RenderBox_isTableCell   # -- Begin function RenderBox_isTableCell
 	.globl	RenderBox_isTableCell
 	.type	RenderBox_isTableCell,@function
 RenderBox_isTableCell:                  # @RenderBox_isTableCell
@@ -110,9 +110,9 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 	.endfunc
 .Lfunc_end3:
 	.size	RenderBox_isTableCell, .Lfunc_end3-RenderBox_isTableCell
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -143,7 +143,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.hidden	false                   # @false
 	.type	false,@object
 	.section	.rodata.false,"a",@progbits
@@ -179,5 +179,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20120111-1.c"
+	.file	"20120111-1.c"
 	.section	.text.f0a,"ax",@progbits
-	.hidden	f0a
+	.hidden	f0a                     # -- Begin function f0a
 	.globl	f0a
 	.type	f0a,@function
 f0a:                                    # @f0a
@@ -16,9 +16,9 @@ f0a:                                    # @f0a
 	.endfunc
 .Lfunc_end0:
 	.size	f0a, .Lfunc_end0-f0a
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -40,7 +40,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

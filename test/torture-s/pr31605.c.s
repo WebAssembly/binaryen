@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr31605.c"
+	.file	"pr31605.c"
 	.section	.text.put_field,"ax",@progbits
-	.hidden	put_field
+	.hidden	put_field               # -- Begin function put_field
 	.globl	put_field
 	.type	put_field,@function
 put_field:                              # @put_field
@@ -24,24 +24,21 @@ put_field:                              # @put_field
 	.endfunc
 .Lfunc_end0:
 	.size	put_field, .Lfunc_end0-put_field
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push0=, 1
-	call    	put_field@FUNCTION, $pop1, $pop0
-	call    	abort@FUNCTION
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
-	.functype	abort, void

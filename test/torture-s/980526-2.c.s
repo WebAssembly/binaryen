@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
+	.file	"980526-2.c"
 	.section	.text.do_mknod,"ax",@progbits
-	.hidden	do_mknod
+	.hidden	do_mknod                # -- Begin function do_mknod
 	.globl	do_mknod
 	.type	do_mknod,@function
 do_mknod:                               # @do_mknod
@@ -22,9 +22,9 @@ do_mknod:                               # @do_mknod
 	.endfunc
 .Lfunc_end0:
 	.size	do_mknod, .Lfunc_end0-do_mknod
-
+                                        # -- End function
 	.section	.text.getname,"ax",@progbits
-	.hidden	getname
+	.hidden	getname                 # -- Begin function getname
 	.globl	getname
 	.type	getname,@function
 getname:                                # @getname
@@ -79,9 +79,9 @@ getname:                                # @getname
 	.endfunc
 .Lfunc_end1:
 	.size	getname, .Lfunc_end1-getname
-
+                                        # -- End function
 	.section	.text.sys_mknod,"ax",@progbits
-	.hidden	sys_mknod
+	.hidden	sys_mknod               # -- Begin function sys_mknod
 	.globl	sys_mknod
 	.type	sys_mknod,@function
 sys_mknod:                              # @sys_mknod
@@ -100,9 +100,9 @@ sys_mknod:                              # @sys_mknod
 	.endfunc
 .Lfunc_end2:
 	.size	sys_mknod, .Lfunc_end2-sys_mknod
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -116,7 +116,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	abort, void

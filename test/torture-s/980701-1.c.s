@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980701-1.c"
+	.file	"980701-1.c"
 	.section	.text.ns_name_skip,"ax",@progbits
-	.hidden	ns_name_skip
+	.hidden	ns_name_skip            # -- Begin function ns_name_skip
 	.globl	ns_name_skip
 	.type	ns_name_skip,@function
 ns_name_skip:                           # @ns_name_skip
@@ -15,9 +15,9 @@ ns_name_skip:                           # @ns_name_skip
 	.endfunc
 .Lfunc_end0:
 	.size	ns_name_skip, .Lfunc_end0-ns_name_skip
-
+                                        # -- End function
 	.section	.text.dn_skipname,"ax",@progbits
-	.hidden	dn_skipname
+	.hidden	dn_skipname             # -- Begin function dn_skipname
 	.globl	dn_skipname
 	.type	dn_skipname,@function
 dn_skipname:                            # @dn_skipname
@@ -30,9 +30,9 @@ dn_skipname:                            # @dn_skipname
 	.endfunc
 .Lfunc_end1:
 	.size	dn_skipname, .Lfunc_end1-dn_skipname
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -52,7 +52,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -62,6 +62,6 @@ a:
 	.size	a, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32
