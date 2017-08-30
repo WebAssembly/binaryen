@@ -326,29 +326,54 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   Pass* create() override { return new BinaryenTrapMode(context); }
 
   void visitUnary(Unary* curr) {
+    switch (curr->op) {
+    case UnaryOp::TruncSFloat32ToInt32:
+    case UnaryOp::TruncSFloat64ToInt32:
+      replaceCurrent(makeTrappingFloatToInt32(true, curr->value, context));
+      break;
+
+    case UnaryOp::TruncUFloat32ToInt32:
+    case UnaryOp::TruncUFloat64ToInt32:
+      replaceCurrent(makeTrappingFloatToInt32(false, curr->value, context));
+      break;
+
+    case UnaryOp::TruncSFloat32ToInt64:
+    case UnaryOp::TruncSFloat64ToInt64:
+      replaceCurrent(makeTrappingFloatToInt64(true, curr->value, context));
+      break;
+
+    case UnaryOp::TruncUFloat32ToInt64:
+    case UnaryOp::TruncUFloat64ToInt64:
+      replaceCurrent(makeTrappingFloatToInt64(false, curr->value, context));
+      break;
+
+    default:
+      break;
+    }
   }
+
   void visitBinary(Binary* curr) {
     switch (curr->op) {
-      case BinaryOp::RemSInt32:
-      case BinaryOp::RemUInt32:
-      case BinaryOp::DivSInt32:
-      case BinaryOp::DivUInt32:
-        replaceCurrent(
-          makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
-        );
-        break;
+    case BinaryOp::RemSInt32:
+    case BinaryOp::RemUInt32:
+    case BinaryOp::DivSInt32:
+    case BinaryOp::DivUInt32:
+      replaceCurrent(
+        makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
+      );
+      break;
 
-      case BinaryOp::RemSInt64:
-      case BinaryOp::RemUInt64:
-      case BinaryOp::DivSInt64:
-      case BinaryOp::DivUInt64:
-        replaceCurrent(
-          makeTrappingI64Binary(curr->op, curr->left, curr->right, context)
-        );
-        break;
+    case BinaryOp::RemSInt64:
+    case BinaryOp::RemUInt64:
+    case BinaryOp::DivSInt64:
+    case BinaryOp::DivUInt64:
+      replaceCurrent(
+        makeTrappingI64Binary(curr->op, curr->left, curr->right, context)
+      );
+      break;
 
-      default:
-        break;
+    default:
+      break;
     }
   }
 };
