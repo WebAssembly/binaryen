@@ -157,12 +157,14 @@ Expression* makeTrappingI64Binary(
 struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   bool isFunctionParallel() override { return false; }
 
-  Pass* create() override { return new BinaryenTrapMode; }
+  FloatTrapContext context;
+  BinaryenTrapMode(FloatTrapContext context) : context(context) {}
+
+  Pass* create() override { return new BinaryenTrapMode(context); }
 
   void visitUnary(Unary* curr) {
   }
   void visitBinary(Binary* curr) {
-    FloatTrapContext context(FloatTrapMode::Clamp, *getModule());
     replaceCurrent(
       makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
     );

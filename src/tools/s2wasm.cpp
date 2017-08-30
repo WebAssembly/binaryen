@@ -145,8 +145,9 @@ int main(int argc, const char *argv[]) {
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
 
-  PassRunner runner(&(linker.getOutput().wasm));
-  runner.add<BinaryenTrapMode>();
+  Module* wasm = &(linker.getOutput().wasm);
+  PassRunner runner(wasm);
+  runner.add<BinaryenTrapMode>(FloatTrapContext(FloatTrapMode::Clamp, *wasm));
   runner.run();
 
   for (const auto& m : archiveLibraries) {
