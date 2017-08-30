@@ -56,9 +56,10 @@ Name I64S_REM("i64s-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
+static std::map<Name, Function*> addedFunctions;
+
 void ensureBinaryFunc(FloatTrapContext& context,
                       Name name, BinaryOp op, WasmType type) {
-  static std::set<Name> addedFunctions;
   if (addedFunctions.count(name) != 0) {
     return;
   }
@@ -93,7 +94,6 @@ void ensureBinaryFunc(FloatTrapContext& context,
       result
     );
   }
-  addedFunctions.insert(name);
   auto func = new Function;
   func->name = name;
   func->params.push_back(type);
@@ -106,7 +106,7 @@ void ensureBinaryFunc(FloatTrapContext& context,
     builder.makeConst(zeroLit),
     result
   );
-  context.wasm.addFunction(func);
+  addedFunctions[name] = func;
 }
 
 // Some binary opts might trap, so emit them safely if necessary
@@ -187,6 +187,12 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
     }
   }
 };
+
+void addAddedFunctions(Module& wasm) {
+  for (const auto& pair : addedFunctions) {
+    wasm.addFunction(pair.second);
+  }
+}
 
 } // namespace wasm
 

@@ -149,6 +149,7 @@ int main(int argc, const char *argv[]) {
   PassRunner runner(wasm);
   runner.add<BinaryenTrapMode>(FloatTrapContext(FloatTrapMode::Clamp, *wasm));
   runner.run();
+  addAddedFunctions(*wasm);
 
   for (const auto& m : archiveLibraries) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
