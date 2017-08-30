@@ -253,6 +253,70 @@ Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
   return ret;
 }
 
+Expression* makeTrappingFloatToInt64(bool signed_, Expression* value, FloatTrapContext context) {
+  if (context.trapMode == FloatTrapMode::Allow) {
+    auto ret = context.allocator.alloc<Unary>();
+    ret->value = value;
+    bool isF64 = ret->value->type == f64;
+    if (signed_) {
+      ret->op = isF64 ? TruncSFloat64ToInt64 : TruncSFloat32ToInt64;
+    } else {
+      ret->op = isF64 ? TruncUFloat64ToInt64 : TruncUFloat32ToInt64;
+    }
+    ret->type = WasmType::i64;
+    return ret;
+  }
+  // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
+  // First, normalize input to f64
+  auto input = ensureDouble(value, context.allocator);
+  // There is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
+  Call *ret = context.allocator.alloc<Call>();
+  ret->target = F64_TO_INT64;
+  ret->operands.push_back(input);
+  ret->type = i64;
+  static bool added = false;
+  if (!added) {
+    Builder& builder = context.builder;
+    added = true;
+    auto func = new Function;
+    func->name = ret->target;
+    func->params.push_back(f64);
+    func->result = i64;
+    func->body = builder.makeUnary(TruncSFloat64ToInt64,
+      builder.makeGetLocal(0, f64)
+    );
+    // too small
+    func->body = builder.makeIf(
+      builder.makeBinary(LeFloat64,
+        builder.makeGetLocal(0, f64),
+        builder.makeConst(Literal(double(std::numeric_limits<int64_t>::min()) - 1))
+      ),
+      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))),
+      func->body
+    );
+    // too big
+    func->body = builder.makeIf(
+      builder.makeBinary(GeFloat64,
+        builder.makeGetLocal(0, f64),
+        builder.makeConst(Literal(double(std::numeric_limits<int64_t>::max()) + 1))
+      ),
+      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything out of range => to the min
+      func->body
+    );
+    // nan
+    func->body = builder.makeIf(
+      builder.makeBinary(NeFloat64,
+        builder.makeGetLocal(0, f64),
+        builder.makeGetLocal(0, f64)
+      ),
+      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything invalid => to the min
+      func->body
+    );
+    context.wasm.addFunction(func);
+  }
+  return ret;
+}
+
 struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   bool isFunctionParallel() override { return false; }
 

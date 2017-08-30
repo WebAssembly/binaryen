@@ -699,69 +699,6 @@ private:
     return wasm::ensureDouble(expr, allocator);
   }
 
-  Expression* makeTrappingFloatToInt64(bool signed_, Expression* value) {
-    if (trapMode == FloatTrapMode::Allow) {
-      auto ret = allocator.alloc<Unary>();
-      ret->value = value;
-      bool isF64 = ret->value->type == f64;
-      if (signed_) {
-        ret->op = isF64 ? TruncSFloat64ToInt64 : TruncSFloat32ToInt64;
-      } else {
-        ret->op = isF64 ? TruncUFloat64ToInt64 : TruncUFloat32ToInt64;
-      }
-      ret->type = WasmType::i64;
-      return ret;
-    }
-    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-    // First, normalize input to f64
-    auto input = ensureDouble(value);
-    // There is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
-    Call *ret = allocator.alloc<Call>();
-    ret->target = F64_TO_INT64;
-    ret->operands.push_back(input);
-    ret->type = i64;
-    static bool added = false;
-    if (!added) {
-      added = true;
-      auto func = new Function;
-      func->name = ret->target;
-      func->params.push_back(f64);
-      func->result = i64;
-      func->body = builder.makeUnary(TruncSFloat64ToInt64,
-        builder.makeGetLocal(0, f64)
-      );
-      // too small
-      func->body = builder.makeIf(
-        builder.makeBinary(LeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int64_t>::min()) - 1))
-        ),
-        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))),
-        func->body
-      );
-      // too big
-      func->body = builder.makeIf(
-        builder.makeBinary(GeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int64_t>::max()) + 1))
-        ),
-        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything out of range => to the min
-        func->body
-      );
-      // nan
-      func->body = builder.makeIf(
-        builder.makeBinary(NeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeGetLocal(0, f64)
-        ),
-        builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything invalid => to the min
-        func->body
-      );
-      wasm.addFunction(func);
-    }
-    return ret;
-  }
-
   Expression* truncateToInt32(Expression* value) {
     if (value->type == i64) return builder.makeUnary(UnaryOp::WrapInt64, value);
     // either i32, or a call_import whose type we don't know yet (but would be legalized to i32 anyhow)
@@ -2006,8 +1943,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
                 if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
                 if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
-                if (name == I64_F2S || name == I64_D2S) return makeTrappingFloatToInt64(true /* signed */, value);
-                if (name == I64_F2U || name == I64_D2U) return makeTrappingFloatToInt64(false /* unsigned */, value);
+                if (name == I64_F2S || name == I64_D2S) return makeTrappingFloatToInt64(true /* signed */, value, trapContext);
+                if (name == I64_F2U || name == I64_D2U) return makeTrappingFloatToInt64(false /* unsigned */, value, trapContext);
                 if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
