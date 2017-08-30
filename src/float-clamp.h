@@ -74,10 +74,8 @@ void ensureBinaryFunc(FloatTrapContext& context,
   UnaryOp eqZOp =      is32Bit ? EqZInt32  : EqZInt64;
   Literal minLit = is32Bit ? Literal(std::numeric_limits<int32_t>::min())
                            : Literal(std::numeric_limits<int64_t>::min());
-  Literal negLit = is32Bit ? Literal(int32_t(-1))
-                           : Literal(int64_t(-1));
-  Literal zeroLit = is32Bit ? Literal(int32_t(0))
-                            : Literal(int64_t(0));
+  Literal negLit = is32Bit ? Literal(int32_t(-1)) : Literal(int64_t(-1));
+  Literal zeroLit = is32Bit ? Literal(int32_t(0)) : Literal(int64_t(0));
   if (op == divSIntOp) {
     // guard against signed division overflow
     result = builder.makeIf(
@@ -165,9 +163,28 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   void visitUnary(Unary* curr) {
   }
   void visitBinary(Binary* curr) {
-    replaceCurrent(
-      makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
-    );
+    switch (curr->op) {
+      case BinaryOp::RemSInt32:
+      case BinaryOp::RemUInt32:
+      case BinaryOp::DivSInt32:
+      case BinaryOp::DivUInt32:
+        replaceCurrent(
+          makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
+        );
+        break;
+
+      case BinaryOp::RemSInt64:
+      case BinaryOp::RemUInt64:
+      case BinaryOp::DivSInt64:
+      case BinaryOp::DivUInt64:
+        replaceCurrent(
+          makeTrappingI64Binary(curr->op, curr->left, curr->right, context)
+        );
+        break;
+
+      default:
+        break;
+    }
   }
 };
 
