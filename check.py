@@ -701,9 +701,6 @@ def run_emscripten_tests():
 # Run all the tests
 run_help_tests()
 run_wasm_opt_tests()
-s2wasm.test_s2wasm()
-s2wasm.test_linker()
-wasm2asm.test_wasm2asm()
 run_asm2wasm_tests()
 run_wasm_dis_tests()
 run_wasm_merge_tests()
@@ -711,6 +708,9 @@ run_ctor_eval_tests()
 run_spec_tests()
 if MOZJS:
   run_binaryen_js_tests()
+s2wasm.test_s2wasm()
+s2wasm.test_linker()
+wasm2asm.test_wasm2asm()
 run_validator_tests()
 if options.torture and options.test_waterfall:
   run_torture_tests()
