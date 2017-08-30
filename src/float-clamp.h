@@ -317,6 +317,13 @@ Expression* makeTrappingFloatToInt64(bool signed_, Expression* value, FloatTrapC
   return ret;
 }
 
+void addAddedFunctions(Module& wasm) {
+  for (const auto& pair : addedFunctions) {
+    wasm.addFunction(pair.second);
+  }
+  addedFunctions.clear();
+}
+
 struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   bool isFunctionParallel() override { return false; }
 
@@ -376,14 +383,11 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
       break;
     }
   }
-};
 
-void addAddedFunctions(Module& wasm) {
-  for (const auto& pair : addedFunctions) {
-    wasm.addFunction(pair.second);
+  void visitModule(Module* curr) {
+    addAddedFunctions(*curr);
   }
-  addedFunctions.clear();
-}
+};
 
 } // namespace wasm
 
