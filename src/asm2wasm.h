@@ -695,115 +695,8 @@ private:
     return ret;
   }
 
-  // converts an f32 to an f64 if necessary
   Expression* ensureDouble(Expression* expr) {
-    if (expr->type == f32) {
-      auto conv = allocator.alloc<Unary>();
-      conv->op = PromoteFloat32;
-      conv->value = expr;
-      conv->type = WasmType::f64;
-      return conv;
-    }
-    assert(expr->type == f64);
-    return expr;
-  }
-
-  // Some conversions might trap, so emit them safely if necessary
-  Expression* makeTrappingFloatToInt32(bool signed_, Expression* value) {
-    if (trapMode == FloatTrapMode::Allow) {
-      auto ret = allocator.alloc<Unary>();
-      ret->value = value;
-      bool isF64 = ret->value->type == f64;
-      if (signed_) {
-        ret->op = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
-      } else {
-        ret->op = isF64 ? TruncUFloat64ToInt32 : TruncUFloat32ToInt32;
-      }
-      ret->type = WasmType::i32;
-      return ret;
-    }
-    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-    // We can handle this in one of two ways: clamping, which is fast, or JS, which
-    // is precisely like JS but in order to do that we do a slow ffi
-    if (trapMode == FloatTrapMode::JS) {
-      // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-      CallImport *ret = allocator.alloc<CallImport>();
-      ret->target = F64_TO_INT;
-      ret->operands.push_back(ensureDouble(value));
-      ret->type = i32;
-      static bool addedImport = false;
-      if (!addedImport) {
-        addedImport = true;
-        auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
-        import->name = F64_TO_INT;
-        import->module = ASM2WASM;
-        import->base = F64_TO_INT;
-        import->functionType = ensureFunctionType("id", &wasm)->name;
-        import->kind = ExternalKind::Function;
-        wasm.addImport(import);
-      }
-      return ret;
-    }
-    assert(trapMode == FloatTrapMode::Clamp);
-    WasmType type = value->type;
-    bool isF64 = type == f64;
-    Name name = isF64 ? F64_TO_INT : F32_TO_INT;
-    UnaryOp truncOp = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
-    BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
-    BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
-    BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
-    int32_t iMin = std::numeric_limits<int32_t>::min();
-    int32_t iMax = std::numeric_limits<int32_t>::max();
-    Literal fMin = isF64 ? Literal(double(iMin) - 1)
-                         : Literal( float(iMin) - 1);
-    Literal fMax = isF64 ? Literal(double(iMax) + 1)
-                         : Literal( float(iMax) + 1);
-    Call *ret = allocator.alloc<Call>();
-    ret->target = name;
-    ret->operands.push_back(value);
-    ret->type = i32;
-    static std::set<Name> addedFunctions;
-    if (addedFunctions.count(name) == 0) {
-      addedFunctions.insert(name);
-      auto func = new Function;
-      func->name = name;
-      func->params.push_back(type);
-      func->result = i32;
-      func->body = builder.makeUnary(truncOp,
-        builder.makeGetLocal(0, type)
-      );
-      // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
-      func->body = builder.makeIf(
-        builder.makeBinary(leOp,
-          builder.makeGetLocal(0, type),
-          builder.makeConst(fMin)
-        ),
-        builder.makeConst(Literal(iMin)),
-        func->body
-      );
-      // too big XXX see above
-      func->body = builder.makeIf(
-        builder.makeBinary(geOp,
-          builder.makeGetLocal(0, type),
-          builder.makeConst(fMax)
-        ),
-        // NB: min here as well. anything out of range => to the min
-        builder.makeConst(Literal(iMin)),
-        func->body
-      );
-      // nan
-      func->body = builder.makeIf(
-        builder.makeBinary(neOp,
-          builder.makeGetLocal(0, type),
-          builder.makeGetLocal(0, type)
-        ),
-        // NB: min here as well. anything invalid => to the min
-        builder.makeConst(Literal(iMin)),
-        func->body
-      );
-      wasm.addFunction(func);
-    }
-    return ret;
+    return wasm::ensureDouble(expr, allocator);
   }
 
   Expression* makeTrappingFloatToInt64(bool signed_, Expression* value) {
@@ -1337,7 +1230,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
           switch (old) {
-            case i32: replaceCurrent(parent->makeTrappingFloatToInt32(true /* signed, asm.js ffi */, curr)); break;
+            case i32: replaceCurrent(makeTrappingFloatToInt32(true /* signed, asm.js ffi */, curr, parent->trapContext)); break;
             case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
             case none: {
               // this function returns a value, but we are not using it, so it must be dropped.
@@ -1866,7 +1759,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
           // if we have an unsigned coercion on us, it is an unsigned op
-          return makeTrappingFloatToInt32(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]));
+          return makeTrappingFloatToInt32(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]), trapContext);
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();

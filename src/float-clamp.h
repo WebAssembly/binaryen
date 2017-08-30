@@ -21,6 +21,7 @@
 #ifndef wasm_float_clamp_h
 #define wasm_float_clamp_h
 
+#include "asm_v_wasm.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "wasm.h"
@@ -150,6 +151,106 @@ Expression* makeTrappingI64Binary(
   call->type = i64;
   ensureBinaryFunc(context, call->target, op, i64);
   return call;
+}
+
+  // Some conversions might trap, so emit them safely if necessary
+Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
+                                     FloatTrapContext context) {
+  if (context.trapMode == FloatTrapMode::Allow) {
+    auto ret = context.allocator.alloc<Unary>();
+    ret->value = value;
+    bool isF64 = ret->value->type == f64;
+    if (signed_) {
+      ret->op = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+    } else {
+      ret->op = isF64 ? TruncUFloat64ToInt32 : TruncUFloat32ToInt32;
+    }
+    ret->type = WasmType::i32;
+    return ret;
+  }
+  // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
+  // We can handle this in one of two ways: clamping, which is fast, or JS, which
+  // is precisely like JS but in order to do that we do a slow ffi
+  if (context.trapMode == FloatTrapMode::JS) {
+    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
+    CallImport *ret = context.allocator.alloc<CallImport>();
+    ret->target = F64_TO_INT;
+    ret->operands.push_back(ensureDouble(value, context.allocator));
+    ret->type = i32;
+    static bool addedImport = false;
+    if (!addedImport) {
+      addedImport = true;
+      auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
+      import->name = F64_TO_INT;
+      import->module = ASM2WASM;
+      import->base = F64_TO_INT;
+      import->functionType = ensureFunctionType("id", &context.wasm)->name;
+      import->kind = ExternalKind::Function;
+      context.wasm.addImport(import);
+    }
+    return ret;
+  }
+  assert(context.trapMode == FloatTrapMode::Clamp);
+  WasmType type = value->type;
+  bool isF64 = type == f64;
+  Name name = isF64 ? F64_TO_INT : F32_TO_INT;
+  UnaryOp truncOp = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+  BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
+  BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
+  BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
+  int32_t iMin = std::numeric_limits<int32_t>::min();
+  int32_t iMax = std::numeric_limits<int32_t>::max();
+  Literal fMin = isF64 ? Literal(double(iMin) - 1)
+                       : Literal( float(iMin) - 1);
+  Literal fMax = isF64 ? Literal(double(iMax) + 1)
+                       : Literal( float(iMax) + 1);
+  Call *ret = context.allocator.alloc<Call>();
+  ret->target = name;
+  ret->operands.push_back(value);
+  ret->type = i32;
+  static std::set<Name> local_addedFunctions;
+  if (local_addedFunctions.count(name) == 0) {
+    Builder& builder = context.builder;
+    local_addedFunctions.insert(name);
+    auto func = new Function;
+    func->name = name;
+    func->params.push_back(type);
+    func->result = i32;
+    func->body = builder.makeUnary(truncOp,
+      builder.makeGetLocal(0, type)
+    );
+    // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
+    func->body = builder.makeIf(
+      builder.makeBinary(leOp,
+        builder.makeGetLocal(0, type),
+        builder.makeConst(fMin)
+      ),
+      builder.makeConst(Literal(iMin)),
+      func->body
+    );
+    // too big XXX see above
+    func->body = builder.makeIf(
+      builder.makeBinary(geOp,
+        builder.makeGetLocal(0, type),
+        builder.makeConst(fMax)
+      ),
+      // NB: min here as well. anything out of range => to the min
+      builder.makeConst(Literal(iMin)),
+      func->body
+    );
+    // nan
+    func->body = builder.makeIf(
+      builder.makeBinary(neOp,
+        builder.makeGetLocal(0, type),
+        builder.makeGetLocal(0, type)
+      ),
+      // NB: min here as well. anything invalid => to the min
+      builder.makeConst(Literal(iMin)),
+      func->body
+    );
+    context.wasm.addFunction(func);
+  }
+  return ret;
 }
 
 struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {

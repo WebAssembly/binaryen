@@ -70,6 +70,9 @@ FunctionType* sigToFunctionType(std::string sig);
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm);
 
+// converts an f32 to an f64 if necessary
+Expression* ensureDouble(Expression* expr, MixedArena& allocator);
+
 } // namespace wasm
 
 #endif // wasm_asm_v_wasm_h
