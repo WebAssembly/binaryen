@@ -68,8 +68,8 @@
   (nop)
   (drop
    (i32.add
-    (unreachable)
     (i32.const 14)
+    (unreachable)
    )
   )
   (nop)
