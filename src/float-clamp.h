@@ -328,7 +328,9 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   bool isFunctionParallel() override { return false; }
 
   FloatTrapContext context;
-  BinaryenTrapMode(FloatTrapContext context) : context(context) {}
+  BinaryenTrapMode(FloatTrapContext context) : context(context) {
+    name = "binaryen-trap-mode";
+  }
 
   Pass* create() override { return new BinaryenTrapMode(context); }
 

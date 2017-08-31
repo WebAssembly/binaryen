@@ -1,5 +1,4 @@
 (module
- (type $FUNCSIG$id (func (param f64) (result i32)))
  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
  (type $FUNCSIG$vf (func (param f32)))
  (type $FUNCSIG$vi (func (param i32)))
@@ -8,6 +7,7 @@
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $FUNCSIG$dd (func (param f64) (result f64)))
  (type $FUNCSIG$i (func (result i32)))
+ (type $FUNCSIG$id (func (param f64) (result i32)))
  (import "global" "NaN" (global $t$asm2wasm$import f64))
  (import "global" "Infinity" (global $u$asm2wasm$import f64))
  (import "env" "tempDoublePtr" (global $tempDoublePtr$asm2wasm$import i32))
@@ -19,8 +19,8 @@
  (import "env" "h" (func $h (param i32)))
  (import "env" "return_int" (func $return_int (result i32)))
  (import "env" "emscripten_log" (func $emscripten_log))
- (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
+ (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 25 25 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
