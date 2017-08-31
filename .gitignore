@@ -26,7 +26,6 @@ actual.out
 example.o
 split.wast
 trace.cpp
-test/local-revision
 test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
 test/wasm-install/
