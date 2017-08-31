@@ -76,8 +76,10 @@ def test_asm2wasm():
           old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
           try:
             os.environ['BINARYEN_PASS_DEBUG'] = '1'
+            print "With BINARYEN_PASS_DEBUG=1:"
             do_asm2wasm_test()
             del os.environ['BINARYEN_PASS_DEBUG']
+            print "With BINARYEN_PASS_DEBUG disabled:"
             do_asm2wasm_test()
           finally:
             if old_pass_debug is not None:
