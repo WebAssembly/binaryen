@@ -111,45 +111,43 @@ void ensureBinaryFunc(FloatTrapContext& context,
 }
 
 // Some binary opts might trap, so emit them safely if necessary
-Expression* makeTrappingI32Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext& context) {
+Expression* makeTrappingI32Binary(Binary* curr, FloatTrapContext& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
-    return context.builder.makeBinary(op, left, right);
+    return curr;
   }
   // the wasm operation might trap if done over 0, so generate a safe call
   auto *call = context.allocator.alloc<Call>();
-  switch (op) {
+  switch (curr->op) {
     case BinaryOp::RemSInt32: call->target = I32S_REM; break;
     case BinaryOp::RemUInt32: call->target = I32U_REM; break;
     case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
     case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
-    default: return context.builder.makeBinary(op, left, right);
+    default: return curr;
   }
-  call->operands.push_back(left);
-  call->operands.push_back(right);
+  call->operands.push_back(curr->left);
+  call->operands.push_back(curr->right);
   call->type = i32;
-  ensureBinaryFunc(context, call->target, op, i32);
+  ensureBinaryFunc(context, call->target, curr->op, i32);
   return call;
 }
 
-Expression* makeTrappingI64Binary(
-    BinaryOp op, Expression* left, Expression* right, FloatTrapContext& context) {
+Expression* makeTrappingI64Binary(Binary* curr, FloatTrapContext& context) {
   if (context.trapMode == FloatTrapMode::Allow) {
-    return context.builder.makeBinary(op, left, right);
+    return curr;
   }
   // wasm operation might trap if done over 0, so generate a safe call
   auto *call = context.allocator.alloc<Call>();
-  switch (op) {
+  switch (curr->op) {
     case BinaryOp::RemSInt64: call->target = I64S_REM; break;
     case BinaryOp::RemUInt64: call->target = I64U_REM; break;
     case BinaryOp::DivSInt64: call->target = I64S_DIV; break;
     case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
     default: WASM_UNREACHABLE();
   }
-  call->operands.push_back(left);
-  call->operands.push_back(right);
+  call->operands.push_back(curr->left);
+  call->operands.push_back(curr->right);
   call->type = i64;
-  ensureBinaryFunc(context, call->target, op, i64);
+  ensureBinaryFunc(context, call->target, curr->op, i64);
   return call;
 }
 
@@ -369,18 +367,14 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
     case BinaryOp::RemUInt32:
     case BinaryOp::DivSInt32:
     case BinaryOp::DivUInt32:
-      replaceCurrent(
-        makeTrappingI32Binary(curr->op, curr->left, curr->right, context)
-      );
+      replaceCurrent(makeTrappingI32Binary(curr, context));
       break;
 
     case BinaryOp::RemSInt64:
     case BinaryOp::RemUInt64:
     case BinaryOp::DivSInt64:
     case BinaryOp::DivUInt64:
-      replaceCurrent(
-        makeTrappingI64Binary(curr->op, curr->left, curr->right, context)
-      );
+      replaceCurrent(makeTrappingI64Binary(curr, context));
       break;
 
     default:
