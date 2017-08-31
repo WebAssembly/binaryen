@@ -327,14 +327,15 @@ void addAddedFunctions(Module& wasm) {
 struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   bool isFunctionParallel() override { return false; }
 
-  FloatTrapContext context;
-  BinaryenTrapMode(FloatTrapContext context) : context(context) {
+  FloatTrapMode mode;
+  BinaryenTrapMode(FloatTrapMode mode) : mode(mode) {
     name = "binaryen-trap-mode";
   }
 
-  Pass* create() override { return new BinaryenTrapMode(context); }
+  Pass* create() override { return new BinaryenTrapMode(mode); }
 
   void visitUnary(Unary* curr) {
+    FloatTrapContext context(mode, *getModule());
     switch (curr->op) {
     case UnaryOp::TruncSFloat32ToInt32:
     case UnaryOp::TruncSFloat64ToInt32:
@@ -362,6 +363,7 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
   }
 
   void visitBinary(Binary* curr) {
+    FloatTrapContext context(mode, *getModule());
     switch (curr->op) {
     case BinaryOp::RemSInt32:
     case BinaryOp::RemUInt32:

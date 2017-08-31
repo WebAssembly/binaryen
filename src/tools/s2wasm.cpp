@@ -166,7 +166,7 @@ int main(int argc, const char *argv[]) {
 
   Module* wasm = &(linker.getOutput().wasm);
   PassRunner runner(wasm);
-  runner.add<BinaryenTrapMode>(FloatTrapContext(trapMode, *wasm));
+  runner.add<BinaryenTrapMode>(trapMode);
   runner.run();
 
   for (const auto& m : archiveLibraries) {
