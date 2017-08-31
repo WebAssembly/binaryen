@@ -1691,10 +1691,22 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
           // if we have an unsigned coercion on us, it is an unsigned op
+          Expression* expr = process(ast[2][2]);
           bool isSigned = !isParentUnsignedCoercion(astStackHelper.getParent());
-          UnaryOp op = isSigned ? UnaryOp::TruncSFloat64ToInt32
-                                : UnaryOp::TruncUFloat64ToInt32;
-          return builder.makeUnary(op, process(ast[2][2]));
+          bool isF64 = expr->type == f64;
+          UnaryOp op;
+          if (isSigned && isF64) {
+            op = UnaryOp::TruncSFloat64ToInt32;
+          } else if (isSigned && !isF64) {
+            op = UnaryOp::TruncSFloat32ToInt32;
+          } else if (!isSigned && isF64) {
+            op = UnaryOp::TruncUFloat64ToInt32;
+          } else if (!isSigned && !isF64) {
+            op = UnaryOp::TruncUFloat32ToInt32;
+          } else {
+            WASM_UNREACHABLE();
+          }
+          return builder.makeUnary(op, expr);
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
