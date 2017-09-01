@@ -2,6 +2,7 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$d (func (result f64)))
+ (import "env" "memBase" (global $import$global0 i32))
  (memory $0 1024 1024)
  (func $nada (type $FUNCSIG$v)
   (nop)

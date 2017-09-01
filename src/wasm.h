@@ -770,6 +770,7 @@ public:
 
   void removeImport(Name name);
   void removeExport(Name name);
+  void removeFunction(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

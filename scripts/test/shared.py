@@ -163,6 +163,7 @@ WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
+WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]
@@ -188,12 +189,20 @@ if options.valgrind:
 os.environ['BINARYEN'] = os.getcwd()
 
 
+def get_platform():
+  return {'linux2': 'linux',
+          'darwin': 'mac',
+          'win32': 'windows',
+          'cygwin': 'windows'}[sys.platform]
+
+
+def has_shell_timeout():
+  return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
+
+
 def fetch_waterfall():
   rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
-  buildername = {'linux2': 'linux',
-                 'darwin': 'mac',
-                 'win32': 'windows',
-                 'cygwin': 'windows'}[sys.platform]
+  buildername = get_platform()
   local_rev_path = os.path.join(WATERFALL_BUILD_DIR, 'local-revision')
   if os.path.exists(local_rev_path):
     with open(local_rev_path) as f:

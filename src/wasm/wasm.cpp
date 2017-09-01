@@ -716,6 +716,16 @@ void Module::removeExport(Name name) {
   exportsMap.erase(name);
 }
 
+void Module::removeFunction(Name name) {
+  for (size_t i = 0; i < functions.size(); i++) {
+    if (functions[i]->name == name) {
+      functions.erase(functions.begin() + i);
+      break;
+    }
+  }
+  functionsMap.erase(name);
+}
+
   // TODO: remove* for other elements
 
 void Module::updateMaps() {
