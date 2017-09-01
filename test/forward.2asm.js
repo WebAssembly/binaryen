@@ -12,10 +12,18 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
- function add(x, y) {
-  x = x | 0;
-  y = y | 0;
-  return x + y | 0 | 0;
+ function even(n) {
+  n = n | 0;
+  var $$1 = 0;
+  if ((n | 0) == (0 | 0)) $$1 = 1; else $$1 = odd(n - 1 | 0 | 0) | 0;
+  return $$1 | 0;
+ }
+ 
+ function odd(n) {
+  n = n | 0;
+  var $$1 = 0;
+  if ((n | 0) == (0 | 0)) $$1 = 0; else $$1 = even(n - 1 | 0 | 0) | 0;
+  return $$1 | 0;
  }
  
  function __wasm_ctz_i32(x) {
@@ -56,7 +64,8 @@ function asmFunc(global, env, buffer) {
  }
  
  return {
-  add: add
+  even: even, 
+  odd: odd
  };
 }
 
