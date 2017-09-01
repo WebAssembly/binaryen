@@ -19,6 +19,13 @@
 // This is helpful for fuzzing.
 //
 
+/*
+memory too
+high chance for set at start of loop
+  high chance of get of a set local in the scope of that scope
+    high chance of a tee in that case => loop var
+*/
+
 #include <wasm-builder.h>
 
 namespace wasm {
@@ -132,6 +139,7 @@ private:
 
   void build() {
     setupMemory();
+    setupTable();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       addFunction();
@@ -142,12 +150,23 @@ private:
     if (DE_NAN) {
       addDeNanSupport();
     }
+    finalizeTable();
   }
 
   void setupMemory() {
     wasm.memory.exists = true;
     // use one page
     wasm.memory.initial = wasm.memory.max = 1;
+  }
+
+  void setupTable() {
+    wasm.table.exists = true;
+    wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+  }
+
+  void finalizeTable() {
+    wasm.table.initial = wasm.table.segments[0].data.size();
+    wasm.table.max = oneIn(2) ? Address(Table::kMaxSize) : wasm.table.initial;
   }
 
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
@@ -282,11 +301,16 @@ private:
     // export some, but not all (to allow inlining etc.). make sure to
     // export at least one, though, to keep each testcase interesting
     if (num == 0 || oneIn(2)) {
+      func->type = ensureFunctionType(getSig(func), &wasm)->name;
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
       export_->kind = ExternalKind::Function;
       wasm.addExport(export_);
+    }
+    // add some to the table
+    while (oneIn(3)) {
+      wasm.table.segments[0].data.push_back(func->name);
     }
     // cleanup
     typeLocals.clear();
@@ -651,7 +675,41 @@ private:
   }
 
   Expression* makeCallIndirect(WasmType type) {
-    return make(type); // TODO
+    auto& data = wasm.table.segments[0].data;
+    if (data.empty()) return make(type);
+    // look for a call target with the right type
+    Index start = upTo(data.size());
+    Index i = start;
+    Function* func;
+    while (1) {
+      // TODO: handle unreachable
+      func = wasm.getFunction(data[i]);
+      if (func->result == type) {
+        break;
+      }
+      i++;
+      if (i == data.size()) i = 0;
+      if (i == start) return make(type);
+    }
+    // with high probability, make sure the type is valid  otherwise, most are
+    // going to trap
+    Expression* target;
+    if (!oneIn(10)) {
+      target = builder.makeConst(Literal(int32_t(i)));
+    } else {
+      target = make(i32);
+    }
+    std::vector<Expression*> args;
+    for (auto type : func->params) {
+      args.push_back(make(type));
+    }
+    func->type = ensureFunctionType(getSig(func), &wasm)->name;
+    return builder.makeCallIndirect(
+      func->type,
+      target,
+      args,
+      func->result
+    );
   }
 
   Expression* makeGetLocal(WasmType type) {
@@ -1069,7 +1127,6 @@ private:
   // pick from a vector
   template<typename T>
   const T& vectorPick(const std::vector<T>& vec) {
-    // TODO: get32?
     assert(!vec.empty());
     auto index = upTo(vec.size());
     return vec[index];
