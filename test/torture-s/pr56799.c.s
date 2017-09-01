@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56799.c"
+	.file	"pr56799.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,10 +9,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push12=, 0
-	i32.const	$push9=, 0
-	i32.load	$push10=, __stack_pointer($pop9)
+	i32.const	$push10=, 0
+	i32.load	$push9=, __stack_pointer($pop10)
 	i32.const	$push11=, 16
-	i32.sub 	$push16=, $pop10, $pop11
+	i32.sub 	$push16=, $pop9, $pop11
 	tee_local	$push15=, $0=, $pop16
 	i32.store	__stack_pointer($pop12), $pop15
 	i64.const	$push2=, 4295032832
@@ -45,9 +45,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -55,43 +55,49 @@ foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.load	$2=, 4($0)
 	block   	
 	block   	
-	i32.load	$push10=, 0($0)
-	tee_local	$push9=, $1=, $pop10
-	i32.const	$push0=, 65535
-	i32.and 	$push1=, $pop9, $pop0
-	i32.eqz 	$push11=, $pop1
-	br_if   	0, $pop11       # 0: down to label2
+	block   	
+	i32.load	$push12=, 0($0)
+	tee_local	$push11=, $1=, $pop12
+	i32.const	$push10=, 65535
+	i32.and 	$push0=, $pop11, $pop10
+	i32.eqz 	$push18=, $pop0
+	br_if   	0, $pop18       # 0: down to label3
 # BB#1:                                 # %if.then
-	i32.const	$push3=, 0
-	i32.const	$push2=, 1
-	i32.store	lo($pop3), $pop2
-	copy_local	$0=, $2
-	br      	1               # 1: down to label1
+	i32.const	$push2=, 0
+	i32.const	$push1=, 1
+	i32.store	lo($pop2), $pop1
+	i32.load	$2=, 4($0)
+	i32.const	$push13=, 65535
+	i32.le_u	$push4=, $1, $pop13
+	br_if   	1, $pop4        # 1: down to label2
+	br      	2               # 2: down to label1
 .LBB1_2:
-	end_block                       # label2:
-	i32.const	$0=, 0
-.LBB1_3:                                # %if.end
-	end_block                       # label1:
-	block   	
-	i32.const	$push4=, 65536
-	i32.lt_u	$push5=, $1, $pop4
-	br_if   	0, $pop5        # 0: down to label3
-# BB#4:                                 # %if.then7
-	i32.const	$push7=, 0
-	i32.const	$push6=, 1
-	i32.store	hi($pop7), $pop6
-	i32.add 	$0=, $0, $2
-.LBB1_5:                                # %if.end10
 	end_block                       # label3:
-	i32.add 	$push8=, $0, $2
+	i32.const	$2=, 0
+	i32.const	$push17=, 65535
+	i32.gt_u	$push3=, $1, $pop17
+	br_if   	1, $pop3        # 1: down to label1
+.LBB1_3:                                # %if.end.if.end10_crit_edge
+	end_block                       # label2:
+	i32.load	$push9=, 4($0)
+	i32.add 	$push7=, $pop9, $2
+	return  	$pop7
+.LBB1_4:                                # %if.then7
+	end_block                       # label1:
+	i32.const	$push6=, 0
+	i32.const	$push5=, 1
+	i32.store	hi($pop6), $pop5
+	i32.load	$push16=, 4($0)
+	tee_local	$push15=, $0=, $pop16
+	i32.add 	$push14=, $0, $2
+	i32.add 	$push8=, $pop15, $pop14
                                         # fallthrough-return: $pop8
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.hidden	hi                      # @hi
 	.type	hi,@object
 	.section	.bss.hi,"aw",@nobits
@@ -111,6 +117,6 @@ lo:
 	.size	lo, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	abort, void

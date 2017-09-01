@@ -144,6 +144,8 @@ public:
   void visitStore(Store *curr);
   void visitAtomicRMW(AtomicRMW *curr);
   void visitAtomicCmpxchg(AtomicCmpxchg *curr);
+  void visitAtomicWait(AtomicWait *curr);
+  void visitAtomicWake(AtomicWake *curr);
   void visitBinary(Binary *curr);
   void visitUnary(Unary *curr);
   void visitSelect(Select* curr);

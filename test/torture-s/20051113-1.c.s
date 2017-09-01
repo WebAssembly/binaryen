@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20051113-1.c"
+	.file	"20051113-1.c"
 	.section	.text.Sum,"ax",@progbits
-	.hidden	Sum
+	.hidden	Sum                     # -- Begin function Sum
 	.globl	Sum
 	.type	Sum,@function
 Sum:                                    # @Sum
@@ -43,9 +43,9 @@ Sum:                                    # @Sum
 	.endfunc
 .Lfunc_end0:
 	.size	Sum, .Lfunc_end0-Sum
-
+                                        # -- End function
 	.section	.text.Sum2,"ax",@progbits
-	.hidden	Sum2
+	.hidden	Sum2                    # -- Begin function Sum2
 	.globl	Sum2
 	.type	Sum2,@function
 Sum2:                                   # @Sum2
@@ -87,9 +87,9 @@ Sum2:                                   # @Sum2
 	.endfunc
 .Lfunc_end1:
 	.size	Sum2, .Lfunc_end1-Sum2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -131,15 +131,15 @@ main:                                   # @main
 # BB#2:                                 # %if.end25
 	i32.const	$push13=, 0
 	return  	$pop13
-.LBB2_3:                                # %if.then24
+.LBB2_3:                                # %if.then
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	malloc, i32, i32
 	.functype	abort, void

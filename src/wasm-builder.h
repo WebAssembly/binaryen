@@ -164,14 +164,14 @@ public:
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
-    ret->type = none;
+    ret->finalize();
     return ret;
   }
   SetLocal* makeTeeLocal(Index index, Expression* value) {
     auto* ret = allocator.alloc<SetLocal>();
     ret->index = index;
     ret->value = value;
-    ret->type = value->type;
+    ret->setTee(true);
     return ret;
   }
   GetGlobal* makeGetGlobal(Name name, WasmType type) {
@@ -197,6 +197,24 @@ public:
     Load* load = makeLoad(bytes, signed_, offset, getWasmTypeSize(type), ptr, type);
     load->isAtomic = true;
     return load;
+  }
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType type) {
+    auto* wait = allocator.alloc<AtomicWait>();
+    wait->ptr = ptr;
+    wait->expected = expected;
+    wait->timeout = timeout;
+    wait->expectedType = type;
+    wait->type = i32;
+    wait->finalize();
+    return wait;
+  }
+  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount) {
+    auto* wake = allocator.alloc<AtomicWake>();
+    wake->ptr = ptr;
+    wake->wakeCount = wakeCount;
+    wake->type = i32;
+    wake->finalize();
+    return wake;
   }
   Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
     auto* ret = allocator.alloc<Store>();

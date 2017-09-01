@@ -5,7 +5,6 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "main" (func $main))
- (export "_start" (func $_start))
  (start $_start)
  (func $main
  )

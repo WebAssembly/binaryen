@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010129-1.c"
+	.file	"20010129-1.c"
 	.section	.text.baz1,"ax",@progbits
-	.hidden	baz1
+	.hidden	baz1                    # -- Begin function baz1
 	.globl	baz1
 	.type	baz1,@function
 baz1:                                   # @baz1
@@ -21,9 +21,9 @@ baz1:                                   # @baz1
 	.endfunc
 .Lfunc_end0:
 	.size	baz1, .Lfunc_end0-baz1
-
+                                        # -- End function
 	.section	.text.baz2,"ax",@progbits
-	.hidden	baz2
+	.hidden	baz2                    # -- Begin function baz2
 	.globl	baz2
 	.type	baz2,@function
 baz2:                                   # @baz2
@@ -35,9 +35,9 @@ baz2:                                   # @baz2
 	.endfunc
 .Lfunc_end1:
 	.size	baz2, .Lfunc_end1-baz2
-
+                                        # -- End function
 	.section	.text.baz3,"ax",@progbits
-	.hidden	baz3
+	.hidden	baz3                    # -- Begin function baz3
 	.globl	baz3
 	.type	baz3,@function
 baz3:                                   # @baz3
@@ -57,9 +57,9 @@ baz3:                                   # @baz3
 	.endfunc
 .Lfunc_end2:
 	.size	baz3, .Lfunc_end2-baz3
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -166,9 +166,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end3:
 	.size	foo, .Lfunc_end3-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -176,10 +176,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push6=, 0
-	i32.const	$push3=, 0
-	i32.load	$push4=, __stack_pointer($pop3)
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push12=, $pop4, $pop5
+	i32.sub 	$push12=, $pop3, $pop5
 	tee_local	$push11=, $0=, $pop12
 	i32.store	__stack_pointer($pop6), $pop11
 	i32.const	$push0=, 0
@@ -197,7 +197,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.type	baz1.l,@object          # @baz1.l
 	.section	.bss.baz1.l,"aw",@nobits
 	.p2align	2
@@ -215,6 +215,6 @@ bar:
 	.size	bar, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

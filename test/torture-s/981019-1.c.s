@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981019-1.c"
+	.file	"981019-1.c"
 	.section	.text.ff,"ax",@progbits
-	.hidden	ff
+	.hidden	ff                      # -- Begin function ff
 	.globl	ff
 	.type	ff,@function
 ff:                                     # @ff
@@ -10,48 +10,50 @@ ff:                                     # @ff
 # BB#0:                                 # %entry
 	block   	
 	block   	
-	i32.eqz 	$push3=, $0
-	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %entry
-	br_if   	1, $2           # 1: down to label0
-.LBB0_2:                                # %while.cond.preheader
-	end_block                       # label1:
-	i32.const	$push0=, 0
-	i32.load	$0=, f3.x($pop0)
-.LBB0_3:                                # %while.cond
-                                        # =>This Inner Loop Header: Depth=1
 	block   	
-	loop    	                # label3:
-	i32.eqz 	$3=, $0
-	br_if   	1, $0           # 1: down to label2
-# BB#4:                                 # %while.body
-                                        #   in Loop: Header=BB0_3 Depth=1
-	copy_local	$0=, $3
-	i32.eqz 	$push4=, $2
-	br_if   	0, $pop4        # 0: up to label3
-# BB#5:                                 # %land.lhs.true
-	end_loop
-	i32.const	$push2=, 0
-	i32.store	f3.x($pop2), $3
-	i32.call	$drop=, f2@FUNCTION
-	unreachable
-.LBB0_6:                                # %while.end
+	i32.eqz 	$push9=, $0
+	br_if   	0, $pop9        # 0: down to label2
+# BB#1:                                 # %entry
+	br_if   	1, $2           # 1: down to label1
+.LBB0_2:                                # %if.end3
 	end_block                       # label2:
-	i32.const	$push1=, 0
-	i32.store	f3.x($pop1), $3
-	br_if   	0, $2           # 0: down to label0
-# BB#7:                                 # %if.end16
+	i32.const	$push0=, 0
+	i32.const	$push8=, 0
+	i32.load	$push7=, f3.x($pop8)
+	tee_local	$push6=, $0=, $pop7
+	i32.eqz 	$push5=, $pop6
+	tee_local	$push4=, $3=, $pop5
+	i32.store	f3.x($pop0), $pop4
+	block   	
+	i32.eqz 	$push10=, $0
+	br_if   	0, $pop10       # 0: down to label3
+# BB#3:                                 # %while.end
+	br_if   	1, $2           # 1: down to label1
+# BB#4:                                 # %if.end16
 	return
-.LBB0_8:                                # %if.then15
-	end_block                       # label0:
+.LBB0_5:                                # %while.body.lr.ph
+	end_block                       # label3:
+	br_if   	1, $2           # 1: down to label0
+# BB#6:                                 # %while.end.thread
+	i32.const	$push3=, 0
+	i32.const	$push1=, 1
+	i32.xor 	$push2=, $3, $pop1
+	i32.store	f3.x($pop3), $pop2
+	return
+.LBB0_7:                                # %if.then2
+	end_block                       # label1:
 	call    	f1@FUNCTION
+	unreachable
+.LBB0_8:                                # %land.lhs.true.split
+	end_block                       # label0:
+	i32.call	$drop=, f2@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	ff, .Lfunc_end0-ff
-
+                                        # -- End function
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -61,9 +63,9 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
-
+                                        # -- End function
 	.section	.text.f3,"ax",@progbits
-	.hidden	f3
+	.hidden	f3                      # -- Begin function f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -81,9 +83,9 @@ f3:                                     # @f3
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -94,35 +96,23 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end3:
 	.size	f2, .Lfunc_end3-f2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.load	$1=, f3.x($pop0)
-.LBB4_1:                                # %while.cond.i
-                                        # =>This Inner Loop Header: Depth=1
-	loop    	                # label4:
-	copy_local	$push3=, $1
-	tee_local	$push2=, $0=, $pop3
-	i32.eqz 	$1=, $pop2
-	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: up to label4
-# BB#2:                                 # %ff.exit
-	end_loop
+	i32.const	$push2=, 0
+	i32.store	f3.x($pop0), $pop2
 	i32.const	$push1=, 0
-	i32.store	f3.x($pop1), $1
-	i32.const	$push4=, 0
-                                        # fallthrough-return: $pop4
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.type	f3.x,@object            # @f3.x
 	.section	.bss.f3.x,"aw",@nobits
 	.p2align	2
@@ -131,5 +121,5 @@ f3.x:
 	.size	f3.x, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000717-5.c"
+	.file	"20000717-5.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -44,9 +44,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -89,9 +89,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -99,33 +99,31 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push17=, $pop9, $pop10
-	tee_local	$push16=, $0=, $pop17
-	i32.store	__stack_pointer($pop11), $pop16
-	i32.const	$push2=, 12
+	i32.sub 	$push15=, $pop8, $pop10
+	tee_local	$push14=, $0=, $pop15
+	i32.store	__stack_pointer($pop11), $pop14
+	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
 	i32.load	$push1=, .Lmain.t+8($pop0)
 	i32.store	0($pop3), $pop1
-	i32.const	$push15=, 0
-	i64.load	$push4=, .Lmain.t($pop15):p2align=2
-	i64.store	4($0):p2align=2, $pop4
-	i32.const	$push12=, 4
-	i32.add 	$push13=, $0, $pop12
+	i32.const	$push13=, 0
+	i64.load	$push4=, .Lmain.t($pop13):p2align=2
+	i64.store	0($0), $pop4
 	i32.const	$push7=, 4
 	i32.const	$push6=, 5
 	i32.const	$push5=, 6
-	i32.call	$drop=, foo@FUNCTION, $pop13, $pop7, $pop6, $pop5
-	i32.const	$push14=, 0
-	call    	exit@FUNCTION, $pop14
+	i32.call	$drop=, foo@FUNCTION, $0, $pop7, $pop6, $pop5
+	i32.const	$push12=, 0
+	call    	exit@FUNCTION, $pop12
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	.Lmain.t,@object        # @main.t
 	.section	.rodata..Lmain.t,"a",@progbits
 	.p2align	2
@@ -136,6 +134,6 @@ main:                                   # @main
 	.size	.Lmain.t, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

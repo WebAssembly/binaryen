@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010403-1.c"
+	.file	"20010403-1.c"
 	.section	.text.a,"ax",@progbits
-	.hidden	a
+	.hidden	a                       # -- Begin function a
 	.globl	a
 	.type	a,@function
 a:                                      # @a
@@ -11,9 +11,9 @@ a:                                      # @a
 	.endfunc
 .Lfunc_end0:
 	.size	a, .Lfunc_end0-a
-
+                                        # -- End function
 	.section	.text.b,"ax",@progbits
-	.hidden	b
+	.hidden	b                       # -- Begin function b
 	.globl	b
 	.type	b,@function
 b:                                      # @b
@@ -27,9 +27,9 @@ b:                                      # @b
 	.endfunc
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b
-
+                                        # -- End function
 	.section	.text.c,"ax",@progbits
-	.hidden	c
+	.hidden	c                       # -- Begin function c
 	.globl	c
 	.type	c,@function
 c:                                      # @c
@@ -47,9 +47,9 @@ c:                                      # @c
 	.endfunc
 .Lfunc_end2:
 	.size	c, .Lfunc_end2-c
-
+                                        # -- End function
 	.section	.text.d,"ax",@progbits
-	.hidden	d
+	.hidden	d                       # -- Begin function d
 	.globl	d
 	.type	d,@function
 d:                                      # @d
@@ -59,9 +59,9 @@ d:                                      # @d
 	.endfunc
 .Lfunc_end3:
 	.size	d, .Lfunc_end3-d
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -73,7 +73,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.hidden	e                       # @e
 	.type	e,@object
 	.section	.bss.e,"aw",@nobits
@@ -84,6 +84,6 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

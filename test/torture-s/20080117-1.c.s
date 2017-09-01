@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080117-1.c"
+	.file	"20080117-1.c"
 	.section	.text.gstate_path_memory,"ax",@progbits
-	.hidden	gstate_path_memory
+	.hidden	gstate_path_memory      # -- Begin function gstate_path_memory
 	.globl	gstate_path_memory
 	.type	gstate_path_memory,@function
 gstate_path_memory:                     # @gstate_path_memory
@@ -19,9 +19,9 @@ gstate_path_memory:                     # @gstate_path_memory
 	.endfunc
 .Lfunc_end0:
 	.size	gstate_path_memory, .Lfunc_end0-gstate_path_memory
-
+                                        # -- End function
 	.section	.text.gs_state_update_overprint,"ax",@progbits
-	.hidden	gs_state_update_overprint
+	.hidden	gs_state_update_overprint # -- Begin function gs_state_update_overprint
 	.globl	gs_state_update_overprint
 	.type	gs_state_update_overprint,@function
 gs_state_update_overprint:              # @gs_state_update_overprint
@@ -32,9 +32,9 @@ gs_state_update_overprint:              # @gs_state_update_overprint
 	.endfunc
 .Lfunc_end1:
 	.size	gs_state_update_overprint, .Lfunc_end1-gs_state_update_overprint
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -45,7 +45,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	gstate_initial,@object  # @gstate_initial
 	.section	.rodata.gstate_initial,"a",@progbits
 	.p2align	2
@@ -56,4 +56,4 @@ gstate_initial:
 	.size	gstate_initial, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

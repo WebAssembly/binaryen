@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050929-1.c"
+	.file	"20050929-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -25,40 +25,40 @@ main:                                   # @main
 	br_if   	0, $pop6        # 0: down to label0
 # BB#2:                                 # %if.end
 	i32.load	$push26=, 4($0)
-	tee_local	$push25=, $1=, $pop26
+	tee_local	$push25=, $0=, $pop26
 	i32.load	$push7=, 0($pop25)
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label0
 # BB#3:                                 # %lor.lhs.false5
-	i32.load	$push10=, 4($1)
+	i32.load	$push10=, 4($0)
 	i32.const	$push11=, 4
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
 # BB#4:                                 # %if.end10
 	i32.const	$push13=, 0
 	i32.load	$push28=, e+4($pop13)
-	tee_local	$push27=, $1=, $pop28
+	tee_local	$push27=, $0=, $pop28
 	i32.load	$push14=, 0($pop27)
 	i32.const	$push15=, 5
 	i32.ne  	$push16=, $pop14, $pop15
 	br_if   	0, $pop16       # 0: down to label0
 # BB#5:                                 # %lor.lhs.false13
-	i32.load	$push17=, 4($1)
+	i32.load	$push17=, 4($0)
 	i32.const	$push18=, 6
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	0, $pop19       # 0: down to label0
 # BB#6:                                 # %if.end17
 	i32.const	$push20=, 0
 	return  	$pop20
-.LBB0_7:                                # %if.then16
+.LBB0_7:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	.compoundliteral,@object # @.compoundliteral
 	.section	.data..compoundliteral,"aw",@progbits
 	.p2align	2
@@ -102,5 +102,5 @@ e:
 	.size	e, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

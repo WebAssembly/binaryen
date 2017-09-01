@@ -33,3 +33,11 @@
   (nop)
  )
 )
+(module
+ (type $0 (func (result i32)))
+ (type $1 (func))
+ (memory $0 0)
+ (func $main (type $0) (result i32)
+  (unreachable)
+ )
+)

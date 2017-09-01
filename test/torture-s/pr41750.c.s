@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41750.c"
+	.file	"pr41750.c"
 	.section	.text.foo_create_got_section,"ax",@progbits
-	.hidden	foo_create_got_section
+	.hidden	foo_create_got_section  # -- Begin function foo_create_got_section
 	.globl	foo_create_got_section
 	.type	foo_create_got_section,@function
 foo_create_got_section:                 # @foo_create_got_section
@@ -15,9 +15,9 @@ foo_create_got_section:                 # @foo_create_got_section
 	.endfunc
 .Lfunc_end0:
 	.size	foo_create_got_section, .Lfunc_end0-foo_create_got_section
-
+                                        # -- End function
 	.section	.text.elf64_ia64_check_relocs,"ax",@progbits
-	.hidden	elf64_ia64_check_relocs
+	.hidden	elf64_ia64_check_relocs # -- Begin function elf64_ia64_check_relocs
 	.globl	elf64_ia64_check_relocs
 	.type	elf64_ia64_check_relocs,@function
 elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
@@ -26,37 +26,38 @@ elf64_ia64_check_relocs:                # @elf64_ia64_check_relocs
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	block   	
-	i32.load	$push7=, 0($1)
-	tee_local	$push6=, $2=, $pop7
-	i32.load	$push5=, 8($pop6)
-	tee_local	$push4=, $3=, $pop5
-	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.then.i
+	i32.load	$push8=, 0($1)
+	tee_local	$push7=, $2=, $pop8
+	i32.load	$push6=, 8($pop7)
+	tee_local	$push5=, $3=, $pop6
+	i32.eqz 	$push11=, $pop5
+	br_if   	0, $pop11       # 0: down to label0
+# BB#1:                                 # %get_got.exit
+	return  	$3
+.LBB1_2:                                # %if.then.i
+	end_block                       # label0:
 	block   	
-	i32.load	$push9=, 4($2)
-	tee_local	$push8=, $3=, $pop9
-	br_if   	0, $pop8        # 0: down to label1
-# BB#2:                                 # %if.then3.i
+	i32.load	$push10=, 4($2)
+	tee_local	$push9=, $3=, $pop10
+	br_if   	0, $pop9        # 0: down to label1
+# BB#3:                                 # %if.then3.i
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $2, $pop0
 	i32.store	0($pop1), $0
 	copy_local	$3=, $0
-.LBB1_3:                                # %if.end.i
+.LBB1_4:                                # %if.end.i
 	end_block                       # label1:
 	i32.call	$drop=, foo_create_got_section@FUNCTION, $3, $1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $2, $pop2
-	i32.load	$3=, 0($pop3)
-.LBB1_4:                                # %get_got.exit
-	end_block                       # label0:
-	copy_local	$push10=, $3
-                                        # fallthrough-return: $pop10
+	i32.load	$push4=, 0($pop3)
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end1:
 	.size	elf64_ia64_check_relocs, .Lfunc_end1-elf64_ia64_check_relocs
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -82,7 +83,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	hash                    # @hash
 	.type	hash,@object
 	.section	.bss.hash,"aw",@nobits
@@ -111,5 +112,5 @@ abfd:
 	.size	abfd, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

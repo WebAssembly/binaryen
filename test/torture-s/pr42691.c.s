@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42691.c"
+	.file	"pr42691.c"
 	.section	.text.add,"ax",@progbits
-	.hidden	add
+	.hidden	add                     # -- Begin function add
 	.globl	add
 	.type	add,@function
 add:                                    # @add
@@ -46,20 +46,20 @@ add:                                    # @add
 	.endfunc
 .Lfunc_end0:
 	.size	add, .Lfunc_end0-add
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, f64, i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end.lr.ph.i
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push15=, $pop7, $pop8
+	i32.sub 	$push15=, $pop6, $pop8
 	tee_local	$push14=, $2=, $pop15
 	i32.store	__stack_pointer($pop9), $pop14
 	i64.const	$push1=, 4627167142146473984
@@ -100,7 +100,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

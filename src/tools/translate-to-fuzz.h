@@ -87,7 +87,7 @@ private:
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
-  static const int HANG_LIMIT = 25;
+  static const int HANG_LIMIT = 100;
 
   // Optionally remove NaNs, which are a source of nondeterminism (which makes
   // cross-VM comparisons harder)
@@ -259,16 +259,16 @@ private:
     labelIndex = 0;
     assert(breakableStack.empty());
     assert(hangStack.empty());
+    // with small chance, make the body unreachable
+    auto bodyType = func->result;
+    if (oneIn(10)) {
+      bodyType = unreachable;
+    }
     // with reasonable chance make the body a block
     if (oneIn(2)) {
-      func->body = makeBlock(func->result);
+      func->body = makeBlock(bodyType);
     } else {
-      // with very small chance, make the body unreachable
-      if (oneIn(20)) {
-        func->body = make(unreachable);
-      } else {
-        func->body = make(func->result);
-      }
+      func->body = make(bodyType);
     }
     if (HANG_LIMIT > 0) {
       func->body = builder.makeSequence(
@@ -452,14 +452,20 @@ private:
   // make something with no chance of infinite recursion
   Expression* makeTrivial(WasmType type) {
     if (isConcreteWasmType(type)) {
-      return makeConst(type);
+      if (oneIn(2)) {
+        return makeGetLocal(type);
+      } else {
+        return makeConst(type);
+      }
     } else if (type == none) {
       return makeNop(type);
     }
     assert(type == unreachable);
-    return builder.makeReturn(
-      isConcreteWasmType(func->result) ? makeConst(func->result) : nullptr
-    );
+    Expression* ret = nullptr;
+    if (isConcreteWasmType(func->result)) {
+      ret = makeTrivial(func->result);
+    }
+    return builder.makeReturn(ret);
   }
 
   // specific expression creators
@@ -650,7 +656,7 @@ private:
 
   Expression* makeGetLocal(WasmType type) {
     auto& locals = typeLocals[type];
-    if (locals.empty()) return makeTrivial(type);
+    if (locals.empty()) return makeConst(type);
     return builder.makeGetLocal(vectorPick(locals), type);
   }
 

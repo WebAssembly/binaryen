@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57861.c"
+	.file	"pr57861.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -17,30 +17,30 @@ main:                                   # @main
 	copy_local	$1=, $pop19
 	block   	
 	i32.const	$push18=, 0
-	i32.load	$push7=, e($pop18)
-	i32.const	$push4=, 24
-	i32.shl 	$push5=, $0, $pop4
+	i32.load	$push3=, e($pop18)
+	i32.const	$push0=, 24
+	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push17=, 24
-	i32.shr_s	$push6=, $pop5, $pop17
-	i32.ge_u	$push8=, $pop7, $pop6
-	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %if.then.i.1
+	i32.shr_s	$push2=, $pop1, $pop17
+	i32.ge_u	$push4=, $pop3, $pop2
+	br_if   	0, $pop4        # 0: down to label0
+# BB#1:                                 # %if.then.1.i
 	i32.const	$push32=, 0
 	i32.const	$push31=, 0
-	i32.load	$push2=, d($pop31)
+	i32.load	$push7=, d($pop31)
 	i32.const	$push30=, 0
-	i32.ne  	$push3=, $pop2, $pop30
+	i32.ne  	$push8=, $pop7, $pop30
 	i32.const	$push29=, 0
-	i32.load	$push0=, h($pop29)
+	i32.load	$push5=, h($pop29)
 	i32.const	$push28=, 0
-	i32.ne  	$push1=, $pop0, $pop28
-	i32.and 	$push27=, $pop3, $pop1
+	i32.ne  	$push6=, $pop5, $pop28
+	i32.and 	$push27=, $pop8, $pop6
 	tee_local	$push26=, $1=, $pop27
 	i32.store16	a($pop32), $pop26
 	i32.const	$push25=, 0
 	i32.const	$push24=, 0
 	i32.store16	f($pop25), $pop24
-.LBB0_2:                                # %for.inc.i.1
+.LBB0_2:                                # %foo.exit
 	end_block                       # label0:
 	i32.const	$push39=, 0
 	i32.const	$push9=, 2
@@ -72,7 +72,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
@@ -164,5 +164,5 @@ e:
 	.size	e, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

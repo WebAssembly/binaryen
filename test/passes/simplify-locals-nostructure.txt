@@ -66,4 +66,38 @@
   (local $x i32)
   (unreachable)
  )
+ (func $implicit-trap-and-global-effects (type $0)
+  (local $var$0 i32)
+  (set_local $var$0
+   (i32.trunc_u/f64
+    (f64.const -nan:0xfffffffffffc3)
+   )
+  )
+  (f32.store align=1
+   (i32.const 22)
+   (f32.const 154)
+  )
+  (drop
+   (get_local $var$0)
+  )
+ )
+ (func $implicit-trap-and-local-effects (type $0)
+  (local $var$0 i32)
+  (local $other i32)
+  (nop)
+  (set_local $other
+   (i32.const 100)
+  )
+  (drop
+   (i32.trunc_u/f64
+    (f64.const -nan:0xfffffffffffc3)
+   )
+  )
+  (if
+   (i32.const 1)
+   (drop
+    (get_local $other)
+   )
+  )
+ )
 )

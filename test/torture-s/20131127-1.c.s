@@ -1,108 +1,87 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20131127-1.c"
+	.file	"20131127-1.c"
 	.section	.text.fn1,"ax",@progbits
-	.hidden	fn1
+	.hidden	fn1                     # -- Begin function fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
 	.param  	i32
 # BB#0:                                 # %entry
-	i32.const	$push0=, 12
+	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
-	i32.load16_u	$push3=, c+12($pop2):p2align=0
-	i32.store16	0($pop1):p2align=0, $pop3
-	i32.const	$push4=, 8
-	i32.add 	$push5=, $0, $pop4
-	i32.const	$push9=, 0
-	i32.load	$push6=, c+8($pop9):p2align=0
-	i32.store	0($pop5):p2align=0, $pop6
-	i32.const	$push8=, 0
-	i64.load	$push7=, c($pop8):p2align=0
-	i64.store	0($0):p2align=0, $pop7
+	i64.load	$push3=, c+6($pop2):p2align=0
+	i64.store	0($pop1):p2align=0, $pop3
+	i32.const	$push5=, 0
+	i64.load	$push4=, c($pop5):p2align=0
+	i64.store	0($0):p2align=0, $pop4
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
-
+                                        # -- End function
 	.section	.text.fn2,"ax",@progbits
-	.hidden	fn2
+	.hidden	fn2                     # -- Begin function fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push19=, 0
-	i32.load16_u	$push1=, c+12($pop19):p2align=0
-	i32.store16	b+12($pop0):p2align=0, $pop1
-	i32.const	$push18=, 0
-	i32.const	$push17=, 0
-	i32.load	$push2=, c+8($pop17):p2align=0
-	i32.store	b+8($pop18):p2align=0, $pop2
-	i32.const	$push16=, 0
-	i32.const	$push15=, 0
-	i64.load	$push3=, c($pop15):p2align=0
-	i64.store	b($pop16):p2align=0, $pop3
-	i32.const	$push14=, 0
 	i32.const	$push13=, 0
-	i32.store16	a($pop14), $pop13
+	i64.load	$push1=, c+6($pop13):p2align=0
+	i64.store	b+6($pop0):p2align=0, $pop1
 	i32.const	$push12=, 0
 	i32.const	$push11=, 0
-	i32.load16_u	$push4=, e+12($pop11):p2align=0
-	i32.store16	d+12($pop12):p2align=0, $pop4
+	i64.load	$push2=, c($pop11):p2align=0
+	i64.store	b($pop12):p2align=0, $pop2
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
-	i32.load	$push5=, e+8($pop9):p2align=0
-	i32.store	d+8($pop10):p2align=0, $pop5
+	i64.load	$push3=, e($pop9):p2align=0
+	i64.store	d($pop10):p2align=0, $pop3
 	i32.const	$push8=, 0
 	i32.const	$push7=, 0
-	i64.load	$push6=, e($pop7):p2align=0
-	i64.store	d($pop8):p2align=0, $pop6
+	i64.load	$push4=, e+6($pop7):p2align=0
+	i64.store	d+6($pop8):p2align=0, $pop4
+	i32.const	$push6=, 0
+	i32.const	$push5=, 0
+	i32.store16	a($pop6), $pop5
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
-	i32.const	$push20=, 0
-	i32.load16_u	$push1=, c+12($pop20):p2align=0
-	i32.store16	b+12($pop0):p2align=0, $pop1
-	i32.const	$push19=, 0
-	i32.const	$push18=, 0
-	i32.load	$push2=, c+8($pop18):p2align=0
-	i32.store	b+8($pop19):p2align=0, $pop2
-	i32.const	$push17=, 0
-	i32.const	$push16=, 0
-	i64.load	$push3=, c($pop16):p2align=0
-	i64.store	b($pop17):p2align=0, $pop3
-	i32.const	$push15=, 0
 	i32.const	$push14=, 0
-	i32.store16	a($pop15), $pop14
+	i64.load	$push1=, c+6($pop14):p2align=0
+	i64.store	b+6($pop0):p2align=0, $pop1
 	i32.const	$push13=, 0
 	i32.const	$push12=, 0
-	i32.load16_u	$push4=, e+12($pop12):p2align=0
-	i32.store16	d+12($pop13):p2align=0, $pop4
+	i64.load	$push2=, c($pop12):p2align=0
+	i64.store	b($pop13):p2align=0, $pop2
 	i32.const	$push11=, 0
 	i32.const	$push10=, 0
-	i32.load	$push5=, e+8($pop10):p2align=0
-	i32.store	d+8($pop11):p2align=0, $pop5
+	i64.load	$push3=, e($pop10):p2align=0
+	i64.store	d($pop11):p2align=0, $pop3
 	i32.const	$push9=, 0
 	i32.const	$push8=, 0
-	i64.load	$push6=, e($pop8):p2align=0
-	i64.store	d($pop9):p2align=0, $pop6
+	i64.load	$push4=, e+6($pop8):p2align=0
+	i64.store	d+6($pop9):p2align=0, $pop4
 	i32.const	$push7=, 0
-                                        # fallthrough-return: $pop7
+	i32.const	$push6=, 0
+	i32.store16	a($pop7), $pop6
+	i32.const	$push5=, 0
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
@@ -148,4 +127,4 @@ e:
 	.size	e, 14
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990128-1.c"
+	.file	"990128-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
-# BB#0:                                 # %for.inc.i.preheader.i.preheader
+# BB#0:                                 # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, sss
 	i32.store	ss($pop1), $pop0
@@ -47,7 +47,7 @@ main:                                   # @main
 	i32.store	sss+36($pop16), $pop15
 	i32.const	$push14=, 0
 	i32.load	$2=, count($pop14)
-.LBB0_1:                                # %for.inc.i.preheader.i
+.LBB0_1:                                # %for.inc.lr.ph.i.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
 	loop    	                # label0:
@@ -90,9 +90,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.sub,"ax",@progbits
-	.hidden	sub
+	.hidden	sub                     # -- Begin function sub
 	.globl	sub
 	.type	sub,@function
 sub:                                    # @sub
@@ -104,8 +104,8 @@ sub:                                    # @sub
 	block   	
 	i32.eqz 	$push12=, $0
 	br_if   	0, $pop12       # 0: down to label3
-# BB#1:                                 # %for.inc.i.preheader.preheader
-.LBB1_2:                                # %for.inc.i.preheader
+# BB#1:
+.LBB1_2:                                # %for.inc.lr.ph.i
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB1_3 Depth 2
 	loop    	                # label4:
@@ -143,9 +143,9 @@ sub:                                    # @sub
 	.endfunc
 .Lfunc_end1:
 	.size	sub, .Lfunc_end1-sub
-
+                                        # -- End function
 	.section	.text.look,"ax",@progbits
-	.hidden	look
+	.hidden	look                    # -- Begin function look
 	.globl	look
 	.type	look,@function
 look:                                   # @look
@@ -177,7 +177,7 @@ look:                                   # @look
 	.endfunc
 .Lfunc_end2:
 	.size	look, .Lfunc_end2-look
-
+                                        # -- End function
 	.hidden	count                   # @count
 	.type	count,@object
 	.section	.bss.count,"aw",@nobits
@@ -215,6 +215,6 @@ sss:
 	.size	sss, 40
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

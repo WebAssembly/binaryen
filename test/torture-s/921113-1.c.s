@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921113-1.c"
+	.file	"921113-1.c"
 	.section	.text.w,"ax",@progbits
-	.hidden	w
+	.hidden	w                       # -- Begin function w
 	.globl	w
 	.type	w,@function
 w:                                      # @w
@@ -14,9 +14,9 @@ w:                                      # @w
 	.endfunc
 .Lfunc_end0:
 	.size	w, .Lfunc_end0-w
-
+                                        # -- End function
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -41,9 +41,9 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end1:
 	.size	f1, .Lfunc_end1-f1
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -68,9 +68,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end2:
 	.size	f2, .Lfunc_end2-f2
-
+                                        # -- End function
 	.section	.text.gitter,"ax",@progbits
-	.hidden	gitter
+	.hidden	gitter                  # -- Begin function gitter
 	.globl	gitter
 	.type	gitter,@function
 gitter:                                 # @gitter
@@ -112,16 +112,16 @@ gitter:                                 # @gitter
 	i32.or  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label3
 # BB#5:                                 # %if.then
-	f64.promote/f32	$push32=, $6
-	tee_local	$push31=, $8=, $pop32
 	f64.promote/f32	$push15=, $5
 	f64.const	$push16=, 0x1p-1
-	f64.mul 	$push30=, $pop15, $pop16
-	tee_local	$push29=, $7=, $pop30
-	f64.gt  	$push17=, $pop31, $pop29
-	f64.ne  	$push19=, $8, $8
+	f64.mul 	$push32=, $pop15, $pop16
+	tee_local	$push31=, $7=, $pop32
+	f64.promote/f32	$push30=, $6
+	tee_local	$push29=, $8=, $pop30
+	f64.lt  	$push17=, $pop31, $pop29
 	f64.ne  	$push18=, $7, $7
-	i32.or  	$push20=, $pop19, $pop18
+	f64.ne  	$push19=, $8, $8
+	i32.or  	$push20=, $pop18, $pop19
 	i32.or  	$push21=, $pop17, $pop20
 	br_if   	0, $pop21       # 0: down to label3
 # BB#6:                                 # %if.then15
@@ -130,16 +130,16 @@ gitter:                                 # @gitter
 .LBB3_7:                                # %if.end18
 	end_block                       # label3:
 	return  	$4
-.LBB3_8:                                # %if.then.i32
+.LBB3_8:                                # %if.then.i
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end3:
 	.size	gitter, .Lfunc_end3-gitter
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -147,10 +147,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push13=, $pop5, $pop6
+	i32.sub 	$push13=, $pop4, $pop6
 	tee_local	$push12=, $0=, $pop13
 	i32.store	__stack_pointer($pop7), $pop12
 	i32.const	$push2=, pos
@@ -167,7 +167,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
-
+                                        # -- End function
 	.hidden	pos                     # @pos
 	.type	pos,@object
 	.section	.bss.pos,"aw",@nobits
@@ -189,6 +189,6 @@ limit:
 	.size	limit, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/mode-dependent-address.c"
+	.file	"mode-dependent-address.c"
 	.section	.text.f883b,"ax",@progbits
-	.hidden	f883b
+	.hidden	f883b                   # -- Begin function f883b
 	.globl	f883b
 	.type	f883b,@function
 f883b:                                  # @f883b
@@ -13,6 +13,7 @@ f883b:                                  # @f883b
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
 	i32.add 	$push12=, $0, $6
+	i64.load	$push10=, 0($3)
 	i32.load16_s	$push29=, 0($1)
 	tee_local	$push28=, $5=, $pop29
 	i32.const	$push27=, 1
@@ -32,8 +33,7 @@ f883b:                                  # @f883b
 	i32.const	$push21=, 251
 	i32.or  	$push8=, $pop7, $pop21
 	i64.extend_u/i32	$push9=, $pop8
-	i64.load	$push10=, 0($3)
-	i64.and 	$push11=, $pop9, $pop10
+	i64.and 	$push11=, $pop10, $pop9
 	i64.store8	0($pop12), $pop11
 	i32.const	$push20=, 8
 	i32.add 	$3=, $3, $pop20
@@ -53,9 +53,9 @@ f883b:                                  # @f883b
 	.endfunc
 .Lfunc_end0:
 	.size	f883b, .Lfunc_end0-f883b
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -102,6 +102,7 @@ main:                                   # @main
 .LBB1_3:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
+	i64.load	$push15=, 0($3)
 	i32.const	$push50=, arg1+192
 	i32.add 	$push4=, $1, $pop50
 	i32.load16_s	$push49=, 0($pop4)
@@ -123,8 +124,7 @@ main:                                   # @main
 	i32.const	$push41=, 251
 	i32.or  	$push13=, $pop12, $pop41
 	i64.extend_u/i32	$push14=, $pop13
-	i64.load	$push15=, 0($3)
-	i64.and 	$push16=, $pop14, $pop15
+	i64.and 	$push16=, $pop15, $pop14
 	i64.store8	0($4), $pop16
 	i32.const	$push40=, 4
 	i32.add 	$2=, $2, $pop40
@@ -138,17 +138,17 @@ main:                                   # @main
 	br_if   	0, $pop35       # 0: up to label2
 # BB#4:                                 # %for.body10.preheader
 	end_loop
-	i32.const	$4=, 0
+	i32.const	$4=, -1
 	i32.const	$3=, .Lmain.correct
 .LBB1_5:                                # %for.body10
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label4:
-	i32.const	$push51=, result
+	i32.load	$push19=, 0($3)
+	i32.const	$push51=, result+1
 	i32.add 	$push17=, $4, $pop51
 	i32.load8_s	$push18=, 0($pop17)
-	i32.load	$push19=, 0($3)
-	i32.ne  	$push20=, $pop18, $pop19
+	i32.ne  	$push20=, $pop19, $pop18
 	br_if   	1, $pop20       # 1: down to label3
 # BB#6:                                 # %for.cond7
                                         #   in Loop: Header=BB1_5 Depth=1
@@ -157,8 +157,8 @@ main:                                   # @main
 	i32.const	$push55=, 1
 	i32.add 	$push54=, $4, $pop55
 	tee_local	$push53=, $4=, $pop54
-	i32.const	$push52=, 95
-	i32.le_s	$push21=, $pop53, $pop52
+	i32.const	$push52=, 94
+	i32.le_u	$push21=, $pop53, $pop52
 	br_if   	0, $pop21       # 0: up to label4
 # BB#7:                                 # %for.end18
 	end_loop
@@ -171,7 +171,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	.Lmain.correct,@object  # @main.correct
 	.section	.rodata..Lmain.correct,"a",@progbits
 	.p2align	4
@@ -320,5 +320,5 @@ result:
 	.size	result, 96
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

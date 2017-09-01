@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000726-1.c"
+	.file	"20000726-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,9 +13,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.adjust_xy,"ax",@progbits
-	.hidden	adjust_xy
+	.hidden	adjust_xy               # -- Begin function adjust_xy
 	.globl	adjust_xy
 	.type	adjust_xy,@function
 adjust_xy:                              # @adjust_xy
@@ -27,7 +27,7 @@ adjust_xy:                              # @adjust_xy
 	.endfunc
 .Lfunc_end1:
 	.size	adjust_xy, .Lfunc_end1-adjust_xy
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

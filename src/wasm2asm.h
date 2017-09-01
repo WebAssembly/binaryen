@@ -109,8 +109,8 @@ class Wasm2AsmBuilder {
 
 public:
   struct Flags {
-    bool debug: 1;
-    bool pedantic: 1;
+    bool debug = false;
+    bool pedantic = false;
   };
 
   Wasm2AsmBuilder(Flags f) : flags(f) {}
@@ -523,7 +523,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
   for (Index i = 0; i < func->getNumParams(); i++) {
-    IString name = fromName(func->getLocalName(i));
+    IString name = fromName(func->getLocalNameOrGeneric(i));
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
       ValueBuilder::makeStatement(
@@ -559,7 +559,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   }
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    ValueBuilder::appendToVar(theVar, fromName(func->getLocalName(i)), makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
+    ValueBuilder::appendToVar(theVar, fromName(func->getLocalNameOrGeneric(i)), makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -928,12 +928,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
     }
     Ref visitGetLocal(GetLocal *curr) {
-      return ValueBuilder::makeName(fromName(func->getLocalName(curr->index)));
+      return ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index)));
     }
     Ref visitSetLocal(SetLocal *curr) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeBinary(
-            ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
+            ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index))),
             SET, visit(curr->value, EXPRESSION_RESULT));
       }
       ScopedTemp temp(curr->type, parent, func, result); // if result was provided, our child can just assign there. otherwise, allocate a temp for it to assign to.
@@ -941,7 +941,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // the output was assigned to result, so we can just assign it to our target
       ret[1]->push_back(ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
-              ValueBuilder::makeName(fromName(func->getLocalName(curr->index))),
+              ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index))),
               SET, temp.getAstName())));
       return ret;
     }

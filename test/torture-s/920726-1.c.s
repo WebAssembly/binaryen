@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920726-1.c"
+	.file	"920726-1.c"
 	.section	.text.first,"ax",@progbits
-	.hidden	first
+	.hidden	first                   # -- Begin function first
 	.globl	first
 	.type	first,@function
 first:                                  # @first
@@ -10,10 +10,10 @@ first:                                  # @first
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $3=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($3), $2
@@ -70,9 +70,9 @@ first:                                  # @first
 	.endfunc
 .Lfunc_end0:
 	.size	first, .Lfunc_end0-first
-
+                                        # -- End function
 	.section	.text.second,"ax",@progbits
-	.hidden	second
+	.hidden	second                  # -- Begin function second
 	.globl	second
 	.type	second,@function
 second:                                 # @second
@@ -81,10 +81,10 @@ second:                                 # @second
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $3=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
 	i32.store	12($3), $2
@@ -141,9 +141,9 @@ second:                                 # @second
 	.endfunc
 .Lfunc_end1:
 	.size	second, .Lfunc_end1-second
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -151,10 +151,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 256
-	i32.sub 	$push23=, $pop6, $pop7
+	i32.sub 	$push23=, $pop5, $pop7
 	tee_local	$push22=, $0=, $pop23
 	i32.store	__stack_pointer($pop8), $pop22
 	i64.const	$push0=, 85899345925
@@ -194,7 +194,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -212,7 +212,7 @@ main:                                   # @main
 	.size	.L.str.2, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strlen, i32, i32
 	.functype	strcmp, i32, i32, i32

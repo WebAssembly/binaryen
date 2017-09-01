@@ -332,6 +332,10 @@ void SetLocal::setTee(bool is) {
 void SetLocal::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
+  } else if (isTee()) {
+    type = value->type;
+  } else {
+    type = none;
   }
 }
 
@@ -364,6 +368,18 @@ void AtomicRMW::finalize() {
 
 void AtomicCmpxchg::finalize() {
   if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicWait::finalize() {
+  if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicWake::finalize() {
+  if (ptr->type == unreachable || wakeCount->type == unreachable) {
     type = unreachable;
   }
 }
@@ -558,6 +574,13 @@ Name Function::getLocalNameOrDefault(Index index) {
   }
   // this is an unnamed local
   return Name();
+}
+
+Name Function::getLocalNameOrGeneric(Index index) {
+  if (hasLocalName(index)) {
+    return localNames[index];
+  }
+  return Name::fromInt(index);
 }
 
 Index Function::getLocalIndex(Name name) {

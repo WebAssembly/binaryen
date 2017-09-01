@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/longlong.c"
+	.file	"longlong.c"
 	.section	.text.alpha_ep_extbl_i_eq_0,"ax",@progbits
-	.hidden	alpha_ep_extbl_i_eq_0
+	.hidden	alpha_ep_extbl_i_eq_0   # -- Begin function alpha_ep_extbl_i_eq_0
 	.globl	alpha_ep_extbl_i_eq_0
 	.type	alpha_ep_extbl_i_eq_0,@function
 alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
@@ -50,9 +50,9 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.endfunc
 .Lfunc_end0:
 	.size	alpha_ep_extbl_i_eq_0, .Lfunc_end0-alpha_ep_extbl_i_eq_0
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -66,21 +66,21 @@ main:                                   # @main
 	i64.const	$push1=, 6003104017374052362
 	i64.store	b+16($pop20), $pop1
 	i32.const	$push19=, 0
-	i32.const	$push2=, -2013265854
-	i32.store	pars($pop19), $pop2
-	i32.const	$push18=, 0
-	i32.load	$push17=, r($pop18)
-	tee_local	$push16=, $0=, $pop17
-	i64.load	$push8=, 16($0)
-	i64.load	$push3=, 136($0)
-	i64.const	$push4=, 3
-	i64.shl 	$push5=, $pop3, $pop4
-	i64.const	$push6=, 56
-	i64.and 	$push7=, $pop5, $pop6
-	i64.shr_u	$push9=, $pop8, $pop7
-	i64.const	$push10=, 255
-	i64.and 	$push11=, $pop9, $pop10
-	i64.store	16($pop16), $pop11
+	i32.load	$push18=, r($pop19)
+	tee_local	$push17=, $0=, $pop18
+	i64.load	$push7=, 16($0)
+	i64.load	$push2=, 136($0)
+	i64.const	$push3=, 3
+	i64.shl 	$push4=, $pop2, $pop3
+	i64.const	$push5=, 56
+	i64.and 	$push6=, $pop4, $pop5
+	i64.shr_u	$push8=, $pop7, $pop6
+	i64.const	$push9=, 255
+	i64.and 	$push10=, $pop8, $pop9
+	i64.store	16($pop17), $pop10
+	i32.const	$push16=, 0
+	i32.const	$push11=, -2013265854
+	i32.store	pars($pop16), $pop11
 	block   	
 	i32.const	$push15=, 0
 	i64.load	$push12=, b+16($pop15)
@@ -98,7 +98,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	b                       # @b
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
@@ -127,6 +127,6 @@ pars:
 	.size	pars, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

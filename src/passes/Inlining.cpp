@@ -17,9 +17,14 @@
 //
 // Inlining.
 //
-// For now, this does a conservative inlining of all functions that have
+// By default, this does a conservative inlining of all functions that have
 // exactly one use, and are fairly small. That should not increase code
 // size, and may have speed benefits.
+//
+// When opt level is 3+ (-O3 or above), we more aggressively inline
+// even functions with more than one use, that seem to be "lightweight"
+// (no loops or calls etc.), so inlining them may get rid of call overhead
+// that would be noticeable otherwise
 //
 
 #include <atomic>
@@ -33,42 +38,66 @@
 
 namespace wasm {
 
-// A limit on how big a function to inline.
-static const int INLINING_SIZE_LIMIT = 15;
+// A limit on how big a function to inline when being careful about size
+static const int CAREFUL_SIZE_LIMIT = 15;
 
-// We only inline a function with a single use.
-static const int SINGLE_USE = 1;
+// A limit on how big a function to inline when being more flexible. In
+// particular it's nice that with this limit we can inline the clamp
+// functions (i32s-div, f64-to-int, etc.), that can affect perf.
+static const int FLEXIBLE_SIZE_LIMIT = 20;
 
-// A number of uses of a function that is too high for us to
-// inline it to all those locations.
-static const int TOO_MANY_USES_TO_INLINE = SINGLE_USE + 1;
+// Useful into on a function, helping us decide if we can inline it
+struct FunctionInfo {
+  std::atomic<Index> calls;
+  Index size;
+  bool lightweight = true;
+  bool usedGlobally = false; // in a table or export
 
-// Map of function name => number of uses. We build the values in
-// parallel, using atomic increments. This is safe because we never
-// update the map itself in parallel, we only update the values,
-// and so the map never allocates or moves values which could be
-// a problem with atomics (in fact it would be a problem in general
-// as well, not just with atomics, as we don't use a lock in
-// parallel access, we depend on the map itself being constant
-// when running multiple threads).
-typedef std::map<Name, std::atomic<Index>> NameToAtomicIndexMap;
+  bool worthInlining(PassOptions& options, bool allowMultipleInliningsPerFunction) {
+    // if it's big, it's just not worth doing (TODO: investigate more)
+    if (size > FLEXIBLE_SIZE_LIMIT) return false;
+    // if it has one use, then inlining it would likely reduce code size
+    // since we are just moving code around, + optimizing, so worth it
+    // if small enough that we are pretty sure its ok
+    if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
+    if (!allowMultipleInliningsPerFunction) return false;
+    // more than one use, so we can't eliminate it after inlining,
+    // so only worth it if we really care about speed and don't care
+    // about size, and if it's lightweight so a good candidate for
+    // speeding us up
+    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 && lightweight;
+  }
+};
 
-struct FunctionUseCounter : public WalkerPass<PostWalker<FunctionUseCounter>> {
+typedef std::unordered_map<Name, FunctionInfo> NameInfoMap;
+
+struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
-  FunctionUseCounter(NameToAtomicIndexMap* uses) : uses(uses) {}
+  FunctionInfoScanner(NameInfoMap* infos) : infos(infos) {}
 
-  FunctionUseCounter* create() override {
-    return new FunctionUseCounter(uses);
+  FunctionInfoScanner* create() override {
+    return new FunctionInfoScanner(infos);
   }
 
-  void visitCall(Call *curr) {
-    assert(uses->count(curr->target) > 0); // can't add a new element in parallel
-    (*uses)[curr->target]++;
+  void visitLoop(Loop* curr) {
+    // having a loop is not lightweight
+    (*infos)[getFunction()->name].lightweight = false;
+  }
+
+  void visitCall(Call* curr) {
+    assert(infos->count(curr->target) > 0); // can't add a new element in parallel
+    (*infos)[curr->target].calls++;
+    // having a call is not lightweight
+    (*infos)[getFunction()->name].lightweight = false;
+  }
+
+  void visitFunction(Function* curr) {
+    (*infos)[curr->name].size = Measurer::measure(curr->body);
   }
 
 private:
-  NameToAtomicIndexMap* uses;
+  NameInfoMap* infos;
 };
 
 struct InliningAction {
@@ -79,8 +108,8 @@ struct InliningAction {
 };
 
 struct InliningState {
-  std::set<Name> canInline;
-  std::map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
+  std::unordered_set<Name> worthInlining;
+  std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction; // function name => actions that can be performed in it
 };
 
 struct Planner : public WalkerPass<PostWalker<Planner>> {
@@ -95,7 +124,7 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
   void visitCall(Call* curr) {
     // plan to inline if we know this is valid to inline, and if the call is
     // actually performed - if it is dead code, it's pointless to inline
-    if (state->canInline.count(curr->target) &&
+    if (state->worthInlining.count(curr->target) &&
         curr->type != unreachable) {
       // nest the call in a block. that way the location of the pointer to the call will not
       // change even if we inline multiple times into the same function, otherwise
@@ -110,7 +139,7 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
   void doWalkFunction(Function* func) {
     // we shouldn't inline into us if we are to be inlined
     // ourselves - that has the risk of cycles
-    if (state->canInline.count(func->name) == 0) {
+    if (state->worthInlining.count(func->name) == 0) {
       walk(func->body);
     }
   }
@@ -126,7 +155,6 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   auto* call = (*action.callSite)->cast<Call>();
   Builder builder(*module);
   auto* block = Builder(*module).makeBlock();
-  block->type = call->type;
   block->name = Name(std::string("__inlined_func$") + from->name.str);
   *action.callSite = block;
   // set up a locals mapping
@@ -162,6 +190,16 @@ static Expression* doInlining(Module* module, Function* into, InliningAction& ac
   auto* contents = ExpressionManipulator::copy(from->body, *module);
   updater.walk(contents);
   block->list.push_back(contents);
+  block->type = call->type;
+  // if the function returned a value, we just set the block containing the
+  // inlined code to have that type. or, if the function was void and
+  // contained void, that is fine too. a bad case is a void function in which
+  // we have unreachable code, so we would be replacing a void call with an
+  // unreachable; we need to handle
+  if (contents->type == unreachable && block->type == none) {
+    // make the block reachable by adding a break to it
+    block->list.push_back(builder.makeBreak(block->name));
+  }
   return block;
 }
 
@@ -169,33 +207,43 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
-  NameToAtomicIndexMap uses;
+  NameInfoMap infos;
+
+  bool firstIteration;
 
   void run(PassRunner* runner, Module* module) override {
     // keep going while we inline, to handle nesting. TODO: optimize
-    calculateUses(module);
-    while (iteration(runner, module)) {}
+    firstIteration = true;
+    while (1) {
+      calculateInfos(module);
+      if (!iteration(runner, module)) {
+        return;
+      }
+      firstIteration = false;
+    }
   }
 
-  void calculateUses(Module* module) {
-    // fill in uses, as we operate on it in parallel (each function to its own entry)
+  void calculateInfos(Module* module) {
+    infos.clear();
+    // fill in info, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
-      uses[func->name].store(0);
+      infos[func->name];
     }
     PassRunner runner(module);
     runner.setIsNested(true);
-    runner.add<FunctionUseCounter>(&uses);
+    runner.add<FunctionInfoScanner>(&infos);
     runner.run();
+    // fill in global uses
     // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
-        uses[ex->value].store(TOO_MANY_USES_TO_INLINE);
+        infos[ex->value].usedGlobally = true;
       }
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
         if (module->getFunctionOrNull(name)) {
-          uses[name].store(TOO_MANY_USES_TO_INLINE);
+          infos[name].usedGlobally = true;
         }
       }
     }
@@ -205,12 +253,12 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     for (auto& func : module->functions) {
-      auto name = func->name;
-      auto numUses = uses[name].load();
-      if (canInline(numUses) && worthInlining(module->getFunction(name))) {
-        state.canInline.insert(name);
+      // on the first iteration, allow multiple inlinings per function
+      if (infos[func->name].worthInlining(runner->options, firstIteration /* allowMultipleInliningsPerFunction */)) {
+        state.worthInlining.insert(func->name);
       }
     }
+    if (state.worthInlining.size() == 0) return false;
     // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
       state.actionsForFunction[func->name];
@@ -222,17 +270,16 @@ struct Inlining : public Pass {
       runner.add<Planner>(&state);
       runner.run();
     }
-    // perform inlinings
-    std::set<Name> inlined;
-    std::set<Function*> inlinedInto;
+    // perform inlinings TODO: parallelize
+    std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
+    std::unordered_set<Function*> inlinedInto; // which functions were inlined into
     for (auto& func : module->functions) {
       for (auto& action : state.actionsForFunction[func->name]) {
         Name inlinedName = action.contents->name;
         doInlining(module, func.get(), action);
-        inlined.insert(inlinedName);
+        inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
-        uses[inlinedName]--;
-        assert(uses[inlinedName].load() == 0);
+        assert(inlinedUses[inlinedName] <= infos[inlinedName].calls);
       }
     }
     // anything we inlined into may now have non-unique label names, fix it up
@@ -242,26 +289,20 @@ struct Inlining : public Pass {
     if (optimize && inlinedInto.size() > 0) {
       doOptimize(inlinedInto, module, runner);
     }
-    // remove functions that we managed to inline, their one use is gone
+    // remove functions that we no longer need after inlining
     auto& funcs = module->functions;
-    funcs.erase(std::remove_if(funcs.begin(), funcs.end(), [&inlined](const std::unique_ptr<Function>& curr) {
-      return inlined.count(curr->name) > 0;
+    funcs.erase(std::remove_if(funcs.begin(), funcs.end(), [&](const std::unique_ptr<Function>& curr) {
+      auto name = curr->name;
+      auto& info = infos[name];
+      return inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
     }), funcs.end());
     // return whether we did any work
-    return inlined.size() > 0;
-  }
-
-  bool canInline(int numUses) {
-    return numUses == SINGLE_USE;
-  }
-
-  bool worthInlining(Function* func) {
-    return Measurer::measure(func->body) <= INLINING_SIZE_LIMIT;
+    return inlinedUses.size() > 0;
   }
 
   // Run useful optimizations after inlining, things like removing
   // unnecessary new blocks, sharing variables, etc.
-  void doOptimize(std::set<Function*>& funcs, Module* module, PassRunner* parentRunner) {
+  void doOptimize(std::unordered_set<Function*>& funcs, Module* module, PassRunner* parentRunner) {
     // save the full list of functions on the side
     std::vector<std::unique_ptr<Function>> all;
     all.swap(module->functions);

@@ -183,6 +183,8 @@ public:
     UnreachableId,
     AtomicCmpxchgId,
     AtomicRMWId,
+    AtomicWaitId,
+    AtomicWakeId,
     NumExpressionIds
   };
   Id _id;
@@ -456,6 +458,30 @@ class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
   void finalize();
 };
 
+class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
+ public:
+  AtomicWait() = default;
+  AtomicWait(MixedArena& allocator) : AtomicWait() {}
+
+  Expression* ptr;
+  Expression* expected;
+  Expression* timeout;
+  WasmType expectedType;
+
+  void finalize();
+};
+
+class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
+ public:
+  AtomicWake() = default;
+  AtomicWake(MixedArena& allocator) : AtomicWake() {}
+
+  Expression* ptr;
+  Expression* wakeCount;
+
+  void finalize();
+};
+
 class Const : public SpecificExpression<Expression::ConstId> {
 public:
   Const() {}
@@ -586,6 +612,7 @@ public:
   WasmType getLocalType(Index index);
 
   Name getLocalNameOrDefault(Index index);
+  Name getLocalNameOrGeneric(Index index);
 
 private:
   bool hasLocalName(Index index) const;

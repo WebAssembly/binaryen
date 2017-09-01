@@ -8,81 +8,18 @@
  (func $0 (type $1) (result i32)
   (block $label$0 (result i32)
    (unreachable)
-   (i32.trunc_u/f64
-    (unreachable)
-   )
-   (unreachable)
-   (br_if $label$0
-    (i32.trunc_u/f64
-     (unreachable)
-    )
-    (unreachable)
-   )
-   (f32.add
-    (unreachable)
-    (f32.const 1)
-   )
-   (unreachable)
   )
  )
  (func $1 (type $0) (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (unreachable)
-   (call $1
-    (unreachable)
-   )
-   (i64.eqz
-    (unreachable)
-   )
-   (drop
-    (unreachable)
-   )
-   (i32.eqz
-    (unreachable)
-   )
-   (i64.eqz
-    (unreachable)
-   )
-   (drop
-    (unreachable)
-   )
-   (call_indirect $0
-    (unreachable)
-    (unreachable)
-   )
-   (i64.eqz
-    (unreachable)
-   )
-   (drop
-    (unreachable)
-   )
   )
  )
  (func $2 (type $2) (param $var$0 i32)
   (local $var$1 f32)
   (block $label$0
    (unreachable)
-   (tee_local $var$0
-    (unreachable)
-   )
-   (i64.eqz
-    (unreachable)
-   )
-   (drop
-    (unreachable)
-   )
-   (i64.eqz
-    (unreachable)
-   )
-   (tee_local $var$1
-    (unreachable)
-   )
-   (drop
-    (unreachable)
-   )
-   (unreachable)
   )
-  (unreachable)
  )
  (func $3 (type $3)
   (local $var$0 f32)
@@ -90,47 +27,40 @@
    (i32.const 259)
    (block $label$0
     (unreachable)
-    (tee_local $var$0
-     (unreachable)
-    )
-    (unreachable)
    )
   )
  )
  (func $4 (type $3)
   (unreachable)
-  (select
-   (unreachable)
-   (i32.const 1)
-   (i32.const 2)
-  )
-  (i64.eqz
-   (unreachable)
-  )
-  (drop
-   (unreachable)
-  )
  )
  (func $5 (type $1) (result i32)
   (block $label$0 (result i32)
    (block $label$1
     (unreachable)
-    (br_if $label$0
-     (unreachable)
-     (unreachable)
-    )
-    (unreachable)
-    (unreachable)
    )
    (unreachable)
   )
  )
- (func $6 (type $1) (result i32)
+ (func $6 (type $0) (param $var$0 i32) (result i32)
+  (block $label$0 (result i32)
+   (if
+    (get_local $var$0)
+    (block $label$1
+     (return
+      (i32.const 127)
+     )
+    )
+   )
+   (block $label$2 (result i32)
+    (return
+     (i32.const -32)
+    )
+   )
+  )
+ )
+ (func $7 (type $1) (result i32)
   (block $label$0 (result i32)
    (block $label$1
-    (unreachable)
-    (unreachable)
-    (unreachable)
     (unreachable)
    )
    (unreachable)

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071029-1.c"
+	.file	"20071029-1.c"
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
@@ -57,7 +57,7 @@ test:                                   # @test
 	br_if   	1, $pop14       # 1: down to label0
 # BB#12:                                # %if.end37
 	return
-.LBB0_13:                               # %if.then33
+.LBB0_13:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -69,49 +69,73 @@ test:                                   # @test
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-	.local  	i32, i32
+	.local  	i32, i32, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 0
-	i32.const	$push1=, 0
-	i32.load	$push2=, __stack_pointer($pop1)
-	i32.const	$push3=, 64
-	i32.sub 	$push11=, $pop2, $pop3
-	tee_local	$push10=, $2=, $pop11
-	i32.store	__stack_pointer($pop4), $pop10
-	i32.const	$push9=, 1
-	i32.add 	$0=, $0, $pop9
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $2, $pop5
+	i32.const	$push10=, 0
+	i32.const	$push8=, 0
+	i32.load	$push7=, __stack_pointer($pop8)
+	i32.const	$push9=, 64
+	i32.sub 	$push19=, $pop7, $pop9
+	tee_local	$push18=, $8=, $pop19
+	i32.store	__stack_pointer($pop10), $pop18
+	i32.const	$push17=, 1
+	i32.add 	$0=, $0, $pop17
+	i32.const	$push11=, 8
+	i32.add 	$push12=, $8, $pop11
 	i32.const	$push0=, 4
-	i32.or  	$1=, $pop6, $pop0
+	i32.or  	$push16=, $pop12, $pop0
+	tee_local	$push15=, $1=, $pop16
+	i32.const	$push1=, 48
+	i32.add 	$2=, $pop15, $pop1
+	i32.const	$push2=, 40
+	i32.add 	$3=, $1, $pop2
+	i32.const	$push3=, 32
+	i32.add 	$4=, $1, $pop3
+	i32.const	$push4=, 24
+	i32.add 	$5=, $1, $pop4
+	i32.const	$push5=, 16
+	i32.add 	$6=, $1, $pop5
+	i32.const	$push6=, 8
+	i32.add 	$7=, $1, $pop6
 .LBB1_1:                                # %again
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.store	8($2), $0
-	i32.const	$push14=, 0
-	i32.const	$push13=, 52
-	i32.call	$drop=, memset@FUNCTION, $1, $pop14, $pop13
-	i32.const	$push12=, 1
-	i32.add 	$0=, $0, $pop12
-	i32.const	$push7=, 8
-	i32.add 	$push8=, $2, $pop7
-	call    	test@FUNCTION, $pop8
+	i64.const	$push27=, 0
+	i64.store	0($1):p2align=2, $pop27
+	i32.const	$push26=, 0
+	i32.store	0($2), $pop26
+	i64.const	$push25=, 0
+	i64.store	0($3):p2align=2, $pop25
+	i64.const	$push24=, 0
+	i64.store	0($4):p2align=2, $pop24
+	i64.const	$push23=, 0
+	i64.store	0($5):p2align=2, $pop23
+	i64.const	$push22=, 0
+	i64.store	0($6):p2align=2, $pop22
+	i64.const	$push21=, 0
+	i64.store	0($7):p2align=2, $pop21
+	i32.store	8($8), $0
+	i32.const	$push20=, 1
+	i32.add 	$0=, $0, $pop20
+	i32.const	$push13=, 8
+	i32.add 	$push14=, $8, $pop13
+	call    	test@FUNCTION, $pop14
 	br      	0               # 0: up to label2
 .LBB1_2:
 	end_loop
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -123,7 +147,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	test.i,@object          # @test.i
 	.section	.data.test.i,"aw",@progbits
 	.p2align	2
@@ -132,6 +156,6 @@ test.i:
 	.size	test.i, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

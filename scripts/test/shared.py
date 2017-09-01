@@ -102,9 +102,11 @@ if not options.binaryen_bin:
   else:
     options.binaryen_bin = 'bin'
 
+options.binaryen_bin = os.path.normpath(options.binaryen_bin)
+
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
-if all(map(lambda f: not os.path.isfile(os.path.join(options.binaryen_bin, f)),
-           wasm_dis_filenames)):
+if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
+           for f in wasm_dis_filenames):
   warn('Binaryen not found (or has not been successfully built to bin/ ?')
 
 # Locate Binaryen source directory if not specified.
@@ -151,6 +153,7 @@ NODEJS = which('nodejs') or which('node')
 MOZJS = which('mozjs')
 EMCC = which('emcc')
 
+BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
@@ -200,13 +203,12 @@ def has_shell_timeout():
 def fetch_waterfall():
   rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
   buildername = get_platform()
-  try:
-    local_rev_path = os.path.join(options.binaryen_test, 'local-revision')
-    local_rev = open(local_rev_path).read().strip()
-  except:
-    local_rev = None
-  if local_rev == rev:
-    return
+  local_rev_path = os.path.join(WATERFALL_BUILD_DIR, 'local-revision')
+  if os.path.exists(local_rev_path):
+    with open(local_rev_path) as f:
+      local_rev = f.read().strip()
+    if local_rev == rev:
+      return
   # fetch it
   basename = 'wasm-binaries-' + rev + '.tbz2'
   url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds',
@@ -222,8 +224,8 @@ def fetch_waterfall():
   subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)],
                         cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
-  with open(os.path.join(options.binaryen_test, 'local-revision'), 'w') as o:
-    o.write(rev)
+  with open(local_rev_path, 'w') as o:
+    o.write(rev + '\n')
 
 
 has_vanilla_llvm = False

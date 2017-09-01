@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/p18298.c"
+	.file	"p18298.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -15,9 +15,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -28,7 +28,7 @@ main:                                   # @main
 	i32.load8_u	$push0=, s($pop1)
 	i32.eqz 	$push5=, $pop0
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %while.body
+# BB#1:                                 # %while.cond
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
 	i32.store8	s($pop3), $pop2
@@ -39,7 +39,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	s                       # @s
 	.type	s,@object
 	.section	.data.s,"aw",@progbits
@@ -50,5 +50,5 @@ s:
 	.size	s, 2048
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strcmp, i32, i32, i32

@@ -6,6 +6,8 @@
  (type $4 (func (param i32 i32)))
  (type $5 (func (param f32 i32 f32 i32 i32 f64 f32) (result i32)))
  (type $6 (func (param i32) (result i64)))
+ (type $7 (func (result i64)))
+ (type $8 (func (result f32)))
  (memory $0 256 256)
  (func $b0-yes (type $0) (param $i1 i32)
   (block $topmost
@@ -1056,6 +1058,50 @@
    (if
     (i32.const 0)
     (nop)
+   )
+  )
+ )
+ (func $unreachable-if-that-could-be-a-br_if (type $7) (result i64)
+  (loop $label$3
+   (if
+    (unreachable)
+    (f64.const 1)
+    (br $label$3)
+   )
+   (i64.const 1)
+  )
+ )
+ (func $nop-br-might-update-type (type $1)
+  (block $label$39
+   (if
+    (unreachable)
+    (if (result i32)
+     (i32.const 1)
+     (br $label$39)
+     (i32.const 0)
+    )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $no-flow-through-if-without-else (type $8) (result f32)
+  (local $0 i32)
+  (local $2 f32)
+  (block $label$0 (result f32)
+   (if (result f32)
+    (get_local $0)
+    (block $label$11
+     (return
+      (f32.const 239)
+     )
+     (if
+      (i32.const 0)
+      (return
+       (get_local $2)
+      )
+     )
+    )
+    (f32.const -9223372036854775808)
    )
   )
  )

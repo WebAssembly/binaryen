@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr40668.c"
+	.file	"pr40668.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -26,7 +26,7 @@ bar:                                    # @bar
 # BB#2:                                 # %switch.lookup
 	i32.const	$push9=, 2
 	i32.shl 	$push10=, $0, $pop9
-	i32.const	$push11=, .Lswitch.table
+	i32.const	$push11=, .Lswitch.table.bar
 	i32.add 	$push12=, $pop10, $pop11
 	i32.load	$push13=, 0($pop12)
 	i32.store	0($1):p2align=0, $pop13
@@ -36,9 +36,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -49,11 +49,11 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
-	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+                                        # -- End function
+	.type	.Lswitch.table.bar,@object # @switch.table.bar
+	.section	.rodata..Lswitch.table.bar,"a",@progbits
 	.p2align	4
-.Lswitch.table:
+.Lswitch.table.bar:
 	.int32	305419896               # 0x12345678
 	.int32	305419896               # 0x12345678
 	.int32	305419896               # 0x12345678
@@ -63,7 +63,7 @@ main:                                   # @main
 	.int32	0                       # 0x0
 	.int32	0                       # 0x0
 	.int32	0                       # 0x0
-	.size	.Lswitch.table, 36
+	.size	.Lswitch.table.bar, 36
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

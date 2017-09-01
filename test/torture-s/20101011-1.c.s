@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20101011-1.c"
+	.file	"20101011-1.c"
 	.section	.text.sigfpe,"ax",@progbits
-	.hidden	sigfpe
+	.hidden	sigfpe                  # -- Begin function sigfpe
 	.globl	sigfpe
 	.type	sigfpe,@function
 sigfpe:                                 # @sigfpe
@@ -13,9 +13,9 @@ sigfpe:                                 # @sigfpe
 	.endfunc
 .Lfunc_end0:
 	.size	sigfpe, .Lfunc_end0-sigfpe
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -29,7 +29,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	k                       # @k
 	.type	k,@object
 	.section	.bss.k,"aw",@nobits
@@ -40,7 +40,7 @@ k:
 	.size	k, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32
 	.functype	signal, i32, i32, i32
 	.functype	abort, void

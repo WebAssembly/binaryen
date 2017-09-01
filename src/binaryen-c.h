@@ -372,8 +372,11 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 // Parse a module in s-expression text format
 BinaryenModuleRef BinaryenModuleParse(const char* text);
 
-// Print a module to stdout. Useful for debugging.
+// Print a module to stdout in s-expression text format. Useful for debugging.
 void BinaryenModulePrint(BinaryenModuleRef module);
+
+// Print a module to stdout in asm.js syntax.
+void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 
 // Validate a module, showing errors on problems.
 //  @return 0 if an error occurred, 1 if validated succesfully

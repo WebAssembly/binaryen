@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57130.c"
+	.file	"pr57130.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -32,9 +32,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -42,10 +42,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 48
-	i32.sub 	$push25=, $pop9, $pop10
+	i32.sub 	$push25=, $pop8, $pop10
 	tee_local	$push24=, $0=, $pop25
 	i32.store	__stack_pointer($pop11), $pop24
 	i32.const	$push15=, 16
@@ -54,23 +54,23 @@ main:                                   # @main
 	i32.add 	$push3=, $pop16, $pop2
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.r+8($pop0):p2align=2
-	i64.store	0($pop3):p2align=2, $pop1
+	i64.store	0($pop3), $pop1
 	i32.const	$push23=, 0
 	i64.load	$push4=, .Lmain.r($pop23):p2align=2
-	i64.store	16($0):p2align=2, $pop4
+	i64.store	16($0), $pop4
 	i32.const	$push17=, 16
 	i32.add 	$push18=, $0, $pop17
 	call    	foo@FUNCTION, $pop18
-	i64.const	$push5=, 12884901887
-	i64.store	40($0), $pop5
 	i32.const	$push22=, 8
-	i32.add 	$push6=, $0, $pop22
+	i32.add 	$push5=, $0, $pop22
+	i64.const	$push6=, 12884901887
+	i64.store	0($pop5), $pop6
 	i64.const	$push21=, 12884901887
-	i64.store	0($pop6):p2align=2, $pop21
+	i64.store	40($0), $pop21
 	i64.const	$push7=, 8589934592
-	i64.store	32($0), $pop7
+	i64.store	0($0), $pop7
 	i64.const	$push20=, 8589934592
-	i64.store	0($0):p2align=2, $pop20
+	i64.store	32($0), $pop20
 	call    	foo@FUNCTION, $0
 	i32.const	$push14=, 0
 	i32.const	$push12=, 48
@@ -81,7 +81,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	s                       # @s
 	.type	s,@object
 	.section	.data.s,"aw",@progbits
@@ -116,6 +116,6 @@ foo.cnt:
 	.size	.Lmain.r, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

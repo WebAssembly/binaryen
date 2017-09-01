@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080519-1.c"
+	.file	"20080519-1.c"
 	.section	.text.merge_overlapping_regs,"ax",@progbits
-	.hidden	merge_overlapping_regs
+	.hidden	merge_overlapping_regs  # -- Begin function merge_overlapping_regs
 	.globl	merge_overlapping_regs
 	.type	merge_overlapping_regs,@function
 merge_overlapping_regs:                 # @merge_overlapping_regs
@@ -26,9 +26,9 @@ merge_overlapping_regs:                 # @merge_overlapping_regs
 	.endfunc
 .Lfunc_end0:
 	.size	merge_overlapping_regs, .Lfunc_end0-merge_overlapping_regs
-
+                                        # -- End function
 	.section	.text.regrename_optimize,"ax",@progbits
-	.hidden	regrename_optimize
+	.hidden	regrename_optimize      # -- Begin function regrename_optimize
 	.globl	regrename_optimize
 	.type	regrename_optimize,@function
 regrename_optimize:                     # @regrename_optimize
@@ -36,10 +36,10 @@ regrename_optimize:                     # @regrename_optimize
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push27=, 0
-	i32.const	$push24=, 0
-	i32.load	$push25=, __stack_pointer($pop24)
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
 	i32.const	$push26=, 16
-	i32.sub 	$push36=, $pop25, $pop26
+	i32.sub 	$push36=, $pop24, $pop26
 	tee_local	$push35=, $6=, $pop36
 	i32.store	__stack_pointer($pop27), $pop35
 	i64.const	$push0=, 0
@@ -122,9 +122,9 @@ regrename_optimize:                     # @regrename_optimize
 	.endfunc
 .Lfunc_end1:
 	.size	regrename_optimize, .Lfunc_end1-regrename_optimize
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -132,10 +132,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push17=, $pop5, $pop6
+	i32.sub 	$push17=, $pop4, $pop6
 	tee_local	$push16=, $0=, $pop17
 	i32.store	__stack_pointer($pop7), $pop16
 	i64.const	$push0=, 0
@@ -161,7 +161,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	reg_class_contents      # @reg_class_contents
 	.type	reg_class_contents,@object
 	.section	.bss.reg_class_contents,"aw",@nobits
@@ -172,5 +172,5 @@ reg_class_contents:
 	.size	reg_class_contents, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

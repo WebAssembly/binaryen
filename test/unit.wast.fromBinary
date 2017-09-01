@@ -270,22 +270,14 @@
       (block $label$15
        (loop $label$16
         (br $label$15)
-        (br $label$16)
        )
-       (unreachable)
-       (br $label$9)
       )
      )
      (block $label$17
       (loop $label$18
        (br $label$9)
-       (br $label$18)
       )
-      (unreachable)
-      (br $label$9)
-      (unreachable)
      )
-     (unreachable)
     )
     (nop)
    )
@@ -474,12 +466,7 @@
    (return
     (i32.const 2)
    )
-   (unreachable)
   )
-  (f64.abs
-   (unreachable)
-  )
-  (unreachable)
  )
  (func $unreachable-block-toplevel (type $5) (result i32)
   (block $label$0
@@ -489,30 +476,21 @@
    (return
     (i32.const 2)
    )
-   (unreachable)
   )
-  (unreachable)
  )
  (func $unreachable-block0 (type $5) (result i32)
   (block $label$0
    (return
     (i32.const 2)
    )
-   (unreachable)
   )
-  (f64.abs
-   (unreachable)
-  )
-  (unreachable)
  )
  (func $unreachable-block0-toplevel (type $5) (result i32)
   (block $label$0
    (return
     (i32.const 2)
    )
-   (unreachable)
   )
-  (unreachable)
  )
  (func $unreachable-block-with-br (type $5) (result i32)
   (block $label$0 (result i32)
@@ -539,10 +517,6 @@
     )
    )
   )
-  (f64.abs
-   (unreachable)
-  )
-  (unreachable)
  )
  (func $unreachable-if-toplevel (type $5) (result i32)
   (if
@@ -558,7 +532,6 @@
     )
    )
   )
-  (unreachable)
  )
  (func $unreachable-loop (type $5) (result i32)
   (loop $label$0
@@ -567,10 +540,6 @@
     (i32.const 1)
    )
   )
-  (f64.abs
-   (unreachable)
-  )
-  (unreachable)
  )
  (func $unreachable-loop0 (type $5) (result i32)
   (loop $label$0
@@ -578,10 +547,6 @@
     (i32.const 1)
    )
   )
-  (f64.abs
-   (unreachable)
-  )
-  (unreachable)
  )
  (func $unreachable-loop-toplevel (type $5) (result i32)
   (loop $label$0
@@ -590,7 +555,6 @@
     (i32.const 1)
    )
   )
-  (unreachable)
  )
  (func $unreachable-loop0-toplevel (type $5) (result i32)
   (loop $label$0
@@ -598,53 +562,11 @@
     (i32.const 1)
    )
   )
-  (unreachable)
  )
  (func $unreachable-ifs (type $1)
   (block $label$0
    (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-    (block $label$2
-     (nop)
-    )
-   )
-   (if
-    (i32.const 1)
-    (block $label$3
-     (nop)
-    )
-    (block $label$4
-     (unreachable)
-    )
-   )
-   (if
-    (i32.const 1)
-    (block $label$5
-     (unreachable)
-    )
-    (block $label$6
-     (unreachable)
-    )
-   )
-   (unreachable)
-   (unreachable)
   )
-  (unreachable)
  )
  (func $unreachable-if-arm (type $1)
   (if
@@ -653,10 +575,6 @@
     (nop)
    )
    (block $label$1
-    (unreachable)
-    (drop
-     (i32.const 1)
-    )
     (unreachable)
    )
   )

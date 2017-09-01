@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr44942.c"
+	.file	"pr44942.c"
 	.section	.text.test1,"ax",@progbits
-	.hidden	test1
+	.hidden	test1                   # -- Begin function test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
@@ -9,13 +9,12 @@ test1:                                  # @test1
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $10=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
-	i32.store	12($10), $9
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $9, $pop0
 	i32.store	12($10), $pop1
@@ -37,9 +36,9 @@ test1:                                  # @test1
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
-
+                                        # -- End function
 	.section	.text.test2,"ax",@progbits
-	.hidden	test2
+	.hidden	test2                   # -- Begin function test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
@@ -47,13 +46,12 @@ test2:                                  # @test2
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push13=, $pop6, $pop7
+	i32.sub 	$push13=, $pop5, $pop7
 	tee_local	$push12=, $19=, $pop13
 	i32.store	__stack_pointer($pop8), $pop12
-	i32.store	12($19), $18
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $18, $pop0
 	i32.store	12($19), $pop1
@@ -75,9 +73,9 @@ test2:                                  # @test2
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
-
+                                        # -- End function
 	.section	.text.test3,"ax",@progbits
-	.hidden	test3
+	.hidden	test3                   # -- Begin function test3
 	.globl	test3
 	.type	test3,@function
 test3:                                  # @test3
@@ -85,13 +83,12 @@ test3:                                  # @test3
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push18=, $pop9, $pop10
+	i32.sub 	$push18=, $pop8, $pop10
 	tee_local	$push17=, $10=, $pop18
 	i32.store	__stack_pointer($pop11), $pop17
-	i32.store	12($10), $9
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $9, $pop0
 	i32.const	$push2=, -8
@@ -118,9 +115,9 @@ test3:                                  # @test3
 	.endfunc
 .Lfunc_end2:
 	.size	test3, .Lfunc_end2-test3
-
+                                        # -- End function
 	.section	.text.test4,"ax",@progbits
-	.hidden	test4
+	.hidden	test4                   # -- Begin function test4
 	.globl	test4
 	.type	test4,@function
 test4:                                  # @test4
@@ -128,13 +125,12 @@ test4:                                  # @test4
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push11=, 0
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push18=, $pop9, $pop10
+	i32.sub 	$push18=, $pop8, $pop10
 	tee_local	$push17=, $19=, $pop18
 	i32.store	__stack_pointer($pop11), $pop17
-	i32.store	12($19), $18
 	i32.const	$push0=, 7
 	i32.add 	$push1=, $18, $pop0
 	i32.const	$push2=, -8
@@ -161,9 +157,9 @@ test4:                                  # @test4
 	.endfunc
 .Lfunc_end3:
 	.size	test4, .Lfunc_end3-test4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -171,10 +167,10 @@ main:                                   # @main
 	.local  	f64, i64, i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 128
-	i32.sub 	$push25=, $pop7, $pop8
+	i32.sub 	$push25=, $pop6, $pop8
 	tee_local	$push24=, $2=, $pop25
 	i32.store	__stack_pointer($pop9), $pop24
 	i32.const	$push0=, 1234
@@ -210,7 +206,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

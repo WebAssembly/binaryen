@@ -36,5 +36,38 @@
       )
     )
   )
+  (func $implicit-trap-and-global-effects
+    (local $var$0 i32)
+    (set_local $var$0
+     (i32.trunc_u/f64
+      (f64.const -nan:0xfffffffffffc3) ;; this implicit trap will actually trap
+     )
+    )
+    (f32.store align=1 ;; and if we move it across this store, the store will execute, having global side effects
+     (i32.const 22)
+     (f32.const 154)
+    )
+    (drop
+     (get_local $var$0)
+    )
+  )
+  (func $implicit-trap-and-local-effects
+    (local $var$0 i32)
+    (local $other i32)
+    (set_local $var$0
+     (i32.trunc_u/f64
+      (f64.const -nan:0xfffffffffffc3) ;; this implicit trap will actually trap
+     )
+    )
+    (set_local $other (i32.const 100)) ;; but it's fine to move it across a local effect, that vanishes anyhow
+    (drop
+     (get_local $var$0)
+    )
+    (if (i32.const 1)
+     (drop
+      (get_local $other)
+     )
+    )
+  )
 )
 

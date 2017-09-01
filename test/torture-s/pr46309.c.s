@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr46309.c"
+	.file	"pr46309.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -37,9 +37,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,10 +47,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push26=, $pop5, $pop6
+	i32.sub 	$push26=, $pop4, $pop6
 	tee_local	$push25=, $0=, $pop26
 	i32.store	__stack_pointer($pop7), $pop25
 	#APP
@@ -65,21 +65,21 @@ main:                                   # @main
 	i32.const	$push13=, 12
 	i32.add 	$push14=, $0, $pop13
 	call    	bar@FUNCTION, $pop14
-	i32.const	$push2=, 1
-	i32.store	8($0), $pop2
-	i32.const	$push3=, 0
+	i32.const	$push2=, 0
+	i32.store	12($0), $pop2
+	i32.const	$push3=, 1
+	i32.store	8($0), $pop3
+	i32.const	$push24=, 0
 	i32.const	$push15=, 8
 	i32.add 	$push16=, $0, $pop15
-	i32.store	q($pop3), $pop16
-	i32.const	$push24=, 0
-	i32.store	12($0), $pop24
+	i32.store	q($pop24), $pop16
 	i32.const	$push17=, 12
 	i32.add 	$push18=, $0, $pop17
 	call    	bar@FUNCTION, $pop18
-	i32.const	$push23=, 0
-	i32.store	8($0), $pop23
-	i32.const	$push22=, 1
-	i32.store	12($0), $pop22
+	i32.const	$push23=, 1
+	i32.store	12($0), $pop23
+	i32.const	$push22=, 0
+	i32.store	8($0), $pop22
 	i32.const	$push19=, 12
 	i32.add 	$push20=, $0, $pop19
 	call    	bar@FUNCTION, $pop20
@@ -92,7 +92,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	q                       # @q
 	.type	q,@object
 	.section	.bss.q,"aw",@nobits
@@ -103,5 +103,5 @@ q:
 	.size	q, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

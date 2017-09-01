@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20050713-1.c"
+	.file	"20050713-1.c"
 	.section	.text.foo2,"ax",@progbits
-	.hidden	foo2
+	.hidden	foo2                    # -- Begin function foo2
 	.globl	foo2
 	.type	foo2,@function
 foo2:                                   # @foo2
@@ -41,16 +41,16 @@ foo2:                                   # @foo2
 # BB#6:                                 # %if.end13
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB0_7:                                # %if.then12
+.LBB0_7:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	foo2, .Lfunc_end0-foo2
-
+                                        # -- End function
 	.section	.text.foo3,"ax",@progbits
-	.hidden	foo3
+	.hidden	foo3                    # -- Begin function foo3
 	.globl	foo3
 	.type	foo3,@function
 foo3:                                   # @foo3
@@ -105,16 +105,16 @@ foo3:                                   # @foo3
 # BB#9:                                 # %if.end
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB1_10:                               # %if.then
+.LBB1_10:                               # %if.then.i
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	foo3, .Lfunc_end1-foo3
-
+                                        # -- End function
 	.section	.text.bar2,"ax",@progbits
-	.hidden	bar2
+	.hidden	bar2                    # -- Begin function bar2
 	.globl	bar2
 	.type	bar2,@function
 bar2:                                   # @bar2
@@ -154,16 +154,16 @@ bar2:                                   # @bar2
 # BB#6:                                 # %foo2.exit
 	i32.const	$push18=, 0
 	return  	$pop18
-.LBB2_7:                                # %if.then12.i
+.LBB2_7:                                # %if.then.i
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	bar2, .Lfunc_end2-bar2
-
+                                        # -- End function
 	.section	.text.bar3,"ax",@progbits
-	.hidden	bar3
+	.hidden	bar3                    # -- Begin function bar3
 	.globl	bar3
 	.type	bar3,@function
 bar3:                                   # @bar3
@@ -218,16 +218,16 @@ bar3:                                   # @bar3
 # BB#9:                                 # %foo3.exit
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB3_10:                               # %if.then.i
+.LBB3_10:                               # %if.then.i.i
 	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end3:
 	.size	bar3, .Lfunc_end3-bar3
-
+                                        # -- End function
 	.section	.text.baz3,"ax",@progbits
-	.hidden	baz3
+	.hidden	baz3                    # -- Begin function baz3
 	.globl	baz3
 	.type	baz3,@function
 baz3:                                   # @baz3
@@ -282,16 +282,16 @@ baz3:                                   # @baz3
 # BB#9:                                 # %foo3.exit
 	i32.const	$push27=, 0
 	return  	$pop27
-.LBB4_10:                               # %if.then.i
+.LBB4_10:                               # %if.then.i.i
 	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end4:
 	.size	baz3, .Lfunc_end4-baz3
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -302,7 +302,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

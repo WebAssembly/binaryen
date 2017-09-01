@@ -535,6 +535,10 @@ enum ASTNodes {
 };
 
 enum AtomicOpcodes {
+  AtomicWake = 0x00,
+  I32AtomicWait = 0x01,
+  I64AtomicWait = 0x02,
+
   I32AtomicLoad = 0x10,
   I64AtomicLoad = 0x11,
   I32AtomicLoad8U = 0x12,
@@ -758,6 +762,8 @@ public:
   void visitStore(Store *curr);
   void visitAtomicRMW(AtomicRMW *curr);
   void visitAtomicCmpxchg(AtomicCmpxchg *curr);
+  void visitAtomicWait(AtomicWait *curr);
+  void visitAtomicWake(AtomicWake *curr);
   void visitConst(Const *curr);
   void visitUnary(Unary *curr);
   void visitBinary(Binary *curr);
@@ -855,9 +861,15 @@ public:
 
   std::vector<Expression*> expressionStack;
 
+  bool definitelyUnreachable; // set when we know code is definitely unreachable. this helps parse
+                              // stacky wasm code, which can be unsuitable for our IR when unreachable
+
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
+  // process a block-type scope, until an end or else marker, or the end of the function
   void processExpressions();
+  void skipUnreachableCode();
+
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
@@ -918,6 +930,8 @@ public:
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicWake(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);

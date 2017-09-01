@@ -9,7 +9,7 @@
 )
 
 [wasm-validator error in function $main] unexpected false: call target must exist, on 
-(call $fn)
+[none] (call $fn)
 (perhaps it should be a CallImport instead of Call?)
 (module
  (type $v (func))

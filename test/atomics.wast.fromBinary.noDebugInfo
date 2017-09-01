@@ -140,5 +140,31 @@
    )
   )
  )
+ (func $3 (type $0)
+  (local $var$0 i32)
+  (local $var$1 i64)
+  (block $label$0
+   (drop
+    (i32.wait
+     (get_local $var$0)
+     (get_local $var$0)
+     (get_local $var$1)
+    )
+   )
+   (drop
+    (wake
+     (get_local $var$0)
+     (get_local $var$0)
+    )
+   )
+   (drop
+    (i64.wait
+     (get_local $var$0)
+     (get_local $var$1)
+     (get_local $var$1)
+    )
+   )
+  )
+ )
 )
 

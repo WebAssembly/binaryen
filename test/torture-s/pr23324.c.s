@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr23324.c"
+	.file	"pr23324.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -41,14 +41,14 @@ main:                                   # @main
 # BB#5:                                 # %caller_bf7.exit
 	i32.const	$push6=, 0
 	return  	$pop6
-.LBB0_6:                                # %if.then37.i.i
+.LBB0_6:                                # %if.then109.i.i
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	wv6,@object             # @wv6
 	.section	.data.wv6,"aw",@progbits
 	.p2align	3
@@ -94,5 +94,5 @@ yv7:
 	.size	yv7, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

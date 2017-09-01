@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000422-1.c"
+	.file	"20000422-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.const	$push15=, 1
 	i32.lt_s	$push0=, $pop16, $pop15
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:                                 # %for.cond1.preheader.preheader
+# BB#1:                                 # %for.body.lr.ph
 	i32.const	$push19=, -1
 	i32.add 	$1=, $0, $pop19
 	i32.const	$push1=, 2
@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.const	$push3=, ops-8
 	i32.add 	$2=, $pop2, $pop3
 	i32.const	$6=, 0
-.LBB0_2:                                # %for.cond1.preheader
+.LBB0_2:                                # %for.body
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_4 Depth 2
 	loop    	                # label2:
@@ -53,7 +53,7 @@ main:                                   # @main
                                         #   in Loop: Header=BB0_4 Depth=2
 	i32.store	0($7), $4
 	i32.store	0($5), $3
-.LBB0_6:                                # %for.cond1.backedge
+.LBB0_6:                                # %for.inc
                                         #   in Loop: Header=BB0_4 Depth=2
 	end_block                       # label5:
 	i32.const	$push30=, -4
@@ -72,7 +72,7 @@ main:                                   # @main
 	tee_local	$push31=, $6=, $pop32
 	i32.lt_s	$push7=, $pop31, $0
 	br_if   	0, $pop7        # 0: up to label2
-# BB#8:                                 # %for.cond15.preheader
+# BB#8:                                 # %for.end14
 	end_loop
 	i32.const	$push34=, 1
 	i32.lt_s	$push8=, $0, $pop34
@@ -113,7 +113,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	ops                     # @ops
 	.type	ops,@object
 	.section	.data.ops,"aw",@progbits
@@ -166,6 +166,6 @@ num:
 	.size	num, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

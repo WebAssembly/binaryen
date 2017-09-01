@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42512.c"
+	.file	"pr42512.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -16,7 +16,7 @@ main:                                   # @main
 	loop    	                # label0:
 	i32.const	$push10=, 65535
 	i32.and 	$push2=, $2, $pop10
-	i32.or  	$2=, $pop2, $1
+	i32.or  	$2=, $1, $pop2
 	i32.const	$push9=, 255
 	i32.add 	$push1=, $1, $pop9
 	i32.const	$push8=, 255
@@ -44,7 +44,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	g_3                     # @g_3
 	.type	g_3,@object
 	.section	.bss.g_3,"aw",@nobits
@@ -55,5 +55,5 @@ g_3:
 	.size	g_3, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

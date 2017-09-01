@@ -31,6 +31,8 @@ namespace wasm {
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, PassOptions& options) {
+  // if the if isn't even taken, this is all dead code anyhow
+  if (ifCondition->type == unreachable) return false;
   if (!brValue) return true;
   EffectAnalyzer value(options, brValue);
   if (value.hasSideEffects()) return false;
@@ -72,7 +74,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         flows.push_back(currp);
         self->valueCanFlow = true; // start optimistic
       } else {
-        self->valueCanFlow = false;
+        self->stopValueFlow();
       }
     } else if (curr->is<Return>()) {
       flows.clear();
@@ -80,6 +82,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->valueCanFlow = true; // start optimistic
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
+      if (iff->condition->type == unreachable) {
+        // avoid trying to optimize this, we never reach it anyhow
+        self->stopFlow();
+        return;
+      }
       if (iff->ifFalse) {
         assert(self->ifStack.size() > 0);
         for (auto* flow : self->ifStack.back()) {
@@ -88,7 +95,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         self->ifStack.pop_back();
       } else {
         // if without else stops the flow of values
-        self->valueCanFlow = false;
+        self->stopValueFlow();
       }
     } else if (curr->is<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
@@ -126,14 +133,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
-      self->valueCanFlow = false;
+      self->stopValueFlow();
     } else if (curr->is<Loop>()) {
       // do nothing - it's ok for values to flow out
     } else {
       // anything else stops the flow
-      flows.clear();
-      self->valueCanFlow = false;
+      self->stopFlow();
     }
+  }
+
+  void stopFlow() {
+    flows.clear();
+    valueCanFlow = false;
+  }
+
+  void stopValueFlow() {
+    flows.erase(std::remove_if(flows.begin(), flows.end(), [&](Expression** currp) {
+      auto* curr = *currp;
+      if (auto* ret = curr->dynCast<Return>()) {
+        return ret->value;
+      }
+      return curr->cast<Break>()->value;
+    }), flows.end());
+    valueCanFlow = false;
   }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
@@ -171,6 +193,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     auto* iff = (*currp)->dynCast<If>();
 
     if (iff) {
+      if (iff->condition->type == unreachable) {
+        // avoid trying to optimize this, we never reach it anyhow
+        return;
+      }
       self->pushTask(doVisitIf, currp);
       if (iff->ifFalse) {
       // we need to join up if-else control flow, and clear after the condition
@@ -456,9 +482,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // a "selectified" condition that executes both.
             for (Index i = 0; i < list.size() - 1; i++) {
               auto* br1 = list[i]->dynCast<Break>();
-              if (!br1 || !br1->condition) continue;
+              // avoid unreachable brs, as they are dead code anyhow, and after merging
+              // them the outer scope could need type changes
+              if (!br1 || !br1->condition || br1->type == unreachable) continue;
               auto* br2 = list[i + 1]->dynCast<Break>();
-              if (!br2 || !br2->condition) continue;
+              if (!br2 || !br2->condition || br2->type == unreachable) continue;
               if (br1->name == br2->name) {
                 assert(!br1->value && !br2->value);
                 if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
