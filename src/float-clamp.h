@@ -138,19 +138,9 @@ Expression* makeTrappingBinary(Binary* curr, FloatTrapContext& context) {
 }
 
 // Some conversions might trap, so emit them safely if necessary
-Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
-                                     FloatTrapContext context) {
+Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
   if (context.trapMode == FloatTrapMode::Allow) {
-    auto ret = context.allocator.alloc<Unary>();
-    ret->value = value;
-    bool isF64 = ret->value->type == f64;
-    if (signed_) {
-      ret->op = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
-    } else {
-      ret->op = isF64 ? TruncUFloat64ToInt32 : TruncUFloat32ToInt32;
-    }
-    ret->type = WasmType::i32;
-    return ret;
+    return curr;
   }
   // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
   // We can handle this in one of two ways: clamping, which is fast, or JS, which
@@ -159,7 +149,7 @@ Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
     CallImport *ret = context.allocator.alloc<CallImport>();
     ret->target = F64_TO_INT;
-    ret->operands.push_back(ensureDouble(value, context.allocator));
+    ret->operands.push_back(ensureDouble(curr->value, context.allocator));
     ret->type = i32;
     static bool addedImport = false;
     if (!addedImport) {
@@ -175,7 +165,7 @@ Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
     return ret;
   }
   assert(context.trapMode == FloatTrapMode::Clamp);
-  WasmType type = value->type;
+  WasmType type = curr->value->type;
   bool isF64 = type == f64;
   Name name = isF64 ? F64_TO_INT : F32_TO_INT;
   UnaryOp truncOp = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
@@ -190,7 +180,7 @@ Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
                        : Literal( float(iMax) + 1);
   Call *ret = context.allocator.alloc<Call>();
   ret->target = name;
-  ret->operands.push_back(value);
+  ret->operands.push_back(curr->value);
   ret->type = i32;
   static std::set<Name> local_addedFunctions;
   if (local_addedFunctions.count(name) == 0) {
@@ -237,16 +227,24 @@ Expression* makeTrappingFloatToInt32(bool signed_, Expression* value,
   return ret;
 }
 
-Expression* makeTrappingFloatToInt64(bool signed_, Expression* value, FloatTrapContext context) {
+Expression* makeTrappingFloatToInt64(bool isSigned, Expression* value, FloatTrapContext context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     auto ret = context.allocator.alloc<Unary>();
     ret->value = value;
     bool isF64 = ret->value->type == f64;
-    if (signed_) {
-      ret->op = isF64 ? TruncSFloat64ToInt64 : TruncSFloat32ToInt64;
+    UnaryOp op;
+    if (isSigned && isF64) {
+      op = TruncSFloat64ToInt64;
+    } else if (isSigned && !isF64) {
+      op = TruncSFloat32ToInt64;
+    } else if (!isSigned && isF64) {
+      op = TruncUFloat64ToInt64;
+    } else if (!isSigned && !isF64) {
+      op = TruncUFloat32ToInt64;
     } else {
-      ret->op = isF64 ? TruncUFloat64ToInt64 : TruncUFloat32ToInt64;
+      WASM_UNREACHABLE();
     }
+    ret->op = op;
     ret->type = WasmType::i64;
     return ret;
   }
@@ -323,12 +321,9 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
     switch (curr->op) {
     case UnaryOp::TruncSFloat32ToInt32:
     case UnaryOp::TruncSFloat64ToInt32:
-      replaceCurrent(makeTrappingFloatToInt32(true, curr->value, context));
-      break;
-
     case UnaryOp::TruncUFloat32ToInt32:
     case UnaryOp::TruncUFloat64ToInt32:
-      replaceCurrent(makeTrappingFloatToInt32(false, curr->value, context));
+      replaceCurrent(makeTrappingFloatToInt32(curr, context));
       break;
 
     case UnaryOp::TruncSFloat32ToInt64:
