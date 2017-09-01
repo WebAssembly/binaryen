@@ -321,15 +321,17 @@ public:
 
   static Index addVar(Function* func, Name name, WasmType type) {
     // always ok to add a var, it does not affect other indices
+    assert(name.is());
     Index index = func->getNumLocals();
-    if (name.is()) func->localIndices[name] = index;
+    func->localIndices[name] = index;
     func->localNames.push_back(name);
     func->vars.emplace_back(type);
     return index;
   }
 
   static Index addVar(Function* func, WasmType type) {
-    return addVar(func, Name(), type);
+    Name name = func->getLocalNameOrGeneric(func->getNumLocals());
+    return addVar(func, name, type);
   }
 
   static void clearLocals(Function* func) {

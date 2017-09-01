@@ -568,14 +568,6 @@ Name Function::getLocalName(Index index) {
   return localNames[index];
 }
 
-Name Function::getLocalNameOrDefault(Index index) {
-  if (hasLocalName(index)) {
-    return localNames[index];
-  }
-  // this is an unnamed local
-  return Name();
-}
-
 Name Function::getLocalNameOrGeneric(Index index) {
   if (hasLocalName(index)) {
     return localNames[index];

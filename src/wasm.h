@@ -611,7 +611,6 @@ public:
   Index getVarIndexBase();
   WasmType getLocalType(Index index);
 
-  Name getLocalNameOrDefault(Index index);
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
