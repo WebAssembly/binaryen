@@ -869,6 +869,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       }
       case 'w': {
         if (!strncmp(str, "wake", strlen("wake"))) return makeAtomicWake(s);
+        abort_on(str);
       }
       default: abort_on(str);
     }
