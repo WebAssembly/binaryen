@@ -78,7 +78,6 @@ struct WasmValidator : public PostWalker<WasmValidator> {
 
   std::map<Name, Expression*> breakTargets;
   std::map<Expression*, BreakInfo> breakInfos;
-  std::set<Name> namedBreakTargets; // even breaks not taken must not be named if they go to a place that does not exist
 
   WasmType returnType = unreachable; // type used in returns
 

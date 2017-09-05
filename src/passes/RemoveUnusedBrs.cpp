@@ -31,7 +31,7 @@ namespace wasm {
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
 static bool canTurnIfIntoBrIf(Expression* ifCondition, Expression* brValue, PassOptions& options) {
-  // if the if isn't even taken, this is all dead code anyhow
+  // if the if isn't even reached, this is all dead code anyhow
   if (ifCondition->type == unreachable) return false;
   if (!brValue) return true;
   EffectAnalyzer value(options, brValue);
@@ -512,7 +512,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (curr->name.is()) {
             auto* br = list[0]->dynCast<Break>();
             // we seek a regular br_if; if the type is unreachable that means it is not
-            // actually taken, so ignore
+            // actually reached, so ignore
             if (br && br->condition && br->name == curr->name && br->type != unreachable) {
               assert(!br->value); // can't, it would be dropped or last in the block
               if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {

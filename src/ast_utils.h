@@ -62,7 +62,7 @@ struct ExpressionAnalyzer {
     if (auto* br = curr->dynCast<Break>()) {
       if (!br->condition) return true;
     } else if (auto* block = curr->dynCast<Block>()) {
-      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BranchUtils::BranchSeeker::hasTaken(block, block->name)) return true;
+      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BranchUtils::BranchSeeker::hasReachable(block, block->name)) return true;
     }
     return false;
   }
