@@ -80,49 +80,27 @@ public:
 private:
   // Some binary opts might trap, so emit them safely if necessary
   Expression* makeTrappingBinary(Binary* curr) {
-    if (mode == FloatTrapMode::Allow) {
+    Name name = getBinaryFuncName(curr);
+    if (mode == FloatTrapMode::Allow || !name.is()) {
       return curr;
     }
+
     // the wasm operation might trap if done over 0, so generate a safe call
     WasmType type = curr->type;
     MixedArena& allocator(getModule()->allocator);
     auto *call = allocator.alloc<Call>();
-    switch (curr->op) {
-      case RemSInt32: call->target = I32S_REM; break;
-      case RemUInt32: call->target = I32U_REM; break;
-      case DivSInt32: call->target = I32S_DIV; break;
-      case DivUInt32: call->target = I32U_DIV; break;
-      case RemSInt64: call->target = I64S_REM; break;
-      case RemUInt64: call->target = I64U_REM; break;
-      case DivSInt64: call->target = I64S_DIV; break;
-      case DivUInt64: call->target = I64U_DIV; break;
-      default:
-        return curr;
-    }
+    call->target = name;
     call->operands.push_back(curr->left);
     call->operands.push_back(curr->right);
     call->type = type;
-    ensureBinaryFunc(call->target, curr->op, type);
+    ensureBinaryFunc(curr);
     return call;
   }
 
   // Some conversions might trap, so emit them safely if necessary
   Expression* makeTrappingUnary(Unary* curr) {
-    switch (curr->op) {
-    case TruncSFloat32ToInt32:
-    case TruncSFloat32ToInt64:
-    case TruncSFloat64ToInt32:
-    case TruncSFloat64ToInt64:
-    case TruncUFloat32ToInt32:
-    case TruncUFloat32ToInt64:
-    case TruncUFloat64ToInt32:
-    case TruncUFloat64ToInt64:
-      break;
-    default:
-      return curr;
-    }
-
-    if (mode == FloatTrapMode::Allow) {
+    Name name = getUnaryFuncName(curr);
+    if (mode == FloatTrapMode::Allow || !name.is()) {
       return curr;
     }
 
@@ -142,7 +120,6 @@ private:
       return ret;
     }
 
-    Name name = getUnaryFuncName(curr);
     Call *ret = allocator.alloc<Call>();
     ret->target = name;
     ret->operands.push_back(curr->value);
@@ -167,26 +144,29 @@ private:
     wasm->addImport(import);
   }
 
-  void ensureBinaryFunc(Name name, BinaryOp op, WasmType type) {
+  void ensureBinaryFunc(Binary* curr) {
+    Name name = getBinaryFuncName(curr);
     if (addedFunctions.count(name) != 0) {
       return;
     }
 
-    bool is32Bit = type == i32;
+    BinaryOp op = curr->op;
+    WasmType type = curr->type;
+    bool isI64 = type == i64;
     Builder builder(*getModule());
     Expression* result = builder.makeBinary(op,
       builder.makeGetLocal(0, type),
       builder.makeGetLocal(1, type)
     );
-    BinaryOp divSIntOp = is32Bit ? DivSInt32 : DivSInt64;
-    BinaryOp eqOp =      is32Bit ? EqInt32   : EqInt64;
-    UnaryOp eqZOp =      is32Bit ? EqZInt32  : EqZInt64; //
-    Literal minLit = is32Bit ? Literal(std::numeric_limits<int32_t>::min())
-                             : Literal(std::numeric_limits<int64_t>::min());
-    Literal negLit = is32Bit ? Literal(int32_t(-1)) : Literal(int64_t(-1));
-    Literal zeroLit = is32Bit ? Literal(int32_t(0)) : Literal(int64_t(0));
+    BinaryOp divSIntOp = isI64 ? DivSInt64 : DivSInt32;
+    UnaryOp eqZOp = isI64 ? EqZInt64 : EqZInt32;
+    Literal minLit = isI64 ? Literal(std::numeric_limits<int64_t>::min())
+                           : Literal(std::numeric_limits<int32_t>::min());
+    Literal zeroLit = isI64 ? Literal(int64_t(0)) : Literal(int32_t(0));
     if (op == divSIntOp) {
       // guard against signed division overflow
+      BinaryOp eqOp = isI64 ? EqInt64 : EqInt32;
+      Literal negLit = isI64 ? Literal(int64_t(-1)) : Literal(int32_t(-1));
       result = builder.makeIf(
         builder.makeBinary(AndInt32,
           builder.makeBinary(eqOp,
@@ -283,19 +263,37 @@ private:
     addedFunctions[name] = func;
   }
 
+  Name getBinaryFuncName(Binary* curr) {
+    switch (curr->op) {
+      case RemSInt32: return I32S_REM;
+      case RemUInt32: return I32U_REM;
+      case DivSInt32: return I32S_DIV;
+      case DivUInt32: return I32U_DIV;
+      case RemSInt64: return I64S_REM;
+      case RemUInt64: return I64U_REM;
+      case DivSInt64: return I64S_DIV;
+      case DivUInt64: return I64U_DIV;
+      default:
+        return Name();
+    }
+  }
+
   Name getUnaryFuncName(Unary* curr) {
-    WasmType type = curr->value->type;
-    WasmType retType = curr->type;
-    bool isF64 = type == f64;
-    bool isI64 = retType == i64;
-    if (isF64 && isI64) {
-      return F64_TO_INT64;
-    } else if (isF64 && !isI64) {
-      return F64_TO_INT;
-    } else if (!isF64 && isI64) {
-      return F32_TO_INT64;
-    } else { // !isF64 && !isI64
+    switch (curr->op) {
+    case TruncSFloat32ToInt32:
+    case TruncUFloat32ToInt32:
       return F32_TO_INT;
+    case TruncSFloat32ToInt64:
+    case TruncUFloat32ToInt64:
+      return F32_TO_INT64;
+    case TruncSFloat64ToInt32:
+    case TruncUFloat64ToInt32:
+      return F64_TO_INT;
+    case TruncSFloat64ToInt64:
+    case TruncUFloat64ToInt64:
+      return F64_TO_INT64;
+    default:
+      return Name();
     }
   }
 };
