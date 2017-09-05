@@ -1699,10 +1699,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             op = UnaryOp::TruncSFloat32ToInt32;
           } else if (!isSigned && isF64) {
             op = UnaryOp::TruncUFloat64ToInt32;
-          } else if (!isSigned && !isF64) {
+          } else { // !isSigned && !isF64
             op = UnaryOp::TruncUFloat32ToInt32;
-          } else {
-            WASM_UNREACHABLE();
           }
           return builder.makeUnary(op, expr);
         }

@@ -138,14 +138,19 @@ Expression* makeTrappingBinary(Binary* curr, FloatTrapContext& context) {
 }
 
 // Some conversions might trap, so emit them safely if necessary
-Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
+Expression* makeTrappingFloatToInt(Unary* curr, FloatTrapContext context) {
   if (context.trapMode == FloatTrapMode::Allow) {
     return curr;
   }
+  WasmType type = curr->value->type;
+  WasmType retType = curr->type;
+  bool isF64 = type == f64;
+  bool isI64 = retType == i64;
   // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
   // We can handle this in one of two ways: clamping, which is fast, or JS, which
   // is precisely like JS but in order to do that we do a slow ffi
-  if (context.trapMode == FloatTrapMode::JS) {
+  // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
+  if (!isI64 && context.trapMode == FloatTrapMode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
     CallImport *ret = context.allocator.alloc<CallImport>();
     ret->target = F64_TO_INT;
@@ -164,24 +169,33 @@ Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
     }
     return ret;
   }
-  assert(context.trapMode == FloatTrapMode::Clamp);
-  WasmType type = curr->value->type;
-  bool isF64 = type == f64;
-  Name name = isF64 ? F64_TO_INT : F32_TO_INT;
-  UnaryOp truncOp = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
+
+  Name name;
+  if (isF64 && isI64) {
+    name = F64_TO_INT64;
+  } else if (isF64 && !isI64) {
+    name = F64_TO_INT;
+  } else if (!isF64 && isI64) {
+    name = F32_TO_INT64;
+  } else { // !isF64 && !isI64
+    name = F32_TO_INT;
+  }
+  UnaryOp truncOp = curr->op;
   BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
   BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
   BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
-  int32_t iMin = std::numeric_limits<int32_t>::min();
-  int32_t iMax = std::numeric_limits<int32_t>::max();
-  Literal fMin = isF64 ? Literal(double(iMin) - 1)
-                       : Literal( float(iMin) - 1);
-  Literal fMax = isF64 ? Literal(double(iMax) + 1)
-                       : Literal( float(iMax) + 1);
+  Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
+                       : Literal(std::numeric_limits<int32_t>::min());
+  Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
+                       : Literal(std::numeric_limits<int32_t>::max());
+  Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
+                       : Literal( float(iMin.getInteger()) - 1);
+  Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
+                       : Literal( float(iMax.getInteger()) + 1);
   Call *ret = context.allocator.alloc<Call>();
   ret->target = name;
   ret->operands.push_back(curr->value);
-  ret->type = i32;
+  ret->type = retType;
   static std::set<Name> local_addedFunctions;
   if (local_addedFunctions.count(name) == 0) {
     Builder& builder = context.builder;
@@ -189,7 +203,7 @@ Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
     auto func = new Function;
     func->name = name;
     func->params.push_back(type);
-    func->result = i32;
+    func->result = retType;
     func->body = builder.makeUnary(truncOp,
       builder.makeGetLocal(0, type)
     );
@@ -199,7 +213,7 @@ Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
         builder.makeGetLocal(0, type),
         builder.makeConst(fMin)
       ),
-      builder.makeConst(Literal(iMin)),
+      builder.makeConst(iMin),
       func->body
     );
     // too big XXX see above
@@ -209,7 +223,7 @@ Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
         builder.makeConst(fMax)
       ),
       // NB: min here as well. anything out of range => to the min
-      builder.makeConst(Literal(iMin)),
+      builder.makeConst(iMin),
       func->body
     );
     // nan
@@ -219,79 +233,7 @@ Expression* makeTrappingFloatToInt32(Unary* curr, FloatTrapContext context) {
         builder.makeGetLocal(0, type)
       ),
       // NB: min here as well. anything invalid => to the min
-      builder.makeConst(Literal(iMin)),
-      func->body
-    );
-    context.wasm.addFunction(func);
-  }
-  return ret;
-}
-
-Expression* makeTrappingFloatToInt64(bool isSigned, Expression* value, FloatTrapContext context) {
-  if (context.trapMode == FloatTrapMode::Allow) {
-    auto ret = context.allocator.alloc<Unary>();
-    ret->value = value;
-    bool isF64 = ret->value->type == f64;
-    UnaryOp op;
-    if (isSigned && isF64) {
-      op = TruncSFloat64ToInt64;
-    } else if (isSigned && !isF64) {
-      op = TruncSFloat32ToInt64;
-    } else if (!isSigned && isF64) {
-      op = TruncUFloat64ToInt64;
-    } else if (!isSigned && !isF64) {
-      op = TruncUFloat32ToInt64;
-    } else {
-      WASM_UNREACHABLE();
-    }
-    ret->op = op;
-    ret->type = WasmType::i64;
-    return ret;
-  }
-  // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-  // First, normalize input to f64
-  auto input = ensureDouble(value, context.allocator);
-  // There is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
-  Call *ret = context.allocator.alloc<Call>();
-  ret->target = F64_TO_INT64;
-  ret->operands.push_back(input);
-  ret->type = i64;
-  static bool added = false;
-  if (!added) {
-    Builder& builder = context.builder;
-    added = true;
-    auto func = new Function;
-    func->name = ret->target;
-    func->params.push_back(f64);
-    func->result = i64;
-    func->body = builder.makeUnary(TruncSFloat64ToInt64,
-      builder.makeGetLocal(0, f64)
-    );
-    // too small
-    func->body = builder.makeIf(
-      builder.makeBinary(LeFloat64,
-        builder.makeGetLocal(0, f64),
-        builder.makeConst(Literal(double(std::numeric_limits<int64_t>::min()) - 1))
-      ),
-      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))),
-      func->body
-    );
-    // too big
-    func->body = builder.makeIf(
-      builder.makeBinary(GeFloat64,
-        builder.makeGetLocal(0, f64),
-        builder.makeConst(Literal(double(std::numeric_limits<int64_t>::max()) + 1))
-      ),
-      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything out of range => to the min
-      func->body
-    );
-    // nan
-    func->body = builder.makeIf(
-      builder.makeBinary(NeFloat64,
-        builder.makeGetLocal(0, f64),
-        builder.makeGetLocal(0, f64)
-      ),
-      builder.makeConst(Literal(int64_t(std::numeric_limits<int64_t>::min()))), // NB: min here as well. anything invalid => to the min
+      builder.makeConst(iMin),
       func->body
     );
     context.wasm.addFunction(func);
@@ -323,17 +265,11 @@ struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
     case UnaryOp::TruncSFloat64ToInt32:
     case UnaryOp::TruncUFloat32ToInt32:
     case UnaryOp::TruncUFloat64ToInt32:
-      replaceCurrent(makeTrappingFloatToInt32(curr, context));
-      break;
-
     case UnaryOp::TruncSFloat32ToInt64:
     case UnaryOp::TruncSFloat64ToInt64:
-      replaceCurrent(makeTrappingFloatToInt64(true, curr->value, context));
-      break;
-
     case UnaryOp::TruncUFloat32ToInt64:
     case UnaryOp::TruncUFloat64ToInt64:
-      replaceCurrent(makeTrappingFloatToInt64(false, curr->value, context));
+      replaceCurrent(makeTrappingFloatToInt(curr, context));
       break;
 
     default:
