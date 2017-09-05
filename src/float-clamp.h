@@ -39,19 +39,6 @@ enum class FloatTrapMode {
   JS
 };
 
-struct FloatTrapContext {
-  FloatTrapMode trapMode;
-  Module& wasm;
-  MixedArena& allocator;
-  Builder builder;
-
-  FloatTrapContext(FloatTrapMode trapMode, Module& wasm)
-    : trapMode(trapMode),
-      wasm(wasm),
-      allocator(wasm.allocator),
-      builder(wasm) {}
-};
-
 Name I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
@@ -73,7 +60,6 @@ public:
   Pass* create() override { return new BinaryenTrapMode(mode); }
 
   void visitUnary(Unary* curr) {
-    FloatTrapContext context(mode, *getModule());
     switch (curr->op) {
     case UnaryOp::TruncSFloat32ToInt32:
     case UnaryOp::TruncSFloat32ToInt64:
@@ -83,7 +69,7 @@ public:
     case UnaryOp::TruncUFloat32ToInt64:
     case UnaryOp::TruncUFloat64ToInt32:
     case UnaryOp::TruncUFloat64ToInt64:
-      replaceCurrent(makeTrappingFloatToInt(curr, context));
+      replaceCurrent(makeTrappingFloatToInt(curr));
       break;
 
     default:
@@ -92,8 +78,7 @@ public:
   }
 
   void visitBinary(Binary* curr) {
-    FloatTrapContext context(mode, *getModule());
-    replaceCurrent(makeTrappingBinary(curr, context));
+    replaceCurrent(makeTrappingBinary(curr));
   }
 
   void visitModule(Module* curr) {
@@ -103,14 +88,13 @@ public:
     addedFunctions.clear();
   }
 
-  void ensureBinaryFunc(FloatTrapContext& context,
-                        Name name, BinaryOp op, WasmType type) {
+  void ensureBinaryFunc(Name name, BinaryOp op, WasmType type) {
     if (addedFunctions.count(name) != 0) {
       return;
     }
 
     bool is32Bit = type == i32;
-    Builder& builder = context.builder;
+    Builder builder(*getModule());
     Expression* result = builder.makeBinary(op,
       builder.makeGetLocal(0, type),
       builder.makeGetLocal(1, type)
@@ -155,13 +139,14 @@ public:
   }
 
   // Some binary opts might trap, so emit them safely if necessary
-  Expression* makeTrappingBinary(Binary* curr, FloatTrapContext& context) {
-    if (context.trapMode == FloatTrapMode::Allow) {
+  Expression* makeTrappingBinary(Binary* curr) {
+    if (mode == FloatTrapMode::Allow) {
       return curr;
     }
     // the wasm operation might trap if done over 0, so generate a safe call
     WasmType type = curr->type;
-    auto *call = context.allocator.alloc<Call>();
+    MixedArena& allocator(getModule()->allocator);
+    auto *call = allocator.alloc<Call>();
     switch (curr->op) {
       case BinaryOp::RemSInt32: call->target = I32S_REM; break;
       case BinaryOp::RemUInt32: call->target = I32U_REM; break;
@@ -177,28 +162,30 @@ public:
     call->operands.push_back(curr->left);
     call->operands.push_back(curr->right);
     call->type = type;
-    ensureBinaryFunc(context, call->target, curr->op, type);
+    ensureBinaryFunc(call->target, curr->op, type);
     return call;
   }
 
   // Some conversions might trap, so emit them safely if necessary
-  Expression* makeTrappingFloatToInt(Unary* curr, FloatTrapContext context) {
-    if (context.trapMode == FloatTrapMode::Allow) {
+  Expression* makeTrappingFloatToInt(Unary* curr) {
+    if (mode == FloatTrapMode::Allow) {
       return curr;
     }
     WasmType type = curr->value->type;
     WasmType retType = curr->type;
     bool isF64 = type == f64;
     bool isI64 = retType == i64;
+    Module& wasm = *getModule();
+    MixedArena& allocator(wasm.allocator);
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
     // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
-    if (!isI64 && context.trapMode == FloatTrapMode::JS) {
+    if (!isI64 && mode == FloatTrapMode::JS) {
       // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-      CallImport *ret = context.allocator.alloc<CallImport>();
+      CallImport *ret = allocator.alloc<CallImport>();
       ret->target = F64_TO_INT;
-      ret->operands.push_back(ensureDouble(curr->value, context.allocator));
+      ret->operands.push_back(ensureDouble(curr->value, allocator));
       ret->type = i32;
       static bool addedImport = false;
       if (!addedImport) {
@@ -207,9 +194,9 @@ public:
         import->name = F64_TO_INT;
         import->module = ASM2WASM;
         import->base = F64_TO_INT;
-        import->functionType = ensureFunctionType("id", &context.wasm)->name;
+        import->functionType = ensureFunctionType("id", &wasm)->name;
         import->kind = ExternalKind::Function;
-        context.wasm.addImport(import);
+        wasm.addImport(import);
       }
       return ret;
     }
@@ -236,12 +223,12 @@ public:
                          : Literal( float(iMin.getInteger()) - 1);
     Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
                          : Literal( float(iMax.getInteger()) + 1);
-    Call *ret = context.allocator.alloc<Call>();
+    Call *ret = allocator.alloc<Call>();
     ret->target = name;
     ret->operands.push_back(curr->value);
     ret->type = retType;
     if (addedFunctions.count(name) == 0) {
-      Builder& builder = context.builder;
+      Builder builder(wasm);
       auto func = new Function;
       func->name = name;
       func->params.push_back(type);
