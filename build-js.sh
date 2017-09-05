@@ -74,6 +74,7 @@ echo "building shared bitcode"
   src/passes/DuplicateFunctionElimination.cpp \
   src/passes/ExtractFunction.cpp \
   src/passes/FlattenControlFlow.cpp \
+  src/passes/I64ToI32Lowering.cpp \
   src/passes/Inlining.cpp \
   src/passes/InstrumentLocals.cpp \
   src/passes/InstrumentMemory.cpp \
@@ -99,6 +100,7 @@ echo "building shared bitcode"
   src/passes/ReorderFunctions.cpp \
   src/passes/ReorderLocals.cpp \
   src/passes/ReReloop.cpp \
+  src/passes/SafeHeap.cpp \
   src/passes/SSAify.cpp \
   src/passes/SimplifyLocals.cpp \
   src/passes/Untee.cpp \
