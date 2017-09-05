@@ -4,7 +4,9 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS, WASM_CTOR_EVAL)
+    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
+    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE,
+    BINARYEN_INSTALL_DIR, has_shell_timeout)
 
 print '[ processing and updating testcases... ]\n'
 
@@ -143,7 +145,8 @@ print '\n[ checking example testcases... ]\n'
 
 for t in sorted(os.listdir(os.path.join('test', 'example'))):
   output_file = os.path.join('bin', 'example')
-  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-Llib/.', '-pthread', '-o', output_file]
+  libdir = os.path.join(BINARYEN_INSTALL_DIR, 'lib')
+  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-L' + libdir, '-pthread', '-o', output_file]
   if t.endswith('.txt'):
     # check if there is a trace in the file, if so, we should build it
     out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join('test', 'example', t)], stdout=subprocess.PIPE).communicate()[0]
@@ -157,17 +160,17 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
   else:
     src = os.path.join('test', 'example', t)
     expected = os.path.join('test', 'example', '.'.join(t.split('.')[:-1]) + '.txt')
-  if src.endswith(('.c', '.cpp')):
-    # build the C file separately
-    extra = [os.environ.get('CC') or 'gcc',
-             src, '-c', '-o', 'example.o',
-             '-Isrc', '-g', '-Llib/.', '-pthread']
-    print 'build: ', ' '.join(extra)
-    subprocess.check_call(extra)
-    # Link against the binaryen C library DSO, using an executable-relative rpath
-    cmd = ['example.o', '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
-  else:
+  if not src.endswith(('.c', '.cpp')):
     continue
+  # build the C file separately
+  extra = [os.environ.get('CC') or 'gcc',
+           src, '-c', '-o', 'example.o',
+           '-Isrc', '-g', '-L' + libdir, '-pthread']
+  print 'build: ', ' '.join(extra)
+  print os.getcwd()
+  subprocess.check_call(extra)
+  # Link against the binaryen C library DSO, using rpath
+  cmd = ['example.o', '-lbinaryen', '-Wl,-rpath=' + os.path.abspath(libdir)] + cmd
   print '  ', t, src, expected
   if os.environ.get('COMPILER_FLAGS'):
     for f in os.environ.get('COMPILER_FLAGS').split(' '):
@@ -220,7 +223,7 @@ for t in os.listdir(os.path.join('test', 'merge')):
     u = t + '.toMerge'
     for finalize in [0, 1]:
       for opt in [0, 1]:
-        cmd = [os.path.join('bin', 'wasm-merge'), t, u, '-o', 'a.wast', '-S', '--verbose']
+        cmd = WASM_MERGE + [t, u, '-o', 'a.wast', '-S', '--verbose']
         if finalize: cmd += ['--finalize-memory-base=1024', '--finalize-table-base=8']
         if opt: cmd += ['-O']
         stdout = run_command(cmd)
@@ -258,4 +261,17 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
     out = t + '.out'
     with open(out, 'w') as o: o.write(actual)
 
-print '\n[ success! ]'
+if has_shell_timeout():
+  print '\n[ checking wasm-reduce ]\n'
+
+  for t in os.listdir(os.path.join('test', 'reduce')):
+    if t.endswith('.wast'):
+      print '..', t
+      t = os.path.join('test', 'reduce', t)
+      # convert to wasm
+      run_command(WASM_AS + [t, '-o', 'a.wasm'])
+      print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
+      expected = t + '.txt'
+      run_command(WASM_DIS + ['c.wasm', '-o', expected])
+
+print '\n[ success! ]'  

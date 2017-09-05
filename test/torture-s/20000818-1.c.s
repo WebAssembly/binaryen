@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000818-1.c"
+	.file	"20000818-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,9 +13,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.yylex,"ax",@progbits
-	.hidden	yylex
+	.hidden	yylex                   # -- Begin function yylex
 	.globl	yylex
 	.type	yylex,@function
 yylex:                                  # @yylex
@@ -26,7 +26,7 @@ yylex:                                  # @yylex
 	.endfunc
 .Lfunc_end1:
 	.size	yylex, .Lfunc_end1-yylex
-
+                                        # -- End function
 	.hidden	temporary_obstack       # @temporary_obstack
 	.type	temporary_obstack,@object
 	.section	.bss.temporary_obstack,"aw",@nobits
@@ -37,5 +37,5 @@ temporary_obstack:
 	.size	temporary_obstack, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

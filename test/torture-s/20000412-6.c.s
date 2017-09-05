@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000412-6.c"
+	.file	"20000412-6.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -34,9 +34,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.bug,"ax",@progbits
-	.hidden	bug
+	.hidden	bug                     # -- Begin function bug
 	.globl	bug
 	.type	bug,@function
 bug:                                    # @bug
@@ -50,24 +50,25 @@ bug:                                    # @bug
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.load16_u	$push1=, 0($1)
-	i32.sub 	$push2=, $0, $pop1
-	i32.const	$push7=, 65535
-	i32.and 	$0=, $pop2, $pop7
-	i32.const	$push6=, 2
-	i32.add 	$push5=, $1, $pop6
-	tee_local	$push4=, $1=, $pop5
-	i32.lt_u	$push3=, $pop4, $2
+	i32.const	$push9=, 65535
+	i32.and 	$push1=, $0, $pop9
+	i32.load16_u	$push2=, 0($1)
+	i32.sub 	$0=, $pop1, $pop2
+	i32.const	$push8=, 2
+	i32.add 	$push7=, $1, $pop8
+	tee_local	$push6=, $1=, $pop7
+	i32.lt_u	$push3=, $pop6, $2
 	br_if   	0, $pop3        # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop
 	end_block                       # label1:
-	copy_local	$push8=, $0
-                                        # fallthrough-return: $pop8
+	i32.const	$push4=, 65535
+	i32.and 	$push5=, $0, $pop4
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end1:
 	.size	bug, .Lfunc_end1-bug
-
+                                        # -- End function
 	.hidden	buf                     # @buf
 	.type	buf,@object
 	.section	.data.buf,"aw",@progbits
@@ -82,6 +83,6 @@ buf:
 	.size	buf, 10
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

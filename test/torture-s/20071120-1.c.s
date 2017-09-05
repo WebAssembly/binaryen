@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20071120-1.c"
+	.file	"20071120-1.c"
 	.section	.text.vec_assert_fail,"ax",@progbits
-	.hidden	vec_assert_fail
+	.hidden	vec_assert_fail         # -- Begin function vec_assert_fail
 	.globl	vec_assert_fail
 	.type	vec_assert_fail,@function
 vec_assert_fail:                        # @vec_assert_fail
@@ -11,9 +11,9 @@ vec_assert_fail:                        # @vec_assert_fail
 	.endfunc
 .Lfunc_end0:
 	.size	vec_assert_fail, .Lfunc_end0-vec_assert_fail
-
+                                        # -- End function
 	.section	.text.perform_access_checks,"ax",@progbits
-	.hidden	perform_access_checks
+	.hidden	perform_access_checks   # -- Begin function perform_access_checks
 	.globl	perform_access_checks
 	.type	perform_access_checks,@function
 perform_access_checks:                  # @perform_access_checks
@@ -24,9 +24,9 @@ perform_access_checks:                  # @perform_access_checks
 	.endfunc
 .Lfunc_end1:
 	.size	perform_access_checks, .Lfunc_end1-perform_access_checks
-
+                                        # -- End function
 	.section	.text.pop_to_parent_deferring_access_checks,"ax",@progbits
-	.hidden	pop_to_parent_deferring_access_checks
+	.hidden	pop_to_parent_deferring_access_checks # -- Begin function pop_to_parent_deferring_access_checks
 	.globl	pop_to_parent_deferring_access_checks
 	.type	pop_to_parent_deferring_access_checks,@function
 pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
@@ -76,7 +76,7 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	br_if   	1, $pop24       # 1: down to label1
 # BB#6:                                 # %if.end16
 	return
-.LBB2_7:                                # %cond.false.i26
+.LBB2_7:                                # %cond.false.i
 	end_block                       # label2:
 	call    	vec_assert_fail@FUNCTION
 	unreachable
@@ -87,9 +87,9 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	.endfunc
 .Lfunc_end2:
 	.size	pop_to_parent_deferring_access_checks, .Lfunc_end2-pop_to_parent_deferring_access_checks
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -113,7 +113,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	deferred_access_no_check,@object # @deferred_access_no_check
 	.section	.bss.deferred_access_no_check,"aw",@nobits
 	.p2align	2
@@ -138,6 +138,6 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

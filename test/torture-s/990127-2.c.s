@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990127-2.c"
+	.file	"990127-2.c"
 	.section	.text.fpEq,"ax",@progbits
-	.hidden	fpEq
+	.hidden	fpEq                    # -- Begin function fpEq
 	.globl	fpEq
 	.type	fpEq,@function
 fpEq:                                   # @fpEq
@@ -19,9 +19,9 @@ fpEq:                                   # @fpEq
 	.endfunc
 .Lfunc_end0:
 	.size	fpEq, .Lfunc_end0-fpEq
-
+                                        # -- End function
 	.section	.text.fpTest,"ax",@progbits
-	.hidden	fpTest
+	.hidden	fpTest                  # -- Begin function fpTest
 	.globl	fpTest
 	.type	fpTest,@function
 fpTest:                                 # @fpTest
@@ -43,25 +43,22 @@ fpTest:                                 # @fpTest
 	.endfunc
 .Lfunc_end1:
 	.size	fpTest, .Lfunc_end1-fpTest
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 # BB#0:                                 # %entry
-	f64.const	$push1=, 0x1.1d9999999999ap5
-	f64.const	$push0=, 0x1.68p5
-	call    	fpTest@FUNCTION, $pop1, $pop0
-	i32.const	$push2=, 0
-	call    	exit@FUNCTION, $pop2
+	i32.const	$push0=, 0
+	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

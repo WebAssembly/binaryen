@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950809-1.c"
+	.file	"950809-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -20,19 +20,19 @@ f:                                      # @f
 	i32.load	$push1=, 0($4)
 	i32.store	8($4), $pop1
 	i32.store	0($4), $2
-	i32.load	$2=, 4($4)
+	i32.store	0($0), $4
+	i32.load	$4=, 4($4)
 	i32.store	12($0), $5
 	i32.store	0($1), $3
-	i32.store	4($0), $2
-	i32.store	0($0), $4
+	i32.store	4($0), $4
 	copy_local	$push6=, $0
                                         # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -62,7 +62,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	main.sc,@object         # @main.sc
 	.section	.data.main.sc,"aw",@progbits
 	.p2align	2
@@ -73,6 +73,6 @@ main.sc:
 	.size	main.sc, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,27 +1,28 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020213-1.c"
+	.file	"20020213-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push0=, 0
-	i32.const	$push3=, 2241
-	i32.const	$push10=, 0
-	i32.load	$push1=, b($pop10)
-	i32.const	$push2=, -1
-	i32.add 	$push9=, $pop1, $pop2
-	tee_local	$push8=, $0=, $pop9
+	i32.const	$push12=, 0
+	i32.load	$push11=, b($pop12)
+	tee_local	$push10=, $0=, $pop11
+	i32.const	$push1=, -1
+	i32.add 	$push9=, $pop10, $pop1
+	tee_local	$push8=, $1=, $pop9
+	i32.const	$push2=, 2241
 	i32.const	$push7=, 2241
-	i32.gt_s	$push6=, $0, $pop7
-	tee_local	$push5=, $0=, $pop6
-	i32.select	$push4=, $pop3, $pop8, $pop5
+	i32.lt_s	$push3=, $1, $pop7
+	i32.select	$push4=, $pop8, $pop2, $pop3
 	i32.store	a+4($pop0), $pop4
 	block   	
-	i32.eqz 	$push11=, $0
-	br_if   	0, $pop11       # 0: down to label0
+	i32.const	$push5=, 2242
+	i32.le_s	$push6=, $0, $pop5
+	br_if   	0, $pop6        # 0: down to label0
 # BB#1:                                 # %if.end
 	return
 .LBB0_2:                                # %if.then
@@ -31,9 +32,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -45,9 +46,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -64,7 +65,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -84,5 +85,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

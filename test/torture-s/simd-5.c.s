@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-5.c"
+	.file	"simd-5.c"
 	.section	.text.func0,"ax",@progbits
-	.hidden	func0
+	.hidden	func0                   # -- Begin function func0
 	.globl	func0
 	.type	func0,@function
 func0:                                  # @func0
@@ -13,9 +13,9 @@ func0:                                  # @func0
 	.endfunc
 .Lfunc_end0:
 	.size	func0, .Lfunc_end0-func0
-
+                                        # -- End function
 	.section	.text.func1,"ax",@progbits
-	.hidden	func1
+	.hidden	func1                   # -- Begin function func1
 	.globl	func1
 	.type	func1,@function
 func1:                                  # @func1
@@ -106,9 +106,9 @@ func1:                                  # @func1
 	.endfunc
 .Lfunc_end1:
 	.size	func1, .Lfunc_end1-func1
-
+                                        # -- End function
 	.section	.text.func2,"ax",@progbits
-	.hidden	func2
+	.hidden	func2                   # -- Begin function func2
 	.globl	func2
 	.type	func2,@function
 func2:                                  # @func2
@@ -199,9 +199,9 @@ func2:                                  # @func2
 	.endfunc
 .Lfunc_end2:
 	.size	func2, .Lfunc_end2-func2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -239,14 +239,14 @@ main:                                   # @main
 # BB#4:                                 # %if.end12
 	i32.const	$push12=, 0
 	return  	$pop12
-.LBB3_5:                                # %if.then11
+.LBB3_5:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.hidden	q1                      # @q1
 	.type	q1,@object
 	.section	.data.q1,"aw",@progbits
@@ -377,5 +377,5 @@ z4:
 	.size	z4, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

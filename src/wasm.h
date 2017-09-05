@@ -614,7 +614,6 @@ public:
   Name getLocalNameOrDefault(Index index);
   Name getLocalNameOrGeneric(Index index);
 
-private:
   bool hasLocalName(Index index) const;
 };
 
@@ -771,6 +770,7 @@ public:
 
   void removeImport(Name name);
   void removeExport(Name name);
+  void removeFunction(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

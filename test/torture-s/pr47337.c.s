@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr47337.c"
+	.file	"pr47337.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -13,7 +13,7 @@ main:                                   # @main
 	i32.const	$push2=, .L.str.1
 	i32.call	$0=, strcmp@FUNCTION, $pop1, $pop2
 	i32.const	$1=, -1024
-.LBB0_1:                                # %for.cond2.preheader
+.LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
 	i32.const	$push44=, a+1024
@@ -24,7 +24,7 @@ main:                                   # @main
 	i32.add 	$push41=, $1, $pop42
 	tee_local	$push40=, $1=, $pop41
 	br_if   	0, $pop40       # 0: up to label0
-# BB#2:                                 # %for.body9.preheader
+# BB#2:                                 # %for.end6
 	end_loop
 	i32.const	$push46=, 0
 	i32.const	$push45=, 0
@@ -32,7 +32,7 @@ main:                                   # @main
 	block   	
 	i32.eqz 	$push71=, $0
 	br_if   	0, $pop71       # 0: down to label1
-# BB#3:                                 # %fnx.exit
+# BB#3:                                 # %if.then.i
 	i32.const	$push69=, 0
 	i32.const	$push68=, 0
 	i32.load	$push4=, b($pop68)
@@ -100,7 +100,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -144,5 +144,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strcmp, i32, i32, i32

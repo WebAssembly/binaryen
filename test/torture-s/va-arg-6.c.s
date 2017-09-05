@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/va-arg-6.c"
+	.file	"va-arg-6.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -10,13 +10,12 @@ f:                                      # @f
 	.local  	i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push51=, 0
-	i32.const	$push48=, 0
-	i32.load	$push49=, __stack_pointer($pop48)
+	i32.const	$push49=, 0
+	i32.load	$push48=, __stack_pointer($pop49)
 	i32.const	$push50=, 16
-	i32.sub 	$push58=, $pop49, $pop50
+	i32.sub 	$push58=, $pop48, $pop50
 	tee_local	$push57=, $4=, $pop58
 	i32.store	__stack_pointer($pop51), $pop57
-	i32.store	12($4), $1
 	i32.const	$push0=, 4
 	i32.add 	$push56=, $1, $pop0
 	tee_local	$push55=, $2=, $pop56
@@ -120,29 +119,29 @@ f:                                      # @f
 	i32.add 	$push53=, $4, $pop52
 	i32.store	__stack_pointer($pop54), $pop53
 	return  	$4
-.LBB0_10:                               # %if.then40
+.LBB0_10:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push30=, 0
 	i32.const	$push27=, 0
-	i32.load	$push28=, __stack_pointer($pop27)
-	i32.const	$push29=, 80
-	i32.sub 	$push32=, $pop28, $pop29
-	tee_local	$push31=, $0=, $pop32
-	i32.store	__stack_pointer($pop30), $pop31
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
+	i32.const	$push26=, 80
+	i32.sub 	$push29=, $pop24, $pop26
+	tee_local	$push28=, $0=, $pop29
+	i32.store	__stack_pointer($pop27), $pop28
 	i32.const	$push0=, 64
 	i32.add 	$push1=, $0, $pop0
 	i64.const	$push2=, 4613307314293241283
@@ -155,39 +154,35 @@ main:                                   # @main
 	i32.add 	$push7=, $0, $pop6
 	i64.const	$push8=, 20000000000
 	i64.store	0($pop7), $pop8
-	i32.const	$push9=, 44
+	i32.const	$push9=, 40
 	i32.add 	$push10=, $0, $pop9
-	i32.const	$push11=, 13
-	i32.store	0($pop10), $pop11
-	i32.const	$push12=, 40
+	i64.const	$push11=, 55834574860
+	i64.store	0($pop10), $pop11
+	i32.const	$push12=, 32
 	i32.add 	$push13=, $0, $pop12
-	i32.const	$push14=, 12
-	i32.store	0($pop13), $pop14
-	i32.const	$push15=, 32
+	i64.const	$push14=, 4611846459164112977
+	i64.store	0($pop13), $pop14
+	i32.const	$push15=, 24
 	i32.add 	$push16=, $0, $pop15
-	i64.const	$push17=, 4611846459164112977
+	i64.const	$push17=, -1475739525896764129
 	i64.store	0($pop16), $pop17
-	i32.const	$push18=, 24
+	i32.const	$push18=, 16
 	i32.add 	$push19=, $0, $pop18
-	i64.const	$push20=, -1475739525896764129
-	i64.store	0($pop19), $pop20
-	i32.const	$push21=, 16
-	i32.add 	$push22=, $0, $pop21
-	i32.const	$push23=, 11
-	i32.store	0($pop22), $pop23
-	i64.const	$push24=, 10000000000
-	i64.store	8($0), $pop24
-	i32.const	$push25=, 10
-	i32.store	0($0), $pop25
+	i32.const	$push20=, 11
+	i32.store	0($pop19), $pop20
+	i64.const	$push21=, 10000000000
+	i64.store	8($0), $pop21
+	i32.const	$push22=, 10
+	i32.store	0($0), $pop22
 	i32.call	$drop=, f@FUNCTION, $0, $0
-	i32.const	$push26=, 0
-	call    	exit@FUNCTION, $pop26
+	i32.const	$push23=, 0
+	call    	exit@FUNCTION, $pop23
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

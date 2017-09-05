@@ -1,17 +1,17 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040703-1.c"
+	.file	"20040703-1.c"
 	.section	.text.num_lshift,"ax",@progbits
-	.hidden	num_lshift
+	.hidden	num_lshift              # -- Begin function num_lshift
 	.globl	num_lshift
 	.type	num_lshift,@function
 num_lshift:                             # @num_lshift
 	.param  	i32, i32, i32, i32
 	.local  	i32, i32, i64, i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push93=, 0
-	i32.load	$push94=, __stack_pointer($pop93)
+	i32.const	$push94=, 0
+	i32.load	$push93=, __stack_pointer($pop94)
 	i32.const	$push95=, 16
-	i32.sub 	$12=, $pop94, $pop95
+	i32.sub 	$12=, $pop93, $pop95
 	block   	
 	block   	
 	block   	
@@ -265,7 +265,7 @@ num_lshift:                             # @num_lshift
 	i32.ne  	$push83=, $4, $3
 	i32.or  	$push85=, $pop84, $pop83
 	i32.store	0($pop87), $pop85
-.LBB0_33:                               # %if.end37
+.LBB0_33:                               # %if.end36
 	end_block                       # label0:
 	i64.load	$push88=, 0($1):p2align=2
 	i64.store	0($0):p2align=2, $pop88
@@ -279,69 +279,59 @@ num_lshift:                             # @num_lshift
 	.endfunc
 .Lfunc_end0:
 	.size	num_lshift, .Lfunc_end0-num_lshift
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push22=, 0
-	i32.const	$push19=, 0
-	i32.load	$push20=, __stack_pointer($pop19)
-	i32.const	$push21=, 32
-	i32.sub 	$push30=, $pop20, $pop21
-	tee_local	$push29=, $0=, $pop30
-	i32.store	__stack_pointer($pop22), $pop29
-	i32.const	$push2=, 12
+	i32.const	$push16=, 0
+	i32.const	$push14=, 0
+	i32.load	$push13=, __stack_pointer($pop14)
+	i32.const	$push15=, 32
+	i32.sub 	$push22=, $pop13, $pop15
+	tee_local	$push21=, $0=, $pop22
+	i32.store	__stack_pointer($pop16), $pop21
+	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
-	i32.load	$push1=, num+12($pop0)
-	i32.store	0($pop3), $pop1
-	i32.const	$push5=, 8
-	i32.add 	$push6=, $0, $pop5
-	i32.const	$push28=, 0
-	i32.load	$push4=, num+8($pop28)
-	i32.store	0($pop6), $pop4
-	i32.const	$push8=, 4
-	i32.add 	$push9=, $0, $pop8
-	i32.const	$push27=, 0
-	i32.load	$push7=, num+4($pop27)
-	i32.store	0($pop9), $pop7
-	i32.const	$push26=, 0
-	i32.load	$push10=, num($pop26)
-	i32.store	0($0), $pop10
-	i32.const	$push23=, 16
-	i32.add 	$push24=, $0, $pop23
-	i32.const	$push12=, 64
-	i32.const	$push25=, 0
-	i32.load	$push11=, n($pop25)
-	call    	num_lshift@FUNCTION, $pop24, $0, $pop12, $pop11
+	i64.load	$push1=, num+8($pop0):p2align=2
+	i64.store	0($pop3), $pop1
+	i32.const	$push20=, 0
+	i64.load	$push4=, num($pop20):p2align=2
+	i64.store	0($0), $pop4
+	i32.const	$push17=, 16
+	i32.add 	$push18=, $0, $pop17
+	i32.const	$push6=, 64
+	i32.const	$push19=, 0
+	i32.load	$push5=, n($pop19)
+	call    	num_lshift@FUNCTION, $pop18, $0, $pop6, $pop5
 	block   	
-	i32.load	$push14=, 20($0)
-	i32.const	$push13=, 196608
-	i32.ne  	$push15=, $pop14, $pop13
-	br_if   	0, $pop15       # 0: down to label18
+	i32.load	$push8=, 20($0)
+	i32.const	$push7=, 196608
+	i32.ne  	$push9=, $pop8, $pop7
+	br_if   	0, $pop9        # 0: down to label18
 # BB#1:                                 # %if.end
-	i32.load	$push16=, 16($0)
-	br_if   	0, $pop16       # 0: down to label18
+	i32.load	$push10=, 16($0)
+	br_if   	0, $pop10       # 0: down to label18
 # BB#2:                                 # %if.end3
-	i32.load	$push17=, 28($0)
-	br_if   	0, $pop17       # 0: down to label18
+	i32.load	$push11=, 28($0)
+	br_if   	0, $pop11       # 0: down to label18
 # BB#3:                                 # %if.end6
-	i32.const	$push18=, 0
-	call    	exit@FUNCTION, $pop18
+	i32.const	$push12=, 0
+	call    	exit@FUNCTION, $pop12
 	unreachable
-.LBB1_4:                                # %if.then5
+.LBB1_4:                                # %if.then
 	end_block                       # label18:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	precision               # @precision
 	.type	precision,@object
 	.section	.data.precision,"aw",@progbits
@@ -373,6 +363,6 @@ num:
 	.size	num, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

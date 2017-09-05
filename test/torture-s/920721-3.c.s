@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920721-3.c"
+	.file	"920721-3.c"
 	.section	.text.ru,"ax",@progbits
-	.hidden	ru
+	.hidden	ru                      # -- Begin function ru
 	.globl	ru
 	.type	ru,@function
 ru:                                     # @ru
@@ -24,16 +24,16 @@ ru:                                     # @ru
 	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %if.end8
 	return  	$0
-.LBB0_3:                                # %if.then7
+.LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	ru, .Lfunc_end0-ru
-
+                                        # -- End function
 	.section	.text.rs,"ax",@progbits
-	.hidden	rs
+	.hidden	rs                      # -- Begin function rs
 	.globl	rs
 	.type	rs,@function
 rs:                                     # @rs
@@ -55,9 +55,9 @@ rs:                                     # @rs
 	.endfunc
 .Lfunc_end1:
 	.size	rs, .Lfunc_end1-rs
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -69,8 +69,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

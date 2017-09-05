@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59229.c"
+	.file	"pr59229.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -35,16 +35,16 @@ bar:                                    # @bar
 	i32.const	$push15=, 8224
 	i32.store16	0($pop14):p2align=0, $pop15
 	return
-.LBB0_3:                                # %if.then3
+.LBB0_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -52,10 +52,10 @@ foo:                                    # @foo
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push18=, $pop7, $pop8
+	i32.sub 	$push18=, $pop6, $pop8
 	tee_local	$push17=, $2=, $pop18
 	i32.store	__stack_pointer($pop9), $pop17
 	block   	
@@ -83,42 +83,43 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32
+	.local  	i32, i32
 # BB#0:                                 # %entry
-	i32.const	$push4=, 0
 	i32.const	$push3=, 0
-	i32.store	i($pop4), $pop3
-	i32.const	$0=, 0
+	i32.const	$push2=, 0
+	i32.store	i($pop3), $pop2
+	i32.const	$1=, 0
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.const	$push11=, .L.str.1
-	call    	foo@FUNCTION, $pop11, $0
+	i32.const	$push12=, .L.str.1
+	call    	foo@FUNCTION, $pop12, $1
+	i32.const	$push11=, 0
 	i32.const	$push10=, 0
-	i32.const	$push9=, 0
-	i32.load	$push0=, i($pop9)
-	i32.const	$push8=, 1
-	i32.add 	$push7=, $pop0, $pop8
-	tee_local	$push6=, $0=, $pop7
-	i32.store	i($pop10), $pop6
-	i32.const	$push5=, 16
-	i32.lt_s	$push1=, $0, $pop5
-	br_if   	0, $pop1        # 0: up to label2
+	i32.load	$push9=, i($pop10)
+	tee_local	$push8=, $0=, $pop9
+	i32.const	$push7=, 1
+	i32.add 	$push6=, $pop8, $pop7
+	tee_local	$push5=, $1=, $pop6
+	i32.store	i($pop11), $pop5
+	i32.const	$push4=, 15
+	i32.lt_s	$push0=, $0, $pop4
+	br_if   	0, $pop0        # 0: up to label2
 # BB#2:                                 # %for.end
 	end_loop
-	i32.const	$push2=, 0
-                                        # fallthrough-return: $pop2
+	i32.const	$push1=, 0
+                                        # fallthrough-return: $pop1
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
@@ -140,6 +141,6 @@ i:
 	.size	.L.str.1, 17
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	memcmp, i32, i32, i32, i32

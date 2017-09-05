@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr39501.c"
+	.file	"pr39501.c"
 	.section	.text.float_min1,"ax",@progbits
-	.hidden	float_min1
+	.hidden	float_min1              # -- Begin function float_min1
 	.globl	float_min1
 	.type	float_min1,@function
 float_min1:                             # @float_min1
@@ -14,9 +14,9 @@ float_min1:                             # @float_min1
 	.endfunc
 .Lfunc_end0:
 	.size	float_min1, .Lfunc_end0-float_min1
-
+                                        # -- End function
 	.section	.text.float_min2,"ax",@progbits
-	.hidden	float_min2
+	.hidden	float_min2              # -- Begin function float_min2
 	.globl	float_min2
 	.type	float_min2,@function
 float_min2:                             # @float_min2
@@ -29,9 +29,9 @@ float_min2:                             # @float_min2
 	.endfunc
 .Lfunc_end1:
 	.size	float_min2, .Lfunc_end1-float_min2
-
+                                        # -- End function
 	.section	.text.float_max1,"ax",@progbits
-	.hidden	float_max1
+	.hidden	float_max1              # -- Begin function float_max1
 	.globl	float_max1
 	.type	float_max1,@function
 float_max1:                             # @float_max1
@@ -44,9 +44,9 @@ float_max1:                             # @float_max1
 	.endfunc
 .Lfunc_end2:
 	.size	float_max1, .Lfunc_end2-float_max1
-
+                                        # -- End function
 	.section	.text.float_max2,"ax",@progbits
-	.hidden	float_max2
+	.hidden	float_max2              # -- Begin function float_max2
 	.globl	float_max2
 	.type	float_max2,@function
 float_max2:                             # @float_max2
@@ -59,9 +59,9 @@ float_max2:                             # @float_max2
 	.endfunc
 .Lfunc_end3:
 	.size	float_max2, .Lfunc_end3-float_max2
-
+                                        # -- End function
 	.section	.text.double_min1,"ax",@progbits
-	.hidden	double_min1
+	.hidden	double_min1             # -- Begin function double_min1
 	.globl	double_min1
 	.type	double_min1,@function
 double_min1:                            # @double_min1
@@ -74,9 +74,9 @@ double_min1:                            # @double_min1
 	.endfunc
 .Lfunc_end4:
 	.size	double_min1, .Lfunc_end4-double_min1
-
+                                        # -- End function
 	.section	.text.double_min2,"ax",@progbits
-	.hidden	double_min2
+	.hidden	double_min2             # -- Begin function double_min2
 	.globl	double_min2
 	.type	double_min2,@function
 double_min2:                            # @double_min2
@@ -89,9 +89,9 @@ double_min2:                            # @double_min2
 	.endfunc
 .Lfunc_end5:
 	.size	double_min2, .Lfunc_end5-double_min2
-
+                                        # -- End function
 	.section	.text.double_max1,"ax",@progbits
-	.hidden	double_max1
+	.hidden	double_max1             # -- Begin function double_max1
 	.globl	double_max1
 	.type	double_max1,@function
 double_max1:                            # @double_max1
@@ -104,9 +104,9 @@ double_max1:                            # @double_max1
 	.endfunc
 .Lfunc_end6:
 	.size	double_max1, .Lfunc_end6-double_max1
-
+                                        # -- End function
 	.section	.text.double_max2,"ax",@progbits
-	.hidden	double_max2
+	.hidden	double_max2             # -- Begin function double_max2
 	.globl	double_max2
 	.type	double_max2,@function
 double_max2:                            # @double_max2
@@ -119,9 +119,9 @@ double_max2:                            # @double_max2
 	.endfunc
 .Lfunc_end7:
 	.size	double_max2, .Lfunc_end7-double_max2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -464,7 +464,7 @@ main:                                   # @main
 	f64.const	$push238=, 0x1p0
 	f64.eq  	$push95=, $pop94, $pop238
 	br_if   	1, $pop95       # 1: down to label0
-.LBB8_48:                               # %if.then187
+.LBB8_48:                               # %if.then
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
@@ -476,8 +476,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end8:
 	.size	main, .Lfunc_end8-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

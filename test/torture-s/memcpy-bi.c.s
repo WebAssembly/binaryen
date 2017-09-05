@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/memcpy-bi.c"
+	.file	"memcpy-bi.c"
 	.section	.text.check,"ax",@progbits
-	.hidden	check
+	.hidden	check                   # -- Begin function check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
@@ -19,9 +19,9 @@ check:                                  # @check
 	.endfunc
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -32,994 +32,1686 @@ main:                                   # @main
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push304=, src
-	i32.add 	$push24=, $0, $pop304
-	i32.const	$push303=, 26
-	i32.rem_u	$push25=, $0, $pop303
-	i32.const	$push302=, 97
-	i32.add 	$push26=, $pop25, $pop302
-	i32.store8	0($pop24), $pop26
-	i32.const	$push301=, 1
-	i32.add 	$push300=, $0, $pop301
-	tee_local	$push299=, $0=, $pop300
-	i32.const	$push298=, 80
-	i32.ne  	$push27=, $pop299, $pop298
-	br_if   	0, $pop27       # 0: up to label1
+	i32.const	$push469=, src
+	i32.add 	$push8=, $0, $pop469
+	i32.const	$push468=, 26
+	i32.rem_u	$push9=, $0, $pop468
+	i32.const	$push467=, 97
+	i32.add 	$push10=, $pop9, $pop467
+	i32.store8	0($pop8), $pop10
+	i32.const	$push466=, 1
+	i32.add 	$push465=, $0, $pop466
+	tee_local	$push464=, $0=, $pop465
+	i32.const	$push463=, 80
+	i32.ne  	$push11=, $pop464, $pop463
+	br_if   	0, $pop11       # 0: up to label1
 # BB#2:                                 # %check.exit
 	end_loop
-	i32.const	$push308=, 0
-	i32.const	$push307=, 0
-	i32.load16_u	$push306=, src($pop307)
-	tee_local	$push305=, $0=, $pop306
-	i32.store16	dst($pop308), $pop305
-	block   	
-	i32.ne  	$push28=, $0, $0
-	br_if   	0, $pop28       # 0: down to label2
-# BB#3:                                 # %check.exit13
-	i32.const	$push314=, 0
-	i32.const	$push313=, 0
-	i32.load8_u	$push29=, src+2($pop313)
-	i32.store8	dst+2($pop314), $pop29
-	i32.const	$push312=, 0
-	i32.const	$push311=, 0
-	i32.load16_u	$push30=, src($pop311)
-	i32.store16	dst($pop312), $pop30
-	i32.const	$push310=, dst
-	i32.const	$push309=, src
-	i32.const	$push31=, 3
-	i32.call	$push32=, memcmp@FUNCTION, $pop310, $pop309, $pop31
-	br_if   	0, $pop32       # 0: down to label2
-# BB#4:                                 # %check.exit17
-	i32.const	$push320=, 0
-	i32.const	$push319=, 0
-	i32.load8_u	$push33=, src+4($pop319)
-	i32.store8	dst+4($pop320), $pop33
-	i32.const	$push318=, 0
-	i32.const	$push317=, 0
-	i32.load	$push34=, src($pop317)
-	i32.store	dst($pop318), $pop34
-	i32.const	$push316=, dst
-	i32.const	$push315=, src
-	i32.const	$push35=, 5
-	i32.call	$push36=, memcmp@FUNCTION, $pop316, $pop315, $pop35
-	br_if   	0, $pop36       # 0: down to label2
-# BB#5:                                 # %check.exit25
-	i32.const	$push326=, 0
-	i32.const	$push325=, 0
-	i32.load16_u	$push37=, src+4($pop325)
-	i32.store16	dst+4($pop326), $pop37
-	i32.const	$push324=, 0
-	i32.const	$push323=, 0
-	i32.load	$push38=, src($pop323)
-	i32.store	dst($pop324), $pop38
-	i32.const	$push322=, dst
-	i32.const	$push321=, src
-	i32.const	$push39=, 6
-	i32.call	$push40=, memcmp@FUNCTION, $pop322, $pop321, $pop39
-	br_if   	0, $pop40       # 0: down to label2
-# BB#6:                                 # %check.exit29
-	i32.const	$push334=, 0
-	i32.const	$push333=, 0
-	i32.load8_u	$push41=, src+6($pop333)
-	i32.store8	dst+6($pop334), $pop41
-	i32.const	$push332=, 0
-	i32.const	$push331=, 0
-	i32.load16_u	$push42=, src+4($pop331)
-	i32.store16	dst+4($pop332), $pop42
-	i32.const	$push330=, 0
-	i32.const	$push329=, 0
-	i32.load	$push43=, src($pop329)
-	i32.store	dst($pop330), $pop43
-	i32.const	$push328=, dst
-	i32.const	$push327=, src
-	i32.const	$push44=, 7
-	i32.call	$push45=, memcmp@FUNCTION, $pop328, $pop327, $pop44
-	br_if   	0, $pop45       # 0: down to label2
-# BB#7:                                 # %check.exit33
-	i32.const	$push340=, 0
-	i32.const	$push339=, 0
-	i32.load8_u	$push46=, src+8($pop339)
-	i32.store8	dst+8($pop340), $pop46
-	i32.const	$push338=, 0
-	i32.const	$push337=, 0
-	i64.load	$push47=, src($pop337)
-	i64.store	dst($pop338), $pop47
-	i32.const	$push336=, dst
-	i32.const	$push335=, src
-	i32.const	$push48=, 9
-	i32.call	$push49=, memcmp@FUNCTION, $pop336, $pop335, $pop48
-	br_if   	0, $pop49       # 0: down to label2
-# BB#8:                                 # %check.exit41
-	i32.const	$push346=, 0
-	i32.const	$push345=, 0
-	i32.load16_u	$push50=, src+8($pop345)
-	i32.store16	dst+8($pop346), $pop50
-	i32.const	$push344=, 0
-	i32.const	$push343=, 0
-	i64.load	$push51=, src($pop343)
-	i64.store	dst($pop344), $pop51
-	i32.const	$push342=, dst
-	i32.const	$push341=, src
-	i32.const	$push52=, 10
-	i32.call	$push53=, memcmp@FUNCTION, $pop342, $pop341, $pop52
-	br_if   	0, $pop53       # 0: down to label2
-# BB#9:                                 # %check.exit45
-	i32.const	$push354=, 0
-	i32.const	$push353=, 0
-	i32.load8_u	$push54=, src+10($pop353)
-	i32.store8	dst+10($pop354), $pop54
-	i32.const	$push352=, 0
-	i32.const	$push351=, 0
-	i32.load16_u	$push55=, src+8($pop351)
-	i32.store16	dst+8($pop352), $pop55
-	i32.const	$push350=, 0
-	i32.const	$push349=, 0
-	i64.load	$push56=, src($pop349)
-	i64.store	dst($pop350), $pop56
-	i32.const	$push348=, dst
-	i32.const	$push347=, src
-	i32.const	$push57=, 11
-	i32.call	$push58=, memcmp@FUNCTION, $pop348, $pop347, $pop57
-	br_if   	0, $pop58       # 0: down to label2
-# BB#10:                                # %check.exit49
-	i32.const	$push360=, 0
-	i32.const	$push359=, 0
-	i32.load	$push59=, src+8($pop359)
-	i32.store	dst+8($pop360), $pop59
-	i32.const	$push358=, 0
-	i32.const	$push357=, 0
-	i64.load	$push60=, src($pop357)
-	i64.store	dst($pop358), $pop60
-	i32.const	$push356=, dst
-	i32.const	$push355=, src
-	i32.const	$push61=, 12
-	i32.call	$push62=, memcmp@FUNCTION, $pop356, $pop355, $pop61
-	br_if   	0, $pop62       # 0: down to label2
-# BB#11:                                # %check.exit53
-	i32.const	$push368=, 0
-	i32.const	$push367=, 0
-	i32.load8_u	$push63=, src+12($pop367)
-	i32.store8	dst+12($pop368), $pop63
-	i32.const	$push366=, 0
-	i32.const	$push365=, 0
-	i32.load	$push64=, src+8($pop365)
-	i32.store	dst+8($pop366), $pop64
-	i32.const	$push364=, 0
-	i32.const	$push363=, 0
-	i64.load	$push65=, src($pop363)
-	i64.store	dst($pop364), $pop65
-	i32.const	$push362=, dst
-	i32.const	$push361=, src
-	i32.const	$push66=, 13
-	i32.call	$push67=, memcmp@FUNCTION, $pop362, $pop361, $pop66
-	br_if   	0, $pop67       # 0: down to label2
-# BB#12:                                # %check.exit57
-	i32.const	$push376=, 0
-	i32.const	$push375=, 0
-	i32.load16_u	$push68=, src+12($pop375)
-	i32.store16	dst+12($pop376), $pop68
-	i32.const	$push374=, 0
-	i32.const	$push373=, 0
-	i32.load	$push69=, src+8($pop373)
-	i32.store	dst+8($pop374), $pop69
-	i32.const	$push372=, 0
-	i32.const	$push371=, 0
-	i64.load	$push70=, src($pop371)
-	i64.store	dst($pop372), $pop70
-	i32.const	$push370=, dst
-	i32.const	$push369=, src
-	i32.const	$push71=, 14
-	i32.call	$push72=, memcmp@FUNCTION, $pop370, $pop369, $pop71
-	br_if   	0, $pop72       # 0: down to label2
-# BB#13:                                # %check.exit61
-	i32.const	$push386=, 0
-	i32.const	$push385=, 0
-	i32.load8_u	$push73=, src+14($pop385)
-	i32.store8	dst+14($pop386), $pop73
-	i32.const	$push384=, 0
-	i32.const	$push383=, 0
-	i32.load16_u	$push74=, src+12($pop383)
-	i32.store16	dst+12($pop384), $pop74
-	i32.const	$push382=, 0
-	i32.const	$push381=, 0
-	i32.load	$push75=, src+8($pop381)
-	i32.store	dst+8($pop382), $pop75
-	i32.const	$push380=, 0
-	i32.const	$push379=, 0
-	i64.load	$push76=, src($pop379)
-	i64.store	dst($pop380), $pop76
-	i32.const	$push378=, dst
-	i32.const	$push377=, src
-	i32.const	$push77=, 15
-	i32.call	$push78=, memcmp@FUNCTION, $pop378, $pop377, $pop77
-	br_if   	0, $pop78       # 0: down to label2
-# BB#14:                                # %check.exit65
-	i32.const	$push392=, 0
-	i32.const	$push391=, 0
-	i64.load	$push79=, src+8($pop391)
-	i64.store	dst+8($pop392), $pop79
-	i32.const	$push390=, 0
-	i32.const	$push389=, 0
-	i64.load	$push80=, src($pop389)
-	i64.store	dst($pop390), $pop80
-	i32.const	$push388=, dst
-	i32.const	$push387=, src
-	i32.const	$push81=, 16
-	i32.call	$push82=, memcmp@FUNCTION, $pop388, $pop387, $pop81
-	br_if   	0, $pop82       # 0: down to label2
-# BB#15:                                # %check.exit69
-	i32.const	$push400=, 0
-	i32.const	$push399=, 0
-	i32.load8_u	$push83=, src+16($pop399)
-	i32.store8	dst+16($pop400), $pop83
-	i32.const	$push398=, 0
-	i32.const	$push397=, 0
-	i64.load	$push84=, src+8($pop397)
-	i64.store	dst+8($pop398), $pop84
-	i32.const	$push396=, 0
-	i32.const	$push395=, 0
-	i64.load	$push85=, src($pop395)
-	i64.store	dst($pop396), $pop85
-	i32.const	$push394=, dst
-	i32.const	$push393=, src
-	i32.const	$push86=, 17
-	i32.call	$push87=, memcmp@FUNCTION, $pop394, $pop393, $pop86
-	br_if   	0, $pop87       # 0: down to label2
-# BB#16:                                # %check.exit73
-	i32.const	$push408=, 0
-	i32.const	$push407=, 0
-	i32.load16_u	$push88=, src+16($pop407)
-	i32.store16	dst+16($pop408), $pop88
-	i32.const	$push406=, 0
-	i32.const	$push405=, 0
-	i64.load	$push89=, src+8($pop405)
-	i64.store	dst+8($pop406), $pop89
-	i32.const	$push404=, 0
-	i32.const	$push403=, 0
-	i64.load	$push90=, src($pop403)
-	i64.store	dst($pop404), $pop90
-	i32.const	$push402=, dst
-	i32.const	$push401=, src
-	i32.const	$push91=, 18
-	i32.call	$push92=, memcmp@FUNCTION, $pop402, $pop401, $pop91
-	br_if   	0, $pop92       # 0: down to label2
-# BB#17:                                # %check.exit77
-	i32.const	$push418=, 0
-	i32.const	$push417=, 0
-	i32.load8_u	$push93=, src+18($pop417)
-	i32.store8	dst+18($pop418), $pop93
-	i32.const	$push416=, 0
-	i32.const	$push415=, 0
-	i32.load16_u	$push94=, src+16($pop415)
-	i32.store16	dst+16($pop416), $pop94
-	i32.const	$push414=, 0
-	i32.const	$push413=, 0
-	i64.load	$push95=, src+8($pop413)
-	i64.store	dst+8($pop414), $pop95
-	i32.const	$push412=, 0
-	i32.const	$push411=, 0
-	i64.load	$push96=, src($pop411)
-	i64.store	dst($pop412), $pop96
-	i32.const	$push410=, dst
-	i32.const	$push409=, src
-	i32.const	$push97=, 19
-	i32.call	$push98=, memcmp@FUNCTION, $pop410, $pop409, $pop97
-	br_if   	0, $pop98       # 0: down to label2
-# BB#18:                                # %check.exit81
-	i32.const	$push426=, 0
-	i32.const	$push425=, 0
-	i32.load	$push99=, src+16($pop425)
-	i32.store	dst+16($pop426), $pop99
-	i32.const	$push424=, 0
-	i32.const	$push423=, 0
-	i64.load	$push100=, src+8($pop423)
-	i64.store	dst+8($pop424), $pop100
-	i32.const	$push422=, 0
-	i32.const	$push421=, 0
-	i64.load	$push101=, src($pop421)
-	i64.store	dst($pop422), $pop101
-	i32.const	$push420=, dst
-	i32.const	$push419=, src
-	i32.const	$push102=, 20
-	i32.call	$push103=, memcmp@FUNCTION, $pop420, $pop419, $pop102
-	br_if   	0, $pop103      # 0: down to label2
-# BB#19:                                # %check.exit85
-	i32.const	$push436=, 0
-	i32.const	$push435=, 0
-	i32.load8_u	$push104=, src+20($pop435)
-	i32.store8	dst+20($pop436), $pop104
-	i32.const	$push434=, 0
-	i32.const	$push433=, 0
-	i32.load	$push105=, src+16($pop433)
-	i32.store	dst+16($pop434), $pop105
-	i32.const	$push432=, 0
-	i32.const	$push431=, 0
-	i64.load	$push106=, src+8($pop431)
-	i64.store	dst+8($pop432), $pop106
-	i32.const	$push430=, 0
-	i32.const	$push429=, 0
-	i64.load	$push107=, src($pop429)
-	i64.store	dst($pop430), $pop107
-	i32.const	$push428=, dst
-	i32.const	$push427=, src
-	i32.const	$push108=, 21
-	i32.call	$push109=, memcmp@FUNCTION, $pop428, $pop427, $pop108
-	br_if   	0, $pop109      # 0: down to label2
-# BB#20:                                # %check.exit89
-	i32.const	$push446=, 0
-	i32.const	$push445=, 0
-	i32.load16_u	$push110=, src+20($pop445)
-	i32.store16	dst+20($pop446), $pop110
-	i32.const	$push444=, 0
-	i32.const	$push443=, 0
-	i32.load	$push111=, src+16($pop443)
-	i32.store	dst+16($pop444), $pop111
-	i32.const	$push442=, 0
-	i32.const	$push441=, 0
-	i64.load	$push112=, src+8($pop441)
-	i64.store	dst+8($pop442), $pop112
-	i32.const	$push440=, 0
-	i32.const	$push439=, 0
-	i64.load	$push113=, src($pop439)
-	i64.store	dst($pop440), $pop113
-	i32.const	$push438=, dst
-	i32.const	$push437=, src
-	i32.const	$push114=, 22
-	i32.call	$push115=, memcmp@FUNCTION, $pop438, $pop437, $pop114
-	br_if   	0, $pop115      # 0: down to label2
-# BB#21:                                # %check.exit93
-	i32.const	$push458=, 0
-	i32.const	$push457=, 0
-	i32.load8_u	$push116=, src+22($pop457)
-	i32.store8	dst+22($pop458), $pop116
-	i32.const	$push456=, 0
-	i32.const	$push455=, 0
-	i32.load16_u	$push117=, src+20($pop455)
-	i32.store16	dst+20($pop456), $pop117
-	i32.const	$push454=, 0
-	i32.const	$push453=, 0
-	i32.load	$push118=, src+16($pop453)
-	i32.store	dst+16($pop454), $pop118
-	i32.const	$push452=, 0
-	i32.const	$push451=, 0
-	i64.load	$push119=, src+8($pop451)
-	i64.store	dst+8($pop452), $pop119
-	i32.const	$push450=, 0
-	i32.const	$push449=, 0
-	i64.load	$push120=, src($pop449)
-	i64.store	dst($pop450), $pop120
-	i32.const	$push448=, dst
-	i32.const	$push447=, src
-	i32.const	$push121=, 23
-	i32.call	$push122=, memcmp@FUNCTION, $pop448, $pop447, $pop121
-	br_if   	0, $pop122      # 0: down to label2
-# BB#22:                                # %check.exit97
-	i32.const	$push466=, 0
-	i32.const	$push465=, 0
-	i64.load	$push123=, src+16($pop465)
-	i64.store	dst+16($pop466), $pop123
-	i32.const	$push464=, 0
-	i32.const	$push463=, 0
-	i64.load	$push124=, src+8($pop463)
-	i64.store	dst+8($pop464), $pop124
-	i32.const	$push462=, 0
-	i32.const	$push461=, 0
-	i64.load	$push125=, src($pop461)
-	i64.store	dst($pop462), $pop125
-	i32.const	$push460=, dst
-	i32.const	$push459=, src
-	i32.const	$push126=, 24
-	i32.call	$push127=, memcmp@FUNCTION, $pop460, $pop459, $pop126
-	br_if   	0, $pop127      # 0: down to label2
-# BB#23:                                # %check.exit101
-	i32.const	$push476=, 0
-	i32.const	$push475=, 0
-	i32.load8_u	$push128=, src+24($pop475)
-	i32.store8	dst+24($pop476), $pop128
-	i32.const	$push474=, 0
 	i32.const	$push473=, 0
-	i64.load	$push129=, src+16($pop473)
-	i64.store	dst+16($pop474), $pop129
 	i32.const	$push472=, 0
-	i32.const	$push471=, 0
-	i64.load	$push130=, src+8($pop471)
-	i64.store	dst+8($pop472), $pop130
-	i32.const	$push470=, 0
-	i32.const	$push469=, 0
-	i64.load	$push131=, src($pop469)
-	i64.store	dst($pop470), $pop131
-	i32.const	$push468=, dst
-	i32.const	$push467=, src
-	i32.const	$push132=, 25
-	i32.call	$push133=, memcmp@FUNCTION, $pop468, $pop467, $pop132
-	br_if   	0, $pop133      # 0: down to label2
-# BB#24:                                # %check.exit105
-	i32.const	$push486=, 0
-	i32.const	$push485=, 0
-	i32.load16_u	$push134=, src+24($pop485)
-	i32.store16	dst+24($pop486), $pop134
-	i32.const	$push484=, 0
-	i32.const	$push483=, 0
-	i64.load	$push135=, src+16($pop483)
-	i64.store	dst+16($pop484), $pop135
-	i32.const	$push482=, 0
-	i32.const	$push481=, 0
-	i64.load	$push136=, src+8($pop481)
-	i64.store	dst+8($pop482), $pop136
-	i32.const	$push480=, 0
+	i32.load16_u	$push471=, src($pop472)
+	tee_local	$push470=, $0=, $pop471
+	i32.store16	dst($pop473), $pop470
+	block   	
+	i32.ne  	$push12=, $0, $0
+	br_if   	0, $pop12       # 0: down to label2
+# BB#3:                                 # %check.exit13
 	i32.const	$push479=, 0
-	i64.load	$push137=, src($pop479)
-	i64.store	dst($pop480), $pop137
-	i32.const	$push478=, dst
-	i32.const	$push477=, src
-	i32.const	$push138=, 26
-	i32.call	$push139=, memcmp@FUNCTION, $pop478, $pop477, $pop138
-	br_if   	0, $pop139      # 0: down to label2
-# BB#25:                                # %check.exit109
-	i32.const	$push498=, 0
-	i32.const	$push497=, 0
-	i32.load8_u	$push140=, src+26($pop497)
-	i32.store8	dst+26($pop498), $pop140
-	i32.const	$push496=, 0
-	i32.const	$push495=, 0
-	i32.load16_u	$push141=, src+24($pop495)
-	i32.store16	dst+24($pop496), $pop141
-	i32.const	$push494=, 0
-	i32.const	$push493=, 0
-	i64.load	$push142=, src+16($pop493)
-	i64.store	dst+16($pop494), $pop142
-	i32.const	$push492=, 0
+	i32.const	$push478=, 0
+	i32.load8_u	$push13=, src+2($pop478)
+	i32.store8	dst+2($pop479), $pop13
+	i32.const	$push477=, 0
+	i32.const	$push476=, 0
+	i32.load16_u	$push14=, src($pop476)
+	i32.store16	dst($pop477), $pop14
+	i32.const	$push475=, dst
+	i32.const	$push474=, src
+	i32.const	$push15=, 3
+	i32.call	$push16=, memcmp@FUNCTION, $pop475, $pop474, $pop15
+	br_if   	0, $pop16       # 0: down to label2
+# BB#4:                                 # %check.exit17
+	i32.const	$push485=, 0
+	i32.const	$push484=, 0
+	i32.load8_u	$push17=, src+4($pop484)
+	i32.store8	dst+4($pop485), $pop17
+	i32.const	$push483=, 0
+	i32.const	$push482=, 0
+	i32.load	$push18=, src($pop482)
+	i32.store	dst($pop483), $pop18
+	i32.const	$push481=, dst
+	i32.const	$push480=, src
+	i32.const	$push19=, 5
+	i32.call	$push20=, memcmp@FUNCTION, $pop481, $pop480, $pop19
+	br_if   	0, $pop20       # 0: down to label2
+# BB#5:                                 # %check.exit25
 	i32.const	$push491=, 0
-	i64.load	$push143=, src+8($pop491)
-	i64.store	dst+8($pop492), $pop143
 	i32.const	$push490=, 0
+	i32.load16_u	$push21=, src+4($pop490)
+	i32.store16	dst+4($pop491), $pop21
 	i32.const	$push489=, 0
-	i64.load	$push144=, src($pop489)
-	i64.store	dst($pop490), $pop144
-	i32.const	$push488=, dst
-	i32.const	$push487=, src
-	i32.const	$push145=, 27
-	i32.call	$push146=, memcmp@FUNCTION, $pop488, $pop487, $pop145
-	br_if   	0, $pop146      # 0: down to label2
-# BB#26:                                # %check.exit113
-	i32.const	$push508=, 0
-	i32.const	$push507=, 0
-	i32.load	$push147=, src+24($pop507)
-	i32.store	dst+24($pop508), $pop147
-	i32.const	$push506=, 0
+	i32.const	$push488=, 0
+	i32.load	$push22=, src($pop488)
+	i32.store	dst($pop489), $pop22
+	i32.const	$push487=, dst
+	i32.const	$push486=, src
+	i32.const	$push23=, 6
+	i32.call	$push24=, memcmp@FUNCTION, $pop487, $pop486, $pop23
+	br_if   	0, $pop24       # 0: down to label2
+# BB#6:                                 # %check.exit29
+	i32.const	$push499=, 0
+	i32.const	$push498=, 0
+	i32.load8_u	$push25=, src+6($pop498)
+	i32.store8	dst+6($pop499), $pop25
+	i32.const	$push497=, 0
+	i32.const	$push496=, 0
+	i32.load16_u	$push26=, src+4($pop496)
+	i32.store16	dst+4($pop497), $pop26
+	i32.const	$push495=, 0
+	i32.const	$push494=, 0
+	i32.load	$push27=, src($pop494)
+	i32.store	dst($pop495), $pop27
+	i32.const	$push493=, dst
+	i32.const	$push492=, src
+	i32.const	$push28=, 7
+	i32.call	$push29=, memcmp@FUNCTION, $pop493, $pop492, $pop28
+	br_if   	0, $pop29       # 0: down to label2
+# BB#7:                                 # %check.exit33
 	i32.const	$push505=, 0
-	i64.load	$push148=, src+16($pop505)
-	i64.store	dst+16($pop506), $pop148
 	i32.const	$push504=, 0
+	i32.load8_u	$push30=, src+8($pop504)
+	i32.store8	dst+8($pop505), $pop30
 	i32.const	$push503=, 0
-	i64.load	$push149=, src+8($pop503)
-	i64.store	dst+8($pop504), $pop149
 	i32.const	$push502=, 0
-	i32.const	$push501=, 0
-	i64.load	$push150=, src($pop501)
-	i64.store	dst($pop502), $pop150
-	i32.const	$push500=, dst
-	i32.const	$push499=, src
-	i32.const	$push151=, 28
-	i32.call	$push152=, memcmp@FUNCTION, $pop500, $pop499, $pop151
-	br_if   	0, $pop152      # 0: down to label2
-# BB#27:                                # %check.exit117
-	i32.const	$push520=, 0
-	i32.const	$push519=, 0
-	i32.load8_u	$push153=, src+28($pop519)
-	i32.store8	dst+28($pop520), $pop153
-	i32.const	$push518=, 0
-	i32.const	$push517=, 0
-	i32.load	$push154=, src+24($pop517)
-	i32.store	dst+24($pop518), $pop154
-	i32.const	$push516=, 0
-	i32.const	$push515=, 0
-	i64.load	$push155=, src+16($pop515)
-	i64.store	dst+16($pop516), $pop155
-	i32.const	$push514=, 0
-	i32.const	$push513=, 0
-	i64.load	$push156=, src+8($pop513)
-	i64.store	dst+8($pop514), $pop156
-	i32.const	$push512=, 0
+	i64.load	$push31=, src($pop502)
+	i64.store	dst($pop503), $pop31
+	i32.const	$push501=, dst
+	i32.const	$push500=, src
+	i32.const	$push32=, 9
+	i32.call	$push33=, memcmp@FUNCTION, $pop501, $pop500, $pop32
+	br_if   	0, $pop33       # 0: down to label2
+# BB#8:                                 # %check.exit41
 	i32.const	$push511=, 0
-	i64.load	$push157=, src($pop511)
-	i64.store	dst($pop512), $pop157
-	i32.const	$push510=, dst
-	i32.const	$push509=, src
-	i32.const	$push158=, 29
-	i32.call	$push159=, memcmp@FUNCTION, $pop510, $pop509, $pop158
-	br_if   	0, $pop159      # 0: down to label2
-# BB#28:                                # %check.exit121
-	i32.const	$push160=, 0
-	i32.const	$push531=, 0
-	i32.load16_u	$push161=, src+28($pop531)
-	i32.store16	dst+28($pop160), $pop161
-	i32.const	$push530=, 0
-	i32.const	$push529=, 0
-	i32.load	$push162=, src+24($pop529)
-	i32.store	dst+24($pop530), $pop162
-	i32.const	$push528=, 0
-	i32.const	$push527=, 0
-	i64.load	$push163=, src+16($pop527)
-	i64.store	dst+16($pop528), $pop163
-	i32.const	$push526=, 0
+	i32.const	$push510=, 0
+	i32.load16_u	$push34=, src+8($pop510)
+	i32.store16	dst+8($pop511), $pop34
+	i32.const	$push509=, 0
+	i32.const	$push508=, 0
+	i64.load	$push35=, src($pop508)
+	i64.store	dst($pop509), $pop35
+	i32.const	$push507=, dst
+	i32.const	$push506=, src
+	i32.const	$push36=, 10
+	i32.call	$push37=, memcmp@FUNCTION, $pop507, $pop506, $pop36
+	br_if   	0, $pop37       # 0: down to label2
+# BB#9:                                 # %check.exit45
+	i32.const	$push519=, 0
+	i32.const	$push518=, 0
+	i32.load8_u	$push38=, src+10($pop518)
+	i32.store8	dst+10($pop519), $pop38
+	i32.const	$push517=, 0
+	i32.const	$push516=, 0
+	i32.load16_u	$push39=, src+8($pop516)
+	i32.store16	dst+8($pop517), $pop39
+	i32.const	$push515=, 0
+	i32.const	$push514=, 0
+	i64.load	$push40=, src($pop514)
+	i64.store	dst($pop515), $pop40
+	i32.const	$push513=, dst
+	i32.const	$push512=, src
+	i32.const	$push41=, 11
+	i32.call	$push42=, memcmp@FUNCTION, $pop513, $pop512, $pop41
+	br_if   	0, $pop42       # 0: down to label2
+# BB#10:                                # %check.exit49
 	i32.const	$push525=, 0
-	i64.load	$push164=, src+8($pop525)
-	i64.store	dst+8($pop526), $pop164
 	i32.const	$push524=, 0
+	i32.load	$push43=, src+8($pop524)
+	i32.store	dst+8($pop525), $pop43
 	i32.const	$push523=, 0
-	i64.load	$push165=, src($pop523)
-	i64.store	dst($pop524), $pop165
-	i32.const	$push522=, dst
-	i32.const	$push521=, src
-	i32.const	$push166=, 30
-	i32.call	$push167=, memcmp@FUNCTION, $pop522, $pop521, $pop166
-	br_if   	0, $pop167      # 0: down to label2
-# BB#29:                                # %check.exit125
-	i32.const	$push169=, dst
-	i32.const	$push536=, src
-	i32.const	$push168=, 31
-	i32.call	$push535=, memcpy@FUNCTION, $pop169, $pop536, $pop168
-	tee_local	$push534=, $0=, $pop535
-	i32.const	$push533=, src
-	i32.const	$push532=, 31
-	i32.call	$push170=, memcmp@FUNCTION, $pop534, $pop533, $pop532
-	br_if   	0, $pop170      # 0: down to label2
-# BB#30:                                # %check.exit129
-	i32.const	$push171=, 0
-	i32.const	$push544=, 0
-	i64.load	$push172=, src+24($pop544)
-	i64.store	dst+24($pop171), $pop172
+	i32.const	$push522=, 0
+	i64.load	$push44=, src($pop522)
+	i64.store	dst($pop523), $pop44
+	i32.const	$push521=, dst
+	i32.const	$push520=, src
+	i32.const	$push45=, 12
+	i32.call	$push46=, memcmp@FUNCTION, $pop521, $pop520, $pop45
+	br_if   	0, $pop46       # 0: down to label2
+# BB#11:                                # %check.exit53
+	i32.const	$push531=, 0
+	i32.const	$push530=, 0
+	i64.load	$push47=, src+5($pop530):p2align=0
+	i64.store	dst+5($pop531):p2align=0, $pop47
+	i32.const	$push529=, 0
+	i32.const	$push528=, 0
+	i64.load	$push48=, src($pop528)
+	i64.store	dst($pop529), $pop48
+	i32.const	$push527=, dst
+	i32.const	$push526=, src
+	i32.const	$push49=, 13
+	i32.call	$push50=, memcmp@FUNCTION, $pop527, $pop526, $pop49
+	br_if   	0, $pop50       # 0: down to label2
+# BB#12:                                # %check.exit57
+	i32.const	$push537=, 0
+	i32.const	$push536=, 0
+	i64.load	$push51=, src+6($pop536):p2align=1
+	i64.store	dst+6($pop537):p2align=1, $pop51
+	i32.const	$push535=, 0
+	i32.const	$push534=, 0
+	i64.load	$push52=, src($pop534)
+	i64.store	dst($pop535), $pop52
+	i32.const	$push533=, dst
+	i32.const	$push532=, src
+	i32.const	$push53=, 14
+	i32.call	$push54=, memcmp@FUNCTION, $pop533, $pop532, $pop53
+	br_if   	0, $pop54       # 0: down to label2
+# BB#13:                                # %check.exit61
 	i32.const	$push543=, 0
 	i32.const	$push542=, 0
-	i64.load	$push173=, src+16($pop542)
-	i64.store	dst+16($pop543), $pop173
+	i64.load	$push55=, src+7($pop542):p2align=0
+	i64.store	dst+7($pop543):p2align=0, $pop55
 	i32.const	$push541=, 0
 	i32.const	$push540=, 0
-	i64.load	$push174=, src+8($pop540)
-	i64.store	dst+8($pop541), $pop174
-	i32.const	$push539=, 0
-	i32.const	$push538=, 0
-	i64.load	$push175=, src($pop538)
-	i64.store	dst($pop539), $pop175
-	i32.const	$push537=, src
-	i32.const	$push176=, 32
-	i32.call	$push177=, memcmp@FUNCTION, $0, $pop537, $pop176
-	br_if   	0, $pop177      # 0: down to label2
-# BB#31:                                # %check.exit133
-	i32.const	$push179=, dst
-	i32.const	$push549=, src
-	i32.const	$push178=, 33
-	i32.call	$push548=, memcpy@FUNCTION, $pop179, $pop549, $pop178
-	tee_local	$push547=, $0=, $pop548
-	i32.const	$push546=, src
-	i32.const	$push545=, 33
-	i32.call	$push180=, memcmp@FUNCTION, $pop547, $pop546, $pop545
-	br_if   	0, $pop180      # 0: down to label2
-# BB#32:                                # %check.exit137
-	i32.const	$push552=, src
-	i32.const	$push181=, 34
-	i32.call	$push0=, memcpy@FUNCTION, $0, $pop552, $pop181
-	i32.const	$push551=, src
-	i32.const	$push550=, 34
-	i32.call	$push182=, memcmp@FUNCTION, $pop0, $pop551, $pop550
-	br_if   	0, $pop182      # 0: down to label2
-# BB#33:                                # %check.exit141
-	i32.const	$push184=, dst
-	i32.const	$push557=, src
-	i32.const	$push183=, 35
-	i32.call	$push556=, memcpy@FUNCTION, $pop184, $pop557, $pop183
-	tee_local	$push555=, $0=, $pop556
-	i32.const	$push554=, src
-	i32.const	$push553=, 35
-	i32.call	$push185=, memcmp@FUNCTION, $pop555, $pop554, $pop553
-	br_if   	0, $pop185      # 0: down to label2
-# BB#34:                                # %check.exit145
-	i32.const	$push560=, src
-	i32.const	$push186=, 36
-	i32.call	$push1=, memcpy@FUNCTION, $0, $pop560, $pop186
-	i32.const	$push559=, src
-	i32.const	$push558=, 36
-	i32.call	$push187=, memcmp@FUNCTION, $pop1, $pop559, $pop558
-	br_if   	0, $pop187      # 0: down to label2
-# BB#35:                                # %check.exit149
-	i32.const	$push189=, dst
-	i32.const	$push565=, src
-	i32.const	$push188=, 37
-	i32.call	$push564=, memcpy@FUNCTION, $pop189, $pop565, $pop188
-	tee_local	$push563=, $0=, $pop564
-	i32.const	$push562=, src
-	i32.const	$push561=, 37
-	i32.call	$push190=, memcmp@FUNCTION, $pop563, $pop562, $pop561
-	br_if   	0, $pop190      # 0: down to label2
-# BB#36:                                # %check.exit153
-	i32.const	$push568=, src
-	i32.const	$push191=, 38
-	i32.call	$push2=, memcpy@FUNCTION, $0, $pop568, $pop191
-	i32.const	$push567=, src
-	i32.const	$push566=, 38
-	i32.call	$push192=, memcmp@FUNCTION, $pop2, $pop567, $pop566
-	br_if   	0, $pop192      # 0: down to label2
-# BB#37:                                # %check.exit157
-	i32.const	$push194=, dst
-	i32.const	$push573=, src
-	i32.const	$push193=, 39
-	i32.call	$push572=, memcpy@FUNCTION, $pop194, $pop573, $pop193
-	tee_local	$push571=, $0=, $pop572
-	i32.const	$push570=, src
-	i32.const	$push569=, 39
-	i32.call	$push195=, memcmp@FUNCTION, $pop571, $pop570, $pop569
-	br_if   	0, $pop195      # 0: down to label2
-# BB#38:                                # %check.exit161
+	i64.load	$push56=, src($pop540)
+	i64.store	dst($pop541), $pop56
+	i32.const	$push539=, dst
+	i32.const	$push538=, src
+	i32.const	$push57=, 15
+	i32.call	$push58=, memcmp@FUNCTION, $pop539, $pop538, $pop57
+	br_if   	0, $pop58       # 0: down to label2
+# BB#14:                                # %check.exit65
+	i32.const	$push549=, 0
+	i32.const	$push548=, 0
+	i64.load	$push59=, src+8($pop548)
+	i64.store	dst+8($pop549), $pop59
+	i32.const	$push547=, 0
+	i32.const	$push546=, 0
+	i64.load	$push60=, src($pop546)
+	i64.store	dst($pop547), $pop60
+	i32.const	$push545=, dst
+	i32.const	$push544=, src
+	i32.const	$push61=, 16
+	i32.call	$push62=, memcmp@FUNCTION, $pop545, $pop544, $pop61
+	br_if   	0, $pop62       # 0: down to label2
+# BB#15:                                # %check.exit69
+	i32.const	$push557=, 0
+	i32.const	$push556=, 0
+	i32.load8_u	$push63=, src+16($pop556)
+	i32.store8	dst+16($pop557), $pop63
+	i32.const	$push555=, 0
+	i32.const	$push554=, 0
+	i64.load	$push64=, src+8($pop554)
+	i64.store	dst+8($pop555), $pop64
+	i32.const	$push553=, 0
+	i32.const	$push552=, 0
+	i64.load	$push65=, src($pop552)
+	i64.store	dst($pop553), $pop65
+	i32.const	$push551=, dst
+	i32.const	$push550=, src
+	i32.const	$push66=, 17
+	i32.call	$push67=, memcmp@FUNCTION, $pop551, $pop550, $pop66
+	br_if   	0, $pop67       # 0: down to label2
+# BB#16:                                # %check.exit73
+	i32.const	$push565=, 0
+	i32.const	$push564=, 0
+	i32.load16_u	$push68=, src+16($pop564)
+	i32.store16	dst+16($pop565), $pop68
+	i32.const	$push563=, 0
+	i32.const	$push562=, 0
+	i64.load	$push69=, src+8($pop562)
+	i64.store	dst+8($pop563), $pop69
+	i32.const	$push561=, 0
+	i32.const	$push560=, 0
+	i64.load	$push70=, src($pop560)
+	i64.store	dst($pop561), $pop70
+	i32.const	$push559=, dst
+	i32.const	$push558=, src
+	i32.const	$push71=, 18
+	i32.call	$push72=, memcmp@FUNCTION, $pop559, $pop558, $pop71
+	br_if   	0, $pop72       # 0: down to label2
+# BB#17:                                # %check.exit77
+	i32.const	$push575=, 0
+	i32.const	$push574=, 0
+	i32.load8_u	$push73=, src+18($pop574)
+	i32.store8	dst+18($pop575), $pop73
+	i32.const	$push573=, 0
+	i32.const	$push572=, 0
+	i32.load16_u	$push74=, src+16($pop572)
+	i32.store16	dst+16($pop573), $pop74
+	i32.const	$push571=, 0
+	i32.const	$push570=, 0
+	i64.load	$push75=, src+8($pop570)
+	i64.store	dst+8($pop571), $pop75
+	i32.const	$push569=, 0
+	i32.const	$push568=, 0
+	i64.load	$push76=, src($pop568)
+	i64.store	dst($pop569), $pop76
+	i32.const	$push567=, dst
+	i32.const	$push566=, src
+	i32.const	$push77=, 19
+	i32.call	$push78=, memcmp@FUNCTION, $pop567, $pop566, $pop77
+	br_if   	0, $pop78       # 0: down to label2
+# BB#18:                                # %check.exit81
+	i32.const	$push583=, 0
+	i32.const	$push582=, 0
+	i32.load	$push79=, src+16($pop582)
+	i32.store	dst+16($pop583), $pop79
+	i32.const	$push581=, 0
+	i32.const	$push580=, 0
+	i64.load	$push80=, src+8($pop580)
+	i64.store	dst+8($pop581), $pop80
+	i32.const	$push579=, 0
+	i32.const	$push578=, 0
+	i64.load	$push81=, src($pop578)
+	i64.store	dst($pop579), $pop81
+	i32.const	$push577=, dst
 	i32.const	$push576=, src
-	i32.const	$push196=, 40
-	i32.call	$push3=, memcpy@FUNCTION, $0, $pop576, $pop196
-	i32.const	$push575=, src
-	i32.const	$push574=, 40
-	i32.call	$push197=, memcmp@FUNCTION, $pop3, $pop575, $pop574
-	br_if   	0, $pop197      # 0: down to label2
-# BB#39:                                # %check.exit165
-	i32.const	$push199=, dst
-	i32.const	$push581=, src
-	i32.const	$push198=, 41
-	i32.call	$push580=, memcpy@FUNCTION, $pop199, $pop581, $pop198
-	tee_local	$push579=, $0=, $pop580
-	i32.const	$push578=, src
-	i32.const	$push577=, 41
-	i32.call	$push200=, memcmp@FUNCTION, $pop579, $pop578, $pop577
-	br_if   	0, $pop200      # 0: down to label2
-# BB#40:                                # %check.exit169
+	i32.const	$push82=, 20
+	i32.call	$push83=, memcmp@FUNCTION, $pop577, $pop576, $pop82
+	br_if   	0, $pop83       # 0: down to label2
+# BB#19:                                # %check.exit85
+	i32.const	$push591=, 0
+	i32.const	$push590=, 0
+	i64.load	$push84=, src+13($pop590):p2align=0
+	i64.store	dst+13($pop591):p2align=0, $pop84
+	i32.const	$push589=, 0
+	i32.const	$push588=, 0
+	i64.load	$push85=, src+8($pop588)
+	i64.store	dst+8($pop589), $pop85
+	i32.const	$push587=, 0
+	i32.const	$push586=, 0
+	i64.load	$push86=, src($pop586)
+	i64.store	dst($pop587), $pop86
+	i32.const	$push585=, dst
 	i32.const	$push584=, src
-	i32.const	$push201=, 42
-	i32.call	$push4=, memcpy@FUNCTION, $0, $pop584, $pop201
-	i32.const	$push583=, src
-	i32.const	$push582=, 42
-	i32.call	$push202=, memcmp@FUNCTION, $pop4, $pop583, $pop582
-	br_if   	0, $pop202      # 0: down to label2
-# BB#41:                                # %check.exit173
-	i32.const	$push204=, dst
-	i32.const	$push589=, src
-	i32.const	$push203=, 43
-	i32.call	$push588=, memcpy@FUNCTION, $pop204, $pop589, $pop203
-	tee_local	$push587=, $0=, $pop588
-	i32.const	$push586=, src
-	i32.const	$push585=, 43
-	i32.call	$push205=, memcmp@FUNCTION, $pop587, $pop586, $pop585
-	br_if   	0, $pop205      # 0: down to label2
-# BB#42:                                # %check.exit177
+	i32.const	$push87=, 21
+	i32.call	$push88=, memcmp@FUNCTION, $pop585, $pop584, $pop87
+	br_if   	0, $pop88       # 0: down to label2
+# BB#20:                                # %check.exit89
+	i32.const	$push599=, 0
+	i32.const	$push598=, 0
+	i64.load	$push89=, src+14($pop598):p2align=1
+	i64.store	dst+14($pop599):p2align=1, $pop89
+	i32.const	$push597=, 0
+	i32.const	$push596=, 0
+	i64.load	$push90=, src+8($pop596)
+	i64.store	dst+8($pop597), $pop90
+	i32.const	$push595=, 0
+	i32.const	$push594=, 0
+	i64.load	$push91=, src($pop594)
+	i64.store	dst($pop595), $pop91
+	i32.const	$push593=, dst
 	i32.const	$push592=, src
-	i32.const	$push206=, 44
-	i32.call	$push5=, memcpy@FUNCTION, $0, $pop592, $pop206
-	i32.const	$push591=, src
-	i32.const	$push590=, 44
-	i32.call	$push207=, memcmp@FUNCTION, $pop5, $pop591, $pop590
-	br_if   	0, $pop207      # 0: down to label2
-# BB#43:                                # %check.exit181
-	i32.const	$push209=, dst
-	i32.const	$push597=, src
-	i32.const	$push208=, 45
-	i32.call	$push596=, memcpy@FUNCTION, $pop209, $pop597, $pop208
-	tee_local	$push595=, $0=, $pop596
-	i32.const	$push594=, src
-	i32.const	$push593=, 45
-	i32.call	$push210=, memcmp@FUNCTION, $pop595, $pop594, $pop593
-	br_if   	0, $pop210      # 0: down to label2
-# BB#44:                                # %check.exit185
+	i32.const	$push92=, 22
+	i32.call	$push93=, memcmp@FUNCTION, $pop593, $pop592, $pop92
+	br_if   	0, $pop93       # 0: down to label2
+# BB#21:                                # %check.exit93
+	i32.const	$push607=, 0
+	i32.const	$push606=, 0
+	i64.load	$push94=, src+15($pop606):p2align=0
+	i64.store	dst+15($pop607):p2align=0, $pop94
+	i32.const	$push605=, 0
+	i32.const	$push604=, 0
+	i64.load	$push95=, src+8($pop604)
+	i64.store	dst+8($pop605), $pop95
+	i32.const	$push603=, 0
+	i32.const	$push602=, 0
+	i64.load	$push96=, src($pop602)
+	i64.store	dst($pop603), $pop96
+	i32.const	$push601=, dst
 	i32.const	$push600=, src
-	i32.const	$push211=, 46
-	i32.call	$push6=, memcpy@FUNCTION, $0, $pop600, $pop211
-	i32.const	$push599=, src
-	i32.const	$push598=, 46
-	i32.call	$push212=, memcmp@FUNCTION, $pop6, $pop599, $pop598
-	br_if   	0, $pop212      # 0: down to label2
-# BB#45:                                # %check.exit189
-	i32.const	$push214=, dst
-	i32.const	$push605=, src
-	i32.const	$push213=, 47
-	i32.call	$push604=, memcpy@FUNCTION, $pop214, $pop605, $pop213
-	tee_local	$push603=, $0=, $pop604
-	i32.const	$push602=, src
-	i32.const	$push601=, 47
-	i32.call	$push215=, memcmp@FUNCTION, $pop603, $pop602, $pop601
-	br_if   	0, $pop215      # 0: down to label2
-# BB#46:                                # %check.exit193
+	i32.const	$push97=, 23
+	i32.call	$push98=, memcmp@FUNCTION, $pop601, $pop600, $pop97
+	br_if   	0, $pop98       # 0: down to label2
+# BB#22:                                # %check.exit97
+	i32.const	$push615=, 0
+	i32.const	$push614=, 0
+	i64.load	$push99=, src+16($pop614)
+	i64.store	dst+16($pop615), $pop99
+	i32.const	$push613=, 0
+	i32.const	$push612=, 0
+	i64.load	$push100=, src+8($pop612)
+	i64.store	dst+8($pop613), $pop100
+	i32.const	$push611=, 0
+	i32.const	$push610=, 0
+	i64.load	$push101=, src($pop610)
+	i64.store	dst($pop611), $pop101
+	i32.const	$push609=, dst
 	i32.const	$push608=, src
-	i32.const	$push216=, 48
-	i32.call	$push7=, memcpy@FUNCTION, $0, $pop608, $pop216
-	i32.const	$push607=, src
-	i32.const	$push606=, 48
-	i32.call	$push217=, memcmp@FUNCTION, $pop7, $pop607, $pop606
-	br_if   	0, $pop217      # 0: down to label2
-# BB#47:                                # %check.exit197
-	i32.const	$push219=, dst
-	i32.const	$push613=, src
-	i32.const	$push218=, 49
-	i32.call	$push612=, memcpy@FUNCTION, $pop219, $pop613, $pop218
-	tee_local	$push611=, $0=, $pop612
-	i32.const	$push610=, src
-	i32.const	$push609=, 49
-	i32.call	$push220=, memcmp@FUNCTION, $pop611, $pop610, $pop609
-	br_if   	0, $pop220      # 0: down to label2
-# BB#48:                                # %check.exit201
+	i32.const	$push102=, 24
+	i32.call	$push103=, memcmp@FUNCTION, $pop609, $pop608, $pop102
+	br_if   	0, $pop103      # 0: down to label2
+# BB#23:                                # %check.exit101
+	i32.const	$push625=, 0
+	i32.const	$push624=, 0
+	i32.load8_u	$push104=, src+24($pop624)
+	i32.store8	dst+24($pop625), $pop104
+	i32.const	$push623=, 0
+	i32.const	$push622=, 0
+	i64.load	$push105=, src+16($pop622)
+	i64.store	dst+16($pop623), $pop105
+	i32.const	$push621=, 0
+	i32.const	$push620=, 0
+	i64.load	$push106=, src+8($pop620)
+	i64.store	dst+8($pop621), $pop106
+	i32.const	$push619=, 0
+	i32.const	$push618=, 0
+	i64.load	$push107=, src($pop618)
+	i64.store	dst($pop619), $pop107
+	i32.const	$push617=, dst
 	i32.const	$push616=, src
-	i32.const	$push221=, 50
-	i32.call	$push8=, memcpy@FUNCTION, $0, $pop616, $pop221
-	i32.const	$push615=, src
-	i32.const	$push614=, 50
-	i32.call	$push222=, memcmp@FUNCTION, $pop8, $pop615, $pop614
-	br_if   	0, $pop222      # 0: down to label2
-# BB#49:                                # %check.exit205
-	i32.const	$push224=, dst
-	i32.const	$push621=, src
-	i32.const	$push223=, 51
-	i32.call	$push620=, memcpy@FUNCTION, $pop224, $pop621, $pop223
-	tee_local	$push619=, $0=, $pop620
-	i32.const	$push618=, src
-	i32.const	$push617=, 51
-	i32.call	$push225=, memcmp@FUNCTION, $pop619, $pop618, $pop617
-	br_if   	0, $pop225      # 0: down to label2
-# BB#50:                                # %check.exit209
-	i32.const	$push624=, src
-	i32.const	$push226=, 52
-	i32.call	$push9=, memcpy@FUNCTION, $0, $pop624, $pop226
-	i32.const	$push623=, src
-	i32.const	$push622=, 52
-	i32.call	$push227=, memcmp@FUNCTION, $pop9, $pop623, $pop622
-	br_if   	0, $pop227      # 0: down to label2
-# BB#51:                                # %check.exit213
-	i32.const	$push229=, dst
-	i32.const	$push629=, src
-	i32.const	$push228=, 53
-	i32.call	$push628=, memcpy@FUNCTION, $pop229, $pop629, $pop228
-	tee_local	$push627=, $0=, $pop628
+	i32.const	$push108=, 25
+	i32.call	$push109=, memcmp@FUNCTION, $pop617, $pop616, $pop108
+	br_if   	0, $pop109      # 0: down to label2
+# BB#24:                                # %check.exit105
+	i32.const	$push635=, 0
+	i32.const	$push634=, 0
+	i32.load16_u	$push110=, src+24($pop634)
+	i32.store16	dst+24($pop635), $pop110
+	i32.const	$push633=, 0
+	i32.const	$push632=, 0
+	i64.load	$push111=, src+16($pop632)
+	i64.store	dst+16($pop633), $pop111
+	i32.const	$push631=, 0
+	i32.const	$push630=, 0
+	i64.load	$push112=, src+8($pop630)
+	i64.store	dst+8($pop631), $pop112
+	i32.const	$push629=, 0
+	i32.const	$push628=, 0
+	i64.load	$push113=, src($pop628)
+	i64.store	dst($pop629), $pop113
+	i32.const	$push627=, dst
 	i32.const	$push626=, src
-	i32.const	$push625=, 53
-	i32.call	$push230=, memcmp@FUNCTION, $pop627, $pop626, $pop625
-	br_if   	0, $pop230      # 0: down to label2
-# BB#52:                                # %check.exit217
-	i32.const	$push632=, src
-	i32.const	$push231=, 54
-	i32.call	$push10=, memcpy@FUNCTION, $0, $pop632, $pop231
-	i32.const	$push631=, src
-	i32.const	$push630=, 54
-	i32.call	$push232=, memcmp@FUNCTION, $pop10, $pop631, $pop630
-	br_if   	0, $pop232      # 0: down to label2
-# BB#53:                                # %check.exit221
-	i32.const	$push234=, dst
-	i32.const	$push637=, src
-	i32.const	$push233=, 55
-	i32.call	$push636=, memcpy@FUNCTION, $pop234, $pop637, $pop233
-	tee_local	$push635=, $0=, $pop636
-	i32.const	$push634=, src
-	i32.const	$push633=, 55
-	i32.call	$push235=, memcmp@FUNCTION, $pop635, $pop634, $pop633
-	br_if   	0, $pop235      # 0: down to label2
-# BB#54:                                # %check.exit225
-	i32.const	$push640=, src
-	i32.const	$push236=, 56
-	i32.call	$push11=, memcpy@FUNCTION, $0, $pop640, $pop236
-	i32.const	$push639=, src
-	i32.const	$push638=, 56
-	i32.call	$push237=, memcmp@FUNCTION, $pop11, $pop639, $pop638
-	br_if   	0, $pop237      # 0: down to label2
-# BB#55:                                # %check.exit229
-	i32.const	$push239=, dst
-	i32.const	$push645=, src
-	i32.const	$push238=, 57
-	i32.call	$push644=, memcpy@FUNCTION, $pop239, $pop645, $pop238
-	tee_local	$push643=, $0=, $pop644
-	i32.const	$push642=, src
-	i32.const	$push641=, 57
-	i32.call	$push240=, memcmp@FUNCTION, $pop643, $pop642, $pop641
-	br_if   	0, $pop240      # 0: down to label2
-# BB#56:                                # %check.exit233
+	i32.const	$push114=, 26
+	i32.call	$push115=, memcmp@FUNCTION, $pop627, $pop626, $pop114
+	br_if   	0, $pop115      # 0: down to label2
+# BB#25:                                # %check.exit109
+	i32.const	$push647=, 0
+	i32.const	$push646=, 0
+	i32.load8_u	$push116=, src+26($pop646)
+	i32.store8	dst+26($pop647), $pop116
+	i32.const	$push645=, 0
+	i32.const	$push644=, 0
+	i32.load16_u	$push117=, src+24($pop644)
+	i32.store16	dst+24($pop645), $pop117
+	i32.const	$push643=, 0
+	i32.const	$push642=, 0
+	i64.load	$push118=, src+16($pop642)
+	i64.store	dst+16($pop643), $pop118
+	i32.const	$push641=, 0
+	i32.const	$push640=, 0
+	i64.load	$push119=, src+8($pop640)
+	i64.store	dst+8($pop641), $pop119
+	i32.const	$push639=, 0
+	i32.const	$push638=, 0
+	i64.load	$push120=, src($pop638)
+	i64.store	dst($pop639), $pop120
+	i32.const	$push637=, dst
+	i32.const	$push636=, src
+	i32.const	$push121=, 27
+	i32.call	$push122=, memcmp@FUNCTION, $pop637, $pop636, $pop121
+	br_if   	0, $pop122      # 0: down to label2
+# BB#26:                                # %check.exit113
+	i32.const	$push657=, 0
+	i32.const	$push656=, 0
+	i32.load	$push123=, src+24($pop656)
+	i32.store	dst+24($pop657), $pop123
+	i32.const	$push655=, 0
+	i32.const	$push654=, 0
+	i64.load	$push124=, src+16($pop654)
+	i64.store	dst+16($pop655), $pop124
+	i32.const	$push653=, 0
+	i32.const	$push652=, 0
+	i64.load	$push125=, src+8($pop652)
+	i64.store	dst+8($pop653), $pop125
+	i32.const	$push651=, 0
+	i32.const	$push650=, 0
+	i64.load	$push126=, src($pop650)
+	i64.store	dst($pop651), $pop126
+	i32.const	$push649=, dst
 	i32.const	$push648=, src
-	i32.const	$push241=, 58
-	i32.call	$push12=, memcpy@FUNCTION, $0, $pop648, $pop241
-	i32.const	$push647=, src
-	i32.const	$push646=, 58
-	i32.call	$push242=, memcmp@FUNCTION, $pop12, $pop647, $pop646
-	br_if   	0, $pop242      # 0: down to label2
-# BB#57:                                # %check.exit237
-	i32.const	$push244=, dst
-	i32.const	$push653=, src
-	i32.const	$push243=, 59
-	i32.call	$push652=, memcpy@FUNCTION, $pop244, $pop653, $pop243
-	tee_local	$push651=, $0=, $pop652
-	i32.const	$push650=, src
-	i32.const	$push649=, 59
-	i32.call	$push245=, memcmp@FUNCTION, $pop651, $pop650, $pop649
-	br_if   	0, $pop245      # 0: down to label2
-# BB#58:                                # %check.exit241
-	i32.const	$push656=, src
-	i32.const	$push246=, 60
-	i32.call	$push13=, memcpy@FUNCTION, $0, $pop656, $pop246
-	i32.const	$push655=, src
-	i32.const	$push654=, 60
-	i32.call	$push247=, memcmp@FUNCTION, $pop13, $pop655, $pop654
-	br_if   	0, $pop247      # 0: down to label2
-# BB#59:                                # %check.exit245
-	i32.const	$push249=, dst
-	i32.const	$push661=, src
-	i32.const	$push248=, 61
-	i32.call	$push660=, memcpy@FUNCTION, $pop249, $pop661, $pop248
-	tee_local	$push659=, $0=, $pop660
+	i32.const	$push127=, 28
+	i32.call	$push128=, memcmp@FUNCTION, $pop649, $pop648, $pop127
+	br_if   	0, $pop128      # 0: down to label2
+# BB#27:                                # %check.exit117
+	i32.const	$push667=, 0
+	i32.const	$push666=, 0
+	i64.load	$push129=, src+21($pop666):p2align=0
+	i64.store	dst+21($pop667):p2align=0, $pop129
+	i32.const	$push665=, 0
+	i32.const	$push664=, 0
+	i64.load	$push130=, src+16($pop664)
+	i64.store	dst+16($pop665), $pop130
+	i32.const	$push663=, 0
+	i32.const	$push662=, 0
+	i64.load	$push131=, src+8($pop662)
+	i64.store	dst+8($pop663), $pop131
+	i32.const	$push661=, 0
+	i32.const	$push660=, 0
+	i64.load	$push132=, src($pop660)
+	i64.store	dst($pop661), $pop132
+	i32.const	$push659=, dst
 	i32.const	$push658=, src
-	i32.const	$push657=, 61
-	i32.call	$push250=, memcmp@FUNCTION, $pop659, $pop658, $pop657
-	br_if   	0, $pop250      # 0: down to label2
-# BB#60:                                # %check.exit249
-	i32.const	$push664=, src
-	i32.const	$push251=, 62
-	i32.call	$push14=, memcpy@FUNCTION, $0, $pop664, $pop251
-	i32.const	$push663=, src
-	i32.const	$push662=, 62
-	i32.call	$push252=, memcmp@FUNCTION, $pop14, $pop663, $pop662
-	br_if   	0, $pop252      # 0: down to label2
-# BB#61:                                # %check.exit253
-	i32.const	$push254=, dst
-	i32.const	$push669=, src
-	i32.const	$push253=, 63
-	i32.call	$push668=, memcpy@FUNCTION, $pop254, $pop669, $pop253
-	tee_local	$push667=, $0=, $pop668
-	i32.const	$push666=, src
-	i32.const	$push665=, 63
-	i32.call	$push255=, memcmp@FUNCTION, $pop667, $pop666, $pop665
-	br_if   	0, $pop255      # 0: down to label2
-# BB#62:                                # %check.exit257
-	i32.const	$push672=, src
-	i32.const	$push256=, 64
-	i32.call	$push15=, memcpy@FUNCTION, $0, $pop672, $pop256
-	i32.const	$push671=, src
-	i32.const	$push670=, 64
-	i32.call	$push257=, memcmp@FUNCTION, $pop15, $pop671, $pop670
-	br_if   	0, $pop257      # 0: down to label2
-# BB#63:                                # %check.exit261
-	i32.const	$push259=, dst
-	i32.const	$push677=, src
-	i32.const	$push258=, 65
-	i32.call	$push676=, memcpy@FUNCTION, $pop259, $pop677, $pop258
-	tee_local	$push675=, $0=, $pop676
-	i32.const	$push674=, src
-	i32.const	$push673=, 65
-	i32.call	$push260=, memcmp@FUNCTION, $pop675, $pop674, $pop673
-	br_if   	0, $pop260      # 0: down to label2
-# BB#64:                                # %check.exit265
-	i32.const	$push680=, src
-	i32.const	$push261=, 66
-	i32.call	$push16=, memcpy@FUNCTION, $0, $pop680, $pop261
-	i32.const	$push679=, src
-	i32.const	$push678=, 66
-	i32.call	$push262=, memcmp@FUNCTION, $pop16, $pop679, $pop678
-	br_if   	0, $pop262      # 0: down to label2
-# BB#65:                                # %check.exit269
-	i32.const	$push264=, dst
-	i32.const	$push685=, src
-	i32.const	$push263=, 67
-	i32.call	$push684=, memcpy@FUNCTION, $pop264, $pop685, $pop263
-	tee_local	$push683=, $0=, $pop684
-	i32.const	$push682=, src
-	i32.const	$push681=, 67
-	i32.call	$push265=, memcmp@FUNCTION, $pop683, $pop682, $pop681
-	br_if   	0, $pop265      # 0: down to label2
-# BB#66:                                # %check.exit273
+	i32.const	$push133=, 29
+	i32.call	$push134=, memcmp@FUNCTION, $pop659, $pop658, $pop133
+	br_if   	0, $pop134      # 0: down to label2
+# BB#28:                                # %check.exit121
+	i32.const	$push677=, 0
+	i32.const	$push676=, 0
+	i64.load	$push135=, src+22($pop676):p2align=1
+	i64.store	dst+22($pop677):p2align=1, $pop135
+	i32.const	$push675=, 0
+	i32.const	$push674=, 0
+	i64.load	$push136=, src+16($pop674)
+	i64.store	dst+16($pop675), $pop136
+	i32.const	$push673=, 0
+	i32.const	$push672=, 0
+	i64.load	$push137=, src+8($pop672)
+	i64.store	dst+8($pop673), $pop137
+	i32.const	$push671=, 0
+	i32.const	$push670=, 0
+	i64.load	$push138=, src($pop670)
+	i64.store	dst($pop671), $pop138
+	i32.const	$push669=, dst
+	i32.const	$push668=, src
+	i32.const	$push139=, 30
+	i32.call	$push140=, memcmp@FUNCTION, $pop669, $pop668, $pop139
+	br_if   	0, $pop140      # 0: down to label2
+# BB#29:                                # %check.exit125
+	i32.const	$push687=, 0
+	i32.const	$push686=, 0
+	i64.load	$push141=, src+23($pop686):p2align=0
+	i64.store	dst+23($pop687):p2align=0, $pop141
+	i32.const	$push685=, 0
+	i32.const	$push684=, 0
+	i64.load	$push142=, src+16($pop684)
+	i64.store	dst+16($pop685), $pop142
+	i32.const	$push683=, 0
+	i32.const	$push682=, 0
+	i64.load	$push143=, src+8($pop682)
+	i64.store	dst+8($pop683), $pop143
+	i32.const	$push681=, 0
+	i32.const	$push680=, 0
+	i64.load	$push144=, src($pop680)
+	i64.store	dst($pop681), $pop144
+	i32.const	$push679=, dst
+	i32.const	$push678=, src
+	i32.const	$push145=, 31
+	i32.call	$push146=, memcmp@FUNCTION, $pop679, $pop678, $pop145
+	br_if   	0, $pop146      # 0: down to label2
+# BB#30:                                # %check.exit129
+	i32.const	$push697=, 0
+	i32.const	$push696=, 0
+	i64.load	$push147=, src+24($pop696)
+	i64.store	dst+24($pop697), $pop147
+	i32.const	$push695=, 0
+	i32.const	$push694=, 0
+	i64.load	$push148=, src+16($pop694)
+	i64.store	dst+16($pop695), $pop148
+	i32.const	$push693=, 0
+	i32.const	$push692=, 0
+	i64.load	$push149=, src+8($pop692)
+	i64.store	dst+8($pop693), $pop149
+	i32.const	$push691=, 0
+	i32.const	$push690=, 0
+	i64.load	$push150=, src($pop690)
+	i64.store	dst($pop691), $pop150
+	i32.const	$push689=, dst
 	i32.const	$push688=, src
-	i32.const	$push266=, 68
-	i32.call	$push17=, memcpy@FUNCTION, $0, $pop688, $pop266
-	i32.const	$push687=, src
-	i32.const	$push686=, 68
-	i32.call	$push267=, memcmp@FUNCTION, $pop17, $pop687, $pop686
-	br_if   	0, $pop267      # 0: down to label2
-# BB#67:                                # %check.exit277
-	i32.const	$push269=, dst
-	i32.const	$push693=, src
-	i32.const	$push268=, 69
-	i32.call	$push692=, memcpy@FUNCTION, $pop269, $pop693, $pop268
-	tee_local	$push691=, $0=, $pop692
-	i32.const	$push690=, src
-	i32.const	$push689=, 69
-	i32.call	$push270=, memcmp@FUNCTION, $pop691, $pop690, $pop689
-	br_if   	0, $pop270      # 0: down to label2
-# BB#68:                                # %check.exit281
-	i32.const	$push696=, src
-	i32.const	$push271=, 70
-	i32.call	$push18=, memcpy@FUNCTION, $0, $pop696, $pop271
-	i32.const	$push695=, src
-	i32.const	$push694=, 70
-	i32.call	$push272=, memcmp@FUNCTION, $pop18, $pop695, $pop694
-	br_if   	0, $pop272      # 0: down to label2
-# BB#69:                                # %check.exit285
-	i32.const	$push274=, dst
-	i32.const	$push701=, src
-	i32.const	$push273=, 71
-	i32.call	$push700=, memcpy@FUNCTION, $pop274, $pop701, $pop273
-	tee_local	$push699=, $0=, $pop700
+	i32.const	$push151=, 32
+	i32.call	$push152=, memcmp@FUNCTION, $pop689, $pop688, $pop151
+	br_if   	0, $pop152      # 0: down to label2
+# BB#31:                                # %check.exit133
+	i32.const	$push709=, 0
+	i32.const	$push708=, 0
+	i32.load8_u	$push153=, src+32($pop708)
+	i32.store8	dst+32($pop709), $pop153
+	i32.const	$push707=, 0
+	i32.const	$push706=, 0
+	i64.load	$push154=, src+24($pop706)
+	i64.store	dst+24($pop707), $pop154
+	i32.const	$push705=, 0
+	i32.const	$push704=, 0
+	i64.load	$push155=, src+16($pop704)
+	i64.store	dst+16($pop705), $pop155
+	i32.const	$push703=, 0
+	i32.const	$push702=, 0
+	i64.load	$push156=, src+8($pop702)
+	i64.store	dst+8($pop703), $pop156
+	i32.const	$push701=, 0
+	i32.const	$push700=, 0
+	i64.load	$push157=, src($pop700)
+	i64.store	dst($pop701), $pop157
+	i32.const	$push699=, dst
 	i32.const	$push698=, src
-	i32.const	$push697=, 71
-	i32.call	$push275=, memcmp@FUNCTION, $pop699, $pop698, $pop697
-	br_if   	0, $pop275      # 0: down to label2
-# BB#70:                                # %check.exit289
-	i32.const	$push704=, src
-	i32.const	$push276=, 72
-	i32.call	$push19=, memcpy@FUNCTION, $0, $pop704, $pop276
-	i32.const	$push703=, src
-	i32.const	$push702=, 72
-	i32.call	$push277=, memcmp@FUNCTION, $pop19, $pop703, $pop702
-	br_if   	0, $pop277      # 0: down to label2
-# BB#71:                                # %check.exit293
-	i32.const	$push279=, dst
-	i32.const	$push709=, src
-	i32.const	$push278=, 73
-	i32.call	$push708=, memcpy@FUNCTION, $pop279, $pop709, $pop278
-	tee_local	$push707=, $0=, $pop708
-	i32.const	$push706=, src
-	i32.const	$push705=, 73
-	i32.call	$push280=, memcmp@FUNCTION, $pop707, $pop706, $pop705
-	br_if   	0, $pop280      # 0: down to label2
-# BB#72:                                # %check.exit297
-	i32.const	$push712=, src
-	i32.const	$push281=, 74
-	i32.call	$push20=, memcpy@FUNCTION, $0, $pop712, $pop281
-	i32.const	$push711=, src
-	i32.const	$push710=, 74
-	i32.call	$push282=, memcmp@FUNCTION, $pop20, $pop711, $pop710
-	br_if   	0, $pop282      # 0: down to label2
-# BB#73:                                # %check.exit301
-	i32.const	$push284=, dst
-	i32.const	$push717=, src
-	i32.const	$push283=, 75
-	i32.call	$push716=, memcpy@FUNCTION, $pop284, $pop717, $pop283
-	tee_local	$push715=, $0=, $pop716
-	i32.const	$push714=, src
-	i32.const	$push713=, 75
-	i32.call	$push285=, memcmp@FUNCTION, $pop715, $pop714, $pop713
-	br_if   	0, $pop285      # 0: down to label2
-# BB#74:                                # %check.exit305
-	i32.const	$push720=, src
-	i32.const	$push286=, 76
-	i32.call	$push21=, memcpy@FUNCTION, $0, $pop720, $pop286
-	i32.const	$push719=, src
-	i32.const	$push718=, 76
-	i32.call	$push287=, memcmp@FUNCTION, $pop21, $pop719, $pop718
-	br_if   	0, $pop287      # 0: down to label2
-# BB#75:                                # %check.exit309
-	i32.const	$push289=, dst
-	i32.const	$push725=, src
-	i32.const	$push288=, 77
-	i32.call	$push724=, memcpy@FUNCTION, $pop289, $pop725, $pop288
-	tee_local	$push723=, $0=, $pop724
+	i32.const	$push158=, 33
+	i32.call	$push159=, memcmp@FUNCTION, $pop699, $pop698, $pop158
+	br_if   	0, $pop159      # 0: down to label2
+# BB#32:                                # %check.exit137
+	i32.const	$push721=, 0
+	i32.const	$push720=, 0
+	i32.load16_u	$push160=, src+32($pop720)
+	i32.store16	dst+32($pop721), $pop160
+	i32.const	$push719=, 0
+	i32.const	$push718=, 0
+	i64.load	$push161=, src+24($pop718)
+	i64.store	dst+24($pop719), $pop161
+	i32.const	$push717=, 0
+	i32.const	$push716=, 0
+	i64.load	$push162=, src+16($pop716)
+	i64.store	dst+16($pop717), $pop162
+	i32.const	$push715=, 0
+	i32.const	$push714=, 0
+	i64.load	$push163=, src+8($pop714)
+	i64.store	dst+8($pop715), $pop163
+	i32.const	$push713=, 0
+	i32.const	$push712=, 0
+	i64.load	$push164=, src($pop712)
+	i64.store	dst($pop713), $pop164
+	i32.const	$push711=, dst
+	i32.const	$push710=, src
+	i32.const	$push165=, 34
+	i32.call	$push166=, memcmp@FUNCTION, $pop711, $pop710, $pop165
+	br_if   	0, $pop166      # 0: down to label2
+# BB#33:                                # %check.exit141
+	i32.const	$push735=, 0
+	i32.const	$push734=, 0
+	i32.load8_u	$push167=, src+34($pop734)
+	i32.store8	dst+34($pop735), $pop167
+	i32.const	$push733=, 0
+	i32.const	$push732=, 0
+	i32.load16_u	$push168=, src+32($pop732)
+	i32.store16	dst+32($pop733), $pop168
+	i32.const	$push731=, 0
+	i32.const	$push730=, 0
+	i64.load	$push169=, src+24($pop730)
+	i64.store	dst+24($pop731), $pop169
+	i32.const	$push729=, 0
+	i32.const	$push728=, 0
+	i64.load	$push170=, src+16($pop728)
+	i64.store	dst+16($pop729), $pop170
+	i32.const	$push727=, 0
+	i32.const	$push726=, 0
+	i64.load	$push171=, src+8($pop726)
+	i64.store	dst+8($pop727), $pop171
+	i32.const	$push725=, 0
+	i32.const	$push724=, 0
+	i64.load	$push172=, src($pop724)
+	i64.store	dst($pop725), $pop172
+	i32.const	$push723=, dst
 	i32.const	$push722=, src
-	i32.const	$push721=, 77
-	i32.call	$push290=, memcmp@FUNCTION, $pop723, $pop722, $pop721
-	br_if   	0, $pop290      # 0: down to label2
-# BB#76:                                # %check.exit313
-	i32.const	$push728=, src
-	i32.const	$push291=, 78
-	i32.call	$push22=, memcpy@FUNCTION, $0, $pop728, $pop291
-	i32.const	$push727=, src
-	i32.const	$push726=, 78
-	i32.call	$push292=, memcmp@FUNCTION, $pop22, $pop727, $pop726
+	i32.const	$push173=, 35
+	i32.call	$push174=, memcmp@FUNCTION, $pop723, $pop722, $pop173
+	br_if   	0, $pop174      # 0: down to label2
+# BB#34:                                # %check.exit145
+	i32.const	$push747=, 0
+	i32.const	$push746=, 0
+	i32.load	$push175=, src+32($pop746)
+	i32.store	dst+32($pop747), $pop175
+	i32.const	$push745=, 0
+	i32.const	$push744=, 0
+	i64.load	$push176=, src+24($pop744)
+	i64.store	dst+24($pop745), $pop176
+	i32.const	$push743=, 0
+	i32.const	$push742=, 0
+	i64.load	$push177=, src+16($pop742)
+	i64.store	dst+16($pop743), $pop177
+	i32.const	$push741=, 0
+	i32.const	$push740=, 0
+	i64.load	$push178=, src+8($pop740)
+	i64.store	dst+8($pop741), $pop178
+	i32.const	$push739=, 0
+	i32.const	$push738=, 0
+	i64.load	$push179=, src($pop738)
+	i64.store	dst($pop739), $pop179
+	i32.const	$push737=, dst
+	i32.const	$push736=, src
+	i32.const	$push180=, 36
+	i32.call	$push181=, memcmp@FUNCTION, $pop737, $pop736, $pop180
+	br_if   	0, $pop181      # 0: down to label2
+# BB#35:                                # %check.exit149
+	i32.const	$push759=, 0
+	i32.const	$push758=, 0
+	i64.load	$push182=, src+29($pop758):p2align=0
+	i64.store	dst+29($pop759):p2align=0, $pop182
+	i32.const	$push757=, 0
+	i32.const	$push756=, 0
+	i64.load	$push183=, src+24($pop756)
+	i64.store	dst+24($pop757), $pop183
+	i32.const	$push755=, 0
+	i32.const	$push754=, 0
+	i64.load	$push184=, src+16($pop754)
+	i64.store	dst+16($pop755), $pop184
+	i32.const	$push753=, 0
+	i32.const	$push752=, 0
+	i64.load	$push185=, src+8($pop752)
+	i64.store	dst+8($pop753), $pop185
+	i32.const	$push751=, 0
+	i32.const	$push750=, 0
+	i64.load	$push186=, src($pop750)
+	i64.store	dst($pop751), $pop186
+	i32.const	$push749=, dst
+	i32.const	$push748=, src
+	i32.const	$push187=, 37
+	i32.call	$push188=, memcmp@FUNCTION, $pop749, $pop748, $pop187
+	br_if   	0, $pop188      # 0: down to label2
+# BB#36:                                # %check.exit153
+	i32.const	$push771=, 0
+	i32.const	$push770=, 0
+	i64.load	$push189=, src+30($pop770):p2align=1
+	i64.store	dst+30($pop771):p2align=1, $pop189
+	i32.const	$push769=, 0
+	i32.const	$push768=, 0
+	i64.load	$push190=, src+24($pop768)
+	i64.store	dst+24($pop769), $pop190
+	i32.const	$push767=, 0
+	i32.const	$push766=, 0
+	i64.load	$push191=, src+16($pop766)
+	i64.store	dst+16($pop767), $pop191
+	i32.const	$push765=, 0
+	i32.const	$push764=, 0
+	i64.load	$push192=, src+8($pop764)
+	i64.store	dst+8($pop765), $pop192
+	i32.const	$push763=, 0
+	i32.const	$push762=, 0
+	i64.load	$push193=, src($pop762)
+	i64.store	dst($pop763), $pop193
+	i32.const	$push761=, dst
+	i32.const	$push760=, src
+	i32.const	$push194=, 38
+	i32.call	$push195=, memcmp@FUNCTION, $pop761, $pop760, $pop194
+	br_if   	0, $pop195      # 0: down to label2
+# BB#37:                                # %check.exit157
+	i32.const	$push783=, 0
+	i32.const	$push782=, 0
+	i64.load	$push196=, src+31($pop782):p2align=0
+	i64.store	dst+31($pop783):p2align=0, $pop196
+	i32.const	$push781=, 0
+	i32.const	$push780=, 0
+	i64.load	$push197=, src+24($pop780)
+	i64.store	dst+24($pop781), $pop197
+	i32.const	$push779=, 0
+	i32.const	$push778=, 0
+	i64.load	$push198=, src+16($pop778)
+	i64.store	dst+16($pop779), $pop198
+	i32.const	$push777=, 0
+	i32.const	$push776=, 0
+	i64.load	$push199=, src+8($pop776)
+	i64.store	dst+8($pop777), $pop199
+	i32.const	$push775=, 0
+	i32.const	$push774=, 0
+	i64.load	$push200=, src($pop774)
+	i64.store	dst($pop775), $pop200
+	i32.const	$push773=, dst
+	i32.const	$push772=, src
+	i32.const	$push201=, 39
+	i32.call	$push202=, memcmp@FUNCTION, $pop773, $pop772, $pop201
+	br_if   	0, $pop202      # 0: down to label2
+# BB#38:                                # %check.exit161
+	i32.const	$push795=, 0
+	i32.const	$push794=, 0
+	i64.load	$push203=, src+32($pop794)
+	i64.store	dst+32($pop795), $pop203
+	i32.const	$push793=, 0
+	i32.const	$push792=, 0
+	i64.load	$push204=, src+24($pop792)
+	i64.store	dst+24($pop793), $pop204
+	i32.const	$push791=, 0
+	i32.const	$push790=, 0
+	i64.load	$push205=, src+16($pop790)
+	i64.store	dst+16($pop791), $pop205
+	i32.const	$push789=, 0
+	i32.const	$push788=, 0
+	i64.load	$push206=, src+8($pop788)
+	i64.store	dst+8($pop789), $pop206
+	i32.const	$push787=, 0
+	i32.const	$push786=, 0
+	i64.load	$push207=, src($pop786)
+	i64.store	dst($pop787), $pop207
+	i32.const	$push785=, dst
+	i32.const	$push784=, src
+	i32.const	$push208=, 40
+	i32.call	$push209=, memcmp@FUNCTION, $pop785, $pop784, $pop208
+	br_if   	0, $pop209      # 0: down to label2
+# BB#39:                                # %check.exit165
+	i32.const	$push809=, 0
+	i32.const	$push808=, 0
+	i32.load8_u	$push210=, src+40($pop808)
+	i32.store8	dst+40($pop809), $pop210
+	i32.const	$push807=, 0
+	i32.const	$push806=, 0
+	i64.load	$push211=, src+32($pop806)
+	i64.store	dst+32($pop807), $pop211
+	i32.const	$push805=, 0
+	i32.const	$push804=, 0
+	i64.load	$push212=, src+24($pop804)
+	i64.store	dst+24($pop805), $pop212
+	i32.const	$push803=, 0
+	i32.const	$push802=, 0
+	i64.load	$push213=, src+16($pop802)
+	i64.store	dst+16($pop803), $pop213
+	i32.const	$push801=, 0
+	i32.const	$push800=, 0
+	i64.load	$push214=, src+8($pop800)
+	i64.store	dst+8($pop801), $pop214
+	i32.const	$push799=, 0
+	i32.const	$push798=, 0
+	i64.load	$push215=, src($pop798)
+	i64.store	dst($pop799), $pop215
+	i32.const	$push797=, dst
+	i32.const	$push796=, src
+	i32.const	$push216=, 41
+	i32.call	$push217=, memcmp@FUNCTION, $pop797, $pop796, $pop216
+	br_if   	0, $pop217      # 0: down to label2
+# BB#40:                                # %check.exit169
+	i32.const	$push823=, 0
+	i32.const	$push822=, 0
+	i32.load16_u	$push218=, src+40($pop822)
+	i32.store16	dst+40($pop823), $pop218
+	i32.const	$push821=, 0
+	i32.const	$push820=, 0
+	i64.load	$push219=, src+32($pop820)
+	i64.store	dst+32($pop821), $pop219
+	i32.const	$push819=, 0
+	i32.const	$push818=, 0
+	i64.load	$push220=, src+24($pop818)
+	i64.store	dst+24($pop819), $pop220
+	i32.const	$push817=, 0
+	i32.const	$push816=, 0
+	i64.load	$push221=, src+16($pop816)
+	i64.store	dst+16($pop817), $pop221
+	i32.const	$push815=, 0
+	i32.const	$push814=, 0
+	i64.load	$push222=, src+8($pop814)
+	i64.store	dst+8($pop815), $pop222
+	i32.const	$push813=, 0
+	i32.const	$push812=, 0
+	i64.load	$push223=, src($pop812)
+	i64.store	dst($pop813), $pop223
+	i32.const	$push811=, dst
+	i32.const	$push810=, src
+	i32.const	$push224=, 42
+	i32.call	$push225=, memcmp@FUNCTION, $pop811, $pop810, $pop224
+	br_if   	0, $pop225      # 0: down to label2
+# BB#41:                                # %check.exit173
+	i32.const	$push839=, 0
+	i32.const	$push838=, 0
+	i32.load8_u	$push226=, src+42($pop838)
+	i32.store8	dst+42($pop839), $pop226
+	i32.const	$push837=, 0
+	i32.const	$push836=, 0
+	i32.load16_u	$push227=, src+40($pop836)
+	i32.store16	dst+40($pop837), $pop227
+	i32.const	$push835=, 0
+	i32.const	$push834=, 0
+	i64.load	$push228=, src+32($pop834)
+	i64.store	dst+32($pop835), $pop228
+	i32.const	$push833=, 0
+	i32.const	$push832=, 0
+	i64.load	$push229=, src+24($pop832)
+	i64.store	dst+24($pop833), $pop229
+	i32.const	$push831=, 0
+	i32.const	$push830=, 0
+	i64.load	$push230=, src+16($pop830)
+	i64.store	dst+16($pop831), $pop230
+	i32.const	$push829=, 0
+	i32.const	$push828=, 0
+	i64.load	$push231=, src+8($pop828)
+	i64.store	dst+8($pop829), $pop231
+	i32.const	$push827=, 0
+	i32.const	$push826=, 0
+	i64.load	$push232=, src($pop826)
+	i64.store	dst($pop827), $pop232
+	i32.const	$push825=, dst
+	i32.const	$push824=, src
+	i32.const	$push233=, 43
+	i32.call	$push234=, memcmp@FUNCTION, $pop825, $pop824, $pop233
+	br_if   	0, $pop234      # 0: down to label2
+# BB#42:                                # %check.exit177
+	i32.const	$push853=, 0
+	i32.const	$push852=, 0
+	i32.load	$push235=, src+40($pop852)
+	i32.store	dst+40($pop853), $pop235
+	i32.const	$push851=, 0
+	i32.const	$push850=, 0
+	i64.load	$push236=, src+32($pop850)
+	i64.store	dst+32($pop851), $pop236
+	i32.const	$push849=, 0
+	i32.const	$push848=, 0
+	i64.load	$push237=, src+24($pop848)
+	i64.store	dst+24($pop849), $pop237
+	i32.const	$push847=, 0
+	i32.const	$push846=, 0
+	i64.load	$push238=, src+16($pop846)
+	i64.store	dst+16($pop847), $pop238
+	i32.const	$push845=, 0
+	i32.const	$push844=, 0
+	i64.load	$push239=, src+8($pop844)
+	i64.store	dst+8($pop845), $pop239
+	i32.const	$push843=, 0
+	i32.const	$push842=, 0
+	i64.load	$push240=, src($pop842)
+	i64.store	dst($pop843), $pop240
+	i32.const	$push841=, dst
+	i32.const	$push840=, src
+	i32.const	$push241=, 44
+	i32.call	$push242=, memcmp@FUNCTION, $pop841, $pop840, $pop241
+	br_if   	0, $pop242      # 0: down to label2
+# BB#43:                                # %check.exit181
+	i32.const	$push867=, 0
+	i32.const	$push866=, 0
+	i64.load	$push243=, src+37($pop866):p2align=0
+	i64.store	dst+37($pop867):p2align=0, $pop243
+	i32.const	$push865=, 0
+	i32.const	$push864=, 0
+	i64.load	$push244=, src+32($pop864)
+	i64.store	dst+32($pop865), $pop244
+	i32.const	$push863=, 0
+	i32.const	$push862=, 0
+	i64.load	$push245=, src+24($pop862)
+	i64.store	dst+24($pop863), $pop245
+	i32.const	$push861=, 0
+	i32.const	$push860=, 0
+	i64.load	$push246=, src+16($pop860)
+	i64.store	dst+16($pop861), $pop246
+	i32.const	$push859=, 0
+	i32.const	$push858=, 0
+	i64.load	$push247=, src+8($pop858)
+	i64.store	dst+8($pop859), $pop247
+	i32.const	$push857=, 0
+	i32.const	$push856=, 0
+	i64.load	$push248=, src($pop856)
+	i64.store	dst($pop857), $pop248
+	i32.const	$push855=, dst
+	i32.const	$push854=, src
+	i32.const	$push249=, 45
+	i32.call	$push250=, memcmp@FUNCTION, $pop855, $pop854, $pop249
+	br_if   	0, $pop250      # 0: down to label2
+# BB#44:                                # %check.exit185
+	i32.const	$push881=, 0
+	i32.const	$push880=, 0
+	i64.load	$push251=, src+38($pop880):p2align=1
+	i64.store	dst+38($pop881):p2align=1, $pop251
+	i32.const	$push879=, 0
+	i32.const	$push878=, 0
+	i64.load	$push252=, src+32($pop878)
+	i64.store	dst+32($pop879), $pop252
+	i32.const	$push877=, 0
+	i32.const	$push876=, 0
+	i64.load	$push253=, src+24($pop876)
+	i64.store	dst+24($pop877), $pop253
+	i32.const	$push875=, 0
+	i32.const	$push874=, 0
+	i64.load	$push254=, src+16($pop874)
+	i64.store	dst+16($pop875), $pop254
+	i32.const	$push873=, 0
+	i32.const	$push872=, 0
+	i64.load	$push255=, src+8($pop872)
+	i64.store	dst+8($pop873), $pop255
+	i32.const	$push871=, 0
+	i32.const	$push870=, 0
+	i64.load	$push256=, src($pop870)
+	i64.store	dst($pop871), $pop256
+	i32.const	$push869=, dst
+	i32.const	$push868=, src
+	i32.const	$push257=, 46
+	i32.call	$push258=, memcmp@FUNCTION, $pop869, $pop868, $pop257
+	br_if   	0, $pop258      # 0: down to label2
+# BB#45:                                # %check.exit189
+	i32.const	$push895=, 0
+	i32.const	$push894=, 0
+	i64.load	$push259=, src+39($pop894):p2align=0
+	i64.store	dst+39($pop895):p2align=0, $pop259
+	i32.const	$push893=, 0
+	i32.const	$push892=, 0
+	i64.load	$push260=, src+32($pop892)
+	i64.store	dst+32($pop893), $pop260
+	i32.const	$push891=, 0
+	i32.const	$push890=, 0
+	i64.load	$push261=, src+24($pop890)
+	i64.store	dst+24($pop891), $pop261
+	i32.const	$push889=, 0
+	i32.const	$push888=, 0
+	i64.load	$push262=, src+16($pop888)
+	i64.store	dst+16($pop889), $pop262
+	i32.const	$push887=, 0
+	i32.const	$push886=, 0
+	i64.load	$push263=, src+8($pop886)
+	i64.store	dst+8($pop887), $pop263
+	i32.const	$push885=, 0
+	i32.const	$push884=, 0
+	i64.load	$push264=, src($pop884)
+	i64.store	dst($pop885), $pop264
+	i32.const	$push883=, dst
+	i32.const	$push882=, src
+	i32.const	$push265=, 47
+	i32.call	$push266=, memcmp@FUNCTION, $pop883, $pop882, $pop265
+	br_if   	0, $pop266      # 0: down to label2
+# BB#46:                                # %check.exit193
+	i32.const	$push909=, 0
+	i32.const	$push908=, 0
+	i64.load	$push267=, src+40($pop908)
+	i64.store	dst+40($pop909), $pop267
+	i32.const	$push907=, 0
+	i32.const	$push906=, 0
+	i64.load	$push268=, src+32($pop906)
+	i64.store	dst+32($pop907), $pop268
+	i32.const	$push905=, 0
+	i32.const	$push904=, 0
+	i64.load	$push269=, src+24($pop904)
+	i64.store	dst+24($pop905), $pop269
+	i32.const	$push903=, 0
+	i32.const	$push902=, 0
+	i64.load	$push270=, src+16($pop902)
+	i64.store	dst+16($pop903), $pop270
+	i32.const	$push901=, 0
+	i32.const	$push900=, 0
+	i64.load	$push271=, src+8($pop900)
+	i64.store	dst+8($pop901), $pop271
+	i32.const	$push899=, 0
+	i32.const	$push898=, 0
+	i64.load	$push272=, src($pop898)
+	i64.store	dst($pop899), $pop272
+	i32.const	$push897=, dst
+	i32.const	$push896=, src
+	i32.const	$push273=, 48
+	i32.call	$push274=, memcmp@FUNCTION, $pop897, $pop896, $pop273
+	br_if   	0, $pop274      # 0: down to label2
+# BB#47:                                # %check.exit197
+	i32.const	$push925=, 0
+	i32.const	$push924=, 0
+	i32.load8_u	$push275=, src+48($pop924)
+	i32.store8	dst+48($pop925), $pop275
+	i32.const	$push923=, 0
+	i32.const	$push922=, 0
+	i64.load	$push276=, src+40($pop922)
+	i64.store	dst+40($pop923), $pop276
+	i32.const	$push921=, 0
+	i32.const	$push920=, 0
+	i64.load	$push277=, src+32($pop920)
+	i64.store	dst+32($pop921), $pop277
+	i32.const	$push919=, 0
+	i32.const	$push918=, 0
+	i64.load	$push278=, src+24($pop918)
+	i64.store	dst+24($pop919), $pop278
+	i32.const	$push917=, 0
+	i32.const	$push916=, 0
+	i64.load	$push279=, src+16($pop916)
+	i64.store	dst+16($pop917), $pop279
+	i32.const	$push915=, 0
+	i32.const	$push914=, 0
+	i64.load	$push280=, src+8($pop914)
+	i64.store	dst+8($pop915), $pop280
+	i32.const	$push913=, 0
+	i32.const	$push912=, 0
+	i64.load	$push281=, src($pop912)
+	i64.store	dst($pop913), $pop281
+	i32.const	$push911=, dst
+	i32.const	$push910=, src
+	i32.const	$push282=, 49
+	i32.call	$push283=, memcmp@FUNCTION, $pop911, $pop910, $pop282
+	br_if   	0, $pop283      # 0: down to label2
+# BB#48:                                # %check.exit201
+	i32.const	$push941=, 0
+	i32.const	$push940=, 0
+	i32.load16_u	$push284=, src+48($pop940)
+	i32.store16	dst+48($pop941), $pop284
+	i32.const	$push939=, 0
+	i32.const	$push938=, 0
+	i64.load	$push285=, src+40($pop938)
+	i64.store	dst+40($pop939), $pop285
+	i32.const	$push937=, 0
+	i32.const	$push936=, 0
+	i64.load	$push286=, src+32($pop936)
+	i64.store	dst+32($pop937), $pop286
+	i32.const	$push935=, 0
+	i32.const	$push934=, 0
+	i64.load	$push287=, src+24($pop934)
+	i64.store	dst+24($pop935), $pop287
+	i32.const	$push933=, 0
+	i32.const	$push932=, 0
+	i64.load	$push288=, src+16($pop932)
+	i64.store	dst+16($pop933), $pop288
+	i32.const	$push931=, 0
+	i32.const	$push930=, 0
+	i64.load	$push289=, src+8($pop930)
+	i64.store	dst+8($pop931), $pop289
+	i32.const	$push929=, 0
+	i32.const	$push928=, 0
+	i64.load	$push290=, src($pop928)
+	i64.store	dst($pop929), $pop290
+	i32.const	$push927=, dst
+	i32.const	$push926=, src
+	i32.const	$push291=, 50
+	i32.call	$push292=, memcmp@FUNCTION, $pop927, $pop926, $pop291
 	br_if   	0, $pop292      # 0: down to label2
+# BB#49:                                # %check.exit205
+	i32.const	$push959=, 0
+	i32.const	$push958=, 0
+	i32.load8_u	$push293=, src+50($pop958)
+	i32.store8	dst+50($pop959), $pop293
+	i32.const	$push957=, 0
+	i32.const	$push956=, 0
+	i32.load16_u	$push294=, src+48($pop956)
+	i32.store16	dst+48($pop957), $pop294
+	i32.const	$push955=, 0
+	i32.const	$push954=, 0
+	i64.load	$push295=, src+40($pop954)
+	i64.store	dst+40($pop955), $pop295
+	i32.const	$push953=, 0
+	i32.const	$push952=, 0
+	i64.load	$push296=, src+32($pop952)
+	i64.store	dst+32($pop953), $pop296
+	i32.const	$push951=, 0
+	i32.const	$push950=, 0
+	i64.load	$push297=, src+24($pop950)
+	i64.store	dst+24($pop951), $pop297
+	i32.const	$push949=, 0
+	i32.const	$push948=, 0
+	i64.load	$push298=, src+16($pop948)
+	i64.store	dst+16($pop949), $pop298
+	i32.const	$push947=, 0
+	i32.const	$push946=, 0
+	i64.load	$push299=, src+8($pop946)
+	i64.store	dst+8($pop947), $pop299
+	i32.const	$push945=, 0
+	i32.const	$push944=, 0
+	i64.load	$push300=, src($pop944)
+	i64.store	dst($pop945), $pop300
+	i32.const	$push943=, dst
+	i32.const	$push942=, src
+	i32.const	$push301=, 51
+	i32.call	$push302=, memcmp@FUNCTION, $pop943, $pop942, $pop301
+	br_if   	0, $pop302      # 0: down to label2
+# BB#50:                                # %check.exit209
+	i32.const	$push975=, 0
+	i32.const	$push974=, 0
+	i32.load	$push303=, src+48($pop974)
+	i32.store	dst+48($pop975), $pop303
+	i32.const	$push973=, 0
+	i32.const	$push972=, 0
+	i64.load	$push304=, src+40($pop972)
+	i64.store	dst+40($pop973), $pop304
+	i32.const	$push971=, 0
+	i32.const	$push970=, 0
+	i64.load	$push305=, src+32($pop970)
+	i64.store	dst+32($pop971), $pop305
+	i32.const	$push969=, 0
+	i32.const	$push968=, 0
+	i64.load	$push306=, src+24($pop968)
+	i64.store	dst+24($pop969), $pop306
+	i32.const	$push967=, 0
+	i32.const	$push966=, 0
+	i64.load	$push307=, src+16($pop966)
+	i64.store	dst+16($pop967), $pop307
+	i32.const	$push965=, 0
+	i32.const	$push964=, 0
+	i64.load	$push308=, src+8($pop964)
+	i64.store	dst+8($pop965), $pop308
+	i32.const	$push963=, 0
+	i32.const	$push962=, 0
+	i64.load	$push309=, src($pop962)
+	i64.store	dst($pop963), $pop309
+	i32.const	$push961=, dst
+	i32.const	$push960=, src
+	i32.const	$push310=, 52
+	i32.call	$push311=, memcmp@FUNCTION, $pop961, $pop960, $pop310
+	br_if   	0, $pop311      # 0: down to label2
+# BB#51:                                # %check.exit213
+	i32.const	$push991=, 0
+	i32.const	$push990=, 0
+	i64.load	$push312=, src+45($pop990):p2align=0
+	i64.store	dst+45($pop991):p2align=0, $pop312
+	i32.const	$push989=, 0
+	i32.const	$push988=, 0
+	i64.load	$push313=, src+40($pop988)
+	i64.store	dst+40($pop989), $pop313
+	i32.const	$push987=, 0
+	i32.const	$push986=, 0
+	i64.load	$push314=, src+32($pop986)
+	i64.store	dst+32($pop987), $pop314
+	i32.const	$push985=, 0
+	i32.const	$push984=, 0
+	i64.load	$push315=, src+24($pop984)
+	i64.store	dst+24($pop985), $pop315
+	i32.const	$push983=, 0
+	i32.const	$push982=, 0
+	i64.load	$push316=, src+16($pop982)
+	i64.store	dst+16($pop983), $pop316
+	i32.const	$push981=, 0
+	i32.const	$push980=, 0
+	i64.load	$push317=, src+8($pop980)
+	i64.store	dst+8($pop981), $pop317
+	i32.const	$push979=, 0
+	i32.const	$push978=, 0
+	i64.load	$push318=, src($pop978)
+	i64.store	dst($pop979), $pop318
+	i32.const	$push977=, dst
+	i32.const	$push976=, src
+	i32.const	$push319=, 53
+	i32.call	$push320=, memcmp@FUNCTION, $pop977, $pop976, $pop319
+	br_if   	0, $pop320      # 0: down to label2
+# BB#52:                                # %check.exit217
+	i32.const	$push1007=, 0
+	i32.const	$push1006=, 0
+	i64.load	$push321=, src+46($pop1006):p2align=1
+	i64.store	dst+46($pop1007):p2align=1, $pop321
+	i32.const	$push1005=, 0
+	i32.const	$push1004=, 0
+	i64.load	$push322=, src+40($pop1004)
+	i64.store	dst+40($pop1005), $pop322
+	i32.const	$push1003=, 0
+	i32.const	$push1002=, 0
+	i64.load	$push323=, src+32($pop1002)
+	i64.store	dst+32($pop1003), $pop323
+	i32.const	$push1001=, 0
+	i32.const	$push1000=, 0
+	i64.load	$push324=, src+24($pop1000)
+	i64.store	dst+24($pop1001), $pop324
+	i32.const	$push999=, 0
+	i32.const	$push998=, 0
+	i64.load	$push325=, src+16($pop998)
+	i64.store	dst+16($pop999), $pop325
+	i32.const	$push997=, 0
+	i32.const	$push996=, 0
+	i64.load	$push326=, src+8($pop996)
+	i64.store	dst+8($pop997), $pop326
+	i32.const	$push995=, 0
+	i32.const	$push994=, 0
+	i64.load	$push327=, src($pop994)
+	i64.store	dst($pop995), $pop327
+	i32.const	$push993=, dst
+	i32.const	$push992=, src
+	i32.const	$push328=, 54
+	i32.call	$push329=, memcmp@FUNCTION, $pop993, $pop992, $pop328
+	br_if   	0, $pop329      # 0: down to label2
+# BB#53:                                # %check.exit221
+	i32.const	$push1023=, 0
+	i32.const	$push1022=, 0
+	i64.load	$push330=, src+47($pop1022):p2align=0
+	i64.store	dst+47($pop1023):p2align=0, $pop330
+	i32.const	$push1021=, 0
+	i32.const	$push1020=, 0
+	i64.load	$push331=, src+40($pop1020)
+	i64.store	dst+40($pop1021), $pop331
+	i32.const	$push1019=, 0
+	i32.const	$push1018=, 0
+	i64.load	$push332=, src+32($pop1018)
+	i64.store	dst+32($pop1019), $pop332
+	i32.const	$push1017=, 0
+	i32.const	$push1016=, 0
+	i64.load	$push333=, src+24($pop1016)
+	i64.store	dst+24($pop1017), $pop333
+	i32.const	$push1015=, 0
+	i32.const	$push1014=, 0
+	i64.load	$push334=, src+16($pop1014)
+	i64.store	dst+16($pop1015), $pop334
+	i32.const	$push1013=, 0
+	i32.const	$push1012=, 0
+	i64.load	$push335=, src+8($pop1012)
+	i64.store	dst+8($pop1013), $pop335
+	i32.const	$push1011=, 0
+	i32.const	$push1010=, 0
+	i64.load	$push336=, src($pop1010)
+	i64.store	dst($pop1011), $pop336
+	i32.const	$push1009=, dst
+	i32.const	$push1008=, src
+	i32.const	$push337=, 55
+	i32.call	$push338=, memcmp@FUNCTION, $pop1009, $pop1008, $pop337
+	br_if   	0, $pop338      # 0: down to label2
+# BB#54:                                # %check.exit225
+	i32.const	$push1039=, 0
+	i32.const	$push1038=, 0
+	i64.load	$push339=, src+48($pop1038)
+	i64.store	dst+48($pop1039), $pop339
+	i32.const	$push1037=, 0
+	i32.const	$push1036=, 0
+	i64.load	$push340=, src+40($pop1036)
+	i64.store	dst+40($pop1037), $pop340
+	i32.const	$push1035=, 0
+	i32.const	$push1034=, 0
+	i64.load	$push341=, src+32($pop1034)
+	i64.store	dst+32($pop1035), $pop341
+	i32.const	$push1033=, 0
+	i32.const	$push1032=, 0
+	i64.load	$push342=, src+24($pop1032)
+	i64.store	dst+24($pop1033), $pop342
+	i32.const	$push1031=, 0
+	i32.const	$push1030=, 0
+	i64.load	$push343=, src+16($pop1030)
+	i64.store	dst+16($pop1031), $pop343
+	i32.const	$push1029=, 0
+	i32.const	$push1028=, 0
+	i64.load	$push344=, src+8($pop1028)
+	i64.store	dst+8($pop1029), $pop344
+	i32.const	$push1027=, 0
+	i32.const	$push1026=, 0
+	i64.load	$push345=, src($pop1026)
+	i64.store	dst($pop1027), $pop345
+	i32.const	$push1025=, dst
+	i32.const	$push1024=, src
+	i32.const	$push346=, 56
+	i32.call	$push347=, memcmp@FUNCTION, $pop1025, $pop1024, $pop346
+	br_if   	0, $pop347      # 0: down to label2
+# BB#55:                                # %check.exit229
+	i32.const	$push1057=, 0
+	i32.const	$push1056=, 0
+	i32.load8_u	$push348=, src+56($pop1056)
+	i32.store8	dst+56($pop1057), $pop348
+	i32.const	$push1055=, 0
+	i32.const	$push1054=, 0
+	i64.load	$push349=, src+48($pop1054)
+	i64.store	dst+48($pop1055), $pop349
+	i32.const	$push1053=, 0
+	i32.const	$push1052=, 0
+	i64.load	$push350=, src+40($pop1052)
+	i64.store	dst+40($pop1053), $pop350
+	i32.const	$push1051=, 0
+	i32.const	$push1050=, 0
+	i64.load	$push351=, src+32($pop1050)
+	i64.store	dst+32($pop1051), $pop351
+	i32.const	$push1049=, 0
+	i32.const	$push1048=, 0
+	i64.load	$push352=, src+24($pop1048)
+	i64.store	dst+24($pop1049), $pop352
+	i32.const	$push1047=, 0
+	i32.const	$push1046=, 0
+	i64.load	$push353=, src+16($pop1046)
+	i64.store	dst+16($pop1047), $pop353
+	i32.const	$push1045=, 0
+	i32.const	$push1044=, 0
+	i64.load	$push354=, src+8($pop1044)
+	i64.store	dst+8($pop1045), $pop354
+	i32.const	$push1043=, 0
+	i32.const	$push1042=, 0
+	i64.load	$push355=, src($pop1042)
+	i64.store	dst($pop1043), $pop355
+	i32.const	$push1041=, dst
+	i32.const	$push1040=, src
+	i32.const	$push356=, 57
+	i32.call	$push357=, memcmp@FUNCTION, $pop1041, $pop1040, $pop356
+	br_if   	0, $pop357      # 0: down to label2
+# BB#56:                                # %check.exit233
+	i32.const	$push358=, 0
+	i32.const	$push1074=, 0
+	i32.load16_u	$push359=, src+56($pop1074)
+	i32.store16	dst+56($pop358), $pop359
+	i32.const	$push1073=, 0
+	i32.const	$push1072=, 0
+	i64.load	$push360=, src+48($pop1072)
+	i64.store	dst+48($pop1073), $pop360
+	i32.const	$push1071=, 0
+	i32.const	$push1070=, 0
+	i64.load	$push361=, src+40($pop1070)
+	i64.store	dst+40($pop1071), $pop361
+	i32.const	$push1069=, 0
+	i32.const	$push1068=, 0
+	i64.load	$push362=, src+32($pop1068)
+	i64.store	dst+32($pop1069), $pop362
+	i32.const	$push1067=, 0
+	i32.const	$push1066=, 0
+	i64.load	$push363=, src+24($pop1066)
+	i64.store	dst+24($pop1067), $pop363
+	i32.const	$push1065=, 0
+	i32.const	$push1064=, 0
+	i64.load	$push364=, src+16($pop1064)
+	i64.store	dst+16($pop1065), $pop364
+	i32.const	$push1063=, 0
+	i32.const	$push1062=, 0
+	i64.load	$push365=, src+8($pop1062)
+	i64.store	dst+8($pop1063), $pop365
+	i32.const	$push1061=, 0
+	i32.const	$push1060=, 0
+	i64.load	$push366=, src($pop1060)
+	i64.store	dst($pop1061), $pop366
+	i32.const	$push1059=, dst
+	i32.const	$push1058=, src
+	i32.const	$push367=, 58
+	i32.call	$push368=, memcmp@FUNCTION, $pop1059, $pop1058, $pop367
+	br_if   	0, $pop368      # 0: down to label2
+# BB#57:                                # %check.exit237
+	i32.const	$push370=, dst
+	i32.const	$push1079=, src
+	i32.const	$push369=, 59
+	i32.call	$push1078=, memcpy@FUNCTION, $pop370, $pop1079, $pop369
+	tee_local	$push1077=, $0=, $pop1078
+	i32.const	$push1076=, src
+	i32.const	$push1075=, 59
+	i32.call	$push371=, memcmp@FUNCTION, $pop1077, $pop1076, $pop1075
+	br_if   	0, $pop371      # 0: down to label2
+# BB#58:                                # %check.exit241
+	i32.const	$push1096=, 0
+	i32.const	$push1095=, 0
+	i32.load	$push372=, src+56($pop1095)
+	i32.store	dst+56($pop1096), $pop372
+	i32.const	$push1094=, 0
+	i32.const	$push1093=, 0
+	i64.load	$push373=, src+48($pop1093)
+	i64.store	dst+48($pop1094), $pop373
+	i32.const	$push1092=, 0
+	i32.const	$push1091=, 0
+	i64.load	$push374=, src+40($pop1091)
+	i64.store	dst+40($pop1092), $pop374
+	i32.const	$push1090=, 0
+	i32.const	$push1089=, 0
+	i64.load	$push375=, src+32($pop1089)
+	i64.store	dst+32($pop1090), $pop375
+	i32.const	$push1088=, 0
+	i32.const	$push1087=, 0
+	i64.load	$push376=, src+24($pop1087)
+	i64.store	dst+24($pop1088), $pop376
+	i32.const	$push1086=, 0
+	i32.const	$push1085=, 0
+	i64.load	$push377=, src+16($pop1085)
+	i64.store	dst+16($pop1086), $pop377
+	i32.const	$push1084=, 0
+	i32.const	$push1083=, 0
+	i64.load	$push378=, src+8($pop1083)
+	i64.store	dst+8($pop1084), $pop378
+	i32.const	$push1082=, 0
+	i32.const	$push1081=, 0
+	i64.load	$push379=, src($pop1081)
+	i64.store	dst($pop1082), $pop379
+	i32.const	$push1080=, src
+	i32.const	$push380=, 60
+	i32.call	$push381=, memcmp@FUNCTION, $0, $pop1080, $pop380
+	br_if   	0, $pop381      # 0: down to label2
+# BB#59:                                # %check.exit245
+	i32.const	$push1114=, 0
+	i32.const	$push1113=, 0
+	i64.load	$push382=, src+53($pop1113):p2align=0
+	i64.store	dst+53($pop1114):p2align=0, $pop382
+	i32.const	$push1112=, 0
+	i32.const	$push1111=, 0
+	i64.load	$push383=, src+48($pop1111)
+	i64.store	dst+48($pop1112), $pop383
+	i32.const	$push1110=, 0
+	i32.const	$push1109=, 0
+	i64.load	$push384=, src+40($pop1109)
+	i64.store	dst+40($pop1110), $pop384
+	i32.const	$push1108=, 0
+	i32.const	$push1107=, 0
+	i64.load	$push385=, src+32($pop1107)
+	i64.store	dst+32($pop1108), $pop385
+	i32.const	$push1106=, 0
+	i32.const	$push1105=, 0
+	i64.load	$push386=, src+24($pop1105)
+	i64.store	dst+24($pop1106), $pop386
+	i32.const	$push1104=, 0
+	i32.const	$push1103=, 0
+	i64.load	$push387=, src+16($pop1103)
+	i64.store	dst+16($pop1104), $pop387
+	i32.const	$push1102=, 0
+	i32.const	$push1101=, 0
+	i64.load	$push388=, src+8($pop1101)
+	i64.store	dst+8($pop1102), $pop388
+	i32.const	$push1100=, 0
+	i32.const	$push1099=, 0
+	i64.load	$push389=, src($pop1099)
+	i64.store	dst($pop1100), $pop389
+	i32.const	$push1098=, dst
+	i32.const	$push1097=, src
+	i32.const	$push390=, 61
+	i32.call	$push391=, memcmp@FUNCTION, $pop1098, $pop1097, $pop390
+	br_if   	0, $pop391      # 0: down to label2
+# BB#60:                                # %check.exit249
+	i32.const	$push1132=, 0
+	i32.const	$push1131=, 0
+	i64.load	$push392=, src+54($pop1131):p2align=1
+	i64.store	dst+54($pop1132):p2align=1, $pop392
+	i32.const	$push1130=, 0
+	i32.const	$push1129=, 0
+	i64.load	$push393=, src+48($pop1129)
+	i64.store	dst+48($pop1130), $pop393
+	i32.const	$push1128=, 0
+	i32.const	$push1127=, 0
+	i64.load	$push394=, src+40($pop1127)
+	i64.store	dst+40($pop1128), $pop394
+	i32.const	$push1126=, 0
+	i32.const	$push1125=, 0
+	i64.load	$push395=, src+32($pop1125)
+	i64.store	dst+32($pop1126), $pop395
+	i32.const	$push1124=, 0
+	i32.const	$push1123=, 0
+	i64.load	$push396=, src+24($pop1123)
+	i64.store	dst+24($pop1124), $pop396
+	i32.const	$push1122=, 0
+	i32.const	$push1121=, 0
+	i64.load	$push397=, src+16($pop1121)
+	i64.store	dst+16($pop1122), $pop397
+	i32.const	$push1120=, 0
+	i32.const	$push1119=, 0
+	i64.load	$push398=, src+8($pop1119)
+	i64.store	dst+8($pop1120), $pop398
+	i32.const	$push1118=, 0
+	i32.const	$push1117=, 0
+	i64.load	$push399=, src($pop1117)
+	i64.store	dst($pop1118), $pop399
+	i32.const	$push1116=, dst
+	i32.const	$push1115=, src
+	i32.const	$push400=, 62
+	i32.call	$push401=, memcmp@FUNCTION, $pop1116, $pop1115, $pop400
+	br_if   	0, $pop401      # 0: down to label2
+# BB#61:                                # %check.exit253
+	i32.const	$push1150=, 0
+	i32.const	$push1149=, 0
+	i64.load	$push402=, src+55($pop1149):p2align=0
+	i64.store	dst+55($pop1150):p2align=0, $pop402
+	i32.const	$push1148=, 0
+	i32.const	$push1147=, 0
+	i64.load	$push403=, src+48($pop1147)
+	i64.store	dst+48($pop1148), $pop403
+	i32.const	$push1146=, 0
+	i32.const	$push1145=, 0
+	i64.load	$push404=, src+40($pop1145)
+	i64.store	dst+40($pop1146), $pop404
+	i32.const	$push1144=, 0
+	i32.const	$push1143=, 0
+	i64.load	$push405=, src+32($pop1143)
+	i64.store	dst+32($pop1144), $pop405
+	i32.const	$push1142=, 0
+	i32.const	$push1141=, 0
+	i64.load	$push406=, src+24($pop1141)
+	i64.store	dst+24($pop1142), $pop406
+	i32.const	$push1140=, 0
+	i32.const	$push1139=, 0
+	i64.load	$push407=, src+16($pop1139)
+	i64.store	dst+16($pop1140), $pop407
+	i32.const	$push1138=, 0
+	i32.const	$push1137=, 0
+	i64.load	$push408=, src+8($pop1137)
+	i64.store	dst+8($pop1138), $pop408
+	i32.const	$push1136=, 0
+	i32.const	$push1135=, 0
+	i64.load	$push409=, src($pop1135)
+	i64.store	dst($pop1136), $pop409
+	i32.const	$push1134=, dst
+	i32.const	$push1133=, src
+	i32.const	$push410=, 63
+	i32.call	$push411=, memcmp@FUNCTION, $pop1134, $pop1133, $pop410
+	br_if   	0, $pop411      # 0: down to label2
+# BB#62:                                # %check.exit257
+	i32.const	$push412=, 0
+	i32.const	$push1167=, 0
+	i64.load	$push413=, src+56($pop1167)
+	i64.store	dst+56($pop412), $pop413
+	i32.const	$push1166=, 0
+	i32.const	$push1165=, 0
+	i64.load	$push414=, src+48($pop1165)
+	i64.store	dst+48($pop1166), $pop414
+	i32.const	$push1164=, 0
+	i32.const	$push1163=, 0
+	i64.load	$push415=, src+40($pop1163)
+	i64.store	dst+40($pop1164), $pop415
+	i32.const	$push1162=, 0
+	i32.const	$push1161=, 0
+	i64.load	$push416=, src+32($pop1161)
+	i64.store	dst+32($pop1162), $pop416
+	i32.const	$push1160=, 0
+	i32.const	$push1159=, 0
+	i64.load	$push417=, src+24($pop1159)
+	i64.store	dst+24($pop1160), $pop417
+	i32.const	$push1158=, 0
+	i32.const	$push1157=, 0
+	i64.load	$push418=, src+16($pop1157)
+	i64.store	dst+16($pop1158), $pop418
+	i32.const	$push1156=, 0
+	i32.const	$push1155=, 0
+	i64.load	$push419=, src+8($pop1155)
+	i64.store	dst+8($pop1156), $pop419
+	i32.const	$push1154=, 0
+	i32.const	$push1153=, 0
+	i64.load	$push420=, src($pop1153)
+	i64.store	dst($pop1154), $pop420
+	i32.const	$push1152=, dst
+	i32.const	$push1151=, src
+	i32.const	$push421=, 64
+	i32.call	$push422=, memcmp@FUNCTION, $pop1152, $pop1151, $pop421
+	br_if   	0, $pop422      # 0: down to label2
+# BB#63:                                # %check.exit261
+	i32.const	$push424=, dst
+	i32.const	$push1172=, src
+	i32.const	$push423=, 65
+	i32.call	$push1171=, memcpy@FUNCTION, $pop424, $pop1172, $pop423
+	tee_local	$push1170=, $0=, $pop1171
+	i32.const	$push1169=, src
+	i32.const	$push1168=, 65
+	i32.call	$push425=, memcmp@FUNCTION, $pop1170, $pop1169, $pop1168
+	br_if   	0, $pop425      # 0: down to label2
+# BB#64:                                # %check.exit265
+	i32.const	$push1175=, src
+	i32.const	$push426=, 66
+	i32.call	$push0=, memcpy@FUNCTION, $0, $pop1175, $pop426
+	i32.const	$push1174=, src
+	i32.const	$push1173=, 66
+	i32.call	$push427=, memcmp@FUNCTION, $pop0, $pop1174, $pop1173
+	br_if   	0, $pop427      # 0: down to label2
+# BB#65:                                # %check.exit269
+	i32.const	$push429=, dst
+	i32.const	$push1180=, src
+	i32.const	$push428=, 67
+	i32.call	$push1179=, memcpy@FUNCTION, $pop429, $pop1180, $pop428
+	tee_local	$push1178=, $0=, $pop1179
+	i32.const	$push1177=, src
+	i32.const	$push1176=, 67
+	i32.call	$push430=, memcmp@FUNCTION, $pop1178, $pop1177, $pop1176
+	br_if   	0, $pop430      # 0: down to label2
+# BB#66:                                # %check.exit273
+	i32.const	$push1183=, src
+	i32.const	$push431=, 68
+	i32.call	$push1=, memcpy@FUNCTION, $0, $pop1183, $pop431
+	i32.const	$push1182=, src
+	i32.const	$push1181=, 68
+	i32.call	$push432=, memcmp@FUNCTION, $pop1, $pop1182, $pop1181
+	br_if   	0, $pop432      # 0: down to label2
+# BB#67:                                # %check.exit277
+	i32.const	$push434=, dst
+	i32.const	$push1188=, src
+	i32.const	$push433=, 69
+	i32.call	$push1187=, memcpy@FUNCTION, $pop434, $pop1188, $pop433
+	tee_local	$push1186=, $0=, $pop1187
+	i32.const	$push1185=, src
+	i32.const	$push1184=, 69
+	i32.call	$push435=, memcmp@FUNCTION, $pop1186, $pop1185, $pop1184
+	br_if   	0, $pop435      # 0: down to label2
+# BB#68:                                # %check.exit281
+	i32.const	$push1191=, src
+	i32.const	$push436=, 70
+	i32.call	$push2=, memcpy@FUNCTION, $0, $pop1191, $pop436
+	i32.const	$push1190=, src
+	i32.const	$push1189=, 70
+	i32.call	$push437=, memcmp@FUNCTION, $pop2, $pop1190, $pop1189
+	br_if   	0, $pop437      # 0: down to label2
+# BB#69:                                # %check.exit285
+	i32.const	$push439=, dst
+	i32.const	$push1196=, src
+	i32.const	$push438=, 71
+	i32.call	$push1195=, memcpy@FUNCTION, $pop439, $pop1196, $pop438
+	tee_local	$push1194=, $0=, $pop1195
+	i32.const	$push1193=, src
+	i32.const	$push1192=, 71
+	i32.call	$push440=, memcmp@FUNCTION, $pop1194, $pop1193, $pop1192
+	br_if   	0, $pop440      # 0: down to label2
+# BB#70:                                # %check.exit289
+	i32.const	$push1199=, src
+	i32.const	$push441=, 72
+	i32.call	$push3=, memcpy@FUNCTION, $0, $pop1199, $pop441
+	i32.const	$push1198=, src
+	i32.const	$push1197=, 72
+	i32.call	$push442=, memcmp@FUNCTION, $pop3, $pop1198, $pop1197
+	br_if   	0, $pop442      # 0: down to label2
+# BB#71:                                # %check.exit293
+	i32.const	$push444=, dst
+	i32.const	$push1204=, src
+	i32.const	$push443=, 73
+	i32.call	$push1203=, memcpy@FUNCTION, $pop444, $pop1204, $pop443
+	tee_local	$push1202=, $0=, $pop1203
+	i32.const	$push1201=, src
+	i32.const	$push1200=, 73
+	i32.call	$push445=, memcmp@FUNCTION, $pop1202, $pop1201, $pop1200
+	br_if   	0, $pop445      # 0: down to label2
+# BB#72:                                # %check.exit297
+	i32.const	$push1207=, src
+	i32.const	$push446=, 74
+	i32.call	$push4=, memcpy@FUNCTION, $0, $pop1207, $pop446
+	i32.const	$push1206=, src
+	i32.const	$push1205=, 74
+	i32.call	$push447=, memcmp@FUNCTION, $pop4, $pop1206, $pop1205
+	br_if   	0, $pop447      # 0: down to label2
+# BB#73:                                # %check.exit301
+	i32.const	$push449=, dst
+	i32.const	$push1212=, src
+	i32.const	$push448=, 75
+	i32.call	$push1211=, memcpy@FUNCTION, $pop449, $pop1212, $pop448
+	tee_local	$push1210=, $0=, $pop1211
+	i32.const	$push1209=, src
+	i32.const	$push1208=, 75
+	i32.call	$push450=, memcmp@FUNCTION, $pop1210, $pop1209, $pop1208
+	br_if   	0, $pop450      # 0: down to label2
+# BB#74:                                # %check.exit305
+	i32.const	$push1215=, src
+	i32.const	$push451=, 76
+	i32.call	$push5=, memcpy@FUNCTION, $0, $pop1215, $pop451
+	i32.const	$push1214=, src
+	i32.const	$push1213=, 76
+	i32.call	$push452=, memcmp@FUNCTION, $pop5, $pop1214, $pop1213
+	br_if   	0, $pop452      # 0: down to label2
+# BB#75:                                # %check.exit309
+	i32.const	$push454=, dst
+	i32.const	$push1220=, src
+	i32.const	$push453=, 77
+	i32.call	$push1219=, memcpy@FUNCTION, $pop454, $pop1220, $pop453
+	tee_local	$push1218=, $0=, $pop1219
+	i32.const	$push1217=, src
+	i32.const	$push1216=, 77
+	i32.call	$push455=, memcmp@FUNCTION, $pop1218, $pop1217, $pop1216
+	br_if   	0, $pop455      # 0: down to label2
+# BB#76:                                # %check.exit313
+	i32.const	$push1223=, src
+	i32.const	$push456=, 78
+	i32.call	$push6=, memcpy@FUNCTION, $0, $pop1223, $pop456
+	i32.const	$push1222=, src
+	i32.const	$push1221=, 78
+	i32.call	$push457=, memcmp@FUNCTION, $pop6, $pop1222, $pop1221
+	br_if   	0, $pop457      # 0: down to label2
 # BB#77:                                # %check.exit317
-	i32.const	$push295=, dst
-	i32.const	$push294=, src
-	i32.const	$push293=, 79
-	i32.call	$push23=, memcpy@FUNCTION, $pop295, $pop294, $pop293
-	i32.const	$push730=, src
-	i32.const	$push729=, 79
-	i32.call	$push296=, memcmp@FUNCTION, $pop23, $pop730, $pop729
-	br_if   	0, $pop296      # 0: down to label2
+	i32.const	$push460=, dst
+	i32.const	$push459=, src
+	i32.const	$push458=, 79
+	i32.call	$push7=, memcpy@FUNCTION, $pop460, $pop459, $pop458
+	i32.const	$push1225=, src
+	i32.const	$push1224=, 79
+	i32.call	$push461=, memcmp@FUNCTION, $pop7, $pop1225, $pop1224
+	br_if   	0, $pop461      # 0: down to label2
 # BB#78:                                # %check.exit321
-	i32.const	$push297=, 0
-	return  	$pop297
-.LBB1_79:                               # %if.then.i320
+	i32.const	$push462=, 0
+	return  	$pop462
+.LBB1_79:                               # %if.then.i12
 	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	src                     # @src
 	.type	src,@object
 	.section	.bss.src,"aw",@nobits
@@ -1039,6 +1731,6 @@ dst:
 	.size	dst, 80
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

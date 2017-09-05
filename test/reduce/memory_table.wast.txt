@@ -1,0 +1,38 @@
+(module
+ (type $0 (func (result i32)))
+ (type $1 (func))
+ (table 481 481 anyfunc)
+ (elem (i32.const 0) $1 $1 $1 $3)
+ (memory $0 256 256)
+ (export "f1" (func $2))
+ (export "f2" (func $3))
+ (export "f4" (func $0))
+ (func $0 (type $0) (result i32)
+  (i32.add
+   (call_indirect $0
+    (i32.const 3)
+   )
+   (call_indirect $0
+    (i32.const 0)
+   )
+  )
+ )
+ (func $1 (type $0) (result i32)
+  (i32.const 1234)
+ )
+ (func $2 (type $1)
+  (nop)
+ )
+ (func $3 (type $0) (result i32)
+  (block $label$0 (result i32)
+   (i32.store
+    (i32.const 0)
+    (i32.const 65530)
+   )
+   (i32.load
+    (i32.const 0)
+   )
+  )
+ )
+)
+

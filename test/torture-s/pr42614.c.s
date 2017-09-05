@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr42614.c"
+	.file	"pr42614.c"
 	.section	.text.init,"ax",@progbits
-	.hidden	init
+	.hidden	init                    # -- Begin function init
 	.globl	init
 	.type	init,@function
 init:                                   # @init
@@ -13,9 +13,9 @@ init:                                   # @init
 	.endfunc
 .Lfunc_end0:
 	.size	init, .Lfunc_end0-init
-
+                                        # -- End function
 	.section	.text.expect_func,"ax",@progbits
-	.hidden	expect_func
+	.hidden	expect_func             # -- Begin function expect_func
 	.globl	expect_func
 	.type	expect_func,@function
 expect_func:                            # @expect_func
@@ -29,16 +29,16 @@ expect_func:                            # @expect_func
 	br_if   	0, $pop1        # 0: down to label0
 # BB#2:                                 # %if.end6
 	return
-.LBB1_3:                                # %if.then5
+.LBB1_3:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	expect_func, .Lfunc_end1-expect_func
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -46,10 +46,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push13=, $pop3, $pop4
+	i32.sub 	$push13=, $pop2, $pop4
 	tee_local	$push12=, $0=, $pop13
 	i32.store	__stack_pointer($pop5), $pop12
 	i32.const	$push0=, 0
@@ -67,8 +67,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	malloc, i32, i32
 	.functype	abort, void

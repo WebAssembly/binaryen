@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49886.c"
+	.file	"pr49886.c"
 	.section	.text.never_ever,"ax",@progbits
-	.hidden	never_ever
+	.hidden	never_ever              # -- Begin function never_ever
 	.globl	never_ever
 	.type	never_ever,@function
 never_ever:                             # @never_ever
@@ -12,9 +12,9 @@ never_ever:                             # @never_ever
 	.endfunc
 .Lfunc_end0:
 	.size	never_ever, .Lfunc_end0-never_ever
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -28,9 +28,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.section	.text.bar_1,"ax",@progbits
-	.hidden	bar_1
+	.hidden	bar_1                   # -- Begin function bar_1
 	.globl	bar_1
 	.type	bar_1,@function
 bar_1:                                  # @bar_1
@@ -45,9 +45,9 @@ bar_1:                                  # @bar_1
 	.endfunc
 .Lfunc_end2:
 	.size	bar_1, .Lfunc_end2-bar_1
-
+                                        # -- End function
 	.section	.text.mark_cell,"ax",@progbits
-	.type	mark_cell,@function
+	.type	mark_cell,@function     # -- Begin function mark_cell
 mark_cell:                              # @mark_cell
 	.param  	i32
 	.local  	i32
@@ -190,9 +190,9 @@ mark_cell:                              # @mark_cell
 	.endfunc
 .Lfunc_end3:
 	.size	mark_cell, .Lfunc_end3-mark_cell
-
+                                        # -- End function
 	.section	.text.bar_2,"ax",@progbits
-	.hidden	bar_2
+	.hidden	bar_2                   # -- Begin function bar_2
 	.globl	bar_2
 	.type	bar_2,@function
 bar_2:                                  # @bar_2
@@ -207,7 +207,7 @@ bar_2:                                  # @bar_2
 	.endfunc
 .Lfunc_end4:
 	.size	bar_2, .Lfunc_end4-bar_2
-
+                                        # -- End function
 	.hidden	cond                    # @cond
 	.type	cond,@object
 	.section	.bss.cond,"aw",@nobits
@@ -227,5 +227,5 @@ gi:
 	.size	gi, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

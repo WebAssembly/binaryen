@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58209.c"
+	.file	"pr58209.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -25,9 +25,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
@@ -51,9 +51,9 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -71,23 +71,23 @@ main:                                   # @main
 	tee_local	$push11=, $1=, $pop12
 	i32.call	$push10=, foo@FUNCTION, $2
 	tee_local	$push9=, $0=, $pop10
-	i32.ne  	$push0=, $pop11, $pop9
-	br_if   	1, $pop0        # 1: down to label2
+	i32.ne  	$push1=, $pop11, $pop9
+	br_if   	1, $pop1        # 1: down to label2
 # BB#2:                                 # %lor.lhs.false
                                         #   in Loop: Header=BB2_1 Depth=1
 	block   	
 	block   	
-	i32.eqz 	$push20=, $2
-	br_if   	0, $pop20       # 0: down to label5
+	i32.eqz 	$push18=, $2
+	br_if   	0, $pop18       # 0: down to label5
 # BB#3:                                 # %if.end.i
                                         #   in Loop: Header=BB2_1 Depth=1
 	i32.const	$push15=, -1
-	i32.add 	$push1=, $2, $pop15
-	i32.call	$push2=, foo@FUNCTION, $pop1
+	i32.add 	$push2=, $2, $pop15
+	i32.call	$push3=, foo@FUNCTION, $pop2
 	i32.const	$push14=, 4
-	i32.add 	$push7=, $pop2, $pop14
-	i32.eq  	$push3=, $pop7, $0
-	br_if   	1, $pop3        # 1: down to label4
+	i32.add 	$push7=, $pop3, $pop14
+	i32.eq  	$push5=, $pop7, $0
+	br_if   	1, $pop5        # 1: down to label4
 	br      	3               # 3: down to label2
 .LBB2_4:                                #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label5:
@@ -97,12 +97,13 @@ main:                                   # @main
 .LBB2_5:                                # %for.cond
                                         #   in Loop: Header=BB2_1 Depth=1
 	end_block                       # label4:
-	i32.const	$push19=, 1
-	i32.add 	$push18=, $2, $pop19
-	tee_local	$push17=, $2=, $pop18
-	i32.const	$push16=, 26
-	i32.le_s	$push5=, $pop17, $pop16
-	br_if   	0, $pop5        # 0: up to label3
+	i32.const	$push17=, 25
+	i32.gt_u	$0=, $2, $pop17
+	i32.const	$push16=, 1
+	i32.add 	$push0=, $2, $pop16
+	copy_local	$2=, $pop0
+	i32.eqz 	$push19=, $0
+	br_if   	0, $pop19       # 0: up to label3
 # BB#6:                                 # %for.end
 	end_loop
 	i32.const	$push6=, 0
@@ -114,7 +115,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	buf                     # @buf
 	.type	buf,@object
 	.section	.bss.buf,"aw",@nobits
@@ -125,5 +126,5 @@ buf:
 	.size	buf, 4096
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

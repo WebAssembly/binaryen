@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/900409-1.c"
+	.file	"900409-1.c"
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
@@ -14,9 +14,9 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
-
+                                        # -- End function
 	.section	.text.f2,"ax",@progbits
-	.hidden	f2
+	.hidden	f2                      # -- Begin function f2
 	.globl	f2
 	.type	f2,@function
 f2:                                     # @f2
@@ -29,9 +29,9 @@ f2:                                     # @f2
 	.endfunc
 .Lfunc_end1:
 	.size	f2, .Lfunc_end1-f2
-
+                                        # -- End function
 	.section	.text.f3,"ax",@progbits
-	.hidden	f3
+	.hidden	f3                      # -- Begin function f3
 	.globl	f3
 	.type	f3,@function
 f3:                                     # @f3
@@ -44,9 +44,9 @@ f3:                                     # @f3
 	.endfunc
 .Lfunc_end2:
 	.size	f3, .Lfunc_end2-f3
-
+                                        # -- End function
 	.section	.text.f4,"ax",@progbits
-	.hidden	f4
+	.hidden	f4                      # -- Begin function f4
 	.globl	f4
 	.type	f4,@function
 f4:                                     # @f4
@@ -59,9 +59,9 @@ f4:                                     # @f4
 	.endfunc
 .Lfunc_end3:
 	.size	f4, .Lfunc_end3-f4
-
+                                        # -- End function
 	.section	.text.f5,"ax",@progbits
-	.hidden	f5
+	.hidden	f5                      # -- Begin function f5
 	.globl	f5
 	.type	f5,@function
 f5:                                     # @f5
@@ -74,9 +74,9 @@ f5:                                     # @f5
 	.endfunc
 .Lfunc_end4:
 	.size	f5, .Lfunc_end4-f5
-
+                                        # -- End function
 	.section	.text.f6,"ax",@progbits
-	.hidden	f6
+	.hidden	f6                      # -- Begin function f6
 	.globl	f6
 	.type	f6,@function
 f6:                                     # @f6
@@ -89,9 +89,9 @@ f6:                                     # @f6
 	.endfunc
 .Lfunc_end5:
 	.size	f6, .Lfunc_end5-f6
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -103,7 +103,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end6:
 	.size	main, .Lfunc_end6-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

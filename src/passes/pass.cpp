@@ -77,6 +77,7 @@ void PassRegistry::registerPasses() {
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
+  registerPass("i64-to-i32-lowering", "lower all uses of i64s to use i32s instead", createI64ToI32LoweringPass);
   registerPass("instrument-locals", "instrument the build with code to intercept all loads and stores", createInstrumentLocalsPass);
   registerPass("instrument-memory", "instrument the build with code to intercept all loads and stores", createInstrumentMemoryPass);
   registerPass("memory-packing", "packs memory into separate segments, skipping zeros", createMemoryPackingPass);
@@ -101,6 +102,7 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
+  registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);

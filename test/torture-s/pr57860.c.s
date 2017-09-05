@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57860.c"
+	.file	"pr57860.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
@@ -54,7 +54,7 @@ foo:                                    # @foo
 # BB#5:                                 #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$5=, 0
 	br      	5               # 5: up to label2
-.LBB0_6:                                # %for.inc.preheader
+.LBB0_6:                                # %for.inc.lr.ph
                                         #   in Loop: Header=BB0_3 Depth=1
 	end_block                       # label7:
 	i32.const	$push19=, 0
@@ -66,13 +66,13 @@ foo:                                    # @foo
 .LBB0_8:                                # %for.end
                                         #   in Loop: Header=BB0_3 Depth=1
 	end_block                       # label6:
-	i64.load32_s	$push4=, 0($2)
 	i32.const	$push28=, 0
 	i64.load32_s	$push2=, a($pop28)
 	i64.const	$push27=, 8589934591
 	i64.xor 	$push3=, $pop2, $pop27
-	i64.and 	$push5=, $pop4, $pop3
-	i64.gt_s	$push26=, $1, $pop5
+	i64.load32_s	$push4=, 0($2)
+	i64.and 	$push5=, $pop3, $pop4
+	i64.lt_s	$push26=, $pop5, $1
 	tee_local	$push25=, $0=, $pop26
 	i32.store	0($3), $pop25
 	i32.store	0($4), $0
@@ -106,9 +106,9 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -164,7 +164,7 @@ main:                                   # @main
 # BB#5:                                 #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$4=, 0
 	br      	8               # 8: up to label11
-.LBB1_6:                                # %for.inc.preheader.i
+.LBB1_6:                                # %for.inc.lr.ph.i
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label19:
 	i32.const	$push21=, 0
@@ -176,12 +176,12 @@ main:                                   # @main
 .LBB1_8:                                # %for.end.i
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label18:
-	i64.load32_s	$push4=, 0($0)
 	i32.const	$push31=, 0
 	i64.load32_s	$push2=, a($pop31)
 	i64.const	$push30=, 8589934591
 	i64.xor 	$push3=, $pop2, $pop30
-	i64.and 	$push5=, $pop4, $pop3
+	i64.load32_s	$push4=, 0($0)
+	i64.and 	$push5=, $pop3, $pop4
 	i64.const	$push29=, 1
 	i64.lt_s	$push28=, $pop5, $pop29
 	tee_local	$push27=, $3=, $pop28
@@ -236,7 +236,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -319,5 +319,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

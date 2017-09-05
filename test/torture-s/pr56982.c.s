@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr56982.c"
+	.file	"pr56982.c"
 	.section	.text.baz,"ax",@progbits
-	.hidden	baz
+	.hidden	baz                     # -- Begin function baz
 	.globl	baz
 	.type	baz,@function
 baz:                                    # @baz
@@ -12,9 +12,9 @@ baz:                                    # @baz
 	.endfunc
 .Lfunc_end0:
 	.size	baz, .Lfunc_end0-baz
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -50,9 +50,9 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end1:
 	.size	f, .Lfunc_end1-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -61,10 +61,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push12=, $pop3, $pop4
+	i32.sub 	$push12=, $pop2, $pop4
 	tee_local	$push11=, $2=, $pop12
 	i32.store	__stack_pointer($pop5), $pop11
 	i32.const	$push0=, 0
@@ -81,7 +81,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.type	env,@object             # @env
 	.section	.bss.env,"aw",@nobits
 	.p2align	4
@@ -90,7 +90,7 @@ env:
 	.size	env, 156
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	setjmp, i32, i32
 	.functype	exit, void, i32
 	.functype	longjmp, void, i32, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr28289.c"
+	.file	"pr28289.c"
 	.section	.text.ix86_split_ashr,"ax",@progbits
-	.hidden	ix86_split_ashr
+	.hidden	ix86_split_ashr         # -- Begin function ix86_split_ashr
 	.globl	ix86_split_ashr
 	.type	ix86_split_ashr,@function
 ix86_split_ashr:                        # @ix86_split_ashr
@@ -16,9 +16,9 @@ ix86_split_ashr:                        # @ix86_split_ashr
 	.endfunc
 .Lfunc_end0:
 	.size	ix86_split_ashr, .Lfunc_end0-ix86_split_ashr
-
+                                        # -- End function
 	.section	.text.ok,"ax",@progbits
-	.hidden	ok
+	.hidden	ok                      # -- Begin function ok
 	.globl	ok
 	.type	ok,@function
 ok:                                     # @ok
@@ -30,9 +30,9 @@ ok:                                     # @ok
 	.endfunc
 .Lfunc_end1:
 	.size	ok, .Lfunc_end1-ok
-
+                                        # -- End function
 	.section	.text.gen_x86_64_shrd,"ax",@progbits
-	.type	gen_x86_64_shrd,@function
+	.type	gen_x86_64_shrd,@function # -- Begin function gen_x86_64_shrd
 gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.param  	i32
 	.result 	i32
@@ -42,9 +42,9 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.endfunc
 .Lfunc_end2:
 	.size	gen_x86_64_shrd, .Lfunc_end2-gen_x86_64_shrd
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -62,7 +62,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.hidden	one                     # @one
 	.type	one,@object
 	.section	.data.one,"aw",@progbits
@@ -73,5 +73,5 @@ one:
 	.size	one, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

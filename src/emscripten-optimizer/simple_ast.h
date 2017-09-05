@@ -1006,7 +1006,7 @@ struct JSPrinter {
     if (childPrecedence < parentPrecedence) return false; //          definitely cool
     // equal precedence, so associativity (rtl/ltr) is what matters
     // (except for some exceptions, where multiple operators can combine into confusion)
-    if (parent[0] == UNARY_PREFIX) {
+    if (parent->isArray() && parent[0] == UNARY_PREFIX) {
       assert(child[0] == UNARY_PREFIX);
       if ((parent[1] == PLUS || parent[1] == MINUS) && child[1] == parent[1]) {
         // cannot emit ++x when we mean +(+x)
@@ -1036,8 +1036,10 @@ struct JSPrinter {
   }
 
   void printUnaryPrefix(Ref node) {
-    if (finalize && node[1] == PLUS && (node[2]->isNumber() ||
-                                       (node[2][0] == UNARY_PREFIX && node[2][1] == MINUS && node[2][2]->isNumber()))) {
+    if (finalize && node[1] == PLUS &&
+        (node[2]->isNumber() ||
+         (node[2]->isArray() && node[2][0] == UNARY_PREFIX &&
+          node[2][1] == MINUS && node[2][2]->isNumber()))) {
       // emit a finalized number
       int last = used;
       print(node[2]);

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981001-1.c"
+	.file	"981001-1.c"
 	.section	.text.sub,"ax",@progbits
-	.hidden	sub
+	.hidden	sub                     # -- Begin function sub
 	.globl	sub
 	.type	sub,@function
 sub:                                    # @sub
@@ -48,9 +48,9 @@ sub:                                    # @sub
 	.endfunc
 .Lfunc_end0:
 	.size	sub, .Lfunc_end0-sub
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -87,7 +87,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	flg                     # @flg
 	.type	flg,@object
 	.section	.bss.flg,"aw",@nobits
@@ -98,6 +98,6 @@ flg:
 	.size	flg, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

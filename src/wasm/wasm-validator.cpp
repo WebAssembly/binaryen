@@ -62,7 +62,7 @@ void WasmValidator::visitBlock(Block *curr) {
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
-      if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)")) {
+      if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !quiet) {
         std::cerr << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
       }
     }
@@ -172,14 +172,14 @@ void WasmValidator::visitCall(Call *curr) {
   if (!validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
-    if (getModule()->getImportOrNull(curr->target)) {
+    if (getModule()->getImportOrNull(curr->target) && !quiet) {
       std::cerr << "(perhaps it should be a CallImport instead of Call?)\n";
     }
     return;
   }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -192,7 +192,7 @@ void WasmValidator::visitCallImport(CallImport *curr) {
   auto* type = getModule()->getFunctionType(import->functionType);
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -204,7 +204,7 @@ void WasmValidator::visitCallIndirect(CallIndirect *curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -536,7 +536,7 @@ void WasmValidator::visitGlobal(Global* curr) {
   if (!validateGlobally) return;
   shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
   shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-  if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type")) {
+  if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !quiet) {
     std::cerr << "(on global " << curr->name << ")\n";
   }
 }
@@ -550,7 +550,7 @@ void WasmValidator::visitFunction(Function *curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist")) {
+  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist") && !quiet) {
     std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
   }
   returnType = unreachable;
@@ -594,6 +594,9 @@ void WasmValidator::visitTable(Table* curr) {
   for (auto& segment : curr->segments) {
     shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
     shouldBeTrue(checkOffset(segment.offset, segment.data.size(), getModule()->table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
+    for (auto name : segment.data) {
+      shouldBeTrue(getModule()->getFunctionOrNull(name) || getModule()->getImportOrNull(name), name, "segment name should be valid");
+    }
   }
 }
 void WasmValidator::visitModule(Module *curr) {
@@ -700,11 +703,13 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
 template <typename T, typename S>
 std::ostream& WasmValidator::fail(S text, T curr) {
   valid = false;
+  if (quiet) return std::cerr;
   auto& ret = printFailureHeader() << text << ", on \n";
   return printModuleComponent(curr, ret);
 }
 
 std::ostream& WasmValidator::printFailureHeader() {
+  if (quiet) return std::cerr;
   Colors::red(std::cerr);
   if (getFunction()) {
     std::cerr << "[wasm-validator error in function ";

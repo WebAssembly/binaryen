@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20090113-1.c"
+	.file	"20090113-1.c"
 	.section	.text.msum_i4,"ax",@progbits
-	.hidden	msum_i4
+	.hidden	msum_i4                 # -- Begin function msum_i4
 	.globl	msum_i4
 	.type	msum_i4,@function
 msum_i4:                                # @msum_i4
@@ -9,10 +9,10 @@ msum_i4:                                # @msum_i4
 	.local  	i32, i32, i32, i32, i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push23=, 0
-	i32.const	$push20=, 0
-	i32.load	$push21=, __stack_pointer($pop20)
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 64
-	i32.sub 	$push42=, $pop21, $pop22
+	i32.sub 	$push42=, $pop20, $pop22
 	tee_local	$push41=, $8=, $pop42
 	i32.store	__stack_pointer($pop23), $pop41
 	i32.load	$push40=, 0($2)
@@ -37,7 +37,7 @@ msum_i4:                                # @msum_i4
 	i32.const	$push29=, 2
 	i32.lt_s	$push7=, $2, $pop29
 	br_if   	0, $pop7        # 0: down to label0
-# BB#1:                                 # %for.body.preheader
+# BB#1:                                 # %for.body.lr.ph
 	i32.const	$push27=, 32
 	i32.add 	$push28=, $8, $pop27
 	i32.const	$push10=, 0
@@ -134,19 +134,19 @@ msum_i4:                                # @msum_i4
 	.endfunc
 .Lfunc_end0:
 	.size	msum_i4, .Lfunc_end0-msum_i4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %for.body18.i.2
+# BB#0:                                 # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

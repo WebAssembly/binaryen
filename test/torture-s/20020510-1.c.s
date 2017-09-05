@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020510-1.c"
+	.file	"20020510-1.c"
 	.section	.text.testc,"ax",@progbits
-	.hidden	testc
+	.hidden	testc                   # -- Begin function testc
 	.globl	testc
 	.type	testc,@function
 testc:                                  # @testc
@@ -18,26 +18,26 @@ testc:                                  # @testc
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label2
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label1
-# BB#2:                                 # %if.then5
-	call    	abort@FUNCTION
-	unreachable
-.LBB0_3:                                # %if.else
+	i32.eqz 	$push6=, $1
+	br_if   	1, $pop6        # 1: down to label1
+	br      	2               # 2: down to label0
+.LBB0_2:                                # %if.else
 	end_block                       # label2:
-	br_if   	1, $1           # 1: down to label0
-.LBB0_4:                                # %if.end9
+	i32.eqz 	$push7=, $1
+	br_if   	1, $pop7        # 1: down to label0
+.LBB0_3:                                # %if.then5
 	end_block                       # label1:
-	return
-.LBB0_5:                                # %if.then7
-	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
+.LBB0_4:                                # %if.end9
+	end_block                       # label0:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	testc, .Lfunc_end0-testc
-
+                                        # -- End function
 	.section	.text.tests,"ax",@progbits
-	.hidden	tests
+	.hidden	tests                   # -- Begin function tests
 	.globl	tests
 	.type	tests,@function
 tests:                                  # @tests
@@ -54,26 +54,26 @@ tests:                                  # @tests
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label5
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label4
-# BB#2:                                 # %if.then5
-	call    	abort@FUNCTION
-	unreachable
-.LBB1_3:                                # %if.else
+	i32.eqz 	$push6=, $1
+	br_if   	1, $pop6        # 1: down to label4
+	br      	2               # 2: down to label3
+.LBB1_2:                                # %if.else
 	end_block                       # label5:
-	br_if   	1, $1           # 1: down to label3
-.LBB1_4:                                # %if.end9
+	i32.eqz 	$push7=, $1
+	br_if   	1, $pop7        # 1: down to label3
+.LBB1_3:                                # %if.then5
 	end_block                       # label4:
-	return
-.LBB1_5:                                # %if.then7
-	end_block                       # label3:
 	call    	abort@FUNCTION
 	unreachable
+.LBB1_4:                                # %if.end9
+	end_block                       # label3:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end1:
 	.size	tests, .Lfunc_end1-tests
-
+                                        # -- End function
 	.section	.text.testi,"ax",@progbits
-	.hidden	testi
+	.hidden	testi                   # -- Begin function testi
 	.globl	testi
 	.type	testi,@function
 testi:                                  # @testi
@@ -86,26 +86,26 @@ testi:                                  # @testi
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label8
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label7
-# BB#2:                                 # %if.then2
-	call    	abort@FUNCTION
-	unreachable
-.LBB2_3:                                # %if.else
+	i32.eqz 	$push2=, $1
+	br_if   	1, $pop2        # 1: down to label7
+	br      	2               # 2: down to label6
+.LBB2_2:                                # %if.else
 	end_block                       # label8:
-	br_if   	1, $1           # 1: down to label6
-.LBB2_4:                                # %if.end6
+	i32.eqz 	$push3=, $1
+	br_if   	1, $pop3        # 1: down to label6
+.LBB2_3:                                # %if.then2
 	end_block                       # label7:
-	return
-.LBB2_5:                                # %if.then4
-	end_block                       # label6:
 	call    	abort@FUNCTION
 	unreachable
+.LBB2_4:                                # %if.end6
+	end_block                       # label6:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	testi, .Lfunc_end2-testi
-
+                                        # -- End function
 	.section	.text.testl,"ax",@progbits
-	.hidden	testl
+	.hidden	testl                   # -- Begin function testl
 	.globl	testl
 	.type	testl,@function
 testl:                                  # @testl
@@ -118,26 +118,26 @@ testl:                                  # @testl
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label11
 # BB#1:                                 # %if.then
-	br_if   	1, $1           # 1: down to label10
-# BB#2:                                 # %if.then2
-	call    	abort@FUNCTION
-	unreachable
-.LBB3_3:                                # %if.else
+	i32.eqz 	$push2=, $1
+	br_if   	1, $pop2        # 1: down to label10
+	br      	2               # 2: down to label9
+.LBB3_2:                                # %if.else
 	end_block                       # label11:
-	br_if   	1, $1           # 1: down to label9
-.LBB3_4:                                # %if.end6
+	i32.eqz 	$push3=, $1
+	br_if   	1, $pop3        # 1: down to label9
+.LBB3_3:                                # %if.then2
 	end_block                       # label10:
-	return
-.LBB3_5:                                # %if.then4
-	end_block                       # label9:
 	call    	abort@FUNCTION
 	unreachable
+.LBB3_4:                                # %if.end6
+	end_block                       # label9:
+                                        # fallthrough-return
 	.endfunc
 .Lfunc_end3:
 	.size	testl, .Lfunc_end3-testl
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -148,7 +148,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

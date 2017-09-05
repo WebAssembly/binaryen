@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/simd-1.c"
+	.file	"simd-1.c"
 	.section	.text.verify,"ax",@progbits
-	.hidden	verify
+	.hidden	verify                  # -- Begin function verify
 	.globl	verify
 	.type	verify,@function
 verify:                                 # @verify
@@ -28,9 +28,9 @@ verify:                                 # @verify
 	.endfunc
 .Lfunc_end0:
 	.size	verify, .Lfunc_end0-verify
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -264,33 +264,33 @@ main:                                   # @main
 	call    	verify@FUNCTION, $3, $2, $1, $0, $pop59, $pop58, $pop57, $pop56
 	i32.const	$push160=, 0
 	i32.const	$push159=, 0
-	i32.load	$push61=, i+12($pop159)
+	i32.load	$push61=, j+12($pop159)
 	i32.const	$push158=, 0
-	i32.load	$push60=, j+12($pop158)
+	i32.load	$push60=, i+12($pop158)
 	i32.xor 	$push157=, $pop61, $pop60
 	tee_local	$push156=, $0=, $pop157
 	i32.store	k+12($pop160), $pop156
 	i32.const	$push155=, 0
 	i32.const	$push154=, 0
-	i32.load	$push63=, i+8($pop154)
+	i32.load	$push63=, j+8($pop154)
 	i32.const	$push153=, 0
-	i32.load	$push62=, j+8($pop153)
+	i32.load	$push62=, i+8($pop153)
 	i32.xor 	$push152=, $pop63, $pop62
 	tee_local	$push151=, $1=, $pop152
 	i32.store	k+8($pop155), $pop151
 	i32.const	$push150=, 0
 	i32.const	$push149=, 0
-	i32.load	$push65=, i+4($pop149)
+	i32.load	$push65=, j+4($pop149)
 	i32.const	$push148=, 0
-	i32.load	$push64=, j+4($pop148)
+	i32.load	$push64=, i+4($pop148)
 	i32.xor 	$push147=, $pop65, $pop64
 	tee_local	$push146=, $2=, $pop147
 	i32.store	k+4($pop150), $pop146
 	i32.const	$push145=, 0
 	i32.const	$push144=, 0
-	i32.load	$push67=, i($pop144)
+	i32.load	$push67=, j($pop144)
 	i32.const	$push143=, 0
-	i32.load	$push66=, j($pop143)
+	i32.load	$push66=, i($pop143)
 	i32.xor 	$push142=, $pop67, $pop66
 	tee_local	$push141=, $3=, $pop142
 	i32.store	k($pop145), $pop141
@@ -395,7 +395,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.data.i,"aw",@progbits
@@ -439,6 +439,6 @@ res:
 	.size	res, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2e.c"
+	.file	"loop-2e.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
@@ -62,12 +62,12 @@ f:                                      # @f
 	i32.const	$push34=, 72
 	i32.add 	$push35=, $0, $pop34
 	i32.store	72($1), $pop35
-	i32.const	$push36=, 76
+	i32.const	$push36=, 80
 	i32.add 	$push37=, $0, $pop36
-	i32.store	76($1), $pop37
-	i32.const	$push38=, 80
+	i32.store	80($1), $pop37
+	i32.const	$push38=, 76
 	i32.add 	$push39=, $0, $pop38
-	i32.store	80($1), $pop39
+	i32.store	76($1), $pop39
 	i32.const	$push40=, 84
 	i32.add 	$push41=, $0, $pop40
 	i32.store	84($1), $pop41
@@ -119,29 +119,29 @@ f:                                      # @f
 	i32.const	$push72=, 148
 	i32.add 	$push73=, $0, $pop72
 	i32.store	148($1), $pop73
-	i32.const	$push74=, 152
+	i32.const	$push74=, 156
 	i32.add 	$push75=, $0, $pop74
-	i32.store	152($1), $pop75
-	i32.const	$push76=, 156
+	i32.store	156($1), $pop75
+	i32.const	$push76=, 152
 	i32.add 	$push77=, $0, $pop76
-	i32.store	156($1), $pop77
+	i32.store	152($1), $pop77
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# BB#0:                                 # %if.end
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

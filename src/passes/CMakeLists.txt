@@ -11,6 +11,7 @@ SET(passes_SOURCES
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  I64ToI32Lowering.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   MemoryPacking.cpp
@@ -32,6 +33,7 @@ SET(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  SafeHeap.cpp
   SimplifyLocals.cpp
   SSAify.cpp
   Untee.cpp

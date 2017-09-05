@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991014-1.c"
+	.file	"991014-1.c"
 	.section	.text.union_size,"ax",@progbits
-	.hidden	union_size
+	.hidden	union_size              # -- Begin function union_size
 	.globl	union_size
 	.type	union_size,@function
 union_size:                             # @union_size
@@ -12,9 +12,9 @@ union_size:                             # @union_size
 	.endfunc
 .Lfunc_end0:
 	.size	union_size, .Lfunc_end0-union_size
-
+                                        # -- End function
 	.section	.text.struct_size,"ax",@progbits
-	.hidden	struct_size
+	.hidden	struct_size             # -- Begin function struct_size
 	.globl	struct_size
 	.type	struct_size,@function
 struct_size:                            # @struct_size
@@ -25,9 +25,9 @@ struct_size:                            # @struct_size
 	.endfunc
 .Lfunc_end1:
 	.size	struct_size, .Lfunc_end1-struct_size
-
+                                        # -- End function
 	.section	.text.struct_a_offset,"ax",@progbits
-	.hidden	struct_a_offset
+	.hidden	struct_a_offset         # -- Begin function struct_a_offset
 	.globl	struct_a_offset
 	.type	struct_a_offset,@function
 struct_a_offset:                        # @struct_a_offset
@@ -38,9 +38,9 @@ struct_a_offset:                        # @struct_a_offset
 	.endfunc
 .Lfunc_end2:
 	.size	struct_a_offset, .Lfunc_end2-struct_a_offset
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -51,6 +51,6 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"

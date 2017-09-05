@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr34456.c"
+	.file	"pr34456.c"
 	.section	.text.debug,"ax",@progbits
-	.hidden	debug
+	.hidden	debug                   # -- Begin function debug
 	.globl	debug
 	.type	debug,@function
 debug:                                  # @debug
@@ -12,9 +12,9 @@ debug:                                  # @debug
 	.endfunc
 .Lfunc_end0:
 	.size	debug, .Lfunc_end0-debug
-
+                                        # -- End function
 	.section	.text.bad_compare,"ax",@progbits
-	.hidden	bad_compare
+	.hidden	bad_compare             # -- Begin function bad_compare
 	.globl	bad_compare
 	.type	bad_compare,@function
 bad_compare:                            # @bad_compare
@@ -27,9 +27,9 @@ bad_compare:                            # @bad_compare
 	.endfunc
 .Lfunc_end1:
 	.size	bad_compare, .Lfunc_end1-bad_compare
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -47,9 +47,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.section	.text.compare,"ax",@progbits
-	.type	compare,@function
+	.type	compare,@function       # -- Begin function compare
 compare:                                # @compare
 	.param  	i32, i32
 	.result 	i32
@@ -80,7 +80,7 @@ compare:                                # @compare
 	.endfunc
 .Lfunc_end3:
 	.size	compare, .Lfunc_end3-compare
-
+                                        # -- End function
 	.hidden	array                   # @array
 	.type	array,@object
 	.section	.data.array,"aw",@progbits
@@ -103,5 +103,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	qsort, void, i32, i32, i32, i32

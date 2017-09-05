@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/bf-sign-2.c"
+	.file	"bf-sign-2.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -9,85 +9,57 @@ main:                                   # @main
 	.local  	i64
 # BB#0:                                 # %entry
 	block   	
-	block   	
-	i32.const	$push37=, 0
-	i32.load8_u	$push0=, x($pop37)
-	i32.const	$push1=, 7
+	i32.const	$push21=, 0
+	i32.load8_u	$push0=, x($pop21)
+	i32.const	$push1=, 6
 	i32.and 	$push2=, $pop0, $pop1
-	i32.const	$push36=, -2
-	i32.add 	$push3=, $pop2, $pop36
-	i32.const	$push35=, 0
-	i32.ge_s	$push4=, $pop3, $pop35
-	br_if   	0, $pop4        # 0: down to label1
+	br_if   	0, $pop2        # 0: down to label0
 # BB#1:                                 # %if.end
-	i32.const	$push41=, 0
-	i32.load	$push5=, x+4($pop41)
-	i32.const	$push6=, 1
-	i32.shl 	$push7=, $pop5, $pop6
-	i32.const	$push40=, 1
-	i32.shr_s	$push8=, $pop7, $pop40
-	i32.const	$push39=, -2
-	i32.add 	$push9=, $pop8, $pop39
-	i32.const	$push38=, 0
-	i32.ge_s	$push10=, $pop9, $pop38
-	br_if   	0, $pop10       # 0: down to label1
+	i32.const	$push22=, 0
+	i32.load	$push3=, x+4($pop22)
+	i32.const	$push4=, 1
+	i32.shl 	$push5=, $pop3, $pop4
+	i32.const	$push6=, 3
+	i32.ge_s	$push7=, $pop5, $pop6
+	br_if   	0, $pop7        # 0: down to label0
 # BB#2:                                 # %if.end5
-	i32.const	$push46=, 0
-	i64.load	$push45=, x+8($pop46)
-	tee_local	$push44=, $0=, $pop45
-	i32.wrap/i64	$push11=, $pop44
-	i32.const	$push43=, -2
-	i32.add 	$push12=, $pop11, $pop43
-	i32.const	$push42=, 0
-	i32.ge_s	$push13=, $pop12, $pop42
-	br_if   	0, $pop13       # 0: down to label1
+	i32.const	$push25=, 0
+	i64.load	$push24=, x+8($pop25)
+	tee_local	$push23=, $0=, $pop24
+	i32.wrap/i64	$push8=, $pop23
+	i32.const	$push9=, 2
+	i32.ge_s	$push10=, $pop8, $pop9
+	br_if   	0, $pop10       # 0: down to label0
 # BB#3:                                 # %if.end13
-	i32.const	$push49=, 0
-	i64.load	$push14=, x+24($pop49)
-	i64.const	$push15=, 35
-	i64.shr_u	$push16=, $pop14, $pop15
-	i32.wrap/i64	$push17=, $pop16
-	i32.const	$push18=, 32767
-	i32.and 	$push19=, $pop17, $pop18
-	i32.const	$push48=, -2
-	i32.add 	$push20=, $pop19, $pop48
-	i32.const	$push47=, 0
-	i32.ge_s	$push21=, $pop20, $pop47
-	br_if   	0, $pop21       # 0: down to label1
+	i32.const	$push26=, 0
+	i32.load	$push11=, x+28($pop26)
+	i32.const	$push12=, 262128
+	i32.and 	$push13=, $pop11, $pop12
+	br_if   	0, $pop13       # 0: down to label0
 # BB#4:                                 # %if.end20
-	i64.const	$push22=, 32
-	i64.shr_u	$push23=, $0, $pop22
-	i32.wrap/i64	$push24=, $pop23
-	i32.const	$push25=, 2147483647
-	i32.and 	$push26=, $pop24, $pop25
-	i32.const	$push51=, -2
-	i32.add 	$push27=, $pop26, $pop51
-	i32.const	$push50=, 0
-	i32.ge_s	$push28=, $pop27, $pop50
-	br_if   	0, $pop28       # 0: down to label1
+	i64.const	$push14=, 9223372028264841216
+	i64.and 	$push15=, $0, $pop14
+	i64.const	$push16=, 4294967297
+	i64.ge_u	$push17=, $pop15, $pop16
+	br_if   	0, $pop17       # 0: down to label0
 # BB#5:                                 # %if.end35
-	i32.const	$push54=, 0
-	i32.load	$push29=, x+20($pop54)
-	i32.const	$push30=, 7
-	i32.and 	$push31=, $pop29, $pop30
-	i32.const	$push53=, -2
-	i32.add 	$push32=, $pop31, $pop53
-	i32.const	$push52=, 0
-	i32.lt_s	$push33=, $pop32, $pop52
-	br_if   	1, $pop33       # 1: down to label0
-.LBB0_6:                                # %if.then42
-	end_block                       # label1:
-	call    	abort@FUNCTION
+	i32.const	$push27=, 0
+	i32.load8_u	$push18=, x+20($pop27)
+	i32.const	$push19=, 6
+	i32.and 	$push20=, $pop18, $pop19
+	br_if   	0, $pop20       # 0: down to label0
+# BB#6:                                 # %if.end50
+	i32.const	$push28=, 0
+	call    	exit@FUNCTION, $pop28
 	unreachable
-.LBB0_7:                                # %if.end50
+.LBB0_7:                                # %if.then
 	end_block                       # label0:
-	i32.const	$push34=, 0
-	call    	exit@FUNCTION, $pop34
+	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.bss.x,"aw",@nobits
@@ -98,6 +70,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

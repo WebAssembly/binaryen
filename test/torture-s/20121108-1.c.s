@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20121108-1.c"
+	.file	"20121108-1.c"
 	.section	.text.strtoul1,"ax",@progbits
-	.hidden	strtoul1
+	.hidden	strtoul1                # -- Begin function strtoul1
 	.globl	strtoul1
 	.type	strtoul1,@function
 strtoul1:                               # @strtoul1
@@ -21,39 +21,40 @@ strtoul1:                               # @strtoul1
 # BB#1:                                 # %if.else
 	i32.const	$push4=, temp+4
 	i32.eq  	$push5=, $0, $pop4
-	br_if   	2, $pop5        # 2: down to label1
+	br_if   	1, $pop5        # 1: down to label2
 # BB#2:                                 # %if.else3
 	i32.const	$push6=, temp+8
 	i32.eq  	$push7=, $0, $pop6
-	br_if   	3, $pop7        # 3: down to label0
+	br_if   	2, $pop7        # 2: down to label1
 # BB#3:                                 # %if.else6
-	i32.const	$1=, 160
 	i32.const	$push8=, temp+12
-	i32.eq  	$push9=, $0, $pop8
-	br_if   	1, $pop9        # 1: down to label2
-# BB#4:                                 # %if.end11
-	call    	abort@FUNCTION
-	unreachable
+	i32.ne  	$push9=, $0, $pop8
+	br_if   	3, $pop9        # 3: down to label0
+# BB#4:                                 # %return
+	i32.const	$push13=, 160
+	return  	$pop13
 .LBB0_5:
 	end_block                       # label3:
-	i32.const	$1=, 192
-.LBB0_6:                                # %return
+	i32.const	$push12=, 192
+	return  	$pop12
+.LBB0_6:
 	end_block                       # label2:
-	return  	$1
-.LBB0_7:
-	end_block                       # label1:
 	i32.const	$push11=, 168
 	return  	$pop11
-.LBB0_8:
-	end_block                       # label0:
+.LBB0_7:
+	end_block                       # label1:
 	i32.const	$push10=, 190
-                                        # fallthrough-return: $pop10
+	return  	$pop10
+.LBB0_8:                                # %if.end11
+	end_block                       # label0:
+	call    	abort@FUNCTION
+	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	strtoul1, .Lfunc_end0-strtoul1
-
+                                        # -- End function
 	.section	.text.string_to_ip,"ax",@progbits
-	.hidden	string_to_ip
+	.hidden	string_to_ip            # -- Begin function string_to_ip
 	.globl	string_to_ip
 	.type	string_to_ip,@function
 string_to_ip:                           # @string_to_ip
@@ -62,10 +63,10 @@ string_to_ip:                           # @string_to_ip
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push23=, 0
-	i32.const	$push20=, 0
-	i32.load	$push21=, __stack_pointer($pop20)
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 16
-	i32.sub 	$push36=, $pop21, $pop22
+	i32.sub 	$push36=, $pop20, $pop22
 	tee_local	$push35=, $2=, $pop36
 	i32.store	__stack_pointer($pop23), $pop35
 	block   	
@@ -158,9 +159,9 @@ string_to_ip:                           # @string_to_ip
 	.endfunc
 .Lfunc_end1:
 	.size	string_to_ip, .Lfunc_end1-string_to_ip
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -168,10 +169,10 @@ main:                                   # @main
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push9=, 0
-	i32.const	$push6=, 0
-	i32.load	$push7=, __stack_pointer($pop6)
+	i32.const	$push7=, 0
+	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 32
-	i32.sub 	$push21=, $pop7, $pop8
+	i32.sub 	$push21=, $pop6, $pop8
 	tee_local	$push20=, $1=, $pop21
 	i32.store	__stack_pointer($pop9), $pop20
 	i32.const	$push0=, temp
@@ -208,7 +209,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	temp                    # @temp
 	.type	temp,@object
 	.section	.data.temp,"aw",@progbits
@@ -239,7 +240,7 @@ result:
 	.size	.Lstr, 7
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	printf, i32, i32
 	.functype	puts, i32, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20011008-3.c"
+	.file	"20011008-3.c"
 	.section	.text.log_compare,"ax",@progbits
-	.hidden	log_compare
+	.hidden	log_compare             # -- Begin function log_compare
 	.globl	log_compare
 	.type	log_compare,@function
 log_compare:                            # @log_compare
@@ -13,9 +13,9 @@ log_compare:                            # @log_compare
 	.endfunc
 .Lfunc_end0:
 	.size	log_compare, .Lfunc_end0-log_compare
-
+                                        # -- End function
 	.section	.text.__db_txnlist_lsnadd,"ax",@progbits
-	.hidden	__db_txnlist_lsnadd
+	.hidden	__db_txnlist_lsnadd     # -- Begin function __db_txnlist_lsnadd
 	.globl	__db_txnlist_lsnadd
 	.type	__db_txnlist_lsnadd,@function
 __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
@@ -100,9 +100,9 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	.endfunc
 .Lfunc_end1:
 	.size	__db_txnlist_lsnadd, .Lfunc_end1-__db_txnlist_lsnadd
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -114,7 +114,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	exit, void, i32

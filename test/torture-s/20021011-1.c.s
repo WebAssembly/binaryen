@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20021011-1.c"
+	.file	"20021011-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.const	$push35=, .L.str
 	i32.call	$push0=, strcmp@FUNCTION, $pop36, $pop35
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %for.body.preheader
+# BB#1:                                 # %if.end
 	i32.const	$push48=, 0
 	i32.store8	buf+8($pop48), $0
 	i32.const	$push47=, 0
@@ -216,14 +216,14 @@ main:                                   # @main
 # BB#17:                                # %for.cond.15
 	i32.const	$push137=, 0
 	return  	$pop137
-.LBB0_18:                               # %if.then7
+.LBB0_18:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	buf                     # @buf
 	.type	buf,@object
 	.section	.bss.buf,"aw",@nobits
@@ -240,6 +240,6 @@ buf:
 	.size	.L.str, 9
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20040625-1.c"
+	.file	"20040625-1.c"
 	.section	.text.maybe_next,"ax",@progbits
-	.hidden	maybe_next
+	.hidden	maybe_next              # -- Begin function maybe_next
 	.globl	maybe_next
 	.type	maybe_next,@function
 maybe_next:                             # @maybe_next
@@ -20,9 +20,9 @@ maybe_next:                             # @maybe_next
 	.endfunc
 .Lfunc_end0:
 	.size	maybe_next, .Lfunc_end0-maybe_next
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -30,10 +30,10 @@ main:                                   # @main
 	.local  	i32
 # BB#0:                                 # %entry
 	i32.const	$push7=, 0
-	i32.const	$push4=, 0
-	i32.load	$push5=, __stack_pointer($pop4)
+	i32.const	$push5=, 0
+	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push11=, $pop5, $pop6
+	i32.sub 	$push11=, $pop4, $pop6
 	tee_local	$push10=, $0=, $pop11
 	i32.store	__stack_pointer($pop7), $pop10
 	i32.store	8($0), $0
@@ -55,8 +55,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32

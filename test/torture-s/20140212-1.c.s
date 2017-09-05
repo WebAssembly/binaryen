@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20140212-1.c"
+	.file	"20140212-1.c"
 	.section	.text.fn1,"ax",@progbits
-	.hidden	fn1
+	.hidden	fn1                     # -- Begin function fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
@@ -72,9 +72,9 @@ fn1:                                    # @fn1
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -157,7 +157,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	d                       # @d
 	.type	d,@object
 	.section	.data.d,"aw",@progbits
@@ -256,5 +256,5 @@ h:
 	.size	h, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

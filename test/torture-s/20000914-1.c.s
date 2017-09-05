@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000914-1.c"
+	.file	"20000914-1.c"
 	.section	.text.blah,"ax",@progbits
-	.hidden	blah
+	.hidden	blah                    # -- Begin function blah
 	.globl	blah
 	.type	blah,@function
 blah:                                   # @blah
@@ -13,9 +13,9 @@ blah:                                   # @blah
 	.endfunc
 .Lfunc_end0:
 	.size	blah, .Lfunc_end0-blah
-
+                                        # -- End function
 	.section	.text.convert_like_real,"ax",@progbits
-	.hidden	convert_like_real
+	.hidden	convert_like_real       # -- Begin function convert_like_real
 	.globl	convert_like_real
 	.type	convert_like_real,@function
 convert_like_real:                      # @convert_like_real
@@ -36,9 +36,9 @@ convert_like_real:                      # @convert_like_real
 	.endfunc
 .Lfunc_end1:
 	.size	convert_like_real, .Lfunc_end1-convert_like_real
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -57,9 +57,9 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	malloc, i32, i32
 	.functype	exit, void, i32

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/frame-address.c"
+	.file	"frame-address.c"
 	.section	.text.check_fa_work,"ax",@progbits
-	.hidden	check_fa_work
+	.hidden	check_fa_work           # -- Begin function check_fa_work
 	.globl	check_fa_work
 	.type	check_fa_work,@function
 check_fa_work:                          # @check_fa_work
@@ -9,10 +9,10 @@ check_fa_work:                          # @check_fa_work
 	.result 	i32
 	.local  	i32
 # BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push18=, $pop9, $pop10
+	i32.sub 	$push18=, $pop8, $pop10
 	tee_local	$push17=, $2=, $pop18
 	i32.const	$push0=, 0
 	i32.store8	15($pop17), $pop0
@@ -39,9 +39,9 @@ check_fa_work:                          # @check_fa_work
 	.endfunc
 .Lfunc_end0:
 	.size	check_fa_work, .Lfunc_end0-check_fa_work
-
+                                        # -- End function
 	.section	.text.check_fa_mid,"ax",@progbits
-	.hidden	check_fa_mid
+	.hidden	check_fa_mid            # -- Begin function check_fa_mid
 	.globl	check_fa_mid
 	.type	check_fa_mid,@function
 check_fa_mid:                           # @check_fa_mid
@@ -62,9 +62,9 @@ check_fa_mid:                           # @check_fa_mid
 	.endfunc
 .Lfunc_end1:
 	.size	check_fa_mid, .Lfunc_end1-check_fa_mid
-
+                                        # -- End function
 	.section	.text.check_fa,"ax",@progbits
-	.hidden	check_fa
+	.hidden	check_fa                # -- Begin function check_fa
 	.globl	check_fa
 	.type	check_fa,@function
 check_fa:                               # @check_fa
@@ -73,10 +73,10 @@ check_fa:                               # @check_fa
 	.local  	i32, i32
 # BB#0:                                 # %entry
 	i32.const	$push5=, 0
-	i32.const	$push2=, 0
-	i32.load	$push3=, __stack_pointer($pop2)
+	i32.const	$push3=, 0
+	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push12=, $pop3, $pop4
+	i32.sub 	$push12=, $pop2, $pop4
 	tee_local	$push11=, $2=, $pop12
 	i32.store	__stack_pointer($pop5), $pop11
 	i32.const	$push9=, 15
@@ -92,9 +92,9 @@ check_fa:                               # @check_fa
 	.endfunc
 .Lfunc_end2:
 	.size	check_fa, .Lfunc_end2-check_fa
-
+                                        # -- End function
 	.section	.text.how_much,"ax",@progbits
-	.hidden	how_much
+	.hidden	how_much                # -- Begin function how_much
 	.globl	how_much
 	.type	how_much,@function
 how_much:                               # @how_much
@@ -105,9 +105,9 @@ how_much:                               # @how_much
 	.endfunc
 .Lfunc_end3:
 	.size	how_much, .Lfunc_end3-how_much
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -128,7 +128,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void

@@ -1,7 +1,7 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20001031-1.c"
+	.file	"20001031-1.c"
 	.section	.text.t1,"ax",@progbits
-	.hidden	t1
+	.hidden	t1                      # -- Begin function t1
 	.globl	t1
 	.type	t1,@function
 t1:                                     # @t1
@@ -20,9 +20,9 @@ t1:                                     # @t1
 	.endfunc
 .Lfunc_end0:
 	.size	t1, .Lfunc_end0-t1
-
+                                        # -- End function
 	.section	.text.t2,"ax",@progbits
-	.hidden	t2
+	.hidden	t2                      # -- Begin function t2
 	.globl	t2
 	.type	t2,@function
 t2:                                     # @t2
@@ -33,9 +33,9 @@ t2:                                     # @t2
 	.endfunc
 .Lfunc_end1:
 	.size	t2, .Lfunc_end1-t2
-
+                                        # -- End function
 	.section	.text.t3,"ax",@progbits
-	.hidden	t3
+	.hidden	t3                      # -- Begin function t3
 	.globl	t3
 	.type	t3,@function
 t3:                                     # @t3
@@ -54,9 +54,9 @@ t3:                                     # @t3
 	.endfunc
 .Lfunc_end2:
 	.size	t3, .Lfunc_end2-t3
-
+                                        # -- End function
 	.section	.text.t4,"ax",@progbits
-	.hidden	t4
+	.hidden	t4                      # -- Begin function t4
 	.globl	t4
 	.type	t4,@function
 t4:                                     # @t4
@@ -67,9 +67,9 @@ t4:                                     # @t4
 	.endfunc
 .Lfunc_end3:
 	.size	t4, .Lfunc_end3-t4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
@@ -81,8 +81,8 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
 	.functype	abort, void
 	.functype	exit, void, i32
