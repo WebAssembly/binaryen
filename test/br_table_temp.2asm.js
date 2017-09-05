@@ -49531,7 +49531,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$20() {
-  var $$0 = 0, $$1 = 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0;
   fake_return_waka123 : {
    loop_in : do {
     $$0 = 3;
@@ -49549,7 +49549,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$21() {
-  var $$0 = 0, $$1 = 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0;
   fake_return_waka123 : {
    loop_in : do {
     dummy();
@@ -49677,7 +49677,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$31() {
-  var $$0 = 0, $$1 = 0, $$2 = 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0;
   $$if : {
    $$0 = 2;
    $$1 = $$0;
@@ -49686,8 +49686,8 @@ function asmFunc(global, env, buffer) {
     break $$if;
    };
   };
-  $$2 = $$1;
-  return $$2 | 0;
+  $$3 = $$1;
+  return $$3 | 0;
  }
  
  function $$32($$0, $$1) {
