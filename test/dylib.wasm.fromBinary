@@ -16,7 +16,7 @@
  (export "runPostSets" (func $1))
  (export "_str" (global $global$2))
  (func $0 (type $1) (result i32)
-  (block $label$0 (result i32)
+  (block $label$1 (result i32)
    (drop
     (call $import$1
      (get_global $import$0)
@@ -29,7 +29,7 @@
   (nop)
  )
  (func $2 (type $2)
-  (block $label$0
+  (block $label$1
    (set_global $global$0
     (i32.add
      (get_global $import$0)

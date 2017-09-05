@@ -906,8 +906,13 @@ public:
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, size_t start, size_t end);
   void visitBlock(Block *curr);
-  Expression* getMaybeBlock(WasmType type);
+
+  // Gets a potential list of instructions. This is not a block and cannot be
+  // branched to.
+  Expression* getList(WasmType type);
+  // Gets a potential block. This may be branched to.
   Expression* getBlock(WasmType type);
+
   void visitIf(If *curr);
   void visitLoop(Loop *curr);
   BreakTarget getBreakTarget(int32_t offset);

@@ -50,7 +50,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (func $stackAlloc (type $1) (param $var$0 i32) (result i32)
   (local $var$1 i32)
-  (block $label$0
+  (block $label$1
    (set_local $var$1
     (get_global $global$3)
    )
@@ -85,7 +85,7 @@
   )
  )
  (func $establishStackSpace (type $0) (param $var$0 i32) (param $var$1 i32)
-  (block $label$0
+  (block $label$1
    (set_global $global$3
     (get_local $var$0)
    )
@@ -100,7 +100,7 @@
     (get_global $global$7)
     (i32.const 0)
    )
-   (block $label$0
+   (block
     (set_global $global$7
      (get_local $var$0)
     )
@@ -123,7 +123,7 @@
   (local $var$10 i32)
   (local $var$11 i32)
   ;;@ fib.c:8:0
-  (block $label$0
+  (block $label$1
    (set_local $var$11
     (get_global $global$3)
    )
@@ -138,7 +138,7 @@
    (if
     ;;@ fib.c:3:0
     (get_local $var$6)
-    (block $label$1
+    (block
      (set_local $var$1
       (i32.const 0)
      )
@@ -149,7 +149,7 @@
       (i32.const 0)
      )
     )
-    (block $label$2
+    (block
      (set_local $var$4
       (i32.const 1)
      )
@@ -160,8 +160,8 @@
     )
    )
    ;;@ fib.c:3:0
-   (loop $label$3
-    (block $label$4
+   (loop $label$4
+    (block $label$5
      ;;@ fib.c:4:0
      (set_local $var$3
       (i32.add
@@ -184,13 +184,13 @@
      )
      (if
       (get_local $var$7)
-      (block $label$5
+      (block
        (set_local $var$4
         (get_local $var$3)
        )
-       (br $label$4)
+       (br $label$5)
       )
-      (block $label$6
+      (block
        (set_local $var$2
         (get_local $var$5)
        )
@@ -205,7 +205,7 @@
        )
       )
      )
-     (br $label$3)
+     (br $label$4)
     )
    )
    ;;@ fib.c:8:0

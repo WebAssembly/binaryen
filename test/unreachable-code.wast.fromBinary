@@ -4,48 +4,34 @@
  (func $a (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
+   (unreachable)
   )
  )
  (func $b (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
-   (block $label$1
-    (unreachable)
-   )
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-block (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
+   (unreachable)
   )
  )
  (func $b-block (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
-   (block $label$1
-    (unreachable)
-   )
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-prepost (type $0)
   (nop)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
+   (unreachable)
   )
   (nop)
  )
@@ -53,54 +39,44 @@
   (nop)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
-   (block $label$1
-    (unreachable)
-   )
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-block-prepost (type $0)
   (nop)
-  (block $label$0
+  (block $label$1
    (if
     (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
+    (unreachable)
    )
   )
   (nop)
  )
  (func $b-block-prepost (type $0)
   (nop)
-  (block $label$0
+  (block $label$1
    (if
     (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-    (block $label$2
-     (unreachable)
-    )
+    (unreachable)
+    (unreachable)
    )
   )
  )
  (func $recurse (type $0)
   (nop)
-  (block $label$0
+  (block $label$1
    (nop)
-   (br $label$0)
+   (br $label$1)
   )
   (nop)
  )
  (func $recurse-b (type $0)
-  (block $label$0
+  (block $label$1
    (nop)
-   (block $label$1
+   (block $label$2
     (nop)
-    (br $label$0)
+    (br $label$1)
    )
   )
  )

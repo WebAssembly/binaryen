@@ -1633,7 +1633,7 @@ void WasmBinaryBuilder::readFunctions() {
       breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
-      func->body = getMaybeBlock(func->result);
+      func->body = getBlock(func->result);
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
@@ -2225,11 +2225,11 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
+Expression* WasmBinaryBuilder::getList(WasmType type) {
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
-  if (start - end == 1) {
+  if (end - start == 1) {
     return popExpression();
   }
   if (start > end) {
@@ -2244,9 +2244,21 @@ Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
 Expression* WasmBinaryBuilder::getBlock(WasmType type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
-  auto* block = Builder(wasm).blockify(getMaybeBlock(type));
+  auto start = expressionStack.size();
+  processExpressions();
+  size_t end = expressionStack.size();
   breakStack.pop_back();
-  block->cast<Block>()->name = label;
+  auto* block = allocator.alloc<Block>();
+  pushBlockElements(block, start, end);
+  block->name = label;
+  block->finalize(type);
+  // maybe we don't need a block here?
+  if (!brokenTo(block)) {
+    block->name = Name();
+    if (block->list.size() == 1) {
+      return block->list[0];
+    }
+  }
   return block;
 }
 
@@ -2269,7 +2281,7 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
   curr->type = getWasmType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
-  curr->body = getMaybeBlock(curr->type);
+  curr->body = getList(curr->type);
   breakStack.pop_back();
   curr->finalize(curr->type);
 }

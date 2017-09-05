@@ -50,7 +50,7 @@
   (set_local $1
    (i64.const 1)
   )
-  (loop $label$2
+  (loop $label$3
    (if
     (i64.ne
      (get_local $0)
@@ -69,7 +69,7 @@
        (i64.const 1)
       )
      )
-     (br $label$2)
+     (br $label$3)
     )
    )
   )
@@ -85,14 +85,14 @@
     (get_local $0)
     (i64.const 2)
    )
-   (loop $label$2
+   (loop $label$3
     (set_local $1
      (i64.mul
       (get_local $1)
       (get_local $0)
      )
     )
-    (br_if $label$2
+    (br_if $label$3
      (i64.gt_s
       (tee_local $0
        (i64.add
