@@ -60,21 +60,7 @@ public:
   Pass* create() override { return new BinaryenTrapMode(mode); }
 
   void visitUnary(Unary* curr) {
-    switch (curr->op) {
-    case UnaryOp::TruncSFloat32ToInt32:
-    case UnaryOp::TruncSFloat32ToInt64:
-    case UnaryOp::TruncSFloat64ToInt32:
-    case UnaryOp::TruncSFloat64ToInt64:
-    case UnaryOp::TruncUFloat32ToInt32:
-    case UnaryOp::TruncUFloat32ToInt64:
-    case UnaryOp::TruncUFloat64ToInt32:
-    case UnaryOp::TruncUFloat64ToInt64:
-      replaceCurrent(makeTrappingFloatToInt(curr));
-      break;
-
-    default:
-      break;
-    }
+    replaceCurrent(makeTrappingFloatToInt(curr));
   }
 
   void visitBinary(Binary* curr) {
@@ -168,9 +154,24 @@ public:
 
   // Some conversions might trap, so emit them safely if necessary
   Expression* makeTrappingFloatToInt(Unary* curr) {
+    switch (curr->op) {
+    case UnaryOp::TruncSFloat32ToInt32:
+    case UnaryOp::TruncSFloat32ToInt64:
+    case UnaryOp::TruncSFloat64ToInt32:
+    case UnaryOp::TruncSFloat64ToInt64:
+    case UnaryOp::TruncUFloat32ToInt32:
+    case UnaryOp::TruncUFloat32ToInt64:
+    case UnaryOp::TruncUFloat64ToInt32:
+    case UnaryOp::TruncUFloat64ToInt64:
+      break;
+    default:
+      return curr;
+    }
+
     if (mode == FloatTrapMode::Allow) {
       return curr;
     }
+
     WasmType type = curr->value->type;
     WasmType retType = curr->type;
     bool isF64 = type == f64;
@@ -211,24 +212,26 @@ public:
     } else { // !isF64 && !isI64
       name = F32_TO_INT;
     }
-    UnaryOp truncOp = curr->op;
-    BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
-    BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
-    BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
-    Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
-                         : Literal(std::numeric_limits<int32_t>::min());
-    Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
-                         : Literal(std::numeric_limits<int32_t>::max());
-    Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
-                         : Literal( float(iMin.getInteger()) - 1);
-    Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
-                         : Literal( float(iMax.getInteger()) + 1);
     Call *ret = allocator.alloc<Call>();
     ret->target = name;
     ret->operands.push_back(curr->value);
     ret->type = retType;
     if (addedFunctions.count(name) == 0) {
       Builder builder(wasm);
+
+      UnaryOp truncOp = curr->op;
+      BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
+      BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
+      BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
+      Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
+                           : Literal(std::numeric_limits<int32_t>::min());
+      Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
+                           : Literal(std::numeric_limits<int32_t>::max());
+      Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
+                           : Literal( float(iMin.getInteger()) - 1);
+      Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
+                           : Literal( float(iMax.getInteger()) + 1);
+
       auto func = new Function;
       func->name = name;
       func->params.push_back(type);
@@ -236,7 +239,8 @@ public:
       func->body = builder.makeUnary(truncOp,
         builder.makeGetLocal(0, type)
       );
-      // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
+      // too small XXX this is different than asm.js, which does frem. here we
+      // clamp, which is much simpler/faster, and similar to native builds
       func->body = builder.makeIf(
         builder.makeBinary(leOp,
           builder.makeGetLocal(0, type),
