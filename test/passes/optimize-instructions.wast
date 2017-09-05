@@ -2321,6 +2321,27 @@
         (i32.add (get_local $1) (i32.const 1))
       )
     )
+    (drop
+      (if (result i32)
+        (get_local $0)
+        (i32.add (get_local $1) (unreachable)) ;; folding them would change the type of the if
+        (i32.add (get_local $1) (unreachable))
+      )
+    )
+    (drop
+      (if (result i32)
+        (tee_local $0 (get_local $1)) ;; side effects!
+        (i32.add (get_local $1) (unreachable)) ;; folding them would change the type of the if
+        (i32.add (get_local $1) (unreachable))
+      )
+    )
+    (drop
+      (if (result i32)
+        (unreachable) ;; !!!
+        (i32.add (get_local $1) (unreachable)) ;; folding them would change the type of the if
+        (i32.add (get_local $1) (unreachable))
+      )
+    )
   )
   (func $select-parallel (param $0 i32) (param $1 i32)
     (drop
