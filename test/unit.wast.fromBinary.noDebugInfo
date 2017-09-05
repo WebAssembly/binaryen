@@ -19,22 +19,20 @@
  (export "big_negative" (func $0))
  (func $0 (type $1)
   (local $var$0 f64)
-  (block $label$0
-   (set_local $var$0
-    (f64.const -2147483648)
-   )
-   (set_local $var$0
-    (f64.const -2147483648)
-   )
-   (set_local $var$0
-    (f64.const -21474836480)
-   )
-   (set_local $var$0
-    (f64.const 0.039625)
-   )
-   (set_local $var$0
-    (f64.const -0.039625)
-   )
+  (set_local $var$0
+   (f64.const -2147483648)
+  )
+  (set_local $var$0
+   (f64.const -2147483648)
+  )
+  (set_local $var$0
+   (f64.const -21474836480)
+  )
+  (set_local $var$0
+   (f64.const 0.039625)
+  )
+  (set_local $var$0
+   (f64.const -0.039625)
   )
  )
  (func $1 (type $4) (result f64)
@@ -166,23 +164,21 @@
  (func $5 (type $1)
   (local $var$0 i32)
   (local $var$1 f64)
-  (block $label$0
-   (set_local $var$0
-    (call $import$1
-     (get_local $var$1)
-    )
+  (set_local $var$0
+   (call $import$1
+    (get_local $var$1)
    )
-   (set_local $var$1
-    (f64.convert_s/i32
+  )
+  (set_local $var$1
+   (f64.convert_s/i32
+    (get_local $var$0)
+   )
+  )
+  (set_local $var$1
+   (f64.convert_u/i32
+    (i32.shr_u
      (get_local $var$0)
-    )
-   )
-   (set_local $var$1
-    (f64.convert_u/i32
-     (i32.shr_u
-      (get_local $var$0)
-      (i32.const 0)
-     )
+     (i32.const 0)
     )
    )
   )
@@ -297,43 +293,39 @@
  )
  (func $10 (type $5) (result i32)
   (local $var$0 i32)
-  (block $label$0 (result i32)
-   (set_local $var$0
-    (i32.and
-     (i32.div_u
-      (i32.const -1)
-      (i32.const 2)
-     )
+  (set_local $var$0
+   (i32.and
+    (i32.div_u
      (i32.const -1)
+     (i32.const 2)
     )
+    (i32.const -1)
    )
-   (get_local $var$0)
   )
+  (get_local $var$0)
  )
  (func $11 (type $0) (param $var$0 f32)
   (local $var$1 f32)
   (local $var$2 f64)
-  (block $label$0
-   (drop
-    (f32.demote/f64
-     (get_local $var$2)
-    )
+  (drop
+   (f32.demote/f64
+    (get_local $var$2)
    )
-   (drop
-    (get_local $var$1)
-   )
-   (drop
-    (f32.const 5)
-   )
-   (drop
-    (f32.const 0)
-   )
-   (drop
-    (f32.const 5)
-   )
-   (drop
-    (f32.const 0)
-   )
+  )
+  (drop
+   (get_local $var$1)
+  )
+  (drop
+   (f32.const 5)
+  )
+  (drop
+   (f32.const 0)
+  )
+  (drop
+   (f32.const 5)
+  )
+  (drop
+   (f32.const 0)
   )
  )
  (func $12 (type $4) (result f64)
@@ -344,54 +336,50 @@
   (local $var$1 i32)
   (local $var$2 f32)
   (local $var$3 f64)
-  (block $label$0
-   (set_local $var$0
-    (block $label$1 (result i32)
-     (set_local $var$1
+  (set_local $var$0
+   (block $label$0 (result i32)
+    (set_local $var$1
+     (i32.const 0)
+    )
+    (select
+     (i32.sub
+      (i32.const 0)
+      (get_local $var$1)
+     )
+     (get_local $var$1)
+     (i32.lt_s
+      (get_local $var$1)
       (i32.const 0)
      )
-     (select
-      (i32.sub
-       (i32.const 0)
-       (get_local $var$1)
-      )
-      (get_local $var$1)
-      (i32.lt_s
-       (get_local $var$1)
-       (i32.const 0)
-      )
-     )
     )
    )
-   (set_local $var$3
-    (f64.abs
-     (f64.const 0)
-    )
+  )
+  (set_local $var$3
+   (f64.abs
+    (f64.const 0)
    )
-   (set_local $var$2
-    (f32.abs
-     (f32.const 0)
-    )
+  )
+  (set_local $var$2
+   (f32.abs
+    (f32.const 0)
    )
   )
  )
  (func $14 (type $1)
   (local $var$0 f32)
-  (block $label$0
-   (set_local $var$0
-    (f32.neg
-     (get_local $var$0)
-    )
-   )
-   (call_indirect $0
+  (set_local $var$0
+   (f32.neg
     (get_local $var$0)
-    (i32.add
-     (i32.and
-      (i32.const 1)
-      (i32.const 7)
-     )
-     (i32.const 8)
+   )
+  )
+  (call_indirect $0
+   (get_local $var$0)
+   (i32.add
+    (i32.and
+     (i32.const 1)
+     (i32.const 7)
     )
+    (i32.const 8)
    )
   )
  )
@@ -426,15 +414,13 @@
   (nop)
  )
  (func $19 (type $5) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
-    (drop
-     (i32.const 1)
-    )
-    (br $label$1)
+  (block $label$0
+   (drop
+    (i32.const 1)
    )
-   (i32.const 0)
+   (br $label$0)
   )
+  (i32.const 0)
  )
  (func $20 (type $7) (param $var$0 f64) (result f64)
   (loop $label$0 (result f64)
@@ -469,13 +455,11 @@
   )
  )
  (func $25 (type $5) (result i32)
-  (block $label$0
-   (drop
-    (i32.const 1)
-   )
-   (return
-    (i32.const 2)
-   )
+  (drop
+   (i32.const 1)
+  )
+  (return
+   (i32.const 2)
   )
  )
  (func $26 (type $5) (result i32)
@@ -486,22 +470,18 @@
   )
  )
  (func $27 (type $5) (result i32)
-  (block $label$0
-   (return
-    (i32.const 2)
-   )
+  (return
+   (i32.const 2)
   )
  )
  (func $28 (type $5) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
-    (drop
-     (i32.const 1)
-    )
-    (br $label$1)
+  (block $label$0
+   (drop
+    (i32.const 1)
    )
-   (i32.const 1)
+   (br $label$0)
   )
+  (i32.const 1)
  )
  (func $29 (type $5) (result i32)
   (if
@@ -564,9 +544,7 @@
   )
  )
  (func $35 (type $1)
-  (block $label$0
-   (unreachable)
-  )
+  (unreachable)
  )
  (func $36 (type $1)
   (if
