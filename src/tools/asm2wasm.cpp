@@ -18,6 +18,7 @@
 // asm2wasm console tool
 //
 
+#include "passes/FloatTrap.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -26,8 +27,6 @@
 #include "wasm-io.h"
 #include "wasm-validator.h"
 #include "optimization-options.h"
-
-#include "float-clamp.h"
 
 #include "asm2wasm.h"
 

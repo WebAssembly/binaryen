@@ -18,7 +18,7 @@
 // wasm2asm console tool
 //
 
-#include "float-clamp.h"
+#include "passes/FloatTrap.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"

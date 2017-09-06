@@ -28,6 +28,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "passes/FloatTrap.h"
 #include "passes/passes.h"
 #include "pass.h"
 #include "parsing.h"
@@ -36,8 +37,6 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
-
-#include "float-clamp.h"
 
 namespace wasm {
 

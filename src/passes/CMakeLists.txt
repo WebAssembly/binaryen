@@ -7,6 +7,7 @@ SET(passes_SOURCES
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
+  FloatTrap.cpp
   FlattenControlFlow.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
