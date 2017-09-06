@@ -46,6 +46,8 @@ public:
     JS
   };
 
+  // Needs to be non-parallel so that visitModule gets called after visiting
+  // each node in the module, so we can add the functions that we created.
   bool isFunctionParallel() override { return false; }
 
   FloatTrap(Mode mode)
@@ -73,6 +75,8 @@ public:
 
 private:
   Mode mode;
+  // Need to defer adding generated functions because adding functions while
+  // iterating over existing functions causes problems.
   std::map<Name, Function*> addedFunctions;
   bool addedF64ToI64JSImport;
 
