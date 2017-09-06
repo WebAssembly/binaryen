@@ -110,6 +110,16 @@ Name I32_CTTZ("i32_cttz"),
      MFTCALL("mftCall_"),
      MAX_("max"),
      MIN_("min"),
+     ATOMICS("Atomics"),
+     ATOMICS_LOAD("load"),
+     ATOMICS_STORE("store"),
+     ATOMICS_EXCHANGE("exchange"),
+     ATOMICS_COMPARE_EXCHANGE("compareExchange"),
+     ATOMICS_ADD("add"),
+     ATOMICS_SUB("sub"),
+     ATOMICS_AND("and"),
+     ATOMICS_OR("or"),
+     ATOMICS_XOR("xor"),
      EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
@@ -423,6 +433,17 @@ private:
   IString Math_sqrt;
   IString Math_max;
   IString Math_min;
+
+  // Imported names of Atomics.*
+  IString Atomics_load;
+  IString Atomics_store;
+  IString Atomics_exchange;
+  IString Atomics_compareExchange;
+  IString Atomics_add;
+  IString Atomics_sub;
+  IString Atomics_and;
+  IString Atomics_or;
+  IString Atomics_xor;
 
   IString llvm_cttz_i32;
 
@@ -1012,6 +1033,44 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         } else if (imported[2] == MIN_) {
           assert(Math_min.isNull());
           Math_min = name;
+          return;
+        }
+      } else if (module[2] == ATOMICS) {
+        if (imported[2] == ATOMICS_LOAD) {
+          assert(Atomics_load.isNull());
+          Atomics_load = name;
+          return;
+        } else if (imported[2] == ATOMICS_STORE) {
+          assert(Atomics_store.isNull());
+          Atomics_store = name;
+          return;
+        } else if (imported[2] == ATOMICS_EXCHANGE) {
+          assert(Atomics_exchange.isNull());
+          Atomics_exchange = name;
+          return;
+        } else if (imported[2] == ATOMICS_COMPARE_EXCHANGE) {
+          assert(Atomics_compareExchange.isNull());
+          Atomics_compareExchange = name;
+          return;
+        } else if (imported[2] == ATOMICS_ADD) {
+          assert(Atomics_add.isNull());
+          Atomics_add = name;
+          return;
+        } else if (imported[2] == ATOMICS_SUB) {
+          assert(Atomics_sub.isNull());
+          Atomics_sub = name;
+          return;
+        } else if (imported[2] == ATOMICS_AND) {
+          assert(Atomics_and.isNull());
+          Atomics_and = name;
+          return;
+        } else if (imported[2] == ATOMICS_OR) {
+          assert(Atomics_or.isNull());
+          Atomics_or = name;
+          return;
+        } else if (imported[2] == ATOMICS_XOR) {
+          assert(Atomics_xor.isNull());
+          Atomics_xor = name;
           return;
         }
       }
@@ -2056,6 +2115,51 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           }
           ret->type = ret->left->type;
           return ret;
+        }
+        if (name == Atomics_load ||
+            name == Atomics_store ||
+            name == Atomics_exchange ||
+            name == Atomics_compareExchange ||
+            name == Atomics_add ||
+            name == Atomics_sub ||
+            name == Atomics_and ||
+            name == Atomics_or ||
+            name == Atomics_xor) {
+          // atomic operation
+          Ref target = ast[2][0];
+          assert(target->isString());
+          IString heap = target->getIString();
+          assert(views.find(heap) != views.end());
+          View& view = views[heap];
+          wasm.memory.shared = true;
+          if (name == Atomics_load) {
+            return builder.makeAtomicLoad(view.bytes, view.signed_, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
+          } else if (name == Atomics_store) {
+            // asm.js stores return the value, wasm does not
+            auto type = asmToWasmType(view.type);
+            auto temp = Builder::addVar(function, type);
+            return builder.makeSequence(
+              builder.makeAtomicStore(view.bytes, 0, processUnshifted(ast[2][1], view.bytes),
+                                      builder.makeTeeLocal(temp, process(ast[2][2])),
+                                      type),
+              builder.makeGetLocal(temp, type)
+            );
+          } else if (name == Atomics_exchange) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_compareExchange) {
+            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
+          } else if (name == Atomics_add) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_sub) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Sub, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_and) {
+            return builder.makeAtomicRMW(AtomicRMWOp::And, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_or) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Or, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_xor) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Xor, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          }
+          WASM_UNREACHABLE();
         }
         bool tableCall = false;
         if (wasmOnly) {
