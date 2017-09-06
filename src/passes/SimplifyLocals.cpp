@@ -348,7 +348,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->cast<Break>();
       assert(!br->value);
-      // if the break is conditional, then we must set the value here - if the break is not taken, we must still have the new value in the local
+      // if the break is conditional, then we must set the value here - if the break is not reached, we must still have the new value in the local
       auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
       if (br->condition) {
         br->value = set;

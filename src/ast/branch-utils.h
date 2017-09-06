@@ -24,24 +24,23 @@ namespace wasm {
 
 namespace BranchUtils {
 
-// branches not actually taken (e.g. (br $out (unreachable)))
-// are trivially ignored in our type system
+// Some branches are obviously not actually reachable (e.g. (br $out (unreachable)))
 
-inline bool isBranchTaken(Break* br) {
+inline bool isBranchReachable(Break* br) {
   return !(br->value     && br->value->type     == unreachable) &&
          !(br->condition && br->condition->type == unreachable);
 }
 
-inline bool isBranchTaken(Switch* sw) {
+inline bool isBranchReachable(Switch* sw) {
   return !(sw->value && sw->value->type     == unreachable) &&
                         sw->condition->type != unreachable;
 }
 
-inline bool isBranchTaken(Expression* expr) {
+inline bool isBranchReachable(Expression* expr) {
   if (auto* br = expr->dynCast<Break>()) {
-    return isBranchTaken(br);
+    return isBranchReachable(br);
   } else if (auto* sw = expr->dynCast<Switch>()) {
-    return isBranchTaken(sw);
+    return isBranchReachable(sw);
   }
   WASM_UNREACHABLE();
 }
@@ -103,8 +102,9 @@ inline std::set<Name> getBranchTargets(Expression* ast) {
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-// By default we consider untaken branches (so any named use). You can unset named to
-// avoid that (and only note branches that are not obviously unreachable)
+// By default we consider all branches, so any place there is a branch that
+// names the target. You can unset 'named' to only note branches that appear
+// reachable (i.e., are not obviously unreachable).
 struct BranchSeeker : public PostWalker<BranchSeeker> {
   Name target;
   bool named = true;
@@ -144,7 +144,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     if (curr->default_ == target) noteFound(curr->value);
   }
 
-  static bool hasTaken(Expression* tree, Name target) {
+  static bool hasReachable(Expression* tree, Name target) {
     if (!target.is()) return false;
     BranchSeeker seeker(target);
     seeker.named = false;
@@ -152,7 +152,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     return seeker.found > 0;
   }
 
-  static Index countTaken(Expression* tree, Name target) {
+  static Index countReachable(Expression* tree, Name target) {
     if (!target.is()) return 0;
     BranchSeeker seeker(target);
     seeker.named = false;

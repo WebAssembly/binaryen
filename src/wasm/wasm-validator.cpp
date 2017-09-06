@@ -58,7 +58,6 @@ void WasmValidator::visitBlock(Block *curr) {
       }
     }
     breakTargets.erase(curr->name);
-    namedBreakTargets.erase(curr->name);
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
@@ -88,7 +87,6 @@ void WasmValidator::visitLoop(Loop *curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
     breakTargets.erase(curr->name);
-    namedBreakTargets.erase(curr->name);
     if (breakInfos.count(curr) > 0) {
       auto& info = breakInfos[curr];
       shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
@@ -128,7 +126,6 @@ void WasmValidator::visitIf(If *curr) {
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  namedBreakTargets.insert(name);
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -550,9 +547,7 @@ void WasmValidator::visitFunction(Function *curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist") && !quiet) {
-    std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
-  }
+  shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
 }

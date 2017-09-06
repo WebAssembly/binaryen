@@ -670,7 +670,7 @@ void WasmBinaryWriter::visitBreak(Break *curr) {
     // then either the condition or the value is unreachable, which is
     // extremely rare, and may require us to make the stack polymorphic
     // (if the block we branch to has a value, we may lack one as we
-    // are not a taken branch; the wasm spec on the other hand does
+    // are not a reachable branch; the wasm spec on the other hand does
     // presume the br_if emits a value of the right type, even if it
     // popped unreachable)
     o << int8_t(BinaryConsts::Unreachable);
@@ -683,11 +683,10 @@ void WasmBinaryWriter::visitSwitch(Switch *curr) {
     recurse(curr->value);
   }
   recurse(curr->condition);
-  if (!BranchUtils::isBranchTaken(curr)) {
-    // if the branch is not taken, then it's dangerous to emit it, as
-    // wasm type checking rules are stricter than ours - we tolerate
-    // an untaken branch to a target with a different value, but not
-    // wasm. so just don't emit it
+  if (!BranchUtils::isBranchReachable(curr)) {
+    // if the branch is not reachable, then it's dangerous to emit it, as
+    // wasm type checking rules are different, especially in unreachable
+    // code. so just don't emit that unreachable code.
     o << int8_t(BinaryConsts::Unreachable);
     return;
   }
