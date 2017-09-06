@@ -59,14 +59,9 @@ Expression* FloatTrap::makeTrappingBinary(Binary* curr) {
 
   // the wasm operation might trap if done over 0, so generate a safe call
   WasmType type = curr->type;
-  MixedArena& allocator(getModule()->allocator);
-  auto *call = allocator.alloc<Call>();
-  call->target = name;
-  call->operands.push_back(curr->left);
-  call->operands.push_back(curr->right);
-  call->type = type;
+  Builder builder(*getModule());
   ensureBinaryFunc(curr);
-  return call;
+  return builder.makeCall(name, {curr->left, curr->right}, type);
 }
 
 Expression* FloatTrap::makeTrappingUnary(Unary* curr) {
@@ -75,28 +70,21 @@ Expression* FloatTrap::makeTrappingUnary(Unary* curr) {
     return curr;
   }
 
-  Module& wasm = *getModule();
-  MixedArena& allocator(wasm.allocator);
+  Module* wasm = getModule();
+  Builder builder(*wasm);
   // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
   // We can handle this in one of two ways: clamping, which is fast, or JS, which
   // is precisely like JS but in order to do that we do a slow ffi
   // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
   if (curr->type != i64 && mode == Mode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-    CallImport *ret = allocator.alloc<CallImport>();
-    ret->target = F64_TO_INT;
-    ret->operands.push_back(ensureDouble(curr->value, allocator));
-    ret->type = i32;
     ensureF64ToI64JSImport();
-    return ret;
+    Expression* f64Value = ensureDouble(curr->value, wasm->allocator);
+    return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
   }
 
-  Call *ret = allocator.alloc<Call>();
-  ret->target = name;
-  ret->operands.push_back(curr->value);
-  ret->type = curr->type;
   ensureUnaryFunc(curr);
-  return ret;
+  return builder.makeCall(name, {curr->value}, curr->type);
 }
 
 void FloatTrap::ensureF64ToI64JSImport() {
