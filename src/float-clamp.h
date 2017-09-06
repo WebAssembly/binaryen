@@ -52,7 +52,7 @@ public:
 
   FloatTrap(Mode mode)
       : mode(mode),
-        addedF64ToI64JSImport(false) {
+        didAddF64ToI64JSImport(false) {
     name = "binaryen-trap-mode";
   }
 
@@ -67,18 +67,18 @@ public:
   }
 
   void visitModule(Module* curr) {
-    for (const auto& pair : addedFunctions) {
+    for (const auto& pair : generatedFunctions) {
       curr->addFunction(pair.second);
     }
-    addedFunctions.clear();
+    generatedFunctions.clear();
   }
 
 private:
   Mode mode;
   // Need to defer adding generated functions because adding functions while
   // iterating over existing functions causes problems.
-  std::map<Name, Function*> addedFunctions;
-  bool addedF64ToI64JSImport;
+  std::map<Name, Function*> generatedFunctions;
+  bool didAddF64ToI64JSImport;
 
   Expression* makeTrappingBinary(Binary* curr) {
     Name name = getBinaryFuncName(curr);
@@ -129,12 +129,12 @@ private:
   }
 
   void ensureF64ToI64JSImport() {
-    if (addedF64ToI64JSImport) {
+    if (didAddF64ToI64JSImport) {
       return;
     }
 
     Module* wasm = getModule();
-    addedF64ToI64JSImport = true;
+    didAddF64ToI64JSImport = true;
     auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
     import->name = F64_TO_INT;
     import->module = ASM2WASM;
@@ -146,7 +146,7 @@ private:
 
   void ensureBinaryFunc(Binary* curr) {
     Name name = getBinaryFuncName(curr);
-    if (addedFunctions.count(name) != 0) {
+    if (generatedFunctions.count(name) != 0) {
       return;
     }
 
@@ -194,12 +194,12 @@ private:
       builder.makeConst(zeroLit),
       result
     );
-    addedFunctions[name] = func;
+    generatedFunctions[name] = func;
   }
 
   void ensureUnaryFunc(Unary *curr) {
     Name name = getUnaryFuncName(curr);
-    if (addedFunctions.count(name) != 0) {
+    if (generatedFunctions.count(name) != 0) {
       return;
     }
 
@@ -260,7 +260,7 @@ private:
       builder.makeConst(iMin),
       func->body
     );
-    addedFunctions[name] = func;
+    generatedFunctions[name] = func;
   }
 
   Name getBinaryFuncName(Binary* curr) {
