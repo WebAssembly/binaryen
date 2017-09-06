@@ -336,7 +336,7 @@ def run_wasm_reduce_tests():
       t = os.path.join('test', 'reduce', t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
+      print run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
@@ -723,6 +723,7 @@ run_wasm_merge_tests()
 run_ctor_eval_tests()
 if has_shell_timeout():
   run_wasm_reduce_tests()
+
 run_spec_tests()
 if MOZJS:
   run_binaryen_js_tests()
