@@ -70,9 +70,7 @@ void WasmValidator::visitBlock(Block *curr) {
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
     if (!isConcreteWasmType(curr->type)) {
-      if (isConcreteWasmType(backType)) {
-        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
-      }
+      shouldBeFalse(isConcreteWasmType(backType), curr, "if block is not returning a value, final element should not flow out a value");
     } else {
       if (isConcreteWasmType(backType)) {
         shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
@@ -118,15 +116,19 @@ void WasmValidator::visitIf(If *curr) {
         shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
       }
     }
+    if (isConcreteWasmType(curr->ifTrue->type)) {
+      shouldBeEqual(curr->type, curr->ifTrue->type, curr, "if type must match concrete ifTrue");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->ifTrue->type, curr, "other arm must match concrete ifTrue");
+    }
+    if (isConcreteWasmType(curr->ifFalse->type)) {
+      shouldBeEqual(curr->type, curr->ifFalse->type, curr, "if type must match concrete ifFalse");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->ifFalse->type, curr, "other arm must match concrete ifFalse");
+    }
   }
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  if (!BranchUtils::isBranchTaken(curr)) {
-    // if not actually taken, just note the name
-    namedBreakTargets.insert(name);
-    return;
-  }
+  namedBreakTargets.insert(name);
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -548,7 +550,7 @@ void WasmValidator::visitFunction(Function *curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist (even if not taken)") && !quiet) {
+  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist") && !quiet) {
     std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
   }
   returnType = unreachable;

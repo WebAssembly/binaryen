@@ -55,16 +55,12 @@
   )
   (func $drop-unreachable-br_if (result i32)
     (block $label$0 (result i32)
-     (drop
-      (block $label$2
-       (drop
-        (br_if $label$2
-         (br $label$0
-          (i32.const 538976371)
-         )
-         (i32.const 1918987552)
-        )
+     (block $label$2 (result i32)
+      (br_if $label$2
+       (br $label$0
+        (i32.const 538976371)
        )
+       (i32.const 1918987552)
       )
      )
     )

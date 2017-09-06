@@ -5,8 +5,10 @@ import os, sys, subprocess, difflib
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE,
+    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM,
     BINARYEN_INSTALL_DIR, has_shell_timeout)
+from scripts.test.wasm2asm import tests, spec_tests, extra_tests
+
 
 print '[ processing and updating testcases... ]\n'
 
@@ -260,6 +262,24 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
     actual = open('a.wast').read()
     out = t + '.out'
     with open(out, 'w') as o: o.write(actual)
+
+print '\n[ checking wasm2asm ]\n'
+
+for wasm in tests + spec_tests + extra_tests:
+  if not wasm.endswith('.wast'):
+    continue
+
+  asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
+  expected_file = os.path.join('test', asm)
+
+  if not os.path.exists(expected_file):
+    continue
+
+  print '..', wasm
+
+  cmd = WASM2ASM + [os.path.join('test', wasm)]
+  out = run_command(cmd)
+  with open(expected_file, 'w') as o: o.write(out)
 
 if has_shell_timeout():
   print '\n[ checking wasm-reduce ]\n'

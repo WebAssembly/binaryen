@@ -919,11 +919,24 @@
     )
    )
   )
-  (func $untaken-br-with-concrete-last-element (result i32)
-   (block $label$8 (result i32)
-    (block $label$11 (result i32)
+  (func $untaken-br-with-concrete-last-element
+   (block $label$8
+    (block $label$11
      (block $label$14
       (br_if $label$14
+       (br $label$11
+       )
+      )
+     )
+    )
+   )
+  )
+  (func $untaken-br-with-concrete-last-element2 (result i32)
+   (block $label$8 (result i32)
+    (block $label$11 (result i32)
+     (block $label$14 (result i32)
+      (br_if $label$14
+       (i32.const 102)
        (br $label$11
         (i32.const 103)
        )
@@ -944,25 +957,29 @@
    )
   )
   (func $unreachable-if-that-could-be-a-br_if (result i64)
-   (loop $label$3
-    (if
-     (unreachable)
-     (f64.const 1)
-     (br $label$3)
+   (loop $label$3 (result i64)
+    (drop
+     (if (result f64)
+      (unreachable)
+      (f64.const 1)
+      (br $label$3)
+     )
     )
     (i64.const 1)
    )
   )
   (func $nop-br-might-update-type
    (block $label$39
-    (if
-     (unreachable)
+    (drop
      (if (result i32)
-      (i32.const 1)
-      (br $label$39) ;; if we nop this, then the parent type must change
+      (unreachable)
+      (if (result i32)
+       (i32.const 1)
+       (br $label$39) ;; if we nop this, then the parent type must change
+       (i32.const 0)
+      )
       (i32.const 0)
      )
-     (i32.const 0)
     )
    )
   )

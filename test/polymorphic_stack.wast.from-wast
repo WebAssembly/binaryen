@@ -85,6 +85,7 @@
   (block $x (result i32)
    (block $block
     (br_if $x
+     (i32.const 0)
      (unreachable)
     )
    )
@@ -99,6 +100,7 @@
   )
   (block $label$0 (result i32)
    (br_if $label$0
+    (i32.const 0)
     (return
      (i32.const -32)
     )
@@ -107,10 +109,26 @@
  )
  (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
   (block $a (result i32)
-   (block $b
+   (block $b (result i32)
     (br_table $a $b
      (unreachable)
      (unreachable)
+    )
+   )
+  )
+ )
+ (func $untaken-br_if (type $1) (result i32)
+  (block $label$8 (result i32)
+   (block $label$9
+    (drop
+     (if
+      (i32.const 0)
+      (br_if $label$8
+       (unreachable)
+       (i32.const 0)
+      )
+      (unreachable)
+     )
     )
    )
   )

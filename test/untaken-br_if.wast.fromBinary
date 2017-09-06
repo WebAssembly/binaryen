@@ -2,15 +2,15 @@
  (type $0 (func (result f32)))
  (memory $0 0)
  (func $binaryify-untaken-br_if (type $0) (result f32)
-  (if
+  (if (result f32)
    (i32.const 1)
-   (block $label$0
+   (block $label$0 (result f32)
     (unreachable)
    )
-   (block $label$1
-    (block $label$2
+   (block $label$1 (result f32)
+    (block $label$2 (result f32)
      (drop
-      (i32.const 1)
+      (f32.const 1)
      )
      (unreachable)
     )

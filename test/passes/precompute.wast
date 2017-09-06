@@ -249,4 +249,35 @@
     (f64.const 4776014875438170098655851e156)
    )
   )
+  (func $refinalize-two-breaks-one-unreachable
+   (drop
+    (block $label$0 (result i64)
+     (br_if $label$0
+      (select
+       (i64.const 1)
+       (block (result i64)
+        (set_global $global$0
+         (i32.const 1)
+        )
+        (br_if $label$0
+         (i64.const -22)
+         (i32.const -1)
+        )
+       )
+       (i32.const 0)
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
+  (func $one-break-value-and-it-is-unreachable (result f64)
+   (local $var$0 i32)
+   (block $label$6 (result f64)
+    (br_if $label$6
+     (unreachable)
+     (i32.const 0)
+    )
+   )
+  )
 )

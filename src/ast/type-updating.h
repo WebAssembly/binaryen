@@ -132,13 +132,9 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
     if (auto* br = curr->dynCast<Break>()) {
-      if (BranchUtils::isBranchTaken(br)) {
-        noteBreakChange(br->name, change, br->value);
-      }
+      noteBreakChange(br->name, change, br->value);
     } else if (auto* sw = curr->dynCast<Switch>()) {
-      if (BranchUtils::isBranchTaken(sw)) {
-        applySwitchChanges(sw, change);
-      }
+      applySwitchChanges(sw, change);
     }
   }
 
@@ -200,34 +196,17 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       auto* child = curr;
       curr = parents[child];
       if (!curr) return;
-      // if a child of a break/switch is now unreachable, the
-      // break may no longer be taken. note that if we get here,
-      // this is an actually new unreachable child of the
-      // node, so if there is just 1 such child, it is us, and
-      // we are newly unreachable
-      if (auto* br = curr->dynCast<Break>()) {
-        int unreachableChildren = 0;
-        if (br->value && br->value->type == unreachable) unreachableChildren++;
-        if (br->condition && br->condition->type == unreachable) unreachableChildren++;
-        if (unreachableChildren == 1) {
-          // the break is no longer taken
-          noteBreakChange(br->name, -1, br->value);
-        }
-      } else if (auto* sw = curr->dynCast<Switch>()) {
-        int unreachableChildren = 0;
-        if (sw->value && sw->value->type == unreachable) unreachableChildren++;
-        if (sw->condition->type == unreachable) unreachableChildren++;
-        if (unreachableChildren == 1) {
-          applySwitchChanges(sw, -1);
-        }
-      }
       // get ready to apply unreachability to this node
       if (curr->type == unreachable) {
         return; // already unreachable, stop here
       }
       // most nodes become unreachable if a child is unreachable,
-      // but exceptions exists
+      // but exceptions exist
       if (auto* block = curr->dynCast<Block>()) {
+        // if the block has a fallthrough, it can keep its type
+        if (isConcreteWasmType(block->list.back()->type)) {
+          return; // did not turn
+        }
         // if the block has breaks, it can keep its type
         if (!block->name.is() || blockInfos[block->name].numBreaks == 0) {
           curr->type = unreachable;
@@ -255,7 +234,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       return; // nothing concrete to change to unreachable
     }
     if (curr->name.is() && blockInfos[curr->name].numBreaks > 0) {
-      return;// has a break, not unreachable
+      return; // has a break, not unreachable
     }
     // look for a fallthrough
     makeBlockUnreachableIfNoFallThrough(curr);
@@ -265,9 +244,13 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     if (curr->type == unreachable) {
       return; // no change possible
     }
+    if (!curr->list.empty() &&
+        isConcreteWasmType(curr->list.back()->type)) {
+      return; // should keep type due to fallthrough, even if has an unreachable child
+    }
     for (auto* child : curr->list) {
       if (child->type == unreachable) {
-        // no fallthrough, this block is now unreachable
+        // no fallthrough, and an unreachable, => this block is now unreachable
         changeTypeTo(curr, unreachable);
         return;
       }

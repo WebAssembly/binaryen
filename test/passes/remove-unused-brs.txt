@@ -332,7 +332,7 @@
     )
    )
    (if
-    (block $block6
+    (block $block6 (result i32)
      (block $block15
       (drop
        (i32.const 2)
@@ -1037,11 +1037,23 @@
    )
   )
  )
- (func $untaken-br-with-concrete-last-element (type $2) (result i32)
-  (block $label$8 (result i32)
-   (block $label$11 (result i32)
+ (func $untaken-br-with-concrete-last-element (type $1)
+  (block $label$8
+   (block $label$11
     (block $label$14
      (br_if $label$8
+      (br $label$8)
+     )
+    )
+   )
+  )
+ )
+ (func $untaken-br-with-concrete-last-element2 (type $2) (result i32)
+  (block $label$8 (result i32)
+   (block $label$11 (result i32)
+    (block $label$14 (result i32)
+     (br_if $label$14
+      (i32.const 102)
       (br $label$11
        (i32.const 103)
       )
@@ -1062,25 +1074,29 @@
   )
  )
  (func $unreachable-if-that-could-be-a-br_if (type $7) (result i64)
-  (loop $label$3
-   (if
-    (unreachable)
-    (f64.const 1)
-    (br $label$3)
+  (loop $label$3 (result i64)
+   (drop
+    (if (result f64)
+     (unreachable)
+     (f64.const 1)
+     (br $label$3)
+    )
    )
    (i64.const 1)
   )
  )
  (func $nop-br-might-update-type (type $1)
   (block $label$39
-   (if
-    (unreachable)
+   (drop
     (if (result i32)
-     (i32.const 1)
-     (br $label$39)
+     (unreachable)
+     (if (result i32)
+      (i32.const 1)
+      (br $label$39)
+      (i32.const 0)
+     )
      (i32.const 0)
     )
-    (i32.const 0)
    )
   )
  )

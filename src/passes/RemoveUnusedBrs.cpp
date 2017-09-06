@@ -394,7 +394,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (list.size() == 1 && curr->name.is()) {
           // if this block has just one child, a sub-block, then jumps to the former are jumps to us, really
           if (auto* child = list[0]->dynCast<Block>()) {
-            if (child->name.is() && child->name != curr->name) {
+            // the two blocks must have the same type for us to update the branch, as otherwise
+            // one block may be unreachable and the other concrete, so one might lack a value
+            if (child->name.is() && child->name != curr->name && child->type == curr->type) {
               auto& breaks = breaksToBlock[child];
               for (auto* br : breaks) {
                 newNames[br] = curr->name;

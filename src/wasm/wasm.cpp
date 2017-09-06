@@ -116,13 +116,12 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   }
 
   void visitBreak(Break* curr) {
-    if (curr->name == targetName && BranchUtils::isBranchTaken(curr)) {
+    if (curr->name == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
     }
   }
 
   void visitSwitch(Switch* curr) {
-    if (!BranchUtils::isBranchTaken(curr)) return;
     for (auto name : curr->targets) {
       if (name == targetName) types.push_back(curr->value ? curr->value->type : none);
     }
@@ -174,16 +173,17 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
 // and there are no branches to it
 static void handleUnreachable(Block* block) {
   if (block->type == unreachable) return; // nothing to do
+  if (block->list.size() == 0) return; // nothing to do
+  // if we are concrete, stop - even an unreachable child
+  // won't change that (since we have a break with a value,
+  // or the final child flows out a value)
+  if (isConcreteWasmType(block->type)) return;
+  // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      BranchUtils::BranchSeeker seeker(block->name);
-      Expression* expr = block;
-      seeker.walk(expr);
-      if (!seeker.found) {
+      if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
         block->type = unreachable;
-      } else {
-        block->type = seeker.valueType;
       }
       return;
     }
@@ -199,19 +199,27 @@ void Block::finalize(WasmType type_) {
 
 void Block::finalize() {
   if (!name.is()) {
-    // nothing branches here, so this is easy
     if (list.size() > 0) {
-      // if we have an unreachable child, we are unreachable
-      // (we don't need to recurse into children, they can't
-      // break to us)
+      // nothing branches here, so this is easy
+      // normally the type is the type of the final child
+      type = list.back()->type;
+      // and even if we have an unreachable child somewhere,
+      // we still mark ourselves as having that type,
+      // (block (result i32)
+      //  (return)
+      //  (i32.const 10)
+      // )
+      if (isConcreteWasmType(type)) return;
+      // if we are unreachable, we are done
+      if (type == unreachable) return;
+      // we may still be unreachable if we have an unreachable
+      // child
       for (auto* child : list) {
         if (child->type == unreachable) {
           type = unreachable;
           return;
         }
       }
-      // children are reachable, so last element determines type
-      type = list.back()->type;
     } else {
       type = none;
     }
@@ -231,9 +239,7 @@ void If::finalize(WasmType type_) {
 }
 
 void If::finalize() {
-  if (condition->type == unreachable) {
-    type = unreachable;
-  } else if (ifFalse) {
+  if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
     } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
@@ -245,6 +251,17 @@ void If::finalize() {
     }
   } else {
     type = none; // if without else
+  }
+  // if the arms return a value, leave it even if the condition
+  // is unreachable, we still mark ourselves as having that type, e.g.
+  // (if (result i32)
+  //  (unreachable)
+  //  (i32.const 10)
+  //  (i32.const 20
+  // )
+  // otherwise, if the condition is unreachable, so is the if
+  if (type == none && condition->type == unreachable) {
+    type = unreachable;
   }
 }
 
