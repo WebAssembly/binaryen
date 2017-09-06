@@ -31,6 +31,8 @@
 #include <ast/properties.h>
 #include <ast/literal-utils.h>
 
+// TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on the availability of atomics.
+
 namespace wasm {
 
 Name I32_EXPR  = "i32.expr",

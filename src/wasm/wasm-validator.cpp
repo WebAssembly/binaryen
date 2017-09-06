@@ -430,8 +430,17 @@ void WasmValidator::visitUnary(Unary *curr) {
       shouldBeTrue(curr->value->type == i64, curr, "i64.eqz input must be i64");
       break;
     }
-    case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
-    case ExtendUInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+    case ExtendSInt32:
+    case ExtendUInt32:
+    case ExtendS8Int32:
+    case ExtendS16Int32: {
+      shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+    }
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64: {
+      shouldBeEqual(curr->value->type, i64, curr, "extend type must be correct"); break;
+    }
     case WrapInt64:              shouldBeEqual(curr->value->type, i64, curr, "wrap type must be correct"); break;
     case TruncSFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
     case TruncSFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;

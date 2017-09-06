@@ -531,6 +531,12 @@ enum ASTNodes {
   F32ReinterpretI32 = 0xbe,
   F64ReinterpretI64 = 0xbf,
 
+  I32ExtendS8 = 0xc0,
+  I32ExtendS16 = 0xc1,
+  I64ExtendS8 = 0xc2,
+  I64ExtendS16 = 0xc3,
+  I64ExtendS32 = 0xc4,
+
   AtomicPrefix = 0xfe
 };
 

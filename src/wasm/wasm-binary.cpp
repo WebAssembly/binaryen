@@ -1048,6 +1048,11 @@ void WasmBinaryWriter::visitUnary(Unary *curr) {
     case ReinterpretFloat64: o << int8_t(BinaryConsts::I64ReinterpretF64); break;
     case ReinterpretInt32: o << int8_t(BinaryConsts::F32ReinterpretI32); break;
     case ReinterpretInt64: o << int8_t(BinaryConsts::F64ReinterpretI64); break;
+    case ExtendS8Int32: o << int8_t(BinaryConsts::I32ExtendS8); break;
+    case ExtendS16Int32: o << int8_t(BinaryConsts::I32ExtendS16); break;
+    case ExtendS8Int64: o << int8_t(BinaryConsts::I64ExtendS8); break;
+    case ExtendS16Int64: o << int8_t(BinaryConsts::I64ExtendS16); break;
+    case ExtendS32Int64: o << int8_t(BinaryConsts::I64ExtendS32); break;
     default: abort();
   }
   if (curr->type == unreachable) {
@@ -2677,6 +2682,12 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
     case BinaryConsts::I64ReinterpretF64: curr = allocator.alloc<Unary>(); curr->op = ReinterpretFloat64;  curr->type = i64; break;
     case BinaryConsts::F32ReinterpretI32: curr = allocator.alloc<Unary>(); curr->op = ReinterpretInt32;    curr->type = f32; break;
     case BinaryConsts::F64ReinterpretI64: curr = allocator.alloc<Unary>(); curr->op = ReinterpretInt64;    curr->type = f64; break;
+
+    case BinaryConsts::I32ExtendS8:  curr = allocator.alloc<Unary>(); curr->op = ExtendS8Int32; curr->type = i32; break;
+    case BinaryConsts::I32ExtendS16: curr = allocator.alloc<Unary>(); curr->op = ExtendS16Int32; curr->type = i32; break;
+    case BinaryConsts::I64ExtendS8:  curr = allocator.alloc<Unary>(); curr->op = ExtendS8Int64; curr->type = i64; break;
+    case BinaryConsts::I64ExtendS16: curr = allocator.alloc<Unary>(); curr->op = ExtendS16Int64; curr->type = i64; break;
+    case BinaryConsts::I64ExtendS32: curr = allocator.alloc<Unary>(); curr->op = ExtendS32Int64; curr->type = i64; break;
 
     default: return false;
   }
