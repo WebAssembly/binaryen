@@ -74,6 +74,9 @@ jobs:
       before_script:
         - alpine ./check.py --only-prepare
       script:
+        - if [ "${TRAVIS_EVENT_TYPE}" != "cron" ]; then
+            exit 0;
+          fi        
         - alpine cmake .
         - alpine make -j2
         - alpine ./check.py
@@ -87,6 +90,9 @@ jobs:
       stage: build
       env: ARCH=x86_64
       script:
+        - if [ "${TRAVIS_EVENT_TYPE}" != "cron" ]; then
+            exit 0;
+          fi
         - alpine cmake -DCMAKE_BUILD_TYPE=Release
                        -DCMAKE_VERBOSE_MAKEFILE=ON
                        -DCMAKE_CXX_FLAGS="-static -no-pie"
