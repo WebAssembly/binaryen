@@ -275,6 +275,7 @@ struct Walker : public VisitorType {
   };
 
   void pushTask(TaskFunc func, Expression** currp) {
+    assert(*currp);
     stack.emplace_back(func, currp);
   }
   void maybePushTask(TaskFunc func, Expression** currp) {

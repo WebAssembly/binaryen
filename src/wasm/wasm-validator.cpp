@@ -58,11 +58,10 @@ void WasmValidator::visitBlock(Block *curr) {
       }
     }
     breakTargets.erase(curr->name);
-    namedBreakTargets.erase(curr->name);
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
-      if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)")) {
+      if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !quiet) {
         std::cerr << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
       }
     }
@@ -70,9 +69,7 @@ void WasmValidator::visitBlock(Block *curr) {
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
     if (!isConcreteWasmType(curr->type)) {
-      if (isConcreteWasmType(backType)) {
-        shouldBeTrue(curr->type == unreachable, curr, "block with no value and a last element with a value must be unreachable");
-      }
+      shouldBeFalse(isConcreteWasmType(backType), curr, "if block is not returning a value, final element should not flow out a value");
     } else {
       if (isConcreteWasmType(backType)) {
         shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
@@ -90,7 +87,6 @@ void WasmValidator::visitLoop(Loop *curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
     breakTargets.erase(curr->name);
-    namedBreakTargets.erase(curr->name);
     if (breakInfos.count(curr) > 0) {
       auto& info = breakInfos[curr];
       shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
@@ -118,15 +114,18 @@ void WasmValidator::visitIf(If *curr) {
         shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
       }
     }
+    if (isConcreteWasmType(curr->ifTrue->type)) {
+      shouldBeEqual(curr->type, curr->ifTrue->type, curr, "if type must match concrete ifTrue");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->ifTrue->type, curr, "other arm must match concrete ifTrue");
+    }
+    if (isConcreteWasmType(curr->ifFalse->type)) {
+      shouldBeEqual(curr->type, curr->ifFalse->type, curr, "if type must match concrete ifFalse");
+      shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->ifFalse->type, curr, "other arm must match concrete ifFalse");
+    }
   }
 }
 
 void WasmValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  if (!BranchUtils::isBranchTaken(curr)) {
-    // if not actually taken, just note the name
-    namedBreakTargets.insert(name);
-    return;
-  }
   WasmType valueType = none;
   Index arity = 0;
   if (value) {
@@ -170,14 +169,14 @@ void WasmValidator::visitCall(Call *curr) {
   if (!validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
-    if (getModule()->getImportOrNull(curr->target)) {
+    if (getModule()->getImportOrNull(curr->target) && !quiet) {
       std::cerr << "(perhaps it should be a CallImport instead of Call?)\n";
     }
     return;
   }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -190,7 +189,7 @@ void WasmValidator::visitCallImport(CallImport *curr) {
   auto* type = getModule()->getFunctionType(import->functionType);
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -202,7 +201,7 @@ void WasmValidator::visitCallIndirect(CallIndirect *curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->target->type, i32, curr, "indirect call target must be an i32");
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match")) {
+    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !quiet) {
       std::cerr << "(on argument " << i << ")\n";
     }
   }
@@ -431,8 +430,17 @@ void WasmValidator::visitUnary(Unary *curr) {
       shouldBeTrue(curr->value->type == i64, curr, "i64.eqz input must be i64");
       break;
     }
-    case ExtendSInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
-    case ExtendUInt32:           shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+    case ExtendSInt32:
+    case ExtendUInt32:
+    case ExtendS8Int32:
+    case ExtendS16Int32: {
+      shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+    }
+    case ExtendS8Int64:
+    case ExtendS16Int64:
+    case ExtendS32Int64: {
+      shouldBeEqual(curr->value->type, i64, curr, "extend type must be correct"); break;
+    }
     case WrapInt64:              shouldBeEqual(curr->value->type, i64, curr, "wrap type must be correct"); break;
     case TruncSFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
     case TruncSFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
@@ -534,7 +542,7 @@ void WasmValidator::visitGlobal(Global* curr) {
   if (!validateGlobally) return;
   shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
   shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-  if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type")) {
+  if (!shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !quiet) {
     std::cerr << "(on global " << curr->name << ")\n";
   }
 }
@@ -548,9 +556,7 @@ void WasmValidator::visitFunction(Function *curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  if (!shouldBeTrue(namedBreakTargets.empty(), curr->body, "all named break targets must exist (even if not taken)")) {
-    std::cerr << "(on label " << *namedBreakTargets.begin() << ")\n";
-  }
+  shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
 }
@@ -592,6 +598,9 @@ void WasmValidator::visitTable(Table* curr) {
   for (auto& segment : curr->segments) {
     shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
     shouldBeTrue(checkOffset(segment.offset, segment.data.size(), getModule()->table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
+    for (auto name : segment.data) {
+      shouldBeTrue(getModule()->getFunctionOrNull(name) || getModule()->getImportOrNull(name), name, "segment name should be valid");
+    }
   }
 }
 void WasmValidator::visitModule(Module *curr) {
@@ -698,11 +707,13 @@ void WasmValidator::validateBinaryenIR(Module& wasm) {
 template <typename T, typename S>
 std::ostream& WasmValidator::fail(S text, T curr) {
   valid = false;
+  if (quiet) return std::cerr;
   auto& ret = printFailureHeader() << text << ", on \n";
   return printModuleComponent(curr, ret);
 }
 
 std::ostream& WasmValidator::printFailureHeader() {
+  if (quiet) return std::cerr;
   Colors::red(std::cerr);
   if (getFunction()) {
     std::cerr << "[wasm-validator error in function ";

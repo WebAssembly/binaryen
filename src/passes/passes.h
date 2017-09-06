@@ -31,6 +31,7 @@ Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();
 Pass *createFlattenControlFlowPass();
 Pass *createFullPrinterPass();
+Pass *createI64ToI32LoweringPass();
 Pass *createInliningPass();
 Pass *createInliningOptimizingPass();
 Pass *createLegalizeJSInterfacePass();

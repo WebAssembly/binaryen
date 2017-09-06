@@ -348,7 +348,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->cast<Break>();
       assert(!br->value);
-      // if the break is conditional, then we must set the value here - if the break is not taken, we must still have the new value in the local
+      // if the break is conditional, then we must set the value here - if the break is not reached, we must still have the new value in the local
       auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
       if (br->condition) {
         br->value = set;
@@ -372,8 +372,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   // optimize set_locals from both sides of an if into a return value
   void optimizeIfReturn(If* iff, Expression** currp, Sinkables& ifTrue) {
     assert(iff->ifFalse);
-    // if this if already has a result, we can't do anything
-    if (isConcreteWasmType(iff->type)) return;
+    // if this if already has a result, or is unreachable code, we have
+    // nothing to do
+    if (iff->type != none) return;
     // We now have the sinkables from both sides of the if.
     Sinkables& ifFalse = sinkables;
     Index sharedIndex = -1;

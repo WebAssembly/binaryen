@@ -7,15 +7,17 @@ from shared import (WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, tests)
 
 
 # tests with i64s, invokes, etc.
-blacklist = ['address.wast']
-spec_tests = [os.path.join('spec', t) for t in
-              sorted(os.listdir(os.path.join('test', 'spec')))]
+spec_tests = [os.path.join('spec', t)
+              for t in sorted(os.listdir(os.path.join('test', 'spec')))
+              if '.fail' not in t]
+extra_tests = [os.path.join('wasm2asm', t) for t in
+               sorted(os.listdir(os.path.join('test', 'wasm2asm')))]
 assert_tests = ['wasm2asm.wast.asserts']
 
 
 def test_wasm2asm_output():
-  for wasm in tests + [w for w in spec_tests if '.fail' not in w]:
-    if not wasm.endswith('.wast') or os.path.basename(wasm) in blacklist:
+  for wasm in tests + spec_tests + extra_tests:
+    if not wasm.endswith('.wast'):
       continue
 
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')

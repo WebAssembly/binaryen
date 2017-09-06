@@ -36,6 +36,9 @@
  (func $untaken-break-should-have-value (type $1) (result i32)
   (block $label$0 (result i32)
    (block $label$1
+    (drop
+     (i32.const 0)
+    )
     (unreachable)
    )
    (unreachable)
@@ -52,6 +55,9 @@
     )
    )
    (block $label$2 (result i32)
+    (drop
+     (i32.const 0)
+    )
     (return
      (i32.const -32)
     )
@@ -60,8 +66,23 @@
  )
  (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
   (block $label$0 (result i32)
-   (block $label$1
+   (block $label$1 (result i32)
     (unreachable)
+   )
+  )
+ )
+ (func $untaken-br_if (type $1) (result i32)
+  (block $label$0 (result i32)
+   (block $label$1
+    (if
+     (i32.const 0)
+     (block $label$2
+      (unreachable)
+     )
+     (block $label$3
+      (unreachable)
+     )
+    )
    )
    (unreachable)
   )

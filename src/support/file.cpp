@@ -73,3 +73,15 @@ wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Fl
         }
         return buffer;
       }()) {}
+
+void wasm::copy_file(std::string input, std::string output) {
+  std::ifstream src(input, std::ios::binary);
+  std::ofstream dst(output, std::ios::binary);
+  dst << src.rdbuf();
+}
+
+size_t wasm::file_size(std::string filename) {
+  std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
+  return infile.tellg();
+}
+

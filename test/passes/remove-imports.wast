@@ -6,6 +6,7 @@
   (import $waka "somewhere" "waka")
   (import $waka-ret "somewhere" "waka-ret" (result i32))
   (import $waka-ret-d "somewhere" "waka-ret-d" (result f64))
+  (import "env" "memBase" (global i32))
   (func $nada (type $FUNCSIG$v)
     (call $waka)
     (drop

@@ -1,5 +1,6 @@
 (module
  (type $0 (func (param i32 i32) (result i32)))
+ (type $1 (func (result f64)))
  (memory $0 0)
  (func $conditionals (type $0) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
@@ -320,5 +321,42 @@
   (return
    (get_local $1)
   )
+ )
+ (func $conditionalize-if-type-change (type $1) (result f64)
+  (local $0 i32)
+  (drop
+   (loop $label$1 (result f32)
+    (block $label$2 (result f32)
+     (drop
+      (block $label$3 (result f32)
+       (br_if $label$1
+        (i32.or
+         (f32.gt
+          (br_if $label$3
+           (f32.const 1)
+           (get_local $0)
+          )
+          (br $label$2
+           (f32.const 71)
+          )
+         )
+         (i64.eqz
+          (select
+           (i64.const 58)
+           (i64.const -982757)
+           (i64.eqz
+            (i64.const 0)
+           )
+          )
+         )
+        )
+       )
+      )
+     )
+     (f32.const 1)
+    )
+   )
+  )
+  (f64.const -nan:0xfffffffffffff)
  )
 )

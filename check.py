@@ -24,10 +24,10 @@ from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE,
-    WASM_DIS, binary_format_check, delete_from_orbit, fail, fail_with_error,
+    WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings
+    requested, warnings, has_shell_timeout
 )
 
 import scripts.test.s2wasm as s2wasm
@@ -326,6 +326,22 @@ def run_ctor_eval_tests():
       out = t + '.out'
       with open(out) as f:
         fail_if_not_identical(f.read(), actual)
+
+def run_wasm_reduce_tests():
+  print '\n[ checking wasm-reduce ]\n'
+
+  for t in os.listdir(os.path.join('test', 'reduce')):
+    if t.endswith('.wast'):
+      print '..', t
+      t = os.path.join('test', 'reduce', t)
+      # convert to wasm
+      run_command(WASM_AS + [t, '-o', 'a.wasm'])
+      print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
+      expected = t + '.txt'
+      run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
+      with open('a.wast') as seen:
+        with open(expected) as correct:
+          fail_if_not_identical(seen.read(), correct.read())
 
 def run_spec_tests():
   print '\n[ checking wasm-shell spec testcases... ]\n'
@@ -705,6 +721,8 @@ run_asm2wasm_tests()
 run_wasm_dis_tests()
 run_wasm_merge_tests()
 run_ctor_eval_tests()
+if has_shell_timeout():
+  run_wasm_reduce_tests()
 run_spec_tests()
 if MOZJS:
   run_binaryen_js_tests()

@@ -877,17 +877,13 @@
   )
  )
  (func $if-return-but-unreachable (type $10) (param $var$0 i64)
-  (tee_local $var$0
-   (if
-    (unreachable)
-    (block (result i64)
-     (nop)
-     (get_local $var$0)
-    )
-    (block (result i64)
-     (nop)
-     (i64.const 1)
-    )
+  (if
+   (unreachable)
+   (set_local $var$0
+    (get_local $var$0)
+   )
+   (set_local $var$0
+    (i64.const 1)
    )
   )
  )

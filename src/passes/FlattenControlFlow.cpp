@@ -61,7 +61,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-
+#include <ast_utils.h>
 
 namespace wasm {
 
@@ -460,6 +460,11 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     for (auto*& operand : curr->operands) {
       splitter.note(operand);
     }
+  }
+
+  void visitFunction(Function* curr) {
+    // removing breaks can alter types
+    ReFinalize().walkFunctionInModule(curr, getModule());
   }
 };
 

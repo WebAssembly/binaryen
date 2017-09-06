@@ -31,6 +31,8 @@
 #include <ast/properties.h>
 #include <ast/literal-utils.h>
 
+// TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on the availability of atomics.
+
 namespace wasm {
 
 Name I32_EXPR  = "i32.expr",
@@ -397,6 +399,14 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
 
   // Optimizations that don't yet fit in the pattern DSL, but could be eventually maybe
   Expression* handOptimize(Expression* curr) {
+    // if this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for example).
+    // this optimization pass focuses on actually executing code. the only
+    // exceptions are control flow changes
+    if (curr->type == unreachable &&
+        !curr->is<Break>() && !curr->is<Switch>() && !curr->is<If>()) {
+      return nullptr;
+    }
     if (auto* binary = curr->dynCast<Binary>()) {
       if (Properties::isSymmetric(binary)) {
         // canonicalize a const to the second position

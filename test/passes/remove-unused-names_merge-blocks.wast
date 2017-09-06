@@ -1007,9 +1007,11 @@
  )
  (func $concrete_finale_in_unreachable (result f64)
   (block $label$0 (result f64)
-   (block ;; this block is unreachable
-    (unreachable)
-    (f64.const 6.322092475576799e-96)
+   (drop
+    (block (result f64)
+     (unreachable)
+     (f64.const 6.322092475576799e-96)
+    )
    )
    (f64.const -1)
   )
@@ -1056,7 +1058,7 @@
  )
  (func $drop-unreachable-block-with-concrete-final
   (drop
-   (block
+   (block (result i32)
     (drop
      (block
       (drop
@@ -1070,7 +1072,7 @@
  )
  (func $merging-with-unreachable-in-middle (result i32)
   (block $label$1 (result i32)
-   (block
+   (block (result i32)
     (return
      (i32.const 21536)
     )

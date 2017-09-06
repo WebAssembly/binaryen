@@ -67,6 +67,8 @@ struct WasmValidator : public PostWalker<WasmValidator> {
   bool validateWeb = false;
   bool validateGlobally = true;
 
+  bool quiet = false; // whether to log errors verbosely
+
   struct BreakInfo {
     WasmType type;
     Index arity;
@@ -76,7 +78,6 @@ struct WasmValidator : public PostWalker<WasmValidator> {
 
   std::map<Name, Expression*> breakTargets;
   std::map<Expression*, BreakInfo> breakInfos;
-  std::set<Name> namedBreakTargets; // even breaks not taken must not be named if they go to a place that does not exist
 
   WasmType returnType = unreachable; // type used in returns
 
@@ -98,7 +99,7 @@ public:
       validateBinaryenIR(module);
     }
     // print if an error occurred
-    if (!valid) {
+    if (!valid && !quiet) {
       WasmPrinter::printModule(&module, std::cerr);
     }
     return valid;

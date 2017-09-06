@@ -545,7 +545,9 @@
       )
       (block
         (unreachable)
-        (i32.const 1) ;; ends in a concrete, after an unreachable
+        (drop
+          (i32.const 1)
+        )
       )
     )
   )

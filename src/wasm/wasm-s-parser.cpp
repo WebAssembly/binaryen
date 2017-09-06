@@ -699,7 +699,12 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
           if (op[2] == 0) return makeBinary(s, BINARY_INT_OR_FLOAT(Eq), type);
           if (op[2] == 'z') return makeUnary(s, type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
         }
-        if (op[1] == 'x') return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
+        if (op[1] == 'x') {
+          if (op[6] == '8') return makeUnary(s, type == i32 ? UnaryOp::ExtendS8Int32 : UnaryOp::ExtendS8Int64, type);
+          if (op[6] == '1') return makeUnary(s, type == i32 ? UnaryOp::ExtendS16Int32 : UnaryOp::ExtendS16Int64, type);
+          if (op[6] == '3') return makeUnary(s, UnaryOp::ExtendS32Int64, type);
+          return makeUnary(s, op[7] == 'u' ? UnaryOp::ExtendUInt32 : UnaryOp::ExtendSInt32, type);
+        }
         abort_on(op);
       }
       case 'f': {
@@ -920,6 +925,8 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op, WasmType t
       break;
     }
     case ExtendSInt32: case ExtendUInt32:
+    case ExtendS8Int32: case ExtendS16Int32:
+    case ExtendS8Int64: case ExtendS16Int64: case ExtendS32Int64:
     case WrapInt64:
     case PromoteFloat32:
     case DemoteFloat64:
