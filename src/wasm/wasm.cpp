@@ -426,7 +426,8 @@ void Unary::finalize() {
     case SqrtFloat64: type = value->type; break;
     case EqZInt32:
     case EqZInt64: type = i32; break;
-    case ExtendSInt32: case ExtendUInt32: type = i64; break;
+    case ExtendS8Int32: case ExtendS16Int32: type = i32; break;
+    case ExtendSInt32: case ExtendUInt32: case ExtendS8Int64: case ExtendS16Int64: case ExtendS32Int64: type = i64; break;
     case WrapInt64: type = i32; break;
     case PromoteFloat32: type = f64; break;
     case DemoteFloat64: type = f32; break;

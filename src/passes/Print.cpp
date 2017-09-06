@@ -474,6 +474,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case DemoteFloat64:          o << "f32.demote/f64"; break;
       case ReinterpretInt32:       o << "f32.reinterpret/i32"; break;
       case ReinterpretInt64:       o << "f64.reinterpret/i64"; break;
+      case ExtendS8Int32:          o << "i32.extend8_s"; break;
+      case ExtendS16Int32:         o << "i32.extend16_s"; break;
+      case ExtendS8Int64:          o << "i64.extend8_s"; break;
+      case ExtendS16Int64:         o << "i64.extend16_s"; break;
+      case ExtendS32Int64:         o << "i64.extend32_s"; break;
       default: abort();
     }
     incIndent();

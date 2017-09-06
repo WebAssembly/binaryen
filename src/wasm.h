@@ -98,6 +98,10 @@ enum UnaryOp {
   PromoteFloat32, // f32 to f64
   DemoteFloat64, // f64 to f32
   ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
+  // The following sign-extention operators go along with wasm atomics support.
+  // Extend signed subword-sized integer. This differs from e.g. ExtendSInt64
+  // because the input integer is in an i64 value insetad of an i32 value.
+  ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
 };
 
 enum BinaryOp {
