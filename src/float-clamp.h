@@ -33,34 +33,28 @@
 
 namespace wasm {
 
-enum class FloatTrapMode {
-  Allow,
-  Clamp,
-  JS
-};
-
 Name I64S_REM("i64s-rem"),
      I64U_REM("i64u-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
-
-struct BinaryenTrapMode : public WalkerPass<PostWalker<BinaryenTrapMode>> {
-private:
-  FloatTrapMode mode;
-  std::map<Name, Function*> addedFunctions;
-  bool addedF64ToI64JSImport;
-
+struct FloatTrap : public WalkerPass<PostWalker<FloatTrap>> {
 public:
+  enum class Mode {
+    Allow,
+    Clamp,
+    JS
+  };
+
   bool isFunctionParallel() override { return false; }
 
-  BinaryenTrapMode(FloatTrapMode mode)
+  FloatTrap(Mode mode)
       : mode(mode),
         addedF64ToI64JSImport(false) {
     name = "binaryen-trap-mode";
   }
 
-  Pass* create() override { return new BinaryenTrapMode(mode); }
+  Pass* create() override { return new FloatTrap(mode); }
 
   void visitUnary(Unary* curr) {
     replaceCurrent(makeTrappingUnary(curr));
@@ -78,10 +72,13 @@ public:
   }
 
 private:
-  // Some binary opts might trap, so emit them safely if necessary
+  Mode mode;
+  std::map<Name, Function*> addedFunctions;
+  bool addedF64ToI64JSImport;
+
   Expression* makeTrappingBinary(Binary* curr) {
     Name name = getBinaryFuncName(curr);
-    if (mode == FloatTrapMode::Allow || !name.is()) {
+    if (mode == Mode::Allow || !name.is()) {
       return curr;
     }
 
@@ -97,10 +94,9 @@ private:
     return call;
   }
 
-  // Some conversions might trap, so emit them safely if necessary
   Expression* makeTrappingUnary(Unary* curr) {
     Name name = getUnaryFuncName(curr);
-    if (mode == FloatTrapMode::Allow || !name.is()) {
+    if (mode == Mode::Allow || !name.is()) {
       return curr;
     }
 
@@ -110,7 +106,7 @@ private:
     // We can handle this in one of two ways: clamping, which is fast, or JS, which
     // is precisely like JS but in order to do that we do a slow ffi
     // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
-    if (curr->type != i64 && mode == FloatTrapMode::JS) {
+    if (curr->type != i64 && mode == Mode::JS) {
       // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
       CallImport *ret = allocator.alloc<CallImport>();
       ret->target = F64_TO_INT;

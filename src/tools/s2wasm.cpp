@@ -38,7 +38,7 @@ int main(int argc, const char *argv[]) {
   bool importMemory = false;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
-  FloatTrapMode trapMode = FloatTrapMode::Allow;
+  FloatTrap::Mode trapMode = FloatTrap::Mode::Allow;
   Options options("s2wasm", "Link .s file into .wast");
   options.extra["validate"] = "wasm";
   options
@@ -87,19 +87,19 @@ int main(int argc, const char *argv[]) {
            "Emit instructions that might trap, like div/rem of 0",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::Allow;
+             trapMode = FloatTrap::Mode::Allow;
            })
       .add("--emit-clamped-potential-traps", "",
            "Clamp instructions that might trap, like float => int",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::Clamp;
+             trapMode = FloatTrap::Mode::Clamp;
            })
       .add("--emit-jsified-potential-traps", "",
            "Avoid instructions that might trap, handling them exactly like JS would",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::JS;
+             trapMode = FloatTrap::Mode::JS;
            })
       .add("--emscripten-glue", "-e", "Generate emscripten glue",
            Options::Arguments::Zero,
@@ -166,7 +166,7 @@ int main(int argc, const char *argv[]) {
 
   Module* wasm = &(linker.getOutput().wasm);
   PassRunner runner(wasm);
-  runner.add<BinaryenTrapMode>(trapMode);
+  runner.add<FloatTrap>(trapMode);
   runner.run();
 
   for (const auto& m : archiveLibraries) {

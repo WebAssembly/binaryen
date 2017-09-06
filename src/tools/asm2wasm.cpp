@@ -36,7 +36,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   bool legalizeJavaScriptFFI = true;
-  FloatTrapMode trapMode = FloatTrapMode::JS;
+  FloatTrap::Mode trapMode = FloatTrap::Mode::JS;
   bool wasmOnly = false;
   std::string sourceMapFilename;
   std::string sourceMapUrl;
@@ -81,19 +81,19 @@ int main(int argc, const char *argv[]) {
            })
       .add("--emit-potential-traps", "-i", "Emit instructions that might trap, like div/rem of 0", Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::Allow;
+             trapMode = FloatTrap::Mode::Allow;
            })
       .add("--emit-clamped-potential-traps", "-i", "Clamp instructions that might trap, like float => int", Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::Clamp;
+             trapMode = FloatTrap::Mode::Clamp;
            })
       .add("--emit-jsified-potential-traps", "-i", "Avoid instructions that might trap, handling them exactly like JS would", Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::JS;
+             trapMode = FloatTrap::Mode::JS;
            })
       .add("--imprecise", "-i", "Imprecise optimizations (old name for --emit-potential-traps)", Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrapMode::Allow;
+             trapMode = FloatTrap::Mode::Allow;
            })
       .add("--wasm-only", "-w", "Input is in WebAssembly-only format, and not actually valid asm.js", Options::Arguments::Zero,
            [&wasmOnly](Options *o, const std::string &) {
