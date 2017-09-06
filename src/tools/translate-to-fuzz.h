@@ -27,6 +27,7 @@ high chance for set at start of loop
 */
 
 #include <wasm-builder.h>
+#include <ast/literal-utils.h>
 
 namespace wasm {
 
@@ -833,7 +834,7 @@ private:
 
   Expression* makeConst(WasmType type) {
     Literal value;
-    switch (upTo(3)) {
+    switch (upTo(4)) {
       case 0: {
         // totally random, entire range
         switch (type) {
@@ -847,12 +848,14 @@ private:
       }
       case 1: {
         // small range
-        int32_t small;
-        switch (upTo(4)) {
+        int64_t small;
+        switch (upTo(6)) {
           case 0: small = int8_t(get()); break;
           case 1: small = uint8_t(get()); break;
           case 2: small = int16_t(get16()); break;
           case 3: small = uint16_t(get16()); break;
+          case 4: small = int32_t(get32()); break;
+          case 5: small = uint32_t(get32()); break;
           default: WASM_UNREACHABLE();
         }
         switch (type) {
@@ -898,7 +901,25 @@ private:
                                                  std::numeric_limits<uint64_t>::max())); break;
           default: WASM_UNREACHABLE();
         }
+        // tweak around special values
+        if (oneIn(3)) {
+          value = value.add(LiteralUtils::makeLiteralFromInt32(upTo(3) - 1, type));
+        }
         break;
+      }
+      case 3: {
+        // powers of 2
+        switch (type) {
+          case i32: value = Literal(int32_t(1) << upTo(32)); break;
+          case i64: value = Literal(int64_t(1) << upTo(64)); break;
+          case f32: value = Literal(float(int64_t(1) << upTo(64))); break;
+          case f64: value = Literal(double(int64_t(1) << upTo(64))); break;
+          default: WASM_UNREACHABLE();
+        }
+        // maybe negative
+        if (oneIn(2)) {
+          value = value.mul(LiteralUtils::makeLiteralFromInt32(-1, type));
+        }
       }
     }
     auto* ret = wasm.allocator.alloc<Const>();
