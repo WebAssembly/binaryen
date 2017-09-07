@@ -134,6 +134,9 @@ Module["asm"] =  (function(global, env, buffer) {
    $temp = (Atomics_and(HEAP32, $temp>>2, 0)|0);
    $temp = (Atomics_or(HEAP32, $temp>>2, 0)|0);
    $temp = (Atomics_xor(HEAP32, $temp>>2, 0)|0);
+   $temp = (Atomics_xor(HEAPU32, 1024, 0)|0);
+   $temp = (Atomics_xor(HEAP16, 1024, 0)|0);
+   $temp = (Atomics_xor(HEAPU8, 1024, 0)|0);
   }
 
   return { test: test };
