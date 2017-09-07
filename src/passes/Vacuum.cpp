@@ -162,7 +162,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           }
         }
 
-        default: WASM_UNREACHABLE();
+        default: return curr; // assume needed
       }
     }
   }
