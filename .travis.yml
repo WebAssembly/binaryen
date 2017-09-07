@@ -50,6 +50,11 @@ jobs:
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=thread"
 
+    - <<: *test-ubuntu
+      compiler: gcc
+      env: |
+        CC_COMPILER="gcc-5"
+        CXX_COMPILER="g++-5"
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
     - &test-alpine
