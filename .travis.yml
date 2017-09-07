@@ -66,9 +66,11 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
+        - &download-alpine-script
+          "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
               && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
-        - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+        - &define-alpine-func
+          alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
       before_script:
@@ -86,6 +88,16 @@ jobs:
       <<: *test-alpine
       stage: build
       env: ARCH=x86_64
+      before_install:
+        # XXX: This is ugly hack to skip this job (and all derived) for pull
+        # requests, run it only on master branch and tags (to cut down build
+        # time). Replace it after Travis finally implement proper support for
+        # conditional jobs or stages.
+        - if [[ "$TRAVIS_PULL_REQUEST" != "false" || ( "$TRAVIS_BRANCH" != "master" && -z "$TRAVIS_TAG" ) ]]; then
+              travis_terminate 0;
+          fi
+        - *download-alpine-script
+        - *define-alpine-func
       # Don't run before_script inherited from *test-alpine.
       before_script: skip
       script:
