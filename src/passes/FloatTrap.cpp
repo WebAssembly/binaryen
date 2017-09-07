@@ -18,10 +18,9 @@
 // Pass that supports potentially-trapping float operations.
 //
 
-#include "passes/FloatTrap.h"
-
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
+#include "ast/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "wasm.h"

@@ -18,7 +18,7 @@
 // asm2wasm console tool
 //
 
-#include "passes/FloatTrap.h"
+#include "ast/trapping.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_passes_FloatTrap_h
-#define wasm_passes_FloatTrap_h
+#ifndef wasm_ast_trapping_h
+#define wasm_ast_trapping_h
 
 enum class TrapMode {
   Allow,
@@ -23,4 +23,4 @@ enum class TrapMode {
   JS
 };
 
-#endif // wasm_passes_FloatTrap_h
+#endif // wasm_ast_trapping_h
