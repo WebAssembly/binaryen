@@ -67,6 +67,8 @@ Pass *createSimplifyLocalsNoTeePass();
 Pass *createSimplifyLocalsNoStructurePass();
 Pass *createSimplifyLocalsNoTeeNoStructurePass();
 Pass *createSSAifyPass();
+Pass *createTrapModeClamp();
+Pass *createTrapModeJS();
 Pass *createUnteePass();
 Pass *createVacuumPass();
 

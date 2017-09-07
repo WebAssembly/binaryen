@@ -38,7 +38,7 @@ int main(int argc, const char *argv[]) {
   bool importMemory = false;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
-  FloatTrap::Mode trapMode = FloatTrap::Mode::Allow;
+  TrapMode trapMode = TrapMode::Allow;
   Options options("s2wasm", "Link .s file into .wast");
   options.extra["validate"] = "wasm";
   options
@@ -87,19 +87,19 @@ int main(int argc, const char *argv[]) {
            "Emit instructions that might trap, like div/rem of 0",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrap::Mode::Allow;
+             trapMode = TrapMode::Allow;
            })
       .add("--emit-clamped-potential-traps", "",
            "Clamp instructions that might trap, like float => int",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrap::Mode::Clamp;
+             trapMode = TrapMode::Clamp;
            })
       .add("--emit-jsified-potential-traps", "",
            "Avoid instructions that might trap, handling them exactly like JS would",
            Options::Arguments::Zero,
            [&trapMode](Options *o, const std::string &) {
-             trapMode = FloatTrap::Mode::JS;
+             trapMode = TrapMode::JS;
            })
       .add("--emscripten-glue", "-e", "Generate emscripten glue",
            Options::Arguments::Zero,
@@ -164,10 +164,16 @@ int main(int argc, const char *argv[]) {
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);
 
-  Module* wasm = &(linker.getOutput().wasm);
-  PassRunner runner(wasm);
-  runner.add<FloatTrap>(trapMode);
-  runner.run();
+  if (trapMode != TrapMode::Allow) {
+    Module* wasm = &(linker.getOutput().wasm);
+    PassRunner runner(wasm);
+    if (trapMode == TrapMode::Clamp) {
+      runner.add("trap-mode-clamp");
+    } else if (trapMode == TrapMode::JS) {
+      runner.add("trap-mode-js");
+    }
+    runner.run();
+  }
 
   for (const auto& m : archiveLibraries) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));

@@ -14,57 +14,13 @@
  * limitations under the License.
  */
 
-//
-// Pass that supports potentially-trapping float operations.
-//
-
 #ifndef wasm_passes_FloatTrap_h
 #define wasm_passes_FloatTrap_h
 
-#include "pass.h"
-#include "wasm.h"
-#include "support/name.h"
-
-namespace wasm {
-
-struct FloatTrap : public WalkerPass<PostWalker<FloatTrap>> {
-public:
-  enum class Mode {
-    Allow,
-    Clamp,
-    JS
-  };
-
-  // Needs to be non-parallel so that visitModule gets called after visiting
-  // each node in the module, so we can add the functions that we created.
-  bool isFunctionParallel() override { return false; }
-
-  FloatTrap(Mode mode);
-
-  Pass* create() override { return new FloatTrap(mode); }
-
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitModule(Module* curr);
-
-private:
-  Mode mode;
-  // Need to defer adding generated functions because adding functions while
-  // iterating over existing functions causes problems.
-  std::map<Name, Function*> generatedFunctions;
-  bool didAddF64ToI64JSImport;
-
-  Expression* makeTrappingBinary(Binary* curr);
-  Expression* makeTrappingUnary(Unary* curr);
-
-  void ensureF64ToI64JSImport();
-  void ensureBinaryFunc(Binary* curr);
-  void ensureUnaryFunc(Unary *curr);
-
-  Name getBinaryFuncName(Binary* curr);
-  Name getUnaryFuncName(Unary* curr);
+enum class TrapMode {
+  Allow,
+  Clamp,
+  JS
 };
-
-} // namespace wasm
 
 #endif // wasm_passes_FloatTrap_h
