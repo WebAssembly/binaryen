@@ -194,7 +194,7 @@ public:
     return ret;
   }
   Load* makeAtomicLoad(unsigned bytes, bool signed_, uint32_t offset, Expression* ptr, WasmType type) {
-    Load* load = makeLoad(bytes, signed_, offset, getWasmTypeSize(type), ptr, type);
+    Load* load = makeLoad(bytes, signed_, offset, bytes, ptr, type);
     load->isAtomic = true;
     return load;
   }
