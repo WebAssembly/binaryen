@@ -1272,11 +1272,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // finalizeCalls also does autoDrop, which is crucial for the non-optimizing case,
   // so that the output of the first pass is valid
   passRunner.add<FinalizeCalls>(this);
-  if (trapMode == TrapMode::Clamp) {
-    passRunner.add("trap-mode-clamp");
-  } else if (trapMode == TrapMode::JS) {
-    passRunner.add("trap-mode-js");
-  }
+  addTrapModePass(passRunner, trapMode);
   if (legalizeJavaScriptFFI) {
     passRunner.add("legalize-js-interface");
   }

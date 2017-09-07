@@ -17,10 +17,24 @@
 #ifndef wasm_ast_trapping_h
 #define wasm_ast_trapping_h
 
+#include "pass.h"
+
+namespace wasm {
+
 enum class TrapMode {
   Allow,
   Clamp,
   JS
 };
+
+inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
+  if (trapMode == TrapMode::Clamp) {
+    runner.add("trap-mode-clamp");
+  } else if (trapMode == TrapMode::JS) {
+    runner.add("trap-mode-js");
+  }
+}
+
+} // wasm
 
 #endif // wasm_ast_trapping_h

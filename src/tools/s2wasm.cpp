@@ -167,11 +167,7 @@ int main(int argc, const char *argv[]) {
   if (trapMode != TrapMode::Allow) {
     Module* wasm = &(linker.getOutput().wasm);
     PassRunner runner(wasm);
-    if (trapMode == TrapMode::Clamp) {
-      runner.add("trap-mode-clamp");
-    } else if (trapMode == TrapMode::JS) {
-      runner.add("trap-mode-js");
-    }
+    addTrapModePass(runner, trapMode);
     runner.run();
   }
 
