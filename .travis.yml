@@ -67,7 +67,7 @@ jobs:
       env: ARCH=x86_64
       before_install:
         - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
-              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || exit 1"
+              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
         - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
@@ -98,7 +98,7 @@ jobs:
         - alpine ls -lh bin/
         # Check if the built executables are really statically linked.
         - if [ -n "$(find bin/ -type f -perm -u=x -exec file {} + | grep -Fvw 'statically linked')" ]; then
-              file bin/*; exit 1;
+              file bin/*; false;
           fi
       before_deploy:
         - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH-linux"
