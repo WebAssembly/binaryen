@@ -36,20 +36,20 @@ Name I64S_REM("i64s-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
-struct FloatTrap : public WalkerPass<PostWalker<FloatTrap>> {
+struct TrapModePass : public WalkerPass<PostWalker<TrapModePass>> {
 public:
 
   // Needs to be non-parallel so that visitModule gets called after visiting
   // each node in the module, so we can add the functions that we created.
   bool isFunctionParallel() override { return false; }
 
-  FloatTrap(TrapMode mode)
+  TrapModePass(TrapMode mode)
       : mode(mode),
         didAddF64ToI64JSImport(false) {
     assert(mode != TrapMode::Allow);
   }
 
-  Pass* create() override { return new FloatTrap(mode); }
+  Pass* create() override { return new TrapModePass(mode); }
 
   void visitUnary(Unary* curr) {
     replaceCurrent(makeTrappingUnary(curr));
@@ -280,11 +280,11 @@ private:
 };
 
 Pass *createTrapModeClamp() {
-  return new FloatTrap(TrapMode::Clamp);
+  return new TrapModePass(TrapMode::Clamp);
 }
 
 Pass *createTrapModeJS() {
-  return new FloatTrap(TrapMode::JS);
+  return new TrapModePass(TrapMode::JS);
 }
 
 } // namespace wasm

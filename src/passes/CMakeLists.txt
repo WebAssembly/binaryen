@@ -7,7 +7,6 @@ SET(passes_SOURCES
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
-  FloatTrap.cpp
   FlattenControlFlow.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
@@ -35,6 +34,7 @@ SET(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  TrapMode.cpp
   SafeHeap.cpp
   SimplifyLocals.cpp
   SSAify.cpp
