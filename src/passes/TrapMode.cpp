@@ -191,7 +191,7 @@ private:
 
     Builder builder(*getModule());
 
-    UnaryOp truncOp = curr->op;
+    UnaryOp truncOp = getSignedTruncOp(curr->op);
     BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
     BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
     BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
@@ -275,6 +275,21 @@ private:
       return F64_TO_INT64;
     default:
       return Name();
+    }
+  }
+
+  UnaryOp getSignedTruncOp(UnaryOp op) {
+    switch (op) {
+    case TruncUFloat32ToInt32:
+      return TruncSFloat32ToInt32;
+    case TruncUFloat32ToInt64:
+      return TruncSFloat32ToInt64;
+    case TruncUFloat64ToInt32:
+      return TruncSFloat64ToInt32;
+    case TruncUFloat64ToInt64:
+      return TruncSFloat64ToInt64;
+    default:
+      return op;
     }
   }
 };
