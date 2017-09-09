@@ -87,7 +87,7 @@ private:
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use
     auto before = num * size;
-    auto after = size + 2 /* set_local */ + (2 /* get_local */ * size);
+    auto after = size + 2 /* set_local */ + (2 /* get_local */ * num);
     return after < before;
   }
 
