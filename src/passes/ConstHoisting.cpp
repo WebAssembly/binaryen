@@ -30,7 +30,7 @@
 namespace wasm {
 
 // with fewer uses than this, it is never beneficial to hoist
-static const Index MIN_USES = 3;
+static const Index MIN_USES = 2;
 
 struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
   bool isFunctionParallel() override { return true; }
@@ -86,6 +86,10 @@ private:
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use
+    // doing the algebra, the criterion here is when
+    //   size > 2(1+num)/(num-1)
+    // or
+    //   num > (size+2)/(size-2)
     auto before = num * size;
     auto after = size + 2 /* set_local */ + (2 /* get_local */ * num);
     return after < before;
