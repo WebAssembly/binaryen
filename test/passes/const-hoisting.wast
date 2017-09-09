@@ -131,5 +131,27 @@
     (drop (i32.const -1048576)) ;; 3 bytes
     (drop (i32.const -1048577)) ;; 4 bytes
   )
+  (func $floats-10-times
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+    (drop (f32.const 0)) ;; 4 bytes
+    (drop (f64.const 0)) ;; 8 bytes
+  )
 )
 

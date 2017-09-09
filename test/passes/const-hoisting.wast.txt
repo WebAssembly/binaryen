@@ -421,4 +421,78 @@
    )
   )
  )
+ (func $floats-10-times (type $0)
+  (local $0 f32)
+  (local $1 f64)
+  (block
+   (set_local $0
+    (f32.const 0)
+   )
+   (set_local $1
+    (f64.const 0)
+   )
+  )
+  (block
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+  )
+ )
 )
