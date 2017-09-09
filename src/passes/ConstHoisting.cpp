@@ -19,6 +19,11 @@
 // in most cases, and if a const is larger than that, it may be
 // better to store it to a local, then get it from that local.
 //
+// WARNING: this often shrinks code size, but can *increase* gzip
+//          size. apparently having the constants in their proper
+//          places lets them be compressed better, across
+//          functions, etc.
+//
 
 #include <map>
 
