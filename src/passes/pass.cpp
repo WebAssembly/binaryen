@@ -152,8 +152,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.shrinkLevel >= 2) {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE
-    add("const-hoisting");
-    add("merge-blocks"); // for const-hoisting
   }
   add("vacuum"); // just to be safe
 }
