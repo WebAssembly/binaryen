@@ -285,7 +285,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
     digest = rehash(digest, hash);
   };
   auto hash64 = [&digest](uint64_t hash) {
-    digest = rehash(rehash(digest, hash >> 32), uint32_t(hash));
+    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
   };
 
   std::vector<Name> nameStack;

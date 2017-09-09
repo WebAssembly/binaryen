@@ -18,6 +18,8 @@
 #define wasm_literal_h
 
 #include <iostream>
+
+#include "support/hash.h"
 #include "support/utilities.h"
 #include "compiler-support.h"
 #include "wasm-type.h"
@@ -69,9 +71,9 @@ private:
   float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
   double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
 
-  int64_t getInteger();
-  double getFloat();
-  int64_t getBits();
+  int64_t getInteger() const;
+  double getFloat() const;
+  int64_t getBits() const;
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
 
@@ -147,5 +149,23 @@ private:
 };
 
 } // namespace wasm
+
+namespace std {
+template<> struct hash<wasm::Literal> {
+  size_t operator()(const wasm::Literal& a) const {
+    return wasm::rehash(
+      hash<size_t>()(size_t(a.type)),
+      hash<int64_t>()(a.getBits())
+    );
+  }
+};
+template<> struct less<wasm::Literal> {
+  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
+    if (a.type < b.type) return true;
+    if (a.type > b.type) return false;
+    return a.getBits() < b.getBits();
+  }
+};
+}
 
 #endif // wasm_literal_h

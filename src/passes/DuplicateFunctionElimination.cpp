@@ -56,7 +56,7 @@ private:
     digest = rehash(digest, hash);
   }
   void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, hash >> 32), uint32_t(hash));
+    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
   };
 };
 
