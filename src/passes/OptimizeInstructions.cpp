@@ -622,16 +622,33 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             std::swap(iff->ifTrue, iff->ifFalse);
           }
         }
-        if (ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
+        if (iff->condition->type != unreachable && ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
           // sides are identical, fold
-          if (!EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects()) {
+          // if we can replace the if with one arm, and no side effects in the condition, do that
+          auto needCondition = EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
+          auto typeIsIdentical = iff->ifTrue->type == iff->type;
+          if (typeIsIdentical && !needCondition) {
             return iff->ifTrue;
           } else {
             Builder builder(*getModule());
-            return builder.makeSequence(
-              builder.makeDrop(iff->condition),
-              iff->ifTrue
-            );
+            if (typeIsIdentical) {
+              return builder.makeSequence(
+                builder.makeDrop(iff->condition),
+                iff->ifTrue
+              );
+            } else {
+              // the types diff. as the condition is reachable, that means the if must be
+              // concrete while the arm is not
+              assert(isConcreteWasmType(iff->type) && iff->ifTrue->type == unreachable);
+              // emit a block with a forced type
+              auto* ret = builder.makeBlock();
+              if (needCondition) {
+                ret->list.push_back(builder.makeDrop(iff->condition));
+              }
+              ret->list.push_back(iff->ifTrue);
+              ret->finalize(iff->type);
+              return ret;
+            }
           }
         }
       }

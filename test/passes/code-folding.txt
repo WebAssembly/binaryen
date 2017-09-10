@@ -1,0 +1,24 @@
+(module
+ (type $13 (func (param f32)))
+ (type $1 (func))
+ (table 282 282 anyfunc)
+ (memory $0 1 1)
+ (func $0 (type $1)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (block
+     (block $label$3
+      (call_indirect $13
+       (block $label$4
+        (br $label$3)
+       )
+       (i32.const 105)
+      )
+     )
+     (nop)
+    )
+   )
+  )
+ )
+)

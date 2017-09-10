@@ -226,13 +226,17 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // optimize returns at the end, so we can benefit from a fallthrough if there is a value TODO: separate passes for them?
       optimizeTerminatingTails(returnTails);
       // TODO add fallthrough for returns
-      // TODO optimzier returns not in blocks, a big return value can be worth it
+      // TODO optimize returns not in blocks, a big return value can be worth it
       // clean up
       breakTails.clear();
       unreachableTails.clear();
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
+      // if we did any work, types may need to be propagated
+      if (anotherPass) {
+        ReFinalize().walkFunctionInModule(func, getModule());
+      }
     }
   }
 
@@ -371,8 +375,7 @@ private:
       if (!tail.isFallthrough()) {
         tail.block->list.push_back(last);
       }
-      // the blocks lose their endings, so any values are gone, and the blocks
-      // are now either none or unreachable
+      // the block type may change if we removed final values
       tail.block->finalize();
     }
     // since we managed a merge, then it might open up more opportunities later
