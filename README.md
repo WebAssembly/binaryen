@@ -32,14 +32,23 @@ Binaryen's internal IR is an AST, designed to be
  * **Flexible and fast** for optimization.
  * **As close as possible to WebAssembly** so it is simple and fast to convert it to and from WebAssembly.
 
-The differences between Binaryen IR and WebAssembly are:
+There are a few differences between Binaryen IR and the WebAssembly language:
 
- * Binaryen IR [is an AST](https://github.com/WebAssembly/binaryen/issues/663), for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
- * WebAssembly limits block/if/loop types to none and the concrete value types (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows block/if/loop to take it, allowing [local transforms that don't need to know the global context](https://github.com/WebAssembly/binaryen/issues/903).
- * Binaryen IR requires the names of blocks and loops to be unique. (Reading wast files with duplicate names is supported, by disambiguating them).
- * Binaryen IR has only one node with a list: blocks. WebAssembly on the other hand allows lists in loops and ifs (Binaryen would represent those with additional blocks as necessary). The motivation here is that many passes need special code for iterating on lists, so having a single IR node with a list simplifies things.
- * Binaryen's text format allows only s-expressions. WebAssembly's official text format is a stack machine with s-expression extensions. Binaryen can't read stack machine code, but it can read a wast if it contains only s-expressions.
- * Binaryen ignores unreachable code when reading WebAssembly binaries. That means that if you read a wasm file with unreachable code, that code will be discarded as if it were optimized out (often this is what you want anyhow, and optimized programs have no unreachable code anyway, but if you write an unoptimized file and then read it, it may look different). The reason for this behavior is that unreachable code in WebAssembly has corner cases that are tricky to handle in Binaryen IR (it can be very unstructured, and Binaryen IR is more structured than WebAssembly as noted earlier). Note that Binaryen does support unreachable code in wast text files, since as we saw Binaryen only supports s-expressions there, which are structured.
+ * AST structure
+   * Binaryen IR [is an AST](https://github.com/WebAssembly/binaryen/issues/663) (i.e. it has hierarchical structure), for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
+   * Consequently Binaryen's text format allows only s-expressions. WebAssembly's official text format is primarily a linear instruction list (with s-expression extensions). Binaryen can't read the linear style, but it can read a wasm text file if it contains only s-expressions.
+ * Types and unreachable code
+   * WebAssembly limits block/if/loop types to none and the concrete value types (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows block/if/loop to take it, allowing [local transforms that don't need to know the global context](https://github.com/WebAssembly/binaryen/issues/903).
+   * Binaryen ignores unreachable code when reading WebAssembly binaries. That means that if you read a wasm file with unreachable code, that code will be discarded as if it were optimized out (often this is what you want anyhow, and optimized programs have no unreachable code anyway, but if you write an unoptimized file and then read it, it may look different). The reason for this behavior is that unreachable code in WebAssembly has corner cases that are tricky to handle in Binaryen IR (it can be very unstructured, and Binaryen IR is more structured than WebAssembly as noted earlier). Note that Binaryen does support unreachable code in wast text files, since as we saw Binaryen only supports s-expressions there, which are structured.
+ * Blocks
+   * Binaryen IR has only one node that contains a variable-length list of operands: the block. WebAssembly on the other hand allows lists in loops, if arms, and the top level of a function. Binaryen's IR has a single operand for all non-block nodes; this operand may of course be a block. The motivation for this property is that many passes need special code for iterating on lists, so having a single IR node with a list simplifies them.
+   * As in wasm, blocks and loops may have names. Branch targets in the IR are resolved by name (as opposed to nesting depth). This has 2 consequences:
+     * Blocks without names may not be branch targets.
+     * Names are required to be unique. (Reading wast files with duplicate names is supported; the names are modified when the IR is constructed).
+   * As an optimization, a block that is the child of a loop (or if arm, or function toplevel) and which has no branches targeting it will not be emitted when generating wasm. Instead its list of operands will be directly used in the containing node. Such a block is sometimes called an "implicit block".
+   
+ 
+ 
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
 
