@@ -88,6 +88,7 @@ void PassRegistry::registerPasses() {
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
   registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
+  registerPass("precompute-propagate", "computes compile-time evaluatable expressions and propagates them through locals", createPrecomputePropagatePass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
@@ -147,7 +148,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  add("precompute");
+  // if we are willing to work hard, also propagate
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("precompute-propagate");
+  } else {
+    add("precompute");
+  }
   if (options.shrinkLevel >= 2) {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE

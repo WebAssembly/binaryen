@@ -27,8 +27,6 @@
 #include <ast/local-graph.h>
 #include <ast/manipulation.h>
 
-// XXX meaure speed for -O2
-
 namespace wasm {
 
 static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
@@ -103,16 +101,19 @@ public:
 struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Precompute; }
+  Pass* create() override { return new Precompute(propagate); }
+
+  bool propagate = false;
+
+  Precompute(bool propagate) : propagate(propagate) {}
 
   GetValues getValues;
 
   void doWalkFunction(Function* func) {
-    auto& options = getPassRunner()->options;
     // with extra effort, we can utilize the get-set graph to precompute
     // things that use locals that are known to be constant. otherwise,
     // we just look at what is immediately before us
-    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    if (propagate) {
       optimizeLocals(func, getModule());
     }
     // do the main and final walk over everything
@@ -120,7 +121,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
   void visitExpression(Expression* curr) {
-// TODO: if get_local, only replace with a constant if we don't care about size...?
+    // TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
     Flow flow = precomputeFlow(curr);
@@ -283,7 +284,11 @@ private:
 };
 
 Pass *createPrecomputePass() {
-  return new Precompute();
+  return new Precompute(false);
+}
+
+Pass *createPrecomputePropagatePass() {
+  return new Precompute(true);
 }
 
 } // namespace wasm
