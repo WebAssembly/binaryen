@@ -23,18 +23,6 @@
 
 namespace wasm {
 
-static bool areBitwiseEqual(Literal a, Literal b) {
-  if (a == b) return true;
-  // accept equal nans if equal in all bits
-  if (a.type != b.type) return false;
-  if (a.type == f32) {
-    return a.reinterpreti32() == b.reinterpreti32();
-  } else if (a.type == f64) {
-    return a.reinterpreti64() == b.reinterpreti64();
-  }
-  return false;
-}
-
 // gets execution results from a wasm module. this is useful for fuzzing
 //
 // we can only get results when there are no imports. we then call each method
@@ -86,7 +74,7 @@ struct ExecutionResults {
         abort();
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (!areBitwiseEqual(results[name], other.results[name])) {
+      if (!results[name].bitwiseEqual(other.results[name])) {
         std::cout << "not identical!\n";
         abort();
       }

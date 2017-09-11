@@ -18,35 +18,73 @@
 #define wasm_ast_local_graph_h
 
 #include <wasm-builder.h>
+#include <ast/find_all.h>
 
 namespace wasm {
 
 //
 // Finds the connections between get_locals and set_locals, creating
-// a graph of those ties.
-//
-// Typical usage is to call walkFunctionInModule and than inspect
-// getSetses, which gives you the sets for each get
+// a graph of those ties. This is useful for "ssa-style" optimization,
+// in which you want to know exactly which sets are relevant for a
+// a get, so it is as if each get has just one set, logically speaking
+// (see the SSA pass for actually creating new local indexes based
+// on this).
 //
 struct LocalGraph : public PostWalker<LocalGraph> {
+  // main API
+
+  // the constructor computes getSetses, the sets affecting each get
+  LocalGraph(Function* func, Module* module) {
+    walkFunctionInModule(func, module);
+  }
+
   // the set_locals relevant for an index or a get. we use
   // as set as merges of control flow mean more than 1 may
   // be relevant
   typedef std::set<SetLocal*> Sets;
 
+  // externally useful information
+  std::map<GetLocal*, Sets> getSetses; // the sets affecting each get. a nullptr set means the initial
+                                       // value (0 for a var, the received value for a param)
+  std::map<Expression*, Expression**> locations; // where each get and set is (for easy replacing)
+
+  // optional computation: compute the influence graphs between sets and gets
+  // (useful for algorithms that propagate changes)
+
+  std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences; // for each get, the sets whose values are influenced by that get
+  std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences; // for each set, the gets whose values are influenced by that set
+
+  void computeInfluences() {
+    for (auto& pair : locations) {
+      auto* curr = pair.first;
+      if (auto* set = curr->dynCast<SetLocal>()) {
+        FindAll<GetLocal> findAll(set->value);
+        for (auto* get : findAll.list) {
+          getInfluences[get].insert(set);
+        }
+      } else {
+        auto* get = curr->cast<GetLocal>();
+        for (auto* set : getSetses[get]) {
+          setInfluences[set].insert(get);
+        }
+      }
+    }
+  }
+
+private:
   // we map local index => the set_locals for that index.
   // a nullptr set means there is a virtual set, from a param
   // initial value or the zero init initial value.
   typedef std::vector<Sets> Mapping;
 
+  // internal state
   Index numLocals;
   Mapping currMapping;
   std::vector<Mapping> mappingStack; // used in ifs, loops
   std::map<Name, std::vector<Mapping>> breakMappings; // break target => infos that reach it
   std::vector<std::vector<GetLocal*>> loopGetStack; //  stack of loops, all the gets in each, so we can update them for back branches
-  std::map<Expression*, Expression**> locations; // where each get and set is (for easy replacing)
-  std::map<GetLocal*, Sets> getSetses; // the sets for each get
 
+public:
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
     if (numLocals == 0) return; // nothing to do

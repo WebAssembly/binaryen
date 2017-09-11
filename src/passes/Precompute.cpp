@@ -23,15 +23,26 @@
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <ast_utils.h>
-#include "ast/manipulation.h"
+#include <ast/literal-utils.h>
+#include <ast/local-graph.h>
+#include <ast/manipulation.h>
+
+// XXX meaure speed for -O2
 
 namespace wasm {
 
 static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
+typedef std::unordered_map<GetLocal*, Literal> GetValues;
+
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
+  // map gets to constant values, if they are known to be constant
+  GetValues& getValues;
+
 public:
+  StandaloneExpressionRunner(GetValues& getValues) : getValues(getValues) {}
+
   struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
 
   Flow visitLoop(Loop* curr) {
@@ -50,6 +61,13 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetLocal(GetLocal *curr) {
+    auto iter = getValues.find(curr);
+    if (iter != getValues.end()) {
+      auto value = iter->second;
+      if (value.isConcrete()) {
+        return Flow(value);
+      }
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetLocal(SetLocal *curr) {
@@ -87,15 +105,25 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
 
   Pass* create() override { return new Precompute; }
 
+  GetValues getValues;
+
+  void doWalkFunction(Function* func) {
+    auto& options = getPassRunner()->options;
+    // with extra effort, we can utilize the get-set graph to precompute
+    // things that use locals that are known to be constant. otherwise,
+    // we just look at what is immediately before us
+    if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+      optimizeLocals(func, getModule());
+    }
+    // do the main and final walk over everything
+    WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>>::doWalkFunction(func);
+  }
+
   void visitExpression(Expression* curr) {
+// TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
-    Flow flow;
-    try {
-      flow = StandaloneExpressionRunner().visit(curr);
-    } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
-      return;
-    }
+    Flow flow = precomputeFlow(curr);
     if (flow.breaking()) {
       if (flow.breakTo == NONSTANDALONE_FLOW) return;
       if (flow.breakTo == RETURN_FLOW) {
@@ -156,6 +184,101 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   void visitFunction(Function* curr) {
     // removing breaks can alter types
     ReFinalize().walkFunctionInModule(curr, getModule());
+  }
+
+private:
+  Flow precomputeFlow(Expression* curr) {
+    try {
+      return StandaloneExpressionRunner(getValues).visit(curr);
+    } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
+      return Flow(NONSTANDALONE_FLOW);
+    }
+  }
+
+  Literal precomputeValue(Expression* curr) {
+    Flow flow = precomputeFlow(curr);
+    if (flow.breaking()) {
+      return Literal();
+    }
+    return flow.value;
+  }
+
+  void optimizeLocals(Function* func, Module* module) {
+    // using the graph of get-set interactions, do a constant-propagation type
+    // operation: note which sets are assigned locals, then see if that lets us
+    // compute other sets as locals (since some of the gets they read may be
+    // constant).
+    // compute all dependencies
+    LocalGraph localGraph(func, module);
+    localGraph.computeInfluences();
+    // prepare the work list. we add things here that might change to a constant
+    // initially, that means everything
+    std::unordered_set<Expression*> work;
+    for (auto& pair : localGraph.locations) {
+      auto* curr = pair.first;
+      work.insert(curr);
+    }
+    std::unordered_map<SetLocal*, Literal> setValues; // the constant value, or none if not a constant
+    // propagate constant values
+    while (!work.empty()) {
+      auto iter = work.begin();
+      auto* curr = *iter;
+      work.erase(iter);
+      // see if this set or get is actually a constant value, and if so,
+      // mark it as such and add everything it influences to the work list,
+      // as they may be constant too.
+      if (auto* set = curr->dynCast<SetLocal>()) {
+        auto value = setValues[set] = precomputeValue(set->value);
+        if (value.isConcrete()) {
+          for (auto* get : localGraph.setInfluences[set]) {
+            work.insert(get);
+          }
+        }
+      } else {
+        auto* get = curr->cast<GetLocal>();
+        // for this get to have constant value, all sets must agree
+        Literal value;
+        bool first = true;
+        for (auto* set : localGraph.getSetses[get]) {
+          Literal curr;
+          if (set == nullptr) {
+            if (getFunction()->isVar(get->index)) {
+              curr = LiteralUtils::makeLiteralZero(getFunction()->getLocalType(get->index));
+            } else {
+              // it's a param, so it's hopeless
+              value = Literal();
+              break;
+            }
+          } else {
+            curr = setValues[set];
+          }
+          if (curr.isNull()) {
+            // not a constant, give up
+            value = Literal();
+            break;
+          }
+          // we found a concrete value. compare with the current one
+          if (first) {
+            value = curr; // this is the first
+            first = false;
+          } else {
+            if (!value.bitwiseEqual(curr)) {
+              // not the same, give up
+              value = Literal();
+              break;
+            }
+          }
+        }
+        // we may have found a value
+        if (value.isConcrete()) {
+          // we did!
+          getValues[get] = value;
+          for (auto* set : localGraph.getInfluences[get]) {
+            work.insert(set);
+          }
+        }
+      }
+    }
   }
 };
 

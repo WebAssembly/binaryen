@@ -140,106 +140,97 @@
   )
  )
  (func $stores
-  (local $0 i32)
-  (local $1 f64)
-  (local $2 f32)
   (i32.store8
    (i32.const 100)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store8
    (i32.const 101)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store16
    (i32.const 102)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store16
    (i32.const 103)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store16 align=1
    (i32.const 104)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store16
    (i32.const 105)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 106)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 107)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store align=1
    (i32.const 108)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store align=2
    (i32.const 109)
-   (get_local $0)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 110)
-   (get_local $0)
+   (i32.const 0)
   )
   (f32.store
    (i32.const 111)
-   (get_local $2)
+   (f32.const 0)
   )
   (f32.store
    (i32.const 112)
-   (get_local $2)
+   (f32.const 0)
   )
   (f32.store align=1
    (i32.const 113)
-   (get_local $2)
+   (f32.const 0)
   )
   (f32.store align=2
    (i32.const 114)
-   (get_local $2)
+   (f32.const 0)
   )
   (f32.store
    (i32.const 115)
-   (get_local $2)
+   (f32.const 0)
   )
   (f64.store
    (i32.const 116)
-   (get_local $1)
+   (f64.const 0)
   )
   (f64.store
    (i32.const 117)
-   (get_local $1)
+   (f64.const 0)
   )
   (f64.store align=1
    (i32.const 118)
-   (get_local $1)
+   (f64.const 0)
   )
   (f64.store align=2
    (i32.const 119)
-   (get_local $1)
+   (f64.const 0)
   )
   (f64.store align=4
    (i32.const 120)
-   (get_local $1)
+   (f64.const 0)
   )
   (f64.store
    (i32.const 121)
-   (get_local $1)
+   (f64.const 0)
   )
  )
  (func $test
-  (local $0 f32)
-  (local $1 i32)
-  (set_local $1
-   (i32.reinterpret/f32
-    (get_local $0)
-   )
-  )
+  (nop)
  )
  (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
@@ -295,52 +286,40 @@
  (func $test64
   (local $0 i64)
   (local $1 i64)
-  (local $2 i64)
-  (local $3 f32)
-  (local $4 f64)
-  (set_local $2
+  (local $2 f32)
+  (local $3 f64)
+  (set_local $0
    (call $i64s-div
     (block (result i64)
-     (set_local $2
-      (i64.mul
-       (i64.sub
-        (i64.add
-         (tee_local $0
-          (i64.const 128849018897)
-         )
-         (i64.const 100)
-        )
-        (get_local $0)
-       )
-       (get_local $0)
-      )
+     (set_local $0
+      (i64.const 12884901889700)
      )
      (if (result i64)
       (i64.eqz
        (tee_local $1
-        (get_local $0)
+        (i64.const 128849018897)
        )
       )
       (i64.const 0)
       (i64.div_u
-       (get_local $2)
+       (get_local $0)
        (get_local $1)
       )
      )
     )
-    (get_local $0)
+    (i64.const 128849018897)
    )
   )
-  (set_local $1
+  (set_local $0
    (if (result i64)
     (i64.eqz
      (tee_local $1
-      (get_local $0)
+      (i64.const 128849018897)
      )
     )
     (i64.const 0)
     (i64.rem_u
-     (get_local $2)
+     (get_local $0)
      (get_local $1)
     )
    )
@@ -348,12 +327,14 @@
   (drop
    (if (result i64)
     (i64.eqz
-     (get_local $0)
+     (tee_local $1
+      (i64.const 128849018897)
+     )
     )
     (i64.const 0)
     (i64.rem_s
-     (get_local $1)
      (get_local $0)
+     (get_local $1)
     )
    )
   )
@@ -404,7 +385,7 @@
   (drop
    (call $f64-to-int64
     (f64.promote/f32
-     (tee_local $3
+     (tee_local $2
       (f32.convert_u/i64
        (tee_local $0
         (i64.extend_u/i32
@@ -420,7 +401,7 @@
   )
   (drop
    (call $f64-to-int64
-    (tee_local $4
+    (tee_local $3
      (f64.convert_u/i64
       (get_local $0)
      )
@@ -430,13 +411,13 @@
   (drop
    (call $f64-to-int64
     (f64.promote/f32
-     (get_local $3)
+     (get_local $2)
     )
    )
   )
   (drop
    (call $f64-to-int64
-    (get_local $4)
+    (get_local $3)
    )
   )
  )
@@ -559,44 +540,24 @@
   )
  )
  (func $switch64TOOMUCH (param $0 i64) (result i32)
-  (local $1 i32)
-  (local $2 i64)
+  (local $1 i64)
   (block $switch-default
    (if
     (i64.ne
-     (tee_local $2
+     (tee_local $1
       (get_local $0)
      )
      (i64.const -9223372036854775808)
     )
     (br_if $switch-default
      (i64.ne
-      (get_local $2)
+      (get_local $1)
       (i64.const 4611686018427387904)
      )
     )
    )
    (return
     (i32.const 40)
-   )
-  )
-  (block $switch-default4
-   (if
-    (i32.ne
-     (tee_local $1
-      (i32.const 100)
-     )
-     (i32.const 214748364)
-    )
-    (br_if $switch-default4
-     (i32.ne
-      (get_local $1)
-      (i32.const 107374182)
-     )
-    )
-   )
-   (return
-    (i32.const 41)
    )
   )
   (block $switch5
@@ -614,25 +575,6 @@
    )
    (return
     (i32.const 42)
-   )
-  )
-  (block $switch8
-   (if
-    (i32.ne
-     (tee_local $1
-      (i32.const 100)
-     )
-     (i32.const 214748364)
-    )
-    (br_if $switch8
-     (i32.ne
-      (get_local $1)
-      (i32.const 107374182)
-     )
-    )
-   )
-   (return
-    (i32.const 43)
    )
   )
   (i32.const 44)

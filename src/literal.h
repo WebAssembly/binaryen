@@ -42,7 +42,7 @@ private:
     return val & (sizeof(T) * 8 - 1);
   }
 
- public:
+public:
   Literal() : type(WasmType::none), i64(0) {}
   explicit Literal(WasmType type) : type(type), i64(0) {}
   explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
@@ -51,6 +51,9 @@ private:
   explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
   explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
+
+  bool isConcrete() { return type != none; }
+  bool isNull() { return type == none; }
 
   Literal castToF32();
   Literal castToF64();
@@ -69,11 +72,12 @@ private:
   float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
   double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
 
-  int64_t getInteger();
-  double getFloat();
-  int64_t getBits();
+  int64_t getInteger() const;
+  double getFloat() const;
+  int64_t getBits() const;
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
+  bool bitwiseEqual(const Literal& other) const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
