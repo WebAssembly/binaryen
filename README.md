@@ -32,7 +32,7 @@ Binaryen's internal IR is an AST, designed to be
  * **Flexible and fast** for optimization.
  * **As close as possible to WebAssembly** so it is simple and fast to convert it to and from WebAssembly.
 
-The differences between Binaryen IR and WebAssembly are:
+There are a few differences between Binaryen IR and the WebAssembly language:
 
  * AST structure
    * Binaryen IR [is an AST](https://github.com/WebAssembly/binaryen/issues/663) (i.e. it has hierarchical structure), for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
