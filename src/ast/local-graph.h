@@ -38,9 +38,7 @@ struct LocalGraph : public PostWalker<LocalGraph> {
     walkFunctionInModule(func, module);
   }
 
-  // the set_locals relevant for an index or a get. we use
-  // as set as merges of control flow mean more than 1 may
-  // be relevant
+  // the set_locals relevant for an index or a get.
   typedef std::set<SetLocal*> Sets;
 
   // externally useful information

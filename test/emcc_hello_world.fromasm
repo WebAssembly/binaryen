@@ -5099,15 +5099,9 @@
                        (i32.lt_s
                         (tee_local $6
                          (i32.add
-                          (if (result i32)
-                           (tee_local $12
-                            (i32.const 9)
-                           )
-                           (i32.rem_s
-                            (get_local $6)
-                            (get_local $12)
-                           )
-                           (i32.const 0)
+                          (i32.rem_s
+                           (get_local $6)
+                           (i32.const 9)
                           )
                           (i32.const 1)
                          )

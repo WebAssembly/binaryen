@@ -1142,7 +1142,6 @@
   )
  )
  (func $keepAlive
-  (local $0 i32)
   (drop
    (call $sqrts
     (f64.const 3.14159)
@@ -1151,16 +1150,6 @@
   (drop
    (call $sqrts
     (f64.const 2.18281)
-   )
-  )
-  (block $__inlined_func$autoDrop
-   (br_if $__inlined_func$autoDrop
-    (i32.eq
-     (tee_local $0
-      (i32.const 52)
-     )
-     (i32.const 17)
-    )
    )
   )
   (call_indirect $FUNCSIG$vi

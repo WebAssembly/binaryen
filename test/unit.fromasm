@@ -252,21 +252,7 @@
   )
  )
  (func $big_uint_div_u (result i32)
-  (local $0 i32)
-  (local $1 i32)
-  (set_local $0
-   (i32.const -1)
-  )
-  (if (result i32)
-   (tee_local $1
-    (i32.const 2)
-   )
-   (i32.div_u
-    (get_local $0)
-    (get_local $1)
-   )
-   (i32.const 0)
-  )
+  (i32.const 2147483647)
  )
  (func $fr (param $0 f32)
   (nop)
@@ -1175,7 +1161,6 @@
   )
  )
  (func $keepAlive
-  (local $0 i32)
   (drop
    (call $sqrts
     (f64.const 3.14159)
@@ -1194,16 +1179,6 @@
   (drop
    (call $f2u
     (f64.const 100)
-   )
-  )
-  (block $__inlined_func$autoDrop
-   (br_if $__inlined_func$autoDrop
-    (i32.eq
-     (tee_local $0
-      (i32.const 52)
-     )
-     (i32.const 17)
-    )
    )
   )
   (call_indirect $FUNCSIG$vi
