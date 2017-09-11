@@ -223,6 +223,34 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         PUSH(Store, value);
         break;
       }
+      case Expression::Id::AtomicCmpxchgId: {
+        CHECK(AtomicCmpxchg, bytes);
+        CHECK(AtomicCmpxchg, offset);
+        PUSH(AtomicCmpxchg, ptr);
+        PUSH(AtomicCmpxchg, expected);
+        PUSH(AtomicCmpxchg, replacement);
+        break;
+      }
+      case Expression::Id::AtomicRMWId: {
+        CHECK(AtomicRMW, op);
+        CHECK(AtomicRMW, bytes);
+        CHECK(AtomicRMW, offset);
+        PUSH(AtomicRMW, ptr);
+        PUSH(AtomicRMW, value);
+        break;
+      }
+      case Expression::Id::AtomicWaitId: {
+        CHECK(AtomicWait, expectedType);
+        PUSH(AtomicWait, ptr);
+        PUSH(AtomicWait, expected);
+        PUSH(AtomicWait, timeout);
+        break;
+      }
+      case Expression::Id::AtomicWakeId: {
+        PUSH(AtomicWake, ptr);
+        PUSH(AtomicWake, wakeCount);
+        break;
+      }
       case Expression::Id::ConstId: {
         CHECK(Const, value);
         break;
@@ -438,6 +466,34 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         HASH(Store, valueType);
         PUSH(Store, ptr);
         PUSH(Store, value);
+        break;
+      }
+      case Expression::Id::AtomicCmpxchgId: {
+        HASH(AtomicCmpxchg, bytes);
+        HASH(AtomicCmpxchg, offset);
+        PUSH(AtomicCmpxchg, ptr);
+        PUSH(AtomicCmpxchg, expected);
+        PUSH(AtomicCmpxchg, replacement);
+        break;
+      }
+      case Expression::Id::AtomicRMWId: {
+        HASH(AtomicRMW, op);
+        HASH(AtomicRMW, bytes);
+        HASH(AtomicRMW, offset);
+        PUSH(AtomicRMW, ptr);
+        PUSH(AtomicRMW, value);
+        break;
+      }
+      case Expression::Id::AtomicWaitId: {
+        HASH(AtomicWait, expectedType);
+        PUSH(AtomicWait, ptr);
+        PUSH(AtomicWait, expected);
+        PUSH(AtomicWait, timeout);
+        break;
+      }
+      case Expression::Id::AtomicWakeId: {
+        PUSH(AtomicWake, ptr);
+        PUSH(AtomicWake, wakeCount);
         break;
       }
       case Expression::Id::ConstId: {
