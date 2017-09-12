@@ -32,7 +32,7 @@
 
 namespace wasm {
 
-struct ReReloop : public Pass {
+struct ReReloop final : public Pass {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReReloop; }
@@ -110,7 +110,7 @@ struct ReReloop : public Pass {
   typedef std::shared_ptr<Task> TaskPtr;
   std::vector<TaskPtr> stack;
 
-  struct TriageTask : public Task {
+  struct TriageTask final : public Task {
     Expression* curr;
 
     TriageTask(ReReloop& parent, Expression* curr) : Task(parent), curr(curr) {}
@@ -120,7 +120,7 @@ struct ReReloop : public Pass {
     }
   };
 
-  struct BlockTask : public Task {
+  struct BlockTask final : public Task {
     Block* curr;
     CFG::Block* later;
 
@@ -149,7 +149,7 @@ struct ReReloop : public Pass {
     }
   };
 
-  struct LoopTask : public Task {
+  struct LoopTask final : public Task {
     static void handle(ReReloop& parent, Loop* curr) {
       parent.stack.push_back(std::make_shared<TriageTask>(parent, curr->body));
       if (curr->name.is()) {
@@ -162,7 +162,7 @@ struct ReReloop : public Pass {
     }
   };
 
-  struct IfTask : public Task {
+  struct IfTask final : public Task {
     If* curr;
     CFG::Block* condition;
     CFG::Block* ifTrueEnd;
@@ -325,4 +325,3 @@ Pass *createReReloopPass() {
 }
 
 } // namespace wasm
-
