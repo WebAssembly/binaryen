@@ -1,0 +1,214 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32) (result i32)))
+ (memory $0 0)
+ (func $basic (type $0) (param $p i32)
+  (local $x i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (call $basic
+   (i32.const 20)
+  )
+ )
+ (func $split (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 10)
+   )
+  )
+  (call $basic
+   (i32.add
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+ )
+ (func $split-but-join (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 10)
+   )
+   (set_local $x
+    (i32.const 10)
+   )
+  )
+  (call $basic
+   (i32.const 20)
+  )
+ )
+ (func $split-but-join-different (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 10)
+   )
+   (set_local $x
+    (i32.const 20)
+   )
+  )
+  (call $basic
+   (i32.add
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+ )
+ (func $split-but-join-different-b (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 10)
+   )
+   (set_local $x
+    (get_local $p)
+   )
+  )
+  (call $basic
+   (i32.add
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+ )
+ (func $split-but-join-init0 (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 0)
+   )
+  )
+  (call $basic
+   (i32.const 0)
+  )
+ )
+ (func $later (type $0) (param $p i32)
+  (local $x i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (call $basic
+   (i32.const 20)
+  )
+  (set_local $x
+   (i32.const 22)
+  )
+  (call $basic
+   (i32.const 44)
+  )
+  (set_local $x
+   (i32.const 39)
+  )
+ )
+ (func $later2 (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (set_local $x
+   (i32.const 20)
+  )
+  (i32.const 20)
+ )
+ (func $two-ways-but-identical (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 11)
+   )
+   (set_local $y
+    (i32.const 11)
+   )
+  )
+  (set_local $y
+   (i32.const 21)
+  )
+  (i32.const 21)
+ )
+ (func $two-ways-but-almost-identical (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 12)
+   )
+   (set_local $y
+    (i32.const 11)
+   )
+  )
+  (set_local $y
+   (i32.add
+    (i32.const 10)
+    (get_local $y)
+   )
+  )
+  (get_local $y)
+ )
+ (func $deadloop (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $deadloop2 (type $0) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $deadloop3 (type $0) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+)

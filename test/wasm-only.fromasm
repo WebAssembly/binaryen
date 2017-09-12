@@ -294,67 +294,41 @@
  )
  (func $test64
   (local $0 i64)
-  (local $1 i64)
-  (local $2 i64)
-  (local $3 f32)
-  (local $4 f64)
-  (set_local $2
+  (local $1 f32)
+  (local $2 f64)
+  (set_local $0
    (call $i64s-div
     (block (result i64)
-     (set_local $2
+     (set_local $0
       (i64.mul
        (i64.sub
         (i64.add
-         (tee_local $0
-          (i64.const 128849018897)
-         )
+         (i64.const 128849018897)
          (i64.const 100)
         )
-        (get_local $0)
+        (i64.const 128849018897)
        )
-       (get_local $0)
+       (i64.const 128849018897)
       )
      )
-     (if (result i64)
-      (i64.eqz
-       (tee_local $1
-        (get_local $0)
-       )
-      )
-      (i64.const 0)
-      (i64.div_u
-       (get_local $2)
-       (get_local $1)
-      )
+     (i64.div_u
+      (get_local $0)
+      (i64.const 128849018897)
      )
     )
-    (get_local $0)
+    (i64.const 128849018897)
    )
   )
-  (set_local $1
-   (if (result i64)
-    (i64.eqz
-     (tee_local $1
-      (get_local $0)
-     )
-    )
-    (i64.const 0)
-    (i64.rem_u
-     (get_local $2)
-     (get_local $1)
-    )
+  (set_local $0
+   (i64.rem_u
+    (get_local $0)
+    (i64.const 128849018897)
    )
   )
   (drop
-   (if (result i64)
-    (i64.eqz
-     (get_local $0)
-    )
-    (i64.const 0)
-    (i64.rem_s
-     (get_local $1)
-     (get_local $0)
-    )
+   (i64.rem_s
+    (get_local $0)
+    (i64.const 128849018897)
    )
   )
   (drop
@@ -404,7 +378,7 @@
   (drop
    (call $f64-to-int64
     (f64.promote/f32
-     (tee_local $3
+     (tee_local $1
       (f32.convert_u/i64
        (tee_local $0
         (i64.extend_u/i32
@@ -420,7 +394,7 @@
   )
   (drop
    (call $f64-to-int64
-    (tee_local $4
+    (tee_local $2
      (f64.convert_u/i64
       (get_local $0)
      )
@@ -430,13 +404,13 @@
   (drop
    (call $f64-to-int64
     (f64.promote/f32
-     (get_local $3)
+     (get_local $1)
     )
    )
   )
   (drop
    (call $f64-to-int64
-    (get_local $4)
+    (get_local $2)
    )
   )
  )

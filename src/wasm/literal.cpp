@@ -93,6 +93,12 @@ bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
 }
 
+bool Literal::bitwiseEqual(const Literal& other) const {
+  if (type != other.type) return false;
+  if (type == none) return true;
+  return getBits() == other.getBits();
+}
+
 uint32_t Literal::NaNPayload(float f) {
   assert(std::isnan(f) && "expected a NaN");
   // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF

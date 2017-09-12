@@ -49,6 +49,7 @@ Pass *createOptimizeInstructionsPass();
 Pass *createPickLoadSignsPass();
 Pass *createPostEmscriptenPass();
 Pass *createPrecomputePass();
+Pass *createPrecomputePropagatePass();
 Pass *createPrinterPass();
 Pass *createPrintCallGraphPass();
 Pass *createRelooperJumpThreadingPass();

@@ -11,10 +11,11 @@
     )
     (i32.add (get_local $x2) (get_local $y2))
   )
-  (func $8 (export "localcse-2") (param $var$0 i32) (result i32)
-    (local $var$1 i32)
-    (local $var$2 i32)
-    (local $var$3 i32)
+  (func $8 (export "localcse-2") (param $var$0 i32)
+    (param $var$1 i32)
+    (param $var$2 i32)
+    (param $var$3 i32)
+    (result i32)
     (block $label$0 (result i32)
       (i32.store
         (tee_local $var$2

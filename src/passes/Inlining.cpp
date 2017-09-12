@@ -313,6 +313,7 @@ struct Inlining : public Pass {
     PassRunner runner(module, parentRunner->options);
     runner.setIsNested(true);
     runner.setValidateGlobally(false); // not a full valid module
+    runner.add("precompute-propagate");
     runner.add("remove-unused-brs");
     runner.add("remove-unused-names");
     runner.add("coalesce-locals");
