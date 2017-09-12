@@ -25,4 +25,19 @@
    )
   )
  )
+ (func $split-but-join (type $0) (param $p i32)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 10)
+   )
+   (set_local $x
+    (i32.const 10)
+   )
+  )
+  (call $basic
+   (i32.const 20)
+  )
+ )
 )
