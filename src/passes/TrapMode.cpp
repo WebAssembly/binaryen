@@ -15,7 +15,9 @@
  */
 
 //
-// Pass that supports potentially-trapping float operations.
+// Pass that supports potentially-trapping wasm operations.
+// For example, integer division traps when dividing by zero, so this pass
+// generates a check and replaces the result with zero in that case.
 //
 
 #include "asm_v_wasm.h"
