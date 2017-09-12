@@ -1,5 +1,6 @@
 (module
  (type $0 (func (param i32)))
+ (type $1 (func (param i32) (result i32)))
  (memory $0 0)
  (func $basic (type $0) (param $p i32)
   (local $x i32)
@@ -105,5 +106,15 @@
   (set_local $x
    (i32.const 39)
   )
+ )
+ (func $later2 (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (set_local $x
+   (i32.const 20)
+  )
+  (i32.const 20)
  )
 )

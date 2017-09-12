@@ -50,5 +50,11 @@
     (call $basic (i32.add (get_local $x) (get_local $x)))
     (set_local $x (i32.const 39))
   )
+  (func $later2 (param $p i32) (result i32)
+    (local $x i32)
+    (set_local $x (i32.const 10))
+    (set_local $x (i32.add (get_local $x) (get_local $x)))
+    (get_local $x)
+  )
 )
 
