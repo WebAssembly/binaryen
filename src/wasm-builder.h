@@ -82,6 +82,12 @@ public:
     ret->name = name;
     return ret;
   }
+  Block* makeBlock(const std::vector<Expression*>& items) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize();
+    return ret;
+  }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse = nullptr) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;

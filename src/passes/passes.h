@@ -26,6 +26,7 @@ Pass *createCoalesceLocalsPass();
 Pass *createCoalesceLocalsWithLearningPass();
 Pass *createCodeFoldingPass();
 Pass *createCodePushingPass();
+Pass *createConstHoistingPass();
 Pass *createDeadCodeEliminationPass();
 Pass *createDuplicateFunctionEliminationPass();
 Pass *createExtractFunctionPass();

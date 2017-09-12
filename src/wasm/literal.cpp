@@ -53,7 +53,7 @@ Literal Literal::castToI64() {
   return ret;
 }
 
-int64_t Literal::getInteger() {
+int64_t Literal::getInteger() const {
   switch (type) {
     case WasmType::i32: return i32;
     case WasmType::i64: return i64;
@@ -61,7 +61,7 @@ int64_t Literal::getInteger() {
   }
 }
 
-double Literal::getFloat() {
+double Literal::getFloat() const {
   switch (type) {
     case WasmType::f32: return getf32();
     case WasmType::f64: return getf64();
@@ -69,7 +69,7 @@ double Literal::getFloat() {
   }
 }
 
-int64_t Literal::getBits() {
+int64_t Literal::getBits() const {
   switch (type) {
     case WasmType::i32: case WasmType::f32: return i32;
     case WasmType::i64: case WasmType::f64: return i64;
