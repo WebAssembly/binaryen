@@ -35,5 +35,12 @@
     )
     (call $basic (i32.add (get_local $x) (get_local $x)))
   )
+  (func $split-but-join-init0 (param $p i32)
+    (local $x i32)
+    (if (i32.const 1)
+      (set_local $x (i32.const 0))
+    )
+    (call $basic (i32.add (get_local $x) (get_local $x)))
+  )
 )
 
