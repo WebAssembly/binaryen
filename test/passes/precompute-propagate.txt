@@ -173,4 +173,42 @@
    (br $loop)
   )
  )
+ (func $deadloop2 (type $0) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $deadloop3 (type $0) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
 )
