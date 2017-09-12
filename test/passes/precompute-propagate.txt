@@ -88,4 +88,22 @@
    (i32.const 0)
   )
  )
+ (func $later (type $0) (param $p i32)
+  (local $x i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (call $basic
+   (i32.const 20)
+  )
+  (set_local $x
+   (i32.const 22)
+  )
+  (call $basic
+   (i32.const 44)
+  )
+  (set_local $x
+   (i32.const 39)
+  )
+ )
 )
