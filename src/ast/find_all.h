@@ -17,6 +17,8 @@
 #ifndef wasm_ast_find_all_h
 #define wasm_ast_find_all_h
 
+#include <wasm-traversal.h>
+
 namespace wasm {
 
 // Find all instances of a certain node type
