@@ -17,6 +17,8 @@
 #ifndef wasm_ast_local_graph_h
 #define wasm_ast_local_graph_h
 
+#include <iterator>
+
 #include <wasm-builder.h>
 #include <ast/find_all.h>
 
