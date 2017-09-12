@@ -160,4 +160,17 @@
   )
   (get_local $y)
  )
+ (func $deadloop (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 0)
+   )
+   (set_local $y
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
 )

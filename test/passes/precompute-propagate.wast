@@ -78,5 +78,14 @@
     (set_local $y (i32.add (get_local $x) (get_local $y)))
     (get_local $y)
   )
+  (func $deadloop (param $p i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    (loop $loop ;; we look like we depend on the other, but we don't actually
+      (set_local $x (if (result i32) (i32.const 1) (i32.const 0) (get_local $y)))
+      (set_local $y (if (result i32) (i32.const 1) (i32.const 0) (get_local $x)))
+      (br $loop)
+    )
+  )
 )
 
