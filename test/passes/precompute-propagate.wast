@@ -67,5 +67,16 @@
     (set_local $y (i32.add (get_local $x) (get_local $y)))
     (get_local $y)
   )
+  (func $two-ways-but-almost-identical (param $p i32) (result i32)
+    (local $x i32)
+    (local $y i32)
+    (set_local $x (i32.const 10))
+    (if (i32.const 1)
+      (set_local $y (i32.const 12)) ;; 12, not 11...
+      (set_local $y (i32.add (get_local $x) (i32.const 1)))
+    )
+    (set_local $y (i32.add (get_local $x) (get_local $y)))
+    (get_local $y)
+  )
 )
 

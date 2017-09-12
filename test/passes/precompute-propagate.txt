@@ -137,4 +137,27 @@
   )
   (i32.const 21)
  )
+ (func $two-ways-but-almost-identical (type $1) (param $p i32) (result i32)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (i32.const 10)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 12)
+   )
+   (set_local $y
+    (i32.const 11)
+   )
+  )
+  (set_local $y
+   (i32.add
+    (i32.const 10)
+    (get_local $y)
+   )
+  )
+  (get_local $y)
+ )
 )
