@@ -907,11 +907,8 @@ public:
   void pushBlockElements(Block* curr, size_t start, size_t end);
   void visitBlock(Block *curr);
 
-  // Gets a potential list of instructions. This is not a block and cannot be
-  // branched to.
-  Expression* getList(WasmType type);
-  // Gets a potential block. This may be branched to.
-  Expression* getBlock(WasmType type);
+  // Gets a block of expressions. If it's just one, return that singleton.
+  Expression* getBlockOrSingleton(WasmType type);
 
   void visitIf(If *curr);
   void visitLoop(Loop *curr);

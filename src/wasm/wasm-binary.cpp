@@ -1633,7 +1633,7 @@ void WasmBinaryBuilder::readFunctions() {
       breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
-      func->body = getBlock(func->result);
+      func->body = getBlockOrSingleton(func->result);
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
@@ -2225,23 +2225,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getList(WasmType type) {
-  auto start = expressionStack.size();
-  processExpressions();
-  size_t end = expressionStack.size();
-  if (end - start == 1) {
-    return popExpression();
-  }
-  if (start > end) {
-    throw ParseException("block cannot pop from outside");
-  }
-  auto* block = allocator.alloc<Block>();
-  pushBlockElements(block, start, end);
-  block->finalize(type);
-  return block;
-}
-
-Expression* WasmBinaryBuilder::getBlock(WasmType type) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
@@ -2266,9 +2250,9 @@ void WasmBinaryBuilder::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
   curr->type = getWasmType();
   curr->condition = popNonVoidExpression();
-  curr->ifTrue = getBlock(curr->type);
+  curr->ifTrue = getBlockOrSingleton(curr->type);
   if (lastSeparator == BinaryConsts::Else) {
-    curr->ifFalse = getBlock(curr->type);
+    curr->ifFalse = getBlockOrSingleton(curr->type);
   }
   curr->finalize(curr->type);
   if (lastSeparator != BinaryConsts::End) {
@@ -2281,7 +2265,25 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
   curr->type = getWasmType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
-  curr->body = getList(curr->type);
+  // find the expressions in the block, and create the body
+  // a loop may have a list of instructions in wasm, much like
+  // a block, but it only has a label at the top of the loop,
+  // so even if we need a block (if there is more than 1
+  // expression) we never need a label on the block.
+  auto start = expressionStack.size();
+  processExpressions();
+  size_t end = expressionStack.size();
+  if (end - start == 1) {
+    curr->body = popExpression();
+  } else {
+    if (start > end) {
+      throw ParseException("block cannot pop from outside");
+    }
+    auto* block = allocator.alloc<Block>();
+    pushBlockElements(block, start, end);
+    block->finalize(curr->type);
+    curr->body = block;
+  }
   breakStack.pop_back();
   curr->finalize(curr->type);
 }
