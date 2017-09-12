@@ -32,6 +32,9 @@ namespace wasm {
 // (see the SSA pass for actually creating new local indexes based
 // on this).
 //
+// TODO: the algorithm here is pretty simple, but also pretty slow,
+//       we should optimize it. e.g. we rely on set_interaction
+//       here, and worse we only use it to compute the size...
 struct LocalGraph : public PostWalker<LocalGraph> {
   // main API
 
