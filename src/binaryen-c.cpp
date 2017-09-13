@@ -745,7 +745,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   return ret;
 }
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, bool mutable_, BinaryenExpressionRef init) {
+BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
   if (tracing) {
     std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
   }
@@ -754,7 +754,7 @@ BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   auto* ret = new Global();
   ret->name = name;
   ret->type = WasmType(type);
-  ret->mutable_ = mutable_;
+  ret->mutable_ = !!mutable_;
   ret->init = (Expression*)init;
   wasm->addGlobal(ret);
   return ret;

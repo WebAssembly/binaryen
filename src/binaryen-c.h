@@ -355,7 +355,7 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Globals
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, bool mutable_, BinaryenExpressionRef init);
+BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
 
 // Function table. One per module
 
