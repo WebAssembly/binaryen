@@ -475,6 +475,7 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
   }
   ret->fullType = type;
   ret->type = wasm->getFunctionType(ret->fullType)->result;
+  ret->finalize();
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type) {
