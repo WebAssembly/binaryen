@@ -158,8 +158,8 @@ namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
     return wasm::rehash(
-      hash<size_t>()(size_t(a.type)),
-      hash<int64_t>()(a.getBits())
+      uint64_t(hash<size_t>()(size_t(a.type))),
+      uint64_t(hash<int64_t>()(a.getBits()))
     );
   }
 };
