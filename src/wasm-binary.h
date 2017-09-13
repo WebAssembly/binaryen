@@ -906,8 +906,10 @@ public:
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, size_t start, size_t end);
   void visitBlock(Block *curr);
-  Expression* getMaybeBlock(WasmType type);
-  Expression* getBlock(WasmType type);
+
+  // Gets a block of expressions. If it's just one, return that singleton.
+  Expression* getBlockOrSingleton(WasmType type);
+
   void visitIf(If *curr);
   void visitLoop(Loop *curr);
   BreakTarget getBreakTarget(int32_t offset);

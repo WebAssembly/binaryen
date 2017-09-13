@@ -4,117 +4,79 @@
  (func $a (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
+   (unreachable)
   )
  )
  (func $b (type $0)
   (if
    (i32.const 1)
-   (block $label$0
-    (unreachable)
-   )
-   (block $label$1
-    (unreachable)
-   )
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-block (type $0)
-  (block $label$0
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
   )
  )
  (func $b-block (type $0)
-  (block $label$0
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-    (block $label$2
-     (unreachable)
-    )
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-prepost (type $0)
-  (block $label$0
-   (nop)
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-   )
-   (nop)
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
   )
+  (nop)
  )
  (func $b-prepost (type $0)
-  (block $label$0
-   (nop)
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-    (block $label$2
-     (unreachable)
-    )
-   )
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
   )
  )
  (func $a-block-prepost (type $0)
-  (block $label$0
-   (nop)
-   (block $label$1
-    (if
-     (i32.const 1)
-     (block $label$2
-      (unreachable)
-     )
-    )
+  (nop)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (unreachable)
    )
-   (nop)
   )
+  (nop)
  )
  (func $b-block-prepost (type $0)
-  (block $label$0
-   (nop)
-   (block $label$1
-    (if
-     (i32.const 1)
-     (block $label$2
-      (unreachable)
-     )
-     (block $label$3
-      (unreachable)
-     )
-    )
+  (nop)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (unreachable)
+    (unreachable)
    )
   )
  )
  (func $recurse (type $0)
-  (block $label$0
+  (nop)
+  (block $label$1
    (nop)
-   (block $label$1
-    (nop)
-    (br $label$1)
-   )
-   (nop)
+   (br $label$1)
   )
+  (nop)
  )
  (func $recurse-b (type $0)
-  (block $label$0
+  (block $label$1
    (nop)
-   (block $label$1
+   (block $label$2
     (nop)
-    (br $label$0)
+    (br $label$1)
    )
   )
  )

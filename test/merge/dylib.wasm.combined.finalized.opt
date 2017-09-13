@@ -18,8 +18,8 @@
  (export "_str" (global $global$2))
  (export "_foo" (func $_foo))
  (func $_main (type $2) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1 (result i32)
+  (block $label$1 (result i32)
+   (block $label$2 (result i32)
     (drop
      (call $import$1
       (i32.const 1024)
@@ -34,27 +34,25 @@
  )
  (func $__post_instantiate (type $3)
   (call $__post_instantiate$0)
-  (block
-   (block $label$0
-    (block $label$1
-     (set_global $global$0
-      (i32.const 1040)
-     )
-     (set_global $global$1
-      (i32.add
-       (get_global $global$0)
-       (i32.const 32)
-      )
-     )
-     (call $runPostSets)
+  (block $label$1
+   (block $label$2
+    (set_global $global$0
+     (i32.const 1040)
     )
+    (set_global $global$1
+     (i32.add
+      (get_global $global$0)
+      (i32.const 32)
+     )
+    )
+    (call $runPostSets)
    )
   )
  )
  (func $_foo (type $2) (result i32)
   (local $var$0 i32)
-  (block $label$0 (result i32)
-   (block $label$1 (result i32)
+  (block $label$1 (result i32)
+   (block $label$2 (result i32)
     (set_local $var$0
      (call $_main)
     )
@@ -66,8 +64,8 @@
   (nop)
  )
  (func $__post_instantiate$0 (type $3)
-  (block $label$0
-   (block $label$1
+  (block $label$1
+   (block $label$2
     (set_global $global$0$0
      (i32.const 1072)
     )

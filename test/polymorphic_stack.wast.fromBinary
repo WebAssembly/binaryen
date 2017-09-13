@@ -6,36 +6,30 @@
  (import "env" "table" (table 9 9 anyfunc))
  (memory $0 0)
  (func $break-and-binary (type $1) (result i32)
-  (block $label$0 (result i32)
+  (block $label$1 (result i32)
    (unreachable)
   )
  )
  (func $call-and-unary (type $0) (param $var$0 i32) (result i32)
-  (block $label$0 (result i32)
-   (unreachable)
-  )
+  (unreachable)
  )
  (func $tee (type $2) (param $var$0 i32)
   (local $var$1 f32)
-  (block $label$0
-   (unreachable)
-  )
+  (unreachable)
  )
  (func $tee2 (type $3)
   (local $var$0 f32)
   (if
    (i32.const 259)
-   (block $label$0
-    (unreachable)
-   )
+   (unreachable)
   )
  )
  (func $select (type $3)
   (unreachable)
  )
  (func $untaken-break-should-have-value (type $1) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
+  (block $label$1 (result i32)
+   (block $label$2
     (drop
      (i32.const 0)
     )
@@ -45,43 +39,35 @@
   )
  )
  (func $unreachable-in-block-but-code-before (type $0) (param $var$0 i32) (result i32)
-  (block $label$0 (result i32)
-   (if
-    (get_local $var$0)
-    (block $label$1
-     (return
-      (i32.const 127)
-     )
-    )
+  (if
+   (get_local $var$0)
+   (return
+    (i32.const 127)
    )
-   (block $label$2 (result i32)
-    (drop
-     (i32.const 0)
-    )
-    (return
-     (i32.const -32)
-    )
+  )
+  (block $label$2 (result i32)
+   (drop
+    (i32.const 0)
+   )
+   (return
+    (i32.const -32)
    )
   )
  )
  (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1 (result i32)
+  (block $label$1 (result i32)
+   (block $label$2 (result i32)
     (unreachable)
    )
   )
  )
  (func $untaken-br_if (type $1) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
+  (block $label$1 (result i32)
+   (block $label$2
     (if
      (i32.const 0)
-     (block $label$2
-      (unreachable)
-     )
-     (block $label$3
-      (unreachable)
-     )
+     (unreachable)
+     (unreachable)
     )
    )
    (unreachable)

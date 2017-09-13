@@ -271,7 +271,7 @@ void WasmBinaryWriter::writeFunctions() {
     if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
     if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
 
-    writeExpression(function->body);
+    recursePossibleBlockContents(function->body);
     o << int8_t(BinaryConsts::End);
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -1633,7 +1633,7 @@ void WasmBinaryBuilder::readFunctions() {
       breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
-      func->body = getMaybeBlock(func->result);
+      func->body = getBlockOrSingleton(func->result);
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
@@ -2225,28 +2225,24 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
+  Name label = getNextLabel();
+  breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
-  if (start - end == 1) {
-    return popExpression();
-  }
-  if (start > end) {
-    throw ParseException("block cannot pop from outside");
-  }
+  breakStack.pop_back();
   auto* block = allocator.alloc<Block>();
   pushBlockElements(block, start, end);
+  block->name = label;
   block->finalize(type);
-  return block;
-}
-
-Expression* WasmBinaryBuilder::getBlock(WasmType type) {
-  Name label = getNextLabel();
-  breakStack.push_back({label, type != none && type != unreachable});
-  auto* block = Builder(wasm).blockify(getMaybeBlock(type));
-  breakStack.pop_back();
-  block->cast<Block>()->name = label;
+  // maybe we don't need a block here?
+  if (!brokenTo(block)) {
+    block->name = Name();
+    if (block->list.size() == 1) {
+      return block->list[0];
+    }
+  }
   return block;
 }
 
@@ -2254,9 +2250,9 @@ void WasmBinaryBuilder::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
   curr->type = getWasmType();
   curr->condition = popNonVoidExpression();
-  curr->ifTrue = getBlock(curr->type);
+  curr->ifTrue = getBlockOrSingleton(curr->type);
   if (lastSeparator == BinaryConsts::Else) {
-    curr->ifFalse = getBlock(curr->type);
+    curr->ifFalse = getBlockOrSingleton(curr->type);
   }
   curr->finalize(curr->type);
   if (lastSeparator != BinaryConsts::End) {
@@ -2269,7 +2265,25 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
   curr->type = getWasmType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
-  curr->body = getMaybeBlock(curr->type);
+  // find the expressions in the block, and create the body
+  // a loop may have a list of instructions in wasm, much like
+  // a block, but it only has a label at the top of the loop,
+  // so even if we need a block (if there is more than 1
+  // expression) we never need a label on the block.
+  auto start = expressionStack.size();
+  processExpressions();
+  size_t end = expressionStack.size();
+  if (end - start == 1) {
+    curr->body = popExpression();
+  } else {
+    if (start > end) {
+      throw ParseException("block cannot pop from outside");
+    }
+    auto* block = allocator.alloc<Block>();
+    pushBlockElements(block, start, end);
+    block->finalize(curr->type);
+    curr->body = block;
+  }
   breakStack.pop_back();
   curr->finalize(curr->type);
 }
