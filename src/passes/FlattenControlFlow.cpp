@@ -357,8 +357,8 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
+    Block* preBlock = nullptr;
     Expression* processed = curr;
-
     // first of all, get rid of the value if there is one
     if (curr->value) {
       if (curr->value->type != unreachable) {
@@ -367,12 +367,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         auto temp = builder->addVar(getFunction(), type);
         auto* value = getFallthroughReplacement(curr->value, temp);
         curr->value = nullptr;
-        auto* block = builder->makeBlock();
-        block->list.push_back(value);
+        // the entire preBlock, including the value, will be before everything else
+        preBlock = builder->makeBlock();
+        preBlock->list.push_back(value);
         std::set<Name> names;
         for (auto target : curr->targets) {
           if (names.insert(target).second) {
-            block->list.push_back(
+            preBlock->list.push_back(
               builder->makeSetLocal(
                 getBreakTargetIndex(target, type),
                 builder->makeGetLocal(temp, type)
@@ -381,16 +382,14 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
           }
         }
         if (names.insert(curr->default_).second) {
-          block->list.push_back(
+          preBlock->list.push_back(
             builder->makeSetLocal(
               getBreakTargetIndex(curr->default_, type),
               builder->makeGetLocal(temp, type)
             )
           );
         }
-        block->list.push_back(curr);
-        block->finalize();
-        replaceCurrent(block);
+        preBlock->finalize();
       } else {
         // we have a value, but it has unreachable type. we can just replace
         // ourselves with it, we won't reach a condition (if there is one) or the br
@@ -399,8 +398,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         return;
       }
     }
-    Splitter splitter(*this, processed);
-    splitter.note(curr->value);
+    Splitter splitter(*this, processed, preBlock);
     splitter.note(curr->condition);
   }
   void visitCall(Call* curr) {

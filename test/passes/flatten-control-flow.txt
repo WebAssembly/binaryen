@@ -717,14 +717,16 @@
       (block
        (block $switch-in
         (block
-         (set_local $6
-          (i32.const 2)
-         )
-         (set_local $7
-          (get_local $6)
-         )
-         (set_local $8
-          (get_local $6)
+         (block
+          (set_local $6
+           (i32.const 2)
+          )
+          (set_local $7
+           (get_local $6)
+          )
+          (set_local $8
+           (get_local $6)
+          )
          )
          (br_table $in $switch-in $in
           (i32.const 777)
