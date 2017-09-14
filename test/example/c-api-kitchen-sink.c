@@ -287,6 +287,7 @@ void test_unreachable() {
   BinaryenFunctionRef fn = BinaryenAddFunction(module, "unreachable-fn", i, NULL, 0, body);
 
   assert(BinaryenModuleValidate(module));
+  BinaryenModulePrint(module);
   BinaryenModuleDispose(module);
 }
 
