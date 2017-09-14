@@ -132,7 +132,18 @@ private:
     if (generatedFunctions.count(name) != 0) {
       return;
     }
+    generatedFunctions[name] = generateBinaryFunc(curr);
+  }
 
+  void ensureUnaryFunc(Unary *curr) {
+    Name name = getUnaryFuncName(curr);
+    if (generatedFunctions.count(name) != 0) {
+      return;
+    }
+    generatedFunctions[name] = generateUnaryFunc(curr);
+  }
+
+  Function* generateBinaryFunc(Binary *curr) {
     BinaryOp op = curr->op;
     WasmType type = curr->type;
     bool isI64 = type == i64;
@@ -166,7 +177,7 @@ private:
       );
     }
     auto func = new Function;
-    func->name = name;
+    func->name = getBinaryFuncName(curr);
     func->params.push_back(type);
     func->params.push_back(type);
     func->result = type;
@@ -177,15 +188,10 @@ private:
       builder.makeConst(zeroLit),
       result
     );
-    generatedFunctions[name] = func;
+    return func;
   }
 
-  void ensureUnaryFunc(Unary *curr) {
-    Name name = getUnaryFuncName(curr);
-    if (generatedFunctions.count(name) != 0) {
-      return;
-    }
-
+  Function* generateUnaryFunc(Unary *curr) {
     WasmType type = curr->value->type;
     WasmType retType = curr->type;
     bool isF64 = type == f64;
@@ -207,7 +213,7 @@ private:
                          : Literal( float(iMax.getInteger()) + 1);
 
     auto func = new Function;
-    func->name = name;
+    func->name = getUnaryFuncName(curr);
     func->params.push_back(type);
     func->result = retType;
     func->body = builder.makeUnary(truncOp,
@@ -243,7 +249,7 @@ private:
       builder.makeConst(iMin),
       func->body
     );
-    generatedFunctions[name] = func;
+    return func;
   }
 
   Name getBinaryFuncName(Binary* curr) {
