@@ -38,6 +38,165 @@ Name I64S_REM("i64s-rem"),
      I64S_DIV("i64s-div"),
      I64U_DIV("i64u-div");
 
+Name getBinaryFuncName(Binary* curr) {
+  switch (curr->op) {
+    case RemSInt32: return I32S_REM;
+    case RemUInt32: return I32U_REM;
+    case DivSInt32: return I32S_DIV;
+    case DivUInt32: return I32U_DIV;
+    case RemSInt64: return I64S_REM;
+    case RemUInt64: return I64U_REM;
+    case DivSInt64: return I64S_DIV;
+    case DivUInt64: return I64U_DIV;
+    default:
+      return Name();
+  }
+}
+
+Name getUnaryFuncName(Unary* curr) {
+  switch (curr->op) {
+  case TruncSFloat32ToInt32:
+  case TruncUFloat32ToInt32:
+    return F32_TO_INT;
+  case TruncSFloat32ToInt64:
+  case TruncUFloat32ToInt64:
+    return F32_TO_INT64;
+  case TruncSFloat64ToInt32:
+  case TruncUFloat64ToInt32:
+    return F64_TO_INT;
+  case TruncSFloat64ToInt64:
+  case TruncUFloat64ToInt64:
+    return F64_TO_INT64;
+  default:
+    return Name();
+  }
+}
+
+UnaryOp getSignedTruncOp(UnaryOp op) {
+  switch (op) {
+  case TruncUFloat32ToInt32:
+    return TruncSFloat32ToInt32;
+  case TruncUFloat32ToInt64:
+    return TruncSFloat32ToInt64;
+  case TruncUFloat64ToInt32:
+    return TruncSFloat64ToInt32;
+  case TruncUFloat64ToInt64:
+    return TruncSFloat64ToInt64;
+  default:
+    return op;
+  }
+}
+
+Function* generateBinaryFunc(Module& wasm, Binary *curr) {
+  BinaryOp op = curr->op;
+  WasmType type = curr->type;
+  bool isI64 = type == i64;
+  Builder builder(wasm);
+  Expression* result = builder.makeBinary(op,
+    builder.makeGetLocal(0, type),
+    builder.makeGetLocal(1, type)
+  );
+  BinaryOp divSIntOp = isI64 ? DivSInt64 : DivSInt32;
+  UnaryOp eqZOp = isI64 ? EqZInt64 : EqZInt32;
+  Literal minLit = isI64 ? Literal(std::numeric_limits<int64_t>::min())
+                         : Literal(std::numeric_limits<int32_t>::min());
+  Literal zeroLit = isI64 ? Literal(int64_t(0)) : Literal(int32_t(0));
+  if (op == divSIntOp) {
+    // guard against signed division overflow
+    BinaryOp eqOp = isI64 ? EqInt64 : EqInt32;
+    Literal negLit = isI64 ? Literal(int64_t(-1)) : Literal(int32_t(-1));
+    result = builder.makeIf(
+      builder.makeBinary(AndInt32,
+        builder.makeBinary(eqOp,
+          builder.makeGetLocal(0, type),
+          builder.makeConst(minLit)
+        ),
+        builder.makeBinary(eqOp,
+          builder.makeGetLocal(1, type),
+          builder.makeConst(negLit)
+        )
+      ),
+      builder.makeConst(zeroLit),
+      result
+    );
+  }
+  auto func = new Function;
+  func->name = getBinaryFuncName(curr);
+  func->params.push_back(type);
+  func->params.push_back(type);
+  func->result = type;
+  func->body = builder.makeIf(
+    builder.makeUnary(eqZOp,
+      builder.makeGetLocal(1, type)
+    ),
+    builder.makeConst(zeroLit),
+    result
+  );
+  return func;
+}
+
+Function* generateUnaryFunc(Module& wasm, Unary *curr) {
+  WasmType type = curr->value->type;
+  WasmType retType = curr->type;
+  bool isF64 = type == f64;
+  bool isI64 = retType == i64;
+
+  Builder builder(wasm);
+
+  UnaryOp truncOp = getSignedTruncOp(curr->op);
+  BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
+  BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
+  BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
+  Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
+                       : Literal(std::numeric_limits<int32_t>::min());
+  Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
+                       : Literal(std::numeric_limits<int32_t>::max());
+  Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
+                       : Literal( float(iMin.getInteger()) - 1);
+  Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
+                       : Literal( float(iMax.getInteger()) + 1);
+
+  auto func = new Function;
+  func->name = getUnaryFuncName(curr);
+  func->params.push_back(type);
+  func->result = retType;
+  func->body = builder.makeUnary(truncOp,
+    builder.makeGetLocal(0, type)
+  );
+  // too small XXX this is different than asm.js, which does frem. here we
+  // clamp, which is much simpler/faster, and similar to native builds
+  func->body = builder.makeIf(
+    builder.makeBinary(leOp,
+      builder.makeGetLocal(0, type),
+      builder.makeConst(fMin)
+    ),
+    builder.makeConst(iMin),
+    func->body
+  );
+  // too big XXX see above
+  func->body = builder.makeIf(
+    builder.makeBinary(geOp,
+      builder.makeGetLocal(0, type),
+      builder.makeConst(fMax)
+    ),
+    // NB: min here as well. anything out of range => to the min
+    builder.makeConst(iMin),
+    func->body
+  );
+  // nan
+  func->body = builder.makeIf(
+    builder.makeBinary(neOp,
+      builder.makeGetLocal(0, type),
+      builder.makeGetLocal(0, type)
+    ),
+    // NB: min here as well. anything invalid => to the min
+    builder.makeConst(iMin),
+    func->body
+  );
+  return func;
+}
+
+
 struct TrapModePass : public WalkerPass<PostWalker<TrapModePass>> {
 public:
 
@@ -132,7 +291,7 @@ private:
     if (generatedFunctions.count(name) != 0) {
       return;
     }
-    generatedFunctions[name] = generateBinaryFunc(curr);
+    generatedFunctions[name] = generateBinaryFunc(*getModule(), curr);
   }
 
   void ensureUnaryFunc(Unary *curr) {
@@ -140,165 +299,7 @@ private:
     if (generatedFunctions.count(name) != 0) {
       return;
     }
-    generatedFunctions[name] = generateUnaryFunc(curr);
-  }
-
-  Function* generateBinaryFunc(Binary *curr) {
-    BinaryOp op = curr->op;
-    WasmType type = curr->type;
-    bool isI64 = type == i64;
-    Builder builder(*getModule());
-    Expression* result = builder.makeBinary(op,
-      builder.makeGetLocal(0, type),
-      builder.makeGetLocal(1, type)
-    );
-    BinaryOp divSIntOp = isI64 ? DivSInt64 : DivSInt32;
-    UnaryOp eqZOp = isI64 ? EqZInt64 : EqZInt32;
-    Literal minLit = isI64 ? Literal(std::numeric_limits<int64_t>::min())
-                           : Literal(std::numeric_limits<int32_t>::min());
-    Literal zeroLit = isI64 ? Literal(int64_t(0)) : Literal(int32_t(0));
-    if (op == divSIntOp) {
-      // guard against signed division overflow
-      BinaryOp eqOp = isI64 ? EqInt64 : EqInt32;
-      Literal negLit = isI64 ? Literal(int64_t(-1)) : Literal(int32_t(-1));
-      result = builder.makeIf(
-        builder.makeBinary(AndInt32,
-          builder.makeBinary(eqOp,
-            builder.makeGetLocal(0, type),
-            builder.makeConst(minLit)
-          ),
-          builder.makeBinary(eqOp,
-            builder.makeGetLocal(1, type),
-            builder.makeConst(negLit)
-          )
-        ),
-        builder.makeConst(zeroLit),
-        result
-      );
-    }
-    auto func = new Function;
-    func->name = getBinaryFuncName(curr);
-    func->params.push_back(type);
-    func->params.push_back(type);
-    func->result = type;
-    func->body = builder.makeIf(
-      builder.makeUnary(eqZOp,
-        builder.makeGetLocal(1, type)
-      ),
-      builder.makeConst(zeroLit),
-      result
-    );
-    return func;
-  }
-
-  Function* generateUnaryFunc(Unary *curr) {
-    WasmType type = curr->value->type;
-    WasmType retType = curr->type;
-    bool isF64 = type == f64;
-    bool isI64 = retType == i64;
-
-    Builder builder(*getModule());
-
-    UnaryOp truncOp = getSignedTruncOp(curr->op);
-    BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
-    BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
-    BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
-    Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
-                         : Literal(std::numeric_limits<int32_t>::min());
-    Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
-                         : Literal(std::numeric_limits<int32_t>::max());
-    Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
-                         : Literal( float(iMin.getInteger()) - 1);
-    Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
-                         : Literal( float(iMax.getInteger()) + 1);
-
-    auto func = new Function;
-    func->name = getUnaryFuncName(curr);
-    func->params.push_back(type);
-    func->result = retType;
-    func->body = builder.makeUnary(truncOp,
-      builder.makeGetLocal(0, type)
-    );
-    // too small XXX this is different than asm.js, which does frem. here we
-    // clamp, which is much simpler/faster, and similar to native builds
-    func->body = builder.makeIf(
-      builder.makeBinary(leOp,
-        builder.makeGetLocal(0, type),
-        builder.makeConst(fMin)
-      ),
-      builder.makeConst(iMin),
-      func->body
-    );
-    // too big XXX see above
-    func->body = builder.makeIf(
-      builder.makeBinary(geOp,
-        builder.makeGetLocal(0, type),
-        builder.makeConst(fMax)
-      ),
-      // NB: min here as well. anything out of range => to the min
-      builder.makeConst(iMin),
-      func->body
-    );
-    // nan
-    func->body = builder.makeIf(
-      builder.makeBinary(neOp,
-        builder.makeGetLocal(0, type),
-        builder.makeGetLocal(0, type)
-      ),
-      // NB: min here as well. anything invalid => to the min
-      builder.makeConst(iMin),
-      func->body
-    );
-    return func;
-  }
-
-  Name getBinaryFuncName(Binary* curr) {
-    switch (curr->op) {
-      case RemSInt32: return I32S_REM;
-      case RemUInt32: return I32U_REM;
-      case DivSInt32: return I32S_DIV;
-      case DivUInt32: return I32U_DIV;
-      case RemSInt64: return I64S_REM;
-      case RemUInt64: return I64U_REM;
-      case DivSInt64: return I64S_DIV;
-      case DivUInt64: return I64U_DIV;
-      default:
-        return Name();
-    }
-  }
-
-  Name getUnaryFuncName(Unary* curr) {
-    switch (curr->op) {
-    case TruncSFloat32ToInt32:
-    case TruncUFloat32ToInt32:
-      return F32_TO_INT;
-    case TruncSFloat32ToInt64:
-    case TruncUFloat32ToInt64:
-      return F32_TO_INT64;
-    case TruncSFloat64ToInt32:
-    case TruncUFloat64ToInt32:
-      return F64_TO_INT;
-    case TruncSFloat64ToInt64:
-    case TruncUFloat64ToInt64:
-      return F64_TO_INT64;
-    default:
-      return Name();
-    }
-  }
-
-  UnaryOp getSignedTruncOp(UnaryOp op) {
-    switch (op) {
-    case TruncUFloat32ToInt32:
-      return TruncSFloat32ToInt32;
-    case TruncUFloat32ToInt64:
-      return TruncSFloat32ToInt64;
-    case TruncUFloat64ToInt32:
-      return TruncSFloat64ToInt32;
-    case TruncUFloat64ToInt64:
-      return TruncSFloat64ToInt64;
-    default:
-      return op;
-    }
+    generatedFunctions[name] = generateUnaryFunc(*getModule(), curr);
   }
 };
 
