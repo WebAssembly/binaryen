@@ -537,6 +537,9 @@
    (block $label$1
     (block
      (block
+      (set_local $1
+       (i32.const 4104)
+      )
       (unreachable)
      )
     )
@@ -1148,18 +1151,16 @@
   (block $label$0
    (block
     (block
+     (set_local $2
+      (i32.const 0)
+     )
      (block $block
       (set_local $1
        (get_local $0)
       )
      )
-     (block
-      (set_local $2
-       (i32.const 0)
-      )
-      (br_if $label$0
-       (get_local $1)
-      )
+     (br_if $label$0
+      (get_local $1)
      )
     )
     (drop
@@ -1179,6 +1180,59 @@
    (block
     (unreachable)
    )
+  )
+ )
+ (func $br_if_order (type $3) (param $x i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (block $outer
+   (block
+    (block $inner
+     (block
+      (block
+       (block
+        (block
+         (set_local $1
+          (i32.const 0)
+         )
+         (br_if $outer
+          (i32.const 1)
+         )
+        )
+        (set_local $4
+         (get_local $1)
+        )
+       )
+       (block
+        (block $block
+         (set_local $2
+          (i32.const -16)
+         )
+        )
+        (set_local $3
+         (call $br_if_order
+          (get_local $2)
+         )
+        )
+       )
+       (br_if $inner
+        (get_local $3)
+       )
+      )
+      (set_local $4
+       (get_local $4)
+      )
+     )
+    )
+    (set_local $1
+     (get_local $4)
+    )
+   )
+  )
+  (return
+   (get_local $1)
   )
  )
 )

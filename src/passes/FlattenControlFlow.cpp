@@ -193,7 +193,10 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
 
   // Splitter helper
   struct Splitter {
-    Splitter(FlattenControlFlow& parent, Expression* node) : parent(parent), node(node) {}
+    // @param parent the parent class
+    // @param node the node on which we operate
+    // @param pre code we need to emit before the node itself (might be part of it we already removed)
+    Splitter(FlattenControlFlow& parent, Expression* node, Expression* pre = nullptr) : parent(parent), node(node), pre(pre) {}
 
     ~Splitter() {
       finish();
@@ -201,6 +204,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
 
     FlattenControlFlow& parent;
     Expression* node;
+    Expression* pre;
 
     std::vector<Expression**> children; // TODO: reuse in parent, avoiding mallocing on each node
 
@@ -214,7 +218,21 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     bool stop = false; // if a child is unreachable, we can stop
 
     void finish() {
-      if (children.empty()) return;
+      Builder* builder = parent.builder.get();
+      auto finishBlock = [&](Block* block) {
+        // finally, we just created a new block, ending in node. If node is e.g.
+        // i32.add, then our block would return a value. so we must convert
+        // this new block to return a value through a local
+        parent.visitBlock(block);
+        // the block is now done
+        parent.replaceCurrent(block);
+        // if the node was potentially a flowthrough value, then it has an entry
+        // in breakExprIndexes, and since we are replacing it with this block,
+        // we must note it's index as the same, so it is found by the parent.
+        if (parent.breakExprIndexes.find(node) != parent.breakExprIndexes.end()) {
+          parent.breakExprIndexes[block] = parent.breakExprIndexes[node];
+        }
+      };
       // first, scan the list
       bool hasControlFlowChild = false;
       bool hasUnreachableChild = false;
@@ -233,11 +251,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       if (!hasControlFlowChild) {
         // nothing to do here.
         assert(!hasUnreachableChild); // all of them should be executed
+        if (pre) {
+          finishBlock(builder->makeSequence(pre, node));
+        }
         return;
       }
       // we have at least one child we need to split out, so to preserve the order of operations,
       // split them all out
-      Builder* builder = parent.builder.get();
       std::vector<Index> tempIndexes;
       for (auto** childp : children) {
         auto* child = *childp;
@@ -249,6 +269,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       }
       // create a new replacement block
       auto* block = builder->makeBlock();
+      if (pre) block->list.push_back(pre);
       for (Index i = 0; i < children.size(); i++) {
         auto* child = *children[i];
         auto type = child->type;
@@ -279,18 +300,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         block->list.push_back(node);
       }
       block->finalize();
-      // finally, we just created a new block, ending in node. If node is e.g.
-      // i32.add, then our block would return a value. so we must convert
-      // this new block to return a value through a local
-      parent.visitBlock(block);
-      // the block is now done
-      parent.replaceCurrent(block);
-      // if the node was potentially a flowthrough value, then it has an entry
-      // in breakExprIndexes, and since we are replacing it with this block,
-      // we must note it's index as the same, so it is found by the parent.
-      if (parent.breakExprIndexes.find(node) != parent.breakExprIndexes.end()) {
-        parent.breakExprIndexes[block] = parent.breakExprIndexes[node];
-      }
+      finishBlock(block);
     }
   };
 
@@ -317,19 +327,16 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     splitter.note(curr->condition);
   }
   void visitBreak(Break* curr) {
+    Expression* pre = nullptr;
     Expression* processed = curr;
     // first of all, get rid of the value if there is one
     if (curr->value) {
       if (curr->value->type != unreachable) {
         auto type = getFallthroughType(curr->value);
         auto index = getBreakTargetIndex(curr->name, type);
-        auto* value = getFallthroughReplacement(curr->value, index);
+        pre = getFallthroughReplacement(curr->value, index); // we'll need to put the value before
         curr->value = nullptr;
         curr->finalize();
-        processed = builder->makeSequence(
-          value,
-          curr
-        );
         replaceCurrent(processed);
         if (curr->condition) {
           // we already called getBreakTargetIndex for the value we send to our
@@ -346,7 +353,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         return;
       }
     }
-    Splitter splitter(*this, processed);
+    Splitter splitter(*this, processed, pre);
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {

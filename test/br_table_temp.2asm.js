@@ -49619,6 +49619,7 @@ function asmFunc(global, env, buffer) {
  function $$26() {
   var $$0 = 0, $$1 = 0;
   block : {
+   $$1 = 6;
    $$0 = 9;
    $$1 = $$0;
    switch (0 | 0) {
@@ -50186,6 +50187,7 @@ function asmFunc(global, env, buffer) {
   block : {
    $$4 = 1;
    block17 : {
+    $$2 = 4;
     $$1 = 8;
     $$2 = $$1;
     $$3 = $$1;

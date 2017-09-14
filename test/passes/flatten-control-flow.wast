@@ -780,4 +780,21 @@
     )
    )
   )
+  (func $br_if_order (param $x i32) (result i32)
+   (block $outer (result i32)
+    (block $inner (result i32)
+     (br_if $inner
+      (br_if $outer
+       (i32.const 0)
+       (i32.const 1)
+      )
+      (call $br_if_order
+       (block (result i32)
+        (i32.const -16)
+       )
+      )
+     )
+    )
+   )
+  )
 )
