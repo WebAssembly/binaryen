@@ -278,6 +278,19 @@ void test_core() {
   BinaryenModuleDispose(module);
 }
 
+void test_unreachable() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
+  BinaryenFunctionTypeRef I = BinaryenAddFunctionType(module, "I", BinaryenInt64(), NULL, 0);
+
+  BinaryenExpressionRef body = BinaryenCallIndirect(module, BinaryenUnreachable(module), NULL, 0, "I");
+  BinaryenFunctionRef fn = BinaryenAddFunction(module, "unreachable-fn", i, NULL, 0, body);
+
+  assert(BinaryenModuleValidate(module));
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 BinaryenExpressionRef makeCallCheck(BinaryenModuleRef module, int x) {
   BinaryenExpressionRef callOperands[] = { makeInt32(module, x) };
   return BinaryenCallImport(module, "check", callOperands, 1, BinaryenNone());
@@ -556,6 +569,7 @@ void test_tracing() {
 int main() {
   test_types();
   test_core();
+  test_unreachable();
   test_relooper();
   test_binaries();
   test_interpret();
