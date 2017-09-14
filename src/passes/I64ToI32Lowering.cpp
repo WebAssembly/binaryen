@@ -49,19 +49,20 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
     TempVar& operator=(TempVar&& rhs) {
       assert(!rhs.moved);
+      // free overwritten idx
+      if (!moved) freeIdx();
       idx = rhs.idx;
       rhs.moved = true;
+      moved = false;
       return *this;
     }
 
     ~TempVar() {
-      if (moved) return;
-      assert(std::find(pass.freeTemps.begin(), pass.freeTemps.end(), idx) ==
-             pass.freeTemps.end());
-      pass.freeTemps.push_back(idx);
+      if (!moved) freeIdx();
     }
 
     bool operator==(const TempVar& rhs) {
+      assert(!moved && !rhs.moved);
       return idx == rhs.idx;
     }
 
@@ -75,6 +76,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar& operator=(const TempVar&) = delete;
 
   private:
+    void freeIdx() {
+      assert(std::find(pass.freeTemps.begin(), pass.freeTemps.end(), idx) ==
+             pass.freeTemps.end());
+      pass.freeTemps.push_back(idx);
+    }
+
     Index idx;
     I64ToI32Lowering& pass;
     bool moved; // since C++ will still destruct moved-from values
@@ -270,21 +277,22 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitSwitch(Switch* curr) {
     if (!hasOutParam(curr->value)) return;
     TempVar outParam = fetchOutParam(curr->value);
+    // still need to know idx after outParam is moved
+    Index outIdx = outParam;
     TempVar tmp = getTemp();
     Expression* result = curr;
     std::vector<Name> targets;
     auto processTarget = [&](Name target) -> Name {
       auto labelIt = labelHighBitVars.find(target);
-      if (labelIt == labelHighBitVars.end() || labelIt->second == outParam) {
+      if (labelIt == labelHighBitVars.end() || labelIt->second == outIdx) {
         labelHighBitVars.emplace(target, std::move(outParam));
         return target;
       }
-      TempVar labelOutParam = std::move(labelIt->second);
       Name newLabel("$i64toi32_" + std::string(target.c_str()));
       result = builder->blockify(
         builder->makeSetLocal(tmp, builder->makeBlock(newLabel, result)),
         builder->makeSetLocal(
-          labelOutParam,
+          labelIt->second,
           builder->makeGetLocal(outParam, i32)
         ),
         builder->makeGetLocal(tmp, i32)
