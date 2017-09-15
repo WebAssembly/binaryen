@@ -277,32 +277,34 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitSwitch(Switch* curr) {
     if (!hasOutParam(curr->value)) return;
     TempVar outParam = fetchOutParam(curr->value);
-    // still need to know idx after outParam is moved
-    Index outIdx = outParam;
     TempVar tmp = getTemp();
     Expression* result = curr;
     std::vector<Name> targets;
+    size_t blockID = 0;
     auto processTarget = [&](Name target) -> Name {
       auto labelIt = labelHighBitVars.find(target);
-      if (labelIt == labelHighBitVars.end() || labelIt->second == outIdx) {
-        labelHighBitVars.emplace(target, std::move(outParam));
-        return target;
+      if (labelIt == labelHighBitVars.end()) {
+        labelHighBitVars.emplace(target, getTemp());
+        labelIt = labelHighBitVars.find(target);
       }
-      Name newLabel("$i64toi32_" + std::string(target.c_str()));
+      Name newLabel("$i64toi32_" + std::string(target.c_str()) +
+                    "_" + std::to_string(blockID++));
+      Block* trampoline = builder->makeBlock(newLabel, result);
+      trampoline->type = i32;
       result = builder->blockify(
-        builder->makeSetLocal(tmp, builder->makeBlock(newLabel, result)),
+        builder->makeSetLocal(tmp, trampoline),
         builder->makeSetLocal(
           labelIt->second,
           builder->makeGetLocal(outParam, i32)
         ),
-        builder->makeGetLocal(tmp, i32)
+        builder->makeBreak(target, builder->makeGetLocal(tmp, i32))
       );
-      assert(result->type == i32);
       return newLabel;
     };
     for (auto target : curr->targets) {
       targets.push_back(processTarget(target));
     }
+    curr->targets.set(targets);
     curr->default_ = processTarget(curr->default_);
     replaceCurrent(result);
   }

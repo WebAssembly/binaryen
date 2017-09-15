@@ -48,20 +48,33 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$6() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 2;
-   $$3 = $$2;
-   $$4 = $$3;
-   switch (0 | 0) {
-   case 0:
-    break block;
-   default:
+   $i64toi32_block_1 : {
+    $i64toi32_block_0 : {
+     i64toi32_i32$0 = 0;
+     $$3 = 2;
+     $$4 = $$3;
+     $$5 = $$4;
+     $$6 = $$4;
+     switch (0 | 0) {
+     case 0:
+      break $i64toi32_block_0;
+     default:
+      break $i64toi32_block_1;
+     };
+    };
+    i64toi32_i32$1 = $$5;
+    i64toi32_i32$2 = i64toi32_i32$0;
+    $$7 = i64toi32_i32$1;
     break block;
    };
+   i64toi32_i32$1 = $$6;
+   i64toi32_i32$2 = i64toi32_i32$0;
+   $$7 = i64toi32_i32$1;
+   break block;
   };
-  return $$4 | 0;
+  return $$7 | 0;
  }
  
  function $$7() {
@@ -49662,18 +49675,24 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$30() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 7;
-   $$3 = $$2;
-   $$4 = $$3;
-   switch (0 | 0) {
-   default:
-    break block;
+   $i64toi32_block_0 : {
+    i64toi32_i32$0 = 0;
+    $$3 = 7;
+    $$4 = $$3;
+    $$5 = $$4;
+    switch (0 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   i64toi32_i32$1 = $$5;
+   i64toi32_i32$2 = i64toi32_i32$0;
+   $$6 = i64toi32_i32$1;
+   break block;
   };
-  return $$4 | 0;
+  return $$6 | 0;
  }
  
  function $$31() {
@@ -49912,18 +49931,24 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$47() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 30;
-   $$3 = $$2;
-   $$4 = $$3;
-   switch (1 | 0) {
-   default:
-    break block;
+   $i64toi32_block_0 : {
+    i64toi32_i32$0 = 0;
+    $$3 = 30;
+    $$4 = $$3;
+    $$5 = $$4;
+    switch (1 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   i64toi32_i32$1 = $$5;
+   i64toi32_i32$2 = i64toi32_i32$0;
+   $$6 = i64toi32_i32$1;
+   break block;
   };
-  return $$4 | 0;
+  return $$6 | 0;
  }
  
  function $$48() {
@@ -50009,20 +50034,26 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$54() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0;
   block : {
    i64toi32_i32$0 = 0;
-   $$3 = 10;
-   i64toi32_i32$1 = 0;
-   $$4 = 45;
-   $$5 = $$4;
-   $$6 = $$5;
-   switch (0 | 0) {
-   default:
-    break block;
+   $$4 = 10;
+   $i64toi32_block_0 : {
+    i64toi32_i32$1 = 0;
+    $$5 = 45;
+    $$6 = $$5;
+    $$7 = $$6;
+    switch (0 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   i64toi32_i32$2 = $$7;
+   i64toi32_i32$3 = i64toi32_i32$1;
+   $$8 = i64toi32_i32$2;
+   break block;
   };
-  return $$6 | 0;
+  return $$8 | 0;
  }
  
  function $$55() {
