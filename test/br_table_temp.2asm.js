@@ -49617,9 +49617,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$26() {
-  var $$0 = 0, $$1 = 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0;
   block : {
    $$1 = 6;
+   $$2 = $$1;
    $$0 = 9;
    $$1 = $$0;
    switch (0 | 0) {
@@ -50185,11 +50186,12 @@ function asmFunc(global, env, buffer) {
  
  function $$63($$0) {
   $$0 = $$0 | 0;
-  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0;
+  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0;
   block : {
-   $$4 = 1;
+   $$5 = 1;
    block17 : {
     $$2 = 4;
+    $$4 = $$2;
     $$1 = 8;
     $$2 = $$1;
     $$3 = $$1;
@@ -50202,8 +50204,8 @@ function asmFunc(global, env, buffer) {
      break block17;
     };
    };
-   $$5 = $$4 + $$2 | 0;
-   $$3 = $$5;
+   $$6 = $$5 + $$2 | 0;
+   $$3 = $$6;
   };
   return $$3 | 0;
  }
@@ -50271,11 +50273,12 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $$2 = 0, $$3 = 0;
+  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0;
   count = 0;
   b : {
    l : do {
     $$2 = count;
+    $$3 = $$2;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -50283,8 +50286,8 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  $$3 = $$2;
-  return $$3 | 0;
+  $$4 = $$2;
+  return $$4 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {

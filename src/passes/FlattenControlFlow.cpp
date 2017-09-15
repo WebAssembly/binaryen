@@ -120,14 +120,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   // returns the index to assign values to for a break target. allocates
   // the local if this is the first time we see it.
   // expr is used if this is a flowing value.
-  Index getBreakTargetIndex(Name name, WasmType type, Expression* expr = nullptr, Index index = -1) {
+  // name can be null if this is a purely flowing value
+  Index getBreakTargetIndex(Name name, WasmType type, Expression* expr = nullptr) {
     assert(isConcreteWasmType(type)); // we shouldn't get here if the value ins't actually set
     if (name.is()) {
       auto iter = breakNameIndexes.find(name);
       if (iter == breakNameIndexes.end()) {
-        if (index == Index(-1)) {
-          index = builder->addVar(getFunction(), type);
-        }
+        Index index = builder->addVar(getFunction(), type);
         breakNameIndexes[name] = index;
         if (expr) {
           breakExprIndexes[expr] = index;
@@ -142,9 +141,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
       assert(expr);
       auto iter = breakExprIndexes.find(expr);
       if (iter == breakExprIndexes.end()) {
-        if (index == Index(-1)) {
-          index = builder->addVar(getFunction(), type);
-        }
+        Index index = builder->addVar(getFunction(), type);
         return breakExprIndexes[expr] = index;
       }
       return iter->second;
@@ -339,11 +336,14 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         curr->finalize();
         replaceCurrent(processed);
         if (curr->condition) {
-          // we already called getBreakTargetIndex for the value we send to our
-          // break target if we break. as this is a br_if with a value, it also
-          // flows out that value, so our parent needs to know how to receive it.
-          // we note the already-existing index we prepared before, for that value.
-          getBreakTargetIndex(Name(), type, processed, index);
+          // the value flowing out needs its own index, separate from the
+          // break target we got before
+          auto flowIndex = getBreakTargetIndex(Name(), type, getCurrent());
+          // we need to set the value on both the break index *and* this index
+          pre = builder->makeSequence(
+            pre,
+            builder->makeSetLocal(flowIndex, builder->makeGetLocal(index, type))
+          );
         }
       } else {
         // we have a value, but it has unreachable type. we can just replace

@@ -530,20 +530,26 @@
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (set_local $3
+  (local $4 i32)
+  (set_local $4
    (i32.const 1)
   )
   (block $label$0
    (block $label$1
     (block
      (block
-      (set_local $1
-       (i32.const 4104)
+      (block
+       (set_local $1
+        (i32.const 4104)
+       )
+       (set_local $2
+        (get_local $1)
+       )
       )
       (unreachable)
      )
     )
-    (set_local $2
+    (set_local $3
      (i32.const 4)
     )
    )
@@ -651,6 +657,7 @@
   (local $42 i32)
   (local $43 i32)
   (local $44 i32)
+  (local $45 i32)
   (block $out
    (drop
     (i32.add
@@ -1013,15 +1020,20 @@
     (block $temp
      (block
       (block
-       (set_local $44
-        (i32.const 1)
+       (block
+        (set_local $44
+         (i32.const 1)
+        )
+        (set_local $45
+         (get_local $44)
+        )
        )
        (br_if $temp
         (i32.const 2)
        )
       )
       (set_local $44
-       (get_local $44)
+       (get_local $45)
       )
      )
     )
@@ -1150,11 +1162,17 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
+  (local $3 i32)
   (block $label$0
    (block
     (block
-     (set_local $2
-      (i32.const 0)
+     (block
+      (set_local $2
+       (i32.const 0)
+      )
+      (set_local $3
+       (get_local $2)
+      )
      )
      (block $block
       (set_local $1
@@ -1166,7 +1184,7 @@
      )
     )
     (drop
-     (get_local $2)
+     (get_local $3)
     )
    )
    (set_local $2
@@ -1189,6 +1207,8 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
+  (local $5 i32)
+  (local $6 i32)
   (block $outer
    (block
     (block $inner
@@ -1196,40 +1216,50 @@
       (block
        (block
         (block
-         (set_local $1
-          (i32.const 0)
+         (block
+          (block
+           (set_local $1
+            (i32.const 0)
+           )
+           (set_local $2
+            (get_local $1)
+           )
+          )
+          (br_if $outer
+           (i32.const 1)
+          )
          )
-         (br_if $outer
-          (i32.const 1)
+         (set_local $5
+          (get_local $2)
          )
         )
-        (set_local $4
-         (get_local $1)
+        (set_local $6
+         (get_local $5)
         )
        )
        (block
         (block $block
-         (set_local $2
+         (set_local $3
           (i32.const -16)
          )
         )
-        (set_local $3
+        (set_local $4
          (call $br_if_order
-          (get_local $2)
+          (get_local $3)
          )
         )
        )
        (br_if $inner
-        (get_local $3)
+        (get_local $4)
        )
       )
-      (set_local $4
-       (get_local $4)
+      (set_local $5
+       (get_local $6)
       )
      )
     )
     (set_local $1
-     (get_local $4)
+     (get_local $5)
     )
    )
   )
