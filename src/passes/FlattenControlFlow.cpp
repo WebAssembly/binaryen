@@ -148,6 +148,13 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     }
   }
 
+  // set the temp index for an expression (used when creating one manually, as
+  // opposed to getBreakTargetIndex)
+  void setExprIndex(Expression* expr, Index index) {
+    assert(breakExprIndexes.count(expr) == 0);
+    breakExprIndexes[expr] = index;
+  }
+
   // When we reach a fallthrough value, it has already been flattened, and its value
   // assigned to the proper local. Or, it may not have needed to be flattened,
   // and we can just assign to a local. This method simply returns the fallthrough
@@ -205,6 +212,9 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
 
     std::vector<Expression**> children; // TODO: reuse in parent, avoiding mallocing on each node
 
+    void setNode(Expression* replacement) {
+      node = replacement;
+    }
     void note(Expression*& child) {
       // we accept nullptr inputs, for a non-existing child
       if (!child) return;
@@ -324,28 +334,35 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     splitter.note(curr->condition);
   }
   void visitBreak(Break* curr) {
-    Expression* pre = nullptr;
-    Expression* processed = curr;
-    // first of all, get rid of the value if there is one
+    Splitter splitter(*this, curr);
     if (curr->value) {
-      if (curr->value->type != unreachable) {
-        auto type = getFallthroughType(curr->value);
-        auto index = getBreakTargetIndex(curr->name, type);
-        pre = getFallthroughReplacement(curr->value, index); // we'll need to put the value before
+      if (curr->condition && isConcreteWasmType(curr->value->type)) {
+        // we are flowing out a value. set up a local for that, in addition to
+        // the one for the break target, we must assign to both
+        auto flowIndex = getBreakTargetIndex(Name(), curr->value->type, curr);
+        auto* set1 = builder->makeSetLocal(
+            flowIndex,
+            curr->value
+        );
+        splitter.note(set1->value); // the first use of the value is noted
+        // the node no longer has a value
         curr->value = nullptr;
         curr->finalize();
-        replaceCurrent(processed);
-        if (curr->condition) {
-          // the value flowing out needs its own index, separate from the
-          // break target we got before
-          auto flowIndex = getBreakTargetIndex(Name(), type, getCurrent());
-          // we need to set the value on both the break index *and* this index
-          pre = builder->makeSequence(
-            pre,
-            builder->makeSetLocal(flowIndex, builder->makeGetLocal(index, type))
-          );
-        }
-      } else {
+        auto* set2 = builder->makeSetLocal(
+          getBreakTargetIndex(curr->name, set1->value->type),
+          builder->makeGetLocal(flowIndex, set1->value->type)
+        );
+        // replace the block with that set, a copy to the break target index,
+        // and the node itself
+        auto* rep = builder->makeBlock({
+          set1,
+          set2,
+          curr
+        });
+        replaceCurrent(rep);
+        setExprIndex(rep, set2->index);
+        splitter.setNode(rep);
+      } else if (curr->value->type == unreachable) {
         // we have a value, but it has unreachable type. we can just replace
         // ourselves with it, we won't reach a condition (if there is one) or the br
         // itself
@@ -353,7 +370,6 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
         return;
       }
     }
-    Splitter splitter(*this, processed, pre);
     splitter.note(curr->condition);
   }
   void visitSwitch(Switch* curr) {
