@@ -25,9 +25,9 @@ parser.add_argument(
     help='If enabled, only fetches the waterfall build. Default: false.')
 parser.add_argument(
     '--test-waterfall', dest='test_waterfall', action='store_true',
-    default=True,
+    default=False,
     help=('If enabled, fetches and tests the LLVM waterfall builds.'
-          ' Default: true.'))
+          ' Default: false.'))
 parser.add_argument(
     '--no-test-waterfall', dest='test_waterfall', action='store_false',
     help='Disables downloading and testing of the LLVM waterfall builds.')
