@@ -591,7 +591,7 @@ public:
   Expression* body;
 
   // local names. these are optional.
-  std::vector<Name> localNames;
+  std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
   struct DebugLocation {

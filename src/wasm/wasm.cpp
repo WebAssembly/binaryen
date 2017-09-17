@@ -578,25 +578,28 @@ bool Function::isVar(Index index) {
 }
 
 bool Function::hasLocalName(Index index) const {
-  return index < localNames.size() && localNames[index].is();
+  return localNames.find(index) != localNames.end();
 }
 
 Name Function::getLocalName(Index index) {
-  assert(hasLocalName(index));
-  return localNames[index];
+  auto nameIt = localNames.find(index);
+  assert(nameIt != localNames.end());
+  return nameIt->second;
 }
 
 Name Function::getLocalNameOrDefault(Index index) {
-  if (hasLocalName(index)) {
-    return localNames[index];
+  auto nameIt = localNames.find(index);
+  if (nameIt != localNames.end()) {
+    return nameIt->second;
   }
   // this is an unnamed local
   return Name();
 }
 
 Name Function::getLocalNameOrGeneric(Index index) {
-  if (hasLocalName(index)) {
-    return localNames[index];
+  auto nameIt = localNames.find(index);
+  if (nameIt != localNames.end()) {
+    return nameIt->second;
   }
   return Name::fromInt(index);
 }

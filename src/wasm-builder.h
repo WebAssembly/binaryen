@@ -54,13 +54,15 @@ public:
 
     for (auto& param : params) {
       func->params.push_back(param.type);
-      func->localIndices[param.name] = func->localNames.size();
-      func->localNames.push_back(param.name);
+      Index idx = func->localNames.size();
+      func->localIndices[param.name] = idx;
+      func->localNames[idx] = param.name;
     }
     for (auto& var : vars) {
       func->vars.push_back(var.type);
-      func->localIndices[var.name] = func->localNames.size();
-      func->localNames.push_back(var.name);
+      Index idx = func->localNames.size();
+      func->localIndices[var.name] = idx;
+      func->localNames[idx] = var.name;
     }
 
     return func;
@@ -321,15 +323,17 @@ public:
     func->params.push_back(type);
     Index index = func->localNames.size();
     func->localIndices[name] = index;
-    func->localNames.push_back(name);
+    func->localNames[index] = name;
     return index;
   }
 
   static Index addVar(Function* func, Name name, WasmType type) {
     // always ok to add a var, it does not affect other indices
     Index index = func->getNumLocals();
-    if (name.is()) func->localIndices[name] = index;
-    func->localNames.push_back(name);
+    if (name.is()) {
+      func->localIndices[name] = index;
+      func->localNames[index] = name;
+    }
     func->vars.emplace_back(type);
     return index;
   }
