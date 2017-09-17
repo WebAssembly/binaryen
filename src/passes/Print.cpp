@@ -99,14 +99,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   Name printableLocal(Index index) {
-    Name name;
     if (currFunction) {
-      name = currFunction->getLocalNameOrDefault(index);
+      return currFunction->getLocalNameOrGeneric(index);
     }
-    if (!name.is()) {
-      name = Name::fromInt(index);
-    }
-    return name;
+    return Name::fromInt(index);
   }
 
   std::ostream& printName(Name name) {
