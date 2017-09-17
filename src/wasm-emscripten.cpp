@@ -129,7 +129,8 @@ void generateStackAllocFunction(LinkerObject& linker) {
   Block* block = builder.makeBlock();
   block->list.push_back(setStackLocal);
   block->list.push_back(storeStack);
-  block->list.push_back(getStackLocal);
+  GetLocal* getStackLocal2 = builder.makeGetLocal(1, i32);
+  block->list.push_back(getStackLocal2);
   block->type = i32;
   function->body = block;
 
