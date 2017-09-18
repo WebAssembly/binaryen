@@ -66,6 +66,7 @@ echo "building shared bitcode"
   $EMCC_ARGS \
   src/ast/ExpressionAnalyzer.cpp \
   src/ast/ExpressionManipulator.cpp \
+  src/ast/LocalGraph.cpp \
   src/passes/pass.cpp \
   src/passes/CoalesceLocals.cpp \
   src/passes/CodeFolding.cpp \
@@ -100,6 +101,7 @@ echo "building shared bitcode"
   src/passes/ReorderFunctions.cpp \
   src/passes/ReorderLocals.cpp \
   src/passes/ReReloop.cpp \
+  src/passes/ConstHoisting.cpp \
   src/passes/SafeHeap.cpp \
   src/passes/SSAify.cpp \
   src/passes/SimplifyLocals.cpp \
