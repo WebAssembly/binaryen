@@ -567,11 +567,9 @@ void WasmValidator::visitFunction(Function *curr) {
     Walker(std::unordered_set<Expression*>& seen) : seen(seen) {}
 
     void visitExpression(Expression* curr) {
-      if (seen.find(curr) == seen.end()) {
-        seen.insert(curr);
-      } else {
-        dupes.push_back(curr);
-      }
+      bool inserted;
+      std::tie(std::ignore, inserted) = seen.insert(curr);
+      if (!inserted) dupes.push_back(curr);
     }
   };
   Walker walker(seenExpressions);
