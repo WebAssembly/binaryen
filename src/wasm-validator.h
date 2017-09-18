@@ -39,6 +39,7 @@
 
 #include <set>
 #include <sstream>
+#include <unordered_set>
 
 #include "wasm.h"
 #include "wasm-printing.h"
@@ -82,6 +83,8 @@ struct WasmValidator : public PostWalker<WasmValidator> {
   WasmType returnType = unreachable; // type used in returns
 
   std::set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
+
+  std::unordered_set<Expression*> seenExpressions; // expressions must not appear twice
 
   void noteLabelName(Name name);
 

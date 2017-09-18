@@ -559,6 +559,24 @@ void WasmValidator::visitFunction(Function *curr) {
   shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
+  // expressions must not be seen more than once
+  struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    std::unordered_set<Expression*>& seen;
+    std::vector<Expression*> dupes;
+
+    Walker(std::unordered_set<Expression*>& seen) : seen(seen) {}
+
+    void visitExpression(Expression* curr) {
+      bool inserted;
+      std::tie(std::ignore, inserted) = seen.insert(curr);
+      if (!inserted) dupes.push_back(curr);
+    }
+  };
+  Walker walker(seenExpressions);
+  walker.walk(curr->body);
+  for (auto* bad : walker.dupes) {
+    fail("expression seen more than once in the tree", bad);
+  }
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
