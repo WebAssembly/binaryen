@@ -639,14 +639,17 @@ private:
           }
         }
         switch (conditions) {
-          case 0:
+          case 0: {
             if (!oneIn(4)) continue;
             break;
-          case 1:
+          }
+          case 1: {
             if (!oneIn(2)) continue;
             break;
-          default:
+          }
+          default: {
             if (oneIn(conditions + 1)) continue;
+          }
         }
         return builder.makeBreak(name);
       }
