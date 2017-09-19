@@ -639,8 +639,8 @@ private:
           }
         }
         switch (conditions) {
-          case 0: if (!oneIn(4)) continue;
-          case 1: if (!oneIn(2)) continue;
+          case 0: if (!oneIn(4)) continue; break;
+          case 1: if (!oneIn(2)) continue; break;
           default: if (oneIn(conditions + 1)) continue;
         }
         return builder.makeBreak(name);
