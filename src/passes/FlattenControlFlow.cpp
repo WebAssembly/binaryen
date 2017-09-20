@@ -71,7 +71,8 @@ namespace wasm {
 // we reduce it to a get_local and add a prelude for that. We then handle
 // the preludes, by moving them to the parent or handling them directly.
 // we can move them to the parent if the parent is not a control flow
-// structure.
+// structure. Otherwise, if the parent is a control flow structure, it
+// will incorporate the preludes of its children accordingly.
 // As a result, when we reach a node, we know its children have no
 // side effects (they have been moved to a prelude), or we are a
 // control flow structure (which allows children with side effects,
@@ -97,7 +98,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
     if (isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
-      assert(preludes.find(curr) == preludes.end()); // no one should have given us preludes
+      assert(preludes.find(curr) == preludes.end()); // no one should have given us preludes, they are on the children
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -127,14 +128,16 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           auto*& last = block->list.back();
           if (isConcreteWasmType(last->type)) {
             last = builder.makeSetLocal(temp, last);
-            block->finalize(none);
           }
+          block->finalize(none);
           // and we leave just a get of the value
           auto* rep = builder.makeGetLocal(temp, type);
           replaceCurrent(rep);
           // the whole block is now a prelude
           ourPreludes.push_back(block);
         }
+        // the block now has no return value, and may have become unreachable
+        block->finalize(none);
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
         auto* rep = getPreludesWithExpression(iff->condition);
@@ -188,13 +191,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           auto type = br->value->type;
           if (isConcreteWasmType(type)) {
             // we are sending a value. use a local instead
-            Index temp;
-            auto iter = breakTemps.find(br->name);
-            if (iter != breakTemps.end()) {
-              temp = iter->second;
-            } else {
-              temp = breakTemps[br->name] = builder.addVar(getFunction(), type);
-            }
+            Index temp = getTempForBreakTarget(br->name, type);
             ourPreludes.push_back(builder.makeSetLocal(temp, br->value));
             br->value = nullptr;
             br->finalize();
@@ -203,6 +200,29 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
               ourPreludes.push_back(br);
               replaceCurrent(builder.makeGetLocal(temp, type));
             }
+          }
+        }
+      } else if (auto* sw = curr->dynCast<Switch>()) {
+        if (sw->value) {
+          auto type = sw->value->type;
+          if (isConcreteWasmType(type)) {
+            // we are sending a value. use a local instead
+            Index temp = builder.addVar(getFunction(), type);
+            ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
+            // we don't know which break target will be hit - assign to them all
+            std::unordered_set<Name> names;
+            for (auto target : sw->targets) {
+              names.insert(target);
+            }
+            names.insert(sw->default_);
+            for (auto name : names) {
+              ourPreludes.push_back(builder.makeSetLocal(
+                getTempForBreakTarget(name, type),
+                builder.makeGetLocal(temp, type)
+              ));
+            }
+            sw->value = nullptr;
+            sw->finalize();
           }
         }
       }
@@ -230,7 +250,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
         if (auto* set = curr->dynCast<SetLocal>()) {
           temp = set->index;
           set->setTee(false);
-          ourPreludes.push_back(curr);
+          ourPreludes.push_back(set);
         } else {
           temp = builder.addVar(getFunction(), type);
           ourPreludes.push_back(builder.makeSetLocal(temp, curr));
@@ -281,6 +301,17 @@ private:
     ret->list.push_back(after);
     ret->finalize();
     return ret;
+  }
+
+  // get the temp local to be used for breaks to that target. allocates
+  // one if there isn't one yet
+  Index getTempForBreakTarget(Name name, WasmType type) {
+    auto iter = breakTemps.find(name);
+    if (iter != breakTemps.end()) {
+      return iter->second;
+    } else {
+      return breakTemps[name] = Builder(*getModule()).addVar(getFunction(), type);
+    }
   }
 };
 
