@@ -613,6 +613,12 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
+  Expression* getParent() {
+    if (expressionStack.size() == 1) return nullptr;
+    assert(expressionStack.size() >= 2);
+    return expressionStack[expressionStack.size() - 2];
+  }
+
   static void doPreVisit(SubType* self, Expression** currp) {
     self->expressionStack.push_back(*currp);
   }

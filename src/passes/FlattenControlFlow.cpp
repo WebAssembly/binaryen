@@ -65,32 +65,172 @@
 
 namespace wasm {
 
-// Looks for control flow changes and structures, excluding blocks (as we
-// want to put all control flow on them)
-struct ControlFlowChecker : public Visitor<ControlFlowChecker> {
-  static bool is(Expression* node) {
-    ControlFlowChecker finder;
-    finder.visit(node);
-    return finder.hasControlFlow;
-  }
-
-  bool hasControlFlow = false;
-
-  void visitBreak(Break *curr) { hasControlFlow = true; }
-  void visitSwitch(Switch *curr) { hasControlFlow = true; }
-  void visitBlock(Block *curr) { hasControlFlow = true; }
-  void visitLoop(Loop* curr) { hasControlFlow = true; }
-  void visitIf(If* curr) { hasControlFlow = true; }
-  void visitReturn(Return *curr) { hasControlFlow = true; }
-  void visitUnreachable(Unreachable *curr) { hasControlFlow = true; }
-};
-
-struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
+// We use the following algorithm: we maintain a list of "preludes", code
+// that runs right before an expression. When we visit an expression we
+// must handle it and its preludes. If the expression has side effects,
+// we reduce it to a get_local and add a prelude for that. We then handle
+// the preludes, by moving them to the parent or handling them directly.
+// we can move them to the parent if the parent is not a control flow
+// structure.
+// As a result, when we reach a node, we know its children have no
+// side effects (they have been moved to a prelude), or we are a
+// control flow structure (which allows children with side effects,
+// e.g. a return as a block element).
+struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenControlFlow, UnifiedExpressionVisitor<FlattenControlFlow>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FlattenControlFlow; }
 
-  std::unique_ptr<Builder> builder;
+  // For each expression, a bunch of expressions that should execute right before it
+  std::unordered_map<Expression*, std::vector<Expression*>> preludes;
+
+  void visitExpression(Expression* curr) {
+    if (isControlFlowStructure(curr) {
+      // handle control flow explicitly. our children do not have control flow,
+      // but they do have preludes which we need to set up in the right place
+      assert(preludes.find(curr) == preludes.end(); // no one should have given us preludes
+      if (auto* block = curr->dynCast<Block>()) {
+        // make a new list, where each item's preludes are added before it
+        ExpressionList newList(getModule());
+        for (auto* item : block->list) {
+          auto iter = preludes.find(item);
+          if (iter != preludes.end()) {
+            auto& itemPreludes = *iter;
+            for (auto* prelude : itemPreludes) {
+              newList.push_back(prelude);
+            }
+            itemPreludes.clear();
+          }
+          newList.push_back(item);
+        }
+        block->list.swap(newList);
+        // remove a block return value
+        auto type = block->type;
+        if (isConcreteWasmType(type)) {
+          // if there is a temp index for breaking to the block, use that
+          Index temp;
+          if (auto iter = breakTemps.find(block->name)) {
+            temp = *iter;
+          } else {
+            temp = builder->addVar(getFunction(), type);
+          }
+          auto*& last = block->list.back();
+          if (isConcreteWasmType(last->type)) {
+            last = builder->makeSetLocal(temp, last);
+            block->finalize(none);
+          }
+          // the whole block is now a prelude
+          preludes[block] = block;
+          // and we leave just a get of the value
+          replaceCurrent(builder->makeGetLocal(temp, type));
+        }
+      } else if (auto* iff = curr->dynCast<If>()) {
+        // condition preludes go before the entire if
+        auto* rep = getPreludesWithExpression(iff->condition);
+        // arm preludes go in the arms. we must also remove an if value
+        auto* originalIfTrue = iff->ifTrue;
+        auto* originalIfFalse = iff->ifFalse;
+        auto type = iff->type;
+        if (isConcreteWasmType(type)) {
+          Index temp = builder->addVar(getFunction(), type);
+          if (isConcreteWasmType(iff->ifTrue->type)) {
+            iff->ifTrue = builder->makeSetLocal(temp, iff->ifTrue);
+          }
+          if (isConcreteWasmType(iff->ifFalse->type)) {
+            iff->ifFalse = builder->makeSetLocal(temp, iff->ifFalse);
+          }
+          // the whole if is now a prelude
+          preludes[iff] = rep;
+          // and we leave just a get of the value
+          rep = builder->makeGetLocal(temp, type);
+        }
+        iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
+        iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        replaceCurrent(rep);
+      } else if (auto* loop = curr->dynCast<Loop>()) {
+// XXX return value
+        loop->body = getPreludesWithExpression(loop->body);
+      } else {
+        WASM_UNREACHABLE();
+      }
+    }
+    // continue for general handling of everything, control flow or otherwise
+    curr = getCurrent(); // we may have replaced it
+    // first, handle side effects, move them to the prelude
+    if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
+      // we need to move the side effects to the prelude
+      if (curr->type == unreachable || curr->type == nop) {
+        preludes[curr].push_back(curr);
+        // use a nop for unreachable too - never reached anyhow
+        replaceCurrent(builder->makeNop());
+      } else {
+        // use a local
+        auto type = curr->type;
+        Index temp;
+        if (auto* set = curr->dynCast<SetLocal>()) {
+          temp = set->index;
+          set->setTee(false);
+          preludes[curr].push_back(curr);
+        } else {
+          temp = builder->addVar(getFunction(), type);
+          preludes[curr].push_back(builder->makeSetLocal(temp, curr));
+        }
+        replaceCurrent(builder->makeGetLocal(temp, type);
+      }
+    }
+    // next, finish up: migrate our preludes if we can
+    auto iter = preludes.find(curr);
+    if (iter != preludes.end()) {
+      tryToPushPreludesToParent(*iter);
+    }
+  }
+
+// XXX TODO: break temps
+// XXX TODO: br_if, return values
+
+  void visitFunction(Function* curr) {
+    // the body may have preludes
+XXX
+  }
+
+private:
+  bool isControlFlowStructure(Expression* curr) {
+    return curr->is<Block>() || curr->is<If>() || curr->is<Loop>();
+  }
+
+  // gets an expression, either by itself, or in a block with its
+  // preludes (which we use up) before it
+  Expression* getPreludesWithExpression(Expression* curr) {
+    return getPreludesWithExpression(curr, curr);
+  }
+
+  // gets an expression, either by itself, or in a block with some
+  // preludes (which we use up) for another expression before it
+  Expression* getPreludesWithExpression(Expression* preluder, Expression* after) {
+    auto iter = preludes.find(preluder);
+    if (iter == preludes.end()) return after;
+    // we have preludes
+    auto* ret = builder->makeBlock(*iter);
+    iter->clear();
+    ret->list.push_back(after);
+    ret->finalize();
+    return ret;
+  }
+
+  // given some preludes, move them to the parent if possible. otherwise,
+  // leave them here, the parent will handle them for us
+  void tryToPushPreludesToParent(std::vector<Expression*> ourPreludes) {
+    auto* parent = getParent();
+    if (parent && !isControlFlowStructure(parent)) {
+      auto& parentPreludes = preludes[parent];
+      for (auto* prelude : ourPreludes) {
+        parentPreludes.push_back(prelude);
+      }
+      ourPreludes.clear();
+    }
+  }
+
+/*
   // we get rid of block/if/loop values. this map tells us for
   // each break target what local index to use.
   // if this is a flowing value, there might not be a name assigned
@@ -98,7 +238,6 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
   // the expr (and there will be exactly one set and get of it,
   // so we don't need a name)
   std::map<Name, Index> breakNameIndexes;
-  std::map<Expression*, Index> breakExprIndexes;
 
   void doWalkFunction(Function* func) {
     builder = make_unique<Builder>(*getModule());
@@ -487,6 +626,7 @@ struct FlattenControlFlow : public WalkerPass<PostWalker<FlattenControlFlow>> {
     // removing breaks can alter types
     ReFinalize().walkFunctionInModule(curr, getModule());
   }
+*/
 };
 
 Pass *createFlattenControlFlowPass() {
