@@ -896,7 +896,7 @@
  (type $4 (func (param i32)))
  (type $5 (func (param i32) (result i32)))
  (type $6 (func (param i32 i32 i32 i32 i32 i32)))
- (memory $0 256 256 shared)
+ (memory $0 (shared 256 256))
  (func $nonatomics (type $FUNCSIG$i) (result i32)
   (local $x i32)
   (nop)

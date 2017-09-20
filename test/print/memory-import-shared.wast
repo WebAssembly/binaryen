@@ -1,3 +1,3 @@
 (module
- (import "env" "memory" (memory $0 256 shared))
+ (import "env" "memory" (memory (shared $0 256)))
 )

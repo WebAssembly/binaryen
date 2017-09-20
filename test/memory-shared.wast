@@ -1,4 +1,4 @@
 (module
- (memory $0 23 256 shared)
+ (memory $0 (shared 23 256))
 )
 
