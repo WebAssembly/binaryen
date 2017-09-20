@@ -1760,13 +1760,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
     // ends with the table element type
   } else if (im->kind == ExternalKind::Memory) {
-    if (inner[0]->isList()) {
-      auto& limits = *inner[0];
-      limits.dump();
-      if (!(limits[0]->isStr() && !strcmp(limits[0]->c_str(), "shared"))) throw ParseException("bad memory limit declaration");
-      parseMemoryLimits(*limits[0], 1);
+    if (inner[j]->isList()) {
+      auto& limits = *inner[j];
+      if (!(limits[0]->isStr() && limits[0]->str() == "shared")) throw ParseException("bad memory limit declaration");
+      wasm.memory.shared = true;
+      parseMemoryLimits(limits, 1);
     } else {
-      j = parseMemoryLimits(inner, j);
+      parseMemoryLimits(inner, j);
     }
   }
   if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
