@@ -140,7 +140,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
         block->finalize(none);
       } else if (auto* iff = curr->dynCast<If>()) {
         // condition preludes go before the entire if
-        auto* rep = getPreludesWithExpression(iff->condition);
+        auto* rep = getPreludesWithExpression(iff->condition, iff);
         // arm preludes go in the arms. we must also remove an if value
         auto* originalIfTrue = iff->ifTrue;
         auto* originalIfFalse = iff->ifFalse;
@@ -150,7 +150,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           if (isConcreteWasmType(iff->ifTrue->type)) {
             iff->ifTrue = builder.makeSetLocal(temp, iff->ifTrue);
           }
-          if (isConcreteWasmType(iff->ifFalse->type)) {
+          if (iff->ifFalse && isConcreteWasmType(iff->ifFalse->type)) {
             iff->ifFalse = builder.makeSetLocal(temp, iff->ifFalse);
           }
           // and we leave just a get of the value
@@ -159,7 +159,8 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           ourPreludes.push_back(iff);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
-        iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        if (iff->ifFalse) iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        iff->finalize();
         replaceCurrent(rep);
       } else if (auto* loop = curr->dynCast<Loop>()) {
         // remove a loop value
@@ -173,8 +174,10 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           rep = builder.makeGetLocal(temp, type);
           // the whole if is now a prelude
           ourPreludes.push_back(loop);
+          loop->type = none;
         }
         loop->body = getPreludesWithExpression(originalBody, loop->body);
+        loop->finalize();
         replaceCurrent(rep);
       } else {
         WASM_UNREACHABLE();
@@ -193,13 +196,17 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
             // we are sending a value. use a local instead
             Index temp = getTempForBreakTarget(br->name, type);
             ourPreludes.push_back(builder.makeSetLocal(temp, br->value));
-            br->value = nullptr;
-            br->finalize();
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
               replaceCurrent(builder.makeGetLocal(temp, type));
             }
+            br->value = nullptr;
+            br->finalize();
+          } else {
+            assert(type == unreachable);
+            // we don't need the br at all
+            replaceCurrent(br->value);
           }
         }
       } else if (auto* sw = curr->dynCast<Switch>()) {
@@ -223,6 +230,10 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
             }
             sw->value = nullptr;
             sw->finalize();
+          } else {
+            assert(type == unreachable);
+            // we don't need the br at all
+            replaceCurrent(br->value);
           }
         }
       }
