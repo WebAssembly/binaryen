@@ -49697,8 +49697,20 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$31() {
-  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0;
-  return abort() | 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0, wasm2asm_i32$0 = 0;
+  block : {
+   $$if : {
+    $$0 = 2;
+    $$1 = $$0;
+    switch (0 | 0) {
+    default:
+     break $$if;
+    };
+   };
+   $$3 = $$1;
+  };
+  wasm2asm_i32$0 = $$3;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$32($$0, $$1) {

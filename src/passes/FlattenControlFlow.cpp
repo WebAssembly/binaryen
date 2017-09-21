@@ -146,6 +146,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
         auto* originalIfTrue = iff->ifTrue;
         auto* originalIfFalse = iff->ifFalse;
         auto type = iff->type;
+        Expression* prelude = nullptr;
         if (isConcreteWasmType(type)) {
           Index temp = builder.addVar(getFunction(), type);
           if (isConcreteWasmType(iff->ifTrue->type)) {
@@ -154,14 +155,18 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           if (iff->ifFalse && isConcreteWasmType(iff->ifFalse->type)) {
             iff->ifFalse = builder.makeSetLocal(temp, iff->ifFalse);
           }
+          // the whole if (+any preludes from the condition) is now a prelude
+          prelude = rep;
           // and we leave just a get of the value
           rep = builder.makeGetLocal(temp, type);
-          // the whole if is now a prelude
-          ourPreludes.push_back(iff);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
         if (iff->ifFalse) iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
         iff->finalize();
+        if (prelude) {
+          ReFinalizeNode().visit(prelude);
+          ourPreludes.push_back(prelude);
+        }
         replaceCurrent(rep);
       } else if (auto* loop = curr->dynCast<Loop>()) {
         // remove a loop value

@@ -281,6 +281,37 @@
   )
   (get_local $0)
  )
+ (func $a13 (type $2) (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block $x
+   (block
+    (set_local $0
+     (i32.const 2)
+    )
+    (set_local $1
+     (get_local $0)
+    )
+    (br_table $x
+     (i32.const 0)
+    )
+    (if
+     (unreachable)
+     (set_local $2
+      (i32.const 0)
+     )
+     (set_local $2
+      (i32.const 1)
+     )
+    )
+   )
+   (set_local $1
+    (get_local $2)
+   )
+  )
+  (get_local $1)
+ )
  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   (nop)
  )
@@ -1336,23 +1367,34 @@
     (unreachable)
    )
    (unreachable)
-   (if
-    (get_local $11)
-    (set_local $13
-     (i32.const 8)
-    )
-    (block
-     (if
-      (i32.const 9)
-      (set_local $12
-       (i32.const 10)
-      )
-      (set_local $12
-       (i32.const 11)
-      )
+   (block
+    (if
+     (i32.const 5)
+     (set_local $11
+      (i32.const 6)
      )
+     (set_local $11
+      (i32.const 7)
+     )
+    )
+    (if
+     (get_local $11)
      (set_local $13
-      (get_local $12)
+      (i32.const 8)
+     )
+     (block
+      (if
+       (i32.const 9)
+       (set_local $12
+        (i32.const 10)
+       )
+       (set_local $12
+        (i32.const 11)
+       )
+      )
+      (set_local $13
+       (get_local $12)
+      )
      )
     )
    )

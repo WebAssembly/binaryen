@@ -132,6 +132,15 @@
    (i32.const 2)
   )
  )
+ (func $a13 (result i32)
+  (block $x i32
+   (if i32
+    (br_table $x (i32.const 2) (i32.const 0))
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
