@@ -1219,21 +1219,21 @@
      (unreachable)
     )
     (drop
-     (get_local $2)
+     (get_local $3)
     )
-    (set_local $3
+    (set_local $2
      (i32.const 3)
     )
     (br $in)
     (unreachable)
-    (set_local $3
+    (set_local $2
      (i32.const 4)
     )
    )
    (drop
     (i32.add
      (i32.const 1)
-     (get_local $3)
+     (get_local $2)
     )
    )
    (loop $loop-in

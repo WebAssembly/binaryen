@@ -227,7 +227,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
             Index temp = builder.addVar(getFunction(), type);
             ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
             // we don't know which break target will be hit - assign to them all
-            std::unordered_set<Name> names;
+            std::set<Name> names;
             for (auto target : sw->targets) {
               names.insert(target);
             }
