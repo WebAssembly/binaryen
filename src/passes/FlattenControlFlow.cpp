@@ -61,6 +61,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
+#include <ast_utils.h>
 #include <ast/effects.h>
 
 namespace wasm {
@@ -188,6 +189,10 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
       if (iter != preludes.end()) {
         ourPreludes.swap(iter->second);
       }
+      // we have changed children, potentially moving unreachable code outside
+      if (curr->type == unreachable) {
+        ReFinalizeNode().visit(curr);
+      }
       // special handling
       if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
@@ -233,7 +238,7 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
           } else {
             assert(type == unreachable);
             // we don't need the br at all
-            replaceCurrent(br->value);
+            replaceCurrent(sw->value);
           }
         }
       }
