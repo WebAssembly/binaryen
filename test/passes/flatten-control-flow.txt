@@ -312,6 +312,28 @@
   )
   (get_local $1)
  )
+ (func $a14 (type $2) (result i32)
+  (local $0 i32)
+  (local $1 i32)
+  (block $block
+   (set_local $0
+    (i32.const 7)
+   )
+   (set_local $1
+    (get_local $0)
+   )
+   (br_table $block
+    (i32.const 1)
+   )
+   (select
+    (i32.const 0)
+    (i32.const 1)
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (get_local $1)
+ )
  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   (nop)
  )

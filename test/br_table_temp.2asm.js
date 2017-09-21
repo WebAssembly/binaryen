@@ -50251,11 +50251,11 @@ function asmFunc(global, env, buffer) {
       break block;
      };
     };
-    $$2 = 16;
+    $$3 = 16;
    };
-   $$3 = 1 + $$2 | 0;
+   $$2 = 1 + $$3 | 0;
   };
-  wasm2asm_i32$0 = $$3;
+  wasm2asm_i32$0 = $$2;
   return wasm2asm_i32$0 | 0;
  }
  
