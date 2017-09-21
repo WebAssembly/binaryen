@@ -25,19 +25,23 @@ function asmFunc(global, env, buffer) {
  function $$2(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) / (y | 0) | 0 | 0;
+  var $$2 = 0, wasm2asm_i32$0 = 0;
+  $$2 = (x | 0) / (y | 0) | 0;
+  wasm2asm_i32$0 = $$2;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $$1 = 0;
+  var $$1 = 0, wasm2asm_i32$0 = 0;
   if ((x | 0) == (0 | 0)) $$1 = 32; else $$1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $$1 | 0;
+  wasm2asm_i32$0 = $$1;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $$2 = 0, $$3 = 0;
+  var count = 0, $$2 = 0, $$3 = 0, wasm2asm_i32$0 = 0;
   count = 0;
   b : {
    l : do {
@@ -50,7 +54,8 @@ function asmFunc(global, env, buffer) {
    } while (1);
   };
   $$3 = $$2;
-  return $$3 | 0;
+  wasm2asm_i32$0 = $$3;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
