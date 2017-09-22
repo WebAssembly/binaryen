@@ -265,15 +265,8 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
       } else {
         // use a local
         auto type = curr->type;
-        Index temp;
-        if (auto* set = curr->dynCast<SetLocal>()) {
-          temp = set->index;
-          set->setTee(false);
-          ourPreludes.push_back(set);
-        } else {
-          temp = builder.addVar(getFunction(), type);
-          ourPreludes.push_back(builder.makeSetLocal(temp, curr));
-        }
+        Index temp = builder.addVar(getFunction(), type);
+        ourPreludes.push_back(builder.makeSetLocal(temp, curr));
         replaceCurrent(builder.makeGetLocal(temp, type));
       }
     }

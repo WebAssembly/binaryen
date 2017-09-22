@@ -161,6 +161,27 @@
    )
   )
  )
+ (func $a16 (result i32)
+  (local $x i32)
+  (block $label$1 (result i32)
+   (drop
+    (br_if $label$1
+     (tee_local $x ;; set here, then it is undone later, but this value is used, not the contents of $x!
+      (i32.const 1)
+     )
+     (i32.eqz ;; 0 into 1, so take the br_if
+      (block $label$2 (result i32)
+       (set_local $x
+        (i32.const 0) ;; undo the above tee
+       )
+       (i32.const 0)
+      )
+     )
+    )
+   )
+   (i32.const 0)
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
