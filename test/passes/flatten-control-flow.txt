@@ -334,6 +334,30 @@
   )
   (get_local $1)
  )
+ (func $a15 (type $1)
+  (local $0 i32)
+  (local $1 f32)
+  (block
+   (set_local $0
+    (i32.load16_u
+     (i32.const 53)
+    )
+   )
+   (if
+    (get_local $0)
+    (unreachable)
+    (block
+     (block $label$3
+      (unreachable)
+     )
+     (drop
+      (get_local $1)
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
  (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   (nop)
  )

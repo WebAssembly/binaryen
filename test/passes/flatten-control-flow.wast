@@ -148,6 +148,19 @@
    )
   )
  )
+ (func $a15
+  (if
+   (i32.load16_u
+    (i32.const 53)
+   )
+   (unreachable)
+   (drop
+    (block $label$3 (result f32)
+     (unreachable)
+    )
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )

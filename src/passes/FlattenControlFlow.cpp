@@ -194,10 +194,6 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
       if (iter != preludes.end()) {
         ourPreludes.swap(iter->second);
       }
-      // we have changed children, potentially moving unreachable code outside
-      if (curr->type == unreachable) {
-        ReFinalizeNode().visit(curr);
-      }
       // special handling
       if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
@@ -250,6 +246,8 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
     }
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
+    // we have changed children
+    ReFinalizeNode().visit(curr);
     // handle side effects and control flow, things we need to be
     // in the prelude
     if (isControlFlowStructure(curr) || EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
