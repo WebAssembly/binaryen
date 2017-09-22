@@ -48,6 +48,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
+    if (old == expression) return expression;
     WalkerPass<PostWalker<DeadCodeElimination>>::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
@@ -219,14 +220,17 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
+    auto* curr = *currp;
     if (!self->reachable) {
-      // convert to an unreachable. do this without UB, even though we have no destructors on AST nodes
+      // convert to an unreachable safely
       #define DELEGATE(CLASS_TO_VISIT) { \
-        self->typeUpdater.noteRecursiveRemoval(*currp); \
-        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(*currp)); \
+        auto* parent = self->typeUpdater.parents[curr]; \
+        self->typeUpdater.noteRecursiveRemoval(curr); \
+        ExpressionManipulator::convert<CLASS_TO_VISIT, Unreachable>(static_cast<CLASS_TO_VISIT*>(curr)); \
+        self->typeUpdater.noteAddition(curr, parent); \
         break; \
       }
-      switch ((*currp)->_id) {
+      switch (curr->_id) {
         case Expression::Id::BlockId: DELEGATE(Block);
         case Expression::Id::IfId: DELEGATE(If);
         case Expression::Id::LoopId: DELEGATE(Loop);
@@ -256,7 +260,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       #undef DELEGATE
       return;
     }
-    auto* curr =* currp;
     if (curr->is<If>()) {
       self->pushTask(DeadCodeElimination::doVisitIf, currp);
       if (curr->cast<If>()->ifFalse) {
@@ -328,18 +331,18 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     for (size_t i = 0; i < list.size(); ++i) {
       auto* elem = list[i];
       if (isUnreachable(elem)) {
-	auto* replacement = elem;
-	if (i > 0) {
-	  auto* block = getModule()->allocator.alloc<Block>();
-	  for (size_t j = 0; j < i; ++j) {
-	    block->list.push_back(drop(list[j]));
-	  }
-	  block->list.push_back(list[i]);
-	  block->finalize(type);
-	  replacement = block;
-	}
-	replaceCurrent(replacement);
-	return;
+        auto* replacement = elem;
+        if (i > 0) {
+          auto* block = getModule()->allocator.alloc<Block>();
+          for (size_t j = 0; j < i; ++j) {
+            block->list.push_back(drop(list[j]));
+          }
+          block->list.push_back(list[i]);
+          block->finalize(type);
+          replacement = block;
+        }
+        replaceCurrent(replacement);
+        return;
       }
     }
   }
@@ -349,7 +352,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitLoad(Load* curr) {
-    blockifyReachableOperands({ curr->ptr}, curr->type);
+    blockifyReachableOperands({ curr->ptr }, curr->type);
   }
 
   void visitStore(Store* curr) {
@@ -369,11 +372,11 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitBinary(Binary* curr) {
-    blockifyReachableOperands({ curr->left, curr->right}, curr->type);
+    blockifyReachableOperands({ curr->left, curr->right }, curr->type);
   }
 
   void visitSelect(Select* curr) {
-    blockifyReachableOperands({ curr->ifTrue, curr->ifFalse, curr->condition}, curr->type);
+    blockifyReachableOperands({ curr->ifTrue, curr->ifFalse, curr->condition }, curr->type);
   }
 
   void visitDrop(Drop* curr) {
