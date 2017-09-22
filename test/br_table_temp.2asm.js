@@ -49674,7 +49674,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$26() {
-  var $$0 = 0, $$1 = 0, $$2 = 0, $$3 = 0, wasm2asm_i32$0 = 0;
+  var $$0 = 0, $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
   block : {
    $$0 = 9;
    $$1 = $$0;
@@ -49685,8 +49685,8 @@ function asmFunc(global, env, buffer) {
     break block;
    };
   };
-  $$3 = $$1;
-  wasm2asm_i32$0 = $$3;
+  $$2 = $$1;
+  wasm2asm_i32$0 = $$2;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -50317,7 +50317,7 @@ function asmFunc(global, env, buffer) {
  
  function $$63($$0) {
   $$0 = $$0 | 0;
-  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, wasm2asm_i32$0 = 0;
   block : {
    block17 : {
     $$1 = $$0;
@@ -50333,12 +50333,12 @@ function asmFunc(global, env, buffer) {
      break block17;
     };
    };
-   $$6 = $$4;
-   $$7 = 1 + $$6 | 0;
-   $$3 = $$7;
+   $$5 = $$4;
+   $$6 = 1 + $$5 | 0;
+   $$3 = $$6;
   };
-  $$8 = $$3;
-  wasm2asm_i32$0 = $$8;
+  $$7 = $$3;
+  wasm2asm_i32$0 = $$7;
   return wasm2asm_i32$0 | 0;
  }
  

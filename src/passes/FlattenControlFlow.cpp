@@ -205,7 +205,12 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
-              replaceCurrent(builder.makeGetLocal(temp, type));
+              if (isConcreteWasmType(br->type)) {
+                replaceCurrent(builder.makeGetLocal(temp, type));
+              } else {
+                assert(br->type == unreachable);
+                replaceCurrent(builder.makeUnreachable());
+              }
             }
             br->value = nullptr;
             br->finalize();

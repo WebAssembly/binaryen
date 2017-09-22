@@ -195,6 +195,18 @@
    )
   )
  )
+ (func $a18 (result i32)
+  (block $label$1 (result i32)
+   (i32.load16_s
+    (drop ;; an unreachable drop. one we move its contents outside, it should stay unreachable
+     (br_if $label$1
+      (i32.const 1)
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
