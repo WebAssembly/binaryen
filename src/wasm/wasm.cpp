@@ -582,9 +582,7 @@ bool Function::hasLocalName(Index index) const {
 }
 
 Name Function::getLocalName(Index index) {
-  auto nameIt = localNames.find(index);
-  assert(nameIt != localNames.end());
-  return nameIt->second;
+  return localNames.at(index);
 }
 
 Name Function::getLocalNameOrDefault(Index index) {

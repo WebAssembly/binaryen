@@ -54,15 +54,15 @@ public:
 
     for (auto& param : params) {
       func->params.push_back(param.type);
-      Index idx = func->localNames.size();
-      func->localIndices[param.name] = idx;
-      func->localNames[idx] = param.name;
+      Index index = func->localNames.size();
+      func->localIndices[param.name] = index;
+      func->localNames[index] = param.name;
     }
     for (auto& var : vars) {
       func->vars.push_back(var.type);
-      Index idx = func->localNames.size();
-      func->localIndices[var.name] = idx;
-      func->localNames[idx] = var.name;
+      Index index = func->localNames.size();
+      func->localIndices[var.name] = index;
+      func->localNames[index] = var.name;
     }
 
     return func;
