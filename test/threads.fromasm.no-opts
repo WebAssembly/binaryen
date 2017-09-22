@@ -6,7 +6,7 @@
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
  (import "global" "NaN" (global $nan$asm2wasm$import f64))
  (import "global" "Infinity" (global $inf$asm2wasm$import f64))
- (import "env" "memory" (memory $0 256 256 shared))
+ (import "env" "memory" (memory $0 (shared 256 256)))
  (import "env" "table" (table 0 0 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

@@ -718,7 +718,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void printTableHeader(Table* curr) {
     printOpening(o, "table") << ' ';
     o << curr->initial;
-    if (curr->max != Table::kMaxSize) o << ' ' << curr->max;
+    if (curr->hasMax()) o << ' ' << curr->max;
     o << " anyfunc)";
   }
   void visitTable(Table *curr) {
@@ -746,9 +746,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void printMemoryHeader(Memory* curr) {
     printOpening(o, "memory") << ' ';
     printName(curr->name) << ' ';
+    if (curr->shared) printOpening(o, "shared ");
     o << curr->initial;
-    if (curr->max && curr->max != Memory::kMaxSize) o << ' ' << curr->max;
-    if (curr->shared) o << " shared";
+    if (curr->hasMax()) o << ' ' << curr->max;
+    if (curr->shared) o << ")";
     o << ")";
   }
   void visitMemory(Memory* curr) {

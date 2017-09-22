@@ -597,6 +597,7 @@ static bool checkOffset(Expression* curr, Address add, Address max) {
 void WasmValidator::visitMemory(Memory *curr) {
   shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
   shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
+  shouldBeTrue(!curr->shared || curr->hasMax(), "memory", "shared memory must have max size");
   Index mustBeGreaterOrEqual = 0;
   for (auto& segment : curr->segments) {
     if (!shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
