@@ -1006,5 +1006,19 @@
     )
    )
   )
+  (func $unreachable-return-loop-value (result i64)
+   (loop $loop
+    (if
+     (i32.const 1)
+     (block $block
+      (br_if $block
+       (br $loop)
+      )
+      (br $loop)
+     )
+    )
+    (br $loop) ;; we 100% go back to the loop top, the loop is never exited. but opts move code around so that is not obvious anymore, and the loop becomes a nop, but the func has a return value
+   )
+  )
 )
 

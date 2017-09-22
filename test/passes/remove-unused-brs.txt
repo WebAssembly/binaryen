@@ -1121,4 +1121,20 @@
    )
   )
  )
+ (func $unreachable-return-loop-value (type $7) (result i64)
+  (loop $loop
+   (br_if $loop
+    (i32.eqz
+     (i32.const 1)
+    )
+   )
+   (block $block
+    (br_if $block
+     (br $loop)
+    )
+    (br $loop)
+   )
+  )
+  (unreachable)
+ )
 )

@@ -176,6 +176,15 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitNop(Nop *curr) { curr->finalize(); }
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
 
+  void visitFunction(Function* curr) {
+    // we may have changed the body from unreachable to none, which might be bad
+    // if the function has a return value
+    if (curr->result != none && curr->body->type == none) {
+      Builder builder(*getModule());
+      curr->body = builder.blockify(curr->body, builder.makeUnreachable());
+    }
+  }
+
   WasmType getValueType(Expression* value) {
     return value ? value->type : none;
   }
