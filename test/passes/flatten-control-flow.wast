@@ -182,6 +182,19 @@
    (i32.const 0)
   )
  )
+ (func $a17 (result f32)
+  (local $var$0 f32)
+  (f32.max
+   (get_local $var$0)
+   (select
+    (tee_local $var$0
+     (f32.const -137438953472)
+    )
+    (get_local $var$0)
+    (i32.const 0)
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )

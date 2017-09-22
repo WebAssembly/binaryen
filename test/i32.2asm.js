@@ -15,222 +15,416 @@ function asmFunc(global, env, buffer) {
  function $$0(x, y) {
   x = x | 0;
   y = y | 0;
-  return x + y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 + $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$1(x, y) {
   x = x | 0;
   y = y | 0;
-  return x - y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 - $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$2(x, y) {
   x = x | 0;
   y = y | 0;
-  return Math_imul(x, y) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = Math_imul($$2, $$3);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$3(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, wasm2asm_i32$0 = 0;
-  $$2 = (x | 0) / (y | 0) | 0;
-  wasm2asm_i32$0 = $$2;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) / ($$3 | 0) | 0;
+  wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
  
  function $$4(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, wasm2asm_i32$0 = 0;
-  $$2 = (x >>> 0) / (y >>> 0) | 0;
-  wasm2asm_i32$0 = $$2;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 >>> 0) / ($$3 >>> 0) | 0;
+  wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
  
  function $$5(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, wasm2asm_i32$0 = 0;
-  $$2 = (x | 0) % (y | 0) | 0;
-  wasm2asm_i32$0 = $$2;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) % ($$3 | 0) | 0;
+  wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
  
  function $$6(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, wasm2asm_i32$0 = 0;
-  $$2 = (x >>> 0) % (y >>> 0) | 0;
-  wasm2asm_i32$0 = $$2;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 >>> 0) % ($$3 >>> 0) | 0;
+  wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
  
  function $$7(x, y) {
   x = x | 0;
   y = y | 0;
-  return x & y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 & $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$8(x, y) {
   x = x | 0;
   y = y | 0;
-  return x | y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 | $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$9(x, y) {
   x = x | 0;
   y = y | 0;
-  return x ^ y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 ^ $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$10(x, y) {
   x = x | 0;
   y = y | 0;
-  return x << y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 << $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$11(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >> y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >> $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$12(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> y | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >>> $$3 | 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotl_i32(x, y) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = __wasm_rotl_i32($$2, $$3);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotr_i32(x, y) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = __wasm_rotr_i32($$2, $$3);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$15(x) {
   x = x | 0;
-  return Math_clz32(x) | 0;
+  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  $$1 = x;
+  $$2 = Math_clz32($$1);
+  wasm2asm_i32$0 = $$2;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$16(x) {
   x = x | 0;
-  return __wasm_ctz_i32(x) | 0;
+  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  $$1 = x;
+  $$2 = __wasm_ctz_i32($$1);
+  wasm2asm_i32$0 = $$2;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$17(x) {
   x = x | 0;
-  return __wasm_popcnt_i32(x) | 0;
+  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  $$1 = x;
+  $$2 = __wasm_popcnt_i32($$1);
+  wasm2asm_i32$0 = $$2;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$18(x) {
   x = x | 0;
-  return (x | 0) == (0 | 0) | 0;
+  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  $$1 = x;
+  $$2 = ($$1 | 0) == (0 | 0);
+  wasm2asm_i32$0 = $$2;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$19(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) == (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) == ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$20(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) != (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) != ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$21(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) < (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) < ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$22(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> 0 < y >>> 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >>> 0 < $$3 >>> 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$23(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) <= (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) <= ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$24(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> 0 <= y >>> 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >>> 0 <= $$3 >>> 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$25(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) > (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) > ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$26(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> 0 > y >>> 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >>> 0 > $$3 >>> 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$27(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) >= (y | 0) | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = ($$2 | 0) >= ($$3 | 0);
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function $$28(x, y) {
   x = x | 0;
   y = y | 0;
-  return x >>> 0 >= y >>> 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  $$2 = x;
+  $$3 = y;
+  $$4 = $$2 >>> 0 >= $$3 >>> 0;
+  wasm2asm_i32$0 = $$4;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $$1 = 0, wasm2asm_i32$0 = 0;
-  if ((x | 0) == (0 | 0)) $$1 = 32; else $$1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  wasm2asm_i32$0 = $$1;
+  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, wasm2asm_i32$0 = 0;
+  $$1 = x;
+  $$2 = ($$1 | 0) == (0 | 0);
+  if ($$2) $$9 = 32; else {
+   $$3 = x;
+   $$4 = x;
+   $$5 = $$4 - 1 | 0;
+   $$6 = $$3 ^ $$5 | 0;
+   $$7 = Math_clz32($$6);
+   $$8 = 31 - $$7 | 0;
+   $$9 = $$8;
+  }
+  $$10 = $$9;
+  wasm2asm_i32$0 = $$10;
   return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $$2 = 0, $$3 = 0, wasm2asm_i32$0 = 0;
+  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, wasm2asm_i32$0 = 0;
   count = 0;
   b : {
    l : do {
     $$2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
+    $$3 = x;
+    $$4 = ($$3 | 0) == (0 | 0);
+    $$5 = $$2;
+    if ($$4) break b;
+    $$6 = $$5;
+    $$7 = x;
+    $$8 = x;
+    $$9 = $$8 - 1 | 0;
+    $$10 = $$7 & $$9 | 0;
+    x = $$10;
+    $$11 = count;
+    $$12 = $$11 + 1 | 0;
+    count = $$12;
     continue l;
     break l;
    } while (1);
   };
-  $$3 = $$2;
-  wasm2asm_i32$0 = $$3;
+  $$13 = $$5;
+  $$14 = $$13;
+  $$15 = $$14;
+  wasm2asm_i32$0 = $$15;
   return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  $$2 = k;
+  $$3 = $$2 & 31 | 0;
+  $$4 = 4294967295 >>> $$3 | 0;
+  $$5 = x;
+  $$6 = $$4 & $$5 | 0;
+  $$7 = k;
+  $$8 = $$7 & 31 | 0;
+  $$9 = $$6 << $$8 | 0;
+  $$10 = k;
+  $$11 = $$10 & 31 | 0;
+  $$12 = 32 - $$11 | 0;
+  $$13 = 4294967295 << $$12 | 0;
+  $$14 = x;
+  $$15 = $$13 & $$14 | 0;
+  $$16 = k;
+  $$17 = $$16 & 31 | 0;
+  $$18 = 32 - $$17 | 0;
+  $$19 = $$15 >>> $$18 | 0;
+  $$20 = $$9 | $$19 | 0;
+  wasm2asm_i32$0 = $$20;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  $$2 = k;
+  $$3 = $$2 & 31 | 0;
+  $$4 = 4294967295 << $$3 | 0;
+  $$5 = x;
+  $$6 = $$4 & $$5 | 0;
+  $$7 = k;
+  $$8 = $$7 & 31 | 0;
+  $$9 = $$6 >>> $$8 | 0;
+  $$10 = k;
+  $$11 = $$10 & 31 | 0;
+  $$12 = 32 - $$11 | 0;
+  $$13 = 4294967295 >>> $$12 | 0;
+  $$14 = x;
+  $$15 = $$13 & $$14 | 0;
+  $$16 = k;
+  $$17 = $$16 & 31 | 0;
+  $$18 = 32 - $$17 | 0;
+  $$19 = $$15 << $$18 | 0;
+  $$20 = $$9 | $$19 | 0;
+  wasm2asm_i32$0 = $$20;
+  return wasm2asm_i32$0 | 0;
  }
  
  return {

@@ -249,8 +249,12 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
     // we have changed children
     ReFinalizeNode().visit(curr);
     // handle side effects and control flow, things we need to be
-    // in the prelude
-    if (isControlFlowStructure(curr) || EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
+    // in the prelude. note that we must handle anything here, not just
+    // side effects, as a sibling after us may have side effect for us,
+    // and thus we need to move in anticipation of that (e.g., we are
+    // a get, and a later sibling is a tee - if just the tee moves,
+    // that is bade) TODO optimize
+    if (isControlFlowStructure(curr) || EffectAnalyzer(getPassOptions(), curr).hasAnything()) {
       // we need to move the side effects to the prelude
       if (curr->type == unreachable) {
         if (!curr->is<Unreachable>()) {
