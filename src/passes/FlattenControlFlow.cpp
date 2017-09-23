@@ -262,10 +262,8 @@ struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenContr
     if (isControlFlowStructure(curr) || EffectAnalyzer(getPassOptions(), curr).hasAnything()) {
       // we need to move the side effects to the prelude
       if (curr->type == unreachable) {
-        if (!curr->is<Unreachable>()) {
-          ourPreludes.push_back(curr);
-          replaceCurrent(builder.makeUnreachable());
-        }
+        ourPreludes.push_back(curr);
+        replaceCurrent(builder.makeUnreachable());
       } else if (curr->type == none) {
         if (!curr->is<Nop>()) {
           ourPreludes.push_back(curr);
