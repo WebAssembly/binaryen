@@ -88,6 +88,7 @@
   (block $label$1
    (nop)
    (unreachable)
+   (unreachable)
   )
   (unreachable)
  )

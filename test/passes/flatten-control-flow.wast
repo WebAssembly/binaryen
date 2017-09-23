@@ -207,6 +207,21 @@
    )
   )
  )
+ (func $a19 (result f32)
+  (block $label$0
+   (block $label$1
+    (drop
+     (select
+      (unreachable) ;; move this out, so it happens before the return
+      (return
+       (f32.const 4289944320)
+      )
+      (i32.const 65535)
+     )
+    )
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
