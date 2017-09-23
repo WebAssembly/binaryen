@@ -161,7 +161,7 @@ function asmFunc(global, env, buffer) {
   var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
   $$2 = x;
   $$3 = y;
-  $$4 = __wasm_rotl_i32($$2, $$3);
+  $$4 = __wasm_rotl_i32($$2, $$3) | 0;
   wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
@@ -172,7 +172,7 @@ function asmFunc(global, env, buffer) {
   var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
   $$2 = x;
   $$3 = y;
-  $$4 = __wasm_rotr_i32($$2, $$3);
+  $$4 = __wasm_rotr_i32($$2, $$3) | 0;
   wasm2asm_i32$0 = $$4;
   return wasm2asm_i32$0 | 0;
  }
@@ -190,7 +190,7 @@ function asmFunc(global, env, buffer) {
   x = x | 0;
   var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
   $$1 = x;
-  $$2 = __wasm_ctz_i32($$1);
+  $$2 = __wasm_ctz_i32($$1) | 0;
   wasm2asm_i32$0 = $$2;
   return wasm2asm_i32$0 | 0;
  }
@@ -199,7 +199,7 @@ function asmFunc(global, env, buffer) {
   x = x | 0;
   var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
   $$1 = x;
-  $$2 = __wasm_popcnt_i32($$1);
+  $$2 = __wasm_popcnt_i32($$1) | 0;
   wasm2asm_i32$0 = $$2;
   return wasm2asm_i32$0 | 0;
  }

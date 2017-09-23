@@ -227,7 +227,7 @@ static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
   Builder b(allocator);
   // if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
   bool is32Bit = (op == CtzInt32);
-  Name funcName    = is32Bit ? Name(CTZ32) : Name(CTZ64);
+  Name funcName    = is32Bit ? Name(WASM_CTZ32) : Name(WASM_CTZ64);
   BinaryOp subOp   = is32Bit ? SubInt32    : SubInt64;
   BinaryOp xorOp   = is32Bit ? XorInt32    : XorInt64;
   UnaryOp  clzOp   = is32Bit ? ClzInt32    : ClzInt64;
@@ -270,7 +270,7 @@ static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
   // popcnt implemented as:
   // int c; for (c = 0; x != 0; c++) { x = x & (x - 1) }; return c
   bool is32Bit = (op == PopcntInt32);
-  Name funcName    = is32Bit ? Name(POPCNT32) : Name(POPCNT64);
+  Name funcName    = is32Bit ? Name(WASM_POPCNT32) : Name(WASM_POPCNT64);
   BinaryOp addOp   = is32Bit ? AddInt32       : AddInt64;
   BinaryOp subOp   = is32Bit ? SubInt32       : SubInt64;
   BinaryOp andOp   = is32Bit ? AndInt32       : AndInt64;
@@ -328,8 +328,8 @@ Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
   // where k is shift modulo w. reverse shifts for right rotate
   bool is32Bit = (op == RotLInt32 || op == RotRInt32);
   bool isLRot  = (op == RotLInt32 || op == RotLInt64);
-  static Name names[2][2] = {{Name(ROTR64), Name(ROTR32)},
-                             {Name(ROTL64), Name(ROTL32)}};
+  static Name names[2][2] = {{Name(WASM_ROTR64), Name(WASM_ROTR32)},
+                             {Name(WASM_ROTL64), Name(WASM_ROTL32)}};
   static BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32},
                                     {ShlInt64, ShlInt32}};
   Name funcName = names[isLRot][is32Bit];
@@ -1267,15 +1267,26 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case i32: {
           switch (curr->op) {
             case ClzInt32:
-              return ValueBuilder::makeCall(MATH_CLZ32,
-                                            visit(curr->value,
-                                                  EXPRESSION_RESULT));
+              return ValueBuilder::makeCall(
+                MATH_CLZ32,
+                visit(curr->value, EXPRESSION_RESULT)
+              );
             case CtzInt32:
-              return ValueBuilder::makeCall(CTZ32, visit(curr->value,
-                                                         EXPRESSION_RESULT));
+              return makeSigning(
+                ValueBuilder::makeCall(
+                  WASM_CTZ32,
+                  visit(curr->value, EXPRESSION_RESULT)
+                ),
+                ASM_SIGNED
+              );
             case PopcntInt32:
-              return ValueBuilder::makeCall(POPCNT32, visit(curr->value,
-                                                            EXPRESSION_RESULT));
+              return makeSigning(
+                ValueBuilder::makeCall(
+                  WASM_POPCNT32,
+                  visit(curr->value, EXPRESSION_RESULT)
+                ),
+                ASM_SIGNED
+              );
             case EqZInt32:
               return ValueBuilder::makeBinary(
                   makeAsmCoercion(visit(curr->value,
@@ -1476,9 +1487,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
                                           makeSigning(right, ASM_UNSIGNED));
         case RotLInt32:
-          return ValueBuilder::makeCall(ROTL32, left, right);
+          return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right),
+                             ASM_SIGNED);
         case RotRInt32:
-          return ValueBuilder::makeCall(ROTR32, left, right);
+          return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
+                             ASM_SIGNED);
         default: {
           std::cerr << "Unhandled binary operator: " << curr << std::endl;
           abort();
