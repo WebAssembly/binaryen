@@ -38,6 +38,55 @@ static Name makeHighName(Name n) {
 }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
+  struct TempVar {
+    TempVar(Index idx, I64ToI32Lowering& pass) :
+      idx(idx), pass(pass), moved(false) {}
+
+    TempVar(TempVar&& other) : idx(other), pass(other.pass), moved(false) {
+      assert(!other.moved);
+      other.moved = true;
+    }
+
+    TempVar& operator=(TempVar&& rhs) {
+      assert(!rhs.moved);
+      // free overwritten idx
+      if (!moved) freeIdx();
+      idx = rhs.idx;
+      rhs.moved = true;
+      moved = false;
+      return *this;
+    }
+
+    ~TempVar() {
+      if (!moved) freeIdx();
+    }
+
+    bool operator==(const TempVar& rhs) {
+      assert(!moved && !rhs.moved);
+      return idx == rhs.idx;
+    }
+
+    operator Index() {
+      assert(!moved);
+      return idx;
+    }
+
+    // disallow copying
+    TempVar(const TempVar&) = delete;
+    TempVar& operator=(const TempVar&) = delete;
+
+  private:
+    void freeIdx() {
+      assert(std::find(pass.freeTemps.begin(), pass.freeTemps.end(), idx) ==
+             pass.freeTemps.end());
+      pass.freeTemps.push_back(idx);
+    }
+
+    Index idx;
+    I64ToI32Lowering& pass;
+    bool moved; // since C++ will still destruct moved-from values
+  };
+
   static Name highBitsGlobal;
 
   // false since function types need to be lowered
@@ -82,8 +131,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // create builder here if this is first entry to module for this object
     if (!builder) builder = make_unique<Builder>(*getModule());
     indexMap.clear();
-    returnIndices.clear();
-    labelIndices.clear();
+    highBitVars.clear();
+    labelHighBitVars.clear();
     freeTemps.clear();
     Function oldFunc(*func);
     func->params.clear();
@@ -118,8 +167,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       func->result = i32;
       // body may not have out param if it ends with control flow
       if (hasOutParam(func->body)) {
-        Index highBits = fetchOutParam(func->body);
-        Index lowBits = getTemp();
+        TempVar highBits = fetchOutParam(func->body);
+        TempVar lowBits = getTemp();
         SetLocal* setLow = builder->makeSetLocal(
           lowBits,
           func->body
@@ -130,8 +179,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         );
         GetLocal* getLow = builder->makeGetLocal(lowBits, i32);
         func->body = builder->blockify(setLow, setHigh, getLow);
-        freeTemp(highBits);
-        freeTemp(lowBits);
       }
     }
     assert(freeTemps.size() == nextTemp - func->getNumLocals());
@@ -145,25 +192,25 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) return;
     if (curr->type == i64) curr->type = i32;
-    auto highBitsIt = labelIndices.find(curr->name);
+    auto highBitsIt = labelHighBitVars.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
-      if (highBitsIt != labelIndices.end()) {
-        setOutParam(curr, highBitsIt->second);
+      if (highBitsIt != labelHighBitVars.end()) {
+        setOutParam(curr, std::move(highBitsIt->second));
       }
       return;
     }
-    Index lastHighBits = fetchOutParam(curr->list.back());
-    if (highBitsIt == labelIndices.end() ||
+    TempVar lastHighBits = fetchOutParam(curr->list.back());
+    if (highBitsIt == labelHighBitVars.end() ||
         highBitsIt->second == lastHighBits) {
-      setOutParam(curr, lastHighBits);
-      if (highBitsIt != labelIndices.end()) {
-        labelIndices.erase(highBitsIt);
+      setOutParam(curr, std::move(lastHighBits));
+      if (highBitsIt != labelHighBitVars.end()) {
+        labelHighBitVars.erase(highBitsIt);
       }
       return;
     }
-    Index highBits = highBitsIt->second;
-    Index tmp = getTemp();
-    labelIndices.erase(highBitsIt);
+    TempVar highBits = std::move(highBitsIt->second);
+    TempVar tmp = getTemp();
+    labelHighBitVars.erase(highBitsIt);
     SetLocal* setLow = builder->makeSetLocal(tmp, curr->list.back());
     SetLocal* setHigh = builder->makeSetLocal(
       highBits,
@@ -171,9 +218,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     GetLocal* getLow = builder->makeGetLocal(tmp, i32);
     curr->list.back() = builder->blockify(setLow, setHigh, getLow);
-    setOutParam(curr, highBits);
-    freeTemp(lastHighBits);
-    freeTemp(tmp);
+    setOutParam(curr, std::move(highBits));
   }
 
   // If and Select have identical code
@@ -181,9 +226,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBranching(T* curr) {
     if (!hasOutParam(curr->ifTrue)) return;
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
-    Index highBits = fetchOutParam(curr->ifTrue);
-    Index falseBits = fetchOutParam(curr->ifFalse);
-    Index tmp = getTemp();
+    TempVar highBits = fetchOutParam(curr->ifTrue);
+    TempVar falseBits = fetchOutParam(curr->ifFalse);
+    TempVar tmp = getTemp();
     curr->type = i32;
     curr->ifFalse = builder->blockify(
       builder->makeSetLocal(tmp, curr->ifFalse),
@@ -193,9 +238,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       ),
       builder->makeGetLocal(tmp, i32)
     );
-    freeTemp(tmp);
-    freeTemp(falseBits);
-    setOutParam(curr, highBits);
+    setOutParam(curr, std::move(highBits));
   }
 
   void visitIf(If* curr) {
@@ -203,7 +246,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitLoop(Loop* curr) {
-    assert(labelIndices.find(curr->name) == labelIndices.end());
+    assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
     if (curr->type != i64) return;
     curr->type = i32;
     setOutParam(curr, fetchOutParam(curr->body));
@@ -212,15 +255,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBreak(Break* curr) {
     if (!hasOutParam(curr->value)) return;
     assert(curr->value != nullptr);
-    Index valHighBits = fetchOutParam(curr->value);
-    auto blockHighBitsIt = labelIndices.find(curr->name);
-    if (blockHighBitsIt == labelIndices.end()) {
-      labelIndices[curr->name] = valHighBits;
+    TempVar valHighBits = fetchOutParam(curr->value);
+    auto blockHighBitsIt = labelHighBitVars.find(curr->name);
+    if (blockHighBitsIt == labelHighBitVars.end()) {
+      labelHighBitVars.emplace(curr->name, std::move(valHighBits));
       curr->type = i32;
       return;
     }
-    Index blockHighBits = blockHighBitsIt->second;
-    Index tmp = getTemp();
+    TempVar blockHighBits = std::move(blockHighBitsIt->second);
+    TempVar tmp = getTemp();
     SetLocal* setLow = builder->makeSetLocal(tmp, curr->value);
     SetLocal* setHigh = builder->makeSetLocal(
       blockHighBits,
@@ -229,45 +272,41 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     curr->value = builder->makeGetLocal(tmp, i32);
     curr->type = i32;
     replaceCurrent(builder->blockify(setLow, setHigh, curr));
-    freeTemp(tmp);
   }
 
   void visitSwitch(Switch* curr) {
     if (!hasOutParam(curr->value)) return;
-    Index outParam = fetchOutParam(curr->value);
-    Index tmp = getTemp();
-    bool didReuseOutParam = false;
+    TempVar outParam = fetchOutParam(curr->value);
+    TempVar tmp = getTemp();
     Expression* result = curr;
     std::vector<Name> targets;
+    size_t blockID = 0;
     auto processTarget = [&](Name target) -> Name {
-      auto labelIt = labelIndices.find(target);
-      if (labelIt == labelIndices.end() || labelIt->second == outParam) {
-        labelIndices[target] = outParam;
-        didReuseOutParam = true;
-        return target;
+      auto labelIt = labelHighBitVars.find(target);
+      if (labelIt == labelHighBitVars.end()) {
+        labelHighBitVars.emplace(target, getTemp());
+        labelIt = labelHighBitVars.find(target);
       }
-      Index labelOutParam = labelIt->second;
-      Name newLabel("$i64toi32_" + std::string(target.c_str()));
+      Name newLabel("$i64toi32_" + std::string(target.c_str()) +
+                    "_" + std::to_string(blockID++));
+      Block* trampoline = builder->makeBlock(newLabel, result);
+      trampoline->type = i32;
       result = builder->blockify(
-        builder->makeSetLocal(tmp, builder->makeBlock(newLabel, result)),
+        builder->makeSetLocal(tmp, trampoline),
         builder->makeSetLocal(
-          labelOutParam,
+          labelIt->second,
           builder->makeGetLocal(outParam, i32)
         ),
-        builder->makeGetLocal(tmp, i32)
+        builder->makeBreak(target, builder->makeGetLocal(tmp, i32))
       );
-      assert(result->type == i32);
       return newLabel;
     };
     for (auto target : curr->targets) {
       targets.push_back(processTarget(target));
     }
+    curr->targets.set(targets);
     curr->default_ = processTarget(curr->default_);
     replaceCurrent(result);
-    freeTemp(tmp);
-    if (!didReuseOutParam) {
-      freeTemp(outParam);
-    }
   }
 
   template <typename T>
@@ -279,17 +318,16 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     for (auto* e : curr->operands) {
       args.push_back(e);
       if (hasOutParam(e)) {
-        Index argHighBits = fetchOutParam(e);
+        TempVar argHighBits = fetchOutParam(e);
         args.push_back(builder->makeGetLocal(argHighBits, i32));
-        freeTemp(argHighBits);
       }
     }
     if (curr->type != i64) {
       replaceCurrent(callBuilder(args, curr->type));
       return;
     }
-    Index lowBits = getTemp();
-    Index highBits = getTemp();
+    TempVar lowBits = getTemp();
+    TempVar highBits = getTemp();
     SetLocal* doCall = builder->makeSetLocal(
       lowBits,
       callBuilder(args, i32)
@@ -300,8 +338,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     GetLocal* getLow = builder->makeGetLocal(lowBits, i32);
     Block* result = builder->blockify(doCall, setHigh, getLow);
-    freeTemp(lowBits);
-    setOutParam(result, highBits);
+    setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
   void visitCall(Call* curr) {
@@ -336,7 +373,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (curr->type != i64) return;
     curr->index = indexMap[curr->index];
     curr->type = i32;
-    Index highBits = getTemp();
+    TempVar highBits = getTemp();
     SetLocal *setHighBits = builder->makeSetLocal(
       highBits,
       builder->makeGetLocal(
@@ -346,12 +383,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     Block* result = builder->blockify(setHighBits, curr);
     replaceCurrent(result);
-    setOutParam(result, highBits);
+    setOutParam(result, std::move(highBits));
   }
 
   void lowerTee(SetLocal* curr) {
-    Index highBits = fetchOutParam(curr->value);
-    Index tmp = getTemp();
+    TempVar highBits = fetchOutParam(curr->value);
+    TempVar tmp = getTemp();
     curr->index = indexMap[curr->index];
     curr->type = i32;
     SetLocal* setLow = builder->makeSetLocal(tmp, curr);
@@ -362,8 +399,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     GetLocal* getLow = builder->makeGetLocal(tmp, i32);
     Block* result = builder->blockify(setLow, setHigh, getLow);
     replaceCurrent(result);
-    setOutParam(result, highBits);
-    freeTemp(tmp);
+    setOutParam(result, std::move(highBits));
   }
 
   void visitSetLocal(SetLocal* curr) {
@@ -372,7 +408,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       lowerTee(curr);
       return;
     }
-    Index highBits = fetchOutParam(curr->value);
+    TempVar highBits = fetchOutParam(curr->value);
     curr->index = indexMap[curr->index];
     SetLocal* setHigh = builder->makeSetLocal(
       curr->index + 1,
@@ -380,7 +416,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     Block* result = builder->blockify(curr, setHigh);
     replaceCurrent(result);
-    freeTemp(highBits);
   }
 
   void visitGetGlobal(GetGlobal* curr) {
@@ -394,8 +429,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitLoad(Load* curr) {
     if (curr->type != i64) return;
     assert(!curr->isAtomic && "atomic load not implemented");
-    Index highBits = getTemp();
-    Index ptrTemp = getTemp();
+    TempVar highBits = getTemp();
+    TempVar ptrTemp = getTemp();
     SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
     SetLocal* loadHigh;
     if (curr->bytes == 8) {
@@ -422,21 +457,20 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     curr->ptr = builder->makeGetLocal(ptrTemp, i32);
     Block* result = builder->blockify(setPtr, loadHigh, curr);
     replaceCurrent(result);
-    setOutParam(result, highBits);
-    freeTemp(ptrTemp);
+    setOutParam(result, std::move(highBits));
   }
 
   void visitStore(Store* curr) {
     if (!hasOutParam(curr->value)) return;
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
-    Index highBits = fetchOutParam(curr->value);
+    TempVar highBits = fetchOutParam(curr->value);
     uint8_t bytes = curr->bytes;
     curr->bytes = std::min(curr->bytes, uint8_t(4));
     curr->align = std::min(uint32_t(curr->align), uint32_t(4));
     curr->valueType = i32;
     if (bytes == 8) {
-      Index ptrTemp = getTemp();
+      TempVar ptrTemp = getTemp();
       SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
       curr->ptr = builder->makeGetLocal(ptrTemp, i32);
       Store* storeHigh = builder->makeStore(
@@ -448,9 +482,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         i32
       );
       replaceCurrent(builder->blockify(setPtr, curr, storeHigh));
-      freeTemp(ptrTemp);
     }
-    freeTemp(highBits);
   }
 
   void visitAtomicRMW(AtomicRMW* curr) {
@@ -463,7 +495,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitConst(Const* curr) {
     if (curr->type != i64) return;
-    Index highBits = getTemp();
+    TempVar highBits = getTemp();
     Const* lowVal = builder->makeConst(
       Literal(int32_t(curr->value.geti64() & 0xffffffff))
     );
@@ -474,12 +506,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       )
     );
     Block* result = builder->blockify(setHigh, lowVal);
-    setOutParam(result, highBits);
+    setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
 
   void lowerEqZInt64(Unary* curr) {
-    Index highBits = fetchOutParam(curr->value);
+    TempVar highBits = fetchOutParam(curr->value);
     replaceCurrent(
       builder->makeBinary(
         AndInt32,
@@ -487,21 +519,21 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeUnary(EqZInt32, curr->value)
       )
     );
-    freeTemp(highBits);
   }
 
   void lowerExtendUInt32(Unary* curr) {
-    Index highBits = getTemp();
+    TempVar highBits = getTemp();
     Block* result = builder->blockify(
       builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))),
       curr->value
     );
-    setOutParam(result, highBits);
+    setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
 
   void lowerWrapInt64(Unary* curr) {
-    freeTemp(fetchOutParam(curr->value));
+    // free the temp var
+    fetchOutParam(curr->value);
     replaceCurrent(curr->value);
   }
 
@@ -560,8 +592,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
   }
 
-  Block* lowerAdd(Block* result, Index leftLow, Index leftHigh,
-                  Index rightLow, Index rightHigh) {
+  Block* lowerAdd(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+                  TempVar&& rightLow, TempVar&& rightHigh) {
     SetLocal* addLow = builder->makeSetLocal(
       leftHigh,
       builder->makeBinary(
@@ -596,21 +628,18 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     GetLocal* getLow = builder->makeGetLocal(leftHigh, i32);
     result = builder->blockify(result, addLow, addHigh, checkOverflow, getLow);
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    setOutParam(result, rightHigh);
+    setOutParam(result, std::move(rightHigh));
     return result;
   }
 
-  Block* lowerMul(Block* result, Index leftLow, Index leftHigh, Index rightLow,
-                  Index rightHigh) {
+  Block* lowerMul(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+                  TempVar&& rightLow, TempVar&& rightHigh) {
     // high bits = ll*rh + lh*rl + ll1*rl1 + (ll0*rl1)>>16 + (ll1*rl0)>>16
     // low bits = ll*rl
-    Index leftLow0 = getTemp();
-    Index leftLow1 = getTemp();
-    Index rightLow0 = getTemp();
-    Index rightLow1 = getTemp();
+    TempVar leftLow0 = getTemp();
+    TempVar leftLow1 = getTemp();
+    TempVar rightLow0 = getTemp();
+    TempVar rightLow1 = getTemp();
     SetLocal* setLL0 = builder->makeSetLocal(
       leftLow0,
       builder->makeBinary(
@@ -715,19 +744,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       addLL1RL0,
       getLow
     );
-    freeTemp(leftLow0);
-    freeTemp(leftLow1);
-    freeTemp(rightLow0);
-    freeTemp(rightLow1);
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    setOutParam(result, rightHigh);
+    setOutParam(result, std::move(rightHigh));
     return result;
   }
 
-  Block* lowerBitwise(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
-                      Index rightLow, Index rightHigh) {
+  Block* lowerBitwise(BinaryOp op, Block* result, TempVar&& leftLow,
+                      TempVar&& leftHigh, TempVar&& rightLow,
+                      TempVar&& rightHigh) {
     BinaryOp op32;
     switch (op) {
       case AndInt64: op32 = AndInt32; break;
@@ -751,10 +774,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         builder->makeGetLocal(rightLow, i32)
       )
     );
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    setOutParam(result, rightHigh);
+    setOutParam(result, std::move(rightHigh));
     return result;
   }
 
@@ -841,8 +861,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-  Block* lowerShU(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
-                  Index rightLow, Index rightHigh) {
+  Block* lowerShU(BinaryOp op, Block* result, TempVar&& leftLow,
+                  TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
     assert(op == ShlInt64 || op == ShrUInt64);
     // shift left lowered as:
     // if 32 <= rightLow % 64:
@@ -851,7 +871,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     //     high = (((1 << k) - 1) & (leftLow >> (32 - k))) | (leftHigh << k);
     //     low = leftLow << k
     // where k = shift % 32. shift right is similar.
-    Index shift = getTemp();
+    TempVar shift = getTemp();
     SetLocal* setShift = builder->makeSetLocal(
       shift,
       builder->makeBinary(
@@ -911,20 +931,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       smallShiftBlock
     );
     result = builder->blockify(result, setShift, ifLargeShift);
-    freeTemp(shift);
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    setOutParam(result, rightHigh);
+    setOutParam(result, std::move(rightHigh));
     return result;
   }
 
-  Block* lowerEq(Block* result, Index leftLow, Index leftHigh,
-                    Index rightLow, Index rightHigh) {
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    freeTemp(rightHigh);
+  Block* lowerEq(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+                    TempVar&& rightLow, TempVar&& rightHigh) {
     return builder->blockify(
       result,
       builder->makeBinary(
@@ -943,12 +955,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-  Block* lowerNe(Block* result, Index leftLow, Index leftHigh,
-                 Index rightLow, Index rightHigh) {
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    freeTemp(rightHigh);
+  Block* lowerNe(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+                 TempVar&& rightLow, TempVar&& rightHigh) {
     return builder->blockify(
       result,
       builder->makeBinary(
@@ -967,12 +975,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-  Block* lowerUComp(BinaryOp op, Block* result, Index leftLow, Index leftHigh,
-                    Index rightLow, Index rightHigh) {
-    freeTemp(leftLow);
-    freeTemp(leftHigh);
-    freeTemp(rightLow);
-    freeTemp(rightHigh);
+  Block* lowerUComp(BinaryOp op, Block* result, TempVar&& leftLow,
+                    TempVar&& leftHigh, TempVar&& rightLow,
+                    TempVar&& rightHigh) {
     BinaryOp highOp, lowOp;
     switch (op) {
       case LtUInt64: highOp = LtUInt32; lowOp = LtUInt32; break;
@@ -1043,7 +1048,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       // left unreachable, replace self with left
       replaceCurrent(curr->left);
       if (hasOutParam(curr->right)) {
-        freeTemp(fetchOutParam(curr->right));
+        // free temp var
+        fetchOutParam(curr->right);
       }
       return;
     }
@@ -1052,27 +1058,31 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       replaceCurrent(
         builder->blockify(builder->makeDrop(curr->left), curr->right)
       );
-      freeTemp(fetchOutParam(curr->left));
+      // free temp var
+      fetchOutParam(curr->left);
       return;
     }
     // left and right reachable, lower normally
-    Index leftLow = getTemp();
-    Index leftHigh = fetchOutParam(curr->left);
-    Index rightLow = getTemp();
-    Index rightHigh = fetchOutParam(curr->right);
+    TempVar leftLow = getTemp();
+    TempVar leftHigh = fetchOutParam(curr->left);
+    TempVar rightLow = getTemp();
+    TempVar rightHigh = fetchOutParam(curr->right);
     SetLocal* setRight = builder->makeSetLocal(rightLow, curr->right);
     SetLocal* setLeft = builder->makeSetLocal(leftLow, curr->left);
     Block* result = builder->blockify(setLeft, setRight);
     switch (curr->op) {
       case AddInt64: {
-        replaceCurrent(lowerAdd(result, leftLow, leftHigh, rightLow,
-                                rightHigh));
+        replaceCurrent(
+          lowerAdd(result, std::move(leftLow), std::move(leftHigh),
+                   std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case SubInt64: goto err;
       case MulInt64: {
-        replaceCurrent(lowerMul(result, leftLow, leftHigh, rightLow,
-                                rightHigh));
+        replaceCurrent(
+          lowerMul(result, std::move(leftLow), std::move(leftHigh),
+                   std::move(rightLow), std::move(rightHigh))
+        );
         break;
       }
       case DivSInt64:
@@ -1082,25 +1092,36 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case AndInt64:
       case OrInt64:
       case XorInt64: {
-        replaceCurrent(lowerBitwise(curr->op, result, leftLow, leftHigh,
-                                    rightLow, rightHigh));
+        replaceCurrent(
+          lowerBitwise(curr->op, result, std::move(leftLow),
+                       std::move(leftHigh), std::move(rightLow),
+                       std::move(rightHigh))
+        );
         break;
       }
       case ShlInt64:
       case ShrUInt64: {
-        replaceCurrent(lowerShU(curr->op, result, leftLow, leftHigh, rightLow,
-                                rightHigh));
+        replaceCurrent(
+          lowerShU(curr->op, result, std::move(leftLow), std::move(leftHigh),
+                   std::move(rightLow), std::move(rightHigh))
+        );
         break;
       }
       case ShrSInt64:
       case RotLInt64:
       case RotRInt64: goto err;
       case EqInt64: {
-        replaceCurrent(lowerEq(result, leftLow, leftHigh, rightLow, rightHigh));
+        replaceCurrent(
+          lowerEq(result, std::move(leftLow), std::move(leftHigh),
+                  std::move(rightLow), std::move(rightHigh))
+        );
         break;
       }
       case NeInt64: {
-        replaceCurrent(lowerNe(result, leftLow, leftHigh, rightLow, rightHigh));
+        replaceCurrent(
+          lowerNe(result, std::move(leftLow), std::move(leftHigh),
+                  std::move(rightLow), std::move(rightHigh))
+        );
         break;
       }
       case LtSInt64:
@@ -1111,8 +1132,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case LeUInt64:
       case GtUInt64:
       case GeUInt64: {
-        replaceCurrent(lowerUComp(curr->op, result, leftLow, leftHigh, rightLow,
-                                  rightHigh));
+        replaceCurrent(
+          lowerUComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
+                     std::move(rightLow), std::move(rightHigh))
+        );
         break;
       }
       err: default: {
@@ -1128,13 +1151,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitDrop(Drop* curr) {
     if (!hasOutParam(curr->value)) return;
-    freeTemp(fetchOutParam(curr->value));
+    // free temp var
+    fetchOutParam(curr->value);
   }
 
   void visitReturn(Return* curr) {
     if (!hasOutParam(curr->value)) return;
-    Index lowBits = getTemp();
-    Index highBits = fetchOutParam(curr->value);
+    TempVar lowBits = getTemp();
+    TempVar highBits = fetchOutParam(curr->value);
     SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
     SetGlobal* setHigh = builder->makeSetGlobal(
       highBitsGlobal,
@@ -1143,20 +1167,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     curr->value = builder->makeGetLocal(lowBits, i32);
     Block* result = builder->blockify(setLow, setHigh, curr);
     replaceCurrent(result);
-    freeTemp(lowBits);
-    freeTemp(highBits);
   }
 
 private:
   std::unique_ptr<Builder> builder;
   std::unordered_map<Index, Index> indexMap;
-  std::unordered_map<Expression*, Index> returnIndices;
-  std::unordered_map<Name, Index> labelIndices;
+  std::unordered_map<Expression*, TempVar> highBitVars;
+  std::unordered_map<Name, TempVar> labelHighBitVars;
   std::vector<Index> freeTemps;
   Index nextTemp;
 
-  // TODO: RAII for temp var allocation
-  Index getTemp() {
+  TempVar getTemp() {
     Index ret;
     if (freeTemps.size() > 0) {
       ret = freeTemps.back();
@@ -1164,26 +1185,22 @@ private:
     } else {
       ret = nextTemp++;
     }
-    return ret;
-  }
-
-  void freeTemp(Index t) {
-    assert(std::find(freeTemps.begin(), freeTemps.end(), t) == freeTemps.end());
-    freeTemps.push_back(t);
+    return TempVar(ret, *this);
   }
 
   bool hasOutParam(Expression* e) {
-    return returnIndices.find(e) != returnIndices.end();
+    return highBitVars.find(e) != highBitVars.end();
   }
 
-  void setOutParam(Expression* e, Index idx) {
-    returnIndices[e] = idx;
+  void setOutParam(Expression* e, TempVar&& var) {
+    highBitVars.emplace(e, std::move(var));
   }
 
-  Index fetchOutParam(Expression* e) {
-    assert(returnIndices.find(e) != returnIndices.end());
-    Index ret = returnIndices[e];
-    returnIndices.erase(e);
+  TempVar fetchOutParam(Expression* e) {
+    auto outParamIt = highBitVars.find(e);
+    assert(outParamIt != highBitVars.end());
+    TempVar ret = std::move(outParamIt->second);
+    highBitVars.erase(e);
     return ret;
   }
 };
