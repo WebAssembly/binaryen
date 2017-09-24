@@ -93,13 +93,13 @@ function asmFunc(global, env, buffer) {
  function $$13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotl_i32(x, y) | 0;
+  return __wasm_rotl_i32(x, y) | 0 | 0;
  }
  
  function $$14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotr_i32(x, y) | 0;
+  return __wasm_rotr_i32(x, y) | 0 | 0;
  }
  
  function $$15(x) {
@@ -109,12 +109,12 @@ function asmFunc(global, env, buffer) {
  
  function $$16(x) {
   x = x | 0;
-  return __wasm_ctz_i32(x) | 0;
+  return __wasm_ctz_i32(x) | 0 | 0;
  }
  
  function $$17(x) {
   x = x | 0;
-  return __wasm_popcnt_i32(x) | 0;
+  return __wasm_popcnt_i32(x) | 0 | 0;
  }
  
  function $$18(x) {
