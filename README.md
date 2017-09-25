@@ -46,11 +46,13 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      * Blocks without names may not be branch targets.
      * Names are required to be unique. (Reading wast files with duplicate names is supported; the names are modified when the IR is constructed).
    * As an optimization, a block that is the child of a loop (or if arm, or function toplevel) and which has no branches targeting it will not be emitted when generating wasm. Instead its list of operands will be directly used in the containing node. Such a block is sometimes called an "implicit block".
-   
- 
- 
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
+
+Notes when working with Binaryen IR:
+
+ * As mentioned above, Binaryen IR has a tree structure. As a result, each expression should have exactly one parent - you should not "reuse" a node by having it appear more than once in the tree. The motivation for this limitation is that when we optimize we modify nodes, so if they appear more than once in the tree, a change in one place can appear in another incorrectly.
+ * For similar reasons, nodes should not appear in more than one functions.
 
 ## Tools
 

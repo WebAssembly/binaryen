@@ -559,6 +559,24 @@ void WasmValidator::visitFunction(Function *curr) {
   shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
+  // expressions must not be seen more than once
+  struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    std::unordered_set<Expression*>& seen;
+    std::vector<Expression*> dupes;
+
+    Walker(std::unordered_set<Expression*>& seen) : seen(seen) {}
+
+    void visitExpression(Expression* curr) {
+      bool inserted;
+      std::tie(std::ignore, inserted) = seen.insert(curr);
+      if (!inserted) dupes.push_back(curr);
+    }
+  };
+  Walker walker(seenExpressions);
+  walker.walk(curr->body);
+  for (auto* bad : walker.dupes) {
+    fail("expression seen more than once in the tree", bad);
+  }
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
@@ -579,6 +597,7 @@ static bool checkOffset(Expression* curr, Address add, Address max) {
 void WasmValidator::visitMemory(Memory *curr) {
   shouldBeFalse(curr->initial > curr->max, "memory", "memory max >= initial");
   shouldBeTrue(curr->max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
+  shouldBeTrue(!curr->shared || curr->hasMax(), "memory", "shared memory must have max size");
   Index mustBeGreaterOrEqual = 0;
   for (auto& segment : curr->segments) {
     if (!shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;

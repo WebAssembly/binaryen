@@ -98,6 +98,7 @@ void test_core() {
 
   BinaryenExpressionRef callOperands2[] = { makeInt32(module, 13), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
+  BinaryenExpressionRef callOperands4b[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
 
   BinaryenType params[4] = { BinaryenInt32(), BinaryenInt64(), BinaryenFloat32(), BinaryenFloat64() };
   BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenInt32(), params, 4);
@@ -203,7 +204,7 @@ void test_core() {
       )
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4, 4, "iiIfF")
+      BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
     ),
     BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenInt32())),
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
@@ -545,18 +546,36 @@ void test_interpret() {
 
 void test_nonvalid() {
   // create a module that fails to validate
-  BinaryenModuleRef module = BinaryenModuleCreate();
+  {
+    BinaryenModuleRef module = BinaryenModuleCreate();
 
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
-  BinaryenType localTypes[] = { BinaryenInt32() };
-  BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
-    BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
-  );
+    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+    BinaryenType localTypes[] = { BinaryenInt32() };
+    BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
+      BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
+    );
 
-  BinaryenModulePrint(module);
-  printf("validation: %d\n", BinaryenModuleValidate(module));
+    BinaryenModulePrint(module);
+    printf("validation: %d\n", BinaryenModuleValidate(module));
 
-  BinaryenModuleDispose(module);
+    BinaryenModuleDispose(module);
+  }
+  // validation failure due to duplicate nodes
+  {
+    BinaryenModuleRef module = BinaryenModuleCreate();
+
+    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
+    BinaryenType localTypes[] = { };
+    BinaryenExpressionRef num = makeInt32(module, 1234);
+    BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, NULL, 0,
+      BinaryenBinary(module, BinaryenInt32(), num, num) // incorrectly use num twice
+    );
+
+    BinaryenModulePrint(module);
+    printf("validation: %d\n", BinaryenModuleValidate(module));
+
+    BinaryenModuleDispose(module);
+  }
 }
 
 void test_tracing() {

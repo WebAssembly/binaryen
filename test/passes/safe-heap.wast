@@ -1,5 +1,5 @@
 (module
- (memory 100 100 shared)
+ (memory (shared 100 100))
  (func $loads
   (drop (i32.load (i32.const 1)))
   (drop (i32.atomic.load (i32.const 1)))

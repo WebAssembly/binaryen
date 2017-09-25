@@ -50,22 +50,41 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$6() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, wasm2asm_i32$0 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, wasm2asm_i32$0 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 2;
-   $$3 = $$2;
-   $$4 = $$3;
-   $$5 = $$4;
-   switch (0 | 0) {
-   case 0:
-    break block;
-   default:
+   $i64toi32_block_1 : {
+    $i64toi32_block_0 : {
+     i64toi32_i32$0 = 0;
+     $$3 = 2;
+     $$4 = $$3;
+     $$5 = $$4;
+     $$6 = $$5;
+     $$7 = $$5;
+     switch (0 | 0) {
+     case 0:
+      break $i64toi32_block_0;
+     default:
+      break $i64toi32_block_1;
+     };
+    };
+    $$8 = $$6;
+    i64toi32_i32$1 = $$8;
+    $$9 = i64toi32_i32$0;
+    i64toi32_i32$2 = $$9;
+    $$10 = i64toi32_i32$1;
+    $$11 = $$10;
     break block;
    };
+   $$12 = $$7;
+   i64toi32_i32$1 = $$12;
+   $$13 = i64toi32_i32$0;
+   i64toi32_i32$2 = $$13;
+   $$14 = i64toi32_i32$1;
+   $$11 = $$14;
+   break block;
   };
-  $$6 = $$5;
-  wasm2asm_i32$0 = $$6;
+  $$15 = $$11;
+  wasm2asm_i32$0 = $$15;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -49725,20 +49744,29 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$30() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, wasm2asm_i32$0 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, wasm2asm_i32$0 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 7;
-   $$3 = $$2;
-   $$4 = $$3;
-   $$5 = $$4;
-   switch (0 | 0) {
-   default:
-    break block;
+   $i64toi32_block_0 : {
+    i64toi32_i32$0 = 0;
+    $$3 = 7;
+    $$4 = $$3;
+    $$5 = $$4;
+    $$6 = $$5;
+    switch (0 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   $$7 = $$6;
+   i64toi32_i32$1 = $$7;
+   $$8 = i64toi32_i32$0;
+   i64toi32_i32$2 = $$8;
+   $$9 = i64toi32_i32$1;
+   $$10 = $$9;
+   break block;
   };
-  $$6 = $$5;
-  wasm2asm_i32$0 = $$6;
+  $$11 = $$10;
+  wasm2asm_i32$0 = $$11;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -50011,20 +50039,29 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$47() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, wasm2asm_i32$0 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, wasm2asm_i32$0 = 0;
   block : {
-   i64toi32_i32$0 = 0;
-   $$2 = 30;
-   $$3 = $$2;
-   $$4 = $$3;
-   $$5 = $$4;
-   switch (1 | 0) {
-   default:
-    break block;
+   $i64toi32_block_0 : {
+    i64toi32_i32$0 = 0;
+    $$3 = 30;
+    $$4 = $$3;
+    $$5 = $$4;
+    $$6 = $$5;
+    switch (1 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   $$7 = $$6;
+   i64toi32_i32$1 = $$7;
+   $$8 = i64toi32_i32$0;
+   i64toi32_i32$2 = $$8;
+   $$9 = i64toi32_i32$1;
+   $$10 = $$9;
+   break block;
   };
-  $$6 = $$5;
-  wasm2asm_i32$0 = $$6;
+  $$11 = $$10;
+  wasm2asm_i32$0 = $$11;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -50121,23 +50158,32 @@ function asmFunc(global, env, buffer) {
  }
  
  function $$54() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, wasm2asm_i32$0 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, wasm2asm_i32$0 = 0;
   block : {
    i64toi32_i32$0 = 0;
-   $$3 = 10;
-   $$4 = $$3;
-   i64toi32_i32$1 = 0;
-   $$5 = 45;
-   $$6 = $$5;
-   $$7 = $$6;
-   $$8 = $$7;
-   switch (0 | 0) {
-   default:
-    break block;
+   $$4 = 10;
+   $$5 = $$4;
+   $i64toi32_block_0 : {
+    i64toi32_i32$1 = 0;
+    $$6 = 45;
+    $$7 = $$6;
+    $$8 = $$7;
+    $$9 = $$8;
+    switch (0 | 0) {
+    default:
+     break $i64toi32_block_0;
+    };
    };
+   $$10 = $$9;
+   i64toi32_i32$2 = $$10;
+   $$11 = i64toi32_i32$1;
+   i64toi32_i32$3 = $$11;
+   $$12 = i64toi32_i32$2;
+   $$13 = $$12;
+   break block;
   };
-  $$9 = $$8;
-  wasm2asm_i32$0 = $$9;
+  $$14 = $$13;
+  wasm2asm_i32$0 = $$14;
   return wasm2asm_i32$0 | 0;
  }
  

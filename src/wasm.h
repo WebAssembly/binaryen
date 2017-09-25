@@ -591,7 +591,7 @@ public:
   Expression* body;
 
   // local names. these are optional.
-  std::vector<Name> localNames;
+  std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
   struct DebugLocation {
@@ -672,6 +672,7 @@ public:
   Table() : exists(false), imported(false), initial(0), max(kMaxSize) {
     name = Name::fromInt(0);
   }
+  bool hasMax() { return max != kMaxSize; }
 };
 
 class Memory {
@@ -705,6 +706,7 @@ public:
   Memory() : initial(0), max(kMaxSize), exists(false), imported(false), shared(false) {
     name = Name::fromInt(0);
   }
+  bool hasMax() { return max != kMaxSize; }
 };
 
 class Global {
