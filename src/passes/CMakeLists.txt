@@ -7,7 +7,7 @@ SET(passes_SOURCES
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
-  FlattenControlFlow.cpp
+  Flatten.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
   LocalCSE.cpp

@@ -15,7 +15,8 @@
  */
 
 //
-// Flattens control flow, e.g.
+// Flattens code, removing nesting.e.g. an if return value would be
+// converted to a local
 //
 //  (i32.add
 //    (if (..condition..)
@@ -38,24 +39,13 @@
 //    (i32.const 1)
 //  )
 //
-// Formally, this pass flattens control flow in the precise sense of
+// Formally, this pass flattens in the precise sense of
 // making the AST have these properties:
 //
-//  1. Control flow structures (block, loop, if) and control flow
-//     operations (br, br_if, br_table, return, unreachable) may
-//     only be block children, a loop body, or an if-true or if-false.
-//     (I.e., they cannot be nested inside an i32.add, a drop, a
-//     call, an if-condition, etc.)
+//  1. The operands of an instruction must be a get_local or a const.
+//     anything else is written to a local earlier.
 //  2. Disallow block, loop, and if return values, i.e., do not use
 //     control flow to pass around values.
-//
-// Note that we do still allow normal arbitrary nesting of expressions
-// *without* control flow (i.e., this is not a reduction to 3-address
-// code form). We also allow nesting of control flow, but just nested
-// in other control flow, like an if in the true arm of an if, and
-// so forth. What we achieve here is that when you see an expression,
-// you know it has no control flow inside it, it will be fully
-// executed.
 //
 
 #include <wasm.h>
@@ -81,10 +71,10 @@ namespace wasm {
 // Once exception is that we allow an (unreachable) node, which is used
 // when we move something unreachable to another place, and need a
 // placeholder. We will never reach that (unreachable) anyhow
-struct FlattenControlFlow : public WalkerPass<ExpressionStackWalker<FlattenControlFlow, UnifiedExpressionVisitor<FlattenControlFlow>>> {
+struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FlattenControlFlow; }
+  Pass* create() override { return new Flatten; }
 
   // For each expression, a bunch of expressions that should execute right before it
   std::unordered_map<Expression*, std::vector<Expression*>> preludes;
@@ -334,8 +324,8 @@ private:
   }
 };
 
-Pass *createFlattenControlFlowPass() {
-  return new FlattenControlFlow();
+Pass *createFlattenPass() {
+  return new Flatten();
 }
 
 } // namespace wasm
