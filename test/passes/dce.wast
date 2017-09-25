@@ -651,4 +651,60 @@
     )
   )
  )
+ (func $replace-with-unreachable-affects-parent (param $var$0 f32) (param $var$1 i64)
+  (block $top
+   (drop
+    (f32.load offset=4
+     (i64.ne
+      (i64.const 0)
+      (if (result i64)
+       (block (result i32)
+        (call $replace-with-unreachable-affects-parent
+         (f32.const 1)
+         (i64.const -15917430362925035)
+        )
+        (i32.const 1)
+       )
+       (unreachable)
+       (unreachable)
+      )
+     )
+    )
+   )
+   (nop) ;; this is not reachable due to the above code, so we replace it with unreachable. type should go to parent
+  )
+ )
+ (func $replace-block-changes-later-when-if-goes
+  (block $top ;; and so should this
+   (set_global $global$0
+    (i32.const 0)
+   )
+   (drop
+    (f32.load offset=4
+     (i64.ne
+      (block $inner (result i64) ;; this becomes unreachable
+       (drop
+        (call $helper
+         (f32.const 1)
+         (i64.const -15917430362925035)
+        )
+       )
+       (unreachable)
+      )
+      (i64.const 0)
+     )
+    )
+   )
+   (if
+    (i32.load16_s offset=22 align=1
+     (i32.const 0)
+    )
+    (br $top) ;; this keeps the block none after the inner block gets unreachable. but it will vanish into unreachable itself
+    (unreachable)
+   )
+  )
+ )
+ (func $helper (param $var$0 f32) (param $var$1 i64) (result i32)
+  (i32.const 0)
+ )
 )

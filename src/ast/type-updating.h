@@ -75,10 +75,16 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
   // note the replacement of one node with another. this should be called
   // after performing the replacement.
-  // this does *not* look into the node. you should do so yourself if necessary
-  void noteReplacement(Expression* from, Expression* to) {
+  // this does *not* look into the node by default. see noteReplacementWithRecursiveRemoval
+  // (we don't support recursive addition because in practice we do not create
+  // new trees in the passes that use this, they just move around children)
+  void noteReplacement(Expression* from, Expression* to, bool recursivelyRemove=false) {
     auto parent = parents[from];
-    noteRemoval(from);
+    if (recursivelyRemove) {
+      noteRecursiveRemoval(from);
+    } else {
+      noteRemoval(from);
+    }
     // if we are replacing with a child, i.e. a node that was already present
     // in the ast, then we just have a type and parent to update
     if (parents.find(to) != parents.end()) {
@@ -89,6 +95,10 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
     } else {
       noteAddition(to, parent, from);
     }
+  }
+
+  void noteReplacementWithRecursiveRemoval(Expression* from, Expression* to) {
+    noteReplacement(from, to, true);
   }
 
   // note the removal of a node

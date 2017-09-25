@@ -4,6 +4,8 @@
  (type $2 (func (result i32)))
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i64 i64) (result i64)))
+ (type $5 (func (param f32 i64)))
+ (type $6 (func (param f32 i64) (result i32)))
  (global $x (mut i32) (i32.const 0))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
@@ -440,5 +442,49 @@
    (nop)
    (unreachable)
   )
+ )
+ (func $replace-with-unreachable-affects-parent (type $5) (param $var$0 f32) (param $var$1 i64)
+  (block $top
+   (drop
+    (f32.load offset=4
+     (block (result i32)
+      (drop
+       (i64.const 0)
+      )
+      (if
+       (block $block (result i32)
+        (call $replace-with-unreachable-affects-parent
+         (f32.const 1)
+         (i64.const -15917430362925035)
+        )
+        (i32.const 1)
+       )
+       (unreachable)
+       (unreachable)
+      )
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $replace-block-changes-later-when-if-goes (type $1)
+  (block $top
+   (set_global $global$0
+    (i32.const 0)
+   )
+   (block $inner
+    (drop
+     (call $helper
+      (f32.const 1)
+      (i64.const -15917430362925035)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+ (func $helper (type $6) (param $var$0 f32) (param $var$1 i64) (result i32)
+  (i32.const 0)
  )
 )
