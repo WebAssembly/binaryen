@@ -15,317 +15,288 @@ function asmFunc(global, env, buffer) {
  function $$0(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 + $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$1(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 - $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$2(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = Math_imul($$2, $$3);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$3(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) / ($$3 | 0) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$4(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 >>> 0) / ($$3 >>> 0) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$5(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) % ($$3 | 0) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$6(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 >>> 0) % ($$3 >>> 0) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$7(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 & $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$8(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 | $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$9(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 ^ $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$10(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 << $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$11(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >> $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$12(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >>> $$3 | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$13(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = __wasm_rotl_i32($$2, $$3) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$14(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = __wasm_rotr_i32($$2, $$3) | 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$15(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0;
   $$1 = x;
   $$2 = Math_clz32($$1);
-  wasm2asm_i32$0 = $$2;
-  return wasm2asm_i32$0 | 0;
+  return $$2 | 0;
  }
  
  function $$16(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0;
   $$1 = x;
   $$2 = __wasm_ctz_i32($$1) | 0;
-  wasm2asm_i32$0 = $$2;
-  return wasm2asm_i32$0 | 0;
+  return $$2 | 0;
  }
  
  function $$17(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0;
   $$1 = x;
   $$2 = __wasm_popcnt_i32($$1) | 0;
-  wasm2asm_i32$0 = $$2;
-  return wasm2asm_i32$0 | 0;
+  return $$2 | 0;
  }
  
  function $$18(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0;
   $$1 = x;
   $$2 = ($$1 | 0) == (0 | 0);
-  wasm2asm_i32$0 = $$2;
-  return wasm2asm_i32$0 | 0;
+  return $$2 | 0;
  }
  
  function $$19(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) == ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$20(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) != ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$21(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) < ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$22(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >>> 0 < $$3 >>> 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$23(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) <= ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$24(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >>> 0 <= $$3 >>> 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$25(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) > ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$26(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >>> 0 > $$3 >>> 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$27(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = ($$2 | 0) >= ($$3 | 0);
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function $$28(x, y) {
   x = x | 0;
   y = y | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0;
   $$2 = x;
   $$3 = y;
   $$4 = $$2 >>> 0 >= $$3 >>> 0;
-  wasm2asm_i32$0 = $$4;
-  return wasm2asm_i32$0 | 0;
+  return $$4 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, wasm2asm_i32$0 = 0;
+  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0;
   $$1 = x;
   $$2 = ($$1 | 0) == (0 | 0);
   if ($$2) $$9 = 32; else {
@@ -338,13 +309,12 @@ function asmFunc(global, env, buffer) {
    $$9 = $$8;
   }
   $$10 = $$9;
-  wasm2asm_i32$0 = $$10;
-  return wasm2asm_i32$0 | 0;
+  return $$10 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, wasm2asm_i32$0 = 0;
+  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0;
   count = 0;
   b : {
    l : do {
@@ -369,14 +339,13 @@ function asmFunc(global, env, buffer) {
   $$13 = $$5;
   $$14 = $$13;
   $$15 = $$14;
-  wasm2asm_i32$0 = $$15;
-  return wasm2asm_i32$0 | 0;
+  return $$15 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0;
   $$2 = k;
   $$3 = $$2 & 31 | 0;
   $$4 = 4294967295 >>> $$3 | 0;
@@ -396,14 +365,13 @@ function asmFunc(global, env, buffer) {
   $$18 = 32 - $$17 | 0;
   $$19 = $$15 >>> $$18 | 0;
   $$20 = $$9 | $$19 | 0;
-  wasm2asm_i32$0 = $$20;
-  return wasm2asm_i32$0 | 0;
+  return $$20 | 0;
  }
  
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0;
   $$2 = k;
   $$3 = $$2 & 31 | 0;
   $$4 = 4294967295 << $$3 | 0;
@@ -423,8 +391,7 @@ function asmFunc(global, env, buffer) {
   $$18 = 32 - $$17 | 0;
   $$19 = $$15 << $$18 | 0;
   $$20 = $$9 | $$19 | 0;
-  wasm2asm_i32$0 = $$20;
-  return wasm2asm_i32$0 | 0;
+  return $$20 | 0;
  }
  
  return {

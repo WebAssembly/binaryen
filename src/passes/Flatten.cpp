@@ -283,8 +283,13 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
   }
 
   void visitFunction(Function* curr) {
+    auto* originalBody = curr->body;
+    // if the body is a block with a result, turn that into a return
+    if (isConcreteWasmType(curr->body->type)) {
+      curr->body = Builder(*getModule()).makeReturn(curr->body);
+    }
     // the body may have preludes
-    curr->body = getPreludesWithExpression(curr->body);
+    curr->body = getPreludesWithExpression(originalBody, curr->body);
   }
 
 private:

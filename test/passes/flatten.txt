@@ -18,9 +18,11 @@
   )
  )
  (func $a2 (type $2) (result i32)
-  (i32.add
-   (i32.const 0)
-   (i32.const 1)
+  (return
+   (i32.add
+    (i32.const 0)
+    (i32.const 1)
+   )
   )
  )
  (func $a3 (type $2) (result i32)
@@ -41,7 +43,9 @@
     (get_local $1)
    )
   )
-  (get_local $2)
+  (return
+   (get_local $2)
+  )
  )
  (func $a4 (type $1)
   (local $0 i32)
@@ -94,7 +98,9 @@
     (get_local $3)
    )
   )
-  (get_local $4)
+  (return
+   (get_local $4)
+  )
  )
  (func $a6 (type $2) (result i32)
   (local $x i32)
@@ -137,7 +143,9 @@
     (get_local $6)
    )
   )
-  (get_local $7)
+  (return
+   (get_local $7)
+  )
  )
  (func $a7 (type $2) (result i32)
   (local $x i32)
@@ -190,7 +198,9 @@
   (set_local $9
    (get_local $8)
   )
-  (get_local $9)
+  (return
+   (get_local $9)
+  )
  )
  (func $a8 (type $2) (result i32)
   (local $x i32)
@@ -262,7 +272,9 @@
   (set_local $10
    (get_local $2)
   )
-  (get_local $10)
+  (return
+   (get_local $10)
+  )
  )
  (func $a9 (type $2) (result i32)
   (local $0 i32)
@@ -302,7 +314,9 @@
   (set_local $5
    (get_local $4)
   )
-  (get_local $5)
+  (return
+   (get_local $5)
+  )
  )
  (func $a10 (type $2) (result i32)
   (local $x i32)
@@ -398,7 +412,9 @@
   (set_local $10
    (get_local $1)
   )
-  (get_local $10)
+  (return
+   (get_local $10)
+  )
  )
  (func $a11 (type $1)
   (if
@@ -424,7 +440,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $a13 (type $2) (result i32)
   (local $0 i32)
@@ -463,7 +481,9 @@
   (set_local $4
    (get_local $1)
   )
-  (get_local $4)
+  (return
+   (get_local $4)
+  )
  )
  (func $a14 (type $2) (result i32)
   (local $0 i32)
@@ -489,7 +509,9 @@
   (set_local $2
    (get_local $1)
   )
-  (get_local $2)
+  (return
+   (get_local $2)
+  )
  )
  (func $a15 (type $1)
   (local $0 i32)
@@ -576,7 +598,9 @@
   (set_local $7
    (get_local $5)
   )
-  (get_local $7)
+  (return
+   (get_local $7)
+  )
  )
  (func $a17 (type $5) (result f32)
   (local $var$0 f32)
@@ -609,7 +633,9 @@
     (get_local $4)
    )
   )
-  (get_local $5)
+  (return
+   (get_local $5)
+  )
  )
  (func $a18 (type $2) (result i32)
   (local $0 i32)
@@ -634,7 +660,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $a19 (type $5) (result f32)
   (block $label$0
@@ -1305,7 +1333,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
   (local $1 i32)
@@ -1353,7 +1383,9 @@
   (set_local $4
    (get_local $3)
   )
-  (get_local $4)
+  (return
+   (get_local $4)
+  )
  )
  (func $global (type $1)
   (local $0 i32)
@@ -1390,7 +1422,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unreachable-br (type $2) (result i32)
   (local $0 i32)
@@ -1406,7 +1440,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unreachable-br-loop (type $2) (result i32)
   (loop $out
@@ -1437,7 +1473,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unreachable-block-ends-br_if (type $2) (result i32)
   (local $0 i32)
@@ -1461,7 +1499,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unreachable-brs-3 (type $2) (result i32)
   (local $0 i32)
@@ -1483,7 +1523,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
   (local $1 i32)
@@ -1530,7 +1572,9 @@
     (get_local $4)
    )
   )
-  (get_local $5)
+  (return
+   (get_local $5)
+  )
  )
  (func $call-unreach (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $2 i64)
@@ -1629,7 +1673,9 @@
   (set_local $17
    (get_local $16)
   )
-  (get_local $17)
+  (return
+   (get_local $17)
+  )
  )
  (func $test-flatten (type $1)
   (local $0 i32)
@@ -2064,7 +2110,9 @@
   (set_local $1
    (get_local $0)
   )
-  (get_local $1)
+  (return
+   (get_local $1)
+  )
  )
  (func $unbug (type $1)
   (local $12 i32)
@@ -2232,7 +2280,9 @@
   (set_local $5
    (get_local $4)
   )
-  (get_local $5)
+  (return
+   (get_local $5)
+  )
  )
  (func $nested-br_if-with-value (type $2) (result i32)
   (local $0 i32)
@@ -2274,7 +2324,9 @@
   (set_local $6
    (get_local $4)
   )
-  (get_local $6)
+  (return
+   (get_local $6)
+  )
  )
  (func $switch-unreachable (type $1)
   (block $label$3
@@ -2343,6 +2395,8 @@
   (set_local $9
    (get_local $1)
   )
-  (get_local $9)
+  (return
+   (get_local $9)
+  )
  )
 )

@@ -1,0 +1,45 @@
+(module
+ (type $0 (func (result f64)))
+ (memory $0 0)
+ (func $0 (type $0) (result f64)
+  (local $0 f64)
+  (local $1 f64)
+  (local $2 i32)
+  (block $block$2$break
+   (block
+   )
+   (if
+    (i32.const 0)
+    (br $block$2$break)
+    (block
+     (block
+      (nop)
+      (set_local $0
+       (f64.const -nan:0xfffffd63e4e5a)
+      )
+      (set_local $1
+       (get_local $0)
+      )
+      (return
+       (get_local $1)
+      )
+     )
+    )
+   )
+  )
+  (block
+   (block $block$3$break
+    (block
+    )
+    (block
+     (br $block$3$break)
+    )
+   )
+   (block
+    (block
+     (unreachable)
+    )
+   )
+  )
+ )
+)
