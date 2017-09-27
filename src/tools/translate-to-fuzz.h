@@ -20,7 +20,6 @@
 //
 
 /*
-memory too
 high chance for set at start of loop
   high chance of get of a set local in the scope of that scope
     high chance of a tee in that case => loop var
@@ -90,6 +89,7 @@ private:
 
   // the memory that we use, a small portion so that we have a good chance of
   // looking at writes (we also look outside of this region with small probability)
+  // this should be a power of 2
   static const int USABLE_MEMORY = 32;
 
   // the number of runtime iterations (function calls, loop backbranches) we
@@ -158,6 +158,13 @@ private:
     wasm.memory.exists = true;
     // use one page
     wasm.memory.initial = wasm.memory.max = 1;
+    // init some data
+    wasm.memory.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+    auto num = upTo(USABLE_MEMORY * 2);
+    for (size_t i = 0; i < num; i++) {
+      auto value = upTo(512);
+      wasm.memory.segments[0].data.push_back(value >= 256 ? 0 : (value & 0xff));
+    }
   }
 
   void setupTable() {
@@ -509,6 +516,10 @@ private:
         num /= 2;
       }
     }
+    // not likely to have a block of size 1
+    if (num == 0 && !oneIn(10)) {
+      num++;
+    }
     while (num > 0 && !finishedInput) {
       ret->list.push_back(make(none));
       num--;
@@ -540,7 +551,17 @@ private:
     ret->name = makeLabel();
     breakableStack.push_back(ret);
     hangStack.push_back(ret);
-    ret->body = makeMaybeBlock(type);
+    // either create random content, or do something more targeted
+    if (oneIn(2)) {
+      ret->body = makeMaybeBlock(type);
+    } else {
+      // ensure a branch back. also optionally create some loop vars
+      std::vector<Expression*> list;
+      list.push_back(makeMaybeBlock(none)); // primary contents
+      list.push_back(builder.makeBreak(ret->name, nullptr, makeCondition())); // possible branch back
+      list.push_back(make(type)); // final element, so we have the right type
+      ret->body = builder.makeBlock(list);
+    }
     breakableStack.pop_back();
     hangStack.pop_back();
     if (HANG_LIMIT > 0) {
@@ -1145,6 +1166,12 @@ private:
 
   bool oneIn(Index x) {
     return upTo(x) == 0;
+  }
+
+  bool onceEvery(Index x) {
+    static int counter = 0;
+    counter++;
+    return counter % x == 0;
   }
 
   // apply upTo twice, generating a skewed distribution towards
