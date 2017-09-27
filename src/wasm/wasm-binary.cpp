@@ -1629,7 +1629,7 @@ void WasmBinaryBuilder::readFunctions() {
       useDebugLocation = false;
       breaksToReturn = false;
       // process body
-      assert(seenBreaks.size() == 0);
+      assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
       breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
@@ -1638,7 +1638,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(depth == 0);
       assert(breakStack.size() == 1);
       breakStack.pop_back();
-      assert(seenBreaks.size() == 0);
+      assert(breakTargetNames.size() == 0);
       if (!expressionStack.empty()) {
         throw ParseException("stack not empty on function exit");
       }
@@ -2224,7 +2224,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     pushBlockElements(curr, start, end);
     curr->finalize(curr->type);
     breakStack.pop_back();
-    seenBreaks.erase(curr->name);
+    breakTargetNames.erase(curr->name);
   }
 }
 
@@ -2240,13 +2240,13 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
   block->name = label;
   block->finalize(type);
   // maybe we don't need a block here?
-  if (seenBreaks.find(block->name) == seenBreaks.end()) {
+  if (breakTargetNames.find(block->name) == breakTargetNames.end()) {
     block->name = Name();
     if (block->list.size() == 1) {
       return block->list[0];
     }
   }
-  seenBreaks.erase(block->name);
+  breakTargetNames.erase(block->name);
   return block;
 }
 
@@ -2289,7 +2289,7 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
     curr->body = block;
   }
   breakStack.pop_back();
-  seenBreaks.erase(curr->name);
+  breakTargetNames.erase(curr->name);
   curr->finalize(curr->type);
 }
 
@@ -2307,7 +2307,7 @@ WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset)
   }
   if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
   auto& ret = breakStack[index];
-  seenBreaks.insert(ret.name);
+  breakTargetNames.insert(ret.name);
   return ret;
 }
 
