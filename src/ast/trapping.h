@@ -35,6 +35,38 @@ inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
   }
 }
 
+class GeneratedTrappingFunctions {
+public:
+  bool hasFunction(Name name) {
+    return functions.find(name) != functions.end();
+  }
+  bool hasImport(Name name) {
+    return imports.find(name) != imports.end();
+  }
+
+  void addFunction(Function* function) {
+    functions[function->name] = function;
+  }
+  void addImport(Import* import) {
+    imports[import->name] = import;
+  }
+
+  void addToModule(Module &wasm) {
+    for (auto &pair : functions) {
+      wasm.addFunction(pair.second);
+    }
+    for (auto &pair : imports) {
+      wasm.addImport(pair.second);
+    }
+    functions.clear();
+    imports.clear();
+  }
+
+private:
+  std::map<Name, Function*> functions;
+  std::map<Name, Import*> imports;
+};
+
 } // wasm
 
 #endif // wasm_ast_trapping_h

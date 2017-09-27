@@ -204,9 +204,7 @@ public:
   // each node in the module, so we can add the functions that we created.
   bool isFunctionParallel() override { return false; }
 
-  TrapModePass(TrapMode mode)
-      : mode(mode),
-        didAddF64ToI64JSImport(false) {
+  TrapModePass(TrapMode mode) : mode(mode) {
     assert(mode != TrapMode::Allow);
   }
 
@@ -221,18 +219,14 @@ public:
   }
 
   void visitModule(Module* curr) {
-    for (const auto& pair : generatedFunctions) {
-      curr->addFunction(pair.second);
-    }
-    generatedFunctions.clear();
+    generated.addToModule(*curr);
   }
 
 private:
   TrapMode mode;
   // Need to defer adding generated functions because adding functions while
   // iterating over existing functions causes problems.
-  std::map<Name, Function*> generatedFunctions;
-  bool didAddF64ToI64JSImport;
+  GeneratedTrappingFunctions generated;
 
   Expression* makeTrappingBinary(Binary* curr) {
     Name name = getBinaryFuncName(curr);
@@ -271,35 +265,34 @@ private:
   }
 
   void ensureF64ToI64JSImport() {
-    if (didAddF64ToI64JSImport) {
+    if (generated.hasImport(F64_TO_INT)) {
       return;
     }
 
     Module* wasm = getModule();
-    didAddF64ToI64JSImport = true;
     auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
     import->name = F64_TO_INT;
     import->module = ASM2WASM;
     import->base = F64_TO_INT;
     import->functionType = ensureFunctionType("id", wasm)->name;
     import->kind = ExternalKind::Function;
-    wasm->addImport(import);
+    generated.addImport(import);
   }
 
   void ensureBinaryFunc(Binary* curr) {
     Name name = getBinaryFuncName(curr);
-    if (generatedFunctions.count(name) != 0) {
+    if (generated.hasFunction(name)) {
       return;
     }
-    generatedFunctions[name] = generateBinaryFunc(*getModule(), curr);
+    generated.addFunction(generateBinaryFunc(*getModule(), curr));
   }
 
   void ensureUnaryFunc(Unary *curr) {
     Name name = getUnaryFuncName(curr);
-    if (generatedFunctions.count(name) != 0) {
+    if (generated.hasFunction(name)) {
       return;
     }
-    generatedFunctions[name] = generateUnaryFunc(*getModule(), curr);
+    generated.addFunction(generateUnaryFunc(*getModule(), curr));
   }
 };
 
