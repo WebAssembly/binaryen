@@ -40,13 +40,11 @@ template <typename T,
     !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
   >::type* = nullptr>
 inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
-  std::unique_lock<std::mutex> lock(loggingMutex);
   stream << curr << std::endl;
   return stream;
 }
 // Extra overload for Expressions, to print type info too
 inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
-  std::unique_lock<std::mutex> lock(loggingMutex);
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
   return stream;
 }
@@ -65,8 +63,9 @@ struct ValidationInfo {
   std::ostream& fail(S text, T curr, Function* func) {
     valid = false;
     if (quiet) return std::cerr;
+    auto& ret = printFailureHeader(func);
     std::unique_lock<std::mutex> lock(loggingMutex);
-    auto& ret = printFailureHeader(func) << text << ", on \n";
+    ret << text << ", on \n";
     return printModuleComponent(curr, ret);
   }
 
