@@ -55,13 +55,17 @@ struct ValidationInfo {
   bool validateGlobally;
   bool quiet;
 
-  bool valid = true;
+  std::atomic<bool> valid;
+
+  ValidationInfo() {
+    valid.store(true);
+  }
 
   // printing and error handling support
 
   template <typename T, typename S>
   std::ostream& fail(S text, T curr, Function* func) {
-    valid = false;
+    valid.store(false);
     if (quiet) return std::cerr;
     auto& ret = printFailureHeader(func);
     std::unique_lock<std::mutex> lock(loggingMutex);
@@ -154,11 +158,11 @@ struct ValidationInfo {
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionValidator(info); }
+  Pass* create() override { return new FunctionValidator(&info); }
 
   ValidationInfo& info;
 
-  FunctionValidator(ValidationInfo& info) : info(info) {}
+  FunctionValidator(ValidationInfo* info) : info(*info) {}
 
   struct BreakInfo {
     WasmType type;
@@ -855,8 +859,9 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         // The block has an added type, not derived from the ast itself, so it is
         // ok for it to be either i32 or unreachable.
         if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
-          info.printFailureHeader(getFunction()) << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
-          info.valid = false;
+          std::ostringstream ss;
+          ss << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+          info.fail(ss.str(), curr, getFunction());
         }
         curr->type = oldType;
       }
@@ -991,7 +996,7 @@ bool WasmValidator::validate(Module& module, bool validateWeb, bool validateGlob
   info.quiet = quiet;
   // parallel wasm logic validation
   PassRunner runner(&module);
-  runner.add<FunctionValidator>(info);
+  runner.add<FunctionValidator>(&info);
   runner.setIsNested(true);
   runner.run();
   // validate globally
@@ -1011,7 +1016,7 @@ bool WasmValidator::validate(Module& module, bool validateWeb, bool validateGlob
   if (!info.valid && !info.quiet) {
     WasmPrinter::printModule(&module, std::cerr);
   }
-  return info.valid;
+  return info.valid.load();
 }
 
 } // namespace wasm
