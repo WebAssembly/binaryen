@@ -196,6 +196,74 @@ Function* generateUnaryFunc(Module& wasm, Unary *curr) {
   return func;
 }
 
+void ensureBinaryFunc(Binary* curr, Module& wasm,
+                      GeneratedTrappingFunctions &generated) {
+  Name name = getBinaryFuncName(curr);
+  if (generated.hasFunction(name)) {
+    return;
+  }
+  generated.addFunction(generateBinaryFunc(wasm, curr));
+}
+
+void ensureUnaryFunc(Unary *curr, Module& wasm,
+                     GeneratedTrappingFunctions &generated) {
+  Name name = getUnaryFuncName(curr);
+  if (generated.hasFunction(name)) {
+    return;
+  }
+  generated.addFunction(generateUnaryFunc(wasm, curr));
+}
+
+void ensureF64ToI64JSImport(Module& wasm, GeneratedTrappingFunctions &generated) {
+  if (generated.hasImport(F64_TO_INT)) {
+    return;
+  }
+
+  auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
+  import->name = F64_TO_INT;
+  import->module = ASM2WASM;
+  import->base = F64_TO_INT;
+  import->functionType = ensureFunctionType("id", &wasm)->name;
+  import->kind = ExternalKind::Function;
+  generated.addImport(import);
+}
+
+Expression* makeTrappingBinary(Binary* curr, Module& wasm,
+                               GeneratedTrappingFunctions &generated) {
+  Name name = getBinaryFuncName(curr);
+  if (!name.is()) {
+    return curr;
+  }
+
+  // the wasm operation might trap if done over 0, so generate a safe call
+  WasmType type = curr->type;
+  Builder builder(wasm);
+  ensureBinaryFunc(curr, wasm, generated);
+  return builder.makeCall(name, {curr->left, curr->right}, type);
+}
+
+Expression* makeTrappingUnary(Unary* curr, TrapMode mode, Module& wasm,
+                              GeneratedTrappingFunctions &generated) {
+  Name name = getUnaryFuncName(curr);
+  if (!name.is()) {
+    return curr;
+  }
+
+  Builder builder(wasm);
+  // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
+  // We can handle this in one of two ways: clamping, which is fast, or JS, which
+  // is precisely like JS but in order to do that we do a slow ffi
+  // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
+  if (curr->type != i64 && mode == TrapMode::JS) {
+    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
+    ensureF64ToI64JSImport(wasm, generated);
+    Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
+    return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
+  }
+
+  ensureUnaryFunc(curr, wasm, generated);
+  return builder.makeCall(name, {curr->value}, curr->type);
+}
 
 struct TrapModePass : public WalkerPass<PostWalker<TrapModePass>> {
 public:
@@ -211,11 +279,11 @@ public:
   Pass* create() override { return new TrapModePass(mode); }
 
   void visitUnary(Unary* curr) {
-    replaceCurrent(makeTrappingUnary(curr));
+    replaceCurrent(makeTrappingUnary(curr, mode, *getModule(), generated));
   }
 
   void visitBinary(Binary* curr) {
-    replaceCurrent(makeTrappingBinary(curr));
+    replaceCurrent(makeTrappingBinary(curr, *getModule(), generated));
   }
 
   void visitModule(Module* curr) {
@@ -227,73 +295,6 @@ private:
   // Need to defer adding generated functions because adding functions while
   // iterating over existing functions causes problems.
   GeneratedTrappingFunctions generated;
-
-  Expression* makeTrappingBinary(Binary* curr) {
-    Name name = getBinaryFuncName(curr);
-    if (!name.is()) {
-      return curr;
-    }
-
-    // the wasm operation might trap if done over 0, so generate a safe call
-    WasmType type = curr->type;
-    Builder builder(*getModule());
-    ensureBinaryFunc(curr);
-    return builder.makeCall(name, {curr->left, curr->right}, type);
-  }
-
-  Expression* makeTrappingUnary(Unary* curr) {
-    Name name = getUnaryFuncName(curr);
-    if (!name.is()) {
-      return curr;
-    }
-
-    Module* wasm = getModule();
-    Builder builder(*wasm);
-    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-    // We can handle this in one of two ways: clamping, which is fast, or JS, which
-    // is precisely like JS but in order to do that we do a slow ffi
-    // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
-    if (curr->type != i64 && mode == TrapMode::JS) {
-      // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-      ensureF64ToI64JSImport();
-      Expression* f64Value = ensureDouble(curr->value, wasm->allocator);
-      return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
-    }
-
-    ensureUnaryFunc(curr);
-    return builder.makeCall(name, {curr->value}, curr->type);
-  }
-
-  void ensureF64ToI64JSImport() {
-    if (generated.hasImport(F64_TO_INT)) {
-      return;
-    }
-
-    Module* wasm = getModule();
-    auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
-    import->name = F64_TO_INT;
-    import->module = ASM2WASM;
-    import->base = F64_TO_INT;
-    import->functionType = ensureFunctionType("id", wasm)->name;
-    import->kind = ExternalKind::Function;
-    generated.addImport(import);
-  }
-
-  void ensureBinaryFunc(Binary* curr) {
-    Name name = getBinaryFuncName(curr);
-    if (generated.hasFunction(name)) {
-      return;
-    }
-    generated.addFunction(generateBinaryFunc(*getModule(), curr));
-  }
-
-  void ensureUnaryFunc(Unary *curr) {
-    Name name = getUnaryFuncName(curr);
-    if (generated.hasFunction(name)) {
-      return;
-    }
-    generated.addFunction(generateUnaryFunc(*getModule(), curr));
-  }
 };
 
 Pass *createTrapModeClamp() {
