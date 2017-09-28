@@ -11305,6 +11305,18 @@
    (get_local $d)
   )
  )
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (get_local $1)
+   )
+   (i32.const 0)
+   (i32.div_u
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+ )
  (func $bb (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
   (local $e i32)
   (local $f i32)
@@ -11982,18 +11994,6 @@
  (func $ib (result i32)
   (return
    (i32.const 0)
-  )
- )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if (result i32)
-   (i32.eqz
-    (get_local $1)
-   )
-   (i32.const 0)
-   (i32.div_u
-    (get_local $0)
-    (get_local $1)
-   )
   )
  )
  (func $__growWasmMemory (param $newSize i32) (result i32)

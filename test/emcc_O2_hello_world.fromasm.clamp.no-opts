@@ -11346,6 +11346,18 @@
    (get_local $i4)
   )
  )
+ (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (get_local $1)
+   )
+   (i32.const 0)
+   (i32.div_u
+    (get_local $0)
+    (get_local $1)
+   )
+  )
+ )
  (func $_fwrite (param $i1 i32) (param $i2 i32) (param $i3 i32) (param $i4 i32) (result i32)
   (local $i5 i32)
   (local $i6 i32)
@@ -11925,18 +11937,6 @@
  (func $b2 (param $i1 i32)
   (call $abort
    (i32.const 2)
-  )
- )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
-  (if (result i32)
-   (i32.eqz
-    (get_local $1)
-   )
-   (i32.const 0)
-   (i32.div_u
-    (get_local $0)
-    (get_local $1)
-   )
   )
  )
 )

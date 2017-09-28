@@ -1,1 +1,1 @@
-{"version":3,"sources":["tests/hello_world.c","tests/other_file.cpp","return.cpp","even-opted.cpp","fib.c","/tmp/emscripten_test_binaryen2_28hnAe/src.c"],"names":[],"mappings":"qKC8ylTA,QC7vlTA,OAkDA,QCnGA,OACA,OACA,cCAA,wBAKA,MAJA,OADA,0BAKA,0FCsi1DA"}
+{"version":3,"sources":["tests/hello_world.c","tests/other_file.cpp","return.cpp","even-opted.cpp","fib.c","/tmp/emscripten_test_binaryen2_28hnAe/src.c"],"names":[],"mappings":"oKC8ylTA,QC7vlTA,OAkDA,UCnGA,OACA,OACA,uBCAA,wBAKA,MAJA,OADA,0BAKA,0FCsi1DA"}

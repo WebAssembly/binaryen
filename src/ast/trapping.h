@@ -37,6 +37,11 @@ inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
 
 class GeneratedTrappingFunctions {
 public:
+  GeneratedTrappingFunctions(TrapMode mode, Module &wasm, bool immediate = false)
+    : mode(mode),
+      wasm(wasm),
+      immediate(immediate) { }
+
   bool hasFunction(Name name) {
     return functions.find(name) != functions.end();
   }
@@ -46,26 +51,49 @@ public:
 
   void addFunction(Function* function) {
     functions[function->name] = function;
+    if (immediate) {
+      wasm.addFunction(function);
+    }
   }
   void addImport(Import* import) {
     imports[import->name] = import;
+    if (immediate) {
+      wasm.addImport(import);
+    }
   }
 
-  void addToModule(Module &wasm) {
-    for (auto &pair : functions) {
-      wasm.addFunction(pair.second);
-    }
-    for (auto &pair : imports) {
-      wasm.addImport(pair.second);
+  void addToModule() {
+    if (!immediate) {
+      for (auto &pair : functions) {
+        wasm.addFunction(pair.second);
+      }
+      for (auto &pair : imports) {
+        wasm.addImport(pair.second);
+      }
     }
     functions.clear();
     imports.clear();
   }
 
+  TrapMode getMode() {
+    return mode;
+  }
+
+  Module& getModule() {
+    return wasm;
+  }
+
 private:
   std::map<Name, Function*> functions;
   std::map<Name, Import*> imports;
+
+  TrapMode mode;
+  Module& wasm;
+  bool immediate;
 };
+
+Expression* makeTrappingBinary(Binary* curr, GeneratedTrappingFunctions &generated);
+Expression* makeTrappingUnary(Unary* curr, GeneratedTrappingFunctions &generated);
 
 } // wasm
 
