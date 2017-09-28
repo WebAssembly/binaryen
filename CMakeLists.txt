@@ -270,7 +270,7 @@ SET(wasm_as_SOURCES
 )
 ADD_EXECUTABLE(wasm-as
                ${wasm_as_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-as passes wasm asmjs ast cfg support)
+TARGET_LINK_LIBRARIES(wasm-as wasm asmjs passes ast cfg support)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-as PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-as DESTINATION ${CMAKE_INSTALL_BINDIR})
