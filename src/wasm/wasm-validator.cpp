@@ -18,7 +18,6 @@
 #include <set>
 #include <sstream>
 #include <unordered_set>
-#include <mutex>
 
 #include "wasm.h"
 #include "wasm-printing.h"
@@ -30,10 +29,6 @@
 
 namespace wasm {
 
-// Print only one message at a time, so even during parallel validation we don't
-// mangle messages together
-static std::mutex loggingMutex;
-
 // Print anything that can be streamed to an ostream
 template <typename T,
   typename std::enable_if<
@@ -43,6 +38,7 @@ inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   stream << curr << std::endl;
   return stream;
 }
+
 // Extra overload for Expressions, to print type info too
 inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream) {
   WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
@@ -57,8 +53,22 @@ struct ValidationInfo {
 
   std::atomic<bool> valid;
 
+  // a stream of error test for each function. we print in the right order at
+  // the end, for deterministic output
+  // note errors are rare/unexpected, so it's ok to use a slow mutex here
+  std::mutex mutex;
+  std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
+
   ValidationInfo() {
     valid.store(true);
+  }
+
+  std::ostringstream& getStream(Function* func) {
+    std::unique_lock<std::mutex> lock(mutex);
+    auto iter = outputs.find(func);
+    if (iter != outputs.end()) return *(iter->second.get());
+    auto& ret = outputs[func] = make_unique<std::ostringstream>();
+    return *ret.get();
   }
 
   // printing and error handling support
@@ -66,28 +76,28 @@ struct ValidationInfo {
   template <typename T, typename S>
   std::ostream& fail(S text, T curr, Function* func) {
     valid.store(false);
-    if (quiet) return std::cerr;
+    auto& stream = getStream(func);
+    if (quiet) return stream;
     auto& ret = printFailureHeader(func);
-    std::unique_lock<std::mutex> lock(loggingMutex);
     ret << text << ", on \n";
     return printModuleComponent(curr, ret);
   }
 
   std::ostream& printFailureHeader(Function* func) {
-    if (quiet) return std::cerr;
-    std::unique_lock<std::mutex> lock(loggingMutex);
-    Colors::red(std::cerr);
+    auto& stream = getStream(func);
+    if (quiet) return stream;
+    Colors::red(stream);
     if (func) {
-      std::cerr << "[wasm-validator error in function ";
-      Colors::green(std::cerr);
-      std::cerr << func->name;
-      Colors::red(std::cerr);
-      std::cerr << "] ";
+      stream << "[wasm-validator error in function ";
+      Colors::green(stream);
+      stream << func->name;
+      Colors::red(stream);
+      stream << "] ";
     } else {
-      std::cerr << "[wasm-validator error in module] ";
+      stream << "[wasm-validator error in module] ";
     }
-    Colors::normal(std::cerr);
-    return std::cerr;
+    Colors::normal(stream);
+    return stream;
   }
 
   // checking utilities
@@ -233,6 +243,10 @@ public:
 
   // helpers
 private:
+  std::ostream& getStream() {
+    return info.getStream(getFunction());
+  }
+
   template<typename T>
   bool shouldBeTrue(bool result, T curr, const char* text) {
     return info.shouldBeTrue(result, curr, text, getFunction());
@@ -306,8 +320,7 @@ void FunctionValidator::visitBlock(Block *curr) {
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !info.quiet) {
-        std::unique_lock<std::mutex> lock(loggingMutex);
-        std::cerr << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
+        getStream() << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
       }
     }
   }
@@ -416,16 +429,14 @@ void FunctionValidator::visitCall(Call *curr) {
   auto* target = getModule()->getFunctionOrNull(curr->target);
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     if (getModule()->getImportOrNull(curr->target) && !info.quiet) {
-      std::unique_lock<std::mutex> lock(loggingMutex);
-      std::cerr << "(perhaps it should be a CallImport instead of Call?)\n";
+      getStream() << "(perhaps it should be a CallImport instead of Call?)\n";
     }
     return;
   }
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !info.quiet) {
-      std::unique_lock<std::mutex> lock(loggingMutex);
-      std::cerr << "(on argument " << i << ")\n";
+      getStream() << "(on argument " << i << ")\n";
     }
   }
 }
@@ -439,8 +450,7 @@ void FunctionValidator::visitCallImport(CallImport *curr) {
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !info.quiet) {
-      std::unique_lock<std::mutex> lock(loggingMutex);
-      std::cerr << "(on argument " << i << ")\n";
+      getStream() << "(on argument " << i << ")\n";
     }
   }
 }
@@ -453,8 +463,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect *curr) {
   if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !info.quiet) {
-      std::unique_lock<std::mutex> lock(loggingMutex);
-      std::cerr << "(on argument " << i << ")\n";
+      getStream() << "(on argument " << i << ")\n";
     }
   }
 }
@@ -937,8 +946,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
     info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
-      std::unique_lock<std::mutex> lock(loggingMutex);
-      std::cerr << "(on global " << curr->name << ")\n";
+      info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
   }
 }
@@ -1012,8 +1020,13 @@ bool WasmValidator::validate(Module& module, bool validateWeb, bool validateGlob
   if (PassRunner::getPassDebug()) {
     validateBinaryenIR(module, info);
   }
-  // print if an error occurred
-  if (!info.valid && !info.quiet) {
+  // print all the data
+  if (!info.valid.load() && !info.quiet) {
+    for (auto& func : module.functions) {
+      std::cerr << info.getStream(func.get()).str();
+    }
+    std::cerr << info.getStream(nullptr).str();
+    // also print the module
     WasmPrinter::printModule(&module, std::cerr);
   }
   return info.valid.load();
