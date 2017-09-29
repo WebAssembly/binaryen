@@ -124,18 +124,13 @@ Function* generateBinaryFunc(Module& wasm, Binary *curr) {
   return func;
 }
 
-template <typename IntType>
-void makeClampLimitLiterals(bool isF64, Literal& iMin, Literal& fMin, Literal& fMax) {
+template <typename IntType, typename FloatType>
+void makeClampLimitLiterals(Literal& iMin, Literal& fMin, Literal& fMax) {
   IntType minVal = std::numeric_limits<IntType>::min();
   IntType maxVal = std::numeric_limits<IntType>::max();
   iMin = Literal(minVal);
-  if (isF64) {
-    fMin = Literal(double(minVal) - 1);
-    fMax = Literal(double(maxVal) + 1);
-  } else {
-    fMin = Literal(float(minVal) - 1);
-    fMax = Literal(float(maxVal) + 1);
-  }
+  fMin = Literal(FloatType(minVal) - 1);
+  fMax = Literal(FloatType(maxVal) + 1);
 }
 
 Function* generateUnaryFunc(Module& wasm, Unary *curr) {
@@ -143,23 +138,24 @@ Function* generateUnaryFunc(Module& wasm, Unary *curr) {
   WasmType retType = curr->type;
   UnaryOp truncOp = curr->op;
   bool isF64 = type == f64;
-  bool isI64 = retType == i64;
-  bool isSigned = isTruncOpSigned(truncOp);
 
   Builder builder(wasm);
 
   BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
   BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
   BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
+
   Literal iMin, fMin, fMax;
-  if        ( isSigned &&  isI64) {
-    makeClampLimitLiterals< int64_t>(isF64, iMin, fMin, fMax);
-  } else if ( isSigned && !isI64) {
-    makeClampLimitLiterals< int32_t>(isF64, iMin, fMin, fMax);
-  } else if (!isSigned &&  isI64) {
-    makeClampLimitLiterals<uint64_t>(isF64, iMin, fMin, fMax);
-  } else { //!isSigned && !isI64
-    makeClampLimitLiterals<uint32_t>(isF64, iMin, fMin, fMax);
+  switch (truncOp) {
+  case TruncSFloat32ToInt32: makeClampLimitLiterals< int32_t,  float>(iMin, fMin, fMax); break;
+  case TruncUFloat32ToInt32: makeClampLimitLiterals<uint32_t,  float>(iMin, fMin, fMax); break;
+  case TruncSFloat32ToInt64: makeClampLimitLiterals< int64_t,  float>(iMin, fMin, fMax); break;
+  case TruncUFloat32ToInt64: makeClampLimitLiterals<uint64_t,  float>(iMin, fMin, fMax); break;
+  case TruncSFloat64ToInt32: makeClampLimitLiterals< int32_t, double>(iMin, fMin, fMax); break;
+  case TruncUFloat64ToInt32: makeClampLimitLiterals<uint32_t, double>(iMin, fMin, fMax); break;
+  case TruncSFloat64ToInt64: makeClampLimitLiterals< int64_t, double>(iMin, fMin, fMax); break;
+  case TruncUFloat64ToInt64: makeClampLimitLiterals<uint64_t, double>(iMin, fMin, fMax); break;
+  default: WASM_UNREACHABLE();
   }
 
   auto func = new Function;
