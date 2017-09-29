@@ -471,31 +471,42 @@ def run_validator_tests():
 def run_torture_tests():
   print '\n[ checking torture testcases... ]\n'
 
-  unexpected_result_count = 0
+  # torture tests are parallel anyhow, don't create multiple threads in each child
+  old_cores = os.environ.get('BINARYEN_CORES')
+  try:
+    os.environ['BINARYEN_CORES'] = '1'
 
-  import test.waterfall.src.link_assembly_files as link_assembly_files
-  s2wasm_torture_out = os.path.abspath(os.path.join(options.binaryen_test, 's2wasm-torture-out'))
-  if os.path.isdir(s2wasm_torture_out):
+    unexpected_result_count = 0
+
+    import test.waterfall.src.link_assembly_files as link_assembly_files
+    s2wasm_torture_out = os.path.abspath(os.path.join(options.binaryen_test, 's2wasm-torture-out'))
+    if os.path.isdir(s2wasm_torture_out):
+      shutil.rmtree(s2wasm_torture_out)
+    os.mkdir(s2wasm_torture_out)
+    unexpected_result_count += link_assembly_files.run(
+        linker=os.path.abspath(S2WASM_EXE),
+        files=os.path.abspath(os.path.join(options.binaryen_test, 'torture-s', '*.s')),
+        fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt')),
+        out=s2wasm_torture_out)
+    assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
+
+    import test.waterfall.src.execute_files as execute_files
+    unexpected_result_count += execute_files.run(
+        runner=os.path.abspath(WASM_SHELL_EXE),
+        files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
+        fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt')),
+        out='',
+        wasmjs='')
+
     shutil.rmtree(s2wasm_torture_out)
-  os.mkdir(s2wasm_torture_out)
-  unexpected_result_count += link_assembly_files.run(
-      linker=os.path.abspath(S2WASM_EXE),
-      files=os.path.abspath(os.path.join(options.binaryen_test, 'torture-s', '*.s')),
-      fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt')),
-      out=s2wasm_torture_out)
-  assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
+    if unexpected_result_count:
+      fail('%s failures' % unexpected_result_count, '0 failures')
 
-  import test.waterfall.src.execute_files as execute_files
-  unexpected_result_count += execute_files.run(
-      runner=os.path.abspath(WASM_SHELL_EXE),
-      files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
-      fails=os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt')),
-      out='',
-      wasmjs='')
-
-  shutil.rmtree(s2wasm_torture_out)
-  if unexpected_result_count:
-    fail('%s failures' % unexpected_result_count, '0 failures')
+  finally:
+    if old_cores:
+      os.environ['BINARYEN_CORES'] = old_cores
+    else:
+      del os.environ['BINARYEN_CORES']
 
 def run_vanilla_tests():
   print '\n[ checking emcc WASM_BACKEND testcases...]\n'
