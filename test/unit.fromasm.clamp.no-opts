@@ -1996,9 +1996,35 @@
    )
   )
  )
+ (func $f64-to-uint (param $0 f64) (result i32)
+  (if (result i32)
+   (f64.ne
+    (get_local $0)
+    (get_local $0)
+   )
+   (i32.const 0)
+   (if (result i32)
+    (f64.ge
+     (get_local $0)
+     (f64.const 4294967296)
+    )
+    (i32.const 0)
+    (if (result i32)
+     (f64.le
+      (get_local $0)
+      (f64.const -1)
+     )
+     (i32.const 0)
+     (i32.trunc_u/f64
+      (get_local $0)
+     )
+    )
+   )
+  )
+ )
  (func $f2u (param $x f64) (result i32)
   (return
-   (call $f64-to-int
+   (call $f64-to-uint
     (get_local $x)
    )
   )

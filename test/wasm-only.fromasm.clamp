@@ -318,6 +318,58 @@
    )
   )
  )
+ (func $f32-to-uint64 (param $0 f32) (result i64)
+  (if (result i64)
+   (f32.ne
+    (get_local $0)
+    (get_local $0)
+   )
+   (i64.const 0)
+   (if (result i64)
+    (f32.ge
+     (get_local $0)
+     (f32.const 18446744073709551615)
+    )
+    (i64.const 0)
+    (if (result i64)
+     (f32.le
+      (get_local $0)
+      (f32.const -1)
+     )
+     (i64.const 0)
+     (i64.trunc_u/f32
+      (get_local $0)
+     )
+    )
+   )
+  )
+ )
+ (func $f64-to-uint64 (param $0 f64) (result i64)
+  (if (result i64)
+   (f64.ne
+    (get_local $0)
+    (get_local $0)
+   )
+   (i64.const 0)
+   (if (result i64)
+    (f64.ge
+     (get_local $0)
+     (f64.const 18446744073709551615)
+    )
+    (i64.const 0)
+    (if (result i64)
+     (f64.le
+      (get_local $0)
+      (f64.const -1)
+     )
+     (i64.const 0)
+     (i64.trunc_u/f64
+      (get_local $0)
+     )
+    )
+   )
+  )
+ )
  (func $test64
   (local $0 i64)
   (local $1 f32)
@@ -426,12 +478,12 @@
    )
   )
   (drop
-   (call $f32-to-int64
+   (call $f32-to-uint64
     (get_local $1)
    )
   )
   (drop
-   (call $f64-to-int64
+   (call $f64-to-uint64
     (get_local $2)
    )
   )

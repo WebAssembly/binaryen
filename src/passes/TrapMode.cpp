@@ -54,25 +54,25 @@ Name getBinaryFuncName(Binary* curr) {
 
 Name getUnaryFuncName(Unary* curr) {
   switch (curr->op) {
-  case TruncSFloat32ToInt32:
-  case TruncUFloat32ToInt32: return F32_TO_INT;
-  case TruncSFloat32ToInt64:
-  case TruncUFloat32ToInt64: return F32_TO_INT64;
-  case TruncSFloat64ToInt32:
-  case TruncUFloat64ToInt32: return F64_TO_INT;
-  case TruncSFloat64ToInt64:
-  case TruncUFloat64ToInt64: return F64_TO_INT64;
+  case TruncSFloat32ToInt32: return F32_TO_INT;
+  case TruncUFloat32ToInt32: return F32_TO_UINT;
+  case TruncSFloat32ToInt64: return F32_TO_INT64;
+  case TruncUFloat32ToInt64: return F32_TO_UINT64;
+  case TruncSFloat64ToInt32: return F64_TO_INT;
+  case TruncUFloat64ToInt32: return F64_TO_UINT;
+  case TruncSFloat64ToInt64: return F64_TO_INT64;
+  case TruncUFloat64ToInt64: return F64_TO_UINT64;
   default:                   return Name();
   }
 }
 
-UnaryOp getSignedTruncOp(UnaryOp op) {
+bool isTruncOpSigned(UnaryOp op) {
   switch (op) {
-  case TruncUFloat32ToInt32: return TruncSFloat32ToInt32;
-  case TruncUFloat32ToInt64: return TruncSFloat32ToInt64;
-  case TruncUFloat64ToInt32: return TruncSFloat64ToInt32;
-  case TruncUFloat64ToInt64: return TruncSFloat64ToInt64;
-  default:                   return op;
+  case TruncUFloat32ToInt32:
+  case TruncUFloat32ToInt64:
+  case TruncUFloat64ToInt32:
+  case TruncUFloat64ToInt64: return false;
+  default:                   return true;
   }
 }
 
@@ -124,26 +124,43 @@ Function* generateBinaryFunc(Module& wasm, Binary *curr) {
   return func;
 }
 
+template <typename IntType>
+void makeClampLimitLiterals(bool isF64, Literal& iMin, Literal& fMin, Literal& fMax) {
+  IntType minVal = std::numeric_limits<IntType>::min();
+  IntType maxVal = std::numeric_limits<IntType>::max();
+  iMin = Literal(minVal);
+  if (isF64) {
+    fMin = Literal(double(minVal) - 1);
+    fMax = Literal(double(maxVal) + 1);
+  } else {
+    fMin = Literal(float(minVal) - 1);
+    fMax = Literal(float(maxVal) + 1);
+  }
+}
+
 Function* generateUnaryFunc(Module& wasm, Unary *curr) {
   WasmType type = curr->value->type;
   WasmType retType = curr->type;
+  UnaryOp truncOp = curr->op;
   bool isF64 = type == f64;
   bool isI64 = retType == i64;
+  bool isSigned = isTruncOpSigned(truncOp);
 
   Builder builder(wasm);
 
-  UnaryOp truncOp = getSignedTruncOp(curr->op);
   BinaryOp leOp = isF64 ? LeFloat64 : LeFloat32;
   BinaryOp geOp = isF64 ? GeFloat64 : GeFloat32;
   BinaryOp neOp = isF64 ? NeFloat64 : NeFloat32;
-  Literal iMin = isI64 ? Literal(std::numeric_limits<int64_t>::min())
-                       : Literal(std::numeric_limits<int32_t>::min());
-  Literal iMax = isI64 ? Literal(std::numeric_limits<int64_t>::max())
-                       : Literal(std::numeric_limits<int32_t>::max());
-  Literal fMin = isF64 ? Literal(double(iMin.getInteger()) - 1)
-                       : Literal( float(iMin.getInteger()) - 1);
-  Literal fMax = isF64 ? Literal(double(iMax.getInteger()) + 1)
-                       : Literal( float(iMax.getInteger()) + 1);
+  Literal iMin, fMin, fMax;
+  if        ( isSigned &&  isI64) {
+    makeClampLimitLiterals< int64_t>(isF64, iMin, fMin, fMax);
+  } else if ( isSigned && !isI64) {
+    makeClampLimitLiterals< int32_t>(isF64, iMin, fMin, fMax);
+  } else if (!isSigned &&  isI64) {
+    makeClampLimitLiterals<uint64_t>(isF64, iMin, fMin, fMax);
+  } else { //!isSigned && !isI64
+    makeClampLimitLiterals<uint32_t>(isF64, iMin, fMin, fMax);
+  }
 
   auto func = new Function;
   func->name = getUnaryFuncName(curr);
@@ -245,6 +262,7 @@ Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFu
   // We can handle this in one of two ways: clamping, which is fast, or JS, which
   // is precisely like JS but in order to do that we do a slow ffi
   // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
+  // asm.js doesn't have unsigned f64-to-int, so just use the signed one.
   if (curr->type != i64 && mode == TrapMode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
     ensureF64ToI64JSImport(trappingFunctions);
