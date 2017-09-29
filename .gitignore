@@ -30,6 +30,7 @@ trace.cpp
 test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
 test/wasm-install/
+test/validator/*.wasm
 
 *.pyc
 CMakeFiles/

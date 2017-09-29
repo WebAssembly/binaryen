@@ -48,42 +48,31 @@ Name getBinaryFuncName(Binary* curr) {
     case RemUInt64: return I64U_REM;
     case DivSInt64: return I64S_DIV;
     case DivUInt64: return I64U_DIV;
-    default:
-      return Name();
+    default:        return Name();
   }
 }
 
 Name getUnaryFuncName(Unary* curr) {
   switch (curr->op) {
   case TruncSFloat32ToInt32:
-  case TruncUFloat32ToInt32:
-    return F32_TO_INT;
+  case TruncUFloat32ToInt32: return F32_TO_INT;
   case TruncSFloat32ToInt64:
-  case TruncUFloat32ToInt64:
-    return F32_TO_INT64;
+  case TruncUFloat32ToInt64: return F32_TO_INT64;
   case TruncSFloat64ToInt32:
-  case TruncUFloat64ToInt32:
-    return F64_TO_INT;
+  case TruncUFloat64ToInt32: return F64_TO_INT;
   case TruncSFloat64ToInt64:
-  case TruncUFloat64ToInt64:
-    return F64_TO_INT64;
-  default:
-    return Name();
+  case TruncUFloat64ToInt64: return F64_TO_INT64;
+  default:                   return Name();
   }
 }
 
 UnaryOp getSignedTruncOp(UnaryOp op) {
   switch (op) {
-  case TruncUFloat32ToInt32:
-    return TruncSFloat32ToInt32;
-  case TruncUFloat32ToInt64:
-    return TruncSFloat32ToInt64;
-  case TruncUFloat64ToInt32:
-    return TruncSFloat64ToInt32;
-  case TruncUFloat64ToInt64:
-    return TruncSFloat64ToInt64;
-  default:
-    return op;
+  case TruncUFloat32ToInt32: return TruncSFloat32ToInt32;
+  case TruncUFloat32ToInt64: return TruncSFloat32ToInt64;
+  case TruncUFloat64ToInt32: return TruncSFloat64ToInt32;
+  case TruncUFloat64ToInt64: return TruncSFloat64ToInt64;
+  default:                   return op;
   }
 }
 
@@ -197,60 +186,60 @@ Function* generateUnaryFunc(Module& wasm, Unary *curr) {
 }
 
 void ensureBinaryFunc(Binary* curr, Module& wasm,
-                      GeneratedTrappingFunctions &generated) {
+                      TrappingFunctionContainer &trappingFunctions) {
   Name name = getBinaryFuncName(curr);
-  if (generated.hasFunction(name)) {
+  if (trappingFunctions.hasFunction(name)) {
     return;
   }
-  generated.addFunction(generateBinaryFunc(wasm, curr));
+  trappingFunctions.addFunction(generateBinaryFunc(wasm, curr));
 }
 
 void ensureUnaryFunc(Unary *curr, Module& wasm,
-                     GeneratedTrappingFunctions &generated) {
+                     TrappingFunctionContainer &trappingFunctions) {
   Name name = getUnaryFuncName(curr);
-  if (generated.hasFunction(name)) {
+  if (trappingFunctions.hasFunction(name)) {
     return;
   }
-  generated.addFunction(generateUnaryFunc(wasm, curr));
+  trappingFunctions.addFunction(generateUnaryFunc(wasm, curr));
 }
 
-void ensureF64ToI64JSImport(GeneratedTrappingFunctions &generated) {
-  if (generated.hasImport(F64_TO_INT)) {
+void ensureF64ToI64JSImport(TrappingFunctionContainer &trappingFunctions) {
+  if (trappingFunctions.hasImport(F64_TO_INT)) {
     return;
   }
 
-  Module& wasm = generated.getModule();
+  Module& wasm = trappingFunctions.getModule();
   auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
   import->functionType = ensureFunctionType("id", &wasm)->name;
   import->kind = ExternalKind::Function;
-  generated.addImport(import);
+  trappingFunctions.addImport(import);
 }
 
-Expression* makeTrappingBinary(Binary* curr, GeneratedTrappingFunctions &generated) {
+Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trappingFunctions) {
   Name name = getBinaryFuncName(curr);
-  if (!name.is() || generated.getMode() == TrapMode::Allow) {
+  if (!name.is() || trappingFunctions.getMode() == TrapMode::Allow) {
     return curr;
   }
 
   // the wasm operation might trap if done over 0, so generate a safe call
   WasmType type = curr->type;
-  Module& wasm = generated.getModule();
+  Module& wasm = trappingFunctions.getModule();
   Builder builder(wasm);
-  ensureBinaryFunc(curr, wasm, generated);
+  ensureBinaryFunc(curr, wasm, trappingFunctions);
   return builder.makeCall(name, {curr->left, curr->right}, type);
 }
 
-Expression* makeTrappingUnary(Unary* curr, GeneratedTrappingFunctions &generated) {
+Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFunctions) {
   Name name = getUnaryFuncName(curr);
-  TrapMode mode = generated.getMode();
+  TrapMode mode = trappingFunctions.getMode();
   if (!name.is() || mode == TrapMode::Allow) {
     return curr;
   }
 
-  Module& wasm = generated.getModule();
+  Module& wasm = trappingFunctions.getModule();
   Builder builder(wasm);
   // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
   // We can handle this in one of two ways: clamping, which is fast, or JS, which
@@ -258,12 +247,12 @@ Expression* makeTrappingUnary(Unary* curr, GeneratedTrappingFunctions &generated
   // If i64, there is no "JS" way to handle this, as no i64s in JS, so always clamp if we don't allow traps
   if (curr->type != i64 && mode == TrapMode::JS) {
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-    ensureF64ToI64JSImport(generated);
+    ensureF64ToI64JSImport(trappingFunctions);
     Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
     return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
   }
 
-  ensureUnaryFunc(curr, wasm, generated);
+  ensureUnaryFunc(curr, wasm, trappingFunctions);
   return builder.makeCall(name, {curr->value}, curr->type);
 }
 
@@ -281,31 +270,27 @@ public:
   Pass* create() override { return new TrapModePass(mode); }
 
   void visitUnary(Unary* curr) {
-    ensureGenerated();
-    replaceCurrent(makeTrappingUnary(curr, *generated));
+    replaceCurrent(makeTrappingUnary(curr, *trappingFunctions));
   }
 
   void visitBinary(Binary* curr) {
-    ensureGenerated();
-    replaceCurrent(makeTrappingBinary(curr, *generated));
+    replaceCurrent(makeTrappingBinary(curr, *trappingFunctions));
   }
 
   void visitModule(Module* curr) {
-    ensureGenerated();
-    generated->addToModule();
+    trappingFunctions->addToModule();
+  }
+
+  void doWalkModule(Module* module) {
+    trappingFunctions = make_unique<TrappingFunctionContainer>(mode, *module);
+    WalkerPass<PostWalker<TrapModePass>>::doWalkModule(module);
   }
 
 private:
   TrapMode mode;
   // Need to defer adding generated functions because adding functions while
   // iterating over existing functions causes problems.
-  std::unique_ptr<GeneratedTrappingFunctions> generated;
-
-  void ensureGenerated() {
-    if (!generated) {
-      generated = make_unique<GeneratedTrappingFunctions>(mode, *getModule());
-    }
-  }
+  std::unique_ptr<TrappingFunctionContainer> trappingFunctions;
 };
 
 Pass *createTrapModeClamp() {

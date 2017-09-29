@@ -379,7 +379,7 @@ public:
   bool debug;
     
   TrapMode trapMode;
-  GeneratedTrappingFunctions generated;
+  TrappingFunctionContainer trappingFunctions;
   PassOptions passOptions;
   bool legalizeJavaScriptFFI;
   bool runOptimizationPasses;
@@ -514,7 +514,7 @@ public:
        preprocessor(preprocessor),
        debug(debug),
        trapMode(trapMode),
-       generated(trapMode, wasm, /* immediate = */ true),
+       trappingFunctions(trapMode, wasm, /* immediate = */ true),
        passOptions(passOptions),
        legalizeJavaScriptFFI(legalizeJavaScriptFFI),
        runOptimizationPasses(runOptimizationPasses),
@@ -1167,7 +1167,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           switch (old) {
             case i32:  {
               Unary* trunc = parent->builder.makeUnary(TruncSFloat64ToInt32, curr);
-              replaceCurrent(makeTrappingUnary(trunc, parent->generated));
+              replaceCurrent(makeTrappingUnary(trunc, parent->trappingFunctions));
               break;
             }
             case f32: {
@@ -1629,7 +1629,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         return call;
       }
-      return makeTrappingBinary(ret, generated);
+      return makeTrappingBinary(ret, trappingFunctions);
     } else if (what == SUB) {
       Ref target = ast[1];
       assert(target->isString());
@@ -1710,7 +1710,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else { // !isSigned && !isF64
             op = UnaryOp::TruncUFloat32ToInt32;
           }
-          return makeTrappingUnary(builder.makeUnary(op, expr), generated);
+          return makeTrappingUnary(builder.makeUnary(op, expr), trappingFunctions);
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
@@ -1959,19 +1959,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
                 if (name == I64_F2S) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
-                  return makeTrappingUnary(conv, generated);
+                  return makeTrappingUnary(conv, trappingFunctions);
                 }
                 if (name == I64_D2S) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
-                  return makeTrappingUnary(conv, generated);
+                  return makeTrappingUnary(conv, trappingFunctions);
                 }
                 if (name == I64_F2U) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
-                  return makeTrappingUnary(conv, generated);
+                  return makeTrappingUnary(conv, trappingFunctions);
                 }
                 if (name == I64_D2U) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
-                  return makeTrappingUnary(conv, generated);
+                  return makeTrappingUnary(conv, trappingFunctions);
                 }
                 if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
@@ -1988,19 +1988,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
                 if (name == I64_UDIV) {
                   Binary* div = builder.makeBinary(BinaryOp::DivUInt64, left, right);
-                  return makeTrappingBinary(div, generated);
+                  return makeTrappingBinary(div, trappingFunctions);
                 }
                 if (name == I64_SDIV) {
                   Binary* div = builder.makeBinary(BinaryOp::DivSInt64, left, right);
-                  return makeTrappingBinary(div, generated);
+                  return makeTrappingBinary(div, trappingFunctions);
                 }
                 if (name == I64_UREM) {
                   Binary* rem = builder.makeBinary(BinaryOp::RemUInt64, left, right);
-                  return makeTrappingBinary(rem, generated);
+                  return makeTrappingBinary(rem, trappingFunctions);
                 }
                 if (name == I64_SREM) {
                   Binary* rem = builder.makeBinary(BinaryOp::RemSInt64, left, right);
-                  return makeTrappingBinary(rem, generated);
+                  return makeTrappingBinary(rem, trappingFunctions);
                 }
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);

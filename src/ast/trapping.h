@@ -35,9 +35,9 @@ inline void addTrapModePass(PassRunner& runner, TrapMode trapMode) {
   }
 }
 
-class GeneratedTrappingFunctions {
+class TrappingFunctionContainer {
 public:
-  GeneratedTrappingFunctions(TrapMode mode, Module &wasm, bool immediate = false)
+  TrappingFunctionContainer(TrapMode mode, Module &wasm, bool immediate = false)
     : mode(mode),
       wasm(wasm),
       immediate(immediate) { }
@@ -92,8 +92,8 @@ private:
   bool immediate;
 };
 
-Expression* makeTrappingBinary(Binary* curr, GeneratedTrappingFunctions &generated);
-Expression* makeTrappingUnary(Unary* curr, GeneratedTrappingFunctions &generated);
+Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trappingFunctions);
+Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFunctions);
 
 } // wasm
 
