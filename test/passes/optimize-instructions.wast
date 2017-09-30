@@ -2587,4 +2587,32 @@
       (i64.const 255)
     )
   )
+  (func $optimizeAddedConstants-filters-through-nonzero (result i32)
+   (i32.sub
+    (i32.add
+     (i32.shl
+      (i32.const -536870912)
+      (i32.wrap/i64
+       (i64.const 0)
+      )
+     )
+     (i32.const -32768)
+    )
+    (i32.const -1024)
+   )
+  )
+  (func $optimizeAddedConstants-filters-through-nonzero-b (result i32)
+   (i32.sub
+    (i32.add
+     (i32.shl
+      (i32.const -536870912)
+      (i32.wrap/i64
+       (i64.const -1)
+      )
+     )
+     (i32.const -32768)
+    )
+    (i32.const -1024)
+   )
+  )
 )
