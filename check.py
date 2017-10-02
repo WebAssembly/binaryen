@@ -22,7 +22,7 @@ import sys
 
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
-    ASM2WASM, BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
+    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
@@ -30,6 +30,7 @@ from scripts.test.shared import (
     requested, warnings, has_shell_timeout
 )
 
+import scripts.test.asm2wasm as asm2wasm
 import scripts.test.s2wasm as s2wasm
 import scripts.test.wasm2asm as wasm2asm
 
@@ -144,6 +145,7 @@ def run_wasm_opt_tests():
       actual = actual.replace('printing before:\n', '')
 
       expected = open(f, 'rb').read()
+
       if actual != expected:
         fail(actual, expected)
 
@@ -151,126 +153,6 @@ def run_wasm_opt_tests():
       binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
 
       minify_check(t)
-
-def run_asm2wasm_tests():
-  print '[ checking asm2wasm testcases... ]\n'
-
-  for asm in tests:
-    if asm.endswith('.asm.js'):
-      for precise in [0, 1, 2]:
-        for opts in [1, 0]:
-          cmd = ASM2WASM + [os.path.join(options.binaryen_test, asm)]
-          wasm = asm.replace('.asm.js', '.fromasm')
-          if not precise:
-            cmd += ['--emit-potential-traps', '--ignore-implicit-traps']
-            wasm += '.imprecise'
-          elif precise == 2:
-            cmd += ['--emit-clamped-potential-traps']
-            wasm += '.clamp'
-          if not opts:
-            wasm += '.no-opts'
-            if precise:
-              cmd += ['-O0'] # test that -O0 does nothing
-          else:
-            cmd += ['-O']
-          if 'debugInfo' in asm:
-            cmd += ['-g']
-          if 'noffi' in asm:
-            cmd += ['--no-legalize-javascript-ffi']
-          if precise and opts:
-            # test mem init importing
-            open('a.mem', 'wb').write(asm)
-            cmd += ['--mem-init=a.mem']
-            if asm[0] == 'e':
-              cmd += ['--mem-base=1024']
-          if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
-            cmd += ['--wasm-only']
-          wasm = os.path.join(options.binaryen_test, wasm)
-          print '..', asm, wasm
-
-          def do_asm2wasm_test():
-            actual = run_command(cmd)
-
-            # verify output
-            if not os.path.exists(wasm):
-              fail_with_error('output .wast file %s does not exist' % wasm)
-            expected = open(wasm, 'rb').read()
-            if actual != expected:
-              fail(actual, expected)
-
-            binary_format_check(wasm, verify_final_result=False)
-
-          # test both normally and with pass debug (so each inter-pass state is validated)
-          old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
-          try:
-            os.environ['BINARYEN_PASS_DEBUG'] = '1'
-            do_asm2wasm_test()
-            del os.environ['BINARYEN_PASS_DEBUG']
-            do_asm2wasm_test()
-          finally:
-            if old_pass_debug is not None:
-              os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
-            else:
-              if 'BINARYEN_PASS_DEBUG' in os.environ:
-                del os.environ['BINARYEN_PASS_DEBUG']
-
-          # verify in wasm
-          if options.interpreter:
-            # remove imports, spec interpreter doesn't know what to do with them
-            subprocess.check_call(WASM_OPT + ['--remove-imports', wasm], stdout=open('ztemp.wast', 'w'), stderr=subprocess.PIPE)
-            proc = subprocess.Popen([options.interpreter, 'ztemp.wast'], stderr=subprocess.PIPE)
-            out, err = proc.communicate()
-            if proc.returncode != 0:
-              try: # to parse the error
-                reported = err.split(':')[1]
-                start, end = reported.split('-')
-                start_line, start_col = map(int, start.split('.'))
-                lines = open('ztemp.wast').read().split('\n')
-                print
-                print '='*80
-                print lines[start_line-1]
-                print (' '*(start_col-1)) + '^'
-                print (' '*(start_col-2)) + '/_\\'
-                print '='*80
-                print err
-              except Exception, e:
-                fail_with_error('wasm interpreter error: ' + err) # failed to pretty-print
-              fail_with_error('wasm interpreter error')
-
-          # verify debug info
-          if 'debugInfo' in asm:
-            jsmap = 'a.wasm.map'
-            cmd += ['--source-map', jsmap,
-                    '--source-map-url', 'http://example.org/' + jsmap,
-                    '-o', 'a.wasm']
-            run_command(cmd)
-            if not os.path.isfile(jsmap):
-              fail_with_error('Debug info map not created: %s' % jsmap)
-            with open(wasm + '.map', 'rb') as expected:
-              with open(jsmap, 'rb') as actual:
-                fail_if_not_identical(actual.read(), expected.read())
-            with open('a.wasm', 'rb') as binary:
-              url_section_name = bytearray([16]) + bytearray('sourceMappingURL')
-              payload = 'http://example.org/' + jsmap
-              assert len(payload) < 256, 'name too long'
-              url_section_contents = bytearray([len(payload)]) + bytearray(payload)
-              print url_section_name
-              binary_contents = bytearray(binary.read())
-              if url_section_name not in binary_contents:
-                fail_with_error('source map url section not found in binary')
-              if url_section_contents not in binary_contents[binary_contents.index(url_section_name):]:
-                fail_with_error('source map url not found in url section')
-
-
-  print '\n[ checking asm2wasm binary reading/writing... ]\n'
-
-  asmjs = os.path.join(options.binaryen_test, 'hello_world.asm.js')
-  delete_from_orbit('a.wasm')
-  delete_from_orbit('b.wast')
-  run_command(ASM2WASM + [asmjs, '-o', 'a.wasm'])
-  assert open('a.wasm', 'rb').read()[0] == '\0', 'we emit binary by default'
-  run_command(ASM2WASM + [asmjs, '-o', 'b.wast', '-S'])
-  assert open('b.wast', 'rb').read()[0] != '\0', 'we emit text with -S'
 
 def run_wasm_dis_tests():
   print '\n[ checking wasm-dis on provided binaries... ]\n'
@@ -728,7 +610,8 @@ def run_emscripten_tests():
 # Run all the tests
 run_help_tests()
 run_wasm_opt_tests()
-run_asm2wasm_tests()
+asm2wasm.test_asm2wasm()
+asm2wasm.test_asm2wasm_binary()
 run_wasm_dis_tests()
 run_wasm_merge_tests()
 run_ctor_eval_tests()

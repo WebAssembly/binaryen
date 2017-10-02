@@ -34,6 +34,7 @@ SET(passes_SOURCES
   RemoveUnusedModuleElements.cpp
   ReorderLocals.cpp
   ReorderFunctions.cpp
+  TrapMode.cpp
   SafeHeap.cpp
   SimplifyLocals.cpp
   SSAify.cpp

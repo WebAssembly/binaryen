@@ -15,6 +15,7 @@
  */
 
 #ifndef wasm_shared_constants_h
+#define wasm_shared_constants_h
 
 #include "wasm.h"
 
