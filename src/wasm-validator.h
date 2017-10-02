@@ -49,7 +49,14 @@
 namespace wasm {
 
 struct WasmValidator {
-  bool validate(Module& module, bool validateWeb = false, bool validateGlobally = true, bool quiet = false);
+  enum Flags {
+    Minimal = 0,
+    Web = 1 << 0,
+    Globally = 1 << 1,
+    Quiet = 1 << 2
+  };
+
+  bool validate(Module& module, Flags flags = Globally);
 };
 
 } // namespace wasm

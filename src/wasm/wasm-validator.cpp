@@ -997,18 +997,18 @@ static void validateModule(Module& module, ValidationInfo& info) {
 // TODO: If we want the validator to be part of libwasm rather than libpasses, then
 // Using PassRunner::getPassDebug causes a circular dependence. We should fix that,
 // perhaps by moving some of the pass infrastructure into libsupport.
-bool WasmValidator::validate(Module& module, bool validateWeb, bool validateGlobally, bool quiet) {
+bool WasmValidator::validate(Module& module, Flags flags) {
   ValidationInfo info;
-  info.validateWeb = validateWeb;
-  info.validateGlobally = validateGlobally;
-  info.quiet = quiet;
+  info.validateWeb = flags & Web;
+  info.validateGlobally = flags & Globally;
+  info.quiet = flags & Quiet;
   // parallel wasm logic validation
   PassRunner runner(&module);
   runner.add<FunctionValidator>(&info);
   runner.setIsNested(true);
   runner.run();
   // validate globally
-  if (validateGlobally) {
+  if (info.validateGlobally) {
     validateImports(module, info);
     validateExports(module, info);
     validateGlobals(module, info);

@@ -194,6 +194,10 @@ void PassRunner::run() {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
+    WasmValidator::Flags validationFlags = WasmValidator::Minimal;
+    if (options.validateGlobally) {
+      validationFlags = WasmValidator::Flags(validationFlags | WasmValidator::Globally);
+    }
     std::cerr << "[PassRunner] running passes..." << std::endl;
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
@@ -227,7 +231,7 @@ void PassRunner::run() {
       totalTime += diff;
       // validate, ignoring the time
       std::cerr << "[PassRunner]   (validating)\n";
-      if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
+      if (!WasmValidator().validate(*wasm, validationFlags)) {
         if (passDebug >= 2) {
           std::cerr << "Last pass (" << pass->name << ") broke validation. Here is the module before: \n" << moduleBefore.str() << "\n";
         } else {
@@ -242,7 +246,7 @@ void PassRunner::run() {
     std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
     // validate
     std::cerr << "[PassRunner] (final validation)\n";
-    if (!WasmValidator().validate(*wasm, false, options.validateGlobally)) {
+    if (!WasmValidator().validate(*wasm, validationFlags)) {
       std::cerr << "final module does not validate\n";
       abort();
     }
