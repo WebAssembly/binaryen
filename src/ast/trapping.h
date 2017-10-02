@@ -17,12 +17,13 @@
 #ifndef wasm_ast_trapping_h
 #define wasm_ast_trapping_h
 
+#include <exception>
+
 #include "pass.h"
 
 namespace wasm {
 
 enum class TrapMode {
-  Invalid,
   Allow,
   Clamp,
   JS
@@ -104,7 +105,9 @@ inline TrapMode trapModeFromString(std::string const& str) {
   } else if (str == "js") {
     return TrapMode::JS;
   } else {
-    return TrapMode::Invalid;
+    throw std::invalid_argument(
+      "Unsupported trap mode \"" + str + "\". "
+      "Valid modes are \"allow\", \"js\", and \"clamp\"");
   }
 }
 

@@ -18,6 +18,8 @@
 // asm2wasm console tool
 //
 
+#include <exception>
+
 #include "ast/trapping.h"
 #include "support/colors.h"
 #include "support/command-line.h"
@@ -105,9 +107,10 @@ int main(int argc, const char *argv[]) {
              "values are \"allow\", \"js\", and \"clamp\"",
            Options::Arguments::One,
            [&trapMode](Options *o, const std::string &argument) {
-             trapMode = trapModeFromString(argument);
-             if (trapMode == TrapMode::Invalid) {
-               std::cerr << "Error: unsupported trap mode: " << argument << "\n";
+             try {
+               trapMode = trapModeFromString(argument);
+             } catch (std::invalid_argument e) {
+               std::cerr << "Error: " << e.what() << "\n";
                exit(EXIT_FAILURE);
              }
            })
