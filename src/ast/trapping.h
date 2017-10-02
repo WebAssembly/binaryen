@@ -22,6 +22,7 @@
 namespace wasm {
 
 enum class TrapMode {
+  Invalid,
   Allow,
   Clamp,
   JS
@@ -94,6 +95,18 @@ private:
 
 Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trappingFunctions);
 Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFunctions);
+
+inline TrapMode trapModeFromString(std::string const& str) {
+  if (str == "allow") {
+    return TrapMode::Allow;
+  } else if (str == "clamp") {
+    return TrapMode::Clamp;
+  } else if (str == "js") {
+    return TrapMode::JS;
+  } else {
+    return TrapMode::Invalid;
+  }
+}
 
 } // wasm
 
