@@ -196,7 +196,7 @@ void PassRunner::run() {
     size_t padding = 0;
     WasmValidator::Flags validationFlags = WasmValidator::Minimal;
     if (options.validateGlobally) {
-      validationFlags = WasmValidator::Flags(validationFlags | WasmValidator::Globally);
+      validationFlags = validationFlags | WasmValidator::Globally;
     }
     std::cerr << "[PassRunner] running passes..." << std::endl;
     for (auto pass : passes) {
