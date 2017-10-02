@@ -10,7 +10,7 @@
    (call $f32-to-int
     (get_local $0)
    )
-   (call $f64-to-int
+   (call $f64-to-uint
     (get_local $1)
    )
   )
@@ -41,26 +41,26 @@
    )
   )
  )
- (func $f64-to-int (param $0 f64) (result i32)
+ (func $f64-to-uint (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (get_local $0)
     (get_local $0)
    )
-   (i32.const -2147483648)
+   (i32.const 0)
    (if (result i32)
     (f64.ge
      (get_local $0)
-     (f64.const 2147483648)
+     (f64.const 4294967296)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
     (if (result i32)
      (f64.le
       (get_local $0)
-      (f64.const -2147483649)
+      (f64.const -1)
      )
-     (i32.const -2147483648)
-     (i32.trunc_s/f64
+     (i32.const 0)
+     (i32.trunc_u/f64
       (get_local $0)
      )
     )
