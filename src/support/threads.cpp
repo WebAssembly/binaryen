@@ -111,7 +111,14 @@ void ThreadPool::initialize(size_t num) {
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
-    threads.emplace_back(make_unique<Thread>());
+    try {
+      threads.emplace_back(make_unique<Thread>());
+    } catch (std::system_error&) {
+      // failed to create a thread - don't use multithreading, as if num cores == 1
+      DEBUG_POOL("could not create thread\n");
+      threads.clear();
+      return;
+    }
   }
   DEBUG_POOL("initialize() waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });

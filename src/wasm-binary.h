@@ -863,6 +863,7 @@ public:
     BreakTarget(Name name, int arity) : name(name), arity(arity) {}
   };
   std::vector<BreakTarget> breakStack;
+  std::unordered_set<Name> breakTargetNames;
   bool breaksToReturn; // whether a break is done to the function scope, which is in effect a return
 
   std::vector<Expression*> expressionStack;

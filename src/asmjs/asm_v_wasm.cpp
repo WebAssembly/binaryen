@@ -109,4 +109,16 @@ FunctionType* ensureFunctionType(std::string sig, Module* wasm) {
   return type;
 }
 
+Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
+  if (expr->type == f32) {
+    auto conv = allocator.alloc<Unary>();
+    conv->op = PromoteFloat32;
+    conv->value = expr;
+    conv->type = WasmType::f64;
+    return conv;
+  }
+  assert(expr->type == f64);
+  return expr;
+}
+
 } // namespace wasm

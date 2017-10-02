@@ -109,6 +109,8 @@ void PassRegistry::registerPasses() {
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
+  registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
+  registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
   registerPass("untee", "removes tee_locals, replacing them with sets and gets", createUnteePass);
   registerPass("vacuum", "removes obviously unneeded code", createVacuumPass);
 //  registerPass("lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);

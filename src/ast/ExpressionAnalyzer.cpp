@@ -252,7 +252,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         break;
       }
       case Expression::Id::ConstId: {
-        CHECK(Const, value);
+        if (!left->cast<Const>()->value.bitwiseEqual(right->cast<Const>()->value)) {
+          return false;
+        }
         break;
       }
       case Expression::Id::UnaryId: {

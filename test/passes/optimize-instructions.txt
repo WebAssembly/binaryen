@@ -2157,4 +2157,45 @@
    (i64.const 255)
   )
  )
+ (func $optimizeAddedConstants-filters-through-nonzero (type $2) (result i32)
+  (i32.add
+   (i32.shl
+    (i32.const -536870912)
+    (i32.wrap/i64
+     (i64.const 0)
+    )
+   )
+   (i32.const -31744)
+  )
+ )
+ (func $optimizeAddedConstants-filters-through-nonzero-b (type $2) (result i32)
+  (i32.add
+   (i32.shl
+    (i32.const -536870912)
+    (i32.wrap/i64
+     (i64.const -1)
+    )
+   )
+   (i32.const -31744)
+  )
+ )
+ (func $return-proper-value-from-shift-left-by-zero (type $2) (result i32)
+  (if (result i32)
+   (i32.add
+    (loop $label$0 (result i32)
+     (block $label$1
+      (br_if $label$1
+       (i32.load
+        (i32.const 0)
+       )
+      )
+     )
+     (i32.const -62)
+    )
+    (i32.const 40)
+   )
+   (i32.const 1)
+   (i32.const 0)
+  )
+ )
 )

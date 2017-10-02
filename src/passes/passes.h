@@ -30,7 +30,7 @@ Pass* createConstHoistingPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();
-Pass* createFlattenPass();
+Pass* createFlatten();
 Pass* createFullPrinterPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInliningPass();
@@ -67,6 +67,8 @@ Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createSSAifyPass();
+Pass* createTrapModeClamp();
+Pass* createTrapModeJS();
 Pass* createUnteePass();
 Pass* createVacuumPass();
 
