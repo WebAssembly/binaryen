@@ -80,28 +80,6 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &) {
              std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
            })
-      .add("--emit-potential-traps", "-i",
-           "Emit instructions that might trap, like div/rem of 0 (old name for --trap-mode=allow)",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::Allow;
-           })
-      .add("--emit-clamped-potential-traps", "-i",
-           "Clamp instructions that might trap, like float => int (old name for --trap-mode=clamp)",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::Clamp;
-           })
-      .add("--emit-jsified-potential-traps", "-i",
-           "Avoid instructions that might trap, handling them exactly like JS would (old name for --trap-mode=js)",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::JS;
-           })
-      .add("--imprecise", "-i", "Imprecise optimizations (old name for --emit-potential-traps)", Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::Allow;
-           })
       .add("--trap-mode", "",
            "Strategy for handling potentially trapping instructions. Valid "
              "values are \"allow\", \"js\", and \"clamp\"",
