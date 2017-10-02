@@ -414,9 +414,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     for (auto& func : functions) {
       curr->removeFunction(func.name);
-      WasmValidator validator;
-      validator.quiet = true;
-      if (validator.validate(*curr) && writeAndTestReduction()) {
+      if (WasmValidator().validate(*curr, false, true, true /* override quiet */) && writeAndTestReduction()) {
         std::cerr << "|      removed function " << func.name << '\n';
         noteReduction();
       } else {
