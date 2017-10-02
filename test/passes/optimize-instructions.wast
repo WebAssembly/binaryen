@@ -2615,4 +2615,29 @@
     (i32.const -1024)
    )
   )
+  (func $return-proper-value-from-shift-left-by-zero (result i32)
+   (if (result i32)
+    (i32.sub
+     (i32.add
+      (loop $label$0 (result i32)
+       (block $label$1
+        (br_if $label$1
+         (i32.shl
+          (i32.load
+           (i32.const 0)
+          )
+          (i32.const -31904) ;; really 0 shifts
+         )
+        )
+       )
+       (i32.const -62)
+      )
+      (i32.const 38)
+     )
+     (i32.const -2)
+    )
+    (i32.const 1)
+    (i32.const 0)
+   )
+  )
 )

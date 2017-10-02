@@ -865,7 +865,7 @@ private:
           // shifting a 0 is a 0, or anything by 0 has no effect, all unless the shift has side effects
           if (((left && left->value.geti32() == 0) || (right && Bits::getEffectiveShifts(right) == 0)) &&
               !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
-            replaceCurrent(left);
+            replaceCurrent(curr->left);
             return;
           }
         } else if (curr->op == MulInt32) {
