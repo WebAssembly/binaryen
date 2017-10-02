@@ -19,10 +19,10 @@ for asm in sorted(os.listdir('test')):
         cmd = ASM2WASM + [os.path.join('test', asm)]
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
-          cmd += ['--emit-potential-traps', '--ignore-implicit-traps']
+          cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
           wasm += '.imprecise'
         elif precise == 2:
-          cmd += ['--emit-clamped-potential-traps']
+          cmd += ['--trap-mode=clamp']
           wasm += '.clamp'
         if not opts:
           wasm += '.no-opts'

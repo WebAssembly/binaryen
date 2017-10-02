@@ -35,10 +35,10 @@ def test_asm2wasm():
         cmd = ASM2WASM + [os.path.join(options.binaryen_test, asm)]
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
-          cmd += ['--emit-potential-traps', '--ignore-implicit-traps']
+          cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
           wasm += '.imprecise'
         elif precise == 2:
-          cmd += ['--emit-clamped-potential-traps']
+          cmd += ['--trap-mode=clamp']
           wasm += '.clamp'
         if not opts:
           wasm += '.no-opts'
