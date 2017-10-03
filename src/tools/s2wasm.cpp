@@ -15,8 +15,10 @@
  */
 
 //
-// wasm2asm console tool
+// s2wasm console tool
 //
+
+#include <exception>
 
 #include "ast/trapping.h"
 #include "support/colors.h"
@@ -83,23 +85,17 @@ int main(int argc, const char *argv[]) {
            [&allowMemoryGrowth](Options *, const std::string &) {
              allowMemoryGrowth = true;
            })
-      .add("--emit-potential-traps", "",
-           "Emit instructions that might trap, like div/rem of 0",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::Allow;
-           })
-      .add("--emit-clamped-potential-traps", "",
-           "Clamp instructions that might trap, like float => int",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::Clamp;
-           })
-      .add("--emit-jsified-potential-traps", "",
-           "Avoid instructions that might trap, handling them exactly like JS would",
-           Options::Arguments::Zero,
-           [&trapMode](Options *o, const std::string &) {
-             trapMode = TrapMode::JS;
+      .add("--trap-mode", "",
+           "Strategy for handling potentially trapping instructions. Valid "
+             "values are \"allow\", \"js\", and \"clamp\"",
+           Options::Arguments::One,
+           [&trapMode](Options *o, const std::string &argument) {
+             try {
+               trapMode = trapModeFromString(argument);
+             } catch (std::invalid_argument e) {
+               std::cerr << "Error: " << e.what() << "\n";
+               exit(EXIT_FAILURE);
+             }
            })
       .add("--emscripten-glue", "-e", "Generate emscripten glue",
            Options::Arguments::Zero,

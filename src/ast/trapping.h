@@ -17,6 +17,8 @@
 #ifndef wasm_ast_trapping_h
 #define wasm_ast_trapping_h
 
+#include <exception>
+
 #include "pass.h"
 
 namespace wasm {
@@ -94,6 +96,20 @@ private:
 
 Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trappingFunctions);
 Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFunctions);
+
+inline TrapMode trapModeFromString(std::string const& str) {
+  if (str == "allow") {
+    return TrapMode::Allow;
+  } else if (str == "clamp") {
+    return TrapMode::Clamp;
+  } else if (str == "js") {
+    return TrapMode::JS;
+  } else {
+    throw std::invalid_argument(
+      "Unsupported trap mode \"" + str + "\". "
+      "Valid modes are \"allow\", \"js\", and \"clamp\"");
+  }
+}
 
 } // wasm
 
