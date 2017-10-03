@@ -30,7 +30,7 @@ Pass* createConstHoistingPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();
-Pass* createFlatten();
+Pass* createFlattenPass();
 Pass* createFullPrinterPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInliningPass();
