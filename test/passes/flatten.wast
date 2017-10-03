@@ -8,6 +8,220 @@
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
  (memory $0 10)
+ (func $a1
+  (drop (i32.add (i32.const 0) (i32.const 1)))
+ )
+ (func $a2 (result i32)
+  (i32.add (i32.const 0) (i32.const 1))
+ )
+ (func $a3 (result i32)
+  (i32.add
+   (i32.const 0)
+   (block (result i32)
+    (i32.const 1)
+   )
+  )
+ )
+ (func $a4
+  (drop
+   (i32.add
+    (i32.const 0)
+    (block (result i32)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $a5 (result i32)
+  (i32.add
+   (block (result i32)
+    (i32.const 0)
+   )
+   (block (result i32)
+    (i32.const 1)
+   )
+  )
+ )
+ (func $a6 (result i32)
+  (local $x i32)
+  (i32.add
+   (block (result i32)
+    (tee_local $x
+     (i32.const 0)
+    )
+   )
+   (block (result i32)
+    (tee_local $x
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $a7 (result i32)
+  (local $x i32)
+  (block (result i32)
+   (i32.add
+    (block (result i32)
+     (tee_local $x
+      (i32.const 0)
+     )
+    )
+    (block (result i32)
+     (tee_local $x
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $a8 (result i32)
+  (local $x i32)
+  (block $outer (result i32)
+   (block $inner (result i32)
+    (i32.add
+     (block (result i32)
+      (br $inner
+       (i32.const -1)
+      )
+      (br $outer
+       (i32.const 0)
+      )
+      (i32.const 1)
+     )
+     (block (result i32)
+      (br $outer
+       (i32.const 2)
+      )
+      (tee_local $x
+       (i32.const 3)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $a9 (result i32)
+  (loop $outer (result i32)
+   (loop $inner (result i32)
+    (br_if $outer (i32.const -1))
+    (i32.add
+     (i32.const 0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $a10 (result i32)
+  (local $x i32)
+  (block $outer (result i32)
+   (drop (br_if $outer (i32.const 0) (i32.const 1)))
+   (drop (br_if $outer (tee_local $x (i32.const 2)) (i32.const 3)))
+   (drop (br_if $outer (i32.const 4) (tee_local $x (i32.const 5))))
+   (drop (br_if $outer (tee_local $x (i32.const 6)) (tee_local $x (i32.const 7))))
+   (br $outer (i32.const 8))
+  )
+ )
+ (func $a11
+  (if (i32.const 0)
+   (drop (i32.const 1))
+  )
+ )
+ (func $a12 (result i32)
+  (if (result i32) (i32.const 0)
+   (i32.const 1)
+   (i32.const 2)
+  )
+ )
+ (func $a13 (result i32)
+  (block $x i32
+   (if i32
+    (br_table $x (i32.const 2) (i32.const 0))
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+ )
+ (func $a14 (result i32)
+  (block i32
+   (select
+    (i32.const 0) (i32.const 1) (br_table 0 (i32.const 7) (i32.const 1))
+   )
+  )
+ )
+ (func $a15
+  (if
+   (i32.load16_u
+    (i32.const 53)
+   )
+   (unreachable)
+   (drop
+    (block $label$3 (result f32)
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $a16 (result i32)
+  (local $x i32)
+  (block $label$1 (result i32)
+   (drop
+    (br_if $label$1
+     (tee_local $x ;; set here, then it is undone later, but this value is used, not the contents of $x!
+      (i32.const 1)
+     )
+     (i32.eqz ;; 0 into 1, so take the br_if
+      (block $label$2 (result i32)
+       (set_local $x
+        (i32.const 0) ;; undo the above tee
+       )
+       (i32.const 0)
+      )
+     )
+    )
+   )
+   (i32.const 0)
+  )
+ )
+ (func $a17 (result f32)
+  (local $var$0 f32)
+  (f32.max
+   (get_local $var$0)
+   (select
+    (tee_local $var$0
+     (f32.const -137438953472)
+    )
+    (get_local $var$0)
+    (i32.const 0)
+   )
+  )
+ )
+ (func $a18 (result i32)
+  (block $label$1 (result i32)
+   (i32.load16_s
+    (drop ;; an unreachable drop. one we move its contents outside, it should stay unreachable
+     (br_if $label$1
+      (i32.const 1)
+      (unreachable)
+     )
+    )
+   )
+  )
+ )
+ (func $a19 (result f32)
+  (block $label$0
+   (block $label$1
+    (drop
+     (select
+      (unreachable) ;; move this out, so it happens before the return
+      (return
+       (f32.const 4289944320)
+      )
+      (i32.const 65535)
+     )
+    )
+   )
+  )
+ )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
@@ -777,6 +991,23 @@
    (block $label$3
     (br_table $label$3
      (unreachable)
+    )
+   )
+  )
+  (func $br_if_order (param $x i32) (result i32)
+   (block $outer (result i32)
+    (block $inner (result i32)
+     (br_if $inner
+      (br_if $outer
+       (i32.const 0)
+       (i32.const 1)
+      )
+      (call $br_if_order
+       (block (result i32)
+        (i32.const -16)
+       )
+      )
+     )
     )
    )
   )

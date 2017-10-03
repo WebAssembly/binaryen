@@ -18,7 +18,7 @@
 // Convert the AST to a CFG, and optimize+convert it back to the AST
 // using the relooper.
 //
-// This pass depends on flatten-control-flow being run before it.
+// This pass depends on flatten being run before it.
 //
 
 #include <memory>

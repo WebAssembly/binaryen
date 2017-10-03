@@ -386,7 +386,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
   runner.add("i64-to-i32-lowering");
-  runner.add("flatten-control-flow");
+  runner.add("flatten");
   runner.add("vacuum");
   runner.setDebug(flags.debug);
   runner.run();
