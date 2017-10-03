@@ -49,7 +49,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
     if (old == expression) return expression;
-    WalkerPass<PostWalker<DeadCodeElimination>>::replaceCurrent(expression);
+    super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
     return expression;
@@ -270,7 +270,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       self->pushTask(DeadCodeElimination::doAfterIfCondition, currp);
       self->pushTask(DeadCodeElimination::scan, &curr->cast<If>()->condition);
     } else {
-      WalkerPass<PostWalker<DeadCodeElimination>>::scan(self, currp);
+      super::scan(self, currp);
     }
   }
 

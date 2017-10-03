@@ -271,7 +271,7 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   totalCopies.resize(numLocals);
   std::fill(totalCopies.begin(), totalCopies.end(), 0);
   // collect initial liveness info
-  WalkerPass<CFGWalker<CoalesceLocals, Visitor<CoalesceLocals>, Liveness>>::doWalkFunction(func);
+  super::doWalkFunction(func);
   // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
   liveBlocks = findLiveBlocks();
   unlinkDeadBlocks(liveBlocks);

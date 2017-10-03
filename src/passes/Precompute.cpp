@@ -117,7 +117,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       optimizeLocals(func, getModule());
     }
     // do the main and final walk over everything
-    WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>>::doWalkFunction(func);
+    super::doWalkFunction(func);
   }
 
   void visitExpression(Expression* curr) {

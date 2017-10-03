@@ -213,6 +213,9 @@ template <typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
   PassRunner *runner;
 
+protected:
+  typedef WalkerPass<WalkerType> super;
+
 public:
   void run(PassRunner* runner, Module* module) override {
     setPassRunner(runner);

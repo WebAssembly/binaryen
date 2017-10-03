@@ -145,7 +145,7 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
       labelIndex = func->getLocalIndex(LABEL);
       LabelUseFinder finder(labelIndex, labelChecks, labelSets);
       finder.walk(func->body);
-      WalkerPass<ExpressionStackWalker<RelooperJumpThreading>>::doWalkFunction(func);
+      super::doWalkFunction(func);
     }
   }
 

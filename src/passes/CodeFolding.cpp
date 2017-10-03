@@ -221,7 +221,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     anotherPass = true;
     while (anotherPass) {
       anotherPass = false;
-      WalkerPass<ControlFlowWalker<CodeFolding>>::doWalkFunction(func);
+      super::doWalkFunction(func);
       optimizeTerminatingTails(unreachableTails);
       // optimize returns at the end, so we can benefit from a fallthrough if there is a value TODO: separate passes for them?
       optimizeTerminatingTails(returnTails);

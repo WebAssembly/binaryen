@@ -364,7 +364,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       scanner.walkFunction(func);
     }
     // main walk
-    WalkerPass<PostWalker<OptimizeInstructions, UnifiedExpressionVisitor<OptimizeInstructions>>>::doWalkFunction(func);
+    super::doWalkFunction(func);
   }
 
   void visitExpression(Expression* curr) {
