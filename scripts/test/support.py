@@ -156,8 +156,9 @@ def run_command(cmd, expected_status=0, stderr=None,
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
   out, err = proc.communicate()
-  if proc.returncode != expected_status:
-    raise Exception(('run_command failed', err))
+  code = proc.returncode
+  if code != expected_status:
+    raise Exception(('run_command failed (%s)' % code, out + str(err or '')))
   err_correct = expected_err is None or \
       (expected_err in err if err_contains else expected_err == err)
   if not err_correct:
