@@ -432,7 +432,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       self->pushTask(SimplifyLocals::doNoteIfElseCondition, currp);
       self->pushTask(SimplifyLocals::scan, &curr->cast<If>()->condition);
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
+      super::scan(self, currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -454,7 +454,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     do {
       anotherCycle = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::doWalkFunction(func);
+      super::doWalkFunction(func);
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {

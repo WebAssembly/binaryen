@@ -36,7 +36,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
-    WalkerPass<PostWalker<Vacuum>>::replaceCurrent(expression);
+    super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
     return expression;

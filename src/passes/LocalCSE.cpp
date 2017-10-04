@@ -109,7 +109,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   static void scan(LocalCSE* self, Expression** currp) {
     self->pushTask(visitPost, currp);
 
-    WalkerPass<LinearExecutionWalker<LocalCSE>>::scan(self, currp);
+    super::scan(self, currp);
 
     self->pushTask(visitPre, currp);
   }

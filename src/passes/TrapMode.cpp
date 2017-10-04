@@ -297,7 +297,7 @@ public:
 
   void doWalkModule(Module* module) {
     trappingFunctions = make_unique<TrappingFunctionContainer>(mode, *module);
-    WalkerPass<PostWalker<TrapModePass>>::doWalkModule(module);
+    super::doWalkModule(module);
   }
 
 private:
