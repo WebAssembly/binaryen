@@ -85,6 +85,10 @@ public:
     return wasm;
   }
 
+  std::map<Name, Function*>& getFunctions() {
+    return functions;
+  }
+
 private:
   std::map<Name, Function*> functions;
   std::map<Name, Import*> imports;
