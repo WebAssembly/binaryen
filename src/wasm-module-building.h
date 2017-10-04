@@ -75,6 +75,7 @@ class OptimizingIncrementalModuleBuilder {
   uint32_t numFunctions;
   PassOptions passOptions;
   std::function<void (PassRunner&)> addPrePasses;
+  std::function<void ()> beforeGlobalOptimizations;
   Function* endMarker;
   std::atomic<Function*>* list;
   uint32_t nextFunction; // only used on main thread
@@ -90,8 +91,13 @@ class OptimizingIncrementalModuleBuilder {
 public:
   // numFunctions must be equal to the number of functions allocated, or higher. Knowing
   // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions, std::function<void (PassRunner&)> addPrePasses, bool debug, bool validateGlobally)
-      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
+  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions,
+      std::function<void (PassRunner&)> addPrePasses,
+      std::function<void ()> beforeGlobalOptimizations,
+      bool debug, bool validateGlobally)
+      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions),
+        addPrePasses(addPrePasses), beforeGlobalOptimizations(beforeGlobalOptimizations),
+        endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
 
@@ -165,14 +171,13 @@ public:
       }
       addPrePasses(passRunner);
       passRunner.addDefaultFunctionOptimizationPasses();
-      passRunner.addDefaultGlobalOptimizationPostPasses();
       passRunner.run();
-      return;
+    } else {
+      DEBUG_THREAD("finish()ing");
+      assert(nextFunction == numFunctions);
+      wakeAllWorkers();
+      waitUntilAllFinished();
     }
-    DEBUG_THREAD("finish()ing");
-    assert(nextFunction == numFunctions);
-    wakeAllWorkers();
-    waitUntilAllFinished();
     optimizeGlobally();
     // TODO: clear side thread allocators from module allocator, as these threads were transient
   }
@@ -225,9 +230,11 @@ private:
   }
 
   void optimizeGlobally() {
+    beforeGlobalOptimizations();
     PassRunner passRunner(wasm, passOptions);
     passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
+
   }
 
   // worker code

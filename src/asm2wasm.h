@@ -862,6 +862,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
+      // addPrePasses
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
@@ -874,6 +875,18 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       // optimize relooper label variable usage at the wasm level, where it is easy
       passRunner.add("relooper-jump-threading");
+    }, [&]() {
+      // beforeGlobalOptimizations
+      // if we added any helper functions (like non-trapping i32-div, etc.), then those
+      // have not been optimized (the optimizing builder has just been fed the asm.js
+      // functions). Optimize those now. Typically there are very few, just do it
+      // sequentially.
+      PassRunner passRunner(&wasm, passOptions);
+      passRunner.addDefaultFunctionOptimizationPasses();
+      for (auto& pair : trappingFunctions.getFunctions()) {
+        auto* func = pair.second;
+        passRunner.runFunction(func);
+      }
     }, debug, false /* do not validate globally yet */);
   }
 
