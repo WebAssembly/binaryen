@@ -17,6 +17,7 @@
 #include <iterator>
 
 #include <wasm-builder.h>
+#include <wasm-printing.h>
 #include <ast/find_all.h>
 #include <ast/local-graph.h>
 
@@ -24,6 +25,18 @@ namespace wasm {
 
 LocalGraph::LocalGraph(Function* func, Module* module) {
   walkFunctionInModule(func, module);
+
+#ifdef LOCAL_GRAPH_DEBUG
+  std::cout << "LocalGraph::dump\n";
+  for (auto& pair : getSetses) {
+    auto* get = pair.first;
+    auto& sets = pair.second;
+    std::cout << "GET\n" << get << " is influenced by\n";
+    for (auto* set : sets) {
+      std::cout << set << '\n';
+    }
+  }
+#endif
 }
 
 void LocalGraph::computeInfluences() {
