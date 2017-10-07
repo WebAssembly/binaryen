@@ -192,6 +192,7 @@ public:
     auto* ret = allocator.alloc<SetGlobal>();
     ret->name = name;
     ret->value = value;
+    ret->finalize();
     return ret;
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
