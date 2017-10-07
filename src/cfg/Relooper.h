@@ -136,6 +136,7 @@ struct InsertOrderedSet
   }
 
   size_t size() const { return Map.size(); }
+  bool empty() const { return Map.empty(); }
 
   void clear() {
     Map.clear();
@@ -194,6 +195,7 @@ struct InsertOrderedMap
   }
 
   size_t size() const { return Map.size(); }
+  bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }
 
   InsertOrderedMap() {}
