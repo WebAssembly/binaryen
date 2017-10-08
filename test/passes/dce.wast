@@ -708,3 +708,29 @@
   (i32.const 0)
  )
 )
+;; if goes to unreachable, need to propagate that up to the set_global
+(module
+ (global $global (mut f64) (f64.const 0))
+ (func $0
+  (set_global $global
+   (if (result f64)
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
+)
+(module
+ (func $0
+  (local $local f64)
+  (set_local $local
+   (if (result f64)
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
+)
+
