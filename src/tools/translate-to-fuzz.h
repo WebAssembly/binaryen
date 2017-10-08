@@ -801,7 +801,8 @@ private:
     type = getConcreteType();
     auto& globals = globalsByType[type];
     if (globals.empty()) return makeTrivial(none);
-    return builder.makeSetGlobal(vectorPick(globals), make(type));
+    auto* value = make(type);
+    return builder.makeSetGlobal(vectorPick(globals), value);
   }
 
   Expression* makePointer() {
