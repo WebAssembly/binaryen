@@ -780,7 +780,7 @@ private:
     return ret;
   }
 
-  Expression* makeLoad(WasmType type) {
+  Load* makeNonAtomicLoad(WasmType type) {
     auto offset = logify(get());
     auto ptr = makePointer();
     switch (type) {
@@ -813,10 +813,20 @@ private:
     }
   }
 
-  Store* makeStore(WasmType type) {
+  Expression* makeLoad(WasmType type) {
+    auto* ret = makeNonAtomicLoad(type);
+    if (oneIn(2)) return ret;
+    // make it atomic
+    wasm.memory.shared = true;
+    ret->isAtomic = true;
+    ret->align = ret->bytes;
+    return ret;
+  }
+
+  Store* makeNonAtomicStore(WasmType type) {
     if (type == unreachable) {
       // make a normal store, then make it unreachable
-      auto* ret = makeStore(getConcreteType());
+      auto* ret = makeNonAtomicStore(getConcreteType());
       switch (upTo(3)) {
         case 0: ret->ptr = make(unreachable); break;
         case 1: ret->value = make(unreachable); break;
@@ -859,6 +869,16 @@ private:
       }
       default: WASM_UNREACHABLE();
     }
+  }
+
+  Store* makeStore(WasmType type) {
+    auto* ret = makeNonAtomicStore(type);
+    if (oneIn(2)) return ret;
+    // make it atomic
+    wasm.memory.shared = true;
+    ret->isAtomic = true;
+    ret->align = ret->bytes;
+    return ret;
   }
 
   Expression* makeConst(WasmType type) {
