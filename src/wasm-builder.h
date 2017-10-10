@@ -445,6 +445,15 @@ public:
     return makeConst(value);
   }
 
+  // Module-level helpers
+  static Global* makeGlobal(Name name, WasmType type, Expression* init, bool mutable_) {
+    auto* glob = new Global;
+    glob->name = name;
+    glob->type = type;
+    glob->init = init;
+    glob->mutable_ = mutable_;
+    return glob;
+  }
 };
 
 } // namespace wasm

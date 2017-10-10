@@ -30,6 +30,7 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <ast_utils.h>
+#include <ast/literal-utils.h>
 
 namespace wasm {
 
@@ -226,12 +227,12 @@ private:
 
   void ensureTempRet0(Module* module) {
     if (!module->getGlobalOrNull(TEMP_RET_0)) {
-      Global* global = new Global;
-      global->name = TEMP_RET_0;
-      global->type = i32;
-      global->init = module->allocator.alloc<Const>()->set(Literal(int32_t(0)));
-      global->mutable_ = true;
-      module->addGlobal(global);
+      module->addGlobal(Builder::makeGlobal(
+        TEMP_RET_0,
+        i32,
+        LiteralUtils::makeZero(i32, *module),
+        true /* mutable */
+      ));
     }
   }
 };
