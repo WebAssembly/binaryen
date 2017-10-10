@@ -2,37 +2,28 @@
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (param f32 i32 i32) (result i32)))
- (global $global$0 (mut f64) (f64.const -32768))
  (global $global$1 (mut i32) (i32.const 100))
  (memory $0 1 1)
  (export "func_217" (func $1))
  (func $1 (type $1) (param $0 i32)
-  (block $__inlined_func$0
-   (block
-    (if
-     (get_global $global$1)
-     (unreachable)
-    )
-    (set_global $global$1
+  (if
+   (get_global $global$1)
+   (unreachable)
+  )
+  (set_global $global$1
+   (i32.const 0)
+  )
+  (if
+   (i32.eqz
+    (if (result i32)
+     (i32.load16_u
+      (i32.const 3)
+     )
+     (i32.const 1)
      (i32.const 0)
     )
-    (block $label$2
-     (set_global $global$0
-      (block
-       (br_if $label$2
-        (if (result i32)
-         (i32.load16_u
-          (i32.const 3)
-         )
-         (i32.const 1)
-         (i32.const 0)
-        )
-       )
-       (unreachable)
-      )
-     )
-    )
    )
+   (unreachable)
   )
  )
 )
