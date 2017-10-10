@@ -266,6 +266,19 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       }
     }
   }
+
+  // efficiently update the type of an if, given the data we know. this
+  // can remove a concrete type and turn the if unreachable when it is
+  // unreachable
+  void maybeUpdateTypeToUnreachable(If* curr) {
+    if (!isConcreteWasmType(curr->type)) {
+      return; // nothing concrete to change to unreachable
+    }
+    curr->finalize();
+    if (curr->type == unreachable) {
+      propagateTypesUp(curr);
+    }
+  }
 };
 
 } // namespace wasm
