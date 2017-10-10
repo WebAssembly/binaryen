@@ -141,6 +141,7 @@ private:
   void build() {
     setupMemory();
     setupTable();
+    setupGlobals();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       addFunction();
@@ -170,6 +171,24 @@ private:
   void setupTable() {
     wasm.table.exists = true;
     wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
+  }
+
+  std::map<WasmType, std::vector<Name>> globalsByType;
+
+  void setupGlobals() {
+    size_t index = 0;
+    for (auto type : { i32, i64, f32, f64 }) {
+      auto num = upTo(3);
+      for (size_t i = 0; i < num; i++) {
+        auto* glob = new Global;
+        glob->name = std::string("global$") + std::to_string(index++);
+        glob->type = type;
+        glob->init = makeConst(type);
+        glob->mutable_ = true;
+        wasm.addGlobal(glob);
+        globalsByType[type].push_back(glob->name);
+      }
+    }
   }
 
   void finalizeTable() {
@@ -369,7 +388,7 @@ private:
   }
 
   Expression* _makei32() {
-    switch (upTo(13)) {
+    switch (upTo(14)) {
       case 0: return makeBlock(i32);
       case 1: return makeIf(i32);
       case 2: return makeLoop(i32);
@@ -383,12 +402,13 @@ private:
       case 10: return makeUnary(i32);
       case 11: return makeBinary(i32);
       case 12: return makeSelect(i32);
+      case 13: return makeGetGlobal(i32);
     }
     WASM_UNREACHABLE();
   }
 
   Expression* _makei64() {
-    switch (upTo(13)) {
+    switch (upTo(14)) {
       case 0: return makeBlock(i64);
       case 1: return makeIf(i64);
       case 2: return makeLoop(i64);
@@ -402,12 +422,13 @@ private:
       case 10: return makeUnary(i64);
       case 11: return makeBinary(i64);
       case 12: return makeSelect(i64);
+      case 13: return makeGetGlobal(i64);
     }
     WASM_UNREACHABLE();
   }
 
   Expression* _makef32() {
-    switch (upTo(13)) {
+    switch (upTo(14)) {
       case 0: return makeBlock(f32);
       case 1: return makeIf(f32);
       case 2: return makeLoop(f32);
@@ -421,12 +442,13 @@ private:
       case 10: return makeUnary(f32);
       case 11: return makeBinary(f32);
       case 12: return makeSelect(f32);
+      case 13: return makeGetGlobal(f32);
     }
     WASM_UNREACHABLE();
   }
 
   Expression* _makef64() {
-    switch (upTo(13)) {
+    switch (upTo(14)) {
       case 0: return makeBlock(f64);
       case 1: return makeIf(f64);
       case 2: return makeLoop(f64);
@@ -440,12 +462,13 @@ private:
       case 10: return makeUnary(f64);
       case 11: return makeBinary(f64);
       case 12: return makeSelect(f64);
+      case 13: return makeGetGlobal(f64);
     }
     WASM_UNREACHABLE();
   }
 
   Expression* _makenone() {
-    switch (upTo(10)) {
+    switch (upTo(11)) {
       case 0: return makeBlock(none);
       case 1: return makeIf(none);
       case 2: return makeLoop(none);
@@ -456,6 +479,7 @@ private:
       case 7: return makeStore(none);
       case 8: return makeDrop(none);
       case 9: return makeNop(none);
+      case 10: return makeSetGlobal(none);
     }
     WASM_UNREACHABLE();
   }
@@ -764,6 +788,21 @@ private:
     } else {
       return builder.makeSetLocal(vectorPick(locals), value);
     }
+  }
+
+  Expression* makeGetGlobal(WasmType type) {
+    auto& globals = globalsByType[type];
+    if (globals.empty()) return makeConst(type);
+    return builder.makeGetGlobal(vectorPick(globals), type);
+  }
+
+  Expression* makeSetGlobal(WasmType type) {
+    assert(type == none);
+    type = getConcreteType();
+    auto& globals = globalsByType[type];
+    if (globals.empty()) return makeTrivial(none);
+    auto* value = make(type);
+    return builder.makeSetGlobal(vectorPick(globals), value);
   }
 
   Expression* makePointer() {
