@@ -397,7 +397,7 @@ private:
       name,
       type,
       LiteralUtils::makeZero(type, wasm),
-      true /* mutable */
+      Builder::Mutable
     ));
   }
 
@@ -838,7 +838,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             name,
             type,
             builder.makeGetGlobal(import->name, type),
-            true /* mutable */
+            Builder::Mutable
           ));
         }
       }
@@ -1076,7 +1076,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             key,
             i32,
             builder.makeConst(Literal(int32_t(value))),
-            false /* mutable */
+            Builder::NotMutable
           );
           wasm.addGlobal(global);
           auto* export_ = new Export;

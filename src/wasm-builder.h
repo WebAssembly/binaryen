@@ -446,12 +446,18 @@ public:
   }
 
   // Module-level helpers
-  static Global* makeGlobal(Name name, WasmType type, Expression* init, bool mutable_) {
+
+  enum Mutability {
+    Mutable,
+    NotMutable
+  };
+
+  static Global* makeGlobal(Name name, WasmType type, Expression* init, Mutability mutable_) {
     auto* glob = new Global;
     glob->name = name;
     glob->type = type;
     glob->init = init;
-    glob->mutable_ = mutable_;
+    glob->mutable_ = mutable_ == Mutable;
     return glob;
   }
 };

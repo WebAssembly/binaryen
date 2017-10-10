@@ -231,7 +231,7 @@ private:
         TEMP_RET_0,
         i32,
         LiteralUtils::makeZero(i32, *module),
-        true /* mutable */
+        Builder::Mutable
       ));
     }
   }

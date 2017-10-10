@@ -184,7 +184,7 @@ private:
           std::string("global$") + std::to_string(index++),
           type,
           makeConst(type),
-          true /* mutable */
+          Builder::Mutable
         );
         wasm.addGlobal(glob);
         globalsByType[type].push_back(glob->name);
@@ -204,7 +204,7 @@ private:
       HANG_LIMIT_GLOBAL,
       i32,
       builder.makeConst(Literal(int32_t(HANG_LIMIT))),
-      true /* mutable */
+      Builder::Mutable
     );
     wasm.addGlobal(glob);
 
