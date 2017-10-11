@@ -484,23 +484,6 @@ def run_gcc_torture_tests():
         fail(actual, expected)
 
 def run_emscripten_tests():
-  if MOZJS and 0:
-
-    print '\n[ checking native wasm support ]\n'
-
-    command = [EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join(options.binaryen_test, 'hello_world.c'), '-s', 'BINARYEN_METHOD="native-wasm"', '-s', 'BINARYEN_SCRIPTS="spidermonkify.py"']
-    print ' '.join(command)
-    subprocess.check_call(command)
-
-    cmd = [MOZJS, 'a.wasm.js']
-    out = run_command(cmd)
-    assert 'hello, world!' in out, out
-
-    proc = subprocess.Popen([NODEJS, 'a.wasm.js'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = proc.communicate()
-    assert proc.returncode != 0, 'should fail on no wasm support'
-    assert 'no native wasm support detected' in err, err
-
   print '\n[ checking wasm.js methods... ]\n'
 
   for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
@@ -553,58 +536,6 @@ def run_emscripten_tests():
         else:
           assert proc.returncode != 0, err
           assert 'hello, world!' not in out, out
-
-  print '\n[ checking wasm.js testcases... ]\n'
-
-  for c in tests:
-    if c.endswith(('.c', '.cpp')):
-      print '..', c
-      base = c.replace('.cpp', '').replace('.c', '')
-      post = base + '.post.js'
-      try:
-        post = open(os.path.join(options.binaryen_test, post)).read()
-      except:
-        post = None
-      expected = open(os.path.join(options.binaryen_test, base + '.txt')).read()
-      emcc = os.path.join(options.binaryen_test, base + '.emcc')
-      extra = []
-      if os.path.exists(emcc):
-        extra = json.loads(open(emcc).read())
-      if os.path.exists('a.normal.js'): os.unlink('a.normal.js')
-      for opts in [[], ['-O1'], ['-O2'], ['-O3'], ['-Oz']]:
-        for method in ['interpret-asm2wasm', 'interpret-s-expr', 'interpret-binary']:
-          command = [EMCC, '-o', 'a.wasm.js', '-s', 'BINARYEN=1', os.path.join(options.binaryen_test, c)] + opts + extra
-          command += ['-s', 'BINARYEN_METHOD="' + method + '"']
-          command += ['-s', 'BINARYEN_TRAP_MODE="js"']
-          print '....' + ' '.join(command)
-          subprocess.check_call(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-          if post:
-            open('a.wasm.js', 'a').write(post)
-          else:
-            print '     (no post)'
-          for which in ['wasm']:
-            print '......', which
-            try:
-              args = json.loads(open(os.path.join(options.binaryen_test, base + '.args')).read())
-            except:
-              args = []
-              print '     (no args)'
-
-            def execute():
-              if NODEJS:
-                cmd = [NODEJS, 'a.' + which + '.js'] + args
-                out = run_command(cmd)
-                if out.strip() != expected.strip():
-                  fail(out, expected)
-
-            execute()
-
-            if method in ['interpret-s-expr']:
-              # binary and back
-              shutil.copyfile('a.wasm.wast', 'a.wasm.original.wast')
-              recreated = binary_format_check('a.wasm.wast', verify_final_result=False)
-              shutil.copyfile(recreated, 'a.wasm.wast')
-              execute()
 
 
 # Run all the tests
