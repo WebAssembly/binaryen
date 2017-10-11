@@ -1,4 +1,5 @@
 (module
+  (global $global$0 (mut i32) (i32.const 1))
   (func $basics (param $x i32)
     (local $y i32)
     (local $z f32)
@@ -310,6 +311,33 @@
       )
     )
     (drop (get_local $x)) ;; can receive from either set, or input param
+  )
+  (func $func_6 (result i32)
+   (local $result i32)
+   (local $zero i32)
+   (loop $label$1
+    (if
+     (i32.eqz
+      (get_global $global$0)
+     )
+     (return
+      (get_local $result) ;; we eventually reach here
+     )
+    )
+    (set_global $global$0
+     (i32.const 0) ;; tell next iteration to return
+    )
+    (set_local $result
+     (i32.const 1) ;; set the return value to 1, temporarily
+    )
+    (br_if $label$1
+     (i32.const 0) ;; don't do anything here
+    )
+    (set_local $result
+     (get_local $zero) ;; set it to zero instead
+    )
+    (br $label$1) ;; back to the top, where we will return the zero
+   )
   )
 )
 
