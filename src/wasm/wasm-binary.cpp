@@ -1823,14 +1823,16 @@ void WasmBinaryBuilder::readGlobals() {
   if (debug) std::cerr << "num: " << num << std::endl;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto curr = new Global;
-    curr->type = getWasmType();
+    auto type = getWasmType();
     auto mutable_ = getU32LEB();
     if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
-    curr->mutable_ = mutable_;
-    curr->init = readExpression();
-    curr->name = Name("global$" + std::to_string(wasm.globals.size()));
-    wasm.addGlobal(curr);
+    auto* init = readExpression();
+    wasm.addGlobal(Builder::makeGlobal(
+      "global$" + std::to_string(wasm.globals.size()),
+      type,
+      init,
+      mutable_ ? Builder::Mutable : Builder::Immutable
+    ));
   }
 }
 

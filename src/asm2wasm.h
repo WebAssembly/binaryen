@@ -33,6 +33,7 @@
 #include "parsing.h"
 #include "ast_utils.h"
 #include "ast/branch-utils.h"
+#include "ast/literal-utils.h"
 #include "ast/trapping.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
@@ -392,17 +393,12 @@ private:
   void allocateGlobal(IString name, WasmType type) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     mappedGlobals.emplace(name, MappedGlobal(type));
-    auto global = new Global();
-    global->name = name;
-    global->type = type;
-    Literal value;
-    if (type == i32) value = Literal(uint32_t(0));
-    else if (type == f32) value = Literal(float(0));
-    else if (type == f64) value = Literal(double(0));
-    else WASM_UNREACHABLE();
-    global->init = wasm.allocator.alloc<Const>()->set(value);
-    global->mutable_ = true;
-    wasm.addGlobal(global);
+    wasm.addGlobal(builder.makeGlobal(
+      name,
+      type,
+      LiteralUtils::makeZero(type, wasm),
+      Builder::Mutable
+    ));
   }
 
   struct View {
@@ -838,12 +834,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         // import an immutable and create a mutable global initialized to its value
         import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
         {
-          auto global = new Global();
-          global->name = name;
-          global->type = type;
-          global->init = builder.makeGetGlobal(import->name, type);
-          global->mutable_ = true;
-          wasm.addGlobal(global);
+          wasm.addGlobal(builder.makeGlobal(
+            name,
+            type,
+            builder.makeGetGlobal(import->name, type),
+            Builder::Mutable
+          ));
         }
       }
     } else {
@@ -1076,11 +1072,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(pair[1]->isNumber());
           assert(exported.count(key) == 0);
           auto value = pair[1]->getInteger();
-          auto global = new Global();
-          global->name = key;
-          global->type = i32;
-          global->init = builder.makeConst(Literal(int32_t(value)));
-          global->mutable_ = false;
+          auto* global = builder.makeGlobal(
+            key,
+            i32,
+            builder.makeConst(Literal(int32_t(value))),
+            Builder::Immutable
+          );
           wasm.addGlobal(global);
           auto* export_ = new Export;
           export_->name = key;

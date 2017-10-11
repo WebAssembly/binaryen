@@ -180,11 +180,12 @@ private:
     for (auto type : { i32, i64, f32, f64 }) {
       auto num = upTo(3);
       for (size_t i = 0; i < num; i++) {
-        auto* glob = new Global;
-        glob->name = std::string("global$") + std::to_string(index++);
-        glob->type = type;
-        glob->init = makeConst(type);
-        glob->mutable_ = true;
+        auto* glob = builder.makeGlobal(
+          std::string("global$") + std::to_string(index++),
+          type,
+          makeConst(type),
+          Builder::Mutable
+        );
         wasm.addGlobal(glob);
         globalsByType[type].push_back(glob->name);
       }
@@ -199,11 +200,12 @@ private:
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
 
   void addHangLimitSupport() {
-    auto* glob = new Global;
-    glob->name = HANG_LIMIT_GLOBAL;
-    glob->type = i32;
-    glob->init = builder.makeConst(Literal(int32_t(HANG_LIMIT)));
-    glob->mutable_ = true;
+    auto* glob = builder.makeGlobal(
+      HANG_LIMIT_GLOBAL,
+      i32,
+      builder.makeConst(Literal(int32_t(HANG_LIMIT))),
+      Builder::Mutable
+    );
     wasm.addGlobal(glob);
 
     auto* func = new Function;
