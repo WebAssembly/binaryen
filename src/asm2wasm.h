@@ -1076,7 +1076,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             key,
             i32,
             builder.makeConst(Literal(int32_t(value))),
-            Builder::NotMutable
+            Builder::Immutable
           );
           wasm.addGlobal(global);
           auto* export_ = new Export;

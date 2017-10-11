@@ -449,7 +449,7 @@ public:
 
   enum Mutability {
     Mutable,
-    NotMutable
+    Immutable
   };
 
   static Global* makeGlobal(Name name, WasmType type, Expression* init, Mutability mutable_) {

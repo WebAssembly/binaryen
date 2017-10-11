@@ -1831,7 +1831,7 @@ void WasmBinaryBuilder::readGlobals() {
       "global$" + std::to_string(wasm.globals.size()),
       type,
       init,
-      mutable_ ? Builder::Mutable : Builder::NotMutable
+      mutable_ ? Builder::Mutable : Builder::Immutable
     ));
   }
 }
