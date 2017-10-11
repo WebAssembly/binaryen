@@ -30,6 +30,10 @@
 #include "cfg/Relooper.h"
 #include "ast_utils.h"
 
+#ifdef RERELOOP_DEBUG
+#include <wasm-printing.h>
+#endif
+
 namespace wasm {
 
 struct ReReloop final : public Pass {
@@ -307,6 +311,33 @@ struct ReReloop final : public Pass {
     }
     // finish the current block
     finishBlock();
+    // blocks that do not have any exits are dead ends in the relooper. we need
+    // to make sure that are in fact dead ends, and do not flow control anywhere.
+    // add a return as needed
+    for (auto* cfgBlock : relooper.Blocks) {
+      auto* block = cfgBlock->Code->cast<Block>();
+      if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
+        block->list.push_back(
+          function->result == none ? (Expression*)builder->makeReturn()
+                                   : (Expression*)builder->makeUnreachable()
+        );
+        block->finalize();
+      }
+    }
+#ifdef RERELOOP_DEBUG
+    std::cout << "rerelooping " << function->name << '\n';
+    for (auto* block : relooper.Blocks) {
+      std::cout << block << " block:\n" << block->Code << '\n';
+      for (auto& pair : block->BranchesOut) {
+        auto* target = pair.first;
+        auto* branch = pair.second;
+        std::cout << "branch to " << target << "\n";
+        if (branch->Condition) {
+          std::cout << "  with condition\n" << branch->Condition << '\n';
+        }
+      }
+    }
+#endif
     // run the relooper to recreate control flow
     relooper.Calculate(entry);
     // render
