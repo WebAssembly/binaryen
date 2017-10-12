@@ -119,7 +119,7 @@ class ExpressionRunner : public Visitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
     auto ret = Visitor<SubType, Flow>::visit(curr);
-    if (!ret.breaking()) {
+    if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
       assert(ret.value.type == curr->type);
     }
     return ret;
@@ -1022,11 +1022,17 @@ protected:
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
     trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
-    trapIfGt(addr, memorySizeBytes - curr->bytes, "highest > memory");
+    checkLoadAddress(addr, curr->bytes);
     return addr;
   }
 
+  void checkLoadAddress(Address addr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+  }
+
   Literal doAtomicLoad(Address addr, Index bytes, WasmType type) {
+    checkLoadAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));
     ptr.type = i32;
