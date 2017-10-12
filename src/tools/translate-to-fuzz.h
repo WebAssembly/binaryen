@@ -369,7 +369,7 @@ private:
   }
 
   Expression* _makeConcrete(WasmType type) {
-    switch (upTo(13)) {
+    switch (upTo(14)) {
       case 0: return makeBlock(type);
       case 1: return makeIf(type);
       case 2: return makeLoop(type);
@@ -383,6 +383,7 @@ private:
       case 10: return makeUnary(type);
       case 11: return makeBinary(type);
       case 12: return makeSelect(type);
+      case 13: return makeAtomic(type);
     }
     WASM_UNREACHABLE();
   }
@@ -1064,6 +1065,63 @@ private:
   Expression* makeUnreachable(WasmType type) {
     assert(type == unreachable);
     return builder.makeUnreachable();
+  }
+
+  Expression* makeAtomic(WasmType type) {
+    if (type != i32 && type != i64) return makeTrivial(type);
+    if (type == i32 && oneIn(2)) {
+      if (oneIn(2)) {
+        auto* ptr = makePointer();
+        auto expectedType = pick(i32, i64);
+        auto* expected = make(expectedType);
+        auto* timeout = make(i64);
+        return builder.makeAtomicWait(ptr, expected, timeout, expectedType);
+      } else {
+        auto* ptr = makePointer();
+        auto* count = make(i32);
+        return builder.makeAtomicWake(ptr, count);
+      }
+    }
+    Index bytes;
+    switch (type) {
+      case i32: {
+        switch (upTo(3)) {
+          case 0: bytes = 1; break;
+          case 1: bytes = pick(1, 2); break;
+          case 2: bytes = pick(1, 2, 4); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (upTo(4)) {
+          case 0: bytes = 1; break;
+          case 1: bytes = pick(1, 2); break;
+          case 2: bytes = pick(1, 2, 4); break;
+          case 3: bytes = pick(1, 2, 4, 8); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case f32: {
+        bytes = pick(1, 2, 4); break;
+      }
+      case f64: {
+        bytes = pick(1, 2, 4, 8); break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+    auto offset = logify(get());
+    auto* ptr = makePointer();
+    if (oneIn(2)) {
+      auto* value = make(type);
+      return builder.makeAtomicRMW(pick(AtomicRMWOp::Add, AtomicRMWOp::Sub, AtomicRMWOp::And, AtomicRMWOp::Or, AtomicRMWOp::Xor, AtomicRMWOp::Xchg),
+                                   bytes, offset, ptr, value, type);
+    } else {
+      auto* expected = make(type);
+      auto* replacement = make(type);
+      return builder.makeAtomicCmpxchg(bytes, offset, ptr, expected, replacement, type);
+    }
   }
 
   // special getters
