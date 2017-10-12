@@ -212,7 +212,6 @@ public:
     wait->expected = expected;
     wait->timeout = timeout;
     wait->expectedType = type;
-    wait->type = i32;
     wait->finalize();
     return wait;
   }
@@ -220,7 +219,6 @@ public:
     auto* wake = allocator.alloc<AtomicWake>();
     wake->ptr = ptr;
     wake->wakeCount = wakeCount;
-    wake->type = i32;
     wake->finalize();
     return wake;
   }
