@@ -118,7 +118,11 @@ template<typename SubType>
 class ExpressionRunner : public Visitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
-    return Visitor<SubType, Flow>::visit(curr);
+    auto ret = Visitor<SubType, Flow>::visit(curr);
+    if (!ret.breaking()) {
+      assert(ret.value.type == curr->type);
+    }
+    return ret;
   }
 
   Flow visitBlock(Block *curr) {
@@ -461,7 +465,7 @@ public:
   Flow visitUnreachable(Unreachable *curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");
-    return Flow();
+    WASM_UNREACHABLE();
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {

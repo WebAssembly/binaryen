@@ -364,6 +364,7 @@ private:
       case unreachable: ret = _makeunreachable(); break;
       default: WASM_UNREACHABLE();
     }
+    assert(ret->type == type); // we should create the right type of thing
     nesting--;
     return ret;
   }
