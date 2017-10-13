@@ -118,7 +118,6 @@ public:
   Flow visit(Expression *curr) {
     auto ret = Visitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
-std::cout << curr << " : " << ret.value << '\n';
       assert(ret.value.type == curr->type);
     }
     return ret;
