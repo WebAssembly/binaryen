@@ -32,7 +32,11 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 
+//#define WASM_INTERPRETER_DEBUG 1
+
+//#ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
+//#endif
 
 
 namespace wasm {
@@ -118,6 +122,11 @@ public:
   Flow visit(Expression *curr) {
     auto ret = Visitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
+#if 1 // def WASM_INTERPRETER_DEBUG
+      if (ret.value.type != curr->type) {
+        std::cerr << "expected " << printWasmType(curr->type) << ", seeing " << printWasmType(ret.value.type) << " from\n" << curr << '\n';
+      }
+#endif
       assert(ret.value.type == curr->type);
     }
     return ret;
@@ -925,7 +934,6 @@ public:
         Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
         NOTE_EVAL1(ptr);
-        NOTE_EVAL1(addr);
         auto count = this->visit(curr->wakeCount);
         NOTE_EVAL1(count);
         if (count.breaking()) return count;
