@@ -760,6 +760,7 @@ private:
 
   Expression* makeLoad(WasmType type) {
     auto* ret = makeNonAtomicLoad(type);
+    if (type != i32 && type != i64) return ret;
     if (oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
@@ -818,6 +819,7 @@ private:
 
   Store* makeStore(WasmType type) {
     auto* ret = makeNonAtomicStore(type);
+    if (ret->value->type != i32 && ret->value->type != i64) return ret;
     if (oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
@@ -1103,12 +1105,6 @@ private:
           default: WASM_UNREACHABLE();
         }
         break;
-      }
-      case f32: {
-        bytes = pick(1, 2, 4); break;
-      }
-      case f64: {
-        bytes = pick(1, 2, 4, 8); break;
       }
       default: WASM_UNREACHABLE();
     }
