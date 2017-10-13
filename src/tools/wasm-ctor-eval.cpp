@@ -33,6 +33,7 @@
 #include "wasm-builder.h"
 #include "ast/memory-utils.h"
 #include "ast/global-utils.h"
+#include "ast/import-utils.h"
 
 using namespace wasm;
 
@@ -71,6 +72,7 @@ public:
   }
 
   Literal& operator[](Name name) {
+std::cout << "operator[] " << name << '\n';
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
@@ -78,9 +80,12 @@ public:
       }
       throw FailToEvalException(std::string("tried to access a dangerous (import-initialized) global: ") + name.str + extra);
     }
-    if (sealed) {
-      if (globals.find(name) == globals.end()) {
+    if (globals.find(name) == globals.end()) {
+      if (sealed) {
         throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
+      } else {
+        // fake a value
+        globals[name] = Literal(int32_t(0));
       }
     }
     return globals[name];
@@ -114,6 +119,13 @@ public:
   }
 };
 
+enum {
+  // put the stack in some ridiculously high location
+  STACK_START = 0x40000000,
+  // use a ridiculously large stack size
+  STACK_SIZE = 32 * 1024 * 1024
+};
+
 class EvallingModuleInstance : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
   EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {
@@ -138,13 +150,6 @@ public:
     }
   }
 
-  enum {
-    // put the stack in some ridiculously high location
-    STACK_START = 0x40000000,
-    // use a ridiculously large stack size
-    STACK_SIZE = 32 * 1024 * 1024
-  };
-
   std::vector<char> stack;
 
   // create C stack space for us to use. We do *NOT* care about their contents,
@@ -153,13 +158,6 @@ public:
   void setupEnvironment() {
     // prepare scratch memory
     stack.resize(STACK_SIZE);
-    // fill usable values for stack imports
-    if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm, "env", "STACKTOP")) {
-      globals[stackTop->name] = Literal(int32_t(STACK_START));
-    }
-    if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm, "env", "STACK_MAX")) {
-      globals[stackMax->name] = Literal(int32_t(STACK_START));
-    }
     // tell the module to accept writes up to the stack end
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
@@ -181,6 +179,19 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
+    // fill usable values for stack imports, and globals initialized to them
+    if (auto* stackTop = ImportUtils::getImport(wasm_, "env", "STACKTOP")) {
+      globals[stackTop->name] = Literal(int32_t(STACK_START));
+      if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACKTOP")) {
+        globals[stackTop->name] = Literal(int32_t(STACK_START));
+      }
+    }
+    if (auto* stackMax = ImportUtils::getImport(wasm_, "env", "STACK_MAX")) {
+      globals[stackMax->name] = Literal(int32_t(STACK_START));
+      if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
+        globals[stackMax->name] = Literal(int32_t(STACK_START));
+      }
+    }
   }
 
   Literal callImport(Import *import, LiteralList& arguments) override {
@@ -248,9 +259,9 @@ private:
   template <typename T>
   T* getMemory(Address address) {
     // if memory is on the stack, use the stack
-    if (address >= instance->STACK_START) {
-      Address relative = address - instance->STACK_START;
-      if (relative + sizeof(T) > instance->STACK_SIZE) {
+    if (address >= STACK_START) {
+      Address relative = address - STACK_START;
+      if (relative + sizeof(T) > STACK_SIZE) {
         throw FailToEvalException("stack usage too high");
       }
       // in range, all is good, use the stack

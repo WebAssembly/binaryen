@@ -32,9 +32,7 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 
-#ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
-#endif
 
 
 namespace wasm {
@@ -120,6 +118,7 @@ public:
   Flow visit(Expression *curr) {
     auto ret = Visitor<SubType, Flow>::visit(curr);
     if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
+std::cout << curr << " : " << ret.value << '\n';
       assert(ret.value.type == curr->type);
     }
     return ret;
@@ -526,7 +525,9 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) { return Flow(globals[curr->name]); }
+  Flow visitGetGlobal(GetGlobal *curr) {
+    return Flow(globals[curr->name]);
+  }
   Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
@@ -814,8 +815,8 @@ public:
         NOTE_ENTER("GetGlobal");
         auto name = curr->name;
         NOTE_EVAL1(name);
-        NOTE_EVAL1(instance.globals[name]);
         assert(instance.globals.find(name) != instance.globals.end());
+        NOTE_EVAL1(instance.globals[name]);
         return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {

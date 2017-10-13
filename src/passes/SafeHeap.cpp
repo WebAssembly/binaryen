@@ -114,7 +114,7 @@ struct SafeHeap : public Pass {
 
   void addImports(Module* module) {
     // imports
-    dynamicTopPtr = ImportUtils::getImport(*module, ENV, DYNAMICTOP_PTR_IMPORT);
+    dynamicTopPtr = ImportUtils::getImport(*module, ENV, DYNAMICTOP_PTR_IMPORT)->name;
     if (!dynamicTopPtr.is()) {
       auto* import = new Import;
       import->name = dynamicTopPtr = DYNAMICTOP_PTR_IMPORT;
@@ -124,7 +124,7 @@ struct SafeHeap : public Pass {
       import->globalType = i32;
       module->addImport(import);
     }
-    segfault = ImportUtils::getImport(*module, ENV, SEGFAULT_IMPORT);
+    segfault = ImportUtils::getImport(*module, ENV, SEGFAULT_IMPORT)->name;
     if (!segfault.is()) {
       auto* import = new Import;
       import->name = segfault = SEGFAULT_IMPORT;
@@ -134,7 +134,7 @@ struct SafeHeap : public Pass {
       import->functionType = ensureFunctionType("v", module)->name;
       module->addImport(import);
     }
-    alignfault = ImportUtils::getImport(*module, ENV, ALIGNFAULT_IMPORT);
+    alignfault = ImportUtils::getImport(*module, ENV, ALIGNFAULT_IMPORT)->name;
     if (!alignfault.is()) {
       auto* import = new Import;
       import->name = alignfault = ALIGNFAULT_IMPORT;

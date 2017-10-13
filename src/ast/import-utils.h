@@ -25,13 +25,13 @@ namespace wasm {
 namespace ImportUtils {
   // find an import by the module.base that is being imported.
   // return the internal name
-  inline Name getImport(Module& wasm, Name module, Name base) {
+  inline Import* getImport(Module& wasm, Name module, Name base) {
     for (auto& import : wasm.imports) {
       if (import->module == module && import->base == base) {
-        return import->name;
+        return import.get();
       }
     }
-    return Name();
+    return nullptr;
   }
 };
 
