@@ -177,41 +177,8 @@ void Linker::layout() {
     getTableDataRef().push_back(P.second);
   }
 
-  for (auto& relocation : out.relocations) {
-    // TODO: Handle weak symbols properly, instead of always taking the weak definition.
-    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
-    Name name = relocation->symbol;
+  layoutRelocations();
 
-    if (debug) std::cerr << "fix relocation " << name << '\n';
-
-    if (alias) {
-      name = alias->symbol;
-      relocation->addend += alias->offset;
-    }
-
-    if (relocation->kind == LinkerObject::Relocation::kData) {
-      const auto& symbolAddress = staticAddresses.find(name);
-      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
-      *(relocation->data) = symbolAddress->second + relocation->addend;
-      if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
-    } else {
-      // function address
-      if (!out.wasm.getFunctionOrNull(name)) {
-        if (FunctionType* f = out.getExternType(name)) {
-          // Address of an imported function is taken, but imports do not have addresses in wasm.
-          // Generate a thunk to forward to the call_import.
-          Function* thunk = getImportThunk(name, f);
-          *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
-        } else {
-          std::cerr << "Unknown symbol: " << name << '\n';
-          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
-          *(relocation->data) = 0;
-        }
-      } else {
-        *(relocation->data) = getFunctionIndex(name) + relocation->addend;
-      }
-    }
-  }
   if (!!startFunction) {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
@@ -272,6 +239,45 @@ void Linker::layout() {
   if (tableSize > 0) {
     out.wasm.table.initial = out.wasm.table.max = tableSize;
   }
+}
+
+void Linker::layoutRelocations() {
+  for (auto& relocation : out.relocations) {
+    // TODO: Handle weak symbols properly, instead of always taking the weak definition.
+    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
+    Name name = relocation->symbol;
+
+    if (debug) std::cerr << "fix relocation " << name << '\n';
+
+    if (alias) {
+      name = alias->symbol;
+      relocation->addend += alias->offset;
+    }
+
+    if (relocation->kind == LinkerObject::Relocation::kData) {
+      const auto& symbolAddress = staticAddresses.find(name);
+      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
+      *(relocation->data) = symbolAddress->second + relocation->addend;
+      if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
+    } else {
+      // function address
+      if (!out.wasm.getFunctionOrNull(name)) {
+        if (FunctionType* f = out.getExternType(name)) {
+          // Address of an imported function is taken, but imports do not have addresses in wasm.
+          // Generate a thunk to forward to the call_import.
+          Function* thunk = getImportThunk(name, f);
+          *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
+        } else {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
+          *(relocation->data) = 0;
+        }
+      } else {
+        *(relocation->data) = getFunctionIndex(name) + relocation->addend;
+      }
+    }
+  }
+  out.relocations.clear();
 }
 
 bool Linker::linkObject(S2WasmBuilder& builder) {
