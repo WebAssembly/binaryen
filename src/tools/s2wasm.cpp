@@ -175,15 +175,17 @@ int main(int argc, const char *argv[]) {
     linker.linkArchive(lib);
   }
 
-  if (generateEmscriptenGlue) {
-    emscripten::generateRuntimeFunctions(linker.getOutput());
-  }
-
   linker.layout();
 
   std::stringstream meta;
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
+
+    emscripten::generateRuntimeFunctions(linker.getOutput());
+    // Generated functions reference __stack_pointer, currently we handle new
+    // references to it via relocations.
+    linker.layoutRelocations();
+
     if (allowMemoryGrowth) {
       emscripten::generateMemoryGrowthFunction(linker.getOutput().wasm);
     }

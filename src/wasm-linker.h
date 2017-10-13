@@ -246,6 +246,10 @@ class Linker {
   // function table.
   void layout();
 
+  // Process just the relocations. Can be useful to do on its on, for
+  // relocations added to the module after general layout.
+  void layoutRelocations();
+
   // Support for emscripten integration: generates dyncall thunks, emits
   // metadata for asmConsts, staticBump and initializer functions.
   void emscriptenGlue(std::ostream& o);
