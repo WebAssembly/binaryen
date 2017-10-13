@@ -34,6 +34,7 @@
 #include "ast/memory-utils.h"
 #include "ast/global-utils.h"
 #include "ast/import-utils.h"
+#include "ast/literal-utils.h"
 
 using namespace wasm;
 
@@ -72,21 +73,12 @@ public:
   }
 
   Literal& operator[](Name name) {
-std::cout << "operator[] " << name << '\n';
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
         extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit that use ___dso_handle are not emitted";
       }
       throw FailToEvalException(std::string("tried to access a dangerous (import-initialized) global: ") + name.str + extra);
-    }
-    if (globals.find(name) == globals.end()) {
-      if (sealed) {
-        throw FailToEvalException(std::string("tried to access missing global: ") + name.str);
-      } else {
-        // fake a value
-        globals[name] = Literal(int32_t(0));
-      }
     }
     return globals[name];
   }
@@ -190,6 +182,19 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       globals[stackMax->name] = Literal(int32_t(STACK_START));
       if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
         globals[stackMax->name] = Literal(int32_t(STACK_START));
+      }
+    }
+    // fill in fake values for everything else, which is dangerous to use
+    for (auto& global : wasm_.globals) {
+      if (globals.find(global->name) == globals.end()) {
+        globals[global->name] = LiteralUtils::makeLiteralZero(global->type);
+      }
+    }
+    for (auto& import : wasm_.imports) {
+      if (import->kind == ExternalKind::Global) {
+        if (globals.find(import->name) == globals.end()) {
+          globals[import->name] = LiteralUtils::makeLiteralZero(import->globalType);
+        }
       }
     }
   }
