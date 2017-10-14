@@ -55,20 +55,6 @@ struct ExpressionAnalyzer {
     return !curr->condition && !curr->value;
   }
 
-  // Checks if an expression does not flow out in an obvious way.
-  // We return true if it cannot flow out. If it can flow out, we
-  // might still return true, as the analysis here is simple and fast.
-  static bool obviouslyDoesNotFlowOut(Expression* curr) {
-    // to not flow out, we must be unreachable
-    if (curr->type != unreachable) return false;
-    if (auto* br = curr->dynCast<Break>()) {
-      if (!br->condition) return true;
-    } else if (auto* block = curr->dynCast<Block>()) {
-      if (block->list.size() > 0 && obviouslyDoesNotFlowOut(block->list.back()) && !BranchUtils::BranchSeeker::hasReachable(block, block->name)) return true;
-    }
-    return false;
-  }
-
   using ExprComparer = std::function<bool(Expression*, Expression*)>;
   static bool flexibleEqual(Expression* left, Expression* right, ExprComparer comparer);
 

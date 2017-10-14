@@ -484,11 +484,12 @@
   )
   (loop $in45
    (block $out46
-    (if
-     (i32.const 0)
-     (unreachable)
+    (br_if $in45
+     (i32.eqz
+      (i32.const 0)
+     )
     )
-    (br $in45)
+    (unreachable)
    )
   )
   (loop $in48
