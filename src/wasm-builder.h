@@ -231,7 +231,7 @@ public:
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, WasmType type) {
-    Store* store = makeStore(bytes, offset, getWasmTypeSize(type), ptr, value, type);
+    Store* store = makeStore(bytes, offset, bytes, ptr, value, type);
     store->isAtomic = true;
     return store;
   }
