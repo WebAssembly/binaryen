@@ -1020,5 +1020,24 @@
     (br $loop) ;; we 100% go back to the loop top, the loop is never exited. but opts move code around so that is not obvious anymore, and the loop becomes a nop, but the func has a return value
    )
   )
+  (func $obviously-flows-out-maybe (param $var$0 i32) (result f32)
+   (block $label$1 (result f32)
+    (br $label$1
+     (f32.const 1)
+    )
+    (loop $label$5
+     (if
+      (i32.const 11)
+      (block $label$8  ;; this block is none - it has a break, even if not taken - and so looks like it might flow out,
+       (br_if $label$8 ;; and so we can't move it outside to be the end of the loop's block
+        (unreachable)
+       )
+       (br $label$5)
+      )
+     )
+     (br $label$5)
+    )
+   )
+  )
 )
 

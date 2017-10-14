@@ -59,6 +59,8 @@ struct ExpressionAnalyzer {
   // We return true if it cannot flow out. If it can flow out, we
   // might still return true, as the analysis here is simple and fast.
   static bool obviouslyDoesNotFlowOut(Expression* curr) {
+    // to not flow out, we must be unreachable
+    if (curr->type != unreachable) return false;
     if (auto* br = curr->dynCast<Break>()) {
       if (!br->condition) return true;
     } else if (auto* block = curr->dynCast<Block>()) {
