@@ -1072,6 +1072,7 @@ private:
 
   Expression* makeAtomic(WasmType type) {
     if (type != i32 && type != i64) return makeTrivial(type);
+    wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (oneIn(2)) {
         auto* ptr = makePointer();
