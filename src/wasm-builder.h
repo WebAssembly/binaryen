@@ -206,12 +206,12 @@ public:
     load->isAtomic = true;
     return load;
   }
-  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType type) {
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType expectedType) {
     auto* wait = allocator.alloc<AtomicWait>();
     wait->ptr = ptr;
     wait->expected = expected;
     wait->timeout = timeout;
-    wait->expectedType = type;
+    wait->expectedType = expectedType;
     wait->finalize();
     return wait;
   }
