@@ -510,6 +510,7 @@ class S2WasmBuilder {
       else if (match("data")) {}
       else if (match("ident")) skipToEOL();
       else if (match("section")) parseToplevelSection();
+      else if (match("file")) parseFile();
       else if (match("align") || match("p2align")) skipToEOL();
       else if (match("import_global")) {
         skipToEOL();
