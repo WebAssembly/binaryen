@@ -912,15 +912,15 @@ public:
         Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
         NOTE_EVAL1(ptr);
-        auto addr = ptr.value.getInteger();
-        NOTE_EVAL1(addr);
         auto expected = this->visit(curr->expected);
         NOTE_EVAL1(expected);
         if (expected.breaking()) return expected;
         auto timeout = this->visit(curr->timeout);
         NOTE_EVAL1(timeout);
         if (timeout.breaking()) return timeout;
-        auto loaded = instance.doAtomicLoad(addr, getWasmTypeSize(curr->expectedType), curr->expectedType);
+        auto bytes = getWasmTypeSize(curr->expectedType);
+        auto addr = instance.getFinalAddress(ptr.value, bytes);
+        auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
         NOTE_EVAL1(loaded);
         if (loaded != expected.value) {
           return Literal(int32_t(1)); // not equal
@@ -1031,6 +1031,13 @@ protected:
     addr += curr->offset;
     trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
     checkLoadAddress(addr, curr->bytes);
+    return addr;
+  }
+
+  Address getFinalAddress(Literal ptr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
     return addr;
   }
 
