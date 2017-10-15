@@ -866,12 +866,12 @@ public:
         NOTE_ENTER("AtomicRMW");
         Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
+        auto value = this->visit(curr->value);
+        if (value.breaking()) return value;
         NOTE_EVAL1(ptr);
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
-        auto value = this->visit(curr->value);
         NOTE_EVAL1(value);
-        if (value.breaking()) return value;
         auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
         NOTE_EVAL1(loaded);
         auto computed = value.value;
@@ -892,14 +892,14 @@ public:
         Flow ptr = this->visit(curr->ptr);
         if (ptr.breaking()) return ptr;
         NOTE_EVAL1(ptr);
-        auto addr = instance.getFinalAddress(curr, ptr.value);
-        NOTE_EVAL1(addr);
         auto expected = this->visit(curr->expected);
-        NOTE_EVAL1(expected);
         if (expected.breaking()) return expected;
         auto replacement = this->visit(curr->replacement);
-        NOTE_EVAL1(replacement);
         if (replacement.breaking()) return replacement;
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(expected);
+        NOTE_EVAL1(replacement);
         auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
         NOTE_EVAL1(loaded);
         if (loaded == expected.value) {
