@@ -881,6 +881,12 @@ void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
   recurse(curr->ptr);
   recurse(curr->value);
 
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
+
   o << int8_t(BinaryConsts::AtomicPrefix);
 
 #define CASE_FOR_OP(Op) \
@@ -926,6 +932,12 @@ void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   recurse(curr->ptr);
   recurse(curr->expected);
   recurse(curr->replacement);
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->type) {
