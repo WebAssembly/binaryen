@@ -502,7 +502,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "AtomicRMW result type must match operand");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->value->type, curr, "AtomicRMW result type must match operand");
   shouldBeIntOrUnreachable(curr->type, curr, "Atomic operations are only valid on int types");
 }
 
