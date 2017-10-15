@@ -513,8 +513,8 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
     shouldBeEqual(curr->expected->type, curr->replacement->type, curr, "cmpxchg operand types must match");
   }
-  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->type, curr, "Cmpxchg result type must match expected");
-  shouldBeEqualOrFirstIsUnreachable(curr->replacement->type, curr->type, curr, "Cmpxchg result type must match replacement");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->expected->type, curr, "Cmpxchg result type must match expected");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->replacement->type, curr, "Cmpxchg result type must match replacement");
   shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
 }
 
