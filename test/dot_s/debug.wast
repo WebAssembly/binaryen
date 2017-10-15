@@ -10,6 +10,7 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
+  ;;@ fib.c:1:0
   (set_local $3
    (i32.const 0)
   )

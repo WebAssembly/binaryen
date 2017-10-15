@@ -597,26 +597,16 @@ class S2WasmBuilder {
   }
 
   void parseFile() {
+    if (debug) dump("file");
+    size_t fileId = 0;
     if (*s != '"') {
-      // TODO: optimize, see recordFile below
-      size_t fileId = getInt();
+      fileId = getInt();
       skipWhitespace();
-      auto quoted = getQuoted();
-      uint32_t index = wasm->debugInfoFileNames.size();
-      fileIndexMap[fileId] = index;
-      wasm->debugInfoFileNames.push_back(std::string(quoted.begin(), quoted.end()));
-      s = strchr(s, '\n');
-      return;
     }
-    // '.file' without first index argument points to bc-file
-    s++;
-    std::string filename;
-    while (*s != '"') {
-      filename += *s;
-      s++;
-    }
-    s++;
-    WASM_UNUSED(filename); // TODO: use the filename
+    auto filename = getQuoted();
+    uint32_t index = wasm->debugInfoFileNames.size();
+    wasm->debugInfoFileNames.push_back(std::string(filename.begin(), filename.end()));
+    fileIndexMap[fileId] = index;
   }
 
   void parseGlobl() {
@@ -670,16 +660,6 @@ class S2WasmBuilder {
 
     Function::DebugLocation debugLocation = { 0, 0, 0 };
     bool useDebugLocation = false;
-    auto recordFile = [&]() {
-      if (debug) dump("file");
-      size_t fileId = getInt();
-      skipWhitespace();
-      auto quoted = getQuoted();
-      uint32_t index = wasm->debugInfoFileNames.size();
-      fileIndexMap[fileId] = index;
-      wasm->debugInfoFileNames.push_back(std::string(quoted.begin(), quoted.end()));
-      s = strchr(s, '\n');
-    };
     auto recordLoc = [&]() {
       if (debug) dump("loc");
       size_t fileId = getInt();
@@ -743,7 +723,7 @@ class S2WasmBuilder {
           if (!match(",")) break;
         }
       } else if (match(".file")) {
-        recordFile();
+        parseFile();
         skipWhitespace();
       } else if (match(".loc")) {
         recordLoc();
@@ -1293,7 +1273,7 @@ class S2WasmBuilder {
         s = strchr(s, '\n');
         break; // the function is done
       } else if (match(".file")) {
-        recordFile();
+        parseFile();
       } else if (match(".loc")) {
         recordLoc();
       } else if (peek(".L") && strchr(s, ':') < strchr(s, '\n')) {
