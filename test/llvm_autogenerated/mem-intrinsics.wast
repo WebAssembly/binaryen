@@ -10,9 +10,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "copy_yes" (func $copy_yes))
  (export "copy_no" (func $copy_no))
  (export "move_yes" (func $move_yes))
@@ -22,6 +19,9 @@
  (export "frame_index" (func $frame_index))
  (export "drop_result" (func $drop_result))
  (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $copy_yes (; 5 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy

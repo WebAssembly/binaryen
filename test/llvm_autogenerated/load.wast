@@ -2,13 +2,13 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "ldi32" (func $ldi32))
  (export "ldi64" (func $ldi64))
  (export "ldf32" (func $ldf32))
  (export "ldf64" (func $ldf64))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $ldi32 (; 0 ;) (param $0 i32) (result i32)
   (return
    (i32.load

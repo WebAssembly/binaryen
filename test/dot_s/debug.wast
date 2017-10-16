@@ -1,10 +1,10 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
+ (export "fib" (func $fib))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "fib" (func $fib))
  (func $fib (; 0 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
