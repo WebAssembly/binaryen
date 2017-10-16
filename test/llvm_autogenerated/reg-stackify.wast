@@ -21,9 +21,6 @@
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (data (i32.const 12) "\00\00\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "no0" (func $no0))
  (export "no1" (func $no1))
  (export "yes0" (func $yes0))
@@ -49,6 +46,9 @@
  (export "stackify_indvar" (func $stackify_indvar))
  (export "stackpointer_dependency" (func $stackpointer_dependency))
  (export "call_indirect_stackify" (func $call_indirect_stackify))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $no0 (param $0 i32) (param $1 i32) (result i32)
   (set_local $1
    (i32.load

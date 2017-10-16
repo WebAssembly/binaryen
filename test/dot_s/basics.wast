@@ -9,10 +9,10 @@
  (data (i32.const 16) "hello, world!\n\00")
  (data (i32.const 32) "vcq")
  (data (i32.const 48) "\16\00\00\00")
+ (export "main" (func $main))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "main" (func $main))
  (export "dynCall_iii" (func $dynCall_iii))
  (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
   (call $puts
@@ -97,6 +97,9 @@
   )
   (get_local $0)
  )
+ (func $__wasm_nullptr (type $FUNCSIG$v)
+  (unreachable)
+ )
  (func $stackSave (result i32)
   (i32.load offset=4
    (i32.const 0)
@@ -126,9 +129,6 @@
    (i32.const 0)
    (get_local $0)
   )
- )
- (func $__wasm_nullptr (type $FUNCSIG$v)
-  (unreachable)
  )
  (func $dynCall_iii (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect $FUNCSIG$iii

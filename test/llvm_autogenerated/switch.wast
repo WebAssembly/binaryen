@@ -9,11 +9,11 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
+ (export "bar32" (func $bar32))
+ (export "bar64" (func $bar64))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "bar32" (func $bar32))
- (export "bar64" (func $bar64))
  (func $bar32 (param $0 i32)
   (block $label$0
    (br_if $label$0

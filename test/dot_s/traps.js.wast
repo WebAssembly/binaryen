@@ -3,10 +3,10 @@
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
+ (export "test_traps" (func $test_traps))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "test_traps" (func $test_traps))
  (func $test_traps (param $0 f32) (param $1 f64) (result i32)
   (call $i32u-div
    (call $f64-to-int

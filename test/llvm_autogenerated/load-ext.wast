@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "sext_i8_i32" (func $sext_i8_i32))
  (export "zext_i8_i32" (func $zext_i8_i32))
  (export "sext_i16_i32" (func $sext_i16_i32))
@@ -15,6 +12,9 @@
  (export "zext_i16_i64" (func $zext_i16_i64))
  (export "sext_i32_i64" (func $sext_i32_i64))
  (export "zext_i32_i64" (func $zext_i32_i64))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $sext_i8_i32 (param $0 i32) (result i32)
   (return
    (i32.load8_s

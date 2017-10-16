@@ -4,10 +4,10 @@
  (import "env" "emscripten_asm_const_v" (func $emscripten_asm_const_v (param i32)))
  (table 0 anyfunc)
  (data (i32.const 16) "{ Module.print(\"hello, world! \" + HEAP32[8>>2]); }\00")
+ (export "main" (func $main))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "main" (func $main))
  (func $_Z6reporti (param $0 i32)
   (i32.store
    (i32.const 8)

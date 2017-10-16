@@ -4,9 +4,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "fadd64" (func $fadd64))
  (export "fsub64" (func $fsub64))
  (export "fmul64" (func $fmul64))
@@ -23,6 +20,9 @@
  (export "fmin64" (func $fmin64))
  (export "fmax64" (func $fmax64))
  (export "fma64" (func $fma64))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $fadd64 (param $0 f64) (param $1 f64) (result f64)
   (return
    (f64.add

@@ -2,10 +2,10 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\90\04\00\00")
+ (export "main" (func $main))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "main" (func $main))
  (func $main (result i32)
   (local $0 i32)
   (set_local $0

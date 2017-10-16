@@ -2,13 +2,13 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "z2s_func" (func $z2s_func))
  (export "s2z_func" (func $s2z_func))
  (export "z2s_call" (func $z2s_call))
  (export "s2z_call" (func $s2z_call))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $z2s_func (param $0 i32) (result i32)
   (return
    (i32.shr_s

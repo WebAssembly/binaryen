@@ -1,12 +1,15 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
+ (export "main" (func $main))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "main" (func $main))
  (start $_start)
  (func $main
+ )
+ (func $_start
+  (call $main)
  )
  (func $stackSave (result i32)
   (i32.load offset=4
@@ -37,9 +40,6 @@
    (i32.const 0)
    (get_local $0)
   )
- )
- (func $_start
-  (call $main)
  )
 )
 ;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }

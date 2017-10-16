@@ -2,15 +2,15 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "load_u_i1_i32" (func $load_u_i1_i32))
  (export "load_s_i1_i32" (func $load_s_i1_i32))
  (export "load_u_i1_i64" (func $load_u_i1_i64))
  (export "load_s_i1_i64" (func $load_s_i1_i64))
  (export "store_i32_i1" (func $store_i32_i1))
  (export "store_i64_i1" (func $store_i64_i1))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $load_u_i1_i32 (param $0 i32) (result i32)
   (return
    (i32.load8_u
