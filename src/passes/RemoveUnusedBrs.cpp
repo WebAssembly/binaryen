@@ -250,7 +250,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // let's try to move the code going to the top of the loop into the if-else
         if (!iff->ifFalse) {
           // we need the ifTrue to break, so it cannot reach the code we want to move
-          if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
+          if (iff->ifTrue->type == unreachable) {
             iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
             iff->finalize();
             block->finalize();
@@ -288,12 +288,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return block;
           };
 
-          if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifTrue)) {
+          if (iff->ifTrue->type == unreachable) {
             iff->ifFalse = blockifyMerge(iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
-          } else if (ExpressionAnalyzer::obviouslyDoesNotFlowOut(iff->ifFalse)) {
+          } else if (iff->ifFalse->type == unreachable) {
             iff->ifTrue = blockifyMerge(iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
             iff->finalize();
             block->finalize();

@@ -8,6 +8,7 @@
  (type $6 (func (param i32) (result i64)))
  (type $7 (func (result i64)))
  (type $8 (func (result f32)))
+ (type $9 (func (param i32) (result f32)))
  (memory $0 256 256)
  (func $b0-yes (type $0) (param $i1 i32)
   (block $topmost
@@ -483,11 +484,12 @@
   )
   (loop $in45
    (block $out46
-    (if
-     (i32.const 0)
-     (unreachable)
+    (br_if $in45
+     (i32.eqz
+      (i32.const 0)
+     )
     )
-    (br $in45)
+    (unreachable)
    )
   )
   (loop $in48
@@ -1123,18 +1125,35 @@
  )
  (func $unreachable-return-loop-value (type $7) (result i64)
   (loop $loop
-   (br_if $loop
-    (i32.eqz
-     (i32.const 1)
-    )
-   )
-   (block $block
-    (br_if $block
+   (if
+    (i32.const 1)
+    (block $block
+     (br_if $block
+      (br $loop)
+     )
      (br $loop)
     )
-    (br $loop)
+   )
+   (br $loop)
+  )
+ )
+ (func $obviously-flows-out-maybe (type $9) (param $var$0 i32) (result f32)
+  (block $label$1 (result f32)
+   (br $label$1
+    (f32.const 1)
+   )
+   (loop $label$5
+    (if
+     (i32.const 11)
+     (block $label$8
+      (br_if $label$8
+       (unreachable)
+      )
+      (br $label$5)
+     )
+    )
+    (br $label$5)
    )
   )
-  (unreachable)
  )
 )
