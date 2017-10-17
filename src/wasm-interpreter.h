@@ -575,7 +575,7 @@ public:
           switch (load->bytes) {
             case 1: return load->signed_ ? Literal((int32_t)load8s(addr)) : Literal((int32_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int32_t)load16s(addr)) : Literal((int32_t)load16u(addr));
-            case 4: return load->signed_ ? Literal((int32_t)load32s(addr)) : Literal((int32_t)load32u(addr));
+            case 4: return Literal((int32_t)load32s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
@@ -585,7 +585,7 @@ public:
             case 1: return load->signed_ ? Literal((int64_t)load8s(addr)) : Literal((int64_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int64_t)load16s(addr)) : Literal((int64_t)load16u(addr));
             case 4: return load->signed_ ? Literal((int64_t)load32s(addr)) : Literal((int64_t)load32u(addr));
-            case 8: return load->signed_ ? Literal((int64_t)load64s(addr)) : Literal((int64_t)load64u(addr));
+            case 8: return Literal((int64_t)load64s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
