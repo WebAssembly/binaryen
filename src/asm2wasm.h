@@ -32,6 +32,7 @@
 #include "pass.h"
 #include "parsing.h"
 #include "ast_utils.h"
+#include "ast/bits.h"
 #include "ast/branch-utils.h"
 #include "ast/literal-utils.h"
 #include "ast/trapping.h"
@@ -1884,7 +1885,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           View& view = views[heap];
           wasm.memory.shared = true;
           if (name == Atomics_load) {
-            return builder.makeAtomicLoad(view.bytes, view.signed_, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
+            Expression* ret = builder.makeAtomicLoad(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
+            if (view.signed_) {
+              // atomic loads are unsigned; add a signing
+              ret = Bits::makeSignExt(ret, view.bytes, wasm);
+            }
+            return ret;
           } else if (name == Atomics_store) {
             // asm.js stores return the value, wasm does not
             auto type = asmToWasmType(view.type);

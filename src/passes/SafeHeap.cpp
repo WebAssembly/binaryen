@@ -25,6 +25,7 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
+#include "ast/bits.h"
 #include "ast/import-utils.h"
 
 namespace wasm {
@@ -229,7 +230,13 @@ struct SafeHeap : public Pass {
     auto* load = module->allocator.alloc<Load>();
     *load = style; // basically the same as the template we are given!
     load->ptr = builder.makeGetLocal(2, i32);
-    block->list.push_back(load);
+    Expression* last = load;
+    if (load->isAtomic && load->signed_) {
+      // atomic loads cannot be signed, manually sign it
+      last = Bits::makeSignExt(load, load->bytes, *module);
+      load->signed_ = false;
+    }
+    block->list.push_back(last);
     block->finalize(style.type);
     func->body = block;
     module->addFunction(func);

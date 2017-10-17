@@ -97,7 +97,7 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     }
     Expression* visitLoad(Load *curr) {
       if (curr->isAtomic) {
-        return builder.makeAtomicLoad(curr->bytes, curr->signed_, curr->offset,
+        return builder.makeAtomicLoad(curr->bytes, curr->offset,
                                       copy(curr->ptr), curr->type);
       }
       return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
