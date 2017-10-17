@@ -32,11 +32,10 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 
-//#define WASM_INTERPRETER_DEBUG 1
 
-//#ifdef WASM_INTERPRETER_DEBUG
+#ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
-//#endif
+#endif
 
 
 namespace wasm {
