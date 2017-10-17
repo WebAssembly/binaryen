@@ -192,6 +192,7 @@ public:
     auto* ret = allocator.alloc<SetGlobal>();
     ret->name = name;
     ret->value = value;
+    ret->finalize();
     return ret;
   }
   Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
@@ -442,6 +443,21 @@ public:
     return makeConst(value);
   }
 
+  // Module-level helpers
+
+  enum Mutability {
+    Mutable,
+    Immutable
+  };
+
+  static Global* makeGlobal(Name name, WasmType type, Expression* init, Mutability mutable_) {
+    auto* glob = new Global;
+    glob->name = name;
+    glob->type = type;
+    glob->init = init;
+    glob->mutable_ = mutable_ == Mutable;
+    return glob;
+  }
 };
 
 } // namespace wasm

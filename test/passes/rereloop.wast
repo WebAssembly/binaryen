@@ -197,4 +197,25 @@
   )
  )
 )
+(module
+ (global $global$0 (mut i32) (i32.const 1))
+ (export "one" (func $0))
+ (export "two" (func $1))
+ (func $0
+  (block $outer
+   (block
+    (br_if $outer ;; taken - do not modify the global, stay it at 1
+     (i32.const 1)
+    )
+    (set_global $global$0 ;; never get here!
+     (i32.const 0)
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $1 (result i32)
+  (return (get_global $global$0))
+ )
+)
 

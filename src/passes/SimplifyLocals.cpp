@@ -47,6 +47,7 @@
 #include <pass.h>
 #include <ast/count.h>
 #include <ast/effects.h>
+#include <ast/find_all.h>
 #include <ast/manipulation.h>
 
 namespace wasm {
@@ -327,6 +328,51 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       }
     }
     if (!found) return;
+    // If one of our brs is a br_if, then we will give it a value. since
+    // the value executes before the condition, it is dangerous if we are
+    // moving code out of the condition,
+    //  (br_if
+    //   (block
+    //    ..use $x..
+    //    (set_local $x ..)
+    //   )
+    //  )
+    // =>
+    //  (br_if
+    //   (tee_local $x ..) ;; this now affects the use!
+    //   (block
+    //    ..use $x..
+    //   )
+    //  )
+    // so we must check for that.
+    for (size_t j = 0; j < breaks.size(); j++) {
+      // move break set_local's value to the break
+      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* brp = breaks[j].brp;
+      auto* br = (*brp)->cast<Break>();
+      auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
+      if (br->condition) {
+        // TODO: optimize
+        FindAll<SetLocal> findAll(br->condition);
+        for (auto* otherSet : findAll.list) {
+          if (otherSet == set) {
+            // the set is indeed in the condition, so we can't just move it
+            // but maybe there are no effects? see if, ignoring the set
+            // itself, there is any risk
+            Nop nop;
+            *breakSetLocalPointer = &nop;
+            EffectAnalyzer condition(getPassOptions(), br->condition);
+            EffectAnalyzer value(getPassOptions(), set);
+            *breakSetLocalPointer = set;
+            if (condition.invalidates(value)) {
+              // indeed, we can't do this, stop
+              return;
+            }
+            break; // we found set in the list, can stop now
+          }
+        }
+      }
+    }
     // Great, this local is set in them all, we can optimize!
     if (block->list.size() == 0 || !block->list.back()->is<Nop>()) {
       // We can't do this here, since we can't push to the block -

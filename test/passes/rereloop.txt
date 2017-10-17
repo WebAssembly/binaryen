@@ -8,6 +8,7 @@
   (local $0 i32)
   (block
    (nop)
+   (return)
   )
  )
  (func $trivial2 (type $0)
@@ -15,6 +16,7 @@
   (block
    (call $trivial)
    (call $trivial)
+   (return)
   )
  )
  (func $return-void (type $0)
@@ -161,6 +163,7 @@
       )
       (block
        (block
+        (return)
        )
       )
      )
@@ -182,6 +185,7 @@
   )
   (block
    (block
+    (return)
    )
   )
  )
@@ -206,6 +210,7 @@
      )
      (block
       (block
+       (return)
       )
      )
     )
@@ -254,6 +259,7 @@
    )
    (block
     (block
+     (return)
     )
    )
   )
@@ -509,6 +515,7 @@
                   (call $before-and-after
                    (i32.const 25)
                   )
+                  (return)
                  )
                 )
                )
@@ -598,6 +605,7 @@
     )
     (block
      (block
+      (return)
      )
     )
    )
@@ -634,6 +642,7 @@
   )
   (block
    (block
+    (return)
    )
   )
  )
@@ -697,6 +706,7 @@
     (call $if-br-wat
      (i32.const 3)
     )
+    (return)
    )
   )
  )
@@ -740,6 +750,55 @@
       )
      )
     )
+   )
+  )
+ )
+)
+(module
+ (type $0 (func))
+ (type $1 (func (result i32)))
+ (global $global$0 (mut i32) (i32.const 1))
+ (memory $0 0)
+ (export "one" (func $0))
+ (export "two" (func $1))
+ (func $0 (type $0)
+  (local $0 i32)
+  (block $block$4$break
+   (block
+   )
+   (if
+    (i32.const 1)
+    (block
+     (block
+      (return)
+     )
+    )
+    (br $block$4$break)
+   )
+  )
+  (block
+   (block $block$3$break
+    (block
+     (set_global $global$0
+      (i32.const 0)
+     )
+    )
+    (block
+     (br $block$3$break)
+    )
+   )
+   (block
+    (block
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $1 (type $1) (result i32)
+  (local $0 i32)
+  (block
+   (return
+    (get_global $global$0)
    )
   )
  )

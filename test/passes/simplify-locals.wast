@@ -940,4 +940,51 @@
     (drop (i32.atomic.load (i32.const 1028)))
     (drop (get_local $x))
   )
+  (func $br-value-reordering (result i32)
+   (local $temp i32)
+   (block $outside
+    (loop $loop ;; we should exit this loop, hit the unreachable outside
+     ;; loop logic
+     (br_if $outside ;; we should not create a block value that adds a value to a br, if the value&condition of the br cannot be reordered,
+                     ;; as the value comes first
+      (block (result i32)
+       (br_if $loop
+        (get_local $temp) ;; false, don't loop
+       )
+       (unreachable) ;; the end
+       (set_local $temp
+        (i32.const -1)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (set_local $temp
+     (i32.const -1)
+    )
+   )
+   (unreachable)
+  )
+  (func $br-value-reordering-safe (result i32)
+   (local $temp i32)
+   (block $outside
+    (loop $loop ;; we should exit this loop, hit the unreachable outside
+     ;; loop logic
+     (drop (get_local $temp)) ;; different from above - add a use here
+     (br_if $outside ;; we should not create a block value that adds a value to a br, if the value&condition of the br cannot be reordered,
+                     ;; as the value comes first
+      (block (result i32)
+       (set_local $temp ;; the use *is* in the condition, but it's ok, no conflicts
+        (i32.const -1)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (set_local $temp
+     (i32.const -1)
+    )
+   )
+   (unreachable)
+  )
 )

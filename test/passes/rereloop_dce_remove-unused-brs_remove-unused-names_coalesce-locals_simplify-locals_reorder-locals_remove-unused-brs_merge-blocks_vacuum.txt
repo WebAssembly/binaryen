@@ -68,8 +68,11 @@
    (i32.eqz
     (get_local $0)
    )
-   (call $unreachable
-    (i32.const 5)
+   (block
+    (call $unreachable
+     (i32.const 5)
+    )
+    (return)
    )
   )
   (if

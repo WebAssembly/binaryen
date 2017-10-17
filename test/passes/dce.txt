@@ -444,27 +444,18 @@
   )
  )
  (func $replace-with-unreachable-affects-parent (type $5) (param $var$0 f32) (param $var$1 i64)
-  (block $top
-   (drop
-    (f32.load offset=4
-     (block (result i32)
-      (drop
-       (i64.const 0)
-      )
-      (if
-       (block $block (result i32)
-        (call $replace-with-unreachable-affects-parent
-         (f32.const 1)
-         (i64.const -15917430362925035)
-        )
-        (i32.const 1)
-       )
-       (unreachable)
-       (unreachable)
-      )
-     )
+  (drop
+   (i64.const 0)
+  )
+  (if
+   (block $block (result i32)
+    (call $replace-with-unreachable-affects-parent
+     (f32.const 1)
+     (i64.const -15917430362925035)
     )
+    (i32.const 1)
    )
+   (unreachable)
    (unreachable)
   )
  )
@@ -486,5 +477,29 @@
  )
  (func $helper (type $6) (param $var$0 f32) (param $var$1 i64) (result i32)
   (i32.const 0)
+ )
+)
+(module
+ (type $0 (func))
+ (global $global (mut f64) (f64.const 0))
+ (memory $0 0)
+ (func $0 (type $0)
+  (if
+   (i32.const 0)
+   (unreachable)
+   (unreachable)
+  )
+ )
+)
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $0 (type $0)
+  (local $local f64)
+  (if
+   (i32.const 0)
+   (unreachable)
+   (unreachable)
+  )
  )
 )

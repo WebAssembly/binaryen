@@ -216,7 +216,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
       replaceCurrent(curr->condition);
     }
     // the if may have had a type, but can now be unreachable, which allows more reduction outside
-    curr->finalize();
+    typeUpdater.maybeUpdateTypeToUnreachable(curr);
   }
 
   static void scan(DeadCodeElimination* self, Expression** currp) {
@@ -352,6 +352,10 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitSetLocal(SetLocal* curr) {
+    blockifyReachableOperands({ curr->value }, curr->type);
+  }
+
+  void visitSetGlobal(SetGlobal* curr) {
     blockifyReachableOperands({ curr->value }, curr->type);
   }
 

@@ -141,6 +141,7 @@ private:
   void build() {
     setupMemory();
     setupTable();
+    setupGlobals();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       addFunction();
@@ -172,6 +173,25 @@ private:
     wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
   }
 
+  std::map<WasmType, std::vector<Name>> globalsByType;
+
+  void setupGlobals() {
+    size_t index = 0;
+    for (auto type : { i32, i64, f32, f64 }) {
+      auto num = upTo(3);
+      for (size_t i = 0; i < num; i++) {
+        auto* glob = builder.makeGlobal(
+          std::string("global$") + std::to_string(index++),
+          type,
+          makeConst(type),
+          Builder::Mutable
+        );
+        wasm.addGlobal(glob);
+        globalsByType[type].push_back(glob->name);
+      }
+    }
+  }
+
   void finalizeTable() {
     wasm.table.initial = wasm.table.segments[0].data.size();
     wasm.table.max = oneIn(2) ? Address(Table::kMaxSize) : wasm.table.initial;
@@ -180,11 +200,12 @@ private:
   const Name HANG_LIMIT_GLOBAL = "hangLimit";
 
   void addHangLimitSupport() {
-    auto* glob = new Global;
-    glob->name = HANG_LIMIT_GLOBAL;
-    glob->type = i32;
-    glob->init = builder.makeConst(Literal(int32_t(HANG_LIMIT)));
-    glob->mutable_ = true;
+    auto* glob = builder.makeGlobal(
+      HANG_LIMIT_GLOBAL,
+      i32,
+      builder.makeConst(Literal(int32_t(HANG_LIMIT))),
+      Builder::Mutable
+    );
     wasm.addGlobal(glob);
 
     auto* func = new Function;
@@ -370,7 +391,7 @@ private:
   }
 
   Expression* _makeConcrete(WasmType type) {
-    switch (upTo(14)) {
+    switch (upTo(15)) {
       case 0: return makeBlock(type);
       case 1: return makeIf(type);
       case 2: return makeLoop(type);
@@ -384,13 +405,14 @@ private:
       case 10: return makeUnary(type);
       case 11: return makeBinary(type);
       case 12: return makeSelect(type);
-      case 13: return makeAtomic(type);
+      case 13: return makeGetGlobal(type);
+      case 14: return makeAtomic(type);
     }
     WASM_UNREACHABLE();
   }
 
   Expression* _makenone() {
-    switch (upTo(10)) {
+    switch (upTo(11)) {
       case 0: return makeBlock(none);
       case 1: return makeIf(none);
       case 2: return makeLoop(none);
@@ -401,6 +423,7 @@ private:
       case 7: return makeStore(none);
       case 8: return makeDrop(none);
       case 9: return makeNop(none);
+      case 10: return makeSetGlobal(none);
     }
     WASM_UNREACHABLE();
   }
@@ -709,6 +732,21 @@ private:
     } else {
       return builder.makeSetLocal(vectorPick(locals), value);
     }
+  }
+
+  Expression* makeGetGlobal(WasmType type) {
+    auto& globals = globalsByType[type];
+    if (globals.empty()) return makeConst(type);
+    return builder.makeGetGlobal(vectorPick(globals), type);
+  }
+
+  Expression* makeSetGlobal(WasmType type) {
+    assert(type == none);
+    type = getConcreteType();
+    auto& globals = globalsByType[type];
+    if (globals.empty()) return makeTrivial(none);
+    auto* value = make(type);
+    return builder.makeSetGlobal(vectorPick(globals), value);
   }
 
   Expression* makePointer() {

@@ -1,6 +1,8 @@
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
+ (type $2 (func (result i32)))
+ (global $global$0 (mut i32) (i32.const 1))
  (memory $0 0)
  (func $basics (type $0) (param $x i32)
   (local $y i32)
@@ -689,6 +691,40 @@
    (drop
     (get_local $5)
    )
+  )
+ )
+ (func $func_6 (type $2) (result i32)
+  (local $result i32)
+  (local $zero i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (loop $label$1
+   (if
+    (i32.eqz
+     (get_global $global$0)
+    )
+    (return
+     (get_local $4)
+    )
+   )
+   (set_global $global$0
+    (i32.const 0)
+   )
+   (set_local $2
+    (tee_local $4
+     (i32.const 1)
+    )
+   )
+   (br_if $label$1
+    (i32.const 0)
+   )
+   (set_local $3
+    (tee_local $4
+     (i32.const 0)
+    )
+   )
+   (br $label$1)
   )
  )
 )

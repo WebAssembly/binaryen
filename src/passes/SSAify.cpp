@@ -60,7 +60,7 @@ struct SSAify : public Pass {
     LocalGraph graph(func, module);
     // create new local indexes, one for each set
     createNewIndexes(graph);
-    // we now know the sets for each get
+    // we now know the sets for each get, and can compute get indexes and handle phis
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
@@ -75,7 +75,6 @@ struct SSAify : public Pass {
     }
   }
 
-  // After we traversed it all, we can compute gets and phis
   void computeGetsAndPhis(LocalGraph& graph) {
     for (auto& iter : graph.getSetses) {
       auto* get = iter.first;
@@ -84,8 +83,7 @@ struct SSAify : public Pass {
         continue; // unreachable, ignore
       }
       if (sets.size() == 1) {
-        // TODO: add tests for this case
-        // easy, just one set, use it's index
+        // easy, just one set, use its index
         auto* set = *sets.begin();
         if (set) {
           get->index = set->index;
@@ -138,10 +136,18 @@ struct SSAify : public Pass {
         for (auto* set : sets) {
           if (set) {
             // a set exists, just add a tee of its value
-            set->value = builder.makeTeeLocal(
+            auto* value = set->value;
+            auto* tee = builder.makeTeeLocal(
               new_,
-              set->value
+              value
             );
+            set->value = tee;
+            // the value may have been something we tracked the location
+            // of. if so, update that, since we moved it into the tee
+            if (graph.locations.count(value) > 0) {
+              assert(graph.locations[value] == &set->value);
+              graph.locations[value] = &tee->value;
+            }
           } else {
             // this is a param or the zero init value.
             if (func->isParam(old)) {

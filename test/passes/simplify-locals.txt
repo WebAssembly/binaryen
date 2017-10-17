@@ -1024,4 +1024,53 @@
    (get_local $x)
   )
  )
+ (func $br-value-reordering (type $FUNCSIG$i) (result i32)
+  (local $temp i32)
+  (block $outside
+   (loop $loop
+    (br_if $outside
+     (block $block (result i32)
+      (br_if $loop
+       (get_local $temp)
+      )
+      (unreachable)
+      (set_local $temp
+       (i32.const -1)
+      )
+      (i32.const 0)
+     )
+    )
+   )
+   (set_local $temp
+    (i32.const -1)
+   )
+  )
+  (unreachable)
+ )
+ (func $br-value-reordering-safe (type $FUNCSIG$i) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (block $outside (result i32)
+    (loop $loop
+     (drop
+      (get_local $temp)
+     )
+     (drop
+      (br_if $outside
+       (tee_local $temp
+        (i32.const -1)
+       )
+       (block $block (result i32)
+        (nop)
+        (i32.const 0)
+       )
+      )
+     )
+    )
+    (nop)
+    (i32.const -1)
+   )
+  )
+  (unreachable)
+ )
 )
