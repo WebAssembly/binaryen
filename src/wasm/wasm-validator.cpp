@@ -487,6 +487,7 @@ void FunctionValidator::visitLoad(Load *curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
+  if (curr->isAtomic) shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
 }
 
 void FunctionValidator::visitStore(Store *curr) {

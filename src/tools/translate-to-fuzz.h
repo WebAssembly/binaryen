@@ -101,6 +101,9 @@ private:
   // cross-VM comparisons harder)
   static const bool DE_NAN = true;
 
+  // Whether to emit atomics
+  static const bool ATOMICS = true;
+
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
@@ -799,10 +802,11 @@ private:
   Expression* makeLoad(WasmType type) {
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
-    if (oneIn(2)) return ret;
+    if (!ATOMICS || oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
+    ret->signed_ = false;
     ret->align = ret->bytes;
     return ret;
   }
@@ -858,7 +862,7 @@ private:
   Store* makeStore(WasmType type) {
     auto* ret = makeNonAtomicStore(type);
     if (ret->value->type != i32 && ret->value->type != i64) return ret;
-    if (oneIn(2)) return ret;
+    if (!ATOMICS || oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
@@ -1109,7 +1113,7 @@ private:
   }
 
   Expression* makeAtomic(WasmType type) {
-    if (type != i32 && type != i64) return makeTrivial(type);
+    if (!ATOMICS || (type != i32 && type != i64)) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (oneIn(2)) {
