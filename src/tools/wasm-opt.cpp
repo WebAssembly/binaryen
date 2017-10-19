@@ -173,8 +173,7 @@ int main(int argc, const char* argv[]) {
 
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner = options.getPassRunner(wasm);
-    passRunner.run();
+    options.runPasses(wasm);
     assert(WasmValidator().validate(wasm));
   }
 
