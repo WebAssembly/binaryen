@@ -97,7 +97,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   if (sizeFieldSize != MaxLEB32Bytes) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
-    std::move(&o[start + MaxLEB32Bytes], &o[start + MaxLEB32Bytes + size], &o[start + sizeFieldSize]);
+    std::move(&o[start] + MaxLEB32Bytes, &o[start] + MaxLEB32Bytes + size, &o[start] + sizeFieldSize);
     o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
   }
 }
@@ -280,7 +280,7 @@ void WasmBinaryWriter::writeFunctions() {
     if (sizeFieldSize != MaxLEB32Bytes) {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
-      std::move(&o[start], &o[start + size], &o[sizePos + sizeFieldSize]);
+      std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
       o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
   }
