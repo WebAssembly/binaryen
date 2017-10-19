@@ -75,7 +75,10 @@ struct PassRunner {
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
   PassRunner(Module* wasm, PassOptions options) : wasm(wasm), allocator(&wasm->allocator), options(options) {}
-  PassRunner(const PassRunner& that) = delete; // no copy constructor, we control |passes|
+
+  // no copying, we control |passes|
+  PassRunner(const PassRunner&) = delete;
+  PassRunner& operator=(const PassRunner&) = delete;
 
   void setDebug(bool debug_) {
     options.debug = debug_;
