@@ -23,7 +23,7 @@
  (export "fmin64" (func $fmin64))
  (export "fmax64" (func $fmax64))
  (export "fma64" (func $fma64))
- (func $fadd64 (param $0 f64) (param $1 f64) (result f64)
+ (func $fadd64 (param $0 f64) (param $1 f64) (result f64) ;; 0
   (return
    (f64.add
     (get_local $0)
@@ -31,7 +31,7 @@
    )
   )
  )
- (func $fsub64 (param $0 f64) (param $1 f64) (result f64)
+ (func $fsub64 (param $0 f64) (param $1 f64) (result f64) ;; 1
   (return
    (f64.sub
     (get_local $0)
@@ -39,7 +39,7 @@
    )
   )
  )
- (func $fmul64 (param $0 f64) (param $1 f64) (result f64)
+ (func $fmul64 (param $0 f64) (param $1 f64) (result f64) ;; 2
   (return
    (f64.mul
     (get_local $0)
@@ -47,7 +47,7 @@
    )
   )
  )
- (func $fdiv64 (param $0 f64) (param $1 f64) (result f64)
+ (func $fdiv64 (param $0 f64) (param $1 f64) (result f64) ;; 3
   (return
    (f64.div
     (get_local $0)
@@ -55,21 +55,21 @@
    )
   )
  )
- (func $fabs64 (param $0 f64) (result f64)
+ (func $fabs64 (param $0 f64) (result f64) ;; 4
   (return
    (f64.abs
     (get_local $0)
    )
   )
  )
- (func $fneg64 (param $0 f64) (result f64)
+ (func $fneg64 (param $0 f64) (result f64) ;; 5
   (return
    (f64.neg
     (get_local $0)
    )
   )
  )
- (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
+ (func $copysign64 (param $0 f64) (param $1 f64) (result f64) ;; 6
   (return
    (f64.copysign
     (get_local $0)
@@ -77,49 +77,49 @@
    )
   )
  )
- (func $sqrt64 (param $0 f64) (result f64)
+ (func $sqrt64 (param $0 f64) (result f64) ;; 7
   (return
    (f64.sqrt
     (get_local $0)
    )
   )
  )
- (func $ceil64 (param $0 f64) (result f64)
+ (func $ceil64 (param $0 f64) (result f64) ;; 8
   (return
    (f64.ceil
     (get_local $0)
    )
   )
  )
- (func $floor64 (param $0 f64) (result f64)
+ (func $floor64 (param $0 f64) (result f64) ;; 9
   (return
    (f64.floor
     (get_local $0)
    )
   )
  )
- (func $trunc64 (param $0 f64) (result f64)
+ (func $trunc64 (param $0 f64) (result f64) ;; 10
   (return
    (f64.trunc
     (get_local $0)
    )
   )
  )
- (func $nearest64 (param $0 f64) (result f64)
+ (func $nearest64 (param $0 f64) (result f64) ;; 11
   (return
    (f64.nearest
     (get_local $0)
    )
   )
  )
- (func $nearest64_via_rint (param $0 f64) (result f64)
+ (func $nearest64_via_rint (param $0 f64) (result f64) ;; 12
   (return
    (f64.nearest
     (get_local $0)
    )
   )
  )
- (func $fmin64 (param $0 f64) (result f64)
+ (func $fmin64 (param $0 f64) (result f64) ;; 13
   (return
    (f64.min
     (get_local $0)
@@ -127,7 +127,7 @@
    )
   )
  )
- (func $fmax64 (param $0 f64) (result f64)
+ (func $fmax64 (param $0 f64) (result f64) ;; 14
   (return
    (f64.max
     (get_local $0)
@@ -135,7 +135,7 @@
    )
   )
  )
- (func $fma64 (param $0 f64) (param $1 f64) (param $2 f64) (result f64)
+ (func $fma64 (param $0 f64) (param $1 f64) (param $2 f64) (result f64) ;; 15
   (return
    (call $fma
     (get_local $0)
@@ -144,12 +144,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 16
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 17
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -168,7 +168,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 18
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

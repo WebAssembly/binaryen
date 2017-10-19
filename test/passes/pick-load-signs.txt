@@ -2,7 +2,7 @@
  (type $0 (func))
  (type $1 (func (result i32)))
  (memory $0 0)
- (func $a (type $0)
+ (func $a (type $0) ;; 0
   (local $y i32)
   (set_local $y
    (i32.load8_u
@@ -16,7 +16,7 @@
    )
   )
  )
- (func $b (type $0)
+ (func $b (type $0) ;; 1
   (local $y i32)
   (set_local $y
    (i32.load16_u
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $c (type $0)
+ (func $c (type $0) ;; 2
   (local $y i32)
   (set_local $y
    (i32.load8_u
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $d (type $0)
+ (func $d (type $0) ;; 3
   (local $y i32)
   (set_local $y
    (i32.load16_u
@@ -58,7 +58,7 @@
    )
   )
  )
- (func $one-of-each (type $0)
+ (func $one-of-each (type $0) ;; 4
   (local $y i32)
   (set_local $y
    (i32.load8_s
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $more-of-one (type $0)
+ (func $more-of-one (type $0) ;; 5
   (local $y i32)
   (set_local $y
    (i32.load8_s
@@ -110,7 +110,7 @@
    )
   )
  )
- (func $many-more-of-one (type $0)
+ (func $many-more-of-one (type $0) ;; 6
   (local $y i32)
   (set_local $y
    (i32.load8_u
@@ -145,7 +145,7 @@
    )
   )
  )
- (func $a-sign (type $0)
+ (func $a-sign (type $0) ;; 7
   (local $y i32)
   (set_local $y
    (i32.load8_s
@@ -162,7 +162,7 @@
    )
   )
  )
- (func $multivar (type $0)
+ (func $multivar (type $0) ;; 8
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -191,7 +191,7 @@
    )
   )
  )
- (func $corners (type $0)
+ (func $corners (type $0) ;; 9
   (local $y i32)
   (drop
    (i32.load8_s
@@ -207,7 +207,7 @@
    (i32.const 1024)
   )
  )
- (func $wrong-size (type $0)
+ (func $wrong-size (type $0) ;; 10
   (local $y i32)
   (set_local $y
    (i32.load8_s
@@ -221,7 +221,7 @@
    )
   )
  )
- (func $wrong-size_s (type $0)
+ (func $wrong-size_s (type $0) ;; 11
   (local $y i32)
   (set_local $y
    (i32.load8_u
@@ -238,7 +238,7 @@
    )
   )
  )
- (func $non-sign-or-unsigned-use (type $0)
+ (func $non-sign-or-unsigned-use (type $0) ;; 12
   (local $y i32)
   (set_local $y
    (i32.load8_s
@@ -255,12 +255,12 @@
    (get_local $y)
   )
  )
- (func $toplevel-load (type $1) (result i32)
+ (func $toplevel-load (type $1) (result i32) ;; 13
   (i32.load8_s
    (i32.const 1024)
   )
  )
- (func $tees (type $0)
+ (func $tees (type $0) ;; 14
   (local $y i32)
   (drop
    (tee_local $y

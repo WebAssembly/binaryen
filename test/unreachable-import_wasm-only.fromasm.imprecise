@@ -4,7 +4,7 @@
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
- (func $__ZN10WasmAssertC2Ev__async_cb (param $0 i32)
+ (func $__ZN10WasmAssertC2Ev__async_cb (param $0 i32) ;; 0
   (i32.store
    (i32.const 12)
    (i32.const 26)

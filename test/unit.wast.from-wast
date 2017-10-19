@@ -17,7 +17,7 @@
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (export "big_negative" (func $big_negative))
- (func $big_negative (type $FUNCSIG$v)
+ (func $big_negative (type $FUNCSIG$v) ;; 0
   (local $temp f64)
   (block $block0
    (set_local $temp
@@ -37,7 +37,7 @@
    )
   )
  )
- (func $importedDoubles (type $4) (result f64)
+ (func $importedDoubles (type $4) (result f64) ;; 1
   (local $temp f64)
   (block $topmost (result f64)
    (set_local $temp
@@ -89,7 +89,7 @@
    (f64.const 1.2)
   )
  )
- (func $doubleCompares (type $FUNCSIG$ddd) (param $x f64) (param $y f64) (result f64)
+ (func $doubleCompares (type $FUNCSIG$ddd) (param $x f64) (param $y f64) (result f64) ;; 2
   (local $t f64)
   (local $Int f64)
   (local $Double i32)
@@ -133,14 +133,14 @@
    (get_local $y)
   )
  )
- (func $intOps (type $5) (result i32)
+ (func $intOps (type $5) (result i32) ;; 3
   (local $x i32)
   (i32.eq
    (get_local $x)
    (i32.const 0)
   )
  )
- (func $hexLiterals (type $FUNCSIG$v)
+ (func $hexLiterals (type $FUNCSIG$v) ;; 4
   (drop
    (i32.add
     (i32.add
@@ -151,7 +151,7 @@
    )
   )
  )
- (func $conversions (type $FUNCSIG$v)
+ (func $conversions (type $FUNCSIG$v) ;; 5
   (local $i i32)
   (local $d f64)
   (block $block0
@@ -175,7 +175,7 @@
    )
   )
  )
- (func $seq (type $FUNCSIG$v)
+ (func $seq (type $FUNCSIG$v) ;; 6
   (local $J f64)
   (set_local $J
    (f64.sub
@@ -194,7 +194,7 @@
    )
   )
  )
- (func $switcher (type $6) (param $x i32) (result i32)
+ (func $switcher (type $6) (param $x i32) (result i32) ;; 7
   (block $topmost (result i32)
    (block $switch$0
     (block $switch-default$3
@@ -280,18 +280,18 @@
    (i32.const 0)
   )
  )
- (func $blocker (type $FUNCSIG$v)
+ (func $blocker (type $FUNCSIG$v) ;; 8
   (block $label$break$L
    (br $label$break$L)
   )
  )
- (func $frem (type $4) (result f64)
+ (func $frem (type $4) (result f64) ;; 9
   (call $f64-rem
    (f64.const 5.5)
    (f64.const 1.2)
   )
  )
- (func $big_uint_div_u (type $5) (result i32)
+ (func $big_uint_div_u (type $5) (result i32) ;; 10
   (local $x i32)
   (block $topmost (result i32)
    (set_local $x
@@ -306,7 +306,7 @@
    (get_local $x)
   )
  )
- (func $fr (type $FUNCSIG$vf) (param $x f32)
+ (func $fr (type $FUNCSIG$vf) (param $x f32) ;; 11
   (local $y f32)
   (local $z f64)
   (block $block0
@@ -332,10 +332,10 @@
    )
   )
  )
- (func $negZero (type $4) (result f64)
+ (func $negZero (type $4) (result f64) ;; 12
   (f64.const -0)
  )
- (func $abs (type $FUNCSIG$v)
+ (func $abs (type $FUNCSIG$v) ;; 13
   (local $x i32)
   (local $y f64)
   (local $z f32)
@@ -371,7 +371,7 @@
    )
   )
  )
- (func $neg (type $FUNCSIG$v)
+ (func $neg (type $FUNCSIG$v) ;; 14
   (local $x f32)
   (block $block0
    (set_local $x
@@ -391,7 +391,7 @@
    )
   )
  )
- (func $cneg (type $FUNCSIG$vf) (param $x f32)
+ (func $cneg (type $FUNCSIG$vf) (param $x f32) ;; 15
   (call_indirect $FUNCSIG$vf
    (get_local $x)
    (i32.add
@@ -403,7 +403,7 @@
    )
   )
  )
- (func $___syscall_ret (type $FUNCSIG$v)
+ (func $___syscall_ret (type $FUNCSIG$v) ;; 16
   (local $$0 i32)
   (drop
    (i32.gt_u
@@ -415,13 +415,13 @@
    )
   )
  )
- (func $z (type $FUNCSIG$v)
+ (func $z (type $FUNCSIG$v) ;; 17
   (nop)
  )
- (func $w (type $FUNCSIG$v)
+ (func $w (type $FUNCSIG$v) ;; 18
   (nop)
  )
- (func $block_and_after (type $5) (result i32)
+ (func $block_and_after (type $5) (result i32) ;; 19
   (block $waka
    (drop
     (i32.const 1)
@@ -430,7 +430,7 @@
   )
   (i32.const 0)
  )
- (func $loop-roundtrip (type $7) (param $0 f64) (result f64)
+ (func $loop-roundtrip (type $7) (param $0 f64) (result f64) ;; 20
   (loop $loop-in1 (result f64)
    (drop
     (get_local $0)
@@ -438,21 +438,21 @@
    (get_local $0)
   )
  )
- (func $big-i64 (type $8) (result i64)
+ (func $big-i64 (type $8) (result i64) ;; 21
   (i64.const -9218868437227405313)
  )
- (func $i64-store32 (type $9) (param $0 i32) (param $1 i64)
+ (func $i64-store32 (type $9) (param $0 i32) (param $1 i64) ;; 22
   (i64.store32
    (get_local $0)
    (get_local $1)
   )
  )
- (func $return-unreachable (type $5) (result i32)
+ (func $return-unreachable (type $5) (result i32) ;; 23
   (return
    (i32.const 1)
   )
  )
- (func $unreachable-block (type $5) (result i32)
+ (func $unreachable-block (type $5) (result i32) ;; 24
   (f64.abs
    (block $block
     (drop
@@ -464,7 +464,7 @@
    )
   )
  )
- (func $unreachable-block-toplevel (type $5) (result i32)
+ (func $unreachable-block-toplevel (type $5) (result i32) ;; 25
   (block $block
    (drop
     (i32.const 1)
@@ -474,7 +474,7 @@
    )
   )
  )
- (func $unreachable-block0 (type $5) (result i32)
+ (func $unreachable-block0 (type $5) (result i32) ;; 26
   (f64.abs
    (block $block
     (return
@@ -483,14 +483,14 @@
    )
   )
  )
- (func $unreachable-block0-toplevel (type $5) (result i32)
+ (func $unreachable-block0-toplevel (type $5) (result i32) ;; 27
   (block $block
    (return
     (i32.const 2)
    )
   )
  )
- (func $unreachable-block-with-br (type $5) (result i32)
+ (func $unreachable-block-with-br (type $5) (result i32) ;; 28
   (block $block
    (drop
     (i32.const 1)
@@ -499,7 +499,7 @@
   )
   (i32.const 1)
  )
- (func $unreachable-if (type $5) (result i32)
+ (func $unreachable-if (type $5) (result i32) ;; 29
   (f64.abs
    (if
     (i32.const 3)
@@ -512,7 +512,7 @@
    )
   )
  )
- (func $unreachable-if-toplevel (type $5) (result i32)
+ (func $unreachable-if-toplevel (type $5) (result i32) ;; 30
   (if
    (i32.const 3)
    (return
@@ -523,7 +523,7 @@
    )
   )
  )
- (func $unreachable-loop (type $5) (result i32)
+ (func $unreachable-loop (type $5) (result i32) ;; 31
   (f64.abs
    (loop $loop-in
     (nop)
@@ -533,7 +533,7 @@
    )
   )
  )
- (func $unreachable-loop0 (type $5) (result i32)
+ (func $unreachable-loop0 (type $5) (result i32) ;; 32
   (f64.abs
    (loop $loop-in
     (return
@@ -542,7 +542,7 @@
    )
   )
  )
- (func $unreachable-loop-toplevel (type $5) (result i32)
+ (func $unreachable-loop-toplevel (type $5) (result i32) ;; 33
   (loop $loop-in
    (nop)
    (return
@@ -550,14 +550,14 @@
    )
   )
  )
- (func $unreachable-loop0-toplevel (type $5) (result i32)
+ (func $unreachable-loop0-toplevel (type $5) (result i32) ;; 34
   (loop $loop-in
    (return
     (i32.const 1)
    )
   )
  )
- (func $unreachable-ifs (type $FUNCSIG$v)
+ (func $unreachable-ifs (type $FUNCSIG$v) ;; 35
   (if
    (unreachable)
    (nop)
@@ -602,7 +602,7 @@
    (unreachable)
   )
  )
- (func $unreachable-if-arm (type $FUNCSIG$v)
+ (func $unreachable-if-arm (type $FUNCSIG$v) ;; 36
   (if
    (i32.const 1)
    (block $block

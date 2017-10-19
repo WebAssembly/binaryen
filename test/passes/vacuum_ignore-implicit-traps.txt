@@ -2,13 +2,13 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (memory $0 0)
- (func $load-would-normally-have-side-effects (type $0) (result i32)
+ (func $load-would-normally-have-side-effects (type $0) (result i32) ;; 0
   (i64.ge_s
    (i64.const 2912825531628789796)
    (i64.const 0)
   )
  )
- (func $unary-binary-may-trap (type $1)
+ (func $unary-binary-may-trap (type $1) ;; 1
   (nop)
  )
 )

@@ -34,38 +34,38 @@
  (export "tail_call_void_nullary" (func $tail_call_void_nullary))
  (export "fastcc_tail_call_void_nullary" (func $fastcc_tail_call_void_nullary))
  (export "coldcc_tail_call_void_nullary" (func $coldcc_tail_call_void_nullary))
- (func $call_i32_nullary (result i32)
+ (func $call_i32_nullary (result i32) ;; 0
   (return
    (call $i32_nullary)
   )
  )
- (func $call_i64_nullary (result i64)
+ (func $call_i64_nullary (result i64) ;; 1
   (return
    (call $i64_nullary)
   )
  )
- (func $call_float_nullary (result f32)
+ (func $call_float_nullary (result f32) ;; 2
   (return
    (call $float_nullary)
   )
  )
- (func $call_double_nullary (result f64)
+ (func $call_double_nullary (result f64) ;; 3
   (return
    (call $double_nullary)
   )
  )
- (func $call_void_nullary
+ (func $call_void_nullary ;; 4
   (call $void_nullary)
   (return)
  )
- (func $call_i32_unary (param $0 i32) (result i32)
+ (func $call_i32_unary (param $0 i32) (result i32) ;; 5
   (return
    (call $i32_unary
     (get_local $0)
    )
   )
  )
- (func $call_i32_binary (param $0 i32) (param $1 i32) (result i32)
+ (func $call_i32_binary (param $0 i32) (param $1 i32) (result i32) ;; 6
   (return
    (call $i32_binary
     (get_local $0)
@@ -73,27 +73,27 @@
    )
   )
  )
- (func $call_indirect_void (param $0 i32)
+ (func $call_indirect_void (param $0 i32) ;; 7
   (call_indirect $FUNCSIG$v
    (get_local $0)
   )
   (return)
  )
- (func $call_indirect_i32 (param $0 i32) (result i32)
+ (func $call_indirect_i32 (param $0 i32) (result i32) ;; 8
   (return
    (call_indirect $FUNCSIG$i
     (get_local $0)
    )
   )
  )
- (func $call_indirect_arg (param $0 i32) (param $1 i32)
+ (func $call_indirect_arg (param $0 i32) (param $1 i32) ;; 9
   (call_indirect $FUNCSIG$vi
    (get_local $1)
    (get_local $0)
   )
   (return)
  )
- (func $call_indirect_arg_2 (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $call_indirect_arg_2 (param $0 i32) (param $1 i32) (param $2 i32) ;; 10
   (drop
    (call_indirect $FUNCSIG$iii
     (get_local $1)
@@ -103,24 +103,24 @@
   )
   (return)
  )
- (func $tail_call_void_nullary
+ (func $tail_call_void_nullary ;; 11
   (call $void_nullary)
   (return)
  )
- (func $fastcc_tail_call_void_nullary
+ (func $fastcc_tail_call_void_nullary ;; 12
   (call $void_nullary)
   (return)
  )
- (func $coldcc_tail_call_void_nullary
+ (func $coldcc_tail_call_void_nullary ;; 13
   (call $void_nullary)
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 14
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 15
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -139,7 +139,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 16
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

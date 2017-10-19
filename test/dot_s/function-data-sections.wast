@@ -10,15 +10,15 @@
  (export "foo" (func $foo))
  (export "bar" (func $bar))
  (export "qux" (func $qux))
- (func $foo
+ (func $foo ;; 0
   (return)
  )
- (func $bar (param $0 i32) (result i32)
+ (func $bar (param $0 i32) (result i32) ;; 1
   (return
    (get_local $0)
   )
  )
- (func $qux (param $0 f64) (param $1 f64) (result f64)
+ (func $qux (param $0 f64) (param $1 f64) (result f64) ;; 2
   (return
    (f64.add
     (get_local $0)
@@ -26,12 +26,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 3
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 4
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -50,7 +50,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 5
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

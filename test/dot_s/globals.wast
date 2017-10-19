@@ -12,7 +12,7 @@
  (export "import_globals" (func $import_globals))
  (export "globals_offset" (func $globals_offset))
  (export "import_globals_offset" (func $import_globals_offset))
- (func $globals
+ (func $globals ;; 0
   (i32.store offset=12
    (i32.const 0)
    (i32.const 7)
@@ -26,7 +26,7 @@
    (i32.const 12)
   )
  )
- (func $import_globals
+ (func $import_globals ;; 1
   (i32.store
    (get_global $imported_global)
    (i32.const 7)
@@ -40,7 +40,7 @@
    (get_global $imported_global)
   )
  )
- (func $globals_offset
+ (func $globals_offset ;; 2
   (i32.store offset=24
    (i32.const 4)
    (i32.const 7)
@@ -54,7 +54,7 @@
    (i32.const 28)
   )
  )
- (func $import_globals_offset
+ (func $import_globals_offset ;; 3
   (i32.store offset=12
    (i32.add
     (i32.const 4)
@@ -80,12 +80,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 4
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 5
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -104,7 +104,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 6
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

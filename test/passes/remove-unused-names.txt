@@ -3,10 +3,10 @@
  (type $1 (func))
  (type $2 (func (result i32)))
  (memory $0 256 256)
- (func $b0 (type $0) (param $i1 i32) (result i32)
+ (func $b0 (type $0) (param $i1 i32) (result i32) ;; 0
   (i32.const 0)
  )
- (func $loops (type $1)
+ (func $loops (type $1) ;; 1
   (block $out
    (loop $in
     (br $out)
@@ -48,7 +48,7 @@
    )
   )
  )
- (func $merges (type $1)
+ (func $merges (type $1) ;; 2
   (block $b
    (br $b)
    (br $b)
@@ -64,7 +64,7 @@
    )
   )
  )
- (func $merge-typed-with-unreachable-child (type $2) (result i32)
+ (func $merge-typed-with-unreachable-child (type $2) (result i32) ;; 3
   (local $0 f32)
   (block $label$1 (result i32)
    (br_if $label$1

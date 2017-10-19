@@ -49,7 +49,7 @@
  (export "dynCall_iiii" (func $lb))
  (export "dynCall_vi" (func $mb))
  (export "__growWasmMemory" (func $__growWasmMemory))
- (func $eb (param $0 i32) (result i32)
+ (func $eb (param $0 i32) (result i32) ;; 0
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -5933,7 +5933,7 @@
    (i32.const 8)
   )
  )
- (func $fb (param $0 i32)
+ (func $fb (param $0 i32) ;; 1
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -7775,7 +7775,7 @@
    (i32.const -1)
   )
  )
- (func $Ra (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Ra (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 2
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -8149,7 +8149,7 @@
   )
   (get_local $15)
  )
- (func $Wa (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Wa (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 3
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -8362,7 +8362,7 @@
   )
   (get_local $4)
  )
- (func $Za (param $0 i32) (result i32)
+ (func $Za (param $0 i32) (result i32) ;; 4
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8506,7 +8506,7 @@
    (get_local $3)
   )
  )
- (func $_a (param $0 i32) (result i32)
+ (func $_a (param $0 i32) (result i32) ;; 5
   (local $1 i32)
   (local $2 i32)
   (block $do-once
@@ -8643,7 +8643,7 @@
   )
   (get_local $1)
  )
- (func $ab (param $0 i32) (param $1 i32) (result i32)
+ (func $ab (param $0 i32) (param $1 i32) (result i32) ;; 6
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -8792,7 +8792,7 @@
   )
   (get_local $4)
  )
- (func $$a (param $0 i32) (result i32)
+ (func $$a (param $0 i32) (result i32) ;; 7
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8927,7 +8927,7 @@
   )
   (get_local $2)
  )
- (func $jb (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $jb (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 8
   (local $3 i32)
   (if
    (i32.ge_s
@@ -9074,10 +9074,10 @@
   )
   (get_local $3)
  )
- (func $gb
+ (func $gb ;; 9
   (nop)
  )
- (func $hb (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $hb (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 10
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -9215,7 +9215,7 @@
    (get_local $2)
   )
  )
- (func $db (param $0 i32) (result i32)
+ (func $db (param $0 i32) (result i32) ;; 11
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -9324,7 +9324,7 @@
    (i32.const 31)
   )
  )
- (func $Xa (param $0 i32) (result i32)
+ (func $Xa (param $0 i32) (result i32) ;; 12
   (local $1 i32)
   (local $2 i32)
   (set_local $2
@@ -9402,7 +9402,7 @@
    )
   )
  )
- (func $bb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $bb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 13
   (local $4 i32)
   (local $5 i32)
   (set_local $4
@@ -9464,7 +9464,7 @@
   )
   (get_local $2)
  )
- (func $Ua (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Ua (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 14
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9533,7 +9533,7 @@
   )
   (get_local $0)
  )
- (func $Va (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Va (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 15
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9603,7 +9603,7 @@
   )
   (get_local $3)
  )
- (func $Oa (param $0 i32) (result i32)
+ (func $Oa (param $0 i32) (result i32) ;; 16
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -9636,7 +9636,7 @@
   )
   (get_local $0)
  )
- (func $Pa (param $0 i32) (result i32)
+ (func $Pa (param $0 i32) (result i32) ;; 17
   (if (result i32)
    (i32.gt_u
     (get_local $0)
@@ -9655,7 +9655,7 @@
    (get_local $0)
   )
  )
- (func $Qa (result i32)
+ (func $Qa (result i32) ;; 18
   (if (result i32)
    (i32.load
     (i32.const 1160)
@@ -9666,7 +9666,7 @@
    (i32.const 1204)
   )
  )
- (func $lb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $lb (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 19
   (call_indirect $FUNCSIG$iiii
    (get_local $1)
    (get_local $2)
@@ -9680,7 +9680,7 @@
    )
   )
  )
- (func $Ea (param $0 i32) (result i32)
+ (func $Ea (param $0 i32) (result i32) ;; 20
   (local $1 i32)
   (set_local $1
    (get_global $r)
@@ -9702,13 +9702,13 @@
   )
   (get_local $1)
  )
- (func $ob (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $ob (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 21
   (call $ja
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $Ia (param $0 i32) (param $1 i32)
+ (func $Ia (param $0 i32) (param $1 i32) ;; 22
   (if
    (i32.eqz
     (get_global $v)
@@ -9723,7 +9723,7 @@
    )
   )
  )
- (func $kb (param $0 i32) (param $1 i32) (result i32)
+ (func $kb (param $0 i32) (param $1 i32) (result i32) ;; 23
   (call_indirect $FUNCSIG$ii
    (get_local $1)
    (i32.and
@@ -9732,7 +9732,7 @@
    )
   )
  )
- (func $Sa (param $0 i32)
+ (func $Sa (param $0 i32) ;; 24
   (if
    (i32.eqz
     (i32.load offset=68
@@ -9744,7 +9744,7 @@
    )
   )
  )
- (func $mb (param $0 i32) (param $1 i32)
+ (func $mb (param $0 i32) (param $1 i32) ;; 25
   (call_indirect $FUNCSIG$vi
    (get_local $1)
    (i32.add
@@ -9756,7 +9756,7 @@
    )
   )
  )
- (func $Ha (param $0 i32) (param $1 i32)
+ (func $Ha (param $0 i32) (param $1 i32) ;; 26
   (set_global $r
    (get_local $0)
   )
@@ -9764,13 +9764,13 @@
    (get_local $1)
   )
  )
- (func $nb (param $0 i32) (result i32)
+ (func $nb (param $0 i32) (result i32) ;; 27
   (call $ja
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $Na (result i32)
+ (func $Na (result i32) ;; 28
   (drop
    (call $db
     (i32.const 1144)
@@ -9778,37 +9778,37 @@
   )
   (i32.const 0)
  )
- (func $Ya (param $0 i32) (result i32)
+ (func $Ya (param $0 i32) (result i32) ;; 29
   (i32.const 0)
  )
- (func $Ta (param $0 i32)
+ (func $Ta (param $0 i32) ;; 30
   (nop)
  )
- (func $pb (param $0 i32)
+ (func $pb (param $0 i32) ;; 31
   (call $ja
    (i32.const 2)
   )
  )
- (func $La (param $0 i32)
+ (func $La (param $0 i32) ;; 32
   (set_global $K
    (get_local $0)
   )
  )
- (func $Ga (param $0 i32)
+ (func $Ga (param $0 i32) ;; 33
   (set_global $r
    (get_local $0)
   )
  )
- (func $Ma (result i32)
+ (func $Ma (result i32) ;; 34
   (get_global $K)
  )
- (func $Fa (result i32)
+ (func $Fa (result i32) ;; 35
   (get_global $r)
  )
- (func $ib (result i32)
+ (func $ib (result i32) ;; 36
   (i32.const 0)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
+ (func $__growWasmMemory (param $newSize i32) (result i32) ;; 37
   (grow_memory
    (get_local $newSize)
   )

@@ -61,7 +61,7 @@
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_vi" (func $dynCall_vi))
  (export "___udivmoddi4" (func $___udivmoddi4))
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 0
   (local $1 i32)
   (set_local $1
    (get_global $STACKTOP)
@@ -90,15 +90,15 @@
   )
   (get_local $1)
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 1
   (get_global $STACKTOP)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 2
   (set_global $STACKTOP
    (get_local $0)
   )
  )
- (func $establishStackSpace (param $0 i32) (param $1 i32)
+ (func $establishStackSpace (param $0 i32) (param $1 i32) ;; 3
   (set_global $STACKTOP
    (get_local $0)
   )
@@ -106,7 +106,7 @@
    (get_local $1)
   )
  )
- (func $setThrew (param $0 i32) (param $1 i32)
+ (func $setThrew (param $0 i32) (param $1 i32) ;; 4
   (if
    (i32.eqz
     (get_global $__THREW__)
@@ -121,15 +121,15 @@
    )
   )
  )
- (func $setTempRet0 (param $0 i32)
+ (func $setTempRet0 (param $0 i32) ;; 5
   (set_global $tempRet0
    (get_local $0)
   )
  )
- (func $getTempRet0 (result i32)
+ (func $getTempRet0 (result i32) ;; 6
   (get_global $tempRet0)
  )
- (func $_main (result i32)
+ (func $_main (result i32) ;; 7
   (local $0 i32)
   (set_local $0
    (get_global $STACKTOP)
@@ -158,7 +158,7 @@
   )
   (i32.const 0)
  )
- (func $_frexp (param $0 f64) (param $1 i32) (result f64)
+ (func $_frexp (param $0 f64) (param $1 i32) (result f64) ;; 8
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -255,7 +255,7 @@
   )
   (get_local $0)
  )
- (func $_strerror (param $0 i32) (result i32)
+ (func $_strerror (param $0 i32) (result i32) ;; 9
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -336,7 +336,7 @@
   )
   (get_local $0)
  )
- (func $___errno_location (result i32)
+ (func $___errno_location (result i32) ;; 10
   (if (result i32)
    (i32.load
     (i32.const 16)
@@ -347,7 +347,7 @@
    (i32.const 60)
   )
  )
- (func $___stdio_close (param $0 i32) (result i32)
+ (func $___stdio_close (param $0 i32) (result i32) ;; 11
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -387,7 +387,7 @@
   )
   (get_local $0)
  )
- (func $___stdout_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdout_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 12
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -468,7 +468,7 @@
   )
   (get_local $0)
  )
- (func $___stdio_seek (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_seek (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 13
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -544,7 +544,7 @@
   )
   (get_local $0)
  )
- (func $_fflush (param $0 i32) (result i32)
+ (func $_fflush (param $0 i32) (result i32) ;; 14
   (local $1 i32)
   (local $2 i32)
   (block $do-once
@@ -671,7 +671,7 @@
   )
   (get_local $0)
  )
- (func $_printf (param $0 i32) (param $1 i32) (result i32)
+ (func $_printf (param $0 i32) (param $1 i32) (result i32) ;; 15
   (local $2 i32)
   (local $3 i32)
   (set_local $2
@@ -710,13 +710,13 @@
   )
   (get_local $0)
  )
- (func $___lockfile (param $0 i32) (result i32)
+ (func $___lockfile (param $0 i32) (result i32) ;; 16
   (i32.const 0)
  )
- (func $___unlockfile (param $0 i32)
+ (func $___unlockfile (param $0 i32) ;; 17
   (nop)
  )
- (func $___stdio_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 18
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1062,7 +1062,7 @@
   )
   (get_local $2)
  )
- (func $_vfprintf (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_vfprintf (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 19
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1354,7 +1354,7 @@
   )
   (get_local $0)
  )
- (func $___fwritex (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___fwritex (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 20
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1540,7 +1540,7 @@
   )
   (get_local $3)
  )
- (func $___towrite (param $0 i32) (result i32)
+ (func $___towrite (param $0 i32) (result i32) ;; 21
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -1618,7 +1618,7 @@
    )
   )
  )
- (func $_wcrtomb (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_wcrtomb (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 22
   (block $do-once (result i32)
    (if (result i32)
     (get_local $0)
@@ -1792,7 +1792,7 @@
    )
   )
  )
- (func $_wctomb (param $0 i32) (param $1 i32) (result i32)
+ (func $_wctomb (param $0 i32) (param $1 i32) (result i32) ;; 23
   (if (result i32)
    (get_local $0)
    (call $_wcrtomb
@@ -1803,7 +1803,7 @@
    (i32.const 0)
   )
  )
- (func $_memchr (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memchr (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 24
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -2034,7 +2034,7 @@
    (get_local $0)
   )
  )
- (func $___syscall_ret (param $0 i32) (result i32)
+ (func $___syscall_ret (param $0 i32) (result i32) ;; 25
   (if (result i32)
    (i32.gt_u
     (get_local $0)
@@ -2053,7 +2053,7 @@
    (get_local $0)
   )
  )
- (func $___fflush_unlocked (param $0 i32) (result i32)
+ (func $___fflush_unlocked (param $0 i32) (result i32) ;; 26
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -2175,7 +2175,7 @@
    )
   )
  )
- (func $_cleanup (param $0 i32)
+ (func $_cleanup (param $0 i32) ;; 27
   (if
    (i32.eqz
     (i32.load offset=68
@@ -2187,7 +2187,7 @@
    )
   )
  )
- (func $_printf_core (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
+ (func $_printf_core (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32) ;; 28
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
@@ -7084,7 +7084,7 @@
   )
   (get_local $16)
  )
- (func $_pop_arg_336 (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $_pop_arg_336 (param $0 i32) (param $1 i32) (param $2 i32) ;; 29
   (local $3 i32)
   (local $4 f64)
   (local $5 i32)
@@ -7484,7 +7484,7 @@
    )
   )
  )
- (func $_fmt_u (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_fmt_u (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 30
   (local $3 i32)
   (local $4 i32)
   (if
@@ -7606,7 +7606,7 @@
   )
   (get_local $2)
  )
- (func $_pad (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+ (func $_pad (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) ;; 31
   (local $5 i32)
   (local $6 i32)
   (local $7 i32)
@@ -7754,7 +7754,7 @@
    (get_local $7)
   )
  )
- (func $_malloc (param $0 i32) (result i32)
+ (func $_malloc (param $0 i32) (result i32) ;; 32
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -13233,7 +13233,7 @@
    (i32.const 8)
   )
  )
- (func $_free (param $0 i32)
+ (func $_free (param $0 i32) ;; 33
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -15022,10 +15022,10 @@
    (i32.const -1)
   )
  )
- (func $runPostSets
+ (func $runPostSets ;; 34
   (nop)
  )
- (func $_i64Subtract (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_i64Subtract (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 35
   (set_global $tempRet0
    (i32.sub
     (i32.sub
@@ -15043,7 +15043,7 @@
    (get_local $2)
   )
  )
- (func $_i64Add (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_i64Add (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 36
   (local $4 i32)
   (set_global $tempRet0
    (i32.add
@@ -15064,7 +15064,7 @@
   )
   (get_local $4)
  )
- (func $_memset (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memset (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 37
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -15202,7 +15202,7 @@
    (get_local $2)
   )
  )
- (func $_bitshift64Lshr (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_bitshift64Lshr (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 38
   (if
    (i32.lt_s
     (get_local $2)
@@ -15252,7 +15252,7 @@
    )
   )
  )
- (func $_bitshift64Shl (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_bitshift64Shl (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 39
   (if
    (i32.lt_s
     (get_local $2)
@@ -15308,7 +15308,7 @@
   )
   (i32.const 0)
  )
- (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 40
   (local $3 i32)
   (if
    (i32.ge_s
@@ -15455,7 +15455,7 @@
   )
   (get_local $3)
  )
- (func $___udivdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $___udivdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 41
   (call $___udivmoddi4
    (get_local $0)
    (get_local $1)
@@ -15464,7 +15464,7 @@
    (i32.const 0)
   )
  )
- (func $___uremdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $___uremdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 42
   (local $4 i32)
   (set_local $4
    (get_global $STACKTOP)
@@ -15498,7 +15498,7 @@
    (get_local $0)
   )
  )
- (func $___udivmoddi4 (param $xl i32) (param $xh i32) (param $yl i32) (param $yh i32) (param $r i32) (result i32)
+ (func $___udivmoddi4 (param $xl i32) (param $xh i32) (param $yl i32) (param $yh i32) (param $r i32) (result i32) ;; 43
   (local $x64 i64)
   (local $y64 i64)
   (set_local $x64
@@ -15555,7 +15555,7 @@
    (get_local $x64)
   )
  )
- (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
+ (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32) ;; 44
   (call_indirect $FUNCSIG$ii
    (get_local $1)
    (i32.and
@@ -15564,7 +15564,7 @@
    )
   )
  )
- (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 45
   (call_indirect $FUNCSIG$iiii
    (get_local $1)
    (get_local $2)
@@ -15578,7 +15578,7 @@
    )
   )
  )
- (func $dynCall_vi (param $0 i32) (param $1 i32)
+ (func $dynCall_vi (param $0 i32) (param $1 i32) ;; 46
   (call_indirect $FUNCSIG$vi
    (get_local $1)
    (i32.add
@@ -15590,19 +15590,19 @@
    )
   )
  )
- (func $b0 (param $0 i32) (result i32)
+ (func $b0 (param $0 i32) (result i32) ;; 47
   (call $nullFunc_ii
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $b1 (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $b1 (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 48
   (call $nullFunc_iiii
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $b2 (param $0 i32)
+ (func $b2 (param $0 i32) ;; 49
   (call $nullFunc_vi
    (i32.const 2)
   )

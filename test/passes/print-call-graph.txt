@@ -186,7 +186,7 @@ digraph call {
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_vi" (func $dynCall_vi))
  (export "dynCall_v" (func $dynCall_v))
- (func $stackAlloc (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $stackAlloc (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 0
   (local $1 i32)
   (set_local $1
    (get_global $STACKTOP)
@@ -208,15 +208,15 @@ digraph call {
   )
   (get_local $1)
  )
- (func $stackSave (type $6) (result i32)
+ (func $stackSave (type $6) (result i32) ;; 1
   (get_global $STACKTOP)
  )
- (func $stackRestore (type $FUNCSIG$vi) (param $0 i32)
+ (func $stackRestore (type $FUNCSIG$vi) (param $0 i32) ;; 2
   (set_global $STACKTOP
    (get_local $0)
   )
  )
- (func $establishStackSpace (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
+ (func $establishStackSpace (type $FUNCSIG$vii) (param $0 i32) (param $1 i32) ;; 3
   (set_global $STACKTOP
    (get_local $0)
   )
@@ -224,7 +224,7 @@ digraph call {
    (get_local $1)
   )
  )
- (func $setThrew (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
+ (func $setThrew (type $FUNCSIG$vii) (param $0 i32) (param $1 i32) ;; 4
   (if
    (i32.eqz
     (get_global $__THREW__)
@@ -239,21 +239,21 @@ digraph call {
    )
   )
  )
- (func $setTempRet0 (type $FUNCSIG$vi) (param $0 i32)
+ (func $setTempRet0 (type $FUNCSIG$vi) (param $0 i32) ;; 5
   (set_global $tempRet0
    (get_local $0)
   )
  )
- (func $getTempRet0 (type $6) (result i32)
+ (func $getTempRet0 (type $6) (result i32) ;; 6
   (get_global $tempRet0)
  )
- (func $_malloc (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $_malloc (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 7
   (i32.const 0)
  )
- (func $_free (type $FUNCSIG$vi) (param $0 i32)
+ (func $_free (type $FUNCSIG$vi) (param $0 i32) ;; 8
   (nop)
  )
- (func $_main (type $6) (result i32)
+ (func $_main (type $6) (result i32) ;; 9
   (local $0 i32)
   (i64.store align=4
    (tee_local $0
@@ -265,7 +265,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $___stdio_close (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $___stdio_close (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 10
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -298,7 +298,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $___stdio_write (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_write (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 11
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -645,7 +645,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $___stdio_seek (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_seek (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 12
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -714,7 +714,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $___syscall_ret (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $___syscall_ret (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 13
   (if (result i32)
    (i32.gt_u
     (get_local $0)
@@ -733,7 +733,7 @@ digraph call {
    (get_local $0)
   )
  )
- (func $___errno_location (type $6) (result i32)
+ (func $___errno_location (type $6) (result i32) ;; 14
   (if (result i32)
    (i32.load
     (i32.const 1140)
@@ -744,7 +744,7 @@ digraph call {
    (i32.const 1184)
   )
  )
- (func $_cleanup_387 (type $FUNCSIG$vi) (param $0 i32)
+ (func $_cleanup_387 (type $FUNCSIG$vi) (param $0 i32) ;; 15
   (if
    (i32.eqz
     (i32.load offset=68
@@ -756,7 +756,7 @@ digraph call {
    )
   )
  )
- (func $___stdout_write (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdout_write (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 16
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -830,7 +830,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $_fflush (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $_fflush (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 17
   (local $1 i32)
   (local $2 i32)
   (block $do-once (result i32)
@@ -953,7 +953,7 @@ digraph call {
    )
   )
  )
- (func $___fflush_unlocked (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $___fflush_unlocked (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 18
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -1073,7 +1073,7 @@ digraph call {
    (i32.const 0)
   )
  )
- (func $__Znwj (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $__Znwj (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 19
   (local $1 i32)
   (set_local $1
    (select
@@ -1115,7 +1115,7 @@ digraph call {
   )
   (get_local $0)
  )
- (func $__ZSt15get_new_handlerv (type $6) (result i32)
+ (func $__ZSt15get_new_handlerv (type $6) (result i32) ;; 20
   (local $0 i32)
   (i32.store
    (i32.const 1188)
@@ -1130,10 +1130,10 @@ digraph call {
   )
   (get_local $0)
  )
- (func $runPostSets (type $FUNCSIG$v)
+ (func $runPostSets (type $FUNCSIG$v) ;; 21
   (nop)
  )
- (func $_memset (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memset (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 22
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -1271,7 +1271,7 @@ digraph call {
    (get_local $2)
   )
  )
- (func $_memcpy (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memcpy (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 23
   (local $3 i32)
   (if
    (i32.ge_s
@@ -1420,10 +1420,10 @@ digraph call {
   )
   (get_local $3)
  )
- (func $_pthread_self (type $6) (result i32)
+ (func $_pthread_self (type $6) (result i32) ;; 24
   (i32.const 0)
  )
- (func $dynCall_ii (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
+ (func $dynCall_ii (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32) ;; 25
   (call_indirect $FUNCSIG$ii
    (get_local $1)
    (i32.add
@@ -1435,7 +1435,7 @@ digraph call {
    )
   )
  )
- (func $dynCall_iiii (type $7) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $dynCall_iiii (type $7) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 26
   (call_indirect $FUNCSIG$iiii
    (get_local $1)
    (get_local $2)
@@ -1449,7 +1449,7 @@ digraph call {
    )
   )
  )
- (func $dynCall_vi (type $FUNCSIG$vii) (param $0 i32) (param $1 i32)
+ (func $dynCall_vi (type $FUNCSIG$vii) (param $0 i32) (param $1 i32) ;; 27
   (call_indirect $FUNCSIG$vi
    (get_local $1)
    (i32.add
@@ -1461,7 +1461,7 @@ digraph call {
    )
   )
  )
- (func $dynCall_v (type $FUNCSIG$vi) (param $0 i32)
+ (func $dynCall_v (type $FUNCSIG$vi) (param $0 i32) ;; 28
   (call_indirect $FUNCSIG$v
    (i32.add
     (i32.and
@@ -1472,24 +1472,24 @@ digraph call {
    )
   )
  )
- (func $b0 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $b0 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 29
   (call $abort
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $b1 (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $b1 (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 30
   (call $abort
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $b2 (type $FUNCSIG$vi) (param $0 i32)
+ (func $b2 (type $FUNCSIG$vi) (param $0 i32) ;; 31
   (call $abort
    (i32.const 2)
   )
  )
- (func $b3 (type $FUNCSIG$v)
+ (func $b3 (type $FUNCSIG$v) ;; 32
   (call $abort
    (i32.const 3)
   )

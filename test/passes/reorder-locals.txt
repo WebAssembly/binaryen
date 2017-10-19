@@ -2,7 +2,7 @@
  (type $0 (func (param i32 i32)))
  (type $1 (func))
  (memory $0 256 256)
- (func $b0-yes (type $0) (param $a i32) (param $b i32)
+ (func $b0-yes (type $0) (param $a i32) (param $b i32) ;; 0
   (local $z i32)
   (local $y i32)
   (local $x i32)
@@ -43,13 +43,13 @@
    (get_local $b)
   )
  )
- (func $zero (type $1)
+ (func $zero (type $1) ;; 1
   (local $b i32)
   (drop
    (get_local $b)
   )
  )
- (func $null (type $1)
+ (func $null (type $1) ;; 2
   (nop)
  )
 )

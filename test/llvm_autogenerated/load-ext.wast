@@ -15,82 +15,82 @@
  (export "zext_i16_i64" (func $zext_i16_i64))
  (export "sext_i32_i64" (func $sext_i32_i64))
  (export "zext_i32_i64" (func $zext_i32_i64))
- (func $sext_i8_i32 (param $0 i32) (result i32)
+ (func $sext_i8_i32 (param $0 i32) (result i32) ;; 0
   (return
    (i32.load8_s
     (get_local $0)
    )
   )
  )
- (func $zext_i8_i32 (param $0 i32) (result i32)
+ (func $zext_i8_i32 (param $0 i32) (result i32) ;; 1
   (return
    (i32.load8_u
     (get_local $0)
    )
   )
  )
- (func $sext_i16_i32 (param $0 i32) (result i32)
+ (func $sext_i16_i32 (param $0 i32) (result i32) ;; 2
   (return
    (i32.load16_s
     (get_local $0)
    )
   )
  )
- (func $zext_i16_i32 (param $0 i32) (result i32)
+ (func $zext_i16_i32 (param $0 i32) (result i32) ;; 3
   (return
    (i32.load16_u
     (get_local $0)
    )
   )
  )
- (func $sext_i8_i64 (param $0 i32) (result i64)
+ (func $sext_i8_i64 (param $0 i32) (result i64) ;; 4
   (return
    (i64.load8_s
     (get_local $0)
    )
   )
  )
- (func $zext_i8_i64 (param $0 i32) (result i64)
+ (func $zext_i8_i64 (param $0 i32) (result i64) ;; 5
   (return
    (i64.load8_u
     (get_local $0)
    )
   )
  )
- (func $sext_i16_i64 (param $0 i32) (result i64)
+ (func $sext_i16_i64 (param $0 i32) (result i64) ;; 6
   (return
    (i64.load16_s
     (get_local $0)
    )
   )
  )
- (func $zext_i16_i64 (param $0 i32) (result i64)
+ (func $zext_i16_i64 (param $0 i32) (result i64) ;; 7
   (return
    (i64.load16_u
     (get_local $0)
    )
   )
  )
- (func $sext_i32_i64 (param $0 i32) (result i64)
+ (func $sext_i32_i64 (param $0 i32) (result i64) ;; 8
   (return
    (i64.load32_s
     (get_local $0)
    )
   )
  )
- (func $zext_i32_i64 (param $0 i32) (result i64)
+ (func $zext_i32_i64 (param $0 i32) (result i64) ;; 9
   (return
    (i64.load32_u
     (get_local $0)
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 10
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 11
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -109,7 +109,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 12
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

@@ -9,7 +9,7 @@
  (export "s2z_func" (func $s2z_func))
  (export "z2s_call" (func $z2s_call))
  (export "s2z_call" (func $s2z_call))
- (func $z2s_func (param $0 i32) (result i32)
+ (func $z2s_func (param $0 i32) (result i32) ;; 0
   (return
    (i32.shr_s
     (i32.shl
@@ -20,7 +20,7 @@
    )
   )
  )
- (func $s2z_func (param $0 i32) (result i32)
+ (func $s2z_func (param $0 i32) (result i32) ;; 1
   (return
    (i32.and
     (get_local $0)
@@ -28,7 +28,7 @@
    )
   )
  )
- (func $z2s_call (param $0 i32) (result i32)
+ (func $z2s_call (param $0 i32) (result i32) ;; 2
   (return
    (call $z2s_func
     (i32.and
@@ -38,7 +38,7 @@
    )
   )
  )
- (func $s2z_call (param $0 i32) (result i32)
+ (func $s2z_call (param $0 i32) (result i32) ;; 3
   (return
    (i32.shr_s
     (i32.shl
@@ -57,12 +57,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 4
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 5
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -81,7 +81,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 6
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

@@ -75,10 +75,10 @@
  (export "relocatableAndModules" (func $relocatableAndModules))
  (export "exported_f32_user" (func $legalstub$exported_f32_user))
  (export "keepAlive" (func $keepAlive))
- (func $big_negative
+ (func $big_negative ;; 0
   (nop)
  )
- (func $importedDoubles (result f64)
+ (func $importedDoubles (result f64) ;; 1
   (if
    (i32.gt_s
     (get_global $Int)
@@ -99,7 +99,7 @@
   )
   (f64.const 1.2)
  )
- (func $doubleCompares (param $0 f64) (param $1 f64) (result f64)
+ (func $doubleCompares (param $0 f64) (param $1 f64) (result f64) ;; 2
   (if
    (f64.gt
     (get_local $0)
@@ -138,12 +138,12 @@
   )
   (get_local $1)
  )
- (func $intOps (param $0 i32) (result i32)
+ (func $intOps (param $0 i32) (result i32) ;; 3
   (i32.eqz
    (get_local $0)
   )
  )
- (func $f64-to-int (param $0 f64) (result i32)
+ (func $f64-to-int (param $0 f64) (result i32) ;; 4
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -169,7 +169,7 @@
    )
   )
  )
- (func $f32-to-int (param $0 f32) (result i32)
+ (func $f32-to-int (param $0 f32) (result i32) ;; 5
   (if (result i32)
    (f32.ne
     (get_local $0)
@@ -195,7 +195,7 @@
    )
   )
  )
- (func $conversions (param $0 i32) (param $1 f64) (param $2 f32)
+ (func $conversions (param $0 i32) (param $1 f64) (param $2 f32) ;; 6
   (drop
    (call $f64-to-int
     (get_local $1)
@@ -207,7 +207,7 @@
    )
   )
  )
- (func $switcher (param $0 i32) (result i32)
+ (func $switcher (param $0 i32) (result i32) ;; 7
   (block $switch
    (block $switch-case0
     (block $switch-case
@@ -286,13 +286,13 @@
   )
   (i32.const 0)
  )
- (func $frem (result f64)
+ (func $frem (result f64) ;; 8
   (call $f64-rem
    (f64.const 5.5)
    (f64.const 1.2)
   )
  )
- (func $frem_float (result f32)
+ (func $frem_float (result f32) ;; 9
   (f32.demote/f64
    (call $f64-rem
     (f64.const 5.5)
@@ -300,19 +300,19 @@
    )
   )
  )
- (func $big_uint_div_u (result i32)
+ (func $big_uint_div_u (result i32) ;; 10
   (i32.const 2147483647)
  )
- (func $trapping_sint_div_s (result i32)
+ (func $trapping_sint_div_s (result i32) ;; 11
   (i32.const 0)
  )
- (func $fr (param $0 f32)
+ (func $fr (param $0 f32) ;; 12
   (nop)
  )
- (func $negZero (result f64)
+ (func $negZero (result f64) ;; 13
   (f64.const -0)
  )
- (func $neg
+ (func $neg ;; 14
   (local $0 f32)
   (call_indirect $FUNCSIG$vf
    (f32.neg
@@ -321,13 +321,13 @@
    (i32.const 9)
   )
  )
- (func $cneg (param $0 f32)
+ (func $cneg (param $0 f32) ;; 15
   (call_indirect $FUNCSIG$vf
    (get_local $0)
    (i32.const 9)
   )
  )
- (func $smallCompare (param $0 i32) (param $1 i32) (result i32)
+ (func $smallCompare (param $0 i32) (param $1 i32) (result i32) ;; 16
   (if
    (i32.lt_s
     (get_local $0)
@@ -354,13 +354,13 @@
   )
   (get_local $0)
  )
- (func $cneg_nosemicolon
+ (func $cneg_nosemicolon ;; 17
   (call_indirect $FUNCSIG$vi
    (i32.const 1)
    (i32.const 17)
   )
  )
- (func $forLoop
+ (func $forLoop ;; 18
   (local $0 i32)
   (set_local $0
    (i32.const 1)
@@ -386,10 +386,10 @@
    )
   )
  )
- (func $ceiling_32_64 (param $0 f32) (param $1 f64)
+ (func $ceiling_32_64 (param $0 f32) (param $1 f64) ;; 19
   (nop)
  )
- (func $aborts
+ (func $aborts ;; 20
   (drop
    (call $abort
     (f64.const 0)
@@ -418,7 +418,7 @@
    )
   )
  )
- (func $continues
+ (func $continues ;; 21
   (loop $while-in
    (call $print
     (i32.const 1)
@@ -437,10 +437,10 @@
    (br $while-in)
   )
  )
- (func $bitcasts (param $0 i32) (param $1 f32)
+ (func $bitcasts (param $0 i32) (param $1 f32) ;; 22
   (nop)
  )
- (func $recursiveBlockMerging (param $0 i32) (result i32)
+ (func $recursiveBlockMerging (param $0 i32) (result i32) ;; 23
   (drop
    (call $lb
     (i32.add
@@ -515,7 +515,7 @@
    )
   )
  )
- (func $lb (param $0 i32) (result i32)
+ (func $lb (param $0 i32) (result i32) ;; 24
   (i32.store
    (get_local $0)
    (i32.add
@@ -525,7 +525,7 @@
   )
   (i32.const 0)
  )
- (func $zeroInit (param $0 i32)
+ (func $zeroInit (param $0 i32) ;; 25
   (local $1 i32)
   (if
    (call $lb
@@ -555,7 +555,7 @@
    )
   )
  )
- (func $phi (result i32)
+ (func $phi (result i32) ;; 26
   (block $do-once (result i32)
    (drop
     (br_if $do-once
@@ -568,7 +568,7 @@
    (i32.const 1)
   )
  )
- (func $smallIf
+ (func $smallIf ;; 27
   (if
    (call $return_int)
    (drop
@@ -578,7 +578,7 @@
    )
   )
  )
- (func $dropCall (result i32)
+ (func $dropCall (result i32) ;; 28
   (if
    (call $return_int)
    (block
@@ -599,7 +599,7 @@
   )
   (call $phi)
  )
- (func $useSetGlobal (result i32)
+ (func $useSetGlobal (result i32) ;; 29
   (set_global $Int
    (i32.const 10)
   )
@@ -611,13 +611,13 @@
   )
   (get_global $Int)
  )
- (func $usesSetGlobal2 (result i32)
+ (func $usesSetGlobal2 (result i32) ;; 30
   (set_global $Int
    (i32.const 40)
   )
   (i32.const 50)
  )
- (func $breakThroughMany (param $0 i32)
+ (func $breakThroughMany (param $0 i32) ;; 31
   (block $label$break$L1
    (if
     (get_local $0)
@@ -635,7 +635,7 @@
    )
   )
  )
- (func $ifChainEmpty (param $0 i32) (result i32)
+ (func $ifChainEmpty (param $0 i32) (result i32) ;; 32
   (if
    (i32.eq
     (get_local $0)
@@ -647,12 +647,12 @@
   )
   (i32.const 0)
  )
- (func $heap8NoShift (param $0 i32) (result i32)
+ (func $heap8NoShift (param $0 i32) (result i32) ;; 33
   (i32.load8_s
    (get_local $0)
   )
  )
- (func $conditionalTypeFun
+ (func $conditionalTypeFun ;; 34
   (drop
    (if (result i32)
     (call $return_int)
@@ -678,7 +678,7 @@
    )
   )
  )
- (func $loadSigned (param $0 i32)
+ (func $loadSigned (param $0 i32) ;; 35
   (call $loadSigned
    (i32.load8_s
     (get_local $0)
@@ -744,10 +744,10 @@
    )
   )
  )
- (func $w (result f64)
+ (func $w (result f64) ;; 36
   (f64.const 0)
  )
- (func $globalOpts
+ (func $globalOpts ;; 37
   (local $0 i32)
   (i32.store8
    (i32.const 13)
@@ -777,7 +777,7 @@
    (get_local $0)
   )
  )
- (func $dropCallImport
+ (func $dropCallImport ;; 38
   (if
    (call $return_int)
    (drop
@@ -785,7 +785,7 @@
    )
   )
  )
- (func $loophi (param $0 i32) (param $1 i32)
+ (func $loophi (param $0 i32) (param $1 i32) ;; 39
   (local $2 i32)
   (loop $while-in
    (block $while-out
@@ -815,7 +815,7 @@
    )
   )
  )
- (func $loophi2 (result i32)
+ (func $loophi2 (result i32) ;; 40
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -851,7 +851,7 @@
   )
   (get_local $1)
  )
- (func $loophi2b (result i32)
+ (func $loophi2b (result i32) ;; 41
   (local $0 i32)
   (local $1 i32)
   (loop $label$continue$L7
@@ -883,7 +883,7 @@
   )
   (get_local $0)
  )
- (func $relooperJumpThreading (param $0 i32) (result i32)
+ (func $relooperJumpThreading (param $0 i32) (result i32) ;; 42
   (block $__rjto$0
    (block $__rjti$0
     (if
@@ -1052,7 +1052,7 @@
   )
   (get_local $0)
  )
- (func $relooperJumpThreading__ZN4game14preloadweaponsEv (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32)
+ (func $relooperJumpThreading__ZN4game14preloadweaponsEv (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) ;; 43
   (loop $while-in
    (block $__rjto$1
     (block $__rjti$1
@@ -1079,7 +1079,7 @@
    (br $while-in)
   )
  )
- (func $relooperJumpThreading_irreducible (param $0 i32)
+ (func $relooperJumpThreading_irreducible (param $0 i32) ;; 44
   (local $1 i32)
   (if
    (i32.eq
@@ -1131,7 +1131,7 @@
    )
   )
  )
- (func $__Z12multi_varargiz (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+ (func $__Z12multi_varargiz (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) ;; 45
   (if
    (get_local $3)
    (loop $while-in
@@ -1148,10 +1148,10 @@
    )
   )
  )
- (func $jumpThreadDrop (result i32)
+ (func $jumpThreadDrop (result i32) ;; 46
   (call $return_int)
  )
- (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $dropIgnoredImportInIf (param $0 i32) (param $1 i32) (param $2 i32) ;; 47
   (if
    (get_local $0)
    (drop
@@ -1161,7 +1161,7 @@
    )
   )
  )
- (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $dropIgnoredImportsInIf (param $0 i32) (param $1 i32) (param $2 i32) ;; 48
   (drop
    (if (result i32)
     (get_local $0)
@@ -1174,7 +1174,7 @@
    )
   )
  )
- (func $store_fround (param $0 i32)
+ (func $store_fround (param $0 i32) ;; 49
   (f64.store
    (i32.const 80)
    (f64.promote/f32
@@ -1184,7 +1184,7 @@
    )
   )
  )
- (func $relocatableAndModules (result i32)
+ (func $relocatableAndModules (result i32) ;; 50
   (call_indirect $FUNCSIG$v
    (i32.const 10)
   )
@@ -1197,10 +1197,10 @@
    (i32.const 30)
   )
  )
- (func $exported_f32_user (param $0 i32) (param $1 f32) (param $2 f64) (result f32)
+ (func $exported_f32_user (param $0 i32) (param $1 f32) (param $2 f64) (result f32) ;; 51
   (get_local $1)
  )
- (func $sqrts (param $0 f64) (result f64)
+ (func $sqrts (param $0 f64) (result f64) ;; 52
   (f64.add
    (f64.sqrt
     (get_local $0)
@@ -1214,7 +1214,7 @@
    )
   )
  )
- (func $f64-to-uint (param $0 f64) (result i32)
+ (func $f64-to-uint (param $0 f64) (result i32) ;; 53
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -1240,7 +1240,7 @@
    )
   )
  )
- (func $keepAlive
+ (func $keepAlive ;; 54
   (drop
    (call $sqrts
     (f64.const 3.14159)
@@ -1289,13 +1289,13 @@
    )
   )
  )
- (func $vi (param $0 i32)
+ (func $vi (param $0 i32) ;; 55
   (nop)
  )
- (func $ii (param $0 i32) (result i32)
+ (func $ii (param $0 i32) (result i32) ;; 56
   (get_local $0)
  )
- (func $legalstub$conversions (param $0 i32) (param $1 f64) (param $2 f64)
+ (func $legalstub$conversions (param $0 i32) (param $1 f64) (param $2 f64) ;; 57
   (call $conversions
    (get_local $0)
    (get_local $1)
@@ -1304,19 +1304,19 @@
    )
   )
  )
- (func $legalstub$frem_float (result f64)
+ (func $legalstub$frem_float (result f64) ;; 58
   (f64.promote/f32
    (call $frem_float)
   )
  )
- (func $legalstub$fr (param $0 f64)
+ (func $legalstub$fr (param $0 f64) ;; 59
   (call $fr
    (f32.demote/f64
     (get_local $0)
    )
   )
  )
- (func $legalstub$ceiling_32_64 (param $0 f64) (param $1 f64)
+ (func $legalstub$ceiling_32_64 (param $0 f64) (param $1 f64) ;; 60
   (call $ceiling_32_64
    (f32.demote/f64
     (get_local $0)
@@ -1324,7 +1324,7 @@
    (get_local $1)
   )
  )
- (func $legalstub$bitcasts (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (param $0 i32) (param $1 f64) ;; 61
   (call $bitcasts
    (get_local $0)
    (f32.demote/f64
@@ -1332,7 +1332,7 @@
    )
   )
  )
- (func $legalstub$exported_f32_user (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+ (func $legalstub$exported_f32_user (param $0 i32) (param $1 f64) (param $2 f64) (result f64) ;; 62
   (f64.promote/f32
    (call $exported_f32_user
     (get_local $0)

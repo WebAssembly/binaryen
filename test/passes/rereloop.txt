@@ -4,14 +4,14 @@
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32)))
  (memory $0 0)
- (func $trivial (type $0)
+ (func $trivial (type $0) ;; 0
   (local $0 i32)
   (block
    (nop)
    (return)
   )
  )
- (func $trivial2 (type $0)
+ (func $trivial2 (type $0) ;; 1
   (local $0 i32)
   (block
    (call $trivial)
@@ -19,13 +19,13 @@
    (return)
   )
  )
- (func $return-void (type $0)
+ (func $return-void (type $0) ;; 2
   (local $0 i32)
   (block
    (return)
   )
  )
- (func $return-val (type $1) (result i32)
+ (func $return-val (type $1) (result i32) ;; 3
   (local $0 i32)
   (block
    (return
@@ -33,7 +33,7 @@
    )
   )
  )
- (func $ifs (type $2) (param $x i32) (result i32)
+ (func $ifs (type $2) (param $x i32) (result i32) ;; 4
   (local $1 i32)
   (block
   )
@@ -83,7 +83,7 @@
    )
   )
  )
- (func $loops (type $3) (param $x i32)
+ (func $loops (type $3) (param $x i32) ;; 5
   (local $1 i32)
   (block $block$5$break
    (block
@@ -171,7 +171,7 @@
    )
   )
  )
- (func $br-out (type $3) (param $x i32)
+ (func $br-out (type $3) (param $x i32) ;; 6
   (local $1 i32)
   (block $block$2$break
    (block
@@ -189,7 +189,7 @@
    )
   )
  )
- (func $unreachable (type $3) (param $x i32)
+ (func $unreachable (type $3) (param $x i32) ;; 7
   (local $1 i32)
   (block $block$2$break
    (block
@@ -240,7 +240,7 @@
    )
   )
  )
- (func $empty-blocks (type $3) (param $x i32)
+ (func $empty-blocks (type $3) (param $x i32) ;; 8
   (local $1 i32)
   (block $block$2$break
    (block
@@ -264,7 +264,7 @@
    )
   )
  )
- (func $before-and-after (type $3) (param $x i32)
+ (func $before-and-after (type $3) (param $x i32) ;; 9
   (local $1 i32)
   (block $block$2$break
    (block
@@ -533,7 +533,7 @@
    )
   )
  )
- (func $switch (type $3) (param $x i32)
+ (func $switch (type $3) (param $x i32) ;; 10
   (local $1 i32)
   (block $block$3$break
    (block
@@ -611,7 +611,7 @@
    )
   )
  )
- (func $no-return (type $0)
+ (func $no-return (type $0) ;; 11
   (local $0 i32)
   (block $block$4$break
    (block
@@ -646,7 +646,7 @@
    )
   )
  )
- (func $if-br-wat (type $3) (param $x i32)
+ (func $if-br-wat (type $3) (param $x i32) ;; 12
   (local $1 i32)
   (block $block$2$break
    (block $block$8$break
@@ -710,7 +710,7 @@
    )
   )
  )
- (func $switcher-to-nowhere (type $2) (param $0 i32) (result i32)
+ (func $switcher-to-nowhere (type $2) (param $0 i32) (result i32) ;; 13
   (local $1 i32)
   (block
   )
@@ -761,7 +761,7 @@
  (memory $0 0)
  (export "one" (func $0))
  (export "two" (func $1))
- (func $0 (type $0)
+ (func $0 (type $0) ;; 0
   (local $0 i32)
   (block $block$4$break
    (block
@@ -794,7 +794,7 @@
    )
   )
  )
- (func $1 (type $1) (result i32)
+ (func $1 (type $1) (result i32) ;; 1
   (local $0 i32)
   (block
    (return

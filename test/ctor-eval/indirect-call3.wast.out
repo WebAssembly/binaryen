@@ -8,10 +8,10 @@
  (memory $0 256 256)
  (data (i32.const 10) "waka waka xaka waka waka\00\00\00\00\00\00C")
  (export "test1" (func $test1))
- (func $test1 (type $v)
+ (func $test1 (type $v) ;; 0
   (nop)
  )
- (func $call-indirect (type $v)
+ (func $call-indirect (type $v) ;; 1
   (i32.store8
    (i32.const 40)
    (i32.const 67)

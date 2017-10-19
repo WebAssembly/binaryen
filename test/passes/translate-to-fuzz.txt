@@ -13,7 +13,7 @@
  (export "func_3" (func $func_3))
  (export "func_4" (func $func_4))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
- (func $func_0 (type $FUNCSIG$ifi) (param $0 f32) (param $1 i32) (result i32)
+ (func $func_0 (type $FUNCSIG$ifi) (param $0 f32) (param $1 i32) (result i32) ;; 0
   (block
    (if
     (i32.eqz
@@ -32,7 +32,7 @@
   )
   (get_local $1)
  )
- (func $func_1
+ (func $func_1 ;; 1
   (block
    (if
     (i32.eqz
@@ -68,7 +68,7 @@
    )
   )
  )
- (func $func_2 (param $0 f32) (result f64)
+ (func $func_2 (param $0 f32) (result f64) ;; 2
   (local $1 f32)
   (local $2 i32)
   (local $3 i32)
@@ -297,7 +297,7 @@
    )
   )
  )
- (func $func_3 (type $FUNCSIG$i) (result i32)
+ (func $func_3 (type $FUNCSIG$i) (result i32) ;; 3
   (local $0 i32)
   (local $1 i64)
   (local $2 f64)
@@ -324,7 +324,7 @@
    )
   )
  )
- (func $func_4 (type $FUNCSIG$j) (result i64)
+ (func $func_4 (type $FUNCSIG$j) (result i64) ;; 4
   (local $0 i64)
   (local $1 f32)
   (local $2 i64)
@@ -931,7 +931,7 @@
    )
   )
  )
- (func $func_5 (result i64)
+ (func $func_5 (result i64) ;; 5
   (local $0 i32)
   (local $1 i32)
   (local $2 f32)
@@ -1096,12 +1096,12 @@
    )
   )
  )
- (func $hangLimitInitializer
+ (func $hangLimitInitializer ;; 6
   (set_global $hangLimit
    (i32.const 100)
   )
  )
- (func $deNan32 (param $0 f32) (result f32)
+ (func $deNan32 (param $0 f32) (result f32) ;; 7
   (if (result f32)
    (f32.eq
     (get_local $0)
@@ -1111,7 +1111,7 @@
    (f32.const 0)
   )
  )
- (func $deNan64 (param $0 f64) (result f64)
+ (func $deNan64 (param $0 f64) (result f64) ;; 8
   (if (result f64)
    (f64.eq
     (get_local $0)

@@ -4,10 +4,10 @@
 (module
  (type $0 (func))
  (memory $0 0)
- (func $a (type $0)
+ (func $a (type $0) ;; 0
   (nop)
  )
- (func $b (type $0)
+ (func $b (type $0) ;; 1
   (drop
    (loop $loop-in1 (result i32)
     (nop)
@@ -15,7 +15,7 @@
    )
   )
  )
- (func $c (type $0)
+ (func $c (type $0) ;; 2
   (block $top
    (nop)
    (drop

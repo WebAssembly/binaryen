@@ -8,7 +8,7 @@
  (memory $0 0)
  (export "user" (func $user))
  (export "exported" (func $exported))
- (func $user (type $0)
+ (func $user (type $0) ;; 0
   (local $x i32)
   (local $y f64)
   (local $2 f32)
@@ -120,22 +120,22 @@
    )
   )
  )
- (func $exported (type $0)
+ (func $exported (type $0) ;; 1
   (nop)
  )
- (func $recursive (type $0)
+ (func $recursive (type $0) ;; 2
   (call $recursive)
  )
- (func $tabled (type $0)
+ (func $tabled (type $0) ;; 3
   (nop)
  )
- (func $cycle1 (type $0)
+ (func $cycle1 (type $0) ;; 4
   (call $cycle2)
  )
- (func $cycle2 (type $0)
+ (func $cycle2 (type $0) ;; 5
   (call $cycle1)
  )
- (func $multi (type $0)
+ (func $multi (type $0) ;; 6
   (nop)
  )
 )
@@ -143,10 +143,10 @@
  (type $0 (func (param i32) (result i32)))
  (type $1 (func (result i32)))
  (memory $0 0)
- (func $child (type $0) (param $0 i32) (result i32)
+ (func $child (type $0) (param $0 i32) (result i32) ;; 0
   (i32.const 1234)
  )
- (func $parent (type $1) (result i32)
+ (func $parent (type $1) (result i32) ;; 1
   (call $child
    (unreachable)
   )
@@ -159,7 +159,7 @@
  (global $hangLimit (mut i32) (i32.const 25))
  (memory $0 1 1)
  (export "hangLimitInitializer" (func $hangLimitInitializer))
- (func $func_4 (type $1) (param $0 f32) (param $1 i32) (result i32)
+ (func $func_4 (type $1) (param $0 f32) (param $1 i32) (result i32) ;; 0
   (local $2 i64)
   (local $3 f64)
   (local $4 f32)
@@ -212,7 +212,7 @@
    )
   )
  )
- (func $hangLimitInitializer (type $2)
+ (func $hangLimitInitializer (type $2) ;; 1
   (set_global $hangLimit
    (i32.const 25)
   )

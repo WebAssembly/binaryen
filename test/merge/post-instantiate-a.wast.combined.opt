@@ -5,7 +5,7 @@
  (memory $0 0)
  (data (get_global $memoryBase) "")
  (export "__post_instantiate" (func $0))
- (func $0 (type $0)
+ (func $0 (type $0) ;; 0
   (nop)
  )
 )

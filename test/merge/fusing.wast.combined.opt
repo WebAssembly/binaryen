@@ -12,7 +12,7 @@
  (export "aglobal" (global $a-global))
  (export "bar" (func $bar-func))
  (export "bglobal" (global $b-global))
- (func $foo-func (type $FUNCSIG$v)
+ (func $foo-func (type $FUNCSIG$v) ;; 0
   (nop)
   (call $bar-func)
   (drop
@@ -22,7 +22,7 @@
    (get_global $b-global)
   )
  )
- (func $bar-func (type $FUNCSIG$v)
+ (func $bar-func (type $FUNCSIG$v) ;; 1
   (nop)
   (drop
    (get_global $a-global)

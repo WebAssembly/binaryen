@@ -15,7 +15,7 @@
  (export "sge_i64" (func $sge_i64))
  (export "ugt_i64" (func $ugt_i64))
  (export "uge_i64" (func $uge_i64))
- (func $eq_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $eq_i64 (param $0 i64) (param $1 i64) (result i32) ;; 0
   (return
    (i64.eq
     (get_local $0)
@@ -23,7 +23,7 @@
    )
   )
  )
- (func $ne_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $ne_i64 (param $0 i64) (param $1 i64) (result i32) ;; 1
   (return
    (i64.ne
     (get_local $0)
@@ -31,7 +31,7 @@
    )
   )
  )
- (func $slt_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $slt_i64 (param $0 i64) (param $1 i64) (result i32) ;; 2
   (return
    (i64.lt_s
     (get_local $0)
@@ -39,7 +39,7 @@
    )
   )
  )
- (func $sle_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $sle_i64 (param $0 i64) (param $1 i64) (result i32) ;; 3
   (return
    (i64.le_s
     (get_local $0)
@@ -47,7 +47,7 @@
    )
   )
  )
- (func $ult_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $ult_i64 (param $0 i64) (param $1 i64) (result i32) ;; 4
   (return
    (i64.lt_u
     (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $ule_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $ule_i64 (param $0 i64) (param $1 i64) (result i32) ;; 5
   (return
    (i64.le_u
     (get_local $0)
@@ -63,7 +63,7 @@
    )
   )
  )
- (func $sgt_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $sgt_i64 (param $0 i64) (param $1 i64) (result i32) ;; 6
   (return
    (i64.gt_s
     (get_local $0)
@@ -71,7 +71,7 @@
    )
   )
  )
- (func $sge_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $sge_i64 (param $0 i64) (param $1 i64) (result i32) ;; 7
   (return
    (i64.ge_s
     (get_local $0)
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $ugt_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $ugt_i64 (param $0 i64) (param $1 i64) (result i32) ;; 8
   (return
    (i64.gt_u
     (get_local $0)
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $uge_i64 (param $0 i64) (param $1 i64) (result i32)
+ (func $uge_i64 (param $0 i64) (param $1 i64) (result i32) ;; 9
   (return
    (i64.ge_u
     (get_local $0)
@@ -95,12 +95,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 10
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 11
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -119,7 +119,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 12
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

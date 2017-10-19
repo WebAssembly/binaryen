@@ -17,7 +17,7 @@
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (export "big_negative" (func $big_negative))
- (func $big_negative (type $1)
+ (func $big_negative (type $1) ;; 0
   (local $var$0 f64)
   (set_local $var$0
    (f64.const -2147483648)
@@ -35,7 +35,7 @@
    (f64.const -0.039625)
   )
  )
- (func $importedDoubles (type $4) (result f64)
+ (func $importedDoubles (type $4) (result f64) ;; 1
   (local $var$0 f64)
   (block $label$1 (result f64)
    (set_local $var$0
@@ -87,7 +87,7 @@
    (f64.const 1.2)
   )
  )
- (func $doubleCompares (type $3) (param $var$0 f64) (param $var$1 f64) (result f64)
+ (func $doubleCompares (type $3) (param $var$0 f64) (param $var$1 f64) (result f64) ;; 2
   (local $var$2 i32)
   (local $var$3 f64)
   (local $var$4 f64)
@@ -131,14 +131,14 @@
    (get_local $var$1)
   )
  )
- (func $intOps (type $5) (result i32)
+ (func $intOps (type $5) (result i32) ;; 3
   (local $var$0 i32)
   (i32.eq
    (get_local $var$0)
    (i32.const 0)
   )
  )
- (func $hexLiterals (type $1)
+ (func $hexLiterals (type $1) ;; 4
   (drop
    (i32.add
     (i32.add
@@ -149,7 +149,7 @@
    )
   )
  )
- (func $conversions (type $1)
+ (func $conversions (type $1) ;; 5
   (local $var$0 i32)
   (local $var$1 f64)
   (set_local $var$0
@@ -171,7 +171,7 @@
    )
   )
  )
- (func $seq (type $1)
+ (func $seq (type $1) ;; 6
   (local $var$0 f64)
   (set_local $var$0
    (f64.sub
@@ -190,7 +190,7 @@
    )
   )
  )
- (func $switcher (type $6) (param $var$0 i32) (result i32)
+ (func $switcher (type $6) (param $var$0 i32) (result i32) ;; 7
   (block $label$1 (result i32)
    (block $label$2
     (block $label$3
@@ -268,18 +268,18 @@
    (i32.const 0)
   )
  )
- (func $blocker (type $1)
+ (func $blocker (type $1) ;; 8
   (block $label$1
    (br $label$1)
   )
  )
- (func $frem (type $4) (result f64)
+ (func $frem (type $4) (result f64) ;; 9
   (call $import$2
    (f64.const 5.5)
    (f64.const 1.2)
   )
  )
- (func $big_uint_div_u (type $5) (result i32)
+ (func $big_uint_div_u (type $5) (result i32) ;; 10
   (local $var$0 i32)
   (set_local $var$0
    (i32.and
@@ -292,7 +292,7 @@
   )
   (get_local $var$0)
  )
- (func $fr (type $0) (param $var$0 f32)
+ (func $fr (type $0) (param $var$0 f32) ;; 11
   (local $var$1 f32)
   (local $var$2 f64)
   (drop
@@ -316,10 +316,10 @@
    (f32.const 0)
   )
  )
- (func $negZero (type $4) (result f64)
+ (func $negZero (type $4) (result f64) ;; 12
   (f64.const -0)
  )
- (func $abs (type $1)
+ (func $abs (type $1) ;; 13
   (local $var$0 i32)
   (local $var$1 i32)
   (local $var$2 f32)
@@ -353,7 +353,7 @@
    )
   )
  )
- (func $neg (type $1)
+ (func $neg (type $1) ;; 14
   (local $var$0 f32)
   (set_local $var$0
    (f32.neg
@@ -371,7 +371,7 @@
    )
   )
  )
- (func $cneg (type $0) (param $var$0 f32)
+ (func $cneg (type $0) (param $var$0 f32) ;; 15
   (call_indirect $0
    (get_local $var$0)
    (i32.add
@@ -383,7 +383,7 @@
    )
   )
  )
- (func $___syscall_ret (type $1)
+ (func $___syscall_ret (type $1) ;; 16
   (local $var$0 i32)
   (drop
    (i32.gt_u
@@ -395,13 +395,13 @@
    )
   )
  )
- (func $z (type $1)
+ (func $z (type $1) ;; 17
   (nop)
  )
- (func $w (type $1)
+ (func $w (type $1) ;; 18
   (nop)
  )
- (func $block_and_after (type $5) (result i32)
+ (func $block_and_after (type $5) (result i32) ;; 19
   (block $label$1
    (drop
     (i32.const 1)
@@ -410,7 +410,7 @@
   )
   (i32.const 0)
  )
- (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64)
+ (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64) ;; 20
   (loop $label$1 (result f64)
    (drop
     (get_local $var$0)
@@ -418,21 +418,21 @@
    (get_local $var$0)
   )
  )
- (func $big-i64 (type $8) (result i64)
+ (func $big-i64 (type $8) (result i64) ;; 21
   (i64.const -9218868437227405313)
  )
- (func $i64-store32 (type $9) (param $var$0 i32) (param $var$1 i64)
+ (func $i64-store32 (type $9) (param $var$0 i32) (param $var$1 i64) ;; 22
   (i64.store32
    (get_local $var$0)
    (get_local $var$1)
   )
  )
- (func $return-unreachable (type $5) (result i32)
+ (func $return-unreachable (type $5) (result i32) ;; 23
   (return
    (i32.const 1)
   )
  )
- (func $unreachable-block (type $5) (result i32)
+ (func $unreachable-block (type $5) (result i32) ;; 24
   (block $label$1
    (drop
     (i32.const 1)
@@ -442,7 +442,7 @@
    )
   )
  )
- (func $unreachable-block-toplevel (type $5) (result i32)
+ (func $unreachable-block-toplevel (type $5) (result i32) ;; 25
   (drop
    (i32.const 1)
   )
@@ -450,19 +450,19 @@
    (i32.const 2)
   )
  )
- (func $unreachable-block0 (type $5) (result i32)
+ (func $unreachable-block0 (type $5) (result i32) ;; 26
   (block $label$1
    (return
     (i32.const 2)
    )
   )
  )
- (func $unreachable-block0-toplevel (type $5) (result i32)
+ (func $unreachable-block0-toplevel (type $5) (result i32) ;; 27
   (return
    (i32.const 2)
   )
  )
- (func $unreachable-block-with-br (type $5) (result i32)
+ (func $unreachable-block-with-br (type $5) (result i32) ;; 28
   (block $label$1
    (drop
     (i32.const 1)
@@ -471,7 +471,7 @@
   )
   (i32.const 1)
  )
- (func $unreachable-if (type $5) (result i32)
+ (func $unreachable-if (type $5) (result i32) ;; 29
   (if
    (i32.const 3)
    (return
@@ -482,7 +482,7 @@
    )
   )
  )
- (func $unreachable-if-toplevel (type $5) (result i32)
+ (func $unreachable-if-toplevel (type $5) (result i32) ;; 30
   (if
    (i32.const 3)
    (return
@@ -493,7 +493,7 @@
    )
   )
  )
- (func $unreachable-loop (type $5) (result i32)
+ (func $unreachable-loop (type $5) (result i32) ;; 31
   (loop $label$1
    (nop)
    (return
@@ -501,14 +501,14 @@
    )
   )
  )
- (func $unreachable-loop0 (type $5) (result i32)
+ (func $unreachable-loop0 (type $5) (result i32) ;; 32
   (loop $label$1
    (return
     (i32.const 1)
    )
   )
  )
- (func $unreachable-loop-toplevel (type $5) (result i32)
+ (func $unreachable-loop-toplevel (type $5) (result i32) ;; 33
   (loop $label$1
    (nop)
    (return
@@ -516,17 +516,17 @@
    )
   )
  )
- (func $unreachable-loop0-toplevel (type $5) (result i32)
+ (func $unreachable-loop0-toplevel (type $5) (result i32) ;; 34
   (loop $label$1
    (return
     (i32.const 1)
    )
   )
  )
- (func $unreachable-ifs (type $1)
+ (func $unreachable-ifs (type $1) ;; 35
   (unreachable)
  )
- (func $unreachable-if-arm (type $1)
+ (func $unreachable-if-arm (type $1) ;; 36
   (if
    (i32.const 1)
    (nop)

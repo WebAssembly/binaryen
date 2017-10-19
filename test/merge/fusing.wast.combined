@@ -15,7 +15,7 @@
  (export "aglobal" (global $a-global))
  (export "bar" (func $bar-func))
  (export "bglobal" (global $b-global))
- (func $foo-func (type $FUNCSIG$v)
+ (func $foo-func (type $FUNCSIG$v) ;; 0
   (drop
    (i32.const 1337)
   )
@@ -27,10 +27,10 @@
    (get_global $b-global)
   )
  )
- (func $b (type $FUNCSIG$v$0)
+ (func $b (type $FUNCSIG$v$0) ;; 1
   (call $foo-func)
  )
- (func $bar-func (type $FUNCSIG$v$0)
+ (func $bar-func (type $FUNCSIG$v$0) ;; 2
   (drop
    (f64.const 3.14159)
   )

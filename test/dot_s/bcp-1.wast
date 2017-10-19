@@ -38,92 +38,92 @@
  (export "main" (func $main))
  (export "dynCall_i" (func $dynCall_i))
  (export "dynCall_ii" (func $dynCall_ii))
- (func $bad0 (type $FUNCSIG$i) (result i32)
+ (func $bad0 (type $FUNCSIG$i) (result i32) ;; 0
   (return
    (i32.const 0)
   )
  )
- (func $bad1 (type $FUNCSIG$i) (result i32)
+ (func $bad1 (type $FUNCSIG$i) (result i32) ;; 1
   (return
    (i32.const 0)
   )
  )
- (func $bad2 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $bad2 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 2
   (return
    (i32.const 0)
   )
  )
- (func $bad3 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $bad3 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 3
   (return
    (i32.const 0)
   )
  )
- (func $bad4 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $bad4 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 4
   (return
    (i32.const 0)
   )
  )
- (func $bad5 (type $FUNCSIG$i) (result i32)
+ (func $bad5 (type $FUNCSIG$i) (result i32) ;; 5
   (return
    (i32.const 0)
   )
  )
- (func $bad6 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $bad6 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 6
   (return
    (i32.const 0)
   )
  )
- (func $bad7 (type $FUNCSIG$i) (result i32)
+ (func $bad7 (type $FUNCSIG$i) (result i32) ;; 7
   (return
    (i32.const 0)
   )
  )
- (func $bad8 (type $FUNCSIG$i) (result i32)
+ (func $bad8 (type $FUNCSIG$i) (result i32) ;; 8
   (return
    (i32.const 0)
   )
  )
- (func $bad9 (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $bad9 (type $FUNCSIG$ii) (param $0 i32) (result i32) ;; 9
   (return
    (i32.const 0)
   )
  )
- (func $bad10 (type $FUNCSIG$i) (result i32)
+ (func $bad10 (type $FUNCSIG$i) (result i32) ;; 10
   (return
    (i32.const 0)
   )
  )
- (func $good0 (type $FUNCSIG$i) (result i32)
+ (func $good0 (type $FUNCSIG$i) (result i32) ;; 11
   (return
    (i32.const 1)
   )
  )
- (func $good1 (type $FUNCSIG$i) (result i32)
+ (func $good1 (type $FUNCSIG$i) (result i32) ;; 12
   (return
    (i32.const 1)
   )
  )
- (func $good2 (type $FUNCSIG$i) (result i32)
+ (func $good2 (type $FUNCSIG$i) (result i32) ;; 13
   (return
    (i32.const 1)
   )
  )
- (func $opt0 (type $FUNCSIG$i) (result i32)
+ (func $opt0 (type $FUNCSIG$i) (result i32) ;; 14
   (return
    (i32.const 0)
   )
  )
- (func $opt1 (type $FUNCSIG$i) (result i32)
+ (func $opt1 (type $FUNCSIG$i) (result i32) ;; 15
   (return
    (i32.const 0)
   )
  )
- (func $opt2 (type $FUNCSIG$i) (result i32)
+ (func $opt2 (type $FUNCSIG$i) (result i32) ;; 16
   (return
    (i32.const 1)
   )
  )
- (func $main (result i32)
+ (func $main (result i32) ;; 17
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -309,12 +309,12 @@
   (call $abort)
   (unreachable)
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 18
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 19
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -333,21 +333,21 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 20
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v)
+ (func $__wasm_nullptr (type $FUNCSIG$v) ;; 21
   (unreachable)
  )
- (func $dynCall_i (param $fptr i32) (result i32)
+ (func $dynCall_i (param $fptr i32) (result i32) ;; 22
   (call_indirect $FUNCSIG$i
    (get_local $fptr)
   )
  )
- (func $dynCall_ii (param $fptr i32) (param $0 i32) (result i32)
+ (func $dynCall_ii (param $fptr i32) (param $0 i32) (result i32) ;; 23
   (call_indirect $FUNCSIG$ii
    (get_local $0)
    (get_local $fptr)

@@ -26,7 +26,7 @@
  (export "setThrew" (func $setThrew))
  (export "setTempRet0" (func $setTempRet0))
  (export "dynCall_v" (func $dynCall_v))
- (func $exception
+ (func $exception ;; 0
   (local $0 i32)
   (i32.store offset=12
    (i32.const 0)
@@ -61,7 +61,7 @@
    (call $__cxa_end_catch)
   )
  )
- (func $setjmp_longjmp
+ (func $setjmp_longjmp ;; 1
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -85,7 +85,7 @@
   )
   (unreachable)
  )
- (func $setThrew (param $0 i32) (param $1 i32)
+ (func $setThrew (param $0 i32) (param $1 i32) ;; 2
   (block $label$0
    (br_if $label$0
     (i32.load offset=12
@@ -102,18 +102,18 @@
    )
   )
  )
- (func $setTempRet0 (param $0 i32)
+ (func $setTempRet0 (param $0 i32) ;; 3
   (i32.store offset=20
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 4
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 5
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -132,19 +132,19 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 6
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v)
+ (func $__wasm_nullptr (type $FUNCSIG$v) ;; 7
   (unreachable)
  )
- (func $__importThunk_foo (type $FUNCSIG$v)
+ (func $__importThunk_foo (type $FUNCSIG$v) ;; 8
   (call $foo)
  )
- (func $dynCall_v (param $fptr i32)
+ (func $dynCall_v (param $fptr i32) ;; 9
   (call_indirect $FUNCSIG$v
    (get_local $fptr)
   )

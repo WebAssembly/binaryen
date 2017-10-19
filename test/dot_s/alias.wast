@@ -10,7 +10,7 @@
  (export "__exit" (func $__exit))
  (export "__needs_exit" (func $__needs_exit))
  (export "dynCall_v" (func $dynCall_v))
- (func $__exit (type $FUNCSIG$v)
+ (func $__exit (type $FUNCSIG$v) ;; 0
   (drop
    (i32.add
     (i32.load
@@ -22,18 +22,18 @@
    )
   )
  )
- (func $__needs_exit (result i32)
+ (func $__needs_exit (result i32) ;; 1
   (call $__exit)
   (return
    (i32.const 1)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 2
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 3
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -52,16 +52,16 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 4
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v)
+ (func $__wasm_nullptr (type $FUNCSIG$v) ;; 5
   (unreachable)
  )
- (func $dynCall_v (param $fptr i32)
+ (func $dynCall_v (param $fptr i32) ;; 6
   (call_indirect $FUNCSIG$v
    (get_local $fptr)
   )

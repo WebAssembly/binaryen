@@ -8,7 +8,7 @@
  (import "env" "tableBase" (global $tableBase$0 i32))
  (elem (get_global $tableBase) $foo $foo)
  (data (get_global $memoryBase) "hello, this is some data!")
- (func $foo (type $0)
+ (func $foo (type $0) ;; 0
   (drop
    (get_global $tableBase$0)
   )

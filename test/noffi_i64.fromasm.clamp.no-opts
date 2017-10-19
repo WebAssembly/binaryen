@@ -7,7 +7,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (export "_add" (func $add))
  (export "_main" (func $main))
- (func $add (param $a i64) (param $b i64) (result i64)
+ (func $add (param $a i64) (param $b i64) (result i64) ;; 0
   (local $c i64)
   (set_local $c
    (i64.add
@@ -19,7 +19,7 @@
    (get_local $c)
   )
  )
- (func $main (result i32)
+ (func $main (result i32) ;; 1
   (drop
    (call $importll
     (i64.const 2)

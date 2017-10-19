@@ -17,7 +17,7 @@
  (export "runPostSets" (func $runPostSets))
  (export "_str" (global $global$2))
  (export "_foo" (func $_foo))
- (func $_main (type $2) (result i32)
+ (func $_main (type $2) (result i32) ;; 0
   (block $label$1 (result i32)
    (block $label$2 (result i32)
     (drop
@@ -29,10 +29,10 @@
    )
   )
  )
- (func $runPostSets (type $3)
+ (func $runPostSets (type $3) ;; 1
   (nop)
  )
- (func $__post_instantiate (type $3)
+ (func $__post_instantiate (type $3) ;; 2
   (call $__post_instantiate$0)
   (block $label$1
    (block $label$2
@@ -49,7 +49,7 @@
    )
   )
  )
- (func $_foo (type $2) (result i32)
+ (func $_foo (type $2) (result i32) ;; 3
   (local $var$0 i32)
   (block $label$1 (result i32)
    (block $label$2 (result i32)
@@ -60,10 +60,10 @@
    )
   )
  )
- (func $runPostSets$0 (type $3)
+ (func $runPostSets$0 (type $3) ;; 4
   (nop)
  )
- (func $__post_instantiate$0 (type $3)
+ (func $__post_instantiate$0 (type $3) ;; 5
   (block $label$1
    (block $label$2
     (set_global $global$0$0

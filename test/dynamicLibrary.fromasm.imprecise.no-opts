@@ -40,7 +40,7 @@
  (export "__post_instantiate" (func $__post_instantiate))
  (export "runPostSets" (func $runPostSets))
  (export "_global" (global $_global))
- (func $stackAlloc (param $size i32) (result i32)
+ (func $stackAlloc (param $size i32) (result i32) ;; 0
   (local $ret i32)
   (set_local $ret
    (get_global $STACKTOP)
@@ -73,17 +73,17 @@
    (get_local $ret)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 1
   (return
    (get_global $STACKTOP)
   )
  )
- (func $stackRestore (param $top i32)
+ (func $stackRestore (param $top i32) ;; 2
   (set_global $STACKTOP
    (get_local $top)
   )
  )
- (func $establishStackSpace (param $stackBase i32) (param $stackMax i32)
+ (func $establishStackSpace (param $stackBase i32) (param $stackMax i32) ;; 3
   (set_global $STACKTOP
    (get_local $stackBase)
   )
@@ -91,7 +91,7 @@
    (get_local $stackMax)
   )
  )
- (func $setThrew (param $threw i32) (param $value i32)
+ (func $setThrew (param $threw i32) (param $value i32) ;; 4
   (if
    (i32.eq
     (get_global $__THREW__)
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $___cxx_global_var_init
+ (func $___cxx_global_var_init ;; 5
   (local $label i32)
   (local $sp i32)
   (set_local $sp
@@ -121,7 +121,7 @@
   )
   (return)
  )
- (func $__ZN3FooC2Ev (param $$0 i32)
+ (func $__ZN3FooC2Ev (param $$0 i32) ;; 6
   (local $$1 i32)
   (local $label i32)
   (local $sp i32)
@@ -159,7 +159,7 @@
   )
   (return)
  )
- (func $__GLOBAL__sub_I_liblib_cpp
+ (func $__GLOBAL__sub_I_liblib_cpp ;; 7
   (local $label i32)
   (local $sp i32)
   (set_local $sp
@@ -168,11 +168,11 @@
   (call $___cxx_global_var_init)
   (return)
  )
- (func $runPostSets
+ (func $runPostSets ;; 8
   (local $temp i32)
   (nop)
  )
- (func $__post_instantiate
+ (func $__post_instantiate ;; 9
   (set_global $STACKTOP
    (i32.add
     (get_global $memoryBase)

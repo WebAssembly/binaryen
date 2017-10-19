@@ -10,7 +10,7 @@
  (export "opts" (func $opts))
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
- (func $add (param $x i32) (param $y i32) (result i32)
+ (func $add (param $x i32) (param $y i32) (result i32) ;; 0
   ;;@ tests/hello_world.c:5:0
   (set_local $x
    (get_local $x)
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $ret (param $x i32) (result i32)
+ (func $ret (param $x i32) (result i32) ;; 1
   ;;@ return.cpp:50:0
   (set_local $x
    (i32.shl
@@ -46,7 +46,7 @@
    )
   )
  )
- (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
+ (func $i32s-rem (param $0 i32) (param $1 i32) (result i32) ;; 2
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -58,7 +58,7 @@
    )
   )
  )
- (func $opts (param $x i32) (param $y i32) (result i32)
+ (func $opts (param $x i32) (param $y i32) (result i32) ;; 3
   ;;@ even-opted.cpp:1:0
   (set_local $x
    (i32.add
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $fib (param $$0 i32) (result i32)
+ (func $fib (param $$0 i32) (result i32) ;; 4
   (local $$$0$lcssa i32)
   (local $$$01518 i32)
   (local $$$01518$phi i32)
@@ -185,7 +185,7 @@
    (get_local $$$0$lcssa)
   )
  )
- (func $switch_reach (param $$p i32) (result i32)
+ (func $switch_reach (param $$p i32) (result i32) ;; 5
   (local $$0 i32)
   (local $$call i32)
   (local $$magic i32)

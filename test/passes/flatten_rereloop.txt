@@ -1,7 +1,7 @@
 (module
  (type $0 (func (result f64)))
  (memory $0 0)
- (func $0 (type $0) (result f64)
+ (func $0 (type $0) (result f64) ;; 0
   (local $0 f64)
   (local $1 f64)
   (local $2 i32)

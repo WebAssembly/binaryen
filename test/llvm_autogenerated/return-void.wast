@@ -7,9 +7,9 @@
  (export "stackRestore" (func $stackRestore))
  (export "return_void" (func $return_void))
  (export "return_void_twice" (func $return_void_twice))
- (func $return_void
+ (func $return_void ;; 0
  )
- (func $return_void_twice (param $0 i32)
+ (func $return_void_twice (param $0 i32) ;; 1
   (block $label$0
    (br_if $label$0
     (i32.eqz
@@ -27,12 +27,12 @@
    (i32.const 1)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 2
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 3
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -51,7 +51,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 4
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

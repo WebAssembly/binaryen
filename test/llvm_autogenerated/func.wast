@@ -11,23 +11,23 @@
  (export "f3" (func $f3))
  (export "f4" (func $f4))
  (export "f5" (func $f5))
- (func $f0
+ (func $f0 ;; 0
   (return)
  )
- (func $f1 (result i32)
+ (func $f1 (result i32) ;; 1
   (return
    (i32.const 0)
   )
  )
- (func $f2 (param $0 i32) (param $1 f32) (result i32)
+ (func $f2 (param $0 i32) (param $1 f32) (result i32) ;; 2
   (return
    (i32.const 0)
   )
  )
- (func $f3 (param $0 i32) (param $1 f32)
+ (func $f3 (param $0 i32) (param $1 f32) ;; 3
   (return)
  )
- (func $f4 (param $0 i32) (result i32)
+ (func $f4 (param $0 i32) (result i32) ;; 4
   (block $label$0
    (br_if $label$0
     (i32.eqz
@@ -45,15 +45,15 @@
    (i32.const 1)
   )
  )
- (func $f5 (result f32)
+ (func $f5 (result f32) ;; 5
   (unreachable)
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 6
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 7
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -72,7 +72,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 8
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

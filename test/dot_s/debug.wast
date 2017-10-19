@@ -5,7 +5,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "fib" (func $fib))
- (func $fib (param $0 i32) (result i32)
+ (func $fib (param $0 i32) (result i32) ;; 0
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -57,12 +57,12 @@
    (get_local $4)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 1
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 2
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -81,7 +81,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 3
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

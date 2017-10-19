@@ -51,7 +51,7 @@
  (export "dynCall_ii" (func $dynCall_ii))
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_vi" (func $dynCall_vi))
- (func $_malloc (param $0 i32) (result i32)
+ (func $_malloc (param $0 i32) (result i32) ;; 0
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -5885,7 +5885,7 @@
   )
   (i32.const 0)
  )
- (func $_free (param $0 i32)
+ (func $_free (param $0 i32) ;; 1
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -7727,7 +7727,7 @@
    (i32.const -1)
   )
  )
- (func $___stdio_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 2
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -8101,7 +8101,7 @@
   )
   (get_local $15)
  )
- (func $___fwritex (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___fwritex (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 3
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -8314,7 +8314,7 @@
   )
   (get_local $4)
  )
- (func $_fflush (param $0 i32) (result i32)
+ (func $_fflush (param $0 i32) (result i32) ;; 4
   (local $1 i32)
   (local $2 i32)
   (block $do-once
@@ -8448,7 +8448,7 @@
   )
   (get_local $2)
  )
- (func $_strlen (param $0 i32) (result i32)
+ (func $_strlen (param $0 i32) (result i32) ;; 5
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8592,7 +8592,7 @@
    (get_local $3)
   )
  )
- (func $___overflow (param $0 i32) (param $1 i32) (result i32)
+ (func $___overflow (param $0 i32) (param $1 i32) (result i32) ;; 6
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -8746,7 +8746,7 @@
   )
   (get_local $4)
  )
- (func $___fflush_unlocked (param $0 i32) (result i32)
+ (func $___fflush_unlocked (param $0 i32) (result i32) ;; 7
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -8869,7 +8869,7 @@
    )
   )
  )
- (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memcpy (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 8
   (local $3 i32)
   (if
    (i32.ge_s
@@ -9016,10 +9016,10 @@
   )
   (get_local $3)
  )
- (func $runPostSets
+ (func $runPostSets ;; 9
   (nop)
  )
- (func $_memset (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memset (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 10
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -9157,7 +9157,7 @@
    (get_local $2)
   )
  )
- (func $_puts (param $0 i32) (result i32)
+ (func $_puts (param $0 i32) (result i32) ;; 11
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -9266,7 +9266,7 @@
    (i32.const 31)
   )
  )
- (func $___stdio_seek (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdio_seek (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 12
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9335,7 +9335,7 @@
   )
   (get_local $0)
  )
- (func $___towrite (param $0 i32) (result i32)
+ (func $___towrite (param $0 i32) (result i32) ;; 13
   (local $1 i32)
   (local $2 i32)
   (set_local $2
@@ -9413,7 +9413,7 @@
    )
   )
  )
- (func $_fwrite (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_fwrite (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 14
   (local $4 i32)
   (local $5 i32)
   (set_local $4
@@ -9475,7 +9475,7 @@
   )
   (get_local $2)
  )
- (func $___stdout_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $___stdout_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 15
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9544,7 +9544,7 @@
   )
   (get_local $3)
  )
- (func $___stdio_close (param $0 i32) (result i32)
+ (func $___stdio_close (param $0 i32) (result i32) ;; 16
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -9577,7 +9577,7 @@
   )
   (get_local $0)
  )
- (func $___syscall_ret (param $0 i32) (result i32)
+ (func $___syscall_ret (param $0 i32) (result i32) ;; 17
   (if (result i32)
    (i32.gt_u
     (get_local $0)
@@ -9596,7 +9596,7 @@
    (get_local $0)
   )
  )
- (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32) ;; 18
   (call_indirect $FUNCSIG$iiii
    (get_local $1)
    (get_local $2)
@@ -9610,7 +9610,7 @@
    )
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (param $0 i32) (result i32) ;; 19
   (local $1 i32)
   (set_local $1
    (get_global $STACKTOP)
@@ -9632,7 +9632,7 @@
   )
   (get_local $1)
  )
- (func $___errno_location (result i32)
+ (func $___errno_location (result i32) ;; 20
   (if (result i32)
    (i32.load
     (i32.const 8)
@@ -9643,7 +9643,7 @@
    (i32.const 60)
   )
  )
- (func $setThrew (param $0 i32) (param $1 i32)
+ (func $setThrew (param $0 i32) (param $1 i32) ;; 21
   (if
    (i32.eqz
     (get_global $__THREW__)
@@ -9658,7 +9658,7 @@
    )
   )
  )
- (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
+ (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32) ;; 22
   (call_indirect $FUNCSIG$ii
    (get_local $1)
    (i32.and
@@ -9667,7 +9667,7 @@
    )
   )
  )
- (func $_cleanup_418 (param $0 i32)
+ (func $_cleanup_418 (param $0 i32) ;; 23
   (if
    (i32.eqz
     (i32.load offset=68
@@ -9679,7 +9679,7 @@
    )
   )
  )
- (func $establishStackSpace (param $0 i32) (param $1 i32)
+ (func $establishStackSpace (param $0 i32) (param $1 i32) ;; 24
   (set_global $STACKTOP
    (get_local $0)
   )
@@ -9687,7 +9687,7 @@
    (get_local $1)
   )
  )
- (func $dynCall_vi (param $0 i32) (param $1 i32)
+ (func $dynCall_vi (param $0 i32) (param $1 i32) ;; 25
   (call_indirect $FUNCSIG$vi
    (get_local $1)
    (i32.add
@@ -9699,38 +9699,38 @@
    )
   )
  )
- (func $b1 (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $b1 (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 26
   (call $abort
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (param $0 i32) ;; 27
   (set_global $STACKTOP
    (get_local $0)
   )
  )
- (func $setTempRet0 (param $0 i32)
+ (func $setTempRet0 (param $0 i32) ;; 28
   (set_global $tempRet0
    (get_local $0)
   )
  )
- (func $b0 (param $0 i32) (result i32)
+ (func $b0 (param $0 i32) (result i32) ;; 29
   (call $abort
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $___unlockfile (param $0 i32)
+ (func $___unlockfile (param $0 i32) ;; 30
   (nop)
  )
- (func $___lockfile (param $0 i32) (result i32)
+ (func $___lockfile (param $0 i32) (result i32) ;; 31
   (i32.const 0)
  )
- (func $getTempRet0 (result i32)
+ (func $getTempRet0 (result i32) ;; 32
   (get_global $tempRet0)
  )
- (func $_main (result i32)
+ (func $_main (result i32) ;; 33
   (drop
    (call $_puts
     (i32.const 672)
@@ -9738,10 +9738,10 @@
   )
   (i32.const 0)
  )
- (func $stackSave (result i32)
+ (func $stackSave (result i32) ;; 34
   (get_global $STACKTOP)
  )
- (func $b2 (param $0 i32)
+ (func $b2 (param $0 i32) ;; 35
   (call $abort
    (i32.const 2)
   )

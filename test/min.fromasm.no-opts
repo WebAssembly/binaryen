@@ -11,7 +11,7 @@
  (export "neg" (func $legalstub$neg))
  (export "bitcasts" (func $legalstub$bitcasts))
  (export "ctzzzz" (func $ctzzzz))
- (func $floats (param $f f32) (result f32)
+ (func $floats (param $f f32) (result f32) ;; 0
   (local $t f32)
   (return
    (f32.add
@@ -20,7 +20,7 @@
    )
   )
  )
- (func $neg (param $k i32) (param $p i32) (result f32)
+ (func $neg (param $k i32) (param $p i32) (result f32) ;; 1
   (local $n f32)
   (set_local $n
    (f32.neg
@@ -39,7 +39,7 @@
    (get_local $n)
   )
  )
- (func $bitcasts (param $i i32) (param $f f32)
+ (func $bitcasts (param $i i32) (param $f f32) ;; 2
   (drop
    (f32.reinterpret/i32
     (get_local $i)
@@ -58,14 +58,14 @@
    )
   )
  )
- (func $ctzzzz (result i32)
+ (func $ctzzzz (result i32) ;; 3
   (return
    (i32.ctz
     (i32.const 4660)
    )
   )
  )
- (func $ub (result i32)
+ (func $ub (result i32) ;; 4
   (drop
    (call $ub)
   )
@@ -73,7 +73,7 @@
    (get_global $M)
   )
  )
- (func $legalstub$floats (param $0 f64) (result f64)
+ (func $legalstub$floats (param $0 f64) (result f64) ;; 5
   (f64.promote/f32
    (call $floats
     (f32.demote/f64
@@ -82,7 +82,7 @@
    )
   )
  )
- (func $legalstub$neg (param $0 i32) (param $1 i32) (result f64)
+ (func $legalstub$neg (param $0 i32) (param $1 i32) (result f64) ;; 6
   (f64.promote/f32
    (call $neg
     (get_local $0)
@@ -90,7 +90,7 @@
    )
   )
  )
- (func $legalstub$bitcasts (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (param $0 i32) (param $1 f64) ;; 7
   (call $bitcasts
    (get_local $0)
    (f32.demote/f64

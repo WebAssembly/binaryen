@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 0)
- (func $contrast (type $0)
+ (func $contrast (type $0) ;; 0
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -62,11 +62,11 @@
    (get_local $b)
   )
  )
- (func $no-unreachable (type $0)
+ (func $no-unreachable (type $0) ;; 1
   (local $x i32)
   (unreachable)
  )
- (func $implicit-trap-and-global-effects (type $0)
+ (func $implicit-trap-and-global-effects (type $0) ;; 2
   (local $var$0 i32)
   (set_local $var$0
    (i32.trunc_u/f64
@@ -81,7 +81,7 @@
    (get_local $var$0)
   )
  )
- (func $implicit-trap-and-local-effects (type $0)
+ (func $implicit-trap-and-local-effects (type $0) ;; 3
   (local $var$0 i32)
   (local $other i32)
   (nop)

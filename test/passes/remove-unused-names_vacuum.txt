@@ -2,30 +2,30 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (memory $0 0)
- (func $return-i32-but-body-is-unreachable3 (type $0) (result i32)
+ (func $return-i32-but-body-is-unreachable3 (type $0) (result i32) ;; 0
   (local $label i32)
   (loop $while-in$1
    (br $while-in$1)
   )
  )
- (func $return-i32-but-body-is-unreachable4 (type $0) (result i32)
+ (func $return-i32-but-body-is-unreachable4 (type $0) (result i32) ;; 1
   (local $label i32)
   (loop $while-in$1
    (br $while-in$1)
   )
  )
- (func $to-drop-unreachable (type $1)
+ (func $to-drop-unreachable (type $1) ;; 2
   (drop
    (block (result i32)
     (unreachable)
    )
   )
  )
- (func $return-i32-but-body-is-unreachable5 (type $0) (result i32)
+ (func $return-i32-but-body-is-unreachable5 (type $0) (result i32) ;; 3
   (local $label i32)
   (unreachable)
  )
- (func $return-i32-but-body-is-unreachable6 (type $0) (result i32)
+ (func $return-i32-but-body-is-unreachable6 (type $0) (result i32) ;; 4
   (local $label i32)
   (unreachable)
  )
