@@ -27,7 +27,7 @@ namespace wasm {
 
 namespace GlobalUtils {
   // find a global initialized to the value of an import, or null if no such global
-  inline Global* getGlobalInitializedToImport(Module&wasm, Name module, Name base) {
+  inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
     // find the import
     Name imported;
     for (auto& import : wasm.imports) {

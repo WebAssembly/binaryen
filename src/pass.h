@@ -76,6 +76,10 @@ struct PassRunner {
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
   PassRunner(Module* wasm, PassOptions options) : wasm(wasm), allocator(&wasm->allocator), options(options) {}
 
+  // no copying, we control |passes|
+  PassRunner(const PassRunner&) = delete;
+  PassRunner& operator=(const PassRunner&) = delete;
+
   void setDebug(bool debug_) {
     options.debug = debug_;
     options.validateGlobally = debug_; // validate everything by default if debugging

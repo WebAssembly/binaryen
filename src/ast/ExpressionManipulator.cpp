@@ -97,28 +97,28 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     }
     Expression* visitLoad(Load *curr) {
       if (curr->isAtomic) {
-	return builder.makeAtomicLoad(curr->bytes, curr->signed_, curr->offset,
-				      copy(curr->ptr), curr->type);
+        return builder.makeAtomicLoad(curr->bytes, curr->offset,
+                                      copy(curr->ptr), curr->type);
       }
       return builder.makeLoad(curr->bytes, curr->signed_, curr->offset, curr->align, copy(curr->ptr), curr->type);
     }
     Expression* visitStore(Store *curr) {
       if (curr->isAtomic) {
-	return builder.makeAtomicStore(curr->bytes, curr->offset, copy(curr->ptr), copy(curr->value), curr->valueType);
+        return builder.makeAtomicStore(curr->bytes, curr->offset, copy(curr->ptr), copy(curr->value), curr->valueType);
       }
       return builder.makeStore(curr->bytes, curr->offset, curr->align, copy(curr->ptr), copy(curr->value), curr->valueType);
     }
     Expression* visitAtomicRMW(AtomicRMW* curr) {
       return builder.makeAtomicRMW(curr->op, curr->bytes, curr->offset,
-				   copy(curr->ptr), copy(curr->value), curr->type);
+                                   copy(curr->ptr), copy(curr->value), curr->type);
     }
     Expression* visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       return builder.makeAtomicCmpxchg(curr->bytes, curr->offset,
-				       copy(curr->ptr), copy(curr->expected), copy(curr->replacement),
-				       curr->type);
+                                       copy(curr->ptr), copy(curr->expected), copy(curr->replacement),
+                                       curr->type);
     }
     Expression* visitAtomicWait(AtomicWait* curr) {
-      return builder.makeAtomicWait(copy(curr->ptr), copy(curr->expected), copy(curr->timeout), curr->type);
+      return builder.makeAtomicWait(copy(curr->ptr), copy(curr->expected), copy(curr->timeout), curr->expectedType);
     }
     Expression* visitAtomicWake(AtomicWake* curr) {
       return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount));

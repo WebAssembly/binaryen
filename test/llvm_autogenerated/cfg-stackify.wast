@@ -37,7 +37,7 @@
  (export "test13" (func $test13))
  (export "test14" (func $test14))
  (export "test15" (func $test15))
- (func $test0 (; 0 ;) (param $0 i32)
+ (func $test0 (; 5 ;) (param $0 i32)
   (local $1 i32)
   (set_local $1
    (i32.const 1)
@@ -62,7 +62,7 @@
    (br $label$0)
   )
  )
- (func $test1 (; 1 ;) (param $0 i32)
+ (func $test1 (; 6 ;) (param $0 i32)
   (local $1 i32)
   (set_local $1
    (i32.const 1)
@@ -87,7 +87,7 @@
    (br $label$0)
   )
  )
- (func $test2 (; 2 ;) (param $0 i32) (param $1 i32)
+ (func $test2 (; 7 ;) (param $0 i32) (param $1 i32)
   (block $label$0
    (br_if $label$0
     (i32.lt_s
@@ -123,7 +123,7 @@
   )
   (return)
  )
- (func $doublediamond (; 3 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $doublediamond (; 8 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $2)
    (i32.const 0)
@@ -166,7 +166,7 @@
    (i32.const 0)
   )
  )
- (func $triangle (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $triangle (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -188,7 +188,7 @@
    (i32.const 0)
   )
  )
- (func $diamond (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $diamond (; 10 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -217,7 +217,7 @@
    (i32.const 0)
   )
  )
- (func $single_block (; 6 ;) (param $0 i32) (result i32)
+ (func $single_block (; 11 ;) (param $0 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -226,7 +226,7 @@
    (i32.const 0)
   )
  )
- (func $minimal_loop (; 7 ;) (param $0 i32) (result i32)
+ (func $minimal_loop (; 12 ;) (param $0 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -239,7 +239,7 @@
    (br $label$0)
   )
  )
- (func $simple_loop (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $simple_loop (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -263,7 +263,7 @@
    (i32.const 0)
   )
  )
- (func $doubletriangle (; 9 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $doubletriangle (; 14 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $2)
    (i32.const 0)
@@ -298,7 +298,7 @@
    (i32.const 0)
   )
  )
- (func $ifelse_earlyexits (; 10 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $ifelse_earlyexits (; 15 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $2)
    (i32.const 0)
@@ -334,7 +334,7 @@
    (i32.const 0)
   )
  )
- (func $doublediamond_in_a_loop (; 11 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $doublediamond_in_a_loop (; 16 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (loop $label$0 (result i32)
    (i32.store
     (get_local $2)
@@ -383,7 +383,7 @@
    (br $label$0)
   )
  )
- (func $test3 (; 12 ;) (param $0 i32)
+ (func $test3 (; 17 ;) (param $0 i32)
   (block $label$0
    (br_if $label$0
     (i32.const 0)
@@ -414,7 +414,7 @@
   )
   (return)
  )
- (func $test4 (; 13 ;) (param $0 i32)
+ (func $test4 (; 18 ;) (param $0 i32)
   (block $label$0
    (block $label$1
     (br_if $label$1
@@ -454,7 +454,7 @@
   )
   (return)
  )
- (func $test5 (; 14 ;) (param $0 i32) (param $1 i32)
+ (func $test5 (; 19 ;) (param $0 i32) (param $1 i32)
   (set_local $0
    (i32.and
     (get_local $0)
@@ -498,7 +498,7 @@
   )
   (return)
  )
- (func $test6 (; 15 ;) (param $0 i32) (param $1 i32)
+ (func $test6 (; 20 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (set_local $2
    (i32.and
@@ -557,7 +557,7 @@
   )
   (return)
  )
- (func $test7 (; 16 ;) (param $0 i32) (param $1 i32)
+ (func $test7 (; 21 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -610,7 +610,7 @@
   )
   (unreachable)
  )
- (func $test8 (; 17 ;) (result i32)
+ (func $test8 (; 22 ;) (result i32)
   (loop $label$0 (result i32)
    (br_if $label$0
     (i32.const 0)
@@ -618,7 +618,7 @@
    (br $label$0)
   )
  )
- (func $test9 (; 18 ;)
+ (func $test9 (; 23 ;)
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -687,7 +687,7 @@
   )
   (return)
  )
- (func $test10 (; 19 ;)
+ (func $test10 (; 24 ;)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -750,7 +750,7 @@
    (br $label$0)
   )
  )
- (func $test11 (; 20 ;)
+ (func $test11 (; 25 ;)
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -819,7 +819,7 @@
   )
   (return)
  )
- (func $test12 (; 21 ;) (param $0 i32)
+ (func $test12 (; 26 ;) (param $0 i32)
   (local $1 i32)
   (block $label$0
    (loop $label$1
@@ -873,7 +873,7 @@
   )
   (return)
  )
- (func $test13 (; 22 ;)
+ (func $test13 (; 27 ;)
   (local $0 i32)
   (block $label$0
    (block $label$1
@@ -903,7 +903,7 @@
   )
   (unreachable)
  )
- (func $test14 (; 23 ;)
+ (func $test14 (; 28 ;)
   (loop $label$0
    (br_if $label$0
     (i32.const 0)
@@ -916,7 +916,7 @@
   )
   (return)
  )
- (func $test15 (; 24 ;)
+ (func $test15 (; 29 ;)
   (local $0 i32)
   (local $1 i32)
   (block $label$0
@@ -963,12 +963,12 @@
   )
   (return)
  )
- (func $stackSave (; 25 ;) (result i32)
+ (func $stackSave (; 30 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (; 26 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 31 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -987,7 +987,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (; 27 ;) (param $0 i32)
+ (func $stackRestore (; 32 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

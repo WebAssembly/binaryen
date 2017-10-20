@@ -20,6 +20,7 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "ast/branch-utils.h"
+#include "ast/module-utils.h"
 
 namespace wasm {
 
@@ -31,6 +32,9 @@ void WasmBinaryWriter::prepare() {
     }
     // TODO: depending on upstream flux https://github.com/WebAssembly/spec/pull/301 might want this: assert(!func->type.isNull());
   }
+  ModuleUtils::BinaryIndexes indexes(*wasm);
+  mappedFunctions.swap(indexes.functionIndexes);
+  mappedGlobals.swap(indexes.globalIndexes);
 }
 
 void WasmBinaryWriter::write() {
@@ -97,7 +101,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   if (sizeFieldSize != MaxLEB32Bytes) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
-    std::move(&o[start + MaxLEB32Bytes], &o[start + MaxLEB32Bytes + size], &o[start + sizeFieldSize]);
+    std::move(&o[start] + MaxLEB32Bytes, &o[start] + MaxLEB32Bytes + size, &o[start] + sizeFieldSize);
     o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
   }
 }
@@ -280,7 +284,7 @@ void WasmBinaryWriter::writeFunctions() {
     if (sizeFieldSize != MaxLEB32Bytes) {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
-      std::move(&o[start], &o[start + size], &o[sizePos + sizeFieldSize]);
+      std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
       o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
   }
@@ -343,39 +347,11 @@ void WasmBinaryWriter::writeDataSegments() {
 }
 
 uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  if (!mappedFunctions.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Function) continue;
-      assert(mappedFunctions.count(import->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->functions.size(); i++) {
-      assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[wasm->functions[i]->name] = index;
-    }
-  }
   assert(mappedFunctions.count(name));
   return mappedFunctions[name];
 }
 
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  if (!mappedGlobals.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Global) continue;
-      assert(mappedGlobals.count(import->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->globals.size(); i++) {
-      assert(mappedGlobals.count(wasm->globals[i]->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[wasm->globals[i]->name] = index;
-    }
-  }
   assert(mappedGlobals.count(name));
   return mappedGlobals[name];
 }
@@ -791,6 +767,11 @@ void WasmBinaryWriter::visitLoad(Load *curr) {
       default: WASM_UNREACHABLE();
     }
   } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->type) {
       case i32: {
@@ -849,6 +830,11 @@ void WasmBinaryWriter::visitStore(Store *curr) {
       default: abort();
     }
   } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->valueType) {
       case i32: {
@@ -880,6 +866,12 @@ void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   recurse(curr->ptr);
   recurse(curr->value);
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
 
@@ -926,6 +918,12 @@ void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   recurse(curr->ptr);
   recurse(curr->expected);
   recurse(curr->replacement);
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->type) {

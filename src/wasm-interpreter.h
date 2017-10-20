@@ -32,6 +32,7 @@
 #include "wasm.h"
 #include "wasm-traversal.h"
 
+
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
 #endif
@@ -118,7 +119,16 @@ template<typename SubType>
 class ExpressionRunner : public Visitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
-    return Visitor<SubType, Flow>::visit(curr);
+    auto ret = Visitor<SubType, Flow>::visit(curr);
+    if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
+#if 1 // def WASM_INTERPRETER_DEBUG
+      if (ret.value.type != curr->type) {
+        std::cerr << "expected " << printWasmType(curr->type) << ", seeing " << printWasmType(ret.value.type) << " from\n" << curr << '\n';
+      }
+#endif
+      assert(ret.value.type == curr->type);
+    }
+    return ret;
   }
 
   Flow visitBlock(Block *curr) {
@@ -461,7 +471,7 @@ public:
   Flow visitUnreachable(Unreachable *curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");
-    return Flow();
+    WASM_UNREACHABLE();
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {
@@ -522,7 +532,9 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) { return Flow(globals[curr->name]); }
+  Flow visitGetGlobal(GetGlobal *curr) {
+    return Flow(globals[curr->name]);
+  }
   Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
@@ -563,7 +575,7 @@ public:
           switch (load->bytes) {
             case 1: return load->signed_ ? Literal((int32_t)load8s(addr)) : Literal((int32_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int32_t)load16s(addr)) : Literal((int32_t)load16u(addr));
-            case 4: return load->signed_ ? Literal((int32_t)load32s(addr)) : Literal((int32_t)load32u(addr));
+            case 4: return Literal((int32_t)load32s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
@@ -573,7 +585,7 @@ public:
             case 1: return load->signed_ ? Literal((int64_t)load8s(addr)) : Literal((int64_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int64_t)load16s(addr)) : Literal((int64_t)load16u(addr));
             case 4: return load->signed_ ? Literal((int64_t)load32s(addr)) : Literal((int64_t)load32u(addr));
-            case 8: return load->signed_ ? Literal((int64_t)load64s(addr)) : Literal((int64_t)load64u(addr));
+            case 8: return Literal((int64_t)load64s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
@@ -810,8 +822,8 @@ public:
         NOTE_ENTER("GetGlobal");
         auto name = curr->name;
         NOTE_EVAL1(name);
-        NOTE_EVAL1(instance.globals[name]);
         assert(instance.globals.find(name) != instance.globals.end());
+        NOTE_EVAL1(instance.globals[name]);
         return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
@@ -847,6 +859,85 @@ public:
         NOTE_EVAL1(value);
         instance.externalInterface->store(curr, addr, value.value);
         return Flow();
+      }
+
+      Flow visitAtomicRMW(AtomicRMW *curr) {
+        NOTE_ENTER("AtomicRMW");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        auto value = this->visit(curr->value);
+        if (value.breaking()) return value;
+        NOTE_EVAL1(ptr);
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(value);
+        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+        NOTE_EVAL1(loaded);
+        auto computed = value.value;
+        switch (curr->op) {
+          case Add:  computed = computed.add(value.value); break;
+          case Sub:  computed = computed.sub(value.value); break;
+          case And:  computed = computed.and_(value.value); break;
+          case Or:   computed = computed.or_(value.value);  break;
+          case Xor:  computed = computed.xor_(value.value); break;
+          case Xchg: computed = value.value;               break;
+          default: WASM_UNREACHABLE();
+        }
+        instance.doAtomicStore(addr, curr->bytes, computed);
+        return loaded;
+      }
+      Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+        NOTE_ENTER("AtomicCmpxchg");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto expected = this->visit(curr->expected);
+        if (expected.breaking()) return expected;
+        auto replacement = this->visit(curr->replacement);
+        if (replacement.breaking()) return replacement;
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(expected);
+        NOTE_EVAL1(replacement);
+        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+        NOTE_EVAL1(loaded);
+        if (loaded == expected.value) {
+          instance.doAtomicStore(addr, curr->bytes, replacement.value);
+        }
+        return loaded;
+      }
+      Flow visitAtomicWait(AtomicWait *curr) {
+        NOTE_ENTER("AtomicWait");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto expected = this->visit(curr->expected);
+        NOTE_EVAL1(expected);
+        if (expected.breaking()) return expected;
+        auto timeout = this->visit(curr->timeout);
+        NOTE_EVAL1(timeout);
+        if (timeout.breaking()) return timeout;
+        auto bytes = getWasmTypeSize(curr->expectedType);
+        auto addr = instance.getFinalAddress(ptr.value, bytes);
+        auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
+        NOTE_EVAL1(loaded);
+        if (loaded != expected.value) {
+          return Literal(int32_t(1)); // not equal
+        }
+        // TODO: add threads support!
+        //       for now, just assume we are woken up
+        return Literal(int32_t(0)); // woken up
+      }
+      Flow visitAtomicWake(AtomicWake *curr) {
+        NOTE_ENTER("AtomicWake");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto count = this->visit(curr->wakeCount);
+        NOTE_EVAL1(count);
+        if (count.breaking()) return count;
+        // TODO: add threads support!
+        return Literal(int32_t(0)); // none woken up
       }
 
       Flow visitHost(Host *curr) {
@@ -922,23 +1013,68 @@ protected:
 
   Address memorySize; // in pages
 
+  void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
+    if (lhs > rhs) {
+      std::stringstream ss;
+      ss << msg << ": " << lhs << " > " << rhs;
+      externalInterface->trap(ss.str().c_str());
+    }
+  }
+
   template <class LS>
   Address getFinalAddress(LS* curr, Literal ptr) {
-    auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
-      if (lhs > rhs) {
-        std::stringstream ss;
-        ss << msg << ": " << lhs << " > " << rhs;
-        externalInterface->trap(ss.str().c_str());
-      }
-    };
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
     trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
-    trapIfGt(addr, memorySizeBytes - curr->bytes, "highest > memory");
+    checkLoadAddress(addr, curr->bytes);
     return addr;
+  }
+
+  Address getFinalAddress(Literal ptr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+    return addr;
+  }
+
+  void checkLoadAddress(Address addr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+  }
+
+  Literal doAtomicLoad(Address addr, Index bytes, WasmType type) {
+    checkLoadAddress(addr, bytes);
+    Const ptr;
+    ptr.value = Literal(int32_t(addr));
+    ptr.type = i32;
+    Load load;
+    load.bytes = bytes;
+    load.signed_ = true;
+    load.align = bytes;
+    load.isAtomic = true; // understatement
+    load.ptr = &ptr;
+    load.type = type;
+    return externalInterface->load(&load, addr);
+  }
+
+  void doAtomicStore(Address addr, Index bytes, Literal toStore) {
+    Const ptr;
+    ptr.value = Literal(int32_t(addr));
+    ptr.type = i32;
+    Const value;
+    value.value = toStore;
+    value.type = toStore.type;
+    Store store;
+    store.bytes = bytes;
+    store.align = bytes;
+    store.isAtomic = true; // understatement
+    store.ptr = &ptr;
+    store.value = &value;
+    store.valueType = value.type;
+    return externalInterface->store(&store, addr, toStore);
   }
 
   ExternalInterface* externalInterface;

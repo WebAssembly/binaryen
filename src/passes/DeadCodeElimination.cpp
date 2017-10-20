@@ -254,6 +254,10 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::HostId: DELEGATE(Host);
         case Expression::Id::NopId: DELEGATE(Nop);
         case Expression::Id::UnreachableId: break;
+        case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
+        case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+        case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
+        case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
         case Expression::Id::InvalidId:
         default: WASM_UNREACHABLE();
       }

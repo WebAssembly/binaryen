@@ -22,6 +22,7 @@
 #include <wasm-printing.h>
 #include <pass.h>
 #include <pretty_printing.h>
+#include <ast/module-utils.h>
 
 namespace wasm {
 
@@ -46,6 +47,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
+
+  std::unordered_map<Name, Index> functionIndexes;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
@@ -352,7 +355,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   static void printRMWSize(std::ostream& o, WasmType type, uint8_t bytes) {
     prepareColor(o) << printWasmType(type) << ".atomic.rmw";
-    if (bytes != getWasmTypeSize(type)) {
+    if (type == unreachable) {
+      o << '?';
+    } else if (bytes != getWasmTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -686,12 +691,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->name);
     if (currModule && !minify) {
       // emit the function index in a comment
-      for (Index i = 0; i < currModule->functions.size(); i++) {
-        if (currModule->functions[i].get() == curr) {
-          o << " (; " << i << " ;)";
-          break;
-        }
+      if (functionIndexes.empty()) {
+        ModuleUtils::BinaryIndexes indexes(*currModule);
+        functionIndexes.swap(indexes.functionIndexes);
       }
+      o << " (; " << functionIndexes[curr->name] << " ;)";
     }
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';

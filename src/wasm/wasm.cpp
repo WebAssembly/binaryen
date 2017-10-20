@@ -390,12 +390,14 @@ void AtomicCmpxchg::finalize() {
 }
 
 void AtomicWait::finalize() {
+  type = i32;
   if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
     type = unreachable;
   }
 }
 
 void AtomicWake::finalize() {
+  type = i32;
   if (ptr->type == unreachable || wakeCount->type == unreachable) {
     type = unreachable;
   }

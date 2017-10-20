@@ -16,7 +16,7 @@
  (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
  (import "env" "lp" (func $lp (param i32 i32) (result i32)))
  (memory $0 256 256)
- (func $contrast (; 0 ;) (type $FUNCSIG$v)
+ (func $contrast (; 5 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
   (local $z i32)
@@ -78,7 +78,7 @@
    )
   )
  )
- (func $b0-yes (; 1 ;) (type $4) (param $i1 i32)
+ (func $b0-yes (; 6 ;) (type $4) (param $i1 i32)
   (local $x i32)
   (local $y i32)
   (local $a i32)
@@ -400,7 +400,7 @@
    )
   )
  )
- (func $Ia (; 2 ;) (type $5) (param $a i32) (result i32)
+ (func $Ia (; 7 ;) (type $5) (param $a i32) (result i32)
   (local $b i32)
   (block $switch$0
    (block $switch-default$6
@@ -411,7 +411,7 @@
    (i32.const 60)
   )
  )
- (func $memories (; 3 ;) (type $6) (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
+ (func $memories (; 8 ;) (type $6) (param $i2 i32) (param $i3 i32) (param $bi2 i32) (param $bi3 i32) (param $ci3 i32) (param $di3 i32)
   (local $set_with_no_get i32)
   (nop)
   (i32.store8
@@ -443,7 +443,7 @@
    (i32.const 456)
   )
  )
- (func $___remdi3 (; 4 ;) (type $FUNCSIG$iiiii) (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
+ (func $___remdi3 (; 9 ;) (type $FUNCSIG$iiiii) (param $$a$0 i32) (param $$a$1 i32) (param $$b$0 i32) (param $$b$1 i32) (result i32)
   (local $$1$1 i32)
   (local $$1$0 i32)
   (local $$rem i32)
@@ -636,7 +636,7 @@
    )
   )
  )
- (func $block-returns (; 5 ;) (type $FUNCSIG$v)
+ (func $block-returns (; 10 ;) (type $FUNCSIG$v)
   (local $x i32)
   (set_local $x
    (block $out (result i32)
@@ -706,7 +706,7 @@
    )
   )
  )
- (func $multiple (; 6 ;) (type $6) (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
+ (func $multiple (; 11 ;) (type $6) (param $s i32) (param $r i32) (param $f i32) (param $p i32) (param $t i32) (param $m i32)
   (nop)
   (set_local $r
    (i32.add
@@ -733,7 +733,7 @@
    (get_local $t)
   )
  )
- (func $switch-def (; 7 ;) (type $5) (param $i3 i32) (result i32)
+ (func $switch-def (; 12 ;) (type $5) (param $i3 i32) (result i32)
   (local $i1 i32)
   (set_local $i1
    (i32.const 10)
@@ -752,7 +752,7 @@
    (get_local $i1)
   )
  )
- (func $no-out-of-label (; 8 ;) (type $8) (param $x i32) (param $y i32)
+ (func $no-out-of-label (; 13 ;) (type $8) (param $x i32) (param $y i32)
   (loop $moar
    (set_local $x
     (block $block (result i32)
@@ -780,7 +780,7 @@
    (get_local $y)
   )
  )
- (func $freetype-cd (; 9 ;) (type $5) (param $a i32) (result i32)
+ (func $freetype-cd (; 14 ;) (type $5) (param $a i32) (result i32)
   (local $e i32)
   (loop $while-in$1
    (set_local $a
@@ -807,7 +807,7 @@
   )
   (get_local $a)
  )
- (func $drop-if-value (; 10 ;) (type $9) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ (func $drop-if-value (; 15 ;) (type $9) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $temp i32)
   (drop
    (if (result i32)
@@ -835,7 +835,7 @@
    (i32.const 0)
   )
  )
- (func $drop-br_if (; 11 ;) (type $9) (param $label i32) (param $$cond2 i32) (param $$$0151 i32) (result i32)
+ (func $drop-br_if (; 16 ;) (type $9) (param $label i32) (param $$cond2 i32) (param $$$0151 i32) (result i32)
   (nop)
   (tee_local $label
    (block $label$break$L4 (result i32)
@@ -867,7 +867,7 @@
    )
   )
  )
- (func $drop-tee-unreachable (; 12 ;) (type $FUNCSIG$v)
+ (func $drop-tee-unreachable (; 17 ;) (type $FUNCSIG$v)
   (local $x i32)
   (tee_local $x
    (unreachable)
@@ -876,7 +876,7 @@
    (get_local $x)
   )
  )
- (func $if-return-but-unreachable (; 13 ;) (type $10) (param $var$0 i64)
+ (func $if-return-but-unreachable (; 18 ;) (type $10) (param $var$0 i64)
   (if
    (unreachable)
    (set_local $var$0

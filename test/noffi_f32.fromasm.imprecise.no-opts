@@ -7,7 +7,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (export "main" (func $main))
  (export "exportf" (func $exportf))
- (func $exportf (; 0 ;) (param $a f32) (result f32)
+ (func $exportf (; 1 ;) (param $a f32) (result f32)
   (return
    (f32.add
     (get_local $a)
@@ -15,7 +15,7 @@
    )
   )
  )
- (func $main (; 1 ;) (result i32)
+ (func $main (; 2 ;) (result i32)
   (drop
    (call $importf
     (f32.const 3.4000000953674316)

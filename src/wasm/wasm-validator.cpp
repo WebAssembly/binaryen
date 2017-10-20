@@ -487,6 +487,7 @@ void FunctionValidator::visitLoad(Load *curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
+  if (curr->isAtomic) shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
 }
 
 void FunctionValidator::visitStore(Store *curr) {
@@ -502,7 +503,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->type, curr, "AtomicRMW result type must match operand");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->value->type, curr, "AtomicRMW result type must match operand");
   shouldBeIntOrUnreachable(curr->type, curr, "Atomic operations are only valid on int types");
 }
 
@@ -513,8 +514,8 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   if (curr->expected->type != unreachable && curr->replacement->type != unreachable) {
     shouldBeEqual(curr->expected->type, curr->replacement->type, curr, "cmpxchg operand types must match");
   }
-  shouldBeEqualOrFirstIsUnreachable(curr->expected->type, curr->type, curr, "Cmpxchg result type must match expected");
-  shouldBeEqualOrFirstIsUnreachable(curr->replacement->type, curr->type, curr, "Cmpxchg result type must match replacement");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->expected->type, curr, "Cmpxchg result type must match expected");
+  shouldBeEqualOrFirstIsUnreachable(curr->type, curr->replacement->type, curr, "Cmpxchg result type must match replacement");
   shouldBeIntOrUnreachable(curr->expected->type, curr, "Atomic operations are only valid on int types");
 }
 

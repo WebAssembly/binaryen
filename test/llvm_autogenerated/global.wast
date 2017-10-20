@@ -21,14 +21,14 @@
  (export "stackRestore" (func $stackRestore))
  (export "foo" (func $foo))
  (export "call_memcpy" (func $call_memcpy))
- (func $foo (; 0 ;) (result i32)
+ (func $foo (; 1 ;) (result i32)
   (return
    (i32.load offset=32
     (i32.const 0)
    )
   )
  )
- (func $call_memcpy (; 1 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $call_memcpy (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy
     (get_local $0)
@@ -37,12 +37,12 @@
    )
   )
  )
- (func $stackSave (; 2 ;) (result i32)
+ (func $stackSave (; 3 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -61,7 +61,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (; 4 ;) (param $0 i32)
+ (func $stackRestore (; 5 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

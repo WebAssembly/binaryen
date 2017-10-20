@@ -8,7 +8,7 @@
  (elem (get_global $tableBase) $gm)
  (data (get_global $memoryBase) "importedSignCast.asm.js")
  (export "func" (func $func))
- (func $func (; 0 ;)
+ (func $func (; 1 ;)
   (drop
    (call $gm
     (i32.const 0)

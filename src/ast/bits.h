@@ -18,6 +18,8 @@
 #define wasm_ast_bits_h
 
 #include "support/bits.h"
+#include "wasm-builder.h"
+#include "ast/literal-utils.h"
 
 namespace wasm {
 
@@ -59,6 +61,43 @@ struct Bits {
       return getEffectiveShifts(amount->value.geti64(), i64);
     }
     WASM_UNREACHABLE();
+  }
+
+  static Expression* makeSignExt(Expression* value, Index bytes, Module& wasm) {
+    if (value->type == i32) {
+      if (bytes == 1 || bytes == 2) {
+        auto shifts = bytes == 1 ? 24 : 16;
+        Builder builder(wasm);
+        return builder.makeBinary(
+          ShrSInt32,
+          builder.makeBinary(
+            ShlInt32,
+            value,
+            LiteralUtils::makeFromInt32(shifts, i32, wasm)
+          ),
+          LiteralUtils::makeFromInt32(shifts, i32, wasm)
+        );
+      }
+      assert(bytes == 4);
+      return value; // nothing to do
+    } else {
+      assert(value->type == i64);
+      if (bytes == 1 || bytes == 2 || bytes == 4) {
+        auto shifts = bytes == 1 ? 56 : (bytes == 2 ? 48 : 32);
+        Builder builder(wasm);
+        return builder.makeBinary(
+          ShrSInt64,
+          builder.makeBinary(
+            ShlInt64,
+            value,
+            LiteralUtils::makeFromInt32(shifts, i64, wasm)
+          ),
+          LiteralUtils::makeFromInt32(shifts, i64, wasm)
+        );
+      }
+      assert(bytes == 8);
+      return value; // nothing to do
+    }
   }
 };
 

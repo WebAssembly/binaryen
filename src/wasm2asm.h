@@ -387,6 +387,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   runner.add<AutoDrop>();
   runner.add("i64-to-i32-lowering");
   runner.add("flatten");
+  runner.add("simplify-locals-notee-nostructure");
   runner.add("vacuum");
   runner.setDebug(flags.debug);
   runner.run();
