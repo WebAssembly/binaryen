@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "ast_utils.h"
 #include "support/hash.h"
-
+#include "ast_utils.h"
+#include "ast/load-utils.h"
 
 namespace wasm {
 // Given a stack of expressions, checks if the topmost is used as a result.
@@ -208,7 +208,10 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       }
       case Expression::Id::LoadId: {
         CHECK(Load, bytes);
-        CHECK(Load, signed_);
+        if (LoadUtils::isSignRelevant(left->cast<Load>()) &&
+            LoadUtils::isSignRelevant(right->cast<Load>())) {
+          CHECK(Load, signed_);
+        }
         CHECK(Load, offset);
         CHECK(Load, align);
         PUSH(Load, ptr);
@@ -455,7 +458,9 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
       }
       case Expression::Id::LoadId: {
         HASH(Load, bytes);
-        HASH(Load, signed_);
+        if (LoadUtils::isSignRelevant(curr->cast<Load>())) {
+          HASH(Load, signed_);
+        }
         HASH(Load, offset);
         HASH(Load, align);
         PUSH(Load, ptr);
