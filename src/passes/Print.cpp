@@ -352,7 +352,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   static void printRMWSize(std::ostream& o, WasmType type, uint8_t bytes) {
     prepareColor(o) << printWasmType(type) << ".atomic.rmw";
-    if (bytes != getWasmTypeSize(type)) {
+    if (type == unreachable) {
+      o << '?';
+    } else if (bytes != getWasmTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {

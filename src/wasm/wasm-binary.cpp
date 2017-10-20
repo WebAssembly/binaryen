@@ -791,6 +791,11 @@ void WasmBinaryWriter::visitLoad(Load *curr) {
       default: WASM_UNREACHABLE();
     }
   } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->type) {
       case i32: {
@@ -849,6 +854,11 @@ void WasmBinaryWriter::visitStore(Store *curr) {
       default: abort();
     }
   } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->valueType) {
       case i32: {
@@ -880,6 +890,12 @@ void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   recurse(curr->ptr);
   recurse(curr->value);
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
 
@@ -926,6 +942,12 @@ void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   recurse(curr->ptr);
   recurse(curr->expected);
   recurse(curr->replacement);
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->type) {

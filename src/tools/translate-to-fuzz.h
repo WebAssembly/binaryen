@@ -101,6 +101,9 @@ private:
   // cross-VM comparisons harder)
   static const bool DE_NAN = true;
 
+  // Whether to emit atomics
+  static const bool ATOMICS = true;
+
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
@@ -377,94 +380,36 @@ private:
     nesting++;
     Expression* ret;
     switch (type) {
-      case i32: ret = _makei32(); break;
-      case i64: ret = _makei64(); break;
-      case f32: ret = _makef32(); break;
-      case f64: ret = _makef64(); break;
+      case i32:
+      case i64:
+      case f32:
+      case f64: ret = _makeConcrete(type); break;
       case none: ret = _makenone(); break;
       case unreachable: ret = _makeunreachable(); break;
       default: WASM_UNREACHABLE();
     }
+    assert(ret->type == type); // we should create the right type of thing
     nesting--;
     return ret;
   }
 
-  Expression* _makei32() {
-    switch (upTo(14)) {
-      case 0: return makeBlock(i32);
-      case 1: return makeIf(i32);
-      case 2: return makeLoop(i32);
-      case 3: return makeBreak(i32);
-      case 4: return makeCall(i32);
-      case 5: return makeCallIndirect(i32);
-      case 6: return makeGetLocal(i32);
-      case 7: return makeSetLocal(i32);
-      case 8: return makeLoad(i32);
-      case 9: return makeConst(i32);
-      case 10: return makeUnary(i32);
-      case 11: return makeBinary(i32);
-      case 12: return makeSelect(i32);
-      case 13: return makeGetGlobal(i32);
-    }
-    WASM_UNREACHABLE();
-  }
-
-  Expression* _makei64() {
-    switch (upTo(14)) {
-      case 0: return makeBlock(i64);
-      case 1: return makeIf(i64);
-      case 2: return makeLoop(i64);
-      case 3: return makeBreak(i64);
-      case 4: return makeCall(i64);
-      case 5: return makeCallIndirect(i64);
-      case 6: return makeGetLocal(i64);
-      case 7: return makeSetLocal(i64);
-      case 8: return makeLoad(i64);
-      case 9: return makeConst(i64);
-      case 10: return makeUnary(i64);
-      case 11: return makeBinary(i64);
-      case 12: return makeSelect(i64);
-      case 13: return makeGetGlobal(i64);
-    }
-    WASM_UNREACHABLE();
-  }
-
-  Expression* _makef32() {
-    switch (upTo(14)) {
-      case 0: return makeBlock(f32);
-      case 1: return makeIf(f32);
-      case 2: return makeLoop(f32);
-      case 3: return makeBreak(f32);
-      case 4: return makeCall(f32);
-      case 5: return makeCallIndirect(f32);
-      case 6: return makeGetLocal(f32);
-      case 7: return makeSetLocal(f32);
-      case 8: return makeLoad(f32);
-      case 9: return makeConst(f32);
-      case 10: return makeUnary(f32);
-      case 11: return makeBinary(f32);
-      case 12: return makeSelect(f32);
-      case 13: return makeGetGlobal(f32);
-    }
-    WASM_UNREACHABLE();
-  }
-
-  Expression* _makef64() {
-    switch (upTo(14)) {
-      case 0: return makeBlock(f64);
-      case 1: return makeIf(f64);
-      case 2: return makeLoop(f64);
-      case 3: return makeBreak(f64);
-      case 4: return makeCall(f64);
-      case 5: return makeCallIndirect(f64);
-      case 6: return makeGetLocal(f64);
-      case 7: return makeSetLocal(f64);
-      case 8: return makeLoad(f64);
-      case 9: return makeConst(f64);
-      case 10: return makeUnary(f64);
-      case 11: return makeBinary(f64);
-      case 12: return makeSelect(f64);
-      case 13: return makeGetGlobal(f64);
+  Expression* _makeConcrete(WasmType type) {
+    switch (upTo(15)) {
+      case 0: return makeBlock(type);
+      case 1: return makeIf(type);
+      case 2: return makeLoop(type);
+      case 3: return makeBreak(type);
+      case 4: return makeCall(type);
+      case 5: return makeCallIndirect(type);
+      case 6: return makeGetLocal(type);
+      case 7: return makeSetLocal(type);
+      case 8: return makeLoad(type);
+      case 9: return makeConst(type);
+      case 10: return makeUnary(type);
+      case 11: return makeBinary(type);
+      case 12: return makeSelect(type);
+      case 13: return makeGetGlobal(type);
+      case 14: return makeAtomic(type);
     }
     WASM_UNREACHABLE();
   }
@@ -821,7 +766,7 @@ private:
     return ret;
   }
 
-  Expression* makeLoad(WasmType type) {
+  Load* makeNonAtomicLoad(WasmType type) {
     auto offset = logify(get());
     auto ptr = makePointer();
     switch (type) {
@@ -854,10 +799,22 @@ private:
     }
   }
 
-  Store* makeStore(WasmType type) {
+  Expression* makeLoad(WasmType type) {
+    auto* ret = makeNonAtomicLoad(type);
+    if (type != i32 && type != i64) return ret;
+    if (!ATOMICS || oneIn(2)) return ret;
+    // make it atomic
+    wasm.memory.shared = true;
+    ret->isAtomic = true;
+    ret->signed_ = false;
+    ret->align = ret->bytes;
+    return ret;
+  }
+
+  Store* makeNonAtomicStore(WasmType type) {
     if (type == unreachable) {
       // make a normal store, then make it unreachable
-      auto* ret = makeStore(getConcreteType());
+      auto* ret = makeNonAtomicStore(getConcreteType());
       switch (upTo(3)) {
         case 0: ret->ptr = make(unreachable); break;
         case 1: ret->value = make(unreachable); break;
@@ -900,6 +857,17 @@ private:
       }
       default: WASM_UNREACHABLE();
     }
+  }
+
+  Store* makeStore(WasmType type) {
+    auto* ret = makeNonAtomicStore(type);
+    if (ret->value->type != i32 && ret->value->type != i64) return ret;
+    if (!ATOMICS || oneIn(2)) return ret;
+    // make it atomic
+    wasm.memory.shared = true;
+    ret->isAtomic = true;
+    ret->align = ret->bytes;
+    return ret;
   }
 
   Expression* makeConst(WasmType type) {
@@ -1142,6 +1110,58 @@ private:
   Expression* makeUnreachable(WasmType type) {
     assert(type == unreachable);
     return builder.makeUnreachable();
+  }
+
+  Expression* makeAtomic(WasmType type) {
+    if (!ATOMICS || (type != i32 && type != i64)) return makeTrivial(type);
+    wasm.memory.shared = true;
+    if (type == i32 && oneIn(2)) {
+      if (oneIn(2)) {
+        auto* ptr = makePointer();
+        auto expectedType = pick(i32, i64);
+        auto* expected = make(expectedType);
+        auto* timeout = make(i64);
+        return builder.makeAtomicWait(ptr, expected, timeout, expectedType);
+      } else {
+        auto* ptr = makePointer();
+        auto* count = make(i32);
+        return builder.makeAtomicWake(ptr, count);
+      }
+    }
+    Index bytes;
+    switch (type) {
+      case i32: {
+        switch (upTo(3)) {
+          case 0: bytes = 1; break;
+          case 1: bytes = pick(1, 2); break;
+          case 2: bytes = pick(1, 2, 4); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (upTo(4)) {
+          case 0: bytes = 1; break;
+          case 1: bytes = pick(1, 2); break;
+          case 2: bytes = pick(1, 2, 4); break;
+          case 3: bytes = pick(1, 2, 4, 8); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+    auto offset = logify(get());
+    auto* ptr = makePointer();
+    if (oneIn(2)) {
+      auto* value = make(type);
+      return builder.makeAtomicRMW(pick(AtomicRMWOp::Add, AtomicRMWOp::Sub, AtomicRMWOp::And, AtomicRMWOp::Or, AtomicRMWOp::Xor, AtomicRMWOp::Xchg),
+                                   bytes, offset, ptr, value, type);
+    } else {
+      auto* expected = make(type);
+      auto* replacement = make(type);
+      return builder.makeAtomicCmpxchg(bytes, offset, ptr, expected, replacement, type);
+    }
   }
 
   // special getters

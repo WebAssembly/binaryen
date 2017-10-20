@@ -202,18 +202,17 @@ public:
     ret->type = type;
     return ret;
   }
-  Load* makeAtomicLoad(unsigned bytes, bool signed_, uint32_t offset, Expression* ptr, WasmType type) {
-    Load* load = makeLoad(bytes, signed_, offset, bytes, ptr, type);
+  Load* makeAtomicLoad(unsigned bytes, uint32_t offset, Expression* ptr, WasmType type) {
+    Load* load = makeLoad(bytes, false, offset, bytes, ptr, type);
     load->isAtomic = true;
     return load;
   }
-  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType type) {
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType expectedType) {
     auto* wait = allocator.alloc<AtomicWait>();
     wait->ptr = ptr;
     wait->expected = expected;
     wait->timeout = timeout;
-    wait->expectedType = type;
-    wait->type = i32;
+    wait->expectedType = expectedType;
     wait->finalize();
     return wait;
   }
@@ -221,7 +220,6 @@ public:
     auto* wake = allocator.alloc<AtomicWake>();
     wake->ptr = ptr;
     wake->wakeCount = wakeCount;
-    wake->type = i32;
     wake->finalize();
     return wake;
   }
@@ -234,7 +232,7 @@ public:
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, WasmType type) {
-    Store* store = makeStore(bytes, offset, getWasmTypeSize(type), ptr, value, type);
+    Store* store = makeStore(bytes, offset, bytes, ptr, value, type);
     store->isAtomic = true;
     return store;
   }

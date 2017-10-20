@@ -89,6 +89,12 @@ public:
   Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
+  Flow visitAtomicWait(AtomicWait *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicWake(AtomicWake *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
   Flow visitHost(Host *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }

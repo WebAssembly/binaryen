@@ -189,8 +189,14 @@
    )
    (call $segfault)
   )
-  (i32.atomic.load8_s
-   (get_local $2)
+  (i32.shr_s
+   (i32.shl
+    (i32.atomic.load8_u
+     (get_local $2)
+    )
+    (i32.const 24)
+   )
+   (i32.const 24)
   )
  )
  (func $SAFE_HEAP_LOAD_i32_1_1 (param $0 i32) (param $1 i32) (result i32)
@@ -346,8 +352,14 @@
    )
    (call $alignfault)
   )
-  (i32.atomic.load16_s
-   (get_local $2)
+  (i32.shr_s
+   (i32.shl
+    (i32.atomic.load16_u
+     (get_local $2)
+    )
+    (i32.const 16)
+   )
+   (i32.const 16)
   )
  )
  (func $SAFE_HEAP_LOAD_i32_2_2 (param $0 i32) (param $1 i32) (result i32)
@@ -799,8 +811,14 @@
    )
    (call $segfault)
   )
-  (i64.atomic.load8_s
-   (get_local $2)
+  (i64.shr_s
+   (i64.shl
+    (i64.atomic.load8_u
+     (get_local $2)
+    )
+    (i64.const 56)
+   )
+   (i64.const 56)
   )
  )
  (func $SAFE_HEAP_LOAD_i64_1_1 (param $0 i32) (param $1 i32) (result i64)
@@ -956,8 +974,14 @@
    )
    (call $alignfault)
   )
-  (i64.atomic.load16_s
-   (get_local $2)
+  (i64.shr_s
+   (i64.shl
+    (i64.atomic.load16_u
+     (get_local $2)
+    )
+    (i64.const 48)
+   )
+   (i64.const 48)
   )
  )
  (func $SAFE_HEAP_LOAD_i64_2_2 (param $0 i32) (param $1 i32) (result i64)
@@ -1201,8 +1225,14 @@
    )
    (call $alignfault)
   )
-  (i64.atomic.load32_s
-   (get_local $2)
+  (i64.shr_s
+   (i64.shl
+    (i64.atomic.load32_u
+     (get_local $2)
+    )
+    (i64.const 32)
+   )
+   (i64.const 32)
   )
  )
  (func $SAFE_HEAP_LOAD_i64_4_4 (param $0 i32) (param $1 i32) (result i64)
