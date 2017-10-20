@@ -62,7 +62,6 @@ std::string runCommand(std::string command) {
 
 int main(int argc, const char* argv[]) {
   Name entry;
-  std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
@@ -173,8 +172,7 @@ int main(int argc, const char* argv[]) {
 
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner = options.getPassRunner(wasm);
-    passRunner.run();
+    options.runPasses(wasm);
     assert(WasmValidator().validate(wasm));
   }
 

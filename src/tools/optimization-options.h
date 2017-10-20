@@ -115,7 +115,7 @@ struct OptimizationOptions : public Options {
     return passes.size() > 0;
   }
 
-  PassRunner getPassRunner(Module& wasm) {
+  void runPasses(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
     if (debug) passRunner.setDebug(true);
     for (auto& pass : passes) {
@@ -125,7 +125,7 @@ struct OptimizationOptions : public Options {
         passRunner.add(pass);
       }
     }
-    return passRunner;
+    passRunner.run();
   }
 };
 
