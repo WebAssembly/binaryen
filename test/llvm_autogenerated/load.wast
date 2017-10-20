@@ -9,40 +9,40 @@
  (export "ldi64" (func $ldi64))
  (export "ldf32" (func $ldf32))
  (export "ldf64" (func $ldf64))
- (func $ldi32 (param $0 i32) (result i32) ;; 0
+ (func $ldi32 (; 0 ;) (param $0 i32) (result i32)
   (return
    (i32.load
     (get_local $0)
    )
   )
  )
- (func $ldi64 (param $0 i32) (result i64) ;; 1
+ (func $ldi64 (; 1 ;) (param $0 i32) (result i64)
   (return
    (i64.load
     (get_local $0)
    )
   )
  )
- (func $ldf32 (param $0 i32) (result f32) ;; 2
+ (func $ldf32 (; 2 ;) (param $0 i32) (result f32)
   (return
    (f32.load
     (get_local $0)
    )
   )
  )
- (func $ldf64 (param $0 i32) (result f64) ;; 3
+ (func $ldf64 (; 3 ;) (param $0 i32) (result f64)
   (return
    (f64.load
     (get_local $0)
    )
   )
  )
- (func $stackSave (result i32) ;; 4
+ (func $stackSave (; 4 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 5
+ (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -61,7 +61,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 6
+ (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

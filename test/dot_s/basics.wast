@@ -14,7 +14,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "main" (func $main))
  (export "dynCall_iii" (func $dynCall_iii))
- (func $main (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32) ;; 0
+ (func $main (; 0 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
   (call $puts
    (i32.const 16)
   )
@@ -97,12 +97,12 @@
   )
   (get_local $0)
  )
- (func $stackSave (result i32) ;; 1
+ (func $stackSave (; 1 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 2
+ (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -121,16 +121,16 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 3
+ (func $stackRestore (; 3 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v) ;; 4
+ (func $__wasm_nullptr (; 4 ;) (type $FUNCSIG$v)
   (unreachable)
  )
- (func $dynCall_iii (param $fptr i32) (param $0 i32) (param $1 i32) (result i32) ;; 5
+ (func $dynCall_iii (; 5 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect $FUNCSIG$iii
    (get_local $0)
    (get_local $1)

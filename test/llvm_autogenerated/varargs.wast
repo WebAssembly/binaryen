@@ -17,17 +17,17 @@
  (export "caller_none" (func $caller_none))
  (export "caller_some" (func $caller_some))
  (export "startbb" (func $startbb))
- (func $start (param $0 i32) (param $1 i32) ;; 0
+ (func $start (; 0 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $end (param $0 i32) ;; 1
+ (func $end (; 1 ;) (param $0 i32)
   (return)
  )
- (func $copy (param $0 i32) (param $1 i32) ;; 2
+ (func $copy (; 2 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (i32.load
@@ -36,7 +36,7 @@
   )
   (return)
  )
- (func $arg_i8 (param $0 i32) (result i32) ;; 3
+ (func $arg_i8 (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
    (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $arg_i32 (param $0 i32) (result i32) ;; 4
+ (func $arg_i32 (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
    (get_local $0)
@@ -80,7 +80,7 @@
    )
   )
  )
- (func $arg_i128 (param $0 i32) (param $1 i32) ;; 5
+ (func $arg_i128 (; 5 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i64)
@@ -130,13 +130,13 @@
   )
   (return)
  )
- (func $caller_none ;; 6
+ (func $caller_none (; 6 ;)
   (call $callee
    (i32.const 0)
   )
   (return)
  )
- (func $caller_some ;; 7
+ (func $caller_some (; 7 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -169,7 +169,7 @@
   )
   (return)
  )
- (func $startbb (param $0 i32) (param $1 i32) (param $2 i32) ;; 8
+ (func $startbb (; 8 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (block $label$0
    (br_if $label$0
     (i32.eqz
@@ -187,12 +187,12 @@
   )
   (return)
  )
- (func $stackSave (result i32) ;; 9
+ (func $stackSave (; 9 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 10
+ (func $stackAlloc (; 10 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -211,7 +211,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 11
+ (func $stackRestore (; 11 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

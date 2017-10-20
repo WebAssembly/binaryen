@@ -20,7 +20,7 @@
  (export "exp-collide2" (func $willCollide))
  (export "exp-b" (func $only-b))
  (export "exp-b-nameCollided" (func $willCollide$0))
- (func $only-a (type $FUNCSIG$v) ;; 0
+ (func $only-a (; 0 ;) (type $FUNCSIG$v)
   (nop)
   (call $only-a)
   (call $some-func)
@@ -42,11 +42,11 @@
    (i32.const 1234)
   )
  )
- (func $willCollide (type $FUNCSIG$v) ;; 1
+ (func $willCollide (; 1 ;) (type $FUNCSIG$v)
   (nop)
   (call $willCollide)
  )
- (func $only-b (type $FUNCSIG$v) ;; 2
+ (func $only-b (; 2 ;) (type $FUNCSIG$v)
   (nop)
   (call $only-b)
   (call $some-func-b)
@@ -77,7 +77,7 @@
    (i32.const 5678)
   )
  )
- (func $willCollide$0 (type $FUNCSIG$v) ;; 3
+ (func $willCollide$0 (; 3 ;) (type $FUNCSIG$v)
   (nop)
   (call $willCollide$0)
  )

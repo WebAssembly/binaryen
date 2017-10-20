@@ -5,7 +5,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "test_traps" (func $test_traps))
- (func $test_traps (param $0 f32) (param $1 f64) (result i32) ;; 0
+ (func $test_traps (; 0 ;) (param $0 f32) (param $1 f64) (result i32)
   (call $i32u-div
    (call $f32-to-int
     (get_local $0)
@@ -15,7 +15,7 @@
    )
   )
  )
- (func $f32-to-int (param $0 f32) (result i32) ;; 1
+ (func $f32-to-int (; 1 ;) (param $0 f32) (result i32)
   (if (result i32)
    (f32.ne
     (get_local $0)
@@ -41,7 +41,7 @@
    )
   )
  )
- (func $f64-to-uint (param $0 f64) (result i32) ;; 2
+ (func $f64-to-uint (; 2 ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -67,7 +67,7 @@
    )
   )
  )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32) ;; 3
+ (func $i32u-div (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -79,12 +79,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 4
+ (func $stackSave (; 4 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 5
+ (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -103,7 +103,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 6
+ (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

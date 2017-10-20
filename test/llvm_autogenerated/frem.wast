@@ -11,7 +11,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "frem32" (func $frem32))
  (export "frem64" (func $frem64))
- (func $frem32 (param $0 f32) (param $1 f32) (result f32) ;; 0
+ (func $frem32 (; 0 ;) (param $0 f32) (param $1 f32) (result f32)
   (return
    (call $fmodf
     (get_local $0)
@@ -19,7 +19,7 @@
    )
   )
  )
- (func $frem64 (param $0 f64) (param $1 f64) (result f64) ;; 1
+ (func $frem64 (; 1 ;) (param $0 f64) (param $1 f64) (result f64)
   (return
    (call $fmod
     (get_local $0)
@@ -27,12 +27,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 2
+ (func $stackSave (; 2 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 3
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -51,7 +51,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 4
+ (func $stackRestore (; 4 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

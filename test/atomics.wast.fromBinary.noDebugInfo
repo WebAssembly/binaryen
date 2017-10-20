@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 (shared 23 256))
- (func $0 (type $0) ;; 0
+ (func $0 (; 0 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (drop
@@ -68,7 +68,7 @@
    (get_local $var$1)
   )
  )
- (func $1 (type $0) ;; 1
+ (func $1 (; 1 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (drop
@@ -102,7 +102,7 @@
    )
   )
  )
- (func $2 (type $0) ;; 2
+ (func $2 (; 2 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (drop
@@ -134,7 +134,7 @@
    )
   )
  )
- (func $3 (type $0) ;; 3
+ (func $3 (; 3 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (drop

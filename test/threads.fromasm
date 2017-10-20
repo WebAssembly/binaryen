@@ -5,7 +5,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (data (get_global $memoryBase) "threads.asm.js")
  (export "test" (func $test))
- (func $test ;; 0
+ (func $test (; 0 ;)
   (local $0 i32)
   (drop
    (i32.atomic.load

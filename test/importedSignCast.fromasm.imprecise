@@ -7,7 +7,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (elem (get_global $tableBase) $gm)
  (export "func" (func $func))
- (func $func ;; 0
+ (func $func (; 0 ;)
   (drop
    (call $gm
     (i32.const 0)

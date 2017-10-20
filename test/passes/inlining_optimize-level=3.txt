@@ -6,10 +6,10 @@
  (memory $0 0)
  (export "yes" (func $yes))
  (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
- (func $yes (type $0) (result i32) ;; 0
+ (func $yes (; 0 ;) (type $0) (result i32)
   (i32.const 1)
  )
- (func $no-tooBig (type $0) (result i32) ;; 1
+ (func $no-tooBig (; 1 ;) (type $0) (result i32)
   (nop)
   (nop)
   (nop)
@@ -48,27 +48,27 @@
   (nop)
   (i32.const 1)
  )
- (func $no-calls (type $0) (result i32) ;; 2
+ (func $no-calls (; 2 ;) (type $0) (result i32)
   (block $__inlined_func$yes (result i32)
    (i32.const 1)
   )
  )
- (func $no-loops (type $0) (result i32) ;; 3
+ (func $no-loops (; 3 ;) (type $0) (result i32)
   (loop $loop-in (result i32)
    (i32.const 1)
   )
  )
- (func $no-loops-but-one-use-but-exported (type $0) (result i32) ;; 4
+ (func $no-loops-but-one-use-but-exported (; 4 ;) (type $0) (result i32)
   (loop $loop-in (result i32)
    (i32.const 1)
   )
  )
- (func $no-loops-but-one-use-but-tabled (type $0) (result i32) ;; 5
+ (func $no-loops-but-one-use-but-tabled (; 5 ;) (type $0) (result i32)
   (loop $loop-in (result i32)
    (i32.const 1)
   )
  )
- (func $intoHere (type $1) ;; 6
+ (func $intoHere (; 6 ;) (type $1)
   (drop
    (block (result i32)
     (block $__inlined_func$yes (result i32)

@@ -14,7 +14,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "bar32" (func $bar32))
  (export "bar64" (func $bar64))
- (func $bar32 (param $0 i32) ;; 0
+ (func $bar32 (; 0 ;) (param $0 i32)
   (block $label$0
    (br_if $label$0
     (i32.gt_u
@@ -51,7 +51,7 @@
   )
   (return)
  )
- (func $bar64 (param $0 i64) ;; 1
+ (func $bar64 (; 1 ;) (param $0 i64)
   (block $label$0
    (br_if $label$0
     (i64.gt_u
@@ -90,12 +90,12 @@
   )
   (return)
  )
- (func $stackSave (result i32) ;; 2
+ (func $stackSave (; 2 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 3
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -114,7 +114,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 4
+ (func $stackRestore (; 4 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

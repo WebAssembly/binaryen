@@ -19,7 +19,7 @@
  (export "ule_f64" (func $ule_f64))
  (export "ugt_f64" (func $ugt_f64))
  (export "uge_f64" (func $uge_f64))
- (func $ord_f64 (param $0 f64) (param $1 f64) (result i32) ;; 0
+ (func $ord_f64 (; 0 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.and
     (f64.eq
@@ -33,7 +33,7 @@
    )
   )
  )
- (func $uno_f64 (param $0 f64) (param $1 f64) (result i32) ;; 1
+ (func $uno_f64 (; 1 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.ne
@@ -47,7 +47,7 @@
    )
   )
  )
- (func $oeq_f64 (param $0 f64) (param $1 f64) (result i32) ;; 2
+ (func $oeq_f64 (; 2 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.eq
     (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $une_f64 (param $0 f64) (param $1 f64) (result i32) ;; 3
+ (func $une_f64 (; 3 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.ne
     (get_local $0)
@@ -63,7 +63,7 @@
    )
   )
  )
- (func $olt_f64 (param $0 f64) (param $1 f64) (result i32) ;; 4
+ (func $olt_f64 (; 4 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.lt
     (get_local $0)
@@ -71,7 +71,7 @@
    )
   )
  )
- (func $ole_f64 (param $0 f64) (param $1 f64) (result i32) ;; 5
+ (func $ole_f64 (; 5 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.le
     (get_local $0)
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $ogt_f64 (param $0 f64) (param $1 f64) (result i32) ;; 6
+ (func $ogt_f64 (; 6 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.gt
     (get_local $0)
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $oge_f64 (param $0 f64) (param $1 f64) (result i32) ;; 7
+ (func $oge_f64 (; 7 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (f64.ge
     (get_local $0)
@@ -95,7 +95,7 @@
    )
   )
  )
- (func $ueq_f64 (param $0 f64) (param $1 f64) (result i32) ;; 8
+ (func $ueq_f64 (; 8 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.eq
@@ -115,7 +115,7 @@
    )
   )
  )
- (func $one_f64 (param $0 f64) (param $1 f64) (result i32) ;; 9
+ (func $one_f64 (; 9 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.and
     (f64.ne
@@ -135,7 +135,7 @@
    )
   )
  )
- (func $ult_f64 (param $0 f64) (param $1 f64) (result i32) ;; 10
+ (func $ult_f64 (; 10 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.lt
@@ -155,7 +155,7 @@
    )
   )
  )
- (func $ule_f64 (param $0 f64) (param $1 f64) (result i32) ;; 11
+ (func $ule_f64 (; 11 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.le
@@ -175,7 +175,7 @@
    )
   )
  )
- (func $ugt_f64 (param $0 f64) (param $1 f64) (result i32) ;; 12
+ (func $ugt_f64 (; 12 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.gt
@@ -195,7 +195,7 @@
    )
   )
  )
- (func $uge_f64 (param $0 f64) (param $1 f64) (result i32) ;; 13
+ (func $uge_f64 (; 13 ;) (param $0 f64) (param $1 f64) (result i32)
   (return
    (i32.or
     (f64.ge
@@ -215,12 +215,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 14
+ (func $stackSave (; 14 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 15
+ (func $stackAlloc (; 15 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -239,7 +239,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 16
+ (func $stackRestore (; 16 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

@@ -684,6 +684,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     lastPrintedLocation = { 0, 0, 0 };
     printOpening(o, "func ", true);
     printName(curr->name);
+    if (currModule && !minify) {
+      // emit the function index in a comment
+      for (Index i = 0; i < currModule->functions.size(); i++) {
+        if (currModule->functions[i].get() == curr) {
+          o << " (; " << i << " ;)";
+          break;
+        }
+      }
+    }
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }
@@ -696,15 +705,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->result != none) {
       o << maybeSpace;
       printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
-    }
-    if (currModule && !minify) {
-      // emit the function index in a comment
-      for (Index i = 0; i < currModule->functions.size(); i++) {
-        if (currModule->functions[i].get() == curr) {
-          o << " ;; " << i;
-          break;
-        }
-      }
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {

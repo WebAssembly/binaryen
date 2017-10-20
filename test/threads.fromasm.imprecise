@@ -4,7 +4,7 @@
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (export "test" (func $test))
- (func $test ;; 0
+ (func $test (; 0 ;)
   (local $0 i32)
   (drop
    (i32.atomic.load

@@ -9,29 +9,29 @@
  (export "free" (func $free))
  (export "realloc" (func $realloc))
  (export "memalign" (func $memalign))
- (func $main (result i32) ;; 0
+ (func $main (; 0 ;) (result i32)
   (i32.const 0)
  )
- (func $malloc (param $0 i32) (result i32) ;; 1
+ (func $malloc (; 1 ;) (param $0 i32) (result i32)
   (i32.const 0)
  )
- (func $free (param $0 i32) ;; 2
+ (func $free (; 2 ;) (param $0 i32)
  )
- (func $realloc (param $0 i32) (param $1 i32) (result i32) ;; 3
+ (func $realloc (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $memalign (param $0 i32) (param $1 i32) (result i32) ;; 4
+ (func $memalign (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $not_a_malloc (param $0 i32) (param $1 i32) (result i32) ;; 5
+ (func $not_a_malloc (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $stackSave (result i32) ;; 6
+ (func $stackSave (; 6 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 7
+ (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -50,7 +50,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 8
+ (func $stackRestore (; 8 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

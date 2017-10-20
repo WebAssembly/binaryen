@@ -23,7 +23,7 @@
  (export "frameaddress_0" (func $frameaddress_0))
  (export "frameaddress_1" (func $frameaddress_1))
  (export "inline_asm" (func $inline_asm))
- (func $alloca32 ;; 0
+ (func $alloca32 (; 0 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -49,7 +49,7 @@
   )
   (return)
  )
- (func $alloca3264 ;; 1
+ (func $alloca3264 (; 1 ;)
   (local $0 i32)
   (i32.store offset=12
    (tee_local $0
@@ -68,7 +68,7 @@
   )
   (return)
  )
- (func $allocarray ;; 2
+ (func $allocarray (; 2 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -101,7 +101,7 @@
   )
   (return)
  )
- (func $non_mem_use (param $0 i32) ;; 3
+ (func $non_mem_use (; 3 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -139,7 +139,7 @@
   )
   (return)
  )
- (func $allocarray_inbounds ;; 4
+ (func $allocarray_inbounds (; 4 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -172,7 +172,7 @@
   )
   (return)
  )
- (func $dynamic_alloca (param $0 i32) ;; 5
+ (func $dynamic_alloca (; 5 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -205,7 +205,7 @@
   )
   (return)
  )
- (func $dynamic_alloca_redzone (param $0 i32) ;; 6
+ (func $dynamic_alloca_redzone (; 6 ;) (param $0 i32)
   (local $1 i32)
   (drop
    (tee_local $1
@@ -237,7 +237,7 @@
   )
   (return)
  )
- (func $dynamic_static_alloca (param $0 i32) ;; 7
+ (func $dynamic_static_alloca (; 7 ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -318,7 +318,7 @@
   )
   (return)
  )
- (func $llvm_stack_builtins (param $0 i32) ;; 8
+ (func $llvm_stack_builtins (; 8 ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -357,7 +357,7 @@
   )
   (return)
  )
- (func $dynamic_alloca_nouse (param $0 i32) ;; 9
+ (func $dynamic_alloca_nouse (; 9 ;) (param $0 i32)
   (local $1 i32)
   (local $2 i32)
   (set_local $1
@@ -389,7 +389,7 @@
   )
   (return)
  )
- (func $copytoreg_fi (param $0 i32) (param $1 i32) ;; 10
+ (func $copytoreg_fi (; 10 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (set_local $2
    (i32.add
@@ -422,7 +422,7 @@
   )
   (return)
  )
- (func $frameaddress_0 ;; 11
+ (func $frameaddress_0 (; 11 ;)
   (local $0 i32)
   (call $use_i8_star
    (tee_local $0
@@ -437,13 +437,13 @@
   )
   (return)
  )
- (func $frameaddress_1 ;; 12
+ (func $frameaddress_1 (; 12 ;)
   (call $use_i8_star
    (i32.const 0)
   )
   (return)
  )
- (func $inline_asm ;; 13
+ (func $inline_asm (; 13 ;)
   (local $0 i32)
   (set_local $0
    (i32.add
@@ -458,12 +458,12 @@
   )
   (return)
  )
- (func $stackSave (result i32) ;; 14
+ (func $stackSave (; 14 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 15
+ (func $stackAlloc (; 15 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -482,7 +482,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 16
+ (func $stackRestore (; 16 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

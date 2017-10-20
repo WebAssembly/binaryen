@@ -7,16 +7,16 @@
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
- (func $test1 (type $v) ;; 0
+ (func $test1 (; 0 ;) (type $v)
   (nop)
  )
- (func $test2 (type $v) ;; 1
+ (func $test2 (; 1 ;) (type $v)
   (nop)
  )
- (func $test3 (type $v) ;; 2
+ (func $test3 (; 2 ;) (type $v)
   (nop)
  )
- (func $safe-to-call (type $v) ;; 3
+ (func $safe-to-call (; 3 ;) (type $v)
   (i32.store8
    (i32.const 10)
    (i32.const 110)
@@ -26,7 +26,7 @@
    (i32.const 109)
   )
  )
- (func $call-indirect (type $v) ;; 4
+ (func $call-indirect (; 4 ;) (type $v)
   (i32.store8
    (i32.const 40)
    (i32.const 67)

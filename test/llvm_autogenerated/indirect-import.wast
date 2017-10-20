@@ -22,7 +22,7 @@
  (export "dynCall_fd" (func $dynCall_fd))
  (export "dynCall_v" (func $dynCall_v))
  (export "dynCall_vi" (func $dynCall_vi))
- (func $bar (result i32) ;; 0
+ (func $bar (; 0 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (i32.store offset=4
@@ -88,12 +88,12 @@
    (get_local $0)
   )
  )
- (func $stackSave (result i32) ;; 1
+ (func $stackSave (; 1 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 2
+ (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -112,29 +112,29 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 3
+ (func $stackRestore (; 3 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v) ;; 4
+ (func $__wasm_nullptr (; 4 ;) (type $FUNCSIG$v)
   (unreachable)
  )
- (func $__importThunk_extern_fd (type $FUNCSIG$fd) (param $0 f64) (result f32) ;; 5
+ (func $__importThunk_extern_fd (; 5 ;) (type $FUNCSIG$fd) (param $0 f64) (result f32)
   (call $extern_fd
    (get_local $0)
   )
  )
- (func $__importThunk_extern_vj (type $FUNCSIG$vj) (param $0 i64) ;; 6
+ (func $__importThunk_extern_vj (; 6 ;) (type $FUNCSIG$vj) (param $0 i64)
   (call $extern_vj
    (get_local $0)
   )
  )
- (func $__importThunk_extern_v (type $FUNCSIG$v) ;; 7
+ (func $__importThunk_extern_v (; 7 ;) (type $FUNCSIG$v)
   (call $extern_v)
  )
- (func $__importThunk_extern_ijidf (type $FUNCSIG$ijidf) (param $0 i64) (param $1 i32) (param $2 f64) (param $3 f32) (result i32) ;; 8
+ (func $__importThunk_extern_ijidf (; 8 ;) (type $FUNCSIG$ijidf) (param $0 i64) (param $1 i32) (param $2 f64) (param $3 f32) (result i32)
   (call $extern_ijidf
    (get_local $0)
    (get_local $1)
@@ -142,28 +142,28 @@
    (get_local $3)
   )
  )
- (func $__importThunk_extern_struct (type $FUNCSIG$vi) (param $0 i32) ;; 9
+ (func $__importThunk_extern_struct (; 9 ;) (type $FUNCSIG$vi) (param $0 i32)
   (call $extern_struct
    (get_local $0)
   )
  )
- (func $__importThunk_extern_sret (type $FUNCSIG$vi) (param $0 i32) ;; 10
+ (func $__importThunk_extern_sret (; 10 ;) (type $FUNCSIG$vi) (param $0 i32)
   (call $extern_sret
    (get_local $0)
   )
  )
- (func $dynCall_fd (param $fptr i32) (param $0 f64) (result f32) ;; 11
+ (func $dynCall_fd (; 11 ;) (param $fptr i32) (param $0 f64) (result f32)
   (call_indirect $FUNCSIG$fd
    (get_local $0)
    (get_local $fptr)
   )
  )
- (func $dynCall_v (param $fptr i32) ;; 12
+ (func $dynCall_v (; 12 ;) (param $fptr i32)
   (call_indirect $FUNCSIG$v
    (get_local $fptr)
   )
  )
- (func $dynCall_vi (param $fptr i32) (param $0 i32) ;; 13
+ (func $dynCall_vi (; 13 ;) (param $fptr i32) (param $0 i32)
   (call_indirect $FUNCSIG$vi
    (get_local $0)
    (get_local $fptr)

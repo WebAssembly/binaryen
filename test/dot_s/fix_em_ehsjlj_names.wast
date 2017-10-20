@@ -23,18 +23,18 @@
  (export "dynCall_iiii" (func $dynCall_iiii))
  (export "dynCall_ffd" (func $dynCall_ffd))
  (export "dynCall_iii" (func $dynCall_iii))
- (func $_Z5func1v (type $FUNCSIG$v) ;; 0
+ (func $_Z5func1v (; 0 ;) (type $FUNCSIG$v)
  )
- (func $_Z5func2iii (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 1
+ (func $_Z5func2iii (; 1 ;) (type $FUNCSIG$iiii) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.const 3)
  )
- (func $_Z5func3fd (type $FUNCSIG$ffd) (param $0 f32) (param $1 f64) (result f32) ;; 2
+ (func $_Z5func3fd (; 2 ;) (type $FUNCSIG$ffd) (param $0 f32) (param $1 f64) (result f32)
   (f32.const 1)
  )
- (func $_Z5func4P8mystructS_ (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32) ;; 3
+ (func $_Z5func4P8mystructS_ (; 3 ;) (type $FUNCSIG$iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $main (result i32) ;; 4
+ (func $main (; 4 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -76,12 +76,12 @@
   )
   (i32.const 0)
  )
- (func $stackSave (result i32) ;; 5
+ (func $stackSave (; 5 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 6
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -100,21 +100,21 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 7
+ (func $stackRestore (; 7 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v) ;; 8
+ (func $__wasm_nullptr (; 8 ;) (type $FUNCSIG$v)
   (unreachable)
  )
- (func $dynCall_v (param $fptr i32) ;; 9
+ (func $dynCall_v (; 9 ;) (param $fptr i32)
   (call_indirect $FUNCSIG$v
    (get_local $fptr)
   )
  )
- (func $dynCall_iiii (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 10
+ (func $dynCall_iiii (; 10 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call_indirect $FUNCSIG$iiii
    (get_local $0)
    (get_local $1)
@@ -122,14 +122,14 @@
    (get_local $fptr)
   )
  )
- (func $dynCall_ffd (param $fptr i32) (param $0 f32) (param $1 f64) (result f32) ;; 11
+ (func $dynCall_ffd (; 11 ;) (param $fptr i32) (param $0 f32) (param $1 f64) (result f32)
   (call_indirect $FUNCSIG$ffd
    (get_local $0)
    (get_local $1)
    (get_local $fptr)
   )
  )
- (func $dynCall_iii (param $fptr i32) (param $0 i32) (param $1 i32) (result i32) ;; 12
+ (func $dynCall_iii (; 12 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect $FUNCSIG$iii
    (get_local $0)
    (get_local $1)

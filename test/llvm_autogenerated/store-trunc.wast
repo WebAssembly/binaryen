@@ -10,42 +10,42 @@
  (export "trunc_i8_i64" (func $trunc_i8_i64))
  (export "trunc_i16_i64" (func $trunc_i16_i64))
  (export "trunc_i32_i64" (func $trunc_i32_i64))
- (func $trunc_i8_i32 (param $0 i32) (param $1 i32) ;; 0
+ (func $trunc_i8_i32 (; 0 ;) (param $0 i32) (param $1 i32)
   (i32.store8
    (get_local $0)
    (get_local $1)
   )
  )
- (func $trunc_i16_i32 (param $0 i32) (param $1 i32) ;; 1
+ (func $trunc_i16_i32 (; 1 ;) (param $0 i32) (param $1 i32)
   (i32.store16
    (get_local $0)
    (get_local $1)
   )
  )
- (func $trunc_i8_i64 (param $0 i32) (param $1 i64) ;; 2
+ (func $trunc_i8_i64 (; 2 ;) (param $0 i32) (param $1 i64)
   (i64.store8
    (get_local $0)
    (get_local $1)
   )
  )
- (func $trunc_i16_i64 (param $0 i32) (param $1 i64) ;; 3
+ (func $trunc_i16_i64 (; 3 ;) (param $0 i32) (param $1 i64)
   (i64.store16
    (get_local $0)
    (get_local $1)
   )
  )
- (func $trunc_i32_i64 (param $0 i32) (param $1 i64) ;; 4
+ (func $trunc_i32_i64 (; 4 ;) (param $0 i32) (param $1 i64)
   (i64.store32
    (get_local $0)
    (get_local $1)
   )
  )
- (func $stackSave (result i32) ;; 5
+ (func $stackSave (; 5 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 6
+ (func $stackAlloc (; 6 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -64,7 +64,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 7
+ (func $stackRestore (; 7 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

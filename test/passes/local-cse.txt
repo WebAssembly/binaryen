@@ -2,7 +2,7 @@
  (type $0 (func))
  (type $1 (func (param i32) (result i32)))
  (memory $0 100 100)
- (func $basics (type $0) ;; 0
+ (func $basics (; 0 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (local $2 i32)
@@ -56,7 +56,7 @@
    )
   )
  )
- (func $recursive1 (type $0) ;; 1
+ (func $recursive1 (; 1 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (local $2 i32)
@@ -81,7 +81,7 @@
    (get_local $2)
   )
  )
- (func $recursive2 (type $0) ;; 2
+ (func $recursive2 (; 2 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (local $2 i32)
@@ -106,7 +106,7 @@
    )
   )
  )
- (func $self (type $0) ;; 3
+ (func $self (; 3 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (local $2 i32)
@@ -125,7 +125,7 @@
    (get_local $2)
   )
  )
- (func $loads (type $0) ;; 4
+ (func $loads (; 4 ;) (type $0)
   (drop
    (i32.load
     (i32.const 10)
@@ -137,7 +137,7 @@
    )
   )
  )
- (func $8 (type $1) (param $var$0 i32) (result i32) ;; 5
+ (func $8 (; 5 ;) (type $1) (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (local $var$2 i32)
   (local $var$3 i32)

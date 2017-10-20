@@ -22,7 +22,7 @@
  (export "frame_index" (func $frame_index))
  (export "drop_result" (func $drop_result))
  (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
- (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 0
+ (func $copy_yes (; 0 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy
     (get_local $0)
@@ -31,7 +31,7 @@
    )
   )
  )
- (func $copy_no (param $0 i32) (param $1 i32) (param $2 i32) ;; 1
+ (func $copy_no (; 1 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memcpy
     (get_local $0)
@@ -41,7 +41,7 @@
   )
   (return)
  )
- (func $move_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 2
+ (func $move_yes (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memmove
     (get_local $0)
@@ -50,7 +50,7 @@
    )
   )
  )
- (func $move_no (param $0 i32) (param $1 i32) (param $2 i32) ;; 3
+ (func $move_no (; 3 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memmove
     (get_local $0)
@@ -60,7 +60,7 @@
   )
   (return)
  )
- (func $set_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 4
+ (func $set_yes (; 4 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memset
     (get_local $0)
@@ -69,7 +69,7 @@
    )
   )
  )
- (func $set_no (param $0 i32) (param $1 i32) (param $2 i32) ;; 5
+ (func $set_no (; 5 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memset
     (get_local $0)
@@ -79,7 +79,7 @@
   )
   (return)
  )
- (func $frame_index ;; 6
+ (func $frame_index (; 6 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -115,7 +115,7 @@
   )
   (return)
  )
- (func $drop_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32) ;; 7
+ (func $drop_result (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
   (block $label$0
    (block $label$1
     (block $label$2
@@ -152,7 +152,7 @@
    (get_local $0)
   )
  )
- (func $tail_dup_to_reuse_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32) ;; 8
+ (func $tail_dup_to_reuse_result (; 8 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
   (block $label$0
    (block $label$1
     (block $label$2
@@ -184,12 +184,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 9
+ (func $stackSave (; 9 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 10
+ (func $stackAlloc (; 10 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -208,7 +208,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 11
+ (func $stackRestore (; 11 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

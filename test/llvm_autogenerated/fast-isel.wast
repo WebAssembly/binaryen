@@ -11,38 +11,38 @@
  (export "bitcast_f32_i32" (func $bitcast_f32_i32))
  (export "bitcast_i64_f64" (func $bitcast_i64_f64))
  (export "bitcast_f64_i64" (func $bitcast_f64_i64))
- (func $immediate_f32 (result f32) ;; 0
+ (func $immediate_f32 (; 0 ;) (result f32)
   (f32.const 2.5)
  )
- (func $immediate_f64 (result f64) ;; 1
+ (func $immediate_f64 (; 1 ;) (result f64)
   (f64.const 2.5)
  )
- (func $bitcast_i32_f32 (param $0 f32) (result i32) ;; 2
+ (func $bitcast_i32_f32 (; 2 ;) (param $0 f32) (result i32)
   (i32.reinterpret/f32
    (get_local $0)
   )
  )
- (func $bitcast_f32_i32 (param $0 i32) (result f32) ;; 3
+ (func $bitcast_f32_i32 (; 3 ;) (param $0 i32) (result f32)
   (f32.reinterpret/i32
    (get_local $0)
   )
  )
- (func $bitcast_i64_f64 (param $0 f64) (result i64) ;; 4
+ (func $bitcast_i64_f64 (; 4 ;) (param $0 f64) (result i64)
   (i64.reinterpret/f64
    (get_local $0)
   )
  )
- (func $bitcast_f64_i64 (param $0 i64) (result f64) ;; 5
+ (func $bitcast_f64_i64 (; 5 ;) (param $0 i64) (result f64)
   (f64.reinterpret/i64
    (get_local $0)
   )
  )
- (func $stackSave (result i32) ;; 6
+ (func $stackSave (; 6 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 7
+ (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -61,7 +61,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 8
+ (func $stackRestore (; 8 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

@@ -9,40 +9,40 @@
  (export "sti64" (func $sti64))
  (export "stf32" (func $stf32))
  (export "stf64" (func $stf64))
- (func $sti32 (param $0 i32) (param $1 i32) ;; 0
+ (func $sti32 (; 0 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64 (param $0 i32) (param $1 i64) ;; 1
+ (func $sti64 (; 1 ;) (param $0 i32) (param $1 i64)
   (i64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stf32 (param $0 i32) (param $1 f32) ;; 2
+ (func $stf32 (; 2 ;) (param $0 i32) (param $1 f32)
   (f32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stf64 (param $0 i32) (param $1 f64) ;; 3
+ (func $stf64 (; 3 ;) (param $0 i32) (param $1 f64)
   (f64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stackSave (result i32) ;; 4
+ (func $stackSave (; 4 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 5
+ (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -61,7 +61,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 6
+ (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

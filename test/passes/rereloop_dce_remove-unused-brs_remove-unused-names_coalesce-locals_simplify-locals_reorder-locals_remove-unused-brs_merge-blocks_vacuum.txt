@@ -4,20 +4,20 @@
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32)))
  (memory $0 0)
- (func $trivial (type $0) ;; 0
+ (func $trivial (; 0 ;) (type $0)
   (nop)
  )
- (func $trivial2 (type $0) ;; 1
+ (func $trivial2 (; 1 ;) (type $0)
   (call $trivial)
   (call $trivial)
  )
- (func $return-void (type $0) ;; 2
+ (func $return-void (; 2 ;) (type $0)
   (nop)
  )
- (func $return-val (type $1) (result i32) ;; 3
+ (func $return-val (; 3 ;) (type $1) (result i32)
   (i32.const 1)
  )
- (func $ifs (type $2) (param $0 i32) (result i32) ;; 4
+ (func $ifs (; 4 ;) (type $2) (param $0 i32) (result i32)
   (if (result i32)
    (get_local $0)
    (if (result i32)
@@ -32,7 +32,7 @@
    )
   )
  )
- (func $loops (type $3) (param $0 i32) ;; 5
+ (func $loops (; 5 ;) (type $3) (param $0 i32)
   (if
    (get_local $0)
    (loop $shape$3$continue
@@ -58,12 +58,12 @@
    )
   )
  )
- (func $br-out (type $3) (param $0 i32) ;; 6
+ (func $br-out (; 6 ;) (type $3) (param $0 i32)
   (call $br-out
    (i32.const 5)
   )
  )
- (func $unreachable (type $3) (param $0 i32) ;; 7
+ (func $unreachable (; 7 ;) (type $3) (param $0 i32)
   (if
    (i32.eqz
     (get_local $0)
@@ -88,10 +88,10 @@
    )
   )
  )
- (func $empty-blocks (type $3) (param $0 i32) ;; 8
+ (func $empty-blocks (; 8 ;) (type $3) (param $0 i32)
   (nop)
  )
- (func $before-and-after (type $3) (param $0 i32) ;; 9
+ (func $before-and-after (; 9 ;) (type $3) (param $0 i32)
   (call $before-and-after
    (i32.const 1)
   )
@@ -187,7 +187,7 @@
    (i32.const 25)
   )
  )
- (func $switch (type $3) (param $0 i32) ;; 10
+ (func $switch (; 10 ;) (type $3) (param $0 i32)
   (block $switch$1$case$3
    (br_table $switch$1$case$3 $switch$1$case$3
     (get_local $0)
@@ -213,10 +213,10 @@
    (i32.const 3)
   )
  )
- (func $no-return (type $0) ;; 11
+ (func $no-return (; 11 ;) (type $0)
   (nop)
  )
- (func $if-br-wat (type $3) (param $0 i32) ;; 12
+ (func $if-br-wat (; 12 ;) (type $3) (param $0 i32)
   (block $block$2$break
    (call $if-br-wat
     (i32.const 0)

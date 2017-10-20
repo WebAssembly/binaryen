@@ -15,7 +15,7 @@
  (export "sge_i32" (func $sge_i32))
  (export "ugt_i32" (func $ugt_i32))
  (export "uge_i32" (func $uge_i32))
- (func $eq_i32 (param $0 i32) (param $1 i32) (result i32) ;; 0
+ (func $eq_i32 (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.eq
     (get_local $0)
@@ -23,7 +23,7 @@
    )
   )
  )
- (func $ne_i32 (param $0 i32) (param $1 i32) (result i32) ;; 1
+ (func $ne_i32 (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ne
     (get_local $0)
@@ -31,7 +31,7 @@
    )
   )
  )
- (func $slt_i32 (param $0 i32) (param $1 i32) (result i32) ;; 2
+ (func $slt_i32 (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.lt_s
     (get_local $0)
@@ -39,7 +39,7 @@
    )
   )
  )
- (func $sle_i32 (param $0 i32) (param $1 i32) (result i32) ;; 3
+ (func $sle_i32 (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.le_s
     (get_local $0)
@@ -47,7 +47,7 @@
    )
   )
  )
- (func $ult_i32 (param $0 i32) (param $1 i32) (result i32) ;; 4
+ (func $ult_i32 (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.lt_u
     (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $ule_i32 (param $0 i32) (param $1 i32) (result i32) ;; 5
+ (func $ule_i32 (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.le_u
     (get_local $0)
@@ -63,7 +63,7 @@
    )
   )
  )
- (func $sgt_i32 (param $0 i32) (param $1 i32) (result i32) ;; 6
+ (func $sgt_i32 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.gt_s
     (get_local $0)
@@ -71,7 +71,7 @@
    )
   )
  )
- (func $sge_i32 (param $0 i32) (param $1 i32) (result i32) ;; 7
+ (func $sge_i32 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ge_s
     (get_local $0)
@@ -79,7 +79,7 @@
    )
   )
  )
- (func $ugt_i32 (param $0 i32) (param $1 i32) (result i32) ;; 8
+ (func $ugt_i32 (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.gt_u
     (get_local $0)
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $uge_i32 (param $0 i32) (param $1 i32) (result i32) ;; 9
+ (func $uge_i32 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.ge_u
     (get_local $0)
@@ -95,12 +95,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 10
+ (func $stackSave (; 10 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 11
+ (func $stackAlloc (; 11 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -119,7 +119,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 12
+ (func $stackRestore (; 12 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

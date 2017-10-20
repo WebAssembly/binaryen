@@ -16,7 +16,7 @@ Counts
  (elem (i32.const 0) $ifs $ifs $ifs)
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
- (func $ifs (type $0) (param $x i32) ;; 0
+ (func $ifs (; 0 ;) (type $0) (param $x i32)
   (local $y f32)
   (block $block0
    (if

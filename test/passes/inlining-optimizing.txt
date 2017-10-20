@@ -8,28 +8,28 @@
  (memory $0 0)
  (export "user" (func $user))
  (export "exported" (func $exported))
- (func $user (type $0) ;; 0
+ (func $user (; 0 ;) (type $0)
   (call $exported)
   (call $tabled)
   (call $multi)
   (call $multi)
  )
- (func $exported (type $0) ;; 1
+ (func $exported (; 1 ;) (type $0)
   (nop)
  )
- (func $recursive (type $0) ;; 2
+ (func $recursive (; 2 ;) (type $0)
   (call $recursive)
  )
- (func $tabled (type $0) ;; 3
+ (func $tabled (; 3 ;) (type $0)
   (nop)
  )
- (func $cycle1 (type $0) ;; 4
+ (func $cycle1 (; 4 ;) (type $0)
   (call $cycle2)
  )
- (func $cycle2 (type $0) ;; 5
+ (func $cycle2 (; 5 ;) (type $0)
   (call $cycle1)
  )
- (func $multi (type $0) ;; 6
+ (func $multi (; 6 ;) (type $0)
   (nop)
  )
 )
@@ -37,7 +37,7 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (memory $0 0)
- (func $main (type $0) (result i32) ;; 0
+ (func $main (; 0 ;) (type $0) (result i32)
   (unreachable)
  )
 )

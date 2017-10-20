@@ -28,7 +28,7 @@
  (export "masked_rotl" (func $masked_rotl))
  (export "rotr" (func $rotr))
  (export "masked_rotr" (func $masked_rotr))
- (func $add32 (param $0 i32) (param $1 i32) (result i32) ;; 0
+ (func $add32 (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.add
     (get_local $0)
@@ -36,7 +36,7 @@
    )
   )
  )
- (func $sub32 (param $0 i32) (param $1 i32) (result i32) ;; 1
+ (func $sub32 (; 1 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.sub
     (get_local $0)
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $mul32 (param $0 i32) (param $1 i32) (result i32) ;; 2
+ (func $mul32 (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.mul
     (get_local $0)
@@ -52,7 +52,7 @@
    )
   )
  )
- (func $sdiv32 (param $0 i32) (param $1 i32) (result i32) ;; 3
+ (func $sdiv32 (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.div_s
     (get_local $0)
@@ -60,7 +60,7 @@
    )
   )
  )
- (func $udiv32 (param $0 i32) (param $1 i32) (result i32) ;; 4
+ (func $udiv32 (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.div_u
     (get_local $0)
@@ -68,7 +68,7 @@
    )
   )
  )
- (func $srem32 (param $0 i32) (param $1 i32) (result i32) ;; 5
+ (func $srem32 (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rem_s
     (get_local $0)
@@ -76,7 +76,7 @@
    )
   )
  )
- (func $urem32 (param $0 i32) (param $1 i32) (result i32) ;; 6
+ (func $urem32 (; 6 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rem_u
     (get_local $0)
@@ -84,7 +84,7 @@
    )
   )
  )
- (func $and32 (param $0 i32) (param $1 i32) (result i32) ;; 7
+ (func $and32 (; 7 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.and
     (get_local $0)
@@ -92,7 +92,7 @@
    )
   )
  )
- (func $or32 (param $0 i32) (param $1 i32) (result i32) ;; 8
+ (func $or32 (; 8 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.or
     (get_local $0)
@@ -100,7 +100,7 @@
    )
   )
  )
- (func $xor32 (param $0 i32) (param $1 i32) (result i32) ;; 9
+ (func $xor32 (; 9 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.xor
     (get_local $0)
@@ -108,7 +108,7 @@
    )
   )
  )
- (func $shl32 (param $0 i32) (param $1 i32) (result i32) ;; 10
+ (func $shl32 (; 10 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.shl
     (get_local $0)
@@ -116,7 +116,7 @@
    )
   )
  )
- (func $shr32 (param $0 i32) (param $1 i32) (result i32) ;; 11
+ (func $shr32 (; 11 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.shr_u
     (get_local $0)
@@ -124,7 +124,7 @@
    )
   )
  )
- (func $sar32 (param $0 i32) (param $1 i32) (result i32) ;; 12
+ (func $sar32 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.shr_s
     (get_local $0)
@@ -132,49 +132,49 @@
    )
   )
  )
- (func $clz32 (param $0 i32) (result i32) ;; 13
+ (func $clz32 (; 13 ;) (param $0 i32) (result i32)
   (return
    (i32.clz
     (get_local $0)
    )
   )
  )
- (func $clz32_zero_undef (param $0 i32) (result i32) ;; 14
+ (func $clz32_zero_undef (; 14 ;) (param $0 i32) (result i32)
   (return
    (i32.clz
     (get_local $0)
    )
   )
  )
- (func $ctz32 (param $0 i32) (result i32) ;; 15
+ (func $ctz32 (; 15 ;) (param $0 i32) (result i32)
   (return
    (i32.ctz
     (get_local $0)
    )
   )
  )
- (func $ctz32_zero_undef (param $0 i32) (result i32) ;; 16
+ (func $ctz32_zero_undef (; 16 ;) (param $0 i32) (result i32)
   (return
    (i32.ctz
     (get_local $0)
    )
   )
  )
- (func $popcnt32 (param $0 i32) (result i32) ;; 17
+ (func $popcnt32 (; 17 ;) (param $0 i32) (result i32)
   (return
    (i32.popcnt
     (get_local $0)
    )
   )
  )
- (func $eqz32 (param $0 i32) (result i32) ;; 18
+ (func $eqz32 (; 18 ;) (param $0 i32) (result i32)
   (return
    (i32.eqz
     (get_local $0)
    )
   )
  )
- (func $rotl (param $0 i32) (param $1 i32) (result i32) ;; 19
+ (func $rotl (; 19 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rotl
     (get_local $0)
@@ -182,7 +182,7 @@
    )
   )
  )
- (func $masked_rotl (param $0 i32) (param $1 i32) (result i32) ;; 20
+ (func $masked_rotl (; 20 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rotl
     (get_local $0)
@@ -190,7 +190,7 @@
    )
   )
  )
- (func $rotr (param $0 i32) (param $1 i32) (result i32) ;; 21
+ (func $rotr (; 21 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rotr
     (get_local $0)
@@ -198,7 +198,7 @@
    )
   )
  )
- (func $masked_rotr (param $0 i32) (param $1 i32) (result i32) ;; 22
+ (func $masked_rotr (; 22 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.rotr
     (get_local $0)
@@ -206,12 +206,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 23
+ (func $stackSave (; 23 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 24
+ (func $stackAlloc (; 24 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -230,7 +230,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 25
+ (func $stackRestore (; 25 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

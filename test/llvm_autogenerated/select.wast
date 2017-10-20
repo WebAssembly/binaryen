@@ -17,7 +17,7 @@
  (export "select_f64_bool" (func $select_f64_bool))
  (export "select_f64_eq" (func $select_f64_eq))
  (export "select_f64_ne" (func $select_f64_ne))
- (func $select_i32_bool (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 0
+ (func $select_i32_bool (; 0 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (select
     (get_local $1)
@@ -26,7 +26,7 @@
    )
   )
  )
- (func $select_i32_eq (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 1
+ (func $select_i32_eq (; 1 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (select
     (get_local $2)
@@ -35,7 +35,7 @@
    )
   )
  )
- (func $select_i32_ne (param $0 i32) (param $1 i32) (param $2 i32) (result i32) ;; 2
+ (func $select_i32_ne (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (select
     (get_local $1)
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $select_i64_bool (param $0 i32) (param $1 i64) (param $2 i64) (result i64) ;; 3
+ (func $select_i64_bool (; 3 ;) (param $0 i32) (param $1 i64) (param $2 i64) (result i64)
   (return
    (select
     (get_local $1)
@@ -53,7 +53,7 @@
    )
   )
  )
- (func $select_i64_eq (param $0 i32) (param $1 i64) (param $2 i64) (result i64) ;; 4
+ (func $select_i64_eq (; 4 ;) (param $0 i32) (param $1 i64) (param $2 i64) (result i64)
   (return
    (select
     (get_local $2)
@@ -62,7 +62,7 @@
    )
   )
  )
- (func $select_i64_ne (param $0 i32) (param $1 i64) (param $2 i64) (result i64) ;; 5
+ (func $select_i64_ne (; 5 ;) (param $0 i32) (param $1 i64) (param $2 i64) (result i64)
   (return
    (select
     (get_local $1)
@@ -71,7 +71,7 @@
    )
   )
  )
- (func $select_f32_bool (param $0 i32) (param $1 f32) (param $2 f32) (result f32) ;; 6
+ (func $select_f32_bool (; 6 ;) (param $0 i32) (param $1 f32) (param $2 f32) (result f32)
   (return
    (select
     (get_local $1)
@@ -80,7 +80,7 @@
    )
   )
  )
- (func $select_f32_eq (param $0 i32) (param $1 f32) (param $2 f32) (result f32) ;; 7
+ (func $select_f32_eq (; 7 ;) (param $0 i32) (param $1 f32) (param $2 f32) (result f32)
   (return
    (select
     (get_local $2)
@@ -89,7 +89,7 @@
    )
   )
  )
- (func $select_f32_ne (param $0 i32) (param $1 f32) (param $2 f32) (result f32) ;; 8
+ (func $select_f32_ne (; 8 ;) (param $0 i32) (param $1 f32) (param $2 f32) (result f32)
   (return
    (select
     (get_local $1)
@@ -98,7 +98,7 @@
    )
   )
  )
- (func $select_f64_bool (param $0 i32) (param $1 f64) (param $2 f64) (result f64) ;; 9
+ (func $select_f64_bool (; 9 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (return
    (select
     (get_local $1)
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $select_f64_eq (param $0 i32) (param $1 f64) (param $2 f64) (result f64) ;; 10
+ (func $select_f64_eq (; 10 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (return
    (select
     (get_local $2)
@@ -116,7 +116,7 @@
    )
   )
  )
- (func $select_f64_ne (param $0 i32) (param $1 f64) (param $2 f64) (result f64) ;; 11
+ (func $select_f64_ne (; 11 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (return
    (select
     (get_local $1)
@@ -125,12 +125,12 @@
    )
   )
  )
- (func $stackSave (result i32) ;; 12
+ (func $stackSave (; 12 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32) ;; 13
+ (func $stackAlloc (; 13 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -149,7 +149,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32) ;; 14
+ (func $stackRestore (; 14 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

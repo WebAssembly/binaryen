@@ -12,11 +12,11 @@
  (export "test1" (func $test1))
  (export "test2" (func $test2))
  (export "test3" (func $test3))
- (func $test1 (type $0) ;; 0
+ (func $test1 (; 0 ;) (type $0)
   (local $temp i32)
   (nop)
  )
- (func $test2 (type $0) ;; 1
+ (func $test2 (; 1 ;) (type $0)
   (set_global $tempDoublePtr
    (i32.const 1)
   )
@@ -25,7 +25,7 @@
    (i32.const 115)
   )
  )
- (func $test3 (type $0) ;; 2
+ (func $test3 (; 2 ;) (type $0)
   (i32.store8
    (i32.const 14)
    (i32.const 115)
