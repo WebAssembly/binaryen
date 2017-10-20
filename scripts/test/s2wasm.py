@@ -119,7 +119,15 @@ def test_linker():
   for name, extra in expected_funcs:
     space = ' ' if extra else ''
     fail_if_not_contained(output, '(export "{0}" (func ${0}))'.format(name))
-    fail_if_not_contained(output, '(func ${0}'.format(name + space + extra))
+    for line in output.split('\n'):
+      if '(func ${0}'.format(name + space) in line:
+        # we found the relevant line for the function definition. remove
+        # a (; X ;) comment with its index
+        start = line.find('(; ')
+        if start >= 0:
+          end = line.find(' ;)')
+          line = line[:start] + line[end + 4:]
+        fail_if_not_contained(line, '(func ${0}'.format(name + space + extra))
 
 
 if __name__ == '__main__':
