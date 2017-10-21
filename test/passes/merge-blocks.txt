@@ -3,7 +3,7 @@
  (type $1 (func (param i32)))
  (type $2 (func (result i32)))
  (memory $0 0)
- (func $drop-block (type $0)
+ (func $drop-block (; 0 ;) (type $0)
   (block $block
    (block $x
     (drop
@@ -12,7 +12,7 @@
    )
   )
  )
- (func $drop-block-br (type $0)
+ (func $drop-block-br (; 1 ;) (type $0)
   (block $block
    (drop
     (block $x (result i32)
@@ -24,7 +24,7 @@
    )
   )
  )
- (func $drop-block-br-if (type $0)
+ (func $drop-block-br-if (; 2 ;) (type $0)
   (block $block
    (block $x
     (drop
@@ -39,7 +39,7 @@
    )
   )
  )
- (func $undroppable-block-br-if (type $1) (param $0 i32)
+ (func $undroppable-block-br-if (; 3 ;) (type $1) (param $0 i32)
   (block $block
    (drop
     (block $x (result i32)
@@ -54,7 +54,7 @@
    )
   )
  )
- (func $drop-block-nested-br-if (type $0)
+ (func $drop-block-nested-br-if (; 4 ;) (type $0)
   (block $block
    (block $x
     (if
@@ -75,7 +75,7 @@
    )
   )
  )
- (func $drop-unreachable-br_if (type $2) (result i32)
+ (func $drop-unreachable-br_if (; 5 ;) (type $2) (result i32)
   (block $label$0 (result i32)
    (block $label$2 (result i32)
     (br_if $label$2
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $drop-block-squared-iloop (type $0)
+ (func $drop-block-squared-iloop (; 6 ;) (type $0)
   (drop
    (block $label$0 (result i32)
     (drop
@@ -100,7 +100,7 @@
    )
   )
  )
- (func $br-goes-away-label2-becomes-unreachable (type $0)
+ (func $br-goes-away-label2-becomes-unreachable (; 7 ;) (type $0)
   (block $block
    (drop
     (block $label$1 (result i32)
@@ -119,7 +119,7 @@
    )
   )
  )
- (func $loop-block-drop-block-return (type $0)
+ (func $loop-block-drop-block-return (; 8 ;) (type $0)
   (loop $label$4
    (block $label$5
     (drop

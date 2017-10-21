@@ -17,7 +17,7 @@
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (export "big_negative" (func $0))
- (func $0 (type $1)
+ (func $0 (; 3 ;) (type $1)
   (local $var$0 f64)
   (set_local $var$0
    (f64.const -2147483648)
@@ -35,7 +35,7 @@
    (f64.const -0.039625)
   )
  )
- (func $1 (type $4) (result f64)
+ (func $1 (; 4 ;) (type $4) (result f64)
   (local $var$0 f64)
   (block $label$1 (result f64)
    (set_local $var$0
@@ -87,7 +87,7 @@
    (f64.const 1.2)
   )
  )
- (func $2 (type $3) (param $var$0 f64) (param $var$1 f64) (result f64)
+ (func $2 (; 5 ;) (type $3) (param $var$0 f64) (param $var$1 f64) (result f64)
   (local $var$2 i32)
   (local $var$3 f64)
   (local $var$4 f64)
@@ -131,14 +131,14 @@
    (get_local $var$1)
   )
  )
- (func $3 (type $5) (result i32)
+ (func $3 (; 6 ;) (type $5) (result i32)
   (local $var$0 i32)
   (i32.eq
    (get_local $var$0)
    (i32.const 0)
   )
  )
- (func $4 (type $1)
+ (func $4 (; 7 ;) (type $1)
   (drop
    (i32.add
     (i32.add
@@ -149,7 +149,7 @@
    )
   )
  )
- (func $5 (type $1)
+ (func $5 (; 8 ;) (type $1)
   (local $var$0 i32)
   (local $var$1 f64)
   (set_local $var$0
@@ -171,7 +171,7 @@
    )
   )
  )
- (func $6 (type $1)
+ (func $6 (; 9 ;) (type $1)
   (local $var$0 f64)
   (set_local $var$0
    (f64.sub
@@ -190,7 +190,7 @@
    )
   )
  )
- (func $7 (type $6) (param $var$0 i32) (result i32)
+ (func $7 (; 10 ;) (type $6) (param $var$0 i32) (result i32)
   (block $label$1 (result i32)
    (block $label$2
     (block $label$3
@@ -268,18 +268,18 @@
    (i32.const 0)
   )
  )
- (func $8 (type $1)
+ (func $8 (; 11 ;) (type $1)
   (block $label$1
    (br $label$1)
   )
  )
- (func $9 (type $4) (result f64)
+ (func $9 (; 12 ;) (type $4) (result f64)
   (call $import$2
    (f64.const 5.5)
    (f64.const 1.2)
   )
  )
- (func $10 (type $5) (result i32)
+ (func $10 (; 13 ;) (type $5) (result i32)
   (local $var$0 i32)
   (set_local $var$0
    (i32.and
@@ -292,7 +292,7 @@
   )
   (get_local $var$0)
  )
- (func $11 (type $0) (param $var$0 f32)
+ (func $11 (; 14 ;) (type $0) (param $var$0 f32)
   (local $var$1 f32)
   (local $var$2 f64)
   (drop
@@ -316,10 +316,10 @@
    (f32.const 0)
   )
  )
- (func $12 (type $4) (result f64)
+ (func $12 (; 15 ;) (type $4) (result f64)
   (f64.const -0)
  )
- (func $13 (type $1)
+ (func $13 (; 16 ;) (type $1)
   (local $var$0 i32)
   (local $var$1 i32)
   (local $var$2 f32)
@@ -353,7 +353,7 @@
    )
   )
  )
- (func $14 (type $1)
+ (func $14 (; 17 ;) (type $1)
   (local $var$0 f32)
   (set_local $var$0
    (f32.neg
@@ -371,7 +371,7 @@
    )
   )
  )
- (func $15 (type $0) (param $var$0 f32)
+ (func $15 (; 18 ;) (type $0) (param $var$0 f32)
   (call_indirect $0
    (get_local $var$0)
    (i32.add
@@ -383,7 +383,7 @@
    )
   )
  )
- (func $16 (type $1)
+ (func $16 (; 19 ;) (type $1)
   (local $var$0 i32)
   (drop
    (i32.gt_u
@@ -395,13 +395,13 @@
    )
   )
  )
- (func $17 (type $1)
+ (func $17 (; 20 ;) (type $1)
   (nop)
  )
- (func $18 (type $1)
+ (func $18 (; 21 ;) (type $1)
   (nop)
  )
- (func $19 (type $5) (result i32)
+ (func $19 (; 22 ;) (type $5) (result i32)
   (block $label$1
    (drop
     (i32.const 1)
@@ -410,7 +410,7 @@
   )
   (i32.const 0)
  )
- (func $20 (type $7) (param $var$0 f64) (result f64)
+ (func $20 (; 23 ;) (type $7) (param $var$0 f64) (result f64)
   (loop $label$1 (result f64)
    (drop
     (get_local $var$0)
@@ -418,21 +418,21 @@
    (get_local $var$0)
   )
  )
- (func $21 (type $8) (result i64)
+ (func $21 (; 24 ;) (type $8) (result i64)
   (i64.const -9218868437227405313)
  )
- (func $22 (type $9) (param $var$0 i32) (param $var$1 i64)
+ (func $22 (; 25 ;) (type $9) (param $var$0 i32) (param $var$1 i64)
   (i64.store32
    (get_local $var$0)
    (get_local $var$1)
   )
  )
- (func $23 (type $5) (result i32)
+ (func $23 (; 26 ;) (type $5) (result i32)
   (return
    (i32.const 1)
   )
  )
- (func $24 (type $5) (result i32)
+ (func $24 (; 27 ;) (type $5) (result i32)
   (block $label$1
    (drop
     (i32.const 1)
@@ -442,7 +442,7 @@
    )
   )
  )
- (func $25 (type $5) (result i32)
+ (func $25 (; 28 ;) (type $5) (result i32)
   (drop
    (i32.const 1)
   )
@@ -450,19 +450,19 @@
    (i32.const 2)
   )
  )
- (func $26 (type $5) (result i32)
+ (func $26 (; 29 ;) (type $5) (result i32)
   (block $label$1
    (return
     (i32.const 2)
    )
   )
  )
- (func $27 (type $5) (result i32)
+ (func $27 (; 30 ;) (type $5) (result i32)
   (return
    (i32.const 2)
   )
  )
- (func $28 (type $5) (result i32)
+ (func $28 (; 31 ;) (type $5) (result i32)
   (block $label$1
    (drop
     (i32.const 1)
@@ -471,7 +471,7 @@
   )
   (i32.const 1)
  )
- (func $29 (type $5) (result i32)
+ (func $29 (; 32 ;) (type $5) (result i32)
   (if
    (i32.const 3)
    (return
@@ -482,7 +482,7 @@
    )
   )
  )
- (func $30 (type $5) (result i32)
+ (func $30 (; 33 ;) (type $5) (result i32)
   (if
    (i32.const 3)
    (return
@@ -493,7 +493,7 @@
    )
   )
  )
- (func $31 (type $5) (result i32)
+ (func $31 (; 34 ;) (type $5) (result i32)
   (loop $label$1
    (nop)
    (return
@@ -501,14 +501,14 @@
    )
   )
  )
- (func $32 (type $5) (result i32)
+ (func $32 (; 35 ;) (type $5) (result i32)
   (loop $label$1
    (return
     (i32.const 1)
    )
   )
  )
- (func $33 (type $5) (result i32)
+ (func $33 (; 36 ;) (type $5) (result i32)
   (loop $label$1
    (nop)
    (return
@@ -516,17 +516,17 @@
    )
   )
  )
- (func $34 (type $5) (result i32)
+ (func $34 (; 37 ;) (type $5) (result i32)
   (loop $label$1
    (return
     (i32.const 1)
    )
   )
  )
- (func $35 (type $1)
+ (func $35 (; 38 ;) (type $1)
   (unreachable)
  )
- (func $36 (type $1)
+ (func $36 (; 39 ;) (type $1)
   (if
    (i32.const 1)
    (nop)

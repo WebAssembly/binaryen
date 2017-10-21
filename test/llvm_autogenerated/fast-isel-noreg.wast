@@ -8,12 +8,12 @@
  (export "a" (func $a))
  (export "b" (func $b))
  (export "c" (func $c))
- (func $a (result i32)
+ (func $a (; 0 ;) (result i32)
   (return
    (i32.const 0)
   )
  )
- (func $b (result i32)
+ (func $b (; 1 ;) (result i32)
   (block $label$0
    (br_if $label$0
     (i32.const 1)
@@ -24,7 +24,7 @@
    (i32.const 0)
   )
  )
- (func $c (result i32)
+ (func $c (; 2 ;) (result i32)
   (i32.store
    (i32.const 0)
    (i32.const 0)
@@ -33,12 +33,12 @@
    (i32.const 0)
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 3 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -57,7 +57,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 5 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

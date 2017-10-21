@@ -3,7 +3,7 @@
  (type $1 (func (param f32)))
  (type $2 (func (param f64)))
  (memory $0 0)
- (func $test_div (type $0) (param $0 i32) (param $1 i64)
+ (func $test_div (; 0 ;) (type $0) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div
     (get_local $0)
@@ -29,7 +29,7 @@
    )
   )
  )
- (func $test_rem (type $0) (param $0 i32) (param $1 i64)
+ (func $test_rem (; 1 ;) (type $0) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-rem
     (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $test_f32_to_int (type $1) (param $0 f32)
+ (func $test_f32_to_int (; 2 ;) (type $1) (param $0 f32)
   (drop
    (call $f32-to-int
     (get_local $0)
@@ -77,7 +77,7 @@
    )
   )
  )
- (func $test_f64_to_int (type $2) (param $0 f64)
+ (func $test_f64_to_int (; 3 ;) (type $2) (param $0 f64)
   (drop
    (call $f64-to-int
     (get_local $0)
@@ -99,7 +99,7 @@
    )
   )
  )
- (func $f32-to-int (param $0 f32) (result i32)
+ (func $f32-to-int (; 4 ;) (param $0 f32) (result i32)
   (if (result i32)
    (f32.ne
     (get_local $0)
@@ -125,7 +125,7 @@
    )
   )
  )
- (func $f32-to-int64 (param $0 f32) (result i64)
+ (func $f32-to-int64 (; 5 ;) (param $0 f32) (result i64)
   (if (result i64)
    (f32.ne
     (get_local $0)
@@ -151,7 +151,7 @@
    )
   )
  )
- (func $f32-to-uint (param $0 f32) (result i32)
+ (func $f32-to-uint (; 6 ;) (param $0 f32) (result i32)
   (if (result i32)
    (f32.ne
     (get_local $0)
@@ -177,7 +177,7 @@
    )
   )
  )
- (func $f32-to-uint64 (param $0 f32) (result i64)
+ (func $f32-to-uint64 (; 7 ;) (param $0 f32) (result i64)
   (if (result i64)
    (f32.ne
     (get_local $0)
@@ -203,7 +203,7 @@
    )
   )
  )
- (func $f64-to-int (param $0 f64) (result i32)
+ (func $f64-to-int (; 8 ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -229,7 +229,7 @@
    )
   )
  )
- (func $f64-to-int64 (param $0 f64) (result i64)
+ (func $f64-to-int64 (; 9 ;) (param $0 f64) (result i64)
   (if (result i64)
    (f64.ne
     (get_local $0)
@@ -255,7 +255,7 @@
    )
   )
  )
- (func $f64-to-uint (param $0 f64) (result i32)
+ (func $f64-to-uint (; 10 ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -281,7 +281,7 @@
    )
   )
  )
- (func $f64-to-uint64 (param $0 f64) (result i64)
+ (func $f64-to-uint64 (; 11 ;) (param $0 f64) (result i64)
   (if (result i64)
    (f64.ne
     (get_local $0)
@@ -307,7 +307,7 @@
    )
   )
  )
- (func $i32s-div (param $0 i32) (param $1 i32) (result i32)
+ (func $i32s-div (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -332,7 +332,7 @@
    )
   )
  )
- (func $i32s-rem (param $0 i32) (param $1 i32) (result i32)
+ (func $i32s-rem (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -344,7 +344,7 @@
    )
   )
  )
- (func $i32u-div (param $0 i32) (param $1 i32) (result i32)
+ (func $i32u-div (; 14 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -356,7 +356,7 @@
    )
   )
  )
- (func $i32u-rem (param $0 i32) (param $1 i32) (result i32)
+ (func $i32u-rem (; 15 ;) (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (get_local $1)
@@ -368,7 +368,7 @@
    )
   )
  )
- (func $i64s-div (param $0 i64) (param $1 i64) (result i64)
+ (func $i64s-div (; 16 ;) (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (get_local $1)
@@ -393,7 +393,7 @@
    )
   )
  )
- (func $i64s-rem (param $0 i64) (param $1 i64) (result i64)
+ (func $i64s-rem (; 17 ;) (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (get_local $1)
@@ -405,7 +405,7 @@
    )
   )
  )
- (func $i64u-div (param $0 i64) (param $1 i64) (result i64)
+ (func $i64u-div (; 18 ;) (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (get_local $1)
@@ -417,7 +417,7 @@
    )
   )
  )
- (func $i64u-rem (param $0 i64) (param $1 i64) (result i64)
+ (func $i64u-rem (; 19 ;) (param $0 i64) (param $1 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (get_local $1)

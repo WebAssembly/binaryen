@@ -4,7 +4,7 @@
  (type $2 (func (result f32)))
  (table 282 282 anyfunc)
  (memory $0 1 1)
- (func $0 (type $1)
+ (func $0 (; 0 ;) (type $1)
   (block $label$1
    (if
     (i32.const 1)
@@ -22,7 +22,7 @@
    )
   )
  )
- (func $negative-zero (type $2) (result f32)
+ (func $negative-zero (; 1 ;) (type $2) (result f32)
   (if (result f32)
    (i32.const 0)
    (block $label$0 (result f32)
@@ -33,7 +33,7 @@
    )
   )
  )
- (func $negative-zero-b (type $2) (result f32)
+ (func $negative-zero-b (; 2 ;) (type $2) (result f32)
   (drop
    (i32.const 0)
   )
@@ -41,7 +41,7 @@
    (f32.const -0)
   )
  )
- (func $negative-zero-c (type $2) (result f32)
+ (func $negative-zero-c (; 3 ;) (type $2) (result f32)
   (drop
    (i32.const 0)
   )

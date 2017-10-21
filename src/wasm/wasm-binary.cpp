@@ -20,6 +20,7 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "ast/branch-utils.h"
+#include "ast/module-utils.h"
 
 namespace wasm {
 
@@ -31,6 +32,9 @@ void WasmBinaryWriter::prepare() {
     }
     // TODO: depending on upstream flux https://github.com/WebAssembly/spec/pull/301 might want this: assert(!func->type.isNull());
   }
+  ModuleUtils::BinaryIndexes indexes(*wasm);
+  mappedFunctions = std::move(indexes.functionIndexes);
+  mappedGlobals = std::move(indexes.globalIndexes);
 }
 
 void WasmBinaryWriter::write() {
@@ -343,39 +347,11 @@ void WasmBinaryWriter::writeDataSegments() {
 }
 
 uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  if (!mappedFunctions.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Function) continue;
-      assert(mappedFunctions.count(import->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->functions.size(); i++) {
-      assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[wasm->functions[i]->name] = index;
-    }
-  }
   assert(mappedFunctions.count(name));
   return mappedFunctions[name];
 }
 
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  if (!mappedGlobals.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Global) continue;
-      assert(mappedGlobals.count(import->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->globals.size(); i++) {
-      assert(mappedGlobals.count(wasm->globals[i]->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[wasm->globals[i]->name] = index;
-    }
-  }
   assert(mappedGlobals.count(name));
   return mappedGlobals[name];
 }

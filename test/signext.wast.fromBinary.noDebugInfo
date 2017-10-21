@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 0)
- (func $0 (type $0)
+ (func $0 (; 0 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (drop

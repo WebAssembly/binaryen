@@ -17,17 +17,17 @@
  (export "caller_none" (func $caller_none))
  (export "caller_some" (func $caller_some))
  (export "startbb" (func $startbb))
- (func $start (param $0 i32) (param $1 i32)
+ (func $start (; 1 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $end (param $0 i32)
+ (func $end (; 2 ;) (param $0 i32)
   (return)
  )
- (func $copy (param $0 i32) (param $1 i32)
+ (func $copy (; 3 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (i32.load
@@ -36,7 +36,7 @@
   )
   (return)
  )
- (func $arg_i8 (param $0 i32) (result i32)
+ (func $arg_i8 (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
    (get_local $0)
@@ -55,7 +55,7 @@
    )
   )
  )
- (func $arg_i32 (param $0 i32) (result i32)
+ (func $arg_i32 (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (i32.store
    (get_local $0)
@@ -80,7 +80,7 @@
    )
   )
  )
- (func $arg_i128 (param $0 i32) (param $1 i32)
+ (func $arg_i128 (; 6 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i64)
@@ -130,13 +130,13 @@
   )
   (return)
  )
- (func $caller_none
+ (func $caller_none (; 7 ;)
   (call $callee
    (i32.const 0)
   )
   (return)
  )
- (func $caller_some
+ (func $caller_some (; 8 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -169,7 +169,7 @@
   )
   (return)
  )
- (func $startbb (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $startbb (; 9 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (block $label$0
    (br_if $label$0
     (i32.eqz
@@ -187,12 +187,12 @@
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 10 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 11 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -211,7 +211,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 12 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

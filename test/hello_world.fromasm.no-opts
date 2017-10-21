@@ -4,7 +4,7 @@
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (export "add" (func $add))
- (func $add (param $x i32) (param $y i32) (result i32)
+ (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)
   (return
    (i32.add
     (get_local $x)

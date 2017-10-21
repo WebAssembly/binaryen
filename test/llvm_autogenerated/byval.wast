@@ -22,7 +22,7 @@
  (export "byval_empty_caller" (func $byval_empty_caller))
  (export "byval_empty_callee" (func $byval_empty_callee))
  (export "big_byval" (func $big_byval))
- (func $byval_arg (param $0 i32)
+ (func $byval_arg (; 8 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -56,7 +56,7 @@
   )
   (return)
  )
- (func $byval_arg_align8 (param $0 i32)
+ (func $byval_arg_align8 (; 9 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -90,7 +90,7 @@
   )
   (return)
  )
- (func $byval_arg_double (param $0 i32)
+ (func $byval_arg_double (; 10 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -133,25 +133,25 @@
   )
   (return)
  )
- (func $byval_param (param $0 i32)
+ (func $byval_param (; 11 ;) (param $0 i32)
   (call $ext_func
    (get_local $0)
   )
   (return)
  )
- (func $byval_empty_caller (param $0 i32)
+ (func $byval_empty_caller (; 12 ;) (param $0 i32)
   (call $ext_byval_func_empty
    (get_local $0)
   )
   (return)
  )
- (func $byval_empty_callee (param $0 i32)
+ (func $byval_empty_callee (; 13 ;) (param $0 i32)
   (call $ext_func_empty
    (get_local $0)
   )
   (return)
  )
- (func $big_byval (param $0 i32)
+ (func $big_byval (; 14 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -182,12 +182,12 @@
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 15 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 16 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -206,7 +206,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 17 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

@@ -696,8 +696,8 @@ public:
   void writeExports();
   void writeDataSegments();
 
-  std::map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
-  std::map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
+  std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
+  std::unordered_map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
 

@@ -14,10 +14,10 @@
  
  (data (get_global $memoryBase) "")
  (export "_printf" (func $625))
- (func $625 (type $FUNCSIG$iii) (param $var$0 i32) (param $var$1 i32) (result i32)
+ (func $625 (; 1 ;) (type $FUNCSIG$iii) (param $var$0 i32) (param $var$1 i32) (result i32)
   (i32.const 102030)
  )
- (func $b (type $1)
+ (func $b (; 2 ;) (type $1)
   (drop
    (call $625
     (i32.const 11)

@@ -5,7 +5,7 @@
  (type $3 (func))
  (import "env" "table" (table 9 9 anyfunc))
  (memory $0 0)
- (func $break-and-binary (type $1) (result i32)
+ (func $break-and-binary (; 0 ;) (type $1) (result i32)
   (block $x (result i32)
    (f32.add
     (br_if $x
@@ -20,7 +20,7 @@
    )
   )
  )
- (func $call-and-unary (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $call-and-unary (; 1 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (drop
    (i64.eqz
     (call $call-and-unary
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $tee (type $2) (param $x i32)
+ (func $tee (; 2 ;) (type $2) (param $x i32)
   (local $y f32)
   (drop
    (i64.eqz
@@ -61,7 +61,7 @@
    )
   )
  )
- (func $tee2 (type $3)
+ (func $tee2 (; 3 ;) (type $3)
   (local $0 f32)
   (if
    (i32.const 259)
@@ -70,7 +70,7 @@
    )
   )
  )
- (func $select (type $3)
+ (func $select (; 4 ;) (type $3)
   (drop
    (i64.eqz
     (select
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $untaken-break-should-have-value (type $1) (result i32)
+ (func $untaken-break-should-have-value (; 5 ;) (type $1) (result i32)
   (block $x (result i32)
    (block $block
     (br_if $x
@@ -91,7 +91,7 @@
    )
   )
  )
- (func $unreachable-in-block-but-code-before (type $FUNCSIG$ii) (param $0 i32) (result i32)
+ (func $unreachable-in-block-but-code-before (; 6 ;) (type $FUNCSIG$ii) (param $0 i32) (result i32)
   (if
    (get_local $0)
    (return
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
+ (func $br_table_unreachable_to_also_unreachable (; 7 ;) (type $1) (result i32)
   (block $a (result i32)
    (block $b (result i32)
     (br_table $a $b
@@ -117,7 +117,7 @@
    )
   )
  )
- (func $untaken-br_if (type $1) (result i32)
+ (func $untaken-br_if (; 8 ;) (type $1) (result i32)
   (block $label$8 (result i32)
    (block $label$9
     (drop

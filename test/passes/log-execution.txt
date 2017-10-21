@@ -4,19 +4,19 @@
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "log_execution" (func $log_execution (param i32)))
  (memory $0 0)
- (func $nopp (type $0)
+ (func $nopp (; 1 ;) (type $0)
   (call $log_execution
    (i32.const 0)
   )
   (nop)
  )
- (func $intt (type $1) (result i32)
+ (func $intt (; 2 ;) (type $1) (result i32)
   (call $log_execution
    (i32.const 1)
   )
   (i32.const 10)
  )
- (func $workk (type $0)
+ (func $workk (; 3 ;) (type $0)
   (call $log_execution
    (i32.const 2)
   )
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $loops (type $0)
+ (func $loops (; 4 ;) (type $0)
   (call $log_execution
    (i32.const 6)
   )
@@ -71,7 +71,7 @@
    )
   )
  )
- (func $loops-similar (type $0)
+ (func $loops-similar (; 5 ;) (type $0)
   (call $log_execution
    (i32.const 8)
   )

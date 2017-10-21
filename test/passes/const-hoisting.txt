@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (memory $0 0)
- (func $10-of-each (type $0)
+ (func $10-of-each (; 0 ;) (type $0)
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
@@ -421,7 +421,7 @@
    )
   )
  )
- (func $floats-10-times (type $0)
+ (func $floats-10-times (; 1 ;) (type $0)
   (local $0 f32)
   (local $1 f64)
   (block
@@ -495,7 +495,7 @@
    )
   )
  )
- (func $too-few (type $0)
+ (func $too-few (; 2 ;) (type $0)
   (drop
    (i32.const 8192)
   )
@@ -512,7 +512,7 @@
    (i32.const 8192)
   )
  )
- (func $just-enough (type $0)
+ (func $just-enough (; 3 ;) (type $0)
   (local $0 i32)
   (block
    (set_local $0
@@ -540,7 +540,7 @@
    )
   )
  )
- (func $too-few-b (type $0)
+ (func $too-few-b (; 4 ;) (type $0)
   (drop
    (i32.const 1048576)
   )
@@ -551,7 +551,7 @@
    (i32.const 1048576)
   )
  )
- (func $enough-b (type $0)
+ (func $enough-b (; 5 ;) (type $0)
   (local $0 i32)
   (block
    (set_local $0
@@ -573,7 +573,7 @@
    )
   )
  )
- (func $too-few-c (type $0)
+ (func $too-few-c (; 6 ;) (type $0)
   (drop
    (f32.const 0)
   )
@@ -584,7 +584,7 @@
    (f32.const 0)
   )
  )
- (func $enough-c (type $0)
+ (func $enough-c (; 7 ;) (type $0)
   (local $0 f32)
   (block
    (set_local $0
@@ -606,12 +606,12 @@
    )
   )
  )
- (func $too-few-d (type $0)
+ (func $too-few-d (; 8 ;) (type $0)
   (drop
    (f64.const 0)
   )
  )
- (func $enough-d (type $0)
+ (func $enough-d (; 9 ;) (type $0)
   (local $0 f64)
   (block
    (set_local $0

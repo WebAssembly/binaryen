@@ -7,10 +7,10 @@
  (export "stackRestore" (func $stackRestore))
  (export "return_i32" (func $return_i32))
  (export "return_i32_twice" (func $return_i32_twice))
- (func $return_i32 (param $0 i32) (result i32)
+ (func $return_i32 (; 0 ;) (param $0 i32) (result i32)
   (get_local $0)
  )
- (func $return_i32_twice (param $0 i32) (result i32)
+ (func $return_i32_twice (; 1 ;) (param $0 i32) (result i32)
   (block $label$0
    (br_if $label$0
     (i32.eqz
@@ -31,12 +31,12 @@
   )
   (i32.const 3)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 2 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -55,7 +55,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 4 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

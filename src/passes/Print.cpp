@@ -22,6 +22,7 @@
 #include <wasm-printing.h>
 #include <pass.h>
 #include <pretty_printing.h>
+#include <ast/module-utils.h>
 
 namespace wasm {
 
@@ -46,6 +47,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
+
+  std::unordered_map<Name, Index> functionIndexes;
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
@@ -686,6 +689,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     lastPrintedLocation = { 0, 0, 0 };
     printOpening(o, "func ", true);
     printName(curr->name);
+    if (currModule && !minify) {
+      // emit the function index in a comment
+      if (functionIndexes.empty()) {
+        ModuleUtils::BinaryIndexes indexes(*currModule);
+        functionIndexes = std::move(indexes.functionIndexes);
+      }
+      o << " (; " << functionIndexes[curr->name] << " ;)";
+    }
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }

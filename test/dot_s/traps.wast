@@ -5,7 +5,7 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "test_traps" (func $test_traps))
- (func $test_traps (param $0 f32) (param $1 f64) (result i32)
+ (func $test_traps (; 0 ;) (param $0 f32) (param $1 f64) (result i32)
   (i32.div_u
    (i32.trunc_s/f32
     (get_local $0)
@@ -15,12 +15,12 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 1 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 2 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -39,7 +39,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 3 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)

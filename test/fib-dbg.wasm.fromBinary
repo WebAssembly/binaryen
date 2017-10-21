@@ -48,7 +48,7 @@
  (export "stackRestore" (func $stackRestore))
  (export "_fib" (func $_fib))
  (export "stackAlloc" (func $stackAlloc))
- (func $stackAlloc (type $1) (param $var$0 i32) (result i32)
+ (func $stackAlloc (; 0 ;) (type $1) (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (block $label$1
    (set_local $var$1
@@ -74,17 +74,17 @@
    )
   )
  )
- (func $stackSave (type $2) (result i32)
+ (func $stackSave (; 1 ;) (type $2) (result i32)
   (return
    (get_global $global$3)
   )
  )
- (func $stackRestore (type $3) (param $var$0 i32)
+ (func $stackRestore (; 2 ;) (type $3) (param $var$0 i32)
   (set_global $global$3
    (get_local $var$0)
   )
  )
- (func $establishStackSpace (type $0) (param $var$0 i32) (param $var$1 i32)
+ (func $establishStackSpace (; 3 ;) (type $0) (param $var$0 i32) (param $var$1 i32)
   (block $label$1
    (set_global $global$3
     (get_local $var$0)
@@ -94,7 +94,7 @@
    )
   )
  )
- (func $setThrew (type $0) (param $var$0 i32) (param $var$1 i32)
+ (func $setThrew (; 4 ;) (type $0) (param $var$0 i32) (param $var$1 i32)
   (if
    (i32.eq
     (get_global $global$7)
@@ -110,7 +110,7 @@
    )
   )
  )
- (func $_fib (type $1) (param $var$0 i32) (result i32)
+ (func $_fib (; 5 ;) (type $1) (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (local $var$2 i32)
   (local $var$3 i32)
@@ -214,7 +214,7 @@
    )
   )
  )
- (func $runPostSets (type $4)
+ (func $runPostSets (; 6 ;) (type $4)
   (local $var$0 i32)
   (nop)
  )

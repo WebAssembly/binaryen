@@ -5,7 +5,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (data (get_global $memoryBase) "hello_world.asm.js")
  (export "add" (func $add))
- (func $add (param $0 i32) (param $1 i32) (result i32)
+ (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (get_local $0)
    (get_local $1)

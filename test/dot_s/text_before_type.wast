@@ -5,18 +5,18 @@
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
  (export "main" (func $main))
- (func $main (result i32)
+ (func $main (; 0 ;) (result i32)
   (call $foo)
   (i32.const 0)
  )
- (func $foo
+ (func $foo (; 1 ;)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 2 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 3 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (i32.load offset=4
@@ -35,7 +35,7 @@
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 4 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
