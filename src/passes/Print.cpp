@@ -693,7 +693,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // emit the function index in a comment
       if (functionIndexes.empty()) {
         ModuleUtils::BinaryIndexes indexes(*currModule);
-        functionIndexes = std::move(ModuleUtils::BinaryIndexes(*currModule).functionIndexes);
+        functionIndexes = std::move(indexes.functionIndexes);
       }
       o << " (; " << functionIndexes[curr->name] << " ;)";
     }
