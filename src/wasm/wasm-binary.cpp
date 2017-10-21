@@ -33,8 +33,8 @@ void WasmBinaryWriter::prepare() {
     // TODO: depending on upstream flux https://github.com/WebAssembly/spec/pull/301 might want this: assert(!func->type.isNull());
   }
   ModuleUtils::BinaryIndexes indexes(*wasm);
-  mappedFunctions.swap(indexes.functionIndexes);
-  mappedGlobals.swap(indexes.globalIndexes);
+  mappedFunctions = std::move(indexes.functionIndexes);
+  mappedGlobals = std::move(indexes.globalIndexes);
 }
 
 void WasmBinaryWriter::write() {
