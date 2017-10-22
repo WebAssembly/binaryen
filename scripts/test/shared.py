@@ -240,7 +240,7 @@ def setup_waterfall():
     subprocess.check_call([CLANG, '-v'])
     has_vanilla_llvm = True
     print '...success'
-  except Exception, e:
+  except (OSError, subprocess.CalledProcessError) as e:
     warn('could not run vanilla LLVM from waterfall: ' + str(e) +
          ', looked for clang at ' + CLANG)
 
@@ -259,7 +259,7 @@ try:
   if NODEJS is not None:
     subprocess.check_call(
         [NODEJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except OSError:
+except (OSError, subprocess.CalledProcessError):
   NODEJS = None
 if NODEJS is None:
   warn('no node found (did not check proper js form)')
@@ -268,7 +268,7 @@ try:
   if MOZJS is not None:
     subprocess.check_call(
         [MOZJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except OSError:
+except (OSError, subprocess.CalledProcessError):
   MOZJS = None
 if MOZJS is None:
   warn('no mozjs found (did not check native wasm support nor asm.js'
@@ -278,7 +278,7 @@ try:
   if EMCC is not None:
     subprocess.check_call(
         [EMCC, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except OSError:
+except (OSError, subprocess.CalledProcessError):
   EMCC = None
 if EMCC is None:
   warn('no emcc found (did not check non-vanilla emscripten/binaryen'
@@ -290,7 +290,7 @@ try:
       [os.path.join(options.binaryen_test, 'emscripten', 'emcc'), '--version'],
       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   has_vanilla_emcc = True
-except OSError:
+except (OSError, subprocess.CalledProcessError):
   pass
 
 
