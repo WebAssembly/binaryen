@@ -37,6 +37,9 @@
 
 using namespace wasm;
 
+// a timeout on every execution of the command
+size_t timeout = 2;
+
 struct ProgramResult {
   int code;
   std::string output;
@@ -51,10 +54,10 @@ struct ProgramResult {
   void getFromExecution(std::string command) {
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
-    code = system(("timeout 2s " + command + " > /dev/null 2> /dev/null").c_str());
+    code = system(("timeout " + std::to_string(timeout) + "s " + command + " > /dev/null 2> /dev/null").c_str());
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
-    FILE *stream = popen(("timeout 2s " + command + " 2> /dev/null").c_str(), "r");
+    FILE *stream = popen(("timeout " + std::to_string(timeout) + "s " + command + " 2> /dev/null").c_str(), "r");
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
       output.append(buffer);
     }
@@ -525,6 +528,12 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
              force = true;
+           })
+      .add("--timeout", "-to", "A timeout to apply to each execution of the command, in seconds (default: 2)",
+           Options::Arguments::One,
+           [&](Options* o, const std::string& argument) {
+             timeout = atoi(argument.c_str());
+             std::cout << "|applying timeout: " << timeout << "\n";
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&](Options* o, const std::string& argument) {
