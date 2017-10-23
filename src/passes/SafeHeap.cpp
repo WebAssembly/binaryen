@@ -127,7 +127,7 @@ struct SafeHeap : public Pass {
       module->addImport(import);
     }
     if (auto* existing = ImportUtils::getImport(*module, ENV, SEGFAULT_IMPORT)) {
-      dynamicTopPtr = existing->name;
+      segfault = existing->name;
     } else {
       auto* import = new Import;
       import->name = segfault = SEGFAULT_IMPORT;
@@ -138,7 +138,7 @@ struct SafeHeap : public Pass {
       module->addImport(import);
     }
     if (auto* existing = ImportUtils::getImport(*module, ENV, ALIGNFAULT_IMPORT)) {
-      dynamicTopPtr = existing->name;
+      alignfault = existing->name;
     } else {
       auto* import = new Import;
       import->name = alignfault = ALIGNFAULT_IMPORT;
