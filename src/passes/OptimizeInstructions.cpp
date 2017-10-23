@@ -30,6 +30,7 @@
 #include <ast/manipulation.h>
 #include <ast/properties.h>
 #include <ast/literal-utils.h>
+#include <ast/load-utils.h>
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on the availability of atomics.
 
@@ -243,7 +244,8 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     return localInfoProvider->getMaxBitsForLocal(get);
   } else if (auto* load = curr->dynCast<Load>()) {
     // if signed, then the sign-extension might fill all the bits
-    if (!load->signed_) {
+    // if unsigned, then we have a limit
+    if (LoadUtils::isSignRelevant(load) && !load->signed_) {
       return 8 * load->bytes;
     }
   }
@@ -320,7 +322,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     if (Properties::getSignExtValue(value)) {
       signExtBits = Properties::getSignExtBits(value);
     } else if (auto* load = value->dynCast<Load>()) {
-      if (load->signed_) {
+      if (LoadUtils::isSignRelevant(load) && load->signed_) {
         signExtBits = load->bytes * 8;
       }
     }
