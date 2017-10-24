@@ -76,7 +76,7 @@ struct ExpressionAnalyzer {
 // vs
 //  (block (unreachable))
 // This converts to the latter form.
-struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
+struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new ReFinalize; }
@@ -154,6 +154,8 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
   void visitStore(Store *curr) { curr->finalize(); }
   void visitAtomicRMW(AtomicRMW *curr) { curr->finalize(); }
   void visitAtomicCmpxchg(AtomicCmpxchg *curr) { curr->finalize(); }
+  void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
+  void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
   void visitConst(Const *curr) { curr->finalize(); }
   void visitUnary(Unary *curr) { curr->finalize(); }
   void visitBinary(Binary *curr) { curr->finalize(); }
@@ -186,7 +188,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize>> {
 
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
-struct ReFinalizeNode : public Visitor<ReFinalizeNode> {
+struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitBlock(Block *curr) { curr->finalize(); }
   void visitIf(If *curr) { curr->finalize(); }
   void visitLoop(Loop *curr) { curr->finalize(); }
@@ -201,6 +203,10 @@ struct ReFinalizeNode : public Visitor<ReFinalizeNode> {
   void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
   void visitLoad(Load *curr) { curr->finalize(); }
   void visitStore(Store *curr) { curr->finalize(); }
+  void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
+  void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
+  void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
   void visitConst(Const *curr) { curr->finalize(); }
   void visitUnary(Unary *curr) { curr->finalize(); }
   void visitBinary(Binary *curr) { curr->finalize(); }

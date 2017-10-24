@@ -32,6 +32,8 @@
 
 namespace wasm {
 
+// A generic visitor, defaulting to doing nothing on each visit
+
 template<typename SubType, typename ReturnType = void>
 struct Visitor {
   // Expression visitors
@@ -71,6 +73,91 @@ struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
+
+  ReturnType visit(Expression* curr) {
+    assert(curr);
+
+    #define DELEGATE(CLASS_TO_VISIT) \
+      return static_cast<SubType*>(this)-> \
+          visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT*>(curr))
+
+    switch (curr->_id) {
+      case Expression::Id::BlockId: DELEGATE(Block);
+      case Expression::Id::IfId: DELEGATE(If);
+      case Expression::Id::LoopId: DELEGATE(Loop);
+      case Expression::Id::BreakId: DELEGATE(Break);
+      case Expression::Id::SwitchId: DELEGATE(Switch);
+      case Expression::Id::CallId: DELEGATE(Call);
+      case Expression::Id::CallImportId: DELEGATE(CallImport);
+      case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
+      case Expression::Id::GetLocalId: DELEGATE(GetLocal);
+      case Expression::Id::SetLocalId: DELEGATE(SetLocal);
+      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
+      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
+      case Expression::Id::LoadId: DELEGATE(Load);
+      case Expression::Id::StoreId: DELEGATE(Store);
+      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
+      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+      case Expression::Id::ConstId: DELEGATE(Const);
+      case Expression::Id::UnaryId: DELEGATE(Unary);
+      case Expression::Id::BinaryId: DELEGATE(Binary);
+      case Expression::Id::SelectId: DELEGATE(Select);
+      case Expression::Id::DropId: DELEGATE(Drop);
+      case Expression::Id::ReturnId: DELEGATE(Return);
+      case Expression::Id::HostId: DELEGATE(Host);
+      case Expression::Id::NopId: DELEGATE(Nop);
+      case Expression::Id::UnreachableId: DELEGATE(Unreachable);
+      case Expression::Id::InvalidId:
+      default: WASM_UNREACHABLE();
+    }
+
+    #undef DELEGATE
+  }
+};
+
+// A visitor which must be overridden for each visitor that is reached.
+
+template<typename SubType, typename ReturnType = void>
+struct OverriddenVisitor {
+  // Expression visitors
+  ReturnType visitBlock(Block* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitIf(If* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitBreak(Break* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitCall(Call* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitGetLocal(GetLocal* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitSetLocal(SetLocal* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitSetGlobal(SetGlobal* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitLoad(Load* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitStore(Store* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitAtomicWake(AtomicWake* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitConst(Const* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitUnary(Unary* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitBinary(Binary* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitSelect(Select* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitDrop(Drop* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitReturn(Return* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitHost(Host* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitNop(Nop* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitUnreachable(Unreachable* curr) { WASM_UNREACHABLE(); }
+  // Module-level visitors
+  ReturnType visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitImport(Import* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitExport(Export* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitFunction(Function* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitTable(Table* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
   ReturnType visit(Expression* curr) {
     assert(curr);
