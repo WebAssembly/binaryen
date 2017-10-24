@@ -26,7 +26,7 @@ def _open_archive(tarfile, tmp_dir):
   with tempfile.TemporaryFile(mode='w+') as f:
     try:
       subprocess.check_call(['tar', '-xvf', tarfile], cwd=tmp_dir, stdout=f)
-    except:
+    except Exception:
       f.seek(0)
       sys.stderr.write(f.read())
       raise

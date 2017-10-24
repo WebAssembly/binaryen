@@ -31,7 +31,7 @@ def download_revision(force_latest):
   info = None
   try:
     info = json.loads(downloaded)
-  except:
+  except ValueError:
     pass
   return info['build'] if type(info) == dict else downloaded
 

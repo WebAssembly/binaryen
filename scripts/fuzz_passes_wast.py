@@ -96,7 +96,7 @@ try:
         try:
           apply_passes(smaller)
           assert run() == normal
-        except:
+        except Exception:
           # this failed too, so it's a good reduction
           passes = smaller
           print '>>> reduction successful'
