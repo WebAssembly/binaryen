@@ -363,7 +363,6 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
 int main(int argc, const char* argv[]) {
   Name entry;
   std::vector<std::string> passes;
-  PassOptions passOptions;
   bool emitBinary = true;
   bool debugInfo = false;
   std::string ctorsString;
