@@ -19,7 +19,7 @@ jobs:
         - export CXX="${CXX_COMPILER}"
         - export ASAN_OPTIONS="symbolize=1"
       install:
-        - pip install flake8==3.4.1
+        - pip install --user flake8==3.4.1
       before_script:
         # Check the style of a subset of Python code until the other code is updated.
         - flake8 ./scripts/
