@@ -256,25 +256,31 @@ if options.only_prepare:
 # external tools
 
 try:
-  subprocess.check_call(
-      [NODEJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if NODEJS is not None:
+    subprocess.check_call(
+        [NODEJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except OSError:
   NODEJS = None
+if NODEJS is None:
   warn('no node found (did not check proper js form)')
 
 try:
-  subprocess.check_call(
-      [MOZJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if MOZJS is not None:
+    subprocess.check_call(
+        [MOZJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except OSError:
   MOZJS = None
+if MOZJS is None:
   warn('no mozjs found (did not check native wasm support nor asm.js'
        ' validation)')
 
 try:
-  subprocess.check_call(
-      [EMCC, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if EMCC is not None:
+    subprocess.check_call(
+        [EMCC, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except OSError:
   EMCC = None
+if EMCC is None:
   warn('no emcc found (did not check non-vanilla emscripten/binaryen'
        ' integration)')
 
@@ -284,7 +290,7 @@ try:
       [os.path.join(options.binaryen_test, 'emscripten', 'emcc'), '--version'],
       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   has_vanilla_emcc = True
-except:
+except OSError:
   pass
 
 
@@ -294,13 +300,13 @@ except:
 def delete_from_orbit(filename):
   try:
     os.unlink(filename)
-  except:
+  except OSError:
     pass
   if not os.path.exists(filename):
     return
   try:
     shutil.rmtree(filename, ignore_errors=True)
-  except:
+  except OSError:
     pass
   if not os.path.exists(filename):
     return
@@ -315,7 +321,7 @@ def delete_from_orbit(filename):
       else:
         raise
     shutil.rmtree(filename, onerror=remove_readonly_and_try_again)
-  except:
+  except OSError:
     pass
 
 
