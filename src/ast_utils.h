@@ -175,6 +175,14 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     }
   }
 
+  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
+  void visitImport(Import* curr) { WASM_UNREACHABLE(); }
+  void visitExport(Export* curr) { WASM_UNREACHABLE(); }
+  void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
+  void visitTable(Table* curr) { WASM_UNREACHABLE(); }
+  void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+  void visitModule(Module* curr) { WASM_UNREACHABLE(); }
+
   WasmType getValueType(Expression* value) {
     return value ? value->type : none;
   }
@@ -216,6 +224,14 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitHost(Host *curr) { curr->finalize(); }
   void visitNop(Nop *curr) { curr->finalize(); }
   void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+
+  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
+  void visitImport(Import* curr) { WASM_UNREACHABLE(); }
+  void visitExport(Export* curr) { WASM_UNREACHABLE(); }
+  void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
+  void visitTable(Table* curr) { WASM_UNREACHABLE(); }
+  void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
+  void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
   // given a stack of nested expressions, update them all from child to parent
   static void updateStack(std::vector<Expression*>& expressionStack) {

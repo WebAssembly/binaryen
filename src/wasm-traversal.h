@@ -122,42 +122,147 @@ struct Visitor {
 template<typename SubType, typename ReturnType = void>
 struct OverriddenVisitor {
   // Expression visitors
-  ReturnType visitBlock(Block* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitIf(If* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitBreak(Break* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitCall(Call* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitGetLocal(GetLocal* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitSetLocal(SetLocal* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitSetGlobal(SetGlobal* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitLoad(Load* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitAtomicWake(AtomicWake* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitConst(Const* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitUnary(Unary* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitBinary(Binary* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitSelect(Select* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitDrop(Drop* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitReturn(Return* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitNop(Nop* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitUnreachable(Unreachable* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitBlock(Block* curr) {
+    static_assert(&SubType::visitBlock != &OverriddenVisitor<SubType, ReturnType>::visitBlock, "Derived class must implement visitBlock");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitIf(If* curr) {
+    static_assert(&SubType::visitIf != &OverriddenVisitor<SubType, ReturnType>::visitIf, "Derived class must implement visitIf");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitLoop(Loop* curr) {
+    static_assert(&SubType::visitLoop != &OverriddenVisitor<SubType, ReturnType>::visitLoop, "Derived class must implement visitLoop");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitBreak(Break* curr) {
+    static_assert(&SubType::visitBreak != &OverriddenVisitor<SubType, ReturnType>::visitBreak, "Derived class must implement visitBreak");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitSwitch(Switch* curr) {
+    static_assert(&SubType::visitSwitch != &OverriddenVisitor<SubType, ReturnType>::visitSwitch, "Derived class must implement visitSwitch");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitCall(Call* curr) {
+    static_assert(&SubType::visitCall != &OverriddenVisitor<SubType, ReturnType>::visitCall, "Derived class must implement visitCall");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitCallImport(CallImport* curr) {
+    static_assert(&SubType::visitCallImport != &OverriddenVisitor<SubType, ReturnType>::visitCallImport, "Derived class must implement visitCallImport");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitCallIndirect(CallIndirect* curr) {
+    static_assert(&SubType::visitCallIndirect != &OverriddenVisitor<SubType, ReturnType>::visitCallIndirect, "Derived class must implement visitCallIndirect");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitGetLocal(GetLocal* curr) {
+    static_assert(&SubType::visitGetLocal != &OverriddenVisitor<SubType, ReturnType>::visitGetLocal, "Derived class must implement visitGetLocal");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitSetLocal(SetLocal* curr) {
+    static_assert(&SubType::visitSetLocal != &OverriddenVisitor<SubType, ReturnType>::visitSetLocal, "Derived class must implement visitSetLocal");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitGetGlobal(GetGlobal* curr) {
+    static_assert(&SubType::visitGetGlobal != &OverriddenVisitor<SubType, ReturnType>::visitGetGlobal, "Derived class must implement visitGetGlobal");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitSetGlobal(SetGlobal* curr) {
+    static_assert(&SubType::visitSetGlobal != &OverriddenVisitor<SubType, ReturnType>::visitSetGlobal, "Derived class must implement visitSetGlobal");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitLoad(Load* curr) {
+    static_assert(&SubType::visitLoad != &OverriddenVisitor<SubType, ReturnType>::visitLoad, "Derived class must implement visitLoad");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitStore(Store* curr) {
+    static_assert(&SubType::visitStore != &OverriddenVisitor<SubType, ReturnType>::visitStore, "Derived class must implement visitStore");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) {
+    static_assert(&SubType::visitAtomicRMW != &OverriddenVisitor<SubType, ReturnType>::visitAtomicRMW, "Derived class must implement visitAtomicRMW");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    static_assert(&SubType::visitAtomicCmpxchg != &OverriddenVisitor<SubType, ReturnType>::visitAtomicCmpxchg, "Derived class must implement visitAtomicCmpxchg");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitAtomicWait(AtomicWait* curr) {
+    static_assert(&SubType::visitAtomicWait != &OverriddenVisitor<SubType, ReturnType>::visitAtomicWait, "Derived class must implement visitAtomicWait");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitAtomicWake(AtomicWake* curr) {
+    static_assert(&SubType::visitAtomicWake != &OverriddenVisitor<SubType, ReturnType>::visitAtomicWake, "Derived class must implement visitAtomicWake");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitConst(Const* curr) {
+    static_assert(&SubType::visitConst != &OverriddenVisitor<SubType, ReturnType>::visitConst, "Derived class must implement visitConst");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitUnary(Unary* curr) {
+    static_assert(&SubType::visitUnary != &OverriddenVisitor<SubType, ReturnType>::visitUnary, "Derived class must implement visitUnary");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitBinary(Binary* curr) {
+    static_assert(&SubType::visitBinary != &OverriddenVisitor<SubType, ReturnType>::visitBinary, "Derived class must implement visitBinary");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitSelect(Select* curr) {
+    static_assert(&SubType::visitSelect != &OverriddenVisitor<SubType, ReturnType>::visitSelect, "Derived class must implement visitSelect");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitDrop(Drop* curr) {
+    static_assert(&SubType::visitDrop != &OverriddenVisitor<SubType, ReturnType>::visitDrop, "Derived class must implement visitDrop");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitReturn(Return* curr) {
+    static_assert(&SubType::visitReturn != &OverriddenVisitor<SubType, ReturnType>::visitReturn, "Derived class must implement visitReturn");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitHost(Host* curr) {
+    static_assert(&SubType::visitHost != &OverriddenVisitor<SubType, ReturnType>::visitHost, "Derived class must implement visitHost");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitNop(Nop* curr) {
+    static_assert(&SubType::visitNop != &OverriddenVisitor<SubType, ReturnType>::visitNop, "Derived class must implement visitNop");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitUnreachable(Unreachable* curr) {
+    static_assert(&SubType::visitUnreachable != &OverriddenVisitor<SubType, ReturnType>::visitUnreachable, "Derived class must implement visitUnreachable");
+    WASM_UNREACHABLE();
+  }
   // Module-level visitors
-  ReturnType visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitImport(Import* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitExport(Export* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitFunction(Function* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitTable(Table* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-  ReturnType visitModule(Module* curr) { WASM_UNREACHABLE(); }
+  ReturnType visitFunctionType(FunctionType* curr) {
+    static_assert(&SubType::visitFunctionType != &OverriddenVisitor<SubType, ReturnType>::visitFunctionType, "Derived class must implement visitFunctionType");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitImport(Import* curr) {
+    static_assert(&SubType::visitImport != &OverriddenVisitor<SubType, ReturnType>::visitImport, "Derived class must implement visitImport");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitExport(Export* curr) {
+    static_assert(&SubType::visitExport != &OverriddenVisitor<SubType, ReturnType>::visitExport, "Derived class must implement visitExport");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitGlobal(Global* curr) {
+    static_assert(&SubType::visitGlobal != &OverriddenVisitor<SubType, ReturnType>::visitGlobal, "Derived class must implement visitGlobal");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitFunction(Function* curr) {
+    static_assert(&SubType::visitFunction != &OverriddenVisitor<SubType, ReturnType>::visitFunction, "Derived class must implement visitFunction");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitTable(Table* curr) {
+    static_assert(&SubType::visitTable != &OverriddenVisitor<SubType, ReturnType>::visitTable, "Derived class must implement visitTable");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitMemory(Memory* curr) {
+    static_assert(&SubType::visitMemory != &OverriddenVisitor<SubType, ReturnType>::visitMemory, "Derived class must implement visitMemory");
+    WASM_UNREACHABLE();
+  }
+  ReturnType visitModule(Module* curr) {
+    static_assert(&SubType::visitModule != &OverriddenVisitor<SubType, ReturnType>::visitModule, "Derived class must implement visitModule");
+    WASM_UNREACHABLE();
+  }
 
   ReturnType visit(Expression* curr) {
     assert(curr);
