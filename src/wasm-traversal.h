@@ -122,49 +122,49 @@ struct Visitor {
 template<typename SubType, typename ReturnType = void>
 struct OverriddenVisitor {
   // Expression visitors, which must be overridden
-  #define DELEGATE(CLASS_TO_VISIT) \
+  #define UNIMPLEMENTED(CLASS_TO_VISIT) \
     ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { \
       static_assert(&SubType::visit##CLASS_TO_VISIT != &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT, "Derived class must implement visit" #CLASS_TO_VISIT); \
       WASM_UNREACHABLE(); \
     }
 
-  DELEGATE(Block);
-  DELEGATE(If);
-  DELEGATE(Loop);
-  DELEGATE(Break);
-  DELEGATE(Switch);
-  DELEGATE(Call);
-  DELEGATE(CallImport);
-  DELEGATE(CallIndirect);
-  DELEGATE(GetLocal);
-  DELEGATE(SetLocal);
-  DELEGATE(GetGlobal);
-  DELEGATE(SetGlobal);
-  DELEGATE(Load);
-  DELEGATE(Store);
-  DELEGATE(AtomicRMW);
-  DELEGATE(AtomicCmpxchg);
-  DELEGATE(AtomicWait);
-  DELEGATE(AtomicWake);
-  DELEGATE(Const);
-  DELEGATE(Unary);
-  DELEGATE(Binary);
-  DELEGATE(Select);
-  DELEGATE(Drop);
-  DELEGATE(Return);
-  DELEGATE(Host);
-  DELEGATE(Nop);
-  DELEGATE(Unreachable);
-  DELEGATE(FunctionType);
-  DELEGATE(Import);
-  DELEGATE(Export);
-  DELEGATE(Global);
-  DELEGATE(Function);
-  DELEGATE(Table);
-  DELEGATE(Memory);
-  DELEGATE(Module);
+  UNIMPLEMENTED(Block);
+  UNIMPLEMENTED(If);
+  UNIMPLEMENTED(Loop);
+  UNIMPLEMENTED(Break);
+  UNIMPLEMENTED(Switch);
+  UNIMPLEMENTED(Call);
+  UNIMPLEMENTED(CallImport);
+  UNIMPLEMENTED(CallIndirect);
+  UNIMPLEMENTED(GetLocal);
+  UNIMPLEMENTED(SetLocal);
+  UNIMPLEMENTED(GetGlobal);
+  UNIMPLEMENTED(SetGlobal);
+  UNIMPLEMENTED(Load);
+  UNIMPLEMENTED(Store);
+  UNIMPLEMENTED(AtomicRMW);
+  UNIMPLEMENTED(AtomicCmpxchg);
+  UNIMPLEMENTED(AtomicWait);
+  UNIMPLEMENTED(AtomicWake);
+  UNIMPLEMENTED(Const);
+  UNIMPLEMENTED(Unary);
+  UNIMPLEMENTED(Binary);
+  UNIMPLEMENTED(Select);
+  UNIMPLEMENTED(Drop);
+  UNIMPLEMENTED(Return);
+  UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(Nop);
+  UNIMPLEMENTED(Unreachable);
+  UNIMPLEMENTED(FunctionType);
+  UNIMPLEMENTED(Import);
+  UNIMPLEMENTED(Export);
+  UNIMPLEMENTED(Global);
+  UNIMPLEMENTED(Function);
+  UNIMPLEMENTED(Table);
+  UNIMPLEMENTED(Memory);
+  UNIMPLEMENTED(Module);
 
-  #undef DELEGATE
+  #undef UNIMPLEMENTED
 
   ReturnType visit(Expression* curr) {
     assert(curr);
