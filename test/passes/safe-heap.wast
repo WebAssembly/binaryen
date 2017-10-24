@@ -40,4 +40,16 @@
   (drop (i32.load (i32.const 1)))
  )
 )
+;; pre-existing
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
+ (import "env" "segfault" (func $segfault))
+ (import "env" "alignfault" (func $alignfault))
+ (memory $0 (shared 100 100))
+ (func $actions
+  (drop (i32.load (i32.const 1)))
+  (i32.store (i32.const 1) (i32.const 100))
+ )
+)
 
