@@ -1324,6 +1324,10 @@ class S2WasmBuilder {
       mustMatch(name.str);
       skipWhitespace();
     }
+    if (match(".weak")) {
+      mustMatch(name.str);
+      skipWhitespace();
+    }
     if (match(".align") || match(".p2align")) {
       align = getInt();
       skipWhitespace();
