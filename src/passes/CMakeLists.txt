@@ -8,6 +8,7 @@ SET(passes_SOURCES
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp
   Flatten.cpp
+  FunctionSplitting.cpp
   Inlining.cpp
   LegalizeJSInterface.cpp
   LocalCSE.cpp
