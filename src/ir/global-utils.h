@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_global_h
-#define wasm_ast_global_h
+#ifndef wasm_ir_global_h
+#define wasm_ir_global_h
 
 #include <algorithm>
 #include <vector>
@@ -51,5 +51,5 @@ namespace GlobalUtils {
 
 } // namespace wasm
 
-#endif // wasm_ast_global_h
+#endif // wasm_ir_global_h
 

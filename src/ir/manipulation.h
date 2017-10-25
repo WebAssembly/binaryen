@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_manipulation_h
-#define wasm_ast_manipulation_h
+#ifndef wasm_ir_manipulation_h
+#define wasm_ir_manipulation_h
 
 #include "wasm.h"
 
@@ -65,5 +65,5 @@ namespace ExpressionManipulator {
 
 } // wasm
 
-#endif // wams_ast_manipulation_h
+#endif // wams_ir_manipulation_h
 

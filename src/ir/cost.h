@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_cost_h
-#define wasm_ast_cost_h
+#ifndef wasm_ir_cost_h
+#define wasm_ir_cost_h
 
 namespace wasm {
 
@@ -251,5 +251,5 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
 
 } // namespace wasm
 
-#endif // wasm_ast_cost_h
+#endif // wasm_ir_cost_h
 

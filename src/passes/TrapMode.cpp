@@ -22,7 +22,7 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ast/trapping.h"
+#include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "wasm.h"

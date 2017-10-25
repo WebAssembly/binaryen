@@ -31,7 +31,7 @@
 #include "wasm-validator.h"
 #include "wasm2asm.h"
 #include "cfg/Relooper.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "shell-interface.h"
 
 using namespace wasm;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_count_h
-#define wasm_ast_count_h
+#ifndef wasm_ir_count_h
+#define wasm_ir_count_h
 
 namespace wasm {
 
@@ -46,5 +46,5 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
 
 } // namespace wasm
 
-#endif // wasm_ast_count_h
+#endif // wasm_ir_count_h
 

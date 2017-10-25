@@ -21,9 +21,9 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ast/block-utils.h>
-#include <ast/effects.h>
-#include <ast/type-updating.h>
+#include <ir/block-utils.h>
+#include <ir/effects.h>
+#include <ir/type-updating.h>
 
 namespace wasm {
 

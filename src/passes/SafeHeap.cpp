@@ -25,8 +25,8 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
-#include "ast/bits.h"
-#include "ast/import-utils.h"
+#include "ir/bits.h"
+#include "ir/import-utils.h"
 
 namespace wasm {
 

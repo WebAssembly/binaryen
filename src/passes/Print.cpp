@@ -22,7 +22,7 @@
 #include <wasm-printing.h>
 #include <pass.h>
 #include <pretty_printing.h>
-#include <ast/module-utils.h>
+#include <ir/module-utils.h>
 
 namespace wasm {
 

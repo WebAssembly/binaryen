@@ -31,7 +31,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "passes/passes.h"
 
 namespace wasm {

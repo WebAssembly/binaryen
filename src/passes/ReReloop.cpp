@@ -28,7 +28,7 @@
 #include "wasm-traversal.h"
 #include "pass.h"
 #include "cfg/Relooper.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 
 #ifdef RERELOOP_DEBUG
 #include <wasm-printing.h>

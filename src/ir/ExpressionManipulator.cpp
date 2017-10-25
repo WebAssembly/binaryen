@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "support/hash.h"
 
 namespace wasm {

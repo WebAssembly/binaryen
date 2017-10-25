@@ -22,7 +22,7 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ast/branch-utils.h"
+#include "ir/branch-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"

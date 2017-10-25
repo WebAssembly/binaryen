@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_properties_h
-#define wasm_ast_properties_h
+#ifndef wasm_ir_properties_h
+#define wasm_ir_properties_h
 
 #include "wasm.h"
-#include "ast/bits.h"
+#include "ir/bits.h"
 
 namespace wasm {
 
@@ -137,5 +137,5 @@ struct Properties {
 
 } // wasm
 
-#endif // wams_ast_properties_h
+#endif // wams_ir_properties_h
 

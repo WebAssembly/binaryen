@@ -18,7 +18,7 @@
 #define wasm_wasm_builder_h
 
 #include "wasm.h"
-#include "ast/manipulation.h"
+#include "ir/manipulation.h"
 
 namespace wasm {
 

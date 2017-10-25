@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_bits_h
-#define wasm_ast_bits_h
+#ifndef wasm_ir_bits_h
+#define wasm_ir_bits_h
 
 #include "support/bits.h"
 #include "wasm-builder.h"
-#include "ast/literal-utils.h"
+#include "ir/literal-utils.h"
 
 namespace wasm {
 
@@ -103,5 +103,5 @@ struct Bits {
 
 } // namespace wasm
 
-#endif // wasm_ast_bits_h
+#endif // wasm_ir_bits_h
 

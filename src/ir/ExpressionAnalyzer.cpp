@@ -15,8 +15,8 @@
  */
 
 #include "support/hash.h"
-#include "ast_utils.h"
-#include "ast/load-utils.h"
+#include "ir/utils.h"
+#include "ir/load-utils.h"
 
 namespace wasm {
 // Given a stack of expressions, checks if the topmost is used as a result.

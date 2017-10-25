@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_load_h
-#define wasm_ast_load_h
+#ifndef wasm_ir_load_h
+#define wasm_ir_load_h
 
 #include "wasm.h"
 
@@ -36,5 +36,5 @@ inline bool isSignRelevant(Load* load) {
 
 } // namespace wasm
 
-#endif // wasm_ast_load_h
+#endif // wasm_ir_load_h
 

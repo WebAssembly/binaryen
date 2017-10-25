@@ -16,7 +16,7 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast/properties.h>
+#include <ir/properties.h>
 
 namespace wasm {
 

@@ -20,9 +20,9 @@
 
 #include <wasm.h>
 #include <pass.h>
-#include <ast_utils.h>
-#include <ast/branch-utils.h>
-#include <ast/effects.h>
+#include <ir/utils.h>
+#include <ir/branch-utils.h>
+#include <ir/effects.h>
 #include <wasm-builder.h>
 
 namespace wasm {

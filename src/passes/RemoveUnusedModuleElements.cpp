@@ -25,7 +25,7 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "asm_v_wasm.h"
 
 namespace wasm {

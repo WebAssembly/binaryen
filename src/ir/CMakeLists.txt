@@ -1,6 +1,6 @@
-SET(ast_SOURCES
+SET(ir_SOURCES
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
   LocalGraph.cpp
 )
-ADD_LIBRARY(ast STATIC ${ast_SOURCES})
+ADD_LIBRARY(ir STATIC ${ir_SOURCES})

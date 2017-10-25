@@ -34,8 +34,8 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "support/permutations.h"
-#include "ast/literal-utils.h"
-#include "ast/local-graph.h"
+#include "ir/literal-utils.h"
+#include "ir/local-graph.h"
 
 namespace wasm {
 

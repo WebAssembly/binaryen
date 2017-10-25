@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_import_h
-#define wasm_ast_import_h
+#ifndef wasm_ir_import_h
+#define wasm_ir_import_h
 
 #include "literal.h"
 #include "wasm.h"
@@ -37,5 +37,5 @@ namespace ImportUtils {
 
 } // namespace wasm
 
-#endif // wasm_ast_import_h
+#endif // wasm_ir_import_h
 

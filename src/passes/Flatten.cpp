@@ -51,8 +51,8 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ast_utils.h>
-#include <ast/effects.h>
+#include <ir/utils.h>
+#include <ir/effects.h>
 
 namespace wasm {
 

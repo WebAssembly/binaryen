@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_localizer_h
-#define wasm_ast_localizer_h
+#ifndef wasm_ir_localizer_h
+#define wasm_ir_localizer_h
 
 #include <wasm-builder.h>
 
@@ -43,5 +43,5 @@ struct Localizer {
 
 } // namespace wasm
 
-#endif // wasm_ast_localizer_h
+#endif // wasm_ir_localizer_h
 

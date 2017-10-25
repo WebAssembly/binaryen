@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_effects_h
-#define wasm_ast_effects_h
+#ifndef wasm_ir_effects_h
+#define wasm_ir_effects_h
 
 namespace wasm {
 
@@ -275,4 +275,4 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
 
 } // namespace wasm
 
-#endif // wasm_ast_effects_h
+#endif // wasm_ir_effects_h
