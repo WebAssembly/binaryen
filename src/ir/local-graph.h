@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_local_graph_h
-#define wasm_ast_local_graph_h
+#ifndef wasm_ir_local_graph_h
+#define wasm_ir_local_graph_h
 
 namespace wasm {
 
@@ -107,5 +107,5 @@ public:
 
 } // namespace wasm
 
-#endif // wasm_ast_local_graph_h
+#endif // wasm_ir_local_graph_h
 

@@ -31,10 +31,10 @@
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
 #include "wasm-builder.h"
-#include "ast/memory-utils.h"
-#include "ast/global-utils.h"
-#include "ast/import-utils.h"
-#include "ast/literal-utils.h"
+#include "ir/memory-utils.h"
+#include "ir/global-utils.h"
+#include "ir/import-utils.h"
+#include "ir/literal-utils.h"
 
 using namespace wasm;
 

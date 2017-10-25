@@ -21,9 +21,10 @@
 
 #include <memory>
 #include <iomanip>
+
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 
 namespace wasm {
 

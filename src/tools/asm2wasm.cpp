@@ -20,7 +20,7 @@
 
 #include <exception>
 
-#include "ast/trapping.h"
+#include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"

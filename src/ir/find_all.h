@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_find_all_h
-#define wasm_ast_find_all_h
+#ifndef wasm_ir_find_all_h
+#define wasm_ir_find_all_h
 
 #include <wasm-traversal.h>
 
@@ -44,5 +44,5 @@ struct FindAll {
 
 } // namespace wasm
 
-#endif // wasm_ast_find_all_h
+#endif // wasm_ir_find_all_h
 

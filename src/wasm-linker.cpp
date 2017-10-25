@@ -16,7 +16,7 @@
 
 #include "wasm-linker.h"
 #include "asm_v_wasm.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "s2wasm.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"

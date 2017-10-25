@@ -18,8 +18,8 @@
 
 #include <wasm-builder.h>
 #include <wasm-printing.h>
-#include <ast/find_all.h>
-#include <ast/local-graph.h>
+#include <ir/find_all.h>
+#include <ir/local-graph.h>
 
 namespace wasm {
 

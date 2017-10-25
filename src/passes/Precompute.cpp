@@ -22,10 +22,10 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
-#include <ast_utils.h>
-#include <ast/literal-utils.h>
-#include <ast/local-graph.h>
-#include <ast/manipulation.h>
+#include <ir/utils.h>
+#include <ir/literal-utils.h>
+#include <ir/local-graph.h>
+#include <ir/manipulation.h>
 
 namespace wasm {
 

@@ -45,10 +45,10 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ast/count.h>
-#include <ast/effects.h>
-#include <ast/find_all.h>
-#include <ast/manipulation.h>
+#include <ir/count.h>
+#include <ir/effects.h>
+#include <ir/find_all.h>
+#include <ir/manipulation.h>
 
 namespace wasm {
 

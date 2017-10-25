@@ -26,7 +26,7 @@ high chance for set at start of loop
 */
 
 #include <wasm-builder.h>
-#include <ast/literal-utils.h>
+#include <ir/literal-utils.h>
 
 namespace wasm {
 

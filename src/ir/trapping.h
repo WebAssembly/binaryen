@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_trapping_h
-#define wasm_ast_trapping_h
+#ifndef wasm_ir_trapping_h
+#define wasm_ir_trapping_h
 
 #include <exception>
 
@@ -117,4 +117,4 @@ inline TrapMode trapModeFromString(std::string const& str) {
 
 } // wasm
 
-#endif // wasm_ast_trapping_h
+#endif // wasm_ir_trapping_h

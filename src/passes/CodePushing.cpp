@@ -22,7 +22,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ast/effects.h>
+#include <ir/effects.h>
 
 namespace wasm {
 

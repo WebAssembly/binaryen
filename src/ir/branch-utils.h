@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_branch_h
-#define wasm_ast_branch_h
+#ifndef wasm_ir_branch_h
+#define wasm_ir_branch_h
 
 #include "wasm.h"
 #include "wasm-traversal.h"
@@ -179,5 +179,5 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
 
 } // namespace wasm
 
-#endif // wasm_ast_branch_h
+#endif // wasm_ir_branch_h
 

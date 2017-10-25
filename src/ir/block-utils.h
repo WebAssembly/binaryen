@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_block_h
-#define wasm_ast_block_h
+#ifndef wasm_ir_block_h
+#define wasm_ir_block_h
 
 #include "literal.h"
 #include "wasm.h"
-#include "ast/branch-utils.h"
-#include "ast/effects.h"
+#include "ir/branch-utils.h"
+#include "ir/effects.h"
 
 namespace wasm {
 
@@ -63,5 +63,5 @@ namespace BlockUtils {
 
 } // namespace wasm
 
-#endif // wasm_ast_block_h
+#endif // wasm_ir_block_h
 

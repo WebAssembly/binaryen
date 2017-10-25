@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_utils_h
-#define wasm_ast_utils_h
+#ifndef wasm_ir_utils_h
+#define wasm_ir_utils_h
 
 #include "wasm.h"
 #include "wasm-traversal.h"
 #include "wasm-builder.h"
 #include "pass.h"
-#include "ast/branch-utils.h"
+#include "ir/branch-utils.h"
 
 namespace wasm {
 
@@ -357,4 +357,4 @@ struct I64Utilities {
 
 } // namespace wasm
 
-#endif // wasm_ast_utils_h
+#endif // wasm_ir_utils_h

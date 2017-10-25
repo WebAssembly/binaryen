@@ -16,7 +16,7 @@
 
 #include "wasm.h"
 #include "wasm-traversal.h"
-#include "ast/branch-utils.h"
+#include "ir/branch-utils.h"
 
 namespace wasm {
 

@@ -29,8 +29,8 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ast_utils.h>
-#include <ast/literal-utils.h>
+#include <ir/utils.h>
+#include <ir/literal-utils.h>
 
 namespace wasm {
 

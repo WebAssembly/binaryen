@@ -59,9 +59,9 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
-#include "ast_utils.h"
-#include "ast/branch-utils.h"
-#include "ast/label-utils.h"
+#include "ir/utils.h"
+#include "ir/branch-utils.h"
+#include "ir/label-utils.h"
 
 namespace wasm {
 

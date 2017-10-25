@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_literl_utils_h
-#define wasm_ast_literl_utils_h
+#ifndef wasm_ir_literal_utils_h
+#define wasm_ir_literal_utils_h
 
 #include "wasm.h"
 
@@ -52,5 +52,5 @@ inline Expression* makeZero(WasmType type, Module& wasm) {
 
 } // namespace wasm
 
-#endif // wasm_ast_literl_utils_h
+#endif // wasm_ir_literal_utils_h
 

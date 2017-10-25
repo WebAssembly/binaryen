@@ -23,7 +23,7 @@
 #include <stack>
 #include <string>
 
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "parsing.h"
 
 namespace CFG {

@@ -21,8 +21,8 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
-#include "ast/manipulation.h"
+#include "ir/utils.h"
+#include "ir/manipulation.h"
 
 namespace wasm {
 

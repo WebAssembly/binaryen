@@ -28,7 +28,7 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "cfg/cfg-traversal.h"
 #include "wasm-builder.h"
 #include "support/learning.h"

@@ -22,8 +22,8 @@
 #include "wasm.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
-#include "ast_utils.h"
-#include "ast/branch-utils.h"
+#include "ir/utils.h"
+#include "ir/branch-utils.h"
 #include "support/colors.h"
 
 

@@ -32,7 +32,7 @@
 #include "support/file.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
-#include "ast/literal-utils.h"
+#include "ir/literal-utils.h"
 #include "wasm-validator.h"
 
 using namespace wasm;

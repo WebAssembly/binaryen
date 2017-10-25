@@ -19,8 +19,8 @@
 
 #include "support/bits.h"
 #include "wasm-binary.h"
-#include "ast/branch-utils.h"
-#include "ast/module-utils.h"
+#include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 

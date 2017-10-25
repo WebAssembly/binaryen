@@ -22,7 +22,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ast/localize.h>
+#include <ir/localize.h>
 #include <asmjs/shared-constants.h>
 
 namespace wasm {

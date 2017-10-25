@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_memory_h
-#define wasm_ast_memory_h
+#ifndef wasm_ir_memory_h
+#define wasm_ir_memory_h
 
 #include <algorithm>
 #include <vector>
@@ -52,5 +52,5 @@ namespace MemoryUtils {
 
 } // namespace wasm
 
-#endif // wasm_ast_memory_h
+#endif // wasm_ir_memory_h
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_label_h
-#define wasm_ast_label_h
+#ifndef wasm_ir_label_h
+#define wasm_ir_label_h
 
 #include "wasm.h"
 #include "wasm-traversal.h"
@@ -58,5 +58,5 @@ private:
 
 } // namespace wasm
 
-#endif // wasm_ast_label_h
+#endif // wasm_ir_label_h
 

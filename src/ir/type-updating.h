@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_type_updating_h
-#define wasm_ast_type_updating_h
+#ifndef wasm_ir_type_updating_h
+#define wasm_ir_type_updating_h
 
 #include "wasm-traversal.h"
 
@@ -283,4 +283,4 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
 } // namespace wasm
 
-#endif // wasm_ast_type_updating_h
+#endif // wasm_ir_type_updating_h

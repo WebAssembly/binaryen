@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ast_module_h
-#define wasm_ast_module_h
+#ifndef wasm_ir_module_h
+#define wasm_ir_module_h
 
 #include "wasm.h"
 
@@ -55,5 +55,5 @@ struct BinaryIndexes {
 
 } // namespace wasm
 
-#endif // wasm_ast_module_h
+#endif // wasm_ir_module_h
 

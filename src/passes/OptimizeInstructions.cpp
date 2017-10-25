@@ -24,13 +24,13 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
-#include <ast_utils.h>
-#include <ast/cost.h>
-#include <ast/effects.h>
-#include <ast/manipulation.h>
-#include <ast/properties.h>
-#include <ast/literal-utils.h>
-#include <ast/load-utils.h>
+#include <ir/utils.h>
+#include <ir/cost.h>
+#include <ir/effects.h>
+#include <ir/manipulation.h>
+#include <ir/properties.h>
+#include <ir/literal-utils.h>
+#include <ir/load-utils.h>
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on the availability of atomics.
 

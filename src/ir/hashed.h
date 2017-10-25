@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef _wasm_ast_hashed_h
+#ifndef _wasm_ir_hashed_h
 
 #include "support/hash.h"
 #include "wasm.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 
 namespace wasm {
 
@@ -55,5 +55,5 @@ class HashedExpressionMap : public std::unordered_map<HashedExpression, T, Expre
 
 } // namespace wasm
 
-#endif // _wasm_ast_hashed_h
+#endif // _wasm_ir_hashed_h
 
