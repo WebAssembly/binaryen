@@ -246,10 +246,6 @@ class Linker {
   // function table.
   void layout();
 
-  // Process just the relocations. Can be useful to do on its on, for
-  // relocations added to the module after general layout.
-  void layoutRelocations();
-
   // Support for emscripten integration: generates dyncall thunks, emits
   // metadata for asmConsts, staticBump and initializer functions.
   void emscriptenGlue(std::ostream& o);
@@ -262,6 +258,8 @@ class Linker {
   // currently-undefined reference will be added to the link.
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
+
+  Address getStackPointerAddress();
 
  private:
   // Allocate a static variable and return its address in linear memory

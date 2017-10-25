@@ -177,7 +177,43 @@ void Linker::layout() {
     getTableDataRef().push_back(P.second);
   }
 
-  layoutRelocations();
+  for (auto& relocation : out.relocations) {
+    // TODO: Handle weak symbols properly, instead of always taking the weak definition.
+    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
+    Name name = relocation->symbol;
+
+    if (debug) std::cerr << "fix relocation " << name << '\n';
+
+    if (alias) {
+      name = alias->symbol;
+      relocation->addend += alias->offset;
+    }
+
+    if (relocation->kind == LinkerObject::Relocation::kData) {
+      const auto& symbolAddress = staticAddresses.find(name);
+      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
+      *(relocation->data) = symbolAddress->second + relocation->addend;
+      if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
+    } else {
+      std::cerr << "  function\n";
+      // function address
+      if (!out.wasm.getFunctionOrNull(name)) {
+        if (FunctionType* f = out.getExternType(name)) {
+          // Address of an imported function is taken, but imports do not have addresses in wasm.
+          // Generate a thunk to forward to the call_import.
+          Function* thunk = getImportThunk(name, f);
+          *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
+        } else {
+          std::cerr << "Unknown symbol: " << name << '\n';
+          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
+          *(relocation->data) = 0;
+        }
+      } else {
+        *(relocation->data) = getFunctionIndex(name) + relocation->addend;
+      }
+    }
+  }
+  out.relocations.clear();
 
   if (!!startFunction) {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
@@ -239,45 +275,6 @@ void Linker::layout() {
   if (tableSize > 0) {
     out.wasm.table.initial = out.wasm.table.max = tableSize;
   }
-}
-
-void Linker::layoutRelocations() {
-  for (auto& relocation : out.relocations) {
-    // TODO: Handle weak symbols properly, instead of always taking the weak definition.
-    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
-    Name name = relocation->symbol;
-
-    if (debug) std::cerr << "fix relocation " << name << '\n';
-
-    if (alias) {
-      name = alias->symbol;
-      relocation->addend += alias->offset;
-    }
-
-    if (relocation->kind == LinkerObject::Relocation::kData) {
-      const auto& symbolAddress = staticAddresses.find(name);
-      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
-      *(relocation->data) = symbolAddress->second + relocation->addend;
-      if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
-    } else {
-      // function address
-      if (!out.wasm.getFunctionOrNull(name)) {
-        if (FunctionType* f = out.getExternType(name)) {
-          // Address of an imported function is taken, but imports do not have addresses in wasm.
-          // Generate a thunk to forward to the call_import.
-          Function* thunk = getImportThunk(name, f);
-          *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
-        } else {
-          std::cerr << "Unknown symbol: " << name << '\n';
-          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
-          *(relocation->data) = 0;
-        }
-      } else {
-        *(relocation->data) = getFunctionIndex(name) + relocation->addend;
-      }
-    }
-  }
-  out.relocations.clear();
 }
 
 bool Linker::linkObject(S2WasmBuilder& builder) {
@@ -345,12 +342,14 @@ void Linker::emscriptenGlue(std::ostream& o) {
   auto functionsToThunk = getTableData();
   auto removeIt = std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
   functionsToThunk.erase(removeIt, functionsToThunk.end());
-  for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
+
+  EmscriptenGlueLinker emscripten(out.wasm, getStackPointerAddress());
+  for (auto f : emscripten.makeDynCallThunks(functionsToThunk)) {
     exportFunction(f->name, true);
   }
 
   auto staticBump = nextStatic - globalBase;
-  emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
+  emscripten.generateEmscriptenMetadata(o, segmentsByAddress, staticBump, out.initializerFunctions);
 }
 
 void Linker::ensureTableSegment() {
@@ -420,4 +419,8 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   f->body = call;
   out.wasm.addFunction(f);
   return f;
+}
+
+Address Linker::getStackPointerAddress() {
+  return Address(staticAddresses[stackPointer]);
 }
