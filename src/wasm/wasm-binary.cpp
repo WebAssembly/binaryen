@@ -62,6 +62,7 @@ void WasmBinaryWriter::write() {
     writeSourceMapEpilog();
   }
   finishUp();
+  lookForProblems();
 }
 
 void WasmBinaryWriter::writeHeader() {
@@ -287,7 +288,7 @@ void WasmBinaryWriter::writeFunctions() {
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
       o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
-    tableOfContents.functions.emplace_back(sizePos + sizeFieldSize, size);
+    tableOfContents.functions.emplace_back(function->name, fsizePos + sizeFieldSize, size);
   }
   currFunction = nullptr;
   finishSection(start);
@@ -523,6 +524,18 @@ void WasmBinaryWriter::finishUp() {
     o.writeAt(buffer.pointerLocation, (uint32_t)o.size());
     for (size_t i = 0; i < buffer.size; i++) {
       o << (uint8_t)buffer.data[i];
+    }
+  }
+}
+
+void WasmBinaryWriter::lookForProblems() {
+  // some wasm VMs have decided to limit function body sizes
+  const size_t FUNCTION_BODY_MAX = 128 * 1024 * 1024;
+  for (auto& entry : tableOfContents.functionBodies) {
+    std::cerr << entry.name << " : " << entry.size << '\n';
+    if (entry.size >= FUNCTION_BODY_MAX) {
+      std::cout << "warning: function '" << name << "' has size " << size
+                << " which is larger than some wasm engines will accept\n";
     }
   }
 }

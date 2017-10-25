@@ -666,9 +666,10 @@ public:
   // locations in the output binary for the various parts of the module
   struct TableOfContents {
     struct Entry {
+      Name name;
       size_t offset; // where the entry starts
       size_t size; // the size of the entry
-      Entry(size_t offset, size_t size) : offset(offset), size(size) {}
+      Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
     };
     std::vector<Entry> functionBodies;
   } tableOfContents;
@@ -737,6 +738,7 @@ public:
   void emitBuffer(const char* data, size_t size);
   void emitString(const char *str);
   void finishUp();
+  void lookForProblems();
 
   // AST writing via visitors
   int depth = 0; // only for debugging
