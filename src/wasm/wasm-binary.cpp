@@ -532,7 +532,6 @@ void WasmBinaryWriter::lookForProblems() {
   // some wasm VMs have decided to limit function body sizes
   const size_t FUNCTION_BODY_MAX = 128 * 1024;
   for (auto& entry : tableOfContents.functionBodies) {
-    std::cerr << entry.name << " : " << entry.size << '\n';
     if (entry.size >= FUNCTION_BODY_MAX) {
       std::cout << "warning: function '" << entry.name << "' has size " << entry.size
                 << " which is larger than some wasm engines will accept\n";
