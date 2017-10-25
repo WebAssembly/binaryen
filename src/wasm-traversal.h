@@ -32,6 +32,8 @@
 
 namespace wasm {
 
+// A generic visitor, defaulting to doing nothing on each visit
+
 template<typename SubType, typename ReturnType = void>
 struct Visitor {
   // Expression visitors
@@ -71,6 +73,98 @@ struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
+
+  ReturnType visit(Expression* curr) {
+    assert(curr);
+
+    #define DELEGATE(CLASS_TO_VISIT) \
+      return static_cast<SubType*>(this)-> \
+          visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT*>(curr))
+
+    switch (curr->_id) {
+      case Expression::Id::BlockId: DELEGATE(Block);
+      case Expression::Id::IfId: DELEGATE(If);
+      case Expression::Id::LoopId: DELEGATE(Loop);
+      case Expression::Id::BreakId: DELEGATE(Break);
+      case Expression::Id::SwitchId: DELEGATE(Switch);
+      case Expression::Id::CallId: DELEGATE(Call);
+      case Expression::Id::CallImportId: DELEGATE(CallImport);
+      case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
+      case Expression::Id::GetLocalId: DELEGATE(GetLocal);
+      case Expression::Id::SetLocalId: DELEGATE(SetLocal);
+      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
+      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
+      case Expression::Id::LoadId: DELEGATE(Load);
+      case Expression::Id::StoreId: DELEGATE(Store);
+      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
+      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+      case Expression::Id::ConstId: DELEGATE(Const);
+      case Expression::Id::UnaryId: DELEGATE(Unary);
+      case Expression::Id::BinaryId: DELEGATE(Binary);
+      case Expression::Id::SelectId: DELEGATE(Select);
+      case Expression::Id::DropId: DELEGATE(Drop);
+      case Expression::Id::ReturnId: DELEGATE(Return);
+      case Expression::Id::HostId: DELEGATE(Host);
+      case Expression::Id::NopId: DELEGATE(Nop);
+      case Expression::Id::UnreachableId: DELEGATE(Unreachable);
+      case Expression::Id::InvalidId:
+      default: WASM_UNREACHABLE();
+    }
+
+    #undef DELEGATE
+  }
+};
+
+// A visitor which must be overridden for each visitor that is reached.
+
+template<typename SubType, typename ReturnType = void>
+struct OverriddenVisitor {
+  // Expression visitors, which must be overridden
+  #define UNIMPLEMENTED(CLASS_TO_VISIT) \
+    ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { \
+      static_assert(&SubType::visit##CLASS_TO_VISIT != &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT, "Derived class must implement visit" #CLASS_TO_VISIT); \
+      WASM_UNREACHABLE(); \
+    }
+
+  UNIMPLEMENTED(Block);
+  UNIMPLEMENTED(If);
+  UNIMPLEMENTED(Loop);
+  UNIMPLEMENTED(Break);
+  UNIMPLEMENTED(Switch);
+  UNIMPLEMENTED(Call);
+  UNIMPLEMENTED(CallImport);
+  UNIMPLEMENTED(CallIndirect);
+  UNIMPLEMENTED(GetLocal);
+  UNIMPLEMENTED(SetLocal);
+  UNIMPLEMENTED(GetGlobal);
+  UNIMPLEMENTED(SetGlobal);
+  UNIMPLEMENTED(Load);
+  UNIMPLEMENTED(Store);
+  UNIMPLEMENTED(AtomicRMW);
+  UNIMPLEMENTED(AtomicCmpxchg);
+  UNIMPLEMENTED(AtomicWait);
+  UNIMPLEMENTED(AtomicWake);
+  UNIMPLEMENTED(Const);
+  UNIMPLEMENTED(Unary);
+  UNIMPLEMENTED(Binary);
+  UNIMPLEMENTED(Select);
+  UNIMPLEMENTED(Drop);
+  UNIMPLEMENTED(Return);
+  UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(Nop);
+  UNIMPLEMENTED(Unreachable);
+  UNIMPLEMENTED(FunctionType);
+  UNIMPLEMENTED(Import);
+  UNIMPLEMENTED(Export);
+  UNIMPLEMENTED(Global);
+  UNIMPLEMENTED(Function);
+  UNIMPLEMENTED(Table);
+  UNIMPLEMENTED(Memory);
+  UNIMPLEMENTED(Module);
+
+  #undef UNIMPLEMENTED
 
   ReturnType visit(Expression* curr) {
     assert(curr);
