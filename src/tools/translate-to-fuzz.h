@@ -908,14 +908,14 @@ private:
       case 2: {
         // special values
         switch (type) {
-          case i32: value = Literal(pick<int32_t>(0, -1, 1,
+          case i32: value = Literal(pick<int32_t>(0,
                                                   std::numeric_limits<int8_t>::min(),  std::numeric_limits<int8_t>::max(),
                                                   std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(),
                                                   std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
                                                   std::numeric_limits<uint8_t>::max(),
                                                   std::numeric_limits<uint16_t>::max(),
                                                   std::numeric_limits<uint32_t>::max())); break;
-          case i64: value = Literal(pick<int64_t>(0, -1, 1,
+          case i64: value = Literal(pick<int64_t>(0,
                                                   std::numeric_limits<int8_t>::min(),  std::numeric_limits<int8_t>::max(),
                                                   std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(),
                                                   std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
@@ -924,13 +924,13 @@ private:
                                                   std::numeric_limits<uint16_t>::max(),
                                                   std::numeric_limits<uint32_t>::max(),
                                                   std::numeric_limits<uint64_t>::max())); break;
-          case f32: value = Literal(pick<float>(0, -1, 1,
+          case f32: value = Literal(pick<float>(0,
                                                 std::numeric_limits<float>::min(),  std::numeric_limits<float>::max(),
                                                 std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
                                                 std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
                                                 std::numeric_limits<uint32_t>::max(),
                                                 std::numeric_limits<uint64_t>::max())); break;
-          case f64: value = Literal(pick<double>(0, -1, 1,
+          case f64: value = Literal(pick<double>(0,
                                                  std::numeric_limits<float>::min(),  std::numeric_limits<float>::max(),
                                                  std::numeric_limits<double>::min(),  std::numeric_limits<double>::max(),
                                                  std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
@@ -940,8 +940,11 @@ private:
           default: WASM_UNREACHABLE();
         }
         // tweak around special values
-        if (oneIn(3)) {
+        if (oneIn(3)) { // +- 1
           value = value.add(LiteralUtils::makeLiteralFromInt32(upTo(3) - 1, type));
+        }
+        if (oneIn(2)) { // flip sign
+          value = value.mul(LiteralUtils::makeLiteralFromInt32(-1, type));
         }
         break;
       }
