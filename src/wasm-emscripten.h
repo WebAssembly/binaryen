@@ -18,27 +18,42 @@
 #define wasm_wasm_emscripten_h
 
 #include "wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
 class LinkerObject;
 
-namespace emscripten {
+class EmscriptenGlueLinker {
+public:
+  EmscriptenGlueLinker(Module& _wasm, Address _stackPointerOffset)
+    : wasm(_wasm),
+      builder(_wasm),
+      stackPointerOffset(_stackPointerOffset) { }
 
-void generateRuntimeFunctions(LinkerObject& linker);
-void generateMemoryGrowthFunction(Module&);
+  void generateRuntimeFunctions();
+  void generateMemoryGrowthFunction();
 
-// Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-// signature in the indirect function table.
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData);
+  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
+  // signature in the indirect function table.
+  std::vector<Function*> makeDynCallThunks(std::vector<Name> const& tableSegmentData);
 
-void generateEmscriptenMetadata(std::ostream& o,
-                                Module& wasm,
-                                std::unordered_map<Address, Address> segmentsByAddress,
-                                Address staticBump,
-                                std::vector<Name> const& initializerFunctions);
+  void generateEmscriptenMetadata(std::ostream& o,
+                                  std::unordered_map<Address, Address> segmentsByAddress,
+                                  Address staticBump,
+                                  std::vector<Name> const& initializerFunctions);
 
-} // namespace emscripten
+private:
+  Module& wasm;
+  Builder builder;
+  Address stackPointerOffset;
+
+  Load* generateLoadStackPointer();
+  Store* generateStoreStackPointer(Expression* value);
+  void generateStackSaveFunction();
+  void generateStackAllocFunction();
+  void generateStackRestoreFunction();
+};
 
 } // namespace wasm
 

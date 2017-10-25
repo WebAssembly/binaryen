@@ -181,13 +181,12 @@ int main(int argc, const char *argv[]) {
   if (generateEmscriptenGlue) {
     if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
 
-    emscripten::generateRuntimeFunctions(linker.getOutput());
-    // Generated functions reference __stack_pointer, currently we handle new
-    // references to it via relocations.
-    linker.layoutRelocations();
+    Module& wasm = linker.getOutput().wasm;
+    EmscriptenGlueLinker emscripten(wasm, linker.getStackPointerAddress());
+    emscripten.generateRuntimeFunctions();
 
     if (allowMemoryGrowth) {
-      emscripten::generateMemoryGrowthFunction(linker.getOutput().wasm);
+      emscripten.generateMemoryGrowthFunction();
     }
 
     // dyncall thunks
