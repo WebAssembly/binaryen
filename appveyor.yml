@@ -21,7 +21,7 @@ environment:
     PARALLEL_FLAG: "/m:"
 
 install:
-  - pip install flake8
+  - pip install flake8==3.4.1
 
 before_build:
   # Check the style of a subset of Python code until the other code is updated.
