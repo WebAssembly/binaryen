@@ -76,7 +76,6 @@ struct ValidationInfo {
 
   template <typename T, typename S>
   std::ostream& fail(S text, T curr, Function* func) {
-    __builtin_trap();
     valid.store(false);
     auto& stream = getStream(func);
     if (quiet) return stream;
