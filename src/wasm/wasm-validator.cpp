@@ -484,7 +484,7 @@ void FunctionValidator::visitSetLocal(SetLocal *curr) {
 }
 
 void FunctionValidator::visitLoad(Load *curr) {
-  shouldBeTrue(!curr->isAtomic || info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -493,7 +493,7 @@ void FunctionValidator::visitLoad(Load *curr) {
 }
 
 void FunctionValidator::visitStore(Store *curr) {
-  shouldBeTrue(!curr->isAtomic || info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -503,7 +503,7 @@ void FunctionValidator::visitStore(Store *curr) {
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
-  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
@@ -512,7 +512,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
@@ -525,7 +525,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
-  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
@@ -535,7 +535,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 }
 
 void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
-  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
@@ -964,6 +964,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   info.shouldBeFalse(curr.initial > curr.max, "memory", "memory max >= initial");
   info.shouldBeTrue(curr.max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
+  if (curr.shared) info.shouldBeTrue(info.features & Feature::Atomics, "memory", "memory is shared, but atomics are disabled");
   Index mustBeGreaterOrEqual = 0;
   for (auto& segment : curr.segments) {
     if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;

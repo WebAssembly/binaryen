@@ -56,7 +56,7 @@
 
 namespace wasm {
 
-enum Features : uint32_t {
+enum Feature : uint32_t {
   MVP = 0,
   Atomics = 1 << 0,
   All = 0xffffffff,

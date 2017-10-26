@@ -112,7 +112,7 @@ int main(int argc, const char* argv[]) {
   Module wasm;
   // It should be safe to just always enable atomics in wasm-opt, because we
   // don't expect any passes to accidentally generate atomic ops
-  Features features = Features::Atomics;
+  FeatureSet features = Feature::Atomics;
 
   if (options.debug) std::cerr << "reading...\n";
 

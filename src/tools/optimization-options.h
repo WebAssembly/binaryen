@@ -25,7 +25,7 @@ struct OptimizationOptions : public Options {
 
   std::vector<std::string> passes;
   PassOptions passOptions;
-  Features features = Features::Atomics;
+  FeatureSet features = Feature::Atomics;
 
   OptimizationOptions(const std::string &command, const std::string &description) : Options(command, description) {
     (*this).add("", "-O", "execute default optimization passes",

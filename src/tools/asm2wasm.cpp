@@ -117,7 +117,7 @@ int main(int argc, const char *argv[]) {
            [&](Options *o, const std::string &argument) { emitBinary = false; })
       .add("--enable-threads", "-a", "Enable the Atomics wasm feature",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { options.passOptions.features |= Features::Atomics; })
+           [&](Options *o, const std::string &argument) { options.passOptions.features |= Feature::Atomics; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
