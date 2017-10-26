@@ -253,6 +253,7 @@ struct Asm2WasmPreProcessor {
       char* out = copy;
       std::string DEBUGINFO_INTRINSIC = EMSCRIPTEN_DEBUGINFO.str;
       auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
+      const char* UNKNOWN_FILE = "(unknown)";
       bool seenUseAsm = false;
       while (input[0]) {
         if (out + ADD_FACTOR >= end) {
@@ -260,13 +261,35 @@ struct Asm2WasmPreProcessor {
         }
         if (startsWith(input, "//@line")) {
           char* linePos = input + 8;
-          char* lineEnd = strchr(input + 8, ' ');
-          char* filePos = strchr(lineEnd, '"') + 1;
-          char* fileEnd = strchr(filePos, '"');
-          input = fileEnd + 1;
+          char* lineEnd = strpbrk(input + 8, " \n");
+          if (!lineEnd) {
+            // comment goes to end of input
+            break;
+          }
+          input = lineEnd + 1;
+          std::string file;
+          if (*lineEnd == ' ') {
+            // we have a file
+            char* filePos = strpbrk(input, "\"\n");
+            if (!filePos) {
+              // goes to end of input
+              break;
+            }
+            if (*filePos == '"') {
+              char* fileEnd = strpbrk(filePos + 1, "\"\n");
+              input = fileEnd + 1;
+              *fileEnd = 0;
+              file = filePos + 1;
+            } else {
+              file = UNKNOWN_FILE;
+              input = filePos + 1;
+            }
+          } else {
+            // no file, we found \n
+            file = UNKNOWN_FILE;
+          }
           *lineEnd = 0;
-          *fileEnd = 0;
-          std::string line = linePos, file = filePos;
+          std::string line = linePos;
           auto iter = debugInfoFileIndices.find(file);
           if (iter == debugInfoFileIndices.end()) {
             Index index = debugInfoFileNames.size();

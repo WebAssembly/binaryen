@@ -10,6 +10,7 @@
  (export "opts" (func $opts))
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
+ (export "nofile" (func $nofile))
  (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
@@ -187,5 +188,9 @@
   )
   ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
   (get_local $1)
+ )
+ (func $nofile (; 5 ;)
+  ;;@ (unknown):1337:0
+  (call $nofile)
  )
 )
