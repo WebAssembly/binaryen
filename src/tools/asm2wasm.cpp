@@ -115,7 +115,7 @@ int main(int argc, const char *argv[]) {
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
-      .add("--enable-atomics", "-a", "Enable the Atomics wasm feature",
+      .add("--enable-threads", "-a", "Enable the Atomics wasm feature",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { options.passOptions.features |= Features::Atomics; })
       .add_positional("INFILE", Options::Arguments::One,
