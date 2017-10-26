@@ -25,6 +25,7 @@ struct OptimizationOptions : public Options {
 
   std::vector<std::string> passes;
   PassOptions passOptions;
+  Features features = Features::Atomics;
 
   OptimizationOptions(const std::string &command, const std::string &description) : Options(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
@@ -118,6 +119,7 @@ struct OptimizationOptions : public Options {
   void runPasses(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
     if (debug) passRunner.setDebug(true);
+    passRunner.setFeatures(features);
     for (auto& pass : passes) {
       if (pass == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();
@@ -130,4 +132,3 @@ struct OptimizationOptions : public Options {
 };
 
 } // namespace wasm
-

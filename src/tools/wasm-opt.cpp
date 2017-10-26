@@ -110,6 +110,9 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
+  // It should be safe to just always enable atomics in wasm-opt, because we
+  // don't expect any passes to accidentally generate atomic ops
+  Features features = Features::Atomics;
 
   if (options.debug) std::cerr << "reading...\n";
 
@@ -125,14 +128,14 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
-    if (!WasmValidator().validate(wasm)) {
+    if (!WasmValidator().validate(wasm, features)) {
       Fatal() << "error in validating input";
     }
   } else {
     // translate-to-fuzz
     TranslateToFuzzReader reader(wasm);
     reader.read(options.extra["infile"]);
-    if (!WasmValidator().validate(wasm)) {
+    if (!WasmValidator().validate(wasm, features)) {
       std::cerr << "translate-to-fuzz must always generate a valid module";
       abort();
     }
@@ -173,7 +176,7 @@ int main(int argc, const char* argv[]) {
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
     options.runPasses(wasm);
-    assert(WasmValidator().validate(wasm));
+    assert(WasmValidator().validate(wasm, features));
   }
 
   if (fuzzExec) {
@@ -189,7 +192,7 @@ int main(int argc, const char* argv[]) {
       auto input = buffer.getAsChars();
       WasmBinaryBuilder parser(second, input, false);
       parser.read();
-      assert(WasmValidator().validate(second));
+      assert(WasmValidator().validate(second, features));
     }
     results.check(*compare);
   }

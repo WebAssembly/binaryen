@@ -33,6 +33,8 @@ def test_asm2wasm():
     for precise in [0, 1, 2]:
       for opts in [1, 0]:
         cmd = ASM2WASM + [os.path.join(options.binaryen_test, asm)]
+        if 'threads' in asm:
+          cmd += ['--enable-atomics']
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
           cmd += ['--trap-mode=allow', '--ignore-implicit-traps']

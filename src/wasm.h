@@ -56,6 +56,13 @@
 
 namespace wasm {
 
+enum Features : uint32_t {
+  MVP = 0,
+  Atomics = 1 << 0,
+  All = 0xffffffff,
+};
+typedef uint32_t FeatureSet;
+
 // An index in a wasm module
 typedef uint32_t Index;
 

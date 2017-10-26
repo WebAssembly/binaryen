@@ -49,6 +49,7 @@ inline std::ostream& printModuleComponent(Expression* curr, std::ostream& stream
 struct ValidationInfo {
   bool validateWeb;
   bool validateGlobally;
+  FeatureSet features;
   bool quiet;
 
   std::atomic<bool> valid;
@@ -75,6 +76,7 @@ struct ValidationInfo {
 
   template <typename T, typename S>
   std::ostream& fail(S text, T curr, Function* func) {
+    __builtin_trap();
     valid.store(false);
     auto& stream = getStream(func);
     if (quiet) return stream;
@@ -483,6 +485,7 @@ void FunctionValidator::visitSetLocal(SetLocal *curr) {
 }
 
 void FunctionValidator::visitLoad(Load *curr) {
+  shouldBeTrue(!curr->isAtomic || info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -491,6 +494,7 @@ void FunctionValidator::visitLoad(Load *curr) {
 }
 
 void FunctionValidator::visitStore(Store *curr) {
+  shouldBeTrue(!curr->isAtomic || info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -500,6 +504,7 @@ void FunctionValidator::visitStore(Store *curr) {
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
+  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
@@ -508,6 +513,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
@@ -520,6 +526,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
+  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
@@ -529,6 +536,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 }
 
 void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
+  shouldBeTrue(info.features & Features::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
@@ -998,10 +1006,11 @@ static void validateModule(Module& module, ValidationInfo& info) {
 // TODO: If we want the validator to be part of libwasm rather than libpasses, then
 // Using PassRunner::getPassDebug causes a circular dependence. We should fix that,
 // perhaps by moving some of the pass infrastructure into libsupport.
-bool WasmValidator::validate(Module& module, Flags flags) {
+bool WasmValidator::validate(Module& module, FeatureSet features, Flags flags) {
   ValidationInfo info;
   info.validateWeb = flags & Web;
   info.validateGlobally = flags & Globally;
+  info.features = features;
   info.quiet = flags & Quiet;
   // parallel wasm logic validation
   PassRunner runner(&module);
