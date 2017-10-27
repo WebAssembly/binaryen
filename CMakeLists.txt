@@ -244,7 +244,7 @@ SET_PROPERTY(TARGET asm2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS asm2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm2asm_SOURCES
-  src/wasm2asm-main.cpp
+  src/tools/wasm2asm.cpp
 )
 ADD_EXECUTABLE(wasm2asm
                ${wasm2asm_SOURCES})

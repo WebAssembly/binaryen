@@ -35,7 +35,7 @@ Binaryen's internal IR is designed to be
 There are a few differences between Binaryen IR and the WebAssembly language:
 
  * Tree structure
-   * Binaryen IR [is an tree](https://github.com/WebAssembly/binaryen/issues/663), i.e., it has hierarchical structure, for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
+   * Binaryen IR [is a tree](https://github.com/WebAssembly/binaryen/issues/663), i.e., it has hierarchical structure, for convenience of optimization. This differs from the WebAssembly binary format which is a stack machine.
    * Consequently Binaryen's text format allows only s-expressions. WebAssembly's official text format is primarily a linear instruction list (with s-expression extensions). Binaryen can't read the linear style, but it can read a wasm text file if it contains only s-expressions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows block/if/loop to take it, allowing [local transforms that don't need to know the global context](https://github.com/WebAssembly/binaryen/issues/903).

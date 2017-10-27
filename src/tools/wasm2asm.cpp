@@ -57,21 +57,31 @@ int main(int argc, const char *argv[]) {
   auto input(
       read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
-  if (options.debug) std::cerr << "s-parsing..." << std::endl;
-  SExpressionParser parser(input.data());
-  Element &root = *parser.root;
-
-  if (options.debug) std::cerr << "w-parsing..." << std::endl;
+  Element* root;
   Module wasm;
-  SExpressionWasmBuilder builder(wasm, *root[0]);
+  Ref asmjs;
 
-  if (options.debug) std::cerr << "asming..." << std::endl;
-  Wasm2AsmBuilder wasm2asm(builderFlags);
-  Ref asmjs = wasm2asm.processWasm(&wasm);
+  try {
+    if (options.debug) std::cerr << "s-parsing..." << std::endl;
+    SExpressionParser parser(input.data());
+    root = parser.root;
 
-  if (options.extra["asserts"] == "1") {
-    if (options.debug) std::cerr << "asserting..." << std::endl;
-    flattenAppend(asmjs, wasm2asm.processAsserts(root, builder));
+    if (options.debug) std::cerr << "w-parsing..." << std::endl;
+    SExpressionWasmBuilder builder(wasm, *(*root)[0]);
+
+    if (options.debug) std::cerr << "asming..." << std::endl;
+    Wasm2AsmBuilder wasm2asm(builderFlags);
+    asmjs = wasm2asm.processWasm(&wasm);
+
+    if (options.extra["asserts"] == "1") {
+      if (options.debug) std::cerr << "asserting..." << std::endl;
+      flattenAppend(asmjs, wasm2asm.processAsserts(*root, builder));
+    }
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing input";
+  } catch (std::bad_alloc& b) {
+    Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
   }
 
   if (options.debug) {
