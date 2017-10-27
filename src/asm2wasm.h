@@ -379,7 +379,6 @@ public:
 
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
-    
   TrapMode trapMode;
   TrappingFunctionContainer trappingFunctions;
   PassOptions passOptions;
@@ -1286,6 +1285,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
 
   PassRunner passRunner(&wasm);
+  passRunner.setFeatures(passOptions.features);
   if (debug) {
     passRunner.setDebug(true);
     passRunner.setValidateGlobally(false);

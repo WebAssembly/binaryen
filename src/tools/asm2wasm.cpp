@@ -115,6 +115,9 @@ int main(int argc, const char *argv[]) {
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &argument) { emitBinary = false; })
+      .add("--enable-threads", "-a", "Enable the Atomics wasm feature",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &argument) { options.passOptions.features |= Feature::Atomics; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -176,6 +179,7 @@ int main(int argc, const char *argv[]) {
     wasm.memory.segments.emplace_back(init, data);
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
+      runner.setFeatures(options.features);
       runner.add("memory-packing");
       runner.run();
     }
@@ -202,7 +206,7 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (!WasmValidator().validate(wasm)) {
+  if (!WasmValidator().validate(wasm, options.passOptions.features)) {
     Fatal() << "error in validating output";
   }
 
