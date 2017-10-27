@@ -391,6 +391,9 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 // Run the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
+// Runs the specified passes on the module.
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+
 // Auto-generate drop() operations where needed. This lets you generate code without
 // worrying about where they are needed. (It is more efficient to do it yourself,
 // but simpler to use autodrop).

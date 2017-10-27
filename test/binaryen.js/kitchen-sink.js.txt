@@ -2902,6 +2902,11 @@ raw:
 )
 
   BinaryenModuleValidate(the_module);
+  {
+    const char* passes[] = { "precompute" };
+    BinaryenModuleRunPasses(the_module, passes, 1);
+  }
+  BinaryenModuleValidate(the_module);
   BinaryenModuleOptimize(the_module);
   BinaryenModuleValidate(the_module);
 optimized:

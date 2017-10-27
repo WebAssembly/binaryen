@@ -847,6 +847,13 @@
     this['optimize'] = function() {
       return Module['_BinaryenModuleOptimize'](module);
     };
+    this['runPasses'] = function(passes) {
+      return preserveStack(function() {
+        return Module['_BinaryenModuleRunPasses'](module, i32sToStack(
+          passes.map(strToStack)
+        ), passes.length);
+      });
+    }
     this['autoDrop'] = function() {
       return Module['_BinaryenModuleAutoDrop'](module);
     };

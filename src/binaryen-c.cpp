@@ -969,6 +969,27 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
+  if (tracing) {
+    std::cout << "  {\n";
+    std::cout << "    const char* passes[] = { ";
+    for (BinaryenIndex i = 0; i < numPasses; i++) {
+      if (i > 0) std::cout << ", ";
+      std::cout << "\"" << passes[i] << "\"";
+    }
+    std::cout << " };\n";
+    std::cout << "    BinaryenModuleRunPasses(the_module, passes, " << numPasses << ");\n";
+    std::cout << "  }\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  for (BinaryenIndex i = 0; i < numPasses; i++) {
+    passRunner.add(passes[i]);
+  }
+  passRunner.run();
+}
+
 void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenModuleAutoDrop(the_module);\n";
