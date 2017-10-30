@@ -66,7 +66,7 @@ public:
   }
 
   void pickPasses(OptimizationOptions& options) {
-    while (options.passes.size() < 20 && !oneIn(3)) {
+    while (options.passes.size() < 20 && !finishedInput && !oneIn(3)) {
       switch (upTo(32)) {
         case 0:
         case 1:
