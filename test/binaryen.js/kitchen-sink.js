@@ -416,6 +416,10 @@ function test_relooper() {
 
   assert(module.validate());
 
+  module.runPasses(["precompute"]);
+
+  assert(module.validate());
+
   module.optimize();
 
   assert(module.validate());
