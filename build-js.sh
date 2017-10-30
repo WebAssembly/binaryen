@@ -64,9 +64,9 @@ echo "building shared bitcode"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  src/ast/ExpressionAnalyzer.cpp \
-  src/ast/ExpressionManipulator.cpp \
-  src/ast/LocalGraph.cpp \
+  src/ir/ExpressionAnalyzer.cpp \
+  src/ir/ExpressionManipulator.cpp \
+  src/ir/LocalGraph.cpp \
   src/passes/pass.cpp \
   src/passes/CoalesceLocals.cpp \
   src/passes/CodeFolding.cpp \
@@ -74,7 +74,7 @@ echo "building shared bitcode"
   src/passes/DeadCodeElimination.cpp \
   src/passes/DuplicateFunctionElimination.cpp \
   src/passes/ExtractFunction.cpp \
-  src/passes/FlattenControlFlow.cpp \
+  src/passes/Flatten.cpp \
   src/passes/I64ToI32Lowering.cpp \
   src/passes/Inlining.cpp \
   src/passes/InstrumentLocals.cpp \
@@ -105,6 +105,7 @@ echo "building shared bitcode"
   src/passes/SafeHeap.cpp \
   src/passes/SSAify.cpp \
   src/passes/SimplifyLocals.cpp \
+  src/passes/TrapMode.cpp \
   src/passes/Untee.cpp \
   src/passes/Vacuum.cpp \
   src/emscripten-optimizer/parser.cpp \
