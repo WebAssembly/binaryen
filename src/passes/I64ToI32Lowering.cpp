@@ -27,6 +27,7 @@
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "ir/names.h"
 
 
 namespace wasm {
@@ -140,6 +141,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     func->localNames.clear();
     func->localIndices.clear();
     Index newIdx = 0;
+    Names::ensureNames(func);
     for (Index i = 0; i < oldFunc.getNumLocals(); ++i) {
       assert(oldFunc.hasLocalName(i));
       Name lowName = oldFunc.getLocalName(i);
