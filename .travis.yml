@@ -32,30 +32,30 @@ jobs:
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-    - <<: *test-ubuntu
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
+    #- <<: *test-ubuntu
+    #  env: |
+    #    CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+    #    CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+    #    COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    - <<: *test-ubuntu
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=address"
+    #- <<: *test-ubuntu
+    #  env: |
+    #    CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+    #    CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+    #    COMPILER_FLAGS="-fsanitize=address"
 
-    - <<: *test-ubuntu
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=thread"
+    #- <<: *test-ubuntu
+    #  env: |
+    #    CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+    #    CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+    #    COMPILER_FLAGS="-fsanitize=thread"
 
     # Build with gcc 5 and run tests on the host system (Ubuntu).
-    - <<: *test-ubuntu
-      compiler: gcc
-      env: |
-        CC_COMPILER="gcc-5"
-        CXX_COMPILER="g++-5"
+    #- <<: *test-ubuntu
+    #  compiler: gcc
+    #  env: |
+    #    CC_COMPILER="gcc-5"
+    #    CXX_COMPILER="g++-5"
 
     # Also build wasm.js and binaryen.js using the emsdk
     - <<: *test-ubuntu
@@ -69,30 +69,30 @@ jobs:
       before_install:
       - docker pull ubuntu:16.04
       script:
-      - docker build
+      - docker build .
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
-    - &test-alpine
-      stage: test
-      sudo: true
-      language: minimal
-      compiler: gcc
-      env: ARCH=x86_64
-      before_install:
-        - &download-alpine-script
-          "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
-              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
-        - &define-alpine-func
-          alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
-      install:
-        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
-      before_script:
-        - alpine ./check.py --test-waterfall --only-prepare
-      script:
-        - alpine cmake .
-        - alpine make -j2
-        - alpine ./check.py --test-waterfall
+    #- &test-alpine
+    #  stage: test
+    #  sudo: true
+    #  language: minimal
+    #  compiler: gcc
+    #  env: ARCH=x86_64
+    #  before_install:
+    #    - &download-alpine-script
+    #      "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
+    #          && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
+    #    - &define-alpine-func
+    #      alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+    #  install:
+    #    - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+    #  before_script:
+    #    - alpine ./check.py --test-waterfall --only-prepare
+    #  script:
+    #    - alpine cmake .
+    #    - alpine make -j2
+    #    - alpine ./check.py --test-waterfall
 
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
