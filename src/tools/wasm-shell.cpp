@@ -143,6 +143,9 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       if (!invalid) {
         // maybe parsed ok, but otherwise incorrect
         invalid = !WasmValidator().validate(wasm);
+        if (invalid) {
+          WasmPrinter::printModule(&wasm);
+        }
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
@@ -287,7 +290,11 @@ int main(int argc, const char* argv[]) {
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
-        assert(WasmValidator().validate(*modules[moduleName]));
+        bool valid = WasmValidator().validate(*modules[moduleName]);
+        if (!valid) {
+          WasmPrinter::printModule(modules[moduleName].get());
+        }
+        assert(valid);
         run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root, builders[moduleName].get(), entry);
       } else {
         run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);

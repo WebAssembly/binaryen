@@ -207,6 +207,7 @@ int main(int argc, const char *argv[]) {
   }
 
   if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+    WasmPrinter::printModule(&wasm);
     Fatal() << "error in validating output";
   }
 

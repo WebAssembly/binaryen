@@ -627,6 +627,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (!WasmValidator().validate(output)) {
+    WasmPrinter::printModule(&output);
     Fatal() << "error in validating output";
   }
 
