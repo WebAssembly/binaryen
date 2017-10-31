@@ -21,10 +21,10 @@ RUN cd /root/ \
  && popd \
  && echo EMSCRIPTEN_ROOT="'/root/emscripten/'" >> .emscripten
 
-RUN echo `pwd`
- && EMSCRIPTEN=/root/emscripten ./build-js.sh
- && ./check.py --test-waterfall --only-prepare
- && cmake .
- && make -j2
+RUN echo `pwd` \
+ && EMSCRIPTEN=/root/emscripten ./build-js.sh \
+ && ./check.py --test-waterfall --only-prepare \
+ && cmake . \
+ && make -j2 \
  && ./check.py --test-waterfall
 
