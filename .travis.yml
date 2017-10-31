@@ -57,6 +57,20 @@ jobs:
         CC_COMPILER="gcc-5"
         CXX_COMPILER="g++-5"
 
+    # Also build wasm.js and binaryen.js using the emsdk
+    - <<: *test-ubuntu
+      sudo: required
+      compiler: gcc
+      env: |
+        CC_COMPILER="gcc-5"
+        CXX_COMPILER="g++-5"
+      services:
+      - docker
+      before_install:
+      - docker pull ubuntu:16.04
+      script:
+      - docker build
+
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
     - &test-alpine
