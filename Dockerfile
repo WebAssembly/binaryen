@@ -19,6 +19,7 @@ RUN echo "Starting Docker, in" `pwd` \
  && ./emsdk activate latest \
  && popd \
  && echo EMSCRIPTEN_ROOT="'/root/emscripten/'" >> .emscripten \
+ && cd .. \
  && echo "Starting to build, in" `pwd` \
  && EMSCRIPTEN=/root/emscripten ./build-js.sh \
  && cmake . \
