@@ -6,7 +6,10 @@ RUN mkdir -p /root/emscripten/
 COPY . /root/emscripten/
 
 RUN echo "Starting Docker, in" `pwd` \
+ && ls -al \
+ && echo "now in root" \
  && cd /root/ \
+ && ls -al \
  && apt-get update \
  && apt-get install -y python python-pip cmake build-essential openjdk-9-jre-headless \
  && pip install --upgrade pip \
@@ -17,9 +20,13 @@ RUN echo "Starting Docker, in" `pwd` \
  && ./emsdk update \
  && ./emsdk install latest \
  && ./emsdk activate latest \
+ && ls -al \
  && popd \
+ && echo "popd" \
+ && ls -al \
  && echo EMSCRIPTEN_ROOT="'/root/emscripten/'" >> .emscripten \
  && cd .. \
+ && ls -al \
  && echo "Starting to build, in" `pwd` \
  && EMSCRIPTEN=/root/emscripten ./build-js.sh \
  && cmake . \
