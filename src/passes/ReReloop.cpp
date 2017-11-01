@@ -316,7 +316,7 @@ struct ReReloop final : public Pass {
     // add a return as needed
     for (auto* cfgBlock : relooper.Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
-      if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
+      if (cfgBlock->BranchesOut.empty() && block->type == none) {
         block->list.push_back(
           function->result == none ? (Expression*)builder->makeReturn()
                                    : (Expression*)builder->makeUnreachable()

@@ -803,3 +803,13 @@
   )
  )
 )
+(module
+ (type $0 (func (result i32)))
+ (memory $0 0)
+ (func $2 (; 0 ;) (type $0) (result i32)
+  (local $0 i32)
+  (block (result i32)
+   (i32.const 656877351)
+  )
+ )
+)
