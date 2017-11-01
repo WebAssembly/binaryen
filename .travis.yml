@@ -14,7 +14,7 @@ before_install:
   - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-tag-1.37.22-64bit bash
 
 script:
-  - docker exec -it emscripten sh ./build-js.sh
+  - docker exec -it emscripten bash ./build-js.sh
 
 notifications:
   email: false
