@@ -143,9 +143,6 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       if (!invalid) {
         // maybe parsed ok, but otherwise incorrect
         invalid = !WasmValidator().validate(wasm);
-        if (invalid) {
-          WasmPrinter::printModule(&wasm);
-        }
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
