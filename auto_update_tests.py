@@ -16,7 +16,7 @@ for asm in sorted(os.listdir('test')):
   if asm.endswith('.asm.js'):
     for precise in [0, 1, 2]:
       for opts in [1, 0]:
-        cmd = ASM2WASM + [os.path.join('test', asm)]
+        cmd = ASM2WASM + [os.path.join('test', asm), '--enable-threads']
         wasm = asm.replace('.asm.js', '.fromasm')
         if not precise:
           cmd += ['--trap-mode=allow', '--ignore-implicit-traps']

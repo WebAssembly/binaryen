@@ -14,45 +14,49 @@ function asmFunc(global, env, buffer) {
  var Math_clz32 = global.Math.clz32;
  function main($$0) {
   $$0 = $$0 | 0;
+  var $$1 = 0, wasm2asm_i32$0 = 0;
   return $$0 | 0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var wasm2asm_i32$0 = 0;
-  if ((x | 0) == (0 | 0)) wasm2asm_i32$0 = 32; else wasm2asm_i32$0 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return wasm2asm_i32$0 | 0;
+  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0;
+  if ((x | 0) == (0 | 0)) $$9 = 32; else $$9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $$9 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, wasm2asm_i32$0 = 0;
+  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0;
   count = 0;
   b : {
    l : do {
-    if ((x | 0) == (0 | 0)) {
-     wasm2asm_i32$0 = count;
-     break b;
-    }
+    $$5 = count;
+    if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
     continue l;
     break l;
    } while (1);
   };
-  return wasm2asm_i32$0 | 0;
+  return $$5 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
   return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
+  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
   return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  return wasm2asm_i32$0 | 0;
  }
  
  return {
