@@ -1,48 +1,20 @@
-sudo: false
-dist: trusty
-language: cpp
+notifications:
+  email: false
 
-jobs:
-  include:
-    # Build with clang and run tests on the host system (Ubuntu).
-    - &test-ubuntu
-      stage: test
-      compiler: clang
-      python: 2.7
-      node_js: 7
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['cmake', 'g++-5']
-      before_install:
-        - export CC="${CC_COMPILER}"
-        - export CXX="${CXX_COMPILER}"
-        - export ASAN_OPTIONS="symbolize=1"
-      install:
-        - pip install --user flake8==3.4.1
-      before_script:
-        # Check the style of a subset of Python code until the other code is updated.
-        - flake8 ./scripts/
-        - ./check.py --test-waterfall --only-prepare
-      script:
-        - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-        - make -j2
-        - ./check.py --test-waterfall
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+language: node_js
+node_js:
+  - node
 
-    # Also build wasm.js and binaryen.js using emscripten
-    - &test-ubuntu-emcc
-      stage: test
-      sudo: required
-      language: node_js
-      services:
-      - docker
-      before_install:
-      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-32bit bash
-      script:
-      - docker exec -it emscripten ./build-js.sh
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+
+script:
+  - docker exec -it emscripten ./build-js.sh
 
 notifications:
   email: false
