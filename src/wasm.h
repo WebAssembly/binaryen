@@ -621,11 +621,7 @@ public:
   Index getLocalIndex(Name name);
   Index getVarIndexBase();
   WasmType getLocalType(Index index);
-FAIL
-THE;
-COMPILE!
-(*!@^&$*!(&@
-/*
+
   Name getLocalNameOrDefault(Index index);
   Name getLocalNameOrGeneric(Index index);
 
