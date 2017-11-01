@@ -42,9 +42,9 @@ jobs:
       services:
       - docker
       before_install:
-      - docker pull ubuntu:16.04
+      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
       script:
-      - docker build .
+      - docker exec -it emscripten ./build-js.sh
 
 notifications:
   email: false
