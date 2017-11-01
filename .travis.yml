@@ -56,8 +56,9 @@ jobs:
       env: |
         CC_COMPILER="gcc-5"
         CXX_COMPILER="g++-5"
+
     # Build the .js outputs using emcc
-    - &test-ubuntu-emcc
+    - &test-emcc
       stage: test
       compiler: clang
       python: 2.7
