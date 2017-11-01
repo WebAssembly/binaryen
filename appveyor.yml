@@ -1,0 +1,35 @@
+---
+
+init:
+  - set PATH=C:\Python27\Scripts;%PATH%             # while python's bin is already in PATH, but pip.exe in Scripts\ dir isn't
+  - set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%
+
+environment:
+  DEGREE_OF_PARALLELISM: 3
+  matrix:
+  - GENERATOR: MSYS Makefiles
+    CONFIG: Release
+    PARALLEL_FLAG: -j
+  - GENERATOR: Visual Studio 14 2015
+    CONFIG: Release
+    PARALLEL_FLAG: "/m:"
+  - GENERATOR: Visual Studio 14 2015 Win64
+    CONFIG: Debug
+    PARALLEL_FLAG: "/m:"
+  - GENERATOR: Visual Studio 14 2015 Win64
+    CONFIG: Release
+    PARALLEL_FLAG: "/m:"
+
+install:
+  - pip install flake8==3.4.1
+
+before_build:
+  # Check the style of a subset of Python code until the other code is updated.
+  - flake8 ./scripts/
+
+build_script:
+  - cmake .  -DCMAKE_BUILD_TYPE=%CONFIG% -G "%GENERATOR%"
+  - cmake --build . --config %CONFIG% -- %PARALLEL_FLAG%%DEGREE_OF_PARALLELISM%
+
+test_script:
+  - ctest --output-on-failure --timeout 10 -j 5
