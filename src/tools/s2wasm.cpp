@@ -194,8 +194,10 @@ int main(int argc, const char *argv[]) {
 
   if (options.extra["validate"] != "none") {
     if (options.debug) std::cerr << "Validating..." << std::endl;
-    if (!wasm::WasmValidator().validate(linker.getOutput().wasm,
+    Module* output = &linker.getOutput().wasm;
+    if (!wasm::WasmValidator().validate(*output,
          WasmValidator::Globally | (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
+      WasmPrinter::printModule(output);
       Fatal() << "Error: linked module is not valid.\n";
     }
   }

@@ -287,7 +287,11 @@ int main(int argc, const char* argv[]) {
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
-        assert(WasmValidator().validate(*modules[moduleName]));
+        bool valid = WasmValidator().validate(*modules[moduleName]);
+        if (!valid) {
+          WasmPrinter::printModule(modules[moduleName].get());
+        }
+        assert(valid);
         run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root, builders[moduleName].get(), entry);
       } else {
         run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
