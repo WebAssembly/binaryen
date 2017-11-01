@@ -1,20 +1,162 @@
-notifications:
-  email: false
+sudo: false
+dist: trusty
+language: cpp
 
-language: node_js
-node_js:
-  - node
+jobs:
+  include:
+    # Build with clang and run tests on the host system (Ubuntu).
+    - &test-ubuntu
+      stage: test
+      compiler: clang
+      python: 2.7
+      node_js: 7
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['cmake', 'g++-5']
+      before_install:
+        - export CC="${CC_COMPILER}"
+        - export CXX="${CXX_COMPILER}"
+        - export ASAN_OPTIONS="symbolize=1"
+      install:
+        - pip install --user flake8==3.4.1
+      before_script:
+        # Check the style of a subset of Python code until the other code is updated.
+        - flake8 ./scripts/
+        - ./check.py --test-waterfall --only-prepare
+      script:
+        - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        - make -j2
+        - ./check.py --test-waterfall
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-sudo: required
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-services:
-  - docker
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=address"
 
-before_install:
-  - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-tag-1.37.22-64bit bash
+    - <<: *test-ubuntu
+      env: |
+        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+        COMPILER_FLAGS="-fsanitize=thread"
 
-script:
-  - docker exec -it emscripten bash ./build-js.sh
+    # Build with gcc 5 and run tests on the host system (Ubuntu).
+    - <<: *test-ubuntu
+      compiler: gcc
+      env: |
+        CC_COMPILER="gcc-5"
+        CXX_COMPILER="g++-5"
+    # Build the .js outputs using emcc
+    - &test-ubuntu-emcc
+      stage: test
+      compiler: clang
+      python: 2.7
+      node_js: 7
+      language: node_js
+      node_js:
+      - node
+      sudo: required
+      services:
+      - docker
+      before_install:
+      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+      script:
+      - docker exec -it emscripten bash ./build-js.sh -g
+
+    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+    # Note: Alpine uses musl libc.
+    - &test-alpine
+      stage: test
+      sudo: true
+      language: minimal
+      compiler: gcc
+      env: ARCH=x86_64
+      before_install:
+        - &download-alpine-script
+          "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
+              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
+        - &define-alpine-func
+          alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+      install:
+        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+      before_script:
+        - alpine ./check.py --test-waterfall --only-prepare
+      script:
+        - alpine cmake .
+        - alpine make -j2
+        - alpine ./check.py --test-waterfall
+
+
+    # Build statically linked release binaries with gcc 6.3 on Alpine Linux
+    # (inside chroot). If building a tagged commit, then deploy release tarball
+    # to GitHub Releases.
+    - &build-alpine
+      <<: *test-alpine
+      stage: build
+      env: ARCH=x86_64
+      before_install:
+        # XXX: This is ugly hack to skip this job (and all derived) for pull
+        # requests, run it only on master branch and tags (to cut down build
+        # time). Replace it after Travis finally implement proper support for
+        # conditional jobs or stages.
+        - if [[ "$TRAVIS_PULL_REQUEST" != "false" || ( "$TRAVIS_BRANCH" != "master" && -z "$TRAVIS_TAG" ) ]]; then
+              travis_terminate 0;
+          fi
+        - *download-alpine-script
+        - *define-alpine-func
+      # Don't run before_script inherited from *test-alpine.
+      before_script: skip
+      script:
+        - alpine cmake -DCMAKE_BUILD_TYPE=Release
+                       -DCMAKE_VERBOSE_MAKEFILE=ON
+                       -DCMAKE_CXX_FLAGS="-static -no-pie"
+                       -DCMAKE_C_FLAGS="-static -no-pie" .
+        - alpine make -j2
+        - alpine find bin/ -type f -perm -u=x -exec strip {} +
+        - alpine ls -lh bin/
+        # Check if the built executables are really statically linked.
+        - if [ -n "$(find bin/ -type f -perm -u=x -exec file {} + | grep -Fvw 'statically linked')" ]; then
+              file bin/*; false;
+          fi
+      before_deploy:
+        - PKGNAME="binaryen-$TRAVIS_TAG-$ARCH-linux"
+        - mv bin binaryen-$TRAVIS_TAG
+        - tar -czf $PKGNAME.tar.gz binaryen-$TRAVIS_TAG
+        - sha256sum $PKGNAME.tar.gz > $PKGNAME.tar.gz.sha256
+      deploy:
+        provider: releases
+        api_key:
+          secure: "cu6CD5BaycXdCylvcs+Fho5+OVTkh9mZwH8RTnNpXo9hAQzLJDFgcNBHeXHEHtcp4IWf/YZSMu48UKnpU9sP5iF0AS4rtuEBJk5gOKkgB8GWnuIOePFkfANAZMN+EncuUwhAdN56iOAESXqnlHYgmJjyRVCHOxiezuWTOYui4lxoIAdxvOMJc3E9yfzUq4Epm2GDszSDN7ObmRIJpVgDXD9Sze1Xv4IkbIwc0biCmduGGLp3ow2KM+RZ4tOF0c8P0ki49vOFHr6n2Vmqg0QCiVNd4JJBRBCGn6Tzip2jsTQewnUUvpYCZafLeRV//v//voNA6ZUz91yXR23GIhkfdlyuqnz3/7l335Sa749M1lpYfSRWvwg9mJEqP66mxqTrWzj1xSItr9T+p0WhSmRN/4UEJPuItYPSma6kfv+H7qhLa3ZYKECH8hHW79grYmUWtiX0vQVIgnctJGgboPNLfG/1mNtmCI241wK0S3zvL2okdZH8/PqxfllYHMBTUp9lUrop8eoLKPgHZPm6+V20dgTUgOuGTZzTWwQ7Uk/Pg8JMUgkre5y0eo6pP3z0vDW1NNFNhouJ5oGkAeK/HAznr8Q0zWWF1vGFhoyC8ok/IJ7yKxK9scJVPBDe4oox6tr1zlsxzNEYE0/mY3JjuWV0z8RgjrIAbRe8IpGTkYz5VOM="
+        file: binaryen-$TRAVIS_TAG-*.tar.gz*
+        file_glob: true
+        skip_cleanup: true
+        on:
+          tags: true
+
+    # Build binaries for other architectures using QEMU user-mode emulation.
+    # Note: We don't run tests for these architectures, because some fail under
+    # QEMU/binfmt and it takes too long time (hits time limit on Travis).
+    - <<: *build-alpine
+      env: ARCH=x86
+
+    - <<: *build-alpine
+      env: ARCH=aarch64
+
+    - <<: *build-alpine
+      env: ARCH=armhf
+
+    - <<: *build-alpine
+      env: ARCH=ppc64le
 
 notifications:
   email: false
