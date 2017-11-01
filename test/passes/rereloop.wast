@@ -218,9 +218,4 @@
   (return (get_global $global$0))
  )
 )
-(module
- (func $2(result i32)
-  (i32.const 656877351)
- )
-)
 

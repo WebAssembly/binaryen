@@ -713,20 +713,31 @@
  (func $switcher-to-nowhere (; 13 ;) (type $2) (param $0 i32) (result i32)
   (local $1 i32)
   (block
-  )
-  (block $switch$1$leave
-   (block $switch$1$default
-    (block $switch$1$case$3
-     (block $switch$1$case$4
-      (br_table $switch$1$case$4 $switch$1$case$3 $switch$1$default
-       (get_local $0)
+   (block
+   )
+   (block $switch$1$leave
+    (block $switch$1$default
+     (block $switch$1$case$3
+      (block $switch$1$case$4
+       (br_table $switch$1$case$4 $switch$1$case$3 $switch$1$default
+        (get_local $0)
+       )
+      )
+      (block
+       (block
+        (block
+         (return
+          (i32.const 1)
+         )
+        )
+       )
       )
      )
      (block
       (block
        (block
         (return
-         (i32.const 1)
+         (i32.const 2)
         )
        )
       )
@@ -736,22 +747,14 @@
      (block
       (block
        (return
-        (i32.const 2)
+        (i32.const 3)
        )
       )
      )
     )
    )
-   (block
-    (block
-     (block
-      (return
-       (i32.const 3)
-      )
-     )
-    )
-   )
   )
+  (unreachable)
  )
 )
 (module
@@ -800,16 +803,6 @@
    (return
     (get_global $global$0)
    )
-  )
- )
-)
-(module
- (type $0 (func (result i32)))
- (memory $0 0)
- (func $2 (; 0 ;) (type $0) (result i32)
-  (local $0 i32)
-  (block (result i32)
-   (i32.const 656877351)
   )
  )
 )
