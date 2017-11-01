@@ -129,6 +129,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (!WasmValidator().validate(wasm, features)) {
+      WasmPrinter::printModule(&wasm);
       Fatal() << "error in validating input";
     }
   } else {
@@ -136,6 +137,7 @@ int main(int argc, const char* argv[]) {
     TranslateToFuzzReader reader(wasm);
     reader.read(options.extra["infile"]);
     if (!WasmValidator().validate(wasm, features)) {
+      WasmPrinter::printModule(&wasm);
       std::cerr << "translate-to-fuzz must always generate a valid module";
       abort();
     }
@@ -176,7 +178,11 @@ int main(int argc, const char* argv[]) {
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
     options.runPasses(wasm);
-    assert(WasmValidator().validate(wasm, features));
+    bool valid = WasmValidator().validate(wasm, features);
+    if (!valid) {
+      WasmPrinter::printModule(&wasm);
+    }
+    assert(valid);
   }
 
   if (fuzzExec) {
@@ -192,7 +198,11 @@ int main(int argc, const char* argv[]) {
       auto input = buffer.getAsChars();
       WasmBinaryBuilder parser(second, input, false);
       parser.read();
-      assert(WasmValidator().validate(second, features));
+      bool valid = WasmValidator().validate(second, features);
+      if (!valid) {
+        WasmPrinter::printModule(&second);
+      }
+      assert(valid);
     }
     results.check(*compare);
   }

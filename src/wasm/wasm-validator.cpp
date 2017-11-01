@@ -1036,8 +1036,6 @@ bool WasmValidator::validate(Module& module, FeatureSet features, Flags flags) {
       std::cerr << info.getStream(func.get()).str();
     }
     std::cerr << info.getStream(nullptr).str();
-    // also print the module
-    WasmPrinter::printModule(&module, std::cerr);
   }
   return info.valid.load();
 }
