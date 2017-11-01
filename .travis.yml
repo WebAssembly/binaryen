@@ -32,13 +32,11 @@ jobs:
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
 
-    # Also build wasm.js and binaryen.js using the emsdk
-    - <<: *test-ubuntu
+    # Also build wasm.js and binaryen.js using emscripten
+    - &test-ubuntu-emcc
+      stage: test
       sudo: required
-      compiler: gcc
-      env: |
-        CC_COMPILER="gcc-5"
-        CXX_COMPILER="g++-5"
+      language: node_js
       services:
       - docker
       before_install:
