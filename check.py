@@ -321,16 +321,30 @@ def run_spec_tests():
         check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
 def run_binaryen_js_tests():
+  if not MOZJS and not NODEJS:
+    return
+
   print '\n[ checking binaryen.js testcases... ]\n'
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
-    f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
-    f.write(open(os.path.join(options.binaryen_test, 'binaryen.js', s)).read())
+    f.write(open(os.path.join(options.binaryen_bin, 'binaryen.clean.js')).read())
+    # node test support
+    f.write('\nif (typeof require === "function") var Binaryen = module.exports;\n')
+    test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
+    test = open(test_path).read()
+    need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
+    if MOZJS:
+      cmd = [MOZJS]
+    elif NODEJS and not need_wasm: # TODO: check if node is new and has wasm support
+      cmd = [NODEJS]
+    else:
+      continue # we can't run it
+    cmd += ['a.js']
+    f.write(test)
     f.close()
-    cmd = [MOZJS, 'a.js']
     out = run_command(cmd, stderr=subprocess.STDOUT)
     expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
     if expected not in out:
@@ -550,8 +564,7 @@ if has_shell_timeout():
   run_wasm_reduce_tests()
 
 run_spec_tests()
-if MOZJS:
-  run_binaryen_js_tests()
+run_binaryen_js_tests()
 s2wasm.test_s2wasm()
 s2wasm.test_linker()
 wasm2asm.test_wasm2asm()
