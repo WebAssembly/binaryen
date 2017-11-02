@@ -68,6 +68,7 @@ public:
   double  getf64() const { assert(type == WasmType::f64); return bit_cast<double>(i64); }
 
   int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
+  int64_t* geti64Ptr() { assert(type == WasmType::i64); return &i64; } // careful!
 
   int32_t reinterpreti32() const { assert(type == WasmType::f32); return i32; }
   int64_t reinterpreti64() const { assert(type == WasmType::f64); return i64; }

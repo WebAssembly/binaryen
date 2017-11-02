@@ -156,6 +156,13 @@ struct BinaryenLiteral BinaryenLiteralFloat64(double x);
 struct BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x);
 struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 
+BinaryenType BinaryenLiteralGetType(BinaryenLiteral lit);
+int32_t BinaryenLiteralGetI32(BinaryenLiteral lit);
+int64_t BinaryenLiteralGetI64(BinaryenLiteral lit);
+int64_t* BinaryenLiteralGetI64Ptr(BinaryenLiteral lit);
+float BinaryenLiteralGetF32(BinaryenLiteral lit);
+double BinaryenLiteralGetF64(BinaryenLiteral lit);
+
 // Expressions
 //
 // Some expressions have a BinaryenOp, which is the more
@@ -356,7 +363,7 @@ BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
-BinaryenIndex BinaryenExpressionGetId(BinaryenExpressionRef expr);
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 
 // Functions
@@ -389,13 +396,15 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Globals
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
-BinaryenType BinaryenGlobalGetType(BinaryenImportRef global);
-void BinaryenGlobalSetType(BinaryenImportRef global, BinaryenType type);
-int BinaryenGlobalGetMutable(BinaryenImportRef global);
-void BinaryenGlobalSetMutable(BinaryenImportRef global, int mutable_);
-BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenImportRef global);
-void BinaryenGlobalSetInit(BinaryenImportRef global, BinaryenExpressionRef expr);
+typedef void* BinaryenGlobalRef;
+
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global);
+void BinaryenGlobalSetType(BinaryenGlobalRef global, BinaryenType type);
+int BinaryenGlobalGetMutable(BinaryenGlobalRef global);
+void BinaryenGlobalSetMutable(BinaryenGlobalRef global, int mutable_);
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenGlobalRef global);
+void BinaryenGlobalSetInit(BinaryenGlobalRef global, BinaryenExpressionRef expr);
 
 // Function table. One per module
 

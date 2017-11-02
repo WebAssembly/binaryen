@@ -82,7 +82,7 @@ void traceNameOrNULL(const char *name) {
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
-std::map<BinaryenImportRef, size_t> globals;
+std::map<BinaryenGlobalRef, size_t> globals;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
 size_t noteExpression(BinaryenExpressionRef expression) {
@@ -92,7 +92,7 @@ size_t noteExpression(BinaryenExpressionRef expression) {
   return id;
 }
 
-size_t noteGlobal(BinaryenImportRef global) {
+size_t noteGlobal(BinaryenGlobalRef global) {
   auto id = globals.size();
   assert(globals.find(global) == globals.end());
   globals[global] = id;
@@ -217,6 +217,35 @@ BinaryenLiteral BinaryenLiteralFloat32(float x) { return toBinaryenLiteral(Liter
 BinaryenLiteral BinaryenLiteralFloat64(double x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) { return toBinaryenLiteral(Literal(x).castToF32()); }
 BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) { return toBinaryenLiteral(Literal(x).castToF64()); }
+
+// TODO: the following functions do not print tracing information
+// because there is no literals map, like for expressions. should
+// there be one or might it be better to do something else?
+
+BinaryenType BinaryenLiteralGetType(BinaryenLiteral lit) {
+  return fromBinaryenLiteral(lit).type;
+}
+
+int32_t BinaryenLiteralGetI32(BinaryenLiteral lit) {
+  return fromBinaryenLiteral(lit).geti32();
+}
+
+int64_t BinaryenLiteralGetI64(BinaryenLiteral lit) {
+  return fromBinaryenLiteral(lit).geti64();
+}
+
+int64_t* BinaryenLiteralGetI64Ptr(BinaryenLiteral lit) {
+  // alternative for use in wasm32 (i.e. binaryen.js)
+  return fromBinaryenLiteral(lit).geti64Ptr();
+}
+
+float BinaryenLiteralGetF32(BinaryenLiteral lit) {
+  return fromBinaryenLiteral(lit).getf32();
+}
+
+double BinaryenLiteralGetF64(BinaryenLiteral lit) {
+  return fromBinaryenLiteral(lit).getf64();
+}
 
 // Expressions
 
@@ -801,7 +830,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   return ret;
 }
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
   auto* wasm = (Module*)module;
   auto* ret = new Global();
   ret->name = name;
@@ -818,49 +847,49 @@ BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   return ret;
 }
 
-BinaryenType BinaryenGlobalGetType(BinaryenImportRef global) {
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalGetType(globals[" << global << "]);";
+    std::cout << "  BinaryenGlobalGetType(globals[" << globals[global] << "]);";
   }
 
   return ((Global*)global)->type;
 }
 
-void BinaryenGlobalSetType(BinaryenImportRef global, BinaryenType type) {
+void BinaryenGlobalSetType(BinaryenGlobalRef global, BinaryenType type) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalSetType(globals[" << global << "], types[" << type << "]);";
+    std::cout << "  BinaryenGlobalSetType(globals[" << globals[global] << "], types[" << type << "]);";
   }
 
   ((Global*)global)->type = WasmType(type);
 }
 
-int BinaryenGlobalGetMutable(BinaryenImportRef global) {
+int BinaryenGlobalGetMutable(BinaryenGlobalRef global) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalGetMutable(globals[" << global << "]);";
+    std::cout << "  BinaryenGlobalGetMutable(globals[" << globals[global] << "]);";
   }
 
   return ((Global*)global)->mutable_ ? 1 : 0;
 }
 
-void BinaryenGlobalSetMutable(BinaryenImportRef global, int mutable_) {
+void BinaryenGlobalSetMutable(BinaryenGlobalRef global, int mutable_) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalSetMutable(globals[" << global << "], " << mutable_ << ");";
+    std::cout << "  BinaryenGlobalSetMutable(globals[" << globals[global] << "], " << mutable_ << ");";
   }
 
   ((Global*)global)->mutable_ = mutable_ ? true : false;
 }
 
-BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenImportRef global) {
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenGlobalRef global) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalGetInit(globals[" << global << "]);";
+    std::cout << "  BinaryenGlobalGetInit(globals[" << globals[global] << "]);";
   }
 
   return ((Global*)global)->init;
 }
 
-void BinaryenGlobalSetInit(BinaryenImportRef global, BinaryenExpressionRef expr) {
+void BinaryenGlobalSetInit(BinaryenGlobalRef global, BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenGlobalSetInit(globals[" << global << "], expressions[" << expr << "]);";
+    std::cout << "  BinaryenGlobalSetInit(globals[" << globals[global] << "], expressions[" << expr << "]);";
   }
 
   ((Global*)global)->init = (Expression*)expr;
@@ -1252,7 +1281,7 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
-                 "  std::map<size_t, BinaryenImportRef> globals;\n"
+                 "  std::map<size_t, BinaryenGlobalRef> globals;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
                  "  RelooperRef the_relooper = NULL;\n";
