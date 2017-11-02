@@ -119,6 +119,15 @@ Name I32_CTTZ("i32_cttz"),
      ATOMICS_AND("and"),
      ATOMICS_OR("or"),
      ATOMICS_XOR("xor"),
+     I64_ATOMICS_LOAD("i64_atomics_load"),
+     I64_ATOMICS_STORE("i64_atomics_store"),
+     I64_ATOMICS_AND("i64_atomics_and"),
+     I64_ATOMICS_OR("i64_atomics_or"),
+     I64_ATOMICS_XOR("i64_atomics_xor"),
+     I64_ATOMICS_ADD("i64_atomics_add"),
+     I64_ATOMICS_SUB("i64_atomics_sub"),
+     I64_ATOMICS_EXCHANGE("i64_atomics_exchange"),
+     I64_ATOMICS_COMPAREEXCHANGE("i64_atomics_compareExchange"),
      EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
@@ -1994,6 +2003,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
                 if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
                 if (name == I64_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt64, value);
+                if (name == I64_ATOMICS_LOAD) return builder.makeAtomicLoad(8, 0, value, i64);
               } else if (num == 2) { // 2 params,binary
                 if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
                 auto* left = process(ast[2][0]);
@@ -2035,6 +2045,40 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
                 if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
                 if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
+                // atomics
+                if (name == I64_ATOMICS_STORE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicStore(8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_ADD) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Add, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_SUB) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Sub, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_AND) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::And, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_OR) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Or, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_XOR) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Xor, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_EXCHANGE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Xchg, 8, 0, left, right, i64);
+                }
+              } else if (num == 3) {
+                if (name == I64_ATOMICS_COMPAREEXCHANGE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicCmpxchg(8, 0, process(ast[2][0]), process(ast[2][1]), process(ast[2][2]), i64);
+                }
               }
               break;
             }
