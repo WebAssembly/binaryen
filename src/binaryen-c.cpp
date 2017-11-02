@@ -696,6 +696,14 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   return static_cast<Expression*>(ret);
 }
 
+BinaryenIndex BinaryenGetExpressionId(BinaryenExpressionRef expr) {
+  return ((Expression*)expr)->_id;
+}
+
+BinaryenType BinaryenGetExpressionType(BinaryenExpressionRef expr) {
+  return ((Expression*)expr)->type;
+}
+
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrint(expressions[" << expressions[expr] << "]);\n";
@@ -759,6 +767,10 @@ BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   ret->init = (Expression*)init;
   wasm->addGlobal(ret);
   return ret;
+}
+
+BinaryenExpressionRef BinaryenGetGlobalInit(BinaryenImportRef global) {
+  return ((Global*)global)->init;
 }
 
 // Imports

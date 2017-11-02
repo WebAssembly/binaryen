@@ -322,6 +322,11 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
 
+// Get the internal id of an expression.
+BinaryenIndex BinaryenGetExpressionId(BinaryenExpressionRef expr);
+// Get the type of an expression.
+BinaryenType BinaryenGetExpressionType(BinaryenExpressionRef expr);
+
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 
@@ -356,6 +361,8 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 // Globals
 
 BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+// Gets the initilizer expression of a global.
+BinaryenExpressionRef BinaryenGetGlobalInit(BinaryenImportRef global);
 
 // Function table. One per module
 
