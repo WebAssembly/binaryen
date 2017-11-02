@@ -72,7 +72,7 @@ jobs:
       before_install:
       - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
       script:
-      - docker exec -it emscripten bash ./build-js.sh -g
+      - docker exec -it emscripten bash ./build-js.sh -g && python -c "import check ; check.run_binaryen_js_tests()"
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.

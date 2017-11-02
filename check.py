@@ -551,42 +551,46 @@ def run_emscripten_tests():
           assert proc.returncode != 0, err
           assert 'hello, world!' not in out, out
 
-
 # Run all the tests
-run_help_tests()
-run_wasm_opt_tests()
-asm2wasm.test_asm2wasm()
-asm2wasm.test_asm2wasm_binary()
-run_wasm_dis_tests()
-run_wasm_merge_tests()
-run_ctor_eval_tests()
-if has_shell_timeout():
-  run_wasm_reduce_tests()
+def main():
+  run_help_tests()
+  run_wasm_opt_tests()
+  asm2wasm.test_asm2wasm()
+  asm2wasm.test_asm2wasm_binary()
+  run_wasm_dis_tests()
+  run_wasm_merge_tests()
+  run_ctor_eval_tests()
+  if has_shell_timeout():
+    run_wasm_reduce_tests()
 
-run_spec_tests()
-run_binaryen_js_tests()
-s2wasm.test_s2wasm()
-s2wasm.test_linker()
-wasm2asm.test_wasm2asm()
-run_validator_tests()
-if options.torture and options.test_waterfall:
-  run_torture_tests()
-if has_vanilla_emcc and has_vanilla_llvm and 0:
-  run_vanilla_tests()
-print '\n[ checking example testcases... ]\n'
-if options.run_gcc_tests:
-  run_gcc_torture_tests()
-if EMCC:
-  run_emscripten_tests()
+  run_spec_tests()
+  run_binaryen_js_tests()
+  s2wasm.test_s2wasm()
+  s2wasm.test_linker()
+  wasm2asm.test_wasm2asm()
+  run_validator_tests()
+  if options.torture and options.test_waterfall:
+    run_torture_tests()
+  if has_vanilla_emcc and has_vanilla_llvm and 0:
+    run_vanilla_tests()
+  print '\n[ checking example testcases... ]\n'
+  if options.run_gcc_tests:
+    run_gcc_torture_tests()
+  if EMCC:
+    run_emscripten_tests()
 
-# Check/display the results
-if num_failures == 0:
-  print '\n[ success! ]'
+  # Check/display the results
+  if num_failures == 0:
+    print '\n[ success! ]'
 
-if warnings:
-  print '\n' + '\n'.join(warnings)
+  if warnings:
+    print '\n' + '\n'.join(warnings)
 
-if num_failures > 0:
-  print '\n[ ' + str(num_failures) + ' failures! ]'
+  if num_failures > 0:
+    print '\n[ ' + str(num_failures) + ' failures! ]'
 
-sys.exit(num_failures)
+  sys.exit(num_failures)
+
+if __name__ == '__main__':
+  main()
+
