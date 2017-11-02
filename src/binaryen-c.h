@@ -159,7 +159,8 @@ struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 BinaryenType BinaryenLiteralGetType(BinaryenLiteral lit);
 int32_t BinaryenLiteralGetI32(BinaryenLiteral lit);
 int64_t BinaryenLiteralGetI64(BinaryenLiteral lit);
-int64_t* BinaryenLiteralGetI64Ptr(BinaryenLiteral lit);
+int32_t BinaryenLiteralGetI64Low(BinaryenLiteral lit);
+int32_t BinaryenLiteralGetI64High(BinaryenLiteral lit);
 float BinaryenLiteralGetF32(BinaryenLiteral lit);
 double BinaryenLiteralGetF64(BinaryenLiteral lit);
 

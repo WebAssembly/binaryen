@@ -234,9 +234,12 @@ int64_t BinaryenLiteralGetI64(BinaryenLiteral lit) {
   return fromBinaryenLiteral(lit).geti64();
 }
 
-int64_t* BinaryenLiteralGetI64Ptr(BinaryenLiteral lit) {
-  // alternative for use in wasm32 (i.e. binaryen.js)
-  return fromBinaryenLiteral(lit).geti64Ptr();
+int32_t BinaryenLiteralGetI64Low(BinaryenLiteral lit) {
+  return int32_t(fromBinaryenLiteral(lit).geti64());
+}
+
+int32_t BinaryenLiteralGetI64High(BinaryenLiteral lit) {
+  return int32_t(uint64_t(fromBinaryenLiteral(lit).geti64()) >> 32);
 }
 
 float BinaryenLiteralGetF32(BinaryenLiteral lit) {
