@@ -76,6 +76,39 @@ BinaryenType BinaryenFloat64(void);
 // the API figure out the type instead of providing one.
 BinaryenType BinaryenUndefined(void);
 
+// Expression ids (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExpressionId;
+
+BinaryenExpressionId BinaryenInvalidId(void);
+BinaryenExpressionId BinaryenBlockId(void);
+BinaryenExpressionId BinaryenIfId(void);
+BinaryenExpressionId BinaryenLoopId(void);
+BinaryenExpressionId BinaryenBreakId(void);
+BinaryenExpressionId BinaryenSwitchId(void);
+BinaryenExpressionId BinaryenCallId(void);
+BinaryenExpressionId BinaryenCallImportId(void);
+BinaryenExpressionId BinaryenCallIndirectId(void);
+BinaryenExpressionId BinaryenGetLocalId(void);
+BinaryenExpressionId BinaryenSetLocalId(void);
+BinaryenExpressionId BinaryenGetGlobalId(void);
+BinaryenExpressionId BinaryenSetGlobalId(void);
+BinaryenExpressionId BinaryenLoadId(void);
+BinaryenExpressionId BinaryenStoreId(void);
+BinaryenExpressionId BinaryenConstId(void);
+BinaryenExpressionId BinaryenUnaryId(void);
+BinaryenExpressionId BinaryenBinaryId(void);
+BinaryenExpressionId BinaryenSelectId(void);
+BinaryenExpressionId BinaryenDropId(void);
+BinaryenExpressionId BinaryenReturnId(void);
+BinaryenExpressionId BinaryenHostId(void);
+BinaryenExpressionId BinaryenNopId(void);
+BinaryenExpressionId BinaryenUnreachableId(void);
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
+BinaryenExpressionId BinaryenAtomicRMWId(void);
+BinaryenExpressionId BinaryenAtomicWaitId(void);
+BinaryenExpressionId BinaryenAtomicWakeId(void);
+
 // Modules
 //
 // Modules contain lists of functions, imports, exports, function types. The
@@ -321,14 +354,10 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
-
-// Get the internal id of an expression.
-BinaryenIndex BinaryenGetExpressionId(BinaryenExpressionRef expr);
-// Get the type of an expression.
-BinaryenType BinaryenGetExpressionType(BinaryenExpressionRef expr);
-
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+BinaryenIndex BinaryenExpressionGetId(BinaryenExpressionRef expr);
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 
 // Functions
 
@@ -361,8 +390,12 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 // Globals
 
 BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
-// Gets the initilizer expression of a global.
-BinaryenExpressionRef BinaryenGetGlobalInit(BinaryenImportRef global);
+BinaryenType BinaryenGlobalGetType(BinaryenImportRef global);
+void BinaryenGlobalSetType(BinaryenImportRef global, BinaryenType type);
+int BinaryenGlobalGetMutable(BinaryenImportRef global);
+void BinaryenGlobalSetMutable(BinaryenImportRef global, int mutable_);
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenImportRef global);
+void BinaryenGlobalSetInit(BinaryenImportRef global, BinaryenExpressionRef expr);
 
 // Function table. One per module
 

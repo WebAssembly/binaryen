@@ -82,12 +82,20 @@ void traceNameOrNULL(const char *name) {
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
+std::map<BinaryenImportRef, size_t> globals;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
 size_t noteExpression(BinaryenExpressionRef expression) {
   auto id = expressions.size();
   assert(expressions.find(expression) == expressions.end());
   expressions[expression] = id;
+  return id;
+}
+
+size_t noteGlobal(BinaryenImportRef global) {
+  auto id = globals.size();
+  assert(globals.find(global) == globals.end());
+  globals[global] = id;
   return id;
 }
 
@@ -105,6 +113,37 @@ BinaryenType BinaryenInt64(void) { return i64; }
 BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
 BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
+
+// Expression ids
+
+BinaryenExpressionId BinaryenInvalidId(void) { return Expression::Id::InvalidId; }
+BinaryenExpressionId BinaryenBlockId(void) { return Expression::Id::BlockId; }
+BinaryenExpressionId BinaryenIfId(void) { return Expression::Id::IfId; }
+BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
+BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
+BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
+BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
+BinaryenExpressionId BinaryenCallImportId(void) { return Expression::Id::CallImportId; }
+BinaryenExpressionId BinaryenCallIndirectId(void) { return Expression::Id::CallIndirectId; }
+BinaryenExpressionId BinaryenGetLocalId(void) { return Expression::Id::GetLocalId; }
+BinaryenExpressionId BinaryenSetLocalId(void) { return Expression::Id::SetLocalId; }
+BinaryenExpressionId BinaryenGetGlobalId(void) { return Expression::Id::GetGlobalId; }
+BinaryenExpressionId BinaryenSetGlobalId(void) { return Expression::Id::SetGlobalId; }
+BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
+BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
+BinaryenExpressionId BinaryenConstId(void) { return Expression::Id::ConstId; }
+BinaryenExpressionId BinaryenUnaryId(void) { return Expression::Id::UnaryId; }
+BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
+BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
+BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
+BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
+BinaryenExpressionId BinaryenHostId(void) { return Expression::Id::HostId; }
+BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
+BinaryenExpressionId BinaryenUnreachableId(void) { return Expression::Id::UnreachableId; }
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void) { return Expression::Id::AtomicCmpxchgId; }
+BinaryenExpressionId BinaryenAtomicRMWId(void) { return Expression::Id::AtomicRMWId; }
+BinaryenExpressionId BinaryenAtomicWaitId(void) { return Expression::Id::AtomicWaitId; }
+BinaryenExpressionId BinaryenAtomicWakeId(void) { return Expression::Id::AtomicWakeId; }
 
 // Modules
 
@@ -696,11 +735,19 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   return static_cast<Expression*>(ret);
 }
 
-BinaryenIndex BinaryenGetExpressionId(BinaryenExpressionRef expr) {
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr] << "]);\n";
+  }
+
   return ((Expression*)expr)->_id;
 }
 
-BinaryenType BinaryenGetExpressionType(BinaryenExpressionRef expr) {
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetType(expressions[" << expressions[expr] << "]);\n";
+  }
+
   return ((Expression*)expr)->type;
 }
 
@@ -755,10 +802,6 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 }
 
 BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
-  if (tracing) {
-    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Global();
   ret->name = name;
@@ -766,11 +809,61 @@ BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   ret->mutable_ = !!mutable_;
   ret->init = (Expression*)init;
   wasm->addGlobal(ret);
+
+  if (tracing) {
+    auto id = noteGlobal(ret);
+    std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
+  }
+
   return ret;
 }
 
-BinaryenExpressionRef BinaryenGetGlobalInit(BinaryenImportRef global) {
+BinaryenType BinaryenGlobalGetType(BinaryenImportRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetType(globals[" << global << "]);";
+  }
+
+  return ((Global*)global)->type;
+}
+
+void BinaryenGlobalSetType(BinaryenImportRef global, BinaryenType type) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetType(globals[" << global << "], types[" << type << "]);";
+  }
+
+  ((Global*)global)->type = WasmType(type);
+}
+
+int BinaryenGlobalGetMutable(BinaryenImportRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetMutable(globals[" << global << "]);";
+  }
+
+  return ((Global*)global)->mutable_ ? 1 : 0;
+}
+
+void BinaryenGlobalSetMutable(BinaryenImportRef global, int mutable_) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetMutable(globals[" << global << "], " << mutable_ << ");";
+  }
+
+  ((Global*)global)->mutable_ = mutable_ ? true : false;
+}
+
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenImportRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetInit(globals[" << global << "]);";
+  }
+
   return ((Global*)global)->init;
+}
+
+void BinaryenGlobalSetInit(BinaryenImportRef global, BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetInit(globals[" << global << "], expressions[" << expr << "]);";
+  }
+
+  ((Global*)global)->init = (Expression*)expr;
 }
 
 // Imports
@@ -1159,6 +1252,7 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
+                 "  std::map<size_t, BinaryenImportRef> globals;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
                  "  RelooperRef the_relooper = NULL;\n";
