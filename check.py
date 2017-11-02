@@ -330,7 +330,7 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
-    f.write(open(os.path.join(options.binaryen_bin, 'binaryen.clean.js')).read())
+    f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
     # node test support
     f.write('\nif (typeof require === "function") var Binaryen = module.exports;\n')
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
