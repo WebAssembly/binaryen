@@ -406,14 +406,40 @@ BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
 typedef void* BinaryenImportRef;
 
 BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
-void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
+// Removes the import of the specified internal name from the module.
+void BinaryenRemoveImportByName(BinaryenModuleRef module, const char* internalName);
+// Gets the import at the specified index from the specified module. Returns `NULL` when there are no more imports.
+BinaryenImportRef BinaryenGetImportAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the internal name of the specified import. This is the name referenced by other internal elements.
+const char* BinaryenImportGetInternalName(BinaryenImportRef import);
+// Sets the internal name of the specified import. This is the name referenced by other internal elements.
+void BinaryenImportSetInternalName(BinaryenImportRef import, const char* newName);
+// Gets the external module name of the specified import. This is the name of the module being imported from.
+const char* BinaryenImportGetExternalModuleName(BinaryenImportRef import);
+// Sets the external module name of the specified import. This is the name of the module being imported from.
+void BinaryenImportSetExternalModuleName(BinaryenImportRef import, const char* newName);
+// Gets the external base name of the specified import. This is the name of the element within the module being imported from.
+const char* BinaryenImportGetExternalBaseName(BinaryenImportRef import);
+// Sets the external base name of the specified import. This is the name of the element within the module being imported from.
+void BinaryenImportSetExternalBaseName(BinaryenImportRef import, const char* newName);
 
 // Exports
 
 typedef void* BinaryenExportRef;
 
+// Adds an export to the module, linking the internal name of the exported
+// element to an external name then exposed to the embedder.
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
-void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
+// Removes the export of the specified name from the module.
+void BinaryenRemoveExportByName(BinaryenModuleRef module, const char* externalName);
+// Gets the internal name of the specified export. This is the name referenced by other internal elements.
+const char* BinaryenExportGetInternalName(BinaryenExportRef export_);
+// Sets the internal name of the specified export. This is the name referenced by other internal elements.
+void BinaryenExportSetInternalName(BinaryenExportRef export_, const char* newName);
+// Gets the external name of the specified export. This is the name exposed to the embedder.
+const char* BinaryenExportGetExternalName(BinaryenExportRef export_);
+// Sets the external name of the specified export. This is the name exposed to the embedder.
+void BinaryenExportSetExternalName(BinaryenExportRef export_, const char* newName);
 
 // Globals
 
