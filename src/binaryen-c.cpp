@@ -211,6 +211,48 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   return ret;
 }
 
+BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTypeAt(the_module, " << index << ");\n";
+  }
+
+  auto wasm = (Module*)module;
+  return index < wasm->functionTypes.size() ? wasm->functionTypes.at(index).get() : 0;
+}
+
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetName(functionTypes[" << functionTypes[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->name.c_str();
+}
+
+void BinaryenFunctionTypeSetName(BinaryenFunctionTypeRef ftype, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeSetName(functionTypes[" << functionTypes[ftype] << "], \"" << newName << "\");\n";
+  }
+
+  ((FunctionType*)ftype)->name.set(newName);
+}
+
+BinaryenType BinaryenFunctionTypeGetParamAt(BinaryenFunctionTypeRef ftype, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetParamAt(functionTypes[" << functionTypes[ftype] << "], " << index << ");\n";
+  }
+
+  auto ft = (FunctionType*)ftype;
+  return index < ft->params.size() ? ft->params.at(index) : uint32_t(-1);
+}
+
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetResult(functionTypes[" << functionTypes[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->result;
+}
+
 BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralInt64(int64_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32(float x) { return toBinaryenLiteral(Literal(x)); }
@@ -831,6 +873,64 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   }
 
   return ret;
+}
+
+BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return index < wasm->functions.size() ? wasm->functions.at(index).get() : 0;
+}
+
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetName(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->name.c_str();
+}
+
+void BinaryenFunctionSetName(BinaryenFunctionRef func, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetName(functions[" << functions[func] << "], \"" << newName << "\");\n";
+  }
+
+  ((Function*)func)->name.set(newName);
+}
+
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->body;
+}
+
+void BinaryenFunctionSetBody(BinaryenFunctionRef func, BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetBody(functions[" << functions[func] << "], expressions[" << expressions[expr] << ");\n";
+  }
+
+  ((Function*)func)->body = (Expression*)expr;
+}
+
+BinaryenType BinaryenFunctionGetParamAt(BinaryenFunctionRef func, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetParamAt(functions[" << functions[func] << "]);\n";
+  }
+
+  Function* fn = (Function*)func;
+  return index < fn->params.size() ? fn->params.at(index) : uint32_t(-1);
+}
+
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetResult(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->result;
 }
 
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
