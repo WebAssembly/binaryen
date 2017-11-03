@@ -83,6 +83,8 @@ std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
 std::map<BinaryenGlobalRef, size_t> globals;
+std::map<BinaryenImportRef, size_t> imports;
+std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
 size_t noteExpression(BinaryenExpressionRef expression) {
@@ -96,6 +98,20 @@ size_t noteGlobal(BinaryenGlobalRef global) {
   auto id = globals.size();
   assert(globals.find(global) == globals.end());
   globals[global] = id;
+  return id;
+}
+
+size_t noteImport(BinaryenImportRef import) {
+  auto id = imports.size();
+  assert(imports.find(import) == imports.end());
+  imports[import] = id;
+  return id;
+}
+
+size_t noteExport(BinaryenExportRef export_) {
+  auto id = exports.size();
+  assert(exports.find(export_) == exports.end());
+  exports[export_] = id;
   return id;
 }
 
@@ -163,6 +179,8 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
     std::cout << "  globals.clear();\n";
+    std::cout << "  imports.clear();\n";
+    std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     functionTypes.clear();
     expressions.clear();
@@ -1010,10 +1028,6 @@ void BinaryenGlobalSetInit(BinaryenGlobalRef global, BinaryenExpressionRef expr)
 // Imports
 
 BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type) {
-  if (tracing) {
-    std::cout << "  BinaryenAddImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", functionTypes[" << functionTypes[type] << "]);\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Import();
   ret->name = internalName;
@@ -1022,6 +1036,12 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
   ret->functionType = ((FunctionType*)type)->name;
   ret->kind = ExternalKind::Function;
   wasm->addImport(ret);
+
+  if (tracing) {
+    auto id = noteImport(ret);
+    std::cout << "  imports[" << id << "] = BinaryenAddImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", functionTypes[" << functionTypes[type] << "]);\n";
+  }
+
   return ret;
 }
 
@@ -1047,49 +1067,49 @@ BinaryenImportRef BinaryenGetImportAt(BinaryenModuleRef module, BinaryenIndex in
 }
 
 const char* BinaryenImportGetInternalName(BinaryenImportRef import) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportGetInternalName(imports[" << imports[import] << "]);\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportGetInternalName(imports[" << imports[import] << "]);\n";
+  }
 
   return ((Import*)import)->name.c_str();
 }
 
 void BinaryenImportSetInternalName(BinaryenImportRef import, const char* newName) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportSetInternalName(imports[" << imports[import] << "], \"" << newName << "\");\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportSetInternalName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
 
   ((Import*)import)->name.set(newName);
 }
 
 const char* BinaryenImportGetExternalModuleName(BinaryenImportRef import) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportGetExternalModuleName(imports[" << imports[import] << "]);\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportGetExternalModuleName(imports[" << imports[import] << "]);\n";
+  }
 
   return ((Import*)import)->module.c_str();
 }
 
 void BinaryenImportSetExternalModuleName(BinaryenImportRef import, const char* newName) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportSetExternalModuleName(imports[" << imports[import] << "], \"" << newName << "\");\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportSetExternalModuleName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
 
   ((Import*)import)->module.set(newName);
 }
 
 const char* BinaryenImportGetExternalBaseName(BinaryenImportRef import) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportGetExternalBaseName(imports[" << imports[import] << "]);\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportGetExternalBaseName(imports[" << imports[import] << "]);\n";
+  }
 
   return ((Import*)import)->base.c_str();
 }
 
 void BinaryenImportSetExternalBaseName(BinaryenImportRef import, const char* newName) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenImportSetExternalBaseName(imports[" << imports[import] << "], \"" << newName << "\");\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenImportSetExternalBaseName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
 
   ((Import*)import)->base.set(newName);
 }
@@ -1097,15 +1117,17 @@ void BinaryenImportSetExternalBaseName(BinaryenImportRef import, const char* new
 // Exports
 
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName) {
-  if (tracing) {
-    std::cout << "  BinaryenAddExport(the_module, \"" << internalName << "\", \"" << externalName << "\");\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Export();
   ret->value = internalName;
   ret->name = externalName;
   wasm->addExport(ret);
+
+  if (tracing) {
+    auto id = noteExport(ret);
+    std::cout << "  exports[" << id << "] = BinaryenAddExport(the_module, \"" << internalName << "\", \"" << externalName << "\");\n";
+  }
+
   return ret;
 }
 
@@ -1131,33 +1153,33 @@ void BinaryenRemoveExportByName(BinaryenModuleRef module, const char* externalNa
 }
 
 const char* BinaryenExportGetInternalName(BinaryenExportRef export_) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenExportGetInternalName(exports[" << exports[exp] << "]);\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenExportGetInternalName(exports[" << exports[export_] << "]);\n";
+  }
 
   return ((Export*)export_)->value.c_str();
 }
 
 void BinaryenExportSetInternalName(BinaryenExportRef export_, const char* newName) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenExportSetInternalName(exports[" << exports[exp] << "], \"" << newName << "\");\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenExportSetInternalName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+  }
 
   ((Export*)export_)->value.set(newName);
 }
 
 const char* BinaryenExportGetExternalName(BinaryenExportRef export_) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenExportGetExternalName(exports[" << exports[exp] << "]);\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenExportGetExternalName(exports[" << exports[export_] << "]);\n";
+  }
 
   return ((Export*)export_)->name.c_str();
 }
 
 void BinaryenExportSetExternalName(BinaryenExportRef export_, const char* newName) {
-  // if (tracing) {
-  //   std::cout << "  BinaryenExportSetExternalName(exports[" << exports[exp] << "], \"" << newName << "\");\n";
-  // }
+  if (tracing) {
+    std::cout << "  BinaryenExportSetExternalName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+  }
 
   ((Export*)export_)->name.set(newName);
 }
@@ -1498,6 +1520,8 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
                  "  std::map<size_t, BinaryenGlobalRef> globals;\n"
+                 "  std::map<size_t, BinaryenImportRef> imports;\n"
+                 "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
                  "  RelooperRef the_relooper = NULL;\n";

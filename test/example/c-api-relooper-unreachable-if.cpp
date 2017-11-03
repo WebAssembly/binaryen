@@ -7,6 +7,8 @@ int main() {
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
   std::map<size_t, BinaryenGlobalRef> globals;
+  std::map<size_t, BinaryenImportRef> imports;
+  std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
@@ -554,6 +556,8 @@ int main() {
   expressions.clear();
   functions.clear();
   globals.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
 }
 
