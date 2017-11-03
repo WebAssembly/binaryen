@@ -2173,17 +2173,36 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 }
 
 void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end) {
+  // the first dropped element may be consumed by code later - it was on the stack first,
+  // and is the only thing left on the stack. there must be just one thing on the stack
+  // since we are at the end of a block context. note that we may need to drop more than
+  // one thing, since a bunch of concrete values may be all "consumed" by an unreachable
+  // (in which case, the first value can't be consumed anyhow, so it doesn't matter)
+  const Index NONE = -1;
+  Index consumable = NONE;
   for (size_t i = start; i < end; i++) {
     auto* item = expressionStack[i];
     curr->list.push_back(item);
     if (i < end - 1) {
       // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
       if (isConcreteWasmType(item->type)) {
-        curr->list.back() = Builder(wasm).makeDrop(curr->list.back());
+        curr->list.back() = Builder(wasm).makeDrop(item);
+        if (consumable == NONE) {
+          // this is the first, and hence consumable value. note the location
+          consumable = curr->list.size() - 1;
+        }
       }
     }
   }
   expressionStack.resize(start);
+  // if we have a consumable item and need it, use it
+  if (consumable != NONE && curr->list.back()->type == none) {
+    Builder builder(wasm);
+    auto* item = curr->list[consumable]->cast<Drop>()->value;
+    auto temp = builder.addVar(currFunction, item->type);
+    curr->list[consumable] = builder.makeSetLocal(temp, item);
+    curr->list.push_back(builder.makeGetLocal(temp, item->type));
+  }
 }
 
 void WasmBinaryBuilder::visitBlock(Block *curr) {

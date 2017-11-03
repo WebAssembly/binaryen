@@ -1,0 +1,16 @@
+(module
+ (type $0 (func (result i32)))
+ (memory $0 1 1)
+ (func $0 (; 0 ;) (type $0) (result i32)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 2)
+   (i32.const 3)
+  )
+  (get_local $0)
+ )
+)
+
