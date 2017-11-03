@@ -474,6 +474,8 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
 // exportName can be NULL
 void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
+// Makes the current memory an import. Memory must have been set through `BinaryenSetMemory` previously.
+void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName);
 
 // Start function. One per module
 

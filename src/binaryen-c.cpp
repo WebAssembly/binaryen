@@ -1266,6 +1266,22 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   }
 }
 
+void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryImported(the_module, \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+  wasm->memory.imported = true;
+  auto memoryImport = make_unique<Import>();
+  memoryImport->module = externalModuleName;
+  memoryImport->base = externalBaseName;
+  memoryImport->name = Name::fromInt(0);
+  memoryImport->kind = ExternalKind::Memory;
+  wasm->addImport(memoryImport.release());
+}
+
 // Start function. One per module
 
 void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {
