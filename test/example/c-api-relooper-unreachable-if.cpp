@@ -553,6 +553,7 @@ int main() {
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  globals.clear();
   relooperBlocks.clear();
 }
 

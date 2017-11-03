@@ -1958,6 +1958,7 @@ int main() {
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  globals.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
@@ -2920,6 +2921,7 @@ optimized:
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  globals.clear();
   relooperBlocks.clear();
   return 0;
 }

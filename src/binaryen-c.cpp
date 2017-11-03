@@ -162,6 +162,7 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  functionTypes.clear();\n";
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
+    std::cout << "  globals.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     functionTypes.clear();
     expressions.clear();
