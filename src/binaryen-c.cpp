@@ -217,7 +217,10 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, Bina
   }
 
   auto* wasm = (Module*)module;
-  return index < wasm->functionTypes.size() ? wasm->functionTypes.at(index).get() : NULL;
+  if (index < wasm->functionTypes.size()) {
+    return wasm->functionTypes.at(index).get();
+  }
+  return NULL;
 }
 
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
@@ -242,7 +245,10 @@ BinaryenType BinaryenFunctionTypeGetParamAt(BinaryenFunctionTypeRef ftype, Binar
   }
 
   auto ft = (FunctionType*)ftype;
-  return index < ft->params.size() ? ft->params.at(index) : uint32_t(-1);
+  if (index < ft->params.size()) {
+    return ft->params.at(index);
+  }
+  return uint32_t(-1);
 }
 
 BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
@@ -849,7 +855,10 @@ BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenInde
   }
 
   auto* wasm = (Module*)module;
-  return index < wasm->functions.size() ? wasm->functions.at(index).get() : NULL;
+  if (index < wasm->functions.size()) {
+    return wasm->functions.at(index).get();
+  }
+  return NULL;
 }
 
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
@@ -890,7 +899,10 @@ BinaryenType BinaryenFunctionGetParamAt(BinaryenFunctionRef func, BinaryenIndex 
   }
 
   Function* fn = (Function*)func;
-  return index < fn->params.size() ? fn->params.at(index) : uint32_t(-1);
+  if (index < fn->params.size()) {
+    return fn->params.at(index);
+  }
+  return uint32_t(-1);
 }
 
 BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
@@ -924,7 +936,10 @@ BinaryenGlobalRef BinaryenGetGlobalAt(BinaryenModuleRef module, BinaryenIndex in
   }
 
   auto* wasm = (Module*)module;
-  return index < wasm->globals.size() ? wasm->globals.at(index).get() : NULL;
+  if (index < wasm->globals.size()) {
+    return wasm->globals.at(index).get();
+  }
+  return NULL;
 }
 
 const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
