@@ -52,7 +52,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "main", functionTypes[0], varTypes, 3, expressions[10]);
   }
-  BinaryenAddExport(the_module, "main", "main");
+  exports[0] = BinaryenAddExport(the_module, "main", "main");
   {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
@@ -74,7 +74,7 @@ int main() {
     BinaryenExpressionRef children[] = { expressions[13], expressions[14] };
     expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
   }
-  BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
+  exports[1] = BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
   {
     BinaryenType varTypes[] = { 0 };
     functions[1] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[1], varTypes, 0, expressions[15]);
