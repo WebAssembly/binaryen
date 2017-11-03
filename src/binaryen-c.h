@@ -136,7 +136,7 @@ typedef void* BinaryenFunctionTypeRef;
 // Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
-// Gets the function type at the specified index. Returns `0` when there are no more function types.
+// Gets the function type at the specified index. Returns `NULL` when there are no more function types.
 BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, BinaryenIndex index);
 // Gets the name of the specified function.
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
@@ -166,21 +166,6 @@ struct BinaryenLiteral BinaryenLiteralFloat32(float x);
 struct BinaryenLiteral BinaryenLiteralFloat64(double x);
 struct BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x);
 struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
-
-// Gets the type of the specified literal.
-BinaryenType BinaryenLiteralGetType(BinaryenLiteral lit);
-// Gets the 32-bit integer value of the specified literal.
-int32_t BinaryenLiteralGetI32(BinaryenLiteral lit);
-// Gets the 64-bit integer value of the specified literal. Might not be available in WASM32.
-int64_t BinaryenLiteralGetI64(BinaryenLiteral lit);
-// Gets the low bits of the 64-bit integer value of the specified literal.
-int32_t BinaryenLiteralGetI64Low(BinaryenLiteral lit);
-// Gets the high bits of the 64-bit integer value of the specified literal.
-int32_t BinaryenLiteralGetI64High(BinaryenLiteral lit);
-// Gets the 32-bit float value of the specified literal.
-float BinaryenLiteralGetF32(BinaryenLiteral lit);
-// Gets the 64-bit float value of the specified literal.
-double BinaryenLiteralGetF64(BinaryenLiteral lit);
 
 // Expressions
 //
@@ -400,7 +385,7 @@ typedef void* BinaryenFunctionRef;
 //            0 (and written $0), and if you also have 2 vars they will be
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
-// Gets the function at the specified index. Returns `0` when there are no more functions.
+// Gets the function at the specified index. Returns `NULL` when there are no more functions.
 BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenIndex index);
 // Gets the name of the specified function.
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
@@ -435,6 +420,12 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 typedef void* BinaryenGlobalRef;
 
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+// Gets the global at the specified index. Returns `NULL` when there are no more globals.
+BinaryenGlobalRef BinaryenGetGlobalAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the name of the specified global.
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global);
+// Sets the name of the specified global.
+void BinaryenGlobalSetName(BinaryenGlobalRef global, const char* newName);
 // Gets the type of the specified global.
 BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global);
 // Sets the type of the specified global.

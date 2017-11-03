@@ -1068,7 +1068,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on
 [none] (set_local $0
  [i64] (i64.const 1234)
 )
@@ -1091,6 +1091,7 @@ int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenGlobalRef> globals;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;

@@ -216,8 +216,8 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, Bina
     std::cout << "  BinaryenGetFunctionTypeAt(the_module, " << index << ");\n";
   }
 
-  auto wasm = (Module*)module;
-  return index < wasm->functionTypes.size() ? wasm->functionTypes.at(index).get() : 0;
+  auto* wasm = (Module*)module;
+  return index < wasm->functionTypes.size() ? wasm->functionTypes.at(index).get() : NULL;
 }
 
 const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
@@ -259,38 +259,6 @@ BinaryenLiteral BinaryenLiteralFloat32(float x) { return toBinaryenLiteral(Liter
 BinaryenLiteral BinaryenLiteralFloat64(double x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) { return toBinaryenLiteral(Literal(x).castToF32()); }
 BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) { return toBinaryenLiteral(Literal(x).castToF64()); }
-
-// TODO: the following functions do not print tracing information
-// because there is no literals map, like for expressions. should
-// there be one or might it be better to do something else?
-
-BinaryenType BinaryenLiteralGetType(BinaryenLiteral lit) {
-  return fromBinaryenLiteral(lit).type;
-}
-
-int32_t BinaryenLiteralGetI32(BinaryenLiteral lit) {
-  return fromBinaryenLiteral(lit).geti32();
-}
-
-int64_t BinaryenLiteralGetI64(BinaryenLiteral lit) {
-  return fromBinaryenLiteral(lit).geti64();
-}
-
-int32_t BinaryenLiteralGetI64Low(BinaryenLiteral lit) {
-  return int32_t(fromBinaryenLiteral(lit).geti64());
-}
-
-int32_t BinaryenLiteralGetI64High(BinaryenLiteral lit) {
-  return int32_t(uint64_t(fromBinaryenLiteral(lit).geti64()) >> 32);
-}
-
-float BinaryenLiteralGetF32(BinaryenLiteral lit) {
-  return fromBinaryenLiteral(lit).getf32();
-}
-
-double BinaryenLiteralGetF64(BinaryenLiteral lit) {
-  return fromBinaryenLiteral(lit).getf64();
-}
 
 // Expressions
 
@@ -881,7 +849,7 @@ BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenInde
   }
 
   auto* wasm = (Module*)module;
-  return index < wasm->functions.size() ? wasm->functions.at(index).get() : 0;
+  return index < wasm->functions.size() ? wasm->functions.at(index).get() : NULL;
 }
 
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
@@ -948,6 +916,31 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   }
 
   return ret;
+}
+
+BinaryenGlobalRef BinaryenGetGlobalAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetGlobalAt(the_module, " << index << ");";
+  }
+
+  auto* wasm = (Module*)module;
+  return index < wasm->globals.size() ? wasm->globals.at(index).get() : NULL;
+}
+
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetName(globals[" << globals[global] << "]);";
+  }
+
+  return ((Global*)global)->name.c_str();
+}
+
+void BinaryenGlobalSetName(BinaryenGlobalRef global, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetName(globals[" << globals[global] << "], \"" << newName << "\");";
+  }
+
+  ((Global*)global)->name.set(newName);
 }
 
 BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
