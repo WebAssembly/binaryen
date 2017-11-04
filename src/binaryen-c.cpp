@@ -185,6 +185,9 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     functionTypes.clear();
     expressions.clear();
     functions.clear();
+    globals.clear();
+    imports.clear();
+    exports.clear();
     relooperBlocks.clear();
   }
 
