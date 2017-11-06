@@ -1069,49 +1069,49 @@ BinaryenImportRef BinaryenGetImportAt(BinaryenModuleRef module, BinaryenIndex in
   return NULL;
 }
 
-const char* BinaryenImportGetInternalName(BinaryenImportRef import) {
+const char* BinaryenImportGetName(BinaryenImportRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetInternalName(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenImportGetName(imports[" << imports[import] << "]);\n";
   }
 
   return ((Import*)import)->name.c_str();
 }
 
-void BinaryenImportSetInternalName(BinaryenImportRef import, const char* newName) {
+void BinaryenImportSetName(BinaryenImportRef import, const char* newName) {
   if (tracing) {
-    std::cout << "  BinaryenImportSetInternalName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+    std::cout << "  BinaryenImportSetName(imports[" << imports[import] << "], \"" << newName << "\");\n";
   }
 
   ((Import*)import)->name.set(newName);
 }
 
-const char* BinaryenImportGetExternalModuleName(BinaryenImportRef import) {
+const char* BinaryenImportGetModule(BinaryenImportRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetExternalModuleName(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenImportGetModule(imports[" << imports[import] << "]);\n";
   }
 
   return ((Import*)import)->module.c_str();
 }
 
-void BinaryenImportSetExternalModuleName(BinaryenImportRef import, const char* newName) {
+void BinaryenImportSetModule(BinaryenImportRef import, const char* newName) {
   if (tracing) {
-    std::cout << "  BinaryenImportSetExternalModuleName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+    std::cout << "  BinaryenImportSetModule(imports[" << imports[import] << "], \"" << newName << "\");\n";
   }
 
   ((Import*)import)->module.set(newName);
 }
 
-const char* BinaryenImportGetExternalBaseName(BinaryenImportRef import) {
+const char* BinaryenImportGetBase(BinaryenImportRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetExternalBaseName(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenImportGetBase(imports[" << imports[import] << "]);\n";
   }
 
   return ((Import*)import)->base.c_str();
 }
 
-void BinaryenImportSetExternalBaseName(BinaryenImportRef import, const char* newName) {
+void BinaryenImportSetBase(BinaryenImportRef import, const char* newName) {
   if (tracing) {
-    std::cout << "  BinaryenImportSetExternalBaseName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+    std::cout << "  BinaryenImportSetBase(imports[" << imports[import] << "], \"" << newName << "\");\n";
   }
 
   ((Import*)import)->base.set(newName);
@@ -1155,33 +1155,33 @@ void BinaryenRemoveExportByName(BinaryenModuleRef module, const char* externalNa
   wasm->removeExport(externalName);
 }
 
-const char* BinaryenExportGetInternalName(BinaryenExportRef export_) {
+const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   if (tracing) {
-    std::cout << "  BinaryenExportGetInternalName(exports[" << exports[export_] << "]);\n";
+    std::cout << "  BinaryenExportGetValue(exports[" << exports[export_] << "]);\n";
   }
 
   return ((Export*)export_)->value.c_str();
 }
 
-void BinaryenExportSetInternalName(BinaryenExportRef export_, const char* newName) {
+void BinaryenExportSetValue(BinaryenExportRef export_, const char* newName) {
   if (tracing) {
-    std::cout << "  BinaryenExportSetInternalName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+    std::cout << "  BinaryenExportSetValue(exports[" << exports[export_] << "], \"" << newName << "\");\n";
   }
 
   ((Export*)export_)->value.set(newName);
 }
 
-const char* BinaryenExportGetExternalName(BinaryenExportRef export_) {
+const char* BinaryenExportGetName(BinaryenExportRef export_) {
   if (tracing) {
-    std::cout << "  BinaryenExportGetExternalName(exports[" << exports[export_] << "]);\n";
+    std::cout << "  BinaryenExportGetName(exports[" << exports[export_] << "]);\n";
   }
 
   return ((Export*)export_)->name.c_str();
 }
 
-void BinaryenExportSetExternalName(BinaryenExportRef export_, const char* newName) {
+void BinaryenExportSetName(BinaryenExportRef export_, const char* newName) {
   if (tracing) {
-    std::cout << "  BinaryenExportSetExternalName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+    std::cout << "  BinaryenExportSetName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
   }
 
   ((Export*)export_)->name.set(newName);
