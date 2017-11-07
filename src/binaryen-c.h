@@ -76,6 +76,39 @@ BinaryenType BinaryenFloat64(void);
 // the API figure out the type instead of providing one.
 BinaryenType BinaryenUndefined(void);
 
+// Expression ids (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExpressionId;
+
+BinaryenExpressionId BinaryenInvalidId(void);
+BinaryenExpressionId BinaryenBlockId(void);
+BinaryenExpressionId BinaryenIfId(void);
+BinaryenExpressionId BinaryenLoopId(void);
+BinaryenExpressionId BinaryenBreakId(void);
+BinaryenExpressionId BinaryenSwitchId(void);
+BinaryenExpressionId BinaryenCallId(void);
+BinaryenExpressionId BinaryenCallImportId(void);
+BinaryenExpressionId BinaryenCallIndirectId(void);
+BinaryenExpressionId BinaryenGetLocalId(void);
+BinaryenExpressionId BinaryenSetLocalId(void);
+BinaryenExpressionId BinaryenGetGlobalId(void);
+BinaryenExpressionId BinaryenSetGlobalId(void);
+BinaryenExpressionId BinaryenLoadId(void);
+BinaryenExpressionId BinaryenStoreId(void);
+BinaryenExpressionId BinaryenConstId(void);
+BinaryenExpressionId BinaryenUnaryId(void);
+BinaryenExpressionId BinaryenBinaryId(void);
+BinaryenExpressionId BinaryenSelectId(void);
+BinaryenExpressionId BinaryenDropId(void);
+BinaryenExpressionId BinaryenReturnId(void);
+BinaryenExpressionId BinaryenHostId(void);
+BinaryenExpressionId BinaryenNopId(void);
+BinaryenExpressionId BinaryenUnreachableId(void);
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
+BinaryenExpressionId BinaryenAtomicRMWId(void);
+BinaryenExpressionId BinaryenAtomicWaitId(void);
+BinaryenExpressionId BinaryenAtomicWakeId(void);
+
 // Modules
 //
 // Modules contain lists of functions, imports, exports, function types. The
@@ -103,6 +136,17 @@ typedef void* BinaryenFunctionTypeRef;
 // Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
+// Gets the function type at the specified index. Returns `NULL` when there are no more function types.
+BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the name of the specified function type.
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
+// Sets the name of the specified function type.
+void BinaryenFunctionTypeSetName(BinaryenFunctionTypeRef ftype, const char* newName);
+// Gets the parameter type at the specified index of the specified function type. Returns `BinaryenUndefined()`
+// when there are no more parameters.
+BinaryenType BinaryenFunctionTypeGetParamAt(BinaryenFunctionTypeRef ftype, BinaryenIndex index);
+// Gets the result type of the specified function type.
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype);
 
 // Literals. These are passed by value.
 
@@ -321,9 +365,24 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
-
-// Print an expression to stdout. Useful for debugging.
+// Gets the id (kind) of the specified expression.
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
+// Gets the type of the specified expression.
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
+// Prints an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+// Gets the 32-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Gets the 64-bit integer value of the specified known-to-be-constant expression.
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Gets the low 32-bits of a 64-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Gets the high 32-bits of a 64-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Gets the 32-bit float value of the specified known-to-be-constant expression.
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Gets the 64-bit float value of the specified known-to-be-constant expression.
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
 
 // Functions
 
@@ -338,24 +397,85 @@ typedef void* BinaryenFunctionRef;
 //            0 (and written $0), and if you also have 2 vars they will be
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
+// Gets the function at the specified index. Returns `NULL` when there are no more functions.
+BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the name of the specified function.
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
+// Sets the name of the specified function.
+void BinaryenFunctionSetName(BinaryenFunctionRef func, const char* newName);
+// Gets the body of the specified function.
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+// Sets the body of the specified function.
+void BinaryenFunctionSetBody(BinaryenFunctionRef func, BinaryenExpressionRef expr);
+// Gets the parameter type at the specified index of the specified function. Returns `BinaryenUndefined()`
+// when there are no more parameters.
+BinaryenType BinaryenFunctionGetParamAt(BinaryenFunctionRef func, BinaryenIndex index);
+// Gets the result type of the specified function.
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
 
 // Imports
 
 typedef void* BinaryenImportRef;
 
 BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
-void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
+// Removes the import of the specified internal name from the module.
+void BinaryenRemoveImportByName(BinaryenModuleRef module, const char* internalName);
+// Gets the import at the specified index from the specified module. Returns `NULL` when there are no more imports.
+BinaryenImportRef BinaryenGetImportAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the name of the specified import. This is the name referenced by other internal elements.
+const char* BinaryenImportGetName(BinaryenImportRef import);
+// Sets the name of the specified import. This is the name referenced by other internal elements.
+void BinaryenImportSetName(BinaryenImportRef import, const char* newName);
+// Gets the module of the specified import. This is the name of the module being imported from.
+const char* BinaryenImportGetModule(BinaryenImportRef import);
+// Sets the module of the specified import. This is the name of the module being imported from.
+void BinaryenImportSetModule(BinaryenImportRef import, const char* newName);
+// Gets the base of the specified import. This is the name of the element within the module being imported from.
+const char* BinaryenImportGetBase(BinaryenImportRef import);
+// Sets the base of the specified import. This is the name of the element within the module being imported from.
+void BinaryenImportSetBase(BinaryenImportRef import, const char* newName);
 
 // Exports
 
 typedef void* BinaryenExportRef;
 
+// Adds an export to the module, linking the internal name of the exported
+// element to an external name then exposed to the embedder.
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
-void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
+// Removes the export of the specified name from the module.
+void BinaryenRemoveExportByName(BinaryenModuleRef module, const char* externalName);
+// Gets the value of the specified export. This is the name referenced by other internal elements.
+const char* BinaryenExportGetValue(BinaryenExportRef export_);
+// Sets the value of the specified export. This is the name referenced by other internal elements.
+void BinaryenExportSetValue(BinaryenExportRef export_, const char* newName);
+// Gets the name of the specified export. This is the name exposed to the embedder.
+const char* BinaryenExportGetName(BinaryenExportRef export_);
+// Sets the name of the specified export. This is the name exposed to the embedder.
+void BinaryenExportSetName(BinaryenExportRef export_, const char* newName);
 
 // Globals
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+typedef void* BinaryenGlobalRef;
+
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+// Gets the global at the specified index. Returns `NULL` when there are no more globals.
+BinaryenGlobalRef BinaryenGetGlobalAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the name of the specified global.
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global);
+// Sets the name of the specified global.
+void BinaryenGlobalSetName(BinaryenGlobalRef global, const char* newName);
+// Gets the type of the specified global.
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global);
+// Sets the type of the specified global.
+void BinaryenGlobalSetType(BinaryenGlobalRef global, BinaryenType type);
+// Gets whether the specified global is mutable (`1`) or not (`0`).
+int BinaryenGlobalGetMutable(BinaryenGlobalRef global);
+// Sets whether the specified global is mutable (`1`) or not (`0`).
+void BinaryenGlobalSetMutable(BinaryenGlobalRef global, int mutable_);
+// Gets the initializer expression of the specified global.
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenGlobalRef global);
+// Sets the initilizer expression of the specified global.
+void BinaryenGlobalSetInit(BinaryenGlobalRef global, BinaryenExpressionRef expr);
 
 // Function table. One per module
 
@@ -363,9 +483,23 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
 // Memory. One per module
 
+typedef void* BinaryenMemorySegmentRef;
+
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
 // exportName can be NULL
 void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
+// Makes the current memory an import. Memory must have been set through `BinaryenSetMemory` previously.
+void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName);
+// Tests if the module has a memory (`1`) or not (`0`).
+int BinaryenHasMemory(BinaryenModuleRef module);
+// Gets the memory segment at the specified index. Returns `NULL` when there are no more memory segments.
+BinaryenMemorySegmentRef BinaryenGetMemorySegmentAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the offset expression of the specified memory segment.
+BinaryenExpressionRef BinaryenMemorySegmentGetOffset(BinaryenMemorySegmentRef segment);
+// Gets the size of the data of the specified memory segment.
+size_t BinaryenMemorySegmentGetDataSize(BinaryenMemorySegmentRef segment);
+// Gets a pointer to the data of the specified memory segment.
+const char* BinaryenMemorySegmentGetData(BinaryenMemorySegmentRef segment);
 
 // Start function. One per module
 

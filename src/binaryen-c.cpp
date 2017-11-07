@@ -82,12 +82,36 @@ void traceNameOrNULL(const char *name) {
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
+std::map<BinaryenGlobalRef, size_t> globals;
+std::map<BinaryenImportRef, size_t> imports;
+std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
 size_t noteExpression(BinaryenExpressionRef expression) {
   auto id = expressions.size();
   assert(expressions.find(expression) == expressions.end());
   expressions[expression] = id;
+  return id;
+}
+
+size_t noteGlobal(BinaryenGlobalRef global) {
+  auto id = globals.size();
+  assert(globals.find(global) == globals.end());
+  globals[global] = id;
+  return id;
+}
+
+size_t noteImport(BinaryenImportRef import) {
+  auto id = imports.size();
+  assert(imports.find(import) == imports.end());
+  imports[import] = id;
+  return id;
+}
+
+size_t noteExport(BinaryenExportRef export_) {
+  auto id = exports.size();
+  assert(exports.find(export_) == exports.end());
+  exports[export_] = id;
   return id;
 }
 
@@ -106,6 +130,37 @@ BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
 BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// Expression ids
+
+BinaryenExpressionId BinaryenInvalidId(void) { return Expression::Id::InvalidId; }
+BinaryenExpressionId BinaryenBlockId(void) { return Expression::Id::BlockId; }
+BinaryenExpressionId BinaryenIfId(void) { return Expression::Id::IfId; }
+BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
+BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
+BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
+BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
+BinaryenExpressionId BinaryenCallImportId(void) { return Expression::Id::CallImportId; }
+BinaryenExpressionId BinaryenCallIndirectId(void) { return Expression::Id::CallIndirectId; }
+BinaryenExpressionId BinaryenGetLocalId(void) { return Expression::Id::GetLocalId; }
+BinaryenExpressionId BinaryenSetLocalId(void) { return Expression::Id::SetLocalId; }
+BinaryenExpressionId BinaryenGetGlobalId(void) { return Expression::Id::GetGlobalId; }
+BinaryenExpressionId BinaryenSetGlobalId(void) { return Expression::Id::SetGlobalId; }
+BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
+BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
+BinaryenExpressionId BinaryenConstId(void) { return Expression::Id::ConstId; }
+BinaryenExpressionId BinaryenUnaryId(void) { return Expression::Id::UnaryId; }
+BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
+BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
+BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
+BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
+BinaryenExpressionId BinaryenHostId(void) { return Expression::Id::HostId; }
+BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
+BinaryenExpressionId BinaryenUnreachableId(void) { return Expression::Id::UnreachableId; }
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void) { return Expression::Id::AtomicCmpxchgId; }
+BinaryenExpressionId BinaryenAtomicRMWId(void) { return Expression::Id::AtomicRMWId; }
+BinaryenExpressionId BinaryenAtomicWaitId(void) { return Expression::Id::AtomicWaitId; }
+BinaryenExpressionId BinaryenAtomicWakeId(void) { return Expression::Id::AtomicWakeId; }
+
 // Modules
 
 BinaryenModuleRef BinaryenModuleCreate(void) {
@@ -123,10 +178,16 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  functionTypes.clear();\n";
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
+    std::cout << "  globals.clear();\n";
+    std::cout << "  imports.clear();\n";
+    std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     functionTypes.clear();
     expressions.clear();
     functions.clear();
+    globals.clear();
+    imports.clear();
+    exports.clear();
     relooperBlocks.clear();
   }
 
@@ -170,6 +231,54 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   }
 
   return ret;
+}
+
+BinaryenFunctionTypeRef BinaryenGetFunctionTypeAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunctionTypeAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (index < wasm->functionTypes.size()) {
+    return wasm->functionTypes.at(index).get();
+  }
+  return NULL;
+}
+
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetName(functionTypes[" << functionTypes[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->name.c_str();
+}
+
+void BinaryenFunctionTypeSetName(BinaryenFunctionTypeRef ftype, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeSetName(functionTypes[" << functionTypes[ftype] << "], \"" << newName << "\");\n";
+  }
+
+  ((FunctionType*)ftype)->name.set(newName);
+}
+
+BinaryenType BinaryenFunctionTypeGetParamAt(BinaryenFunctionTypeRef ftype, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetParamAt(functionTypes[" << functionTypes[ftype] << "], " << index << ");\n";
+  }
+
+  auto ft = (FunctionType*)ftype;
+  if (index < ft->params.size()) {
+    return ft->params.at(index);
+  }
+  return uint32_t(-1);
+}
+
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetResult(functionTypes[" << functionTypes[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->result;
 }
 
 BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Literal(x)); }
@@ -696,6 +805,22 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   return static_cast<Expression*>(ret);
 }
 
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  return ((Expression*)expr)->_id;
+}
+
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetType(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  return ((Expression*)expr)->type;
+}
+
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrint(expressions[" << expressions[expr] << "]);\n";
@@ -703,6 +828,66 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
   WasmPrinter::printExpression((Expression*)expr, std::cout);
   std::cout << '\n';
+}
+
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>() && expression->type == i32);
+  return static_cast<Const*>(expression)->value.geti32();
+}
+
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>() && expression->type == i64);
+  return static_cast<Const*>(expression)->value.geti64();
+}
+
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64Low(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() & 0xffffffff);
+}
+
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64High(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
+}
+
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf32();
+}
+
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf64();
 }
 
 // Functions
@@ -746,11 +931,71 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   return ret;
 }
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
+BinaryenFunctionRef BinaryenGetFunctionAt(BinaryenModuleRef module, BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
+    std::cout << "  BinaryenGetFunctionAt(the_module, " << index << ");\n";
   }
 
+  auto* wasm = (Module*)module;
+  if (index < wasm->functions.size()) {
+    return wasm->functions.at(index).get();
+  }
+  return NULL;
+}
+
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetName(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->name.c_str();
+}
+
+void BinaryenFunctionSetName(BinaryenFunctionRef func, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetName(functions[" << functions[func] << "], \"" << newName << "\");\n";
+  }
+
+  ((Function*)func)->name.set(newName);
+}
+
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->body;
+}
+
+void BinaryenFunctionSetBody(BinaryenFunctionRef func, BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetBody(functions[" << functions[func] << "], expressions[" << expressions[expr] << ");\n";
+  }
+
+  ((Function*)func)->body = (Expression*)expr;
+}
+
+BinaryenType BinaryenFunctionGetParamAt(BinaryenFunctionRef func, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetParamAt(functions[" << functions[func] << "]);\n";
+  }
+
+  Function* fn = (Function*)func;
+  if (index < fn->params.size()) {
+    return fn->params.at(index);
+  }
+  return uint32_t(-1);
+}
+
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetResult(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->result;
+}
+
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
   auto* wasm = (Module*)module;
   auto* ret = new Global();
   ret->name = name;
@@ -758,16 +1003,94 @@ BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   ret->mutable_ = !!mutable_;
   ret->init = (Expression*)init;
   wasm->addGlobal(ret);
+
+  if (tracing) {
+    auto id = noteGlobal(ret);
+    std::cout << "  globals[" << id << "] = BinaryenAddGlobal(the_module, \"" << name << "\", types[" << type << "], " << mutable_ << ", " << expressions[init] << ");\n";
+  }
+
   return ret;
+}
+
+BinaryenGlobalRef BinaryenGetGlobalAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetGlobalAt(the_module, " << index << ");";
+  }
+
+  auto* wasm = (Module*)module;
+  if (index < wasm->globals.size()) {
+    return wasm->globals.at(index).get();
+  }
+  return NULL;
+}
+
+const char* BinaryenGlobalGetName(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetName(globals[" << globals[global] << "]);";
+  }
+
+  return ((Global*)global)->name.c_str();
+}
+
+void BinaryenGlobalSetName(BinaryenGlobalRef global, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetName(globals[" << globals[global] << "], \"" << newName << "\");";
+  }
+
+  ((Global*)global)->name.set(newName);
+}
+
+BinaryenType BinaryenGlobalGetType(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetType(globals[" << globals[global] << "]);";
+  }
+
+  return ((Global*)global)->type;
+}
+
+void BinaryenGlobalSetType(BinaryenGlobalRef global, BinaryenType type) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetType(globals[" << globals[global] << "], types[" << type << "]);";
+  }
+
+  ((Global*)global)->type = WasmType(type);
+}
+
+int BinaryenGlobalGetMutable(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetMutable(globals[" << globals[global] << "]);";
+  }
+
+  return ((Global*)global)->mutable_ ? 1 : 0;
+}
+
+void BinaryenGlobalSetMutable(BinaryenGlobalRef global, int mutable_) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetMutable(globals[" << globals[global] << "], " << mutable_ << ");";
+  }
+
+  ((Global*)global)->mutable_ = mutable_ ? true : false;
+}
+
+BinaryenExpressionRef BinaryenGlobalGetInit(BinaryenGlobalRef global) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalGetInit(globals[" << globals[global] << "]);";
+  }
+
+  return ((Global*)global)->init;
+}
+
+void BinaryenGlobalSetInit(BinaryenGlobalRef global, BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenGlobalSetInit(globals[" << globals[global] << "], expressions[" << expr << "]);";
+  }
+
+  ((Global*)global)->init = (Expression*)expr;
 }
 
 // Imports
 
 BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type) {
-  if (tracing) {
-    std::cout << "  BinaryenAddImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", functionTypes[" << functionTypes[type] << "]);\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Import();
   ret->name = internalName;
@@ -776,40 +1099,152 @@ BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* intern
   ret->functionType = ((FunctionType*)type)->name;
   ret->kind = ExternalKind::Function;
   wasm->addImport(ret);
+
+  if (tracing) {
+    auto id = noteImport(ret);
+    std::cout << "  imports[" << id << "] = BinaryenAddImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", functionTypes[" << functionTypes[type] << "]);\n";
+  }
+
   return ret;
 }
 
-void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName) {
+void BinaryenRemoveImportByName(BinaryenModuleRef module, const char* internalName) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveImport(the_module, \"" << internalName << "\");\n";
+    std::cout << "  BinaryenRemoveImportByName(the_module, \"" << internalName << "\");\n";
   }
 
   auto* wasm = (Module*)module;
   wasm->removeImport(internalName);
 }
 
+BinaryenImportRef BinaryenGetImportAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenGetImportAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (index < wasm->imports.size()) {
+    return wasm->imports.at(index).get();
+  }
+  return NULL;
+}
+
+const char* BinaryenImportGetName(BinaryenImportRef import) {
+  if (tracing) {
+    std::cout << "  BinaryenImportGetName(imports[" << imports[import] << "]);\n";
+  }
+
+  return ((Import*)import)->name.c_str();
+}
+
+void BinaryenImportSetName(BinaryenImportRef import, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenImportSetName(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
+
+  ((Import*)import)->name.set(newName);
+}
+
+const char* BinaryenImportGetModule(BinaryenImportRef import) {
+  if (tracing) {
+    std::cout << "  BinaryenImportGetModule(imports[" << imports[import] << "]);\n";
+  }
+
+  return ((Import*)import)->module.c_str();
+}
+
+void BinaryenImportSetModule(BinaryenImportRef import, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenImportSetModule(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
+
+  ((Import*)import)->module.set(newName);
+}
+
+const char* BinaryenImportGetBase(BinaryenImportRef import) {
+  if (tracing) {
+    std::cout << "  BinaryenImportGetBase(imports[" << imports[import] << "]);\n";
+  }
+
+  return ((Import*)import)->base.c_str();
+}
+
+void BinaryenImportSetBase(BinaryenImportRef import, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenImportSetBase(imports[" << imports[import] << "], \"" << newName << "\");\n";
+  }
+
+  ((Import*)import)->base.set(newName);
+}
+
 // Exports
 
 BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName) {
-  if (tracing) {
-    std::cout << "  BinaryenAddExport(the_module, \"" << internalName << "\", \"" << externalName << "\");\n";
-  }
-
   auto* wasm = (Module*)module;
   auto* ret = new Export();
   ret->value = internalName;
   ret->name = externalName;
   wasm->addExport(ret);
+
+  if (tracing) {
+    auto id = noteExport(ret);
+    std::cout << "  exports[" << id << "] = BinaryenAddExport(the_module, \"" << internalName << "\", \"" << externalName << "\");\n";
+  }
+
   return ret;
 }
 
-void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
+BinaryenExportRef BinaryenGetExportAt(BinaryenModuleRef module, BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenRemoveExport(the_module, \"" << externalName << "\");\n";
+    std::cout << "  BinaryenGetExportAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (index < wasm->exports.size()) {
+    return wasm->exports.at(index).get();
+  }
+  return NULL;
+}
+
+void BinaryenRemoveExportByName(BinaryenModuleRef module, const char* externalName) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveExportByName(the_module, \"" << externalName << "\");\n";
   }
 
   auto* wasm = (Module*)module;
   wasm->removeExport(externalName);
+}
+
+const char* BinaryenExportGetValue(BinaryenExportRef export_) {
+  if (tracing) {
+    std::cout << "  BinaryenExportGetValue(exports[" << exports[export_] << "]);\n";
+  }
+
+  return ((Export*)export_)->value.c_str();
+}
+
+void BinaryenExportSetValue(BinaryenExportRef export_, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenExportSetValue(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+  }
+
+  ((Export*)export_)->value.set(newName);
+}
+
+const char* BinaryenExportGetName(BinaryenExportRef export_) {
+  if (tracing) {
+    std::cout << "  BinaryenExportGetName(exports[" << exports[export_] << "]);\n";
+  }
+
+  return ((Export*)export_)->name.c_str();
+}
+
+void BinaryenExportSetName(BinaryenExportRef export_, const char* newName) {
+  if (tracing) {
+    std::cout << "  BinaryenExportSetName(exports[" << exports[export_] << "], \"" << newName << "\");\n";
+  }
+
+  ((Export*)export_)->name.set(newName);
 }
 
 // Function table. One per module
@@ -892,6 +1327,72 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     wasm->memory.segments.emplace_back((Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
   }
+}
+
+void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryImported(the_module, \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+  wasm->memory.imported = true;
+  auto memoryImport = make_unique<Import>();
+  memoryImport->module = externalModuleName;
+  memoryImport->base = externalBaseName;
+  memoryImport->name = Name::fromInt(0);
+  memoryImport->kind = ExternalKind::Memory;
+  wasm->addImport(memoryImport.release());
+}
+
+int BinaryenHasMemory(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenHasMemory(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->memory.exists ? 1 : 0;
+}
+
+BinaryenMemorySegmentRef BinaryenGetMemorySegmentAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "    BinaryenGetMemorySegmentAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+
+  if (index < wasm->memory.segments.size()) {
+    return &wasm->memory.segments.at(index);
+  }
+  return NULL;
+}
+
+BinaryenExpressionRef BinaryenMemorySegmentGetOffset(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetOffset(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->offset;
+}
+
+size_t BinaryenMemorySegmentGetDataSize(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetDataSize(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->data.size();
+}
+
+const char* BinaryenMemorySegmentGetData(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetData(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->data.data();
 }
 
 // Start function. One per module
@@ -1147,6 +1648,9 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
+                 "  std::map<size_t, BinaryenGlobalRef> globals;\n"
+                 "  std::map<size_t, BinaryenImportRef> imports;\n"
+                 "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
                  "  RelooperRef the_relooper = NULL;\n";
