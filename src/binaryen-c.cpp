@@ -1285,6 +1285,56 @@ void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalMod
   wasm->addImport(memoryImport.release());
 }
 
+int BinaryenHasMemory(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenHasMemory(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->memory.exists ? 1 : 0;
+}
+
+BinaryenMemorySegmentRef BinaryenGetMemorySegmentAt(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "    BinaryenGetMemorySegmentAt(the_module, " << index << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+
+  if (index < wasm->memory.segments.size()) {
+    return &wasm->memory.segments.at(index);
+  }
+  return NULL;
+}
+
+BinaryenExpressionRef BinaryenMemorySegmentGetOffset(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetOffset(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->offset;
+}
+
+size_t BinaryenMemorySegmentGetDataSize(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetDataSize(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->data.size();
+}
+
+const char* BinaryenMemorySegmentGetData(BinaryenMemorySegmentRef segment) {
+  // if (tracing) {
+  //   std::cout << "    BinaryenMemorySegmentGetData(memorySegments[" << memorySegments[segment] << "]);\n";
+  // }
+
+  auto* seg = (Memory::Segment*)segment;
+  return seg->data.data();
+}
+
 // Start function. One per module
 
 void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start) {

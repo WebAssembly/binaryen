@@ -471,11 +471,23 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
 // Memory. One per module
 
+typedef void* BinaryenMemorySegmentRef;
+
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
 // exportName can be NULL
 void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
 // Makes the current memory an import. Memory must have been set through `BinaryenSetMemory` previously.
 void BinaryenSetMemoryImported(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName);
+// Tests if the module has a memory (`1`) or not (`0`).
+int BinaryenHasMemory(BinaryenModuleRef module);
+// Gets the memory segment at the specified index. Returns `NULL` when there are no more memory segments.
+BinaryenMemorySegmentRef BinaryenGetMemorySegmentAt(BinaryenModuleRef module, BinaryenIndex index);
+// Gets the offset expression of the specified memory segment.
+BinaryenExpressionRef BinaryenMemorySegmentGetOffset(BinaryenMemorySegmentRef segment);
+// Gets the size of the data of the specified memory segment.
+size_t BinaryenMemorySegmentGetDataSize(BinaryenMemorySegmentRef segment);
+// Gets a pointer to the data of the specified memory segment.
+const char* BinaryenMemorySegmentGetData(BinaryenMemorySegmentRef segment);
 
 // Start function. One per module
 
