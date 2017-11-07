@@ -365,12 +365,24 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
-// Print an expression to stdout. Useful for debugging.
-void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 // Gets the id (kind) of the specified expression.
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 // Gets the type of the specified expression.
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
+// Prints an expression to stdout. Useful for debugging.
+void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+// Gets the 32-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Gets the 64-bit integer value of the specified known-to-be-constant expression.
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Gets the low 32-bits of a 64-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Gets the high 32-bits of a 64-bit integer value of the specified known-to-be-constant expression.
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Gets the 32-bit float value of the specified known-to-be-constant expression.
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Gets the 64-bit float value of the specified known-to-be-constant expression.
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
 
 // Functions
 
