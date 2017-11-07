@@ -43,6 +43,36 @@ function test_types() {
   console.log("BinaryenFloat64: " + Binaryen.f64);
 }
 
+function test_ids() {
+  console.log("BinaryenInvalidId: " + Binaryen.InvalidId);
+  console.log("BinaryenBlockId: " + Binaryen.BlockId);
+  console.log("BinaryenIfId: " + Binaryen.IfId);
+  console.log("BinaryenLoopId: " + Binaryen.LoopId);
+  console.log("BinaryenBreakId: " + Binaryen.BreakId);
+  console.log("BinaryenSwitchId: " + Binaryen.SwitchId);
+  console.log("BinaryenCallId: " + Binaryen.CallId);
+  console.log("BinaryenCallImportId: " + Binaryen.CallImportId);
+  console.log("BinaryenCallIndirectId: " + Binaryen.CallIndirectId);
+  console.log("BinaryenGetLocalId: " + Binaryen.GetLocalId);
+  console.log("BinaryenSetLocalId: " + Binaryen.SetLocalId);
+  console.log("BinaryenGetGlobalId: " + Binaryen.GetGlobalId);
+  console.log("BinaryenSetGlobalId: " + Binaryen.SetGlobalId);
+  console.log("BinaryenLoadId: " + Binaryen.LoadId);
+  console.log("BinaryenStoreId: " + Binaryen.StoreId);
+  console.log("BinaryenConstId: " + Binaryen.ConstId);
+  console.log("BinaryenUnaryId: " + Binaryen.UnaryId);
+  console.log("BinaryenBinaryId: " + Binaryen.BinaryId);
+  console.log("BinaryenSelectId: " + Binaryen.SelectId);
+  console.log("BinaryenReturnId: " + Binaryen.ReturnId);
+  console.log("BinaryenHostId: " + Binaryen.HostId);
+  console.log("BinaryenNopId: " + Binaryen.NopId);
+  console.log("BinaryenUnreachableId: " + Binaryen.UnreachableId);
+  console.log("BinaryenAtomicCmpxchgId: " + Binaryen.AtomicCmpxchgId);
+  console.log("BinaryenAtomicRMWId: " + Binaryen.AtomicRMWId);
+  console.log("BinaryenAtomicWaitId: " + Binaryen.AtomicWaitId);
+  console.log("BinaryenAtomicWakeId: " + Binaryen.AtomicWakeId);
+}
+
 function test_core() {
 
   // Module creation
@@ -178,6 +208,9 @@ function test_core() {
     module.unreachable(),
   ];
 
+  // Test expression utility
+  console.log("ExpressionGetId=" + module.getExpressionId(valueList[3]));
+  console.log("ExpressionGetType=" + module.getExpressionType(valueList[3]));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
 
   // Make the main body of the function. and one block with a return value, one without
@@ -524,6 +557,7 @@ function test_parsing() {
 
 function main() {
   test_types();
+  test_ids();
   test_core();
   test_relooper();
   test_binaries();
