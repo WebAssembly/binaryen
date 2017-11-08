@@ -886,12 +886,6 @@
     this['autoDrop'] = function() {
       return Module['_BinaryenModuleAutoDrop'](module);
     };
-    this['getExpressionId'] = function(expr) {
-      return Module['_BinaryenExpressionGetId'](expr);
-    };
-    this['getExpressionType'] = function(expr) {
-      return Module['_BinaryenExpressionGetType'](expr);
-    };
 
     // TODO: fix this hard-wired limit
     var MAX = 1024*1024;
@@ -927,6 +921,14 @@
     this['renderAndDispose'] = function(entry, labelHelper, module) {
       return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module['ptr']);
     };
+  };
+
+  Module['getExpressionId'] = function(expr) {
+    return Module['_BinaryenExpressionGetId'](expr);
+  };
+
+  Module['getExpressionType'] = function(expr) {
+    return Module['_BinaryenExpressionGetType'](expr);
   };
 
   // emit text of an expression or a module

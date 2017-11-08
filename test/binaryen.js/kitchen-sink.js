@@ -209,8 +209,8 @@ function test_core() {
   ];
 
   // Test expression utility
-  console.log("ExpressionGetId=" + module.getExpressionId(valueList[3]));
-  console.log("ExpressionGetType=" + module.getExpressionType(valueList[3]));
+  console.log("getExpressionId=" + Binaryen.getExpressionId(valueList[3]));
+  console.log("getExpressionType=" + Binaryen.getExpressionType(valueList[3]));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
 
   // Make the main body of the function. and one block with a return value, one without

@@ -31,8 +31,8 @@ BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 25
 BinaryenAtomicWaitId: 26
 BinaryenAtomicWakeId: 27
-ExpressionGetId=16
-ExpressionGetType=3
+getExpressionId=16
+getExpressionType=3
 (f32.neg
  (f32.const -33.61199951171875)
 )
