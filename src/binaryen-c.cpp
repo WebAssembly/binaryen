@@ -308,6 +308,12 @@ BinaryenOp BinaryenPageSize(void) { return PageSize; }
 BinaryenOp BinaryenCurrentMemory(void) { return CurrentMemory; }
 BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
 BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
+BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
+BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }
+BinaryenOp BinaryenAtomicRMWAnd(void) { return AtomicRMWOp::And; }
+BinaryenOp BinaryenAtomicRMWOr(void) { return AtomicRMWOp::Or; }
+BinaryenOp BinaryenAtomicRMWXor(void) { return AtomicRMWOp::Xor; }
+BinaryenOp BinaryenAtomicRMWXchg(void) { return AtomicRMWOp::Xchg; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
@@ -659,7 +665,7 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
     std::cout << "  expressions[" << id << "] = BinaryenReturn(the_module, expressions[" << expressions[value] << "]);\n";
   }
 
- return static_cast<Expression*>(ret);
+  return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands) {
   if (tracing) {
@@ -691,6 +697,16 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   if (tracing) {
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenUnreachable(the_module);\n";
+  }
+
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
+  auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenAtomicRMW(the_module, " << op << ", " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
   }
 
   return static_cast<Expression*>(ret);

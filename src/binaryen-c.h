@@ -262,6 +262,12 @@ BinaryenOp BinaryenPageSize(void);
 BinaryenOp BinaryenCurrentMemory(void);
 BinaryenOp BinaryenGrowMemory(void);
 BinaryenOp BinaryenHasFeature(void);
+BinaryenOp BinaryenAtomicRMWAdd(void);
+BinaryenOp BinaryenAtomicRMWSub(void);
+BinaryenOp BinaryenAtomicRMWAnd(void);
+BinaryenOp BinaryenAtomicRMWOr(void);
+BinaryenOp BinaryenAtomicRMWXor(void);
+BinaryenOp BinaryenAtomicRMWXchg(void);
 
 typedef void* BinaryenExpressionRef;
 
@@ -321,6 +327,7 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
+BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
 
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
