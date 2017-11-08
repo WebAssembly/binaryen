@@ -840,7 +840,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex max, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -872,7 +872,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     }
     if (numSegments == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
-    std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
+    std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << max << ", ";
     traceNameOrNULL(exportName);
     std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ");\n";
     std::cout << "  }\n";
@@ -880,7 +880,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
 
   auto* wasm = (Module*)module;
   wasm->memory.initial = initial;
-  wasm->memory.max = maximum;
+  wasm->memory.max = max;
   wasm->memory.exists = true;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
@@ -891,6 +891,173 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
     wasm->memory.segments.emplace_back((Expression*)segmentOffsets[i], segments[i], segmentSizes[i]);
+  }
+}
+BinaryenIndex BinaryenGetMemoryInitial(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenGetMemoryInitial(the_module);\n";
+  }
+
+  return ((Module*)module)->memory.initial;
+}
+void BinaryenSetMemoryInitial(BinaryenModuleRef module, BinaryenIndex initial) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryInitial(the_module, " << initial << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->memory.initial = initial;
+}
+BinaryenIndex BinaryenGetMemoryMax(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenGetMemoryMax(the_module);\n";
+  }
+
+  return ((Module*)module)->memory.max;
+}
+void BinaryenSetMemoryMax(BinaryenModuleRef module, BinaryenIndex max) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryMax(the_module, " << max << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->memory.max = max;
+}
+void BinaryenRemoveMemory(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenRemoveMemory(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (!wasm->memory.exists)
+    return;
+
+  Name* importKey = NULL;
+  for (auto it = wasm->imports.begin(); it != wasm->imports.end(); ++it) {
+    auto import = it->get();
+    if (import->kind == ExternalKind::Memory) {
+      importKey = &import->name;
+      break;
+    }
+  }
+  if (importKey) wasm->removeImport(*importKey);
+  wasm->memory.imported = false;
+
+  Name* exportKey = NULL;
+  for (auto it = wasm->exports.begin(); it != wasm->exports.end(); ++it) {
+    auto export_ = it->get();
+    if (export_->kind == ExternalKind::Memory) {
+      exportKey = &export_->name;
+      break;
+    }
+  }
+  if (exportKey) wasm->removeExport(*exportKey);
+
+  wasm->memory.segments.clear();
+  wasm->memory.exists = false;
+}
+int BinaryenHasMemory(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenHasMemory(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->memory.exists ? 1 : 0;
+}
+int BinaryenHasMemoryExport(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenHasMemoryExport(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.exists) {
+    for (auto it = wasm->exports.begin(); it != wasm->exports.end(); ++it) {
+      auto* export_ = it->get();
+      if (export_->kind == ExternalKind::Memory) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+void BinaryenSetMemoryExport(BinaryenModuleRef module, const char* exportName) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryExport(the_module, ";
+    traceNameOrNULL(exportName);
+    std::cout << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+
+  Name* exportKey = NULL;
+  for (auto it = wasm->exports.begin(); it != wasm->exports.end(); ++it) {
+    auto* export_ = it->get();
+    if (export_->kind == ExternalKind::Memory) {
+      exportKey = &export_->name;
+      break;
+    }
+  }
+  if (exportKey) wasm->removeExport(*exportKey);
+
+  if (exportName != NULL) {
+    auto memoryExport = make_unique<Export>();
+    memoryExport->name = exportName;
+    memoryExport->value = Name::fromInt(0);
+    memoryExport->kind = ExternalKind::Memory;
+    wasm->addExport(memoryExport.release());
+  }
+}
+int BinaryenHasMemoryImport(BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "    BinaryenHasMemoryImport(the_module);\n";
+  }
+
+  auto* wasm = (Module*)module;
+  if (wasm->memory.exists) {
+    for (auto it = wasm->imports.begin(); it != wasm->imports.end(); ++it) {
+      auto* import = it->get();
+      if (import->kind == ExternalKind::Memory) {
+        assert(wasm->memory.imported);
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+void BinaryenSetMemoryImport(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName) {
+  if (tracing) {
+    std::cout << "    BinaryenSetMemoryImport(the_module, ";
+    traceNameOrNULL(externalModuleName);
+    std::cout << ", ";
+    traceNameOrNULL(externalBaseName);
+    std::cout << ");\n";
+  }
+  
+  auto* wasm = (Module*)module;
+  assert(wasm->memory.exists);
+
+  Name* importKey = NULL;
+  for (auto it = wasm->imports.begin(); it != wasm->imports.end(); ++it) {
+    auto* import = it->get();
+    if (import->kind == ExternalKind::Memory) {
+      importKey = &import->name;
+      break;
+    }
+  }
+  if (importKey) wasm->removeImport(*importKey);
+
+  if (externalModuleName == NULL && externalBaseName == NULL) {
+    wasm->memory.imported = false;
+  } else {
+    assert(externalModuleName && externalBaseName);
+    auto memoryImport = make_unique<Import>();
+    memoryImport->module = externalModuleName;
+    memoryImport->base = externalBaseName;
+    memoryImport->name = Name::fromInt(0);
+    memoryImport->kind = ExternalKind::Memory;
+    wasm->addImport(memoryImport.release());
+    wasm->memory.imported = true;
   }
 }
 

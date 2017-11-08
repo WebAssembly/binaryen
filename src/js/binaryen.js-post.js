@@ -798,11 +798,11 @@
         return Module['_BinaryenSetFunctionTable'](module, i32sToStack(funcs), funcs.length);
       });
     };
-    this['setMemory'] = function(initial, maximum, exportName, segments) {
+    this['setMemory'] = function(initial, max, exportName, segments) {
       // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
       return preserveStack(function() {
         return Module['_BinaryenSetMemory'](
-          module, initial, maximum, strToStack(exportName),
+          module, initial, max, strToStack(exportName),
           i32sToStack(
             segments.map(function(segment) {
               return allocate(segment.data, 'i8', ALLOC_STACK);
@@ -820,6 +820,40 @@
           ),
           segments.length
         );
+      });
+    };
+    this['getMemoryInitial'] = function() {
+      return Module['_BinaryenGetMemoryInitial'](module);
+    }
+    this['setMemoryInitial'] = function(initial) {
+      return Module['_BinaryenSetMemoryInitial'](module, initial);
+    };
+    this['getMemoryMax'] = function() {
+      return Module['_BinaryenGetMemoryMax'](module);
+    }
+    this['setMemoryMax'] = function(max) {
+      return Module['_BinaryenSetMemoryMax'](module, max);
+    };
+    this['removeMemory'] = function() {
+      return Module['_BinaryenRemoveMemory'](module);
+    };
+    this['hasMemory'] = function() {
+      return Boolean(Module['_BinaryenHasMemory'](module));
+    };
+    this['hasMemoryExport'] = function() {
+      return Boolean(Module['_BinaryenHasMemoryExport'](module));
+    };
+    this['setMemoryExport'] = function(exportName) {
+      return preserveStack(function() {
+        return Module['_BinaryenSetMemoryExport'](module, strToStack(exportName));
+      });
+    };
+    this['hasMemoryImport'] = function() {
+      return Boolean(Module['_BinaryenHasMemoryImport'](module));
+    };
+    this['setMemoryImport'] = function(externalModuleName, externalBaseName) {
+      return preserveStack(function() {
+        return Module['_BinaryenSetMemoryImport'](module, strToStack(externalModuleName), strToStack(externalBaseName));
       });
     };
     this['setStart'] = function(start) {
