@@ -61,9 +61,9 @@ static void ensureSize(T& what, Index size) {
 // A mergeable unit. This class contains basic logic to prepare for merging
 // of two modules.
 struct Mergeable {
-  Mergeable(Module& wasm) : wasm(wasm) {
+  Mergeable(Module& wasm, bool dylinkPadding) : wasm(wasm) {
     // scan the module
-    findSizes();
+    findSizes(dylinkPadding);
     findImports();
     standardizeSegments();
   }
@@ -88,7 +88,7 @@ struct Mergeable {
 
   // find the memory and table sizes. if there are relocatable sections for them,
   // that is the base size, and a dylink section may increase things further
-  void findSizes() {
+  void findSizes(bool dylinkPadding) {
     totalMemorySize = 0;
     totalTableSize = 0;
     for (auto& segment : wasm.memory.segments) {
@@ -105,12 +105,14 @@ struct Mergeable {
         break;
       }
     }
-    for (auto& section : wasm.userSections) {
-      if (section.name == "dylink") {
-        WasmBinaryBuilder builder(wasm, section.data, false);
-        totalMemorySize = std::max(totalMemorySize, builder.getU32LEB());
-        totalTableSize = std::max(totalTableSize, builder.getU32LEB());
-        break; // there can be only one
+    if (dylinkPadding == true) {
+      for (auto& section : wasm.userSections) {
+        if (section.name == "dylink") {
+          WasmBinaryBuilder builder(wasm, section.data, false);
+          totalMemorySize = std::max(totalMemorySize, builder.getU32LEB());
+          totalTableSize = std::max(totalTableSize, builder.getU32LEB());
+          break; // there can be only one
+        }
       }
     }
     // align them
@@ -222,7 +224,7 @@ struct Mergeable {
 // logic to update it for the new data, namely, when an import is provided
 // by the other merged unit, we resolve to access that value directly.
 struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergeable>>, public Mergeable {
-  OutputMergeable(Module& wasm) : Mergeable(wasm) {}
+  OutputMergeable(Module& wasm, bool dylinkPadding) : Mergeable(wasm, dylinkPadding) {}
 
   void visitCallImport(CallImport* curr) {
     auto iter = implementedFunctionImports.find(curr->target);
@@ -256,7 +258,7 @@ struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergea
 // This adds logic to disambiguate its names from the other, and to
 // perform all other merging operations.
 struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<InputMergeable>>, public Mergeable {
-  InputMergeable(Module& wasm, OutputMergeable& outputMergeable) : Mergeable(wasm), outputMergeable(outputMergeable) {}
+  InputMergeable(Module& wasm, OutputMergeable& outputMergeable, bool dylinkPadding) : Mergeable(wasm, dylinkPadding), outputMergeable(outputMergeable) {}
 
   // The unit we are being merged into
   OutputMergeable& outputMergeable;
@@ -494,9 +496,9 @@ private:
 };
 
 // Finalize the memory/table bases, assinging concrete values into them
-void finalizeBases(Module& wasm, Index memory, Index table) {
+void finalizeBases(Module& wasm, Index memory, Index table, bool dylinkPadding) {
   struct FinalizableMergeable : public Mergeable, public PostWalker<FinalizableMergeable, Visitor<FinalizableMergeable>> {
-    FinalizableMergeable(Module& wasm, Index memory, Index table) : Mergeable(wasm), memory(memory), table(table) {
+    FinalizableMergeable(Module& wasm, Index memory, Index table, bool dylinkPadding) : Mergeable(wasm, dylinkPadding), memory(memory), table(table) {
       walkModule(&wasm);
       // ensure memory and table sizes suffice, after finalization we have absolute locations now
       for (auto& segment : wasm.memory.segments) {
@@ -522,7 +524,7 @@ void finalizeBases(Module& wasm, Index memory, Index table) {
       replaceCurrent(Builder(*getModule()).makeConst(Literal(int32_t(value))));
     }
   };
-  FinalizableMergeable mergeable(wasm, memory, table);
+  FinalizableMergeable mergeable(wasm, memory, table, dylinkPadding);
 }
 
 //
@@ -535,6 +537,7 @@ int main(int argc, const char* argv[]) {
   Index finalizeMemoryBase = Index(-1),
         finalizeTableBase = Index(-1);
   bool optimize = false;
+  bool dylinkPadding = true;
   bool verbose = false;
 
   Options options("wasm-merge", "Merge wasm files");
@@ -562,6 +565,11 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
              optimize = true;
+           })
+      .add("--no-dylink-padding", "-ndp", "Skip padding the merged file with null bytes based on the memorysize specified in the dylink section.",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             dylinkPadding = false;
            })
       .add("--verbose", "-v", "Verbose output",
            Options::Arguments::Zero,
@@ -597,8 +605,8 @@ int main(int argc, const char* argv[]) {
         Fatal() << "error in parsing input";
       }
       // perform the merge
-      OutputMergeable outputMergeable(output);
-      InputMergeable inputMergeable(*input, outputMergeable);
+      OutputMergeable outputMergeable(output, dylinkPadding);
+      InputMergeable inputMergeable(*input, outputMergeable, dylinkPadding);
       inputMergeable.merge();
       // retain the linked in module as we may depend on parts of it
       otherModules.push_back(std::unique_ptr<Module>(input.release()));
@@ -613,7 +621,7 @@ int main(int argc, const char* argv[]) {
   }
 
   if (finalizeMemoryBase != Index(-1) || finalizeTableBase != Index(-1)) {
-    finalizeBases(output, finalizeMemoryBase, finalizeTableBase);
+    finalizeBases(output, finalizeMemoryBase, finalizeTableBase, dylinkPadding);
   }
 
   if (optimize) {
