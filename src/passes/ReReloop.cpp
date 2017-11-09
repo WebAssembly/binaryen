@@ -345,6 +345,18 @@ struct ReReloop final : public Pass {
       auto temp = builder->addVar(function, i32);
       CFG::RelooperBuilder builder(*module, temp);
       function->body = relooper.Render(builder);
+      // if the function has a result, and the relooper emitted
+      // something that seems like it flows out without a value
+      // (but that path is never reached; it just has a br to it
+      // because of the relooper's boilerplate switch-handling
+      // code, for example, which could be optimized out later
+      // but isn't yet), then make sure it has a proper type
+      if (function->result != none && function->body->type == none) {
+        function->body = builder.makeSequence(
+          function->body,
+          builder.makeUnreachable()
+        );
+      }
     }
     // TODO: should this be in the relooper itself?
     ReFinalize().walk(function->body);
