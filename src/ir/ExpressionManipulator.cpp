@@ -38,16 +38,14 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     }
 
     Expression* visitBlock(Block *curr) {
-      auto* ret = builder.makeBlock();
+      ExpressionList list(wasm.allocator);
       for (Index i = 0; i < curr->list.size(); i++) {
-        ret->list.push_back(copy(curr->list[i]));
+        list.push_back(copy(curr->list[i]));
       }
-      ret->name = curr->name;
-      ret->finalize(curr->type);
-      return ret;
+      return builder.makeBlock(list, curr->type);
     }
     Expression* visitIf(If *curr) {
-      return builder.makeIf(copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse));
+      return builder.makeIf(copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse), curr->type);
     }
     Expression* visitLoop(Loop *curr) {
       return builder.makeLoop(curr->name, copy(curr->body));

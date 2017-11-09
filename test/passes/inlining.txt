@@ -218,3 +218,21 @@
   )
  )
 )
+(module
+ (type $T (func (param i32)))
+ (type $1 (func))
+ (table 10 anyfunc)
+ (memory $0 0)
+ (func $0 (; 0 ;) (type $1)
+  (block $__inlined_func$1
+   (call_indirect $T
+    (if (result i32)
+     (i32.const 0)
+     (unreachable)
+     (unreachable)
+    )
+    (i32.const 1)
+   )
+  )
+ )
+)

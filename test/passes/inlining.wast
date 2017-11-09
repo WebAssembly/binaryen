@@ -145,4 +145,21 @@
   )
  )
 )
+(module
+ (type $T (func (param i32)))
+ (table 10 anyfunc)
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (call_indirect $T
+   (if (result i32) ;; if copy must preserve the forced type
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
+   )
+   (i32.const 1)
+  )
+ )
+)
 
