@@ -236,3 +236,16 @@
   )
  )
 )
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (func $1 (; 0 ;) (type $0)
+  (block $__inlined_func$0
+   (block $label$1
+    (br_table $label$1 $label$1
+     (i32.const 0)
+    )
+   )
+  )
+ )
+)

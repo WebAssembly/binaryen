@@ -42,7 +42,7 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
       for (Index i = 0; i < curr->list.size(); i++) {
         list.push_back(copy(curr->list[i]));
       }
-      return builder.makeBlock(list, curr->type);
+      return builder.makeBlock(curr->name, list, curr->type);
     }
     Expression* visitIf(If *curr) {
       return builder.makeIf(copy(curr->condition), copy(curr->ifTrue), copy(curr->ifFalse), curr->type);

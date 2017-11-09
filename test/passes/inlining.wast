@@ -162,4 +162,16 @@
   )
  )
 )
+(module
+ (func $0
+  (block $label$1 ;; copy this name
+   (br_table $label$1 $label$1
+    (i32.const 0)
+   )
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
 
