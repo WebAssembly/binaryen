@@ -422,7 +422,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         if (extraShifts == 0) {
           if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
             // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
-            if ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16)) {
+            if (LoadUtils::canBeSigned(load) &&
+                ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
               // if the value falls through, we can't alter the load, as it might be captured in a tee
               if (load->signed_ == true || load == ext) {
                 load->signed_ = true;
