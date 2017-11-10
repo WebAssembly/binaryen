@@ -264,7 +264,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printCallBody(curr);
   }
   void visitCallIndirect(CallIndirect *curr) {
-    printOpening(o, "call_indirect ") << curr->fullType;
+    printOpening(o, "call_indirect (type ") << curr->fullType << ')';
     incIndent();
     for (auto operand : curr->operands) {
       printFullLine(operand);

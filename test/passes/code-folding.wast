@@ -7,7 +7,7 @@
    (if
     (i32.const 1)
     (block $label$3
-     (call_indirect $13
+     (call_indirect (type $13)
       (block $label$4 (result f32) ;; but this type may change dangerously
        (nop) ;; fold this
        (br $label$3)
