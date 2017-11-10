@@ -295,6 +295,12 @@ BinaryenOp BinaryenPageSize(void);
 BinaryenOp BinaryenCurrentMemory(void);
 BinaryenOp BinaryenGrowMemory(void);
 BinaryenOp BinaryenHasFeature(void);
+BinaryenOp BinaryenAtomicRMWAdd(void);
+BinaryenOp BinaryenAtomicRMWSub(void);
+BinaryenOp BinaryenAtomicRMWAnd(void);
+BinaryenOp BinaryenAtomicRMWOr(void);
+BinaryenOp BinaryenAtomicRMWXor(void);
+BinaryenOp BinaryenAtomicRMWXchg(void);
 
 typedef void* BinaryenExpressionRef;
 
@@ -354,6 +360,11 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
+BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
+
 // Gets the id (kind) of the specified expression.
 BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 // Gets the type of the specified expression.
@@ -391,7 +402,9 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Globals
 
-BinaryenImportRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
+typedef void* BinaryenGlobalRef;
+
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
 
 // Function table. One per module
 
