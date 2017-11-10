@@ -204,10 +204,33 @@ function test_core() {
 
   // Memory. One per module
 
+  console.log("before: hasMemory=" + module.hasMemory());
+  console.log("before: hasMemoryImport=" + module.hasMemoryImport());
+  console.log("before: hasMemoryExport=" + module.hasMemoryExport());
   module.setMemory(1, 256, "mem", [{
     offset: module.i32.const(10),
     data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
   }]);
+  console.log("after setMemory: hasMemory=" + module.hasMemory());
+  console.log("after setMemory: hasMemoryImport=" + module.hasMemoryImport());
+  console.log("after setMemory: hasMemoryExport=" + module.hasMemoryExport());
+  console.log("after setMemory: getMemoryInitial=" + module.getMemoryInitial());
+  console.log("after setMemory: getMemoryMax=" + module.getMemoryMax());
+  module.setMemoryInitial(2);
+  module.setMemoryMax(512);
+  console.log("after setMemoryInitial: getMemoryInitial=" + module.getMemoryInitial());
+  console.log("after setMemoryMax: getMemoryMax=" + module.getMemoryMax());
+  module.setMemoryImport("env", "mem");
+  console.log("after setMemoryImport: hasMemoryImport=" + module.hasMemoryImport());
+  module.removeMemory();
+  console.log("after removeMemory: hasMemory=" + module.hasMemory());
+  console.log("after removeMemory: hasMemoryImport=" + module.hasMemoryImport());
+  console.log("after removeMemory: hasMemoryExport=" + module.hasMemoryExport());
+  module.setMemory(1, 256, "mem", [{
+    offset: module.i32.const(10),
+    data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
+  }]);
+  console.log("");
 
   // Start function. One per module
 

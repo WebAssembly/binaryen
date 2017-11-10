@@ -375,9 +375,31 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* fun
 
 // Memory. One per module
 
+// Sets the module's memory.
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
+// initial and max are in pages
 // exportName can be NULL
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex max, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
+// Gets the initial size of the memory, in pages.
+BinaryenIndex BinaryenGetMemoryInitial(BinaryenModuleRef module);
+// Sets the initial size of the memory, in pages.
+void BinaryenSetMemoryInitial(BinaryenModuleRef module, BinaryenIndex initial);
+// Gets the maximum size of the memory, in pages.
+BinaryenIndex BinaryenGetMemoryMax(BinaryenModuleRef module);
+// Sets the maximum size of the memory, in pages.
+void BinaryenSetMemoryMax(BinaryenModuleRef module, BinaryenIndex max);
+// Removes the module's memory.
+void BinaryenRemoveMemory(BinaryenModuleRef module);
+// Tests if the module has an existing memory.
+int BinaryenHasMemory(BinaryenModuleRef module);
+// Tests if the module's memory is exported.
+int BinaryenHasMemoryExport(BinaryenModuleRef module);
+// Sets if the module's memory is exported. Must have a memory. Providing `NULL` as the name removes the export.
+void BinaryenSetMemoryExport(BinaryenModuleRef module, const char* exportName);
+// Tests if the module's memory is imported.
+int BinaryenHasMemoryImport(BinaryenModuleRef module);
+// Sets if the module's memory is imported. Must have a memory. Providing `NULL` for both names removes the import.
+void BinaryenSetMemoryImport(BinaryenModuleRef module, const char* externalModuleName, const char* externalBaseName);
 
 // Start function. One per module
 
