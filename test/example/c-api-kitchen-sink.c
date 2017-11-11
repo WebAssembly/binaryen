@@ -234,6 +234,11 @@ void test_core() {
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };
   BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 1, body);
+  
+  // Globals
+  
+  BinaryenAddGlobal(module, "a-global", BinaryenInt32(), 0, makeInt32(module, 7));
+  BinaryenAddGlobal(module, "a-mutable-global", BinaryenFloat32(), 1, makeFloat32(module, 7.5));
 
   // Imports
 

@@ -794,7 +794,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
   if (tracing) {
-    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", " << type << ", " << mutable_ << ", expressions[" << expressions[init] << "]);\n";
+    std::cout << "  BinaryenAddGlobal(the_module, \"" << name << "\", " << type << ", " << int(mutable_) << ", expressions[" << expressions[init] << "]);\n";
   }
 
   auto* wasm = (Module*)module;
