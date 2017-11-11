@@ -46,7 +46,9 @@ inline std::string getBinaryenRoot() {
 
 // Gets the path to a binaryen binary tool, like wasm-opt
 inline std::string getBinaryenBinaryTool(std::string name) {
-  return getBinaryenRoot() + getPathSeparator() + name;
+  return getBinaryenRoot() + getPathSeparator() +
+         "bin" + getPathSeparator() +
+         name;
 }
 
 } // namespace Path
