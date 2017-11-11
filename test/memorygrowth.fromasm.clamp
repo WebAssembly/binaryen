@@ -8220,7 +8220,7 @@
       )
       (block
        (set_local $4
-        (call_indirect $FUNCSIG$iiii
+        (call_indirect (type $FUNCSIG$iiii)
          (get_local $2)
          (get_local $0)
          (get_local $1)
@@ -8290,7 +8290,7 @@
         )
         (if
          (i32.lt_u
-          (call_indirect $FUNCSIG$iiii
+          (call_indirect (type $FUNCSIG$iiii)
            (get_local $2)
            (get_local $0)
            (get_local $3)
@@ -8763,7 +8763,7 @@
      (set_local $4
       (if (result i32)
        (i32.eq
-        (call_indirect $FUNCSIG$iiii
+        (call_indirect (type $FUNCSIG$iiii)
          (get_local $0)
          (get_local $6)
          (i32.const 1)
@@ -8821,7 +8821,7 @@
    )
    (block
     (drop
-     (call_indirect $FUNCSIG$iiii
+     (call_indirect (type $FUNCSIG$iiii)
       (get_local $0)
       (i32.const 0)
       (i32.const 0)
@@ -8882,7 +8882,7 @@
       )
      )
      (drop
-      (call_indirect $FUNCSIG$iiii
+      (call_indirect (type $FUNCSIG$iiii)
        (get_local $0)
        (i32.sub
         (get_local $2)
@@ -9672,7 +9672,7 @@
   )
  )
  (func $lb (; 31 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-  (call_indirect $FUNCSIG$iiii
+  (call_indirect (type $FUNCSIG$iiii)
    (get_local $1)
    (get_local $2)
    (get_local $3)
@@ -9729,7 +9729,7 @@
   )
  )
  (func $kb (; 35 ;) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect $FUNCSIG$ii
+  (call_indirect (type $FUNCSIG$ii)
    (get_local $1)
    (i32.and
     (get_local $0)
@@ -9750,7 +9750,7 @@
   )
  )
  (func $mb (; 37 ;) (param $0 i32) (param $1 i32)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (get_local $1)
    (i32.add
     (i32.and

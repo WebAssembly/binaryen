@@ -10,7 +10,7 @@
   (func $test1
     (drop (i32.const 0)) ;; no work at all, really
     (call $safe-to-call) ;; safe to call
-    (call_indirect $v (i32.const 0)) ;; safe to call
+    (call_indirect (type $v) (i32.const 0)) ;; safe to call
   )
   (func $test2
     (drop (i32.load (i32.const 12))) ;; a safe load

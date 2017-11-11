@@ -694,12 +694,12 @@
   (drop
    (i32.const 50)
   )
-  (call_indirect $ii
+  (call_indirect (type $ii)
    (i32.const 20)
    (i32.const 40)
    (i32.const 60)
   )
-  (call_indirect $ii
+  (call_indirect (type $ii)
    (unreachable)
    (block (result i32)
     (drop
@@ -717,7 +717,7 @@
   (drop
    (i32.const 31)
   )
-  (call_indirect $ii
+  (call_indirect (type $ii)
    (i32.const 41)
    (unreachable)
    (block (result i32)
@@ -733,7 +733,7 @@
   (drop
    (i32.const 52)
   )
-  (call_indirect $ii
+  (call_indirect (type $ii)
    (i32.const 42)
    (i32.const 62)
    (unreachable)

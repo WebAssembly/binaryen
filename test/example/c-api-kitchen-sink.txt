@@ -466,7 +466,7 @@ BinaryenFloat64: 4
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -541,7 +541,7 @@ BinaryenFloat64: 4
  (type $I (func (result i64)))
  (memory $0 0)
  (func $unreachable-fn (; 0 ;) (type $i) (result i32)
-  (call_indirect $I
+  (call_indirect (type $I)
    (unreachable)
   )
  )
@@ -1881,7 +1881,7 @@ int main() {
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)

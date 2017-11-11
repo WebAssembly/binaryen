@@ -464,12 +464,12 @@
   (table 2 2 anyfunc)
   (elem (i32.const 0)  $erase $other)
   (func $erase (type $T)
-    (call_indirect $T
+    (call_indirect (type $T)
       (i32.const 0)
     )
   )
   (func $other (type $T)
-    (call_indirect $T
+    (call_indirect (type $T)
       (i32.const 0)
     )
   )
@@ -480,12 +480,12 @@
   (table 2 2 anyfunc)
   (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
-    (call_indirect $T
+    (call_indirect (type $T)
       (i32.const 0)
     )
   )
   (func $other (type $T)
-    (call_indirect $T
+    (call_indirect (type $T)
       (i32.const 1)
     )
   )
@@ -497,12 +497,12 @@
   (table 2 2 anyfunc)
   (elem (i32.const 0)  $keep2 $other)
   (func $keep2 (type $T)
-    (call_indirect $T
+    (call_indirect (type $T)
       (i32.const 0)
     )
   )
   (func $other (type $T)
-    (call_indirect $S
+    (call_indirect (type $S)
       (i32.const 0)
     )
   )
