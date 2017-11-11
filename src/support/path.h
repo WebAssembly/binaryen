@@ -30,7 +30,7 @@ namespace Path {
 
 inline std::string getPathSeparator() {
   // TODO: use c++17's path separator
-  //http://en.cppreference.com/w/cpp/experimental/fs/path
+  //       http://en.cppreference.com/w/cpp/experimental/fs/path
 #if defined(WIN32) || defined(_WIN32) 
   return "\\";
 #else
