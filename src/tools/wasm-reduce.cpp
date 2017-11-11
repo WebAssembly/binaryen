@@ -30,6 +30,7 @@
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/path.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ir/literal-utils.h"
@@ -137,7 +138,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
       for (auto shrinking : { false, true }) {
         for (auto pass : passes) {
-          std::string currCommand = "bin/wasm-opt ";
+          std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
           if (shrinking) currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
           if (debugInfo) currCommand += " -g ";
@@ -576,7 +577,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    ProgramResult readWrite(std::string("bin/wasm-opt ") + input + " -o " + test);
+    ProgramResult readWrite(Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
     } else {
