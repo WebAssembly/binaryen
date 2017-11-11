@@ -54,7 +54,6 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // (global) side effects
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
                          // has a defined ordering wrt atomics (e.g. grow_memory)
-  std::set<Name> breakNames; // targets we break to that are outside of this expression
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
@@ -62,6 +61,9 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory || isAtomic; }
   bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
+
+  // check if we break to anything external from ourselves
+  bool hasExternalBreakTargets() { return !breakNames.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
@@ -134,6 +136,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
     return hasAnything();
   }
+
+  std::set<Name> breakNames;
 
   void visitBreak(Break *curr) {
     breakNames.insert(curr->name);

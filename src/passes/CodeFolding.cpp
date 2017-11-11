@@ -483,7 +483,7 @@ private:
       // the very outermost position, so such code cannot be moved
       // TODO: this should not be a problem in *non*-terminating tails,
       //       but double-verify that
-      if (!EffectAnalyzer(getPassOptions(), newItem).breakNames.empty()) {
+      if (EffectAnalyzer(getPassOptions(), newItem).hasExternalBreakTargets()) {
         return true;
       }
       return false;
