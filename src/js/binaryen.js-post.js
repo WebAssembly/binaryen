@@ -29,6 +29,35 @@
   Module['f64'] = Module['_BinaryenFloat64']();
   Module['undefined'] = Module['_BinaryenUndefined']();
 
+  Module['InvalidId'] = Module['_BinaryenInvalidId']();
+  Module['BlockId'] = Module['_BinaryenBlockId']();
+  Module['IfId'] = Module['_BinaryenIfId']();
+  Module['LoopId'] = Module['_BinaryenLoopId']();
+  Module['BreakId'] = Module['_BinaryenBreakId']();
+  Module['SwitchId'] = Module['_BinaryenSwitchId']();
+  Module['CallId'] = Module['_BinaryenCallId']();
+  Module['CallImportId'] = Module['_BinaryenCallImportId']();
+  Module['CallIndirectId'] = Module['_BinaryenCallIndirectId']();
+  Module['GetLocalId'] = Module['_BinaryenGetLocalId']();
+  Module['SetLocalId'] = Module['_BinaryenSetLocalId']();
+  Module['GetGlobalId'] = Module['_BinaryenGetGlobalId']();
+  Module['SetGlobalId'] = Module['_BinaryenSetGlobalId']();
+  Module['LoadId'] = Module['_BinaryenLoadId']();
+  Module['StoreId'] = Module['_BinaryenStoreId']();
+  Module['ConstId'] = Module['_BinaryenConstId']();
+  Module['UnaryId'] = Module['_BinaryenUnaryId']();
+  Module['BinaryId'] = Module['_BinaryenBinaryId']();
+  Module['SelectId'] = Module['_BinaryenSelectId']();
+  Module['DropId'] = Module['_BinaryenDropId']();
+  Module['ReturnId'] = Module['_BinaryenReturnId']();
+  Module['HostId'] = Module['_BinaryenHostId']();
+  Module['NopId'] = Module['_BinaryenNopId']();
+  Module['UnreachableId'] = Module['_BinaryenUnreachableId']();
+  Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
+  Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
+  Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
+  Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
+
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
   Module['PopcntInt32'] = Module['_BinaryenPopcntInt32']();
@@ -892,6 +921,14 @@
     this['renderAndDispose'] = function(entry, labelHelper, module) {
       return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module['ptr']);
     };
+  };
+
+  Module['getExpressionId'] = function(expr) {
+    return Module['_BinaryenExpressionGetId'](expr);
+  };
+
+  Module['getExpressionType'] = function(expr) {
+    return Module['_BinaryenExpressionGetType'](expr);
   };
 
   // emit text of an expression or a module

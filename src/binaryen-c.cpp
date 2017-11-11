@@ -106,6 +106,37 @@ BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
 BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// Expression ids
+
+BinaryenExpressionId BinaryenInvalidId(void) { return Expression::Id::InvalidId; }
+BinaryenExpressionId BinaryenBlockId(void) { return Expression::Id::BlockId; }
+BinaryenExpressionId BinaryenIfId(void) { return Expression::Id::IfId; }
+BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
+BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
+BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
+BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
+BinaryenExpressionId BinaryenCallImportId(void) { return Expression::Id::CallImportId; }
+BinaryenExpressionId BinaryenCallIndirectId(void) { return Expression::Id::CallIndirectId; }
+BinaryenExpressionId BinaryenGetLocalId(void) { return Expression::Id::GetLocalId; }
+BinaryenExpressionId BinaryenSetLocalId(void) { return Expression::Id::SetLocalId; }
+BinaryenExpressionId BinaryenGetGlobalId(void) { return Expression::Id::GetGlobalId; }
+BinaryenExpressionId BinaryenSetGlobalId(void) { return Expression::Id::SetGlobalId; }
+BinaryenExpressionId BinaryenLoadId(void) { return Expression::Id::LoadId; }
+BinaryenExpressionId BinaryenStoreId(void) { return Expression::Id::StoreId; }
+BinaryenExpressionId BinaryenConstId(void) { return Expression::Id::ConstId; }
+BinaryenExpressionId BinaryenUnaryId(void) { return Expression::Id::UnaryId; }
+BinaryenExpressionId BinaryenBinaryId(void) { return Expression::Id::BinaryId; }
+BinaryenExpressionId BinaryenSelectId(void) { return Expression::Id::SelectId; }
+BinaryenExpressionId BinaryenDropId(void) { return Expression::Id::DropId; }
+BinaryenExpressionId BinaryenReturnId(void) { return Expression::Id::ReturnId; }
+BinaryenExpressionId BinaryenHostId(void) { return Expression::Id::HostId; }
+BinaryenExpressionId BinaryenNopId(void) { return Expression::Id::NopId; }
+BinaryenExpressionId BinaryenUnreachableId(void) { return Expression::Id::UnreachableId; }
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void) { return Expression::Id::AtomicCmpxchgId; }
+BinaryenExpressionId BinaryenAtomicRMWId(void) { return Expression::Id::AtomicRMWId; }
+BinaryenExpressionId BinaryenAtomicWaitId(void) { return Expression::Id::AtomicWaitId; }
+BinaryenExpressionId BinaryenAtomicWakeId(void) { return Expression::Id::AtomicWakeId; }
+
 // Modules
 
 BinaryenModuleRef BinaryenModuleCreate(void) {
@@ -742,6 +773,22 @@ BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpre
   return static_cast<Expression*>(ret);
 }
 
+// Expression utility
+
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr] << "]);\n";
+  }
+  
+  return ((Expression*)expr)->_id;
+}
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionGetType(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  return ((Expression*)expr)->type;
+}
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrint(expressions[" << expressions[expr] << "]);\n";
