@@ -104,7 +104,7 @@
      (block $label$C
       (if
        (unreachable)
-       (br_table $label$C $label$C ;; this all looks mergeable, but $label$A is outside
+       (br_table $label$C $label$C ;; this all looks mergeable, and is, B ~~ C
         (unreachable)
        )
       )
