@@ -49,4 +49,61 @@
    (f32.const 0)
   )
  )
+ (func $break-target-outside-of-return-merged-code (; 4 ;) (type $1)
+  (block $label$A
+   (if
+    (unreachable)
+    (block $block
+     (block $block0
+      (block $label$B
+       (if
+        (unreachable)
+        (br_table $label$A $label$B
+         (unreachable)
+        )
+       )
+      )
+      (return)
+     )
+    )
+    (block $block2
+     (block $label$C
+      (if
+       (unreachable)
+       (br_table $label$A $label$C
+        (unreachable)
+       )
+      )
+     )
+     (return)
+    )
+   )
+  )
+ )
+ (func $break-target-inside-all-good (; 5 ;) (type $1)
+  (block $folding-inner0
+   (block $label$A
+    (if
+     (unreachable)
+     (block $block
+      (block $block4
+       (br $folding-inner0)
+      )
+     )
+     (block $block6
+      (br $folding-inner0)
+     )
+    )
+   )
+  )
+  (block $label$B
+   (if
+    (unreachable)
+    (br_table $label$B $label$B
+     (unreachable)
+    )
+   )
+  )
+  (return)
+ )
 )

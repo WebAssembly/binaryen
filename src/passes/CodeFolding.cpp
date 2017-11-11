@@ -61,6 +61,7 @@
 #include "wasm-builder.h"
 #include "ir/utils.h"
 #include "ir/branch-utils.h"
+#include "ir/effects.h"
 #include "ir/label-utils.h"
 
 namespace wasm {
@@ -474,9 +475,18 @@ private:
     };
     // let's see if we can merge deeper than num, to num + 1
     auto next = tails;
-    // remove tails that are too short
+    // remove tails that are too short, or that we hit an item we can't handle
     next.erase(std::remove_if(next.begin(), next.end(), [&](Tail& tail) {
-      return effectiveSize(tail) < num + 1;
+      if (effectiveSize(tail) < num + 1) return true;
+      auto* newItem = getItem(tail, num);
+      // ignore tails that break to outside blocks. we want to move code to
+      // the very outermost position, so such code cannot be moved
+      // TODO: this should not be a problem in *non*-terminating tails,
+      //       but double-verify that
+      if (!EffectAnalyzer(getPassOptions(), newItem).breakNames.empty()) {
+        return true;
+      }
+      return false;
     }), next.end());
     // if we have enough to investigate, do so
     if (next.size() >= 2) {

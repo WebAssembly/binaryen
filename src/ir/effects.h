@@ -54,6 +54,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // (global) side effects
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
                          // has a defined ordering wrt atomics (e.g. grow_memory)
+  std::set<Name> breakNames; // targets we break to that are outside of this expression
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
@@ -133,8 +134,6 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
     return hasAnything();
   }
-
-  std::set<Name> breakNames;
 
   void visitBreak(Break *curr) {
     breakNames.insert(curr->name);
