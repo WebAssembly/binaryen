@@ -9,10 +9,10 @@
  (export "f4" (func $0))
  (func $0 (; 0 ;) (type $0) (result i32)
   (i32.add
-   (call_indirect $0
+   (call_indirect (type $0)
     (i32.const 3)
    )
-   (call_indirect $0
+   (call_indirect (type $0)
     (i32.const 0)
    )
   )

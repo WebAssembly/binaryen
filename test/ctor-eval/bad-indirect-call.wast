@@ -6,7 +6,7 @@
   (elem (i32.const 0) $call-indirect)
   (export "test1" $test1)
   (func $test1
-    (call_indirect $v (i32.const 1)) ;; unsafe to call, out of range
+    (call_indirect (type $v) (i32.const 1)) ;; unsafe to call, out of range
     (i32.store8 (i32.const 20) (i32.const 120))
   )
   (func $call-indirect

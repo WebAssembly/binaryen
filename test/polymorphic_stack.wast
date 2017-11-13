@@ -33,7 +33,7 @@
     )
     (drop
       (i64.eqz
-        (call_indirect $FUNCSIG$ii
+        (call_indirect (type $FUNCSIG$ii)
           (unreachable)
           (unreachable)
         )

@@ -10,7 +10,7 @@
     (i32.const 1)
     (block
      (block $label$3
-      (call_indirect $13
+      (call_indirect (type $13)
        (block $label$4
         (br $label$3)
        )

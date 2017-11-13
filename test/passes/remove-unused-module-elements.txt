@@ -36,40 +36,40 @@
   (call $called3)
  )
  (func $other1 (; 8 ;) (type $1) (param $0 i32)
-  (call_indirect $0
+  (call_indirect (type $0)
    (i32.const 0)
   )
-  (call_indirect $0
+  (call_indirect (type $0)
    (i32.const 0)
   )
-  (call_indirect $0
+  (call_indirect (type $0)
    (i32.const 0)
   )
-  (call_indirect $0
+  (call_indirect (type $0)
    (i32.const 0)
   )
-  (call_indirect $1
+  (call_indirect (type $1)
    (i32.const 0)
    (i32.const 0)
   )
-  (call_indirect $1
+  (call_indirect (type $1)
    (i32.const 0)
    (i32.const 0)
   )
   (drop
-   (call_indirect $2
+   (call_indirect (type $2)
     (i32.const 0)
     (i32.const 0)
    )
   )
   (drop
-   (call_indirect $2
+   (call_indirect (type $2)
     (i32.const 0)
     (i32.const 0)
    )
   )
   (drop
-   (call_indirect $2
+   (call_indirect (type $2)
     (i32.const 0)
     (i32.const 0)
    )

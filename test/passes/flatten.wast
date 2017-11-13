@@ -468,7 +468,7 @@
   )
   (if
    (i32.const -1)
-   (call_indirect $ii
+   (call_indirect (type $ii)
     (i32.const 123)
     (i32.const 456)
     (unreachable)
@@ -476,7 +476,7 @@
   )
   (if
    (i32.const -2)
-   (call_indirect $ii
+   (call_indirect (type $ii)
     (i32.const 139)
     (unreachable)
     (i32.const 0)
@@ -484,7 +484,7 @@
   )
   (if
    (i32.const -3)
-   (call_indirect $ii
+   (call_indirect (type $ii)
     (i32.const 246)
     (unreachable)
     (unreachable)
@@ -492,7 +492,7 @@
   )
   (if
    (i32.const -4)
-   (call_indirect $ii
+   (call_indirect (type $ii)
     (unreachable)
     (unreachable)
     (unreachable)

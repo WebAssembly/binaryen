@@ -379,7 +379,7 @@
           (get_local $x)
         )
       )
-      (call_indirect $FUNCSIG$vf
+      (call_indirect (type $FUNCSIG$vf)
         (get_local $x)
         (i32.add
           (i32.and
@@ -392,7 +392,7 @@
     )
   )
   (func $cneg (type $FUNCSIG$vf) (param $x f32)
-    (call_indirect $FUNCSIG$vf
+    (call_indirect (type $FUNCSIG$vf)
       (get_local $x)
       (i32.add
         (i32.and

@@ -580,7 +580,7 @@
  )
  (func $call_indirect_stackify (; 36 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
-   (call_indirect $FUNCSIG$iii
+   (call_indirect (type $FUNCSIG$iii)
     (tee_local $0
      (i32.load
       (get_local $0)

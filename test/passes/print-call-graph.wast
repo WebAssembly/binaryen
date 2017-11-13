@@ -868,7 +868,7 @@
           )
         )
         (drop
-          (call_indirect $FUNCSIG$iiii
+          (call_indirect (type $FUNCSIG$iiii)
             (get_local $0)
             (i32.const 0)
             (i32.const 0)
@@ -916,7 +916,7 @@
           )
         )
         (drop
-          (call_indirect $FUNCSIG$iiii
+          (call_indirect (type $FUNCSIG$iiii)
             (get_local $0)
             (i32.sub
               (get_local $4)
@@ -981,7 +981,7 @@
             (call $__ZSt15get_new_handlerv)
           )
           (block
-            (call_indirect $FUNCSIG$v
+            (call_indirect (type $FUNCSIG$v)
               (i32.add
                 (i32.and
                   (get_local $0)
@@ -1309,7 +1309,7 @@
     (i32.const 0)
   )
   (func $dynCall_ii (param $0 i32) (param $1 i32) (result i32)
-    (call_indirect $FUNCSIG$ii
+    (call_indirect (type $FUNCSIG$ii)
       (get_local $1)
       (i32.add
         (i32.and
@@ -1321,7 +1321,7 @@
     )
   )
   (func $dynCall_iiii (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
-    (call_indirect $FUNCSIG$iiii
+    (call_indirect (type $FUNCSIG$iiii)
       (get_local $1)
       (get_local $2)
       (get_local $3)
@@ -1335,7 +1335,7 @@
     )
   )
   (func $dynCall_vi (param $0 i32) (param $1 i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect (type $FUNCSIG$vi)
       (get_local $1)
       (i32.add
         (i32.and
@@ -1347,7 +1347,7 @@
     )
   )
   (func $dynCall_v (param $0 i32)
-    (call_indirect $FUNCSIG$v
+    (call_indirect (type $FUNCSIG$v)
       (i32.add
         (i32.and
           (get_local $0)

@@ -360,7 +360,7 @@
     (get_local $var$0)
    )
   )
-  (call_indirect $0
+  (call_indirect (type $0)
    (get_local $var$0)
    (i32.add
     (i32.and
@@ -372,7 +372,7 @@
   )
  )
  (func $15 (; 18 ;) (type $0) (param $var$0 f32)
-  (call_indirect $0
+  (call_indirect (type $0)
    (get_local $var$0)
    (i32.add
     (i32.and

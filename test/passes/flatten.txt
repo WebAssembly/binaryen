@@ -1073,7 +1073,7 @@
     (i32.const -1)
     (block
      (unreachable)
-     (call_indirect $ii
+     (call_indirect (type $ii)
       (i32.const 123)
       (i32.const 456)
       (unreachable)
@@ -1086,7 +1086,7 @@
     (i32.const -2)
     (block
      (unreachable)
-     (call_indirect $ii
+     (call_indirect (type $ii)
       (i32.const 139)
       (unreachable)
       (i32.const 0)
@@ -1100,7 +1100,7 @@
     (block
      (unreachable)
      (unreachable)
-     (call_indirect $ii
+     (call_indirect (type $ii)
       (i32.const 246)
       (unreachable)
       (unreachable)
@@ -1115,7 +1115,7 @@
      (unreachable)
      (unreachable)
      (unreachable)
-     (call_indirect $ii
+     (call_indirect (type $ii)
       (unreachable)
       (unreachable)
       (unreachable)

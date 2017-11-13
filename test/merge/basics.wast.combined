@@ -33,7 +33,7 @@
   (call $only-a)
   (call $some-func)
   (call $some-collide)
-  (call_indirect $ii
+  (call_indirect (type $ii)
    (i32.const 123)
    (i32.const 456)
    (i32.const 789)
@@ -67,7 +67,7 @@
   (call $only-b)
   (call $some-func-b)
   (call $some-collide$0)
-  (call_indirect $ii$0
+  (call_indirect (type $ii$0)
    (i32.const 12)
    (i32.const 34)
    (i32.const 56)
