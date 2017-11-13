@@ -54,9 +54,7 @@ struct BinaryArgs {
 
 class TranslateToFuzzReader {
 public:
-  TranslateToFuzzReader(Module& wasm) : wasm(wasm), builder(wasm) {}
-
-  void read(std::string& filename) {
+  TranslateToFuzzReader(Module& wasm, std::string& filename) : wasm(wasm), builder(wasm) {
     auto input(read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
     bytes.swap(input);
     pos = 0;
@@ -65,7 +63,80 @@ public:
     if (bytes.size() == 0) {
       bytes.push_back(0);
     }
-    build();
+  }
+
+  void pickPasses(OptimizationOptions& options) {
+    while (options.passes.size() < 20 && !finishedInput && !oneIn(3)) {
+      switch (upTo(32)) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4: {
+          options.passes.push_back("O");
+          options.passOptions.optimizeLevel = upTo(4);
+          options.passOptions.shrinkLevel = upTo(4);
+          break;
+        }
+        case 5: options.passes.push_back("coalesce-locals"); break;
+        case 6: options.passes.push_back("code-pushing"); break;
+        case 7: options.passes.push_back("code-folding"); break;
+        case 8: options.passes.push_back("dce"); break;
+        case 9: options.passes.push_back("duplicate-function-elimination"); break;
+        case 10: options.passes.push_back("flatten"); break;
+        case 11: options.passes.push_back("inlining"); break;
+        case 12: options.passes.push_back("inlining-optimizing"); break;
+        case 13: options.passes.push_back("local-cse"); break;
+        case 14: options.passes.push_back("memory-packing"); break;
+        case 15: options.passes.push_back("merge-blocks"); break;
+        case 16: options.passes.push_back("optimize-instructions"); break;
+        case 17: options.passes.push_back("pick-load-signs"); break;
+        case 18: options.passes.push_back("precompute"); break;
+        case 19: options.passes.push_back("precompute-propagate"); break;
+        case 20: options.passes.push_back("remove-unused-brs"); break;
+        case 21: options.passes.push_back("remove-unused-module-elements"); break;
+        case 22: options.passes.push_back("remove-unused-names"); break;
+        case 23: options.passes.push_back("reorder-functions"); break;
+        case 24: options.passes.push_back("reorder-locals"); break;
+        case 25: {
+          options.passes.push_back("flatten");
+          options.passes.push_back("rereloop");
+          break;
+        }
+        case 26: options.passes.push_back("simplify-locals"); break;
+        case 27: options.passes.push_back("simplify-locals-notee"); break;
+        case 28: options.passes.push_back("simplify-locals-nostructure"); break;
+        case 29: options.passes.push_back("simplify-locals-notee-nostructure"); break;
+        case 30: options.passes.push_back("ssa"); break;
+        case 31: options.passes.push_back("vacuum"); break;
+        default: WASM_UNREACHABLE();
+      }
+    }
+    if (oneIn(2)) {
+      options.passOptions.optimizeLevel = upTo(4);
+    }
+    if (oneIn(2)) {
+      options.passOptions.shrinkLevel = upTo(4);
+    }
+    std::cout << "opt level: " << options.passOptions.optimizeLevel << '\n';
+    std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
+  }
+
+  void build() {
+    setupMemory();
+    setupTable();
+    setupGlobals();
+    // keep adding functions until we run out of input
+    while (!finishedInput) {
+      addFunction();
+    }
+    if (HANG_LIMIT > 0) {
+      addHangLimitSupport();
+    }
+    if (DE_NAN) {
+      addDeNanSupport();
+    }
+    finalizeTable();
   }
 
 private:
@@ -139,23 +210,6 @@ private:
 
   double getDouble() {
     return Literal(get64()).reinterpretf64();
-  }
-
-  void build() {
-    setupMemory();
-    setupTable();
-    setupGlobals();
-    // keep adding functions until we run out of input
-    while (!finishedInput) {
-      addFunction();
-    }
-    if (HANG_LIMIT > 0) {
-      addHangLimitSupport();
-    }
-    if (DE_NAN) {
-      addDeNanSupport();
-    }
-    finalizeTable();
   }
 
   void setupMemory() {

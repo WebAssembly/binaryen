@@ -33,7 +33,7 @@
 #include "shell-interface.h"
 #include "optimization-options.h"
 #include "execution-results.h"
-#include "translate-to-fuzz.h"
+#include "fuzzing.h"
 #include "js-wrapper.h"
 #include "spec-wrapper.h"
 
@@ -68,6 +68,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
+  bool fuzzPasses = false;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
 
@@ -97,6 +98,9 @@ int main(int argc, const char* argv[]) {
       .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
            Options::Arguments::Zero,
            [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
+      .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { fuzzPasses = true; })
       .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string &arguments) { emitJSWrapper = arguments; })
@@ -134,8 +138,11 @@ int main(int argc, const char* argv[]) {
     }
   } else {
     // translate-to-fuzz
-    TranslateToFuzzReader reader(wasm);
-    reader.read(options.extra["infile"]);
+    TranslateToFuzzReader reader(wasm, options.extra["infile"]);
+    if (fuzzPasses) {
+      reader.pickPasses(options);
+    }
+    reader.build();
     if (!WasmValidator().validate(wasm, features)) {
       WasmPrinter::printModule(&wasm);
       std::cerr << "translate-to-fuzz must always generate a valid module";
