@@ -7,6 +7,8 @@
  (type $v (func))
  (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (global $a-global i32 (i32.const 7))
+ (global $a-mutable-global (mut f32) (f32.const 7.5))
  (table 1 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
  (memory $0 1 256)
@@ -461,7 +463,7 @@
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)

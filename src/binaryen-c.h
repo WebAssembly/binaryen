@@ -76,6 +76,39 @@ BinaryenType BinaryenFloat64(void);
 // the API figure out the type instead of providing one.
 BinaryenType BinaryenUndefined(void);
 
+// Expression ids (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExpressionId;
+
+BinaryenExpressionId BinaryenInvalidId(void);
+BinaryenExpressionId BinaryenBlockId(void);
+BinaryenExpressionId BinaryenIfId(void);
+BinaryenExpressionId BinaryenLoopId(void);
+BinaryenExpressionId BinaryenBreakId(void);
+BinaryenExpressionId BinaryenSwitchId(void);
+BinaryenExpressionId BinaryenCallId(void);
+BinaryenExpressionId BinaryenCallImportId(void);
+BinaryenExpressionId BinaryenCallIndirectId(void);
+BinaryenExpressionId BinaryenGetLocalId(void);
+BinaryenExpressionId BinaryenSetLocalId(void);
+BinaryenExpressionId BinaryenGetGlobalId(void);
+BinaryenExpressionId BinaryenSetGlobalId(void);
+BinaryenExpressionId BinaryenLoadId(void);
+BinaryenExpressionId BinaryenStoreId(void);
+BinaryenExpressionId BinaryenConstId(void);
+BinaryenExpressionId BinaryenUnaryId(void);
+BinaryenExpressionId BinaryenBinaryId(void);
+BinaryenExpressionId BinaryenSelectId(void);
+BinaryenExpressionId BinaryenDropId(void);
+BinaryenExpressionId BinaryenReturnId(void);
+BinaryenExpressionId BinaryenHostId(void);
+BinaryenExpressionId BinaryenNopId(void);
+BinaryenExpressionId BinaryenUnreachableId(void);
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
+BinaryenExpressionId BinaryenAtomicRMWId(void);
+BinaryenExpressionId BinaryenAtomicWaitId(void);
+BinaryenExpressionId BinaryenAtomicWakeId(void);
+
 // Modules
 //
 // Modules contain lists of functions, imports, exports, function types. The
@@ -262,6 +295,12 @@ BinaryenOp BinaryenPageSize(void);
 BinaryenOp BinaryenCurrentMemory(void);
 BinaryenOp BinaryenGrowMemory(void);
 BinaryenOp BinaryenHasFeature(void);
+BinaryenOp BinaryenAtomicRMWAdd(void);
+BinaryenOp BinaryenAtomicRMWSub(void);
+BinaryenOp BinaryenAtomicRMWAnd(void);
+BinaryenOp BinaryenAtomicRMWOr(void);
+BinaryenOp BinaryenAtomicRMWXor(void);
+BinaryenOp BinaryenAtomicRMWXchg(void);
 
 typedef void* BinaryenExpressionRef;
 
@@ -321,7 +360,15 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
+BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
 
+// Gets the id (kind) of the specified expression.
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
+// Gets the type of the specified expression.
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 

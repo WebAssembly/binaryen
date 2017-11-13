@@ -23,8 +23,8 @@
  )
  (func $f4 (result i32)
   (i32.add
-   (call_indirect $i (i32.const 3))
-   (call_indirect $i (i32.const 0))
+   (call_indirect (type $i) (i32.const 3))
+   (call_indirect (type $i) (i32.const 0))
   )
  )
 )

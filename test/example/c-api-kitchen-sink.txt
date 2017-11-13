@@ -12,6 +12,8 @@ BinaryenFloat64: 4
  (type $v (func))
  (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (global $a-global i32 (i32.const 7))
+ (global $a-mutable-global (mut f32) (f32.const 7.5))
  (table 1 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
  (memory $0 1 256)
@@ -466,7 +468,7 @@ BinaryenFloat64: 4
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -541,7 +543,7 @@ BinaryenFloat64: 4
  (type $I (func (result i64)))
  (memory $0 0)
  (func $unreachable-fn (; 0 ;) (type $i) (result i32)
-  (call_indirect $I
+  (call_indirect (type $I)
    (unreachable)
   )
  )
@@ -1386,6 +1388,10 @@ int main() {
     BinaryenType varTypes[] = { 1 };
     functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[251]);
   }
+  expressions[252] = BinaryenConst(the_module, BinaryenLiteralInt32(7));
+  BinaryenAddGlobal(the_module, "a-global", 1, 0, expressions[252]);
+  expressions[253] = BinaryenConst(the_module, BinaryenLiteralFloat32(7.5));
+  BinaryenAddGlobal(the_module, "a-mutable-global", 3, 1, expressions[253]);
   {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
@@ -1396,11 +1402,11 @@ int main() {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
   }
-  expressions[252] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[254] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char* segments[] = { segment0 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[252] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[254] };
     BinaryenIndex segmentSizes[] = { 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
   }
@@ -1408,10 +1414,10 @@ int main() {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[253] = BinaryenNop(the_module);
+  expressions[255] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[253]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[255]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {
@@ -1427,6 +1433,8 @@ int main() {
  (type $v (func))
  (type $3 (func))
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (global $a-global i32 (i32.const 7))
+ (global $a-mutable-global (mut f32) (f32.const 7.5))
  (table 1 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
  (memory $0 1 256)
@@ -1881,7 +1889,7 @@ int main() {
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)

@@ -110,12 +110,12 @@
   (unreachable)
  )
  (func $dynCall_v (; 14 ;) (param $fptr i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (get_local $fptr)
   )
  )
  (func $dynCall_iiii (; 15 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (call_indirect $FUNCSIG$iiii
+  (call_indirect (type $FUNCSIG$iiii)
    (get_local $0)
    (get_local $1)
    (get_local $2)
@@ -123,14 +123,14 @@
   )
  )
  (func $dynCall_ffd (; 16 ;) (param $fptr i32) (param $0 f32) (param $1 f64) (result f32)
-  (call_indirect $FUNCSIG$ffd
+  (call_indirect (type $FUNCSIG$ffd)
    (get_local $0)
    (get_local $1)
    (get_local $fptr)
   )
  )
  (func $dynCall_iii (; 17 ;) (param $fptr i32) (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect $FUNCSIG$iii
+  (call_indirect (type $FUNCSIG$iii)
    (get_local $0)
    (get_local $1)
    (get_local $fptr)

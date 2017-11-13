@@ -1387,7 +1387,9 @@ Expression* SExpressionWasmBuilder::makeCallImport(Element& s) {
 Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   if (!wasm.table.exists) throw ParseException("no table");
   auto ret = allocator.alloc<CallIndirect>();
-  IString type = s[1]->str();
+  Element& typeElement = *s[1];
+  if (typeElement[0]->str() != "type") throw ParseException("expected 'type' in call_indirect", s.line, s.col);
+  IString type = typeElement[1]->str();
   auto* fullType = wasm.getFunctionTypeOrNull(type);
   if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
   ret->fullType = fullType->name;

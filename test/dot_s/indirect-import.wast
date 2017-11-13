@@ -153,18 +153,18 @@
   )
  )
  (func $dynCall_fd (; 18 ;) (param $fptr i32) (param $0 f64) (result f32)
-  (call_indirect $FUNCSIG$fd
+  (call_indirect (type $FUNCSIG$fd)
    (get_local $0)
    (get_local $fptr)
   )
  )
  (func $dynCall_v (; 19 ;) (param $fptr i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (get_local $fptr)
   )
  )
  (func $dynCall_vi (; 20 ;) (param $fptr i32) (param $0 i32)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (get_local $0)
    (get_local $fptr)
   )

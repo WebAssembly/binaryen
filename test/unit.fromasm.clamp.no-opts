@@ -615,7 +615,7 @@
     (get_local $x)
    )
   )
-  (call_indirect $FUNCSIG$vf
+  (call_indirect (type $FUNCSIG$vf)
    (get_local $x)
    (i32.add
     (i32.and
@@ -627,7 +627,7 @@
   )
  )
  (func $cneg (; 29 ;) (param $x f32)
-  (call_indirect $FUNCSIG$vf
+  (call_indirect (type $FUNCSIG$vf)
    (get_local $x)
    (i32.add
     (i32.and
@@ -677,7 +677,7 @@
   )
  )
  (func $cneg_nosemicolon (; 32 ;)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (i32.const 1)
    (i32.add
     (i32.and
@@ -1999,14 +1999,14 @@
   )
  )
  (func $relocatableAndModules (; 71 ;) (result i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (i32.const 10)
   )
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (i32.const 20)
   )
   (return
-   (call_indirect $FUNCSIG$idi
+   (call_indirect (type $FUNCSIG$idi)
     (f64.const 1.5)
     (i32.const 200)
     (i32.const 30)
@@ -2112,7 +2112,7 @@
   (local $i1 i32)
   (set_local $i1
    (block (result i32)
-    (call_indirect $FUNCSIG$vi
+    (call_indirect (type $FUNCSIG$vi)
      (i32.const 0)
      (i32.add
       (i32.and
@@ -2128,7 +2128,7 @@
  )
  (func $emterpretify_assertions_safeHeap (; 79 ;)
   (local $i1 i32)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (get_local $i1)
    (i32.add
     (i32.and

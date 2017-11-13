@@ -62,7 +62,7 @@
   (unreachable)
  )
  (func $dynCall_v (; 6 ;) (param $fptr i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (get_local $fptr)
   )
  )

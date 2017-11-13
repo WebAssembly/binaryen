@@ -43,7 +43,7 @@
     )
    )
    (return
-    (call_indirect $FUNCSIG$i
+    (call_indirect (type $FUNCSIG$i)
      (get_local $2)
     )
    )
@@ -85,7 +85,7 @@
   (unreachable)
  )
  (func $dynCall_i (; 10 ;) (param $fptr i32) (result i32)
-  (call_indirect $FUNCSIG$i
+  (call_indirect (type $FUNCSIG$i)
    (get_local $fptr)
   )
  )

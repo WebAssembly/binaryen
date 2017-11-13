@@ -266,7 +266,7 @@
  )
  (func $neg (; 20 ;)
   (local $0 f32)
-  (call_indirect $FUNCSIG$vf
+  (call_indirect (type $FUNCSIG$vf)
    (f32.neg
     (get_local $0)
    )
@@ -274,7 +274,7 @@
   )
  )
  (func $cneg (; 21 ;) (param $0 f32)
-  (call_indirect $FUNCSIG$vf
+  (call_indirect (type $FUNCSIG$vf)
    (get_local $0)
    (i32.const 9)
   )
@@ -307,7 +307,7 @@
   (get_local $0)
  )
  (func $cneg_nosemicolon (; 23 ;)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (i32.const 1)
    (i32.const 17)
   )
@@ -1137,13 +1137,13 @@
   )
  )
  (func $relocatableAndModules (; 56 ;) (result i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (i32.const 10)
   )
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (i32.const 20)
   )
-  (call_indirect $FUNCSIG$idi
+  (call_indirect (type $FUNCSIG$idi)
    (f64.const 1.5)
    (i32.const 200)
    (i32.const 30)
@@ -1192,11 +1192,11 @@
     (f64.const 100)
    )
   )
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (i32.const 0)
    (i32.const 17)
   )
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (i32.const 0)
    (block (result i32)
     (set_global $Int

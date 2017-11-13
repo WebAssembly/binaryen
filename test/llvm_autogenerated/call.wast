@@ -74,20 +74,20 @@
   )
  )
  (func $call_indirect_void (; 14 ;) (param $0 i32)
-  (call_indirect $FUNCSIG$v
+  (call_indirect (type $FUNCSIG$v)
    (get_local $0)
   )
   (return)
  )
  (func $call_indirect_i32 (; 15 ;) (param $0 i32) (result i32)
   (return
-   (call_indirect $FUNCSIG$i
+   (call_indirect (type $FUNCSIG$i)
     (get_local $0)
    )
   )
  )
  (func $call_indirect_arg (; 16 ;) (param $0 i32) (param $1 i32)
-  (call_indirect $FUNCSIG$vi
+  (call_indirect (type $FUNCSIG$vi)
    (get_local $1)
    (get_local $0)
   )
@@ -95,7 +95,7 @@
  )
  (func $call_indirect_arg_2 (; 17 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
-   (call_indirect $FUNCSIG$iii
+   (call_indirect (type $FUNCSIG$iii)
     (get_local $1)
     (get_local $2)
     (get_local $0)
