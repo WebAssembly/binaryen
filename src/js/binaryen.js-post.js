@@ -185,6 +185,12 @@
   Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
   Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
   Module['HasFeature'] = Module['_BinaryenHasFeature']();
+  Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
+  Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
+  Module['AtomicRMWAnd'] = Module['_BinaryenAtomicRMWAnd']();
+  Module['AtomicRMWOr'] = Module['_BinaryenAtomicRMWOr']();
+  Module['AtomicRMWXor'] = Module['_BinaryenAtomicRMWXor']();
+  Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
 
   // we provide a JS Module() object interface
   Module['Module'] = function(module) {
@@ -422,6 +428,80 @@
       'ge_u': function(left, right) {
         return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
       },
+      'atomic':{
+        'rmw': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i32']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i32']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i32']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i32']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i32']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i32'])
+          },
+        },
+        'rmw8_u': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i32']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i32']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i32']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i32']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i32']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i32']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i32'])
+          },
+        },
+        'rmw16_u': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i32']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i32']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i32']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i32']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i32']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i32']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'])
+          },
+        },
+      },
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
+      },
     };
 
     this['i64'] = {
@@ -573,6 +653,103 @@
       },
       'ge_u': function(left, right) {
         return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
+      },
+      'atomic':{
+        'rmw': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 8, offset, ptr, value, Module['i64']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 8, offset, ptr, value, Module['i64']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 8, offset, ptr, value, Module['i64']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 8, offset, ptr, value, Module['i64']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 8, offset, ptr, value, Module['i64']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 8, offset, ptr, expected, replacement, Module['i64'])
+          },
+        },
+        'rmw8_u': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 1, offset, ptr, value, Module['i64']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 1, offset, ptr, value, Module['i64']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 1, offset, ptr, value, Module['i64']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 1, offset, ptr, value, Module['i64']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 1, offset, ptr, value, Module['i64']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 1, offset, ptr, value, Module['i64']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 1, offset, ptr, expected, replacement, Module['i64'])
+          },
+        },
+        'rmw16_u': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 2, offset, ptr, value, Module['i64']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 2, offset, ptr, value, Module['i64']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 2, offset, ptr, value, Module['i64']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 2, offset, ptr, value, Module['i64']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 2, offset, ptr, value, Module['i64']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 2, offset, ptr, value, Module['i64']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i64'])
+          },
+        },
+        'rmw32_u': {
+          'add': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i64']);
+          },
+          'sub': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWSub'], 4, offset, ptr, value, Module['i64']);
+          },
+          'and': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAnd'], 4, offset, ptr, value, Module['i64']);
+          },
+          'or': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWOr'], 4, offset, ptr, value, Module['i64']);
+          },
+          'xor': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXor'], 4, offset, ptr, value, Module['i64']);
+          },
+          'xchg': function(offset, ptr, value) {
+            return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWXchg'], 4, offset, ptr, value, Module['i64']);
+          },
+          'cmpxchg': function(offset, ptr, expected, replacement) {
+            return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'])
+          },
+        },
+      },
+      'wait': function(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
       },
     };
 
@@ -791,6 +968,9 @@
     };
     this['unreachable'] = function() {
       return Module['_BinaryenUnreachable'](module);
+    };
+    this['wake'] = function(ptr, wakeCount) {
+      return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
     };
     this['addFunction'] = function(name, functionType, varTypes, body) {
       return preserveStack(function() {
