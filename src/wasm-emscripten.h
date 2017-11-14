@@ -38,9 +38,8 @@ public:
   // signature in the indirect function table.
   std::vector<Function*> makeDynCallThunks();
 
-  void generateEmscriptenMetadata(std::ostream& o,
-                                  Address staticBump,
-                                  std::vector<Name> const& initializerFunctions);
+  std::string generateEmscriptenMetadata(
+    Address staticBump, std::vector<Name> const& initializerFunctions);
 
 private:
   Module& wasm;
@@ -53,6 +52,13 @@ private:
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
 };
+
+std::string emscriptenGlue(
+    Module& wasm,
+    bool allowMemoryGrowth,
+    Address stackPointer,
+    Address staticBump,
+    std::vector<Name> const& initializerFunctions);
 
 } // namespace wasm
 

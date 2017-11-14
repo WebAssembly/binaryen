@@ -177,27 +177,19 @@ int main(int argc, const char *argv[]) {
 
   linker.layout();
 
-  std::stringstream meta;
+  std::string metadata;
   if (generateEmscriptenGlue) {
     Module& wasm = linker.getOutput().wasm;
     if (options.debug) {
       std::cerr << "Emscripten gluing..." << std::endl;
       WasmPrinter::printModule(&wasm, std::cerr);
     }
-
-    EmscriptenGlueLinker emscripten(wasm, linker.getStackPointerAddress());
-    emscripten.generateRuntimeFunctions();
-
-    if (allowMemoryGrowth) {
-      emscripten.generateMemoryGrowthFunction();
-    }
-
-    for (auto f : emscripten.makeDynCallThunks()) {
-      linker.exportFunction(f->name, true);
-    }
-
-    emscripten.generateEmscriptenMetadata(
-      meta, linker.staticBump(), linker.getOutput().getInitializerFunctions());
+    metadata = emscriptenGlue(
+      wasm,
+      allowMemoryGrowth,
+      linker.getStackPointerAddress(),
+      linker.staticBump(),
+      linker.getOutput().getInitializerFunctions());
   }
 
   if (options.extra["validate"] != "none") {
@@ -211,7 +203,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
-  output << meta.str();
+  output << metadata;
 
   if (options.debug) std::cerr << "Done." << std::endl;
   return 0;

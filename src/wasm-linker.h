@@ -33,6 +33,18 @@ namespace wasm {
 
 class S2WasmBuilder;
 
+inline void exportFunction(Module& wasm, Name name, bool must_export) {
+  if (!wasm.getFunctionOrNull(name)) {
+    assert(!must_export);
+    return;
+  }
+  if (wasm.getExportOrNull(name)) return; // Already exported
+  auto exp = new Export;
+  exp->name = exp->value = name;
+  exp->kind = ExternalKind::Function;
+  wasm.addExport(exp);
+}
+
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {
@@ -265,18 +277,6 @@ class Linker {
 
   Address getStackPointerAddress() const;
   Address staticBump() const;
-
-  void exportFunction(Name name, bool must_export) {
-    if (!out.wasm.getFunctionOrNull(name)) {
-      assert(!must_export);
-      return;
-    }
-    if (out.wasm.getExportOrNull(name)) return; // Already exported
-    auto exp = new Export;
-    exp->name = exp->value = name;
-    exp->kind = ExternalKind::Function;
-    out.wasm.addExport(exp);
-  }
 
  private:
   // Allocate a static variable and return its address in linear memory
