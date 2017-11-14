@@ -156,6 +156,10 @@ class LinkerObject {
     return wasm.functions.empty();
   }
 
+  std::vector<Name> const& getInitializerFunctions() const {
+    return initializerFunctions;
+  }
+
   friend class Linker;
 
   Module wasm;
@@ -246,9 +250,9 @@ class Linker {
   // function table.
   void layout();
 
-  // Support for emscripten integration: generates dyncall thunks, emits
-  // metadata for asmConsts, staticBump and initializer functions.
-  void emscriptenGlue(std::ostream& o);
+  // Process just the relocations. Can be useful to do on its on, for
+  // relocations added to the module after general layout.
+  void layoutRelocations();
 
   // Add an object to the link by constructing it in-place with a builder.
   // Returns false if an error occurred.
@@ -259,7 +263,20 @@ class Linker {
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
-  Address getStackPointerAddress();
+  Address getStackPointerAddress() const;
+  Address staticBump() const;
+
+  void exportFunction(Name name, bool must_export) {
+    if (!out.wasm.getFunctionOrNull(name)) {
+      assert(!must_export);
+      return;
+    }
+    if (out.wasm.getExportOrNull(name)) return; // Already exported
+    auto exp = new Export;
+    exp->name = exp->value = name;
+    exp->kind = ExternalKind::Function;
+    out.wasm.addExport(exp);
+  }
 
  private:
   // Allocate a static variable and return its address in linear memory
@@ -294,18 +311,6 @@ class Linker {
 
   static Address roundUpToPageSize(Address size) {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;
-  }
-
-  void exportFunction(Name name, bool must_export) {
-    if (!out.wasm.getFunctionOrNull(name)) {
-      assert(!must_export);
-      return;
-    }
-    if (out.wasm.getExportOrNull(name)) return; // Already exported
-    auto exp = new Export;
-    exp->name = exp->value = name;
-    exp->kind = ExternalKind::Function;
-    out.wasm.addExport(exp);
   }
 
   Function* getImportThunk(Name name, const FunctionType* t);

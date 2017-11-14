@@ -334,18 +334,8 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-void Linker::emscriptenGlue(std::ostream& o) {
-  if (debug) {
-    WasmPrinter::printModule(&out.wasm, std::cerr);
-  }
-
-  EmscriptenGlueLinker emscripten(out.wasm, getStackPointerAddress());
-  for (auto f : emscripten.makeDynCallThunks()) {
-    exportFunction(f->name, true);
-  }
-
-  auto staticBump = nextStatic - globalBase;
-  emscripten.generateEmscriptenMetadata(o, staticBump, out.initializerFunctions);
+Address Linker::staticBump() const {
+  return nextStatic - globalBase;
 }
 
 void Linker::ensureTableSegment() {
@@ -417,6 +407,6 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   return f;
 }
 
-Address Linker::getStackPointerAddress() {
-  return Address(staticAddresses[stackPointer]);
+Address Linker::getStackPointerAddress() const {
+  return Address(staticAddresses.at(stackPointer));
 }
