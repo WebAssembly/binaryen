@@ -339,12 +339,8 @@ void Linker::emscriptenGlue(std::ostream& o) {
     WasmPrinter::printModule(&out.wasm, std::cerr);
   }
 
-  auto functionsToThunk = getTableData();
-  auto removeIt = std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
-  functionsToThunk.erase(removeIt, functionsToThunk.end());
-
   EmscriptenGlueLinker emscripten(out.wasm, getStackPointerAddress());
-  for (auto f : emscripten.makeDynCallThunks(functionsToThunk)) {
+  for (auto f : emscripten.makeDynCallThunks()) {
     exportFunction(f->name, true);
   }
 
