@@ -193,8 +193,13 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   std::map<std::string, Address> ids;
   std::set<std::string> allSigs;
 
-  AsmConstWalker(Module& _wasm, std::unordered_map<Address, Address> _segmentsByAddress) :
-    wasm(_wasm), segmentsByAddress(_segmentsByAddress) { }
+  AsmConstWalker(Module& _wasm) : wasm(_wasm) {
+    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+      Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
+      auto address = addrConst->value.geti32();
+      segmentsByAddress[address] = Address(i);
+    }
+  }
 
   void visitCallImport(CallImport* curr);
 
@@ -308,13 +313,14 @@ void printSet(std::ostream& o, C& c) {
 
 void EmscriptenGlueLinker::generateEmscriptenMetadata(
     std::ostream& o,
-    std::unordered_map<Address, Address> segmentsByAddress,
     Address staticBump,
     std::vector<Name> const& initializerFunctions) {
   o << ";; METADATA: { ";
+
   // find asmConst calls, and emit their metadata
-  AsmConstWalker walker(wasm, segmentsByAddress);
+  AsmConstWalker walker(wasm);
   walker.walkModule(&wasm);
+
   // print
   o << "\"asmConsts\": {";
   bool first = true;
