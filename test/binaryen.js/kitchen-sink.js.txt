@@ -37,6 +37,10 @@ getExpressionType=3
  (f32.const -33.61199951171875)
 )
 
+5
+{ low: 6, high: 7 }
+8.5
+9.5
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
