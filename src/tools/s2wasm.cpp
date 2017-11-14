@@ -179,9 +179,12 @@ int main(int argc, const char *argv[]) {
 
   std::stringstream meta;
   if (generateEmscriptenGlue) {
-    if (options.debug) std::cerr << "Emscripten gluing..." << std::endl;
-
     Module& wasm = linker.getOutput().wasm;
+    if (options.debug) {
+      std::cerr << "Emscripten gluing..." << std::endl;
+      WasmPrinter::printModule(&wasm, std::cerr);
+    }
+
     EmscriptenGlueLinker emscripten(wasm, linker.getStackPointerAddress());
     emscripten.generateRuntimeFunctions();
 
@@ -189,8 +192,12 @@ int main(int argc, const char *argv[]) {
       emscripten.generateMemoryGrowthFunction();
     }
 
-    // dyncall thunks
-    linker.emscriptenGlue(meta);
+    for (auto f : emscripten.makeDynCallThunks()) {
+      linker.exportFunction(f->name, true);
+    }
+
+    emscripten.generateEmscriptenMetadata(
+      meta, linker.staticBump(), linker.getOutput().getInitializerFunctions());
   }
 
   if (options.extra["validate"] != "none") {
