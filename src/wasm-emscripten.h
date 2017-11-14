@@ -39,7 +39,6 @@ public:
   std::vector<Function*> makeDynCallThunks(std::vector<Name> const& tableSegmentData);
 
   void generateEmscriptenMetadata(std::ostream& o,
-                                  std::unordered_map<Address, Address> segmentsByAddress,
                                   Address staticBump,
                                   std::vector<Name> const& initializerFunctions);
 

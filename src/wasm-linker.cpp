@@ -349,7 +349,7 @@ void Linker::emscriptenGlue(std::ostream& o) {
   }
 
   auto staticBump = nextStatic - globalBase;
-  emscripten.generateEmscriptenMetadata(o, segmentsByAddress, staticBump, out.initializerFunctions);
+  emscripten.generateEmscriptenMetadata(o, staticBump, out.initializerFunctions);
 }
 
 void Linker::ensureTableSegment() {
