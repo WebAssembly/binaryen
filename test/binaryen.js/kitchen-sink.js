@@ -545,7 +545,7 @@ function test_parsing() {
   text = module.emitText();
   module.dispose();
   module = null;
-  print('test_parsing text:\n' + text);
+  console.log('test_parsing text:\n' + text);
 
   text = text.replace('adder', 'ADD_ER');
 

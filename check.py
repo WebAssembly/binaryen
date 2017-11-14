@@ -321,6 +321,9 @@ def run_spec_tests():
         check_expected(actual, os.path.join(options.binaryen_test, 'spec', 'expected-output', os.path.basename(wast) + '.log'))
 
 def run_binaryen_js_tests():
+  if not MOZJS and not NODEJS:
+    return
+
   print '\n[ checking binaryen.js testcases... ]\n'
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
@@ -328,9 +331,20 @@ def run_binaryen_js_tests():
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
-    f.write(open(os.path.join(options.binaryen_test, 'binaryen.js', s)).read())
+    # node test support
+    f.write('\nif (typeof require === "function") var Binaryen = module.exports;\n')
+    test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
+    test = open(test_path).read()
+    need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
+    if MOZJS:
+      cmd = [MOZJS]
+    elif NODEJS and not need_wasm: # TODO: check if node is new and has wasm support
+      cmd = [NODEJS]
+    else:
+      continue # we can't run it
+    cmd += ['a.js']
+    f.write(test)
     f.close()
-    cmd = [MOZJS, 'a.js']
     out = run_command(cmd, stderr=subprocess.STDOUT)
     expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
     if expected not in out:
@@ -537,43 +551,46 @@ def run_emscripten_tests():
           assert proc.returncode != 0, err
           assert 'hello, world!' not in out, out
 
-
 # Run all the tests
-run_help_tests()
-run_wasm_opt_tests()
-asm2wasm.test_asm2wasm()
-asm2wasm.test_asm2wasm_binary()
-run_wasm_dis_tests()
-run_wasm_merge_tests()
-run_ctor_eval_tests()
-if has_shell_timeout():
-  run_wasm_reduce_tests()
+def main():
+  run_help_tests()
+  run_wasm_opt_tests()
+  asm2wasm.test_asm2wasm()
+  asm2wasm.test_asm2wasm_binary()
+  run_wasm_dis_tests()
+  run_wasm_merge_tests()
+  run_ctor_eval_tests()
+  if has_shell_timeout():
+    run_wasm_reduce_tests()
 
-run_spec_tests()
-if MOZJS:
+  run_spec_tests()
   run_binaryen_js_tests()
-s2wasm.test_s2wasm()
-s2wasm.test_linker()
-wasm2asm.test_wasm2asm()
-run_validator_tests()
-if options.torture and options.test_waterfall:
-  run_torture_tests()
-if has_vanilla_emcc and has_vanilla_llvm and 0:
-  run_vanilla_tests()
-print '\n[ checking example testcases... ]\n'
-if options.run_gcc_tests:
-  run_gcc_torture_tests()
-if EMCC:
-  run_emscripten_tests()
+  s2wasm.test_s2wasm()
+  s2wasm.test_linker()
+  wasm2asm.test_wasm2asm()
+  run_validator_tests()
+  if options.torture and options.test_waterfall:
+    run_torture_tests()
+  if has_vanilla_emcc and has_vanilla_llvm and 0:
+    run_vanilla_tests()
+  print '\n[ checking example testcases... ]\n'
+  if options.run_gcc_tests:
+    run_gcc_torture_tests()
+  if EMCC:
+    run_emscripten_tests()
 
-# Check/display the results
-if num_failures == 0:
-  print '\n[ success! ]'
+  # Check/display the results
+  if num_failures == 0:
+    print '\n[ success! ]'
 
-if warnings:
-  print '\n' + '\n'.join(warnings)
+  if warnings:
+    print '\n' + '\n'.join(warnings)
 
-if num_failures > 0:
-  print '\n[ ' + str(num_failures) + ' failures! ]'
+  if num_failures > 0:
+    print '\n[ ' + str(num_failures) + ' failures! ]'
 
-sys.exit(num_failures)
+  sys.exit(num_failures)
+
+if __name__ == '__main__':
+  main()
+
