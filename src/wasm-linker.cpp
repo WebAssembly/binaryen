@@ -148,8 +148,8 @@ void Linker::layout() {
   }
 
   // XXX For now, export all functions marked .globl.
-  for (Name name : out.globls) exportFunction(name, false);
-  for (Name name : out.initializerFunctions) exportFunction(name, true);
+  for (Name name : out.globls) exportFunction(out.wasm, name, false);
+  for (Name name : out.initializerFunctions) exportFunction(out.wasm, name, true);
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
@@ -266,7 +266,7 @@ void Linker::layout() {
   // argument from emcc.py and export all of them.
   for (auto function : {"malloc", "free", "realloc", "memalign"}) {
     if (out.symbolInfo.implementedFunctions.count(function)) {
-      exportFunction(function, true);
+      exportFunction(out.wasm, function, true);
     }
   }
 

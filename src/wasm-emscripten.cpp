@@ -16,6 +16,8 @@
 
 #include "wasm-emscripten.h"
 
+#include <sstream>
+
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
@@ -319,42 +321,64 @@ void printSet(std::ostream& o, C& c) {
   o << "]";
 }
 
-void EmscriptenGlueLinker::generateEmscriptenMetadata(
-    std::ostream& o,
+std::string EmscriptenGlueLinker::generateEmscriptenMetadata(
     Address staticBump,
     std::vector<Name> const& initializerFunctions) {
-  o << ";; METADATA: { ";
+  std::stringstream meta;
+  meta << ";; METADATA: { ";
 
   // find asmConst calls, and emit their metadata
   AsmConstWalker walker(wasm);
   walker.walkModule(&wasm);
 
   // print
-  o << "\"asmConsts\": {";
+  meta << "\"asmConsts\": {";
   bool first = true;
   for (auto& pair : walker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
     if (first) first = false;
-    else o << ",";
-    o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
-    printSet(o, sigs);
-    o << "]";
+    else meta << ",";
+    meta << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
+    printSet(meta, sigs);
+    meta << "]";
   }
-  o << "}";
-  o << ",";
-  o << "\"staticBump\": " << staticBump << ", ";
+  meta << "}";
+  meta << ",";
+  meta << "\"staticBump\": " << staticBump << ", ";
 
-  o << "\"initializers\": [";
+  meta << "\"initializers\": [";
   first = true;
   for (const auto& func : initializerFunctions) {
     if (first) first = false;
-    else o << ", ";
-    o << "\"" << func.c_str() << "\"";
+    else meta << ", ";
+    meta << "\"" << func.c_str() << "\"";
   }
-  o << "]";
+  meta << "]";
 
-  o << " }\n";
+  meta << " }\n";
+
+  return meta.str();
+}
+
+std::string emscriptenGlue(
+    Module& wasm,
+    bool allowMemoryGrowth,
+    Address stackPointer,
+    Address staticBump,
+    std::vector<Name> const& initializerFunctions) {
+  EmscriptenGlueLinker emscripten(wasm, stackPointer);
+  emscripten.generateRuntimeFunctions();
+
+  if (allowMemoryGrowth) {
+    emscripten.generateMemoryGrowthFunction();
+  }
+
+  for (auto f : emscripten.makeDynCallThunks()) {
+    exportFunction(wasm, f->name, true);
+  }
+
+  return emscripten.generateEmscriptenMetadata(staticBump, initializerFunctions);
 }
 
 } // namespace wasm
