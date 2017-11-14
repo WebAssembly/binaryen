@@ -28,6 +28,8 @@ namespace wasm {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
+static constexpr const char* dummyFunction = "__wasm_nullptr";
+
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
   auto export_ = new Export;
@@ -155,14 +157,20 @@ void removeImportsWithSubstring(Module& module, Name name) {
   }
 }
 
-std::vector<Function*> EmscriptenGlueLinker::makeDynCallThunks(
-    std::vector<Name> const& tableSegmentData) {
+std::vector<Function*> EmscriptenGlueLinker::makeDynCallThunks() {
   removeImportsWithSubstring(wasm, EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
   std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
   Builder builder(wasm);
+  std::vector<Name> tableSegmentData;
+  if (wasm.table.segments.size() > 0) {
+    tableSegmentData = wasm.table.segments[0].data;
+  }
   for (const auto& indirectFunc : tableSegmentData) {
+    if (indirectFunc == dummyFunction) {
+      continue;
+    }
     std::string sig(getSig(wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.

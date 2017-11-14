@@ -36,7 +36,7 @@ public:
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
-  std::vector<Function*> makeDynCallThunks(std::vector<Name> const& tableSegmentData);
+  std::vector<Function*> makeDynCallThunks();
 
   void generateEmscriptenMetadata(std::ostream& o,
                                   Address staticBump,
