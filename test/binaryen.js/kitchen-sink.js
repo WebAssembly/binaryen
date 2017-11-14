@@ -63,6 +63,7 @@ function test_ids() {
   console.log("BinaryenUnaryId: " + Binaryen.UnaryId);
   console.log("BinaryenBinaryId: " + Binaryen.BinaryId);
   console.log("BinaryenSelectId: " + Binaryen.SelectId);
+  console.log("BinaryenDropId: " + Binaryen.DropId);
   console.log("BinaryenReturnId: " + Binaryen.ReturnId);
   console.log("BinaryenHostId: " + Binaryen.HostId);
   console.log("BinaryenNopId: " + Binaryen.NopId);

@@ -1098,19 +1098,9 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
 [none] (set_local $0
  [i64] (i64.const 1234)
-)
-(module
- (type $v (func))
- (memory $0 0)
- (func $func (; 0 ;) (type $v)
-  (local $0 i32)
-  (set_local $0
-   (i64.const 1234)
-  )
- )
 )
 validation: 0
 // beginning a Binaryen API trace
@@ -1394,6 +1384,10 @@ int main() {
   expressions[244] = BinaryenReturn(the_module, expressions[243]);
   expressions[245] = BinaryenNop(the_module);
   expressions[246] = BinaryenUnreachable(the_module);
+  BinaryenExpressionGetId(expressions[30]);
+getExpressionId=16
+  BinaryenExpressionGetType(expressions[30]);
+getExpressionType=3
   BinaryenExpressionPrint(expressions[30]);
 (f32.neg
  (f32.const -33.61199951171875)
