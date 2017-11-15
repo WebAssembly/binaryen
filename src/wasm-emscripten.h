@@ -26,7 +26,7 @@ namespace wasm {
 // runtime functions and emits metadata.
 class EmscriptenGlueGenerator {
 public:
-  EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset)
+  EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
     : wasm(wasm),
       builder(wasm),
       stackPointerOffset(stackPointerOffset) { }
