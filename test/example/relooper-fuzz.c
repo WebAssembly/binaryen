@@ -253,7 +253,7 @@ int main() {
 
   BinaryenType iparams[] = { BinaryenInt32() };
   BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
-  BinaryenAddImport(module, "print", "spectest", "print", vi);
+  BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
 
   // memory
   BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0);

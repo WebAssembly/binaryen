@@ -42,7 +42,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "tinycore::eh_personality", functionTypes[0], varTypes, 3, expressions[9]);
   }
-  BinaryenAddExport(the_module, "tinycore::eh_personality", "tinycore::eh_personality");
+  BinaryenAddFunctionExport(the_module, "tinycore::eh_personality", "tinycore::eh_personality");
   the_relooper = RelooperCreate();
   expressions[10] = BinaryenGetLocal(the_module, 0, 1);
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -63,7 +63,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[1] = BinaryenAddFunction(the_module, "tinycore::eh_unwind_resume", functionTypes[0], varTypes, 3, expressions[18]);
   }
-  BinaryenAddExport(the_module, "tinycore::eh_unwind_resume", "tinycore::eh_unwind_resume");
+  BinaryenAddFunctionExport(the_module, "tinycore::eh_unwind_resume", "tinycore::eh_unwind_resume");
   the_relooper = RelooperCreate();
   {
     BinaryenExpressionRef children[] = { 0 };
@@ -91,7 +91,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[2] = BinaryenAddFunction(the_module, "tinycore::panic_fmt", functionTypes[1], varTypes, 3, expressions[24]);
   }
-  BinaryenAddExport(the_module, "tinycore::panic_fmt", "tinycore::panic_fmt");
+  BinaryenAddFunctionExport(the_module, "tinycore::panic_fmt", "tinycore::panic_fmt");
   the_relooper = RelooperCreate();
   expressions[25] = BinaryenGetLocal(the_module, 0, 1);
   expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -112,7 +112,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[3] = BinaryenAddFunction(the_module, "tinycore::rust_eh_register_frames", functionTypes[0], varTypes, 3, expressions[33]);
   }
-  BinaryenAddExport(the_module, "tinycore::rust_eh_register_frames", "tinycore::rust_eh_register_frames");
+  BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_register_frames", "tinycore::rust_eh_register_frames");
   the_relooper = RelooperCreate();
   expressions[34] = BinaryenGetLocal(the_module, 0, 1);
   expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -133,7 +133,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[4] = BinaryenAddFunction(the_module, "tinycore::rust_eh_unregister_frames", functionTypes[0], varTypes, 3, expressions[42]);
   }
-  BinaryenAddExport(the_module, "tinycore::rust_eh_unregister_frames", "tinycore::rust_eh_unregister_frames");
+  BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_unregister_frames", "tinycore::rust_eh_unregister_frames");
   the_relooper = RelooperCreate();
   expressions[43] = BinaryenGetLocal(the_module, 0, 1);
   expressions[44] = BinaryenSetLocal(the_module, 1, expressions[43]);
@@ -143,7 +143,7 @@ int main() {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "print_i32", 0, paramTypes, 1);
   }
-  BinaryenAddImport(the_module, "print_i32", "spectest", "print", functionTypes[2]);
+  BinaryenAddFunctionImport(the_module, "print_i32", "spectest", "print", functionTypes[2]);
   expressions[47] = BinaryenGetLocal(the_module, 2, 1);
   {
     BinaryenExpressionRef operands[] = { expressions[47] };
@@ -178,7 +178,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 2 };
     functions[5] = BinaryenAddFunction(the_module, "wasm::print_i32", functionTypes[3], varTypes, 5, expressions[58]);
   }
-  BinaryenAddExport(the_module, "wasm::print_i32", "wasm::print_i32");
+  BinaryenAddFunctionExport(the_module, "wasm::print_i32", "wasm::print_i32");
   the_relooper = RelooperCreate();
   expressions[59] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[60] = BinaryenSetLocal(the_module, 0, expressions[59]);
@@ -247,7 +247,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[6] = BinaryenAddFunction(the_module, "real_main", functionTypes[4], varTypes, 9, expressions[104]);
   }
-  BinaryenAddExport(the_module, "real_main", "real_main");
+  BinaryenAddFunctionExport(the_module, "real_main", "real_main");
   the_relooper = RelooperCreate();
   expressions[105] = BinaryenGetLocal(the_module, 0, 1);
   expressions[106] = BinaryenSetLocal(the_module, 2, expressions[105]);
@@ -338,7 +338,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[7] = BinaryenAddFunction(the_module, "main", functionTypes[5], varTypes, 10, expressions[156]);
   }
-  BinaryenAddExport(the_module, "main", "main");
+  BinaryenAddFunctionExport(the_module, "main", "main");
   {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[6] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
@@ -363,7 +363,7 @@ int main() {
     BinaryenExpressionRef children[] = { expressions[159], expressions[163] };
     expressions[164] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
   }
-  BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
+  BinaryenAddFunctionExport(the_module, "__wasm_start", "rust_entry");
   {
     BinaryenType varTypes[] = { 0 };
     functions[8] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[6], varTypes, 0, expressions[164]);
@@ -437,7 +437,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[9] = BinaryenAddFunction(the_module, "_isize_as_tinycore::Add_::add", functionTypes[7], varTypes, 9, expressions[210]);
   }
-  BinaryenAddExport(the_module, "_isize_as_tinycore::Add_::add", "_isize_as_tinycore::Add_::add");
+  BinaryenAddFunctionExport(the_module, "_isize_as_tinycore::Add_::add", "_isize_as_tinycore::Add_::add");
   the_relooper = RelooperCreate();
   expressions[211] = BinaryenGetLocal(the_module, 0, 1);
   expressions[212] = BinaryenSetLocal(the_module, 1, expressions[211]);
@@ -470,7 +470,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 2 };
     functions[10] = BinaryenAddFunction(the_module, "_bool_as_tinycore::Not_::not", functionTypes[8], varTypes, 6, expressions[227]);
   }
-  BinaryenAddExport(the_module, "_bool_as_tinycore::Not_::not", "_bool_as_tinycore::Not_::not");
+  BinaryenAddFunctionExport(the_module, "_bool_as_tinycore::Not_::not", "_bool_as_tinycore::Not_::not");
   the_relooper = RelooperCreate();
   expressions[228] = BinaryenGetLocal(the_module, 0, 1);
   expressions[229] = BinaryenSetLocal(the_module, 2, expressions[228]);
@@ -508,7 +508,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[11] = BinaryenAddFunction(the_module, "_i16_as_tinycore::PartialEq_::eq", functionTypes[9], varTypes, 8, expressions[249]);
   }
-  BinaryenAddExport(the_module, "_i16_as_tinycore::PartialEq_::eq", "_i16_as_tinycore::PartialEq_::eq");
+  BinaryenAddFunctionExport(the_module, "_i16_as_tinycore::PartialEq_::eq", "_i16_as_tinycore::PartialEq_::eq");
   the_relooper = RelooperCreate();
   expressions[250] = BinaryenGetLocal(the_module, 0, 1);
   expressions[251] = BinaryenSetLocal(the_module, 2, expressions[250]);
@@ -546,7 +546,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2, 2, 1, 1, 1, 2 };
     functions[12] = BinaryenAddFunction(the_module, "_i64_as_tinycore::PartialEq_::eq", functionTypes[10], varTypes, 8, expressions[271]);
   }
-  BinaryenAddExport(the_module, "_i64_as_tinycore::PartialEq_::eq", "_i64_as_tinycore::PartialEq_::eq");
+  BinaryenAddFunctionExport(the_module, "_i64_as_tinycore::PartialEq_::eq", "_i64_as_tinycore::PartialEq_::eq");
   BinaryenModuleValidate(the_module);
   BinaryenModuleDispose(the_module);
   functionTypes.clear();

@@ -22,7 +22,7 @@ module.addFunction('adder', iii, [], ret);
 
 // Export the function, so we can call it later (for simplicity we
 // export it as the same name as it has internally)
-module.addExport('adder', 'adder');
+module.addFunctionExport('adder', 'adder');
 
 // Print out the text
 console.log(module.emitText());

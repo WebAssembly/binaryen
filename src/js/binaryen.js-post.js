@@ -982,9 +982,25 @@
         return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
       });
     }
-    this['addImport'] = function(internalName, externalModuleName, externalBaseName, type) {
+    this['addImport'] = // deprecated
+    this['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
       return preserveStack(function() {
-        return Module['_BinaryenAddImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), type);
+        return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);
+      });
+    };
+    this['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
+      });
+    };
+    this['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
+      });
+    };
+    this['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
       });
     };
     this['removeImport'] = function(internalName) {
@@ -992,9 +1008,25 @@
         return Module['_BinaryenRemoveImport'](module, strToStack(internalName));
       });
     };
-    this['addExport'] = function(internalName, externalName) {
+    this['addExport'] = // deprecated
+    this['addFunctionExport'] = function(internalName, externalName) {
       return preserveStack(function() {
-        return Module['_BinaryenAddExport'](module, strToStack(internalName), strToStack(externalName));
+        return Module['_BinaryenAddFunctionExport'](module, strToStack(internalName), strToStack(externalName));
+      });
+    };
+    this['addTableExport'] = function(internalName, externalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddTableExport'](module, strToStack(internalName), strToStack(externalName));
+      });
+    };
+    this['addMemoryExport'] = function(internalName, externalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddMemoryExport'](module, strToStack(internalName), strToStack(externalName));
+      });
+    };
+    this['addGlobalExport'] = function(internalName, externalName) {
+      return preserveStack(function() {
+        return Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName));
       });
     };
     this['removeExport'] = function(externalName) {

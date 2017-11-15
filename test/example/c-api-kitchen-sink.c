@@ -234,9 +234,9 @@ void test_core() {
   // Create the function
   BinaryenType localTypes[] = { BinaryenInt32() };
   BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 1, body);
-  
+
   // Globals
-  
+
   BinaryenAddGlobal(module, "a-global", BinaryenInt32(), 0, makeInt32(module, 7));
   BinaryenAddGlobal(module, "a-mutable-global", BinaryenFloat32(), 1, makeFloat32(module, 7.5));
 
@@ -244,11 +244,11 @@ void test_core() {
 
   BinaryenType iparams[2] = { BinaryenInt32(), BinaryenFloat64() };
   BinaryenFunctionTypeRef fiF = BinaryenAddFunctionType(module, "fiF", BinaryenFloat32(), iparams, 2);
-  BinaryenAddImport(module, "an-imported", "module", "base", fiF);
+  BinaryenAddFunctionImport(module, "an-imported", "module", "base", fiF);
 
   // Exports
 
-  BinaryenAddExport(module, "kitchen()sinker", "kitchen_sinker");
+  BinaryenAddFunctionExport(module, "kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
   BinaryenFunctionRef functions[] = { sinker };
@@ -310,7 +310,7 @@ void test_relooper() {
   {
     BinaryenType iparams[1] = { BinaryenInt32() };
     BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
-    BinaryenAddImport(module, "check", "module", "check", vi);
+    BinaryenAddFunctionImport(module, "check", "module", "check", vi);
   }
 
   { // trivial: just one block
@@ -535,7 +535,7 @@ void test_interpret() {
 
   BinaryenType iparams[2] = { BinaryenInt32() };
   BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
-  BinaryenAddImport(module, "print-i32", "spectest", "print", vi);
+  BinaryenAddFunctionImport(module, "print-i32", "spectest", "print", vi);
 
   BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
   BinaryenExpressionRef callOperands[] = { makeInt32(module, 1234) };

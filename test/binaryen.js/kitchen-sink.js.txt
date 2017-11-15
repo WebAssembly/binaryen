@@ -1098,7 +1098,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on
 [none] (set_local $0
  [i64] (i64.const 1234)
 )
@@ -1415,8 +1415,8 @@ getExpressionType=3
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
-  BinaryenAddImport(the_module, "an-imported", "module", "base", functionTypes[1]);
-  BinaryenAddExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
@@ -1992,7 +1992,7 @@ getExpressionType=3
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddImport(the_module, "check", "module", "check", functionTypes[1]);
+  BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {

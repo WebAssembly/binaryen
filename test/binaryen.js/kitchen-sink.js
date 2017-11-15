@@ -226,11 +226,11 @@ function test_core() {
   // Imports
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
-  module.addImport("an-imported", "module", "base", fiF);
+  module.addFunctionImport("an-imported", "module", "base", fiF);
 
   // Exports
 
-  module.addExport("kitchen()sinker", "kitchen_sinker");
+  module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
 
@@ -277,7 +277,7 @@ function test_relooper() {
 
   {
     var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-    module.addImport("check", "module", "check", vi);
+    module.addFunctionImport("check", "module", "check", vi);
   }
 
   { // trivial: just one block
@@ -497,7 +497,7 @@ function test_interpret() {
   module = new Binaryen.Module();
 
   var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-  module.addImport("print-i32", "spectest", "print", vi);
+  module.addFunctionImport("print-i32", "spectest", "print", vi);
 
   var v = module.addFunctionType("v", Binaryen.None, []);
   call = module.callImport("print-i32", [ makeInt32(1234) ], Binaryen.None);
