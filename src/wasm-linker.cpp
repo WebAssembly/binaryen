@@ -333,7 +333,7 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-Address Linker::staticBump() const {
+Address Linker::getStaticBump() const {
   return nextStatic - globalBase;
 }
 

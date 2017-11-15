@@ -271,8 +271,11 @@ class Linker {
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
 
+  // Returns the address of the stack pointer.
   Address getStackPointerAddress() const;
-  Address staticBump() const;
+
+  // Returns the total size of all static allocations.
+  Address getStaticBump() const;
 
  private:
   // Allocate a static variable and return its address in linear memory

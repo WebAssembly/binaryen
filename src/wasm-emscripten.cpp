@@ -40,7 +40,7 @@ void addExportedFunction(Module& wasm, Function* function) {
   wasm.addExport(export_);
 }
 
-Load* EmscriptenGlueLinker::generateLoadStackPointer() {
+Load* EmscriptenGlueGenerator::generateLoadStackPointer() {
   Load* load = builder.makeLoad(
     /* bytes  =*/ 4,
     /* signed =*/ false,
@@ -52,7 +52,7 @@ Load* EmscriptenGlueLinker::generateLoadStackPointer() {
   return load;
 }
 
-Store* EmscriptenGlueLinker::generateStoreStackPointer(Expression* value) {
+Store* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
   Store* store = builder.makeStore(
     /* bytes  =*/ 4,
     /* offset =*/ stackPointerOffset,
@@ -64,7 +64,7 @@ Store* EmscriptenGlueLinker::generateStoreStackPointer(Expression* value) {
   return store;
 }
 
-void EmscriptenGlueLinker::generateStackSaveFunction() {
+void EmscriptenGlueGenerator::generateStackSaveFunction() {
   Name name("stackSave");
   std::vector<NameType> params { };
   Function* function = builder.makeFunction(
@@ -76,7 +76,7 @@ void EmscriptenGlueLinker::generateStackSaveFunction() {
   addExportedFunction(wasm, function);
 }
 
-void EmscriptenGlueLinker::generateStackAllocFunction() {
+void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Name name("stackAlloc");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
@@ -104,7 +104,7 @@ void EmscriptenGlueLinker::generateStackAllocFunction() {
   addExportedFunction(wasm, function);
 }
 
-void EmscriptenGlueLinker::generateStackRestoreFunction() {
+void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   Name name("stackRestore");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
@@ -118,13 +118,13 @@ void EmscriptenGlueLinker::generateStackRestoreFunction() {
   addExportedFunction(wasm, function);
 }
 
-void EmscriptenGlueLinker::generateRuntimeFunctions() {
+void EmscriptenGlueGenerator::generateRuntimeFunctions() {
   generateStackSaveFunction();
   generateStackAllocFunction();
   generateStackRestoreFunction();
 }
 
-void EmscriptenGlueLinker::generateMemoryGrowthFunction() {
+void EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   Name name(GROW_WASM_MEMORY);
   std::vector<NameType> params { { NEW_SIZE, i32 } };
   Function* growFunction = builder.makeFunction(
@@ -159,10 +159,9 @@ void removeImportsWithSubstring(Module& module, Name name) {
   }
 }
 
-std::vector<Function*> EmscriptenGlueLinker::makeDynCallThunks() {
+void EmscriptenGlueGenerator::generateDynCallThunks() {
   removeImportsWithSubstring(wasm, EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
-  std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
   Builder builder(wasm);
   std::vector<Name> tableSegmentData;
@@ -189,10 +188,10 @@ std::vector<Function*> EmscriptenGlueLinker::makeDynCallThunks() {
     }
     Expression* call = builder.makeCallIndirect(funcType, fptr, args);
     f->body = call;
+
     wasm.addFunction(f);
-    generatedFunctions.push_back(f);
+    exportFunction(wasm, f->name, true);
   }
-  return generatedFunctions;
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
@@ -321,7 +320,7 @@ void printSet(std::ostream& o, C& c) {
   o << "]";
 }
 
-std::string EmscriptenGlueLinker::generateEmscriptenMetadata(
+std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump,
     std::vector<Name> const& initializerFunctions) {
   std::stringstream meta;
@@ -367,18 +366,16 @@ std::string emscriptenGlue(
     Address stackPointer,
     Address staticBump,
     std::vector<Name> const& initializerFunctions) {
-  EmscriptenGlueLinker emscripten(wasm, stackPointer);
-  emscripten.generateRuntimeFunctions();
+  EmscriptenGlueGenerator generator(wasm, stackPointer);
+  generator.generateRuntimeFunctions();
 
   if (allowMemoryGrowth) {
-    emscripten.generateMemoryGrowthFunction();
+    generator.generateMemoryGrowthFunction();
   }
 
-  for (auto f : emscripten.makeDynCallThunks()) {
-    exportFunction(wasm, f->name, true);
-  }
+  generator.generateDynCallThunks();
 
-  return emscripten.generateEmscriptenMetadata(staticBump, initializerFunctions);
+  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions);
 }
 
 } // namespace wasm

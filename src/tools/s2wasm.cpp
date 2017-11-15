@@ -188,7 +188,7 @@ int main(int argc, const char *argv[]) {
       wasm,
       allowMemoryGrowth,
       linker.getStackPointerAddress(),
-      linker.staticBump(),
+      linker.getStaticBump(),
       linker.getOutput().getInitializerFunctions());
   }
 

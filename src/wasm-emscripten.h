@@ -22,21 +22,21 @@
 
 namespace wasm {
 
-class LinkerObject;
-
-class EmscriptenGlueLinker {
+// Class which modifies a wasm module for use with emscripten. Generates
+// runtime functions and emits metadata.
+class EmscriptenGlueGenerator {
 public:
-  EmscriptenGlueLinker(Module& _wasm, Address _stackPointerOffset)
-    : wasm(_wasm),
-      builder(_wasm),
-      stackPointerOffset(_stackPointerOffset) { }
+  EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset)
+    : wasm(wasm),
+      builder(wasm),
+      stackPointerOffset(stackPointerOffset) { }
 
   void generateRuntimeFunctions();
   void generateMemoryGrowthFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.
-  std::vector<Function*> makeDynCallThunks();
+  void generateDynCallThunks();
 
   std::string generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions);

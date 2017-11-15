@@ -1331,8 +1331,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // apply memory growth, if relevant
   if (preprocessor.memoryGrowth) {
-    EmscriptenGlueLinker emscripten(wasm, Address(0));
-    emscripten.generateMemoryGrowthFunction();
+    EmscriptenGlueGenerator generator(wasm, Address(0));
+    generator.generateMemoryGrowthFunction();
     wasm.memory.max = Memory::kMaxSize;
   }
 
