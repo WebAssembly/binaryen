@@ -70,7 +70,7 @@ std::string relocTypeName(RelocType type) {
   case R_WEBASSEMBLY_MEMORY_ADDR_I32:    return "R_WEBASSEMBLY_MEMORY_ADDR_I32";
   case R_WEBASSEMBLY_TYPE_INDEX_LEB:     return "R_WEBASSEMBLY_TYPE_INDEX_LEB";
   case R_WEBASSEMBLY_GLOBAL_INDEX_LEB:   return "R_WEBASSEMBLY_GLOBAL_INDEX_LEB";
-  default: Fatal() << "Unknown reloc type: " << type << "\n";
+  default: Fatal() << "Unknown reloc type: " << type << "\n"; return "";
   }
 }
 
@@ -96,7 +96,6 @@ void parseReloc(std::vector<char> const& data) {
     P(relocTypeName(type));
     P(offset);
     P(index);
-    uint32_t addend;
     switch (type) {
     case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
     case R_WEBASSEMBLY_TABLE_INDEX_SLEB:
@@ -106,9 +105,11 @@ void parseReloc(std::vector<char> const& data) {
       break;
     case R_WEBASSEMBLY_MEMORY_ADDR_LEB:
     case R_WEBASSEMBLY_MEMORY_ADDR_SLEB:
-    case R_WEBASSEMBLY_MEMORY_ADDR_I32:
-      addend = readNext();
+    case R_WEBASSEMBLY_MEMORY_ADDR_I32: {
+      uint32_t addend = readNext();
+      std::cerr << "Read an addend: " << addend << "\n";
       break;
+    }
     default:
       Fatal() << "Invalid relocation type: " << type << "\n";
     }
