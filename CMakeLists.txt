@@ -279,6 +279,7 @@ SET(o2wasm_SOURCES
   src/tools/o2wasm.cpp
   src/wasm-emscripten.cpp
   src/wasm-linker.cpp
+  src/passes/pass.cpp
 )
 ADD_EXECUTABLE(o2wasm
                ${o2wasm_SOURCES})
