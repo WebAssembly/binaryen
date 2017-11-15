@@ -497,7 +497,7 @@ getExpressionType=3
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -1906,7 +1906,7 @@ getExpressionType=3
       )
       (drop
        (i32.eqz
-        (call_indirect $iiIfF
+        (call_indirect (type $iiIfF)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
