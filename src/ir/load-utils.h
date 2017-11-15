@@ -32,6 +32,11 @@ inline bool isSignRelevant(Load* load) {
   return !isWasmTypeFloat(type) && load->bytes < getWasmTypeSize(type);
 }
 
+// check if a load can be signed (which some opts want to do)
+inline bool canBeSigned(Load* load) {
+  return !load->isAtomic;
+}
+
 } // namespace LoadUtils
 
 } // namespace wasm

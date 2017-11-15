@@ -37,6 +37,10 @@ getExpressionType=3
  (f32.const -33.61199951171875)
 )
 
+5
+{ low: 6, high: 7 }
+8.5
+9.5
 (module
  (type $iiIfF (func (param i32 i64 f32 f64) (result i32)))
  (type $fiF (func (param i32 f64) (result f32)))
@@ -1393,23 +1397,36 @@ getExpressionType=3
  (f32.const -33.61199951171875)
 )
 
+  expressions[247] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  BinaryenConstGetValueI32(expressions[247]);
+5
+  expressions[248] = BinaryenConst(the_module, BinaryenLiteralInt64(30064771078));
+  BinaryenConstGetValueI64Low(expressions[248]);
+  BinaryenConstGetValueI64High(expressions[248]);
+{ low: 6, high: 7 }
+  expressions[249] = BinaryenConst(the_module, BinaryenLiteralFloat32(8.5));
+  BinaryenConstGetValueF32(expressions[249]);
+8.5
+  expressions[250] = BinaryenConst(the_module, BinaryenLiteralFloat64(9.5));
+  BinaryenConstGetValueF64(expressions[250]);
+9.5
   {
     BinaryenExpressionRef children[] = { expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[97], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[191], expressions[192], expressions[193], expressions[195], expressions[197], expressions[198], expressions[200], expressions[202], expressions[203], expressions[204], expressions[206], expressions[212], expressions[217], expressions[224], expressions[226], expressions[228], expressions[231], expressions[233], expressions[235], expressions[237], expressions[239], expressions[240], expressions[241], expressions[242], expressions[244], expressions[245], expressions[246] };
-    expressions[247] = BinaryenBlock(the_module, "the-value", children, 95, BinaryenUndefined());
+    expressions[251] = BinaryenBlock(the_module, "the-value", children, 95, BinaryenUndefined());
   }
-  expressions[248] = BinaryenDrop(the_module, expressions[247]);
+  expressions[252] = BinaryenDrop(the_module, expressions[251]);
   {
-    BinaryenExpressionRef children[] = { expressions[248] };
-    expressions[249] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenUndefined());
+    BinaryenExpressionRef children[] = { expressions[252] };
+    expressions[253] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenUndefined());
   }
-  expressions[250] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
+  expressions[254] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
-    BinaryenExpressionRef children[] = { expressions[249], expressions[250] };
-    expressions[251] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenUndefined());
+    BinaryenExpressionRef children[] = { expressions[253], expressions[254] };
+    expressions[255] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenUndefined());
   }
   {
     BinaryenType varTypes[] = { 1 };
-    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[251]);
+    functions[0] = BinaryenAddFunction(the_module, "kitchen()sinker", functionTypes[0], varTypes, 1, expressions[255]);
   }
   {
     BinaryenType paramTypes[] = { 1, 4 };
@@ -1421,11 +1438,11 @@ getExpressionType=3
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
   }
-  expressions[252] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
+  expressions[256] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
     const char segment0[] = { 104, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100 };
     const char* segments[] = { segment0 };
-    BinaryenExpressionRef segmentOffsets[] = { expressions[252] };
+    BinaryenExpressionRef segmentOffsets[] = { expressions[256] };
     BinaryenIndex segmentSizes[] = { 12 };
     BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
   }
@@ -1433,10 +1450,10 @@ getExpressionType=3
     BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "v", 0, paramTypes, 0);
   }
-  expressions[253] = BinaryenNop(the_module);
+  expressions[257] = BinaryenNop(the_module);
   {
     BinaryenType varTypes[] = { 0 };
-    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[253]);
+    functions[1] = BinaryenAddFunction(the_module, "starter", functionTypes[2], varTypes, 0, expressions[257]);
   }
   BinaryenSetStart(the_module, functions[1]);
   {

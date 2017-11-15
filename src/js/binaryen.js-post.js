@@ -1143,6 +1143,25 @@
     return Module['_BinaryenExpressionGetType'](expr);
   };
 
+  Module['getConstValueI32'] = function(expr) {
+    return Module['_BinaryenConstGetValueI32'](expr);
+  };
+
+  Module['getConstValueI64'] = function(expr) {
+    return {
+      'low': Module['_BinaryenConstGetValueI64Low'](expr),
+      'high': Module['_BinaryenConstGetValueI64High'](expr)
+    };
+  };
+
+  Module['getConstValueF32'] = function(expr) {
+    return Module['_BinaryenConstGetValueF32'](expr);
+  };
+
+  Module['getConstValueF64'] = function(expr) {
+    return Module['_BinaryenConstGetValueF64'](expr);
+  };
+
   // emit text of an expression or a module
   Module['emitText'] = function(expr) {
     if (typeof expr === 'object') {
