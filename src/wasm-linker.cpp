@@ -195,7 +195,6 @@ void Linker::layout() {
       *(relocation->data) = symbolAddress->second + relocation->addend;
       if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
     } else {
-      std::cerr << "  function\n";
       // function address
       if (!out.wasm.getFunctionOrNull(name)) {
         if (FunctionType* f = out.getExternType(name)) {
