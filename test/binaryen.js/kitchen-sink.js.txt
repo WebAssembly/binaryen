@@ -37,6 +37,7 @@ getExpressionType=3
  (f32.const -33.61199951171875)
 )
 
+{ type: 3, value: 33.61199951171875 }
 5
 { low: 6, high: 7 }
 8.5
@@ -1102,7 +1103,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
 [none] (set_local $0
  [i64] (i64.const 1234)
 )
@@ -1397,6 +1398,7 @@ getExpressionType=3
  (f32.const -33.61199951171875)
 )
 
+  BinaryenExpressionPrecomputeValue(expressions[30], NULL, NULL);
 { type: 3, value: 33.61199951171875 }
   expressions[247] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
   BinaryenConstGetValueI32(expressions[247]);

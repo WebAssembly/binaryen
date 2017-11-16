@@ -375,7 +375,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 // @module: module context, can be `NULL`
 // @functionName: function context within the module, can be `NULL`
 // @return: the precomputed literal or a literal of type `BinaryenNone()` if not computable
-BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName);
+struct BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName);
 // Gets the 32-bit integer value of the specified `Const` expression.
 int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
 // Gets the 64-bit integer value of the specified `Const` expression.

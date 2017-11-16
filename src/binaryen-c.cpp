@@ -797,7 +797,7 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   WasmPrinter::printExpression((Expression*)expr, std::cout);
   std::cout << '\n';
 }
-BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName) {
+struct BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName) {
   if (tracing) {
     std::cout << "  BinaryenExpressionPrecomputeValue(expressions[" << expressions[expr] << "], ";
     if (module != NULL) std::cout << "the_module";
