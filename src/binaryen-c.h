@@ -449,11 +449,12 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 //  @return 0 if an error occurred, 1 if validated succesfully
 int BinaryenModuleValidate(BinaryenModuleRef module);
 
-// Run the standard optimization passes on the module.
+// Runs the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
 // Runs the specified passes on the module.
-void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+// @functionName: optional name of a single function to run the passes on, can be `NULL`
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses, const char* functionName);
 
 // Auto-generate drop() operations where needed. This lets you generate code without
 // worrying about where they are needed. (It is more efficient to do it yourself,

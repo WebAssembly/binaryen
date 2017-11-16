@@ -2945,7 +2945,7 @@ raw:
   BinaryenModuleValidate(the_module);
   {
     const char* passes[] = { "precompute" };
-    BinaryenModuleRunPasses(the_module, passes, 1);
+    BinaryenModuleRunPasses(the_module, passes, 1, NULL);
   }
   BinaryenModuleValidate(the_module);
   BinaryenModuleOptimize(the_module);
