@@ -90,10 +90,42 @@ public:
     ret->finalize();
     return ret;
   }
+  Block* makeBlock(const ExpressionList& items) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize();
+    return ret;
+  }
+  Block* makeBlock(const ExpressionList& items, WasmType type) {
+    auto* ret = allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
+  Block* makeBlock(Name name, const ExpressionList& items) {
+    auto* ret = allocator.alloc<Block>();
+    ret->name = name;
+    ret->list.set(items);
+    ret->finalize();
+    return ret;
+  }
+  Block* makeBlock(Name name, const ExpressionList& items, WasmType type) {
+    auto* ret = allocator.alloc<Block>();
+    ret->name = name;
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
   If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse = nullptr) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize();
+    return ret;
+  }
+  If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse, WasmType type) {
+    auto* ret = allocator.alloc<If>();
+    ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
+    ret->finalize(type);
     return ret;
   }
   Loop* makeLoop(Name name, Expression* body) {
