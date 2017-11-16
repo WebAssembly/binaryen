@@ -724,6 +724,7 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
+  void writeUserSections();
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();

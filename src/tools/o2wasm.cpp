@@ -208,17 +208,12 @@ void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
 }
 
 int main(int argc, const char *argv[]) {
-  // bool ignoreUnknownSymbols = false;
-  // bool generateEmscriptenGlue = false;
   // bool allowMemoryGrowth = false;
   // bool importMemory = false;
   // std::string startFunction;
   std::string infile;
   std::string outfile;
-  // std::vector<std::string> archiveLibraries;
-  // TrapMode trapMode = TrapMode::Allow;
   Options options("o2wasm", "Link .o file into .wasm");
-  // options.extra["validate"] = "wasm";
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,

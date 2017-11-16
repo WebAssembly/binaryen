@@ -61,6 +61,9 @@ void WasmBinaryWriter::write() {
   if (sourceMap) {
     writeSourceMapEpilog();
   }
+
+  writeUserSections();
+
   finishUp();
 }
 
@@ -548,6 +551,17 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
     out << char(digit < 20 ? 'g' + digit : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+  }
+}
+
+void WasmBinaryWriter::writeUserSections() {
+  for (auto& section : wasm->userSections) {
+    auto start = startSection(0);
+    writeInlineString(section.name.c_str());
+    for (size_t i = 0; i < section.data.size(); i++) {
+      o << uint8_t(section.data[i]);
+    }
+    finishSection(start);
   }
 }
 
