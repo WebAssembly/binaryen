@@ -222,7 +222,8 @@ private:
 };
 
 void AsmConstWalker::visitCallImport(CallImport* curr) {
-  if (curr->target.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  auto import = wasm.getImport(curr->target);
+  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
     auto code = codeForConstAddr(arg);
     arg->value = idLiteralForCode(code);
