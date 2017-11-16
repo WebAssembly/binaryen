@@ -371,6 +371,11 @@ BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
 // Print an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+// Precomputes a single expression to a literal, if possible.
+// @module: module context, can be `NULL`
+// @functionName: function context within the module, can be `NULL`
+// @return: the precomputed literal or a literal of type `BinaryenNone()` if not computable
+BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName);
 
 // Functions
 

@@ -779,7 +779,7 @@ BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr] << "]);\n";
   }
-  
+
   return ((Expression*)expr)->_id;
 }
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {
@@ -796,6 +796,33 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
 
   WasmPrinter::printExpression((Expression*)expr, std::cout);
   std::cout << '\n';
+}
+BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName) {
+  if (tracing) {
+    std::cout << "  BinaryenExpressionPrecomputeValue(expressions[" << expressions[expr] << "], ";
+    if (module != NULL) std::cout << "the_module";
+    else std::cout << "NULL";
+    std::cout << ", ";
+    traceNameOrNULL(functionName);
+    std::cout << ");\n";
+  }
+
+  Module* wasm = nullptr;
+  if (module != NULL) {
+    wasm = (Module*)module;
+  }
+  Function* func = nullptr;
+  if (functionName != NULL) {
+    assert(wasm);
+    func = wasm->getFunction(functionName);
+  }
+  Literal value = precomputeExpressionValue((Expression*)expr, wasm, func);
+  if (value.type == WasmType::none) {
+    BinaryenLiteral ret;
+    ret.type = WasmType::none;
+    return ret;
+  }
+  return toBinaryenLiteral(value);
 }
 
 // Functions

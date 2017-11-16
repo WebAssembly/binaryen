@@ -213,6 +213,7 @@ function test_core() {
   console.log("getExpressionId=" + Binaryen.getExpressionId(valueList[3]));
   console.log("getExpressionType=" + Binaryen.getExpressionType(valueList[3]));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
+  console.log(Binaryen.precomputeValue(valueList[3])); // test precomputing a standalone expression
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);
