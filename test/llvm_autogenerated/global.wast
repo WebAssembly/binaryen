@@ -16,11 +16,11 @@
  (data (i32.const 136) "\00\00\00\00\00\00\00@")
  (data (i32.const 656) "\e0\00\00\00")
  (data (i32.const 1192) "\a4\04\00\00")
+ (export "foo" (func $foo))
+ (export "call_memcpy" (func $call_memcpy))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "foo" (func $foo))
- (export "call_memcpy" (func $call_memcpy))
  (func $foo (; 1 ;) (result i32)
   (return
    (i32.load offset=32

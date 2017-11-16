@@ -33,6 +33,18 @@ namespace wasm {
 
 class S2WasmBuilder;
 
+inline void exportFunction(Module& wasm, Name name, bool must_export) {
+  if (!wasm.getFunctionOrNull(name)) {
+    assert(!must_export);
+    return;
+  }
+  if (wasm.getExportOrNull(name)) return; // Already exported
+  auto exp = new Export;
+  exp->name = exp->value = name;
+  exp->kind = ExternalKind::Function;
+  wasm.addExport(exp);
+}
+
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {
@@ -156,6 +168,10 @@ class LinkerObject {
     return wasm.functions.empty();
   }
 
+  std::vector<Name> const& getInitializerFunctions() const {
+    return initializerFunctions;
+  }
+
   friend class Linker;
 
   Module wasm;
@@ -246,10 +262,6 @@ class Linker {
   // function table.
   void layout();
 
-  // Support for emscripten integration: generates dyncall thunks, emits
-  // metadata for asmConsts, staticBump and initializer functions.
-  void emscriptenGlue(std::ostream& o);
-
   // Add an object to the link by constructing it in-place with a builder.
   // Returns false if an error occurred.
   bool linkObject(S2WasmBuilder& builder);
@@ -258,6 +270,12 @@ class Linker {
   // currently-undefined reference will be added to the link.
   // Returns false if an error occurred.
   bool linkArchive(Archive& archive);
+
+  // Returns the address of the stack pointer.
+  Address getStackPointerAddress() const;
+
+  // Returns the total size of all static allocations.
+  Address getStaticBump() const;
 
  private:
   // Allocate a static variable and return its address in linear memory
@@ -292,18 +310,6 @@ class Linker {
 
   static Address roundUpToPageSize(Address size) {
     return (size + Memory::kPageSize - 1) & Memory::kPageMask;
-  }
-
-  void exportFunction(Name name, bool must_export) {
-    if (!out.wasm.getFunctionOrNull(name)) {
-      assert(!must_export);
-      return;
-    }
-    if (out.wasm.getExportOrNull(name)) return; // Already exported
-    auto exp = new Export;
-    exp->name = exp->value = name;
-    exp->kind = ExternalKind::Function;
-    out.wasm.addExport(exp);
   }
 
   Function* getImportThunk(Name name, const FunctionType* t);

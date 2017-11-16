@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "select_i32_bool" (func $select_i32_bool))
  (export "select_i32_eq" (func $select_i32_eq))
  (export "select_i32_ne" (func $select_i32_ne))
@@ -17,6 +14,9 @@
  (export "select_f64_bool" (func $select_f64_bool))
  (export "select_f64_eq" (func $select_f64_eq))
  (export "select_f64_ne" (func $select_f64_ne))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $select_i32_bool (; 0 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (select

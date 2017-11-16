@@ -376,6 +376,18 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 // @functionName: function context within the module, can be `NULL`
 // @return: the precomputed literal or a literal of type `BinaryenNone()` if not computable
 BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, BinaryenModuleRef module, const char* functionName);
+// Gets the 32-bit integer value of the specified `Const` expression.
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Gets the 64-bit integer value of the specified `Const` expression.
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Gets the low 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Gets the high 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Gets the 32-bit float value of the specified `Const` expression.
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Gets the 64-bit float value of the specified `Const` expression.
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
 
 // Functions
 

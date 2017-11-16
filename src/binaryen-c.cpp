@@ -824,6 +824,60 @@ BinaryenLiteral BinaryenExpressionPrecomputeValue(BinaryenExpressionRef expr, Bi
   }
   return toBinaryenLiteral(value);
 }
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.geti32();
+}
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.geti64();
+}
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64Low(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() & 0xffffffff);
+}
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64High(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
+}
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf32();
+}
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf64();
+}
 
 // Functions
 

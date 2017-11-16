@@ -1,11 +1,11 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
+ (export "return_i32" (func $return_i32))
+ (export "return_void" (func $return_void))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "return_i32" (func $return_i32))
- (export "return_void" (func $return_void))
  (func $return_i32 (; 0 ;) (result i32)
   (i32.const 5)
  )

@@ -214,6 +214,10 @@ function test_core() {
   console.log("getExpressionType=" + Binaryen.getExpressionType(valueList[3]));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
   console.log(Binaryen.precomputeValue(valueList[3])); // test precomputing a standalone expression
+  console.log(Binaryen.getConstValueI32(module.i32.const(5)));
+  console.log(Binaryen.getConstValueI64(module.i64.const(6, 7)));
+  console.log(Binaryen.getConstValueF32(module.f32.const(8.5)));
+  console.log(Binaryen.getConstValueF64(module.f64.const(9.5)));
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);
