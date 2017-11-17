@@ -135,8 +135,15 @@ void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
 
 int main(int argc, const char *argv[]) {
   std::string infile;
+  std::string outfile;
   Options options("o2wasm", "Link .o file into .wasm");
   options
+      .add("--output", "-o", "Output file",
+           Options::Arguments::One,
+           [&outfile](Options *o, const std::string &argument) {
+             outfile = argument;
+             Colors::disable();
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
                         infile = argument;
@@ -168,7 +175,8 @@ int main(int argc, const char *argv[]) {
 
   EmscriptenGlueGenerator generator(wasm);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
-  std::cout << metadata;
+  Output output(outfile, Flags::Text, Flags::Release);
+  output << metadata;
 
   return 0;
 }
