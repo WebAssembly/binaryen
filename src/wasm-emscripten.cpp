@@ -40,28 +40,39 @@ void addExportedFunction(Module& wasm, Function* function) {
   wasm.addExport(export_);
 }
 
-Load* EmscriptenGlueGenerator::generateLoadStackPointer() {
-  Load* load = builder.makeLoad(
-    /* bytes  =*/ 4,
-    /* signed =*/ false,
-    /* offset =*/ stackPointerOffset,
-    /* align  =*/ 4,
-    /* ptr    =*/ builder.makeConst(Literal(0)),
-    /* type   =*/ i32
-  );
-  return load;
+Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
+  assert(wasm.globals.size() == 1);
+  return wasm.globals[0].get();
 }
 
-Store* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
-  Store* store = builder.makeStore(
-    /* bytes  =*/ 4,
-    /* offset =*/ stackPointerOffset,
-    /* align  =*/ 4,
-    /* ptr    =*/ builder.makeConst(Literal(0)),
-    /* value  =*/ value,
-    /* type   =*/ i32
-  );
-  return store;
+Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
+  if (stackPointerOffset > 0) {
+    return builder.makeLoad(
+      /* bytes  =*/ 4,
+      /* signed =*/ false,
+      /* offset =*/ stackPointerOffset,
+      /* align  =*/ 4,
+      /* ptr    =*/ builder.makeConst(Literal(0)),
+      /* type   =*/ i32
+    );
+  }
+  Global* stackPointer = getStackPointerGlobal();
+  return builder.makeGetGlobal(stackPointer->name, i32);
+}
+
+Expression* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
+  if (stackPointerOffset > 0) {
+    return builder.makeStore(
+      /* bytes  =*/ 4,
+      /* offset =*/ stackPointerOffset,
+      /* align  =*/ 4,
+      /* ptr    =*/ builder.makeConst(Literal(0)),
+      /* value  =*/ value,
+      /* type   =*/ i32
+    );
+  }
+  Global* stackPointer = getStackPointerGlobal();
+  return builder.makeSetGlobal(stackPointer->name, value);
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
@@ -82,7 +93,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Function* function = builder.makeFunction(
     name, std::move(params), i32, { { "1", i32 } }
   );
-  Load* loadStack = generateLoadStackPointer();
+  Expression* loadStack = generateLoadStackPointer();
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
   Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
   const static uint32_t bitAlignment = 16;
@@ -90,7 +101,7 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
   SetLocal* teeStackLocal = builder.makeTeeLocal(1, maskedSub);
-  Store* storeStack = generateStoreStackPointer(teeStackLocal);
+  Expression* storeStack = generateStoreStackPointer(teeStackLocal);
 
   Block* block = builder.makeBlock();
   block->list.push_back(storeStack);
@@ -109,7 +120,7 @@ void EmscriptenGlueGenerator::generateStackRestoreFunction() {
     name, std::move(params), none, {}
   );
   GetLocal* getArg = builder.makeGetLocal(0, i32);
-  Store* store = generateStoreStackPointer(getArg);
+  Expression* store = generateStoreStackPointer(getArg);
 
   function->body = store;
 

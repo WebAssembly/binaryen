@@ -46,8 +46,9 @@ private:
   Builder builder;
   Address stackPointerOffset;
 
-  Load* generateLoadStackPointer();
-  Store* generateStoreStackPointer(Expression* value);
+  Global* getStackPointerGlobal();
+  Expression* generateLoadStackPointer();
+  Expression* generateStoreStackPointer(Expression* value);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
