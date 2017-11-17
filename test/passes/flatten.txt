@@ -5,7 +5,6 @@
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i64 i64) (result i64)))
  (type $5 (func (result f32)))
- (type $6 (func (param i32)))
  (global $x (mut i32) (i32.const 0))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
@@ -2409,19 +2408,19 @@
    (get_local $9)
   )
  )
- (func $tees (; 41 ;) (type $6) (param $x i32)
-  (local $1 i32)
+ (func $tees (; 41 ;) (type $ii) (param $x i32) (param $y i32)
   (local $2 i32)
   (local $3 i32)
+  (local $4 i32)
   (block
    (set_local $x
     (i32.const 1)
    )
-   (set_local $1
+   (set_local $2
     (get_local $x)
    )
    (drop
-    (get_local $1)
+    (get_local $2)
    )
    (nop)
    (unreachable)
@@ -2433,17 +2432,17 @@
    (set_local $x
     (i32.const 2)
    )
-   (set_local $2
-    (get_local $x)
-   )
-   (set_local $x
-    (get_local $2)
-   )
    (set_local $3
     (get_local $x)
    )
-   (drop
+   (set_local $y
     (get_local $3)
+   )
+   (set_local $4
+    (get_local $y)
+   )
+   (drop
+    (get_local $4)
    )
    (nop)
   )
