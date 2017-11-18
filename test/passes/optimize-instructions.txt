@@ -2208,17 +2208,23 @@
    )
   )
   (drop
-   (i32.eqz
-    (i32.and
+   (i32.or
+    (i32.eqz
      (get_local $x)
+    )
+    (i32.eqz
      (get_local $y)
     )
    )
   )
   (drop
    (i32.xor
-    (get_local $x)
-    (get_local $y)
+    (i32.eqz
+     (get_local $x)
+    )
+    (i32.eqz
+     (get_local $y)
+    )
    )
   )
   (drop

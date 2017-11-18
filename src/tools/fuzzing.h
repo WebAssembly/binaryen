@@ -364,6 +364,7 @@ private:
     labelIndex = 0;
     assert(breakableStack.empty());
     assert(hangStack.empty());
+//extra code for the params. we send in a zero value, so we should do stuff like replace with a const, or add or sub or eqz, etc.
     // with small chance, make the body unreachable
     auto bodyType = func->result;
     if (oneIn(10)) {

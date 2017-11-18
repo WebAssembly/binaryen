@@ -563,36 +563,31 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         }
       }
       // bitwise operations
-      if (binary->op == AndInt32 || binary->op == OrInt32 || binary->op == XorInt32) {
-        // try de-morgan's laws
+      if (binary->op == AndInt32) {
+        // try de-morgan's AND law,
+        //  (not X) and (not Y) === not (X  or Y)
+        // Note that the OR and XOR laws do not work here, as these
+        // are not booleans (we could check if they are, but a boolean
+        // would already optimize with the eqz anyhow, unless propagating)
         if (auto* left = binary->left->dynCast<Unary>()) {
           if (left->op == EqZInt32) {
             if (auto* right = binary->right->dynCast<Unary>()) {
               if (right->op == EqZInt32) {
-                // the laws apply,
-                //  (not X) and (not Y) === not (X  or Y)
-                //  (not X)  or (not Y) === not (X and Y)
-                //  (not X) xor (not Y) ===      X xor Y
-                if (binary->op == XorInt32) {
-                  binary->left = left->value;
-                  binary->right = right->value;
-                  return binary;
-                }
-                // and/or: reuse one unary, drop the other
+                // reuse one unary, drop the other
                 auto* leftValue = left->value;
                 left->value = binary;
                 binary->left = leftValue;
                 binary->right = right->value;
-                binary->op = binary->op == AndInt32 ? OrInt32 : AndInt32;
+                binary->op = OrInt32;
                 return left;
               }
             }
           }
         }
-        // for and and or, we can potentially conditionalize
-        if (binary->op != XorInt32) {
-          return conditionalizeExpensiveOnBitwise(binary);
-        }
+      }
+      // for and and or, we can potentially conditionalize
+      if (binary->op == AndInt32 || binary->op == OrInt32) {
+        return conditionalizeExpensiveOnBitwise(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws

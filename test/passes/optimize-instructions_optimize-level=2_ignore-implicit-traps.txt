@@ -25,7 +25,7 @@
     )
     (set_local $0
      (if (result i32)
-      (i32.and
+      (if (result i32)
        (i32.rem_s
         (i32.add
          (i32.mul
@@ -41,19 +41,22 @@
         )
         (i32.const 5)
        )
-       (i32.rem_u
-        (i32.add
-         (i32.mul
-          (get_local $0)
-          (get_local $0)
+       (i32.eqz
+        (i32.rem_u
+         (i32.add
+          (i32.mul
+           (get_local $0)
+           (get_local $0)
+          )
+          (i32.const 11)
          )
-         (i32.const 11)
+         (i32.const 3)
         )
-        (i32.const 3)
        )
+       (i32.const 1)
       )
-      (get_local $6)
       (get_local $7)
+      (get_local $6)
      )
     )
     (br_if $while-in6
@@ -190,19 +193,7 @@
     )
     (set_local $0
      (if (result i32)
-      (i32.and
-       (i32.rem_s
-        (i32.add
-         (i32.mul
-          (i32.eqz
-           (get_local $0)
-          )
-          (get_local $0)
-         )
-         (i32.const 17)
-        )
-        (i32.const 5)
-       )
+      (if (result i32)
        (i32.rem_u
         (i32.add
          (i32.mul
@@ -213,9 +204,24 @@
         )
         (i32.const 3)
        )
+       (i32.eqz
+        (i32.rem_s
+         (i32.add
+          (i32.mul
+           (i32.eqz
+            (get_local $0)
+           )
+           (get_local $0)
+          )
+          (i32.const 17)
+         )
+         (i32.const 5)
+        )
+       )
+       (i32.const 1)
       )
-      (get_local $6)
       (get_local $7)
+      (get_local $6)
      )
     )
     (br_if $while-in6
