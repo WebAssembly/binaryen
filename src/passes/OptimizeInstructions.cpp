@@ -565,10 +565,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       // bitwise operations
       if (binary->op == AndInt32) {
         // try de-morgan's AND law,
-        //  (not X) and (not Y) === not (X  or Y)
+        //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
         // are not booleans (we could check if they are, but a boolean
-        // would already optimize with the eqz anyhow, unless propagating)
+        // would already optimize with the eqz anyhow, unless propagating).
+        // But for AND, the left is true iff X and Y are each all zero bits,
+        // and the right is true if the union of their bits is zero; same.
         if (auto* left = binary->left->dynCast<Unary>()) {
           if (left->op == EqZInt32) {
             if (auto* right = binary->right->dynCast<Unary>()) {
