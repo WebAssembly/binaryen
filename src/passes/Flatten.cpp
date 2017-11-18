@@ -46,6 +46,8 @@
 //     anything else is written to a local earlier.
 //  2. Disallow block, loop, and if return values, i.e., do not use
 //     control flow to pass around values.
+//  3. Disallow tee_local, setting a local is always done in a set_local
+//     on a non-nested-expression location.
 //
 
 #include <wasm.h>
@@ -185,7 +187,19 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         ourPreludes.swap(iter->second);
       }
       // special handling
-      if (auto* br = curr->dynCast<Break>()) {
+      if (auto* set = curr->dynCast<SetLocal>()) {
+        if (set->isTee()) {
+          // we disallow tee_local
+          if (set->value->type == unreachable) {
+            replaceCurrent(set->value); // trivial, no set happens
+          } else {
+            // use a set in a prelude + a get
+            set->setTee(false);
+            ourPreludes.push_back(set);
+            replaceCurrent(builder.makeGetLocal(set->index, set->value->type));
+          }
+        }
+      } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
           if (isConcreteWasmType(type)) {
