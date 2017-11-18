@@ -266,6 +266,9 @@ public:
   void run(PassRunner* runner, Module* module) override;
 };
 
+// Precomputes a single expression's literal value using the precompute pass
+Literal precomputeExpressionValue(Expression* expression, Module* module, Function* func);
+
 } // namespace wasm
 
 #endif // wasm_pass_h

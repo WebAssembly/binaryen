@@ -192,6 +192,13 @@
   Module['AtomicRMWXor'] = Module['_BinaryenAtomicRMWXor']();
   Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
 
+  // The Const creation API is a little different: we don't want users to
+  // need to make their own Literals, as the C API handles them by value,
+  // which means we would leak them. Instead, this is the only API that
+  // accepts Literals, so fuse it with Literal creation
+  var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
+                             // makes us pass pointers to this.
+
   // we provide a JS Module() object interface
   Module['Module'] = function(module) {
     if (!module) module = Module['_BinaryenModuleCreate']();
@@ -282,13 +289,6 @@
     this['hasFeature'] = function(name) {
       return Module['_BinaryenHost'](module, Module['HasFeature'], strToStack(name));
     }
-
-    // The Const creation API is a little different: we don't want users to
-    // need to make their own Literals, as the C API handles them by value,
-    // which means we would leak them. Instead, this is the only API that
-    // accepts Literals, so fuse it with Literal creation
-    var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
-                               // makes us pass pointers to this.
 
     this['i32'] = {
       'load': function(offset, align, ptr) {
@@ -1066,6 +1066,9 @@
     this['autoDrop'] = function() {
       return Module['_BinaryenModuleAutoDrop'](module);
     };
+    this['precomputeValue'] = function(expr, functionName) {
+      return Module['precomputeValue'](expr, module, functionName);
+    };
 
     // TODO: fix this hard-wired limit
     var MAX = 1024*1024;
@@ -1109,6 +1112,35 @@
 
   Module['getExpressionType'] = function(expr) {
     return Module['_BinaryenExpressionGetType'](expr);
+  };
+
+  Module['precomputeValue'] = function(expr, module, functionName) {
+    return preserveStack(function() {
+      Module['_BinaryenExpressionPrecomputeValue'](literal, expr, module, strToStack(functionName));
+      var type = HEAPU32[literal >>> 2];
+      var value;
+      switch (type) {
+        case Module['i32']:
+          value = HEAP32[(literal + 8) >>> 2];
+          break;
+        case Module['i64']:
+          value = {
+            'low': HEAP32[(literal + 8) >>> 2],
+            'high': HEAP32[(literal + 12) >>> 2]
+          };
+          break;
+        case Module['f32']:
+          value = HEAPF32[(literal + 8) >>> 2];
+          break;
+        case Module['f64']:
+          value = HEAPF64[(literal + 8) >>> 3];
+          break;
+      }
+      return {
+        'type': type,
+        'value': value
+      };
+    });
   };
 
   Module['getConstValueI32'] = function(expr) {

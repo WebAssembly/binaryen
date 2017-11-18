@@ -193,6 +193,14 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     ReFinalize().walkFunctionInModule(curr, getModule());
   }
 
+  Literal precomputeValue(Expression* curr) {
+    Flow flow = precomputeFlow(curr);
+    if (flow.breaking()) {
+      return Literal();
+    }
+    return flow.value;
+  }
+
 private:
   Flow precomputeFlow(Expression* curr) {
     try {
@@ -200,14 +208,6 @@ private:
     } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
       return Flow(NONSTANDALONE_FLOW);
     }
-  }
-
-  Literal precomputeValue(Expression* curr) {
-    Flow flow = precomputeFlow(curr);
-    if (flow.breaking()) {
-      return Literal();
-    }
-    return flow.value;
   }
 
   void optimizeLocals(Function* func, Module* module) {
@@ -297,6 +297,13 @@ Pass *createPrecomputePass() {
 
 Pass *createPrecomputePropagatePass() {
   return new Precompute(true);
+}
+
+Literal precomputeExpressionValue(Expression* expression, Module* module, Function* func) {
+  auto pass = new Precompute(false);
+  pass->setModule(module);
+  pass->setFunction(func);
+  return pass->precomputeValue(expression);
 }
 
 } // namespace wasm
