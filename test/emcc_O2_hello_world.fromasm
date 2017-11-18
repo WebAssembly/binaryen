@@ -1674,11 +1674,9 @@
          )
          (block
           (if
-           (i32.and
-            (i32.eqz
+           (i32.eqz
+            (i32.or
              (get_local $6)
-            )
-            (i32.eqz
              (get_local $30)
             )
            )

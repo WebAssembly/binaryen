@@ -1711,14 +1711,11 @@
           (if
            (tee_local $3
             (if (result i32)
-             (i32.and
-              (i32.eqz
-               (get_local $5)
-              )
-              (i32.eqz
-               (get_local $33)
-              )
+             (i32.or
+              (get_local $5)
+              (get_local $33)
              )
+             (get_local $5)
              (block (result i32)
               (if
                (i32.eqz
@@ -1847,7 +1844,6 @@
                )
               )
              )
-             (get_local $5)
             )
            )
            (block
