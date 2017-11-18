@@ -152,7 +152,7 @@
   (call $1)
  )
  (func $1
-  (call_indirect $T
+  (call_indirect (type $T)
    (if (result i32) ;; if copy must preserve the forced type
     (i32.const 0)
     (unreachable)
