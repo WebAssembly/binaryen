@@ -16,6 +16,8 @@
 
 #include "wasm-emscripten.h"
 
+#include <sstream>
+
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
@@ -26,11 +28,9 @@
 
 namespace wasm {
 
-namespace emscripten {
-
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 
-static constexpr const char* stackPointer = "__stack_pointer";
+static constexpr const char* dummyFunction = "__wasm_nullptr";
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -40,82 +40,49 @@ void addExportedFunction(Module& wasm, Function* function) {
   wasm.addExport(export_);
 }
 
-void generateMemoryGrowthFunction(Module& wasm) {
-  Builder builder(wasm);
-  Name name(GROW_WASM_MEMORY);
-  std::vector<NameType> params { { NEW_SIZE, i32 } };
-  Function* growFunction = builder.makeFunction(
-    name, std::move(params), i32, {}
-  );
-  growFunction->body = builder.makeHost(
-    GrowMemory,
-    Name(),
-    { builder.makeGetLocal(0, i32) }
-  );
-
-  addExportedFunction(wasm, growFunction);
-}
-
-void addStackPointerRelocation(LinkerObject& linker, uint32_t* data) {
-  linker.addRelocation(new LinkerObject::Relocation(
-    LinkerObject::Relocation::kData,
-    data,
-    Name(stackPointer),
-    0
-  ));
-}
-
-Load* generateLoadStackPointer(Builder& builder, LinkerObject& linker) {
+Load* EmscriptenGlueGenerator::generateLoadStackPointer() {
   Load* load = builder.makeLoad(
     /* bytes  =*/ 4,
     /* signed =*/ false,
-    /* offset =*/ 0,
+    /* offset =*/ stackPointerOffset,
     /* align  =*/ 4,
     /* ptr    =*/ builder.makeConst(Literal(0)),
     /* type   =*/ i32
   );
-  addStackPointerRelocation(linker, &load->offset.addr);
   return load;
 }
 
-Store* generateStoreStackPointer(Builder& builder,
-                                 LinkerObject& linker,
-                                 Expression* value) {
+Store* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
   Store* store = builder.makeStore(
     /* bytes  =*/ 4,
-    /* offset =*/ 0,
+    /* offset =*/ stackPointerOffset,
     /* align  =*/ 4,
     /* ptr    =*/ builder.makeConst(Literal(0)),
     /* value  =*/ value,
     /* type   =*/ i32
   );
-  addStackPointerRelocation(linker, &store->offset.addr);
   return store;
 }
 
-void generateStackSaveFunction(LinkerObject& linker) {
-  Module& wasm = linker.wasm;
-  Builder builder(wasm);
+void EmscriptenGlueGenerator::generateStackSaveFunction() {
   Name name("stackSave");
   std::vector<NameType> params { };
   Function* function = builder.makeFunction(
     name, std::move(params), i32, {}
   );
 
-  function->body = generateLoadStackPointer(builder, linker);
+  function->body = generateLoadStackPointer();
 
   addExportedFunction(wasm, function);
 }
 
-void generateStackAllocFunction(LinkerObject& linker) {
-  Module& wasm = linker.wasm;
-  Builder builder(wasm);
+void EmscriptenGlueGenerator::generateStackAllocFunction() {
   Name name("stackAlloc");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
     name, std::move(params), i32, { { "1", i32 } }
   );
-  Load* loadStack = generateLoadStackPointer(builder, linker);
+  Load* loadStack = generateLoadStackPointer();
   SetLocal* setStackLocal = builder.makeSetLocal(1, loadStack);
   GetLocal* getStackLocal = builder.makeGetLocal(1, i32);
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
@@ -124,7 +91,7 @@ void generateStackAllocFunction(LinkerObject& linker) {
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  Store* storeStack = generateStoreStackPointer(builder, linker, maskedSub);
+  Store* storeStack = generateStoreStackPointer(maskedSub);
 
   Block* block = builder.makeBlock();
   block->list.push_back(setStackLocal);
@@ -137,26 +104,39 @@ void generateStackAllocFunction(LinkerObject& linker) {
   addExportedFunction(wasm, function);
 }
 
-void generateStackRestoreFunction(LinkerObject& linker) {
-  Module& wasm = linker.wasm;
-  Builder builder(wasm);
+void EmscriptenGlueGenerator::generateStackRestoreFunction() {
   Name name("stackRestore");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
     name, std::move(params), none, {}
   );
   GetLocal* getArg = builder.makeGetLocal(0, i32);
-  Store* store = generateStoreStackPointer(builder, linker, getArg);
+  Store* store = generateStoreStackPointer(getArg);
 
   function->body = store;
 
   addExportedFunction(wasm, function);
 }
 
-void generateRuntimeFunctions(LinkerObject& linker) {
-  generateStackSaveFunction(linker);
-  generateStackAllocFunction(linker);
-  generateStackRestoreFunction(linker);
+void EmscriptenGlueGenerator::generateRuntimeFunctions() {
+  generateStackSaveFunction();
+  generateStackAllocFunction();
+  generateStackRestoreFunction();
+}
+
+void EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
+  Name name(GROW_WASM_MEMORY);
+  std::vector<NameType> params { { NEW_SIZE, i32 } };
+  Function* growFunction = builder.makeFunction(
+    name, std::move(params), i32, {}
+  );
+  growFunction->body = builder.makeHost(
+    GrowMemory,
+    Name(),
+    { builder.makeGetLocal(0, i32) }
+  );
+
+  addExportedFunction(wasm, growFunction);
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
@@ -179,13 +159,19 @@ void removeImportsWithSubstring(Module& module, Name name) {
   }
 }
 
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData) {
+void EmscriptenGlueGenerator::generateDynCallThunks() {
   removeImportsWithSubstring(wasm, EMSCRIPTEN_ASM_CONST); // we create _sig versions
 
-  std::vector<Function*> generatedFunctions;
   std::unordered_set<std::string> sigs;
   Builder builder(wasm);
+  std::vector<Name> tableSegmentData;
+  if (wasm.table.segments.size() > 0) {
+    tableSegmentData = wasm.table.segments[0].data;
+  }
   for (const auto& indirectFunc : tableSegmentData) {
+    if (indirectFunc == dummyFunction) {
+      continue;
+    }
     std::string sig(getSig(wasm.getFunction(indirectFunc)));
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
@@ -202,10 +188,10 @@ std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& 
     }
     Expression* call = builder.makeCallIndirect(funcType, fptr, args);
     f->body = call;
+
     wasm.addFunction(f);
-    generatedFunctions.push_back(f);
+    exportFunction(wasm, f->name, true);
   }
-  return generatedFunctions;
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
@@ -216,8 +202,13 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   std::map<std::string, Address> ids;
   std::set<std::string> allSigs;
 
-  AsmConstWalker(Module& _wasm, std::unordered_map<Address, Address> _segmentsByAddress) :
-    wasm(_wasm), segmentsByAddress(_segmentsByAddress) { }
+  AsmConstWalker(Module& _wasm) : wasm(_wasm) {
+    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+      Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
+      auto address = addrConst->value.geti32();
+      segmentsByAddress[address] = Address(i);
+    }
+  }
 
   void visitCallImport(CallImport* curr);
 
@@ -329,43 +320,62 @@ void printSet(std::ostream& o, C& c) {
   o << "]";
 }
 
-void generateEmscriptenMetadata(std::ostream& o,
-                                Module& wasm,
-                                std::unordered_map<Address, Address> segmentsByAddress,
-                                Address staticBump,
-                                std::vector<Name> const& initializerFunctions) {
-  o << ";; METADATA: { ";
+std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
+    Address staticBump,
+    std::vector<Name> const& initializerFunctions) {
+  std::stringstream meta;
+  meta << ";; METADATA: { ";
+
   // find asmConst calls, and emit their metadata
-  AsmConstWalker walker(wasm, segmentsByAddress);
+  AsmConstWalker walker(wasm);
   walker.walkModule(&wasm);
+
   // print
-  o << "\"asmConsts\": {";
+  meta << "\"asmConsts\": {";
   bool first = true;
   for (auto& pair : walker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
     if (first) first = false;
-    else o << ",";
-    o << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
-    printSet(o, sigs);
-    o << "]";
+    else meta << ",";
+    meta << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
+    printSet(meta, sigs);
+    meta << "]";
   }
-  o << "}";
-  o << ",";
-  o << "\"staticBump\": " << staticBump << ", ";
+  meta << "}";
+  meta << ",";
+  meta << "\"staticBump\": " << staticBump << ", ";
 
-  o << "\"initializers\": [";
+  meta << "\"initializers\": [";
   first = true;
   for (const auto& func : initializerFunctions) {
     if (first) first = false;
-    else o << ", ";
-    o << "\"" << func.c_str() << "\"";
+    else meta << ", ";
+    meta << "\"" << func.c_str() << "\"";
   }
-  o << "]";
+  meta << "]";
 
-  o << " }\n";
+  meta << " }\n";
+
+  return meta.str();
 }
 
-} // namespace emscripten
+std::string emscriptenGlue(
+    Module& wasm,
+    bool allowMemoryGrowth,
+    Address stackPointer,
+    Address staticBump,
+    std::vector<Name> const& initializerFunctions) {
+  EmscriptenGlueGenerator generator(wasm, stackPointer);
+  generator.generateRuntimeFunctions();
+
+  if (allowMemoryGrowth) {
+    generator.generateMemoryGrowthFunction();
+  }
+
+  generator.generateDynCallThunks();
+
+  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions);
+}
 
 } // namespace wasm

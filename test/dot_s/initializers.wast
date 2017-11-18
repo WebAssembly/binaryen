@@ -1,12 +1,12 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "main" (func $main))
  (export "f1" (func $f1))
  (export "f2" (func $f2))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $main (; 0 ;) (result i32)
   (return
    (i32.const 5)

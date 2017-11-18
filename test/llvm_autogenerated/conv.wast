@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "i32_wrap_i64" (func $i32_wrap_i64))
  (export "i64_extend_s_i32" (func $i64_extend_s_i32))
  (export "i64_extend_u_i32" (func $i64_extend_u_i32))
@@ -31,6 +28,9 @@
  (export "bitcast_float_to_i32" (func $bitcast_float_to_i32))
  (export "bitcast_i64_to_double" (func $bitcast_i64_to_double))
  (export "bitcast_double_to_i64" (func $bitcast_double_to_i64))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $i32_wrap_i64 (; 0 ;) (param $0 i64) (result i32)
   (return
    (i32.wrap/i64

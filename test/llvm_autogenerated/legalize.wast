@@ -5,15 +5,15 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "shl_i3" (func $shl_i3))
  (export "shl_i53" (func $shl_i53))
  (export "sext_in_reg_i32_i64" (func $sext_in_reg_i32_i64))
  (export "fpext_f32_f64" (func $fpext_f32_f64))
  (export "fpconv_f64_f32" (func $fpconv_f64_f32))
  (export "bigshift" (func $bigshift))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $shl_i3 (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (i32.shl

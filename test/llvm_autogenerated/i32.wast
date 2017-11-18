@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "add32" (func $add32))
  (export "sub32" (func $sub32))
  (export "mul32" (func $mul32))
@@ -28,6 +25,9 @@
  (export "masked_rotl" (func $masked_rotl))
  (export "rotr" (func $rotr))
  (export "masked_rotr" (func $masked_rotr))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $add32 (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
    (i32.add
