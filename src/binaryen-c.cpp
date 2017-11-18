@@ -732,6 +732,40 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
 
   return static_cast<Expression*>(ret);
 }
+BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenType type, BinaryenExpressionRef ptr) {
+  auto* ret = ((Module*)module)->allocator.alloc<Load>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenAtomicLoad(the_module, " << bytes << ", " << offset << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
+  }
+  ret->isAtomic = true;
+  ret->bytes = bytes;
+  ret->signed_ = false;
+  ret->offset = offset;
+  ret->align = bytes;
+  ret->type = WasmType(type);
+  ret->ptr = (Expression*)ptr;
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
+  auto* ret = ((Module*)module)->allocator.alloc<Store>();
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenAtomicStore(the_module, " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
+  }
+  ret->isAtomic = true;
+  ret->bytes = bytes;
+  ret->offset = offset;
+  ret->align = bytes;
+  ret->ptr = (Expression*)ptr;
+  ret->value = (Expression*)value;
+  ret->valueType = WasmType(type);
+  ret->finalize();
+  return static_cast<Expression*>(ret);
+}
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
   auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
 
