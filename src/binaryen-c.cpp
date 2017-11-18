@@ -1136,7 +1136,8 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  return WasmValidator().validate(*wasm) ? 1 : 0;
+  FeatureSet features = Feature::Atomics;
+  return WasmValidator().validate(*wasm, features) ? 1 : 0;
 }
 
 void BinaryenModuleOptimize(BinaryenModuleRef module) {
