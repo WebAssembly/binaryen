@@ -2164,6 +2164,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 }
 
 void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end) {
+  assert(start <= expressionStack.size());
+  assert(start <= end);
+  assert(end <= expressionStack.size());
   // the first dropped element may be consumed by code later - it was on the stack first,
   // and is the only thing left on the stack. there must be just one thing on the stack
   // since we are at the end of a block context. note that we may need to drop more than
@@ -2244,6 +2247,9 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
+  if (end < start) {
+    throw ParseException("block cannot pop from outside");
+  }
   breakStack.pop_back();
   auto* block = allocator.alloc<Block>();
   pushBlockElements(block, start, end);
