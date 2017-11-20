@@ -149,6 +149,10 @@ ELSE()
   ADD_COMPILE_FLAG("-Wall")
   ADD_COMPILE_FLAG("-Werror")
   ADD_COMPILE_FLAG("-Wextra")
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+  IF(GCC_VERSION VERSION_EQUAL 7.0)
+      ADD_COMPILE_FLAG("-Wno-uninitialized")
+  ENDIF()
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
   IF(WIN32)
@@ -309,4 +313,3 @@ IF (UNIX) # TODO: port to windows
   INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ENDIF()
-
