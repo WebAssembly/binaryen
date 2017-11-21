@@ -400,6 +400,12 @@ typedef void* BinaryenFunctionRef;
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
 
+// Gets a function reference by name.
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name);
+
+// Removes a function by name.
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
+
 // Imports
 
 typedef void* BinaryenImportRef;

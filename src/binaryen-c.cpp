@@ -912,6 +912,22 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
 
   return ret;
 }
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunction(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->getFunction(name);
+}
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveFunction(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeFunction(name);
+}
 
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
   if (tracing) {

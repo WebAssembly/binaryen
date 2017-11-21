@@ -28,6 +28,8 @@ Module property operations:
 
   * `addFunctionType(name, resultType, paramTypes)`: Add a function type to the module, with a specified name, result type, and param types.
   * `addFunction(name, functionType, varTypes, body)`: Add a function, with a name, a function type, an array of local types, and a body.
+  * `getFunction(name)`: Gets a function reference by name.
+  * `removeFunction(name)`: Removes a function by name.
   * `addImport(internalName, externalModuleName, externalBaseName, functionType)`: Add an import, with an internal name (used by other things in the module), an external module name (the module from which we import), an external base name (the name we import from that module), and a function type (for function imports).
   * `addExport(internalName, externalName)`: Add an export, with an internal name and an external name (the name the outside sees it exported as).
   * `setFunctionTable(funcs)`: Sets the function table to a array of functions.
@@ -40,7 +42,9 @@ Module operations:
   * `emitText()`: Returns a text representation of the module, in s-expression format.
   * `validate()`: Validates the module, checking it for correctness.
   * `optimize()`: Runs the standard optimization passes on the module.
+  * `optimizeFunction(func)`: Runs the standard optimization passes on a function.
   * `runPasses(passes)`: Runs the specified passes on the module.
+  * `runPassesOnFunction(func, passes)`: Runs the specified passes on a function.
   * `autoDrop()`: Automatically inserts `drop` operations. This lets you not worry about dropping when creating your code.
   * `interpret()`: Run the module in the Binaryen interpreter (creates the module, and calls the start method). Useful for debugging.
   * `dispose()`: Cleans up the module. If the Binaryen object can be garbage-collected anyhow, you don't need to do this, but if it stays around - e.g. if you create multiple `Module`s over time - then you should call this once a `Module` is no longer needed. (As binaryen.js uses compiled C++ code, we can't just rely on normal garbage collection to clean things up internally.)
