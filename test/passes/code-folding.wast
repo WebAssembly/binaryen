@@ -52,5 +52,67 @@
    )
   )
  )
+ (func $break-target-outside-of-return-merged-code
+  (block $label$A
+   (if
+    (unreachable)
+    (block
+     (block
+      (block $label$B
+       (if
+        (unreachable)
+        (br_table $label$A $label$B
+         (unreachable)
+        )
+       )
+      )
+      (return)
+     )
+    )
+    (block
+     (block $label$C
+      (if
+       (unreachable)
+       (br_table $label$A $label$C ;; this all looks mergeable, but $label$A is outside
+        (unreachable)
+       )
+      )
+     )
+     (return)
+    )
+   )
+  )
+ )
+ (func $break-target-inside-all-good
+  (block $label$A
+   (if
+    (unreachable)
+    (block
+     (block
+      (block $label$B
+       (if
+        (unreachable)
+        (br_table $label$B $label$B
+         (unreachable)
+        )
+       )
+      )
+      (return)
+     )
+    )
+    (block
+     (block $label$C
+      (if
+       (unreachable)
+       (br_table $label$C $label$C ;; this all looks mergeable, and is, B ~~ C
+        (unreachable)
+       )
+      )
+     )
+     (return)
+    )
+   )
+  )
+ )
 )
 

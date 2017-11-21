@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "eq_i64" (func $eq_i64))
  (export "ne_i64" (func $ne_i64))
  (export "slt_i64" (func $slt_i64))
@@ -15,6 +12,9 @@
  (export "sge_i64" (func $sge_i64))
  (export "ugt_i64" (func $ugt_i64))
  (export "uge_i64" (func $uge_i64))
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
  (func $eq_i64 (; 0 ;) (param $0 i64) (param $1 i64) (result i32)
   (return
    (i64.eq

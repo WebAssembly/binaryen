@@ -429,6 +429,24 @@
         return Module['_BinaryenBinary'](module, Module['GeUInt32'], left, right);
       },
       'atomic':{
+        'load': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i32'], ptr);
+        },
+        'load8_u': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i32'], ptr);
+        },
+        'load16_u': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i32'], ptr);
+        },
+        'store': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i32']);
+        },
+        'store8': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i32']);
+        },
+        'store16': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i32']);
+        },
         'rmw': {
           'add': function(offset, ptr, value) {
             return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 4, offset, ptr, value, Module['i32']);
@@ -655,6 +673,30 @@
         return Module['_BinaryenBinary'](module, Module['GeUInt64'], left, right);
       },
       'atomic':{
+        'load': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 8, offset, Module['i64'], ptr);
+        },
+        'load8_u': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 1, offset, Module['i64'], ptr);
+        },
+        'load16_u': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 2, offset, Module['i64'], ptr);
+        },
+        'load32_u': function(offset, ptr) {
+          return Module['_BinaryenAtomicLoad'](module, 4, offset, Module['i64'], ptr);
+        },
+        'store': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 8, offset, ptr, value, Module['i64']);
+        },
+        'store8': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 1, offset, ptr, value, Module['i64']);
+        },
+        'store16': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 2, offset, ptr, value, Module['i64']);
+        },
+        'store32': function(offset, ptr, value) {
+          return Module['_BinaryenAtomicStore'](module, 4, offset, ptr, value, Module['i64']);
+        },
         'rmw': {
           'add': function(offset, ptr, value) {
             return Module['_BinaryenAtomicRMW'](module, Module['AtomicRMWAdd'], 8, offset, ptr, value, Module['i64']);

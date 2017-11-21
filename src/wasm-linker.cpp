@@ -148,8 +148,8 @@ void Linker::layout() {
   }
 
   // XXX For now, export all functions marked .globl.
-  for (Name name : out.globls) exportFunction(name, false);
-  for (Name name : out.initializerFunctions) exportFunction(name, true);
+  for (Name name : out.globls) exportFunction(out.wasm, name, false);
+  for (Name name : out.initializerFunctions) exportFunction(out.wasm, name, true);
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
@@ -212,6 +212,8 @@ void Linker::layout() {
       }
     }
   }
+  out.relocations.clear();
+
   if (!!startFunction) {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
@@ -263,7 +265,7 @@ void Linker::layout() {
   // argument from emcc.py and export all of them.
   for (auto function : {"malloc", "free", "realloc", "memalign"}) {
     if (out.symbolInfo.implementedFunctions.count(function)) {
-      exportFunction(function, true);
+      exportFunction(out.wasm, function, true);
     }
   }
 
@@ -331,20 +333,8 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-void Linker::emscriptenGlue(std::ostream& o) {
-  if (debug) {
-    WasmPrinter::printModule(&out.wasm, std::cerr);
-  }
-
-  auto functionsToThunk = getTableData();
-  auto removeIt = std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
-  functionsToThunk.erase(removeIt, functionsToThunk.end());
-  for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
-    exportFunction(f->name, true);
-  }
-
-  auto staticBump = nextStatic - globalBase;
-  emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
+Address Linker::getStaticBump() const {
+  return nextStatic - globalBase;
 }
 
 void Linker::ensureTableSegment() {
@@ -414,4 +404,8 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   f->body = call;
   out.wasm.addFunction(f);
   return f;
+}
+
+Address Linker::getStackPointerAddress() const {
+  return Address(staticAddresses.at(stackPointer));
 }

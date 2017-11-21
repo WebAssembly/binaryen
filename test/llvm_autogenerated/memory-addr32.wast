@@ -2,11 +2,11 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
+ (export "current_memory" (func $current_memory))
+ (export "grow_memory" (func $grow_memory))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "current_memory" (func $current_memory))
- (export "grow_memory" (func $grow_memory))
  (func $current_memory (; 0 ;) (result i32)
   (return
    (current_memory)
