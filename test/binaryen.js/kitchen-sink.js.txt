@@ -1102,7 +1102,7 @@ module loaded from binary form:
  )
 )
 
-[wasm-validator error in function $func] 1 != 2: set_local type must match function, on
+[wasm-validator error in function $func] 1 != 2: set_local type must match function, on 
 [none] (set_local $0
  [i64] (i64.const 1234)
 )
