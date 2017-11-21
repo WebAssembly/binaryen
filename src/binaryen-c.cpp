@@ -1116,7 +1116,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
-void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses, const char *functionName) {
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
@@ -1125,9 +1125,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
       std::cout << "\"" << passes[i] << "\"";
     }
     std::cout << " };\n";
-    std::cout << "    BinaryenModuleRunPasses(the_module, passes, " << numPasses << ", ";
-    traceNameOrNULL(functionName);
-    std::cout << ");\n";
+    std::cout << "    BinaryenModuleRunPasses(the_module, passes, " << numPasses << ");\n";
     std::cout << "  }\n";
   }
 
@@ -1136,11 +1134,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
-  if (functionName == NULL) {
-    passRunner.run();
-  } else {
-    passRunner.runFunction(wasm->getFunction(functionName));
-  }
+  passRunner.run();
 }
 
 void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
@@ -1195,6 +1189,50 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
   Module* wasm = (Module*)module;
   ShellExternalInterface interface;
   ModuleInstance instance(*wasm, &interface);
+}
+
+//
+// ========== Function Operations ==========
+//
+
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->body;
+}
+
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func] << "], the_module);\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  passRunner.addDefaultOptimizationPasses();
+  passRunner.runFunction((Function*)func);
+}
+
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
+  if (tracing) {
+    std::cout << "  {\n";
+    std::cout << "    const char* passes[] = { ";
+    for (BinaryenIndex i = 0; i < numPasses; i++) {
+      if (i > 0) std::cout << ", ";
+      std::cout << "\"" << passes[i] << "\"";
+    }
+    std::cout << " };\n";
+    std::cout << "    BinaryenFunctionRunPasses(functions[" << functions[func] << ", the_module, passes, " << numPasses << ");\n";
+    std::cout << "  }\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  for (BinaryenIndex i = 0; i < numPasses; i++) {
+    passRunner.add(passes[i]);
+  }
+  passRunner.runFunction((Function*)func);
 }
 
 //

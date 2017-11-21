@@ -1056,11 +1056,11 @@
     this['optimize'] = function() {
       return Module['_BinaryenModuleOptimize'](module);
     };
-    this['runPasses'] = function(passes, functionName) {
+    this['runPasses'] = function(passes) {
       return preserveStack(function() {
         return Module['_BinaryenModuleRunPasses'](module, i32sToStack(
           passes.map(strToStack)
-        ), passes.length, strToStack(functionName));
+        ), passes.length);
       });
     }
     this['autoDrop'] = function() {

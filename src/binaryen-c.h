@@ -453,8 +453,7 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
 // Runs the specified passes on the module.
-// @functionName: optional name of a single function to run the passes on, can be `NULL`
-void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses, const char* functionName);
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 // Auto-generate drop() operations where needed. This lets you generate code without
 // worrying about where they are needed. (It is more efficient to do it yourself,
@@ -472,6 +471,19 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 // the module, run it in the interpreter - which means running the start method -
 // and then destroying the instance.
 void BinaryenModuleInterpret(BinaryenModuleRef module);
+
+//
+// ========== Function Operations ==========
+//
+
+// Gets the body of the function.
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+
+// Runs the standard optimization passes on the function.
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);
+
+// Runs the specified passes on the function.
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 //
 // ========== CFG / Relooper ==========
