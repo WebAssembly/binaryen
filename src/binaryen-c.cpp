@@ -732,6 +732,26 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
 
   return static_cast<Expression*>(ret);
 }
+BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenType type, BinaryenExpressionRef ptr) {
+  auto* ret = Builder(*((Module*)module)).makeAtomicLoad(bytes, offset, (Expression*)ptr, WasmType(type));
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenAtomicLoad(the_module, " << bytes << ", " << offset << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
+  }
+
+  return static_cast<Expression*>(ret);
+}
+BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
+  auto* ret = Builder(*((Module*)module)).makeAtomicStore(bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
+
+  if (tracing) {
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenAtomicStore(the_module, " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
+  }
+
+  return static_cast<Expression*>(ret);
+}
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
   auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
 
@@ -891,6 +911,22 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   }
 
   return ret;
+}
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenGetFunction(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  return wasm->getFunction(name);
+}
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveFunction(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeFunction(name);
 }
 
 BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init) {
@@ -1102,7 +1138,9 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  return WasmValidator().validate(*wasm) ? 1 : 0;
+  // TODO add feature selection support to C API
+  FeatureSet features = Feature::Atomics;
+  return WasmValidator().validate(*wasm, features) ? 1 : 0;
 }
 
 void BinaryenModuleOptimize(BinaryenModuleRef module) {
@@ -1189,6 +1227,50 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
   Module* wasm = (Module*)module;
   ShellExternalInterface interface;
   ModuleInstance instance(*wasm, &interface);
+}
+
+//
+// ========== Function Operations ==========
+//
+
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->body;
+}
+
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func] << "], the_module);\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  passRunner.addDefaultOptimizationPasses();
+  passRunner.runFunction((Function*)func);
+}
+
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
+  if (tracing) {
+    std::cout << "  {\n";
+    std::cout << "    const char* passes[] = { ";
+    for (BinaryenIndex i = 0; i < numPasses; i++) {
+      if (i > 0) std::cout << ", ";
+      std::cout << "\"" << passes[i] << "\"";
+    }
+    std::cout << " };\n";
+    std::cout << "    BinaryenFunctionRunPasses(functions[" << functions[func] << ", the_module, passes, " << numPasses << ");\n";
+    std::cout << "  }\n";
+  }
+
+  Module* wasm = (Module*)module;
+  PassRunner passRunner(wasm);
+  for (BinaryenIndex i = 0; i < numPasses; i++) {
+    passRunner.add(passes[i]);
+  }
+  passRunner.runFunction((Function*)func);
 }
 
 //

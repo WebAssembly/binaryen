@@ -360,6 +360,8 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
+BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenType type, BinaryenExpressionRef ptr);
+BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
@@ -397,6 +399,12 @@ typedef void* BinaryenFunctionRef;
 //            0 (and written $0), and if you also have 2 vars they will be
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
+
+// Gets a function reference by name.
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name);
+
+// Removes a function by name.
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
 
 // Imports
 
@@ -449,7 +457,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 //  @return 0 if an error occurred, 1 if validated succesfully
 int BinaryenModuleValidate(BinaryenModuleRef module);
 
-// Run the standard optimization passes on the module.
+// Runs the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
 // Runs the specified passes on the module.
@@ -471,6 +479,19 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 // the module, run it in the interpreter - which means running the start method -
 // and then destroying the instance.
 void BinaryenModuleInterpret(BinaryenModuleRef module);
+
+//
+// ========== Function Operations ==========
+//
+
+// Gets the body of the function.
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+
+// Runs the standard optimization passes on the function.
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);
+
+// Runs the specified passes on the function.
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 //
 // ========== CFG / Relooper ==========
