@@ -47,6 +47,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "compiler-support.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,6 +110,15 @@ BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
 BinaryenExpressionId BinaryenAtomicRMWId(void);
 BinaryenExpressionId BinaryenAtomicWaitId(void);
 BinaryenExpressionId BinaryenAtomicWakeId(void);
+
+// External kinds (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExternalKind;
+
+BinaryenExternalKind BinaryenExternalFunction(void);
+BinaryenExternalKind BinaryenExternalTable(void);
+BinaryenExternalKind BinaryenExternalMemory(void);
+BinaryenExternalKind BinaryenExternalGlobal(void);
 
 // Modules
 //
@@ -410,14 +421,22 @@ void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
 
 typedef void* BinaryenImportRef;
 
-BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
+WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
+BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef functionType);
+BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
+BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
+BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenType globalType);
 void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
 
 // Exports
 
 typedef void* BinaryenExportRef;
 
-BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
 
 // Globals
