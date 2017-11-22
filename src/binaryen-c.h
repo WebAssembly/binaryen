@@ -411,6 +411,12 @@ typedef void* BinaryenFunctionRef;
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
 
+// Gets a function reference by name.
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name);
+
+// Removes a function by name.
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
+
 // Imports
 
 typedef void* BinaryenImportRef;
@@ -470,7 +476,7 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 //  @return 0 if an error occurred, 1 if validated succesfully
 int BinaryenModuleValidate(BinaryenModuleRef module);
 
-// Run the standard optimization passes on the module.
+// Runs the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
 // Runs the specified passes on the module.
@@ -492,6 +498,19 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 // the module, run it in the interpreter - which means running the start method -
 // and then destroying the instance.
 void BinaryenModuleInterpret(BinaryenModuleRef module);
+
+//
+// ========== Function Operations ==========
+//
+
+// Gets the body of the function.
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+
+// Runs the standard optimization passes on the function.
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);
+
+// Runs the specified passes on the function.
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 //
 // ========== CFG / Relooper ==========

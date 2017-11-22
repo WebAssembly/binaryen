@@ -1204,8 +1204,6 @@ void WasmBinaryWriter::visitDrop(Drop *curr) {
 
 // reader
 
-static Name RETURN_BREAK("binaryen|break-to-return");
-
 void WasmBinaryBuilder::read() {
 
   readHeader();
@@ -1486,12 +1484,12 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i < functionImportIndexes.size()) {
-    auto* import = wasm.getImport(functionImportIndexes[i]);
+  if (i < functionImports.size()) {
+    auto* import = functionImports[i];
     assert(import->kind == ExternalKind::Function);
     return import->name;
   } else {
-    i -= functionImportIndexes.size();
+    i -= functionImports.size();
     if (i >= wasm.functions.size()) {
       throw ParseException("bad function index");
     }
@@ -1529,7 +1527,8 @@ void WasmBinaryBuilder::readImports() {
         }
         curr->functionType = wasm.functionTypes[index]->name;
         assert(curr->functionType.is());
-        functionImportIndexes.push_back(curr->name);
+        functionImports.push_back(curr);
+        continue; // don't add the import yet, we add them later after we know their names
         break;
       }
       case ExternalKind::Table: {
@@ -1625,27 +1624,20 @@ void WasmBinaryBuilder::readFunctions() {
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
       useDebugLocation = false;
-      breaksToReturn = false;
       // process body
       assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
-      breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->result);
       assert(depth == 0);
-      assert(breakStack.size() == 1);
-      breakStack.pop_back();
+      assert(breakStack.size() == 0);
       assert(breakTargetNames.size() == 0);
       if (!expressionStack.empty()) {
         throw ParseException("stack not empty on function exit");
       }
       if (pos != endOfFunction) {
         throw ParseException("binary offset at function exit not at expected location");
-      }
-      if (breaksToReturn) {
-        // we broke to return, so we need an outer block to break to
-        func->body = Builder(wasm).blockifyWithName(func->body, RETURN_BREAK);
       }
     }
     currFunction = nullptr;
@@ -1962,8 +1954,12 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
 }
 
 void WasmBinaryBuilder::processFunctions() {
-  for (auto& func : functions) {
+  for (auto* func : functions) {
     wasm.addFunction(func);
+  }
+
+  for (auto* import : functionImports) {
+    wasm.addImport(import);
   }
 
   // we should have seen all the functions
@@ -1999,6 +1995,14 @@ void WasmBinaryBuilder::processFunctions() {
     auto& calls = iter.second;
     for (auto* call : calls) {
       call->target = wasm.functions[index]->name;
+    }
+  }
+
+  for (auto& iter : functionImportCalls) {
+    size_t index = iter.first;
+    auto& calls = iter.second;
+    for (auto* call : calls) {
+      call->target = functionImports[index]->name;
     }
   }
 
@@ -2076,18 +2080,16 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       continue;
     }
     auto num = getU32LEB();
-    uint32_t importedFunctions = 0;
-    for (auto& import : wasm.imports) {
-      if (import->kind != ExternalKind::Function) continue;
-      importedFunctions++;
-    }
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
-      if (index < importedFunctions) {
-        getInlineString(); // TODO: use this
-      } else if (index - importedFunctions < functions.size()) {
-        auto name = getInlineString();
-        functions[index - importedFunctions]->name = name;
+      auto name = getInlineString();
+      // note: we silently ignore errors here, as name section errors
+      //       are not fatal. should we warn?
+      auto numFunctionImports = functionImports.size();
+      if (index < numFunctionImports) {
+        functionImports[index]->name = name;
+      } else if (index - numFunctionImports < functions.size()) {
+        functions[index - numFunctionImports]->name = name;
       }
     }
     // disallow duplicate names
@@ -2314,15 +2316,12 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
 
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
+  if (breakStack.size() < 1 + size_t(offset)) {
+    throw ParseException("bad breakindex (low)");
+  }
   size_t index = breakStack.size() - 1 - offset;
   if (index >= breakStack.size()) {
-    throw ParseException("bad breakindex");
-  }
-  if (index == 0) {
-    // trying to access the topmost element means we break out
-    // to the function scope, doing in effect a return, we'll
-    // need to create a block for that.
-    breaksToReturn = true;
+    throw ParseException("bad breakindex (high)");
   }
   if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
   auto& ret = breakStack[index];
@@ -2359,19 +2358,20 @@ Expression* WasmBinaryBuilder::visitCall() {
   auto index = getU32LEB();
   FunctionType* type;
   Expression* ret;
-  if (index < functionImportIndexes.size()) {
+  if (index < functionImports.size()) {
     // this is a call of an imported function
     auto* call = allocator.alloc<CallImport>();
-    auto* import = wasm.getImport(functionImportIndexes[index]);
-    call->target = import->name;
+    auto* import = functionImports[index];
     type = wasm.getFunctionType(import->functionType);
+    functionImportCalls[index].push_back(call);
+    call->target = import->name; // name section may modify it
     fillCall(call, type);
     call->finalize();
     ret = call;
   } else {
     // this is a call of a defined function
     auto* call = allocator.alloc<Call>();
-    auto adjustedIndex = index - functionImportIndexes.size();
+    auto adjustedIndex = index - functionImports.size();
     if (adjustedIndex >= functionTypes.size()) {
       throw ParseException("bad call index");
     }

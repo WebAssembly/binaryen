@@ -1019,6 +1019,16 @@
         return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
       });
     };
+    this['getFunction'] = function(name) {
+      return preserveStack(function() {
+        return Module['_BinaryenGetFunction'](module, strToStack(name));
+      });
+    };
+    this['removeFunction'] = function(name) {
+      return preserveStack(function() {
+        return Module['_BinaryenRemoveFunction'](module, strToStack(name));
+      });
+    };
     this['addGlobal'] = function(name, type, mutable, init) {
       return preserveStack(function() {
         return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
@@ -1130,13 +1140,25 @@
     this['optimize'] = function() {
       return Module['_BinaryenModuleOptimize'](module);
     };
+    this['optimizeFunction'] = function(func) {
+      if (typeof func === "string") func = this['getFunction'](func);
+      return Module['_BinaryenFunctionOptimize'](func, module);
+    };
     this['runPasses'] = function(passes) {
       return preserveStack(function() {
         return Module['_BinaryenModuleRunPasses'](module, i32sToStack(
           passes.map(strToStack)
         ), passes.length);
       });
-    }
+    };
+    this['runPassesOnFunction'] = function(func, passes) {
+      if (typeof func === "string") func = this['getFunction'](func);
+      return preserveStack(function() {
+        return Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(
+          passes.map(strToStack)
+        ), passes.length);
+      });
+    };
     this['autoDrop'] = function() {
       return Module['_BinaryenModuleAutoDrop'](module);
     };
@@ -1202,6 +1224,10 @@
 
   Module['getConstValueF64'] = function(expr) {
     return Module['_BinaryenConstGetValueF64'](expr);
+  };
+
+  Module['getFunctionBody'] = function(func) {
+    return Module['_BinaryenFunctionGetBody'](func);
   };
 
   // emit text of an expression or a module

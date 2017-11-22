@@ -102,6 +102,10 @@ if not options.binaryen_bin:
   else:
     options.binaryen_bin = 'bin'
 
+# ensure BINARYEN_ROOT is set up
+os.environ['BINARYEN_ROOT'] = os.path.dirname(os.path.abspath(
+    options.binaryen_bin))
+
 options.binaryen_bin = os.path.normpath(options.binaryen_bin)
 
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
