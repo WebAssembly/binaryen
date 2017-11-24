@@ -1323,7 +1323,7 @@ private:
   #define GCC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
-  #if GCC_VERSION > 70000 && GCC_VERSION < 72000
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
   #endif
@@ -1334,7 +1334,7 @@ private:
     return pickGivenNum<T>(num - 1, args...);
   }
 
-  #if GCC_VERSION > 70000 && GCC_VERSION < 72000
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
     #pragma GCC diagnostic pop
   #endif
 
