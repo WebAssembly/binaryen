@@ -38,6 +38,7 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
+  std::vector<Name> forcedExports;
   Options options("o2wasm", "Link .o file into .wasm");
   options
       .add("--output", "-o", "Output file",
@@ -45,6 +46,23 @@ int main(int argc, const char *argv[]) {
            [&outfile](Options *o, const std::string &argument) {
              outfile = argument;
              Colors::disable();
+           })
+      .add("--force-exports", "", "Comma-separated list of functions to export",
+           Options::Arguments::One,
+           [&forcedExports](Options *o, const std::string &argument) {
+              std::string name = "";
+              for (unsigned i = 0; i < argument.size(); ++i) {
+                char c = argument[i];
+                if (c == ',') {
+                  forcedExports.push_back(name);
+                  name = "";
+                } else {
+                  name += c;
+                }
+              }
+              if (name != "") {
+                forcedExports.push_back(name);
+              }
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
@@ -66,6 +84,14 @@ int main(int argc, const char *argv[]) {
   if (options.debug) {
     std::cerr << "Module before:\n";
     WasmPrinter::printModule(&wasm, std::cerr);
+  }
+
+  for (Name name : forcedExports) {
+    auto exported = make_unique<Export>();
+    exported->name = name;
+    exported->value = name;
+    exported->kind = ExternalKind::Function;
+    wasm.addExport(exported.release());
   }
 
   EmscriptenGlueGenerator generator(wasm);
