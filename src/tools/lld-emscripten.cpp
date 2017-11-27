@@ -64,6 +64,7 @@ int main(int argc, const char *argv[]) {
   reader.readBinary(infile, wasm);
 
   if (options.debug) {
+    std::cerr << "Module before:\n";
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
@@ -71,6 +72,12 @@ int main(int argc, const char *argv[]) {
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
+  generator.fixEmAsmConsts();
+
+  if (options.debug) {
+    std::cerr << "Module after:\n";
+    WasmPrinter::printModule(&wasm, std::cerr);
+  }
 
   ModuleWriter writer;
   // writer.setDebug(options.debug);

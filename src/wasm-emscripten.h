@@ -41,6 +41,9 @@ public:
   std::string generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions);
 
+  // Replace placeholder emscripten_asm_const functions with *_signature versions.
+  void fixEmAsmConsts();
+
 private:
   Module& wasm;
   Builder builder;
