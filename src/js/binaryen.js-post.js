@@ -1093,6 +1093,7 @@
     };
     this['setMemory'] = function(initial, maximum, exportName, segments) {
       // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
+      if (!segments) segments = [];
       return preserveStack(function() {
         return Module['_BinaryenSetMemory'](
           module, initial, maximum, strToStack(exportName),
