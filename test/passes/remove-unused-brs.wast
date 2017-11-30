@@ -1227,5 +1227,65 @@
     )
     (unreachable)
   )
+  (func $br-to-table-bad5 (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eq (get_local $a) (get_local $a)))
+          (br_if $y (i32.eq (get_local $a) (get_local $a)))
+          (br_if $z (i32.eq (get_local $a) (get_local $a)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-bad6 (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eq (call $b13) (i32.const 0)))
+          (br_if $y (i32.eq (call $b13) (i32.const 1)))
+          (br_if $z (i32.eq (call $b13) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-bad7 (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eq (get_local $a) (i32.const -1))) ;; negative, we support only positive up to int32_max
+          (br_if $y (i32.eq (get_local $a) (i32.const -1)))
+          (br_if $z (i32.eq (get_local $a) (i32.const -1)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
+  (func $br-to-table-defaultNameOverlaps (param $a i32)
+    (block $x
+      (block $tablify|0
+        (block $z
+          (br_if $x (i32.eq (get_local $a) (i32.const 0)))
+          (br_if $tablify|0 (i32.eq (get_local $a) (i32.const 1)))
+          (br_if $z (i32.eq (get_local $a) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
 )
 
