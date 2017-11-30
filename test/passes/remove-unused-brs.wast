@@ -1212,5 +1212,20 @@
     )
     (unreachable)
   )
+  (func $br-to-table-bad4 (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.ne (get_local $a) (i32.const 0)))
+          (br_if $y (i32.eq (get_local $a) (i32.const 1)))
+          (br_if $z (i32.eq (get_local $a) (i32.const 2)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
 )
 
