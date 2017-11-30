@@ -82,6 +82,7 @@ public:
   Block* makeBlock(Name name, Expression* first = nullptr) {
     auto* ret = makeBlock(first);
     ret->name = name;
+    ret->finalize();
     return ret;
   }
   Block* makeBlock(const std::vector<Expression*>& items) {

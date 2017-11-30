@@ -599,6 +599,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* br = curr->dynCast<Break>();
           if (!br) return nullptr;
           if (!br->condition || br->value) return nullptr;
+          if (br->type != none) return nullptr; // no value, so can be unreachable or none. ignore unreachable ones, dce will clean it up
           auto* binary = br->condition->dynCast<Binary>();
           if (!binary) return nullptr;
           if (binary->op != EqInt32) return nullptr;
@@ -648,8 +649,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto min = getProperBrIfConstant(list[start]);
             auto max = min;
             for (Index i = start + 1; i < end; i++) {
-              min = std::min(min, getProperBrIfConstant(list[i]));
-              max = std::max(max, getProperBrIfConstant(list[i]));
+              auto* curr = list[i];
+              min = std::min(min, getProperBrIfConstant(curr));
+              max = std::max(max, getProperBrIfConstant(curr));
             }
             uint32_t range = max - min;
             // decision time
