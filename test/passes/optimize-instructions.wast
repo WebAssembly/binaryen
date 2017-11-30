@@ -2640,6 +2640,29 @@
     (i32.const 0)
    )
   )
+  (func $de-morgan-2 (param $x i32) (param $y i32)
+    (drop
+      (i32.and (i32.eqz (get_local $x)) (i32.eqz (get_local $y)))
+    )
+    (drop
+      (i32.or (i32.eqz (get_local $x)) (i32.eqz (get_local $y)))
+    )
+    (drop
+      (i32.xor (i32.eqz (get_local $x)) (i32.eqz (get_local $y)))
+    )
+    (drop
+      (i32.and (i32.eqz (get_local $x)) (get_local $y))
+    )
+    (drop
+      (i32.and (get_local $x) (i32.eqz (get_local $y)))
+    )
+    (drop
+      (i32.and (i32.eqz (get_local $x)) (i32.wrap/i64 (i64.const 2)))
+    )
+    (drop
+      (i32.and (i32.wrap/i64 (i64.const 1)) (i32.eqz (get_local $y)))
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
