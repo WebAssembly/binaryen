@@ -1095,5 +1095,20 @@
     )
     (unreachable)
   )
+  (func $br-to-table-offset (param $a i32)
+    (block $x
+      (block $y
+        (block $z
+          (br_if $x (i32.eq (get_local $a) (i32.const 15)))
+          (br_if $y (i32.eq (get_local $a) (i32.const 16)))
+          (br_if $z (i32.eq (get_local $a) (i32.const 17)))
+          (unreachable)
+        )
+        (unreachable)
+      )
+      (unreachable)
+    )
+    (unreachable)
+  )
 )
 
