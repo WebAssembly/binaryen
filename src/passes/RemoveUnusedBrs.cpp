@@ -635,11 +635,19 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             start++;
             continue;
           }
-          // look for a "run" of br_ifs with all the same conditionValue
+          // look for a "run" of br_ifs with all the same conditionValue, and having
+          // unique constants (an overlapping constant could be handled, just the first
+          // branch is taken, but we can't remove the other br_if (it may be the only
+          // branch keeping a block reachable), which may make this bad for code size.
           Index end = start + 1;
+          std::unordered_set<uint32_t> usedConstants;
           while (end < list.size() &&
                  ExpressionAnalyzer::equal(getProperBrIfConditionValue(list[end]),
                                            conditionValue)) {
+            if (!usedConstants.insert(getProperBrIfConstant(list[end])).second) {
+              // this constant already appeared
+              break;
+            }
             end++;
           }
           auto num = end - start;

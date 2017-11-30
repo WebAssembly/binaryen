@@ -1220,11 +1220,22 @@
   (block $x
    (block $y
     (block $z
-     (nop)
-     (nop)
-     (block $tablify|0
-      (br_table $x $y $tablify|0
+     (br_if $x
+      (i32.eq
        (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
       )
      )
      (unreachable)
@@ -1573,6 +1584,40 @@
       (i32.eq
        (unreachable)
        (i32.const 2)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-overlap-but-later (; 63 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $z $x $y $tablify|0
+       (i32.sub
+        (get_local $a)
+        (i32.const 1)
+       )
       )
      )
      (unreachable)
