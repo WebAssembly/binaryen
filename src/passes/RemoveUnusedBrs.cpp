@@ -621,7 +621,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto getProperBrIfConstant = [&getProperBrIf](Expression* curr) -> uint32_t {
           return getProperBrIf(curr)->condition->cast<Binary>()->right->cast<Const>()->value.geti32();
         };
-
         Index start = 0;
         while (start < list.size() - 1) {
           auto* conditionValue = getProperBrIfConditionValue(list[start]);
@@ -638,7 +637,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // look for a "run" of br_ifs with all the same conditionValue
           Index end = start + 1;
           while (end < list.size() &&
-                 getProperBrIfConditionValue(list[end]) == conditionValue) {
+                 ExpressionAnalyzer::equal(getProperBrIfConditionValue(list[end]),
+                                           conditionValue)) {
             end++;
           }
           auto num = end - start;
@@ -675,7 +675,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 while (table.size() <= index) {
                   table.push_back(defaultName);
                 }
-                table[index] = name;
+                // the same index may appear more than once. the
+                // first is the one that is actually taken, so if
+                // already set a value, don't replace it
+                if (table[index] == defaultName) {
+                  table[index] = name;
+                }
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
