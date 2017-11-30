@@ -1320,6 +1320,8 @@ private:
     return first;
   }
 
+  // Trick to avoid a bug in GCC 7.x.
+  // Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82800
   #define GCC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)
