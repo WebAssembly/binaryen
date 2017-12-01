@@ -671,7 +671,7 @@ private:
       hangStack.push_back(nullptr);
       condition = makeCondition();
     }
-    // we need to find a proper target to break to; try a few times 
+    // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
       auto* target = vectorPick(breakableStack);
@@ -1352,11 +1352,25 @@ private:
     return first;
   }
 
+  // Trick to avoid a bug in GCC 7.x.
+  // Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82800
+  #define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #endif
+
   template<typename T, typename... Args>
   T pickGivenNum(size_t num, T first, Args... args) {
     if (num == 0) return first;
     return pickGivenNum<T>(num - 1, args...);
   }
+
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
+    #pragma GCC diagnostic pop
+  #endif
 
   // utilities
 
