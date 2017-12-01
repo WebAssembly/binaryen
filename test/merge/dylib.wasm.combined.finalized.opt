@@ -10,7 +10,6 @@
  (global $global$2 i32 (i32.const 0))
  (global $global$0$0 (mut i32) (i32.const 0))
  (global $global$1$0 (mut i32) (i32.const 0))
- 
  (data (i32.const 1024) "hello, world!")
  (export "__post_instantiate" (func $__post_instantiate))
  (export "_main" (func $_main))

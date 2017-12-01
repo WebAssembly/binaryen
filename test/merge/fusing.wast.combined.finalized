@@ -9,7 +9,6 @@
  (import "env" "tableBase" (global $tableBase$0 i32))
  (global $a-global i32 (i32.const 0))
  (global $b-global f64 (f64.const 2.14281428))
- 
  (data (i32.const 1024) "")
  (export "foo" (func $foo-func))
  (export "aglobal" (global $a-global))

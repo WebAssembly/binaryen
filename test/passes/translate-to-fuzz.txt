@@ -5,7 +5,6 @@
  (global $global$1 (mut f64) (f64.const -3402823466385288598117041e14))
  (global $hangLimit (mut i32) (i32.const 100))
  (table 0 anyfunc)
- 
  (memory $0 (shared 1 1))
  (data (i32.const 0) "\00C\00[\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
  (export "func_0" (func $func_0))
