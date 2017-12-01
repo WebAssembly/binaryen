@@ -2198,6 +2198,72 @@
    (i32.const 0)
   )
  )
+ (func $de-morgan-2 (; 55 ;) (type $4) (param $x i32) (param $y i32)
+  (drop
+   (i32.eqz
+    (i32.or
+     (get_local $x)
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eqz
+     (get_local $x)
+    )
+    (i32.eqz
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.xor
+    (i32.eqz
+     (get_local $x)
+    )
+    (i32.eqz
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.eqz
+     (get_local $x)
+    )
+    (get_local $y)
+   )
+  )
+  (drop
+   (i32.and
+    (get_local $x)
+    (i32.eqz
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.eqz
+     (get_local $x)
+    )
+    (i32.wrap/i64
+     (i64.const 2)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (i32.wrap/i64
+     (i64.const 1)
+    )
+    (i32.eqz
+     (get_local $y)
+    )
+   )
+  )
+ )
 )
 (module
  (type $0 (func))

@@ -127,9 +127,12 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     if (curr->condition || curr->value) {
       unoptimizables.insert(curr->name);
     } else {
-      // we can only optimize if we are at the end of the parent block
+      // we can only optimize if we are at the end of the parent block,
+      // and if the parent block does not return a value (we can't move
+      // elements out of it if there is a value being returned)
       Block* parent = controlFlowStack.back()->dynCast<Block>();
-      if (parent && curr == parent->list.back()) {
+      if (parent && curr == parent->list.back() &&
+          !isConcreteWasmType(parent->list.back()->type)) {
         breakTails[curr->name].push_back(Tail(curr, parent));
       } else {
         unoptimizables.insert(curr->name);
@@ -168,8 +171,13 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   }
 
   void visitBlock(Block* curr) {
+    if (curr->list.empty()) return;
     if (!curr->name.is()) return;
     if (unoptimizables.count(curr->name) > 0) return;
+    // we can't optimize a fallthrough value
+    if (isConcreteWasmType(curr->list.back()->type)) {
+      return;
+    }
     auto iter = breakTails.find(curr->name);
     if (iter == breakTails.end()) return;
     // looks promising
@@ -376,8 +384,14 @@ private:
       if (!tail.isFallthrough()) {
         tail.block->list.push_back(last);
       }
-      // the block type may change if we removed final values
-      tail.block->finalize();
+      // the block type may change if we removed unreachable stuff,
+      // but in general it should remain the same, as if it had a
+      // forced type it should remain, *and*, we don't have a
+      // fallthrough value (we would never get here), so a concrete
+      // type was not from that. I.e., any type on the block is
+      // either forced and/or from breaks with a value, so the
+      // type cannot be changed by moving code out.
+      tail.block->finalize(tail.block->type);
     }
     // since we managed a merge, then it might open up more opportunities later
     anotherPass = true;

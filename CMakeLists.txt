@@ -309,4 +309,3 @@ IF (UNIX) # TODO: port to windows
   INSTALL(TARGETS wasm-reduce DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ENDIF()
-

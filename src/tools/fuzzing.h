@@ -128,7 +128,8 @@ public:
     setupGlobals();
     // keep adding functions until we run out of input
     while (!finishedInput) {
-      addFunction();
+      auto* func = addFunction();
+      addInvocations(func);
     }
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
@@ -161,12 +162,12 @@ private:
   // the memory that we use, a small portion so that we have a good chance of
   // looking at writes (we also look outside of this region with small probability)
   // this should be a power of 2
-  static const int USABLE_MEMORY = 32;
+  static const int USABLE_MEMORY = 16;
 
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
-  static const int HANG_LIMIT = 100;
+  static const int HANG_LIMIT = 10;
 
   // Optionally remove NaNs, which are a source of nondeterminism (which makes
   // cross-VM comparisons harder)
@@ -343,7 +344,7 @@ private:
 
   std::map<WasmType, std::vector<Index>> typeLocals; // type => list of locals with that type
 
-  void addFunction() {
+  Function* addFunction() {
     Index num = wasm.functions.size();
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
@@ -400,6 +401,37 @@ private:
     }
     // cleanup
     typeLocals.clear();
+    return func;
+  }
+
+  // the fuzzer external interface sends in zeros (simpler to compare
+  // across invocations from JS or wasm-opt etc.). Add invocations in
+  // the wasm, so they run everywhere
+  void addInvocations(Function* func) {
+    std::vector<Expression*> invocations;
+    while (oneIn(2)) {
+      std::vector<Expression*> args;
+      for (auto type : func->params) {
+        args.push_back(makeConst(type));
+      }
+      Expression* invoke = builder.makeCall(func->name, args, func->result);
+      if (isConcreteWasmType(func->result)) {
+        invoke = builder.makeDrop(invoke);
+      }
+      invocations.push_back(invoke);
+    }
+    if (invocations.empty()) return;
+    auto* invoker = new Function;
+    invoker->name = func->name.str + std::string("_invoker");
+    invoker->result = none;
+    invoker->body = builder.makeBlock(invocations);
+    wasm.addFunction(invoker);
+    invoker->type = ensureFunctionType(getSig(invoker), &wasm)->name;
+    auto* export_ = new Export;
+    export_->name = invoker->name;
+    export_->value = invoker->name;
+    export_->kind = ExternalKind::Function;
+    wasm.addExport(export_);
   }
 
   Name makeLabel() {
@@ -639,7 +671,7 @@ private:
       hangStack.push_back(nullptr);
       condition = makeCondition();
     }
-    // we need to find a proper target to break to; try a few times 
+    // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
       auto* target = vectorPick(breakableStack);
@@ -1320,11 +1352,25 @@ private:
     return first;
   }
 
+  // Trick to avoid a bug in GCC 7.x.
+  // Upstream bug report: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82800
+  #define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+  #endif
+
   template<typename T, typename... Args>
   T pickGivenNum(size_t num, T first, Args... args) {
     if (num == 0) return first;
     return pickGivenNum<T>(num - 1, args...);
   }
+
+  #if GCC_VERSION > 70000 && GCC_VERSION < 70300
+    #pragma GCC diagnostic pop
+  #endif
 
   // utilities
 

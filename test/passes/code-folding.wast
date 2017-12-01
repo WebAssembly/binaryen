@@ -114,5 +114,24 @@
    )
   )
  )
+ (func $leave-inner-block-type
+  (block $label$1
+   (drop
+    (block $label$2 (result i32) ;; leave this alone (otherwise, if we make it unreachable, we need to do more updating)
+     (br_if $label$2
+      (unreachable)
+      (unreachable)
+     )
+     (drop
+      (i32.const 1)
+     )
+     (br $label$1)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+ )
 )
 
