@@ -1246,7 +1246,37 @@
   )
   (unreachable)
  )
- (func $br-to-table-offset (; 50 ;) (type $0) (param $a i32)
+ (func $br-to-table-overlap-start (; 50 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-offset (; 51 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1268,7 +1298,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-RANGE-high (; 51 ;) (type $0) (param $a i32)
+ (func $br-to-table-RANGE-high (; 52 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1298,7 +1328,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-RANGE-low (; 52 ;) (type $0) (param $a i32)
+ (func $br-to-table-RANGE-low (; 53 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1317,7 +1347,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad (; 53 ;) (type $10) (param $a i32) (result i32)
+ (func $br-to-table-bad (; 54 ;) (type $10) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1340,7 +1370,7 @@
    (i32.const 2000)
   )
  )
- (func $br-to-table-bad2 (; 54 ;) (type $10) (param $a i32) (result i32)
+ (func $br-to-table-bad2 (; 55 ;) (type $10) (param $a i32) (result i32)
   (block $value (result i32)
    (block $x
     (block $y
@@ -1371,7 +1401,7 @@
    (i32.const 2000)
   )
  )
- (func $br-to-table-bad3 (; 55 ;) (type $0) (param $a i32)
+ (func $br-to-table-bad3 (; 56 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1396,7 +1426,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-multi (; 56 ;) (type $0) (param $a i32)
+ (func $br-to-table-multi (; 57 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1425,7 +1455,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad4 (; 57 ;) (type $0) (param $a i32)
+ (func $br-to-table-bad4 (; 58 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1455,7 +1485,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad5 (; 58 ;) (type $0) (param $a i32)
+ (func $br-to-table-bad5 (; 59 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1485,7 +1515,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad6 (; 59 ;) (type $0) (param $a i32)
+ (func $br-to-table-bad6 (; 60 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1515,7 +1545,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-bad7 (; 60 ;) (type $0) (param $a i32)
+ (func $br-to-table-bad7 (; 61 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1545,7 +1575,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-defaultNameOverlaps (; 61 ;) (type $0) (param $a i32)
+ (func $br-to-table-defaultNameOverlaps (; 62 ;) (type $0) (param $a i32)
   (block $x
    (block $tablify|0
     (block $z
@@ -1564,7 +1594,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-unreach (; 62 ;) (type $0) (param $a i32)
+ (func $br-to-table-unreach (; 63 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z
@@ -1594,7 +1624,7 @@
   )
   (unreachable)
  )
- (func $br-to-table-overlap-but-later (; 63 ;) (type $0) (param $a i32)
+ (func $br-to-table-overlap-but-later (; 64 ;) (type $0) (param $a i32)
   (block $x
    (block $y
     (block $z

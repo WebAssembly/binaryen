@@ -641,6 +641,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // branch keeping a block reachable), which may make this bad for code size.
           Index end = start + 1;
           std::unordered_set<uint32_t> usedConstants;
+          usedConstants.insert(getProperBrIfConstant(list[start]));
           while (end < list.size() &&
                  ExpressionAnalyzer::equal(getProperBrIfConditionValue(list[end]),
                                            conditionValue)) {
@@ -685,12 +686,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 while (table.size() <= index) {
                   table.push_back(defaultName);
                 }
-                // the same index may appear more than once. the
-                // first is the one that is actually taken, so if
-                // already set a value, don't replace it
-                if (table[index] == defaultName) {
-                  table[index] = name;
-                }
+                assert(table[index] == defaultName); // we should have made sure there are no overlaps
+                table[index] = name;
               }
               Builder builder(*getModule());
               // the table and condition are offset by the min
