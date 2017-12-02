@@ -15,11 +15,12 @@
  */
 
 //
-// Loads wasm plus a list of functions that are global ctors, i.e.,
-// are to be executed. It then executes as many of them as it can,
-// applying their changes to memory as needed, then writes it. In
-// other words, this executes code at compile time to speed up
-// startup later.
+// Performs DCE on a graph containing a wasm module. The caller provides
+// the graph, this tool fills in the wasm module's parts. It can then
+// remove exports that are unused, for example, which is impossible
+// otherwise (since we wouldn't know if the outside needs them).
+//
+// FIXME: functions in the table
 //
 
 #include <memory>
@@ -50,11 +51,120 @@ struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
   std::vector<Name> roots;
 
-  Module& wasm;
   std::unordered_map<Name, Name> importToDCENode; // import internal name => DCE name
   std::unordered_map<Name, Name> exportToDCENode; // export exported name => DCE name
+  std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
+  std::unordered_map<Name, Name> globalToDCENode; // global name => DCE name
 
-  MetaDCEGraph(Module& wasm) : wasm(wasm) {}
+  Module* wasm;
+
+  // populate the graph with info from the wasm, integrating with potentially-existing
+  // nodes for imports and exports that the graph may already contain.
+  void scan(Module& module) {
+    wasm = &module;
+
+    // Add an entry for everything we might need ahead of time, so parallel work
+    // does not alter parent state, just adds to things pointed by it, independently
+    // (each thread will add for one function, etc.)
+    for (auto& func : module.functions) {
+      auto dceName = getName("func", func->name.str);
+      functionToDCENode[dceName] = func->name;
+      nodes[dceName] = Node(dceName);
+    }
+    for (auto& global : module.globals) {
+      auto dceName = getName("global", global->name.str);
+      globalToDCENode[dceName] = global->name;
+      nodes[dceName] = Node(dceName);
+    }
+    for (auto& imp : module.imports) {
+      if (importToDCENode.find(imp->name) != importToDCENode.end() {
+        continue; // already exists
+      }
+      auto dceName = getName("import", imp->name.str);
+      importToDCENode[dceName] = imp->name;
+      nodes[dceName] = Node(dceName);
+    }
+    for (auto& exp : module.exports) {
+      if (exportToDCENode.find(exp->name) != exportToDCENode.end() {
+        continue; // already exists
+      }
+      auto dceName = getName("export", exp->name.str);
+      exportToDCENode[dceName] = exp->name;
+      auto node = Node(dceName);
+      // we can also link the export to the thing being exported
+      if (exp->kind == ExternalKind::Function) {
+        if (module.getFunctionOrNull(exp->value)) {
+          node.reaches.push_back(functionToDCENode[exp->value]);
+        } else {
+          node.reaches.push_back(importToDCENode[exp->value]);
+        }
+      } else if (exp->kind == ExternalKind::Global) {
+        if (module.getGlobalOrNull(exp->value)) {
+          node.reaches.push_back(globalToDCENode[exp->value]);
+        } else {
+          node.reaches.push_back(importToDCENode[exp->value]);
+        }
+      }
+      nodes[dceName] = node; // TODO: optimize
+    }
+
+    // A parallel scanner for function bodies
+    struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> {
+      bool isFunctionParallel() override { return true; }
+
+      FunctionInfoScanner(MetaDCEGraph& parent) : parent(parent) {}
+
+      FunctionInfoScanner* create() override {
+        return new FunctionInfoScanner(parent);
+      }
+
+      void visitCall(Call* curr) {
+        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent.functionToDCENode[curr->target]
+        );
+      }
+      void visitCallImport(CallImport* curr) {
+        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent.importToDCENode[curr->target]
+        );
+      }
+      void visitGetGlobal(GetGlobal* curr) {
+        handleGlobal(curr->name);
+      }
+      void visitSetGlobal(GetGlobal* curr) {
+        handleGlobal(curr->name);
+      }
+
+    private:
+      MetaDCEGraph& parent;
+
+      void handleGlobal(Name name) {
+        if (getModule()->getGlobalOrNull(name)) return;
+        // it's an import
+        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent.importToDCENode[curr->target]
+        );
+      }
+    };
+
+    PassRunner runner(wasm);
+    runner.setIsNested(true);
+    runner.add<FunctionInfoScanner>(this);
+    runner.run();
+  }
+
+private:
+  // gets a unique name for the graph
+  Name getName(std::string prefix1, std::string prefix2) {
+    while (1) {
+      auto curr = Name(prefix1 + '$' + prefix2 + '$' + std::to_string(nameIndex++));
+      if (nodes.find(curr) == nodes.end()) {
+        return curr;
+      }
+    }
+  }
+
+  Index nameIndex = 0;
 };
 
 //
@@ -168,7 +278,7 @@ int main(int argc, const char* argv[]) {
                         EXPORT("export"),
                         IMPORT("import");
 
-  MetaDCEGraph graph(wasm);
+  MetaDCEGraph graph();
   if (!json.isArray()) {
     Fatal() << "input graph must be a JSON array of nodes. see --help for the form";
   }
