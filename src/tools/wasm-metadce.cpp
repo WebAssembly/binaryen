@@ -73,14 +73,14 @@ struct MetaDCEGraph {
     // (each thread will add for one function, etc.)
     for (auto& func : module.functions) {
       auto dceName = getName("func", func->name.str);
-      functionToDCENode[dceName] = func->name;
-      DCENodeToFunction[func->name] = dceName;
+      DCENodeToFunction[dceName] = func->name;
+      functionToDCENode[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& global : module.globals) {
       auto dceName = getName("global", global->name.str);
-      globalToDCENode[dceName] = global->name;
-      DCENodeToGlobal[global->name] = dceName;
+      DCENodeToGlobal[dceName] = global->name;
+      globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& imp : module.imports) {
@@ -88,8 +88,8 @@ struct MetaDCEGraph {
         continue; // already exists
       }
       auto dceName = getName("import", imp->name.str);
-      importToDCENode[dceName] = imp->name;
-      DCENodeToImport[imp->name] = dceName;
+      DCENodeToImport[dceName] = imp->name;
+      importToDCENode[imp->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& exp : module.exports) {
@@ -97,8 +97,8 @@ struct MetaDCEGraph {
         continue; // already exists
       }
       auto dceName = getName("export", exp->name.str);
-      exportToDCENode[dceName] = exp->name;
-      DCENodeToExport[exp->name] = dceName;
+      DCENodeToExport[dceName] = exp->name;
+      exportToDCENode[exp->name] = dceName;
       auto node = DCENode(dceName);
       // we can also link the export to the thing being exported
       if (exp->kind == ExternalKind::Function) {
@@ -121,20 +121,21 @@ struct MetaDCEGraph {
     struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       bool isFunctionParallel() override { return true; }
 
-      Scanner(MetaDCEGraph& parent) : parent(parent) {}
+      Scanner(MetaDCEGraph* parent) : parent(parent) {}
 
       Scanner* create() override {
         return new Scanner(parent);
       }
 
       void visitCall(Call* curr) {
-        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent.functionToDCENode[curr->target]
+        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent->functionToDCENode[curr->target]
         );
       }
       void visitCallImport(CallImport* curr) {
-        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent.importToDCENode[curr->target]
+        assert(parent->functionToDCENode.count(getFunction()->name) > 0);
+        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent->importToDCENode[curr->target]
         );
       }
       void visitGetGlobal(GetGlobal* curr) {
@@ -145,24 +146,24 @@ struct MetaDCEGraph {
       }
 
     private:
-      MetaDCEGraph& parent;
+      MetaDCEGraph* parent;
 
       void handleGlobal(Name name) {
         if (getModule()->getGlobalOrNull(name)) return;
         // it's an import
-        parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent.importToDCENode[name]
+        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+          parent->importToDCENode[name]
         );
       }
     };
 
     PassRunner runner(wasm);
     runner.setIsNested(true);
-    runner.add<Scanner>(*this);
+    runner.add<Scanner>(this);
     runner.run();
 
     // also scan segment offsets
-    Scanner scanner(*this);
+    Scanner scanner(this);
     scanner.setModule(wasm);
     for (auto& segment : wasm->table.segments) {
       scanner.walk(segment.offset);
@@ -433,8 +434,14 @@ int main(int argc, const char* argv[]) {
     graph.nodes[node.name] = node;
   }
 
+std::cout << "pre\n";
+graph.dump();
+
   // The external graph is now populated. Scan the module
   graph.scan(wasm);
+
+std::cout << "mid\n";
+graph.dump();
 
   // Perform the DCE
   graph.deadCodeElimination();
