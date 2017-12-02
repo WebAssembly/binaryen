@@ -56,6 +56,11 @@ struct MetaDCEGraph {
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
   std::unordered_map<Name, Name> globalToDCENode; // global name => DCE name
 
+  std::unordered_map<Name, Name> DCENodeToImport; // reverse maps
+  std::unordered_map<Name, Name> DCENodeToExport;
+  std::unordered_map<Name, Name> DCENodeToFunction;
+  std::unordered_map<Name, Name> DCENodeToGlobal;
+
   Module* wasm;
 
   // populate the graph with info from the wasm, integrating with potentially-existing
@@ -69,11 +74,13 @@ struct MetaDCEGraph {
     for (auto& func : module.functions) {
       auto dceName = getName("func", func->name.str);
       functionToDCENode[dceName] = func->name;
+      DCENodeToFunction[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& global : module.globals) {
       auto dceName = getName("global", global->name.str);
       globalToDCENode[dceName] = global->name;
+      DCENodeToGlobal[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& imp : module.imports) {
@@ -82,6 +89,7 @@ struct MetaDCEGraph {
       }
       auto dceName = getName("import", imp->name.str);
       importToDCENode[dceName] = imp->name;
+      DCENodeToImport[imp->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& exp : module.exports) {
@@ -90,6 +98,7 @@ struct MetaDCEGraph {
       }
       auto dceName = getName("export", exp->name.str);
       exportToDCENode[dceName] = exp->name;
+      DCENodeToExport[exp->name] = dceName;
       auto node = DCENode(dceName);
       // we can also link the export to the thing being exported
       if (exp->kind == ExternalKind::Function) {
@@ -109,13 +118,13 @@ struct MetaDCEGraph {
     }
 
     // A parallel scanner for function bodies
-    struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> {
+    struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       bool isFunctionParallel() override { return true; }
 
-      FunctionInfoScanner(MetaDCEGraph& parent) : parent(parent) {}
+      Scanner(MetaDCEGraph& parent) : parent(parent) {}
 
-      FunctionInfoScanner* create() override {
-        return new FunctionInfoScanner(parent);
+      Scanner* create() override {
+        return new Scanner(parent);
       }
 
       void visitCall(Call* curr) {
@@ -149,8 +158,18 @@ struct MetaDCEGraph {
 
     PassRunner runner(wasm);
     runner.setIsNested(true);
-    runner.add<FunctionInfoScanner>(*this);
+    runner.add<Scanner>(*this);
     runner.run();
+
+    // also scan segment offsets
+    Scanner scanner(*this);
+    scanner.setModule(wasm);
+    for (auto& segment : wasm->table.segments) {
+      scanner.walk(segment.offset);
+    }
+    for (auto& segment : wasm->memory.segments) {
+      scanner.walk(segment.offset);
+    }
   }
 
 private:
@@ -166,23 +185,87 @@ private:
 
   Index nameIndex = 0;
 
+  std::unordered_set<Name> reached;
+
 public:
-  // Perform the DCE
+  // Perform the DCE: simple marking from the roots
   void deadCodeElimination() {
+    std::vector<Name> queue;
+    for (auto root : roots) {
+      reached.insert(root);
+      queue.push_back(root);
+    }
+    while (queue.size() > 0) {
+      auto name = queue.back();
+      queue.pop_back();
+      auto& node = nodes[name];
+      for (auto target : node.reaches) {
+        if (reached.find(target) == reached.end()) {
+          reached.insert(target);
+          queue.push_back(target);
+        }
+      }
+    }
   }
 
   // Apply to the wasm
   void apply() {
     // Remove the unused exports
-// XXX
-    // Now they are gone, standard optimization passes can do the rest
+    std::vector<Name> toRemove;
+    for (auto& exp : wasm->exports) {
+      auto name = exp->name;
+      auto dceName = exportToDCENode[name];
+      if (reached.find(dceName) == reached.end()) {
+        toRemove.push_back(name);
+      }
+    }
+    for (auto name : toRemove) {
+      wasm->removeExport(name);
+    }
+    // Now they are gone, standard optimization passes can do the rest!
     PassRunner passRunner(wasm);
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
 
   // Print out the other things that we found a removable from the outside
-  void printExternallyRemovable() {
+  void printAllRemovable() {
+    for (auto& pair : nodes) {
+      auto name = pair.first;
+      if (reached.find(name) == reached.end()) {
+        std::cout << "unreachable: " << name << '\n';
+      }
+    }
+  }
+
+  // A debug utility, prints out the graph
+  void dump() {
+    std::cout << "=== graph ===\n";
+    for (auto root : roots) {
+      std::cout << "root: " << root << '\n';
+    }
+    for (auto& pair : nodes) {
+      auto name = pair.first;
+      auto& node = pair.second;
+      std::cout << "node: " << name << '\n';
+      if (DCENodeToImport.find(name) != DCENodeToImport.end()) {
+        auto* imp = wasm->getImport(DCENodeToImport[name]);
+        std::cout << "  is import " << DCENodeToImport[name] << ", " << imp->module << '.' << imp->base << '\n';
+      }
+      if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
+        std::cout << "  is export " << DCENodeToExport[name] << ", " << wasm->getExport(DCENodeToExport[name])->value << '\n';
+      }
+      if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
+        std::cout << "  is function " << DCENodeToFunction[name] << '\n';
+      }
+      if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
+        std::cout << "  is function " << DCENodeToGlobal[name] << '\n';
+      }
+      for (auto target : node.reaches) {
+        std::cout << "  reaches: " << target << '\n';
+      }
+    }
+    std::cout << "=============\n";
   }
 };
 
@@ -359,6 +442,6 @@ int main(int argc, const char* argv[]) {
   // Apply to the wasm
   graph.apply();
 
-  // Print out the other things that we found a removable from the outside
-  graph.printExternallyRemovable();
+  // Print out everything that we found is removable, the outside might use that
+  graph.printAllRemovable();
 }
