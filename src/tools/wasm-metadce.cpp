@@ -61,29 +61,29 @@ struct MetaDCEGraph {
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
 
-  Module* wasm;
+  Module& wasm;
+
+  MetaDCEGraph(Module& wasm) : wasm(wasm) {}
 
   // populate the graph with info from the wasm, integrating with potentially-existing
   // nodes for imports and exports that the graph may already contain.
-  void scan(Module& module) {
-    wasm = &module;
-
+  void scanWebAssembly() {
     // Add an entry for everything we might need ahead of time, so parallel work
     // does not alter parent state, just adds to things pointed by it, independently
     // (each thread will add for one function, etc.)
-    for (auto& func : module.functions) {
+    for (auto& func : wasm.functions) {
       auto dceName = getName("func", func->name.str);
       DCENodeToFunction[dceName] = func->name;
       functionToDCENode[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
-    for (auto& global : module.globals) {
+    for (auto& global : wasm.globals) {
       auto dceName = getName("global", global->name.str);
       DCENodeToGlobal[dceName] = global->name;
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
-    for (auto& imp : module.imports) {
+    for (auto& imp : wasm.imports) {
       if (importToDCENode.find(imp->name) != importToDCENode.end()) {
         continue; // already exists
       }
@@ -92,7 +92,7 @@ struct MetaDCEGraph {
       importToDCENode[imp->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     }
-    for (auto& exp : module.exports) {
+    for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) != exportToDCENode.end()) {
         continue; // already exists
       }
@@ -102,13 +102,13 @@ struct MetaDCEGraph {
       auto node = DCENode(dceName);
       // we can also link the export to the thing being exported
       if (exp->kind == ExternalKind::Function) {
-        if (module.getFunctionOrNull(exp->value)) {
+        if (wasm.getFunctionOrNull(exp->value)) {
           node.reaches.push_back(functionToDCENode[exp->value]);
         } else {
           node.reaches.push_back(importToDCENode[exp->value]);
         }
       } else if (exp->kind == ExternalKind::Global) {
-        if (module.getGlobalOrNull(exp->value)) {
+        if (wasm.getGlobalOrNull(exp->value)) {
           node.reaches.push_back(globalToDCENode[exp->value]);
         } else {
           node.reaches.push_back(importToDCENode[exp->value]);
@@ -157,18 +157,18 @@ struct MetaDCEGraph {
       }
     };
 
-    PassRunner runner(wasm);
+    PassRunner runner(&wasm);
     runner.setIsNested(true);
     runner.add<Scanner>(this);
     runner.run();
 
     // also scan segment offsets
     Scanner scanner(this);
-    scanner.setModule(wasm);
-    for (auto& segment : wasm->table.segments) {
+    scanner.setModule(&wasm);
+    for (auto& segment : wasm.table.segments) {
       scanner.walk(segment.offset);
     }
-    for (auto& segment : wasm->memory.segments) {
+    for (auto& segment : wasm.memory.segments) {
       scanner.walk(segment.offset);
     }
   }
@@ -213,7 +213,7 @@ public:
   void apply() {
     // Remove the unused exports
     std::vector<Name> toRemove;
-    for (auto& exp : wasm->exports) {
+    for (auto& exp : wasm.exports) {
       auto name = exp->name;
       auto dceName = exportToDCENode[name];
       if (reached.find(dceName) == reached.end()) {
@@ -221,10 +221,10 @@ public:
       }
     }
     for (auto name : toRemove) {
-      wasm->removeExport(name);
+      wasm.removeExport(name);
     }
     // Now they are gone, standard optimization passes can do the rest!
-    PassRunner passRunner(wasm);
+    PassRunner passRunner(&wasm);
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
@@ -250,11 +250,11 @@ public:
       auto& node = pair.second;
       std::cout << "node: " << name << '\n';
       if (DCENodeToImport.find(name) != DCENodeToImport.end()) {
-        auto* imp = wasm->getImport(DCENodeToImport[name]);
+        auto* imp = wasm.getImport(DCENodeToImport[name]);
         std::cout << "  is import " << DCENodeToImport[name] << ", " << imp->module << '.' << imp->base << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name] << ", " << wasm->getExport(DCENodeToExport[name])->value << '\n';
+        std::cout << "  is export " << DCENodeToExport[name] << ", " << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
       if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
         std::cout << "  is function " << DCENodeToFunction[name] << '\n';
@@ -299,22 +299,22 @@ int main(int argc, const char* argv[]) {
                                   "JSON notation:\n\n"
                                   "  [\n"
                                   "    {\n"
-                                  "      name: 'entity1',\n"
-                                  "      reaches: ['entity2, 'entity3'],\n"
-                                  "      root: true\n"
+                                  "      \"name\": \"entity1\",\n"
+                                  "      \"reaches\": [\"entity2, \"entity3\"],\n"
+                                  "      \"root\": true\n"
                                   "    },\n"
                                   "    {\n"
-                                  "      name: 'entity2',\n"
-                                  "      reaches: ['entity1, 'entity4']\n"
+                                  "      \"name\": \"entity2\",\n"
+                                  "      \"reaches\": [\"entity1, \"entity4\"]\n"
                                   "    },\n"
                                   "    {\n"
-                                  "      name: 'entity3',\n"
-                                  "      reaches: ['entity1'],\n"
-                                  "      export: 'export1'\n"
+                                  "      \"name\": \"entity3\",\n"
+                                  "      \"reaches\": [\"entity1\"],\n"
+                                  "      \"export\": \"export1\"\n"
                                   "    },\n"
                                   "    {\n"
-                                  "      name: 'entity4',\n"
-                                  "      import: ['module', 'import1']\n"
+                                  "      \"name\": \"entity4\",\n"
+                                  "      \"import\": [\"module\", \"import1\"]\n"
                                   "    },\n"
                                   "  ]\n\n"
                                   "Each entity has a name and an optional list of the other "
@@ -381,7 +381,8 @@ int main(int argc, const char* argv[]) {
                         EXPORT("export"),
                         IMPORT("import");
 
-  MetaDCEGraph graph;
+  MetaDCEGraph graph(wasm);
+
   if (!json.isArray()) {
     Fatal() << "input graph must be a JSON array of nodes. see --help for the form";
   }
@@ -397,7 +398,7 @@ int main(int argc, const char* argv[]) {
     DCENode node(ref[NAME]->getIString());
     if (ref->has(REACHES)) {
       cashew::Ref reaches = ref[REACHES];
-      if (!reaches->isArray(NAME)) {
+      if (!reaches->isArray()) {
         Fatal() << "node.reaches must be an array. see --help for the form";
       }
       auto size = reaches->size();
@@ -422,13 +423,16 @@ int main(int argc, const char* argv[]) {
         Fatal() << "node.export, if it exists, must be a string. see --help for the form";
       }
       graph.exportToDCENode[exp->getIString()] = node.name;
+      graph.DCENodeToExport[node.name] = exp->getIString();
     }
     if (ref->has(IMPORT)) {
       cashew::Ref imp = ref[IMPORT];
       if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
         Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
-      graph.importToDCENode[ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString())->name] = node.name;
+      auto importName = ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString())->name;
+      graph.importToDCENode[importName] = node.name;
+      graph.DCENodeToImport[node.name] = importName;
     }
     // TODO: optimize this copy with a clever move
     graph.nodes[node.name] = node;
@@ -438,7 +442,7 @@ std::cout << "pre\n";
 graph.dump();
 
   // The external graph is now populated. Scan the module
-  graph.scan(wasm);
+  graph.scanWebAssembly();
 
 std::cout << "mid\n";
 graph.dump();
