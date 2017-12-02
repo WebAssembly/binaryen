@@ -168,6 +168,7 @@ WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
+WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]

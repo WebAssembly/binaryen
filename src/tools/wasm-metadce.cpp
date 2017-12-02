@@ -294,7 +294,7 @@ int main(int argc, const char* argv[]) {
                                   "This tool will output a wasm module with dead code eliminated, "
                                   "and metadata describing the things in the rest of the graph "
                                   "that can be eliminated as well.\n\n"
-                                  "The graph file should represent the graph in the following "
+                                  "The graph description file should represent the graph in the following "
                                   "JSON notation:\n\n"
                                   "  [\n"
                                   "    {\n"
@@ -441,6 +441,13 @@ int main(int argc, const char* argv[]) {
 
   // Apply to the wasm
   graph.apply();
+
+  if (options.extra.count("output") > 0) {
+    ModuleWriter writer;
+    writer.setBinary(emitBinary);
+    writer.setDebugInfo(debugInfo);
+    writer.write(wasm, options.extra["output"]);
+  }
 
   // Print out everything that we found is removable, the outside might use that
   graph.printAllRemovable();

@@ -5,11 +5,25 @@ import os, sys, subprocess, difflib
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM,
+    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
     BINARYEN_INSTALL_DIR, has_shell_timeout)
 from scripts.test.wasm2asm import tests, spec_tests, extra_tests, assert_tests
 
+print '\n[ checking wasm-metadce... ]\n'
 
+for t in os.listdir(os.path.join('test', 'metadce')):
+  if t.endswith(('.wast', '.wasm')):
+    print '..', t
+    t = os.path.join('test', 'metadce', t)
+    graph = t + '.graph.txt'
+    cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S']
+    stdout = run_command(cmd)
+    actual = open('a.wast').read()
+    out = t + '.dced'
+    with open(out, 'w') as o: o.write(actual)
+    with open(out + '.stdout', 'w') as o: o.write(stdout)
+
+1/0
 print '[ processing and updating testcases... ]\n'
 
 for asm in sorted(os.listdir('test')):
