@@ -3,25 +3,25 @@ pre
 =============
 mid
 === graph ===
-node: $export$wasm_func$4
-  is export $wasm_func, $a_wasm_func
-  reaches: $func$a_wasm_func$0
-node: $func$an_unused_wasm_func$1
-  is function $an_unused_wasm_func
-node: $func$a_wasm_func$0
+node: export$wasm_func_unused$5
+  is export wasm_func_unused, $an_unused_wasm_func
+  reaches: func$an_unused_wasm_func$1
+node: func$a_wasm_func$0
   is function $a_wasm_func
-  reaches: $import$a_js_func$2
-node: $import$an_unused_js_func$3
-  is import $an_unused_js_func, $env.$js_func_unused
-node: $export$wasm_func_unused$5
-  is export $wasm_func_unused, $an_unused_wasm_func
-  reaches: $func$an_unused_wasm_func$1
-node: $import$a_js_func$2
-  is import $a_js_func, $env.$js_func
+  reaches: import$a_js_func$2
+node: export$wasm_func$4
+  is export wasm_func, $a_wasm_func
+  reaches: func$a_wasm_func$0
+node: func$an_unused_wasm_func$1
+  is function $an_unused_wasm_func
+node: import$a_js_func$2
+  is import $a_js_func, env.js_func
+node: import$an_unused_js_func$3
+  is import $an_unused_js_func, env.js_func_unused
 =============
+unreachable: $export$wasm_func_unused$5
+unreachable: $func$a_wasm_func$0
 unreachable: $export$wasm_func$4
 unreachable: $func$an_unused_wasm_func$1
-unreachable: $func$a_wasm_func$0
-unreachable: $import$an_unused_js_func$3
-unreachable: $export$wasm_func_unused$5
 unreachable: $import$a_js_func$2
+unreachable: $import$an_unused_js_func$3

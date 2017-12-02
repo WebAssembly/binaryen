@@ -84,23 +84,22 @@ struct MetaDCEGraph {
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& imp : wasm.imports) {
-      if (importToDCENode.find(imp->name) != importToDCENode.end()) {
-        continue; // already exists
+      if (importToDCENode.find(imp->name) == importToDCENode.end()) {
+        auto dceName = getName("import", imp->name.str);
+        DCENodeToImport[dceName] = imp->name;
+        importToDCENode[imp->name] = dceName;
+        nodes[dceName] = DCENode(dceName);
       }
-      auto dceName = getName("import", imp->name.str);
-      DCENodeToImport[dceName] = imp->name;
-      importToDCENode[imp->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
     }
     for (auto& exp : wasm.exports) {
-      if (exportToDCENode.find(exp->name) != exportToDCENode.end()) {
-        continue; // already exists
+      if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
+        auto dceName = getName("export", exp->name.str);
+        DCENodeToExport[dceName] = exp->name;
+        exportToDCENode[exp->name] = dceName;
+        nodes[dceName] = DCENode(dceName);
       }
-      auto dceName = getName("export", exp->name.str);
-      DCENodeToExport[dceName] = exp->name;
-      exportToDCENode[exp->name] = dceName;
-      auto node = DCENode(dceName);
       // we can also link the export to the thing being exported
+      auto& node = nodes[exportToDCENode[exp->name]];
       if (exp->kind == ExternalKind::Function) {
         if (wasm.getFunctionOrNull(exp->value)) {
           node.reaches.push_back(functionToDCENode[exp->value]);
@@ -114,7 +113,6 @@ struct MetaDCEGraph {
           node.reaches.push_back(importToDCENode[exp->value]);
         }
       }
-      nodes[dceName] = node; // TODO: optimize
     }
 
     // A parallel scanner for function bodies
@@ -243,18 +241,18 @@ public:
   void dump() {
     std::cout << "=== graph ===\n";
     for (auto root : roots) {
-      std::cout << "root: " << root << '\n';
+      std::cout << "root: " << root.str << '\n';
     }
     for (auto& pair : nodes) {
       auto name = pair.first;
       auto& node = pair.second;
-      std::cout << "node: " << name << '\n';
+      std::cout << "node: " << name.str << '\n';
       if (DCENodeToImport.find(name) != DCENodeToImport.end()) {
         auto* imp = wasm.getImport(DCENodeToImport[name]);
-        std::cout << "  is import " << DCENodeToImport[name] << ", " << imp->module << '.' << imp->base << '\n';
+        std::cout << "  is import " << DCENodeToImport[name] << ", " << imp->module.str << '.' << imp->base.str << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name] << ", " << wasm.getExport(DCENodeToExport[name])->value << '\n';
+        std::cout << "  is export " << DCENodeToExport[name].str << ", " << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
       if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
         std::cout << "  is function " << DCENodeToFunction[name] << '\n';
@@ -263,7 +261,7 @@ public:
         std::cout << "  is function " << DCENodeToGlobal[name] << '\n';
       }
       for (auto target : node.reaches) {
-        std::cout << "  reaches: " << target << '\n';
+        std::cout << "  reaches: " << target.str << '\n';
       }
     }
     std::cout << "=============\n";

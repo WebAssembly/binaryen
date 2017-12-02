@@ -1,0 +1,32 @@
+pre
+=== graph ===
+root: outside-entity
+node: inside-wasm-func
+  is export wasm_func, $a_wasm_func
+node: outside-entity
+  reaches: inside-wasm-func
+=============
+mid
+=== graph ===
+root: outside-entity
+node: export$wasm_func_unused$4
+  is export wasm_func_unused, $an_unused_wasm_func
+  reaches: func$an_unused_wasm_func$1
+node: outside-entity
+  reaches: inside-wasm-func
+node: inside-wasm-func
+  is export wasm_func, $a_wasm_func
+  reaches: func$a_wasm_func$0
+node: import$an_unused_js_func$3
+  is import $an_unused_js_func, env.js_func_unused
+node: import$a_js_func$2
+  is import $a_js_func, env.js_func
+node: func$an_unused_wasm_func$1
+  is function $an_unused_wasm_func
+node: func$a_wasm_func$0
+  is function $a_wasm_func
+  reaches: import$a_js_func$2
+=============
+unreachable: $export$wasm_func_unused$4
+unreachable: $import$an_unused_js_func$3
+unreachable: $func$an_unused_wasm_func$1
