@@ -41,6 +41,7 @@ using namespace wasm;
 struct DCENode {
   Name name;
   std::vector<Name> reaches; // the other nodes this one can reach
+  DCENode() {}
   DCENode(Name name) : name(name) {}
 };
 
@@ -161,11 +162,11 @@ int main(int argc, const char* argv[]) {
 
   // parse the JSON into our graph, doing all the JSON parsing here, leaving
   // the abstract computation for the class itself
-  const IString NAME("name"),
-                REACHES("reaches"),
-                ROOT("root"),
-                EXPORT("export"),
-                IMPORT("import");
+  const cashew::IString NAME("name"),
+                        REACHES("reaches"),
+                        ROOT("root"),
+                        EXPORT("export"),
+                        IMPORT("import");
 
   MetaDCEGraph graph(wasm);
   if (!json.isArray()) {
@@ -173,48 +174,48 @@ int main(int argc, const char* argv[]) {
   }
   auto size = json.size();
   for (size_t i = 0; i < size; i++) {
-    Ref ref = json[i];
-    if (!ref.isObject()) {
+    cashew::Ref ref = json[i];
+    if (!ref->isObject()) {
       Fatal() << "nodes in input graph must be JSON objects. see --help for the form";
     }
-    if (!node.has(NAME)) {
+    if (!ref->has(NAME)) {
       Fatal() << "nodes in input graph must have a name. see --help for the form";
     }
-    DCENode node(ref[NAME]);
-    if (ref.has(REACHES)) {
-      Ref reaches = ref[REACHES];
-      if (!reaches.isArray(NAME)) {
+    DCENode node(ref[NAME]->getIString());
+    if (ref->has(REACHES)) {
+      cashew::Ref reaches = ref[REACHES];
+      if (!reaches->isArray(NAME)) {
         Fatal() << "node.reaches must be an array. see --help for the form";
       }
-      auto size = reaches.size();
+      auto size = reaches->size();
       for (size_t j = 0; j < size; j++) {
-        Ref name = reaches[j];
-        if (!name.isString()) {
+        cashew::Ref name = reaches[j];
+        if (!name->isString()) {
           Fatal() << "node.reaches items must be strings. see --help for the form";
         }
-        node.reaches.push_back(name.getIString());
+        node.reaches.push_back(name->getIString());
       }
     }
-    if (ref.has(ROOT)) {
-      Ref root = ref[ROOT];
-      if (!root.isBool() || !root.getBool()) {
+    if (ref->has(ROOT)) {
+      cashew::Ref root = ref[ROOT];
+      if (!root->isBool() || !root->getBool()) {
         Fatal() << "node.root, if it exists, must be true. see --help for the form";
       }
       graph.roots.push_back(node.name);
     }
-    if (ref.has(EXPORT)) {
-      Ref exp = ref[EXPORT];
-      if (!exp.isString()) {
+    if (ref->has(EXPORT)) {
+      cashew::Ref exp = ref[EXPORT];
+      if (!exp->isString()) {
         Fatal() << "node.export, if it exists, must be a string. see --help for the form";
       }
-      graph.exportToDCENode[exp.getIString()] = node.name;
+      graph.exportToDCENode[exp->getIString()] = node.name;
     }
-    if (ref.has(IMPORT)) {
-      Ref imp = ref[IMPORT];
-      if (!imp.isArray() || imp.size() != 2 || !imp[0].isString() || !imp[1].isString()) {
+    if (ref->has(IMPORT)) {
+      cashew::Ref imp = ref[IMPORT];
+      if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
         Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
-      graph.importToDCENode[ImportUtils::getImport(wasm, imp[0].getIString(), imp[1].getIString())] = node.name;
+      graph.importToDCENode[ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString())->name] = node.name;
     }
     // TODO: optimize this copy with a clever move
     graph.nodes[node.name] = node;
