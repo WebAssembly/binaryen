@@ -69,28 +69,28 @@ struct MetaDCEGraph {
     for (auto& func : module.functions) {
       auto dceName = getName("func", func->name.str);
       functionToDCENode[dceName] = func->name;
-      nodes[dceName] = Node(dceName);
+      nodes[dceName] = DCENode(dceName);
     }
     for (auto& global : module.globals) {
       auto dceName = getName("global", global->name.str);
       globalToDCENode[dceName] = global->name;
-      nodes[dceName] = Node(dceName);
+      nodes[dceName] = DCENode(dceName);
     }
     for (auto& imp : module.imports) {
-      if (importToDCENode.find(imp->name) != importToDCENode.end() {
+      if (importToDCENode.find(imp->name) != importToDCENode.end()) {
         continue; // already exists
       }
       auto dceName = getName("import", imp->name.str);
       importToDCENode[dceName] = imp->name;
-      nodes[dceName] = Node(dceName);
+      nodes[dceName] = DCENode(dceName);
     }
     for (auto& exp : module.exports) {
-      if (exportToDCENode.find(exp->name) != exportToDCENode.end() {
+      if (exportToDCENode.find(exp->name) != exportToDCENode.end()) {
         continue; // already exists
       }
       auto dceName = getName("export", exp->name.str);
       exportToDCENode[dceName] = exp->name;
-      auto node = Node(dceName);
+      auto node = DCENode(dceName);
       // we can also link the export to the thing being exported
       if (exp->kind == ExternalKind::Function) {
         if (module.getFunctionOrNull(exp->value)) {
@@ -131,7 +131,7 @@ struct MetaDCEGraph {
       void visitGetGlobal(GetGlobal* curr) {
         handleGlobal(curr->name);
       }
-      void visitSetGlobal(GetGlobal* curr) {
+      void visitSetGlobal(SetGlobal* curr) {
         handleGlobal(curr->name);
       }
 
@@ -142,14 +142,14 @@ struct MetaDCEGraph {
         if (getModule()->getGlobalOrNull(name)) return;
         // it's an import
         parent.nodes[parent.functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent.importToDCENode[curr->target]
+          parent.importToDCENode[name]
         );
       }
     };
 
     PassRunner runner(wasm);
     runner.setIsNested(true);
-    runner.add<FunctionInfoScanner>(this);
+    runner.add<FunctionInfoScanner>(*this);
     runner.run();
   }
 
@@ -165,6 +165,25 @@ private:
   }
 
   Index nameIndex = 0;
+
+public:
+  // Perform the DCE
+  void deadCodeElimination() {
+  }
+
+  // Apply to the wasm
+  void apply() {
+    // Remove the unused exports
+// XXX
+    // Now they are gone, standard optimization passes can do the rest
+    PassRunner passRunner(wasm);
+    passRunner.add("remove-unused-module-elements");
+    passRunner.run();
+  }
+
+  // Print out the other things that we found a removable from the outside
+  void printExternallyRemovable() {
+  }
 };
 
 //
@@ -278,7 +297,7 @@ int main(int argc, const char* argv[]) {
                         EXPORT("export"),
                         IMPORT("import");
 
-  MetaDCEGraph graph();
+  MetaDCEGraph graph;
   if (!json.isArray()) {
     Fatal() << "input graph must be a JSON array of nodes. see --help for the form";
   }
@@ -331,25 +350,15 @@ int main(int argc, const char* argv[]) {
     graph.nodes[node.name] = node;
   }
 
-#if 0
-  // Do some useful optimizations after the evalling
-  {
-    PassRunner passRunner(&wasm);
-    passRunner.add("memory-packing"); // we flattened it, so re-optimize
-    passRunner.add("remove-unused-names");
-    passRunner.add("dce");
-    passRunner.add("merge-blocks");
-    passRunner.add("vacuum");
-    passRunner.run();
-  }
+  // The external graph is now populated. Scan the module
+  graph.scan(wasm);
 
-  if (options.extra.count("output") > 0) {
-    if (options.debug) std::cerr << "writing..." << std::endl;
-    ModuleWriter writer;
-    writer.setDebug(options.debug);
-    writer.setBinary(emitBinary);
-    writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
-  }
-#endif
+  // Perform the DCE
+  graph.deadCodeElimination();
+
+  // Apply to the wasm
+  graph.apply();
+
+  // Print out the other things that we found a removable from the outside
+  graph.printExternallyRemovable();
 }
