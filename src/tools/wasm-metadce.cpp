@@ -30,10 +30,31 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
+#include "ir/import-utils.h"
 
 #include "emscripten-optimizer/simple_ast.h"
 
 using namespace wasm;
+
+// Generic reachability graph of abstract nodes
+
+struct DCENode {
+  Name name;
+  std::vector<Name> reaches; // the other nodes this one can reach
+  DCENode(Name name) : name(name) {}
+};
+
+// A meta DCE graph with wasm integration
+struct MetaDCEGraph {
+  std::unordered_map<Name, DCENode> nodes;
+  std::vector<Name> roots;
+
+  Module& wasm;
+  std::unordered_map<Name, Name> importToDCENode; // import internal name => DCE name
+  std::unordered_map<Name, Name> exportToDCENode; // export exported name => DCE name
+
+  MetaDCEGraph(Module& wasm) : wasm(wasm) {}
+};
 
 //
 // main
@@ -135,8 +156,69 @@ int main(int argc, const char* argv[]) {
 
   auto graphInput(read_file<std::string>(graphFile, Flags::Text, Flags::Release));
   auto* copy = strdup(graphInput.c_str());
-  cashew::Value graph;
-  graph.parse(copy);
+  cashew::Value json;
+  json.parse(copy);
+
+  // parse the JSON into our graph, doing all the JSON parsing here, leaving
+  // the abstract computation for the class itself
+  const IString NAME("name"),
+                REACHES("reaches"),
+                ROOT("root"),
+                EXPORT("export"),
+                IMPORT("import");
+
+  MetaDCEGraph graph(wasm);
+  if (!json.isArray()) {
+    Fatal() << "input graph must be a JSON array of nodes. see --help for the form";
+  }
+  auto size = json.size();
+  for (size_t i = 0; i < size; i++) {
+    Ref ref = json[i];
+    if (!ref.isObject()) {
+      Fatal() << "nodes in input graph must be JSON objects. see --help for the form";
+    }
+    if (!node.has(NAME)) {
+      Fatal() << "nodes in input graph must have a name. see --help for the form";
+    }
+    DCENode node(ref[NAME]);
+    if (ref.has(REACHES)) {
+      Ref reaches = ref[REACHES];
+      if (!reaches.isArray(NAME)) {
+        Fatal() << "node.reaches must be an array. see --help for the form";
+      }
+      auto size = reaches.size();
+      for (size_t j = 0; j < size; j++) {
+        Ref name = reaches[j];
+        if (!name.isString()) {
+          Fatal() << "node.reaches items must be strings. see --help for the form";
+        }
+        node.reaches.push_back(name.getIString());
+      }
+    }
+    if (ref.has(ROOT)) {
+      Ref root = ref[ROOT];
+      if (!root.isBool() || !root.getBool()) {
+        Fatal() << "node.root, if it exists, must be true. see --help for the form";
+      }
+      graph.roots.push_back(node.name);
+    }
+    if (ref.has(EXPORT)) {
+      Ref exp = ref[EXPORT];
+      if (!exp.isString()) {
+        Fatal() << "node.export, if it exists, must be a string. see --help for the form";
+      }
+      graph.exportToDCENode[exp.getIString()] = node.name;
+    }
+    if (ref.has(IMPORT)) {
+      Ref imp = ref[IMPORT];
+      if (!imp.isArray() || imp.size() != 2 || !imp[0].isString() || !imp[1].isString()) {
+        Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
+      }
+      graph.importToDCENode[ImportUtils::getImport(wasm, imp[0].getIString(), imp[1].getIString())] = node.name;
+    }
+    // TODO: optimize this copy with a clever move
+    graph.nodes[node.name] = node;
+  }
 
 #if 0
   // Do some useful optimizations after the evalling
