@@ -31,6 +31,8 @@
 #include "wasm-io.h"
 #include "wasm-builder.h"
 
+#include "emscripten-optimizer/simple_ast.h"
+
 using namespace wasm;
 
 //
@@ -42,7 +44,7 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
-  std::string ctorsString;
+  std::string graphFile;
 
   Options options("wasm-metadce", "This tool performs dead code elimination (DCE) on a larger space "
                                   "that the wasm module is just a part of. For example, if you have "
@@ -102,7 +104,7 @@ int main(int argc, const char* argv[]) {
       .add("--graph-file", "-f", "Filename of the graph description file",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
-             ctorsString = argument;
+             graphFile = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
@@ -110,7 +112,11 @@ int main(int argc, const char* argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+  if (graphFile.size() == 0) {
+    Fatal() << "no graph file provided.";
+  }
+
+  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, Flags::Release));
 
   Module wasm;
 
@@ -123,9 +129,14 @@ int main(int argc, const char* argv[]) {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
       p.dump(std::cerr);
-      Fatal() << "error in parsing input";
+      Fatal() << "error in parsing wasm input";
     }
   }
+
+  auto graphInput(read_file<std::string>(graphFile, Flags::Text, Flags::Release));
+  auto* copy = strdup(graphInput.c_str());
+  cashew::Value graph;
+  graph.parse(copy);
 
 #if 0
   // Do some useful optimizations after the evalling
