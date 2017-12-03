@@ -233,13 +233,18 @@ public:
     passRunner.run();
   }
 
-  // Print out the other things that we found a removable from the outside
-  void printAllRemovable() {
+  // Print out everything we found is not used, and so can be
+  // removed, including on the outside
+  void printAllUnused() {
+    std::set<std::string> unused;
     for (auto& pair : nodes) {
       auto name = pair.first;
       if (reached.find(name) == reached.end()) {
-        std::cout << "unreachable: " << name << '\n';
+        unused.insert(name.str);
       }
+    }
+    for (auto& name : unused) {
+      std::cout << "unused: " << name << '\n';
     }
   }
 
@@ -442,14 +447,8 @@ int main(int argc, const char* argv[]) {
     graph.nodes[node.name] = node;
   }
 
-std::cout << "pre\n";
-graph.dump();
-
   // The external graph is now populated. Scan the module
   graph.scanWebAssembly();
-
-std::cout << "mid\n";
-graph.dump();
 
   // Perform the DCE
   graph.deadCodeElimination();
@@ -465,5 +464,5 @@ graph.dump();
   }
 
   // Print out everything that we found is removable, the outside might use that
-  graph.printAllRemovable();
+  graph.printAllUnused();
 }

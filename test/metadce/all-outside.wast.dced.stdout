@@ -1,49 +1,5 @@
-pre
-=== graph ===
-root: root2
-root: root1
-node: reverse
-  reaches: root1
-node: loop1
-  reaches: loop2
-node: lonely
-node: island
-  reaches: island
-node: root1
-  reaches: two
-  reaches: three
-node: loop2
-  reaches: loop1
-node: root2
-  reaches: three
-node: two
-  reaches: two
-node: three
-=============
-mid
-=== graph ===
-root: root2
-root: root1
-node: reverse
-  reaches: root1
-node: loop1
-  reaches: loop2
-node: lonely
-node: island
-  reaches: island
-node: root1
-  reaches: two
-  reaches: three
-node: loop2
-  reaches: loop1
-node: root2
-  reaches: three
-node: two
-  reaches: two
-node: three
-=============
-unreachable: $reverse
-unreachable: $loop1
-unreachable: $lonely
-unreachable: $island
-unreachable: $loop2
+unused: island
+unused: lonely
+unused: loop1
+unused: loop2
+unused: reverse
