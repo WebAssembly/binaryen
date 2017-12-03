@@ -2467,7 +2467,9 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
 }
 
 void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
-  alignment = Pow2(getU32LEB());
+  auto rawAlignment = getU32LEB();
+  if (rawAlignment > 4) throw ParseException("Alignment must be of a reasonable size");
+  alignment = Pow2(rawAlignment);
   offset = getU32LEB();
 }
 
