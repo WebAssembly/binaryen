@@ -2,7 +2,10 @@ PROJECT(binaryen C CXX)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
 INCLUDE(GNUInstallDirs)
 
-SET(CMAKE_BUILD_TYPE "Debug")
+IF(NOT CMAKE_BUILD_TYPE)
+  MESSAGE(STATUS "No build type selected, default to Release")
+  SET(CMAKE_BUILD_TYPE "Release")
+ENDIF()
 
 OPTION(BUILD_STATIC_LIB "Build as a static library" OFF)
 
