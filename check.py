@@ -23,7 +23,7 @@ import sys
 from scripts.test.support import run_command, split_wast
 from scripts.test.shared import (
     BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
-    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE,
+    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_METADCE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
@@ -208,6 +208,23 @@ def run_ctor_eval_tests():
       out = t + '.out'
       with open(out) as f:
         fail_if_not_identical(f.read(), actual)
+
+def run_wasm_metadce_tests():
+  print '\n[ checking wasm-metadce ]\n'
+
+  for t in os.listdir(os.path.join('test', 'metadce')):
+    if t.endswith(('.wast', '.wasm')):
+      print '..', t
+      t = os.path.join('test', 'metadce', t)
+      graph = t + '.graph.txt'
+      cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S']
+      stdout = run_command(cmd)
+      expected = t + '.dced'
+      with open('a.wast') as seen:
+        with open(expected) as correct:
+          fail_if_not_identical(seen.read(), correct.read())
+      with open(expected + '.stdout') as correct:
+        fail_if_not_identical(stdout, correct.read())
 
 def run_wasm_reduce_tests():
   print '\n[ checking wasm-reduce ]\n'
@@ -560,6 +577,7 @@ def main():
   run_wasm_dis_tests()
   run_wasm_merge_tests()
   run_ctor_eval_tests()
+  run_wasm_metadce_tests()
   if has_shell_timeout():
     run_wasm_reduce_tests()
 
