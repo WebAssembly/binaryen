@@ -465,4 +465,7 @@ int main(int argc, const char* argv[]) {
 
   // Print out everything that we found is removable, the outside might use that
   graph.printAllUnused();
+
+  // Clean up
+  free(copy);
 }
