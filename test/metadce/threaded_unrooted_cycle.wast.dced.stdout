@@ -1,0 +1,12 @@
+unused: func$wasm_func_1$0
+unused: func$wasm_func_2$1
+unused: func$wasm_func_3$2
+unused: func$wasm_func_4$3
+unused: outside_js_function1
+unused: outside_js_function2
+unused: outside_js_function3
+unused: outside_js_function4
+unused: wasm_export1
+unused: wasm_export2
+unused: wasm_export3
+unused: wasm_export4
