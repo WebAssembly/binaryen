@@ -29,12 +29,11 @@
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/json.h"
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ir/import-utils.h"
-
-#include "emscripten-optimizer/simple_ast.h"
 
 using namespace wasm;
 
@@ -305,7 +304,8 @@ int main(int argc, const char* argv[]) {
                                   "and metadata describing the things in the rest of the graph "
                                   "that can be eliminated as well.\n\n"
                                   "The graph description file should represent the graph in the following "
-                                  "JSON notation:\n\n"
+                                  "JSON-like notation (note, this is not true JSON, things like "
+                                  "comments, escaping, single-quotes, etc. are not supported):\n\n"
                                   "  [\n"
                                   "    {\n"
                                   "      \"name\": \"entity1\",\n"
@@ -379,12 +379,12 @@ int main(int argc, const char* argv[]) {
 
   auto graphInput(read_file<std::string>(graphFile, Flags::Text, Flags::Release));
   auto* copy = strdup(graphInput.c_str());
-  cashew::Value json;
-  json.parse(copy);
+  json::Value outside;
+  outside.parse(copy);
 
   // parse the JSON into our graph, doing all the JSON parsing here, leaving
   // the abstract computation for the class itself
-  const cashew::IString NAME("name"),
+  const json::IString NAME("name"),
                         REACHES("reaches"),
                         ROOT("root"),
                         EXPORT("export"),
@@ -392,12 +392,12 @@ int main(int argc, const char* argv[]) {
 
   MetaDCEGraph graph(wasm);
 
-  if (!json.isArray()) {
+  if (!outside.isArray()) {
     Fatal() << "input graph must be a JSON array of nodes. see --help for the form";
   }
-  auto size = json.size();
+  auto size = outside.size();
   for (size_t i = 0; i < size; i++) {
-    cashew::Ref ref = json[i];
+    json::Ref ref = outside[i];
     if (!ref->isObject()) {
       Fatal() << "nodes in input graph must be JSON objects. see --help for the form";
     }
@@ -406,13 +406,13 @@ int main(int argc, const char* argv[]) {
     }
     DCENode node(ref[NAME]->getIString());
     if (ref->has(REACHES)) {
-      cashew::Ref reaches = ref[REACHES];
+      json::Ref reaches = ref[REACHES];
       if (!reaches->isArray()) {
         Fatal() << "node.reaches must be an array. see --help for the form";
       }
       auto size = reaches->size();
       for (size_t j = 0; j < size; j++) {
-        cashew::Ref name = reaches[j];
+        json::Ref name = reaches[j];
         if (!name->isString()) {
           Fatal() << "node.reaches items must be strings. see --help for the form";
         }
@@ -420,14 +420,14 @@ int main(int argc, const char* argv[]) {
       }
     }
     if (ref->has(ROOT)) {
-      cashew::Ref root = ref[ROOT];
+      json::Ref root = ref[ROOT];
       if (!root->isBool() || !root->getBool()) {
         Fatal() << "node.root, if it exists, must be true. see --help for the form";
       }
       graph.roots.insert(node.name);
     }
     if (ref->has(EXPORT)) {
-      cashew::Ref exp = ref[EXPORT];
+      json::Ref exp = ref[EXPORT];
       if (!exp->isString()) {
         Fatal() << "node.export, if it exists, must be a string. see --help for the form";
       }
@@ -435,7 +435,7 @@ int main(int argc, const char* argv[]) {
       graph.DCENodeToExport[node.name] = exp->getIString();
     }
     if (ref->has(IMPORT)) {
-      cashew::Ref imp = ref[IMPORT];
+      json::Ref imp = ref[IMPORT];
       if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
         Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
