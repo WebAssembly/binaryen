@@ -1,0 +1,39 @@
+[
+  {
+    "name": "root1",
+    "reaches": ["two", "three"],
+    "root": true
+  },
+  {
+    "name": "root2",
+    "reaches": ["three"],
+    "root": true
+  },
+  {
+    "name": "two",
+    "reaches": ["two"],
+  },
+  {
+    "name": "three",
+  },
+  {
+    "name": "island",
+    "reaches": ["island"],
+  },
+  {
+    "name": "loop1",
+    "reaches": ["loop2"],
+  },
+  {
+    "name": "loop2",
+    "reaches": ["loop1"],
+  },
+  {
+    "name": "lonely",
+  },
+  {
+    "name": "reverse",
+    "reaches": ["root1"],
+  },
+]
+
