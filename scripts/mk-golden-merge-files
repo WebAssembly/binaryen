@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+./bin/wasm-merge $1.wast $1.wast.toMerge -o $1.wast.combined -S --verbose > $1.wast.combined.stdout
+./bin/wasm-merge $1.wast $1.wast.toMerge -o $1.wast.combined.finalized -S --verbose --finalize-memory-base=1024 --finalize-table-base=8 -O > $1.wast.combined.finalized.stdout
+./bin/wasm-merge $1.wast $1.wast.toMerge -o $1.wast.combined.finalized.opt -S --verbose --finalize-memory-base=1024 --finalize-table-base=8 -O > $1.wast.combined.finalized.opt.stdout
+./bin/wasm-merge $1.wast $1.wast.toMerge -o $1.wast.combined.opt -S --verbose -O > $1.wast.combined.opt.stdout
+

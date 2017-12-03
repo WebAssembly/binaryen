@@ -113,11 +113,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   std::ostream& printName(Name name) {
-    // we need to quote names if they have tricky chars
-    if (strpbrk(name.str, "()")) {
-      o << '"' << name << '"';
-    } else {
-      o << name;
+    if (name.is()) {
+      // we need to quote names if they have tricky chars
+      if (strpbrk(name.str, "()")) {
+        o << '"' << name << '"';
+      } else {
+        o << name;
+      }
     }
     return o;
   }

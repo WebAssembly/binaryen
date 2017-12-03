@@ -722,8 +722,13 @@ void WasmBinaryWriter::visitSetLocal(SetLocal *curr) {
 }
 
 void WasmBinaryWriter::visitGetGlobal(GetGlobal *curr) {
-  if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
-  o << int8_t(BinaryConsts::GetGlobal) << U32LEB(getGlobalIndex(curr->name));
+  if (curr->name.is()) {
+    if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << " curr->name=" << curr->name.str << std::endl;
+    o << int8_t(BinaryConsts::GetGlobal) << U32LEB(getGlobalIndex(curr->name));
+  } else {
+    if (debug) std::cerr << "zz node: GetGlobal curr->name.str is null" << std::endl;
+    return;
+  }
 }
 
 void WasmBinaryWriter::visitSetGlobal(SetGlobal *curr) {
