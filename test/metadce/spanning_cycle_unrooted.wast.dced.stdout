@@ -1,0 +1,3 @@
+unused: func$a_wasm_func$0
+unused: outside_js_function
+unused: wasm_export
