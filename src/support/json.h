@@ -51,10 +51,10 @@ struct Value {
     Ref(Value* value) : std::shared_ptr<Value>(value) {}
 
     Ref& operator[](size_t x) {
-      return (*this)[x];
+      return (*this->get())[x];
     }
     Ref& operator[](IString x) {
-      return (*this)[x];
+      return (*this->get())[x];
     }
   };
 
