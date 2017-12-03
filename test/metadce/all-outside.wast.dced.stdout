@@ -1,17 +1,17 @@
 pre
 === graph ===
-root: root1
 root: root2
-node: lonely
+root: root1
+node: reverse
+  reaches: root1
 node: loop1
   reaches: loop2
+node: lonely
 node: island
   reaches: island
 node: root1
   reaches: two
   reaches: three
-node: reverse
-  reaches: root1
 node: loop2
   reaches: loop1
 node: root2
@@ -22,18 +22,18 @@ node: three
 =============
 mid
 === graph ===
-root: root1
 root: root2
-node: lonely
+root: root1
+node: reverse
+  reaches: root1
 node: loop1
   reaches: loop2
+node: lonely
 node: island
   reaches: island
 node: root1
   reaches: two
   reaches: three
-node: reverse
-  reaches: root1
 node: loop2
   reaches: loop1
 node: root2
@@ -42,8 +42,8 @@ node: two
   reaches: two
 node: three
 =============
-unreachable: $lonely
-unreachable: $loop1
-unreachable: $island
 unreachable: $reverse
+unreachable: $loop1
+unreachable: $lonely
+unreachable: $island
 unreachable: $loop2

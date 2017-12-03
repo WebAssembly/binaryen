@@ -8,7 +8,11 @@ node: outside-entity
 =============
 mid
 === graph ===
+root: func$table_func$2
 root: outside-entity
+node: export$wasm_func_unused$14
+  is export wasm_func_unused, $an_unused_wasm_func
+  reaches: func$an_unused_wasm_func$1
 node: import$import$table$0$13
   is import $import$table$0, env.table
 node: import$DYNAMICTOP_PTR$asm2wasm$import_unused$11
@@ -19,45 +23,41 @@ node: import$an_unused_js_func$9
   is import $an_unused_js_func, env.js_func_unused
 node: import$a_js_func$8
   is import $a_js_func, env.js_func
-node: func$an_unused_wasm_func$1
-  is function $an_unused_wasm_func
-  reaches: import$DYNAMICTOP_PTR$asm2wasm$import_unused$11
-node: global$from_segment_never_used$7
-  is function $from_segment_never_used
-node: export$wasm_func_unused$14
-  is export wasm_func_unused, $an_unused_wasm_func
-  reaches: func$an_unused_wasm_func$1
-node: outside-entity
-  reaches: inside-wasm-func
-node: func$table_func$2
-  is function $table_func
 node: func$a_wasm_func$0
   is function $a_wasm_func
   reaches: import$a_js_func$8
   reaches: import$DYNAMICTOP_PTR$asm2wasm$import$10
+node: global$from_segment_never_used$7
+  is function $from_segment_never_used
+node: func$an_unused_wasm_func$1
+  is function $an_unused_wasm_func
+  reaches: import$DYNAMICTOP_PTR$asm2wasm$import_unused$11
+node: outside-entity
+  reaches: inside-wasm-func
+node: global$__THREW__unused$4
+  is function $__THREW__unused
+node: func$table_func$2
+  is function $table_func
+node: import$0$12
+  is import $0, env.memory
 node: inside-wasm-func
   is export wasm_func, $a_wasm_func
   reaches: func$a_wasm_func$0
-node: import$0$12
-  is import $0, env.memory
 node: global$__THREW__$3
   is function $__THREW__
-node: global$__THREW__unused$4
-  is function $__THREW__unused
 node: global$from_segment$5
   is function $from_segment
 node: global$from_segment_2$6
   is function $from_segment_2
 =============
+unreachable: $export$wasm_func_unused$14
 unreachable: $import$import$table$0$13
 unreachable: $import$DYNAMICTOP_PTR$asm2wasm$import_unused$11
 unreachable: $import$an_unused_js_func$9
-unreachable: $func$an_unused_wasm_func$1
 unreachable: $global$from_segment_never_used$7
-unreachable: $export$wasm_func_unused$14
-unreachable: $func$table_func$2
+unreachable: $func$an_unused_wasm_func$1
+unreachable: $global$__THREW__unused$4
 unreachable: $import$0$12
 unreachable: $global$__THREW__$3
-unreachable: $global$__THREW__unused$4
 unreachable: $global$from_segment$5
 unreachable: $global$from_segment_2$6

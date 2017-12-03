@@ -20,8 +20,9 @@
 // remove exports that are unused, for example, which is impossible
 // otherwise (since we wouldn't know if the outside needs them).
 //
-// FIXME: functions in the table
-//
+// TODO: Currently all functions in the table are considered roots,
+//       as the outside may call them. In the future we probably want
+//       to refine that.
 
 #include <memory>
 
@@ -49,7 +50,7 @@ struct DCENode {
 // A meta DCE graph with wasm integration
 struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
-  std::vector<Name> roots;
+  std::unordered_set<Name> roots;
 
   std::unordered_map<Name, Name> importToDCENode; // import internal name => DCE name
   std::unordered_map<Name, Name> exportToDCENode; // export exported name => DCE name
@@ -165,6 +166,11 @@ struct MetaDCEGraph {
     scanner.setModule(&wasm);
     for (auto& segment : wasm.table.segments) {
       scanner.walk(segment.offset);
+      // TODO: currently, all functions in the table are roots, but we
+      //       should add an option to refine that
+      for (auto& name : segment.data) {
+        roots.insert(functionToDCENode[name]);
+      }
     }
     for (auto& segment : wasm.memory.segments) {
       scanner.walk(segment.offset);
@@ -413,7 +419,7 @@ int main(int argc, const char* argv[]) {
       if (!root->isBool() || !root->getBool()) {
         Fatal() << "node.root, if it exists, must be true. see --help for the form";
       }
-      graph.roots.push_back(node.name);
+      graph.roots.insert(node.name);
     }
     if (ref->has(EXPORT)) {
       cashew::Ref exp = ref[EXPORT];
