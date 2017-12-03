@@ -201,7 +201,7 @@ struct Value {
   Value& setObject() {
     free();
     type = Object;
-    obj = new ObjectStorage();
+    obj = arena.alloc<ObjectStorage>();
     return *this;
   }
   Value& setAssign(Ref target, Ref value);
