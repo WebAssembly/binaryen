@@ -239,32 +239,37 @@ public:
     NOTE_EVAL1(value);
     if (value.type == i32) {
       switch (curr->op) {
-        case ClzInt32:            return value.countLeadingZeroes();
-        case CtzInt32:            return value.countTrailingZeroes();
-        case PopcntInt32:         return value.popCount();
-        case EqZInt32:            return Literal(int32_t(value == Literal(int32_t(0))));
-        case ReinterpretInt32: return value.castToF32();
-        case ExtendSInt32:   return value.extendToSI64();
-        case ExtendUInt32:   return value.extendToUI64();
+        case ClzInt32:               return value.countLeadingZeroes();
+        case CtzInt32:               return value.countTrailingZeroes();
+        case PopcntInt32:            return value.popCount();
+        case EqZInt32:               return Literal(int32_t(value == Literal(int32_t(0))));
+        case ReinterpretInt32:       return value.castToF32();
+        case ExtendSInt32:           return value.extendToSI64();
+        case ExtendUInt32:           return value.extendToUI64();
         case ConvertUInt32ToFloat32: return value.convertUToF32();
         case ConvertUInt32ToFloat64: return value.convertUToF64();
         case ConvertSInt32ToFloat32: return value.convertSToF32();
         case ConvertSInt32ToFloat64: return value.convertSToF64();
+        case ExtendS8Int32:          return Literal(int32_t(int8_t(value.geti32() & 255)));
+        case ExtendS16Int32:         return Literal(int32_t(int16_t(value.geti32() & 65535)));
         default: WASM_UNREACHABLE();
       }
     }
     if (value.type == i64) {
       switch (curr->op) {
-        case ClzInt64:            return value.countLeadingZeroes();
-        case CtzInt64:            return value.countTrailingZeroes();
-        case PopcntInt64:         return value.popCount();
-        case EqZInt64:            return Literal(int32_t(value == Literal(int64_t(0))));
-        case WrapInt64:      return value.truncateToI32();
-        case ReinterpretInt64: return value.castToF64();
+        case ClzInt64:               return value.countLeadingZeroes();
+        case CtzInt64:               return value.countTrailingZeroes();
+        case PopcntInt64:            return value.popCount();
+        case EqZInt64:               return Literal(int32_t(value == Literal(int64_t(0))));
+        case WrapInt64:              return value.truncateToI32();
+        case ReinterpretInt64:       return value.castToF64();
         case ConvertUInt64ToFloat32: return value.convertUToF32();
         case ConvertUInt64ToFloat64: return value.convertUToF64();
         case ConvertSInt64ToFloat32: return value.convertSToF32();
         case ConvertSInt64ToFloat64: return value.convertSToF64();
+        case ExtendS8Int64:          return Literal(int64_t(int8_t(value.geti64() & 255)));
+        case ExtendS16Int64:         return Literal(int64_t(int16_t(value.geti64() & 65535)));
+        case ExtendS32Int64:         return Literal(int64_t(int32_t(value.geti64() & 4294967295)));
         default: WASM_UNREACHABLE();
       }
     }
