@@ -1,5 +1,3 @@
-load('bin/binaryen.js');
-
 // Create a module to work on
 var module = new Binaryen.Module();
 
