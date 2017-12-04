@@ -217,7 +217,7 @@
       return preserveStack(function() {
         return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
                                         i32sToStack(children), children.length,
-                                        typeof type !== 'undefined' ? type : Module['undefined']);
+                                        typeof type !== 'undefined' ? type : Module['none']);
       });
     };
     this['if'] = function(condition, ifTrue, ifFalse) {
@@ -228,10 +228,14 @@
         return Module['_BinaryenLoop'](module, strToStack(label), body);
       });
     };
-    this['break'] = function(label, condition, value) {
+    this['break'] = this['br'] = function(label, condition, value) {
       return preserveStack(function() {
         return Module['_BinaryenBreak'](module, strToStack(label), condition, value);
       });
+    };
+    this['br_if'] = function(label, condition, value) {
+      assert(condition);
+      return this['br'](label, condition, value);
     };
     this['switch'] = function(names, defaultName, condition, value) {
       return preserveStack(function() {
@@ -248,38 +252,38 @@
         return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
       });
     };
-    this['callImport'] = function(name, operands, type) {
+    this['callImport'] = this['call_import'] = function(name, operands, type) {
       return preserveStack(function() {
         return Module['_BinaryenCallImport'](module, strToStack(name), i32sToStack(operands), operands.length, type);
       });
     };
-    this['callIndirect'] = function(target, operands, type) {
+    this['callIndirect'] = this['call_indirect'] = function(target, operands, type) {
       return preserveStack(function() {
         return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
       });
     };
-    this['getLocal'] = function(index, type) {
+    this['getLocal'] = this['get_local'] = function(index, type) {
       return Module['_BinaryenGetLocal'](module, index, type);
     };
-    this['setLocal'] = function(index, value) {
+    this['setLocal'] = this['set_local'] = this['set_local'] = function(index, value) {
       return Module['_BinaryenSetLocal'](module, index, value);
     };
-    this['teeLocal'] = function(index, value) {
+    this['teeLocal'] = this['tee_local'] = function(index, value) {
       return Module['_BinaryenTeeLocal'](module, index, value);
     };
-    this['getGlobal'] = function(name, type) {
+    this['getGlobal'] = this['get_global'] = function(name, type) {
       return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
     }
-    this['setGlobal'] = function(name, value) {
+    this['setGlobal'] = this['set_global'] = function(name, value) {
       return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
     }
-    this['currentMemory'] = function() {
+    this['currentMemory'] = this['current_memory'] = function() {
       return Module['_BinaryenHost'](module, Module['CurrentMemory']);
     }
-    this['growMemory'] = function(value) {
+    this['growMemory'] = this['grow_memory'] = function(value) {
       return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
     }
-    this['hasFeature'] = function(name) {
+    this['hasFeature'] = this['has_feature'] = function(name) {
       return Module['_BinaryenHost'](module, Module['HasFeature'], strToStack(name));
     }
 
