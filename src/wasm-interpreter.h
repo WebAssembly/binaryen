@@ -250,8 +250,8 @@ public:
         case ConvertUInt32ToFloat64: return value.convertUToF64();
         case ConvertSInt32ToFloat32: return value.convertSToF32();
         case ConvertSInt32ToFloat64: return value.convertSToF64();
-        case ExtendS8Int32:          return Literal(int32_t(int8_t(value.geti32() & 255)));
-        case ExtendS16Int32:         return Literal(int32_t(int16_t(value.geti32() & 65535)));
+        case ExtendS8Int32:          return Literal(int32_t(int8_t(value.geti32() & 0xFF)));
+        case ExtendS16Int32:         return Literal(int32_t(int16_t(value.geti32() & 0xFFFF)));
         default: WASM_UNREACHABLE();
       }
     }
@@ -267,9 +267,9 @@ public:
         case ConvertUInt64ToFloat64: return value.convertUToF64();
         case ConvertSInt64ToFloat32: return value.convertSToF32();
         case ConvertSInt64ToFloat64: return value.convertSToF64();
-        case ExtendS8Int64:          return Literal(int64_t(int8_t(value.geti64() & 255)));
-        case ExtendS16Int64:         return Literal(int64_t(int16_t(value.geti64() & 65535)));
-        case ExtendS32Int64:         return Literal(int64_t(int32_t(value.geti64() & 4294967295)));
+        case ExtendS8Int64:          return Literal(int64_t(int8_t(value.geti64() & 0xFF)));
+        case ExtendS16Int64:         return Literal(int64_t(int16_t(value.geti64() & 0xFFFF)));
+        case ExtendS32Int64:         return Literal(int64_t(int32_t(value.geti64() & 0xFFFFFFFF)));
         default: WASM_UNREACHABLE();
       }
     }
