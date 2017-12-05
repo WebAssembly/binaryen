@@ -9,6 +9,7 @@
  (type $7 (func (result i64)))
  (type $8 (func (result f32)))
  (type $9 (func (param i32) (result f32)))
+ (type $10 (func (param i32) (result i32)))
  (memory $0 256 256)
  (func $b0-yes (; 0 ;) (type $0) (param $i1 i32)
   (block $topmost
@@ -1155,5 +1156,506 @@
     (br $label$5)
    )
   )
+ )
+ (func $br-to-table (; 46 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-too-few (; 47 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $br-to-table-one-more (; 48 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $x $tablify|0
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-overlap (; 49 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-overlap-start (; 50 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-offset (; 51 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (i32.sub
+        (get_local $a)
+        (i32.const 15)
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-RANGE-high (; 52 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 10)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-RANGE-low (; 53 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $tablify|0 $tablify|0 $y $tablify|0 $tablify|0 $tablify|0 $tablify|0 $tablify|0 $z $tablify|0
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-bad (; 54 ;) (type $10) (param $a i32) (result i32)
+  (block $value (result i32)
+   (block $x
+    (block $y
+     (block $z
+      (nop)
+      (br $x)
+      (nop)
+      (nop)
+      (block $tablify|0
+       (br_table $x $y $z $tablify|0
+        (get_local $a)
+       )
+      )
+      (unreachable)
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 2000)
+  )
+ )
+ (func $br-to-table-bad2 (; 55 ;) (type $10) (param $a i32) (result i32)
+  (block $value (result i32)
+   (block $x
+    (block $y
+     (block $z
+      (nop)
+      (drop
+       (br_if $value
+        (i32.const 1000)
+        (i32.eq
+         (get_local $a)
+         (i32.const 0)
+        )
+       )
+      )
+      (nop)
+      (nop)
+      (block $tablify|0
+       (br_table $x $y $z $tablify|0
+        (get_local $a)
+       )
+      )
+      (unreachable)
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (i32.const 2000)
+  )
+ )
+ (func $br-to-table-bad3 (; 56 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (i32.const 10)
+       (i32.const 0)
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-multi (; 57 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $z $y $x $tablify|0
+       (i32.sub
+        (i32.const 10)
+        (i32.const 5)
+       )
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|00
+      (br_table $x $y $z $tablify|00
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-bad4 (; 58 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.ne
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 2)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-bad5 (; 59 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-bad6 (; 60 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (call $b13)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (call $b13)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (call $b13)
+       (i32.const 2)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-bad7 (; 61 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-defaultNameOverlaps (; 62 ;) (type $0) (param $a i32)
+  (block $x
+   (block $tablify|0
+    (block $z
+     (nop)
+     (nop)
+     (block $tablify|1
+      (br_table $x $tablify|0 $z $tablify|1
+       (get_local $a)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-unreach (; 63 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (unreachable)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (unreachable)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (unreachable)
+       (i32.const 2)
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
+ )
+ (func $br-to-table-overlap-but-later (; 64 ;) (type $0) (param $a i32)
+  (block $x
+   (block $y
+    (block $z
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $z $x $y $tablify|0
+       (i32.sub
+        (get_local $a)
+        (i32.const 1)
+       )
+      )
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+   (unreachable)
+  )
+  (unreachable)
  )
 )
