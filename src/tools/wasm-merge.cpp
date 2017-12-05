@@ -123,13 +123,28 @@ struct Mergeable {
       memoryBaseGlobals.insert(name);
     });
     if (memoryBaseGlobals.size() == 0) {
-      Fatal() << "no memory base was imported";
+      // add one
+      auto* import = new Import;
+      import->name = MEMORY_BASE;
+      import->module = ENV;
+      import->base = MEMORY_BASE;
+      import->kind = ExternalKind::Global;
+      import->globalType = i32;
+      wasm.addImport(import);
+      memoryBaseGlobals.insert(import->name);
     }
     findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
       tableBaseGlobals.insert(name);
     });
     if (tableBaseGlobals.size() == 0) {
-      Fatal() << "no table base was imported";
+      auto* import = new Import;
+      import->name = TABLE_BASE;
+      import->module = ENV;
+      import->base = TABLE_BASE;
+      import->kind = ExternalKind::Global;
+      import->globalType = i32;
+      wasm.addImport(import);
+      tableBaseGlobals.insert(import->name);
     }
   }
 
@@ -169,7 +184,8 @@ struct Mergeable {
   // ensure a relocatable segment exists, of the proper size, including
   // the dylink bump applied into it, standardized into the form of
   // not using a dylink section and instead having enough zeros at
-  // the end. this makes linking much simpler.
+  // the end. this makes linking much simpler.ta
+  // there may be other non-relocatable segments too.
   template<typename T, typename U, typename Segment>
   void standardizeSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
     Segment* relocatable = nullptr;
@@ -194,9 +210,10 @@ struct Mergeable {
     ensureSize(what, relocatable->data.size());
   }
 
-  // copies a relocatable segment from the input to the output
+  // copies a relocatable segment from the input to the output, and
+  // copies the non-relocatable ones as well
   template<typename T, typename V>
-  void copySegment(T& output, T& input, V updater) {
+  void copySegments(T& output, T& input, V updater) {
     for (auto& inputSegment : input.segments) {
       Expression* inputOffset = inputSegment.offset;
       if (inputOffset->is<GetGlobal>()) {
@@ -213,6 +230,9 @@ struct Mergeable {
           }
         }
         WASM_UNREACHABLE(); // we must find a relocatable one in the output, as we standardized
+      } else {
+        // this is a non-relocatable one. just copy it.
+        output.segments.push_back(inputSegment);
       }
     }
   }
@@ -405,8 +425,8 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     }
 
     // memory&table: we place the new memory segments at a higher position. after the existing ones.
-    copySegment(outputMergeable.wasm.memory, wasm.memory, [](char x) -> char { return x; });
-    copySegment(outputMergeable.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
+    copySegments(outputMergeable.wasm.memory, wasm.memory, [](char x) -> char { return x; });
+    copySegments(outputMergeable.wasm.table, wasm.table, [&](Name x) -> Name { return fNames[x]; });
 
     // update the new contents about to be merged in
     walkModule(&wasm);

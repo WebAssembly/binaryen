@@ -11,7 +11,6 @@
  (import "env" "memoryBase" (global $memoryBase$0 i32))
  (import "env" "tableBase" (global $tableBase$0 i32))
  (import "env" "globally" (global $i-collide$0 f64))
- 
  (data (i32.const 1024) "")
  (export "_printf" (func $625))
  (func $625 (; 1 ;) (type $FUNCSIG$iii) (param $var$0 i32) (param $var$1 i32) (result i32)

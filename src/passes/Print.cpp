@@ -741,20 +741,18 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printTableHeader(curr);
       o << maybeNewLine;
     }
-    if (curr->segments.empty()) return;
-    doIndent(o, indent);
     for (auto& segment : curr->segments) {
       // Don't print empty segments
       if (segment.data.empty()) continue;
+      doIndent(o, indent);
       printOpening(o, "elem ", true);
       visit(segment.offset);
       for (auto name : segment.data) {
         o << ' ';
         printName(name);
       }
-      o << ')';
+      o << ")\n";
     }
-    o << maybeNewLine;
   }
   void printMemoryHeader(Memory* curr) {
     printOpening(o, "memory") << ' ';
