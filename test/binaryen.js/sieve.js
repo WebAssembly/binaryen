@@ -17,7 +17,7 @@ var body = module.block(
           module.current_memory(),
           module.i32.const(65536)
         ),
-        module.get_local(0, Binaryen.i32),
+        module.get_local(0, Binaryen.i32)
       ),
       module.grow_memory(
         module.i32.sub(
@@ -28,7 +28,7 @@ var body = module.block(
             ),
             module.i32.const(65536)
           ),
-          module.current_memory(),
+          module.current_memory()
         )
       )
     ),
@@ -45,7 +45,7 @@ var body = module.block(
       )),
       module.br_if('clear', module.i32.eq(
         module.get_local(1),
-        module.get_local(0),
+        module.get_local(0)
       ))
     ])),
     // perform the sieve TODO
