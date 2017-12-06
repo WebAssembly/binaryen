@@ -926,16 +926,13 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
-      bool found = false;
-      for (auto& func : module.functions) {
-        if (func->name == name) {
-          found = true;
-          break;
-        }
-      }
-      info.shouldBeTrue(found, name, "module function exports must be found");
+      Import* imp;
+      info.shouldBeTrue(module.getFunctionOrNull(name) ||
+                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Function), name, "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
-      info.shouldBeTrue(module.getGlobalOrNull(name), name, "module global exports must be found");
+      Import* imp;
+      info.shouldBeTrue(module.getGlobalOrNull(name) ||
+                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Global), name, "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
       info.shouldBeTrue(name == Name("0") || name == module.table.name, name, "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
