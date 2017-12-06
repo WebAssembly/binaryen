@@ -1,0 +1,39 @@
+[
+  {
+    "name": "wasm_export1",
+    "export": "wasm_func1",
+  },
+  {
+    "name": "wasm_export2",
+    "export": "wasm_func2"
+  },
+  {
+    "name": "wasm_export3",
+    "export": "wasm_func3"
+  },
+  {
+    "name": "wasm_export4",
+    "export": "wasm_func4"
+  },
+  {
+    "name": "outside_js_function1",
+    "reaches": ["wasm_export1"],
+    "import": ["env", "js_func1"]
+  },
+  {
+    "name": "outside_js_function2",
+    "reaches": ["wasm_export2"],
+    "import": ["env", "js_func2"]
+  },
+  {
+    "name": "outside_js_function3",
+    "reaches": ["wasm_export3"],
+    "import": ["env", "js_func3"]
+  },
+  {
+    "name": "outside_js_function4",
+    "reaches": ["wasm_export4"],
+    "import": ["env", "js_func4"]
+  }
+]
+

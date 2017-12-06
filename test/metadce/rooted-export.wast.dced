@@ -1,0 +1,8 @@
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (export "wasm_func_b" (func $b_wasm_func))
+ (func $b_wasm_func (; 0 ;) (type $0)
+  (unreachable)
+ )
+)

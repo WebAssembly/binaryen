@@ -232,6 +232,16 @@ SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-merge DESTINATION bin)
 
+SET(wasm-metadce_SOURCES
+  src/tools/wasm-metadce.cpp
+)
+ADD_EXECUTABLE(wasm-metadce
+               ${wasm-metadce_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-metadce wasm asmjs emscripten-optimizer passes ir cfg support wasm)
+SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-metadce PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-metadce DESTINATION bin)
+
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
   src/wasm-emscripten.cpp
