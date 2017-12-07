@@ -29,6 +29,8 @@
   Module['f64'] = Module['_BinaryenFloat64']();
   Module['undefined'] = Module['_BinaryenUndefined']();
 
+  Module['AlwaysInline'] = Module['_BinaryenAlwaysInline']();
+
   Module['InvalidId'] = Module['_BinaryenInvalidId']();
   Module['BlockId'] = Module['_BinaryenBlockId']();
   Module['IfId'] = Module['_BinaryenIfId']();
@@ -1229,6 +1231,14 @@
 
   Module['getFunctionBody'] = function(func) {
     return Module['_BinaryenFunctionGetBody'](func);
+  };
+
+  Module['getFunctionFlags'] = function(func) {
+    return Module['_BinaryenFunctionGetFlags'](func);
+  };
+
+  Module['setFunctionFlags'] = function(func, flags) {
+    return Module['_BinaryenFunctionSetFlags'](func, flags);
   };
 
   // emit text of an expression or a module

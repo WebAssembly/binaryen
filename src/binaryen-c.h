@@ -78,6 +78,12 @@ BinaryenType BinaryenFloat64(void);
 // the API figure out the type instead of providing one.
 BinaryenType BinaryenUndefined(void);
 
+// Flags type used for enum-like values.
+
+typedef uint32_t BinaryenFlags;
+
+BinaryenFlags BinaryenAlwaysInline(void);
+
 // Expression ids (call to get the value of each; you can cache them)
 
 typedef uint32_t BinaryenExpressionId;
@@ -505,6 +511,12 @@ void BinaryenModuleInterpret(BinaryenModuleRef module);
 
 // Gets the body of the function.
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+
+// Gets the flags set for the function.
+BinaryenFlags BinaryenFunctionGetFlags(BinaryenFunctionRef func);
+
+// Sets the function's flags, e.g., 'AlwaysInline'.
+void BinaryenFunctionSetFlags(BinaryenFunctionRef func, BinaryenFlags flags);
 
 // Runs the standard optimization passes on the function.
 void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);

@@ -52,8 +52,11 @@ struct FunctionInfo {
   Index size;
   bool lightweight = true;
   bool usedGlobally = false; // in a table or export
+  bool alwaysInline = false;
 
   bool worthInlining(PassOptions& options, bool allowMultipleInliningsPerFunction) {
+    // if it's explicitly set to be inlined, just do it
+    if (alwaysInline) return true;
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
     // if it has one use, then inlining it would likely reduce code size
@@ -94,6 +97,8 @@ struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> 
 
   void visitFunction(Function* curr) {
     (*infos)[curr->name].size = Measurer::measure(curr->body);
+    if (curr->flags & Function::Flags::AlwaysInline)
+      (*infos)[curr->name].alwaysInline = true;
   }
 
 private:

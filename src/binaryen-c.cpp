@@ -106,6 +106,10 @@ BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
 BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
+// Flags
+
+BinaryenFlags BinaryenAlwaysInline(void) { return Function::Flags::AlwaysInline; }
+
 // Expression ids
 
 BinaryenExpressionId BinaryenInvalidId(void) { return Expression::Id::InvalidId; }
@@ -1350,7 +1354,20 @@ BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
 
   return ((Function*)func)->body;
 }
+BinaryenFlags BinaryenFunctionGetFlags(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetFlags(functions[" << functions[func] << "]);\n";
+  }
 
+  return ((Function*)func)->flags;
+}
+void BinaryenFunctionSetFlags(BinaryenFunctionRef func, BinaryenFlags flags) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetFlags(functions[" << functions[func] << "], " << flags << ");\n";
+  }
+
+  ((Function*)func)->flags = (Function::Flags)flags;
+}
 void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func] << "], the_module);\n";
@@ -1361,7 +1378,6 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
   passRunner.addDefaultOptimizationPasses();
   passRunner.runFunction((Function*)func);
 }
-
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
