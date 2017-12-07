@@ -1,0 +1,7 @@
+[
+  {
+    "name": "ignorable import",
+    "import": ["non", "existent"]
+  }
+]
+

@@ -11,7 +11,10 @@
  (data (i32.const 1024) "abcd")
  (data (get_global $from_segment) "abcd")
  (export "wasm_func" (func $a_wasm_func))
- (func $a_wasm_func (; 1 ;) (type $FUNCSIG$v)
+ (func $table_func (; 1 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $a_wasm_func (; 2 ;) (type $FUNCSIG$v)
   (call $a_js_func)
   (drop
    (get_global $DYNAMICTOP_PTR$asm2wasm$import)
@@ -19,8 +22,5 @@
   (drop
    (get_global $__THREW__)
   )
- )
- (func $table_func (; 2 ;) (type $FUNCSIG$v)
-  (nop)
  )
 )

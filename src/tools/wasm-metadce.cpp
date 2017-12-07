@@ -149,9 +149,15 @@ struct MetaDCEGraph {
       void handleGlobal(Name name) {
         if (getModule()->getGlobalOrNull(name)) return;
         // it's an import
-        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->importToDCENode[name]
-        );
+        if (getFunction()) {
+          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+            parent->importToDCENode[name]
+          );
+        } else {
+          // this is a segment offset. for now, just root what it points to
+          // TODO: some day we can clean up segments
+          parent->roots.insert(parent->importToDCENode[name]);
+        }
       }
     };
 
@@ -229,6 +235,7 @@ public:
     // Now they are gone, standard optimization passes can do the rest!
     PassRunner passRunner(&wasm);
     passRunner.add("remove-unused-module-elements");
+    passRunner.add("reorder-functions"); // removing functions may alter the optimum order, as # of calls can change
     passRunner.run();
   }
 
@@ -439,9 +446,12 @@ int main(int argc, const char* argv[]) {
       if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
         Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
-      auto importName = ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString())->name;
-      graph.importToDCENode[importName] = node.name;
-      graph.DCENodeToImport[node.name] = importName;
+      auto* import = ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString());
+      if (import) {
+        auto importName = import->name;
+        graph.importToDCENode[importName] = node.name;
+        graph.DCENodeToImport[node.name] = importName;
+      }
     }
     // TODO: optimize this copy with a clever move
     graph.nodes[node.name] = node;
