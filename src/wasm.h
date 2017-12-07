@@ -596,6 +596,11 @@ public:
   std::vector<WasmType> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
   Expression* body;
+  enum Flags {
+    None = 0,
+    AlwaysInline = 1 << 0
+  };
+  Flags flags;
 
   // local names. these are optional.
   std::map<Index, Name> localNames;
@@ -608,7 +613,7 @@ public:
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
 
-  Function() : result(none) {}
+  Function() : result(none), flags(None) {}
 
   size_t getNumParams();
   size_t getNumVars();

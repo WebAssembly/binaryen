@@ -3,6 +3,7 @@ BinaryenInt32: 1
 BinaryenInt64: 2
 BinaryenFloat32: 3
 BinaryenFloat64: 4
+BinaryenAlwaysInline: 1
 BinaryenInvalidId: 0
 BinaryenBlockId: 1
 BinaryenIfId: 2
@@ -572,6 +573,8 @@ getExpressionType=3
  )
 )
 
+flags=0
+flags=1
 raw:
 (module
  (type $v (func))
@@ -1057,6 +1060,9 @@ raw:
     (i32.const 1337)
    )
   )
+ )
+ (func $set-flags (; 16 ;) (type $i) (result i32)
+  (i32.const 0)
  )
 )
 
@@ -2453,6 +2459,16 @@ getExpressionType=3
     BinaryenType varTypes[] = { 1 };
     functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[2], varTypes, 1, expressions[141]);
   }
+  expressions[142] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
+  {
+    BinaryenType varTypes[] = { 0 };
+    functions[15] = BinaryenAddFunction(the_module, "set-flags", functionTypes[2], varTypes, 0, expressions[142]);
+  }
+  BinaryenFunctionGetFlags(functions[15]);
+flags=0
+  BinaryenFunctionSetFlags(functions[15], 1);
+  BinaryenFunctionGetFlags(functions[15]);
+flags=1
 raw:
   BinaryenModulePrint(the_module);
 (module
@@ -2939,6 +2955,9 @@ raw:
     (i32.const 1337)
    )
   )
+ )
+ (func $set-flags (; 16 ;) (type $i) (result i32)
+  (i32.const 0)
  )
 )
 

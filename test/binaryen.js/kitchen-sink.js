@@ -43,6 +43,10 @@ function test_types() {
   console.log("BinaryenFloat64: " + Binaryen.f64);
 }
 
+function test_flags() {
+  console.log("BinaryenAlwaysInline: " + Binaryen.AlwaysInline);
+}
+
 function test_ids() {
   console.log("BinaryenInvalidId: " + Binaryen.InvalidId);
   console.log("BinaryenBlockId: " + Binaryen.BlockId);
@@ -449,6 +453,13 @@ function test_relooper() {
     module.addFunction("return", i, localTypes, body);
   }
 
+  { // setting flags
+    var func = module.addFunction("set-flags", i, [], module.i32.const(0));
+    console.log("flags=" + Binaryen.getFunctionFlags(func));
+    Binaryen.setFunctionFlags(func, Binaryen.AlwaysInline);
+    console.log("flags=" + Binaryen.getFunctionFlags(func));
+  }
+
   console.log("raw:");
   console.log(module.emitText());
 
@@ -562,6 +573,7 @@ function test_parsing() {
 
 function main() {
   test_types();
+  test_flags();
   test_ids();
   test_core();
   test_relooper();
