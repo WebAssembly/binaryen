@@ -85,10 +85,13 @@ struct MetaDCEGraph {
     }
     for (auto& imp : wasm.imports) {
       if (importToDCENode.find(imp->name) == importToDCENode.end()) {
-        auto dceName = getName("import", imp->name.str);
-        DCENodeToImport[dceName] = imp->name;
-        importToDCENode[imp->name] = dceName;
-        nodes[dceName] = DCENode(dceName);
+        // only process function and global imports - the table and memory are always there
+        if (imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) {
+          auto dceName = getName("import", imp->name.str);
+          DCENodeToImport[dceName] = imp->name;
+          importToDCENode[imp->name] = dceName;
+          nodes[dceName] = DCENode(dceName);
+        }
       }
     }
     for (auto& exp : wasm.exports) {
@@ -159,7 +162,11 @@ struct MetaDCEGraph {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
       for (auto& name : segment.data) {
-        roots.insert(functionToDCENode[name]);
+        if (wasm.getFunctionOrNull(name)) {
+          roots.insert(functionToDCENode[name]);
+        } else {
+          roots.insert(importToDCENode[name]);
+        }
       }
       rooter.walk(segment.offset);
     }

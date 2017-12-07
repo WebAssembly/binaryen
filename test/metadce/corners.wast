@@ -5,6 +5,11 @@
  (import "env" "UNUSEDTOP" (global $UNUSEDTOP$asm2wasm$import i32))
  (global $UNUSEDTOP (mut i32) (get_global $UNUSEDTOP$asm2wasm$import))
 
+ (import "env" "an-imported-table-func" (func $imported_table_func))
+
+ (import "env" "table" (table 10 10 anyfunc))
+ (elem (i32.const 0) $imported_table_func)
+
  (export "stackAlloc" (func $stackAlloc))
 
  (func $stackAlloc
