@@ -114,6 +114,58 @@ struct MetaDCEGraph {
         }
       }
     }
+    // Add initializer dependencies
+    // if we provide a parent DCE name, that is who can reach what we see
+    // if none is provided, then it is something we must root
+    struct InitScanner : public PostWalker<InitScanner> {
+      InitScanner(MetaDCEGraph* parent, Name parentDceName) : parent(parent), parentDceName(parentDceName) {}
+
+      void visitGetGlobal(GetGlobal* curr) {
+        handleGlobal(curr->name);
+      }
+      void visitSetGlobal(SetGlobal* curr) {
+        handleGlobal(curr->name);
+      }
+
+    private:
+      MetaDCEGraph* parent;
+      Name parentDceName;
+
+      void handleGlobal(Name name) {
+        Name dceName;
+        if (getModule()->getGlobalOrNull(name)) {
+          // its a global
+          dceName = parent->globalToDCENode[name];
+        } else {
+          // it's an import.
+          dceName = parent->importToDCENode[name];
+        }
+        if (parentDceName.isNull()) {
+          parent->roots.insert(parentDceName);
+        } else {
+          parent->nodes[parentDceName].reaches.push_back(dceName);
+        }
+      }
+    };
+    for (auto& global : wasm.globals) {
+      InitScanner scanner(this, globalToDCENode[global->name]);
+      scanner.setModule(&wasm);
+      scanner.walk(global->init);
+    }
+    // we can't remove segments, so root what they need
+    InitScanner rooter(this, Name());
+    rooter.setModule(&wasm);
+    for (auto& segment : wasm.table.segments) {
+      // TODO: currently, all functions in the table are roots, but we
+      //       should add an option to refine that
+      for (auto& name : segment.data) {
+        roots.insert(functionToDCENode[name]);
+      }
+      rooter.walk(segment.offset);
+    }
+    for (auto& segment : wasm.memory.segments) {
+      rooter.walk(segment.offset);
+    }
 
     // A parallel scanner for function bodies
     struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -147,17 +199,16 @@ struct MetaDCEGraph {
       MetaDCEGraph* parent;
 
       void handleGlobal(Name name) {
-        if (getModule()->getGlobalOrNull(name)) return;
-        // it's an import
-        if (getFunction()) {
-          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-            parent->importToDCENode[name]
-          );
+        if (!getFunction()) return; // non-function stuff (initializers) are handled separately
+        Name dceName;
+        if (getModule()->getGlobalOrNull(name)) {
+          // its a global
+          dceName = parent->globalToDCENode[name];
         } else {
-          // this is a segment offset. for now, just root what it points to
-          // TODO: some day we can clean up segments
-          parent->roots.insert(parent->importToDCENode[name]);
+          // it's an import.
+          dceName = parent->importToDCENode[name];
         }
+        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(dceName);
       }
     };
 
@@ -165,21 +216,6 @@ struct MetaDCEGraph {
     runner.setIsNested(true);
     runner.add<Scanner>(this);
     runner.run();
-
-    // also scan segment offsets
-    Scanner scanner(this);
-    scanner.setModule(&wasm);
-    for (auto& segment : wasm.table.segments) {
-      scanner.walk(segment.offset);
-      // TODO: currently, all functions in the table are roots, but we
-      //       should add an option to refine that
-      for (auto& name : segment.data) {
-        roots.insert(functionToDCENode[name]);
-      }
-    }
-    for (auto& segment : wasm.memory.segments) {
-      scanner.walk(segment.offset);
-    }
   }
 
 private:
@@ -295,6 +331,7 @@ int main(int argc, const char* argv[]) {
   bool emitBinary = true;
   bool debugInfo = false;
   std::string graphFile;
+  bool dump = false;
 
   Options options("wasm-metadce", "This tool performs dead code elimination (DCE) on a larger space "
                                   "that the wasm module is just a part of. For example, if you have "
@@ -357,6 +394,9 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              graphFile = argument;
            })
+      .add("--dump", "-d", "Dump the combined graph file (useful for debugging)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string &arguments) { dump = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -459,6 +499,11 @@ int main(int argc, const char* argv[]) {
 
   // The external graph is now populated. Scan the module
   graph.scanWebAssembly();
+
+  // Debug dump the graph, if requested
+  if (dump) {
+    graph.dump();
+  }
 
   // Perform the DCE
   graph.deadCodeElimination();

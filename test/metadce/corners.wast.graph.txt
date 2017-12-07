@@ -2,6 +2,11 @@
   {
     "name": "ignorable import",
     "import": ["non", "existent"]
+  },
+  {
+    "name": "stackAllocGood",
+    "export": "stackAlloc",
+    "root": true
   }
 ]
 

@@ -1,1 +1,3 @@
+unused: global$UNUSEDTOP$2
 unused: ignorable import
+unused: import$UNUSEDTOP$asm2wasm$import$4

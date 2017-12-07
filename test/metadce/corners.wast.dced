@@ -1,3 +1,12 @@
 (module
+ (type $0 (func))
+ (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+ (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (memory $0 0)
+ (export "stackAlloc" (func $stackAlloc))
+ (func $stackAlloc (; 0 ;) (type $0)
+  (drop
+   (get_global $STACKTOP)
+  )
+ )
 )
