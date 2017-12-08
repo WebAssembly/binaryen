@@ -34,7 +34,6 @@
 using namespace cashew;
 using namespace wasm;
 
-
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;

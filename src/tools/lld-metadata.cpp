@@ -157,8 +157,13 @@ int main(int argc, const char *argv[]) {
   }
 
   Module wasm;
-  ModuleReader reader;
-  reader.readBinary(infile, wasm);
+  try {
+    ModuleReader reader;
+    reader.readBinary(infile, wasm);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    Fatal() << "error in parsing wasm binary";
+  }
 
   if (options.debug) {
     WasmPrinter::printModule(&wasm, std::cerr);
