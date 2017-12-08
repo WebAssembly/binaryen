@@ -193,7 +193,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   Module& wasm;
-  std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
+  std::vector<Address> segmentOffsets; // segment index => address offset
 
   std::map<std::string, std::set<std::string>> sigsForCode;
   std::map<std::string, Address> ids;
@@ -203,7 +203,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
     for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
       Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
       auto address = addrConst->value.geti32();
-      segmentsByAddress[address] = Address(i);
+      segmentOffsets.push_back(address);
     }
   }
 
@@ -211,6 +211,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
 
 private:
   std::string codeForConstAddr(Const* addrConst);
+  const char* stringAtAddr(Address adddress);
   Literal idLiteralForCode(std::string code);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig);
@@ -239,13 +240,25 @@ void AsmConstWalker::visitCallImport(CallImport* curr) {
 
 std::string AsmConstWalker::codeForConstAddr(Const* addrConst) {
   auto address = addrConst->value.geti32();
-  auto segmentIterator = segmentsByAddress.find(address);
-  if (segmentIterator == segmentsByAddress.end()) {
-    // If we can't find the segment corresponding with the address, then we omitted the segment and the address points to an empty string.
+  const char* str = stringAtAddr(address);
+  if (!str) {
+    // If we can't find the segment corresponding with the address, then we
+    // omitted the segment and the address points to an empty string.
     return escape("");
   }
-  Address segmentIndex = segmentsByAddress[address];
-  return escape(&wasm.memory.segments[segmentIndex].data[0]);
+  auto result = escape(str);
+  return result;
+}
+
+const char* AsmConstWalker::stringAtAddr(Address address) {
+  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+    Memory::Segment &segment = wasm.memory.segments[i];
+    Address offset = segmentOffsets[i];
+    if (address >= offset && address < offset + segment.data.size()) {
+      return &segment.data[address - offset];
+    }
+  }
+  return nullptr;
 }
 
 std::string AsmConstWalker::escape(const char *input) {
