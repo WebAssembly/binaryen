@@ -4,6 +4,10 @@
     "import": ["non", "existent"]
   },
   {
+    "name": "imported_twice",
+    "import": ["env", "imported_twice"]
+  },
+  {
     "name": "stackAllocGood",
     "export": "stackAlloc",
     "root": true

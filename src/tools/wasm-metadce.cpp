@@ -51,15 +51,30 @@ struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
   std::unordered_set<Name> roots;
 
-  std::unordered_map<Name, Name> importToDCENode; // import internal name => DCE name
   std::unordered_map<Name, Name> exportToDCENode; // export exported name => DCE name
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
   std::unordered_map<Name, Name> globalToDCENode; // global name => DCE name
 
-  std::unordered_map<Name, Name> DCENodeToImport; // reverse maps
-  std::unordered_map<Name, Name> DCENodeToExport;
+  std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
+
+  // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
+  // be imported twice, for example. So we don't map a DCE node to an Import,
+  // but rather the module.base pair ("id") for the import.
+  // TODO: implement this in a safer way, not a string with a magic separator
+  typedef Name ImportId;
+
+  ImportId getImportId(Name module, Name base) {
+    return std::string(module.str) + " (*) " + std::string(base.str);
+  }
+
+  ImportId getImportId(Name name) {
+    auto* imp = wasm.getImport(name);
+    return getImportId(imp->module, imp->base);
+  }
+
+  std::unordered_map<Name, Name> importIdToDCENode; // import module.base => DCE name
 
   Module& wasm;
 
@@ -84,13 +99,12 @@ struct MetaDCEGraph {
       nodes[dceName] = DCENode(dceName);
     }
     for (auto& imp : wasm.imports) {
-      if (importToDCENode.find(imp->name) == importToDCENode.end()) {
-        // only process function and global imports - the table and memory are always there
-        if (imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) {
-          auto dceName = getName("import", imp->name.str);
-          DCENodeToImport[dceName] = imp->name;
-          importToDCENode[imp->name] = dceName;
-          nodes[dceName] = DCENode(dceName);
+      // only process function and global imports - the table and memory are always there
+      if (imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) {
+        auto id = getImportId(imp->module, imp->base);
+        if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+          auto dceName = getName("importId", imp->name.str);
+          importIdToDCENode[id] = dceName;
         }
       }
     }
@@ -107,13 +121,13 @@ struct MetaDCEGraph {
         if (wasm.getFunctionOrNull(exp->value)) {
           node.reaches.push_back(functionToDCENode[exp->value]);
         } else {
-          node.reaches.push_back(importToDCENode[exp->value]);
+          node.reaches.push_back(importIdToDCENode[getImportId(exp->value)]);
         }
       } else if (exp->kind == ExternalKind::Global) {
         if (wasm.getGlobalOrNull(exp->value)) {
           node.reaches.push_back(globalToDCENode[exp->value]);
         } else {
-          node.reaches.push_back(importToDCENode[exp->value]);
+          node.reaches.push_back(importIdToDCENode[getImportId(exp->value)]);
         }
       }
     }
@@ -141,7 +155,7 @@ struct MetaDCEGraph {
           dceName = parent->globalToDCENode[name];
         } else {
           // it's an import.
-          dceName = parent->importToDCENode[name];
+          dceName = parent->importIdToDCENode[parent->getImportId(name)];
         }
         if (parentDceName.isNull()) {
           parent->roots.insert(parentDceName);
@@ -165,7 +179,7 @@ struct MetaDCEGraph {
         if (wasm.getFunctionOrNull(name)) {
           roots.insert(functionToDCENode[name]);
         } else {
-          roots.insert(importToDCENode[name]);
+          roots.insert(importIdToDCENode[getImportId(name)]);
         }
       }
       rooter.walk(segment.offset);
@@ -192,7 +206,7 @@ struct MetaDCEGraph {
       void visitCallImport(CallImport* curr) {
         assert(parent->functionToDCENode.count(getFunction()->name) > 0);
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->importToDCENode[curr->target]
+          parent->importIdToDCENode[parent->getImportId(curr->target)]
         );
       }
       void visitGetGlobal(GetGlobal* curr) {
@@ -213,7 +227,7 @@ struct MetaDCEGraph {
           dceName = parent->globalToDCENode[name];
         } else {
           // it's an import.
-          dceName = parent->importToDCENode[name];
+          dceName = parent->importIdToDCENode[parent->getImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(dceName);
       }
@@ -303,13 +317,18 @@ public:
     for (auto root : roots) {
       std::cout << "root: " << root.str << '\n';
     }
+    std::map<Name, ImportId> importMap;
+    for (auto& pair : importIdToDCENode) {
+      auto& id = pair.first;
+      auto dceName = pair.second;
+      importMap[dceName] = id;
+    }
     for (auto& pair : nodes) {
       auto name = pair.first;
       auto& node = pair.second;
       std::cout << "node: " << name.str << '\n';
-      if (DCENodeToImport.find(name) != DCENodeToImport.end()) {
-        auto* imp = wasm.getImport(DCENodeToImport[name]);
-        std::cout << "  is import " << DCENodeToImport[name] << ", " << imp->module.str << '.' << imp->base.str << '\n';
+      if (importMap.find(name) != importMap.end()) {
+        std::cout << "  is import " << importMap[name] << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
         std::cout << "  is export " << DCENodeToExport[name].str << ", " << wasm.getExport(DCENodeToExport[name])->value << '\n';
@@ -493,12 +512,8 @@ int main(int argc, const char* argv[]) {
       if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
         Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
-      auto* import = ImportUtils::getImport(wasm, imp[0]->getIString(), imp[1]->getIString());
-      if (import) {
-        auto importName = import->name;
-        graph.importToDCENode[importName] = node.name;
-        graph.DCENodeToImport[node.name] = importName;
-      }
+      auto id = graph.getImportId(imp[0]->getIString(), imp[1]->getIString());
+      graph.importIdToDCENode[id] = node.name;
     }
     // TODO: optimize this copy with a clever move
     graph.nodes[node.name] = node;

@@ -2,5 +2,3 @@ unused: export$wasm_func$4
 unused: export$wasm_func_unused$5
 unused: func$a_wasm_func$0
 unused: func$an_unused_wasm_func$1
-unused: import$a_js_func$2
-unused: import$an_unused_js_func$3
