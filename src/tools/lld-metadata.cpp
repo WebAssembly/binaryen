@@ -75,12 +75,13 @@ void parseRelocSection(
     uint32_t offset = readNext();
     (void)offset;
     uint32_t index = readNext();
+    (void)index;
     switch (type) {
     case R_WEBASSEMBLY_TABLE_INDEX_I32: {
       // Assumption: LLD only creates a table for initializer functions.
       // TODO: assumption is false, function pointers also wind up here. Fix it.
-      Name name = wasm.table.segments[0].data[index];
-      initializerFunctions.push_back(name);
+      // Name name = wasm.table.segments[0].data[index];
+      // initializerFunctions.push_back(name);
       break;
     }
     case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
