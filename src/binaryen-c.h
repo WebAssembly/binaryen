@@ -396,6 +396,20 @@ int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
 float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
 // Gets the 64-bit float value of the specified `Const` expression.
 double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
+// Gets the index of the specified `GetLocal` expression.
+BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr);
+// Gets the name of the specified `GetGlobal` expression.
+const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr);
+// Tests if the specified `Load` expression is atomic.
+int BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
+// Tests if the specified `Load` expression is signed.
+int BinaryenLoadIsSigned(BinaryenExpressionRef expr);
+// Gets the byte size of the specified `Load` expression.
+uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
+// Gets the alignment of the specified `Load` expression.
+uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
+// Gets the nested `ptr` expression of the specified `Load` expression.
+BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr);
 
 // Functions
 

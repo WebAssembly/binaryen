@@ -1231,6 +1231,38 @@
     return Module['_BinaryenConstGetValueF64'](expr);
   };
 
+  Module['getGetLocalIndex'] = function(expr) {
+    return Module['_BinaryenGetLocalGetIndex'](expr);
+  };
+
+  Module['getGetGlobalName'] = function(expr) {
+    return Pointer_stringify(Module['_BinaryenGetGlobalGetName'](expr));
+  };
+
+  Module['isLoadAtomic'] = function(expr) {
+    return Module['_BinaryenLoadIsAtomic'](expr);
+  };
+
+  Module['isLoadSigned'] = function(expr) {
+    return Module['_BinaryenLoadIsSigned'](expr);
+  };
+
+  Module['getLoadBytes'] = function(expr) {
+    return Module['_BinaryenLoadGetBytes'](expr);
+  };
+
+  Module['getLoadOffset'] = function(expr) {
+    return Module['_BinaryenLoadGetOffset'](expr);
+  };
+
+  Module['getLoadAlign'] = function(expr) {
+    return Module['_BinaryenLoadGetAlign'](expr);
+  };
+
+  Module['getLoadPtr'] = function(expr) {
+    return Module['_BinaryenLoadGetPtr'](expr);
+  };
+
   Module['getFunctionBody'] = function(func) {
     return Module['_BinaryenFunctionGetBody'](func);
   };

@@ -878,6 +878,78 @@ double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
   assert(expression->is<Const>());
   return static_cast<Const*>(expression)->value.getf64();
 }
+BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenGetLocalGetIndex(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<GetLocal>());
+  return static_cast<GetLocal*>(expression)->index;
+}
+const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenGetGlobalGetName(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<GetGlobal>());
+  return static_cast<GetGlobal*>(expression)->name.c_str();
+}
+int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadIsAtomic(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->isAtomic;
+}
+int BinaryenLoadIsSigned(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadIsSigned(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->signed_;
+}
+uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadGetBytes(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->bytes;
+}
+uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadGetOffset(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->offset;
+}
+uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadGetAlign(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->align;
+}
+BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoadGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Load>());
+  return static_cast<Load*>(expression)->ptr;
+}
 
 // Functions
 
