@@ -1263,6 +1263,42 @@
     return Module['_BinaryenLoadGetPtr'](expr);
   };
 
+  Module['getUnaryOp'] = function (expr) {
+    return Module['_BinaryenUnaryGetOp'](expr);
+  };
+
+  Module['getUnaryValue'] = function (expr) {
+    return Module['_BinaryenUnaryGetValue'](expr);
+  };
+
+  Module['getBinaryOp'] = function (expr) {
+    return Module['_BinaryenBinaryGetOp'](expr);
+  };
+
+  Module['getBinaryLeft'] = function (expr) {
+    return Module['_BinaryenBinaryGetLeft'](expr);
+  };
+
+  Module['getBinaryRight'] = function (expr) {
+    return Module['_BinaryenBinaryGetRight'](expr);
+  };
+
+  Module['getSelectIfTrue'] = function (expr) {
+    return Module['_BinaryenSelectGetIfTrue'](expr);
+  };
+
+  Module['getSelectIfFalse'] = function (expr) {
+    return Module['_BinaryenSelectGetIfFalse'](expr);
+  };
+
+  Module['getSelectCondition'] = function (expr) {
+    return Module['_BinaryenSelectGetCondition'](expr);
+  };
+
+  Module['getDropValue'] = function (expr) {
+    return Module['_BinaryenDropGetValue'](expr);
+  };
+
   Module['getFunctionBody'] = function(func) {
     return Module['_BinaryenFunctionGetBody'](func);
   };

@@ -706,11 +706,22 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands) {
+  auto* ret = ((Module*)module)->allocator.alloc<Host>();
+
   if (tracing) {
-    std::cout << "  TODO: host...\n";
+    std::cout << "  {\n";
+    std::cout << "    BinaryenExpressionRef operands[] = { ";
+    for (BinaryenIndex i = 0; i < numOperands; i++) {
+      if (i > 0) std::cout << ", ";
+      std::cout << "expressions[" << expressions[operands[i]] << "]";
+    }
+    if (numOperands == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
+    std::cout << " };\n";
+    auto id = noteExpression(ret);
+    std::cout << "  expressions[" << id << "] = BinaryenHost(the_module, " << op << ", \"" << name << "\", operands, " << numOperands << ");\n";
+    std::cout << "  }\n";
   }
 
-  auto* ret = ((Module*)module)->allocator.alloc<Host>();
   ret->op = HostOp(op);
   if (name) ret->nameOperand = name;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
@@ -949,6 +960,88 @@ BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->ptr;
+}
+BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenUnaryGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Unary>());
+  return static_cast<Unary*>(expression)->op;
+}
+BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenUnaryGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Unary>());
+  return static_cast<Unary*>(expression)->value;
+}
+BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBinaryGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Binary>());
+  return static_cast<Binary*>(expression)->op;
+}
+BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBinaryGetLeft(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Binary>());
+  return static_cast<Binary*>(expression)->left;
+}
+BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBinaryGetRight(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Binary>());
+  return static_cast<Binary*>(expression)->right;
+}
+
+BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSelectGetIfTrue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Select>());
+  return static_cast<Select*>(expression)->ifTrue;
+}
+BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSelectGetIfFalse(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Select>());
+  return static_cast<Select*>(expression)->ifFalse;
+}
+BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSelectGetConditionBinaryenExpressionRef(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Select>());
+  return static_cast<Select*>(expression)->condition;
+}
+BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenDropGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Drop>());
+  return static_cast<Drop*>(expression)->value;
 }
 
 // Functions

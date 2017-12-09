@@ -410,6 +410,24 @@ uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
 uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
 // Gets the nested `ptr` expression of the specified `Load` expression.
 BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr);
+// Gets the operator of the specified `Unary` expression.
+BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
+// Gets the nested `value` expression of the specified `Unary` expression.
+BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr);
+// Gets the operator of the specified `Binary` expression.
+BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr);
+// Gets the nested `left` expression of the specified `Binary` expression.
+BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr);
+// Gets the nested `right` expression of the specified `Binary` expression.
+BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr);
+// Gets the nested `ifTrue` expression of the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr);
+// Gets the nested `ifFalse` expression of the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr);
+// Gets the nested `condition` expression of the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr);
+// Gets the nested `value` expression of the specified `Drop` expression.
+BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr);
 
 // Functions
 
