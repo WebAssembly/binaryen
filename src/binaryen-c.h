@@ -680,22 +680,37 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 void BinaryenModuleInterpret(BinaryenModuleRef module);
 
 //
+// ======== FunctionType Operations ========
+//
+
+// Gets the name of the specified `FunctionType`.
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
+// Gets the number of parameters of the specified `FunctionType`.
+BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype);
+// Gets the type of the parameter at the specified index of the specified `FunctionType`.
+BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype, BinaryenIndex index);
+// Gets the result type of the specified `FunctionType`.
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype);
+
+//
 // ========== Function Operations ==========
 //
 
-// Gets the name of the specified function.
+// Gets the name of the specified `Function`.
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
-// Gets the number of parameters of the specified functions.
+// Gets the name of the `FunctionType` associated with the specified `Function`. May be `NULL` if the signature is implicit.
+const char* BinaryenFunctionGetType(BinaryenFunctionRef func);
+// Gets the number of parameters of the specified `Function`.
 BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func);
-// Gets the type of the parameter at the specified index of the specified function.
+// Gets the type of the parameter at the specified index of the specified `Function`.
 BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func, BinaryenIndex index);
-// Gets the result type of the specified function.
+// Gets the result type of the specified `Function`.
 BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
-// Gets the number of additional locals within the specified function.
+// Gets the number of additional locals within the specified `Function`.
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
-// Gets the type of the additional local at the specified index within the specified function.
+// Gets the type of the additional local at the specified index within the specified `Function`.
 BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func, BinaryenIndex index);
-// Gets the body of the specified function.
+// Gets the body of the specified `Function`.
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
 
 // Runs the standard optimization passes on the function.

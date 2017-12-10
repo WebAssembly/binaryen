@@ -7,7 +7,7 @@
     } finally {
       Runtime.stackRestore(stack);
     }
-  };
+  }
 
   function strToStack(str) {
     if (!str) return 0;
@@ -22,6 +22,7 @@
     return ret;
   }
 
+  // Types
   Module['none'] = Module['_BinaryenTypeNone']();
   Module['i32'] = Module['_BinaryenTypeInt32']();
   Module['i64'] = Module['_BinaryenTypeInt64']();
@@ -30,6 +31,7 @@
   Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
   Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
+  // Expression ids
   Module['InvalidId'] = Module['_BinaryenInvalidId']();
   Module['BlockId'] = Module['_BinaryenBlockId']();
   Module['IfId'] = Module['_BinaryenIfId']();
@@ -59,6 +61,7 @@
   Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
   Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
 
+  // Operations
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
   Module['PopcntInt32'] = Module['_BinaryenPopcntInt32']();
@@ -193,29 +196,12 @@
   Module['AtomicRMWXor'] = Module['_BinaryenAtomicRMWXor']();
   Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
 
-  // we provide a JS Module() object interface
+  // 'Module' interface
   Module['Module'] = function(module) {
     if (!module) module = Module['_BinaryenModuleCreate']();
     this['ptr'] = module;
 
-    this['dispose'] = function() {
-      Module['_BinaryenModuleDispose'](module);
-    };
-    this['addFunctionType'] = function(name, result, paramTypes) {
-      if (!paramTypes) paramTypes = [];
-      return preserveStack(function() {
-        return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
-                                                  i32sToStack(paramTypes), paramTypes.length);
-      });
-    };
-    this['getFunctionTypeBySignature'] = function(result, paramTypes) {
-      if (!paramTypes) paramTypes = [];
-      return preserveStack(function() {
-        return Module['_BinaryenGetFunctionTypeBySignature'](module, result,
-                                                             i32sToStack(paramTypes), paramTypes.length);
-      });
-    };
-
+    // 'Expression' creation
     this['block'] = function(name, children, type) {
       return preserveStack(function() {
         return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
@@ -1024,6 +1010,22 @@
     this['wake'] = function(ptr, wakeCount) {
       return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
     };
+
+    // 'Module' operations
+    this['addFunctionType'] = function(name, result, paramTypes) {
+      if (!paramTypes) paramTypes = [];
+      return preserveStack(function() {
+        return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
+                                                  i32sToStack(paramTypes), paramTypes.length);
+      });
+    };
+    this['getFunctionTypeBySignature'] = function(result, paramTypes) {
+      if (!paramTypes) paramTypes = [];
+      return preserveStack(function() {
+        return Module['_BinaryenGetFunctionTypeBySignature'](module, result,
+                                                             i32sToStack(paramTypes), paramTypes.length);
+      });
+    };
     this['addFunction'] = function(name, functionType, varTypes, body) {
       return preserveStack(function() {
         return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
@@ -1173,9 +1175,10 @@
     this['autoDrop'] = function() {
       return Module['_BinaryenModuleAutoDrop'](module);
     };
-
-    // TODO: fix this hard-wired limit
-    var MAX = 1024*1024;
+    this['dispose'] = function() {
+      Module['_BinaryenModuleDispose'](module);
+    };
+    var MAX = 1024*1024; // TODO: fix this hard-wired limit
     var writeBuffer = null;
     this['emitBinary'] = function() {
       if (!writeBuffer) writeBuffer = _malloc(MAX);
@@ -1188,8 +1191,10 @@
     };
   };
 
-  Module['Relooper'] = function() {
-    var relooper = this.ptr = Module['_RelooperCreate']();
+  // 'Relooper' interface
+  Module['Relooper'] = function(relooper) {
+    if (!relooper) relooper = Module['_RelooperCreate']();
+    this.ptr = relooper;
 
     this['addBlock'] = function(code) {
       return Module['_RelooperAddBlock'](relooper, code);
@@ -1210,14 +1215,6 @@
     };
   };
 
-  Module['getExpressionId'] = function(expr) {
-    return Module['_BinaryenExpressionGetId'](expr);
-  };
-
-  Module['getExpressionType'] = function(expr) {
-    return Module['_BinaryenExpressionGetType'](expr);
-  };
-
   function getAllNested(ref, numFn, getFn) {
     var num = numFn(ref);
     var ret = new Array(num);
@@ -1225,6 +1222,17 @@
     return ret;
   }
 
+  // Gets the specific id of an 'Expression'
+  Module['getExpressionId'] = function(expr) {
+    return Module['_BinaryenExpressionGetId'](expr);
+  };
+
+  // Gets the result type of an 'Expression'
+  Module['getExpressionType'] = function(expr) {
+    return Module['_BinaryenExpressionGetType'](expr);
+  };
+
+  // Obtains information about an 'Expression'
   Module['getExpressionInfo'] = function(expr) {
     var id = Module['_BinaryenExpressionGetId'](expr);
     var type = Module['_BinaryenExpressionGetType'](expr);
@@ -1443,9 +1451,20 @@
     }
   };
 
+  // Obtains information about a 'FunctionType'
+  Module['getFunctionTypeInfo'] = function(func) {
+    return {
+      'name': Module['_BinaryenFunctionTypeGetName'](func),
+      'params': getAllNested(func, Module['_BinaryenFunctionTypeGetNumParams'], Module['_BinaryenFunctionTypeGetParam']),
+      'result': Module['_BinaryenFunctionTypeGetResult'](func)
+    };
+  };
+
+  // Obtains information about a 'Function'
   Module['getFunctionInfo'] = function(func) {
     return {
       'name': Module['_BinaryenFunctionGetName'](func),
+      'type': Module['_BinaryenFunctionGetType'](func),
       'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
       'result': Module['_BinaryenFunctionGetResult'](func),
       'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
@@ -1453,7 +1472,7 @@
     };
   };
 
-  // emit text of an expression or a module
+  // Emits text format of an expression or a module
   Module['emitText'] = function(expr) {
     if (typeof expr === 'object') {
       return expr.emitText();
@@ -1466,6 +1485,7 @@
     return ret;
   };
 
+  // Parses a binary to a module
   Module['readBinary'] = function(data) {
     var buffer = allocate(data, 'i8', ALLOC_NORMAL);
     var ptr = Module['_BinaryenModuleRead'](buffer, data.length);
@@ -1473,6 +1493,7 @@
     return new Module['Module'](ptr);
   };
 
+  // Parses text format to a module
   Module['parseText'] = function(text) {
     var buffer = _malloc(text.length + 1);
     writeAsciiToMemory(text, buffer);
@@ -1481,6 +1502,7 @@
     return new Module['Module'](ptr);
   };
 
+  // Enables or disables C-API tracing
   Module['setAPITracing'] = function(on) {
     return Module['_BinaryenSetAPITracing'](on);
   };

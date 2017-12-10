@@ -2059,6 +2059,41 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
 }
 
 //
+// ======== FunctionType Operations ========
+//
+
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetName(functionsTypes[" << functions[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->name.c_str();
+}
+BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetNumParams(functionsTypes[" << functions[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->params.size();
+}
+BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetParam(functionsTypes[" << functions[ftype] << "], " << index << ");\n";
+  }
+
+  auto* ft = (FunctionType*)ftype;
+  assert(index < ft->params.size());
+  return ft->params[index];
+}
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionTypeGetResult(functionsTypes[" << functions[ftype] << "]);\n";
+  }
+
+  return ((FunctionType*)ftype)->result;
+}
+
+//
 // ========== Function Operations ==========
 //
 
@@ -2068,6 +2103,13 @@ const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
   }
 
   return ((Function*)func)->name.c_str();
+}
+const char* BinaryenFunctionGetType(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetType(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->type.c_str();
 }
 BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
   if (tracing) {

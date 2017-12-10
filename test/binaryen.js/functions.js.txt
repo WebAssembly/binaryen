@@ -1,5 +1,6 @@
 GetFunction is equal: true
-getFunctionInfo={"name":5397280,"params":[],"result":1,"vars":[],"body":5364472}
+getFunctionTypeInfo={"name":5364592,"params":[],"result":1}
+getFunctionInfo={"name":5397568,"type":5364592,"params":[],"result":1,"vars":[],"body":5364760}
 getExpressionInfo(body)={"id":15,"type":1,"value":3}
 (i32.const 3)
 
