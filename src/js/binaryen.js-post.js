@@ -1012,7 +1012,7 @@
     this['host'] = function(op, name, operands) {
       if (!operands) operands = [];
       return preserveStack(function() {
-        return Module['_BinaryenHost'](module, op, strToStack(name), operands.map(strToStack), operands.length);
+        return Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length);
       });
     };
     this['nop'] = function() {
