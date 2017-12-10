@@ -13,15 +13,14 @@ console.log("GetFunction is equal: " + (func === module.getFunction("a-function"
 
 module.runPassesOnFunction(func, ["precompute"]);
 
-var body = Binaryen.getFunctionBody(func);
-
-console.log("ExpressionId=" + Binaryen.getExpressionId(body));
-console.log("ExpressionType=" + Binaryen.getExpressionType(body));
-console.log(Binaryen.emitText(body));
+var info = Binaryen.getFunction(func);
+console.log("getFunction=" + JSON.stringify(info));
+console.log("getExpression=" + JSON.stringify(Binaryen.getExpression(info.body)));
+console.log(Binaryen.emitText(info.body));
 
 module.removeFunction("a-function");
 
-module.addGlobal("a-global", Binaryen.i32, false, body);
+module.addGlobal("a-global", Binaryen.i32, false, info.body);
 
 module.validate();
 

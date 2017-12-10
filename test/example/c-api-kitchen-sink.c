@@ -16,28 +16,28 @@
 // helpers
 
 BinaryenExpressionRef makeUnary(BinaryenModuleRef module, BinaryenOp op, BinaryenType inputType) {
-  if (inputType == BinaryenInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
-  if (inputType == BinaryenInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
-  if (inputType == BinaryenFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)));
-  if (inputType == BinaryenFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
+  if (inputType == BinaryenTypeInt32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)));
+  if (inputType == BinaryenTypeInt64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)));
+  if (inputType == BinaryenTypeFloat32()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)));
+  if (inputType == BinaryenTypeFloat64()) return BinaryenUnary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)));
   abort();
 }
 
 BinaryenExpressionRef makeBinary(BinaryenModuleRef module, BinaryenOp op, BinaryenType type) {
-  if (type == BinaryenInt32()) {
+  if (type == BinaryenTypeInt32()) {
     // use temp vars to ensure optimization doesn't change the order of operation in our trace recording
     BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt32(-11));
     return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt32(-10)), temp);
   }
-  if (type == BinaryenInt64()) {
+  if (type == BinaryenTypeInt64()) {
     BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralInt64(-23));
     return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralInt64(-22)), temp);
   }
-  if (type == BinaryenFloat32()) {
+  if (type == BinaryenTypeFloat32()) {
     BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat32(-62.5f));
     return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat32(-33.612f)), temp);
   }
-  if (type == BinaryenFloat64()) {
+  if (type == BinaryenTypeFloat64()) {
     BinaryenExpressionRef temp = BinaryenConst(module, BinaryenLiteralFloat64(-9007.333));
     return BinaryenBinary(module, op, BinaryenConst(module, BinaryenLiteralFloat64(-9005.841)), temp);
   }
@@ -71,11 +71,13 @@ BinaryenExpressionRef makeDroppedInt32(BinaryenModuleRef module, int x) {
 // tests
 
 void test_types() {
-  printf("BinaryenNone: %d\n", BinaryenNone());
-  printf("BinaryenInt32: %d\n", BinaryenInt32());
-  printf("BinaryenInt64: %d\n", BinaryenInt64());
-  printf("BinaryenFloat32: %d\n", BinaryenFloat32());
-  printf("BinaryenFloat64: %d\n", BinaryenFloat64());
+  printf("BinaryenTypeNone: %d\n", BinaryenTypeNone());
+  printf("BinaryenTypeInt32: %d\n", BinaryenTypeInt32());
+  printf("BinaryenTypeInt64: %d\n", BinaryenTypeInt64());
+  printf("BinaryenTypeFloat32: %d\n", BinaryenTypeFloat32());
+  printf("BinaryenTypeFloat64: %d\n", BinaryenTypeFloat64());
+  printf("BinaryenTypeUnreachable: %d\n", BinaryenTypeUnreachable());
+  printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 }
 
 void test_core() {
@@ -100,8 +102,8 @@ void test_core() {
   BinaryenExpressionRef callOperands4[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
   BinaryenExpressionRef callOperands4b[] = { makeInt32(module, 13), makeInt64(module, 37), makeFloat32(module, 1.3f), makeFloat64(module, 3.7) };
 
-  BinaryenType params[4] = { BinaryenInt32(), BinaryenInt64(), BinaryenFloat32(), BinaryenFloat64() };
-  BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenInt32(), params, 4);
+  BinaryenType params[4] = { BinaryenTypeInt32(), BinaryenTypeInt64(), BinaryenTypeFloat32(), BinaryenTypeFloat64() };
+  BinaryenFunctionTypeRef iiIfF = BinaryenAddFunctionType(module, "iiIfF", BinaryenTypeInt32(), params, 4);
 
   BinaryenExpressionRef temp1 = makeInt32(module, 1), temp2 = makeInt32(module, 2), temp3 = makeInt32(module, 3),
                         temp4 = makeInt32(module, 4), temp5 = makeInt32(module, 5),
@@ -195,26 +197,26 @@ void test_core() {
     BinaryenSwitch(module, switchValueNames, 1, "the-value", temp8, temp9),
     BinaryenSwitch(module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
-      BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenInt32())
+      BinaryenCall(module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32())
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenUnary(module,
         BinaryenTruncSFloat32ToInt32(),
-        BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenFloat32())
+        BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenTypeFloat32())
       )
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenCallIndirect(module, makeInt32(module, 2449), callOperands4b, 4, "iiIfF")
     ),
-    BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenInt32())),
+    BinaryenDrop(module, BinaryenGetLocal(module, 0, BinaryenTypeInt32())),
     BinaryenSetLocal(module, 0, makeInt32(module, 101)),
     BinaryenDrop(module, BinaryenTeeLocal(module, 0, makeInt32(module, 102))),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(), makeInt32(module, 1)),
-    BinaryenLoad(module, 2, 1, 2, 1, BinaryenInt64(), makeInt32(module, 8)),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenFloat32(), makeInt32(module, 2)),
-    BinaryenLoad(module, 8, 0, 2, 8, BinaryenFloat64(), makeInt32(module, 9)),
-    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenInt32()),
-    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenInt64()),
+    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(), makeInt32(module, 1)),
+    BinaryenLoad(module, 2, 1, 2, 1, BinaryenTypeInt64(), makeInt32(module, 8)),
+    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeFloat32(), makeInt32(module, 2)),
+    BinaryenLoad(module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9)),
+    BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32()),
+    BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64()),
     BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // TODO: Host
@@ -232,18 +234,18 @@ void test_core() {
   BinaryenExpressionRef body = BinaryenBlock(module, "the-body", bodyList, 2, -1);
 
   // Create the function
-  BinaryenType localTypes[] = { BinaryenInt32() };
+  BinaryenType localTypes[] = { BinaryenTypeInt32() };
   BinaryenFunctionRef sinker = BinaryenAddFunction(module, "kitchen()sinker", iiIfF, localTypes, 1, body);
 
   // Globals
 
-  BinaryenAddGlobal(module, "a-global", BinaryenInt32(), 0, makeInt32(module, 7));
-  BinaryenAddGlobal(module, "a-mutable-global", BinaryenFloat32(), 1, makeFloat32(module, 7.5));
+  BinaryenAddGlobal(module, "a-global", BinaryenTypeInt32(), 0, makeInt32(module, 7));
+  BinaryenAddGlobal(module, "a-mutable-global", BinaryenTypeFloat32(), 1, makeFloat32(module, 7.5));
 
   // Imports
 
-  BinaryenType iparams[2] = { BinaryenInt32(), BinaryenFloat64() };
-  BinaryenFunctionTypeRef fiF = BinaryenAddFunctionType(module, "fiF", BinaryenFloat32(), iparams, 2);
+  BinaryenType iparams[2] = { BinaryenTypeInt32(), BinaryenTypeFloat64() };
+  BinaryenFunctionTypeRef fiF = BinaryenAddFunctionType(module, "fiF", BinaryenTypeFloat32(), iparams, 2);
   BinaryenAddFunctionImport(module, "an-imported", "module", "base", fiF);
 
   // Exports
@@ -263,13 +265,13 @@ void test_core() {
 
   // Start function. One per module
 
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
   BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, BinaryenNop(module));
   BinaryenSetStart(module, starter);
 
   // Unnamed function type
 
-  BinaryenFunctionTypeRef noname = BinaryenAddFunctionType(module, NULL, BinaryenNone(), NULL, 0);
+  BinaryenFunctionTypeRef noname = BinaryenAddFunctionType(module, NULL, BinaryenTypeNone(), NULL, 0);
 
   // A bunch of our code needs drop(), auto-add it
   BinaryenModuleAutoDrop(module);
@@ -286,8 +288,8 @@ void test_core() {
 
 void test_unreachable() {
   BinaryenModuleRef module = BinaryenModuleCreate();
-  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
-  BinaryenFunctionTypeRef I = BinaryenAddFunctionType(module, "I", BinaryenInt64(), NULL, 0);
+  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenTypeInt32(), NULL, 0);
+  BinaryenFunctionTypeRef I = BinaryenAddFunctionType(module, "I", BinaryenTypeInt64(), NULL, 0);
 
   BinaryenExpressionRef body = BinaryenCallIndirect(module, BinaryenUnreachable(module), NULL, 0, "I");
   BinaryenFunctionRef fn = BinaryenAddFunction(module, "unreachable-fn", i, NULL, 0, body);
@@ -299,17 +301,17 @@ void test_unreachable() {
 
 BinaryenExpressionRef makeCallCheck(BinaryenModuleRef module, int x) {
   BinaryenExpressionRef callOperands[] = { makeInt32(module, x) };
-  return BinaryenCallImport(module, "check", callOperands, 1, BinaryenNone());
+  return BinaryenCallImport(module, "check", callOperands, 1, BinaryenTypeNone());
 }
 
 void test_relooper() {
   BinaryenModuleRef module = BinaryenModuleCreate();
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
-  BinaryenType localTypes[] = { BinaryenInt32() };
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
+  BinaryenType localTypes[] = { BinaryenTypeInt32() };
 
   {
-    BinaryenType iparams[1] = { BinaryenInt32() };
-    BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
+    BinaryenType iparams[1] = { BinaryenTypeInt32() };
+    BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), iparams, 1);
     BinaryenAddFunctionImport(module, "check", "module", "check", vi);
   }
 
@@ -470,11 +472,11 @@ void test_relooper() {
     RelooperAddBranch(block1, block2, NULL, NULL);
     RelooperAddBranch(block2, block1, NULL, NULL);
     BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, block0, 3, module); // use $3 as the helper var
-    BinaryenType localTypes[] = { BinaryenInt32(), BinaryenInt32(), BinaryenInt64(), BinaryenInt32(), BinaryenFloat32(), BinaryenFloat64(), BinaryenInt32() };
+    BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32(), BinaryenTypeInt64(), BinaryenTypeInt32(), BinaryenTypeFloat32(), BinaryenTypeFloat64(), BinaryenTypeInt32() };
     BinaryenFunctionRef sinker = BinaryenAddFunction(module, "duffs-device", v, localTypes, sizeof(localTypes)/sizeof(BinaryenType), body);
   }
 
-  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
+  BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i", BinaryenTypeInt32(), NULL, 0);
 
   { // return in a block
     RelooperRef relooper = RelooperCreate();
@@ -506,10 +508,10 @@ void test_binaries() {
 
   { // create a module and write it to binary
     BinaryenModuleRef module = BinaryenModuleCreate();
-    BinaryenType params[2] = { BinaryenInt32(), BinaryenInt32() };
-    BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenInt32(), params, 2);
-    BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenInt32()),
-                          y = BinaryenGetLocal(module, 1, BinaryenInt32());
+    BinaryenType params[2] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
+    BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenTypeInt32(), params, 2);
+    BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+                          y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
     BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
     size = BinaryenModuleWrite(module, buffer, 1024); // write out the module
@@ -533,13 +535,13 @@ void test_interpret() {
   // create a simple module with a start method that prints a number, and interpret it, printing that number.
   BinaryenModuleRef module = BinaryenModuleCreate();
 
-  BinaryenType iparams[2] = { BinaryenInt32() };
-  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenNone(), iparams, 1);
+  BinaryenType iparams[2] = { BinaryenTypeInt32() };
+  BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi", BinaryenTypeNone(), iparams, 1);
   BinaryenAddFunctionImport(module, "print-i32", "spectest", "print", vi);
 
-  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
+  BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
   BinaryenExpressionRef callOperands[] = { makeInt32(module, 1234) };
-  BinaryenExpressionRef call = BinaryenCallImport(module, "print-i32", callOperands, 1, BinaryenNone());
+  BinaryenExpressionRef call = BinaryenCallImport(module, "print-i32", callOperands, 1, BinaryenTypeNone());
   BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, call);
   BinaryenSetStart(module, starter);
 
@@ -554,8 +556,8 @@ void test_nonvalid() {
   {
     BinaryenModuleRef module = BinaryenModuleCreate();
 
-    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenNone(), NULL, 0);
-    BinaryenType localTypes[] = { BinaryenInt32() };
+    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
+    BinaryenType localTypes[] = { BinaryenTypeInt32() };
     BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, localTypes, 1,
       BinaryenSetLocal(module, 0, makeInt64(module, 1234)) // wrong type!
     );
@@ -569,11 +571,11 @@ void test_nonvalid() {
   {
     BinaryenModuleRef module = BinaryenModuleCreate();
 
-    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "i", BinaryenInt32(), NULL, 0);
+    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "i", BinaryenTypeInt32(), NULL, 0);
     BinaryenType localTypes[] = { };
     BinaryenExpressionRef num = makeInt32(module, 1234);
     BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, NULL, 0,
-      BinaryenBinary(module, BinaryenInt32(), num, num) // incorrectly use num twice
+      BinaryenBinary(module, BinaryenTypeInt32(), num, num) // incorrectly use num twice
     );
 
     BinaryenModulePrint(module);

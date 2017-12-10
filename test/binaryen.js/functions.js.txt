@@ -1,6 +1,6 @@
 GetFunction is equal: true
-ExpressionId=15
-ExpressionType=1
+getFunction={"body":5364152}
+getExpression={"id":15,"type":1,"value":3}
 (i32.const 3)
 
 (module
