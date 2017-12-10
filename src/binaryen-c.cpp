@@ -104,6 +104,7 @@ BinaryenType BinaryenInt32(void) { return i32; }
 BinaryenType BinaryenInt64(void) { return i64; }
 BinaryenType BinaryenFloat32(void) { return f32; }
 BinaryenType BinaryenFloat64(void) { return f64; }
+BinaryenType BinaryenUnreachableType(void) { return unreachable; }
 BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
 // Expression ids
@@ -835,60 +836,248 @@ void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   WasmPrinter::printExpression((Expression*)expr, std::cout);
   std::cout << '\n';
 }
-int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
+
+// Specific expression utility
+
+// Block
+const char* BinaryenBlockGetName(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueI32(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenBlockGetName(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return static_cast<Const*>(expression)->value.geti32();
+  assert(expression->is<Block>());
+  return static_cast<Block*>(expression)->name.c_str();
 }
-int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenBlockGetNumChildren(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return static_cast<Const*>(expression)->value.geti64();
+  assert(expression->is<Block>());
+  return static_cast<Block*>(expression)->list.size();
 }
-int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueI64Low(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenBlockGetChild(expressions[" << expressions[expr] << "], " << index << ");\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return (int32_t)(static_cast<Const*>(expression)->value.geti64() & 0xffffffff);
+  assert(expression->is<Block>());
+  assert(index < static_cast<Block*>(expression)->list.size());
+  return static_cast<Block*>(expression)->list[index];
 }
-int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
+// If
+BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueI64High(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenIfGetCondition(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
+  assert(expression->is<If>());
+  return static_cast<If*>(expression)->condition;
 }
-float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueF32(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenIfGetIfTrue(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return static_cast<Const*>(expression)->value.getf32();
+  assert(expression->is<If>());
+  return static_cast<If*>(expression)->ifTrue;
 }
-double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenIfGetIfFalse(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
-  assert(expression->is<Const>());
-  return static_cast<Const*>(expression)->value.getf64();
+  assert(expression->is<If>());
+  return static_cast<If*>(expression)->ifFalse;
 }
+// Loop
+const char* BinaryenLoopGetName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoopGetName(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Loop>());
+  return static_cast<Loop*>(expression)->name.c_str();
+}
+BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenLoopGetBody(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Loop>());
+  return static_cast<Loop*>(expression)->body;
+}
+// Break
+const char* BinaryenBreakGetName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakGetName(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  return static_cast<Break*>(expression)->name.c_str();
+}
+BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakGetCondition(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  return static_cast<Break*>(expression)->condition;
+}
+BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenBreakGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Break>());
+  return static_cast<Break*>(expression)->value;
+}
+// Switch
+BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchGetNumNames(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  return static_cast<Switch*>(expression)->targets.size();
+}
+const char* BinaryenSwitchGetName(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchGetName(expressions[" << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  assert(index < static_cast<Switch*>(expression)->targets.size());
+  return static_cast<Switch*>(expression)->targets[index].c_str();
+}
+const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchGetDefaultName(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  return static_cast<Switch*>(expression)->default_.c_str();
+}
+BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchGetCondition(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  return static_cast<Switch*>(expression)->condition;
+}
+BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSwitchGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Switch>());
+  return static_cast<Switch*>(expression)->value;
+}
+// Call
+const char* BinaryenCallGetTarget(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallGetTarget(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return static_cast<Call*>(expression)->target.c_str();
+}
+BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallGetNumOperands(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  return static_cast<Call*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenCallGetOperand(expressions[" << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  assert(index < static_cast<Call*>(expression)->operands.size());
+  return static_cast<Call*>(expression)->operands[index];
+}
+// CallImport
+const char* BinaryenCallImportGetTarget(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallImportGetTarget(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallImport>());
+  return static_cast<CallImport*>(expression)->target.c_str();
+}
+BinaryenIndex BinaryenCallImportGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallImportGetNumOperands(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallImport>());
+  return static_cast<CallImport*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenCallImportGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenCallImportGetOperand(expressions[" << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallImport>());
+  assert(index < static_cast<CallImport*>(expression)->operands.size());
+  return static_cast<CallImport*>(expression)->operands[index];
+}
+// CallIndirect
+BinaryenExpressionRef BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectGetTarget(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->target;
+}
+BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectGetNumOperands(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenCallIndirectGetOperand(expressions[" << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  assert(index < static_cast<CallIndirect*>(expression)->operands.size());
+  return static_cast<CallIndirect*>(expression)->operands[index];
+}
+// GetLocal
 BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGetLocalGetIndex(expressions[" << expressions[expr] << "]);\n";
@@ -898,6 +1087,35 @@ BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr) {
   assert(expression->is<GetLocal>());
   return static_cast<GetLocal*>(expression)->index;
 }
+// SetLocal
+int BinaryenSetLocalIsTee(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLocalIsTee(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SetLocal>());
+  return static_cast<SetLocal*>(expression)->isTee();
+}
+BinaryenIndex BinaryenSetLocalGetIndex(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLocalGetIndex(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SetLocal>());
+  return static_cast<SetLocal*>(expression)->index;
+}
+BinaryenExpressionRef BinaryenSetLocalGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSetLocalGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SetLocal>());
+  return static_cast<SetLocal*>(expression)->value;
+}
+// GetGlobal
 const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenGetGlobalGetName(expressions[" << expressions[expr] << "]);\n";
@@ -907,6 +1125,64 @@ const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr) {
   assert(expression->is<GetGlobal>());
   return static_cast<GetGlobal*>(expression)->name.c_str();
 }
+// SetGlobal
+const char* BinaryenSetGlobalGetName(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSetGlobalGetName(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SetGlobal>());
+  return static_cast<SetGlobal*>(expression)->name.c_str();
+}
+BinaryenExpressionRef BinaryenSetGlobalGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSetGlobalGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SetGlobal>());
+  return static_cast<SetGlobal*>(expression)->value;
+}
+// Host
+BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenHostGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  return static_cast<Host*>(expression)->op;
+}
+const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenHostGetNameOperand(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  return static_cast<Host*>(expression)->nameOperand.c_str();
+}
+BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenHostGetNumOperands(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Host>());
+  return static_cast<Host*>(expression)->operands.size();
+}
+BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenHostGetOperand(expressions[" << expressions[expr] << "], " << index << ");\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Call>());
+  assert(index < static_cast<Host*>(expression)->operands.size());
+  return static_cast<Host*>(expression)->operands[index];
+}
+// Load
 int BinaryenLoadIsAtomic(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenLoadIsAtomic(expressions[" << expressions[expr] << "]);\n";
@@ -961,6 +1237,117 @@ BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr) {
   assert(expression->is<Load>());
   return static_cast<Load*>(expression)->ptr;
 }
+// Store
+int BinaryenStoreIsAtomic(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreIsAtomic(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->isAtomic;
+}
+uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreGetBytes(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->bytes;
+}
+uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreGetOffset(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->offset;
+}
+uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreGetAlign(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->align;
+}
+BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->ptr;
+}
+BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenStoreGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Store>());
+  return static_cast<Store*>(expression)->value;
+}
+// Const
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.geti32();
+}
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.geti64();
+}
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64Low(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() & 0xffffffff);
+}
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueI64High(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return (int32_t)(static_cast<Const*>(expression)->value.geti64() >> 32);
+}
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF32(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf32();
+}
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenConstGetValueF64(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Const>());
+  return static_cast<Const*>(expression)->value.getf64();
+}
+// Unary
 BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenUnaryGetOp(expressions[" << expressions[expr] << "]);\n";
@@ -979,6 +1366,7 @@ BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr) {
   assert(expression->is<Unary>());
   return static_cast<Unary*>(expression)->value;
 }
+// Binary
 BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenBinaryGetOp(expressions[" << expressions[expr] << "]);\n";
@@ -1006,7 +1394,7 @@ BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr) {
   assert(expression->is<Binary>());
   return static_cast<Binary*>(expression)->right;
 }
-
+// Select
 BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenSelectGetIfTrue(expressions[" << expressions[expr] << "]);\n";
@@ -1027,13 +1415,14 @@ BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr) {
 }
 BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr) {
   if (tracing) {
-    std::cout << "  BinaryenSelectGetConditionBinaryenExpressionRef(expressions[" << expressions[expr] << "]);\n";
+    std::cout << "  BinaryenSelectGetCondition(expressions[" << expressions[expr] << "]);\n";
   }
 
   auto* expression = (Expression*)expr;
   assert(expression->is<Select>());
   return static_cast<Select*>(expression)->condition;
 }
+// Drop
 BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenDropGetValue(expressions[" << expressions[expr] << "]);\n";
@@ -1042,6 +1431,164 @@ BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Drop>());
   return static_cast<Drop*>(expression)->value;
+}
+// Return
+BinaryenExpressionRef BinaryenReturnGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenReturnGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Return>());
+  return static_cast<Return*>(expression)->value;
+}
+// AtomicRMW
+BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicRMWGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicRMW>());
+  return static_cast<AtomicRMW*>(expression)->op;
+}
+uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicRMWGetBytes(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicRMW>());
+  return static_cast<AtomicRMW*>(expression)->bytes;
+}
+uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicRMWGetOffset(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicRMW>());
+  return static_cast<AtomicRMW*>(expression)->offset;
+}
+BinaryenExpressionRef BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicRMWGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicRMW>());
+  return static_cast<AtomicRMW*>(expression)->ptr;
+}
+BinaryenExpressionRef BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicRMWGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicRMW>());
+  return static_cast<AtomicRMW*>(expression)->value;
+}
+// AtomicCmpxchg
+uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicCmpxchgGetBytes(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicCmpxchg>());
+  return static_cast<AtomicCmpxchg*>(expression)->bytes;
+}
+uint32_t BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicCmpxchgGetOffset(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicCmpxchg>());
+  return static_cast<AtomicCmpxchg*>(expression)->offset;
+}
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicCmpxchgGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicCmpxchg>());
+  return static_cast<AtomicCmpxchg*>(expression)->ptr;
+}
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicCmpxchgGetExpected(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicCmpxchg>());
+  return static_cast<AtomicCmpxchg*>(expression)->expected;
+}
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicCmpxchgGetReplacement(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicCmpxchg>());
+  return static_cast<AtomicCmpxchg*>(expression)->replacement;
+}
+// AtomicWait
+BinaryenExpressionRef BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWaitGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWait>());
+  return static_cast<AtomicWait*>(expression)->ptr;
+}
+BinaryenExpressionRef BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWaitGetExpected(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWait>());
+  return static_cast<AtomicWait*>(expression)->expected;
+}
+BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWaitGetTimeout(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWait>());
+  return static_cast<AtomicWait*>(expression)->timeout;
+}
+BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWaitGetExpectedType(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWait>());
+  return static_cast<AtomicWait*>(expression)->expectedType;
+}
+// AtomicWake
+BinaryenExpressionRef BinaryenAtomicWakeGetPtr(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWakeGetPtr(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWake>());
+  return static_cast<AtomicWake*>(expression)->ptr;
+}
+BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenAtomicWakeGetWakeCount(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<AtomicWake>());
+  return static_cast<AtomicWake*>(expression)->wakeCount;
 }
 
 // Functions
