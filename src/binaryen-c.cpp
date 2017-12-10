@@ -2062,6 +2062,52 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
 // ========== Function Operations ==========
 //
 
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetName(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->name.c_str();
+}
+BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetNumParams(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->params.size();
+}
+BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetParam(functions[" << functions[func] << "], " << index << ");\n";
+  }
+
+  auto* fn = (Function*)func;
+  assert(index < fn->params.size());
+  return fn->params[index];
+}
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetResult(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->result;
+}
+BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetNumVars(functions[" << functions[func] << "]);\n";
+  }
+
+  return ((Function*)func)->vars.size();
+}
+BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionGetVar(functions[" << functions[func] << "], " << index << ");\n";
+  }
+
+  auto* fn = (Function*)func;
+  assert(index < fn->vars.size());
+  return fn->vars[index];
+}
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
   if (tracing) {
     std::cout << "  BinaryenFunctionGetBody(functions[" << functions[func] << "]);\n";
@@ -2069,7 +2115,6 @@ BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func) {
 
   return ((Function*)func)->body;
 }
-
 void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  BinaryenFunctionOptimize(functions[" << functions[func] << "], the_module);\n";
@@ -2080,7 +2125,6 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
   passRunner.addDefaultOptimizationPasses();
   passRunner.runFunction((Function*)func);
 }
-
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";

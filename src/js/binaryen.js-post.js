@@ -1218,10 +1218,10 @@
     return Module['_BinaryenExpressionGetType'](expr);
   };
 
-  function getAllNested(expr, numFn, getFn) {
-    var num = numFn(expr);
+  function getAllNested(ref, numFn, getFn) {
+    var num = numFn(ref);
     var ret = new Array(num);
-    for (var i = 0; i < num; ++i) ret[i] = getFn(expr, i);
+    for (var i = 0; i < num; ++i) ret[i] = getFn(ref, i);
     return ret;
   }
 
@@ -1445,6 +1445,10 @@
 
   Module['getFunctionInfo'] = function(func) {
     return {
+      'name': Module['_BinaryenFunctionGetName'](func),
+      'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
+      'result': Module['_BinaryenFunctionGetResult'](func),
+      'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
       'body': Module['_BinaryenFunctionGetBody'](func)
     };
   };

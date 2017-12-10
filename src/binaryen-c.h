@@ -683,7 +683,19 @@ void BinaryenModuleInterpret(BinaryenModuleRef module);
 // ========== Function Operations ==========
 //
 
-// Gets the body of the function.
+// Gets the name of the specified function.
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
+// Gets the number of parameters of the specified functions.
+BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func);
+// Gets the type of the parameter at the specified index of the specified function.
+BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func, BinaryenIndex index);
+// Gets the result type of the specified function.
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
+// Gets the number of additional locals within the specified function.
+BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
+// Gets the type of the additional local at the specified index within the specified function.
+BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func, BinaryenIndex index);
+// Gets the body of the specified function.
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
 
 // Runs the standard optimization passes on the function.
