@@ -1218,320 +1218,232 @@
     return Module['_BinaryenExpressionGetType'](expr);
   };
 
-  Module['getExpression'] = function(expr) {
-    var id = Module['_BinaryenExpressionGetId'](expr);
-    switch (id) {
-      case Module['BlockId']: return Module['getBlock'](expr);
-      case Module['IfId']: return Module['getIf'](expr);
-      case Module['LoopId']: return Module['getLoop'](expr);
-      case Module['BreakId']: return Module['getBreak'](expr);
-      case Module['SwitchId']: return Module['getSwitch'](expr);
-      case Module['CallId']: return Module['getCall'](expr);
-      case Module['CallImportId']: return Module['getCallImport'](expr);
-      case Module['CallIndirectId']: return Module['getCallIndirect'](expr);
-      case Module['GetLocalId']: return Module['getGetLocal'](expr);
-      case Module['SetLocalId']: return Module['getSetLocal'](expr);
-      case Module['GetGlobalId']: return Module['getGetGlobal'](expr);
-      case Module['SetGlobalId']: return Module['getSetGlobal'](expr);
-      case Module['LoadId']: return Module['getLoad'](expr);
-      case Module['StoreId']: return Module['getStore'](expr);
-      case Module['ConstId']: return Module['getConst'](expr);
-      case Module['UnaryId']: return Module['getUnary'](expr);
-      case Module['BinaryId']: return Module['getBinary'](expr);
-      case Module['SelectId']: return Module['getSelect'](expr);
-      case Module['DropId']: return Module['getDrop'](expr);
-      case Module['ReturnId']: return Module['getReturn'](expr);
-      case Module['NopId']: return Module['getNop'](expr);
-      case Module['UnreachableId']: return Module['getUnreachable'](expr);
-      case Module['HostId']: return Module['getHost'](expr);
-      case Module['AtomicRMWId']: return Module['getAtomicRMW'](expr);
-      case Module['AtomicCmpxchgId']: return Module['getAtomicCmpxchg'](expr);
-      case Module['AtomicWaitId']: return Module['getAtomicWait'](expr);
-      case Module['AtomicWakeId']: return Module['getAtomicWake'](expr);
-      default: throw Error('unexpected id: ' + id);
-    }
-  };
-
   function getAllNested(expr, numFn, getFn) {
-    var num = Module[numFn](expr);
+    var num = numFn(expr);
     var ret = new Array(num);
-    for (var i = 0; i < num; ++i) {
-      ret[i] = Module[getFn](expr, i);
-    }
+    for (var i = 0; i < num; ++i) ret[i] = getFn(expr, i);
     return ret;
   }
 
-  Module['getBlock'] = function(expr) {
-    return {
-      'id': Module['BlockId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'name': Pointer_stringify(Module['_BinaryenBlockGetName'](expr)),
-      'children': getAllNested(expr, '_BinaryenBlockGetNumChildren', '_BinaryenBlockGetChild')
-    };
-  };
-
-  Module['getIf'] = function(expr) {
-    return {
-      'id': Module['IfId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'condition': Module['_BinaryenIfGetCondition'](expr),
-      'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
-      'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)      
-    };
-  };
-
-  Module['getLoop'] = function(expr) {
-    return {
-      'id': Module['LoopId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'name': Pointer_stringify(Module['_BinaryenLoopGetName'](expr)),
-      'body': Module['_BinaryenLoopGetBody'](expr)
-    };
-  };
-
-  Module['getBreak'] = function(expr) {
-    return {
-      'id': Module['BreakId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'name': Pointer_stringify(Module['_BinaryenBreakGetName'](expr)),
-      'condition': Module['_BinaryenBreakGetCondition'](expr),
-      'value': Module['_BinaryenBreakGetValue'](expr)
-    };
-  };
-
-  Module['getSwitch'] = function(expr) {
-    return {
-      'id': Module['SwitchId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'names': getAllNested(expr, '_BinaryenSwitchGetNumNames', '_BinaryenSwitchGetName').map(Pointer_stringify),
-      'defaultName': Pointer_stringify(Module['_BinaryenSwitchGetDefaultName'](expr)),
-      'condition': Module['_BinaryenSwitchGetCondition'](expr),
-      'value': Module['_BinaryenSwitchGetValue'](expr)
-    };
-  };
-
-  Module['getCall'] = function(expr) {
-    return {
-      'id': Module['CallId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'target': Pointer_stringify(Module['_BinaryenCallGetTarget'](expr)),
-      'operands': getAllNested(expr, '_BinaryenCallGetNumOperands', '_BinaryenCallGetOperand')
-    };
-  };
-
-  Module['getCallImport'] = function(expr) {
-    return {
-      'id': Module['CallImportId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'target': Pointer_stringify(Module['_BinaryenCallImportGetTarget'](expr)),
-      'operands': getAllNested(expr, '_BinaryenCallImportGetNumOperands', '_BinaryenCallImportGetOperand'),
-
-    };
-  };
-
-  Module['getCallIndirect'] = function(expr) {
-    return {
-      'id': Module['CallIndirectId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'target': Module['_BinaryenCallIndirectGetTarget'](expr),
-      'operands': getAllNested(expr, '_BinaryenCallIndirectGetNumOperands', '_BinaryenCallIndirectGetOperand')
-    };
-  };
-
-  Module['getGetLocal'] = function(expr) {
-    return {
-      'id': Module['GetLocalId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'index': Module['_BinaryenGetLocalGetIndex'](expr)
-    };
-  };
-
-  Module['getSetLocal'] = Module['getTeeLocal'] = function(expr) {
-    return {
-      'id': Module['SetLocalId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'isTee': Boolean(Module['_BinaryenSetLocalIsTee'](expr)),
-      'index': Module['_BinaryenSetLocalGetIndex'](expr),
-      'value': Module['_BinaryenSetLocalGetValue'](expr)
-    };
-  };
-
-  Module['getGetGlobal'] = function(expr) {
-    return {
-      'id': Module['GetGlobalId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'name': Pointer_stringify(Module['_BinaryenGetGlobalGetName'](expr))
-    };
-  };
-
-  Module['getSetGlobal'] = function(expr) {
-    return {
-      'id': Module['GetGlobalId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'name': Pointer_stringify(Module['_BinaryenSetGlobalGetName'](expr)),
-      'value': Module['_BinaryenSetGlobalGetValue'](expr)
-    };
-  }; 
-
-  Module['getLoad'] = function(expr) {
-    return {
-      'id': Module['LoadId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'isAtomic': Boolean(Module['_BinaryenLoadIsAtomic'](expr)),
-      'isSigned': Boolean(Module['_BinaryenLoadIsSigned'](expr)),
-      'offset': Module['_BinaryenLoadGetOffset'](expr),
-      'bytes': Module['_BinaryenLoadGetBytes'](expr),
-      'align': Module['_BinaryenLoadGetAlign'](expr),
-      'ptr': Module['_BinaryenLoadGetPtr'](expr)
-    };
-  };
-
-  Module['getStore'] = function(expr) {
-    return {
-      'id': Module['StoreId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'isAtomic': Boolean(Module['_BinaryenStoreIsAtomic'](expr)),
-      'offset': Module['_BinaryenStoreGetOffset'](expr),
-      'bytes': Module['_BinaryenStoreGetBytes'](expr),
-      'align': Module['_BinaryenStoreGetAlign'](expr),
-      'ptr': Module['_BinaryenStoreGetPtr'](expr),
-      'value': Module['_BinaryenStoreGetValue'](expr)
-    };
-  };
-
-  Module['getConst'] = function(expr) {
+  Module['getExpressionInfo'] = function(expr) {
+    var id = Module['_BinaryenExpressionGetId'](expr);
     var type = Module['_BinaryenExpressionGetType'](expr);
-    var value;
-    switch (type) {
-      case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
-      case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
-      case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
-      case Module['f64']: value =  Module['_BinaryenConstGetValueF64'](expr); break;
-      default: throw Error('unexpected type: ' + type);
+    switch (id) {
+      case Module['BlockId']:
+        return {
+          'id': id,
+          'type': type,
+          'name': Pointer_stringify(Module['_BinaryenBlockGetName'](expr)),
+          'children': getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChild'])
+        };
+      case Module['IfId']:
+        return {
+          'id': id,
+          'type': type,
+          'condition': Module['_BinaryenIfGetCondition'](expr),
+          'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
+          'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)      
+        };
+      case Module['LoopId']:
+        return {
+          'id': id,
+          'type': type,
+          'name': Pointer_stringify(Module['_BinaryenLoopGetName'](expr)),
+          'body': Module['_BinaryenLoopGetBody'](expr)
+        };
+      case Module['BreakId']:
+        return {
+          'id': id,
+          'type': type,
+          'name': Pointer_stringify(Module['_BinaryenBreakGetName'](expr)),
+          'condition': Module['_BinaryenBreakGetCondition'](expr),
+          'value': Module['_BinaryenBreakGetValue'](expr)
+        };
+      case Module['SwitchId']:
+        return {
+          'id': id,
+          'type': type,
+          'names': getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetName']).map(Pointer_stringify),
+          'defaultName': Pointer_stringify(Module['_BinaryenSwitchGetDefaultName'](expr)),
+          'condition': Module['_BinaryenSwitchGetCondition'](expr),
+          'value': Module['_BinaryenSwitchGetValue'](expr)
+        };
+      case Module['CallId']:
+        return {
+          'id': id,
+          'type': type,
+          'target': Pointer_stringify(Module['_BinaryenCallGetTarget'](expr)),
+          'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
+        };
+      case Module['CallImportId']:
+        return {
+          'id': id,
+          'type': type,
+          'target': Pointer_stringify(Module['_BinaryenCallImportGetTarget'](expr)),
+          'operands': getAllNested(expr, Module['_BinaryenCallImportGetNumOperands'], Module['_BinaryenCallImportGetOperand']),
+        };
+      case Module['CallIndirectId']:
+        return {
+          'id': id,
+          'type': type,
+          'target': Module['_BinaryenCallIndirectGetTarget'](expr),
+          'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperand'])
+        };
+      case Module['GetLocalId']:
+        return {
+          'id': id,
+          'type': type,
+          'index': Module['_BinaryenGetLocalGetIndex'](expr)
+        };
+      case Module['SetLocalId']:
+        return {
+          'id': id,
+          'type': type,
+          'isTee': Boolean(Module['_BinaryenSetLocalIsTee'](expr)),
+          'index': Module['_BinaryenSetLocalGetIndex'](expr),
+          'value': Module['_BinaryenSetLocalGetValue'](expr)
+        };
+      case Module['GetGlobalId']:
+        return {
+          'id': id,
+          'type': type,
+          'name': Pointer_stringify(Module['_BinaryenGetGlobalGetName'](expr))
+        };
+      case Module['SetGlobalId']: return Module['getSetGlobal'](expr);
+        return {
+          'id': id,
+          'type': type,
+          'name': Pointer_stringify(Module['_BinaryenSetGlobalGetName'](expr)),
+          'value': Module['_BinaryenSetGlobalGetValue'](expr)
+        };
+      case Module['LoadId']:
+        return {
+          'id': id,
+          'type': type,
+          'isAtomic': Boolean(Module['_BinaryenLoadIsAtomic'](expr)),
+          'isSigned': Boolean(Module['_BinaryenLoadIsSigned'](expr)),
+          'offset': Module['_BinaryenLoadGetOffset'](expr),
+          'bytes': Module['_BinaryenLoadGetBytes'](expr),
+          'align': Module['_BinaryenLoadGetAlign'](expr),
+          'ptr': Module['_BinaryenLoadGetPtr'](expr)
+        };
+      case Module['StoreId']:
+        return {
+          'id': id,
+          'type': type,
+          'isAtomic': Boolean(Module['_BinaryenStoreIsAtomic'](expr)),
+          'offset': Module['_BinaryenStoreGetOffset'](expr),
+          'bytes': Module['_BinaryenStoreGetBytes'](expr),
+          'align': Module['_BinaryenStoreGetAlign'](expr),
+          'ptr': Module['_BinaryenStoreGetPtr'](expr),
+          'value': Module['_BinaryenStoreGetValue'](expr)
+        };
+      case Module['ConstId']: {
+        var value;
+        switch (type) {
+          case Module['i32']: value = Module['_BinaryenConstGetValueI32'](expr); break;
+          case Module['i64']: value = { 'low': Module['_BinaryenConstGetValueI64Low'](expr), 'high': Module['_BinaryenConstGetValueI64High'](expr) }; break;
+          case Module['f32']: value = Module['_BinaryenConstGetValueF32'](expr); break;
+          case Module['f64']: value =  Module['_BinaryenConstGetValueF64'](expr); break;
+          default: throw Error('unexpected type: ' + type);
+        }
+        return {
+          'id': id,
+          'type': type,
+          'value': value
+        };
+      }
+      case Module['UnaryId']:
+        return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenUnaryGetOp'](expr),
+          'value': Module['_BinaryenUnaryGetValue'](expr)
+        };
+      case Module['BinaryId']:
+        return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenBinaryGetOp'](expr),
+          'left': Module['_BinaryenBinaryGetLeft'](expr),
+          'right':  Module['_BinaryenBinaryGetRight'](expr)
+        };
+      case Module['SelectId']:
+        return {
+          'id': id,
+          'type': type,
+          'ifTrue': Module['_BinaryenSelectGetIfTrue'](expr),
+          'ifFalse': Module['_BinaryenSelectGetIfFalse'](expr),
+          'condition': Module['_BinaryenSelectGetCondition'](expr)
+        };
+      case Module['DropId']:
+        return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenDropGetValue'](expr)
+        };
+      case Module['ReturnId']:
+        return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenReturnGetValue'](expr)
+        };
+      case Module['NopId']:
+      case Module['UnreachableId']:
+        return {
+          'id': id,
+          'type': type
+        };
+      case Module['HostId']:
+        return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenHostGetOp'](expr),
+          'nameOperand': Pointer_stringify(Module['_BinaryenHostGetNameOperand'](expr)),
+          'operands': getAllNested(expr, Module['_BinaryenHostGetNumOperands'], Module['_BinaryenHostGetOperand'])
+        };
+      case Module['AtomicRMWId']:
+        return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenAtomicRMWGetOp'](expr),
+          'bytes': Module['_BinaryenAtomicRMWGetBytes'](expr),
+          'offset': Module['_BinaryenAtomicRMWGetOffset'](expr),
+          'ptr': Module['_BinaryenAtomicRMWGetPtr'](expr),
+          'value': Module['_BinaryenAtomicRMWGetValue'](expr)
+        };
+      case Module['AtomicCmpxchgId']:
+        return {
+          'id': id,
+          'type': type,
+          'bytes': Module['_BinaryenAtomicCmpxchgGetBytes'](expr),
+          'offset': Module['_BinaryenAtomicCmpxchgGetOffset'](expr),
+          'ptr': Module['_BinaryenAtomicCmpxchgGetPtr'](expr),
+          'expected': Module['_BinaryenAtomicCmpxchgGetExpected'](expr),
+          'replacement': Module['_BinaryenAtomicCmpxchgGetReplacement'](expr)
+        };
+      case Module['AtomicWaitId']:
+        return {
+          'id': id,
+          'type': type,
+          'ptr': Module['_BinaryenAtomicWaitGetPtr'](expr),
+          'expected': Module['_BinaryenAtomicWaitGetExpected'](expr),
+          'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
+          'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
+        };
+      case Module['AtomicWakeId']:
+        return {
+          'id': id,
+          'type': type,
+          'ptr': Module['_BinaryenAtomicWakeGetPtr'](expr),
+          'wakeCount': Module['_BinaryenAtomicWakeGetWakeCount'](expr)
+        };
+      default:
+        throw Error('unexpected id: ' + id);
     }
-    return {
-      'id': Module['ConstId'],
-      'type': type,
-      'value': value
-    };
   };
 
-  Module['getUnary'] = function(expr) {
-    return {
-      'id': Module['UnaryId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'op': Module['_BinaryenUnaryGetOp'](expr),
-      'value': Module['_BinaryenUnaryGetValue'](expr)
-    };
-  };
-
-  Module['getBinary'] = function(expr) {
-    return {
-      'id': Module['BinaryId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'op': Module['_BinaryenBinaryGetOp'](expr),
-      'left': Module['_BinaryenBinaryGetLeft'](expr),
-      'right':  Module['_BinaryenBinaryGetRight'](expr)
-    };
-  };
-
-  Module['getSelect'] = function(expr) {
-    return {
-      'id': Module['SelectId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'ifTrue': Module['_BinaryenSelectGetIfTrue'](expr),
-      'ifFalse': Module['_BinaryenSelectGetIfFalse'](expr),
-      'condition': Module['_BinaryenSelectGetCondition'](expr)
-    };
-  };
-
-  Module['getDrop'] = function(expr) {
-    return {
-      'id': Module['DropId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'value': Module['_BinaryenDropGetValue'](expr)
-    };
-  };
-
-  Module['getReturn'] = function(expr) {
-    return {
-      'id': Module['ReturnId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'value': Module['_BinaryenReturnGetValue'](expr)
-    };
-  };
-
-  Module['getHost'] = function(expr) {
-    return {
-      'id': Module['HostId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'op': Module['_BinaryenHostGetOp'](expr),
-      'nameOperand': Pointer_stringify(Module['_BinaryenHostGetNameOperand'](expr)),
-      'operands': getAllNested(expr, '_BinaryenHostGetNumOperands', '_BinaryenHostGetOperand')
-    }
-  };
-
-  Module['getNop'] = function(expr) {
-    assert(Module['_BinaryenExpressionGetId'](expr) == Module['NopId']);
-    return {
-      'id': Module['NopId'],
-      'type': Module['_BinaryenExpressionGetType'](expr)
-    };
-  };
-
-  Module['getUnreachable'] = function(expr) {
-    assert(Module['_BinaryenExpressionGetId'](expr) == Module['UnreachableId']);
-    return {
-      'id': Module['UnreachableId'],
-      'type': Module['_BinaryenExpressionGetType'](expr)
-    };
-  };
-
-  Module['getAtomicRMW'] = function(expr) {
-    return {
-      'id': Module['AtomicRMWId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'op': Module['_BinaryenAtomicRMWGetOp'](expr),
-      'bytes': Module['_BinaryenAtomicRMWGetBytes'](expr),
-      'offset': Module['_BinaryenAtomicRMWGetOffset'](expr),
-      'ptr': Module['_BinaryenAtomicRMWGetPtr'](expr),
-      'value': Module['_BinaryenAtomicRMWGetValue'](expr)
-    };
-  };
-
-  Module['getAtomicCmpxchg'] = function(expr) {
-    return {
-      'id': Module['AtomicCmpxchgId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'bytes': Module['_BinaryenAtomicCmpxchgGetBytes'](expr),
-      'offset': Module['_BinaryenAtomicCmpxchgGetOffset'](expr),
-      'ptr': Module['_BinaryenAtomicCmpxchgGetPtr'](expr),
-      'expected': Module['_BinaryenAtomicCmpxchgGetExpected'](expr),
-      'replacement': Module['_BinaryenAtomicCmpxchgGetReplacement'](expr)
-    };
-  };
-
-  Module['getAtomicWait'] = function(expr) {
-    return {
-      'id': Module['AtomicWaitId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'ptr': Module['_BinaryenAtomicWaitGetPtr'](expr),
-      'expected': Module['_BinaryenAtomicWaitGetExpected'](expr),
-      'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expr),
-      'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expr)
-    };
-  };
-
-  Module['getAtomicWake'] = function(expr) {
-    return {
-      'id': Module['AtomicWakeId'],
-      'type': Module['_BinaryenExpressionGetType'](expr),
-      'ptr': Module['_BinaryenAtomicWakeGetPtr'](expr),
-      'wakeCount': Module['_BinaryenAtomicWakeGetWakeCount'](expr)
-    };
-  };
-
-  Module['getFunction'] = function(func) {
+  Module['getFunctionInfo'] = function(func) {
     return {
       'body': Module['_BinaryenFunctionGetBody'](func)
     };

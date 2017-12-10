@@ -13,9 +13,9 @@ console.log("GetFunction is equal: " + (func === module.getFunction("a-function"
 
 module.runPassesOnFunction(func, ["precompute"]);
 
-var info = Binaryen.getFunction(func);
-console.log("getFunction=" + JSON.stringify(info));
-console.log("getExpression=" + JSON.stringify(Binaryen.getExpression(info.body)));
+var info = Binaryen.getFunctionInfo(func);
+console.log("getFunctionInfo=" + JSON.stringify(info));
+console.log("getExpressionInfo(body)=" + JSON.stringify(Binaryen.getExpressionInfo(info.body)));
 console.log(Binaryen.emitText(info.body));
 
 module.removeFunction("a-function");

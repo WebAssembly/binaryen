@@ -212,13 +212,13 @@ function test_core() {
   ];
 
   // Test expression utility
-  console.log("getExpression=" + JSON.stringify(Binaryen.getExpression(valueList[3])));
+  console.log("getExpressionInfo=" + JSON.stringify(Binaryen.getExpressionInfo(valueList[3])));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
 
-  console.log("getExpression(i32.const)=" + JSON.stringify(Binaryen.getExpression(module.i32.const(5))));
-  console.log("getExpression(i64.const)=" + JSON.stringify(Binaryen.getExpression(module.i64.const(6, 7))));
-  console.log("getExpression(f32.const)=" + JSON.stringify(Binaryen.getExpression(module.f32.const(8.5))));
-  console.log("getExpression(f64.const)=" + JSON.stringify(Binaryen.getExpression(module.f64.const(9.5))));
+  console.log("getExpressionInfo(i32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i32.const(5))));
+  console.log("getExpressionInfo(i64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i64.const(6, 7))));
+  console.log("getExpressionInfo(f32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f32.const(8.5))));
+  console.log("getExpressionInfo(f64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f64.const(9.5))));
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);
