@@ -1309,7 +1309,7 @@
           'type': type,
           'name': Pointer_stringify(Module['_BinaryenGetGlobalGetName'](expr))
         };
-      case Module['SetGlobalId']: return Module['getSetGlobal'](expr);
+      case Module['SetGlobalId']:
         return {
           'id': id,
           'type': type,
