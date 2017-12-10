@@ -22,13 +22,13 @@
     return ret;
   }
 
-  Module['none'] = Module['_BinaryenNone']();
-  Module['i32'] = Module['_BinaryenInt32']();
-  Module['i64'] = Module['_BinaryenInt64']();
-  Module['f32'] = Module['_BinaryenFloat32']();
-  Module['f64'] = Module['_BinaryenFloat64']();
-  Module['unreachable'] = Module['_BinaryenUnreachableType']();
-  Module['undefined'] = Module['_BinaryenUndefined']();
+  Module['none'] = Module['_BinaryenTypeNone']();
+  Module['i32'] = Module['_BinaryenTypeInt32']();
+  Module['i64'] = Module['_BinaryenTypeInt64']();
+  Module['f32'] = Module['_BinaryenTypeFloat32']();
+  Module['f64'] = Module['_BinaryenTypeFloat64']();
+  Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
+  Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
   Module['InvalidId'] = Module['_BinaryenInvalidId']();
   Module['BlockId'] = Module['_BinaryenBlockId']();

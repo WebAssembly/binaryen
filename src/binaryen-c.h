@@ -68,15 +68,22 @@ typedef uint32_t BinaryenIndex;
 
 typedef uint32_t BinaryenType;
 
-BinaryenType BinaryenNone(void);
-BinaryenType BinaryenInt32(void);
-BinaryenType BinaryenInt64(void);
-BinaryenType BinaryenFloat32(void);
-BinaryenType BinaryenFloat64(void);
-
+BinaryenType BinaryenTypeNone(void);
+BinaryenType BinaryenTypeInt32(void);
+BinaryenType BinaryenTypeInt64(void);
+BinaryenType BinaryenTypeFloat32(void);
+BinaryenType BinaryenTypeFloat64(void);
+BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
-BinaryenType BinaryenUndefined(void);
+BinaryenType BinaryenTypeAuto(void);
+
+WASM_DEPRECATED BinaryenType BinaryenNone(void);
+WASM_DEPRECATED BinaryenType BinaryenInt32(void);
+WASM_DEPRECATED BinaryenType BinaryenInt64(void);
+WASM_DEPRECATED BinaryenType BinaryenFloat32(void);
+WASM_DEPRECATED BinaryenType BinaryenFloat64(void);
+WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
 
 // Expression ids (call to get the value of each; you can cache them)
 

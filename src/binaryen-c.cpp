@@ -99,13 +99,20 @@ extern "C" {
 
 // Core types
 
-BinaryenType BinaryenNone(void) { return none; }
-BinaryenType BinaryenInt32(void) { return i32; }
-BinaryenType BinaryenInt64(void) { return i64; }
-BinaryenType BinaryenFloat32(void) { return f32; }
-BinaryenType BinaryenFloat64(void) { return f64; }
-BinaryenType BinaryenUnreachableType(void) { return unreachable; }
-BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
+BinaryenType BinaryenTypeNone(void) { return none; }
+BinaryenType BinaryenTypeInt32(void) { return i32; }
+BinaryenType BinaryenTypeInt64(void) { return i64; }
+BinaryenType BinaryenTypeFloat32(void) { return f32; }
+BinaryenType BinaryenTypeFloat64(void) { return f64; }
+BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
+BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
+
+WASM_DEPRECATED BinaryenType BinaryenNone(void) { return none; }
+WASM_DEPRECATED BinaryenType BinaryenInt32(void) { return i32; }
+WASM_DEPRECATED BinaryenType BinaryenInt64(void) { return i64; }
+WASM_DEPRECATED BinaryenType BinaryenFloat32(void) { return f32; }
+WASM_DEPRECATED BinaryenType BinaryenFloat64(void) { return f64; }
+WASM_DEPRECATED BinaryenType BinaryenUndefined(void) { return uint32_t(-1); }
 
 // Expression ids
 
@@ -360,7 +367,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }
-  if (type != BinaryenUndefined()) ret->finalize(WasmType(type));
+  if (type != BinaryenTypeAuto()) ret->finalize(WasmType(type));
   else ret->finalize();
 
   if (tracing) {
@@ -376,7 +383,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
     traceNameOrNULL(name);
     std::cout << ", children, " << numChildren << ", ";
-    if (type == BinaryenUndefined()) std::cout << "BinaryenUndefined()";
+    if (type == BinaryenTypeAuto()) std::cout << "BinaryenTypeAuto()";
     else std::cout << type;
     std::cout <<  ");\n";
     std::cout << "  }\n";
