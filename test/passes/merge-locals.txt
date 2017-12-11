@@ -100,4 +100,16 @@
   )
   (get_local $y)
  )
+ (func $silly-self (; 6 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $x)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $y)
+ )
 )
