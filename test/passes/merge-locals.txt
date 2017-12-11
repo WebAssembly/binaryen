@@ -1,0 +1,82 @@
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (memory $0 0)
+ (func $test (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $x)
+ )
+ (func $test2 (; 1 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $x)
+ )
+ (func $test-multiple (; 2 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (get_local $x)
+ )
+ (func $test-just-some (; 3 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $y
+   (i32.const 200)
+  )
+  (get_local $y)
+ )
+ (func $test-just-some2 (; 4 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (if
+   (i32.const 300)
+   (set_local $y
+    (i32.const 400)
+   )
+   (drop
+    (get_local $y)
+   )
+  )
+  (get_local $y)
+ )
+)
