@@ -96,5 +96,19 @@
   )
   (get_local $y) ;; turn this into $x
  )
+ (func $silly-multi (param $x $i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (tee_local $y
+      (get_local $x)
+     )
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $y) ;; turn this into $x
+ )
 )
 
