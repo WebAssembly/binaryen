@@ -94,33 +94,60 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   }
 
   void optimizeCopies() {
+    if (copies.empty()) return;
     // compute all dependencies
-    LocalGraph localGraph(getFunction(), getModule());
-    localGraph.computeInfluences();
+    LocalGraph preGraph(getFunction(), getModule());
+    preGraph.computeInfluences();
     // optimize each copy
+    std::unordered_map<SetLocal*, SetLocal*> optimizedToTrivial;
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<SetLocal>();
       bool canDoThemAll = true;
-      for (auto* influencedGet : localGraph.setInfluences[trivial]) {
+      for (auto* influencedGet : preGraph.setInfluences[trivial]) {
         // this get uses the trivial write, so it uses the value in the copy.
         // however, it may depend on other writes too, if there is a merge/phi,
         // and in that case we can't do anything
         assert(influencedGet->index == trivial->index);
-        if (localGraph.getSetses[influencedGet].size() == 1) {
+        if (preGraph.getSetses[influencedGet].size() == 1) {
           // this is ok
-          assert(*localGraph.getSetses[influencedGet].begin() == trivial);
+          assert(*preGraph.getSetses[influencedGet].begin() == trivial);
         } else {
           canDoThemAll = false;
         }
       }
       if (canDoThemAll) {
         // worth it for this copy, do it
-        for (auto* influencedGet : localGraph.setInfluences[trivial]) {
+        for (auto* influencedGet : preGraph.setInfluences[trivial]) {
           influencedGet->index = copy->index;
         }
+        optimizedToTrivial[copy] = trivial;
       }
       // either way, get rid of the trivial get
       copy->value = trivial->value;
+    }
+    if (optimizedToTrivial.empty()) return;
+    // finally, we need to verify that the changes work properly, that is,
+    // they use the value from the right place (and are not affected by
+    // another set of the index we changed to).
+    // if one does not work, we need to undo all its siblings (don't extend
+    // the live range unless we are definitely removing a conflict, same
+    // logic as before).
+    LocalGraph postGraph(getFunction(), getModule());
+    postGraph.computeInfluences();
+    for (auto& pair : optimizedToTrivial) {
+      auto* copy = pair.first;
+      auto* trivial = pair.second;
+      for (auto* influencedGet : preGraph.setInfluences[trivial]) {
+        // verify the set
+        auto& sets = postGraph.getSetses[influencedGet];
+        if (sets.size() != 1 || *sets.begin() != copy) {
+          // not good, undo all the changes for this copy
+          for (auto* influencedGet : preGraph.setInfluences[trivial]) {
+            influencedGet->index = trivial->index;
+          }
+          break;
+        }
+      }
     }
   }
 };

@@ -110,5 +110,31 @@
   )
   (get_local $y) ;; turn this into $x
  )
+ (func $undo-1 (param $var$1 i32) (param $var$2 i32)
+  (local $var$5 i32)
+  (set_local $var$2 ;; copy 1 to 2
+   (get_local $var$1)
+  )
+  (set_local $var$2 ;; overwrite 2
+   (i32.const 1)
+  )
+  (drop
+   (get_local $var$1) ;; can't be changed to $var$2, as it changes
+  )
+ )
+ (func $undo-2 (param $var$1 i32) (param $var$2 i32)
+  (local $var$5 i32)
+  (set_local $var$2 ;; copy 1 to 2
+   (get_local $var$1)
+  )
+  (if (get_local $var$1)
+   (set_local $var$2 ;; conditional overwrite 2
+    (i32.const 1)
+   )
+  )
+  (drop
+   (get_local $var$1) ;; can't be changed to $var$2, as it changes
+  )
+ )
 )
 
