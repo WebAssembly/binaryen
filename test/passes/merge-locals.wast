@@ -176,5 +176,58 @@
   (set_local $y (i32.const 200))
   (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
  )
+ (func $reverse-undo (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x) ;; can optimize this ($y lives on)
+   )
+  )
+  (set_local $x (i32.const 300)) ;; force an undo
+  (drop (get_local $x)) ;; (read lower down first) but the reverse can almost work
+  (if (i32.const 1)
+   (set_local $y (i32.const 200))
+  )
+  (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
+ )
+ (func $reverse-undo2 (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (set_local $x (i32.const 300)) ;; force an undo
+  (drop (get_local $x)) ;; (read lower down first) but the reverse can almost work
+  (if (i32.const 1)
+   (set_local $y (i32.const 200))
+  )
+  (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
+ )
+ (func $reverse-undo3-conditional (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (if (i32.const 1)
+   (set_local $x (i32.const 300)) ;; force an undo
+  )
+  (drop (get_local $x)) ;; (read lower down first) but the reverse can almost work
+  (if (i32.const 1)
+   (set_local $y (i32.const 200))
+  )
+  (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
+ )
 )
 
