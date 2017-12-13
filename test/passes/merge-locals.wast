@@ -152,5 +152,29 @@
   )
   (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
  )
+ (func $reverse-end (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x) ;; don't change to $y, as its lifetime ended. leave it ended
+   )
+  )
+ )
+ (func $reverse-lone-end-2 (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x) ;; don't change to $y, as its lifetime ended. leave it ended
+   )
+  )
+  (set_local $y (i32.const 200))
+  (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
+ )
 )
 

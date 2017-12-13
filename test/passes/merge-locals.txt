@@ -175,4 +175,32 @@
    (get_local $y)
   )
  )
+ (func $reverse-end (; 11 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+ )
+ (func $reverse-lone-end-2 (; 12 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (set_local $y
+   (i32.const 200)
+  )
+  (drop
+   (get_local $y)
+  )
+ )
 )
