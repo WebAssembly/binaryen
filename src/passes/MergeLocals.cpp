@@ -99,55 +99,123 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
     LocalGraph preGraph(getFunction(), getModule());
     preGraph.computeInfluences();
     // optimize each copy
-    std::unordered_map<SetLocal*, SetLocal*> optimizedToTrivial;
+    std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy, optimizedToTrivial;
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<SetLocal>();
-      bool canDoThemAll = true;
-      for (auto* influencedGet : preGraph.setInfluences[trivial]) {
-        // this get uses the trivial write, so it uses the value in the copy.
-        // however, it may depend on other writes too, if there is a merge/phi,
-        // and in that case we can't do anything
-        assert(influencedGet->index == trivial->index);
-        if (preGraph.getSetses[influencedGet].size() == 1) {
-          // this is ok
-          assert(*preGraph.getSetses[influencedGet].begin() == trivial);
-        } else {
-          canDoThemAll = false;
+      bool canOptimizeToCopy = true;
+      auto& trivialInfluences = preGraph.setInfluences[trivial];
+      if (!trivialInfluences.empty()) {
+        canOptimizeToCopy = true;
+        for (auto* influencedGet : trivialInfluences) {
+          // this get uses the trivial write, so it uses the value in the copy.
+          // however, it may depend on other writes too, if there is a merge/phi,
+          // and in that case we can't do anything
+          assert(influencedGet->index == trivial->index);
+          if (preGraph.getSetses[influencedGet].size() == 1) {
+            // this is ok
+            assert(*preGraph.getSetses[influencedGet].begin() == trivial);
+          } else {
+            canOptimizeToCopy = false;
+            break;
+          }
         }
       }
-      if (canDoThemAll) {
+      if (canOptimizeToCopy) {
         // worth it for this copy, do it
-        for (auto* influencedGet : preGraph.setInfluences[trivial]) {
+        for (auto* influencedGet : trivialInfluences) {
           influencedGet->index = copy->index;
         }
-        optimizedToTrivial[copy] = trivial;
-      }
-      // either way, get rid of the trivial get
-      copy->value = trivial->value;
-    }
-    if (optimizedToTrivial.empty()) return;
-    // finally, we need to verify that the changes work properly, that is,
-    // they use the value from the right place (and are not affected by
-    // another set of the index we changed to).
-    // if one does not work, we need to undo all its siblings (don't extend
-    // the live range unless we are definitely removing a conflict, same
-    // logic as before).
-    LocalGraph postGraph(getFunction(), getModule());
-    postGraph.computeInfluences();
-    for (auto& pair : optimizedToTrivial) {
-      auto* copy = pair.first;
-      auto* trivial = pair.second;
-      for (auto* influencedGet : preGraph.setInfluences[trivial]) {
-        // verify the set
-        auto& sets = postGraph.getSetses[influencedGet];
-        if (sets.size() != 1 || *sets.begin() != copy) {
-          // not good, undo all the changes for this copy
-          for (auto* influencedGet : preGraph.setInfluences[trivial]) {
-            influencedGet->index = trivial->index;
+        optimizedToCopy[copy] = trivial;
+      } else {
+        // alternatively, we can try to remove the conflict in the opposite way: given
+        //   (set_local $x
+        //    (get_local $y)
+        //   )
+        // we can look for uses of $x that could instead be uses of $y. this extends
+        // $y's live range, but if it removes the conflict between $x and $y, it may be
+        // worth it
+        if (!trivialInfluences.empty()) { // if the trivial set we added has influences, it means $y lives on
+          auto& copyInfluences = preGraph.setInfluences[copy];
+          if (!copyInfluences.empty()) {
+            bool canOptimizeToTrivial = true;
+            for (auto* influencedGet : copyInfluences) {
+              // as above, avoid merges/phis
+              assert(influencedGet->index == copy->index);
+              if (preGraph.getSetses[influencedGet].size() == 1) {
+                // this is ok
+                assert(*preGraph.getSetses[influencedGet].begin() == copy);
+              } else {
+                canOptimizeToTrivial = false;
+                break;
+              }
+            }
+            if (canOptimizeToTrivial) {
+              // worth it for this copy, do it
+              for (auto* influencedGet : copyInfluences) {
+                influencedGet->index = trivial->index;
+              }
+              optimizedToTrivial[copy] = trivial;
+              // note that we don't
+            }
           }
-          break;
         }
       }
+    }
+    if (!optimizedToCopy.empty() || !optimizedToTrivial.empty()) {
+      // finally, we need to verify that the changes work properly, that is,
+      // they use the value from the right place (and are not affected by
+      // another set of the index we changed to).
+      // if one does not work, we need to undo all its siblings (don't extend
+      // the live range unless we are definitely removing a conflict, same
+      // logic as before).
+      LocalGraph postGraph(getFunction(), getModule());
+      postGraph.computeInfluences();
+      for (auto& pair : optimizedToCopy) {
+        auto* copy = pair.first;
+        auto* trivial = pair.second;
+        auto& trivialInfluences = preGraph.setInfluences[trivial];
+        for (auto* influencedGet : trivialInfluences) {
+          // verify the set
+          auto& sets = postGraph.getSetses[influencedGet];
+          if (sets.size() != 1 || *sets.begin() != copy) {
+            // not good, undo all the changes for this copy
+            for (auto* influencedGet : trivialInfluences) {
+              influencedGet->index = trivial->index;
+            }
+            break;
+          }
+        }
+      }
+      for (auto& pair : optimizedToTrivial) {
+        auto* copy = pair.first;
+        auto* trivial = pair.second;
+        auto& copyInfluences = preGraph.setInfluences[copy];
+        for (auto* influencedGet : copyInfluences) {
+          // verify the set
+          bool ok = true;
+          auto& sets = postGraph.getSetses[influencedGet];
+          if (sets.size() != 1 || *sets.begin() != trivial) {
+            // not good, undo all the changes for this copy
+            for (auto* influencedGet : copyInfluences) {
+              influencedGet->index = copy->index;
+            }
+            ok = false;
+            break;
+          }
+          // if this change was ok, we can do better and remove the copy itself
+          if (ok) {
+            if (copy->isTee()) {
+              *postGraph.locations[copy] = trivial->value;
+            } else {
+              ExpressionManipulator::nop(copy);
+            }
+          }
+        }
+      }
+    }
+    // remove the trivial sets
+    for (auto* copy : copies) {
+      copy->value = copy->value->cast<SetLocal>()->value;
     }
   }
 };

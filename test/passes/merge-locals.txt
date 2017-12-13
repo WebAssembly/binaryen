@@ -87,7 +87,7 @@
      (get_local $y)
     )
     (i32.const 100)
-    (get_local $x)
+    (i32.const 200)
    )
   )
   (if
@@ -152,6 +152,27 @@
   )
   (drop
    (get_local $var$1)
+  )
+ )
+ (func $reverse (; 10 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (get_local $y)
+    (i32.const 100)
+    (get_local $y)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
   )
  )
 )

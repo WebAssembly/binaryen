@@ -74,7 +74,7 @@
      (get_local $y)
     )
     (i32.const 100)
-    (get_local $x)
+    (i32.const 200)
    )
   )
   (if
@@ -135,6 +135,22 @@
   (drop
    (get_local $var$1) ;; can't be changed to $var$2, as it changes
   )
+ )
+ (func $reverse (param $x $i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (drop (get_local $x)) ;; (read lower down first) but the reverse can work!
+  (if (i32.const 1)
+   (set_local $y (i32.const 200))
+  )
+  (drop (get_local $y)) ;; cannot this into $x, since this $y has multiple sources
  )
 )
 
