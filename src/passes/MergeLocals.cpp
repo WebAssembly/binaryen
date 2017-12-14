@@ -190,9 +190,9 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         auto* copy = pair.first;
         auto* trivial = pair.second;
         auto& copyInfluences = preGraph.setInfluences[copy];
+        bool ok = true;
         for (auto* influencedGet : copyInfluences) {
           // verify the set
-          bool ok = true;
           auto& sets = postGraph.getSetses[influencedGet];
           if (sets.size() != 1 || *sets.begin() != trivial) {
             // not good, undo all the changes for this copy
@@ -202,13 +202,13 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
             ok = false;
             break;
           }
-          // if this change was ok, we can do better and remove the copy itself
-          if (ok) {
-            if (copy->isTee()) {
-              *postGraph.locations[copy] = trivial->value;
-            } else {
-              ExpressionManipulator::nop(copy);
-            }
+        }
+        // if this change was ok, we can do better and remove the copy itself
+        if (ok) {
+          if (copy->isTee()) {
+            *postGraph.locations[copy] = trivial->value;
+          } else {
+            ExpressionManipulator::nop(copy);
           }
         }
       }

@@ -282,4 +282,70 @@
    (get_local $y)
   )
  )
+ (func $reverse-undo3-conditional-b (; 16 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 300)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo3-conditional-c (; 17 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (if
+   (i32.const 1)
+   (drop
+    (get_local $x)
+   )
+   (block $block
+    (if
+     (i32.const 1)
+     (set_local $x
+      (i32.const 300)
+     )
+    )
+    (drop
+     (get_local $x)
+    )
+   )
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
 )
