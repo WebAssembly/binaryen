@@ -102,7 +102,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
     std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy, optimizedToTrivial;
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<SetLocal>();
-      bool canOptimizeToCopy = true;
+      bool canOptimizeToCopy = false;
       auto& trivialInfluences = preGraph.setInfluences[trivial];
       if (!trivialInfluences.empty()) {
         canOptimizeToCopy = true;
