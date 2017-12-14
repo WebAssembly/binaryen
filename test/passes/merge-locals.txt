@@ -1,6 +1,8 @@
 (module
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func (param i32 i32)))
+ (type $2 (func (param i32 f32 f32) (result i64)))
+ (global $global$0 (mut i32) (i32.const 10))
  (memory $0 0)
  (func $test (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (drop
@@ -346,6 +348,90 @@
   )
   (drop
    (get_local $y)
+  )
+ )
+ (func $fuzz (; 18 ;) (type $2) (param $var$0 i32) (param $var$1 f32) (param $var$2 f32) (result i64)
+  (local $var$3 i32)
+  (set_global $global$0
+   (i32.sub
+    (get_global $global$0)
+    (i32.const 1)
+   )
+  )
+  (loop $label$1 (result i64)
+   (set_global $global$0
+    (i32.sub
+     (get_global $global$0)
+     (i32.const 1)
+    )
+   )
+   (br_if $label$1
+    (block $label$2 (result i32)
+     (drop
+      (if (result i32)
+       (block $label$3 (result i32)
+        (set_global $global$0
+         (i32.sub
+          (get_global $global$0)
+          (i32.const 3)
+         )
+        )
+        (set_local $var$3
+         (i32.const 1)
+        )
+        (tee_local $var$3
+         (get_local $var$0)
+        )
+       )
+       (i32.const 0)
+       (block $block (result i32)
+        (set_local $var$3
+         (if (result i32)
+          (i32.const 0)
+          (block $block13 (result i32)
+           (block $label$7
+            (block $label$8
+             (set_local $var$0
+              (i32.const 34738786)
+             )
+            )
+           )
+           (get_local $var$3)
+          )
+          (block $block14 (result i32)
+           (if
+            (i32.eqz
+             (get_global $global$0)
+            )
+            (return
+             (i64.const 137438953472)
+            )
+           )
+           (set_global $global$0
+            (i32.sub
+             (get_global $global$0)
+             (i32.const 1)
+            )
+           )
+           (br_if $label$1
+            (i32.eqz
+             (get_local $var$3)
+            )
+           )
+           (return
+            (i64.const 44125)
+           )
+          )
+         )
+        )
+        (i32.const -129)
+       )
+      )
+     )
+     (i32.const 0)
+    )
+   )
+   (i64.const -36028797018963968)
   )
  )
 )
