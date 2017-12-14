@@ -179,8 +179,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
           auto& sets = postGraph.getSetses[influencedGet];
           if (sets.size() != 1 || *sets.begin() != copy) {
             // not good, undo all the changes for this copy
-            for (auto* influencedGet : trivialInfluences) {
-              influencedGet->index = trivial->index;
+            for (auto* undo : trivialInfluences) {
+              undo->index = trivial->index;
             }
             break;
           }
@@ -196,8 +196,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
           auto& sets = postGraph.getSetses[influencedGet];
           if (sets.size() != 1 || *sets.begin() != trivial) {
             // not good, undo all the changes for this copy
-            for (auto* influencedGet : copyInfluences) {
-              influencedGet->index = copy->index;
+            for (auto* undo : copyInfluences) {
+              undo->index = copy->index;
             }
             ok = false;
             break;
