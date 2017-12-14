@@ -182,36 +182,38 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
+  Module* curr = &wasm;
+  Module other;
+
+  if (fuzzExec && fuzzBinary) {
+    BufferWithRandomAccess buffer(false);
+    // write the binary
+    WasmBinaryWriter writer(&wasm, buffer, false);
+    writer.write();
+    // read the binary
+    auto input = buffer.getAsChars();
+    WasmBinaryBuilder parser(other, input, false);
+    parser.read();
+    bool valid = WasmValidator().validate(other, features);
+    if (!valid) {
+      WasmPrinter::printModule(&other);
+    }
+    assert(valid);
+    curr = &other;
+  }
+
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    options.runPasses(wasm);
-    bool valid = WasmValidator().validate(wasm, features);
+    options.runPasses(*curr);
+    bool valid = WasmValidator().validate(*curr, features);
     if (!valid) {
-      WasmPrinter::printModule(&wasm);
+      WasmPrinter::printModule(&*curr);
     }
     assert(valid);
   }
 
   if (fuzzExec) {
-    auto* compare = &wasm;
-    Module second;
-    if (fuzzBinary) {
-      compare = &second;
-      BufferWithRandomAccess buffer(false);
-      // write the binary
-      WasmBinaryWriter writer(&wasm, buffer, false);
-      writer.write();
-      // read the binary
-      auto input = buffer.getAsChars();
-      WasmBinaryBuilder parser(second, input, false);
-      parser.read();
-      bool valid = WasmValidator().validate(second, features);
-      if (!valid) {
-        WasmPrinter::printModule(&second);
-      }
-      assert(valid);
-    }
-    results.check(*compare);
+    results.check(*curr);
   }
 
   if (options.extra.count("output") > 0) {
@@ -220,7 +222,7 @@ int main(int argc, const char* argv[]) {
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    writer.write(*curr, options.extra["output"]);
 
     if (extraFuzzCommand.size() > 0) {
       auto secondOutput = runCommand(extraFuzzCommand);
