@@ -34,68 +34,6 @@
 using namespace cashew;
 using namespace wasm;
 
-bool startsWith(std::string const& str, std::string const& prefix) {
-  for (unsigned i = 0; i < prefix.size(); ++i) {
-    if (i >= str.size() || str[i] != prefix[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-enum RelocType {
-  R_WEBASSEMBLY_FUNCTION_INDEX_LEB = 0,
-  R_WEBASSEMBLY_TABLE_INDEX_SLEB   = 1,
-  R_WEBASSEMBLY_TABLE_INDEX_I32    = 2,
-  R_WEBASSEMBLY_MEMORY_ADDR_LEB    = 3,
-  R_WEBASSEMBLY_MEMORY_ADDR_SLEB   = 4,
-  R_WEBASSEMBLY_MEMORY_ADDR_I32    = 5,
-  R_WEBASSEMBLY_TYPE_INDEX_LEB     = 6,
-  R_WEBASSEMBLY_GLOBAL_INDEX_LEB   = 7,
-};
-
-void parseRelocSection(
-    std::vector<char> const& data,
-    Module& wasm,
-    std::vector<Name> &initializerFunctions) {
-  unsigned idx = 0;
-  auto get = [&idx, &data](){ return data[idx++]; };
-  auto readNext = [get](){
-    U32LEB leb;
-    leb.read(get);
-    return leb.value;
-  };
-  uint32_t section_id = readNext();
-  if (section_id == 0) {
-    Fatal() << "TODO: implement section_id=0\n";
-  }
-  uint32_t count = readNext();
-  for (uint32_t i = 0; i < count; ++i) {
-    RelocType type = static_cast<RelocType>(readNext());
-    uint32_t offset = readNext();
-    (void)offset;
-    uint32_t index = readNext();
-    (void)index;
-    switch (type) {
-    case R_WEBASSEMBLY_TABLE_INDEX_I32:
-    case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
-    case R_WEBASSEMBLY_TABLE_INDEX_SLEB:
-    case R_WEBASSEMBLY_TYPE_INDEX_LEB:
-    case R_WEBASSEMBLY_GLOBAL_INDEX_LEB:
-      break;
-    case R_WEBASSEMBLY_MEMORY_ADDR_LEB:
-    case R_WEBASSEMBLY_MEMORY_ADDR_SLEB:
-    case R_WEBASSEMBLY_MEMORY_ADDR_I32: {
-      uint32_t addend = readNext();
-      (void)addend;
-      break;
-    }
-    default:
-      Fatal() << "Invalid relocation type: " << type << "\n";
-    }
-  }
-}
-
 enum LinkType : unsigned {
   WASM_STACK_POINTER  = 0x1,
   WASM_SYMBOL_INFO    = 0x2,
@@ -191,9 +129,7 @@ int main(int argc, const char *argv[]) {
   std::vector<Name> initializerFunctions;
 
   for (auto &section : wasm.userSections) {
-    if (startsWith(section.name, "reloc")) {
-      parseRelocSection(section.data, wasm, initializerFunctions);
-    } else if (section.name == "linking") {
+    if (section.name == "linking") {
       parseLinkingSection(section.data, wasm, dataSize, initializerFunctions);
     }
   }
