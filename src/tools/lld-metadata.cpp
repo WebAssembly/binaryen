@@ -77,13 +77,7 @@ void parseRelocSection(
     uint32_t index = readNext();
     (void)index;
     switch (type) {
-    case R_WEBASSEMBLY_TABLE_INDEX_I32: {
-      // Assumption: LLD only creates a table for initializer functions.
-      // TODO: assumption is false, function pointers also wind up here. Fix it.
-      // Name name = wasm.table.segments[0].data[index];
-      // initializerFunctions.push_back(name);
-      break;
-    }
+    case R_WEBASSEMBLY_TABLE_INDEX_I32:
     case R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
     case R_WEBASSEMBLY_TABLE_INDEX_SLEB:
     case R_WEBASSEMBLY_TYPE_INDEX_LEB:
@@ -108,9 +102,14 @@ enum LinkType : unsigned {
   WASM_DATA_SIZE      = 0x3,
   WASM_DATA_ALIGNMENT = 0x4,
   WASM_SEGMENT_INFO   = 0x5,
+  WASM_INIT_FUNCS     = 0x6,
 };
 
-void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
+void parseLinkingSection(
+    std::vector<char> const& data,
+    Module& wasm,
+    uint32_t &dataSize,
+    std::vector<Name> &initializerFunctions) {
   unsigned idx = 0;
   auto get = [&idx, &data](){ return data[idx++]; };
   auto readNext = [get](){
@@ -119,19 +118,38 @@ void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
     return leb.value;
   };
 
+  uint32_t importedFunctions = 0;
+  for (auto& import : wasm.imports) {
+    if (import->kind != ExternalKind::Function) continue;
+    importedFunctions++;
+  }
+
   while (idx < data.size()) {
     LinkType type = static_cast<LinkType>(readNext());
     uint32_t size = readNext();
+    uint32_t startIdx = idx;
 
     switch(type) {
     case WASM_DATA_SIZE: {
       dataSize = readNext();
       break;
     }
-    default:
-      idx += size;
+    case WASM_INIT_FUNCS: {
+      uint32_t numInit = readNext();
+      for (uint32_t i = 0; i < numInit; ++i) {
+        uint32_t priority = readNext();
+        (void)priority;
+        uint32_t rawIdx = readNext();
+        uint32_t functionIdx = rawIdx - importedFunctions;
+        auto name = wasm.functions[functionIdx]->name;
+        initializerFunctions.push_back(name);
+      }
       break;
     }
+    default:
+      break;
+    }
+    idx = startIdx + size;
   }
 }
 
@@ -176,7 +194,7 @@ int main(int argc, const char *argv[]) {
     if (startsWith(section.name, "reloc")) {
       parseRelocSection(section.data, wasm, initializerFunctions);
     } else if (section.name == "linking") {
-      parseLinkingSection(section.data, dataSize);
+      parseLinkingSection(section.data, wasm, dataSize, initializerFunctions);
     }
   }
 

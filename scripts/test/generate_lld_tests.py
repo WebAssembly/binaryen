@@ -26,7 +26,6 @@ def generate_lld_tests(clang_bin):
   lld_path = os.path.join(options.binaryen_test, 'lld')
   for src_file in sorted(os.listdir(lld_path)):
     _, ext = os.path.splitext(src_file)
-    print src_file, ext
     if ext not in ['.c', '.cpp']:
       continue
     print '..', src_file
