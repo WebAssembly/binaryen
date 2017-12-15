@@ -25,10 +25,12 @@ def generate_lld_tests(clang_bin):
 
   lld_path = os.path.join(options.binaryen_test, 'lld')
   for src_file in sorted(os.listdir(lld_path)):
-    if not src_file.endswith('.c'):
+    _, ext = os.path.splitext(src_file)
+    print src_file, ext
+    if ext not in ['.c', '.cpp']:
       continue
     print '..', src_file
-    obj_file = src_file.replace('.c', '.o')
+    obj_file = src_file.replace(ext, '.o')
 
     src_path = os.path.join(lld_path, src_file)
     obj_path = os.path.join(lld_path, obj_file)
@@ -39,6 +41,8 @@ def generate_lld_tests(clang_bin):
       '-nostdinc',
       '-Xclang', '-nobuiltininc',
       '-Xclang', '-nostdsysteminc',
+      '-Xclang', '-I/s/work/emscripten/system/include',
+      '-O1',
     ]
     run_command(cmd)
 

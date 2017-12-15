@@ -1,0 +1,1 @@
+{ "asmConsts": {"2": ["{ Module.print(\"Got \" + $0); }", ["ii"]],"0": ["{ Module.print(\"Hello world\"); }", ["i"]],"1": ["{ return $0 + $1; }", ["iii"]]},"staticBump": 84, "initializers": [] }
