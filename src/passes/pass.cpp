@@ -143,7 +143,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("merge-locals");
+    add("merge-locals"); // very slow on e.g. sqlite
   }
   add("coalesce-locals");
   add("simplify-locals");
