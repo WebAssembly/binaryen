@@ -194,6 +194,17 @@ def run_wasm_merge_tests():
           with open(out + '.stdout') as f:
             fail_if_not_identical(f.read(), stdout)
 
+def run_crash_tests():
+  print "\n[ checking we don't crash on tricky inputs... ]\n"
+
+  for t in os.listdir(os.path.join('test', 'crash')):
+    if t.endswith(('.wast', '.wasm')):
+      print '..', t
+      t = os.path.join('test', 'crash', t)
+      cmd = WASM_OPT + [t]
+      # expect a parse error to be reported
+      run_command(cmd, expected_err='parse exception:', err_contains=True, expected_status=1)
+
 def run_ctor_eval_tests():
   print '\n[ checking wasm-ctor-eval... ]\n'
 
@@ -576,6 +587,7 @@ def main():
   asm2wasm.test_asm2wasm_binary()
   run_wasm_dis_tests()
   run_wasm_merge_tests()
+  run_crash_tests()
   run_ctor_eval_tests()
   run_wasm_metadce_tests()
   if has_shell_timeout():
