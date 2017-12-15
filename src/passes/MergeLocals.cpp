@@ -86,7 +86,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
     if (auto* get = curr->value->dynCast<GetLocal>()) {
       if (get->index != curr->index) {
         Builder builder(*getModule());
-        auto* trivial = builder.makeSetLocal(get->index, get);
+        auto* trivial = builder.makeTeeLocal(get->index, get);
         curr->value = trivial;
         copies.push_back(curr);
       }
@@ -190,7 +190,6 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         auto* copy = pair.first;
         auto* trivial = pair.second;
         auto& copyInfluences = preGraph.setInfluences[copy];
-        bool ok = true;
         for (auto* influencedGet : copyInfluences) {
           // verify the set
           auto& sets = postGraph.getSetses[influencedGet];
@@ -199,18 +198,11 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
             for (auto* undo : copyInfluences) {
               undo->index = copy->index;
             }
-            ok = false;
             break;
           }
         }
-        // if this change was ok, we can do better and remove the copy itself
-        if (ok) {
-          if (copy->isTee()) {
-            *postGraph.locations[copy] = trivial->value;
-          } else {
-            ExpressionManipulator::nop(copy);
-          }
-        }
+        // if this change was ok, we can probably remove the copy itself,
+        // but we leave that for other passes
       }
     }
     // remove the trivial sets

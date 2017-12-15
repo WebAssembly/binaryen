@@ -357,5 +357,23 @@
    (i64.const -36028797018963968)
   )
  )
+ (func $trivial-confusion (param $unused i32) (param $param i32) (param $result i32)
+  (loop $label$1
+   (if
+    (i32.const 1)
+    (drop
+     (get_local $result)
+    )
+   )
+   (set_local $result ;; vanishes
+    (get_local $param)
+   )
+   (br_if $label$1
+    (tee_local $unused ;; unused, but forms part of a copy, with $result - the trivial tee we add here should not confuse us
+     (get_local $result) ;; flips
+    )
+   )
+  )
+ )
 )
 
