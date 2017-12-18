@@ -127,11 +127,8 @@ void LocalGraph::visitLoop(Loop* curr) {
         // the get trivially has fewer sets, so it overrode the loop entry sets
         return;
       }
-      std::vector<SetLocal*> intersection;
-      std::set_intersection(beforeSets.begin(), beforeSets.end(),
-                            getSets.begin(), getSets.end(),
-                            std::back_inserter(intersection));
-      if (intersection.size() < beforeSets.size()) {
+      if (!std::includes(getSets.begin(), getSets.end(),
+                         beforeSets.begin(), beforeSets.end())) {
         // the get has not the same sets as in the loop entry
         return;
       }

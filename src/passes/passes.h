@@ -42,6 +42,7 @@ Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
+Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
