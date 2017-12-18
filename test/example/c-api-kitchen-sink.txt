@@ -1095,6 +1095,8 @@ int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenImportRef> imports;
+  std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
@@ -1398,8 +1400,8 @@ int main() {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
-  BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  imports[0] = BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
@@ -1965,6 +1967,8 @@ int main() {
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
@@ -1976,7 +1980,7 @@ int main() {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
+  imports[1] = BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {
@@ -2920,6 +2924,8 @@ optimized:
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   return 0;
 }
