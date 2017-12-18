@@ -91,6 +91,7 @@ echo "building shared bitcode"
   src/passes/LogExecution.cpp \
   src/passes/MemoryPacking.cpp \
   src/passes/MergeBlocks.cpp \
+  src/passes/MergeLocals.cpp \
   src/passes/Metrics.cpp \
   src/passes/NameList.cpp \
   src/passes/OptimizeInstructions.cpp \
@@ -547,6 +548,19 @@ export_function "_BinaryenFunctionGetVar"
 export_function "_BinaryenFunctionGetBody"
 export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
+
+# 'Import' operations
+export_function "_BinaryenImportGetKind"
+export_function "_BinaryenImportGetModule"
+export_function "_BinaryenImportGetBase"
+export_function "_BinaryenImportGetName"
+export_function "_BinaryenImportGetGlobalType"
+export_function "_BinaryenImportGetFunctionType"
+
+# 'Export' operations
+export_function "_BinaryenExportGetKind"
+export_function "_BinaryenExportGetName"
+export_function "_BinaryenExportGetValue"
 
 # 'Relooper' operations
 export_function "_RelooperCreate"

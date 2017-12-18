@@ -720,6 +720,34 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 //
+// ========== Import Operations ==========
+//
+
+// Gets the external kind of the specified import.
+BinaryenExternalKind BinaryenImportGetKind(BinaryenImportRef import);
+// Gets the external module name of the specified import.
+const char* BinaryenImportGetModule(BinaryenImportRef import);
+// Gets the external base name of the specified import.
+const char* BinaryenImportGetBase(BinaryenImportRef import);
+// Gets the internal name of the specified import.
+const char* BinaryenImportGetName(BinaryenImportRef import);
+// Gets the type of the imported global, if referencing a `Global`.
+BinaryenType BinaryenImportGetGlobalType(BinaryenImportRef import);
+// Gets the name of the function type of the imported function, if referencing a `Function`.
+const char* BinaryenImportGetFunctionType(BinaryenImportRef import);
+
+//
+// ========== Export Operations ==========
+//
+
+// Gets the external kind of the specified export.
+BinaryenExternalKind BinaryenExportGetKind(BinaryenExportRef export_);
+// Gets the external name of the specified export.
+const char* BinaryenExportGetName(BinaryenExportRef export_);
+// Gets the internal name of the specified export.
+const char* BinaryenExportGetValue(BinaryenExportRef export_);
+
+//
 // ========== CFG / Relooper ==========
 //
 // General usage is (1) create a relooper, (2) create blocks, (3) add

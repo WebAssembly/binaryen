@@ -61,6 +61,12 @@
   Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
   Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
 
+  // External kinds
+  Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
+  Module['ExternalTable'] = Module['_BinaryenExternalTable']();
+  Module['ExternalMemory'] = Module['_BinaryenExternalMemory']();
+  Module['ExternalGlobal'] = Module['_BinaryenExternalGlobal']();
+
   // Operations
   Module['ClzInt32'] = Module['_BinaryenClzInt32']();
   Module['CtzInt32'] = Module['_BinaryenCtzInt32']();
@@ -1469,6 +1475,27 @@
       'result': Module['_BinaryenFunctionGetResult'](func),
       'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
       'body': Module['_BinaryenFunctionGetBody'](func)
+    };
+  };
+
+  // Obtains information about an 'Import'
+  Module['getImportInfo'] = function(import_) {
+    return {
+      'kind': Module['_BinaryenImportGetKind'](import_),
+      'module': Pointer_stringify(Module['_BinaryenImportGetModule'](import_)),
+      'base': Pointer_stringify(Module['_BinaryenImportGetBase'](import_)),
+      'name': Pointer_stringify(Module['_BinaryenImportGetName'](import_)),
+      'globalType': Module['_BinaryenImportGetGlobalType'](import_),
+      'functionType': Pointer_stringify(Module['_BinaryenImportGetFunctionType'](import_))
+    };
+  };
+
+  // Obtains information about an 'Export'
+  Module['getExportInfo'] = function(export_) {
+    return {
+      'kind': Module['_BinaryenExportGetKind'](export_),
+      'name': Pointer_stringify(Module['_BinaryenExportGetName'](export_)),
+      'value': Pointer_stringify(Module['_BinaryenExportGetValue'](export_))
     };
   };
 
