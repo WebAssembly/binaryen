@@ -480,6 +480,14 @@ private:
   }
 
   Expression* _makeConcrete(WasmType type) {
+    auto choice = upTo(100);
+    if (choice < 10) return makeConst(type);
+    if (choice < 30) return makeSetLocal(type);
+    if (choice < 50) return makeGetLocal(type);
+    if (choice < 60) return makeBlock(type);
+    if (choice < 70) return makeIf(type);
+    if (choice < 80) return makeLoop(type);
+    if (choice < 90) return makeBreak(type);
     switch (upTo(15)) {
       case 0: return makeBlock(type);
       case 1: return makeIf(type);
@@ -501,6 +509,12 @@ private:
   }
 
   Expression* _makenone() {
+    auto choice = upTo(100);
+    if (choice < 50) return makeSetLocal(none);
+    if (choice < 60) return makeBlock(none);
+    if (choice < 70) return makeIf(none);
+    if (choice < 80) return makeLoop(none);
+    if (choice < 90) return makeBreak(none);
     switch (upTo(11)) {
       case 0: return makeBlock(none);
       case 1: return makeIf(none);

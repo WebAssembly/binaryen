@@ -213,14 +213,15 @@ Unprefixed expressions:
   * `block(label, children)`: Create a block (a list of instructions), with an optional label, and list of children.
   * `if(condition, ifTrue, ifFalse`: Create an if or if-else, with a condition, code to execute if true, and optional code to execute if false.
   * `loop(label, body)`: Create a loop, with an optional label, and body.
-  * `break(label, condition, value)`: Create a break, to a label, and with an optional condition, and optional value.
+  * `br(label, condition, value)`, `break(label, condition, value)`: Create a break, to a label, and with an optional condition, and optional value.
+  * `br_if(label, condition, value)`: Create a conditional break (similar to `br`, but the condition must exist).
   * `switch(labels, defaultLabel, condition, value)`: Create a switch (aka br_table), with a list of labels, a default label, a condition, and an optional value.
   * `call(name, operands, type)`: Create a call, to a function name, with operands, and having a specific return type (note that we must specify the return type here as we may not have created the function being called yet, and we may want to optimize this function before we do so, so the API requires that each function be independent of the others, which means that we can't depend on the definition of another function).
-  * `callImport(name, operands, type)`: Similar to `call`, but calls an imported function.
-  * `callIndirect(target, operands, type)`: Similar to `call`, but calls indirectly, i.e., via a function pointer, so an expression replaces the name as the called value.
-  * `getLocal(index, type)`: Create a get_local, for the local at the specified index, and having a specific type (the type is required for the same reasons as in `call`).
-  * `setLocal(index, value)`: Create a set_local, for the local at the specified index, and setting the specified value.
-  * `teeLocal(index, value)`: Create a tee_local, for the local at the specified index, and setting the specified value.
+  * `callImport(name, operands, type)`, `call_import(name, operands, type)`: Similar to `call`, but calls an imported function.
+  * `callIndirect(target, operands, type)`, `call_indirect(target, operands, type)`: Similar to `call`, but calls indirectly, i.e., via a function pointer, so an expression replaces the name as the called value.
+  * `getLocal(index, type)`, `get_local(index, type)`: Create a get_local, for the local at the specified index, and having a specific type (the type is required for the same reasons as in `call`).
+  * `setLocal(index, value)`, `set_local(index, value)`: Create a set_local, for the local at the specified index, and setting the specified value.
+  * `teeLocal(index, value)`, `tee_local(index, value)`: Create a tee_local, for the local at the specified index, and setting the specified value.
   * `select(condition, ifTrue, ifFalse)`: Create a select operation, executing the condition, ifTrue, and ifFalse, and returning one of them based on the condition.
   * `drop(value)`: Create a drop of a value.
   * `return(value)`: Create a return with an optional value.

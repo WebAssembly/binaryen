@@ -17,6 +17,7 @@ SET(passes_SOURCES
   InstrumentMemory.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
+  MergeLocals.cpp
   Metrics.cpp
   NameList.cpp
   OptimizeInstructions.cpp

@@ -83,6 +83,7 @@ void PassRegistry::registerPasses() {
   registerPass("instrument-memory", "instrument the build with code to intercept all loads and stores", createInstrumentMemoryPass);
   registerPass("memory-packing", "packs memory into separate segments, skipping zeros", createMemoryPackingPass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
+  registerPass("merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
@@ -140,6 +141,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
   add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
+  // if we are willing to work hard, also optimize copies before coalescing
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("merge-locals"); // very slow on e.g. sqlite
+  }
   add("coalesce-locals");
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage

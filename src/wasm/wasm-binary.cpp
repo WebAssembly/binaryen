@@ -2202,6 +2202,9 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end)
   expressionStack.resize(start);
   // if we have a consumable item and need it, use it
   if (consumable != NONE && curr->list.back()->type == none) {
+    if (!currFunction) {
+      throw ParseException("need an extra var in a non-function context, invalid wasm");
+    }
     Builder builder(wasm);
     auto* item = curr->list[consumable]->cast<Drop>()->value;
     auto temp = builder.addVar(currFunction, item->type);
@@ -2464,7 +2467,9 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
 }
 
 void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
-  alignment = Pow2(getU32LEB());
+  auto rawAlignment = getU32LEB();
+  if (rawAlignment > 4) throw ParseException("Alignment must be of a reasonable size");
+  alignment = Pow2(rawAlignment);
   offset = getU32LEB();
 }
 
