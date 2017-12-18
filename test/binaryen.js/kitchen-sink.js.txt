@@ -33,7 +33,7 @@ BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 25
 BinaryenAtomicWaitId: 26
 BinaryenAtomicWakeId: 27
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5365216}
+getExpressionInfo={"id":16,"type":3,"op":6,"value":5366768}
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1116,6 +1116,8 @@ int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenImportRef> imports;
+  std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
@@ -1393,7 +1395,7 @@ int main() {
   BinaryenExpressionGetType(expressions[30]);
   BinaryenUnaryGetOp(expressions[30]);
   BinaryenUnaryGetValue(expressions[30]);
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5400280}
+getExpressionInfo={"id":16,"type":3,"op":6,"value":5401832}
   BinaryenExpressionPrint(expressions[30]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1442,8 +1444,8 @@ getExpressionInfo(f64.const)={"id":15,"type":4,"value":9.5}
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
-  BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  imports[0] = BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
@@ -2008,6 +2010,8 @@ getExpressionInfo(f64.const)={"id":15,"type":4,"value":9.5}
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
@@ -2019,7 +2023,7 @@ getExpressionInfo(f64.const)={"id":15,"type":4,"value":9.5}
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
+  imports[1] = BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {
@@ -2970,6 +2974,8 @@ optimized:
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   return 0;
 }
