@@ -48,12 +48,11 @@ inline void getStackSpace(Index local, Function* func, Index size, Module& wasm)
   // align the size
   size = stackAlign(size);
   // TODO: find existing stack usage, and add on top of that - carefully
-  auto old = Builder::addVar(func, PointerType);
   Builder builder(wasm);
   auto* block = builder.makeBlock();
   block->list.push_back(
     builder.makeSetLocal(
-      old,
+      local,
       builder.makeGetGlobal(stackPointer->name, PointerType)
     )
   );
@@ -62,22 +61,22 @@ inline void getStackSpace(Index local, Function* func, Index size, Module& wasm)
   if (PointerType == i32) {
     added = builder.makeBinary(
       AddInt32,
-      builder.makeGetLocal(old, PointerType),
+      builder.makeGetLocal(local, PointerType),
       builder.makeConst(Literal(int32_t(size)))
     );
   } else {
     WASM_UNREACHABLE();
   }
   block->list.push_back(
-    builder.makeSetLocal(
-      local,
+    builder.makeSetGlobal(
+      stackPointer->name,
       added
     )
   );
   auto makeStackRestore = [&]() {
     return builder.makeSetGlobal(
       stackPointer->name,
-      builder.makeGetLocal(old, PointerType)
+      builder.makeGetLocal(local, PointerType)
     );
   };
   // add stack restores to the returns
