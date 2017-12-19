@@ -61,6 +61,7 @@ struct Action {
 
   bool isGet() { return what == Get; }
   bool isSet() { return what == Set; }
+  bool isOther() { return what == Other; }
 };
 
 // information about liveness in a basic block
