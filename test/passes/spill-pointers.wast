@@ -82,5 +82,11 @@
     )
     (i32.const 4)
   )
+  (func $spill-unreachable (result i32)
+    (local $x i32)
+    (call $nothing)
+    (drop (get_local $x))
+    (unreachable)
+  )
 )
 
