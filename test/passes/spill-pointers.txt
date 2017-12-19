@@ -28,9 +28,6 @@
    )
   )
   (block
-   (set_local $x
-    (i32.const 1)
-   )
    (block
     (i32.store
      (get_local $1)

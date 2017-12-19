@@ -10,7 +10,6 @@
   )
   (func $spill
     (local $x i32)
-    (set_local $x (i32.const 1))
     (call $nothing)
     (drop (get_local $x))
   )
