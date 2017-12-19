@@ -62,6 +62,7 @@ cashew::IString GLOBAL("global"),
                 I32_TEMP("asm2wasm_i32_temp"),
                 DEBUGGER("debugger"),
                 USE_ASM("use asm"),
+                ALMOST_ASM("almost asm"),
                 BUFFER("buffer"),
                 ENV("env"),
                 INSTRUMENT("instrument"),
@@ -84,5 +85,7 @@ cashew::IString GLOBAL("global"),
                 WASM_ROTL32("__wasm_rotl_i32"),
                 WASM_ROTL64("__wasm_rotl_i64"),
                 WASM_ROTR32("__wasm_rotr_i32"),
-                WASM_ROTR64("__wasm_rotr_i64");
+                WASM_ROTR64("__wasm_rotr_i64"),
+                WASM_GROW_MEMORY("__wasm_grow_memory"),
+                WASM_CURRENT_MEMORY("__wasm_current_memory");
 }
