@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -24,6 +23,8 @@
 // should probably run optimizations after doing it.
 // TODO: add a dead store elimination pass, which would help here
 //
+//  * There is currently no check that there is enough stack space.
+//
 
 #include "wasm.h"
 #include "pass.h"
@@ -47,14 +48,24 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   std::unordered_map<Expression**, Expression**> actualPointers;
 
   // note calls in basic blocks
-  void visitCall(Call* curr) {
+  template<typename T>
+  void visitSpillable(T* curr) {
      // if in unreachable code, ignore
     if (!currBasicBlock) return;
     auto* pointer = getCurrentPointer();
     currBasicBlock->contents.actions.emplace_back(pointer);
     actualPointers[pointer] = pointer; // starts out as correct, may change later
   }
-// TODO: call import! call indiret!
+
+  void visitCall(Call* curr) {
+    visitSpillable(curr);
+  }
+  void visitCallImport(CallImport* curr) {
+    visitSpillable(curr);
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    visitSpillable(curr);
+  }
 
   // main entry point
 
@@ -130,12 +141,12 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   }
 
   void spillPointersAroundCall(Expression** origin, std::vector<Index>& toSpill, Index spillLocal, PointerMap& pointerMap, Function* func, Module* module) {
-    auto* call = (*origin)->cast<Call>();
+    auto* call = *origin;
     if (call->type == unreachable) return; // the call is never reached anyhow, ignore
     Builder builder(*module);
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed
-    for (auto*& operand : call->operands) {
+    auto handleOperand = [&](Expression*& operand) {
       auto temp = builder.addVar(func, operand->type);
       auto* set = builder.makeSetLocal(temp, operand);
       block->list.push_back(set);
@@ -145,6 +156,22 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
         actualPointers[&operand] = &set->value;
       }
       operand = builder.makeGetLocal(temp, operand->type);
+    };
+    if (call->is<Call>()) {
+      for (auto*& operand : call->cast<Call>()->operands) {
+        handleOperand(operand);
+      }
+    } else if (call->is<CallImport>()) {
+      for (auto*& operand : call->cast<CallImport>()->operands) {
+        handleOperand(operand);
+      }
+    } else if (call->is<CallIndirect>()) {
+      for (auto*& operand : call->cast<CallIndirect>()->operands) {
+        handleOperand(operand);
+      }
+      handleOperand(call->cast<CallIndirect>()->target);
+    } else {
+      WASM_UNREACHABLE();
     }
     // add the spills
     for (auto index : toSpill) {

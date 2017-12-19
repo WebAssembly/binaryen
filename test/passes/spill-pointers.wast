@@ -1,4 +1,8 @@
 (module
+  (memory 10)
+  (type $ii (func (param i32 i32)))
+  (table 1 1 anyfunc)
+  (elem (i32.const 0))
   (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
   (global $stack_ptr (mut i32) (get_global $STACKTOP$asm2wasm$import))
   (func $nothing
@@ -140,6 +144,15 @@
   (func $spill-call-othertype (param $y f64)
     (local $x i32)
     (call $spill-call-othertype (f64.const 1))
+    (drop (get_local $x))
+  )
+  (func $spill-call_indirect
+    (local $x i32)
+    (call_indirect (type $ii)
+      (i32.const 123)
+      (i32.const 456)
+      (i32.const 789)
+    )
     (drop (get_local $x))
   )
 )
