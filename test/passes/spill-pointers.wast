@@ -88,5 +88,19 @@
     (drop (get_local $x))
     (unreachable)
   )
+  (func $spill-call-call0 (param $p i32) (result i32)
+    (unreachable)
+  )
+  (func $spill-call-call1 (param $p i32) (result i32)
+    (local $x i32)
+    (drop
+      (call $spill-call-call0
+        (call $spill-call-call1
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $x)
+  )
 )
 
