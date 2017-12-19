@@ -42,6 +42,27 @@ struct FindAll {
   }
 };
 
+// Find all pointers to instances of a certain node type
+
+template<typename T>
+struct FindAllPointers {
+  std::vector<Expression**> list;
+
+  FindAllPointers(Expression* ast) {
+    struct Finder : public PostWalker<Finder, UnifiedExpressionVisitor<Finder>> {
+      std::vector<T*>* list;
+      void visitExpression(Expression* curr) {
+        if (curr->is<T>()) {
+          (*list).push_back(getCurrPointer());
+        }
+      }
+    };
+    Finder finder;
+    finder.list = &list;
+    finder.walk(ast);
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_ir_find_all_h
