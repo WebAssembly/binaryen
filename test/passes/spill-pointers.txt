@@ -458,4 +458,15 @@
   )
   (get_local $6)
  )
+ (func $spill-call-ret (; 12 ;) (type $3) (param $p i32) (result i32)
+  (local $x i32)
+  (drop
+   (call $spill-call-call0
+    (return
+     (i32.const 1)
+    )
+   )
+  )
+  (i32.const 0)
+ )
 )
