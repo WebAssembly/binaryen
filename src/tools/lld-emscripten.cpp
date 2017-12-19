@@ -37,14 +37,20 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
+  bool emitBinary = true;
   std::vector<Name> forcedExports;
   Options options("o2wasm", "Link .o file into .wasm");
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
-           [&outfile](Options *o, const std::string &argument) {
+           [&outfile](Options*, const std::string &argument) {
              outfile = argument;
              Colors::disable();
+           })
+      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+           Options::Arguments::Zero,
+           [&emitBinary](Options*, const std::string &) {
+             emitBinary = false;
            })
       .add("--force-exports", "", "Comma-separated list of functions to export",
            Options::Arguments::One,
@@ -72,13 +78,13 @@ int main(int argc, const char *argv[]) {
   if (infile == "") {
     Fatal() << "Need to specify an infile\n";
   }
-  if (outfile == "") {
-    Fatal() << "Need to specify an outfile\n";
+  if (outfile == "" && emitBinary) {
+    Fatal() << "Need to specify an outfile, or use text output\n";
   }
 
   Module wasm;
   ModuleReader reader;
-  reader.readBinary(infile, wasm);
+  reader.read(infile, wasm);
 
   if (options.debug) {
     std::cerr << "Module before:\n";
@@ -109,8 +115,7 @@ int main(int argc, const char *argv[]) {
   writer.setDebugInfo(true);
   // writer.setDebugInfo(options.passOptions.debugInfo);
   // writer.setSymbolMap(symbolMap);
-  writer.setBinary(true);
-  // writer.setBinary(emitBinary);
+  writer.setBinary(emitBinary);
   // if (emitBinary) {
   //   writer.setSourceMapFilename(sourceMapFilename);
   //   writer.setSourceMapUrl(sourceMapUrl);
