@@ -84,6 +84,16 @@ for obj_file in sorted(os.listdir(lld_path)):
   actual = run_command(cmd)
   with open(os.path.join(lld_path, json_file), 'w') as o: o.write(actual)
 
+for wast_file in sorted(os.listdir(lld_path)):
+  if not wast_file.endswith('.wast'):
+    continue
+  print '..', wast_file
+  wast_path = os.path.join(lld_path, wast_file)
+  out_path = wast_path + '.out'
+  cmd = LLD_EMSCRIPTEN + [wast_path, '-S']
+  actual = run_command(cmd)
+  with open(out_path, 'w') as o: o.write(actual)
+
 for t in sorted(os.listdir(os.path.join('test', 'print'))):
   if t.endswith('.wast'):
     print '..', t

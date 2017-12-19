@@ -606,6 +606,7 @@ def main():
   s2wasm.test_s2wasm()
   s2wasm.test_linker()
   lld.test_lld_metadata()
+  lld.test_lld_emscripten()
   wasm2asm.test_wasm2asm()
   run_validator_tests()
   if options.torture and options.test_waterfall:

@@ -45,5 +45,27 @@ def test_lld_metadata():
       fail(actual, expected)
 
 
+def test_lld_emscripten():
+  print '\n[ checking lld-emscripten testcases... ]\n'
+
+  lld_path = os.path.join(options.binaryen_test, 'lld')
+  for wast_file in sorted(os.listdir(lld_path)):
+    if not wast_file.endswith('.wast'):
+      continue
+    print '..', wast_file
+    wast_path = os.path.join(lld_path, wast_file)
+    expected_file = wast_path + '.out'
+    cmd = LLD_EMSCRIPTEN + [wast_path, '-S']
+    actual = run_command(cmd)
+
+    if not os.path.exists(expected_file):
+      print actual
+      fail_with_error('output ' + expected_file + ' does not exist')
+    expected = open(expected_file, 'rb').read()
+    if actual != expected:
+      fail(actual, expected)
+
+
 if __name__ == '__main__':
   test_lld_metadata()
+  test_lld_emscripten()
