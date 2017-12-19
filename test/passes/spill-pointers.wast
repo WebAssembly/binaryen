@@ -113,5 +113,29 @@
     )
     (get_local $x)
   )
+  (func $spill-ret-call (param $p i32) (result i32)
+    (local $x i32)
+    (drop
+      (return
+        (call $spill-call-call0
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $x)
+  )
+  (func $spill-ret-ret (result i32)
+    (local $x i32)
+    (call $nothing)
+    (drop (get_local $x))
+    (drop
+      (return
+        (return
+          (i32.const 1)
+        )
+      )
+    )
+    (get_local $x)
+  )
 )
 
