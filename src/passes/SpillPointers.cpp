@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -42,13 +43,17 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   void visitCall(Call* curr) {
      // if in unreachable code, ignore
     if (!currBasicBlock) return;
+std::cout << "add Other/call " << curr << " : " << *getCurrentPointer() << '\n';
     currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
   }
+// TODO: call import! call indiret!
 
   // main entry point
 
   void doWalkFunction(Function* func) {
+std::cout << "zz walk " << func->name << '\n';
     super::doWalkFunction(func);
+std::cout << "zz spill " << func->name << '\n';
     spillPointers();
   }
 
@@ -85,11 +90,15 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
       LocalSet live = liveness.end;
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
+std::cout << "action " << action.what << " : " << *action.origin << '\n';
         if (action.isGet()) {
+std::cout << "get!\n";
           live.insert(action.index);
         } else if (action.isSet()) {
+std::cout << "set!\n";
           live.erase(action.index);
         } else if (action.isOther()) {
+std::cout << "call!\n";
           std::vector<Index> toSpill;
           for (auto index : live) {
             if (pointerMap.count(index) > 0) {
@@ -101,7 +110,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
             // should be spilled
             if (!spilled) {
               // prepare stack support: get a pointer to stack space big enough for all our data
-              spillLocal = ABI::getStackSpaceLocal(func, getWasmTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
+              spillLocal = Builder::addVar(func, ABI::PointerType);
               spilled = true;
             }
             spillPointersAroundCall(action.origin, toSpill, spillLocal, pointerMap, func, getModule());
@@ -110,6 +119,10 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
           WASM_UNREACHABLE();
         }
       }
+    }
+    if (spilled) {
+      // get the stack space, and set the local to it
+      ABI::getStackSpace(spillLocal, func, getWasmTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
     }
   }
 

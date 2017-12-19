@@ -37,10 +37,10 @@ inline Index stackAlign(Index size) {
   return (size + StackAlign - 1) & -StackAlign;
 }
 
-// return a local containing a pointer to some space allocated on the stack.
-// the local will have the same value in all the function, so you can just
+// Allocate some space on the stack, and assign it to a local.
+// The local will have the same constant value in all the function, so you can just
 // get_local it anywhere there.
-inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
+inline void getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   auto* stackPointer = GlobalUtils::getGlobalInitializedToImport(wasm, ENV, "STACKTOP");
   if (!stackPointer) {
     Fatal() << "getStackSpace: failed to find the stack pointer";
@@ -48,7 +48,6 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   // align the size
   size = stackAlign(size);
   // TODO: find existing stack usage, and add on top of that - carefully
-  auto ret = Builder::addVar(func, PointerType);
   auto old = Builder::addVar(func, PointerType);
   Builder builder(wasm);
   auto* block = builder.makeBlock();
@@ -71,7 +70,7 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   }
   block->list.push_back(
     builder.makeSetLocal(
-      ret,
+      local,
       added
     )
   );
@@ -117,7 +116,6 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   }
   block->finalize();
   func->body = block;
-  return ret;
 }
 
 } // namespace ABI

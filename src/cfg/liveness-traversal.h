@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -50,14 +51,21 @@ typedef SortedVector LocalSet;
 // their position in a block
 struct Action {
   enum What {
-    Get, Set, Other
+    Get = 0,
+    Set = 1,
+    Other = 2
   };
   What what;
   Index index; // the local index read or written
   Expression** origin; // the origin
   bool effective; // whether a store is actually effective, i.e., may be read
 
-  Action(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {}
+  Action(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {
+    assert(what != Other);
+    if (what == Get) assert((*origin)->is<GetLocal>());
+    if (what == Set) assert((*origin)->is<SetLocal>());
+std::cout << "add get/set " << what << " : " << *origin << '\n';
+  }
   Action(Expression** origin) : what(Other), origin(origin) {}
 
   bool isGet() { return what == Get; }
