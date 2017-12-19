@@ -19,6 +19,8 @@
 
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "shared-constants.h"
+#include "asmjs/shared-constants.h"
 #include "ir/find_all.h"
 #include "ir/global-utils.h"
 #include "abi.h"
@@ -46,22 +48,22 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   // align the size
   size = stackAlign(size);
   // TODO: find existing stack usage, and add on top of that - carefully
-  auto ret = Builder::addVar(func, ABI::PointerType);
-  auto old = Builder::addVar(func, ABI::PointerType);
+  auto ret = Builder::addVar(func, PointerType);
+  auto old = Builder::addVar(func, PointerType);
   Builder builder(wasm);
   auto* block = builder.makeBlock();
   block->list.push_back(
     builder.makeSetLocal(
       old,
-      builder.makeGetGlobal(stackPointer->name, ABI::PointerType)
+      builder.makeGetGlobal(stackPointer->name, PointerType)
     )
   );
   // TODO: add stack max check
   Expression* added;
-  if (ABI::PointerType == i32) {
+  if (PointerType == i32) {
     added = builder.makeBinary(
       AddInt32,
-      builder.makeGetLocal(old, ABI::PointerType),
+      builder.makeGetLocal(old, PointerType),
       builder.makeConst(Literal(int32_t(size)))
     );
   } else {
@@ -69,14 +71,14 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   }
   block->list.push_back(
     builder.makeSetLocal(
-      temp,
+      ret,
       added
     )
   );
   auto makeStackRestore = [&]() {
     return builder.makeSetGlobal(
       stackPointer->name,
-      builder.makeGetLocal(old, ABI::PointerType)
+      builder.makeGetLocal(old, PointerType)
     );
   };
   // add stack restores to the returns
@@ -117,6 +119,8 @@ inline Index getStackSpaceLocal(Function* func, Index size, Module& wasm) {
   func->body = block;
   return ret;
 }
+
+} // namespace ABI
 
 } // namespace wasm
 

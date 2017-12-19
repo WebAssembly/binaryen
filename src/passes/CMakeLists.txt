@@ -38,6 +38,7 @@ SET(passes_SOURCES
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyLocals.cpp
+  SpillPointers.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp

@@ -39,10 +39,10 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   Pass* create() override { return new SpillPointers; }
 
   // note calls in basic blocks
-  static void visitCall(Call* curr) {
+  void visitCall(Call* curr) {
      // if in unreachable code, ignore
     if (!currBasicBlock) return;
-    currBasicBlock->contents.actions.emplace_back(Action::Other, getCurrLocation());
+    currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
   }
 
   // main entry point
@@ -79,7 +79,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
           lastCall = i;
         }
       }
-      if (lastCall == -1) continue; // nothing to see here
+      if (lastCall == Index(-1)) continue; // nothing to see here
       // scan through the block, spilling around the calls
       // TODO: we can filter on pointerMap everywhere
       LocalSet live = liveness.end;
@@ -101,7 +101,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
             // should be spilled
             if (!spilled) {
               // prepare stack support: get a pointer to stack space big enough for all our data
-              spillLocal = ABI::getStackSpaceLocal(func, getWasmTypeSize(ABI::PointerType) * pointerMap.size());
+              spillLocal = ABI::getStackSpaceLocal(func, getWasmTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
               spilled = true;
             }
             spillPointersAroundCall(action.origin, toSpill, spillLocal, pointerMap, func, getModule());
@@ -117,7 +117,6 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     auto* call = (*origin)->cast<Call>();
     if (call->type == unreachable) return; // the call is never reached anyhow, ignore
     Builder builder(*module);
-    Expression* replacement;
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed
     for (auto*& operand : call->operands) {

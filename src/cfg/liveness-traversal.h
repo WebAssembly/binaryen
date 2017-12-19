@@ -32,6 +32,7 @@
 
 #include "support/sorted_vector.h"
 #include "wasm.h"
+#include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "cfg-traversal.h"
 

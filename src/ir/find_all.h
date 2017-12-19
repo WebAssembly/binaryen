@@ -44,20 +44,23 @@ struct FindAll {
 
 // Find all pointers to instances of a certain node type
 
+struct PointerFinder : public PostWalker<PointerFinder, UnifiedExpressionVisitor<PointerFinder>> {
+  Expression::Id id;
+  std::vector<Expression**>* list;
+  void visitExpression(Expression* curr) {
+    if (curr->_id == id) {
+      (*list).push_back(getCurrentPointer());
+    }
+  }
+};
+
 template<typename T>
 struct FindAllPointers {
   std::vector<Expression**> list;
 
   FindAllPointers(Expression* ast) {
-    struct Finder : public PostWalker<Finder, UnifiedExpressionVisitor<Finder>> {
-      std::vector<T*>* list;
-      void visitExpression(Expression* curr) {
-        if (curr->is<T>()) {
-          (*list).push_back(getCurrPointer());
-        }
-      }
-    };
-    Finder finder;
+    PointerFinder finder;
+    finder.id = T()._id;
     finder.list = &list;
     finder.walk(ast);
   }
