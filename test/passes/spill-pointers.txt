@@ -239,4 +239,34 @@
    (get_local $6)
   )
  )
+ (func $some-alive (; 6 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local $2 i32)
+  (local $3 i32)
+  (set_local $3
+   (get_global $stack_ptr)
+  )
+  (set_local $2
+   (i32.add
+    (get_local $3)
+    (i32.const 16)
+   )
+  )
+  (block
+   (block
+    (i32.store
+     (get_local $2)
+     (get_local $x)
+    )
+    (call $nothing)
+   )
+   (drop
+    (get_local $x)
+   )
+  )
+  (set_global $stack_ptr
+   (get_local $3)
+  )
+ )
 )

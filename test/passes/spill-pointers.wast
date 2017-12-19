@@ -62,5 +62,11 @@
     (drop (get_local $w))
     (drop (get_local $a))
   )
+  (func $some-alive
+    (local $x i32)
+    (local $y i32)
+    (call $nothing)
+    (drop (get_local $x))
+  )
 )
 
