@@ -68,5 +68,10 @@
     (call $nothing)
     (drop (get_local $x))
   )
+  (func $spill-args (param $p i32) (param $q i32)
+    (local $x i32)
+    (call $spill-args (i32.const 1) (i32.const 2))
+    (drop (get_local $x))
+  )
 )
 
