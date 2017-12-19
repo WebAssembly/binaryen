@@ -4,7 +4,9 @@
   (table 1 1 anyfunc)
   (elem (i32.const 0))
   (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+  (import "env" "segfault" (func $segfault (param i32)))
   (global $stack_ptr (mut i32) (get_global $STACKTOP$asm2wasm$import))
+
   (func $nothing
   )
   (func $not-alive
@@ -152,6 +154,13 @@
       (i32.const 123)
       (i32.const 456)
       (i32.const 789)
+    )
+    (drop (get_local $x))
+  )
+  (func $spill-call_import
+    (local $x i32)
+    (call_import $segfault
+      (i32.const 200)
     )
     (drop (get_local $x))
   )
