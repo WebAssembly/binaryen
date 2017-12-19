@@ -3,6 +3,7 @@
  (type $1 (func (param i32 i32)))
  (type $2 (func (result i32)))
  (type $3 (func (param i32) (result i32)))
+ (type $4 (func (param f64)))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (global $stack_ptr (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (memory $0 0)
@@ -534,5 +535,40 @@
    (get_local $2)
   )
   (get_local $4)
+ )
+ (func $spill-call-othertype (; 15 ;) (type $4) (param $y f64)
+  (local $x i32)
+  (local $2 i32)
+  (local $3 f64)
+  (local $4 i32)
+  (set_local $4
+   (get_global $stack_ptr)
+  )
+  (set_local $2
+   (i32.add
+    (get_local $4)
+    (i32.const 16)
+   )
+  )
+  (block
+   (block
+    (set_local $3
+     (f64.const 1)
+    )
+    (i32.store
+     (get_local $2)
+     (get_local $x)
+    )
+    (call $spill-call-othertype
+     (get_local $3)
+    )
+   )
+   (drop
+    (get_local $x)
+   )
+  )
+  (set_global $stack_ptr
+   (get_local $4)
+  )
  )
 )

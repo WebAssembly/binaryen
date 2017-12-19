@@ -136,7 +136,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed
     for (auto*& operand : call->operands) {
-      auto temp = builder.addVar(func, ABI::PointerType);
+      auto temp = builder.addVar(func, operand->type);
       auto* set = builder.makeSetLocal(temp, operand);
       block->list.push_back(set);
       block->finalize();
@@ -144,7 +144,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
         // this is something we track, and it's moving - update
         actualPointers[&operand] = &set->value;
       }
-      operand = builder.makeGetLocal(temp, ABI::PointerType);
+      operand = builder.makeGetLocal(temp, operand->type);
     }
     // add the spills
     for (auto index : toSpill) {

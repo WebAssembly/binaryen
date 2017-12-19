@@ -137,5 +137,10 @@
     )
     (get_local $x)
   )
+  (func $spill-call-othertype (param $y f64)
+    (local $x i32)
+    (call $spill-call-othertype (f64.const 1))
+    (drop (get_local $x))
+  )
 )
 
