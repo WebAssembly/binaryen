@@ -64,7 +64,6 @@ struct Action {
     assert(what != Other);
     if (what == Get) assert((*origin)->is<GetLocal>());
     if (what == Set) assert((*origin)->is<SetLocal>());
-std::cout << "add get/set " << what << " : " << *origin << '\n';
   }
   Action(Expression** origin) : what(Other), origin(origin) {}
 

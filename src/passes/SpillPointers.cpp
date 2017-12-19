@@ -43,7 +43,6 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   void visitCall(Call* curr) {
      // if in unreachable code, ignore
     if (!currBasicBlock) return;
-std::cout << "add Other/call " << curr << " : " << *getCurrentPointer() << '\n';
     currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
   }
 // TODO: call import! call indiret!
@@ -51,9 +50,7 @@ std::cout << "add Other/call " << curr << " : " << *getCurrentPointer() << '\n';
   // main entry point
 
   void doWalkFunction(Function* func) {
-std::cout << "zz walk " << func->name << '\n';
     super::doWalkFunction(func);
-std::cout << "zz spill " << func->name << '\n';
     spillPointers();
   }
 
@@ -90,15 +87,11 @@ std::cout << "zz spill " << func->name << '\n';
       LocalSet live = liveness.end;
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
-std::cout << "action " << action.what << " : " << *action.origin << '\n';
         if (action.isGet()) {
-std::cout << "get!\n";
           live.insert(action.index);
         } else if (action.isSet()) {
-std::cout << "set!\n";
           live.erase(action.index);
         } else if (action.isOther()) {
-std::cout << "call!\n";
           std::vector<Index> toSpill;
           for (auto index : live) {
             if (pointerMap.count(index) > 0) {

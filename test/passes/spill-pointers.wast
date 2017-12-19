@@ -5,16 +5,16 @@
   )
   (func $not-alive
     (local $x i32)
-    (local $y i64)
-    (local $z f32)
-    (local $w f64)
     (set_local $x (i32.const 1))
-    (set_local $y (i64.const 1))
-    (set_local $z (f32.const 1))
-    (set_local $w (f64.const 1))
     (call $nothing)
   )
   (func $spill
+    (local $x i32)
+    (set_local $x (i32.const 1))
+    (call $nothing)
+    (drop (get_local $x))
+  )
+  (func $ignore-non-pointers
     (local $x i32)
     (local $y i64)
     (local $z f32)
