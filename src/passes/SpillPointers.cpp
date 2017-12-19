@@ -39,11 +39,20 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
 
   Pass* create() override { return new SpillPointers; }
 
+  // a mapping of the pointers to all the spillable things. We need to know
+  // how to replace them, and as we spill we may modify them. This map
+  // gives us, for an Expression** seen during the walk (and placed in the
+  // basic block, which is what we iterate on for efficiency) => the
+  // current actual pointer, which may have moded
+  std::unordered_map<Expression**, Expression**> actualPointers;
+
   // note calls in basic blocks
   void visitCall(Call* curr) {
      // if in unreachable code, ignore
     if (!currBasicBlock) return;
-    currBasicBlock->contents.actions.emplace_back(getCurrentPointer());
+    auto* pointer = getCurrentPointer();
+    currBasicBlock->contents.actions.emplace_back(pointer);
+    actualPointers[pointer] = pointer; // starts out as correct, may change later
   }
 // TODO: call import! call indiret!
 
@@ -106,7 +115,8 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
               spillLocal = Builder::addVar(func, ABI::PointerType);
               spilled = true;
             }
-            spillPointersAroundCall(action.origin, toSpill, spillLocal, pointerMap, func, getModule());
+            auto* pointer = actualPointers[action.origin]; // the origin was seen at walk, but the thing may have moved
+            spillPointersAroundCall(pointer, toSpill, spillLocal, pointerMap, func, getModule());
           }
         } else {
           WASM_UNREACHABLE();
@@ -127,7 +137,13 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     // move the operands into locals, as we must spill after they are executed
     for (auto*& operand : call->operands) {
       auto temp = builder.addVar(func, ABI::PointerType);
-      block->list.push_back(builder.makeSetLocal(temp, operand));
+      auto* set = builder.makeSetLocal(temp, operand);
+      block->list.push_back(set);
+      block->finalize();
+      if (actualPointers.count(&operand) > 0) {
+        // this is something we track, and it's moving - update
+        actualPointers[&operand] = &set->value;
+      }
       operand = builder.makeGetLocal(temp, ABI::PointerType);
     }
     // add the spills
