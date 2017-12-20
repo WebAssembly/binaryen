@@ -36,11 +36,13 @@ function makeDroppedInt32(x) {
 // tests
 
 function test_types() {
-  console.log("BinaryenNone: " + Binaryen.none);
-  console.log("BinaryenInt32: " + Binaryen.i32);
-  console.log("BinaryenInt64: " + Binaryen.i64);
-  console.log("BinaryenFloat32: " + Binaryen.f32);
-  console.log("BinaryenFloat64: " + Binaryen.f64);
+  console.log("BinaryenTypeNone: " + Binaryen.none);
+  console.log("BinaryenTypeInt32: " + Binaryen.i32);
+  console.log("BinaryenTypeInt64: " + Binaryen.i64);
+  console.log("BinaryenTypeFloat32: " + Binaryen.f32);
+  console.log("BinaryenTypeFloat64: " + Binaryen.f64);
+  console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
+  console.log("BinaryenTypeAuto: " + Binaryen.auto);
 }
 
 function test_ids() {
@@ -210,13 +212,13 @@ function test_core() {
   ];
 
   // Test expression utility
-  console.log("getExpressionId=" + Binaryen.getExpressionId(valueList[3]));
-  console.log("getExpressionType=" + Binaryen.getExpressionType(valueList[3]));
+  console.log("getExpressionInfo=" + JSON.stringify(Binaryen.getExpressionInfo(valueList[3])));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
-  console.log(Binaryen.getConstValueI32(module.i32.const(5)));
-  console.log(JSON.stringify(Binaryen.getConstValueI64(module.i64.const(6, 7))));
-  console.log(Binaryen.getConstValueF32(module.f32.const(8.5)));
-  console.log(Binaryen.getConstValueF64(module.f64.const(9.5)));
+
+  console.log("getExpressionInfo(i32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i32.const(5))));
+  console.log("getExpressionInfo(i64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i64.const(6, 7))));
+  console.log("getExpressionInfo(f32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f32.const(8.5))));
+  console.log("getExpressionInfo(f64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f64.const(9.5))));
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);

@@ -1,8 +1,10 @@
-BinaryenNone: 0
-BinaryenInt32: 1
-BinaryenInt64: 2
-BinaryenFloat32: 3
-BinaryenFloat64: 4
+BinaryenTypeNone: 0
+BinaryenTypeInt32: 1
+BinaryenTypeInt64: 2
+BinaryenTypeFloat32: 3
+BinaryenTypeFloat64: 4
+BinaryenTypeUnreachable: 5
+BinaryenTypeAuto: -1
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1093,6 +1095,8 @@ int main() {
   std::map<size_t, BinaryenFunctionTypeRef> functionTypes;
   std::map<size_t, BinaryenExpressionRef> expressions;
   std::map<size_t, BinaryenFunctionRef> functions;
+  std::map<size_t, BinaryenImportRef> imports;
+  std::map<size_t, BinaryenExportRef> exports;
   std::map<size_t, RelooperBlockRef> relooperBlocks;
   BinaryenModuleRef the_module = NULL;
   RelooperRef the_relooper = NULL;
@@ -1304,7 +1308,7 @@ int main() {
   expressions[200] = BinaryenBinary(the_module, 62, expressions[199], expressions[198]);
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[201] = BinaryenBlock(the_module, NULL, children, 0, BinaryenUndefined());
+    expressions[201] = BinaryenBlock(the_module, NULL, children, 0, BinaryenTypeAuto());
   }
     expressions[202] = BinaryenIf(the_module, expressions[17], expressions[18], expressions[19]);
     expressions[203] = BinaryenIf(the_module, expressions[20], expressions[21], expressions[0]);
@@ -1372,17 +1376,17 @@ int main() {
 )
   {
     BinaryenExpressionRef children[] = { expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[96], expressions[98], expressions[100], expressions[102], expressions[104], expressions[107], expressions[110], expressions[113], expressions[116], expressions[119], expressions[122], expressions[125], expressions[128], expressions[131], expressions[134], expressions[137], expressions[140], expressions[143], expressions[146], expressions[149], expressions[152], expressions[155], expressions[158], expressions[161], expressions[164], expressions[167], expressions[170], expressions[173], expressions[176], expressions[179], expressions[182], expressions[185], expressions[188], expressions[191], expressions[194], expressions[197], expressions[200], expressions[201], expressions[202], expressions[203], expressions[205], expressions[207], expressions[208], expressions[210], expressions[212], expressions[213], expressions[214], expressions[216], expressions[218], expressions[221], expressions[224], expressions[226], expressions[228], expressions[231], expressions[233], expressions[235], expressions[237], expressions[239], expressions[240], expressions[241], expressions[242], expressions[244], expressions[245], expressions[246] };
-    expressions[247] = BinaryenBlock(the_module, "the-value", children, 95, BinaryenUndefined());
+    expressions[247] = BinaryenBlock(the_module, "the-value", children, 95, BinaryenTypeAuto());
   }
   expressions[248] = BinaryenDrop(the_module, expressions[247]);
   {
     BinaryenExpressionRef children[] = { expressions[248] };
-    expressions[249] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenUndefined());
+    expressions[249] = BinaryenBlock(the_module, "the-nothing", children, 1, BinaryenTypeAuto());
   }
   expressions[250] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     BinaryenExpressionRef children[] = { expressions[249], expressions[250] };
-    expressions[251] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenUndefined());
+    expressions[251] = BinaryenBlock(the_module, "the-body", children, 2, BinaryenTypeAuto());
   }
   {
     BinaryenType varTypes[] = { 1 };
@@ -1396,8 +1400,8 @@ int main() {
     BinaryenType paramTypes[] = { 1, 4 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "fiF", 3, paramTypes, 2);
   }
-  BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
-  BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  imports[0] = BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
+  exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
   {
     BinaryenFunctionRef funcs[] = { functions[0] };
     BinaryenSetFunctionTable(the_module, funcs, 1);
@@ -1963,6 +1967,8 @@ int main() {
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   the_module = BinaryenModuleCreate();
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
@@ -1974,7 +1980,7 @@ int main() {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
+  imports[1] = BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {
@@ -2410,7 +2416,7 @@ int main() {
   expressions[139] = BinaryenReturn(the_module, expressions[138]);
   {
     BinaryenExpressionRef children[] = { expressions[137], expressions[139] };
-    expressions[140] = BinaryenBlock(the_module, "the-list", children, 2, BinaryenUndefined());
+    expressions[140] = BinaryenBlock(the_module, "the-list", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[140]);
   expressions[141] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
@@ -2918,6 +2924,8 @@ optimized:
   functionTypes.clear();
   expressions.clear();
   functions.clear();
+  imports.clear();
+  exports.clear();
   relooperBlocks.clear();
   return 0;
 }

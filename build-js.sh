@@ -91,6 +91,7 @@ echo "building shared bitcode"
   src/passes/LogExecution.cpp \
   src/passes/MemoryPacking.cpp \
   src/passes/MergeBlocks.cpp \
+  src/passes/MergeLocals.cpp \
   src/passes/Metrics.cpp \
   src/passes/NameList.cpp \
   src/passes/OptimizeInstructions.cpp \
@@ -142,12 +143,17 @@ echo "building wasm.js"
 echo "building binaryen.js"
 
 function export_function { if [ -z ${EXPORTED_FUNCTIONS} ]; then EXPORTED_FUNCTIONS='"'$1'"'; else EXPORTED_FUNCTIONS=${EXPORTED_FUNCTIONS}',"'$1'"'; fi }
-export_function "_BinaryenNone"
-export_function "_BinaryenInt32"
-export_function "_BinaryenInt64"
-export_function "_BinaryenFloat32"
-export_function "_BinaryenFloat64"
-export_function "_BinaryenUndefined"
+
+# Types
+export_function "_BinaryenTypeNone"
+export_function "_BinaryenTypeInt32"
+export_function "_BinaryenTypeInt64"
+export_function "_BinaryenTypeFloat32"
+export_function "_BinaryenTypeFloat64"
+export_function "_BinaryenTypeUnreachable"
+export_function "_BinaryenTypeAuto"
+
+# Expression ids
 export_function "_BinaryenInvalidId"
 export_function "_BinaryenBlockId"
 export_function "_BinaryenIfId"
@@ -176,20 +182,22 @@ export_function "_BinaryenAtomicCmpxchgId"
 export_function "_BinaryenAtomicRMWId"
 export_function "_BinaryenAtomicWaitId"
 export_function "_BinaryenAtomicWakeId"
+
+# External kinds
 export_function "_BinaryenExternalFunction"
 export_function "_BinaryenExternalTable"
 export_function "_BinaryenExternalMemory"
 export_function "_BinaryenExternalGlobal"
-export_function "_BinaryenModuleCreate"
-export_function "_BinaryenModuleDispose"
-export_function "_BinaryenAddFunctionType"
-export_function "_BinaryenGetFunctionTypeBySignature"
+
+# Literals
 export_function "_BinaryenLiteralInt32"
 export_function "_BinaryenLiteralInt64"
 export_function "_BinaryenLiteralFloat32"
 export_function "_BinaryenLiteralFloat64"
 export_function "_BinaryenLiteralFloat32Bits"
 export_function "_BinaryenLiteralFloat64Bits"
+
+# Operations
 export_function "_BinaryenClzInt32"
 export_function "_BinaryenCtzInt32"
 export_function "_BinaryenPopcntInt32"
@@ -323,6 +331,8 @@ export_function "_BinaryenAtomicRMWAnd"
 export_function "_BinaryenAtomicRMWOr"
 export_function "_BinaryenAtomicRMWXor"
 export_function "_BinaryenAtomicRMWXchg"
+
+# Expression creation
 export_function "_BinaryenBlock"
 export_function "_BinaryenIf"
 export_function "_BinaryenLoop"
@@ -353,14 +363,146 @@ export_function "_BinaryenAtomicRMW"
 export_function "_BinaryenAtomicCmpxchg"
 export_function "_BinaryenAtomicWait"
 export_function "_BinaryenAtomicWake"
+
+# 'Expression' operations
 export_function "_BinaryenExpressionGetId"
 export_function "_BinaryenExpressionGetType"
 export_function "_BinaryenExpressionPrint"
+
+# 'Block' expression operations
+export_function "_BinaryenBlockGetName"
+export_function "_BinaryenBlockGetNumChildren"
+export_function "_BinaryenBlockGetChild"
+
+# 'If' expression operations
+export_function "_BinaryenIfGetCondition"
+export_function "_BinaryenIfGetIfTrue"
+export_function "_BinaryenIfGetIfFalse"
+
+# 'Loop' expression operations
+export_function "_BinaryenLoopGetName"
+export_function "_BinaryenLoopGetBody"
+
+# 'Break' expression operations
+export_function "_BinaryenBreakGetName"
+export_function "_BinaryenBreakGetCondition"
+export_function "_BinaryenBreakGetValue"
+
+# 'Switch' expression operations
+export_function "_BinaryenSwitchGetNumNames"
+export_function "_BinaryenSwitchGetName"
+export_function "_BinaryenSwitchGetDefaultName"
+export_function "_BinaryenSwitchGetCondition"
+export_function "_BinaryenSwitchGetValue"
+
+# 'Call' expression operations
+export_function "_BinaryenCallGetTarget"
+export_function "_BinaryenCallGetNumOperands"
+export_function "_BinaryenCallGetOperand"
+
+# 'CallImport' expression operations
+export_function "_BinaryenCallImportGetTarget"
+export_function "_BinaryenCallImportGetNumOperands"
+export_function "_BinaryenCallImportGetOperand"
+
+# 'CallIndirect' expression operations
+export_function "_BinaryenCallIndirectGetTarget"
+export_function "_BinaryenCallIndirectGetNumOperands"
+export_function "_BinaryenCallIndirectGetOperand"
+
+# 'GetLocal' expression operations
+export_function "_BinaryenGetLocalGetIndex"
+
+# 'SetLocal' expression operations
+export_function "_BinaryenSetLocalIsTee"
+export_function "_BinaryenSetLocalGetIndex"
+export_function "_BinaryenSetLocalGetValue"
+
+# 'GetGlobal' expression operations
+export_function "_BinaryenGetGlobalGetName"
+
+# 'SetGlobal' expression operations
+export_function "_BinaryenSetGlobalGetName"
+export_function "_BinaryenSetGlobalGetValue"
+
+# 'Host' expression operations
+export_function "_BinaryenHostGetOp"
+export_function "_BinaryenHostGetNameOperand"
+export_function "_BinaryenHostGetNumOperands"
+export_function "_BinaryenHostGetOperand"
+
+# 'Load' expression operations
+export_function "_BinaryenLoadIsAtomic"
+export_function "_BinaryenLoadIsSigned"
+export_function "_BinaryenLoadGetBytes"
+export_function "_BinaryenLoadGetOffset"
+export_function "_BinaryenLoadGetAlign"
+export_function "_BinaryenLoadGetPtr"
+
+# 'Store' expression operations
+export_function "_BinaryenStoreIsAtomic"
+export_function "_BinaryenStoreGetBytes"
+export_function "_BinaryenStoreGetOffset"
+export_function "_BinaryenStoreGetAlign"
+export_function "_BinaryenStoreGetPtr"
+export_function "_BinaryenStoreGetValue"
+
+# 'Const' expression operations
 export_function "_BinaryenConstGetValueI32"
 export_function "_BinaryenConstGetValueI64Low"
 export_function "_BinaryenConstGetValueI64High"
 export_function "_BinaryenConstGetValueF32"
 export_function "_BinaryenConstGetValueF64"
+
+# 'Unary' expression operations
+export_function "_BinaryenUnaryGetOp"
+export_function "_BinaryenUnaryGetValue"
+
+# 'Binary' expression operations
+export_function "_BinaryenBinaryGetOp"
+export_function "_BinaryenBinaryGetLeft"
+export_function "_BinaryenBinaryGetRight"
+
+# 'Select' expression operations
+export_function "_BinaryenSelectGetIfTrue"
+export_function "_BinaryenSelectGetIfFalse"
+export_function "_BinaryenSelectGetCondition"
+
+# 'Drop' expression operations
+export_function "_BinaryenDropGetValue"
+
+# 'Return' expression operations
+export_function "_BinaryenReturnGetValue"
+
+# 'AtomicRMW' expression operations
+export_function "_BinaryenAtomicRMWGetOp"
+export_function "_BinaryenAtomicRMWGetBytes"
+export_function "_BinaryenAtomicRMWGetOffset"
+export_function "_BinaryenAtomicRMWGetPtr"
+export_function "_BinaryenAtomicRMWGetValue"
+
+# 'AtomicCmpxchg' expression operations
+export_function "_BinaryenAtomicCmpxchgGetBytes"
+export_function "_BinaryenAtomicCmpxchgGetOffset"
+export_function "_BinaryenAtomicCmpxchgGetPtr"
+export_function "_BinaryenAtomicCmpxchgGetExpected"
+export_function "_BinaryenAtomicCmpxchgGetReplacement"
+
+# 'AtomicWait' expression operations
+export_function "_BinaryenAtomicWaitGetPtr"
+export_function "_BinaryenAtomicWaitGetExpected"
+export_function "_BinaryenAtomicWaitGetTimeout"
+export_function "_BinaryenAtomicWaitGetExpectedType"
+
+# 'AtomicWake' expression operations
+export_function "_BinaryenAtomicWakeGetPtr"
+export_function "_BinaryenAtomicWakeGetWakeCount"
+
+# 'Module' operations
+export_function "_BinaryenModuleCreate"
+export_function "_BinaryenModuleDispose"
+export_function "_BinaryenAddFunctionType"
+export_function "_BinaryenGetFunctionTypeBySignature"
 export_function "_BinaryenAddFunction"
 export_function "_BinaryenGetFunction"
 export_function "_BinaryenRemoveFunction"
@@ -388,15 +530,47 @@ export_function "_BinaryenModuleAutoDrop"
 export_function "_BinaryenModuleWrite"
 export_function "_BinaryenModuleRead"
 export_function "_BinaryenModuleInterpret"
+
+# 'FunctionType' operations
+export_function "_BinaryenFunctionTypeGetName"
+export_function "_BinaryenFunctionTypeGetNumParams"
+export_function "_BinaryenFunctionTypeGetParam"
+export_function "_BinaryenFunctionTypeGetResult"
+
+# 'Function' operations
+export_function "_BinaryenFunctionGetName"
+export_function "_BinaryenFunctionGetType"
+export_function "_BinaryenFunctionGetNumParams"
+export_function "_BinaryenFunctionGetParam"
+export_function "_BinaryenFunctionGetResult"
+export_function "_BinaryenFunctionGetNumVars"
+export_function "_BinaryenFunctionGetVar"
 export_function "_BinaryenFunctionGetBody"
 export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
+
+# 'Import' operations
+export_function "_BinaryenImportGetKind"
+export_function "_BinaryenImportGetModule"
+export_function "_BinaryenImportGetBase"
+export_function "_BinaryenImportGetName"
+export_function "_BinaryenImportGetGlobalType"
+export_function "_BinaryenImportGetFunctionType"
+
+# 'Export' operations
+export_function "_BinaryenExportGetKind"
+export_function "_BinaryenExportGetName"
+export_function "_BinaryenExportGetValue"
+
+# 'Relooper' operations
 export_function "_RelooperCreate"
 export_function "_RelooperAddBlock"
 export_function "_RelooperAddBranch"
 export_function "_RelooperAddBlockWithSwitch"
 export_function "_RelooperAddBranchForSwitch"
 export_function "_RelooperRenderAndDispose"
+
+# Tracing
 export_function "_BinaryenSetAPITracing"
 
 "$EMSCRIPTEN/em++" \

@@ -22,7 +22,7 @@ int main() {
   the_relooper = RelooperCreate();
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenUndefined());
+    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[1]);
   expressions[2] = BinaryenGetLocal(the_module, 0, 1);
@@ -31,7 +31,7 @@ int main() {
   expressions[5] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[4], expressions[5] };
-    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenUndefined());
+    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[6]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
@@ -69,7 +69,7 @@ int main() {
   }
   {
     BinaryenExpressionRef children[] = { expressions[13], expressions[14] };
-    expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
+    expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeAuto());
   }
   BinaryenAddFunctionExport(the_module, "__wasm_start", "rust_entry");
   {
