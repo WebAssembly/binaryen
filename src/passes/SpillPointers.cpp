@@ -89,7 +89,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     }
     // find calls and spill around them
     bool spilled = false;
-    Index spillLocal;
+    Index spillLocal = -1;
     for (auto& curr : basicBlocks) {
       if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
       auto& liveness = curr->contents;
