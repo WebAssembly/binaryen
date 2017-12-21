@@ -84,6 +84,28 @@ Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja
 
 If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAssembly), you'll need Emscripten. You'll need the `incoming` branch there (which you can get via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html)), for more details see [the wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
 
+### Visual C++
+
+1. Using the Microsoft Visual Studio Installer, install the "Visual C++ tools for CMake" component.
+
+1. Generate the projects:
+
+   ```
+   mkdir build
+   cd build
+   "%VISUAL_STUDIO_ROOT%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" ..
+   ```
+
+   Substitute VISUAL_STUDIO_ROOT with the path to your Visual Studio installation. In case you are using the Visual Studio Build Tools, the path will be "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools".
+
+1. From the Developer Command Prompt, build the desired projects:
+
+   ```
+   msbuild binaryen.vcxproj
+   ```
+
+   CMake generates a project named "ALL_BUILD.vcxproj" for conveniently building all the projects.
+
 ## Running
 
 ### wasm-opt
