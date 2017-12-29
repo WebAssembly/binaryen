@@ -358,7 +358,8 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
-    f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
+    binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
+    f.write(binaryen_js)
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test = open(test_path).read()
     need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
@@ -368,6 +369,9 @@ def run_binaryen_js_tests():
       cmd = [engine, 'a.js']
       out = run_command(cmd, stderr=subprocess.STDOUT)
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
+      if 'function' in s: # XXX debugging a CI issue
+        print out
+        print 'used', len(binaryen_js), 'bytes at', os.path.join(options.binaryen_bin, 'binaryen.js')
       if expected not in out:
         fail(out, expected)
     # run in all possible shells
