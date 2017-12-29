@@ -33,7 +33,7 @@ BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 25
 BinaryenAtomicWaitId: 26
 BinaryenAtomicWakeId: 27
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5367392}
+getExpressionInfo={"id":16,"type":3,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1395,7 +1395,7 @@ int main() {
   BinaryenExpressionGetType(expressions[30]);
   BinaryenUnaryGetOp(expressions[30]);
   BinaryenUnaryGetValue(expressions[30]);
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5367392}
+getExpressionInfo={"id":16,"type":3,"op":6}
   BinaryenExpressionPrint(expressions[30]);
 (f32.neg
  (f32.const -33.61199951171875)

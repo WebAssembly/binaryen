@@ -1,6 +1,16 @@
 
 // kitchen sink, tests the full API
 
+function cleanInfo(info) {
+  var ret = {};
+  for (var x in info) {
+    if (x !== 'value') {
+      ret[x] = info[x];
+    }
+  }
+  return ret;
+}
+
 var module;
 
 // helpers
@@ -212,7 +222,7 @@ function test_core() {
   ];
 
   // Test expression utility
-  console.log("getExpressionInfo=" + JSON.stringify(Binaryen.getExpressionInfo(valueList[3])));
+  console.log("getExpressionInfo=" + JSON.stringify(cleanInfo(Binaryen.getExpressionInfo(valueList[3]))));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
 
   console.log("getExpressionInfo(i32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i32.const(5))));
