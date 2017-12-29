@@ -365,19 +365,19 @@ def run_binaryen_js_tests():
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test = open(test_path).read()
     need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
-    if MOZJS:
-      cmd = [MOZJS]
-    elif NODEJS and not need_wasm: # TODO: check if node is new and has wasm support
-      cmd = [NODEJS]
-    else:
-      continue # we can't run it
-    cmd += ['a.js']
     f.write(test)
     f.close()
-    out = run_command(cmd, stderr=subprocess.STDOUT)
-    expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
-    if expected not in out:
-      fail(out, expected)
+    def test(engine):
+      cmd = [engine, 'a.js']
+      out = run_command(cmd, stderr=subprocess.STDOUT)
+      expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
+      if expected not in out:
+        fail(out, expected)
+    # run in all possible shells
+    if MOZJS:
+      test(MOZJS)
+    if NODEJS and not need_wasm: # TODO: check if node is new and has wasm support
+      test(NODEJS)
 
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
