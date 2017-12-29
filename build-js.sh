@@ -585,3 +585,7 @@ export_function "_BinaryenSetAPITracing"
   --post-js src/js/binaryen.js-post.js \
   -s MODULARIZE=1 \
   -s 'EXPORT_NAME="Binaryen"'
+
+# Create a singleton instance from the MODULARIZE module
+echo "Binaryen = Binaryen();" >> bin/binaryen${OUT_FILE_SUFFIX}.js
+

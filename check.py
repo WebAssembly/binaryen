@@ -359,9 +359,6 @@ def run_binaryen_js_tests():
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join(options.binaryen_bin, 'binaryen.js')).read())
-    # node/shell test support
-    f.write('\nif (typeof require === "function") var Binaryen = module.exports;\n')
-    f.write('\nBinaryen = Binaryen();\n')
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test = open(test_path).read()
     need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM

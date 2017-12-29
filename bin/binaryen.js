@@ -208,3 +208,4 @@ a.emitText=function(b){if("object"===typeof b)return b.S();var d=a.print,g="";a.
 if (typeof module === "object" && module.exports) {
   module['exports'] = Binaryen;
 };
+Binaryen = Binaryen();
