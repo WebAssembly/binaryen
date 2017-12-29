@@ -40,6 +40,7 @@ fi
 EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
+EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
 
