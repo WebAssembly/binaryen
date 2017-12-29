@@ -139,6 +139,7 @@ echo "building wasm.js"
   -Isrc/ \
   -o bin/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
+  -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
 
 echo "building binaryen.js"
@@ -581,5 +582,6 @@ export_function "_BinaryenSetAPITracing"
   -Isrc/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o bin/binaryen${OUT_FILE_SUFFIX}.js \
-  --pre-js src/js/binaryen.js-pre.js \
-  --post-js src/js/binaryen.js-post.js
+  --post-js src/js/binaryen.js-post.js \
+  -s MODULARIZE=1 \
+  -s 'EXPORT_NAME="Binaryen"'
