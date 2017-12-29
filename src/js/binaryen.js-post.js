@@ -2,10 +2,10 @@
 
   function preserveStack(func) {
     try {
-      var stack = Runtime.stackSave();
+      var stack = stackSave();
       return func();
     } finally {
-      Runtime.stackRestore(stack);
+      stackRestore(stack);
     }
   }
 
@@ -15,7 +15,7 @@
   }
 
   function i32sToStack(i32s) {
-    var ret = Runtime.stackAlloc(i32s.length << 2);
+    var ret = stackAlloc(i32s.length << 2);
     for (var i = 0; i < i32s.length; i++) {
       HEAP32[ret + (i << 2) >> 2] = i32s[i];
     }
