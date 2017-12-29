@@ -48,17 +48,13 @@ if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
-  OUT_FILE_SUFFIX=-g
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
   EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
   EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS=1"
+  EMCC_ARGS="$EMCC_ARGS --closure 1"
   # Why these settings?
   # See https://gist.github.com/rsms/e33c61a25a31c08260161a087be03169
-fi
-
-if [ "$1" != "-g" ]; then
-  EMCC_ARGS="$EMCC_ARGS --closure 1"
 fi
 
 echo "building shared bitcode"

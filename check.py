@@ -369,9 +369,6 @@ def run_binaryen_js_tests():
       cmd = [engine, 'a.js']
       out = run_command(cmd, stderr=subprocess.STDOUT)
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
-      if 'function' in s: # XXX debugging a CI issue
-        print out
-        print 'used', len(binaryen_js), 'bytes at', os.path.join(options.binaryen_bin, 'binaryen.js')
       if expected not in out:
         fail(out, expected)
     # run in all possible shells
