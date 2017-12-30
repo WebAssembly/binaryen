@@ -71,5 +71,14 @@
     )
     (set_local $x (i32.const 1))
   )
+  (func $identical_complex (param $x i32) ;; we don't do this yet
+    (local $y i32)
+    (set_local $y (get_local $x))
+    (set_local $y (get_local $x))
+    (set_local $y (get_local $x))
+    (set_local $x (get_local $x))
+    (set_local $y (get_local $y))
+    (set_local $x (get_local $y))
+  )
 )
 

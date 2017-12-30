@@ -148,4 +148,25 @@
    (i32.const 1)
   )
  )
+ (func $identical_complex (; 8 ;) (type $1) (param $x i32)
+  (local $y i32)
+  (set_local $y
+   (get_local $x)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (set_local $x
+   (get_local $x)
+  )
+  (set_local $y
+   (get_local $y)
+  )
+  (set_local $x
+   (get_local $y)
+  )
+ )
 )
