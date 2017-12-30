@@ -99,4 +99,53 @@
    (i32.const 1)
   )
  )
+ (func $if (; 5 ;) (type $2)
+  (local $x i32)
+  (if
+   (i32.const 0)
+   (set_local $x
+    (i32.const 1)
+   )
+   (set_local $x
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $if2 (; 6 ;) (type $2)
+  (local $x i32)
+  (if
+   (tee_local $x
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $if3 (; 7 ;) (type $2)
+  (local $x i32)
+  (if
+   (tee_local $x
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 1)
+   )
+   (set_local $x
+    (i32.const 2)
+   )
+  )
+  (set_local $x
+   (i32.const 1)
+  )
+ )
 )
