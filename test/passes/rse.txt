@@ -72,4 +72,31 @@
    )
   )
  )
+ (func $loop (; 4 ;) (type $2)
+  (local $a i32)
+  (local $b i32)
+  (loop $x
+   (set_local $a
+    (i32.const 0)
+   )
+   (set_local $a
+    (i32.const 1)
+   )
+   (br_if $x
+    (i32.const 1)
+   )
+  )
+  (block $y
+   (drop
+    (i32.const 0)
+   )
+   (set_local $b
+    (i32.const 1)
+   )
+   (br $y)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
 )

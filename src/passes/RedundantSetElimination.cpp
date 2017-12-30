@@ -151,9 +151,11 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
               changed = true;
             }
           } else if (nextValues[i] != currValues[i]) {
-            // a merge, we don't know any more
-            nextValues[i] = getMixedValue();
-            changed = true;
+            if (nextValues[i] != getMixedValue()) {
+              // a new merge, we don't know any more
+              nextValues[i] = getMixedValue();
+              changed = true;
+            }
           }
           // otherwise, it's the same, leave it
         }
