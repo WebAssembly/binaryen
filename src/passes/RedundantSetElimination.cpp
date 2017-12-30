@@ -67,8 +67,6 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   Pass* create() override { return new RedundantSetElimination(); }
 
-// XXX FIXMEtypedef typename CFGWalker<RedundantSetElimination, VisitorType, Info>::BasicBlock BasicBlock;
-
   Index numLocals;
 
   // cfg traversal work
