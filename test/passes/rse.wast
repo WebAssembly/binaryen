@@ -20,5 +20,17 @@
     (set_local $a (i32.const 1))
     (set_local $a (i32.const 0))
   )
+  (func $unreach
+    (local $a i32)
+    (block $x
+      (set_local $a (i32.const 0))
+      (set_local $a (i32.const 1))
+      (set_local $a (i32.const 1))
+      (br $x)
+      (set_local $a (i32.const 1))
+      (set_local $a (i32.const 2))
+      (set_local $a (i32.const 2))
+    )
+  )
 )
 

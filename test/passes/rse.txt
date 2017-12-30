@@ -1,6 +1,7 @@
 (module
  (type $0 (func (param i32 f64)))
  (type $1 (func (param i32)))
+ (type $2 (func))
  (memory $0 0)
  (func $basic (; 0 ;) (type $0) (param $x i32) (param $y f64)
   (local $a f32)
@@ -45,6 +46,30 @@
   )
   (set_local $a
    (i32.const 0)
+  )
+ )
+ (func $unreach (; 3 ;) (type $2)
+  (local $a i32)
+  (block $x
+   (drop
+    (i32.const 0)
+   )
+   (set_local $a
+    (i32.const 1)
+   )
+   (drop
+    (i32.const 1)
+   )
+   (br $x)
+   (set_local $a
+    (i32.const 1)
+   )
+   (set_local $a
+    (i32.const 2)
+   )
+   (set_local $a
+    (i32.const 2)
+   )
   )
  )
 )

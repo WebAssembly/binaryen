@@ -64,7 +64,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   // cfg traversal work
 
   static void doVisitSetLocal(RedundantSetElimination* self, Expression** currp) {
-    self->currBasicBlock->contents.setps.push_back(currp);
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.setps.push_back(currp);
+    }
   }
 
   // main entry point
@@ -143,9 +145,11 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         bool changed = false;
         for (Index i = 0; i < numLocals; i++) {
           if (nextValues[i] == getUnseenValue()) {
-            // first time we see something here
-            nextValues[i] = currValues[i];
-            changed = true;
+            if (currValues[i] != getUnseenValue()) {
+              // first time we see something here
+              nextValues[i] = currValues[i];
+              changed = true;
+            }
           } else if (nextValues[i] != currValues[i]) {
             // a merge, we don't know any more
             nextValues[i] = getMixedValue();
