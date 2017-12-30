@@ -1,5 +1,6 @@
 (module
  (type $0 (func (param i32 f64)))
+ (type $1 (func (param i32)))
  (memory $0 0)
  (func $basic (; 0 ;) (type $0) (param $x i32) (param $y f64)
   (local $a f32)
@@ -15,6 +16,35 @@
   )
   (drop
    (i64.const 0)
+  )
+ )
+ (func $later-param-use (; 1 ;) (type $1) (param $x i32)
+  (set_local $x
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+ )
+ (func $diff-value (; 2 ;) (type $1) (param $x i32)
+  (local $a i32)
+  (set_local $x
+   (i32.const 0)
+  )
+  (set_local $x
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (set_local $a
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (set_local $a
+   (i32.const 0)
   )
  )
 )

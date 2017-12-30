@@ -17,6 +17,7 @@
 //
 // Note about running this after coalesce-locals, due to live range
 // enlargement risk otherwise
+// TODO expand more in a GVN type thing
 //
 
 #include <wasm.h>
@@ -38,6 +39,17 @@ typedef std::vector<Index> LocalValues;
 struct Info {
   LocalValues start; // the local values at the start of the block
   std::vector<Expression**> setps;
+
+  void dump() {
+    std::cout << "====\n";
+    for (Index i = 0; i < start.size(); i++) {
+      std::cout << "  start[i] = " << start[i] << '\n';
+    }
+    for (auto** setp : setps) {
+      std::cout << "  " << *setp << '\n';
+    }
+    std::cout << "====\n";
+  }
 };
 
 struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>> {
@@ -75,8 +87,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
   }
-  Index getMergeValue() { // this could be anything - we can't do any work here
-    return 0;
+  Index getMixedValue() { // this could be anything - we can't do any work here
+    return 1;
   }
 
   Index getLiteralValue(Literal lit) {
@@ -99,7 +111,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
           if (func->isParam(i)) {
-            values[i] = getMergeValue();
+            values[i] = getMixedValue();
           } else {
             values[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
           }
@@ -124,16 +136,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       auto& setps = curr->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<SetLocal>();
-        if (auto* c = set->value->dynCast<Const>()) {
-          // a constant
-          currValues[set->index] = getLiteralValue(c->value);
-        } else if (auto* get = set->value->dynCast<GetLocal>()) {
-          // a copy of whatever that was
-          currValues[set->index] = currValues[get->index];
-        } else {
-          // we don't know
-          currValues[set->index] = getMergeValue();
-        }
+        currValues[set->index] = getValueForSet(set, currValues);
       }
       for (auto* next : curr->out) {
         auto& nextValues = next->contents.start;
@@ -145,7 +148,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             changed = true;
           } else if (nextValues[i] != currValues[i]) {
             // a merge, we don't know any more
-            nextValues[i] = getMergeValue();
+            nextValues[i] = getMixedValue();
             changed = true;
           }
           // otherwise, it's the same, leave it
@@ -154,6 +157,19 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           queue.insert(next);
         }
       }
+    }
+  }
+
+  Index getValueForSet(SetLocal* set, LocalValues& currValues) {
+    if (auto* c = set->value->dynCast<Const>()) {
+      // a constant
+      return getLiteralValue(c->value);
+    } else if (auto* get = set->value->dynCast<GetLocal>()) {
+      // a copy of whatever that was
+      return currValues[get->index];
+    } else {
+      // we don't know
+      return getMixedValue();
     }
   }
 
@@ -166,23 +182,13 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       auto& setps = block->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<SetLocal>();
-        if (currValues[set->index] == getMergeValue()) {
-          // the analysis can't help
-          continue;
+        auto oldValue = currValues[set->index];
+        auto newValue = getValueForSet(set, currValues);
+        auto index = set->index;
+        if (newValue != getMixedValue() && newValue == oldValue) {
+          remove(setp);
         }
-        // if it's an getUnseenValue, it means we are in dead code. but don't
-        // bother to try to optimize it, leave that for DCE
-        if (auto* c = set->value->dynCast<Const>()) {
-          // a constant
-          if (currValues[set->index] == getLiteralValue(c->value)) {
-            remove(setp);
-          }
-        } else if (auto* get = set->value->dynCast<GetLocal>()) {
-          // a copy of whatever that was
-          if (currValues[set->index] == currValues[get->index]) {
-            remove(setp);
-          }
-        }
+        currValues[index] = newValue; // update for later steps
       }
     }
   }
