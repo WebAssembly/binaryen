@@ -94,6 +94,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   void flowValues(Function* func) {
     for (auto& block : basicBlocks) {
       LocalValues& values = block->contents.start;
+      values.resize(numLocals);
       if (block.get() == entry) {
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
