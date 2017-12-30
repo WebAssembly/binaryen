@@ -15,9 +15,19 @@
  */
 
 //
-// Note about running this after coalesce-locals, due to live range
-// enlargement risk otherwise
-// TODO expand more in a GVN type thing
+// Eliminate redundant set_locals: if a local already has a particular
+// value, we don't need to set it again. A common case here is loops
+// that start at zero, since the default value is initialized to
+// zero anyhow.
+// A risk here is that we extend live ranges, e.g. we may use the default
+// value at the very end of a function, keeping that local alive throughout.
+// For that reason it is probably better to run this near the end of
+// optimization, and especially after coalesce-locals. A final vaccum
+// should be done after it, as this pass can leave around drop()s of
+// values no longer necessary.
+//
+// So far this tracks constant values. TODO expand it into more of a GVN
+// type analysis.
 //
 
 #include <wasm.h>
