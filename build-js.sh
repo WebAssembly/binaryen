@@ -40,6 +40,7 @@ fi
 EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
+EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
 
@@ -47,17 +48,13 @@ if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
-  OUT_FILE_SUFFIX=-g
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
   EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
   EMCC_ARGS="$EMCC_ARGS -s ELIMINATE_DUPLICATE_FUNCTIONS=1"
+  EMCC_ARGS="$EMCC_ARGS --closure 1"
   # Why these settings?
   # See https://gist.github.com/rsms/e33c61a25a31c08260161a087be03169
-fi
-
-if [ "$1" != "-g" ]; then
-  EMCC_ARGS="$EMCC_ARGS --closure 1"
 fi
 
 echo "building shared bitcode"
@@ -138,6 +135,7 @@ echo "building wasm.js"
   -Isrc/ \
   -o bin/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
+  -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
 
 echo "building binaryen.js"
@@ -580,5 +578,10 @@ export_function "_BinaryenSetAPITracing"
   -Isrc/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o bin/binaryen${OUT_FILE_SUFFIX}.js \
-  --pre-js src/js/binaryen.js-pre.js \
-  --post-js src/js/binaryen.js-post.js
+  --post-js src/js/binaryen.js-post.js \
+  -s MODULARIZE=1 \
+  -s 'EXPORT_NAME="Binaryen"'
+
+# Create a singleton instance from the MODULARIZE module
+echo "Binaryen = Binaryen();" >> bin/binaryen${OUT_FILE_SUFFIX}.js
+

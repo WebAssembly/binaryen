@@ -239,6 +239,7 @@ if MOZJS:
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join('bin', 'binaryen.js')).read())
+    # node/shell test support
     f.write(open(os.path.join('test', 'binaryen.js', s)).read())
     f.close()
     cmd = [MOZJS, 'a.js']

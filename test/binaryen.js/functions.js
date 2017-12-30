@@ -1,3 +1,13 @@
+function cleanInfo(info) {
+  var ret = {};
+  for (var x in info) {
+    if (x !== 'name' && x !== 'body' && x !== 'type') {
+      ret[x] = info[x];
+    }
+  }
+  return ret;
+}
+
 var module = new Binaryen.Module();
 
 var signature = module.addFunctionType("i", Binaryen.i32, []);
@@ -13,15 +23,17 @@ console.log("GetFunction is equal: " + (func === module.getFunction("a-function"
 
 module.runPassesOnFunction(func, ["precompute"]);
 
-console.log("getFunctionTypeInfo=" + JSON.stringify(Binaryen.getFunctionTypeInfo(signature)));
-var info = Binaryen.getFunctionInfo(func);
-console.log("getFunctionInfo=" + JSON.stringify(info));
-console.log("getExpressionInfo(body)=" + JSON.stringify(Binaryen.getExpressionInfo(info.body)));
-console.log(Binaryen.emitText(info.body));
+var sigInfo = Binaryen.getFunctionTypeInfo(signature);
+console.log("getFunctionTypeInfo=" + JSON.stringify(cleanInfo(sigInfo)));
+var funcInfo = Binaryen.getFunctionInfo(func);
+console.log("getFunctionInfo=" + JSON.stringify(cleanInfo(funcInfo)));
+var expInfo = Binaryen.getExpressionInfo(funcInfo.body);
+console.log("getExpressionInfo(body)=" + JSON.stringify(cleanInfo(expInfo)));
+console.log(Binaryen.emitText(funcInfo.body));
 
 module.removeFunction("a-function");
 
-module.addGlobal("a-global", Binaryen.i32, false, info.body);
+module.addGlobal("a-global", Binaryen.i32, false, funcInfo.body);
 
 module.validate();
 

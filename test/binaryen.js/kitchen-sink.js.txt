@@ -33,7 +33,7 @@ BinaryenAtomicCmpxchgId: 24
 BinaryenAtomicRMWId: 25
 BinaryenAtomicWaitId: 26
 BinaryenAtomicWakeId: 27
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5366768}
+getExpressionInfo={"id":16,"type":3,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1395,7 +1395,7 @@ int main() {
   BinaryenExpressionGetType(expressions[30]);
   BinaryenUnaryGetOp(expressions[30]);
   BinaryenUnaryGetValue(expressions[30]);
-getExpressionInfo={"id":16,"type":3,"op":6,"value":5401832}
+getExpressionInfo={"id":16,"type":3,"op":6}
   BinaryenExpressionPrint(expressions[30]);
 (f32.neg
  (f32.const -33.61199951171875)
@@ -1423,7 +1423,7 @@ getExpressionInfo(f32.const)={"id":15,"type":3,"value":8.5}
   BinaryenConstGetValueF64(expressions[250]);
 getExpressionInfo(f64.const)={"id":15,"type":4,"value":9.5}
   {
-    BinaryenExpressionRef children[] = { expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], expressions[34], expressions[36], expressions[38], expressions[40], expressions[42], expressions[44], expressions[46], expressions[48], expressions[50], expressions[52], expressions[54], expressions[56], expressions[58], expressions[60], expressions[62], expressions[64], expressions[66], expressions[68], expressions[70], expressions[72], expressions[74], expressions[76], expressions[78], expressions[80], expressions[82], expressions[84], expressions[86], expressions[88], expressions[90], expressions[92], expressions[94], expressions[97], expressions[100], expressions[103], expressions[106], expressions[109], expressions[112], expressions[115], expressions[118], expressions[121], expressions[124], expressions[127], expressions[130], expressions[133], expressions[136], expressions[139], expressions[142], expressions[145], expressions[148], expressions[151], expressions[154], expressions[157], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[191], expressions[192], expressions[193], expressions[195], expressions[197], expressions[198], expressions[200], expressions[202], expressions[203], expressions[204], expressions[206], expressions[212], expressions[217], expressions[224], expressions[226], expressions[228], expressions[231], expressions[233], expressions[235], expressions[237], expressions[239], expressions[240], expressions[241], expressions[242], expressions[244], expressions[245], expressions[246] };
+], expressions[160], expressions[163], expressions[166], expressions[169], expressions[172], expressions[175], expressions[178], expressions[181], expressions[184], expressions[187], expressions[190], expressions[191], expressions[192], expressions[193], expressions[195], expressions[197], expressions[198], expressions[200], expressions[202], expressions[203], expressions[204], expressions[206], expressions[212], expressions[217], expressions[224], expressions[226], expressions[228], expressions[231], expressions[233], expressions[235], expressions[237], expressions[239], expressions[240], expressions[241], expressions[242], expressions[244], expressions[245], expressions[246] };
     expressions[251] = BinaryenBlock(the_module, "the-value", children, 95, 0);
   }
   expressions[252] = BinaryenDrop(the_module, expressions[251]);
