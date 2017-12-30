@@ -97,6 +97,7 @@ echo "building shared bitcode"
   src/passes/Precompute.cpp \
   src/passes/Print.cpp \
   src/passes/PrintCallGraph.cpp \
+  src/passes/RedundantSetElimination.cpp \
   src/passes/RelooperJumpThreading.cpp \
   src/passes/RemoveImports.cpp \
   src/passes/RemoveMemory.cpp \
