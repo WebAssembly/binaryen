@@ -62,6 +62,7 @@ Pass* createRemoveUnusedNamesPass();
 Pass* createReorderFunctionsPass();
 Pass* createReorderLocalsPass();
 Pass* createReReloopPass();
+Pass* createRedundantSetEliminationPass();
 Pass* createSafeHeapPass();
 Pass* createSimplifyLocalsPass();
 Pass* createSimplifyLocalsNoTeePass();
