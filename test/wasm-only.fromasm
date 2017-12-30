@@ -667,9 +667,7 @@
   (block $switch8
    (if
     (i32.ne
-     (tee_local $1
-      (i32.const 100)
-     )
+     (i32.const 100)
      (i32.const 214748364)
     )
     (br_if $switch8
