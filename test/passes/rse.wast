@@ -88,7 +88,34 @@
     (set_local $y (i32.const 3))
     (set_local $y (get_local $x)) ;; do this last
   )
-  (func $identical_complex (param $x i32) ;; we don't do this yet
+  (func $param-unique
+    (param $x i32)
+    (local $a i32)
+    (set_local $a (get_local $x))
+    (set_local $a (get_local $x))
+    (set_local $x (i32.eqz (i32.const 9999)))
+    (set_local $a (get_local $x))
+    (set_local $a (get_local $x))
+  )
+  (func $set-unique
+    (local $x i32)
+    (local $y i32)
+    (set_local $x (i32.eqz (i32.const 123)))
+    (set_local $y (get_local $x))
+    (set_local $y (get_local $x))
+    (set_local $x (i32.eqz (i32.const 456)))
+    (set_local $y (get_local $x))
+    (set_local $y (get_local $x))
+    (set_local $x (i32.eqz (i32.const 789)))
+    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (set_local $y (get_local $x))
+    (set_local $y (get_local $x))
+    (set_local $x (i32.eqz (i32.const 1000)))
+    (set_local $y (get_local $x))
+    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (set_local $y (get_local $x))
+  )
+  (func $identical_complex (param $x i32)
     (local $y i32)
     (set_local $y (get_local $x))
     (set_local $y (get_local $x))

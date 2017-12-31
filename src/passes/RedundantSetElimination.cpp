@@ -92,7 +92,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   // numbering
 
   Index nextValue = 2; // 0 and 1 are reserved
-  std::unordered_map<Literal, Index> literalValues;
+  std::unordered_map<Literal, Index> literalValues; // each constant has a value
+  std::unordered_map<SetLocal*, Index> setValues; // each set has a value
+  std::unordered_map<Block*, std::unordered_map<Index, Index>> blockMergeValues; // each block has values for each merge
 
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
@@ -100,15 +102,46 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   Index getMixedValue() { // this could be anything - we can't do any work here
     return 1;
   }
+  Index getUniqueValue() {
+    return nextValue++;
+  }
 
   Index getLiteralValue(Literal lit) {
     auto iter = literalValues.find(lit);
     if (iter != literalValues.end()) {
       return iter->second;
     }
-    Index ret = nextValue++;
-    literalValues[lit] = ret;
-    return ret;
+    return literalValues[lit] = getUniqueValue();
+  }
+
+  Index getSetValue(SetLocal* set) {
+    auto iter = setValues.find(set);
+    if (iter != setValues.end()) {
+      return iter->second;
+    }
+    return setValues[set] = getUniqueValue();
+  }
+
+  Index getBlockMergeValue(Block* block, Index index) {
+    auto& mergeValues = blockMergeValues[block];
+    auto iter = mergeValues.find(index);
+    if (iter != mergeValues.end()) {
+      return iter->second;
+    }
+    return mergeValues[index] = getUniqueValue();
+  }
+
+  Index getValueForSet(SetLocal* set, LocalValues& currValues) {
+    if (auto* c = set->value->dynCast<Const>()) {
+      // a constant
+      return getLiteralValue(c->value);
+    } else if (auto* get = set->value->dynCast<GetLocal>()) {
+      // a copy of whatever that was
+      return currValues[get->index];
+    } else {
+      // get the sets own unique value
+      return getSetValue(set);
+    }
   }
 
   // flowing
@@ -121,7 +154,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
           if (func->isParam(i)) {
-            values[i] = getMixedValue();
+            values[i] = getUniqueValue();
           } else {
             values[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
           }
@@ -171,19 +204,6 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           queue.insert(next);
         }
       }
-    }
-  }
-
-  Index getValueForSet(SetLocal* set, LocalValues& currValues) {
-    if (auto* c = set->value->dynCast<Const>()) {
-      // a constant
-      return getLiteralValue(c->value);
-    } else if (auto* get = set->value->dynCast<GetLocal>()) {
-      // a copy of whatever that was
-      return currValues[get->index];
-    } else {
-      // we don't know
-      return getMixedValue();
     }
   }
 

@@ -192,24 +192,102 @@
    (get_local $x)
   )
  )
- (func $identical_complex (; 9 ;) (type $1) (param $x i32)
+ (func $param-unique (; 9 ;) (type $1) (param $x i32)
+  (local $a i32)
+  (set_local $a
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $x
+   (i32.eqz
+    (i32.const 9999)
+   )
+  )
+  (set_local $a
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+ )
+ (func $set-unique (; 10 ;) (type $2)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (i32.eqz
+    (i32.const 123)
+   )
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $x
+   (i32.eqz
+    (i32.const 456)
+   )
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $x
+   (i32.eqz
+    (i32.const 789)
+   )
+  )
+  (if
+   (i32.const 1)
+   (nop)
+   (nop)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $x
+   (i32.eqz
+    (i32.const 1000)
+   )
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (nop)
+   (nop)
+  )
+  (drop
+   (get_local $x)
+  )
+ )
+ (func $identical_complex (; 11 ;) (type $1) (param $x i32)
   (local $y i32)
   (set_local $y
    (get_local $x)
   )
-  (set_local $y
+  (drop
    (get_local $x)
   )
-  (set_local $y
+  (drop
    (get_local $x)
   )
-  (set_local $x
+  (drop
    (get_local $x)
   )
-  (set_local $y
+  (drop
    (get_local $y)
   )
-  (set_local $x
+  (drop
    (get_local $y)
   )
  )
