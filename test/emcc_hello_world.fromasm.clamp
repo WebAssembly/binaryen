@@ -10992,9 +10992,6 @@
            (get_local $1)
           )
          )
-         (set_local $3
-          (get_local $1)
-         )
         )
         (if
          (i32.ne
