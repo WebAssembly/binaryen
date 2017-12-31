@@ -140,5 +140,61 @@
     )
     (set_local $x (i32.const 2))
   )
+  (func $one-arm
+   (param $1 i32)
+   (param $3 i32)
+   (set_local $1
+    (get_local $3)
+   )
+   (if
+    (i32.const 1)
+    (nop)
+    (set_local $3
+     (get_local $1)
+    )
+   )
+  )
+  (func $one-arm2
+   (param $1 i32)
+   (param $3 i32)
+   (set_local $1
+    (get_local $3)
+   )
+   (if
+    (i32.const 1)
+    (set_local $3
+     (get_local $1)
+    )
+   )
+  )
+  (func $many-merges
+   (local $0 i32)
+   (local $1 i32)
+   (block $block
+    (br_if $block
+     (i32.const 0)
+    )
+    (loop $loop
+     (set_local $1
+      (get_local $0)
+     )
+     (set_local $0
+      (i32.const 99)
+     )
+     (br_if $loop
+      (i32.const 1)
+     )
+    )
+   )
+   (set_local $0 ;; make them equal
+    (get_local $1)
+   )
+   (if
+    (i32.const 0)
+    (set_local $1 ;; we can drop this
+     (get_local $0)
+    )
+   )
+  )
 )
 

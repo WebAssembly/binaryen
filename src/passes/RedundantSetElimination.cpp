@@ -49,19 +49,8 @@ typedef std::vector<Index> LocalValues;
 
 // information in a basic block
 struct Info {
-  LocalValues start; // the local values at the start of the block
+  LocalValues start, end; // the local values at the start and end of the block
   std::vector<Expression**> setps;
-
-  void dump() {
-    std::cout << "====\n";
-    for (Index i = 0; i < start.size(); i++) {
-      std::cout << "  start[i] = " << start[i] << '\n';
-    }
-    for (auto** setp : setps) {
-      std::cout << "  " << *setp << '\n';
-    }
-    std::cout << "====\n";
-  }
 };
 
 struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>> {
@@ -147,22 +136,28 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   void flowValues(Function* func) {
     for (auto& block : basicBlocks) {
-      LocalValues& values = block->contents.start;
-      values.resize(numLocals);
+      LocalValues& start = block->contents.start;
+      start.resize(numLocals);
       if (block.get() == entry) {
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
           if (func->isParam(i)) {
-            values[i] = getUniqueValue();
+            start[i] = getUniqueValue();
           } else {
-            values[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
+            start[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
           }
         }
       } else {
         // other blocks have all unseen values to begin with
         for (Index i = 0; i < numLocals; i++) {
-          values[i] = getUnseenValue();
+          start[i] = getUnseenValue();
         }
+      }
+      // the ends all begin unseen
+      LocalValues& end = block->contents.end;
+      end.resize(numLocals);
+      for (Index i = 0; i < numLocals; i++) {
+        end[i] = getUnseenValue();
       }
     }
     // keep working while stuff is flowing
@@ -172,37 +167,53 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       auto iter = queue.begin();
       auto* curr = *iter;
       queue.erase(iter);
-      // flow the values at the start to the end, and apply to the blocks we reach,
-      // adding them to the queue if necessary
+      // process a block: first, update its start based on those reaching it
+      if (!curr->in.empty()) {
+        if (curr->in.size() == 1) {
+          // just copy the pred, nothing to merge
+          curr->contents.start = (*curr->in.begin())->contents.end;
+        } else {
+          // perform a merge
+          auto in = curr->in;
+          for (Index i = 0; i < numLocals; i++) {
+            auto iter = in.begin();
+            auto value = (*iter)->contents.end[i];
+            iter++;
+            while (iter != in.end()) {
+              auto otherValue = (*iter)->contents.end[i];
+              if (value == getUnseenValue()) {
+                value = otherValue;
+              } else if (otherValue == getUnseenValue()) {
+                // nothing to do, other has no information
+              } else if (value != otherValue) {
+                // 2 different values, this is a merged value
+                value = getBlockMergeValue(curr, i);
+                break; // no more work once we see a merge
+              }
+              iter++;
+            }
+            curr->contents.start[i] = value;
+          }
+        }
+      }
+      // flow values through it, then add those we can reach if they need an update.
       auto currValues = curr->contents.start; // we'll modify this as we go
       auto& setps = curr->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<SetLocal>();
         currValues[set->index] = getValueForSet(set, currValues);
       }
+      if (currValues == curr->contents.end) {
+        // nothing changed, so no more work to do
+        // note that the first iteration this is always not the case,
+        // since end contains unseen (and then the comparison ends on
+        // the first element)
+        continue;
+      }
+      // update the end state and update children
+      curr->contents.end.swap(currValues);
       for (auto* next : curr->out) {
-        auto& nextValues = next->contents.start;
-        bool changed = false;
-        for (Index i = 0; i < numLocals; i++) {
-          if (nextValues[i] == getUnseenValue()) {
-            if (currValues[i] != getUnseenValue()) {
-              // first time we see something here
-              nextValues[i] = currValues[i];
-              changed = true;
-            }
-          } else if (nextValues[i] != currValues[i]) {
-            Index mergeValue = getBlockMergeValue(next, i);
-            if (nextValues[i] != mergeValue) {
-              // a new merge, we don't know any more
-              nextValues[i] = mergeValue;
-              changed = true;
-            }
-          }
-          // otherwise, it's the same, leave it
-        }
-        if (changed) {
-          queue.insert(next);
-        }
+        queue.insert(next);
       }
     }
   }
@@ -213,6 +224,13 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     // and remove redundant sets when we see them
     for (auto& block : basicBlocks) {
       auto currValues = block->contents.start; // we'll modify this as we go
+#if 0 // scavenging code, useful for gvn, not useful yet
+      // track the values present in all locals, so we can scavenge
+      std::unordered_map<Index, std::set<Index>> presentValues; // value # => set of locals having it
+      for (Index i = 0; i < numLocals; i++) {
+        presentValues[currValues[i]].insert(i);
+      }
+#endif
       auto& setps = block->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<SetLocal>();
@@ -221,8 +239,33 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         auto index = set->index;
         if (newValue == oldValue) {
           remove(setp);
+          continue; // no more work to do
         }
-        currValues[index] = newValue; // update for later steps
+#if 0
+        // perhaps it makes sense to scavenge, that is, get it from a local that
+        // carries that value right now anyhow. if it's a trivial value
+        // anyhow, cheaper than a get, just leave it.
+        // TODO more careful analysis of size and cost
+        auto* value = set->value;
+        if (!value->is<Const>() && !value->is<GetLocal>()) {
+          auto iter = presentValues.find(newValue);
+          if (iter != presentValues.end()) {
+            auto& haveValue = iter->second;
+            if (!haveValue.empty()) {
+              set->value = Builder(*getModule()).makeGetLocal(
+                *haveValue.begin(),
+                getFunction()->getLocalType(set->index)
+              );
+            }
+          }
+        }
+#endif
+        // update for later steps
+        currValues[index] = newValue;
+#if 0
+        presentValues[oldValue].erase(set->index);
+        presentValues[newValue].insert(set->index);
+#endif
       }
     }
   }
@@ -238,6 +281,26 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       *setp = value;
     }
   }
+
+  // debugging
+
+  void dump(BasicBlock* block) {
+    std::cout << "====\n";
+    if (block) {
+      std::cout << "block: " << block << '\n';
+      for (auto* out : block->out) {
+        std::cout << "  goes to " << out << '\n';
+      }
+    }
+    for (Index i = 0; i < block->contents.start.size(); i++) {
+      std::cout << "  start[" << i << "] = " << block->contents.start[i] << '\n';
+    }
+    for (auto** setp : block->contents.setps) {
+      std::cout << "  " << *setp << '\n';
+    }
+    std::cout << "====\n";
+  }
+
 };
 
 Pass *createRedundantSetEliminationPass() {

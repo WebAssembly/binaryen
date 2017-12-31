@@ -2,6 +2,7 @@
  (type $0 (func (param i32 f64)))
  (type $1 (func (param i32)))
  (type $2 (func))
+ (type $3 (func (param i32 i32)))
  (memory $0 0)
  (func $basic (; 0 ;) (type $0) (param $x i32) (param $y f64)
   (local $a f32)
@@ -324,6 +325,58 @@
   )
   (drop
    (i32.const 2)
+  )
+ )
+ (func $one-arm (; 13 ;) (type $3) (param $1 i32) (param $3 i32)
+  (set_local $1
+   (get_local $3)
+  )
+  (if
+   (i32.const 1)
+   (nop)
+   (drop
+    (get_local $1)
+   )
+  )
+ )
+ (func $one-arm2 (; 14 ;) (type $3) (param $1 i32) (param $3 i32)
+  (set_local $1
+   (get_local $3)
+  )
+  (if
+   (i32.const 1)
+   (drop
+    (get_local $1)
+   )
+  )
+ )
+ (func $many-merges (; 15 ;) (type $2)
+  (local $0 i32)
+  (local $1 i32)
+  (block $block
+   (br_if $block
+    (i32.const 0)
+   )
+   (loop $loop
+    (set_local $1
+     (get_local $0)
+    )
+    (set_local $0
+     (i32.const 99)
+    )
+    (br_if $loop
+     (i32.const 1)
+    )
+   )
+  )
+  (set_local $0
+   (get_local $1)
+  )
+  (if
+   (i32.const 0)
+   (drop
+    (get_local $0)
+   )
   )
  )
 )
