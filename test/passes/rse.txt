@@ -291,4 +291,39 @@
    (get_local $y)
   )
  )
+ (func $merge (; 12 ;) (type $2)
+  (local $x i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 1)
+   )
+   (set_local $x
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+  (set_local $x
+   (i32.const 2)
+  )
+  (loop $loop
+   (drop
+    (i32.const 2)
+   )
+   (set_local $x
+    (i32.const 3)
+   )
+   (set_local $x
+    (i32.const 2)
+   )
+   (br_if $loop
+    (i32.const 2)
+   )
+  )
+  (drop
+   (i32.const 2)
+  )
+ )
 )

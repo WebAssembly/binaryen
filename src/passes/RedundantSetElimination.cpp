@@ -91,16 +91,13 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   // numbering
 
-  Index nextValue = 2; // 0 and 1 are reserved
+  Index nextValue = 1; // 0 is reserved for the "unseen value"
   std::unordered_map<Literal, Index> literalValues; // each constant has a value
   std::unordered_map<SetLocal*, Index> setValues; // each set has a value
-  std::unordered_map<Block*, std::unordered_map<Index, Index>> blockMergeValues; // each block has values for each merge
+  std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>> blockMergeValues; // each block has values for each merge
 
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
-  }
-  Index getMixedValue() { // this could be anything - we can't do any work here
-    return 1;
   }
   Index getUniqueValue() {
     return nextValue++;
@@ -122,7 +119,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     return setValues[set] = getUniqueValue();
   }
 
-  Index getBlockMergeValue(Block* block, Index index) {
+  Index getBlockMergeValue(BasicBlock* block, Index index) {
     auto& mergeValues = blockMergeValues[block];
     auto iter = mergeValues.find(index);
     if (iter != mergeValues.end()) {
@@ -192,9 +189,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
               changed = true;
             }
           } else if (nextValues[i] != currValues[i]) {
-            if (nextValues[i] != getMixedValue()) {
+            Index mergeValue = getBlockMergeValue(next, i);
+            if (nextValues[i] != mergeValue) {
               // a new merge, we don't know any more
-              nextValues[i] = getMixedValue();
+              nextValues[i] = mergeValue;
               changed = true;
             }
           }
@@ -219,7 +217,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         auto oldValue = currValues[set->index];
         auto newValue = getValueForSet(set, currValues);
         auto index = set->index;
-        if (newValue != getMixedValue() && newValue == oldValue) {
+        if (newValue == oldValue) {
           remove(setp);
         }
         currValues[index] = newValue; // update for later steps

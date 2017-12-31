@@ -124,5 +124,21 @@
     (set_local $y (get_local $y))
     (set_local $x (get_local $y))
   )
+  (func $merge
+    (local $x i32)
+    (if (i32.const 1)
+      (set_local $x (i32.const 1))
+      (set_local $x (i32.const 1))
+    )
+    (set_local $x (i32.const 1))
+    (set_local $x (i32.const 2))
+    (loop $loop
+      (set_local $x (i32.const 2))
+      (set_local $x (i32.const 3))
+      (set_local $x (i32.const 2))
+      (br_if $loop (i32.const 2))
+    )
+    (set_local $x (i32.const 2))
+  )
 )
 
