@@ -71,6 +71,23 @@
     )
     (set_local $x (i32.const 1))
   )
+  (func $copy
+    (local $x i32)
+    (local $y i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (get_local $x))
+    (set_local $y (i32.const 1))
+    (set_local $x (i32.const 2))
+    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (set_local $y (get_local $x))
+    (set_local $y (i32.const 2))
+    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (set_local $y (i32.const 2))
+    ;; flip
+    (set_local $x (i32.const 3))
+    (set_local $y (i32.const 3))
+    (set_local $y (get_local $x)) ;; do this last
+  )
   (func $identical_complex (param $x i32) ;; we don't do this yet
     (local $y i32)
     (set_local $y (get_local $x))

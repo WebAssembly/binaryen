@@ -148,7 +148,51 @@
    (i32.const 1)
   )
  )
- (func $identical_complex (; 8 ;) (type $1) (param $x i32)
+ (func $copy (; 8 ;) (type $2)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (i32.const 1)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (set_local $x
+   (i32.const 2)
+  )
+  (if
+   (i32.const 1)
+   (nop)
+   (nop)
+  )
+  (set_local $y
+   (get_local $x)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (if
+   (i32.const 1)
+   (nop)
+   (nop)
+  )
+  (drop
+   (i32.const 2)
+  )
+  (set_local $x
+   (i32.const 3)
+  )
+  (set_local $y
+   (i32.const 3)
+  )
+  (drop
+   (get_local $x)
+  )
+ )
+ (func $identical_complex (; 9 ;) (type $1) (param $x i32)
   (local $y i32)
   (set_local $y
    (get_local $x)
