@@ -26,8 +26,10 @@
 // should be done after it, as this pass can leave around drop()s of
 // values no longer necessary.
 //
-// So far this tracks constant values. TODO expand it into more of a GVN
-// type analysis.
+// So far this tracks constant values, and for everything else it considers
+// them unique (so each set_local of a non-constant is a unique value, each
+// merge is a unique value, etc.).
+// TODO expand it into more of a GVN value analysis.
 //
 
 #include <wasm.h>
