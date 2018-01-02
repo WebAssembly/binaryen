@@ -196,5 +196,34 @@
     )
    )
   )
+  (func $fuzz
+   (local $x i32)
+   (loop $label$4
+    (block $label$5
+     (if
+      (i32.const 1)
+      (block
+       (set_local $x
+        (i32.const 203)
+       )
+       (br $label$5)
+      )
+     )
+     (br_if $label$4
+      (i32.const 2)
+     )
+    )
+   )
+   (loop $label$7
+    (if
+     (if (result i32)
+      (i32.const 3)
+      (i32.const 4)
+      (i32.const 5)
+     )
+     (br $label$7)
+    )
+   )
+  )
 )
 

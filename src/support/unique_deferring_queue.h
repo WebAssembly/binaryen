@@ -36,13 +36,13 @@ struct UniqueDeferredQueue {
   // avoid needing to remove elements from the middle
   // when there are duplicates.
   std::queue<T> data;
-  std::unordered_map<T> count;
+  std::unordered_map<T, size_t> count;
 
   size_t size() { return data.size(); }
-  bool empty() { return data.size() == 0; }
+  bool empty() { return size() == 0; }
 
   void push(T item) {
-    data.push_back(item);
+    data.push(item);
     count[item]++;
   }
 

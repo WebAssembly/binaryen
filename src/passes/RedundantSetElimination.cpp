@@ -92,6 +92,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     return 0;
   }
   Index getUniqueValue() {
+#ifdef RSE_DEBUG
+    std::cout << "new unique value " << nextValue << '\n';
+#endif
     return nextValue++;
   }
 
@@ -100,6 +103,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     if (iter != literalValues.end()) {
       return iter->second;
     }
+#ifdef RSE_DEBUG
+    std::cout << "new literal value for " << lit << '\n';
+#endif
     return literalValues[lit] = getUniqueValue();
   }
 
@@ -108,6 +114,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     if (iter != expressionValues.end()) {
       return iter->second;
     }
+#ifdef RSE_DEBUG
+    std::cout << "new expr value for " << expr << '\n';
+#endif
     return expressionValues[expr] = getUniqueValue();
   }
 
@@ -117,7 +126,19 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     if (iter != mergeValues.end()) {
       return iter->second;
     }
+#ifdef RSE_DEBUG
+    std::cout << "new block-merge value for " << block << " : " << index << '\n';
+#endif
     return mergeValues[index] = getUniqueValue();
+  }
+
+  bool isBlockMergeValue(BasicBlock* block, Index index, Index value) {
+    auto iter = blockMergeValues.find(block);
+    if (iter == blockMergeValues.end()) return false;
+    auto& mergeValues = iter->second;
+    auto iter2 = mergeValues.find(index);
+    if (iter2 == mergeValues.end()) return false;
+    return value == iter2->second;
   }
 
   Index getValue(Expression* value, LocalValues& currValues) {
@@ -143,6 +164,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         // params are complex values we can't optimize; vars are zeros
         for (Index i = 0; i < numLocals; i++) {
           if (func->isParam(i)) {
+#ifdef RSE_DEBUG
+            std::cout << "new param value for " << i << '\n';
+#endif
             start[i] = getUniqueValue();
           } else {
             start[i] = getLiteralValue(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
@@ -178,6 +202,12 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           // perform a merge
           auto in = curr->in;
           for (Index i = 0; i < numLocals; i++) {
+            auto old = curr->contents.start[i];
+            // if we already had a merge value here, keep it, merging
+            // is happening
+            if (isBlockMergeValue(curr, i, old)) {
+              continue;
+            }
             auto iter = in.begin();
             auto value = (*iter)->contents.end[i];
             iter++;
@@ -226,13 +256,6 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     // and remove redundant sets when we see them
     for (auto& block : basicBlocks) {
       auto currValues = block->contents.start; // we'll modify this as we go
-#if 0 // scavenging code, useful for gvn, not useful yet
-      // track the values present in all locals, so we can scavenge
-      std::unordered_map<Index, std::set<Index>> presentValues; // value # => set of locals having it
-      for (Index i = 0; i < numLocals; i++) {
-        presentValues[currValues[i]].insert(i);
-      }
-#endif
       auto& setps = block->contents.setps;
       for (auto** setp : setps) {
         auto* set = (*setp)->cast<SetLocal>();
@@ -243,31 +266,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           remove(setp);
           continue; // no more work to do
         }
-#if 0
-        // perhaps it makes sense to scavenge, that is, get it from a local that
-        // carries that value right now anyhow. if it's a trivial value
-        // anyhow, cheaper than a get, just leave it.
-        // TODO more careful analysis of size and cost
-        auto* value = set->value;
-        if (!value->is<Const>() && !value->is<GetLocal>()) {
-          auto iter = presentValues.find(newValue);
-          if (iter != presentValues.end()) {
-            auto& haveValue = iter->second;
-            if (!haveValue.empty()) {
-              set->value = Builder(*getModule()).makeGetLocal(
-                *haveValue.begin(),
-                getFunction()->getLocalType(set->index)
-              );
-            }
-          }
-        }
-#endif
         // update for later steps
         currValues[index] = newValue;
-#if 0
-        presentValues[oldValue].erase(set->index);
-        presentValues[newValue].insert(set->index);
-#endif
       }
     }
   }
@@ -303,6 +303,13 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     std::cout << "====\n";
   }
 
+  void dump(const char* desc, LocalValues& values) {
+    std::cout << desc << ": ";
+    for (auto x : values) {
+      std::cout << x << ' ';
+    }
+    std::cout << '\n';
+  }
 };
 
 Pass *createRedundantSetEliminationPass() {
