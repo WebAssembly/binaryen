@@ -38,6 +38,7 @@
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
+#include <support/unique_deferring_queue.h>
 
 namespace wasm {
 
@@ -160,13 +161,14 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         end[i] = getUnseenValue();
       }
     }
-    // keep working while stuff is flowing
-    std::unordered_set<BasicBlock*> queue;
-    queue.insert(entry);
-    while (queue.size() > 0) {
-      auto iter = queue.begin();
-      auto* curr = *iter;
-      queue.erase(iter);
+    // keep working while stuff is flowing. we use a unique deferred queue
+    // which ensures both FIFO and that we don't do needless work - if
+    // A and B reach C, and both queue C, we only want to do C at the latest
+    // time, when we have information from all those reaching it.
+    UniqueDeferredQueue<BasicBlock*> work;
+    work.push(entry);
+    while (!work.empty()) {
+      auto* curr = work.pop();
       // process a block: first, update its start based on those reaching it
       if (!curr->in.empty()) {
         if (curr->in.size() == 1) {
@@ -213,7 +215,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       // update the end state and update children
       curr->contents.end.swap(currValues);
       for (auto* next : curr->out) {
-        queue.insert(next);
+        work.push(next);
       }
     }
   }
