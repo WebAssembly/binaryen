@@ -225,5 +225,28 @@
     )
    )
   )
+  (func $fuzz2
+   (local $var$1 i32)
+   (if
+    (i32.const 0)
+    (if
+     (i32.const 1)
+     (set_local $var$1
+      (i32.const 2)
+     )
+    )
+   )
+   (loop $label$10
+    (block $label$11
+     (if
+      (i32.const 5)
+      (br_if $label$11
+       (i32.const 6)
+      )
+     )
+     (br $label$10)
+    )
+   )
+  )
 )
 
