@@ -195,7 +195,6 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
       auto* curr = work.pop();
 #ifdef RSE_DEBUG
       std::cout << "flow block " << curr << '\n';
-      dump("pre-start    ", curr->contents.start);
 #endif
       // process a block: first, update its start based on those reaching it
       if (!curr->in.empty()) {
@@ -207,15 +206,36 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           auto in = curr->in;
           for (Index i = 0; i < numLocals; i++) {
             auto old = curr->contents.start[i];
-            // if we already had a merge value here, keep it, merging
-            // is happening
-            // TODO this may have some false positives, as we may e.g. have
+            // If we already had a merge value here, keep it.
+            // TODO This may have some false positives, as we may e.g. have
             //      a single pred that first gives us x, then later y after
             //      flow led to a merge, and we may see x and y at the same
             //      time due to flow from a successor, and then it looks like
             //      we need a merge but we don't. avoiding that would require
             //      more memory and is probably not worth it, but might be
             //      worth investigating
+            // NB While suboptimal, this simplification provides a simple proof
+            //    of convergence: We prove that, in each fixed block+local, the
+            //    the value number at the end is nondecreasing across
+            //    iterations, by induction on the iteration.
+            //     * The first iteration is on the entry block. It increases
+            //       end value number at the end from 0 (unseen) to something
+            //       else.
+            //     * Induction step: assuming the property holds for all
+            //       iterations, consider the current iteration. Of our
+            //       predecessors, those that we iterated on have the property;
+            //       those that we haven't will have 0 (unseen), also
+            //       nondecreasing.
+            //        * If we assign to that local in this block, that will be
+            //          the value in the output, forever.
+            //        * If we see different values coming in, we create a merge
+            //          value number. It's number is higher than everything
+            //          else since we give it the next available number, so we
+            //          do not decrease in this iteration, and we will output
+            //          the same value in the future too (here is where we use
+            //          the simplification property).
+            //        * Otherwise, we will flow the incoming value through,
+            //          and it did not decrease, so neither do we.
             if (isBlockMergeValue(curr, i, old)) {
               continue;
             }
@@ -240,7 +260,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         }
       }
 #ifdef RSE_DEBUG
-      dump("post-start   ", curr->contents.start);
+      dump("start ", curr->contents.start);
 #endif
       // flow values through it, then add those we can reach if they need an update.
       auto currValues = curr->contents.start; // we'll modify this as we go
@@ -257,18 +277,19 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         continue;
       }
       // update the end state and update children
-#ifdef RSE_DEBUG
-      dump("pre-end      ", curr->contents.end);
+#ifndef NDEBUG
+      // verify the convergence property mentioned in the NB comment
+      // above: the value numbers at the end must be nondecreasing
+      for (Index i = 0; i < numLocals; i++) {
+        assert(currValues[i] >= curr->contents.end[i]);
+      }
 #endif
       curr->contents.end.swap(currValues);
 #ifdef RSE_DEBUG
-      dump("post-end     ", curr->contents.end);
+      dump("end   ", curr->contents.end);
 #endif
       for (auto* next : curr->out) {
         work.push(next);
-#ifdef RSE_DEBUG
-        std::cout << "  queue " << next << '\n';
-#endif
       }
     }
   }
