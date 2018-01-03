@@ -205,6 +205,13 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             auto old = curr->contents.start[i];
             // if we already had a merge value here, keep it, merging
             // is happening
+            // TODO this may have some false positives, as we may e.g. have
+            //      a single pred that first gives us x, then later y after
+            //      flow led to a merge, and we may see x and y at the same
+            //      time due to flow from a successor, and then it looks like
+            //      we need a merge but we don't. avoiding that would require
+            //      more memory and is probably not worth it, but might be
+            //      worth investigating
             if (isBlockMergeValue(curr, i, old)) {
               continue;
             }
