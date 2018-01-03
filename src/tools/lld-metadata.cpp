@@ -115,7 +115,7 @@ int main(int argc, const char *argv[]) {
   Module wasm;
   try {
     ModuleReader reader;
-    reader.readBinary(infile, wasm);
+    reader.readObject(infile, wasm);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";

@@ -1640,8 +1640,8 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Global: {
         curr->globalType = getWasmType();
         auto globalMutable = getU32LEB();
-        if (globalMutable) {
-          throw ParseException("imported globals cannot be mutable");
+        if (globalMutable && !isObjectFile) {
+          throw ParseException("imported globals cannot be mutable unless reading an object file");
         }
         break;
       }

@@ -805,6 +805,7 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   const std::vector<char>& input;
   bool debug;
+  bool isObjectFile;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
 
@@ -815,7 +816,16 @@ class WasmBinaryBuilder {
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
+  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug,
+                    bool isObjectFile = false)
+    : wasm(wasm),
+      allocator(wasm.allocator),
+      input(input),
+      debug(debug),
+      isObjectFile(isObjectFile),
+      sourceMap(nullptr),
+      nextDebugLocation(0, { 0, 0, 0 }),
+      useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
