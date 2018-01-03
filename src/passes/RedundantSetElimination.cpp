@@ -193,6 +193,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     work.push(entry);
     while (!work.empty()) {
       auto* curr = work.pop();
+#ifdef RSE_DEBUG
+      std::cout << "flow block " << curr << '\n';
+      dump("pre-start    ", curr->contents.start);
+#endif
       // process a block: first, update its start based on those reaching it
       if (!curr->in.empty()) {
         if (curr->in.size() == 1) {
@@ -235,6 +239,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
           }
         }
       }
+#ifdef RSE_DEBUG
+      dump("post-start   ", curr->contents.start);
+#endif
       // flow values through it, then add those we can reach if they need an update.
       auto currValues = curr->contents.start; // we'll modify this as we go
       auto& setps = curr->contents.setps;
@@ -250,9 +257,18 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         continue;
       }
       // update the end state and update children
+#ifdef RSE_DEBUG
+      dump("pre-end      ", curr->contents.end);
+#endif
       curr->contents.end.swap(currValues);
+#ifdef RSE_DEBUG
+      dump("post-end     ", curr->contents.end);
+#endif
       for (auto* next : curr->out) {
         work.push(next);
+#ifdef RSE_DEBUG
+        std::cout << "  queue " << next << '\n';
+#endif
       }
     }
   }
