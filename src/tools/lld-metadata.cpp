@@ -94,7 +94,7 @@ void parseLinkingSection(
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
-  Options options("o2wasm", "Link .o file into .wasm");
+  Options options("lld-metadata", "Reads wasm .o file and emits .json metadata");
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
