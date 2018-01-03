@@ -461,7 +461,7 @@
  )
  (func $replace-block-changes-later-when-if-goes (; 26 ;) (type $1)
   (block $top
-   (set_global $global$0
+   (set_global $x
     (i32.const 0)
    )
    (block $inner

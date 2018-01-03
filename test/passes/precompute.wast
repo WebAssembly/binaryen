@@ -1,6 +1,7 @@
 (module
   (memory 0)
   (type $0 (func (param i32)))
+  (global $global$0 (mut i32) (i32.const 0))
   (func $x (type $0) (param $x i32)
     (call $x
       (i32.add

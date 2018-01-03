@@ -676,7 +676,7 @@
  )
  (func $replace-block-changes-later-when-if-goes
   (block $top ;; and so should this
-   (set_global $global$0
+   (set_global $x
     (i32.const 0)
    )
    (drop
