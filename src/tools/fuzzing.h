@@ -409,7 +409,7 @@ private:
   // the wasm, so they run everywhere
   void addInvocations(Function* func) {
     std::vector<Expression*> invocations;
-    while (oneIn(2)) {
+    while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
       for (auto type : func->params) {
         args.push_back(makeConst(type));

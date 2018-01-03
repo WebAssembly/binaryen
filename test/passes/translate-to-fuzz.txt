@@ -19,7 +19,6 @@
  (export "func_4" (func $func_4))
  (export "func_6" (func $func_6))
  (export "func_6_invoker" (func $func_6_invoker))
- (export "func_9_invoker" (func $func_9_invoker))
  (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $func_0 (; 0 ;) (type $FUNCSIG$i) (result i32)
   (local $0 i32)
@@ -1365,29 +1364,12 @@
    )
   )
  )
- (func $func_9_invoker (; 10 ;) (type $FUNCSIG$v)
-  (drop
-   (call $func_9
-    (i32.const -120)
-   )
-  )
-  (drop
-   (call $func_9
-    (i32.const 11571)
-   )
-  )
-  (drop
-   (call $func_9
-    (i32.const -1)
-   )
-  )
- )
- (func $hangLimitInitializer (; 11 ;)
+ (func $hangLimitInitializer (; 10 ;)
   (set_global $hangLimit
    (i32.const 10)
   )
  )
- (func $deNan32 (; 12 ;) (param $0 f32) (result f32)
+ (func $deNan32 (; 11 ;) (param $0 f32) (result f32)
   (if (result f32)
    (f32.eq
     (get_local $0)
@@ -1397,7 +1379,7 @@
    (f32.const 0)
   )
  )
- (func $deNan64 (; 13 ;) (param $0 f64) (result f64)
+ (func $deNan64 (; 12 ;) (param $0 f64) (result f64)
   (if (result f64)
    (f64.eq
     (get_local $0)
