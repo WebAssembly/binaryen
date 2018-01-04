@@ -1,0 +1,6 @@
+[wasm-validator error in function $test] unexpected false: get_global name must be valid, on 
+[i32] (get_global $missing)
+0
+[wasm-validator error in function $test] unexpected false: get_local index must be small enough, on 
+[i32] (get_local $0)
+0

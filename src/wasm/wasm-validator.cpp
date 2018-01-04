@@ -228,6 +228,8 @@ public:
   void visitCallIndirect(CallIndirect *curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal *curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal *curr);
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
   void visitAtomicRMW(AtomicRMW *curr);
@@ -470,6 +472,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect *curr) {
 }
 
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
+  shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "get_local index must be small enough");
   shouldBeTrue(isConcreteWasmType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
 }
 
@@ -481,6 +484,19 @@ void FunctionValidator::visitSetLocal(SetLocal *curr) {
     }
     shouldBeEqual(getFunction()->getLocalType(curr->index), curr->value->type, curr, "set_local type must match function");
   }
+}
+
+void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
+  if (!info.validateGlobally) return;
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name) || getModule()->getImportOrNull(curr->name), curr, "get_global name must be valid");
+}
+
+void FunctionValidator::visitSetGlobal(SetGlobal *curr) {
+  if (!info.validateGlobally) return;
+  auto* global = getModule()->getGlobalOrNull(curr->name);
+  shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)");
+  shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
+  shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
 }
 
 void FunctionValidator::visitLoad(Load *curr) {

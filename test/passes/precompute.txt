@@ -3,6 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func))
  (type $3 (func (result f64)))
+ (global $global$0 (mut i32) (i32.const 0))
  (memory $0 0)
  (func $x (; 0 ;) (type $0) (param $x i32)
   (call $x
