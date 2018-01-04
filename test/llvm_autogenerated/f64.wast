@@ -151,19 +151,18 @@
  )
  (func $stackAlloc (; 18 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.sub
-     (get_local $1)
-     (get_local $0)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
+      (get_local $0)
+     )
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
