@@ -29,7 +29,6 @@
 // So far this tracks constant values, and for everything else it considers
 // them unique (so each set_local of a non-constant is a unique value, each
 // merge is a unique value, etc.).
-// TODO expand it into more of a GVN value analysis.
 //
 
 #include <wasm.h>
@@ -236,6 +235,9 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //          the simplification property).
             //        * Otherwise, we will flow the incoming value through,
             //          and it did not decrease, so neither do we.
+            //    Not that we don't trust this proof, but the convergence
+            //    property (value numbers at block ends do not decrease) is
+            //    verified later down.
             if (isBlockMergeValue(curr, i, old)) {
               continue;
             }
@@ -260,7 +262,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         }
       }
 #ifdef RSE_DEBUG
-      dump("start ", curr->contents.start);
+      dump("start", curr->contents.start);
 #endif
       // flow values through it, then add those we can reach if they need an update.
       auto currValues = curr->contents.start; // we'll modify this as we go
@@ -286,7 +288,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 #endif
       curr->contents.end.swap(currValues);
 #ifdef RSE_DEBUG
-      dump("end   ", curr->contents.end);
+      dump("end  ", curr->contents.end);
 #endif
       for (auto* next : curr->out) {
         work.push(next);
