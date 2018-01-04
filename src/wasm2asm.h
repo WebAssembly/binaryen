@@ -212,6 +212,7 @@ private:
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addWasmCompatibilityFuncs(Module* wasm);
+  void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
@@ -533,7 +534,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
       );
     }
     if (export_->kind == ExternalKind::Memory) {
-      almostASM = true;
+      setNeedsAlmostASM("memory export");
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
       ValueBuilder::appendToObject(
@@ -1604,14 +1605,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
 
     Ref visitHost(Host* curr) {
       if (curr->op == HostOp::GrowMemory) {
-        parent->almostASM = true;
+        parent->setNeedsAlmostASM("grow_memory op");
         return ValueBuilder::makeCall(WASM_GROW_MEMORY,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
       }
       if (curr->op == HostOp::CurrentMemory) {
-        parent->almostASM = true;
+        parent->setNeedsAlmostASM("current_memory op");
         return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
       }
       return ValueBuilder::makeCall(ABORT_FUNC);
@@ -1751,6 +1752,13 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
       catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   return outerFunc;
+}
+
+void Wasm2AsmBuilder::setNeedsAlmostASM(const char *reason) {
+  if (!almostASM) {
+    almostASM = true;
+    std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
+  }
 }
 
 void Wasm2AsmBuilder::addMemoryGrowthFuncs(Ref ast) {
