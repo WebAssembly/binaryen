@@ -19,6 +19,7 @@
 // value, we don't need to set it again. A common case here is loops
 // that start at zero, since the default value is initialized to
 // zero anyhow.
+//
 // A risk here is that we extend live ranges, e.g. we may use the default
 // value at the very end of a function, keeping that local alive throughout.
 // For that reason it is probably better to run this near the end of
@@ -28,7 +29,8 @@
 //
 // So far this tracks constant values, and for everything else it considers
 // them unique (so each set_local of a non-constant is a unique value, each
-// merge is a unique value, etc.).
+// merge is a unique value, etc.; there is no sophisticated value numbering
+// here).
 //
 
 #include <wasm.h>
@@ -214,17 +216,16 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //      more memory and is probably not worth it, but might be
             //      worth investigating
             // NB While suboptimal, this simplification provides a simple proof
-            //    of convergence: We prove that, in each fixed block+local, the
+            //    of convergence. We prove that, in each fixed block+local,
             //    the value number at the end is nondecreasing across
-            //    iterations, by induction on the iteration.
+            //    iterations, by induction on the iteration:
             //     * The first iteration is on the entry block. It increases
             //       end value number at the end from 0 (unseen) to something
             //       else.
-            //     * Induction step: assuming the property holds for all
+            //     * Induction step: assuming the property holds for all past
             //       iterations, consider the current iteration. Of our
             //       predecessors, those that we iterated on have the property;
-            //       those that we haven't will have 0 (unseen), also
-            //       nondecreasing.
+            //       those that we haven't will have 0 (unseen).
             //        * If we assign to that local in this block, that will be
             //          the value in the output, forever.
             //        * If we see different values coming in, we create a merge
@@ -234,7 +235,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //          the same value in the future too (here is where we use
             //          the simplification property).
             //        * Otherwise, we will flow the incoming value through,
-            //          and it did not decrease, so neither do we.
+            //          and it did not decrease (by induction), so neither do
+            //          we.
             //    Not that we don't trust this proof, but the convergence
             //    property (value numbers at block ends do not decrease) is
             //    verified later down.
