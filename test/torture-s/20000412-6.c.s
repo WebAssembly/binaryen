@@ -6,7 +6,7 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %bug.exit
+# %bb.0:                                # %bug.exit
 	block   	
 	i32.const	$push1=, 512
 	i32.const	$push13=, 0
@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.const	$push9=, 491
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	0, $pop10       # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14
 	unreachable
@@ -42,22 +42,21 @@ main:                                   # @main
 bug:                                    # @bug
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.ge_u	$push0=, $1, $2
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:                                 # %for.body.preheader
+# %bb.1:                                # %for.body.preheader
 .LBB1_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.const	$push9=, 65535
-	i32.and 	$push1=, $0, $pop9
+	i32.const	$push7=, 65535
+	i32.and 	$push1=, $0, $pop7
 	i32.load16_u	$push2=, 0($1)
 	i32.sub 	$0=, $pop1, $pop2
-	i32.const	$push8=, 2
-	i32.add 	$push7=, $1, $pop8
-	tee_local	$push6=, $1=, $pop7
-	i32.lt_u	$push3=, $pop6, $2
+	i32.const	$push6=, 2
+	i32.add 	$1=, $1, $pop6
+	i32.lt_u	$push3=, $1, $2
 	br_if   	0, $pop3        # 0: up to label2
 .LBB1_3:                                # %for.end
 	end_loop
@@ -83,6 +82,6 @@ buf:
 	.size	buf, 10
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

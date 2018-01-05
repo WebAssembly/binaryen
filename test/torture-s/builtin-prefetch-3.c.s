@@ -5,7 +5,7 @@
 	.globl	simple_vol_global
 	.type	simple_vol_global,@function
 simple_vol_global:                      # @simple_vol_global
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, glob_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
@@ -20,7 +20,7 @@ simple_vol_global:                      # @simple_vol_global
 	.globl	simple_vol_file
 	.type	simple_vol_file,@function
 simple_vol_file:                        # @simple_vol_file
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, stat_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
@@ -36,13 +36,9 @@ simple_vol_file:                        # @simple_vol_file
 	.type	expr_vol_global,@function
 expr_vol_global:                        # @expr_vol_global
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, vol_ptr_str($pop0)
-	i32.const	$push28=, 0
-	i32.load	$drop=, vol_ptr_vol_str($pop28)
-	i32.const	$push27=, 0
-	i32.load	$drop=, vol_ptr_str($pop27)
 	i32.const	$push26=, 0
 	i32.load	$drop=, vol_ptr_vol_str($pop26)
 	i32.const	$push25=, 0
@@ -50,13 +46,16 @@ expr_vol_global:                        # @expr_vol_global
 	i32.const	$push24=, 0
 	i32.load	$drop=, vol_ptr_vol_str($pop24)
 	i32.const	$push23=, 0
-	i32.load	$drop=, vol_str+16($pop23)
+	i32.load	$drop=, vol_ptr_str($pop23)
 	i32.const	$push22=, 0
-	i32.load	$drop=, vol_ptr_str($pop22)
+	i32.load	$drop=, vol_ptr_vol_str($pop22)
 	i32.const	$push21=, 0
-	i32.load	$push20=, ptr_vol_str($pop21)
-	tee_local	$push19=, $0=, $pop20
-	i32.load	$drop=, 16($pop19)
+	i32.load	$drop=, vol_str+16($pop21)
+	i32.const	$push20=, 0
+	i32.load	$drop=, vol_ptr_str($pop20)
+	i32.const	$push19=, 0
+	i32.load	$0=, ptr_vol_str($pop19)
+	i32.load	$drop=, 16($0)
 	i32.const	$push18=, 0
 	i32.load	$push1=, vol_ptr_vol_str($pop18)
 	i32.load	$drop=, 16($pop1)
@@ -103,7 +102,7 @@ expr_vol_global:                        # @expr_vol_global
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	simple_vol_global@FUNCTION
 	call    	simple_vol_file@FUNCTION
 	i32.const	$push1=, 0
@@ -264,5 +263,5 @@ stat_int_arr:
 	.size	stat_int_arr, 400
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

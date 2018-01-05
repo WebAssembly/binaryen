@@ -7,29 +7,28 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load16_u	$push15=, x($pop0)
-	tee_local	$push14=, $0=, $pop15
+	i32.load16_u	$0=, x($pop0)
+	block   	
 	i32.const	$push1=, 15
-	i32.and 	$push2=, $pop14, $pop1
+	i32.and 	$push2=, $0, $pop1
 	i32.const	$push3=, 2
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push5=, 3840
 	i32.and 	$push6=, $0, $pop5
 	i32.const	$push7=, 768
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end7
+# %bb.2:                                # %if.end7
 	i32.const	$push9=, 61440
 	i32.and 	$push10=, $0, $pop9
 	i32.const	$push11=, 16384
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
-# BB#3:                                 # %if.end13
+# %bb.3:                                # %if.end13
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable
@@ -53,6 +52,6 @@ x:
 	.size	x, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

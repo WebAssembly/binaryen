@@ -7,7 +7,7 @@
 movegt:                                 # @movegt
 	.param  	i32, i32, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, -1152921504606846977
 	i64.gt_s	$push1=, $2, $pop0
 	i32.select	$push2=, $0, $1, $pop1
@@ -26,7 +26,7 @@ movegt:                                 # @movegt
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push32=, -1
 	i32.const	$push31=, 1
@@ -39,7 +39,7 @@ main:                                   # @main
 	i32.load	$push3=, tests+8($pop28)
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %for.cond
+# %bb.1:                                # %for.cond
 	i32.const	$push37=, -1
 	i32.const	$push36=, 1
 	i32.const	$push35=, 0
@@ -51,7 +51,7 @@ main:                                   # @main
 	i32.load	$push8=, tests+24($pop33)
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label0
-# BB#2:                                 # %for.cond.1
+# %bb.2:                                # %for.cond.1
 	i32.const	$push42=, -1
 	i32.const	$push41=, 1
 	i32.const	$push40=, 0
@@ -63,7 +63,7 @@ main:                                   # @main
 	i32.load	$push13=, tests+40($pop38)
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label0
-# BB#3:                                 # %for.cond.2
+# %bb.3:                                # %for.cond.2
 	i32.const	$push47=, -1
 	i32.const	$push46=, 1
 	i32.const	$push45=, 0
@@ -75,7 +75,7 @@ main:                                   # @main
 	i32.load	$push18=, tests+56($pop43)
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	0, $pop19       # 0: down to label0
-# BB#4:                                 # %for.cond.3
+# %bb.4:                                # %for.cond.3
 	i32.const	$push24=, -1
 	i32.const	$push23=, 1
 	i32.const	$push49=, 0
@@ -87,7 +87,7 @@ main:                                   # @main
 	i32.load	$push26=, tests+72($pop48)
 	i32.ne  	$push27=, $pop25, $pop26
 	br_if   	0, $pop27       # 0: down to label0
-# BB#5:                                 # %for.cond.4
+# %bb.5:                                # %for.cond.4
 	i32.const	$push50=, 0
 	return  	$pop50
 .LBB1_6:                                # %if.then
@@ -122,5 +122,5 @@ tests:
 	.size	tests, 80
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

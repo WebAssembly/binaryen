@@ -5,7 +5,7 @@
 	.globl	a1
 	.type	a1,@function
 a1:                                     # @a1
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, count($pop4)
@@ -23,12 +23,12 @@ a1:                                     # @a1
 	.type	b,@function
 b:                                      # @b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, -1
 	i32.gt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push2=, 0
 	i32.const	$push18=, 0
 	i32.load	$push3=, count($pop18)
@@ -42,7 +42,7 @@ b:                                      # @b
 	i32.and 	$push7=, $0, $pop6
 	i32.eqz 	$push21=, $pop7
 	br_if   	0, $pop21       # 0: down to label1
-# BB#3:                                 # %if.then3
+# %bb.3:                                # %if.then3
 	i32.const	$push8=, 0
 	i32.const	$push19=, 0
 	i32.load	$push9=, count($pop19)
@@ -56,7 +56,7 @@ b:                                      # @b
 	i32.and 	$push13=, $0, $pop12
 	i32.eqz 	$push22=, $pop13
 	br_if   	0, $pop22       # 0: down to label2
-# BB#5:                                 # %if.then8
+# %bb.5:                                # %if.then8
 	i32.const	$push14=, 0
 	i32.const	$push20=, 0
 	i32.load	$push15=, count($pop20)
@@ -76,7 +76,7 @@ b:                                      # @b
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end21
+# %bb.0:                                # %if.end21
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
 	i32.store	count($pop1), $pop0
@@ -97,5 +97,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

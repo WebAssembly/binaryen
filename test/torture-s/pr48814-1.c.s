@@ -7,16 +7,15 @@
 incr:                                   # @incr
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push5=, 0
-	i32.load	$push1=, count($pop5)
+	i32.load	$push1=, count($pop0)
 	i32.const	$push2=, 1
-	i32.add 	$push4=, $pop1, $pop2
-	tee_local	$push3=, $0=, $pop4
-	i32.store	count($pop0), $pop3
-	copy_local	$push6=, $0
-                                        # fallthrough-return: $pop6
+	i32.add 	$0=, $pop1, $pop2
+	i32.const	$push3=, 0
+	i32.store	count($pop3), $0
+	copy_local	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	incr, .Lfunc_end0-incr
@@ -28,32 +27,30 @@ incr:                                   # @incr
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.call	$0=, incr@FUNCTION
-	i32.const	$push16=, 0
-	i32.load	$push15=, count($pop16)
-	tee_local	$push14=, $1=, $pop15
+	i32.const	$push12=, 0
+	i32.load	$1=, count($pop12)
 	i32.const	$push1=, 2
-	i32.shl 	$push2=, $pop14, $pop1
+	i32.shl 	$push2=, $1, $pop1
 	i32.const	$push3=, arr
 	i32.add 	$push4=, $pop2, $pop3
 	i32.store	0($pop4), $0
-	i32.const	$push13=, 0
 	i32.const	$push5=, 1
-	i32.add 	$push12=, $1, $pop5
-	tee_local	$push11=, $0=, $pop12
-	i32.store	count($pop13), $pop11
+	i32.add 	$1=, $1, $pop5
+	i32.const	$push11=, 0
+	i32.store	count($pop11), $1
 	block   	
 	i32.const	$push10=, 2
-	i32.ne  	$push6=, $0, $pop10
+	i32.ne  	$push6=, $1, $pop10
 	br_if   	0, $pop6        # 0: down to label0
-# BB#1:                                 # %entry
-	i32.const	$push17=, 0
-	i32.load	$push0=, arr+8($pop17)
+# %bb.1:                                # %entry
+	i32.const	$push13=, 0
+	i32.load	$push0=, arr+8($pop13)
 	i32.const	$push7=, 3
 	i32.ne  	$push8=, $pop0, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push9=, 0
 	return  	$pop9
 .LBB1_3:                                # %if.then
@@ -86,5 +83,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

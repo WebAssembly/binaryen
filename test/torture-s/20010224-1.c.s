@@ -6,52 +6,48 @@
 	.type	ba_compute_psd,@function
 ba_compute_psd:                         # @ba_compute_psd
 	.param  	i32
-	.local  	i32, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push22=, 1
-	i32.shl 	$push21=, $0, $pop22
-	tee_local	$push20=, $2=, $pop21
+	.local  	i32, i32, i32
+# %bb.0:                                # %entry
+	i32.const	$push16=, 1
+	i32.shl 	$2=, $0, $pop16
 	i32.const	$push1=, masktab
-	i32.add 	$push2=, $pop20, $pop1
+	i32.add 	$push2=, $2, $pop1
 	i32.load16_s	$push3=, 0($pop2)
-	i32.const	$push19=, 1
-	i32.shl 	$push4=, $pop3, $pop19
+	i32.const	$push15=, 1
+	i32.shl 	$push4=, $pop3, $pop15
 	i32.const	$push5=, bndpsd
-	i32.add 	$push18=, $pop4, $pop5
-	tee_local	$push17=, $1=, $pop18
+	i32.add 	$1=, $pop4, $pop5
 	i32.const	$push6=, psd
 	i32.add 	$push7=, $2, $pop6
-	i32.load16_u	$push16=, 0($pop7)
-	tee_local	$push15=, $4=, $pop16
-	i32.store16	0($pop17), $pop15
+	i32.load16_u	$3=, 0($pop7)
+	i32.store16	0($1), $3
 	block   	
 	i32.const	$push14=, 2
 	i32.gt_s	$push8=, $0, $pop14
 	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %for.body.preheader
+# %bb.1:                                # %for.body.preheader
 	i32.const	$push9=, -1
-	i32.add 	$3=, $0, $pop9
+	i32.add 	$0=, $0, $pop9
 	i32.const	$push10=, psd+2
-	i32.add 	$0=, $2, $pop10
+	i32.add 	$2=, $2, $pop10
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.load16_u	$push12=, 0($0)
-	i32.const	$push28=, 65535
-	i32.and 	$push11=, $4, $pop28
-	i32.add 	$4=, $pop12, $pop11
-	i32.const	$push27=, 2
-	i32.add 	$push0=, $0, $pop27
-	copy_local	$0=, $pop0
-	i32.const	$push26=, 1
-	i32.add 	$push25=, $3, $pop26
-	tee_local	$push24=, $3=, $pop25
-	i32.const	$push23=, 2
-	i32.lt_s	$push13=, $pop24, $pop23
+	i32.load16_u	$push12=, 0($2)
+	i32.const	$push20=, 65535
+	i32.and 	$push11=, $3, $pop20
+	i32.add 	$3=, $pop12, $pop11
+	i32.const	$push19=, 1
+	i32.add 	$0=, $0, $pop19
+	i32.const	$push18=, 2
+	i32.add 	$push0=, $2, $pop18
+	copy_local	$2=, $pop0
+	i32.const	$push17=, 2
+	i32.lt_s	$push13=, $0, $pop17
 	br_if   	0, $pop13       # 0: up to label1
-# BB#3:                                 # %for.cond.for.end_crit_edge
+# %bb.3:                                # %for.cond.for.end_crit_edge
 	end_loop
-	i32.store16	0($1), $4
+	i32.store16	0($1), $3
 .LBB0_4:                                # %for.end
 	end_block                       # label0:
                                         # fallthrough-return
@@ -66,7 +62,7 @@ ba_compute_psd:                         # @ba_compute_psd
 logadd:                                 # @logadd
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.load16_u	$push1=, 0($1)
 	i32.load16_u	$push0=, 0($0)
 	i32.add 	$push2=, $pop1, $pop0
@@ -85,7 +81,7 @@ logadd:                                 # @logadd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push20=, 0
 	i32.load16_s	$push0=, masktab($pop20)
 	i32.const	$push1=, 1
@@ -110,7 +106,7 @@ main:                                   # @main
 	i32.const	$push13=, 140
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push21=, 0
 	return  	$pop21
 .LBB2_2:                                # %if.then
@@ -164,5 +160,5 @@ bndpsd:
 	.size	bndpsd, 12
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

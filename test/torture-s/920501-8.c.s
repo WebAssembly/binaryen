@@ -8,14 +8,13 @@ va:                                     # @va
 	.param  	i32, f64, i32, i32
 	.result 	i32
 	.local  	i32, i64, i64, i64, i64, i64, i32
-# BB#0:                                 # %entry
-	i32.const	$push23=, 0
+# %bb.0:                                # %entry
 	i32.const	$push21=, 0
 	i32.load	$push20=, __stack_pointer($pop21)
 	i32.const	$push22=, 80
-	i32.sub 	$push29=, $pop20, $pop22
-	tee_local	$push28=, $10=, $pop29
-	i32.store	__stack_pointer($pop23), $pop28
+	i32.sub 	$10=, $pop20, $pop22
+	i32.const	$push23=, 0
+	i32.store	__stack_pointer($pop23), $10
 	i32.store	76($10), $3
 	i32.load	$4=, 48($3)
 	i64.load	$5=, 8($3):p2align=2
@@ -60,8 +59,8 @@ va:                                     # @va
 	i32.const	$push24=, 80
 	i32.add 	$push25=, $10, $pop24
 	i32.store	__stack_pointer($pop26), $pop25
-	copy_local	$push30=, $10
-                                        # fallthrough-return: $pop30
+	copy_local	$push28=, $10
+                                        # fallthrough-return: $pop28
 	.endfunc
 .Lfunc_end0:
 	.size	va, .Lfunc_end0-va
@@ -73,14 +72,13 @@ va:                                     # @va
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push27=, 0
+# %bb.0:                                # %entry
 	i32.const	$push25=, 0
 	i32.load	$push24=, __stack_pointer($pop25)
 	i32.const	$push26=, 64
-	i32.sub 	$push29=, $pop24, $pop26
-	tee_local	$push28=, $0=, $pop29
-	i32.store	__stack_pointer($pop27), $pop28
+	i32.sub 	$0=, $pop24, $pop26
+	i32.const	$push27=, 0
+	i32.store	__stack_pointer($pop27), $0
 	i32.const	$push0=, 48
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 15
@@ -114,7 +112,7 @@ main:                                   # @main
 	i32.const	$push20=, buf
 	i32.call	$push22=, strcmp@FUNCTION, $pop21, $pop20
 	br_if   	0, $pop22       # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push23=, 0
 	call    	exit@FUNCTION, $pop23
 	unreachable
@@ -147,7 +145,7 @@ buf:
 	.size	.L.str.1, 45
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

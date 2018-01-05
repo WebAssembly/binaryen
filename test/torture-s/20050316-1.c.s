@@ -6,7 +6,7 @@
 	.type	test1,@function
 test1:                                  # @test1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -20,7 +20,7 @@ test1:                                  # @test1
 test2:                                  # @test2
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -33,13 +33,9 @@ test2:                                  # @test2
 	.type	test3,@function
 test3:                                  # @test3
 	.param  	i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $0, $pop0
-	i32.const	$push2=, 0
-	i32.store	0($pop1), $pop2
-	i32.const	$push3=, 0
-	i32.store	0($0), $pop3
+# %bb.0:                                # %entry
+	i64.const	$push0=, 0
+	i64.store	0($0), $pop0
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -51,7 +47,7 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 65535
 	i32.and 	$push3=, $1, $pop2
 	i32.const	$push0=, 16
@@ -70,10 +66,8 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $0, $pop0
-	i32.store	0($pop1), $2
+# %bb.0:                                # %entry
+	i32.store	4($0), $2
 	i32.store	0($0), $1
                                         # fallthrough-return
 	.endfunc
@@ -86,7 +80,7 @@ test5:                                  # @test5
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end30
+# %bb.0:                                # %if.end30
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -94,4 +88,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end5-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

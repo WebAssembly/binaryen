@@ -7,86 +7,85 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push37=, 0
 	i32.load8_u	$push0=, a1($pop37)
 	i32.const	$push1=, 52
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push40=, 0
-	i32.load	$push39=, a1+4($pop40)
-	tee_local	$push38=, $0=, $pop39
-	i32.load8_u	$push3=, 0($pop38)
+# %bb.1:                                # %if.end
+	i32.const	$push38=, 0
+	i32.load	$0=, a1+4($pop38)
+	i32.load8_u	$push3=, 0($0)
 	i32.const	$push4=, 54
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label0
-# BB#2:                                 # %if.end6
+# %bb.2:                                # %if.end6
 	i32.load8_u	$push6=, 1($0)
 	i32.const	$push7=, 50
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#3:                                 # %if.end12
+# %bb.3:                                # %if.end12
 	i32.load8_u	$push9=, 2($0)
 	br_if   	0, $pop9        # 0: down to label0
-# BB#4:                                 # %if.end18
-	i32.const	$push41=, 0
-	i32.load8_u	$push10=, a2($pop41)
+# %bb.4:                                # %if.end18
+	i32.const	$push39=, 0
+	i32.load8_u	$push10=, a2($pop39)
 	i32.const	$push11=, 118
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
-# BB#5:                                 # %if.end23
-	i32.const	$push42=, 0
-	i32.load8_u	$push13=, a2+1($pop42)
+# %bb.5:                                # %if.end23
+	i32.const	$push40=, 0
+	i32.load8_u	$push13=, a2+1($pop40)
 	i32.const	$push14=, 99
 	i32.ne  	$push15=, $pop13, $pop14
 	br_if   	0, $pop15       # 0: down to label0
-# BB#6:                                 # %if.end28
-	i32.const	$push43=, 0
-	i32.load8_u	$push16=, a2+2($pop43)
+# %bb.6:                                # %if.end28
+	i32.const	$push41=, 0
+	i32.load8_u	$push16=, a2+2($pop41)
 	i32.const	$push17=, 113
 	i32.ne  	$push18=, $pop16, $pop17
 	br_if   	0, $pop18       # 0: down to label0
-# BB#7:                                 # %if.end33
-	i32.const	$push44=, 0
-	i32.load8_u	$push19=, a3($pop44)
+# %bb.7:                                # %if.end33
+	i32.const	$push42=, 0
+	i32.load8_u	$push19=, a3($pop42)
 	i32.const	$push20=, 111
 	i32.ne  	$push21=, $pop19, $pop20
 	br_if   	0, $pop21       # 0: down to label0
-# BB#8:                                 # %if.end38
-	i32.const	$push45=, 0
-	i32.load8_u	$push22=, a3+1($pop45)
+# %bb.8:                                # %if.end38
+	i32.const	$push43=, 0
+	i32.load8_u	$push22=, a3+1($pop43)
 	i32.const	$push23=, 119
 	i32.ne  	$push24=, $pop22, $pop23
 	br_if   	0, $pop24       # 0: down to label0
-# BB#9:                                 # %if.end43
-	i32.const	$push46=, 0
-	i32.load8_u	$push25=, a3+2($pop46)
+# %bb.9:                                # %if.end43
+	i32.const	$push44=, 0
+	i32.load8_u	$push25=, a3+2($pop44)
 	i32.const	$push26=, 120
 	i32.ne  	$push27=, $pop25, $pop26
 	br_if   	0, $pop27       # 0: down to label0
-# BB#10:                                # %if.end48
-	i32.const	$push47=, 0
-	i32.load8_u	$push28=, a4($pop47)
+# %bb.10:                               # %if.end48
+	i32.const	$push45=, 0
+	i32.load8_u	$push28=, a4($pop45)
 	i32.const	$push29=, 57
 	i32.ne  	$push30=, $pop28, $pop29
 	br_if   	0, $pop30       # 0: down to label0
-# BB#11:                                # %if.end53
-	i32.const	$push48=, 0
-	i32.load8_u	$push31=, a4+1($pop48)
+# %bb.11:                               # %if.end53
+	i32.const	$push46=, 0
+	i32.load8_u	$push31=, a4+1($pop46)
 	i32.const	$push32=, 101
 	i32.ne  	$push33=, $pop31, $pop32
 	br_if   	0, $pop33       # 0: down to label0
-# BB#12:                                # %if.end58
-	i32.const	$push49=, 0
-	i32.load8_u	$push34=, a4+2($pop49)
+# %bb.12:                               # %if.end58
+	i32.const	$push47=, 0
+	i32.load8_u	$push34=, a4+2($pop47)
 	i32.const	$push35=, 98
 	i32.ne  	$push36=, $pop34, $pop35
 	br_if   	0, $pop36       # 0: down to label0
-# BB#13:                                # %if.end63
-	i32.const	$push50=, 0
-	return  	$pop50
+# %bb.13:                               # %if.end63
+	i32.const	$push48=, 0
+	return  	$pop48
 .LBB0_14:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -140,5 +139,5 @@ a4:
 	.size	a4, 3
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

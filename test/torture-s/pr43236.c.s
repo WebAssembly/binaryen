@@ -7,14 +7,13 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push21=, 0
+# %bb.0:                                # %entry
 	i32.const	$push19=, 0
 	i32.load	$push18=, __stack_pointer($pop19)
 	i32.const	$push20=, 96
-	i32.sub 	$push64=, $pop18, $pop20
-	tee_local	$push63=, $0=, $pop64
-	i32.store	__stack_pointer($pop21), $pop63
+	i32.sub 	$0=, $pop18, $pop20
+	i32.const	$push21=, 0
+	i32.store	__stack_pointer($pop21), $0
 	i32.const	$push25=, 64
 	i32.add 	$push26=, $0, $pop25
 	i32.const	$push0=, 16
@@ -87,13 +86,13 @@ main:                                   # @main
 	i32.const	$push41=, 30
 	i32.call	$push15=, memcmp@FUNCTION, $pop38, $0, $pop41
 	br_if   	0, $pop15       # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.const	$push39=, 32
 	i32.add 	$push40=, $0, $pop39
-	i32.const	$push65=, 30
-	i32.call	$push16=, memcmp@FUNCTION, $pop40, $0, $pop65
+	i32.const	$push63=, 30
+	i32.call	$push16=, memcmp@FUNCTION, $pop40, $0, $pop63
 	br_if   	0, $pop16       # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push24=, 0
 	i32.const	$push22=, 96
 	i32.add 	$push23=, $0, $pop22
@@ -109,6 +108,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

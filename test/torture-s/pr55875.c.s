@@ -7,16 +7,16 @@
 t:                                      # @t
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.eqz 	$push3=, $0
 	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push0=, 256
 	i32.ge_s	$push1=, $0, $pop0
 	br_if   	1, $pop1        # 1: down to label0
-# BB#2:                                 # %if.end3
+# %bb.2:                                # %if.end3
 	return  	$0
 .LBB0_3:                                # %if.then
 	end_block                       # label1:
@@ -38,7 +38,7 @@ t:                                      # @t
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, 5
 .LBB1_1:                                # %for.cond
                                         # =>This Inner Loop Header: Depth=1
@@ -65,6 +65,6 @@ a:
 	.size	a, 1004
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
 	.functype	abort, void

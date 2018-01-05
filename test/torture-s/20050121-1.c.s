@@ -6,7 +6,7 @@
 	.type	foo_float,@function
 foo_float:                              # @foo_float
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	f32.convert_s/i32	$push2=, $pop1
@@ -26,7 +26,7 @@ foo_float:                              # @foo_float
 	.type	bar_float,@function
 bar_float:                              # @bar_float
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1086324736
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -40,7 +40,7 @@ bar_float:                              # @bar_float
 	.type	baz_float,@function
 baz_float:                              # @baz_float
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1082130432
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -54,7 +54,7 @@ baz_float:                              # @baz_float
 	.type	foo_double,@function
 foo_double:                             # @foo_double
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	f64.convert_s/i32	$push2=, $pop1
@@ -74,7 +74,7 @@ foo_double:                             # @foo_double
 	.type	bar_double,@function
 bar_double:                             # @bar_double
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 4618441417868443648
 	i64.store	0($0), $pop0
                                         # fallthrough-return
@@ -88,7 +88,7 @@ bar_double:                             # @bar_double
 	.type	baz_double,@function
 baz_double:                             # @baz_double
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 4616189618054758400
 	i64.store	0($0), $pop0
                                         # fallthrough-return
@@ -103,14 +103,13 @@ baz_double:                             # @baz_double
 foo_ldouble_t:                          # @foo_ldouble_t
 	.param  	i32, i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push17=, 0
-	i32.const	$push15=, 0
-	i32.load	$push14=, __stack_pointer($pop15)
-	i32.const	$push16=, 32
-	i32.sub 	$push28=, $pop14, $pop16
-	tee_local	$push27=, $2=, $pop28
-	i32.store	__stack_pointer($pop17), $pop27
+# %bb.0:                                # %entry
+	i32.const	$push14=, 0
+	i32.load	$push13=, __stack_pointer($pop14)
+	i32.const	$push15=, 32
+	i32.sub 	$2=, $pop13, $pop15
+	i32.const	$push16=, 0
+	i32.store	__stack_pointer($pop16), $2
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	call    	__floatsitf@FUNCTION, $2, $pop1
@@ -122,25 +121,23 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	i64.store	0($pop3), $pop6
 	i64.load	$push7=, 0($2)
 	i64.store	16($0), $pop7
-	i32.const	$push21=, 16
-	i32.add 	$push22=, $2, $pop21
+	i32.const	$push20=, 16
+	i32.add 	$push21=, $2, $pop20
 	i32.const	$push8=, 1
 	i32.add 	$push9=, $1, $pop8
-	call    	__floatsitf@FUNCTION, $pop22, $pop9
-	i32.const	$push26=, 8
-	i32.add 	$push10=, $0, $pop26
-	i32.const	$push23=, 16
-	i32.add 	$push24=, $2, $pop23
-	i32.const	$push25=, 8
-	i32.add 	$push11=, $pop24, $pop25
-	i64.load	$push12=, 0($pop11)
-	i64.store	0($pop10), $pop12
-	i64.load	$push13=, 16($2)
-	i64.store	0($0), $pop13
-	i32.const	$push20=, 0
-	i32.const	$push18=, 32
-	i32.add 	$push19=, $2, $pop18
-	i32.store	__stack_pointer($pop20), $pop19
+	call    	__floatsitf@FUNCTION, $pop21, $pop9
+	i32.const	$push22=, 16
+	i32.add 	$push23=, $2, $pop22
+	i32.const	$push24=, 8
+	i32.add 	$push10=, $pop23, $pop24
+	i64.load	$push11=, 0($pop10)
+	i64.store	8($0), $pop11
+	i64.load	$push12=, 16($2)
+	i64.store	0($0), $pop12
+	i32.const	$push19=, 0
+	i32.const	$push17=, 32
+	i32.add 	$push18=, $2, $pop17
+	i32.store	__stack_pointer($pop19), $pop18
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end6:
@@ -152,13 +149,11 @@ foo_ldouble_t:                          # @foo_ldouble_t
 	.type	bar_ldouble_t,@function
 bar_ldouble_t:                          # @bar_ldouble_t
 	.param  	i32
-# BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.store	0($0), $pop0
-	i32.const	$push1=, 8
-	i32.add 	$push2=, $0, $pop1
-	i64.const	$push3=, 4612108230892453888
-	i64.store	0($pop2), $pop3
+# %bb.0:                                # %entry
+	i64.const	$push0=, 4612108230892453888
+	i64.store	8($0), $pop0
+	i64.const	$push1=, 0
+	i64.store	0($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end7:
@@ -170,13 +165,11 @@ bar_ldouble_t:                          # @bar_ldouble_t
 	.type	baz_ldouble_t,@function
 baz_ldouble_t:                          # @baz_ldouble_t
 	.param  	i32
-# BB#0:                                 # %entry
-	i64.const	$push0=, 0
-	i64.store	0($0), $pop0
-	i32.const	$push1=, 8
-	i32.add 	$push2=, $0, $pop1
-	i64.const	$push3=, 4611967493404098560
-	i64.store	0($pop2), $pop3
+# %bb.0:                                # %entry
+	i64.const	$push0=, 4611967493404098560
+	i64.store	8($0), $pop0
+	i64.const	$push1=, 0
+	i64.store	0($0), $pop1
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end8:
@@ -188,7 +181,7 @@ baz_ldouble_t:                          # @baz_ldouble_t
 	.type	foo_char,@function
 foo_char:                               # @foo_char
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 255
 	i32.add 	$push1=, $1, $pop0
 	i32.store8	1($0), $pop1
@@ -206,7 +199,7 @@ foo_char:                               # @foo_char
 	.type	bar_char,@function
 bar_char:                               # @bar_char
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.store8	0($0), $pop0
                                         # fallthrough-return
@@ -220,7 +213,7 @@ bar_char:                               # @bar_char
 	.type	baz_char,@function
 baz_char:                               # @baz_char
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.store8	0($0), $pop0
                                         # fallthrough-return
@@ -234,7 +227,7 @@ baz_char:                               # @baz_char
 	.type	foo_short,@function
 foo_short:                              # @foo_short
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 65535
 	i32.add 	$push1=, $1, $pop0
 	i32.store16	2($0), $pop1
@@ -252,7 +245,7 @@ foo_short:                              # @foo_short
 	.type	bar_short,@function
 bar_short:                              # @bar_short
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.store16	0($0), $pop0
                                         # fallthrough-return
@@ -266,7 +259,7 @@ bar_short:                              # @bar_short
 	.type	baz_short,@function
 baz_short:                              # @baz_short
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.store16	0($0), $pop0
                                         # fallthrough-return
@@ -280,7 +273,7 @@ baz_short:                              # @baz_short
 	.type	foo_int,@function
 foo_int:                                # @foo_int
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	i32.store	4($0), $pop1
@@ -298,7 +291,7 @@ foo_int:                                # @foo_int
 	.type	bar_int,@function
 bar_int:                                # @bar_int
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -312,7 +305,7 @@ bar_int:                                # @bar_int
 	.type	baz_int,@function
 baz_int:                                # @baz_int
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -326,7 +319,7 @@ baz_int:                                # @baz_int
 	.type	foo_long,@function
 foo_long:                               # @foo_long
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	i32.store	4($0), $pop1
@@ -344,7 +337,7 @@ foo_long:                               # @foo_long
 	.type	bar_long,@function
 bar_long:                               # @bar_long
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -358,7 +351,7 @@ bar_long:                               # @bar_long
 	.type	baz_long,@function
 baz_long:                               # @baz_long
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.store	0($0), $pop0
                                         # fallthrough-return
@@ -372,7 +365,7 @@ baz_long:                               # @baz_long
 	.type	foo_llong,@function
 foo_llong:                              # @foo_llong
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $1, $pop0
 	i64.extend_s/i32	$push2=, $pop1
@@ -392,7 +385,7 @@ foo_llong:                              # @foo_llong
 	.type	bar_llong,@function
 bar_llong:                              # @bar_llong
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 6
 	i64.store	0($0), $pop0
                                         # fallthrough-return
@@ -406,7 +399,7 @@ bar_llong:                              # @bar_llong
 	.type	baz_llong,@function
 baz_llong:                              # @baz_llong
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 4
 	i64.store	0($0), $pop0
                                         # fallthrough-return
@@ -420,7 +413,7 @@ baz_llong:                              # @baz_llong
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end65
+# %bb.0:                                # %if.end65
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -428,4 +421,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end24-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

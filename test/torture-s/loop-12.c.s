@@ -6,35 +6,33 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push3=, 0
 	i32.load	$1=, p($pop3)
 .LBB0_1:                                # %while.cond
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label1:
-	i32.load8_u	$push10=, 0($1)
-	tee_local	$push9=, $0=, $pop10
-	i32.const	$push8=, 10
-	i32.eq  	$push0=, $pop9, $pop8
+	i32.load8_u	$0=, 0($1)
+	i32.const	$push6=, 10
+	i32.eq  	$push0=, $0, $pop6
 	br_if   	1, $pop0        # 1: down to label0
-# BB#2:                                 # %while.cond
+# %bb.2:                                # %while.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push11=, 33
-	i32.eq  	$push1=, $0, $pop11
+	i32.const	$push7=, 33
+	i32.eq  	$push1=, $0, $pop7
 	br_if   	1, $pop1        # 1: down to label0
-# BB#3:                                 # %while.cond
+# %bb.3:                                # %while.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push12=, 59
-	i32.eq  	$push2=, $0, $pop12
+	i32.const	$push8=, 59
+	i32.eq  	$push2=, $0, $pop8
 	br_if   	1, $pop2        # 1: down to label0
-# BB#4:                                 # %while.body
+# %bb.4:                                # %while.body
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push7=, 0
-	i32.const	$push6=, 1
-	i32.add 	$push5=, $1, $pop6
-	tee_local	$push4=, $1=, $pop5
-	i32.store	p($pop7), $pop4
+	i32.const	$push5=, 1
+	i32.add 	$1=, $1, $pop5
+	i32.const	$push4=, 0
+	i32.store	p($pop4), $1
 	br      	0               # 0: up to label1
 .LBB0_5:                                # %while.end
 	end_loop
@@ -51,30 +49,29 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, .L.str
 .LBB1_1:                                # %while.cond.i
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label3:
-	i32.const	$push8=, 0
-	i32.store	p($pop8), $1
-	i32.load8_u	$push7=, 0($1)
-	tee_local	$push6=, $0=, $pop7
+	i32.const	$push6=, 0
+	i32.store	p($pop6), $1
+	i32.load8_u	$0=, 0($1)
 	i32.const	$push5=, 10
-	i32.eq  	$push0=, $pop6, $pop5
+	i32.eq  	$push0=, $0, $pop5
 	br_if   	1, $pop0        # 1: down to label2
-# BB#2:                                 # %while.cond.i
+# %bb.2:                                # %while.cond.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push9=, 33
-	i32.eq  	$push1=, $0, $pop9
+	i32.const	$push7=, 33
+	i32.eq  	$push1=, $0, $pop7
 	br_if   	1, $pop1        # 1: down to label2
-# BB#3:                                 # %while.cond.i
+# %bb.3:                                # %while.cond.i
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push10=, 59
-	i32.eq  	$push2=, $0, $pop10
+	i32.const	$push8=, 59
+	i32.eq  	$push2=, $0, $pop8
 	br_if   	1, $pop2        # 1: down to label2
-# BB#4:                                 # %while.body.i
+# %bb.4:                                # %while.body.i
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push4=, 1
 	i32.add 	$1=, $1, $pop4
@@ -104,4 +101,4 @@ p:
 	.size	.L.str, 5
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

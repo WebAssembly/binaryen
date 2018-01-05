@@ -8,7 +8,7 @@ bar:                                    # @bar
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
@@ -19,7 +19,7 @@ bar:                                    # @bar
 	i32.const	$push3=, 10
 	i32.gt_s	$push1=, $2, $pop3
 	br_if   	0, $pop1        # 0: up to label0
-# BB#2:                                 # %do.end
+# %bb.2:                                # %do.end
 	end_loop
 	i32.add 	$push2=, $2, $0
                                         # fallthrough-return: $pop2
@@ -35,7 +35,7 @@ foo:                                    # @foo
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
@@ -51,7 +51,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 10
 	i32.gt_s	$push1=, $2, $pop7
 	br_if   	0, $pop1        # 0: up to label1
-# BB#2:                                 # %bar.exit
+# %bb.2:                                # %bar.exit
 	end_loop
 	i32.add 	$push2=, $2, $0
                                         # fallthrough-return: $pop2
@@ -66,14 +66,13 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push9=, 0
+# %bb.0:                                # %entry
 	i32.const	$push7=, 0
 	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push14=, $pop6, $pop8
-	tee_local	$push13=, $0=, $pop14
-	i32.store	__stack_pointer($pop9), $pop13
+	i32.sub 	$0=, $pop6, $pop8
+	i32.const	$push9=, 0
+	i32.store	__stack_pointer($pop9), $0
 	i64.const	$push0=, 12884901890
 	i64.store	0($0), $pop0
 	block   	
@@ -82,7 +81,7 @@ main:                                   # @main
 	i32.const	$push3=, 3
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push12=, 0
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $0, $pop10
@@ -98,5 +97,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

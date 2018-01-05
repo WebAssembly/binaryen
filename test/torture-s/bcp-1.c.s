@@ -6,7 +6,7 @@
 	.type	bad0,@function
 bad0:                                   # @bad0
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -19,7 +19,7 @@ bad0:                                   # @bad0
 	.type	bad1,@function
 bad1:                                   # @bad1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -33,7 +33,7 @@ bad1:                                   # @bad1
 bad2:                                   # @bad2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -47,7 +47,7 @@ bad2:                                   # @bad2
 bad3:                                   # @bad3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -61,7 +61,7 @@ bad3:                                   # @bad3
 bad4:                                   # @bad4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -74,7 +74,7 @@ bad4:                                   # @bad4
 	.type	bad5,@function
 bad5:                                   # @bad5
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -88,7 +88,7 @@ bad5:                                   # @bad5
 bad6:                                   # @bad6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -101,7 +101,7 @@ bad6:                                   # @bad6
 	.type	bad7,@function
 bad7:                                   # @bad7
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -114,7 +114,7 @@ bad7:                                   # @bad7
 	.type	bad8,@function
 bad8:                                   # @bad8
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -128,7 +128,7 @@ bad8:                                   # @bad8
 bad9:                                   # @bad9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -141,7 +141,7 @@ bad9:                                   # @bad9
 	.type	bad10,@function
 bad10:                                  # @bad10
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -154,7 +154,7 @@ bad10:                                  # @bad10
 	.type	good0,@function
 good0:                                  # @good0
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -167,7 +167,7 @@ good0:                                  # @good0
 	.type	good1,@function
 good1:                                  # @good1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -180,7 +180,7 @@ good1:                                  # @good1
 	.type	good2,@function
 good2:                                  # @good2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -193,7 +193,7 @@ good2:                                  # @good2
 	.type	opt0,@function
 opt0:                                   # @opt0
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -206,7 +206,7 @@ opt0:                                   # @opt0
 	.type	opt1,@function
 opt1:                                   # @opt1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -219,7 +219,7 @@ opt1:                                   # @opt1
 	.type	opt2,@function
 opt2:                                   # @opt2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -232,99 +232,99 @@ opt2:                                   # @opt2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.const	$push35=, 0
 	i32.load	$push0=, bad_t0($pop35)
 	i32.call_indirect	$push1=, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %for.cond
+# %bb.1:                                # %for.cond
 	i32.const	$push36=, 0
 	i32.load	$push2=, bad_t0+4($pop36)
 	i32.call_indirect	$push3=, $pop2
 	br_if   	0, $pop3        # 0: down to label1
-# BB#2:                                 # %for.cond.1
+# %bb.2:                                # %for.cond.1
 	i32.const	$push37=, 0
 	i32.load	$push4=, bad_t0+8($pop37)
 	i32.call_indirect	$push5=, $pop4
 	br_if   	0, $pop5        # 0: down to label1
-# BB#3:                                 # %for.cond.2
+# %bb.3:                                # %for.cond.2
 	i32.const	$push38=, 0
 	i32.load	$push6=, bad_t0+12($pop38)
 	i32.call_indirect	$push7=, $pop6
 	br_if   	0, $pop7        # 0: down to label1
-# BB#4:                                 # %for.cond.3
+# %bb.4:                                # %for.cond.3
 	i32.const	$push39=, 0
 	i32.load	$push8=, bad_t0+16($pop39)
 	i32.call_indirect	$push9=, $pop8
 	br_if   	0, $pop9        # 0: down to label1
-# BB#5:                                 # %for.cond.4
+# %bb.5:                                # %for.cond.4
 	i32.const	$push40=, 0
 	i32.load	$push10=, bad_t0+20($pop40)
 	i32.call_indirect	$push11=, $pop10
 	br_if   	0, $pop11       # 0: down to label1
-# BB#6:                                 # %for.cond.5
+# %bb.6:                                # %for.cond.5
 	i32.const	$push42=, 1
 	i32.const	$push41=, 0
 	i32.load	$push12=, bad_t1($pop41)
 	i32.call_indirect	$push13=, $pop42, $pop12
 	br_if   	0, $pop13       # 0: down to label1
-# BB#7:                                 # %for.cond1
+# %bb.7:                                # %for.cond1
 	i32.const	$push44=, 1
 	i32.const	$push43=, 0
 	i32.load	$push14=, bad_t1+4($pop43)
 	i32.call_indirect	$push15=, $pop44, $pop14
 	br_if   	0, $pop15       # 0: down to label1
-# BB#8:                                 # %for.cond1.1
+# %bb.8:                                # %for.cond1.1
 	i32.const	$push17=, 1
 	i32.const	$push45=, 0
 	i32.load	$push16=, bad_t1+8($pop45)
 	i32.call_indirect	$push18=, $pop17, $pop16
 	br_if   	0, $pop18       # 0: down to label1
-# BB#9:                                 # %for.cond1.2
+# %bb.9:                                # %for.cond1.2
 	i32.const	$push47=, .L.str
 	i32.const	$push46=, 0
 	i32.load	$push19=, bad_t2($pop46)
 	i32.call_indirect	$push20=, $pop47, $pop19
 	br_if   	0, $pop20       # 0: down to label1
-# BB#10:                                # %for.cond12
+# %bb.10:                               # %for.cond12
 	i32.const	$push49=, .L.str
 	i32.const	$push48=, 0
 	i32.load	$push21=, bad_t2+4($pop48)
 	i32.call_indirect	$push22=, $pop49, $pop21
 	br_if   	0, $pop22       # 0: down to label1
-# BB#11:                                # %for.cond12.1
+# %bb.11:                               # %for.cond12.1
 	i32.const	$push50=, 0
 	i32.load	$push23=, good_t0($pop50)
 	i32.call_indirect	$push24=, $pop23
 	i32.eqz 	$push57=, $pop24
 	br_if   	0, $pop57       # 0: down to label1
-# BB#12:                                # %for.cond23
+# %bb.12:                               # %for.cond23
 	i32.const	$push51=, 0
 	i32.load	$push25=, good_t0+4($pop51)
 	i32.call_indirect	$push26=, $pop25
 	i32.eqz 	$push58=, $pop26
 	br_if   	0, $pop58       # 0: down to label1
-# BB#13:                                # %for.cond23.1
+# %bb.13:                               # %for.cond23.1
 	i32.const	$push52=, 0
 	i32.load	$push27=, good_t0+8($pop52)
 	i32.call_indirect	$push28=, $pop27
 	i32.eqz 	$push59=, $pop28
 	br_if   	0, $pop59       # 0: down to label1
-# BB#14:                                # %for.cond23.2
+# %bb.14:                               # %for.cond23.2
 	i32.const	$push53=, 0
 	i32.load	$push29=, opt_t0($pop53)
 	i32.call_indirect	$push30=, $pop29
 	i32.eqz 	$push60=, $pop30
 	br_if   	0, $pop60       # 0: down to label1
-# BB#15:                                # %for.cond34
+# %bb.15:                               # %for.cond34
 	i32.const	$push54=, 0
 	i32.load	$push31=, opt_t0+4($pop54)
 	i32.call_indirect	$push32=, $pop31
 	i32.eqz 	$push61=, $pop32
 	br_if   	0, $pop61       # 0: down to label1
-# BB#16:                                # %for.cond34.1
+# %bb.16:                               # %for.cond34.1
 	i32.const	$push55=, 0
 	i32.load	$push33=, opt_t0+8($pop55)
 	i32.call_indirect	$push34=, $pop33
@@ -415,6 +415,6 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -6,21 +6,20 @@
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.load	$0=, 0($0)
 	block   	
 	block   	
-	i32.load	$push12=, 0($0)
-	tee_local	$push11=, $0=, $pop12
 	i32.const	$push0=, -2
-	i32.and 	$push1=, $pop11, $pop0
+	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2
 	i32.eq  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push9=, 1
 	i32.ne  	$push10=, $0, $pop9
 	br_if   	0, $pop10       # 0: down to label1
-# BB#2:                                 # %if.then
+# %bb.2:                                # %if.then
 	i32.const	$push5=, 0
 	i32.load	$push6=, q($pop5)
 	i32.load	$push7=, 0($pop6)
@@ -45,14 +44,13 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push7=, 0
+# %bb.0:                                # %entry
 	i32.const	$push5=, 0
 	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push26=, $pop4, $pop6
-	tee_local	$push25=, $0=, $pop26
-	i32.store	__stack_pointer($pop7), $pop25
+	i32.sub 	$0=, $pop4, $pop6
+	i32.const	$push7=, 0
+	i32.store	__stack_pointer($pop7), $0
 	#APP
 	#NO_APP
 	i32.const	$push0=, 2
@@ -103,5 +101,5 @@ q:
 	.size	q, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

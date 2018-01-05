@@ -7,17 +7,16 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.const	$push6=, 2
+	i32.add 	$0=, $0, $pop6
 	block   	
-	i32.const	$push8=, 2
-	i32.add 	$push7=, $0, $pop8
-	tee_local	$push6=, $0=, $pop7
 	i32.const	$push0=, 7
-	i32.ge_u	$push1=, $pop6, $pop0
+	i32.ge_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %switch.lookup
-	i32.const	$push9=, 2
-	i32.shl 	$push2=, $0, $pop9
+# %bb.1:                                # %switch.lookup
+	i32.const	$push7=, 2
+	i32.shl 	$push2=, $0, $pop7
 	i32.const	$push3=, .Lswitch.table.f
 	i32.add 	$push4=, $pop2, $pop3
 	i32.load	$push5=, 0($pop4)
@@ -36,7 +35,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -58,6 +57,6 @@ main:                                   # @main
 	.size	.Lswitch.table.f, 28
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

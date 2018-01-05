@@ -6,42 +6,46 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$0=, 128
+	.local  	i32, i32, i32
+# %bb.0:                                # %entry
+	i32.const	$0=, s-384
 	i32.const	$1=, 0
-.LBB0_1:                                # %for.body.outer.i
+	i32.const	$2=, 0
+.LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push17=, 0
-	i32.const	$push16=, 128
-	i32.const	$push15=, 128
-	i32.gt_u	$push0=, $1, $pop15
-	i32.select	$push14=, $1, $pop16, $pop0
-	tee_local	$push13=, $1=, $pop14
-	i32.const	$push12=, 3
-	i32.mul 	$push1=, $pop13, $pop12
-	i32.const	$push11=, s-384
-	i32.add 	$push2=, $pop1, $pop11
-	i32.load8_u	$push3=, 0($pop2)
-	i32.store8	g($pop17), $pop3
-	i32.const	$push10=, -1
-	i32.add 	$0=, $0, $pop10
-	i32.const	$push9=, 1
-	i32.add 	$push8=, $1, $pop9
-	tee_local	$push7=, $1=, $pop8
-	i32.const	$push6=, 256
-	i32.ne  	$push4=, $pop7, $pop6
-	br_if   	0, $pop4        # 0: up to label0
-# BB#2:                                 # %foo.exit
+	block   	
+	i32.const	$push6=, 128
+	i32.lt_u	$push0=, $2, $pop6
+	br_if   	0, $pop0        # 0: down to label1
+# %bb.2:                                # %if.then.i
+                                        #   in Loop: Header=BB0_1 Depth=1
+	i32.const	$push8=, 0
+	i32.load8_u	$push1=, 0($0)
+	i32.store8	g($pop8), $pop1
+	i32.const	$push7=, 1
+	i32.add 	$1=, $1, $pop7
+.LBB0_3:                                # %for.inc.i
+                                        #   in Loop: Header=BB0_1 Depth=1
+	end_block                       # label1:
+	i32.const	$push11=, 3
+	i32.add 	$0=, $0, $pop11
+	i32.const	$push10=, 1
+	i32.add 	$2=, $2, $pop10
+	i32.const	$push9=, 256
+	i32.ne  	$push2=, $2, $pop9
+	br_if   	0, $pop2        # 0: up to label0
+# %bb.4:                                # %foo.exit
 	end_loop
 	block   	
-	br_if   	0, $0           # 0: down to label1
-# BB#3:                                 # %if.end
+	i32.const	$push3=, 128
+	i32.ne  	$push4=, $1, $pop3
+	br_if   	0, $pop4        # 0: down to label2
+# %bb.5:                                # %if.end
 	i32.const	$push5=, 0
 	return  	$pop5
-.LBB0_4:                                # %if.then
-	end_block                       # label1:
+.LBB0_6:                                # %if.then
+	end_block                       # label2:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -66,5 +70,5 @@ g:
 	.size	g, 1
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

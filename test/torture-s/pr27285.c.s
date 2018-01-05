@@ -7,42 +7,39 @@
 foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.load8_u	$3=, 1($0)
 	block   	
-	i32.load8_u	$push8=, 1($0)
-	tee_local	$push7=, $3=, $pop8
-	i32.eqz 	$push22=, $pop7
-	br_if   	0, $pop22       # 0: down to label0
-# BB#1:                                 # %while.body.lr.ph
+	i32.eqz 	$push16=, $3
+	br_if   	0, $pop16       # 0: down to label0
+# %bb.1:                                # %while.body.lr.ph
 	i32.const	$push0=, 3
 	i32.add 	$1=, $1, $pop0
-	i32.const	$push9=, 3
-	i32.add 	$0=, $0, $pop9
+	i32.const	$push7=, 3
+	i32.add 	$0=, $0, $pop7
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push21=, 255
-	i32.const	$push20=, 255
-	i32.const	$push19=, 8
-	i32.sub 	$push1=, $pop19, $3
-	i32.shl 	$push2=, $pop20, $pop1
-	i32.const	$push18=, 7
-	i32.gt_s	$push17=, $3, $pop18
-	tee_local	$push16=, $2=, $pop17
-	i32.select	$push3=, $pop21, $pop2, $pop16
+	i32.const	$push15=, 7
+	i32.gt_s	$2=, $3, $pop15
+	i32.const	$push14=, 255
+	i32.const	$push13=, 255
+	i32.const	$push12=, 8
+	i32.sub 	$push1=, $pop12, $3
+	i32.shl 	$push2=, $pop13, $pop1
+	i32.select	$push3=, $pop14, $pop2, $2
 	i32.load8_u	$push4=, 0($0)
 	i32.and 	$push5=, $pop3, $pop4
 	i32.store8	0($1), $pop5
-	i32.const	$push15=, 1
-	i32.add 	$1=, $1, $pop15
-	i32.const	$push14=, 1
-	i32.add 	$0=, $0, $pop14
-	i32.const	$push13=, -8
-	i32.add 	$push6=, $3, $pop13
-	i32.const	$push12=, 0
-	i32.select	$push11=, $pop6, $pop12, $2
-	tee_local	$push10=, $3=, $pop11
-	br_if   	0, $pop10       # 0: up to label1
+	i32.const	$push11=, -8
+	i32.add 	$push6=, $3, $pop11
+	i32.const	$push10=, 0
+	i32.select	$3=, $pop6, $pop10, $2
+	i32.const	$push9=, 1
+	i32.add 	$1=, $1, $pop9
+	i32.const	$push8=, 1
+	i32.add 	$0=, $0, $pop8
+	br_if   	0, $3           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop
 	end_block                       # label0:
@@ -58,14 +55,13 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push31=, 0
+# %bb.0:                                # %entry
 	i32.const	$push29=, 0
 	i32.load	$push28=, __stack_pointer($pop29)
 	i32.const	$push30=, 48
-	i32.sub 	$push53=, $pop28, $pop30
-	tee_local	$push52=, $0=, $pop53
-	i32.store	__stack_pointer($pop31), $pop52
+	i32.sub 	$0=, $pop28, $pop30
+	i32.const	$push31=, 0
+	i32.store	__stack_pointer($pop31), $0
 	i32.const	$push35=, 24
 	i32.add 	$push36=, $0, $pop35
 	i32.const	$push2=, 18
@@ -112,22 +108,22 @@ main:                                   # @main
 	i32.const	$push15=, 170
 	i32.ne  	$push17=, $pop16, $pop15
 	br_if   	0, $pop17       # 0: down to label2
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.load8_u	$push19=, 4($0)
 	i32.const	$push18=, 187
 	i32.ne  	$push20=, $pop19, $pop18
 	br_if   	0, $pop20       # 0: down to label2
-# BB#2:                                 # %lor.lhs.false13
+# %bb.2:                                # %lor.lhs.false13
 	i32.load8_u	$push22=, 5($0)
 	i32.const	$push21=, 204
 	i32.ne  	$push23=, $pop22, $pop21
 	br_if   	0, $pop23       # 0: down to label2
-# BB#3:                                 # %lor.lhs.false22
+# %bb.3:                                # %lor.lhs.false22
 	i32.load8_u	$push25=, 6($0)
 	i32.const	$push24=, 128
 	i32.ne  	$push26=, $pop25, $pop24
 	br_if   	0, $pop26       # 0: down to label2
-# BB#4:                                 # %if.end
+# %bb.4:                                # %if.end
 	i32.const	$push34=, 0
 	i32.const	$push32=, 48
 	i32.add 	$push33=, $0, $pop32
@@ -152,5 +148,5 @@ main:                                   # @main
 	.size	.Lmain.x, 19
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

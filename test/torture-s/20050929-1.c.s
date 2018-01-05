@@ -7,48 +7,44 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load	$push24=, e($pop0)
-	tee_local	$push23=, $0=, $pop24
-	i32.load	$push22=, 0($pop23)
-	tee_local	$push21=, $1=, $pop22
-	i32.load	$push1=, 0($pop21)
+	i32.load	$0=, e($pop0)
+	i32.load	$1=, 0($0)
+	block   	
+	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.load	$push4=, 4($1)
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
-# BB#2:                                 # %if.end
-	i32.load	$push26=, 4($0)
-	tee_local	$push25=, $0=, $pop26
-	i32.load	$push7=, 0($pop25)
+# %bb.2:                                # %if.end
+	i32.load	$0=, 4($0)
+	i32.load	$push7=, 0($0)
 	i32.const	$push8=, 3
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label0
-# BB#3:                                 # %lor.lhs.false5
+# %bb.3:                                # %lor.lhs.false5
 	i32.load	$push10=, 4($0)
 	i32.const	$push11=, 4
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label0
-# BB#4:                                 # %if.end10
+# %bb.4:                                # %if.end10
 	i32.const	$push13=, 0
-	i32.load	$push28=, e+4($pop13)
-	tee_local	$push27=, $0=, $pop28
-	i32.load	$push14=, 0($pop27)
+	i32.load	$0=, e+4($pop13)
+	i32.load	$push14=, 0($0)
 	i32.const	$push15=, 5
 	i32.ne  	$push16=, $pop14, $pop15
 	br_if   	0, $pop16       # 0: down to label0
-# BB#5:                                 # %lor.lhs.false13
+# %bb.5:                                # %lor.lhs.false13
 	i32.load	$push17=, 4($0)
 	i32.const	$push18=, 6
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	0, $pop19       # 0: down to label0
-# BB#6:                                 # %if.end17
+# %bb.6:                                # %if.end17
 	i32.const	$push20=, 0
 	return  	$pop20
 .LBB0_7:                                # %if.then
@@ -102,5 +98,5 @@ e:
 	.size	e, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -7,14 +7,13 @@
 foo:                                    # @foo
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, foo.cnt($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, foo.cnt($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop9, $pop1
-	i32.store	foo.cnt($pop0), $pop2
+	i32.add 	$push2=, $1, $pop1
+	i32.store	foo.cnt($pop9), $pop2
 	block   	
 	i32.const	$push3=, 4
 	i32.shl 	$push4=, $1, $pop3
@@ -23,7 +22,7 @@ foo:                                    # @foo
 	i32.const	$push7=, 16
 	i32.call	$push8=, memcmp@FUNCTION, $0, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -40,14 +39,13 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push11=, 0
+# %bb.0:                                # %entry
 	i32.const	$push9=, 0
 	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 48
-	i32.sub 	$push25=, $pop8, $pop10
-	tee_local	$push24=, $0=, $pop25
-	i32.store	__stack_pointer($pop11), $pop24
+	i32.sub 	$0=, $pop8, $pop10
+	i32.const	$push11=, 0
+	i32.store	__stack_pointer($pop11), $0
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $0, $pop15
 	i32.const	$push2=, 8
@@ -116,6 +114,6 @@ foo.cnt:
 	.size	.Lmain.r, 16
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

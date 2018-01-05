@@ -7,14 +7,13 @@
 f:                                      # @f
 	.param  	i32, i32, i32, f64, i32
 	.local  	i64, i32, f64, f64, i32
-# BB#0:                                 # %entry
-	i32.const	$push31=, 0
+# %bb.0:                                # %entry
 	i32.const	$push29=, 0
 	i32.load	$push28=, __stack_pointer($pop29)
 	i32.const	$push30=, 64
-	i32.sub 	$push43=, $pop28, $pop30
-	tee_local	$push42=, $9=, $pop43
-	i32.store	__stack_pointer($pop31), $pop42
+	i32.sub 	$9=, $pop28, $pop30
+	i32.const	$push31=, 0
+	i32.store	__stack_pointer($pop31), $9
 	i32.const	$push0=, 12
 	i32.add 	$push1=, $1, $pop0
 	i64.load	$5=, 0($pop1):p2align=2
@@ -86,14 +85,13 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push39=, 0
+# %bb.0:                                # %entry
 	i32.const	$push37=, 0
 	i32.load	$push36=, __stack_pointer($pop37)
 	i32.const	$push38=, 256
-	i32.sub 	$push76=, $pop36, $pop38
-	tee_local	$push75=, $0=, $pop76
-	i32.store	__stack_pointer($pop39), $pop75
+	i32.sub 	$0=, $pop36, $pop38
+	i32.const	$push39=, 0
+	i32.store	__stack_pointer($pop39), $0
 	i32.const	$push1=, 92
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push74=, 0
@@ -184,9 +182,9 @@ main:                                   # @main
 	i32.const	$push54=, out
 	i32.call	$push35=, strcmp@FUNCTION, $pop53, $pop54
 	br_if   	0, $pop35       # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push77=, 0
-	call    	exit@FUNCTION, $pop77
+# %bb.1:                                # %if.end
+	i32.const	$push75=, 0
+	call    	exit@FUNCTION, $pop75
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -402,7 +400,7 @@ fp:
 	.size	fp, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcpy, i32, i32, i32
 	.functype	strcmp, i32, i32, i32

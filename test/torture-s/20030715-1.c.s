@@ -7,7 +7,7 @@
 ap_check_cmd_context:                   # @ap_check_cmd_context
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -22,20 +22,20 @@ server_type:                            # @server_type
 	.param  	i32, i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$3=, 0
 	block   	
 	i32.const	$push0=, .L.str
 	i32.call	$push1=, strcmp@FUNCTION, $2, $pop0
 	i32.eqz 	$push7=, $pop1
 	br_if   	0, $pop7        # 0: down to label0
-# BB#1:                                 # %if.else
+# %bb.1:                                # %if.else
 	block   	
 	i32.const	$push2=, .L.str.1
 	i32.call	$push3=, strcmp@FUNCTION, $2, $pop2
 	i32.eqz 	$push8=, $pop3
 	br_if   	0, $pop8        # 0: down to label1
-# BB#2:                                 # %cleanup
+# %bb.2:                                # %cleanup
 	i32.const	$push5=, .L.str.2
 	return  	$pop5
 .LBB1_3:
@@ -57,7 +57,7 @@ server_type:                            # @server_type
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
 	i32.store	ap_standalone($pop1), $pop0
@@ -94,5 +94,5 @@ ap_standalone:
 	.size	.L.str.2, 50
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	strcmp, i32, i32, i32

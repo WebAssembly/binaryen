@@ -6,14 +6,14 @@
 	.type	test1,@function
 test1:                                  # @test1
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label2
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_2:                                # %if.else
@@ -36,7 +36,7 @@ test1:                                  # @test1
 	.type	test2,@function
 test2:                                  # @test2
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
@@ -47,7 +47,7 @@ test2:                                  # @test2
 	i32.const	$push3=, 0
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label5
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label4
 	br      	2               # 2: down to label3
 .LBB1_2:                                # %if.else
@@ -70,14 +70,14 @@ test2:                                  # @test2
 	.type	test3,@function
 test3:                                  # @test3
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label8
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label7
 	br      	2               # 2: down to label6
 .LBB2_2:                                # %if.else
@@ -100,7 +100,7 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
@@ -111,7 +111,7 @@ test4:                                  # @test4
 	i32.const	$push3=, 0
 	i32.lt_s	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label11
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label10
 	br      	2               # 2: down to label9
 .LBB3_2:                                # %if.else
@@ -134,14 +134,14 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label14
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label13
 	br      	2               # 2: down to label12
 .LBB4_2:                                # %if.else
@@ -164,14 +164,14 @@ test5:                                  # @test5
 	.type	test6,@function
 test6:                                  # @test6
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.const	$push0=, 0
 	i32.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label17
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label16
 	br      	2               # 2: down to label15
 .LBB5_2:                                # %if.else
@@ -194,14 +194,14 @@ test6:                                  # @test6
 	.type	test7,@function
 test7:                                  # @test7
 	.param  	i64, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i64.const	$push0=, 0
 	i64.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label20
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label19
 	br      	2               # 2: down to label18
 .LBB6_2:                                # %if.else
@@ -224,14 +224,14 @@ test7:                                  # @test7
 	.type	test8,@function
 test8:                                  # @test8
 	.param  	i64, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i64.const	$push0=, 0
 	i64.lt_s	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label23
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $1           # 1: down to label22
 	br      	2               # 2: down to label21
 .LBB7_2:                                # %if.else
@@ -254,7 +254,7 @@ test8:                                  # @test8
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -262,5 +262,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end8-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

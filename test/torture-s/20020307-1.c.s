@@ -6,14 +6,14 @@
 	.type	f3,@function
 f3:                                     # @f3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 6
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push3=, 6
 	i32.eq  	$push2=, $pop1, $pop3
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -29,14 +29,14 @@ f3:                                     # @f3
 	.type	f4,@function
 f4:                                     # @f4
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 14
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 10
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
@@ -52,14 +52,14 @@ f4:                                     # @f4
 	.type	f5,@function
 f5:                                     # @f5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 30
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 18
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label2:
@@ -75,14 +75,14 @@ f5:                                     # @f5
 	.type	f6,@function
 f6:                                     # @f6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 62
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 34
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label3
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB3_2:                                # %if.then
 	end_block                       # label3:
@@ -98,14 +98,14 @@ f6:                                     # @f6
 	.type	f7,@function
 f7:                                     # @f7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 126
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 66
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label4
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB4_2:                                # %if.then
 	end_block                       # label4:
@@ -121,14 +121,14 @@ f7:                                     # @f7
 	.type	f8,@function
 f8:                                     # @f8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 254
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 130
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label5
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB5_2:                                # %if.then
 	end_block                       # label5:
@@ -144,14 +144,14 @@ f8:                                     # @f8
 	.type	f9,@function
 f9:                                     # @f9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 510
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 258
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label6
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB6_2:                                # %if.then
 	end_block                       # label6:
@@ -167,14 +167,14 @@ f9:                                     # @f9
 	.type	f10,@function
 f10:                                    # @f10
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 1022
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 514
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label7
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB7_2:                                # %if.then
 	end_block                       # label7:
@@ -190,14 +190,14 @@ f10:                                    # @f10
 	.type	f11,@function
 f11:                                    # @f11
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 2046
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1026
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label8
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB8_2:                                # %if.then
 	end_block                       # label8:
@@ -213,14 +213,14 @@ f11:                                    # @f11
 	.type	f12,@function
 f12:                                    # @f12
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 4094
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2050
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label9
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB9_2:                                # %if.then
 	end_block                       # label9:
@@ -236,14 +236,14 @@ f12:                                    # @f12
 	.type	f13,@function
 f13:                                    # @f13
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 8190
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4098
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label10
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB10_2:                               # %if.then
 	end_block                       # label10:
@@ -259,14 +259,14 @@ f13:                                    # @f13
 	.type	f14,@function
 f14:                                    # @f14
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 16382
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8194
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label11
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB11_2:                               # %if.then
 	end_block                       # label11:
@@ -282,14 +282,14 @@ f14:                                    # @f14
 	.type	f15,@function
 f15:                                    # @f15
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 32766
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16386
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label12
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB12_2:                               # %if.then
 	end_block                       # label12:
@@ -305,14 +305,14 @@ f15:                                    # @f15
 	.type	f16,@function
 f16:                                    # @f16
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 65534
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 32770
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label13
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB13_2:                               # %if.then
 	end_block                       # label13:
@@ -328,14 +328,14 @@ f16:                                    # @f16
 	.type	f17,@function
 f17:                                    # @f17
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 131070
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 65538
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label14
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB14_2:                               # %if.then
 	end_block                       # label14:
@@ -351,14 +351,14 @@ f17:                                    # @f17
 	.type	f18,@function
 f18:                                    # @f18
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 262142
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 131074
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label15
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB15_2:                               # %if.then
 	end_block                       # label15:
@@ -374,14 +374,14 @@ f18:                                    # @f18
 	.type	f19,@function
 f19:                                    # @f19
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 524286
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 262146
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label16
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB16_2:                               # %if.then
 	end_block                       # label16:
@@ -397,14 +397,14 @@ f19:                                    # @f19
 	.type	f20,@function
 f20:                                    # @f20
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 1048574
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 524290
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label17
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB17_2:                               # %if.then
 	end_block                       # label17:
@@ -420,14 +420,14 @@ f20:                                    # @f20
 	.type	f21,@function
 f21:                                    # @f21
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 2097150
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1048578
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label18
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB18_2:                               # %if.then
 	end_block                       # label18:
@@ -443,14 +443,14 @@ f21:                                    # @f21
 	.type	f22,@function
 f22:                                    # @f22
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 4194302
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 2097154
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label19
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB19_2:                               # %if.then
 	end_block                       # label19:
@@ -466,14 +466,14 @@ f22:                                    # @f22
 	.type	f23,@function
 f23:                                    # @f23
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 8388606
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 4194306
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label20
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB20_2:                               # %if.then
 	end_block                       # label20:
@@ -489,14 +489,14 @@ f23:                                    # @f23
 	.type	f24,@function
 f24:                                    # @f24
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 16777214
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 8388610
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label21
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB21_2:                               # %if.then
 	end_block                       # label21:
@@ -512,14 +512,14 @@ f24:                                    # @f24
 	.type	f25,@function
 f25:                                    # @f25
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 33554430
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 16777218
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label22
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB22_2:                               # %if.then
 	end_block                       # label22:
@@ -535,14 +535,14 @@ f25:                                    # @f25
 	.type	f26,@function
 f26:                                    # @f26
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 67108862
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 33554434
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label23
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB23_2:                               # %if.then
 	end_block                       # label23:
@@ -558,14 +558,14 @@ f26:                                    # @f26
 	.type	f27,@function
 f27:                                    # @f27
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 134217726
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 67108866
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label24
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB24_2:                               # %if.then
 	end_block                       # label24:
@@ -581,14 +581,14 @@ f27:                                    # @f27
 	.type	f28,@function
 f28:                                    # @f28
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 268435454
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 134217730
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label25
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB25_2:                               # %if.then
 	end_block                       # label25:
@@ -604,14 +604,14 @@ f28:                                    # @f28
 	.type	f29,@function
 f29:                                    # @f29
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 536870910
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 268435458
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label26
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB26_2:                               # %if.then
 	end_block                       # label26:
@@ -627,14 +627,14 @@ f29:                                    # @f29
 	.type	f30,@function
 f30:                                    # @f30
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 1073741822
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 536870914
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label27
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB27_2:                               # %if.then
 	end_block                       # label27:
@@ -650,14 +650,14 @@ f30:                                    # @f30
 	.type	f31,@function
 f31:                                    # @f31
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 2147483646
 	i32.and 	$push1=, $0, $pop0
 	i32.const	$push2=, 1073741826
 	i32.ge_u	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label28
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB28_2:                               # %if.then
 	end_block                       # label28:
@@ -673,7 +673,7 @@ f31:                                    # @f31
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -682,6 +682,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end29-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

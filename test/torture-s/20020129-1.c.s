@@ -7,17 +7,17 @@
 foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.load	$2=, 28($1)
 	block   	
 	block   	
 	block   	
 	i32.load	$push0=, 28($0)
-	i32.eqz 	$push20=, $pop0
-	br_if   	0, $pop20       # 0: down to label2
-# BB#1:                                 # %if.end
-	i32.eqz 	$push21=, $2
-	br_if   	1, $pop21       # 1: down to label1
+	i32.eqz 	$push18=, $pop0
+	br_if   	0, $pop18       # 0: down to label2
+# %bb.1:                                # %if.end
+	i32.eqz 	$push19=, $2
+	br_if   	1, $pop19       # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_2:                                # %if.then
 	end_block                       # label2:
@@ -28,29 +28,28 @@ foo:                                    # @foo
 	i32.add 	$push3=, $1, $pop13
 	i32.const	$push4=, 0
 	i32.store	0($pop3), $pop4
-	i32.eqz 	$push22=, $2
-	br_if   	0, $pop22       # 0: down to label1
+	i32.eqz 	$push20=, $2
+	br_if   	0, $pop20       # 0: down to label1
 .LBB0_3:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
 	i32.store	4($2), $0
-	i32.load	$push15=, 0($2)
-	tee_local	$push14=, $2=, $pop15
-	br_if   	0, $pop14       # 0: up to label3
+	i32.load	$2=, 0($2)
+	br_if   	0, $2           # 0: up to label3
 .LBB0_4:                                # %if.end7
 	end_loop
 	end_block                       # label1:
 	i32.load	$2=, 12($1)
 	block   	
 	i32.load	$push5=, 12($0)
-	i32.const	$push16=, -1
-	i32.eq  	$push6=, $pop5, $pop16
+	i32.const	$push14=, -1
+	i32.eq  	$push6=, $pop5, $pop14
 	br_if   	0, $pop6        # 0: down to label4
-# BB#5:                                 # %if.end22
-	i32.const	$push17=, -1
-	i32.ne  	$push7=, $2, $pop17
+# %bb.5:                                # %if.end22
+	i32.const	$push15=, -1
+	i32.ne  	$push7=, $2, $pop15
 	br_if   	1, $pop7        # 1: down to label0
-# BB#6:                                 # %if.end27
+# %bb.6:                                # %if.end27
 	return
 .LBB0_7:                                # %if.end22.thread
 	end_block                       # label4:
@@ -61,10 +60,10 @@ foo:                                    # @foo
 	i32.store	0($pop10), $2
 	i32.const	$push11=, 0
 	i32.store	16($1), $pop11
-	i32.const	$push19=, 12
-	i32.add 	$push12=, $1, $pop19
-	i32.const	$push18=, -1
-	i32.store	0($pop12), $pop18
+	i32.const	$push17=, 12
+	i32.add 	$push12=, $1, $pop17
+	i32.const	$push16=, -1
+	i32.store	0($pop12), $pop16
 	return
 .LBB0_8:                                # %if.then6
 	end_block                       # label0:
@@ -80,7 +79,7 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 6
 	i32.store	y($pop1), $pop0
@@ -119,6 +118,6 @@ x:
 	.size	x, 32
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

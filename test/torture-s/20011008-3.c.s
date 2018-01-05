@@ -7,7 +7,7 @@
 log_compare:                            # @log_compare
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -22,18 +22,17 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	.param  	i32, i32, i32, i32
 	.result 	i32
 	.local  	i32, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$5=, 0
+# %bb.0:                                # %entry
+	i32.const	$push7=, 1
+	i32.and 	$4=, $3, $pop7
+	i32.const	$3=, 0
 	i32.const	$push0=, 12
-	i32.add 	$4=, $1, $pop0
+	i32.add 	$5=, $1, $pop0
 	i32.const	$6=, 1
 	block   	
 	block   	
-	i32.const	$push9=, 1
-	i32.and 	$push8=, $3, $pop9
-	tee_local	$push7=, $3=, $pop8
-	br_if   	0, $pop7        # 0: down to label1
-# BB#1:
+	br_if   	0, $4           # 0: down to label1
+# %bb.1:
 	i32.const	$7=, 1
 	br      	1               # 1: down to label0
 .LBB1_2:
@@ -55,27 +54,27 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 .LBB1_4:                                # %for.body
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label8:
-	i32.const	$push10=, 1
-	i32.add 	$5=, $5, $pop10
+	i32.const	$push8=, 1
+	i32.add 	$3=, $3, $pop8
 	i32.const	$6=, 1
-	i32.eqz 	$push11=, $3
-	br_if   	3, $pop11       # 3: down to label4
-# BB#5:                                 #   in Loop: Header=BB1_3 Depth=1
+	i32.eqz 	$push9=, $4
+	br_if   	3, $pop9        # 3: down to label4
+# %bb.5:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$7=, 0
 	br      	5               # 5: up to label2
 .LBB1_6:                                # %cond.false
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label7:
-	i32.load	$6=, 0($4)
-# BB#7:                                 #   in Loop: Header=BB1_3 Depth=1
+	i32.load	$6=, 0($5)
+# %bb.7:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$7=, 1
 	br      	4               # 4: up to label2
 .LBB1_8:                                # %cond.end
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label6:
-	i32.lt_s	$push1=, $5, $6
+	i32.lt_s	$push1=, $3, $6
 	br_if   	2, $pop1        # 2: down to label3
-# BB#9:                                 #   in Loop: Header=BB1_3 Depth=1
+# %bb.9:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$7=, 2
 	br      	3               # 3: up to label2
 .LBB1_10:                               # %for.end35
@@ -85,7 +84,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	i32.load	$push4=, 0($pop3)
 	i64.load	$push5=, 0($pop4):p2align=2
 	i64.store	0($2):p2align=2, $pop5
-	i32.add 	$push6=, $0, $5
+	i32.add 	$push6=, $0, $3
 	return  	$pop6
 .LBB1_11:                               #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label4:
@@ -107,7 +106,7 @@ __db_txnlist_lsnadd:                    # @__db_txnlist_lsnadd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end6
+# %bb.0:                                # %if.end6
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -116,5 +115,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

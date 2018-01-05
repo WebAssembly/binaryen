@@ -7,17 +7,17 @@
 copysign_bug:                           # @copysign_bug
 	.param  	f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	f64.const	$push10=, 0x0p0
 	f64.eq  	$push2=, $0, $pop10
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	f64.const	$push1=, 0x1p-1
 	f64.mul 	$push0=, $0, $pop1
 	f64.ne  	$push3=, $pop0, $0
 	br_if   	0, $pop3        # 0: down to label0
-# BB#2:                                 # %return
+# %bb.2:                                # %return
 	i32.const	$push11=, 1
 	return  	$pop11
 .LBB0_3:                                # %if.end
@@ -40,14 +40,14 @@ copysign_bug:                           # @copysign_bug
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	f64.const	$push0=, -0x0p0
 	i32.call	$push1=, copysign_bug@FUNCTION, $pop0
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
@@ -59,5 +59,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

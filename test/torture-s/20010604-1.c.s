@@ -7,21 +7,21 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 1
 	i32.ne  	$push1=, $6, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.eqz 	$push4=, $3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#2:                                 # %entry
+# %bb.2:                                # %entry
 	i32.eqz 	$push5=, $4
 	br_if   	0, $pop5        # 0: down to label0
-# BB#3:                                 # %entry
+# %bb.3:                                # %entry
 	i32.eqz 	$push6=, $5
 	br_if   	0, $pop6        # 0: down to label0
-# BB#4:                                 # %if.end
+# %bb.4:                                # %if.end
 	i32.add 	$push2=, $1, $0
 	i32.add 	$push3=, $pop2, $2
 	return  	$pop3
@@ -39,7 +39,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -48,6 +48,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 input_getc_complicated:                 # @input_getc_complicated
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -22,60 +22,49 @@ check_header:                           # @check_header
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.load	$push37=, 0($0)
-	tee_local	$push36=, $2=, $pop37
-	i32.const	$push35=, 1
-	i32.add 	$push0=, $pop36, $pop35
-	i32.load	$push34=, 4($0)
-	tee_local	$push33=, $1=, $pop34
-	i32.lt_u	$push32=, $2, $pop33
-	tee_local	$push31=, $3=, $pop32
-	i32.select	$push30=, $pop0, $2, $pop31
-	tee_local	$push29=, $2=, $pop30
-	i32.const	$push28=, 1
-	i32.add 	$push1=, $pop29, $pop28
-	i32.lt_u	$push27=, $2, $1
-	tee_local	$push26=, $4=, $pop27
-	i32.select	$push25=, $pop1, $2, $pop26
-	tee_local	$push24=, $2=, $pop25
-	i32.const	$push23=, 1
-	i32.add 	$push2=, $pop24, $pop23
-	i32.lt_u	$push22=, $2, $1
-	tee_local	$push21=, $5=, $pop22
-	i32.select	$push20=, $pop2, $2, $pop21
-	tee_local	$push19=, $2=, $pop20
-	i32.const	$push18=, 1
-	i32.add 	$push3=, $pop19, $pop18
-	i32.lt_u	$push17=, $2, $1
-	tee_local	$push16=, $6=, $pop17
-	i32.select	$push15=, $pop3, $2, $pop16
-	tee_local	$push14=, $2=, $pop15
+# %bb.0:                                # %entry
+	i32.load	$1=, 4($0)
+	i32.load	$2=, 0($0)
+	i32.lt_u	$3=, $2, $1
+	i32.const	$push15=, 1
+	i32.add 	$push0=, $2, $pop15
+	i32.select	$2=, $pop0, $2, $3
+	i32.lt_u	$4=, $2, $1
+	i32.const	$push14=, 1
+	i32.add 	$push1=, $2, $pop14
+	i32.select	$2=, $pop1, $2, $4
+	i32.lt_u	$5=, $2, $1
 	i32.const	$push13=, 1
-	i32.add 	$push4=, $pop14, $pop13
-	i32.lt_u	$push12=, $2, $1
-	tee_local	$push11=, $7=, $pop12
-	i32.select	$2=, $pop4, $2, $pop11
+	i32.add 	$push2=, $2, $pop13
+	i32.select	$2=, $pop2, $2, $5
+	i32.lt_u	$6=, $2, $1
+	i32.const	$push12=, 1
+	i32.add 	$push3=, $2, $pop12
+	i32.select	$2=, $pop3, $2, $6
+	i32.lt_u	$7=, $2, $1
+	i32.const	$push11=, 1
+	i32.add 	$push4=, $2, $pop11
+	i32.select	$2=, $pop4, $2, $7
 	block   	
 	br_if   	0, $3           # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	br_if   	0, $4           # 0: down to label0
-# BB#2:                                 # %entry
+# %bb.2:                                # %entry
 	br_if   	0, $5           # 0: down to label0
-# BB#3:                                 # %entry
+# %bb.3:                                # %entry
 	br_if   	0, $6           # 0: down to label0
-# BB#4:                                 # %entry
+# %bb.4:                                # %entry
 	br_if   	0, $7           # 0: down to label0
-# BB#5:                                 # %entry
+# %bb.5:                                # %entry
 	i32.lt_u	$push5=, $2, $1
 	br_if   	0, $pop5        # 0: down to label0
-# BB#6:
+# %bb.6:
 	i32.const	$push10=, 1
 	return  	$pop10
 .LBB1_7:
 	end_block                       # label0:
-	i32.const	$push38=, 1
-	i32.add 	$push7=, $2, $pop38
+	i32.const	$push16=, 1
+	i32.add 	$push7=, $2, $pop16
 	i32.lt_u	$push6=, $2, $1
 	i32.select	$push8=, $pop7, $2, $pop6
 	i32.store	0($0), $pop8
@@ -91,7 +80,7 @@ check_header:                           # @check_header
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end2
+# %bb.0:                                # %if.end2
 	i32.const	$push1=, 0
 	i32.const	$push0=, b+6
 	i32.store	s($pop1), $pop0
@@ -122,4 +111,4 @@ s:
 	.size	s, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

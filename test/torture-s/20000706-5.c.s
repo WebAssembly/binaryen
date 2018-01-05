@@ -7,30 +7,29 @@
 bar:                                    # @bar
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load	$push13=, c($pop0)
-	tee_local	$push12=, $1=, $pop13
-	i32.load	$push1=, 0($pop12)
+	i32.load	$1=, c($pop0)
+	block   	
+	i32.load	$push1=, 0($1)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.load	$push4=, 4($1)
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label0
-# BB#2:                                 # %lor.lhs.false3
+# %bb.2:                                # %lor.lhs.false3
 	i32.const	$push8=, 4
 	i32.ne  	$push9=, $0, $pop8
 	br_if   	0, $pop9        # 0: down to label0
-# BB#3:                                 # %lor.lhs.false3
+# %bb.3:                                # %lor.lhs.false3
 	i32.load	$push7=, 8($1)
 	i32.const	$push10=, 3
 	i32.ne  	$push11=, $pop7, $pop10
 	br_if   	0, $pop11       # 0: down to label0
-# BB#4:                                 # %if.end
+# %bb.4:                                # %if.end
 	return
 .LBB0_5:                                # %if.then
 	end_block                       # label0:
@@ -46,7 +45,7 @@ bar:                                    # @bar
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	c($pop0), $0
 	block   	
@@ -54,21 +53,21 @@ foo:                                    # @foo
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label1
-# BB#1:                                 # %lor.lhs.false.i
+# %bb.1:                                # %lor.lhs.false.i
 	i32.load	$push4=, 4($0)
 	i32.const	$push5=, 2
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label1
-# BB#2:                                 # %lor.lhs.false3.i
+# %bb.2:                                # %lor.lhs.false3.i
 	i32.const	$push8=, 4
 	i32.ne  	$push9=, $1, $pop8
 	br_if   	0, $pop9        # 0: down to label1
-# BB#3:                                 # %lor.lhs.false3.i
+# %bb.3:                                # %lor.lhs.false3.i
 	i32.load	$push7=, 8($0)
 	i32.const	$push10=, 3
 	i32.ne  	$push11=, $pop7, $pop10
 	br_if   	0, $pop11       # 0: down to label1
-# BB#4:                                 # %bar.exit
+# %bb.4:                                # %bar.exit
 	return
 .LBB1_5:                                # %if.then.i
 	end_block                       # label1:
@@ -85,14 +84,13 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push9=, 0
+# %bb.0:                                # %entry
 	i32.const	$push7=, 0
 	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 32
-	i32.sub 	$push13=, $pop6, $pop8
-	tee_local	$push12=, $0=, $pop13
-	i32.store	__stack_pointer($pop9), $pop12
+	i32.sub 	$0=, $pop6, $pop8
+	i32.const	$push9=, 0
+	i32.store	__stack_pointer($pop9), $0
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 3
@@ -122,6 +120,6 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

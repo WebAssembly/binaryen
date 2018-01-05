@@ -6,7 +6,7 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -21,23 +21,22 @@ main:                                   # @main
 wwrite:                                 # @wwrite
 	.param  	i64
 	.result 	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i64.const	$push1=, -3
-	i64.add 	$push6=, $0, $pop1
-	tee_local	$push5=, $0=, $pop6
+	i64.add 	$0=, $0, $pop1
+	block   	
 	i64.const	$push2=, 44
-	i64.gt_u	$push3=, $pop5, $pop2
+	i64.gt_u	$push3=, $0, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	block   	
 	i32.wrap/i64	$push0=, $0
 	br_table 	$pop0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 # 0: down to label1
                                         # 1: down to label0
 .LBB1_2:                                # %return
 	end_block                       # label1:
-	i32.const	$push7=, 0
-	return  	$pop7
+	i32.const	$push5=, 0
+	return  	$pop5
 .LBB1_3:                                # %sw.default
 	end_block                       # label0:
 	i32.const	$push4=, 123
@@ -47,5 +46,5 @@ wwrite:                                 # @wwrite
 	.size	wwrite, .Lfunc_end1-wwrite
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

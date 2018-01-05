@@ -7,12 +7,12 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 39
 	i32.gt_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %for.body.lr.ph
+# %bb.1:                                # %for.body.lr.ph
 	i32.add 	$push4=, $1, $0
 	i32.const	$push5=, 254
 	i32.const	$push2=, 40
@@ -33,47 +33,46 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push6=, 2147450880
 	i32.const	$push5=, 65536
 	i32.const	$push4=, 3
 	i32.const	$push3=, 50
 	i32.const	$push0=, .L.str
-	i32.const	$push21=, 0
-	i32.const	$push20=, 0
-	i32.call	$push1=, open@FUNCTION, $pop0, $pop21, $pop20
+	i32.const	$push19=, 0
+	i32.const	$push18=, 0
+	i32.call	$push1=, open@FUNCTION, $pop0, $pop19, $pop18
 	i64.const	$push2=, 0
-	i32.call	$push19=, mmap@FUNCTION, $pop6, $pop5, $pop4, $pop3, $pop1, $pop2
-	tee_local	$push18=, $0=, $pop19
+	i32.call	$0=, mmap@FUNCTION, $pop6, $pop5, $pop4, $pop3, $pop1, $pop2
+	block   	
 	i32.const	$push7=, -1
-	i32.eq  	$push8=, $pop18, $pop7
+	i32.eq  	$push8=, $0, $pop7
 	br_if   	0, $pop8        # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i64.const	$push9=, -72340172838076674
 	i64.store	32766($0):p2align=0, $pop9
-	i32.const	$push26=, 0
-	i32.store8	32805($0), $pop26
+	i32.const	$push24=, 0
+	i32.store8	32805($0), $pop24
 	i32.const	$push10=, 32797
 	i32.add 	$push11=, $0, $pop10
-	i64.const	$push25=, -72340172838076674
-	i64.store	0($pop11):p2align=0, $pop25
+	i64.const	$push23=, -72340172838076674
+	i64.store	0($pop11):p2align=0, $pop23
 	i32.const	$push12=, 32790
 	i32.add 	$push13=, $0, $pop12
-	i64.const	$push24=, -72340172838076674
-	i64.store	0($pop13):p2align=0, $pop24
+	i64.const	$push22=, -72340172838076674
+	i64.store	0($pop13):p2align=0, $pop22
 	i32.const	$push14=, 32782
 	i32.add 	$push15=, $0, $pop14
-	i64.const	$push23=, -72340172838076674
-	i64.store	0($pop15):p2align=0, $pop23
+	i64.const	$push21=, -72340172838076674
+	i64.store	0($pop15):p2align=0, $pop21
 	i32.const	$push16=, 32774
 	i32.add 	$push17=, $0, $pop16
-	i64.const	$push22=, -72340172838076674
-	i64.store	0($pop17):p2align=0, $pop22
+	i64.const	$push20=, -72340172838076674
+	i64.store	0($pop17):p2align=0, $pop20
 .LBB1_2:                                # %if.end15
 	end_block                       # label1:
-	i32.const	$push27=, 0
-	call    	exit@FUNCTION, $pop27
+	i32.const	$push25=, 0
+	call    	exit@FUNCTION, $pop25
 	unreachable
 	.endfunc
 .Lfunc_end1:
@@ -86,7 +85,7 @@ main:                                   # @main
 	.size	.L.str, 10
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	open, i32, i32, i32
 	.functype	mmap, i32, i32, i32, i32, i32, i32, i64
 	.functype	exit, void, i32

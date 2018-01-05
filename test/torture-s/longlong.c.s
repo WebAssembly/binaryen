@@ -6,24 +6,21 @@
 	.type	alpha_ep_extbl_i_eq_0,@function
 alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push28=, 0
-	i32.load	$push27=, pars($pop28)
-	tee_local	$push26=, $0=, $pop27
+# %bb.0:                                # %entry
+	i32.const	$push24=, 0
+	i32.load	$0=, pars($pop24)
 	i32.const	$push0=, 31
-	i32.and 	$push25=, $pop26, $pop0
-	tee_local	$push24=, $1=, $pop25
+	i32.and 	$1=, $0, $pop0
+	block   	
 	i32.const	$push23=, 31
-	i32.eq  	$push1=, $pop24, $pop23
+	i32.eq  	$push1=, $1, $pop23
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.then
-	i32.const	$push32=, 0
-	i32.load	$push31=, r($pop32)
-	tee_local	$push30=, $2=, $pop31
+# %bb.1:                                # %if.then
+	i32.const	$push26=, 0
+	i32.load	$2=, r($pop26)
 	i32.const	$push20=, 3
 	i32.shl 	$push21=, $1, $pop20
-	i32.add 	$push22=, $pop30, $pop21
+	i32.add 	$push22=, $2, $pop21
 	i32.const	$push12=, 2
 	i32.shr_u	$push13=, $0, $pop12
 	i32.const	$push4=, 248
@@ -32,8 +29,8 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 	i64.load	$push16=, 0($pop15)
 	i32.const	$push2=, 24
 	i32.shr_u	$push3=, $0, $pop2
-	i32.const	$push29=, 248
-	i32.and 	$push5=, $pop3, $pop29
+	i32.const	$push25=, 248
+	i32.and 	$push5=, $pop3, $pop25
 	i32.add 	$push6=, $2, $pop5
 	i64.load	$push7=, 0($pop6)
 	i64.const	$push8=, 3
@@ -58,16 +55,15 @@ alpha_ep_extbl_i_eq_0:                  # @alpha_ep_extbl_i_eq_0
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %alpha_ep_extbl_i_eq_0.exit
-	i32.const	$push21=, 0
-	i64.const	$push0=, 3160194
-	i64.store	b+136($pop21), $pop0
-	i32.const	$push20=, 0
-	i64.const	$push1=, 6003104017374052362
-	i64.store	b+16($pop20), $pop1
+# %bb.0:                                # %alpha_ep_extbl_i_eq_0.exit
 	i32.const	$push19=, 0
-	i32.load	$push18=, r($pop19)
-	tee_local	$push17=, $0=, $pop18
+	i64.const	$push0=, 3160194
+	i64.store	b+136($pop19), $pop0
+	i32.const	$push18=, 0
+	i64.const	$push1=, 6003104017374052362
+	i64.store	b+16($pop18), $pop1
+	i32.const	$push17=, 0
+	i32.load	$0=, r($pop17)
 	i64.load	$push7=, 16($0)
 	i64.load	$push2=, 136($0)
 	i64.const	$push3=, 3
@@ -77,7 +73,7 @@ main:                                   # @main
 	i64.shr_u	$push8=, $pop7, $pop6
 	i64.const	$push9=, 255
 	i64.and 	$push10=, $pop8, $pop9
-	i64.store	16($pop17), $pop10
+	i64.store	16($0), $pop10
 	i32.const	$push16=, 0
 	i32.const	$push11=, -2013265854
 	i32.store	pars($pop16), $pop11
@@ -87,9 +83,9 @@ main:                                   # @main
 	i64.const	$push13=, 77
 	i64.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label1
-# BB#1:                                 # %if.end
-	i32.const	$push22=, 0
-	call    	exit@FUNCTION, $pop22
+# %bb.1:                                # %if.end
+	i32.const	$push20=, 0
+	call    	exit@FUNCTION, $pop20
 	unreachable
 .LBB1_2:                                # %if.then
 	end_block                       # label1:
@@ -127,6 +123,6 @@ pars:
 	.size	pars, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -7,7 +7,7 @@
 gt:                                     # @gt
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.gt_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -21,7 +21,7 @@ gt:                                     # @gt
 ge:                                     # @ge
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.ge_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -35,7 +35,7 @@ ge:                                     # @ge
 lt:                                     # @lt
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.lt_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -49,7 +49,7 @@ lt:                                     # @lt
 le:                                     # @le
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.le_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -62,11 +62,11 @@ le:                                     # @le
 	.type	true,@function
 true:                                   # @true
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.eqz 	$push0=, $0
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB4_2:                                # %if.then
 	end_block                       # label0:
@@ -82,10 +82,10 @@ true:                                   # @true
 	.type	false,@function
 false:                                  # @false
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	br_if   	0, $0           # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB5_2:                                # %if.then
 	end_block                       # label1:
@@ -102,7 +102,7 @@ false:                                  # @false
 f:                                      # @f
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %true.exit
+# %bb.0:                                # %true.exit
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -115,7 +115,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

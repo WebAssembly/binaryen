@@ -6,7 +6,7 @@
 	.type	b,@function
 b:                                      # @b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -19,25 +19,21 @@ b:                                      # @b
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push17=, 0
-	i32.load	$push16=, k($pop17)
-	tee_local	$push15=, $1=, $pop16
-	i32.const	$push14=, 0
-	i32.load	$push13=, g+8($pop14)
-	tee_local	$push12=, $0=, $pop13
-	i32.gt_s	$push1=, $1, $0
-	i32.select	$push11=, $pop15, $pop12, $pop1
-	tee_local	$push10=, $1=, $pop11
+	i32.load	$0=, g+8($pop0)
 	i32.const	$push9=, 0
-	i32.load	$push8=, g+12($pop9)
-	tee_local	$push7=, $0=, $pop8
-	i32.gt_s	$push2=, $1, $0
-	i32.select	$push3=, $pop10, $pop7, $pop2
+	i32.load	$1=, k($pop9)
+	i32.gt_s	$push1=, $1, $0
+	i32.select	$0=, $1, $0, $pop1
+	i32.const	$push8=, 0
+	i32.load	$1=, g+12($pop8)
+	i32.const	$push7=, 0
+	i32.gt_s	$push2=, $0, $1
+	i32.select	$push3=, $0, $1, $pop2
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
-	i32.store	k($pop0), $pop5
+	i32.store	k($pop7), $pop5
 	i32.const	$push6=, 0
                                         # fallthrough-return: $pop6
 	.endfunc
@@ -65,4 +61,4 @@ k:
 	.size	k, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

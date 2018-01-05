@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -4
 	i32.add 	$1=, $0, $pop0
 	i32.const	$push1=, 3
@@ -19,26 +19,24 @@ f:                                      # @f
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push16=, 1
-	i32.shr_s	$push15=, $2, $pop16
-	tee_local	$push14=, $2=, $pop15
-	i32.const	$push13=, 2
-	i32.shl 	$push3=, $pop14, $pop13
-	i32.const	$push12=, a
-	i32.add 	$push4=, $pop3, $pop12
+	i32.const	$push12=, 1
+	i32.shr_s	$2=, $2, $pop12
+	i32.const	$push11=, 2
+	i32.shl 	$push3=, $2, $pop11
+	i32.const	$push10=, a
+	i32.add 	$push4=, $pop3, $pop10
 	i32.store	0($pop4), $0
-	i32.const	$push11=, 32
-	i32.add 	$0=, $0, $pop11
-	i32.const	$push10=, 4
-	i32.add 	$push9=, $1, $pop10
-	tee_local	$push8=, $1=, $pop9
+	i32.const	$push9=, 32
+	i32.add 	$0=, $0, $pop9
+	i32.const	$push8=, 4
+	i32.add 	$1=, $1, $pop8
 	i32.const	$push7=, 1073741836
-	i32.lt_s	$push5=, $pop8, $pop7
+	i32.lt_s	$push5=, $1, $pop7
 	br_if   	0, $pop5        # 0: up to label0
-# BB#2:                                 # %do.end
+# %bb.2:                                # %do.end
 	end_loop
-	copy_local	$push17=, $0
-                                        # fallthrough-return: $pop17
+	copy_local	$push13=, $1
+                                        # fallthrough-return: $pop13
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
@@ -49,7 +47,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end7
+# %bb.0:                                # %if.end7
 	i32.const	$push1=, 0
 	i32.const	$push0=, a
 	i32.store	a+512($pop1), $pop0
@@ -82,5 +80,5 @@ a:
 	.size	a, 1020
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
