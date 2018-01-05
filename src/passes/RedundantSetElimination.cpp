@@ -227,9 +227,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //       predecessors, those that we iterated on have the property;
             //       those that we haven't will have 0 (unseen).
             //        * If we assign to that local in this block, that will be
-            //          the value in the output, forever.
+            //          the value in the output, forever, and it is greater
+            //          than the initial value of 0.
             //        * If we see different values coming in, we create a merge
-            //          value number. It's number is higher than everything
+            //          value number. Its number is higher than everything
             //          else since we give it the next available number, so we
             //          do not decrease in this iteration, and we will output
             //          the same value in the future too (here is where we use
