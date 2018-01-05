@@ -239,6 +239,10 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //        * Otherwise, we will flow the incoming value through,
             //          and it did not decrease (by induction), so neither do
             //          we.
+            //    Finally, given value numbers are nondecreasing, we must
+            //    converge since we only keep working as long as we see new
+            //    values at the end of a block.
+            //
             //    Not that we don't trust this proof, but the convergence
             //    property (value numbers at block ends do not decrease) is
             //    verified later down.
