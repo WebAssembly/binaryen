@@ -181,7 +181,7 @@ pr60062.c.s.wast O0
 string-opt-18.c.s.wast O0
 vla-dealloc-1.c.s.wast O0
 
-20030125-1.c.s.wast O2
+20030914-1.c.s.wast O2
 20040409-1.c.s.wast O2
 20040409-2.c.s.wast O2
 20040409-3.c.s.wast O2
