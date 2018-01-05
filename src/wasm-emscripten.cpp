@@ -83,18 +83,16 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
     name, std::move(params), i32, { { "1", i32 } }
   );
   Load* loadStack = generateLoadStackPointer();
-  SetLocal* setStackLocal = builder.makeSetLocal(1, loadStack);
-  GetLocal* getStackLocal = builder.makeGetLocal(1, i32);
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
-  Binary* sub = builder.makeBinary(SubInt32, getStackLocal, getSizeArg);
+  Binary* sub = builder.makeBinary(SubInt32, loadStack, getSizeArg);
   const static uint32_t bitAlignment = 16;
   const static uint32_t bitMask = bitAlignment - 1;
   Const* subConst = builder.makeConst(Literal(~bitMask));
   Binary* maskedSub = builder.makeBinary(AndInt32, sub, subConst);
-  Store* storeStack = generateStoreStackPointer(maskedSub);
+  SetLocal* teeStackLocal = builder.makeTeeLocal(1, maskedSub);
+  Store* storeStack = generateStoreStackPointer(teeStackLocal);
 
   Block* block = builder.makeBlock();
-  block->list.push_back(setStackLocal);
   block->list.push_back(storeStack);
   GetLocal* getStackLocal2 = builder.makeGetLocal(1, i32);
   block->list.push_back(getStackLocal2);
