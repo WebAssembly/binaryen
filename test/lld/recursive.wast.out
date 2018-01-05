@@ -85,16 +85,15 @@
  )
  (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (get_global $global$0)
-  )
   (set_global $global$0
-   (i32.and
-    (i32.sub
-     (get_local $1)
-     (get_local $0)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (get_global $global$0)
+      (get_local $0)
+     )
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
