@@ -220,7 +220,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
             //    the value number at the end is nondecreasing across
             //    iterations, by induction on the iteration:
             //     * The first iteration is on the entry block. It increases
-            //       end value number at the end from 0 (unseen) to something
+            //       the value number at the end from 0 (unseen) to something
             //       else (a value number for 0 for locals, a unique value
             //       for params; all >0).
             //     * Induction step: assuming the property holds for all past
