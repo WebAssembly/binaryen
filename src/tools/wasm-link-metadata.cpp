@@ -21,6 +21,7 @@
 
 #include <exception>
 
+#include "abi/wasm-object.h"
 #include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/command-line.h"
@@ -34,15 +35,6 @@
 
 using namespace cashew;
 using namespace wasm;
-
-enum LinkType : unsigned {
-  WASM_STACK_POINTER  = 0x1,
-  WASM_SYMBOL_INFO    = 0x2,
-  WASM_DATA_SIZE      = 0x3,
-  WASM_DATA_ALIGNMENT = 0x4,
-  WASM_SEGMENT_INFO   = 0x5,
-  WASM_INIT_FUNCS     = 0x6,
-};
 
 void parseLinkingSection(
     std::vector<char> const& data,
@@ -64,16 +56,16 @@ void parseLinkingSection(
   }
 
   while (idx < data.size()) {
-    LinkType type = static_cast<LinkType>(readNext());
+    ABI::LinkType type = static_cast<ABI::LinkType>(readNext());
     uint32_t size = readNext();
     uint32_t startIdx = idx;
 
     switch(type) {
-    case WASM_DATA_SIZE: {
+    case ABI::WASM_DATA_SIZE: {
       dataSize = readNext();
       break;
     }
-    case WASM_INIT_FUNCS: {
+    case ABI::WASM_INIT_FUNCS: {
       uint32_t numInit = readNext();
       for (uint32_t i = 0; i < numInit; ++i) {
         uint32_t priority = readNext();
@@ -88,6 +80,7 @@ void parseLinkingSection(
     default:
       break;
     }
+    // Always go to the end of the subsection based on size, not contents.
     idx = startIdx + size;
   }
 }
