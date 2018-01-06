@@ -24,9 +24,7 @@
            (i32.atomic.load16_u
             (i32.const 2458)
            )
-           (tee_local $0
-            (i32.const 0)
-           )
+           (i32.const 0)
           )
           (i32.atomic.rmw.xchg
            (get_local $0)

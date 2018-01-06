@@ -95,6 +95,7 @@ void PassRegistry::registerPasses() {
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
+  registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
@@ -166,6 +167,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.shrinkLevel >= 2) {
     add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
     add("coalesce-locals"); // just for localCSE
+  }
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("rse"); // after all coalesce-locals, and before a final vacuum
   }
   add("vacuum"); // just to be safe
 }

@@ -15,7 +15,7 @@
  */
 
 //
-// Command line helpers.
+// A vector of sorted elements.
 //
 
 #ifndef wasm_support_sorted_vector_h
