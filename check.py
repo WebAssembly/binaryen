@@ -605,8 +605,8 @@ def main():
   run_binaryen_js_tests()
   s2wasm.test_s2wasm()
   s2wasm.test_linker()
-  lld.test_lld_metadata()
-  lld.test_lld_emscripten()
+  lld.test_wasm_link_metadata()
+  lld.test_wasm_emscripten_finalize()
   wasm2asm.test_wasm2asm()
   run_validator_tests()
   if options.torture and options.test_waterfall:

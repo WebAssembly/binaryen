@@ -15,7 +15,7 @@
  */
 
 //
-// lld-metadata console tool
+// wasm-link-metadata console tool
 //
 
 #include <exception>
@@ -94,7 +94,8 @@ void parseLinkingSection(
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
-  Options options("lld-metadata", "Reads wasm .o file and emits .json metadata");
+  Options options("wasm-link-metadata",
+                  "Reads wasm .o file and emits .json metadata");
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,

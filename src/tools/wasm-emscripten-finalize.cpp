@@ -15,7 +15,7 @@
  */
 
 //
-// lld-emscripten console tool
+// wasm-emscripten-finalize console tool
 //
 
 #include <exception>
@@ -39,7 +39,8 @@ int main(int argc, const char *argv[]) {
   std::string outfile;
   bool emitBinary = true;
   std::vector<Name> forcedExports;
-  Options options("lld-emscripten", "Performs Emscripten-specific transforms on bare-clang .wasm files");
+  Options options("wasm-emscripten-finalize",
+                  "Performs Emscripten-specific transforms on .wasm files");
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
