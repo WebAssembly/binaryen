@@ -98,7 +98,7 @@ int main(int argc, const char *argv[]) {
   // functions. Today lld assumes linking is done and only exports main by
   // default, dynamic linking support should allow other symbols to be exported
   // according to C visibility, which is less than all functions. For now this works.
-  for (auto &function : wasm.functions) {
+  for (auto& function : wasm.functions) {
     auto name = function->name;
     if (wasm.getExportOrNull(name)) {
       continue;
