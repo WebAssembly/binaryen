@@ -16,6 +16,7 @@
 
 //
 // wasm-link-metadata console tool
+// Reads wasm .o file and emits .json metadata
 //
 
 #include <exception>

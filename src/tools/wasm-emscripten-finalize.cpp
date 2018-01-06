@@ -16,6 +16,7 @@
 
 //
 // wasm-emscripten-finalize console tool
+// Performs Emscripten-specific transforms on .wasm files
 //
 
 #include <exception>
