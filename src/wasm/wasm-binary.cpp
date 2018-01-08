@@ -407,9 +407,6 @@ void WasmBinaryWriter::writeDataSegments() {
       break;
     }
   }
-  if (emitted >= MaxDataSegments) {
-    std::cerr << "too many data segments, wasm VMs may not accept this binary" << std::endl;
-  }
   finishSection(start);
 }
 
