@@ -37,7 +37,8 @@ namespace wasm {
 
 enum {
   // the maximum amount of bytes we emit per LEB
-  MaxLEB32Bytes = 5
+  MaxLEB32Bytes = 5,
+  MaxDataSegments = 100 * 1000 // a hard limit wasm VMs impose
 };
 
 template<typename T, typename MiniT>

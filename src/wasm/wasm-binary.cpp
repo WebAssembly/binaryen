@@ -330,18 +330,67 @@ void WasmBinaryWriter::writeExports() {
 
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
-  uint32_t num = 0;
+  Index num = 0;
   for (auto& segment : wasm->memory.segments) {
     if (segment.data.size() > 0) num++;
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
-  for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() == 0) continue;
+  // we have a 100K limit. first, emit all non-constant-offset
+  // segments; then emit the constants, which we may merge if
+  // forced to
+  Index emitted = 0;
+  auto emit = [&](Memory::Segment& segment) {
     o << U32LEB(0); // Linear memory 0 in the MVP
     writeExpression(segment.offset);
     o << int8_t(BinaryConsts::End);
     writeInlineBuffer(&segment.data[0], segment.data.size());
+    emitted++;
+  };
+  auto& segments = wasm->memory.segments;
+  for (auto& segment : segments) {
+    if (segment.data.size() == 0) continue;
+    if (segment.offset->is<Const>()) continue;
+    emit(segment);
+  }
+  for (Index i = 0; i < segments.size(); i++) {
+    auto& segment = segments[i];
+    if (segment.data.size() == 0) continue;
+    if (!segment.offset->is<Const>()) continue;
+    if (emitted + 1 < MaxDataSegments) {
+      emit(segment);
+    } else {
+      // we can emit only one more segment! merge everything into one
+      // start the combined segment at the bottom of them all
+      auto start = segment.offset->cast<Const>()->value.getInteger();
+      for (Index j = i + 1; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (segment.data.size() == 0) continue;
+        if (!segment.offset->is<Const>()) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        start = std::min(start, offset);
+      }
+      // create the segment and add in all the data
+      Const c;
+      c.value = Literal(int32_t(start));
+      Memory::Segment combined(&c);
+      for (Index j = i; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (segment.data.size() == 0) continue;
+        if (!segment.offset->is<Const>()) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        auto needed = offset + segment.data.size() - start;
+        if (combined.data.size() < needed) {
+          combined.data.resize(needed);
+        }
+        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + offset - start);
+      }
+      emit(combined);
+      break;
+    }
+  }
+  if (emitted >= MaxDataSegments) {
+    std::cerr << "too many data segments, wasm VMs may not accept this binary" << std::endl;
   }
   finishSection(start);
 }
