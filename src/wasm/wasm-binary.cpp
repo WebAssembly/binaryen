@@ -330,9 +330,27 @@ void WasmBinaryWriter::writeExports() {
 
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
-  Index num = 0;
+  Index numConstant = 0,
+        numDynamic = 0;
   for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() > 0) num++;
+    if (segment.data.size() > 0) {
+      if (segment.offset->is<Const>()) {
+        numConstant++;
+      } else {
+        numDynamic++;
+      }
+    }
+  }
+  // check if we have too many dynamic data segments, which we can do nothing about
+  auto num = numConstant + numDynamic;
+  if (numDynamic + 1 >= MaxDataSegments) {
+    std::cerr << "too many non-constant-offset data segments, wasm VMs may not accept this binary" << std::endl;
+  }
+  // we'll merge constant segments if we must
+  if (numConstant + numDynamic >= MaxDataSegments) {
+    numConstant = MaxDataSegments - numDynamic - 1;
+    num = numConstant + numDynamic;
+    assert(num == MaxDataSegments - 1);
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
@@ -357,7 +375,7 @@ void WasmBinaryWriter::writeDataSegments() {
     auto& segment = segments[i];
     if (segment.data.size() == 0) continue;
     if (!segment.offset->is<Const>()) continue;
-    if (emitted + 1 < MaxDataSegments) {
+    if (emitted + 2 < MaxDataSegments) {
       emit(segment);
     } else {
       // we can emit only one more segment! merge everything into one
@@ -373,6 +391,7 @@ void WasmBinaryWriter::writeDataSegments() {
       // create the segment and add in all the data
       Const c;
       c.value = Literal(int32_t(start));
+      c.type = i32;
       Memory::Segment combined(&c);
       for (Index j = i; j < segments.size(); j++) {
         auto& segment = segments[j];
