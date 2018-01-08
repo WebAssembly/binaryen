@@ -15,8 +15,8 @@ var module;
 
 // helpers
 
-function assert(x) {
-  if (!x) throw 'error!';
+function assert(x, why) {
+  if (!x) throw 'error! ' + (why ? why : '');
 }
 
 function makeInt32(x) {
@@ -572,7 +572,44 @@ function test_parsing() {
   module2.dispose();
 }
 
+function test_segments() {
+  // wasm VMs limit the # of segments
+  module = new Binaryen.Module();
+  var segments = [];
+  for (var i = 0; i < 101 * 1024; i++) {
+    segments.push({
+      offset: module.i32.const(i * 5),
+      data: [1]
+    });
+  }
+  module.setMemory(1, 256, "mem", segments);
+  function count() {
+    var text = module.emitText();
+    var num = 0;
+    var i = 0;
+    while ((i = text.indexOf('(data ', i + 1)) > 0) {
+      num++;
+    }
+    return num;
+  }
+  var before = count();
+  console.log('before: ' + before);
+  assert(before === 101 * 1024);
+  // we don't emit too many segments in a binary
+  var buffer = module.emitBinary();
+  size = buffer.length;
+  module.dispose();
+  module = null;
+  module = Binaryen.readBinary(buffer, size);
+  var later = count();
+  console.log('later: ' + later);
+  assert(later > 1024 && later < 100 * 1024);
+  module = null;
+  module.dispose();
+}
+
 function main() {
+/*
   test_types();
   test_ids();
   test_core();
@@ -582,6 +619,8 @@ function main() {
   test_nonvalid();
   test_tracing();
   test_parsing();
+*/
+  test_segments();
 }
 
 main();
