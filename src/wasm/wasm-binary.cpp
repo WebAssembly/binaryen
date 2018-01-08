@@ -354,9 +354,8 @@ void WasmBinaryWriter::writeDataSegments() {
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
-  // we have a 100K limit. first, emit all non-constant-offset
-  // segments; then emit the constants, which we may merge if
-  // forced to
+  // first, emit all non-constant-offset segments; then emit the constants,
+  // which we may merge if forced to
   Index emitted = 0;
   auto emit = [&](Memory::Segment& segment) {
     o << U32LEB(0); // Linear memory 0 in the MVP
