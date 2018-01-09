@@ -1,7 +1,6 @@
 (module
  (type $v (func))
  (import "env" "fn" (func $fn))
- (memory $0 0)
  (export "main" (func $main))
  (func $main (; 1 ;) (type $v)
   (call $fn)
