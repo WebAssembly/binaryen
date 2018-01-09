@@ -19,6 +19,7 @@
 #include <pass.h>
 #include <support/colors.h>
 #include <wasm.h>
+#include <wasm-binary.h>
 
 namespace wasm {
 
@@ -78,11 +79,17 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     if (byFunction) {
       // print global
       printCounts("global");
+      // compute binary info, so we know function sizes
+      BufferWithRandomAccess buffer;
+      WasmBinaryWriter writer(module, buffer);
+      writer.write();
       // print for each function
-      for (auto& func : module->functions) {
+      for (Index i = 0; i < module->functions.size(); i++) {
+        auto* func = module->functions[i].get();
         counts.clear();
-        walkFunction(func.get());
+        walkFunction(func);
         counts["[vars]"] = func->getNumVars();
+        counts["[binary-bytes]"] = writer.tableOfContents.functionBodies[i].size;
         printCounts(std::string("func: ") + func->name.str);
       }
       // can't comapre detailed info between passes yet
@@ -117,7 +124,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
     });
-    o << title << ":\n";
+    o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];
       o << " " << left << setw(15) << key << ": " << setw(8)
