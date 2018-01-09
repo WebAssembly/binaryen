@@ -38,11 +38,12 @@ jobs:
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    - <<: *test-ubuntu
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=address"
+    ## LeakSanitizer hits an internal error TODO: try to restore this
+    ##- <<: *test-ubuntu
+    ##  env: |
+    ##    CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
+    ##    CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
+    ##    COMPILER_FLAGS="-fsanitize=address"
 
     - <<: *test-ubuntu
       env: |
