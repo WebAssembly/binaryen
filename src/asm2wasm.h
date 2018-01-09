@@ -742,9 +742,21 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   Ref body = asmFunction[3];
   assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") || body[0][1]->getIString() == IString("almost asm")));
 
+  // extra functions that we add, that are not from the compiled code. we need
+  // to make sure to optimize them normally (OptimizingIncrementalModuleBuilder
+  // does that on the fly for compiled code)
+  std::vector<Function*> extraSupportFunctions;
+
   // first, add the memory elements. we do this before the main compile+optimize
   // since the optimizer should see the memory
+
   // apply memory growth, if relevant
+  if (preprocessor.memoryGrowth) {
+    EmscriptenGlueGenerator generator(wasm);
+    auto* func = generator.generateMemoryGrowthFunction();
+    extraSupportFunctions.push_back(func);
+    wasm.memory.max = Memory::kMaxSize;
+  }
 
   // import memory
   auto memoryImport = make_unique<Import>();
@@ -964,6 +976,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       passRunner.addDefaultFunctionOptimizationPasses();
       for (auto& pair : trappingFunctions.getFunctions()) {
         auto* func = pair.second;
+        passRunner.runFunction(func);
+      }
+      for (auto* func : extraSupportFunctions) {
         passRunner.runFunction(func);
       }
     }, debug, false /* do not validate globally yet */);
@@ -1401,12 +1416,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // remove the debug info intrinsic
   if (preprocessor.debugInfo) {
     wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
-  }
-
-  if (preprocessor.memoryGrowth) {
-    EmscriptenGlueGenerator generator(wasm);
-    generator.generateMemoryGrowthFunction();
-    wasm.memory.max = Memory::kMaxSize;
   }
 
   if (udivmoddi4.is() && getTempRet0.is()) {

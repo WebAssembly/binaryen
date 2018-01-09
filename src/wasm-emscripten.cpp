@@ -122,7 +122,7 @@ void EmscriptenGlueGenerator::generateRuntimeFunctions() {
   generateStackRestoreFunction();
 }
 
-void EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
+Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   Name name(GROW_WASM_MEMORY);
   std::vector<NameType> params { { NEW_SIZE, i32 } };
   Function* growFunction = builder.makeFunction(
@@ -135,6 +135,8 @@ void EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   );
 
   addExportedFunction(wasm, growFunction);
+
+  return growFunction;
 }
 
 static bool hasI64ResultOrParam(FunctionType* ft) {
