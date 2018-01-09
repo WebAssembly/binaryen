@@ -26,6 +26,10 @@ using namespace std;
 
 // Prints metrics between optimization passes.
 struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<Metrics>>> {
+  bool byFunction;
+
+  Metrics(bool byFunction) : byFunction(byFunction) {}
+
   static Metrics *lastMetricsPass;
 
   map<const char *, int> counts;
@@ -35,28 +39,25 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     counts[name]++;
   }
 
-  void visitModule(Module* module) {
-    ostream &o = cout;
-    o << "Counts"
-      << "\n";
-    vector<const char*> keys;
-    int total = 0;
-    for (auto i : counts) {
-      keys.push_back(i.first);
-      total += i.second;
+  void doWalkModule(Module* module) {
+    // global things
+
+    for (auto& curr : module->functionTypes) {
+      visitFunctionType(curr.get());
     }
-    // add total
-    keys.push_back("[total]");
-    counts["[total]"] = total;
-    // add vars
-    size_t vars = 0;
-    for (auto& func : module->functions) {
-      vars += func->getNumVars();
+    for (auto& curr : module->imports) {
+      visitImport(curr.get());
     }
-    keys.push_back("[vars]");
-    counts["[vars]"] = vars;
+    for (auto& curr : module->exports) {
+      visitExport(curr.get());
+    }
+    for (auto& curr : module->globals) {
+      walkGlobal(curr.get());
+    }
+    walkTable(&module->table);
+    walkMemory(&module->memory);
+
     // add functions
-    keys.push_back("[funcs]");
     counts["[funcs]"] = module->functions.size();
     // add memory and table
     if (module->memory.exists) {
@@ -64,7 +65,6 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       for (auto& segment: module->memory.segments) {
         size += segment.data.size();
       }
-      keys.push_back("[memory-data]");
       counts["[memory-data]"] = size;
     }
     if (module->table.exists) {
@@ -72,13 +72,52 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       for (auto& segment: module->table.segments) {
         size += segment.data.size();
       }
-      keys.push_back("[table-data]");
       counts["[table-data]"] = size;
     }
+
+    if (byFunction) {
+      // print global
+      printCounts("global");
+      // print for each function
+      for (auto& func : module->functions) {
+        counts.clear();
+        walkFunction(func.get());
+        counts["[vars]"] = func->getNumVars();
+        printCounts(std::string("func: ") + func->name.str);
+      }
+      // can't comapre detailed info between passes yet
+      lastMetricsPass = nullptr;
+    } else {
+      // add function info
+      size_t vars = 0;
+      for (auto& func : module->functions) {
+        walkFunction(func.get());
+        vars += func->getNumVars();
+      }
+      counts["[vars]"] = vars;
+      // print
+      printCounts("total");
+      // compare to next time
+      lastMetricsPass = this;
+    }
+  }
+
+  void printCounts(std::string title) {
+    ostream &o = cout;
+    vector<const char*> keys;
+    // add total
+    int total = 0;
+    for (auto i : counts) {
+      keys.push_back(i.first);
+      total += i.second;
+    }
+    keys.push_back("[total]");
+    counts["[total]"] = total;
     // sort
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
       return strcmp(b, a) > 0;
     });
+    o << title << ":\n";
     for (auto* key : keys) {
       auto value = counts[key];
       o << " " << left << setw(15) << key << ": " << setw(8)
@@ -101,12 +140,15 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       }
       o << "\n";
     }
-    lastMetricsPass = this;
   }
 };
 
 Pass *createMetricsPass() {
-  return new Metrics();
+  return new Metrics(false);
+}
+
+Pass *createFunctionMetricsPass() {
+  return new Metrics(true);
 }
 
 Metrics *Metrics::lastMetricsPass;
