@@ -40,6 +40,7 @@ jobs:
 
     - <<: *test-ubuntu
       env: |
+        LSAN_OPTIONS=verbosity=1:log_threads=1
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=address"
