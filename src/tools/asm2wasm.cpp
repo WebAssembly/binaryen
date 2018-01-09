@@ -184,12 +184,6 @@ int main(int argc, const char *argv[]) {
   Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
   asm2wasm.processAsm(asmjs);
 
-for (auto& curr : wasm.imports) {
-  if (curr->kind == ExternalKind::Memory) {
-//std::cout << "memory imported\n";
-  }
-}
-
   // finalize the imported mem init
   if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
