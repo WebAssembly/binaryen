@@ -46,13 +46,6 @@ void ModuleReader::readBinary(std::string filename, Module& wasm) {
   parser.read();
 }
 
-void ModuleReader::readObject(std::string filename, Module& wasm) {
-  if (debug) std::cerr << "reading object from " << filename << "\n";
-  auto input(read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
-  WasmBinaryBuilder parser(wasm, input, debug, true);
-  parser.read();
-}
-
 bool ModuleReader::isBinaryFile(std::string filename) {
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in | std::ifstream::binary;

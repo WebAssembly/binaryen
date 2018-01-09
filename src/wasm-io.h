@@ -40,8 +40,6 @@ public:
   void readText(std::string filename, Module& wasm);
   // read binary
   void readBinary(std::string filename, Module& wasm);
-  // read object file
-  void readObject(std::string filename, Module& wasm);
   // read text or binary, checking the contents for what it is
   void read(std::string filename, Module& wasm);
 
