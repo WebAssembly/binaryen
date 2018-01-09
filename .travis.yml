@@ -34,48 +34,11 @@ jobs:
 
     - <<: *test-ubuntu
       env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
-
-    - <<: *test-ubuntu
-      env: |
-        LSAN_OPTIONS=verbosity=1:log_threads=1
+        LSAN_OPTIONS=verbosity=1
         CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
         CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
         COMPILER_FLAGS="-fsanitize=address"
 
-    - <<: *test-ubuntu
-      env: |
-        CC_COMPILER="./test/wasm-install/wasm-install/bin/clang"
-        CXX_COMPILER="./test/wasm-install/wasm-install/bin/clang++"
-        COMPILER_FLAGS="-fsanitize=thread"
-
-    # Build with gcc 5 and run tests on the host system (Ubuntu).
-    - <<: *test-ubuntu
-      compiler: gcc
-      env: |
-        CC_COMPILER="gcc-5"
-        CXX_COMPILER="g++-5"
-
-    # Build the .js outputs using emcc
-    - &test-emcc
-      stage: test
-      compiler: clang
-      python: 2.7
-      node_js: 7
-      language: node_js
-      node_js:
-      - node
-      sudo: required
-      services:
-      - docker
-      before_install:
-      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
-      script:
-      # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
-      # version is good too
-      - docker exec -it emscripten bash ./travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
