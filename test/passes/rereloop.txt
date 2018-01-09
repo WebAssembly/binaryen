@@ -3,7 +3,6 @@
  (type $1 (func (result i32)))
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32)))
- (memory $0 0)
  (func $trivial (; 0 ;) (type $0)
   (local $0 i32)
   (block
@@ -761,7 +760,6 @@
  (type $0 (func))
  (type $1 (func (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
- (memory $0 0)
  (export "one" (func $0))
  (export "two" (func $1))
  (func $0 (; 0 ;) (type $0)

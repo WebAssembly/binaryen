@@ -3,7 +3,6 @@
  (type $1 (func (param i32)))
  (type $2 (func))
  (type $3 (func (param i32 i32)))
- (memory $0 0)
  (func $basic (; 0 ;) (type $0) (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)

@@ -543,7 +543,6 @@ BinaryenTypeAuto: -1
 (module
  (type $i (func (result i32)))
  (type $I (func (result i64)))
- (memory $0 0)
  (func $unreachable-fn (; 0 ;) (type $i) (result i32)
   (call_indirect (type $I)
    (unreachable)
@@ -556,7 +555,6 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
  (func $just-one-block (; 1 ;) (type $v)
   (local $0 i32)
   (call $check
@@ -1039,12 +1037,10 @@ raw:
 )
 optimized:
 (module
- (memory $0 0)
 )
 module loaded from binary form:
 (module
  (type $0 (func (param i32 i32) (result i32)))
- (memory $0 0)
  (func $adder (; 0 ;) (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
   (i32.add
    (get_local $var$0)
@@ -1056,7 +1052,6 @@ module loaded from binary form:
  (type $vi (func (param i32)))
  (type $v (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
- (memory $0 0)
  (start $starter)
  (func $starter (; 1 ;) (type $v)
   (call $print-i32
@@ -1067,7 +1062,6 @@ module loaded from binary form:
 (i32.const 1234)
 (module
  (type $v (func))
- (memory $0 0)
  (func $func (; 0 ;) (type $v)
   (local $0 i32)
   (set_local $0
@@ -1078,7 +1072,6 @@ module loaded from binary form:
 validation: 0
 (module
  (type $i (func (result i32)))
- (memory $0 0)
  (func $func (; 0 ;) (type $i) (result i32)
   (i32.sub
    (i32.const 1234)
@@ -2431,7 +2424,6 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
  (func $just-one-block (; 1 ;) (type $v)
   (local $0 i32)
   (call $check
@@ -2918,7 +2910,6 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
- (memory $0 0)
 )
   BinaryenModuleDispose(the_module);
   functionTypes.clear();
