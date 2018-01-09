@@ -892,7 +892,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = new Import();
+    auto import = make_unique<Import>();
     import->name = name;
     import->module = moduleName;
     import->base = imported[2]->getIString();
@@ -928,7 +928,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         (wasm.getImportOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
       return;
     }
-    wasm.addImport(import);
+    wasm.addImport(import.release());
   };
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
