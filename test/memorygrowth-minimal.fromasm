@@ -1,0 +1,11 @@
+(module
+ (import "env" "memory" (memory $0 256))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (data (get_global $memoryBase) "memorygrowth-minimal.asm.js")
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $__growWasmMemory (; 0 ;) (param $0 i32) (result i32)
+  (grow_memory
+   (get_local $0)
+  )
+ )
+)
