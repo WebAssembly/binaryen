@@ -121,6 +121,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitAtomicWake(AtomicWake* curr) {
     usesMemory = true;
   }
+  void visitHost(Host* curr) {
+    if (curr->op == CurrentMemory || curr->op == GrowMemory) {
+      usesMemory = true;
+    }
+  }
 };
 
 // Finds function type usage
@@ -208,7 +213,6 @@ struct RemoveUnusedModuleElements : public Pass {
     module->updateMaps();
     // Handle the memory and table
     if (!exportsMemory && !analyzer.usesMemory && module->memory.segments.empty()) {
-//std::cout << "remoem remem mem\n";
       module->memory.exists = false;
       module->memory.imported = false;
       module->memory.initial = 0;

@@ -177,6 +177,34 @@
  )
 )
 (module
+ (type $0 (func (result i32)))
+ (memory $0 23 256)
+ (export "user" (func $user))
+ (func $user (; 0 ;) (type $0) (result i32)
+  (grow_memory
+   (i32.const 0)
+  )
+ )
+)
+(module
+ (type $0 (func (result i32)))
+ (import "env" "memory" (memory $0 256))
+ (export "user" (func $user))
+ (func $user (; 0 ;) (type $0) (result i32)
+  (grow_memory
+   (i32.const 0)
+  )
+ )
+)
+(module
+ (type $0 (func (result i32)))
+ (memory $0 23 256)
+ (export "user" (func $user))
+ (func $user (; 0 ;) (type $0) (result i32)
+  (current_memory)
+ )
+)
+(module
  (type $0 (func))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 0 anyfunc))

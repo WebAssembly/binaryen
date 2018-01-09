@@ -143,6 +143,27 @@
     (wake (i32.const 0) (i32.const 0))
   )
 )
+(module ;; more use checks
+  (memory $0 23 256)
+  (export "user" $user)
+  (func $user (result i32)
+    (grow_memory (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (import "env" "memory" (memory $0 256))
+  (export "user" $user)
+  (func $user (result i32)
+    (grow_memory (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 23 256)
+  (export "user" $user)
+  (func $user (result i32)
+    (current_memory)
+  )
+)
 (module
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 anyfunc))
