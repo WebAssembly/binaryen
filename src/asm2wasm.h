@@ -745,11 +745,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // first, add the memory elements. we do this before the main compile+optimize
   // since the optimizer should see the memory
   // apply memory growth, if relevant
-  if (preprocessor.memoryGrowth) {
-    EmscriptenGlueGenerator generator(wasm);
-    generator.generateMemoryGrowthFunction();
-    wasm.memory.max = Memory::kMaxSize;
-  }
 
   // import memory
   auto memoryImport = make_unique<Import>();
@@ -1406,6 +1401,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // remove the debug info intrinsic
   if (preprocessor.debugInfo) {
     wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
+  }
+
+  if (preprocessor.memoryGrowth) {
+    EmscriptenGlueGenerator generator(wasm);
+    generator.generateMemoryGrowthFunction();
+    wasm.memory.max = Memory::kMaxSize;
   }
 
   if (udivmoddi4.is() && getTempRet0.is()) {
