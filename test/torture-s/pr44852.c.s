@@ -8,36 +8,32 @@ sf:                                     # @sf
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.const	$push8=, -1
+	i32.add 	$2=, $0, $pop8
 	#APP
 	#NO_APP
+	i32.load8_u	$3=, 0($2)
 	block   	
 	block   	
 	block   	
-	i32.const	$push12=, -1
-	i32.add 	$push11=, $0, $pop12
-	tee_local	$push10=, $2=, $pop11
-	i32.load8_u	$push9=, 0($pop10)
-	tee_local	$push8=, $3=, $pop9
 	i32.const	$push7=, 57
-	i32.ne  	$push0=, $pop8, $pop7
+	i32.ne  	$push0=, $3, $pop7
 	br_if   	0, $pop0        # 0: down to label2
 .LBB0_1:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
 	i32.eq  	$push1=, $1, $2
 	br_if   	2, $pop1        # 2: down to label1
-# BB#2:                                 # %while.cond
+# %bb.2:                                # %while.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push18=, -1
-	i32.add 	$push17=, $2, $pop18
-	tee_local	$push16=, $2=, $pop17
-	i32.load8_u	$push15=, 0($pop16)
-	tee_local	$push14=, $3=, $pop15
-	i32.const	$push13=, 57
-	i32.eq  	$push2=, $pop14, $pop13
+	i32.const	$push10=, -1
+	i32.add 	$2=, $2, $pop10
+	i32.load8_u	$3=, 0($2)
+	i32.const	$push9=, 57
+	i32.eq  	$push2=, $3, $pop9
 	br_if   	0, $pop2        # 0: up to label3
-# BB#3:                                 # %while.end.loopexit
+# %bb.3:                                # %while.end.loopexit
 	end_loop
 	i32.const	$push3=, 1
 	i32.add 	$0=, $2, $pop3
@@ -48,8 +44,8 @@ sf:                                     # @sf
 .LBB0_5:                                # %if.then
 	end_block                       # label1:
 	i32.const	$3=, 48
-	i32.const	$push19=, 48
-	i32.store8	0($1), $pop19
+	i32.const	$push11=, 48
+	i32.store8	0($1), $pop11
 	i32.const	$push4=, 1
 	i32.add 	$0=, $2, $pop4
 .LBB0_6:                                # %while.end
@@ -57,8 +53,8 @@ sf:                                     # @sf
 	i32.const	$push5=, 1
 	i32.add 	$push6=, $3, $pop5
 	i32.store8	0($1), $pop6
-	copy_local	$push20=, $0
-                                        # fallthrough-return: $pop20
+	copy_local	$push12=, $0
+                                        # fallthrough-return: $pop12
 	.endfunc
 .Lfunc_end0:
 	.size	sf, .Lfunc_end0-sf
@@ -70,14 +66,13 @@ sf:                                     # @sf
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push20=, 0
+# %bb.0:                                # %entry
 	i32.const	$push18=, 0
 	i32.load	$push17=, __stack_pointer($pop18)
 	i32.const	$push19=, 16
-	i32.sub 	$push35=, $pop17, $pop19
-	tee_local	$push34=, $0=, $pop35
-	i32.store	__stack_pointer($pop20), $pop34
+	i32.sub 	$0=, $pop17, $pop19
+	i32.const	$push20=, 0
+	i32.store	__stack_pointer($pop20), $0
 	i32.const	$push2=, 14
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
@@ -105,13 +100,13 @@ main:                                   # @main
 	i32.or  	$push9=, $pop25, $pop8
 	i32.ne  	$push13=, $pop12, $pop9
 	br_if   	0, $pop13       # 0: down to label4
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.const	$push30=, 8
 	i32.add 	$push31=, $0, $pop30
 	i32.const	$push14=, .L.str
 	i32.call	$push15=, strcmp@FUNCTION, $pop31, $pop14
 	br_if   	0, $pop15       # 0: down to label4
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push23=, 0
 	i32.const	$push21=, 16
 	i32.add 	$push22=, $0, $pop21
@@ -138,6 +133,6 @@ main:                                   # @main
 	.size	.L.str, 7
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

@@ -6,7 +6,7 @@
 	.type	ix86_split_ashr,@function
 ix86_split_ashr:                        # @ix86_split_ashr
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push3=, 0
 	i32.const	$push1=, ok@FUNCTION
 	i32.const	$push0=, gen_x86_64_shrd@FUNCTION
@@ -24,7 +24,7 @@ ix86_split_ashr:                        # @ix86_split_ashr
 ok:                                     # @ok
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	exit@FUNCTION, $0
 	unreachable
 	.endfunc
@@ -36,7 +36,7 @@ ok:                                     # @ok
 gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -49,7 +49,7 @@ gen_x86_64_shrd:                        # @gen_x86_64_shrd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, ok@FUNCTION
 	i32.const	$push2=, gen_x86_64_shrd@FUNCTION
@@ -73,5 +73,5 @@ one:
 	.size	one, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

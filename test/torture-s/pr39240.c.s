@@ -7,7 +7,7 @@
 bar1:                                   # @bar1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo1@FUNCTION, $pop1
@@ -21,7 +21,7 @@ bar1:                                   # @bar1
 foo1:                                   # @foo1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -35,7 +35,7 @@ foo1:                                   # @foo1
 bar2:                                   # @bar2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo2@FUNCTION, $pop1
@@ -51,7 +51,7 @@ bar2:                                   # @bar2
 foo2:                                   # @foo2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 16
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 16
@@ -68,7 +68,7 @@ foo2:                                   # @foo2
 bar3:                                   # @bar3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo3@FUNCTION, $pop1
@@ -84,7 +84,7 @@ bar3:                                   # @bar3
 foo3:                                   # @foo3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 24
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push3=, 24
@@ -101,7 +101,7 @@ foo3:                                   # @foo3
 bar4:                                   # @bar4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo4@FUNCTION, $pop1
@@ -115,7 +115,7 @@ bar4:                                   # @bar4
 foo4:                                   # @foo4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -129,7 +129,7 @@ foo4:                                   # @foo4
 bar5:                                   # @bar5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo5@FUNCTION, $pop1
@@ -147,7 +147,7 @@ bar5:                                   # @bar5
 foo5:                                   # @foo5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 65535
 	i32.and 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -162,7 +162,7 @@ foo5:                                   # @foo5
 bar6:                                   # @bar6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.add 	$push1=, $0, $pop0
 	i32.call	$push2=, foo6@FUNCTION, $pop1
@@ -180,7 +180,7 @@ bar6:                                   # @bar6
 foo6:                                   # @foo6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 255
 	i32.and 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -194,7 +194,7 @@ foo6:                                   # @foo6
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push20=, -10
 	i32.call	$push0=, bar1@FUNCTION, $pop20
@@ -202,42 +202,42 @@ main:                                   # @main
 	i32.load	$push1=, l1($pop19)
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push22=, 0
 	i32.load	$push4=, l2($pop22)
 	i32.const	$push21=, -10
 	i32.call	$push3=, bar2@FUNCTION, $pop21
 	i32.ne  	$push5=, $pop4, $pop3
 	br_if   	0, $pop5        # 0: down to label0
-# BB#2:                                 # %if.end5
+# %bb.2:                                # %if.end5
 	i32.const	$push24=, 0
 	i32.load	$push7=, l3($pop24)
 	i32.const	$push23=, -10
 	i32.call	$push6=, bar3@FUNCTION, $pop23
 	i32.ne  	$push8=, $pop7, $pop6
 	br_if   	0, $pop8        # 0: down to label0
-# BB#3:                                 # %if.end11
+# %bb.3:                                # %if.end11
 	i32.const	$push26=, -10
 	i32.call	$push9=, bar4@FUNCTION, $pop26
 	i32.const	$push25=, 0
 	i32.load	$push10=, l4($pop25)
 	i32.ne  	$push11=, $pop9, $pop10
 	br_if   	0, $pop11       # 0: down to label0
-# BB#4:                                 # %if.end16
+# %bb.4:                                # %if.end16
 	i32.const	$push28=, 0
 	i32.load	$push13=, l5($pop28)
 	i32.const	$push27=, -10
 	i32.call	$push12=, bar5@FUNCTION, $pop27
 	i32.ne  	$push14=, $pop13, $pop12
 	br_if   	0, $pop14       # 0: down to label0
-# BB#5:                                 # %if.end22
+# %bb.5:                                # %if.end22
 	i32.const	$push30=, 0
 	i32.load	$push16=, l6($pop30)
 	i32.const	$push29=, -10
 	i32.call	$push15=, bar6@FUNCTION, $pop29
 	i32.ne  	$push17=, $pop16, $pop15
 	br_if   	0, $pop17       # 0: down to label0
-# BB#6:                                 # %if.end28
+# %bb.6:                                # %if.end28
 	i32.const	$push18=, 0
 	return  	$pop18
 .LBB12_7:                               # %if.then
@@ -303,5 +303,5 @@ l6:
 	.size	l6, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

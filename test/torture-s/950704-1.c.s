@@ -8,7 +8,7 @@ f:                                      # @f
 	.param  	i64, i64
 	.result 	i64
 	.local  	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push11=, 0
 	i32.store	errflag($pop0), $pop11
@@ -19,11 +19,11 @@ f:                                      # @f
 	i64.const	$push10=, 0
 	i64.lt_s	$push1=, $0, $pop10
 	br_if   	0, $pop1        # 0: down to label2
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i64.const	$push12=, 0
 	i64.lt_s	$push5=, $1, $pop12
 	br_if   	2, $pop5        # 2: down to label0
-# BB#2:                                 # %if.then
+# %bb.2:                                # %if.then
 	i64.const	$push6=, -1
 	i64.le_s	$push7=, $2, $pop6
 	br_if   	1, $pop7        # 1: down to label1
@@ -33,7 +33,7 @@ f:                                      # @f
 	i64.const	$push13=, 0
 	i64.gt_s	$push2=, $1, $pop13
 	br_if   	1, $pop2        # 1: down to label0
-# BB#4:                                 # %if.else
+# %bb.4:                                # %if.else
 	i64.const	$push3=, 0
 	i64.lt_s	$push4=, $2, $pop3
 	br_if   	1, $pop4        # 1: down to label0
@@ -57,7 +57,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end28
+# %bb.0:                                # %if.end28
 	i32.const	$push0=, 0
 	i32.const	$push2=, 0
 	i32.store	errflag($pop0), $pop2
@@ -78,5 +78,5 @@ errflag:
 	.size	errflag, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

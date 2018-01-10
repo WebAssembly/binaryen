@@ -6,19 +6,19 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push1=, 9
 	i32.ne  	$push2=, $2, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	br_if   	0, $1           # 0: down to label0
-# BB#2:                                 # %entry
+# %bb.2:                                # %entry
 	i32.const	$push3=, 0
 	i32.load	$push0=, v($pop3)
 	i32.ne  	$push4=, $pop0, $0
 	br_if   	0, $pop4        # 0: down to label0
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
 	return
 .LBB0_4:                                # %if.then
 	end_block                       # label0:
@@ -34,7 +34,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.load	$push0=, 4($1)
 	i32.const	$push1=, 0
 	call    	foo@FUNCTION, $pop0, $pop1, $0
@@ -50,14 +50,13 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push14=, 0
+# %bb.0:                                # %entry
 	i32.const	$push12=, 0
 	i32.load	$push11=, __stack_pointer($pop12)
 	i32.const	$push13=, 48
-	i32.sub 	$push31=, $pop11, $pop13
-	tee_local	$push30=, $0=, $pop31
-	i32.store	__stack_pointer($pop14), $pop30
+	i32.sub 	$0=, $pop11, $pop13
+	i32.const	$push14=, 0
+	i32.store	__stack_pointer($pop14), $0
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
 	i32.store	v($pop1), $pop0
@@ -112,5 +111,5 @@ v:
 	.size	v, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

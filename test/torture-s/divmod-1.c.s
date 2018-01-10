@@ -7,7 +7,7 @@
 div1:                                   # @div1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
                                         # fallthrough-return: $pop1
@@ -22,7 +22,7 @@ div1:                                   # @div1
 div2:                                   # @div2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
                                         # fallthrough-return: $pop1
@@ -37,7 +37,7 @@ div2:                                   # @div2
 div3:                                   # @div3
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.div_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -51,7 +51,7 @@ div3:                                   # @div3
 div4:                                   # @div4
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.div_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -65,7 +65,7 @@ div4:                                   # @div4
 mod1:                                   # @mod1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -79,7 +79,7 @@ mod1:                                   # @mod1
 mod2:                                   # @mod2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -93,7 +93,7 @@ mod2:                                   # @mod2
 mod3:                                   # @mod3
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.rem_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -107,7 +107,7 @@ mod3:                                   # @mod3
 mod4:                                   # @mod4
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.rem_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -121,7 +121,7 @@ mod4:                                   # @mod4
 mod5:                                   # @mod5
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.rem_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -135,7 +135,7 @@ mod5:                                   # @mod5
 mod6:                                   # @mod6
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.rem_u	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -148,7 +148,7 @@ mod6:                                   # @mod6
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end36
+# %bb.0:                                # %if.end36
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -157,5 +157,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end10-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

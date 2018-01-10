@@ -6,7 +6,7 @@
 	.type	f1,@function
 f1:                                     # @f1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 128
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -19,7 +19,7 @@ f1:                                     # @f1
 	.type	f2,@function
 f2:                                     # @f2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 128
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -32,7 +32,7 @@ f2:                                     # @f2
 	.type	f3,@function
 f3:                                     # @f3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 896
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -45,7 +45,7 @@ f3:                                     # @f3
 	.type	f4,@function
 f4:                                     # @f4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -128
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -58,7 +58,7 @@ f4:                                     # @f4
 	.type	f5,@function
 f5:                                     # @f5
 	.result 	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 2147483648
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -71,7 +71,7 @@ f5:                                     # @f5
 	.type	f6,@function
 f6:                                     # @f6
 	.result 	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 2147483648
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -84,7 +84,7 @@ f6:                                     # @f6
 	.type	f7,@function
 f7:                                     # @f7
 	.result 	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 15032385536
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -97,7 +97,7 @@ f7:                                     # @f7
 	.type	f8,@function
 f8:                                     # @f8
 	.result 	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, -2147483648
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -110,7 +110,7 @@ f8:                                     # @f8
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -118,4 +118,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end8-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

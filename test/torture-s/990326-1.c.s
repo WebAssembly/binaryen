@@ -6,7 +6,7 @@
 	.type	a1,@function
 a1:                                     # @a1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -19,7 +19,7 @@ a1:                                     # @a1
 	.type	a2,@function
 a2:                                     # @a2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -32,7 +32,7 @@ a2:                                     # @a2
 	.type	a3,@function
 a3:                                     # @a3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -45,7 +45,7 @@ a3:                                     # @a3
 	.type	b1,@function
 b1:                                     # @b1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -58,7 +58,7 @@ b1:                                     # @b1
 	.type	b2,@function
 b2:                                     # @b2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -71,7 +71,7 @@ b2:                                     # @b2
 	.type	b3,@function
 b3:                                     # @b3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -84,7 +84,7 @@ b3:                                     # @b3
 	.type	c1,@function
 c1:                                     # @c1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -97,7 +97,7 @@ c1:                                     # @c1
 	.type	c2,@function
 c2:                                     # @c2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -110,7 +110,7 @@ c2:                                     # @c2
 	.type	c3,@function
 c3:                                     # @c3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -123,7 +123,7 @@ c3:                                     # @c3
 	.type	d1,@function
 d1:                                     # @d1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -136,7 +136,7 @@ d1:                                     # @d1
 	.type	d2,@function
 d2:                                     # @d2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -149,7 +149,7 @@ d2:                                     # @d2
 	.type	d3,@function
 d3:                                     # @d3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -162,7 +162,7 @@ d3:                                     # @d3
 	.type	e1,@function
 e1:                                     # @e1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -175,7 +175,7 @@ e1:                                     # @e1
 	.type	e2,@function
 e2:                                     # @e2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -188,7 +188,7 @@ e2:                                     # @e2
 	.type	e3,@function
 e3:                                     # @e3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -201,7 +201,7 @@ e3:                                     # @e3
 	.type	e4,@function
 e4:                                     # @e4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -214,7 +214,7 @@ e4:                                     # @e4
 	.type	f1,@function
 f1:                                     # @f1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -227,7 +227,7 @@ f1:                                     # @f1
 	.type	f2,@function
 f2:                                     # @f2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -240,7 +240,7 @@ f2:                                     # @f2
 	.type	f3,@function
 f3:                                     # @f3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -253,7 +253,7 @@ f3:                                     # @f3
 	.type	f4,@function
 f4:                                     # @f4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -266,7 +266,7 @@ f4:                                     # @f4
 	.type	g1,@function
 g1:                                     # @g1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -279,7 +279,7 @@ g1:                                     # @g1
 	.type	g2,@function
 g2:                                     # @g2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -292,7 +292,7 @@ g2:                                     # @g2
 	.type	g3,@function
 g3:                                     # @g3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -305,7 +305,7 @@ g3:                                     # @g3
 	.type	g4,@function
 g4:                                     # @g4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -318,7 +318,7 @@ g4:                                     # @g4
 	.type	g5,@function
 g5:                                     # @g5
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -331,7 +331,7 @@ g5:                                     # @g5
 	.type	g6,@function
 g6:                                     # @g6
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -344,7 +344,7 @@ g6:                                     # @g6
 	.type	g7,@function
 g7:                                     # @g7
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -357,7 +357,7 @@ g7:                                     # @g7
 	.type	h1,@function
 h1:                                     # @h1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -370,7 +370,7 @@ h1:                                     # @h1
 	.type	h2,@function
 h2:                                     # @h2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -383,7 +383,7 @@ h2:                                     # @h2
 	.type	h3,@function
 h3:                                     # @h3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -396,7 +396,7 @@ h3:                                     # @h3
 	.type	h4,@function
 h4:                                     # @h4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -409,7 +409,7 @@ h4:                                     # @h4
 	.type	h5,@function
 h5:                                     # @h5
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -422,7 +422,7 @@ h5:                                     # @h5
 	.type	h6,@function
 h6:                                     # @h6
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -435,7 +435,7 @@ h6:                                     # @h6
 	.type	h7,@function
 h7:                                     # @h7
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -448,7 +448,7 @@ h7:                                     # @h7
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end132
+# %bb.0:                                # %if.end132
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -457,5 +457,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end34-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

@@ -8,14 +8,13 @@ foo:                                    # @foo
 	.param  	i64
 	.result 	i64
 	.local  	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, -1
-	i64.xor 	$push12=, $0, $pop0
-	tee_local	$push11=, $1=, $pop12
+	i64.xor 	$1=, $0, $pop0
 	i64.const	$push1=, 3
 	i64.const	$push10=, 3
 	i64.gt_s	$push2=, $1, $pop10
-	i64.select	$push3=, $pop11, $pop1, $pop2
+	i64.select	$push3=, $1, $pop1, $pop2
 	i64.add 	$push4=, $pop3, $0
 	i64.const	$push5=, 2
 	i64.add 	$push6=, $pop4, $pop5
@@ -33,14 +32,14 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i64.const	$push0=, 0
 	i64.call	$push1=, foo@FUNCTION, $pop0
 	i64.const	$push2=, -4
 	i64.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
@@ -52,5 +51,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

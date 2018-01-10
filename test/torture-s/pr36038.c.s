@@ -6,30 +6,28 @@
 	.type	doit,@function
 doit:                                   # @doit
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push19=, 0
-	i32.load	$push18=, markstack_ptr($pop19)
-	tee_local	$push17=, $0=, $pop18
+# %bb.0:                                # %entry
+	i32.const	$push15=, 0
+	i32.load	$0=, markstack_ptr($pop15)
 	i32.const	$push2=, -4
-	i32.add 	$push3=, $pop17, $pop2
-	i32.load	$push16=, 0($pop3)
-	tee_local	$push15=, $1=, $pop16
+	i32.add 	$push3=, $0, $pop2
+	i32.load	$1=, 0($pop3)
+	block   	
 	i32.const	$push4=, 6
-	i32.eq  	$push5=, $pop15, $pop4
+	i32.eq  	$push5=, $1, $pop4
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %while.body.lr.ph
-	i32.const	$push22=, 0
-	i32.load	$push0=, stack_base($pop22)
+# %bb.1:                                # %while.body.lr.ph
+	i32.const	$push18=, 0
+	i32.load	$push0=, stack_base($pop18)
 	i32.const	$push1=, 40
 	i32.add 	$2=, $pop0, $pop1
-	i32.const	$push21=, -8
-	i32.add 	$push8=, $0, $pop21
+	i32.const	$push17=, -8
+	i32.add 	$push8=, $0, $pop17
 	i32.load	$push9=, 0($pop8)
 	i32.const	$push6=, 3
 	i32.shl 	$push10=, $pop9, $pop6
-	i32.const	$push20=, 3
-	i32.shl 	$push7=, $1, $pop20
+	i32.const	$push16=, 3
+	i32.shl 	$push7=, $1, $pop16
 	i32.sub 	$0=, $pop10, $pop7
 	i32.const	$push11=, -6
 	i32.add 	$1=, $1, $pop11
@@ -37,16 +35,15 @@ doit:                                   # @doit
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
 	i32.add 	$push12=, $2, $0
-	i32.const	$push27=, 16
-	i32.add 	$push13=, $pop12, $pop27
+	i32.const	$push21=, 16
+	i32.add 	$push13=, $pop12, $pop21
 	i64.load	$push14=, 0($2)
 	i64.store	0($pop13), $pop14
-	i32.const	$push26=, -8
-	i32.add 	$2=, $2, $pop26
-	i32.const	$push25=, 1
-	i32.add 	$push24=, $1, $pop25
-	tee_local	$push23=, $1=, $pop24
-	br_if   	0, $pop23       # 0: up to label1
+	i32.const	$push20=, 1
+	i32.add 	$1=, $1, $pop20
+	i32.const	$push19=, -8
+	i32.add 	$2=, $2, $pop19
+	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %while.end
 	end_loop
 	end_block                       # label0:
@@ -61,7 +58,7 @@ doit:                                   # @doit
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push29=, 0
 	i64.const	$push0=, 1
 	i64.store	list+8($pop29), $pop0
@@ -107,7 +104,7 @@ main:                                   # @main
 	i32.const	$push12=, 80
 	i32.call	$push15=, memcmp@FUNCTION, $pop14, $pop13, $pop12
 	br_if   	0, $pop15       # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push30=, 0
 	return  	$pop30
 .LBB1_2:                                # %if.then
@@ -173,6 +170,6 @@ indices:
 	.size	indices, 40
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

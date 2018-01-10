@@ -7,21 +7,20 @@
 frob:                                   # @frob
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store16	p($pop0), $1
-	i32.const	$push14=, 0
-	i32.const	$push13=, 0
+	i32.const	$push12=, 0
 	i32.const	$push1=, 1
 	i32.add 	$push2=, $0, $pop1
-	i32.const	$push12=, 0
-	i32.load8_u	$push3=, e($pop12)
+	i32.const	$push11=, 0
+	i32.load8_u	$push3=, e($pop11)
 	i32.const	$push4=, -1
 	i32.add 	$push5=, $pop3, $pop4
 	i32.eq  	$push6=, $pop5, $0
-	i32.select	$push11=, $pop13, $pop2, $pop6
-	tee_local	$push10=, $0=, $pop11
-	i32.store16	g($pop14), $pop10
+	i32.select	$0=, $pop12, $pop2, $pop6
+	i32.const	$push10=, 0
+	i32.store16	g($pop10), $0
 	i32.const	$push7=, 65535
 	i32.and 	$push8=, $0, $pop7
 	i32.eq  	$push9=, $pop8, $1
@@ -37,20 +36,18 @@ frob:                                   # @frob
 get_n:                                  # @get_n
 	.result 	i32
 	.local  	i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$3=, 0
+	i32.const	$push13=, 0
+	i32.load16_u	$2=, g($pop13)
+	i32.const	$push12=, 0
+	i32.load16_u	$0=, p($pop12)
 	block   	
-	i32.const	$push17=, 0
-	i32.load16_u	$push16=, p($pop17)
-	tee_local	$push15=, $0=, $pop16
-	i32.const	$push14=, 0
-	i32.load16_u	$push13=, g($pop14)
-	tee_local	$push12=, $2=, $pop13
-	i32.eq  	$push0=, $pop15, $pop12
+	i32.eq  	$push0=, $0, $2
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %while.body.lr.ph
-	i32.const	$push18=, 0
-	i32.load8_u	$push1=, e($pop18)
+# %bb.1:                                # %while.body.lr.ph
+	i32.const	$push14=, 0
+	i32.load8_u	$push1=, e($pop14)
 	i32.const	$push2=, -1
 	i32.add 	$1=, $pop1, $pop2
 	i32.const	$3=, 0
@@ -58,26 +55,24 @@ get_n:                                  # @get_n
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label2:
-	i32.const	$push28=, 0
-	i32.const	$push27=, 65535
-	i32.and 	$push26=, $2, $pop27
-	tee_local	$push25=, $2=, $pop26
-	i32.const	$push24=, 1
-	i32.add 	$push4=, $pop25, $pop24
-	i32.eq  	$push3=, $1, $2
-	i32.select	$2=, $pop28, $pop4, $pop3
-	i32.const	$push23=, 1
-	i32.add 	$push22=, $3, $pop23
-	tee_local	$push21=, $3=, $pop22
 	i32.const	$push20=, 65535
-	i32.and 	$push5=, $pop21, $pop20
-	i32.const	$push19=, 4
-	i32.gt_u	$push6=, $pop5, $pop19
+	i32.and 	$2=, $2, $pop20
+	i32.const	$push19=, 0
+	i32.const	$push18=, 1
+	i32.add 	$push4=, $2, $pop18
+	i32.eq  	$push3=, $1, $2
+	i32.select	$2=, $pop19, $pop4, $pop3
+	i32.const	$push17=, 1
+	i32.add 	$3=, $3, $pop17
+	i32.const	$push16=, 65535
+	i32.and 	$push5=, $3, $pop16
+	i32.const	$push15=, 4
+	i32.gt_u	$push6=, $pop5, $pop15
 	br_if   	1, $pop6        # 1: down to label1
-# BB#3:                                 # %while.body
+# %bb.3:                                # %while.body
                                         #   in Loop: Header=BB1_2 Depth=1
-	i32.const	$push29=, 65535
-	i32.and 	$push7=, $2, $pop29
+	i32.const	$push21=, 65535
+	i32.and 	$push7=, $2, $pop21
 	i32.ne  	$push8=, $0, $pop7
 	br_if   	0, $pop8        # 0: up to label2
 .LBB1_4:                                # %while.cond.while.end_crit_edge
@@ -100,7 +95,7 @@ get_n:                                  # @get_n
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
 	i32.store16	p($pop1), $pop0
@@ -140,5 +135,5 @@ e:
 	.size	e, 1
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

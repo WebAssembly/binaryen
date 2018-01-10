@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -18,13 +18,14 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+	.local  	f64
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.load	$push0=, 0($0)
 	i32.ne  	$push1=, $pop0, $1
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.const	$push2=, 4
 	i32.add 	$push3=, $0, $pop2
 	i32.load	$push4=, 0($pop3)
@@ -36,25 +37,51 @@ bar:                                    # @bar
 	i32.store	12($0), $4
 	i32.load	$push6=, 16($0)
 	f64.convert_s/i32	$push7=, $pop6
-	f64.const	$push8=, 0x0p0
-	f64.mul 	$push9=, $pop7, $pop8
-	f64.const	$push10=, 0x1p-1
-	f64.mul 	$push11=, $pop9, $pop10
-	i32.trunc_s/f64	$push12=, $pop11
-	i32.add 	$push13=, $pop12, $1
-	i32.store	0($0), $pop13
-	i32.const	$push14=, 4
-	i32.add 	$push15=, $0, $pop14
-	i32.load	$push16=, 20($0)
-	f64.convert_s/i32	$push17=, $pop16
-	f64.const	$push23=, 0x0p0
-	f64.mul 	$push18=, $pop17, $pop23
-	f64.const	$push22=, 0x1p-1
-	f64.mul 	$push19=, $pop18, $pop22
-	i32.trunc_s/f64	$push20=, $pop19
-	i32.add 	$push21=, $pop20, $2
-	i32.store	0($pop15), $pop21
-.LBB1_3:                                # %if.end
+	f64.const	$push22=, 0x0p0
+	f64.mul 	$push8=, $pop7, $pop22
+	f64.const	$push21=, 0x1p-1
+	f64.mul 	$5=, $pop8, $pop21
+	block   	
+	block   	
+	f64.abs 	$push15=, $5
+	f64.const	$push16=, 0x1p31
+	f64.lt  	$push17=, $pop15, $pop16
+	br_if   	0, $pop17       # 0: down to label3
+# %bb.3:                                # %if.then
+	i32.const	$3=, -2147483648
+	br      	1               # 1: down to label2
+.LBB1_4:                                # %if.then
+	end_block                       # label3:
+	i32.trunc_s/f64	$3=, $5
+.LBB1_5:                                # %if.then
+	end_block                       # label2:
+	i32.add 	$push9=, $3, $1
+	i32.store	0($0), $pop9
+	i32.const	$push10=, 4
+	i32.add 	$1=, $0, $pop10
+	i32.load	$push11=, 20($0)
+	f64.convert_s/i32	$push12=, $pop11
+	f64.const	$push24=, 0x0p0
+	f64.mul 	$push13=, $pop12, $pop24
+	f64.const	$push23=, 0x1p-1
+	f64.mul 	$5=, $pop13, $pop23
+	block   	
+	block   	
+	f64.abs 	$push18=, $5
+	f64.const	$push19=, 0x1p31
+	f64.lt  	$push20=, $pop18, $pop19
+	br_if   	0, $pop20       # 0: down to label5
+# %bb.6:                                # %if.then
+	i32.const	$0=, -2147483648
+	br      	1               # 1: down to label4
+.LBB1_7:                                # %if.then
+	end_block                       # label5:
+	i32.trunc_s/f64	$0=, $5
+.LBB1_8:                                # %if.then
+	end_block                       # label4:
+	i32.add 	$push14=, $0, $2
+	i32.store	0($1), $pop14
+.LBB1_9:                                # %if.end
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -67,7 +94,7 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -76,5 +103,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

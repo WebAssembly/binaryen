@@ -7,13 +7,13 @@
 bar:                                    # @bar
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i64.load	$push0=, 0($0):p2align=0
 	i64.const	$push1=, 368664092428289
 	i64.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %for.body.preheader
+# %bb.1:                                # %for.body.preheader
 	i32.const	$push3=, 7
 	i32.add 	$1=, $0, $pop3
 	i32.const	$0=, 0
@@ -23,15 +23,14 @@ bar:                                    # @bar
 	i32.add 	$push4=, $1, $0
 	i32.load8_u	$push5=, 0($pop4)
 	br_if   	1, $pop5        # 1: down to label0
-# BB#3:                                 # %for.cond
+# %bb.3:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push10=, 1
-	i32.add 	$push9=, $0, $pop10
-	tee_local	$push8=, $0=, $pop9
+	i32.const	$push8=, 1
+	i32.add 	$0=, $0, $pop8
 	i32.const	$push7=, 2040
-	i32.le_u	$push6=, $pop8, $pop7
+	i32.le_u	$push6=, $0, $pop7
 	br_if   	0, $pop6        # 0: up to label1
-# BB#4:                                 # %for.end
+# %bb.4:                                # %for.end
 	end_loop
 	return
 .LBB0_5:                                # %if.then
@@ -49,7 +48,7 @@ bar:                                    # @bar
 foo:                                    # @foo
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push3=, a+7
 	i32.const	$push2=, 0
 	i32.const	$push1=, 2041
@@ -75,7 +74,7 @@ foo:                                    # @foo
 	i64.const	$push7=, 368664092428289
 	i64.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label3
-# BB#1:                                 # %for.cond.i.preheader
+# %bb.1:                                # %for.cond.i.preheader
 	i32.const	$1=, 8
 .LBB1_2:                                # %for.cond.i
                                         # =>This Inner Loop Header: Depth=1
@@ -85,7 +84,7 @@ foo:                                    # @foo
 	i32.const	$push22=, 2040
 	i32.gt_u	$push10=, $pop9, $pop22
 	br_if   	2, $pop10       # 2: down to label2
-# BB#3:                                 # %for.cond.i.for.body.i_crit_edge
+# %bb.3:                                # %for.cond.i.for.body.i_crit_edge
                                         #   in Loop: Header=BB1_2 Depth=1
 	i32.const	$push25=, a
 	i32.add 	$0=, $1, $pop25
@@ -115,7 +114,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push3=, a+7
 	i32.const	$push2=, 0
 	i32.const	$push1=, 2041
@@ -141,7 +140,7 @@ main:                                   # @main
 	i64.const	$push7=, 368664092428289
 	i64.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label6
-# BB#1:                                 # %for.cond.i.i.preheader
+# %bb.1:                                # %for.cond.i.i.preheader
 	i32.const	$1=, 8
 .LBB2_2:                                # %for.cond.i.i
                                         # =>This Inner Loop Header: Depth=1
@@ -151,7 +150,7 @@ main:                                   # @main
 	i32.const	$push22=, 2040
 	i32.gt_u	$push10=, $pop9, $pop22
 	br_if   	2, $pop10       # 2: down to label5
-# BB#3:                                 # %for.cond.i.for.body.i_crit_edge.i
+# %bb.3:                                # %for.cond.i.for.body.i_crit_edge.i
                                         #   in Loop: Header=BB2_2 Depth=1
 	i32.const	$push25=, a
 	i32.add 	$0=, $1, $pop25
@@ -195,6 +194,6 @@ a:
 	.size	.L.str.1, 6
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

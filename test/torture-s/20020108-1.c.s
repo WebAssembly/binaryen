@@ -7,7 +7,7 @@
 ashift_qi_0:                            # @ashift_qi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -21,7 +21,7 @@ ashift_qi_0:                            # @ashift_qi_0
 ashift_qi_1:                            # @ashift_qi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 254
@@ -38,7 +38,7 @@ ashift_qi_1:                            # @ashift_qi_1
 ashift_qi_2:                            # @ashift_qi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 252
@@ -55,7 +55,7 @@ ashift_qi_2:                            # @ashift_qi_2
 ashift_qi_3:                            # @ashift_qi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 248
@@ -72,7 +72,7 @@ ashift_qi_3:                            # @ashift_qi_3
 ashift_qi_4:                            # @ashift_qi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 240
@@ -89,7 +89,7 @@ ashift_qi_4:                            # @ashift_qi_4
 ashift_qi_5:                            # @ashift_qi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 224
@@ -106,7 +106,7 @@ ashift_qi_5:                            # @ashift_qi_5
 ashift_qi_6:                            # @ashift_qi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 192
@@ -123,7 +123,7 @@ ashift_qi_6:                            # @ashift_qi_6
 ashift_qi_7:                            # @ashift_qi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 128
@@ -140,7 +140,7 @@ ashift_qi_7:                            # @ashift_qi_7
 lshiftrt_qi_0:                          # @lshiftrt_qi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -154,7 +154,7 @@ lshiftrt_qi_0:                          # @lshiftrt_qi_0
 lshiftrt_qi_1:                          # @lshiftrt_qi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -169,7 +169,7 @@ lshiftrt_qi_1:                          # @lshiftrt_qi_1
 lshiftrt_qi_2:                          # @lshiftrt_qi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -184,7 +184,7 @@ lshiftrt_qi_2:                          # @lshiftrt_qi_2
 lshiftrt_qi_3:                          # @lshiftrt_qi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -199,7 +199,7 @@ lshiftrt_qi_3:                          # @lshiftrt_qi_3
 lshiftrt_qi_4:                          # @lshiftrt_qi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -214,7 +214,7 @@ lshiftrt_qi_4:                          # @lshiftrt_qi_4
 lshiftrt_qi_5:                          # @lshiftrt_qi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -229,7 +229,7 @@ lshiftrt_qi_5:                          # @lshiftrt_qi_5
 lshiftrt_qi_6:                          # @lshiftrt_qi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -244,7 +244,7 @@ lshiftrt_qi_6:                          # @lshiftrt_qi_6
 lshiftrt_qi_7:                          # @lshiftrt_qi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -259,7 +259,7 @@ lshiftrt_qi_7:                          # @lshiftrt_qi_7
 ashiftrt_qi_0:                          # @ashiftrt_qi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -273,7 +273,7 @@ ashiftrt_qi_0:                          # @ashiftrt_qi_0
 ashiftrt_qi_1:                          # @ashiftrt_qi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -288,7 +288,7 @@ ashiftrt_qi_1:                          # @ashiftrt_qi_1
 ashiftrt_qi_2:                          # @ashiftrt_qi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -303,7 +303,7 @@ ashiftrt_qi_2:                          # @ashiftrt_qi_2
 ashiftrt_qi_3:                          # @ashiftrt_qi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -318,7 +318,7 @@ ashiftrt_qi_3:                          # @ashiftrt_qi_3
 ashiftrt_qi_4:                          # @ashiftrt_qi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -333,7 +333,7 @@ ashiftrt_qi_4:                          # @ashiftrt_qi_4
 ashiftrt_qi_5:                          # @ashiftrt_qi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -348,7 +348,7 @@ ashiftrt_qi_5:                          # @ashiftrt_qi_5
 ashiftrt_qi_6:                          # @ashiftrt_qi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -363,7 +363,7 @@ ashiftrt_qi_6:                          # @ashiftrt_qi_6
 ashiftrt_qi_7:                          # @ashiftrt_qi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -378,7 +378,7 @@ ashiftrt_qi_7:                          # @ashiftrt_qi_7
 ashift_hi_0:                            # @ashift_hi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -392,7 +392,7 @@ ashift_hi_0:                            # @ashift_hi_0
 ashift_hi_1:                            # @ashift_hi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65534
@@ -409,7 +409,7 @@ ashift_hi_1:                            # @ashift_hi_1
 ashift_hi_2:                            # @ashift_hi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65532
@@ -426,7 +426,7 @@ ashift_hi_2:                            # @ashift_hi_2
 ashift_hi_3:                            # @ashift_hi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65528
@@ -443,7 +443,7 @@ ashift_hi_3:                            # @ashift_hi_3
 ashift_hi_4:                            # @ashift_hi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65520
@@ -460,7 +460,7 @@ ashift_hi_4:                            # @ashift_hi_4
 ashift_hi_5:                            # @ashift_hi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65504
@@ -477,7 +477,7 @@ ashift_hi_5:                            # @ashift_hi_5
 ashift_hi_6:                            # @ashift_hi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65472
@@ -494,7 +494,7 @@ ashift_hi_6:                            # @ashift_hi_6
 ashift_hi_7:                            # @ashift_hi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65408
@@ -511,7 +511,7 @@ ashift_hi_7:                            # @ashift_hi_7
 ashift_hi_8:                            # @ashift_hi_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65280
@@ -528,7 +528,7 @@ ashift_hi_8:                            # @ashift_hi_8
 ashift_hi_9:                            # @ashift_hi_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 65024
@@ -545,7 +545,7 @@ ashift_hi_9:                            # @ashift_hi_9
 ashift_hi_10:                           # @ashift_hi_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 64512
@@ -562,7 +562,7 @@ ashift_hi_10:                           # @ashift_hi_10
 ashift_hi_11:                           # @ashift_hi_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 63488
@@ -579,7 +579,7 @@ ashift_hi_11:                           # @ashift_hi_11
 ashift_hi_12:                           # @ashift_hi_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 61440
@@ -596,7 +596,7 @@ ashift_hi_12:                           # @ashift_hi_12
 ashift_hi_13:                           # @ashift_hi_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 57344
@@ -613,7 +613,7 @@ ashift_hi_13:                           # @ashift_hi_13
 ashift_hi_14:                           # @ashift_hi_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 49152
@@ -630,7 +630,7 @@ ashift_hi_14:                           # @ashift_hi_14
 ashift_hi_15:                           # @ashift_hi_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, 32768
@@ -647,7 +647,7 @@ ashift_hi_15:                           # @ashift_hi_15
 lshiftrt_hi_0:                          # @lshiftrt_hi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -661,7 +661,7 @@ lshiftrt_hi_0:                          # @lshiftrt_hi_0
 lshiftrt_hi_1:                          # @lshiftrt_hi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -676,7 +676,7 @@ lshiftrt_hi_1:                          # @lshiftrt_hi_1
 lshiftrt_hi_2:                          # @lshiftrt_hi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -691,7 +691,7 @@ lshiftrt_hi_2:                          # @lshiftrt_hi_2
 lshiftrt_hi_3:                          # @lshiftrt_hi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -706,7 +706,7 @@ lshiftrt_hi_3:                          # @lshiftrt_hi_3
 lshiftrt_hi_4:                          # @lshiftrt_hi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -721,7 +721,7 @@ lshiftrt_hi_4:                          # @lshiftrt_hi_4
 lshiftrt_hi_5:                          # @lshiftrt_hi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -736,7 +736,7 @@ lshiftrt_hi_5:                          # @lshiftrt_hi_5
 lshiftrt_hi_6:                          # @lshiftrt_hi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -751,7 +751,7 @@ lshiftrt_hi_6:                          # @lshiftrt_hi_6
 lshiftrt_hi_7:                          # @lshiftrt_hi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -766,7 +766,7 @@ lshiftrt_hi_7:                          # @lshiftrt_hi_7
 lshiftrt_hi_8:                          # @lshiftrt_hi_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -781,7 +781,7 @@ lshiftrt_hi_8:                          # @lshiftrt_hi_8
 lshiftrt_hi_9:                          # @lshiftrt_hi_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -796,7 +796,7 @@ lshiftrt_hi_9:                          # @lshiftrt_hi_9
 lshiftrt_hi_10:                         # @lshiftrt_hi_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -811,7 +811,7 @@ lshiftrt_hi_10:                         # @lshiftrt_hi_10
 lshiftrt_hi_11:                         # @lshiftrt_hi_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -826,7 +826,7 @@ lshiftrt_hi_11:                         # @lshiftrt_hi_11
 lshiftrt_hi_12:                         # @lshiftrt_hi_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -841,7 +841,7 @@ lshiftrt_hi_12:                         # @lshiftrt_hi_12
 lshiftrt_hi_13:                         # @lshiftrt_hi_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -856,7 +856,7 @@ lshiftrt_hi_13:                         # @lshiftrt_hi_13
 lshiftrt_hi_14:                         # @lshiftrt_hi_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -871,7 +871,7 @@ lshiftrt_hi_14:                         # @lshiftrt_hi_14
 lshiftrt_hi_15:                         # @lshiftrt_hi_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -886,7 +886,7 @@ lshiftrt_hi_15:                         # @lshiftrt_hi_15
 ashiftrt_hi_0:                          # @ashiftrt_hi_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -900,7 +900,7 @@ ashiftrt_hi_0:                          # @ashiftrt_hi_0
 ashiftrt_hi_1:                          # @ashiftrt_hi_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -915,7 +915,7 @@ ashiftrt_hi_1:                          # @ashiftrt_hi_1
 ashiftrt_hi_2:                          # @ashiftrt_hi_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -930,7 +930,7 @@ ashiftrt_hi_2:                          # @ashiftrt_hi_2
 ashiftrt_hi_3:                          # @ashiftrt_hi_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -945,7 +945,7 @@ ashiftrt_hi_3:                          # @ashiftrt_hi_3
 ashiftrt_hi_4:                          # @ashiftrt_hi_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -960,7 +960,7 @@ ashiftrt_hi_4:                          # @ashiftrt_hi_4
 ashiftrt_hi_5:                          # @ashiftrt_hi_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -975,7 +975,7 @@ ashiftrt_hi_5:                          # @ashiftrt_hi_5
 ashiftrt_hi_6:                          # @ashiftrt_hi_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -990,7 +990,7 @@ ashiftrt_hi_6:                          # @ashiftrt_hi_6
 ashiftrt_hi_7:                          # @ashiftrt_hi_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1005,7 +1005,7 @@ ashiftrt_hi_7:                          # @ashiftrt_hi_7
 ashiftrt_hi_8:                          # @ashiftrt_hi_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1020,7 +1020,7 @@ ashiftrt_hi_8:                          # @ashiftrt_hi_8
 ashiftrt_hi_9:                          # @ashiftrt_hi_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1035,7 +1035,7 @@ ashiftrt_hi_9:                          # @ashiftrt_hi_9
 ashiftrt_hi_10:                         # @ashiftrt_hi_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1050,7 +1050,7 @@ ashiftrt_hi_10:                         # @ashiftrt_hi_10
 ashiftrt_hi_11:                         # @ashiftrt_hi_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1065,7 +1065,7 @@ ashiftrt_hi_11:                         # @ashiftrt_hi_11
 ashiftrt_hi_12:                         # @ashiftrt_hi_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1080,7 +1080,7 @@ ashiftrt_hi_12:                         # @ashiftrt_hi_12
 ashiftrt_hi_13:                         # @ashiftrt_hi_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1095,7 +1095,7 @@ ashiftrt_hi_13:                         # @ashiftrt_hi_13
 ashiftrt_hi_14:                         # @ashiftrt_hi_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1110,7 +1110,7 @@ ashiftrt_hi_14:                         # @ashiftrt_hi_14
 ashiftrt_hi_15:                         # @ashiftrt_hi_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1125,7 +1125,7 @@ ashiftrt_hi_15:                         # @ashiftrt_hi_15
 ashift_si_0:                            # @ashift_si_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -1139,7 +1139,7 @@ ashift_si_0:                            # @ashift_si_0
 ashift_si_1:                            # @ashift_si_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1154,7 +1154,7 @@ ashift_si_1:                            # @ashift_si_1
 ashift_si_2:                            # @ashift_si_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1169,7 +1169,7 @@ ashift_si_2:                            # @ashift_si_2
 ashift_si_3:                            # @ashift_si_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1184,7 +1184,7 @@ ashift_si_3:                            # @ashift_si_3
 ashift_si_4:                            # @ashift_si_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1199,7 +1199,7 @@ ashift_si_4:                            # @ashift_si_4
 ashift_si_5:                            # @ashift_si_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1214,7 +1214,7 @@ ashift_si_5:                            # @ashift_si_5
 ashift_si_6:                            # @ashift_si_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1229,7 +1229,7 @@ ashift_si_6:                            # @ashift_si_6
 ashift_si_7:                            # @ashift_si_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1244,7 +1244,7 @@ ashift_si_7:                            # @ashift_si_7
 ashift_si_8:                            # @ashift_si_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1259,7 +1259,7 @@ ashift_si_8:                            # @ashift_si_8
 ashift_si_9:                            # @ashift_si_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1274,7 +1274,7 @@ ashift_si_9:                            # @ashift_si_9
 ashift_si_10:                           # @ashift_si_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1289,7 +1289,7 @@ ashift_si_10:                           # @ashift_si_10
 ashift_si_11:                           # @ashift_si_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1304,7 +1304,7 @@ ashift_si_11:                           # @ashift_si_11
 ashift_si_12:                           # @ashift_si_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1319,7 +1319,7 @@ ashift_si_12:                           # @ashift_si_12
 ashift_si_13:                           # @ashift_si_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1334,7 +1334,7 @@ ashift_si_13:                           # @ashift_si_13
 ashift_si_14:                           # @ashift_si_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1349,7 +1349,7 @@ ashift_si_14:                           # @ashift_si_14
 ashift_si_15:                           # @ashift_si_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1364,7 +1364,7 @@ ashift_si_15:                           # @ashift_si_15
 ashift_si_16:                           # @ashift_si_16
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 16
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1379,7 +1379,7 @@ ashift_si_16:                           # @ashift_si_16
 ashift_si_17:                           # @ashift_si_17
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 17
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1394,7 +1394,7 @@ ashift_si_17:                           # @ashift_si_17
 ashift_si_18:                           # @ashift_si_18
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 18
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1409,7 +1409,7 @@ ashift_si_18:                           # @ashift_si_18
 ashift_si_19:                           # @ashift_si_19
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 19
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1424,7 +1424,7 @@ ashift_si_19:                           # @ashift_si_19
 ashift_si_20:                           # @ashift_si_20
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 20
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1439,7 +1439,7 @@ ashift_si_20:                           # @ashift_si_20
 ashift_si_21:                           # @ashift_si_21
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 21
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1454,7 +1454,7 @@ ashift_si_21:                           # @ashift_si_21
 ashift_si_22:                           # @ashift_si_22
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 22
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1469,7 +1469,7 @@ ashift_si_22:                           # @ashift_si_22
 ashift_si_23:                           # @ashift_si_23
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 23
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1484,7 +1484,7 @@ ashift_si_23:                           # @ashift_si_23
 ashift_si_24:                           # @ashift_si_24
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 24
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1499,7 +1499,7 @@ ashift_si_24:                           # @ashift_si_24
 ashift_si_25:                           # @ashift_si_25
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 25
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1514,7 +1514,7 @@ ashift_si_25:                           # @ashift_si_25
 ashift_si_26:                           # @ashift_si_26
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 26
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1529,7 +1529,7 @@ ashift_si_26:                           # @ashift_si_26
 ashift_si_27:                           # @ashift_si_27
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 27
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1544,7 +1544,7 @@ ashift_si_27:                           # @ashift_si_27
 ashift_si_28:                           # @ashift_si_28
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 28
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1559,7 +1559,7 @@ ashift_si_28:                           # @ashift_si_28
 ashift_si_29:                           # @ashift_si_29
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 29
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1574,7 +1574,7 @@ ashift_si_29:                           # @ashift_si_29
 ashift_si_30:                           # @ashift_si_30
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 30
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1589,7 +1589,7 @@ ashift_si_30:                           # @ashift_si_30
 ashift_si_31:                           # @ashift_si_31
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 31
 	i32.shl 	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1604,7 +1604,7 @@ ashift_si_31:                           # @ashift_si_31
 lshiftrt_si_0:                          # @lshiftrt_si_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -1618,7 +1618,7 @@ lshiftrt_si_0:                          # @lshiftrt_si_0
 lshiftrt_si_1:                          # @lshiftrt_si_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1633,7 +1633,7 @@ lshiftrt_si_1:                          # @lshiftrt_si_1
 lshiftrt_si_2:                          # @lshiftrt_si_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1648,7 +1648,7 @@ lshiftrt_si_2:                          # @lshiftrt_si_2
 lshiftrt_si_3:                          # @lshiftrt_si_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1663,7 +1663,7 @@ lshiftrt_si_3:                          # @lshiftrt_si_3
 lshiftrt_si_4:                          # @lshiftrt_si_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1678,7 +1678,7 @@ lshiftrt_si_4:                          # @lshiftrt_si_4
 lshiftrt_si_5:                          # @lshiftrt_si_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1693,7 +1693,7 @@ lshiftrt_si_5:                          # @lshiftrt_si_5
 lshiftrt_si_6:                          # @lshiftrt_si_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1708,7 +1708,7 @@ lshiftrt_si_6:                          # @lshiftrt_si_6
 lshiftrt_si_7:                          # @lshiftrt_si_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1723,7 +1723,7 @@ lshiftrt_si_7:                          # @lshiftrt_si_7
 lshiftrt_si_8:                          # @lshiftrt_si_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1738,7 +1738,7 @@ lshiftrt_si_8:                          # @lshiftrt_si_8
 lshiftrt_si_9:                          # @lshiftrt_si_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1753,7 +1753,7 @@ lshiftrt_si_9:                          # @lshiftrt_si_9
 lshiftrt_si_10:                         # @lshiftrt_si_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1768,7 +1768,7 @@ lshiftrt_si_10:                         # @lshiftrt_si_10
 lshiftrt_si_11:                         # @lshiftrt_si_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1783,7 +1783,7 @@ lshiftrt_si_11:                         # @lshiftrt_si_11
 lshiftrt_si_12:                         # @lshiftrt_si_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1798,7 +1798,7 @@ lshiftrt_si_12:                         # @lshiftrt_si_12
 lshiftrt_si_13:                         # @lshiftrt_si_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1813,7 +1813,7 @@ lshiftrt_si_13:                         # @lshiftrt_si_13
 lshiftrt_si_14:                         # @lshiftrt_si_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1828,7 +1828,7 @@ lshiftrt_si_14:                         # @lshiftrt_si_14
 lshiftrt_si_15:                         # @lshiftrt_si_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1843,7 +1843,7 @@ lshiftrt_si_15:                         # @lshiftrt_si_15
 lshiftrt_si_16:                         # @lshiftrt_si_16
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 16
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1858,7 +1858,7 @@ lshiftrt_si_16:                         # @lshiftrt_si_16
 lshiftrt_si_17:                         # @lshiftrt_si_17
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 17
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1873,7 +1873,7 @@ lshiftrt_si_17:                         # @lshiftrt_si_17
 lshiftrt_si_18:                         # @lshiftrt_si_18
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 18
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1888,7 +1888,7 @@ lshiftrt_si_18:                         # @lshiftrt_si_18
 lshiftrt_si_19:                         # @lshiftrt_si_19
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 19
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1903,7 +1903,7 @@ lshiftrt_si_19:                         # @lshiftrt_si_19
 lshiftrt_si_20:                         # @lshiftrt_si_20
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 20
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1918,7 +1918,7 @@ lshiftrt_si_20:                         # @lshiftrt_si_20
 lshiftrt_si_21:                         # @lshiftrt_si_21
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 21
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1933,7 +1933,7 @@ lshiftrt_si_21:                         # @lshiftrt_si_21
 lshiftrt_si_22:                         # @lshiftrt_si_22
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 22
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1948,7 +1948,7 @@ lshiftrt_si_22:                         # @lshiftrt_si_22
 lshiftrt_si_23:                         # @lshiftrt_si_23
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 23
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1963,7 +1963,7 @@ lshiftrt_si_23:                         # @lshiftrt_si_23
 lshiftrt_si_24:                         # @lshiftrt_si_24
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 24
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1978,7 +1978,7 @@ lshiftrt_si_24:                         # @lshiftrt_si_24
 lshiftrt_si_25:                         # @lshiftrt_si_25
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 25
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -1993,7 +1993,7 @@ lshiftrt_si_25:                         # @lshiftrt_si_25
 lshiftrt_si_26:                         # @lshiftrt_si_26
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 26
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2008,7 +2008,7 @@ lshiftrt_si_26:                         # @lshiftrt_si_26
 lshiftrt_si_27:                         # @lshiftrt_si_27
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 27
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2023,7 +2023,7 @@ lshiftrt_si_27:                         # @lshiftrt_si_27
 lshiftrt_si_28:                         # @lshiftrt_si_28
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 28
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2038,7 +2038,7 @@ lshiftrt_si_28:                         # @lshiftrt_si_28
 lshiftrt_si_29:                         # @lshiftrt_si_29
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 29
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2053,7 +2053,7 @@ lshiftrt_si_29:                         # @lshiftrt_si_29
 lshiftrt_si_30:                         # @lshiftrt_si_30
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 30
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2068,7 +2068,7 @@ lshiftrt_si_30:                         # @lshiftrt_si_30
 lshiftrt_si_31:                         # @lshiftrt_si_31
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 31
 	i32.shr_u	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2083,7 +2083,7 @@ lshiftrt_si_31:                         # @lshiftrt_si_31
 ashiftrt_si_0:                          # @ashiftrt_si_0
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -2097,7 +2097,7 @@ ashiftrt_si_0:                          # @ashiftrt_si_0
 ashiftrt_si_1:                          # @ashiftrt_si_1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2112,7 +2112,7 @@ ashiftrt_si_1:                          # @ashiftrt_si_1
 ashiftrt_si_2:                          # @ashiftrt_si_2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2127,7 +2127,7 @@ ashiftrt_si_2:                          # @ashiftrt_si_2
 ashiftrt_si_3:                          # @ashiftrt_si_3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 3
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2142,7 +2142,7 @@ ashiftrt_si_3:                          # @ashiftrt_si_3
 ashiftrt_si_4:                          # @ashiftrt_si_4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 4
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2157,7 +2157,7 @@ ashiftrt_si_4:                          # @ashiftrt_si_4
 ashiftrt_si_5:                          # @ashiftrt_si_5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 5
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2172,7 +2172,7 @@ ashiftrt_si_5:                          # @ashiftrt_si_5
 ashiftrt_si_6:                          # @ashiftrt_si_6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 6
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2187,7 +2187,7 @@ ashiftrt_si_6:                          # @ashiftrt_si_6
 ashiftrt_si_7:                          # @ashiftrt_si_7
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 7
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2202,7 +2202,7 @@ ashiftrt_si_7:                          # @ashiftrt_si_7
 ashiftrt_si_8:                          # @ashiftrt_si_8
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2217,7 +2217,7 @@ ashiftrt_si_8:                          # @ashiftrt_si_8
 ashiftrt_si_9:                          # @ashiftrt_si_9
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 9
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2232,7 +2232,7 @@ ashiftrt_si_9:                          # @ashiftrt_si_9
 ashiftrt_si_10:                         # @ashiftrt_si_10
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 10
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2247,7 +2247,7 @@ ashiftrt_si_10:                         # @ashiftrt_si_10
 ashiftrt_si_11:                         # @ashiftrt_si_11
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 11
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2262,7 +2262,7 @@ ashiftrt_si_11:                         # @ashiftrt_si_11
 ashiftrt_si_12:                         # @ashiftrt_si_12
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 12
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2277,7 +2277,7 @@ ashiftrt_si_12:                         # @ashiftrt_si_12
 ashiftrt_si_13:                         # @ashiftrt_si_13
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 13
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2292,7 +2292,7 @@ ashiftrt_si_13:                         # @ashiftrt_si_13
 ashiftrt_si_14:                         # @ashiftrt_si_14
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 14
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2307,7 +2307,7 @@ ashiftrt_si_14:                         # @ashiftrt_si_14
 ashiftrt_si_15:                         # @ashiftrt_si_15
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 15
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2322,7 +2322,7 @@ ashiftrt_si_15:                         # @ashiftrt_si_15
 ashiftrt_si_16:                         # @ashiftrt_si_16
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 16
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2337,7 +2337,7 @@ ashiftrt_si_16:                         # @ashiftrt_si_16
 ashiftrt_si_17:                         # @ashiftrt_si_17
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 17
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2352,7 +2352,7 @@ ashiftrt_si_17:                         # @ashiftrt_si_17
 ashiftrt_si_18:                         # @ashiftrt_si_18
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 18
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2367,7 +2367,7 @@ ashiftrt_si_18:                         # @ashiftrt_si_18
 ashiftrt_si_19:                         # @ashiftrt_si_19
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 19
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2382,7 +2382,7 @@ ashiftrt_si_19:                         # @ashiftrt_si_19
 ashiftrt_si_20:                         # @ashiftrt_si_20
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 20
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2397,7 +2397,7 @@ ashiftrt_si_20:                         # @ashiftrt_si_20
 ashiftrt_si_21:                         # @ashiftrt_si_21
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 21
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2412,7 +2412,7 @@ ashiftrt_si_21:                         # @ashiftrt_si_21
 ashiftrt_si_22:                         # @ashiftrt_si_22
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 22
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2427,7 +2427,7 @@ ashiftrt_si_22:                         # @ashiftrt_si_22
 ashiftrt_si_23:                         # @ashiftrt_si_23
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 23
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2442,7 +2442,7 @@ ashiftrt_si_23:                         # @ashiftrt_si_23
 ashiftrt_si_24:                         # @ashiftrt_si_24
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 24
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2457,7 +2457,7 @@ ashiftrt_si_24:                         # @ashiftrt_si_24
 ashiftrt_si_25:                         # @ashiftrt_si_25
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 25
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2472,7 +2472,7 @@ ashiftrt_si_25:                         # @ashiftrt_si_25
 ashiftrt_si_26:                         # @ashiftrt_si_26
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 26
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2487,7 +2487,7 @@ ashiftrt_si_26:                         # @ashiftrt_si_26
 ashiftrt_si_27:                         # @ashiftrt_si_27
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 27
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2502,7 +2502,7 @@ ashiftrt_si_27:                         # @ashiftrt_si_27
 ashiftrt_si_28:                         # @ashiftrt_si_28
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 28
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2517,7 +2517,7 @@ ashiftrt_si_28:                         # @ashiftrt_si_28
 ashiftrt_si_29:                         # @ashiftrt_si_29
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 29
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2532,7 +2532,7 @@ ashiftrt_si_29:                         # @ashiftrt_si_29
 ashiftrt_si_30:                         # @ashiftrt_si_30
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 30
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2547,7 +2547,7 @@ ashiftrt_si_30:                         # @ashiftrt_si_30
 ashiftrt_si_31:                         # @ashiftrt_si_31
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 31
 	i32.shr_s	$push1=, $0, $pop0
                                         # fallthrough-return: $pop1
@@ -2561,7 +2561,7 @@ ashiftrt_si_31:                         # @ashiftrt_si_31
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end1211
+# %bb.0:                                # %if.end1211
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -2570,5 +2570,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end168-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

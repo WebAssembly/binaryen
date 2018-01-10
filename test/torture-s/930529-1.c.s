@@ -7,7 +7,7 @@
 dd:                                     # @dd
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.div_s	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -20,14 +20,16 @@ dd:                                     # @dd
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	call    	exit@FUNCTION, $pop0
-	unreachable
+# %bb.0:                                # %entry
+.LBB1_1:                                # %if.end44
+                                        # =>This Inner Loop Header: Depth=1
+	loop    	i32             # label0:
+	br      	0               # 0: up to label0
+.LBB1_2:
+	end_loop
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
-	.functype	exit, void, i32
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

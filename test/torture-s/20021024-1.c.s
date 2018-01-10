@@ -5,7 +5,7 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -18,7 +18,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 511
 	i32.and 	$2=, $0, $pop0
 	i32.const	$push1=, 20
@@ -47,7 +47,7 @@ bar:                                    # @bar
 	i64.store	0($0), $pop17
 	i32.eqz 	$push20=, $2
 	br_if   	0, $pop20       # 0: up to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	end_loop
 	i32.const	$push11=, 3
 	i32.shl 	$push12=, $2, $pop11
@@ -66,34 +66,24 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push9=, 0
-	i32.const	$push7=, 0
-	i32.load	$push6=, __stack_pointer($pop7)
-	i32.const	$push8=, 16
-	i32.sub 	$push18=, $pop6, $pop8
-	tee_local	$push17=, $0=, $pop18
-	i32.store	__stack_pointer($pop9), $pop17
+# %bb.0:                                # %entry
+	i32.const	$push4=, 0
+	i32.load	$push3=, __stack_pointer($pop4)
+	i32.const	$push5=, 16
+	i32.sub 	$0=, $pop3, $pop5
+	i32.const	$push6=, 0
+	i32.store	__stack_pointer($pop6), $0
 	i32.const	$push1=, 0
-	i64.const	$push0=, 47
-	i64.store	main.r+32($pop1), $pop0
-	i32.const	$push16=, 0
-	i64.const	$push2=, 11
-	i64.store	main.r+64($pop16), $pop2
-	i32.const	$push15=, 0
-	i64.const	$push3=, 58
-	i64.store	m($pop15), $pop3
-	i32.const	$push14=, 0
-	i64.const	$push4=, 1
-	i64.store	main.r+120($pop14), $pop4
-	i32.const	$push13=, 0
-	i32.const	$push10=, 8
-	i32.add 	$push11=, $0, $pop10
-	i32.store	cp($pop13), $pop11
-	i64.const	$push5=, 2
-	i64.store	8($0), $pop5
-	i32.const	$push12=, 0
-	call    	exit@FUNCTION, $pop12
+	i64.const	$push0=, 58
+	i64.store	m($pop1), $pop0
+	i32.const	$push10=, 0
+	i32.const	$push7=, 8
+	i32.add 	$push8=, $0, $pop7
+	i32.store	cp($pop10), $pop8
+	i64.const	$push2=, 2
+	i64.store	8($0), $pop2
+	i32.const	$push9=, 0
+	call    	exit@FUNCTION, $pop9
 	unreachable
 	.endfunc
 .Lfunc_end2:
@@ -117,13 +107,6 @@ m:
 	.int64	0                       # 0x0
 	.size	m, 8
 
-	.type	main.r,@object          # @main.r
-	.section	.bss.main.r,"aw",@nobits
-	.p2align	4
-main.r:
-	.skip	512
-	.size	main.r, 512
 
-
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

@@ -6,24 +6,22 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push12=, 0
-	i32.load	$push11=, b($pop12)
-	tee_local	$push10=, $0=, $pop11
+	i32.load	$0=, b($pop0)
 	i32.const	$push1=, -1
-	i32.add 	$push9=, $pop10, $pop1
-	tee_local	$push8=, $1=, $pop9
+	i32.add 	$1=, $0, $pop1
+	i32.const	$push8=, 0
 	i32.const	$push2=, 2241
 	i32.const	$push7=, 2241
 	i32.lt_s	$push3=, $1, $pop7
-	i32.select	$push4=, $pop8, $pop2, $pop3
-	i32.store	a+4($pop0), $pop4
+	i32.select	$push4=, $1, $pop2, $pop3
+	i32.store	a+4($pop8), $pop4
 	block   	
 	i32.const	$push5=, 2242
 	i32.le_s	$push6=, $0, $pop5
 	br_if   	0, $pop6        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -40,7 +38,7 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2241
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -53,7 +51,7 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %foo.exit
+# %bb.0:                                # %foo.exit
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3384
 	i32.store	b($pop1), $pop0
@@ -85,5 +83,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

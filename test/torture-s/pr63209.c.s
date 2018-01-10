@@ -7,9 +7,8 @@
 Predictor:                              # @Predictor
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.load	$push17=, 4($1)
-	tee_local	$push16=, $1=, $pop17
+# %bb.0:                                # %entry
+	i32.load	$1=, 4($1)
 	i32.const	$push2=, 8
 	i32.shr_u	$push3=, $0, $pop2
 	i32.const	$push0=, 255
@@ -25,7 +24,7 @@ Predictor:                              # @Predictor
 	i32.const	$push12=, 255
 	i32.and 	$push9=, $pop8, $pop12
 	i32.gt_s	$push10=, $pop7, $pop9
-	i32.select	$push11=, $0, $pop16, $pop10
+	i32.select	$push11=, $0, $1, $pop10
                                         # fallthrough-return: $pop11
 	.endfunc
 .Lfunc_end0:
@@ -37,7 +36,7 @@ Predictor:                              # @Predictor
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, -8684677
 	i32.const	$push0=, main.top
 	i32.call	$push2=, Predictor@FUNCTION, $pop1, $pop0
@@ -57,4 +56,4 @@ main.top:
 	.size	main.top, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

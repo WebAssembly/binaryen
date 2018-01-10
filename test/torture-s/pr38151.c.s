@@ -7,20 +7,18 @@
 check2848va:                            # @check2848va
 	.param  	i32, i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push20=, 0
 	i32.load	$push19=, __stack_pointer($pop20)
 	i32.const	$push21=, 16
-	i32.sub 	$push26=, $pop19, $pop21
-	tee_local	$push25=, $3=, $pop26
-	i32.store	12($pop25), $1
+	i32.sub 	$3=, $pop19, $pop21
+	i32.store	12($3), $1
 	i32.const	$push0=, 15
 	i32.add 	$push1=, $1, $pop0
 	i32.const	$push2=, -16
-	i32.and 	$push24=, $pop1, $pop2
-	tee_local	$push23=, $1=, $pop24
+	i32.and 	$1=, $pop1, $pop2
 	i32.const	$push3=, 16
-	i32.add 	$push4=, $pop23, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.store	12($3), $pop4
 	i32.load	$2=, 8($1)
 	i32.load	$3=, 4($1)
@@ -30,32 +28,32 @@ check2848va:                            # @check2848va
 	i32.load	$push5=, 0($1)
 	i32.eq  	$push7=, $pop6, $pop5
 	br_if   	0, $pop7        # 0: down to label0
-# BB#1:                                 # %if.then
-	i32.const	$push28=, 0
-	i32.const	$push27=, 0
-	i32.load	$push8=, fails($pop27)
+# %bb.1:                                # %if.then
+	i32.const	$push24=, 0
+	i32.const	$push23=, 0
+	i32.load	$push8=, fails($pop23)
 	i32.const	$push9=, 1
 	i32.add 	$push10=, $pop8, $pop9
-	i32.store	fails($pop28), $pop10
+	i32.store	fails($pop24), $pop10
 .LBB0_2:                                # %if.end
 	end_block                       # label0:
 	block   	
-	i32.const	$push29=, 0
-	i32.load	$push12=, s2848+4($pop29)
+	i32.const	$push25=, 0
+	i32.load	$push12=, s2848+4($pop25)
 	i32.ne  	$push13=, $pop12, $3
 	br_if   	0, $pop13       # 0: down to label1
-# BB#3:                                 # %if.end
-	i32.const	$push30=, 0
-	i32.load	$push11=, s2848+8($pop30)
+# %bb.3:                                # %if.end
+	i32.const	$push26=, 0
+	i32.load	$push11=, s2848+8($pop26)
 	i32.ne  	$push14=, $pop11, $2
 	br_if   	0, $pop14       # 0: down to label1
-# BB#4:                                 # %if.end4
+# %bb.4:                                # %if.end4
 	return
 .LBB0_5:                                # %if.then2
 	end_block                       # label1:
 	i32.const	$push15=, 0
-	i32.const	$push31=, 0
-	i32.load	$push16=, fails($pop31)
+	i32.const	$push27=, 0
+	i32.load	$push16=, fails($pop27)
 	i32.const	$push17=, 1
 	i32.add 	$push18=, $pop16, $pop17
 	i32.store	fails($pop15), $pop18
@@ -71,14 +69,13 @@ check2848va:                            # @check2848va
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push7=, 0
+# %bb.0:                                # %entry
 	i32.const	$push5=, 0
 	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 32
-	i32.sub 	$push19=, $pop4, $pop6
-	tee_local	$push18=, $0=, $pop19
-	i32.store	__stack_pointer($pop7), $pop18
+	i32.sub 	$0=, $pop4, $pop6
+	i32.const	$push7=, 0
+	i32.store	__stack_pointer($pop7), $0
 	i32.const	$push17=, 0
 	i32.const	$push0=, -218144346
 	i32.store	s2848+8($pop17), $pop0
@@ -98,13 +95,13 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.load	$push3=, fails($pop13)
 	br_if   	0, $pop3        # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push10=, 0
 	i32.const	$push8=, 32
 	i32.add 	$push9=, $0, $pop8
 	i32.store	__stack_pointer($pop10), $pop9
-	i32.const	$push20=, 0
-	return  	$pop20
+	i32.const	$push18=, 0
+	return  	$pop18
 .LBB1_2:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -132,5 +129,5 @@ fails:
 	.size	fails, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

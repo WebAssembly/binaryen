@@ -7,7 +7,7 @@
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, -1
 	i32.const	$push7=, 0
 	i32.select	$1=, $pop0, $pop7, $1
@@ -16,7 +16,7 @@ f:                                      # @f
 	i32.load	$push1=, yabba($pop6)
 	i32.eqz 	$push9=, $pop1
 	br_if   	0, $pop9        # 0: down to label0
-# BB#1:                                 # %cleanup
+# %bb.1:                                # %cleanup
 	return  	$1
 .LBB0_2:                                # %if.end24
 	end_block                       # label0:
@@ -38,12 +38,12 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push2=, 0
 	i32.load	$push0=, yabba($pop2)
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:                                 # %if.end24.i
+# %bb.1:                                # %if.end24.i
 	i32.const	$push3=, 0
 	i32.const	$push1=, an_array+1
 	i32.store	a_ptr($pop3), $pop1
@@ -83,5 +83,5 @@ a_ptr:
 	.size	a_ptr, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

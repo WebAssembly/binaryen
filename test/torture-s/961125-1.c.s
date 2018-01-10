@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, .L.str
 	i32.const	$1=, 1
 .LBB0_1:                                # %land.rhs.i
@@ -15,15 +15,15 @@ main:                                   # @main
                                         #     Child Loop BB0_4 Depth 2
 	block   	
 	loop    	                # label1:
-	i32.eqz 	$push20=, $1
-	br_if   	1, $pop20       # 1: down to label0
-# BB#2:                                 # %while.body.i
+	i32.eqz 	$push18=, $1
+	br_if   	1, $pop18       # 1: down to label0
+# %bb.2:                                # %while.body.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	block   	
 	i32.const	$push12=, .L.str+3
 	i32.ge_u	$push0=, $0, $pop12
 	br_if   	0, $pop0        # 0: down to label2
-# BB#3:                                 # %land.rhs4.i.preheader
+# %bb.3:                                # %land.rhs4.i.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
 	copy_local	$2=, $0
 .LBB0_4:                                # %land.rhs4.i
@@ -36,7 +36,7 @@ main:                                   # @main
 	i32.const	$push13=, 58
 	i32.eq  	$push2=, $pop1, $pop13
 	br_if   	1, $pop2        # 1: down to label2
-# BB#5:                                 # %land.rhs4.i
+# %bb.5:                                # %land.rhs4.i
                                         #   in Loop: Header=BB0_4 Depth=2
 	copy_local	$2=, $0
 	i32.const	$push15=, .L.str+3
@@ -54,17 +54,16 @@ main:                                   # @main
 .LBB0_7:                                # %begfield.exit
 	end_loop
 	end_block                       # label0:
-	block   	
 	i32.const	$push5=, 1
-	i32.add 	$push19=, $0, $pop5
-	tee_local	$push18=, $2=, $pop19
+	i32.add 	$2=, $0, $pop5
+	block   	
 	i32.const	$push6=, .L.str+3
 	i32.gt_u	$push7=, $2, $pop6
-	i32.select	$push8=, $0, $pop18, $pop7
+	i32.select	$push8=, $0, $2, $pop7
 	i32.const	$push9=, .L.str+2
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	0, $pop10       # 0: down to label4
-# BB#8:                                 # %if.end
+# %bb.8:                                # %if.end
 	i32.const	$push11=, 0
 	call    	exit@FUNCTION, $pop11
 	unreachable
@@ -83,6 +82,6 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

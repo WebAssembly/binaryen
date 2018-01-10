@@ -6,7 +6,7 @@
 	.type	debug,@function
 debug:                                  # @debug
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -20,7 +20,7 @@ debug:                                  # @debug
 bad_compare:                            # @bad_compare
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.sub 	$push1=, $pop0, $0
                                         # fallthrough-return: $pop1
@@ -34,7 +34,7 @@ bad_compare:                            # @bad_compare
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push3=, array
 	i32.const	$push2=, 2
 	i32.const	$push1=, 8
@@ -54,22 +54,21 @@ compare:                                # @compare
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.load	$1=, 0($1)
 	i32.load	$2=, 4($0)
 	block   	
-	i32.load	$push8=, 0($1)
-	tee_local	$push7=, $1=, $pop8
-	i32.eqz 	$push10=, $pop7
-	br_if   	0, $pop10       # 0: down to label0
-# BB#1:                                 # %land.lhs.true
+	i32.eqz 	$push8=, $1
+	br_if   	0, $pop8        # 0: down to label0
+# %bb.1:                                # %land.lhs.true
 	i32.load	$push0=, 0($0)
 	i32.call_indirect	$push1=, $pop0, $2
-	i32.eqz 	$push11=, $pop1
-	br_if   	0, $pop11       # 0: down to label0
-# BB#2:                                 # %if.then
+	i32.eqz 	$push9=, $pop1
+	br_if   	0, $pop9        # 0: down to label0
+# %bb.2:                                # %if.then
 	i32.const	$push2=, 0
-	i32.const	$push9=, 0
-	i32.load	$push3=, errors($pop9)
+	i32.const	$push7=, 0
+	i32.load	$push3=, errors($pop7)
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $pop3, $pop4
 	i32.store	errors($pop2), $pop5
@@ -103,5 +102,5 @@ errors:
 	.size	errors, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	qsort, void, i32, i32, i32, i32

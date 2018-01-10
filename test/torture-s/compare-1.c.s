@@ -7,30 +7,29 @@
 ieq:                                    # @ieq
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.ne  	$0=, $0, $1
 	block   	
 	block   	
 	block   	
 	block   	
-	i32.ne  	$push1=, $0, $1
-	tee_local	$push0=, $0=, $pop1
-	i32.eqz 	$push2=, $pop0
-	br_if   	0, $pop2        # 0: down to label3
-# BB#1:                                 # %if.else
+	i32.eqz 	$push0=, $0
+	br_if   	0, $pop0        # 0: down to label3
+# %bb.1:                                # %if.else
 	br_if   	2, $2           # 2: down to label1
 	br      	1               # 1: down to label2
 .LBB0_2:                                # %if.then
 	end_block                       # label3:
-	i32.eqz 	$push3=, $2
-	br_if   	1, $pop3        # 1: down to label1
+	i32.eqz 	$push1=, $2
+	br_if   	1, $pop1        # 1: down to label1
 .LBB0_3:                                # %if.end6
 	end_block                       # label2:
 	block   	
 	block   	
 	br_if   	0, $0           # 0: down to label5
-# BB#4:                                 # %if.then10
-	i32.eqz 	$push4=, $2
-	br_if   	2, $pop4        # 2: down to label1
+# %bb.4:                                # %if.then10
+	i32.eqz 	$push2=, $2
+	br_if   	2, $pop2        # 2: down to label1
 	br      	1               # 1: down to label4
 .LBB0_5:                                # %if.else14
 	end_block                       # label5:
@@ -39,35 +38,35 @@ ieq:                                    # @ieq
 	end_block                       # label4:
 	block   	
 	block   	
-	i32.eqz 	$push5=, $0
-	br_if   	0, $pop5        # 0: down to label7
-# BB#7:                                 # %if.else26
+	i32.eqz 	$push3=, $0
+	br_if   	0, $pop3        # 0: down to label7
+# %bb.7:                                # %if.else26
 	br_if   	2, $2           # 2: down to label1
 	br      	1               # 1: down to label6
 .LBB0_8:                                # %if.then22
 	end_block                       # label7:
-	i32.eqz 	$push6=, $2
-	br_if   	1, $pop6        # 1: down to label1
+	i32.eqz 	$push4=, $2
+	br_if   	1, $pop4        # 1: down to label1
 .LBB0_9:                                # %if.end30
 	end_block                       # label6:
 	block   	
 	br_if   	0, $0           # 0: down to label8
-# BB#10:                                # %if.then34
-	i32.eqz 	$push7=, $2
-	br_if   	1, $pop7        # 1: down to label1
+# %bb.10:                               # %if.then34
+	i32.eqz 	$push5=, $2
+	br_if   	1, $pop5        # 1: down to label1
 	br      	2               # 2: down to label0
 .LBB0_11:                               # %if.else38
 	end_block                       # label8:
-	i32.eqz 	$push8=, $2
-	br_if   	1, $pop8        # 1: down to label0
+	i32.eqz 	$push6=, $2
+	br_if   	1, $pop6        # 1: down to label0
 .LBB0_12:                               # %if.then2
 	end_block                       # label1:
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_13:                               # %if.end42
 	end_block                       # label0:
-	copy_local	$push9=, $2
-                                        # fallthrough-return: $pop9
+	copy_local	$push7=, $2
+                                        # fallthrough-return: $pop7
 	.endfunc
 .Lfunc_end0:
 	.size	ieq, .Lfunc_end0-ieq
@@ -79,13 +78,13 @@ ieq:                                    # @ieq
 ine:                                    # @ine
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.ne  	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label11
-# BB#1:                                 # %if.else
+# %bb.1:                                # %if.else
 	i32.eqz 	$push1=, $2
 	br_if   	1, $pop1        # 1: down to label10
 	br      	2               # 2: down to label9
@@ -111,13 +110,13 @@ ine:                                    # @ine
 ilt:                                    # @ilt
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.ge_s	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label14
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $2           # 1: down to label13
 	br      	2               # 2: down to label12
 .LBB2_2:                                # %if.else
@@ -141,13 +140,13 @@ ilt:                                    # @ilt
 ile:                                    # @ile
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.le_s	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label17
-# BB#1:                                 # %if.else
+# %bb.1:                                # %if.else
 	i32.eqz 	$push1=, $2
 	br_if   	1, $pop1        # 1: down to label16
 	br      	2               # 2: down to label15
@@ -173,13 +172,13 @@ ile:                                    # @ile
 igt:                                    # @igt
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.le_s	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label20
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	br_if   	1, $2           # 1: down to label19
 	br      	2               # 2: down to label18
 .LBB4_2:                                # %if.else
@@ -203,13 +202,13 @@ igt:                                    # @igt
 ige:                                    # @ige
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	block   	
 	i32.ge_s	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label23
-# BB#1:                                 # %if.else
+# %bb.1:                                # %if.else
 	i32.eqz 	$push1=, $2
 	br_if   	1, $pop1        # 1: down to label22
 	br      	2               # 2: down to label21
@@ -234,7 +233,7 @@ ige:                                    # @ige
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -242,5 +241,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end6-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

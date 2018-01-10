@@ -6,59 +6,58 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32, i32, i64
-# BB#0:                                 # %entry
-	i64.const	$3=, -1
+	.local  	i32, i32, i64
+# %bb.0:                                # %entry
+	i64.const	$2=, 0
 	i32.const	$1=, .Lswitch.table.main
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label1:
-	i64.const	$push10=, 81985529216486895
-	i64.const	$push9=, 1
-	i64.add 	$push8=, $3, $pop9
-	tee_local	$push7=, $3=, $pop8
-	i64.shl 	$push1=, $pop10, $pop7
-	i64.load	$push2=, 0($1)
-	i64.ne  	$push3=, $pop1, $pop2
-	br_if   	1, $pop3        # 1: down to label0
-# BB#2:                                 # %for.cond
+	i64.const	$push8=, 81985529216486895
+	i64.shl 	$push0=, $pop8, $2
+	i64.load	$push1=, 0($1)
+	i64.ne  	$push2=, $pop0, $pop1
+	br_if   	1, $pop2        # 1: down to label0
+# %bb.2:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push12=, 8
-	i32.add 	$1=, $1, $pop12
-	i64.const	$push11=, 63
-	i64.lt_u	$push4=, $3, $pop11
-	br_if   	0, $pop4        # 0: up to label1
-# BB#3:                                 # %for.body4.preheader
+	i64.const	$push11=, 1
+	i64.add 	$2=, $2, $pop11
+	i32.const	$push10=, 8
+	i32.add 	$1=, $1, $pop10
+	i64.const	$push9=, 64
+	i64.lt_u	$push3=, $2, $pop9
+	br_if   	0, $pop3        # 0: up to label1
+# %bb.3:                                # %for.body4.preheader
 	end_loop
 	i32.const	$1=, 0
 	i32.const	$0=, .Lswitch.table.main
 .LBB0_4:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.const	$push13=, 64
-	i32.ge_u	$push5=, $1, $pop13
+	i32.const	$push13=, 2147483647
+	i32.and 	$push4=, $1, $pop13
+	i32.const	$push12=, 64
+	i32.ge_u	$push5=, $pop4, $pop12
 	br_if   	1, $pop5        # 1: down to label0
-# BB#5:                                 # %switch.lookup
+# %bb.5:                                # %switch.lookup
                                         #   in Loop: Header=BB0_4 Depth=1
 	i32.const	$push14=, 1
 	i32.eqz 	$push18=, $pop14
 	br_if   	1, $pop18       # 1: down to label0
-# BB#6:                                 # %for.cond2
+# %bb.6:                                # %for.cond2
                                         #   in Loop: Header=BB0_4 Depth=1
-	i32.const	$push17=, 8
-	i32.add 	$0=, $0, $pop17
-	i32.const	$push16=, 62
-	i32.gt_u	$2=, $1, $pop16
-	i32.const	$push15=, 1
-	i32.add 	$push0=, $1, $pop15
-	copy_local	$1=, $pop0
-	i32.eqz 	$push19=, $2
-	br_if   	0, $pop19       # 0: up to label2
-# BB#7:                                 # %for.end13
+	i32.const	$push17=, 1
+	i32.add 	$1=, $1, $pop17
+	i32.const	$push16=, 8
+	i32.add 	$0=, $0, $pop16
+	i32.const	$push15=, 63
+	i32.le_u	$push6=, $1, $pop15
+	br_if   	0, $pop6        # 0: up to label2
+# %bb.7:                                # %for.end13
 	end_loop
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+	i32.const	$push7=, 0
+	call    	exit@FUNCTION, $pop7
 	unreachable
 .LBB0_8:                                # %if.then
 	end_block                       # label0:
@@ -139,6 +138,6 @@ main:                                   # @main
 	.size	.Lswitch.table.main, 512
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

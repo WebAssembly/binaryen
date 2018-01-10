@@ -7,57 +7,57 @@
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.load8_u	$push0=, 0($1)
 	i32.const	$push1=, 10
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.load8_u	$push3=, 1($1)
 	i32.const	$push4=, 20
 	i32.ne  	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label0
-# BB#2:                                 # %if.end6
+# %bb.2:                                # %if.end6
 	i32.load8_u	$push6=, 2($1)
 	i32.const	$push7=, 30
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#3:                                 # %if.end11
+# %bb.3:                                # %if.end11
 	i32.load8_u	$push9=, 0($2)
 	i32.const	$push10=, 11
 	i32.ne  	$push11=, $pop9, $pop10
 	br_if   	0, $pop11       # 0: down to label0
-# BB#4:                                 # %if.end17
+# %bb.4:                                # %if.end17
 	i32.load8_u	$push12=, 1($2)
 	i32.const	$push13=, 21
 	i32.ne  	$push14=, $pop12, $pop13
 	br_if   	0, $pop14       # 0: down to label0
-# BB#5:                                 # %if.end23
+# %bb.5:                                # %if.end23
 	i32.load8_u	$push15=, 2($2)
 	i32.const	$push16=, 31
 	i32.ne  	$push17=, $pop15, $pop16
 	br_if   	0, $pop17       # 0: down to label0
-# BB#6:                                 # %if.end29
+# %bb.6:                                # %if.end29
 	i32.load8_u	$push18=, 0($3)
 	i32.const	$push19=, 12
 	i32.ne  	$push20=, $pop18, $pop19
 	br_if   	0, $pop20       # 0: down to label0
-# BB#7:                                 # %if.end35
+# %bb.7:                                # %if.end35
 	i32.load8_u	$push21=, 1($3)
 	i32.const	$push22=, 22
 	i32.ne  	$push23=, $pop21, $pop22
 	br_if   	0, $pop23       # 0: down to label0
-# BB#8:                                 # %if.end41
+# %bb.8:                                # %if.end41
 	i32.load8_u	$push24=, 2($3)
 	i32.const	$push25=, 32
 	i32.ne  	$push26=, $pop24, $pop25
 	br_if   	0, $pop26       # 0: down to label0
-# BB#9:                                 # %if.end47
+# %bb.9:                                # %if.end47
 	i32.const	$push27=, 123
 	i32.ne  	$push28=, $4, $pop27
 	br_if   	0, $pop28       # 0: down to label0
-# BB#10:                                # %if.end51
+# %bb.10:                               # %if.end51
 	return  	$2
 .LBB0_11:                               # %if.then
 	end_block                       # label0:
@@ -74,14 +74,13 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push21=, 0
+# %bb.0:                                # %entry
 	i32.const	$push19=, 0
 	i32.load	$push18=, __stack_pointer($pop19)
 	i32.const	$push20=, 32
-	i32.sub 	$push37=, $pop18, $pop20
-	tee_local	$push36=, $0=, $pop37
-	i32.store	__stack_pointer($pop21), $pop36
+	i32.sub 	$0=, $pop18, $pop20
+	i32.const	$push21=, 0
+	i32.store	__stack_pointer($pop21), $0
 	i32.const	$push0=, 186520586
 	i32.store	16($0), $pop0
 	i32.const	$push22=, 12
@@ -132,6 +131,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

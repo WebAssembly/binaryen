@@ -7,27 +7,25 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push12=, 0
-	i32.const	$push11=, 0
-	i32.load16_s	$push10=, a($pop11)
-	tee_local	$push9=, $0=, $pop10
-	i32.store8	c($pop12), $pop9
+# %bb.0:                                # %entry
 	i32.const	$push8=, 0
+	i32.load16_s	$0=, a($pop8)
+	i32.const	$push7=, 0
+	i32.store8	c($pop7), $0
 	i32.const	$push0=, 24
 	i32.shl 	$push1=, $0, $pop0
-	i32.const	$push7=, 24
-	i32.shr_s	$push2=, $pop1, $pop7
-	i32.or  	$push6=, $0, $pop2
-	tee_local	$push5=, $0=, $pop6
-	i32.store	b($pop8), $pop5
+	i32.const	$push6=, 24
+	i32.shr_s	$push2=, $pop1, $pop6
+	i32.or  	$0=, $0, $pop2
+	i32.const	$push5=, 0
+	i32.store	b($pop5), $0
 	block   	
 	i32.const	$push3=, -1
 	i32.ne  	$push4=, $0, $pop3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push13=, 0
-	return  	$pop13
+# %bb.1:                                # %if.end
+	i32.const	$push9=, 0
+	return  	$pop9
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -63,5 +61,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -7,7 +7,7 @@
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.extend_u/i32	$push0=, $0
 	i64.const	$push1=, 2863311531
 	i64.mul 	$push2=, $pop0, $pop1
@@ -26,7 +26,7 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i64, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, 0
 	i64.const	$0=, 0
 .LBB1_1:                                # %for.body
@@ -40,17 +40,16 @@ main:                                   # @main
 	i32.wrap/i64	$push2=, $pop1
 	i32.ne  	$push3=, $pop0, $pop2
 	br_if   	1, $pop3        # 1: down to label0
-# BB#2:                                 # %for.cond
+# %bb.2:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i64.const	$push12=, 2863311531
-	i64.add 	$0=, $0, $pop12
-	i32.const	$push11=, 1
-	i32.add 	$push10=, $1, $pop11
-	tee_local	$push9=, $1=, $pop10
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	i64.const	$push9=, 2863311531
+	i64.add 	$0=, $0, $pop9
 	i32.const	$push8=, 9999
-	i32.le_u	$push4=, $pop9, $pop8
+	i32.le_u	$push4=, $1, $pop8
 	br_if   	0, $pop4        # 0: up to label1
-# BB#3:                                 # %for.end
+# %bb.3:                                # %for.end
 	end_loop
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
@@ -64,6 +63,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

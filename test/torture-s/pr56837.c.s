@@ -6,20 +6,19 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -8192
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push5=, a+8192
-	i32.add 	$push0=, $0, $pop5
-	i64.const	$push4=, 4294967295
-	i64.store	0($pop0), $pop4
-	i32.const	$push3=, 8
-	i32.add 	$push2=, $0, $pop3
-	tee_local	$push1=, $0=, $pop2
-	br_if   	0, $pop1        # 0: up to label0
-# BB#2:                                 # %for.end
+	i32.const	$push3=, a+8192
+	i32.add 	$push0=, $0, $pop3
+	i64.const	$push2=, 4294967295
+	i64.store	0($pop0), $pop2
+	i32.const	$push1=, 8
+	i32.add 	$0=, $0, $pop1
+	br_if   	0, $0           # 0: up to label0
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -33,10 +32,10 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	foo@FUNCTION
+	i32.const	$1=, 0
 	i32.const	$0=, a
-	i32.const	$1=, -1
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
@@ -45,23 +44,22 @@ main:                                   # @main
 	i32.const	$push6=, -1
 	i32.ne  	$push2=, $pop1, $pop6
 	br_if   	1, $pop2        # 1: down to label1
-# BB#2:                                 # %for.body
+# %bb.2:                                # %for.body
                                         #   in Loop: Header=BB1_1 Depth=1
 	i32.const	$push7=, 4
 	i32.add 	$push3=, $0, $pop7
 	i32.load	$push0=, 0($pop3)
 	br_if   	1, $pop0        # 1: down to label1
-# BB#3:                                 # %for.cond
+# %bb.3:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push12=, 8
-	i32.add 	$0=, $0, $pop12
-	i32.const	$push11=, 1
-	i32.add 	$push10=, $1, $pop11
-	tee_local	$push9=, $1=, $pop10
-	i32.const	$push8=, 1022
-	i32.le_u	$push4=, $pop9, $pop8
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	i32.const	$push9=, 8
+	i32.add 	$0=, $0, $pop9
+	i32.const	$push8=, 1023
+	i32.le_u	$push4=, $1, $pop8
 	br_if   	0, $pop4        # 0: up to label2
-# BB#4:                                 # %for.end
+# %bb.4:                                # %for.end
 	end_loop
 	i32.const	$push5=, 0
 	return  	$pop5
@@ -83,5 +81,5 @@ a:
 	.size	a, 8192
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

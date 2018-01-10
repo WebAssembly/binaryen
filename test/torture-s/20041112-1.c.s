@@ -7,23 +7,21 @@
 bar:                                    # @bar
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push19=, 0
-	i32.load	$push18=, global($pop19)
-	tee_local	$push17=, $0=, $pop18
+	i32.load	$0=, global($pop0)
 	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop17, $pop1
+	i32.add 	$push2=, $0, $pop1
 	i32.const	$push3=, 2
-	i32.select	$push16=, $pop2, $pop3, $0
-	tee_local	$push15=, $1=, $pop16
+	i32.select	$1=, $pop2, $pop3, $0
+	i32.const	$push15=, 0
 	i32.const	$push14=, 1
 	i32.const	$push5=, global
 	i32.const	$push4=, -1
 	i32.eq  	$push6=, $pop5, $pop4
 	i32.select	$push7=, $1, $pop14, $pop6
-	i32.select	$push8=, $pop15, $pop7, $0
-	i32.store	global($pop0), $pop8
+	i32.select	$push8=, $1, $pop7, $0
+	i32.store	global($pop15), $pop8
 	i32.eqz 	$push10=, $0
 	i32.const	$push13=, global
 	i32.const	$push12=, -1
@@ -40,7 +38,7 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 2
 	i32.store	global($pop1), $pop0
@@ -60,4 +58,4 @@ global:
 	.size	global, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

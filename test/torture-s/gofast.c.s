@@ -7,7 +7,7 @@
 fp_add:                                 # @fp_add
 	.param  	f32, f32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.add 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -21,7 +21,7 @@ fp_add:                                 # @fp_add
 fp_sub:                                 # @fp_sub
 	.param  	f32, f32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.sub 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -35,7 +35,7 @@ fp_sub:                                 # @fp_sub
 fp_mul:                                 # @fp_mul
 	.param  	f32, f32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.mul 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -49,7 +49,7 @@ fp_mul:                                 # @fp_mul
 fp_div:                                 # @fp_div
 	.param  	f32, f32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.div 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -63,7 +63,7 @@ fp_div:                                 # @fp_div
 fp_neg:                                 # @fp_neg
 	.param  	f32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.neg 	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -77,7 +77,7 @@ fp_neg:                                 # @fp_neg
 dp_add:                                 # @dp_add
 	.param  	f64, f64
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.add 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -91,7 +91,7 @@ dp_add:                                 # @dp_add
 dp_sub:                                 # @dp_sub
 	.param  	f64, f64
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.sub 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -105,7 +105,7 @@ dp_sub:                                 # @dp_sub
 dp_mul:                                 # @dp_mul
 	.param  	f64, f64
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.mul 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -119,7 +119,7 @@ dp_mul:                                 # @dp_mul
 dp_div:                                 # @dp_div
 	.param  	f64, f64
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.div 	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -133,7 +133,7 @@ dp_div:                                 # @dp_div
 dp_neg:                                 # @dp_neg
 	.param  	f64
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.neg 	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -147,7 +147,7 @@ dp_neg:                                 # @dp_neg
 fp_to_dp:                               # @fp_to_dp
 	.param  	f32
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.promote/f32	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -161,7 +161,7 @@ fp_to_dp:                               # @fp_to_dp
 dp_to_fp:                               # @dp_to_fp
 	.param  	f64
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.demote/f64	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -175,7 +175,7 @@ dp_to_fp:                               # @dp_to_fp
 eqsf2:                                  # @eqsf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.eq  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -189,7 +189,7 @@ eqsf2:                                  # @eqsf2
 nesf2:                                  # @nesf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.ne  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -203,7 +203,7 @@ nesf2:                                  # @nesf2
 gtsf2:                                  # @gtsf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.gt  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -217,7 +217,7 @@ gtsf2:                                  # @gtsf2
 gesf2:                                  # @gesf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.ge  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -231,7 +231,7 @@ gesf2:                                  # @gesf2
 ltsf2:                                  # @ltsf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.lt  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -245,7 +245,7 @@ ltsf2:                                  # @ltsf2
 lesf2:                                  # @lesf2
 	.param  	f32, f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.le  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -259,7 +259,7 @@ lesf2:                                  # @lesf2
 eqdf2:                                  # @eqdf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.eq  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -273,7 +273,7 @@ eqdf2:                                  # @eqdf2
 nedf2:                                  # @nedf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.ne  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -287,7 +287,7 @@ nedf2:                                  # @nedf2
 gtdf2:                                  # @gtdf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.gt  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -301,7 +301,7 @@ gtdf2:                                  # @gtdf2
 gedf2:                                  # @gedf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.ge  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -315,7 +315,7 @@ gedf2:                                  # @gedf2
 ltdf2:                                  # @ltdf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.lt  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -329,7 +329,7 @@ ltdf2:                                  # @ltdf2
 ledf2:                                  # @ledf2
 	.param  	f64, f64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.le  	$push0=, $0, $1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -343,7 +343,7 @@ ledf2:                                  # @ledf2
 floatsisf:                              # @floatsisf
 	.param  	i32
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.convert_s/i32	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -357,7 +357,7 @@ floatsisf:                              # @floatsisf
 floatsidf:                              # @floatsidf
 	.param  	i32
 	.result 	f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.convert_s/i32	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -371,9 +371,19 @@ floatsidf:                              # @floatsidf
 fixsfsi:                                # @fixsfsi
 	.param  	f32
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.trunc_s/f32	$push0=, $0
-                                        # fallthrough-return: $pop0
+# %bb.0:                                # %entry
+	block   	
+	f32.abs 	$push0=, $0
+	f32.const	$push1=, 0x1p31
+	f32.lt  	$push2=, $pop0, $pop1
+	br_if   	0, $pop2        # 0: down to label0
+# %bb.1:                                # %entry
+	i32.const	$push3=, -2147483648
+	return  	$pop3
+.LBB26_2:                               # %entry
+	end_block                       # label0:
+	i32.trunc_s/f32	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end26:
 	.size	fixsfsi, .Lfunc_end26-fixsfsi
@@ -385,9 +395,19 @@ fixsfsi:                                # @fixsfsi
 fixdfsi:                                # @fixdfsi
 	.param  	f64
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.trunc_s/f64	$push0=, $0
-                                        # fallthrough-return: $pop0
+# %bb.0:                                # %entry
+	block   	
+	f64.abs 	$push0=, $0
+	f64.const	$push1=, 0x1p31
+	f64.lt  	$push2=, $pop0, $pop1
+	br_if   	0, $pop2        # 0: down to label1
+# %bb.1:                                # %entry
+	i32.const	$push3=, -2147483648
+	return  	$pop3
+.LBB27_2:                               # %entry
+	end_block                       # label1:
+	i32.trunc_s/f64	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end27:
 	.size	fixdfsi, .Lfunc_end27-fixdfsi
@@ -399,9 +419,21 @@ fixdfsi:                                # @fixdfsi
 fixunssfsi:                             # @fixunssfsi
 	.param  	f32
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.trunc_u/f32	$push0=, $0
-                                        # fallthrough-return: $pop0
+# %bb.0:                                # %entry
+	block   	
+	f32.const	$push0=, 0x1p32
+	f32.lt  	$push1=, $0, $pop0
+	f32.const	$push2=, 0x0p0
+	f32.ge  	$push3=, $0, $pop2
+	i32.and 	$push4=, $pop1, $pop3
+	br_if   	0, $pop4        # 0: down to label2
+# %bb.1:                                # %entry
+	i32.const	$push5=, 0
+	return  	$pop5
+.LBB28_2:                               # %entry
+	end_block                       # label2:
+	i32.trunc_u/f32	$push6=, $0
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end28:
 	.size	fixunssfsi, .Lfunc_end28-fixunssfsi
@@ -413,9 +445,21 @@ fixunssfsi:                             # @fixunssfsi
 fixunsdfsi:                             # @fixunsdfsi
 	.param  	f64
 	.result 	i32
-# BB#0:                                 # %entry
-	i32.trunc_u/f64	$push0=, $0
-                                        # fallthrough-return: $pop0
+# %bb.0:                                # %entry
+	block   	
+	f64.const	$push0=, 0x1p32
+	f64.lt  	$push1=, $0, $pop0
+	f64.const	$push2=, 0x0p0
+	f64.ge  	$push3=, $0, $pop2
+	i32.and 	$push4=, $pop1, $pop3
+	br_if   	0, $pop4        # 0: down to label3
+# %bb.1:                                # %entry
+	i32.const	$push5=, 0
+	return  	$pop5
+.LBB29_2:                               # %entry
+	end_block                       # label3:
+	i32.trunc_u/f64	$push6=, $0
+                                        # fallthrough-return: $pop6
 	.endfunc
 .Lfunc_end29:
 	.size	fixunsdfsi, .Lfunc_end29-fixunsdfsi
@@ -428,14 +472,13 @@ fail:                                   # @fail
 	.param  	i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push9=, 0
+# %bb.0:                                # %entry
 	i32.const	$push7=, 0
 	i32.load	$push6=, __stack_pointer($pop7)
 	i32.const	$push8=, 16
-	i32.sub 	$push16=, $pop6, $pop8
-	tee_local	$push15=, $1=, $pop16
-	i32.store	__stack_pointer($pop9), $pop15
+	i32.sub 	$1=, $pop6, $pop8
+	i32.const	$push9=, 0
+	i32.store	__stack_pointer($pop9), $1
 	i32.const	$push0=, 0
 	i32.const	$push14=, 0
 	i32.load	$push1=, fail_count($pop14)
@@ -451,8 +494,8 @@ fail:                                   # @fail
 	i32.const	$push10=, 16
 	i32.add 	$push11=, $1, $pop10
 	i32.store	__stack_pointer($pop12), $pop11
-	copy_local	$push17=, $1
-                                        # fallthrough-return: $pop17
+	copy_local	$push15=, $1
+                                        # fallthrough-return: $pop15
 	.endfunc
 .Lfunc_end30:
 	.size	fail, .Lfunc_end30-fail
@@ -463,17 +506,17 @@ fail:                                   # @fail
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end198
+# %bb.0:                                # %if.end198
 	block   	
 	i32.const	$push1=, 0
 	i32.load	$push0=, fail_count($pop1)
-	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.end202
+	br_if   	0, $pop0        # 0: down to label4
+# %bb.1:                                # %if.end202
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
 .LBB31_2:                               # %if.then201
-	end_block                       # label0:
+	end_block                       # label4:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -496,7 +539,7 @@ fail_count:
 	.size	.L.str, 17
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	fprintf, i32, i32, i32
 	.functype	abort, void
 	.functype	exit, void, i32

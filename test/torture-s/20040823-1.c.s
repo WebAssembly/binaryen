@@ -5,13 +5,13 @@
 	.globl	bla
 	.type	bla,@function
 bla:                                    # @bla
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push2=, 0
 	i32.load	$push0=, pwarn($pop2)
 	i32.load	$push1=, 0($pop0)
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
@@ -30,14 +30,13 @@ bla:                                    # @bla
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push5=, 0
+# %bb.0:                                # %entry
 	i32.const	$push3=, 0
 	i32.load	$push2=, __stack_pointer($pop3)
 	i32.const	$push4=, 16
-	i32.sub 	$push9=, $pop2, $pop4
-	tee_local	$push8=, $0=, $pop9
-	i32.store	__stack_pointer($pop5), $pop8
+	i32.sub 	$0=, $pop2, $pop4
+	i32.const	$push5=, 0
+	i32.store	__stack_pointer($pop5), $0
 	i32.const	$push0=, 1
 	i32.store	12($0), $pop0
 	i32.const	$push1=, 0
@@ -60,6 +59,6 @@ pwarn:
 	.size	pwarn, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

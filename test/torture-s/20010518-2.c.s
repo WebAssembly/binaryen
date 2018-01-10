@@ -7,14 +7,13 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push29=, 0
+# %bb.0:                                # %entry
 	i32.const	$push27=, 0
 	i32.load	$push26=, __stack_pointer($pop27)
 	i32.const	$push28=, 48
-	i32.sub 	$push35=, $pop26, $pop28
-	tee_local	$push34=, $0=, $pop35
-	i32.store	__stack_pointer($pop29), $pop34
+	i32.sub 	$0=, $pop26, $pop28
+	i32.const	$push29=, 0
+	i32.store	__stack_pointer($pop29), $0
 	i32.const	$push33=, 2
 	i32.store	24($0), $pop33
 	i32.const	$push0=, 1
@@ -50,27 +49,27 @@ main:                                   # @main
 	i32.const	$push30=, 1
 	i32.ne  	$push13=, $pop12, $pop30
 	br_if   	0, $pop13       # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.load	$push14=, 40($0)
-	i32.const	$push36=, 2
-	i32.ne  	$push15=, $pop14, $pop36
+	i32.const	$push34=, 2
+	i32.ne  	$push15=, $pop14, $pop34
 	br_if   	0, $pop15       # 0: down to label0
-# BB#2:                                 # %lor.lhs.false9
+# %bb.2:                                # %lor.lhs.false9
 	i32.load16_u	$push17=, 38($0)
 	i32.const	$push16=, 3
 	i32.ne  	$push18=, $pop17, $pop16
 	br_if   	0, $pop18       # 0: down to label0
-# BB#3:                                 # %lor.lhs.false14
+# %bb.3:                                # %lor.lhs.false14
 	i32.load16_u	$push20=, 36($0)
 	i32.const	$push19=, 4
 	i32.ne  	$push21=, $pop20, $pop19
 	br_if   	0, $pop21       # 0: down to label0
-# BB#4:                                 # %lor.lhs.false19
+# %bb.4:                                # %lor.lhs.false19
 	i32.load8_u	$push23=, 31($0)
 	i32.const	$push22=, 99
 	i32.ne  	$push24=, $pop23, $pop22
 	br_if   	0, $pop24       # 0: down to label0
-# BB#5:                                 # %if.end
+# %bb.5:                                # %if.end
 	i32.const	$push25=, 0
 	call    	exit@FUNCTION, $pop25
 	unreachable
@@ -83,6 +82,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end0-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

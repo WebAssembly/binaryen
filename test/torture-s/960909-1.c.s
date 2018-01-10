@@ -8,30 +8,29 @@ ffs:                                    # @ffs
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
-	i32.eqz 	$push8=, $0
-	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %if.end
+	i32.eqz 	$push6=, $0
+	br_if   	0, $pop6        # 0: down to label0
+# %bb.1:                                # %if.end
 	i32.const	$2=, 1
 	block   	
 	i32.const	$push3=, 1
 	i32.and 	$push0=, $0, $pop3
 	br_if   	0, $pop0        # 0: down to label1
-# BB#2:                                 # %for.inc.preheader
+# %bb.2:                                # %for.inc.preheader
 	i32.const	$1=, 1
 	i32.const	$2=, 1
 .LBB0_3:                                # %for.inc
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.const	$push7=, 1
-	i32.add 	$2=, $2, $pop7
-	i32.const	$push6=, 1
-	i32.shl 	$push5=, $1, $pop6
-	tee_local	$push4=, $1=, $pop5
-	i32.and 	$push1=, $pop4, $0
-	i32.eqz 	$push9=, $pop1
-	br_if   	0, $pop9        # 0: up to label2
+	i32.const	$push5=, 1
+	i32.add 	$2=, $2, $pop5
+	i32.const	$push4=, 1
+	i32.shl 	$1=, $1, $pop4
+	i32.and 	$push1=, $1, $0
+	i32.eqz 	$push7=, $pop1
+	br_if   	0, $pop7        # 0: up to label2
 .LBB0_4:                                # %cleanup
 	end_loop
 	end_block                       # label1:
@@ -51,11 +50,11 @@ ffs:                                    # @ffs
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.eqz 	$push0=, $0
 	br_if   	0, $pop0        # 0: down to label3
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return  	$0
 .LBB1_2:                                # %if.then
 	end_block                       # label3:
@@ -71,7 +70,7 @@ f:                                      # @f
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -80,6 +79,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

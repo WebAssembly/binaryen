@@ -7,7 +7,7 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$5=, .L.str
 	i32.const	$push12=, 0
 	i32.load	$push11=, __stack_pointer($pop12)
@@ -34,7 +34,7 @@ main:                                   # @main
 	i32.const	$push18=, 97
 	i32.ne  	$push1=, $pop0, $pop18
 	br_if   	0, $pop1        # 0: up to label2
-# BB#3:                                 # %while.cond2.i.preheader
+# %bb.3:                                # %while.cond2.i.preheader
                                         #   in Loop: Header=BB0_2 Depth=2
 	copy_local	$7=, $5
 .LBB0_4:                                # %while.cond2.i
@@ -42,60 +42,57 @@ main:                                   # @main
                                         #     Parent Loop BB0_2 Depth=2
                                         # =>    This Inner Loop Header: Depth=3
 	loop    	                # label3:
+	i32.const	$push21=, 1
+	i32.add 	$1=, $7, $pop21
 	i32.load8_u	$4=, 1($7)
-	i32.const	$push23=, 1
-	i32.add 	$push22=, $7, $pop23
-	tee_local	$push21=, $1=, $pop22
-	copy_local	$7=, $pop21
+	copy_local	$7=, $1
 	i32.const	$push20=, 120
 	i32.eq  	$push2=, $4, $pop20
 	br_if   	0, $pop2        # 0: up to label3
-# BB#5:                                 # %while.cond2.i
+# %bb.5:                                # %while.cond2.i
                                         #   in Loop: Header=BB0_2 Depth=2
 	end_loop
-	i32.const	$push24=, 98
-	i32.eq  	$push3=, $4, $pop24
+	i32.const	$push22=, 98
+	i32.eq  	$push3=, $4, $pop22
 	br_if   	1, $pop3        # 1: down to label1
-# BB#6:                                 # %if.end.i
+# %bb.6:                                # %if.end.i
                                         #   in Loop: Header=BB0_2 Depth=2
 	i32.ge_u	$push5=, $5, $1
 	br_if   	0, $pop5        # 0: up to label2
-# BB#7:                                 # %while.body14.lr.ph.i
+# %bb.7:                                # %while.body14.lr.ph.i
                                         #   in Loop: Header=BB0_1 Depth=1
 	end_loop
-	i32.const	$push30=, 97
-	i32.store8	0($6), $pop30
-	i32.const	$push29=, -1
-	i32.add 	$push28=, $1, $pop29
-	tee_local	$push27=, $0=, $pop28
+	i32.const	$push26=, 97
+	i32.store8	0($6), $pop26
+	i32.const	$push25=, -1
+	i32.add 	$0=, $1, $pop25
 	i32.gt_u	$push6=, $5, $0
-	i32.select	$push7=, $5, $pop27, $pop6
+	i32.select	$push7=, $5, $0, $pop6
 	i32.add 	$2=, $6, $pop7
-	i32.const	$push26=, 1
-	i32.add 	$7=, $5, $pop26
-	i32.const	$push25=, 0
-	i32.sub 	$3=, $pop25, $5
+	i32.const	$push24=, 1
+	i32.add 	$7=, $5, $pop24
+	i32.const	$push23=, 0
+	i32.sub 	$3=, $pop23, $5
 	block   	
 	block   	
 	i32.ge_u	$push8=, $5, $0
 	br_if   	0, $pop8        # 0: down to label5
-# BB#8:                                 # %while.body14.while.body14_crit_edge.i.preheader
+# %bb.8:                                # %while.body14.while.body14_crit_edge.i.preheader
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push31=, 1
-	i32.add 	$4=, $6, $pop31
+	i32.const	$push27=, 1
+	i32.add 	$4=, $6, $pop27
 .LBB0_9:                                # %while.body14.while.body14_crit_edge.i
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label6:
 	i32.load8_u	$push9=, 0($7)
 	i32.store8	0($4), $pop9
-	i32.const	$push35=, 1
-	i32.add 	$4=, $4, $pop35
+	i32.const	$push29=, 1
+	i32.add 	$4=, $4, $pop29
+	i32.const	$push28=, 1
+	i32.add 	$5=, $7, $pop28
 	i32.lt_u	$1=, $7, $0
-	i32.const	$push34=, 1
-	i32.add 	$push33=, $7, $pop34
-	tee_local	$push32=, $5=, $pop33
-	copy_local	$7=, $pop32
+	copy_local	$7=, $5
 	br_if   	0, $1           # 0: up to label6
 	br      	2               # 2: down to label4
 .LBB0_10:                               #   in Loop: Header=BB0_1 Depth=1
@@ -125,4 +122,4 @@ main:                                   # @main
 	.size	.L.str, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

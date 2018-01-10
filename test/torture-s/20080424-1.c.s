@@ -7,28 +7,26 @@
 bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push13=, 0
-	i32.load	$push12=, bar.i($pop13)
-	tee_local	$push11=, $2=, $pop12
+# %bb.0:                                # %entry
+	i32.const	$push9=, 0
+	i32.load	$2=, bar.i($pop9)
 	i32.const	$push0=, 36
-	i32.mul 	$push10=, $pop11, $pop0
-	tee_local	$push9=, $3=, $pop10
+	i32.mul 	$3=, $2, $pop0
+	block   	
 	i32.const	$push1=, g+288
-	i32.add 	$push2=, $pop9, $pop1
+	i32.add 	$push2=, $3, $pop1
 	i32.ne  	$push3=, $pop2, $0
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
-	i32.const	$push14=, 0
+# %bb.1:                                # %lor.lhs.false
+	i32.const	$push10=, 0
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $2, $pop4
-	i32.store	bar.i($pop14), $pop5
+	i32.store	bar.i($pop10), $pop5
 	i32.const	$push6=, g
 	i32.add 	$push7=, $3, $pop6
 	i32.ne  	$push8=, $pop7, $1
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	return
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
@@ -44,7 +42,7 @@ bar:                                    # @bar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, g+288
 	i32.const	$push0=, g
 	call    	bar@FUNCTION, $pop1, $pop0
@@ -92,5 +90,5 @@ g:
 	.size	g, 1728
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

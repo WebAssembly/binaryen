@@ -5,7 +5,7 @@
 	.globl	vec_assert_fail
 	.type	vec_assert_fail,@function
 vec_assert_fail:                        # @vec_assert_fail
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -18,7 +18,7 @@ vec_assert_fail:                        # @vec_assert_fail
 	.type	perform_access_checks,@function
 perform_access_checks:                  # @perform_access_checks
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
@@ -31,50 +31,46 @@ perform_access_checks:                  # @perform_access_checks
 	.type	pop_to_parent_deferring_access_checks,@function
 pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.const	$push9=, 0
+	i32.load	$0=, deferred_access_no_check($pop9)
 	block   	
-	i32.const	$push11=, 0
-	i32.load	$push10=, deferred_access_no_check($pop11)
-	tee_local	$push9=, $0=, $pop10
-	i32.eqz 	$push20=, $pop9
-	br_if   	0, $pop20       # 0: down to label0
-# BB#1:                                 # %if.then
-	i32.const	$push12=, 0
+	i32.eqz 	$push12=, $0
+	br_if   	0, $pop12       # 0: down to label0
+# %bb.1:                                # %if.then
+	i32.const	$push10=, 0
 	i32.const	$push0=, -1
 	i32.add 	$push1=, $0, $pop0
-	i32.store	deferred_access_no_check($pop12), $pop1
+	i32.store	deferred_access_no_check($pop10), $pop1
 	return
 .LBB2_2:                                # %if.else
 	end_block                       # label0:
+	i32.const	$push11=, 0
+	i32.load	$0=, deferred_access_stack($pop11)
 	block   	
 	block   	
-	i32.const	$push15=, 0
-	i32.load	$push14=, deferred_access_stack($pop15)
-	tee_local	$push13=, $0=, $pop14
-	i32.eqz 	$push21=, $pop13
-	br_if   	0, $pop21       # 0: down to label2
-# BB#3:                                 # %land.lhs.true.i
-	i32.load	$push17=, 0($0)
-	tee_local	$push16=, $1=, $pop17
-	i32.eqz 	$push22=, $pop16
-	br_if   	0, $pop22       # 0: down to label2
-# BB#4:                                 # %land.lhs.true.i25
+	i32.eqz 	$push13=, $0
+	br_if   	0, $pop13       # 0: down to label2
+# %bb.3:                                # %land.lhs.true.i
+	i32.load	$1=, 0($0)
+	i32.eqz 	$push14=, $1
+	br_if   	0, $pop14       # 0: down to label2
+# %bb.4:                                # %land.lhs.true.i25
 	i32.const	$push2=, -1
-	i32.add 	$push19=, $1, $pop2
-	tee_local	$push18=, $2=, $pop19
-	i32.store	0($0), $pop18
-	i32.eqz 	$push23=, $2
-	br_if   	0, $pop23       # 0: down to label2
-# BB#5:                                 # %VEC_deferred_access_base_last.exit29
+	i32.add 	$2=, $1, $pop2
+	i32.store	0($0), $2
+	i32.eqz 	$push15=, $2
+	br_if   	0, $pop15       # 0: down to label2
+# %bb.5:                                # %VEC_deferred_access_base_last.exit29
 	i32.const	$push3=, 3
 	i32.shl 	$push4=, $1, $pop3
 	i32.add 	$push5=, $0, $pop4
 	i32.const	$push6=, -8
 	i32.add 	$push7=, $pop5, $pop6
 	i32.load	$push8=, 0($pop7)
-	i32.eqz 	$push24=, $pop8
-	br_if   	1, $pop24       # 1: down to label1
-# BB#6:                                 # %if.end16
+	i32.eqz 	$push16=, $pop8
+	br_if   	1, $pop16       # 1: down to label1
+# %bb.6:                                # %if.end16
 	return
 .LBB2_7:                                # %cond.false.i
 	end_block                       # label2:
@@ -95,12 +91,11 @@ pop_to_parent_deferring_access_checks:  # @pop_to_parent_deferring_access_checks
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 76
-	i32.call	$push8=, __builtin_malloc@FUNCTION, $pop0
-	tee_local	$push7=, $0=, $pop8
+	i32.call	$0=, __builtin_malloc@FUNCTION, $pop0
 	i32.const	$push1=, 2
-	i32.store	0($pop7), $pop1
+	i32.store	0($0), $pop1
 	i32.const	$push2=, 0
 	i32.store	deferred_access_stack($pop2), $0
 	i32.const	$push3=, 8
@@ -138,6 +133,6 @@ deferred_access_stack:
 	.size	deferred_access_stack, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	__builtin_malloc, i32

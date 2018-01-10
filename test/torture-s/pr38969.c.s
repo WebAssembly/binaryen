@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.load	$push0=, 0($1):p2align=2
 	i64.store	0($0):p2align=2, $pop0
                                         # fallthrough-return
@@ -21,17 +21,15 @@ foo:                                    # @foo
 bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i64, i32
-# BB#0:                                 # %entry
-	i32.const	$push4=, 0
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.load	$push1=, __stack_pointer($pop2)
 	i32.const	$push3=, 32
-	i32.sub 	$push15=, $pop1, $pop3
-	tee_local	$push14=, $3=, $pop15
-	i32.store	__stack_pointer($pop4), $pop14
-	i64.load	$push13=, 0($1):p2align=2
-	tee_local	$push12=, $2=, $pop13
-	i64.store	8($3), $pop12
+	i32.sub 	$3=, $pop1, $pop3
+	i32.const	$push4=, 0
+	i32.store	__stack_pointer($pop4), $3
+	i64.load	$2=, 0($1):p2align=2
+	i64.store	8($3), $2
 	i64.store	16($3), $2
 	i32.const	$push8=, 24
 	i32.add 	$push9=, $3, $pop8
@@ -56,14 +54,13 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push11=, 0
+# %bb.0:                                # %entry
 	i32.const	$push9=, 0
 	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 32
-	i32.sub 	$push21=, $pop8, $pop10
-	tee_local	$push20=, $0=, $pop21
-	i32.store	__stack_pointer($pop11), $pop20
+	i32.sub 	$0=, $pop8, $pop10
+	i32.const	$push11=, 0
+	i32.store	__stack_pointer($pop11), $0
 	i64.const	$push1=, 4767060206663237632
 	i64.store	8($0), $pop1
 	i64.const	$push19=, 4767060206663237632
@@ -78,12 +75,12 @@ main:                                   # @main
 	f32.const	$push2=, 0x1.2p3
 	f32.ne  	$push4=, $pop3, $pop2
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	f32.load	$push0=, 28($0)
 	f32.const	$push5=, 0x1.5p5
 	f32.ne  	$push6=, $pop0, $pop5
 	br_if   	0, $pop6        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push14=, 0
 	i32.const	$push12=, 32
 	i32.add 	$push13=, $0, $pop12
@@ -99,5 +96,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -6,14 +6,13 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-# BB#0:                                 # %entry
-	i32.const	$push1=, 0
-	i32.const	$push10=, 0
-	i32.load	$push2=, a($pop10)
+# %bb.0:                                # %entry
 	i32.const	$push0=, q
-	i32.sub 	$push9=, $0, $pop0
-	tee_local	$push8=, $0=, $pop9
-	i32.add 	$push3=, $pop2, $pop8
+	i32.sub 	$0=, $0, $pop0
+	i32.const	$push1=, 0
+	i32.const	$push8=, 0
+	i32.load	$push2=, a($pop8)
+	i32.add 	$push3=, $pop2, $0
 	i32.store	a($pop1), $pop3
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
@@ -31,7 +30,7 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push4=, 0
 	i32.load	$push1=, a($pop4)
@@ -39,7 +38,7 @@ main:                                   # @main
 	i32.load	$push0=, a+4($pop3)
 	i32.or  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %for.cond.1
+# %bb.1:                                # %for.cond.1
 	i32.const	$push5=, 0
 	return  	$pop5
 .LBB1_2:                                # %if.then
@@ -68,5 +67,5 @@ a:
 	.size	a, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -6,13 +6,13 @@
 	.type	frob_entry,@function
 frob_entry:                             # @frob_entry
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.load	$push0=, 0($0):p2align=0
 	i32.const	$push1=, 63
 	i32.gt_u	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push3=, -1
 	i32.store	0($0):p2align=0, $pop3
 .LBB0_2:                                # %if.end
@@ -29,14 +29,13 @@ frob_entry:                             # @frob_entry
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push7=, 0
+# %bb.0:                                # %entry
 	i32.const	$push5=, 0
 	i32.load	$push4=, __stack_pointer($pop5)
 	i32.const	$push6=, 16
-	i32.sub 	$push14=, $pop4, $pop6
-	tee_local	$push13=, $0=, $pop14
-	i32.store	__stack_pointer($pop7), $pop13
+	i32.sub 	$0=, $pop4, $pop6
+	i32.const	$push7=, 0
+	i32.store	__stack_pointer($pop7), $0
 	i64.const	$push0=, 0
 	i64.store	8($0), $pop0
 	i32.const	$push11=, 8
@@ -55,4 +54,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
