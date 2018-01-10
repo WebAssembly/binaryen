@@ -328,13 +328,21 @@ void WasmBinaryWriter::writeExports() {
   finishSection(start);
 }
 
+static bool isEmpty(Memory::Segment& segment) {
+  return segment.data.size() == 0;
+}
+
+static bool isConstantOffset(Memory::Segment& segment) {
+  return segment.offset->is<Const>();
+}
+
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
   Index numConstant = 0,
         numDynamic = 0;
   for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() > 0) {
-      if (segment.offset->is<Const>()) {
+    if (!isEmpty(segment)) {
+      if (isConstantOffset(segment)) {
         numConstant++;
       } else {
         numDynamic++;
@@ -366,14 +374,14 @@ void WasmBinaryWriter::writeDataSegments() {
   };
   auto& segments = wasm->memory.segments;
   for (auto& segment : segments) {
-    if (segment.data.size() == 0) continue;
-    if (segment.offset->is<Const>()) continue;
+    if (isEmpty(segment)) continue;
+    if (isConstantOffset(segment)) continue;
     emit(segment);
   }
   for (Index i = 0; i < segments.size(); i++) {
     auto& segment = segments[i];
-    if (segment.data.size() == 0) continue;
-    if (!segment.offset->is<Const>()) continue;
+    if (isEmpty(segment)) continue;
+    if (!isConstantOffset(segment)) continue;
     if (emitted + 2 < MaxDataSegments) {
       emit(segment);
     } else {
@@ -382,8 +390,8 @@ void WasmBinaryWriter::writeDataSegments() {
       auto start = segment.offset->cast<Const>()->value.getInteger();
       for (Index j = i + 1; j < segments.size(); j++) {
         auto& segment = segments[j];
-        if (segment.data.size() == 0) continue;
-        if (!segment.offset->is<Const>()) continue;
+        if (isEmpty(segment)) continue;
+        if (!isConstantOffset(segment)) continue;
         auto offset = segment.offset->cast<Const>()->value.getInteger();
         start = std::min(start, offset);
       }
@@ -394,8 +402,8 @@ void WasmBinaryWriter::writeDataSegments() {
       Memory::Segment combined(&c);
       for (Index j = i; j < segments.size(); j++) {
         auto& segment = segments[j];
-        if (segment.data.size() == 0) continue;
-        if (!segment.offset->is<Const>()) continue;
+        if (isEmpty(segment)) continue;
+        if (!isConstantOffset(segment)) continue;
         auto offset = segment.offset->cast<Const>()->value.getInteger();
         auto needed = offset + segment.data.size() - start;
         if (combined.data.size() < needed) {
