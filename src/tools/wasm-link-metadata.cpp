@@ -77,8 +77,9 @@ void parseLinkingSection(
       }
       break;
     }
-    default:
+    default: {
       break;
+    }
     }
     // Always go to the end of the subsection based on size, not contents.
     idx = startIdx + size;
