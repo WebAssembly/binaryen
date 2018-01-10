@@ -54,7 +54,7 @@ struct SSAify : public Pass {
   Function* func;
   std::vector<Expression*> functionPrepends; // things we add to the function prologue
 
-  void runFunction(PassRunner* runner, Module* module_, Function* func_) override {
+  void runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
     LocalGraph graph(func, module);
