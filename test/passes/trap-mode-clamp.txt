@@ -2,7 +2,6 @@
  (type $0 (func (param i32 i64)))
  (type $1 (func (param f32)))
  (type $2 (func (param f64)))
- (memory $0 0)
  (func $test_div (; 0 ;) (type $0) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div

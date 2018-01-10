@@ -32,7 +32,7 @@ public:
       stackPointerOffset(stackPointerOffset) { }
 
   void generateRuntimeFunctions();
-  void generateMemoryGrowthFunction();
+  Function* generateMemoryGrowthFunction();
 
   // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
   // signature in the indirect function table.

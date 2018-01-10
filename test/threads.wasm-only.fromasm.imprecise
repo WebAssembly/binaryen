@@ -1,8 +1,5 @@
 (module
  (import "env" "memory" (memory $0 (shared 256 256)))
- (import "env" "table" (table 0 0 anyfunc))
- (import "env" "memoryBase" (global $memoryBase i32))
- (import "env" "tableBase" (global $tableBase i32))
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "test64" (func $legalstub$test64))
  (func $test64 (; 0 ;) (result i64)

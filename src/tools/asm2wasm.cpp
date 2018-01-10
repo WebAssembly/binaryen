@@ -159,11 +159,12 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "wasming..." << std::endl;
   Module wasm;
-  wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
-  asm2wasm.processAsm(asmjs);
 
-  // import mem init file, if provided
+  // set up memory
+  wasm.memory.initial = wasm.memory.max = totalMemory / Memory::kPageSize;
+
+  // import mem init file, if provided (do this before compiling the module,
+  // since the optimizer should see the memory segments)
   const auto &memInit = options.extra.find("mem init");
   if (memInit != options.extra.end()) {
     auto filename = memInit->second.c_str();
@@ -177,6 +178,14 @@ int main(int argc, const char *argv[]) {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }
     wasm.memory.segments.emplace_back(init, data);
+  }
+
+  // compile the code
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
+  asm2wasm.processAsm(asmjs);
+
+  // finalize the imported mem init
+  if (memInit != options.extra.end()) {
     if (options.runningDefaultOptimizationPasses()) {
       PassRunner runner(&wasm);
       runner.setFeatures(options.features);

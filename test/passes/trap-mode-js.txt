@@ -4,7 +4,6 @@
  (type $2 (func (param f64)))
  (type $FUNCSIG$id (func (param f64) (result i32)))
  (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
- (memory $0 0)
  (func $test_div (; 1 ;) (type $0) (param $0 i32) (param $1 i64)
   (drop
    (call $i32s-div

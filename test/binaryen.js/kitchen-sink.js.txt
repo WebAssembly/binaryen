@@ -579,7 +579,6 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
  (func $just-one-block (; 1 ;) (type $v)
   (local $0 i32)
   (call $check
@@ -1063,13 +1062,11 @@ raw:
 
 optimized:
 (module
- (memory $0 0)
 )
 
 module loaded from binary form:
 (module
  (type $0 (func (param i32 i32) (result i32)))
- (memory $0 0)
  (func $adder (; 0 ;) (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
   (i32.add
    (get_local $var$0)
@@ -1082,7 +1079,6 @@ module loaded from binary form:
  (type $vi (func (param i32)))
  (type $v (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
- (memory $0 0)
  (start $starter)
  (func $starter (; 1 ;) (type $v)
   (call $print-i32
@@ -1094,7 +1090,6 @@ module loaded from binary form:
 (i32.const 1234)
 (module
  (type $v (func))
- (memory $0 0)
  (func $func (; 0 ;) (type $v)
   (local $0 i32)
   (set_local $0
@@ -2474,7 +2469,6 @@ raw:
  (type $vi (func (param i32)))
  (type $i (func (result i32)))
  (import "module" "check" (func $check (param i32)))
- (memory $0 0)
  (func $just-one-block (; 1 ;) (type $v)
   (local $0 i32)
   (call $check
@@ -2967,7 +2961,6 @@ raw:
 optimized:
   BinaryenModulePrint(the_module);
 (module
- (memory $0 0)
 )
 
   BinaryenModuleDispose(the_module);
@@ -2982,7 +2975,6 @@ optimized:
 test_parsing text:
 (module
  (type $iii (func (param i32 i32) (result i32)))
- (memory $0 0)
  (func $adder (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (get_local $0)
@@ -2994,7 +2986,6 @@ test_parsing text:
 module loaded from text form:
 (module
  (type $iii (func (param i32 i32) (result i32)))
- (memory $0 0)
  (func $ADD_ER (; 0 ;) (type $iii) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (get_local $0)

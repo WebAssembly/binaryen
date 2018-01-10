@@ -3,7 +3,6 @@
  (type $1 (func (result i32)))
  (type $FUNCSIG$vi (func (param i32)))
  (import "env" "log_execution" (func $log_execution (param i32)))
- (memory $0 0)
  (func $nopp (; 1 ;) (type $0)
   (call $log_execution
    (i32.const 0)

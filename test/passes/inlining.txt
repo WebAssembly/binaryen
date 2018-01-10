@@ -5,7 +5,6 @@
  (type $3 (func (param f32 i64)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $tabled)
- (memory $0 0)
  (export "user" (func $user))
  (export "exported" (func $exported))
  (func $user (; 0 ;) (type $0)
@@ -142,7 +141,6 @@
 (module
  (type $0 (func (param i32) (result i32)))
  (type $1 (func (result i32)))
- (memory $0 0)
  (func $child (; 0 ;) (type $0) (param $0 i32) (result i32)
   (i32.const 1234)
  )
@@ -222,7 +220,6 @@
  (type $T (func (param i32)))
  (type $1 (func))
  (table 10 anyfunc)
- (memory $0 0)
  (func $0 (; 0 ;) (type $1)
   (block $__inlined_func$1
    (call_indirect (type $T)
@@ -238,7 +235,6 @@
 )
 (module
  (type $0 (func))
- (memory $0 0)
  (func $1 (; 0 ;) (type $0)
   (block $__inlined_func$0
    (block $label$1

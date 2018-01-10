@@ -6,7 +6,6 @@
  (import "env" "table" (table 10 10 anyfunc))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (elem (i32.const 0) $imported_table_func)
- (memory $0 0)
  (export "stackAlloc" (func $stackAlloc))
  (func $stackAlloc (; 2 ;) (type $FUNCSIG$v)
   (drop

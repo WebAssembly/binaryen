@@ -3,7 +3,6 @@
  (type $1 (func))
  (import "env" "test2" (global $import$1 i32))
  (import "env" "test1" (func $test1))
- (memory $0 0)
  (export "test1" (func $test1))
  (export "test2" (global $import$1))
 )

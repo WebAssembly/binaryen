@@ -482,7 +482,6 @@
 (module
  (type $0 (func))
  (global $global (mut f64) (f64.const 0))
- (memory $0 0)
  (func $0 (; 0 ;) (type $0)
   (if
    (i32.const 0)
@@ -493,7 +492,6 @@
 )
 (module
  (type $0 (func))
- (memory $0 0)
  (func $0 (; 0 ;) (type $0)
   (local $local f64)
   (if

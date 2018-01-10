@@ -742,6 +742,64 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   Ref body = asmFunction[3];
   assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") || body[0][1]->getIString() == IString("almost asm")));
 
+  // extra functions that we add, that are not from the compiled code. we need
+  // to make sure to optimize them normally (OptimizingIncrementalModuleBuilder
+  // does that on the fly for compiled code)
+  std::vector<Function*> extraSupportFunctions;
+
+  // first, add the memory elements. we do this before the main compile+optimize
+  // since the optimizer should see the memory
+
+  // apply memory growth, if relevant
+  if (preprocessor.memoryGrowth) {
+    EmscriptenGlueGenerator generator(wasm);
+    auto* func = generator.generateMemoryGrowthFunction();
+    extraSupportFunctions.push_back(func);
+    wasm.memory.max = Memory::kMaxSize;
+  }
+
+  // import memory
+  auto memoryImport = make_unique<Import>();
+  memoryImport->name = MEMORY;
+  memoryImport->module = ENV;
+  memoryImport->base = MEMORY;
+  memoryImport->kind = ExternalKind::Memory;
+  wasm.memory.exists = true;
+  wasm.memory.imported = true;
+  wasm.addImport(memoryImport.release());
+
+  // import table
+  auto tableImport = make_unique<Import>();
+  tableImport->name = TABLE;
+  tableImport->module = ENV;
+  tableImport->base = TABLE;
+  tableImport->kind = ExternalKind::Table;
+  wasm.addImport(tableImport.release());
+  wasm.table.exists = true;
+  wasm.table.imported = true;
+
+  // Import memory offset, if not already there
+  {
+    auto* import = new Import;
+    import->name = Name("memoryBase");
+    import->module = Name("env");
+    import->base = Name("memoryBase");
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
+  // Import table offset, if not already there
+  {
+    auto* import = new Import;
+    import->name = Name("tableBase");
+    import->module = Name("env");
+    import->base = Name("tableBase");
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
   auto addImport = [&](IString name, Ref imported, WasmType type) {
     assert(imported[0] == DOT);
     Ref module = imported[1];
@@ -846,7 +904,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = new Import();
+    auto import = make_unique<Import>();
     import->name = name;
     import->module = moduleName;
     import->base = imported[2]->getIString();
@@ -877,7 +935,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     } else {
       import->kind = ExternalKind::Function;
     }
-    wasm.addImport(import);
+    // we may have already created an import for this manually
+    if ((name == "tableBase" || name == "memoryBase") &&
+        (wasm.getImportOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
+      return;
+    }
+    wasm.addImport(import.release());
   };
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
@@ -913,6 +976,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       passRunner.addDefaultFunctionOptimizationPasses();
       for (auto& pair : trappingFunctions.getFunctions()) {
         auto* func = pair.second;
+        passRunner.runFunction(func);
+      }
+      for (auto* func : extraSupportFunctions) {
         passRunner.runFunction(func);
       }
     }, debug, false /* do not validate globally yet */);
@@ -1351,65 +1417,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   if (preprocessor.debugInfo) {
     wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
   }
-
-  // apply memory growth, if relevant
-  if (preprocessor.memoryGrowth) {
-    EmscriptenGlueGenerator generator(wasm);
-    generator.generateMemoryGrowthFunction();
-    wasm.memory.max = Memory::kMaxSize;
-  }
-
-#if 0
-  // export memory
-  auto memoryExport = make_unique<Export>();
-  memoryExport->name = MEMORY;
-  memoryExport->value = Name::fromInt(0);
-  memoryExport->kind = ExternalKind::Memory;
-  wasm.addExport(memoryExport.release());
-#else
-  // import memory
-  auto memoryImport = make_unique<Import>();
-  memoryImport->name = MEMORY;
-  memoryImport->module = ENV;
-  memoryImport->base = MEMORY;
-  memoryImport->kind = ExternalKind::Memory;
-  wasm.memory.exists = true;
-  wasm.memory.imported = true;
-  wasm.addImport(memoryImport.release());
-
-  // import table
-  auto tableImport = make_unique<Import>();
-  tableImport->name = TABLE;
-  tableImport->module = ENV;
-  tableImport->base = TABLE;
-  tableImport->kind = ExternalKind::Table;
-  wasm.addImport(tableImport.release());
-  wasm.table.exists = true;
-  wasm.table.imported = true;
-
-  // Import memory offset, if not already there
-  if (!wasm.getImportOrNull("memoryBase") && !wasm.getGlobalOrNull("memoryBase")) {
-    auto* import = new Import;
-    import->name = Name("memoryBase");
-    import->module = Name("env");
-    import->base = Name("memoryBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
-    wasm.addImport(import);
-  }
-
-  // Import table offset, if not already there
-  if (!wasm.getImportOrNull("tableBase") && !wasm.getGlobalOrNull("tableBase")) {
-    auto* import = new Import;
-    import->name = Name("tableBase");
-    import->module = Name("env");
-    import->base = Name("tableBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
-    wasm.addImport(import);
-  }
-
-#endif
 
   if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm

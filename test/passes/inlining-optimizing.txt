@@ -5,7 +5,6 @@
  (type $3 (func (param f32 i64)))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $tabled)
- (memory $0 0)
  (export "user" (func $user))
  (export "exported" (func $exported))
  (func $user (; 0 ;) (type $0)
@@ -36,7 +35,6 @@
 (module
  (type $0 (func (result i32)))
  (type $1 (func))
- (memory $0 0)
  (func $main (; 0 ;) (type $0) (result i32)
   (unreachable)
  )
