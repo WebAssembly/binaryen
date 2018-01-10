@@ -38,7 +38,13 @@ namespace wasm {
 enum {
   // the maximum amount of bytes we emit per LEB
   MaxLEB32Bytes = 5,
-  MaxDataSegments = 100 * 1000 // a hard limit wasm VMs impose
+};
+
+// wasm VMs on the web have decided to impose some limits on what they
+// accept
+enum WebLimitations {
+  MaxDataSegments = 100 * 1000,
+  MaxFunctionBodySize = 128 * 1024
 };
 
 template<typename T, typename MiniT>

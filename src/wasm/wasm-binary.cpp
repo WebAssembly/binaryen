@@ -351,14 +351,14 @@ void WasmBinaryWriter::writeDataSegments() {
   }
   // check if we have too many dynamic data segments, which we can do nothing about
   auto num = numConstant + numDynamic;
-  if (numDynamic + 1 >= MaxDataSegments) {
+  if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
     std::cerr << "too many non-constant-offset data segments, wasm VMs may not accept this binary" << std::endl;
   }
   // we'll merge constant segments if we must
-  if (numConstant + numDynamic >= MaxDataSegments) {
-    numConstant = MaxDataSegments - numDynamic - 1;
+  if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
+    numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
     num = numConstant + numDynamic;
-    assert(num == MaxDataSegments - 1);
+    assert(num == WebLimitations::MaxDataSegments - 1);
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
@@ -382,7 +382,7 @@ void WasmBinaryWriter::writeDataSegments() {
     auto& segment = segments[i];
     if (isEmpty(segment)) continue;
     if (!isConstantOffset(segment)) continue;
-    if (emitted + 2 < MaxDataSegments) {
+    if (emitted + 2 < WebLimitations::MaxDataSegments) {
       emit(segment);
     } else {
       // we can emit only one more segment! merge everything into one
