@@ -26,6 +26,7 @@ def files_with_extensions(path, extensions):
     if ext in extensions:
       yield file, ext
 
+
 def generate_object_files(clang_bin):
   print '\n[ building object files from C sources... ]\n'
 
@@ -37,14 +38,14 @@ def generate_object_files(clang_bin):
     src_path = os.path.join(lld_path, src_file)
     obj_path = os.path.join(lld_path, obj_file)
     run_command([
-      clang_bin, src_path, '-o', obj_path,
-      '--target=wasm32-unknown-unknown-wasm',
-      '-c',
-      '-nostdinc',
-      '-Xclang', '-nobuiltininc',
-      '-Xclang', '-nostdsysteminc',
-      '-Xclang', '-I/s/work/emscripten/system/include',
-      '-O1',
+        clang_bin, src_path, '-o', obj_path,
+        '--target=wasm32-unknown-unknown-wasm',
+        '-c',
+        '-nostdinc',
+        '-Xclang', '-nobuiltininc',
+        '-Xclang', '-nostdsysteminc',
+        '-Xclang', '-I/s/work/emscripten/system/include',
+        '-O1',
     ])
 
 
@@ -61,11 +62,11 @@ def generate_wast_files(lld_bin):
     wasm_path = os.path.join(lld_path, wasm_file)
     wast_path = os.path.join(lld_path, wast_file)
     run_command([
-      lld_bin, '-flavor', 'wasm',
-      '-z', '-stack-size=1048576',
-      obj_path, '-o', wasm_path,
-      '--entry=main',
-      '--allow-undefined',
+        lld_bin, '-flavor', 'wasm',
+        '-z', '-stack-size=1048576',
+        obj_path, '-o', wasm_path,
+        '--entry=main',
+        '--allow-undefined',
     ])
     try:
       run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])

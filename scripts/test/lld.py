@@ -17,8 +17,8 @@
 import os
 from support import run_command
 from shared import (
-    fail, fail_with_error, fail_if_not_contained,
-    options, WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
+    fail, fail_with_error, options,
+    WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
 )
 
 
