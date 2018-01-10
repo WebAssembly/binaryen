@@ -1084,7 +1084,14 @@ private:
     switch (type) {
       case i32: {
         switch (upTo(4)) {
-          case 0: return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32, ExtendS8Int32, ExtendS16Int32), make(i32) });
+          case 0: {
+            if (ATOMICS) {
+              return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32, ExtendS8Int32, ExtendS16Int32), make(i32) });
+            } else {
+              return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32) });
+            }
+            break;
+          }
           case 1: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
           case 2: return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
           case 3: return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
@@ -1093,7 +1100,14 @@ private:
       }
       case i64: {
         switch (upTo(4)) {
-          case 0: return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64), make(i64) });
+          case 0: {
+            if (ATOMICS) {
+              return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64), make(i64) });
+            } else {
+              return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64), make(i64) });
+            }
+            break;
+          }
           case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
           case 2: return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
           case 3: return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
