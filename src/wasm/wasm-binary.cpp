@@ -328,20 +328,94 @@ void WasmBinaryWriter::writeExports() {
   finishSection(start);
 }
 
+static bool isEmpty(Memory::Segment& segment) {
+  return segment.data.size() == 0;
+}
+
+static bool isConstantOffset(Memory::Segment& segment) {
+  return segment.offset->is<Const>();
+}
+
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
-  uint32_t num = 0;
+  Index numConstant = 0,
+        numDynamic = 0;
   for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() > 0) num++;
+    if (!isEmpty(segment)) {
+      if (isConstantOffset(segment)) {
+        numConstant++;
+      } else {
+        numDynamic++;
+      }
+    }
+  }
+  // check if we have too many dynamic data segments, which we can do nothing about
+  auto num = numConstant + numDynamic;
+  if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
+    std::cerr << "too many non-constant-offset data segments, wasm VMs may not accept this binary" << std::endl;
+  }
+  // we'll merge constant segments if we must
+  if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
+    numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
+    num = numConstant + numDynamic;
+    assert(num == WebLimitations::MaxDataSegments - 1);
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
-  for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() == 0) continue;
+  // first, emit all non-constant-offset segments; then emit the constants,
+  // which we may merge if forced to
+  Index emitted = 0;
+  auto emit = [&](Memory::Segment& segment) {
     o << U32LEB(0); // Linear memory 0 in the MVP
     writeExpression(segment.offset);
     o << int8_t(BinaryConsts::End);
     writeInlineBuffer(&segment.data[0], segment.data.size());
+    emitted++;
+  };
+  auto& segments = wasm->memory.segments;
+  for (auto& segment : segments) {
+    if (isEmpty(segment)) continue;
+    if (isConstantOffset(segment)) continue;
+    emit(segment);
+  }
+  // from here on, we concern ourselves with non-empty constant-offset
+  // segments, the ones which we may need to merge
+  auto isRelevant = [](Memory::Segment& segment) {
+    return !isEmpty(segment) && isConstantOffset(segment);
+  };
+  for (Index i = 0; i < segments.size(); i++) {
+    auto& segment = segments[i];
+    if (!isRelevant(segment)) continue;
+    if (emitted + 2 < WebLimitations::MaxDataSegments) {
+      emit(segment);
+    } else {
+      // we can emit only one more segment! merge everything into one
+      // start the combined segment at the bottom of them all
+      auto start = segment.offset->cast<Const>()->value.getInteger();
+      for (Index j = i + 1; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (!isRelevant(segment)) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        start = std::min(start, offset);
+      }
+      // create the segment and add in all the data
+      Const c;
+      c.value = Literal(int32_t(start));
+      c.type = i32;
+      Memory::Segment combined(&c);
+      for (Index j = i; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (!isRelevant(segment)) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        auto needed = offset + segment.data.size() - start;
+        if (combined.data.size() < needed) {
+          combined.data.resize(needed);
+        }
+        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + offset - start);
+      }
+      emit(combined);
+      break;
+    }
   }
   finishSection(start);
 }
