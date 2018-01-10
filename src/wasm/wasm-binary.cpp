@@ -378,10 +378,14 @@ void WasmBinaryWriter::writeDataSegments() {
     if (isConstantOffset(segment)) continue;
     emit(segment);
   }
+  // from here on, we concern ourselves with non-empty constant-offset
+  // segments, the ones which we may need to merge
+  auto isRelevant = [](Memory::Segment& segment) {
+    return !isEmpty(segment) && isConstantOffset(segment);
+  };
   for (Index i = 0; i < segments.size(); i++) {
     auto& segment = segments[i];
-    if (isEmpty(segment)) continue;
-    if (!isConstantOffset(segment)) continue;
+    if (!isRelevant(segment)) continue;
     if (emitted + 2 < WebLimitations::MaxDataSegments) {
       emit(segment);
     } else {
@@ -390,8 +394,7 @@ void WasmBinaryWriter::writeDataSegments() {
       auto start = segment.offset->cast<Const>()->value.getInteger();
       for (Index j = i + 1; j < segments.size(); j++) {
         auto& segment = segments[j];
-        if (isEmpty(segment)) continue;
-        if (!isConstantOffset(segment)) continue;
+        if (!isRelevant(segment)) continue;
         auto offset = segment.offset->cast<Const>()->value.getInteger();
         start = std::min(start, offset);
       }
@@ -402,8 +405,7 @@ void WasmBinaryWriter::writeDataSegments() {
       Memory::Segment combined(&c);
       for (Index j = i; j < segments.size(); j++) {
         auto& segment = segments[j];
-        if (isEmpty(segment)) continue;
-        if (!isConstantOffset(segment)) continue;
+        if (!isRelevant(segment)) continue;
         auto offset = segment.offset->cast<Const>()->value.getInteger();
         auto needed = offset + segment.data.size() - start;
         if (combined.data.size() < needed) {
