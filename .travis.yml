@@ -31,10 +31,10 @@ jobs:
       env: |
         COMPILER_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all -fsanitize-blacklist=$(pwd)/ubsan.blacklist"
 
-    # FIXME we currently must disable leak detection, see #1351
-    - <<: *test-ubuntu
-      env: |
-        COMPILER_FLAGS="-fsanitize=address" ASAN_OPTIONS="detect_leaks=0"
+    # FIXME we currently must disable LSAN entirely, see #1351
+    #- <<: *test-ubuntu
+    #  env: |
+    #    COMPILER_FLAGS="-fsanitize=address"
 
     - <<: *test-ubuntu
       env: |
