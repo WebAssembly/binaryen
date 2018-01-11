@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push5=, 1
 	i32.const	$push12=, 1
 	i32.const	$push4=, -1
@@ -33,16 +33,15 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -14
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label1:
-	i32.const	$push11=, 4
-	i32.add 	$push10=, $1, $pop11
-	tee_local	$push9=, $0=, $pop10
-	i32.call	$push3=, foo@FUNCTION, $pop9
+	i32.const	$push9=, 4
+	i32.add 	$0=, $1, $pop9
+	i32.call	$push3=, foo@FUNCTION, $0
 	i32.const	$push8=, 1
 	i32.eqz 	$push0=, $1
 	i32.const	$push7=, 1
@@ -50,14 +49,14 @@ main:                                   # @main
 	i32.sub 	$push2=, $pop8, $pop1
 	i32.ne  	$push4=, $pop3, $pop2
 	br_if   	1, $pop4        # 1: down to label0
-# BB#2:                                 # %for.cond
+# %bb.2:                                # %for.cond
                                         #   in Loop: Header=BB1_1 Depth=1
-	i32.const	$push13=, 1
-	i32.add 	$1=, $1, $pop13
-	i32.const	$push12=, 8
-	i32.le_s	$push5=, $0, $pop12
+	i32.const	$push11=, 1
+	i32.add 	$1=, $1, $pop11
+	i32.const	$push10=, 8
+	i32.le_s	$push5=, $0, $pop10
 	br_if   	0, $pop5        # 0: up to label1
-# BB#3:                                 # %for.end
+# %bb.3:                                # %for.end
 	end_loop
 	i32.const	$push6=, 0
 	return  	$pop6
@@ -70,5 +69,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

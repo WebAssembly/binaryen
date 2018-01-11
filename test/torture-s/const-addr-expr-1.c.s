@@ -7,7 +7,7 @@
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push9=, 0
 	i32.load	$push0=, Upgd_minor_ID($pop9)
@@ -15,14 +15,14 @@ main:                                   # @main
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push10=, 0
 	i32.load	$push4=, Upgd_minor_ID1($pop10)
 	i32.load	$push5=, 0($pop4)
 	i32.const	$push6=, 1
 	i32.ne  	$push7=, $pop5, $pop6
 	br_if   	0, $pop7        # 0: down to label0
-# BB#2:                                 # %if.end3
+# %bb.2:                                # %if.end3
 	i32.const	$push8=, 0
 	return  	$pop8
 .LBB0_3:                                # %if.then
@@ -76,5 +76,5 @@ Upgd_minor_ID1:
 	.size	Upgd_minor_ID1, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

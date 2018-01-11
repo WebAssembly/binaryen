@@ -243,7 +243,7 @@ private:
     PassRunner passRunner(wasm, passOptions);
     addPrePasses(passRunner);
     passRunner.addDefaultFunctionOptimizationPasses();
-    passRunner.runFunction(func);
+    passRunner.runOnFunction(func);
   }
 
   static void workerMain(OptimizingIncrementalModuleBuilder* self) {

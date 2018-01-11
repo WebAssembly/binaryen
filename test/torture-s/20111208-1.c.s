@@ -8,40 +8,37 @@ pack_unpack:                            # @pack_unpack
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.call	$3=, strlen@FUNCTION, $1
 	block   	
-	i32.call	$push10=, strlen@FUNCTION, $1
-	tee_local	$push9=, $3=, $pop10
 	i32.const	$push8=, 1
-	i32.lt_s	$push0=, $pop9, $pop8
+	i32.lt_s	$push0=, $3, $pop8
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %while.body.preheader
+# %bb.1:                                # %while.body.preheader
 	i32.add 	$2=, $1, $3
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	copy_local	$push16=, $1
-	tee_local	$push15=, $3=, $pop16
-	i32.const	$push14=, 1
-	i32.add 	$1=, $pop15, $pop14
+	copy_local	$3=, $1
+	i32.const	$push10=, 1
+	i32.add 	$1=, $3, $pop10
+	i32.load8_s	$3=, 0($3)
 	block   	
-	i32.load8_s	$push13=, 0($3)
-	tee_local	$push12=, $3=, $pop13
-	i32.const	$push11=, 108
-	i32.eq  	$push1=, $pop12, $pop11
+	i32.const	$push9=, 108
+	i32.eq  	$push1=, $3, $pop9
 	br_if   	0, $pop1        # 0: down to label2
-# BB#3:                                 # %while.body
+# %bb.3:                                # %while.body
                                         #   in Loop: Header=BB0_2 Depth=1
 	block   	
-	i32.const	$push17=, 115
-	i32.ne  	$push2=, $3, $pop17
+	i32.const	$push11=, 115
+	i32.ne  	$push2=, $3, $pop11
 	br_if   	0, $pop2        # 0: down to label3
-# BB#4:                                 # %sw.bb4
+# %bb.4:                                # %sw.bb4
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.load16_s	$push4=, 0($0):p2align=0
 	call    	do_something@FUNCTION, $pop4
-	i32.const	$push18=, 2
-	i32.add 	$0=, $0, $pop18
+	i32.const	$push12=, 2
+	i32.add 	$0=, $0, $pop12
 .LBB0_5:                                # %sw.epilog13
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
@@ -53,8 +50,8 @@ pack_unpack:                            # @pack_unpack
 	end_block                       # label2:
 	i32.load	$push3=, 0($0):p2align=0
 	call    	do_something@FUNCTION, $pop3
-	i32.const	$push19=, 4
-	i32.add 	$0=, $0, $pop19
+	i32.const	$push13=, 4
+	i32.add 	$0=, $0, $pop13
 	i32.lt_u	$push5=, $1, $2
 	br_if   	0, $pop5        # 0: up to label1
 .LBB0_7:                                # %while.end
@@ -70,7 +67,7 @@ pack_unpack:                            # @pack_unpack
 	.type	do_something,@function  # -- Begin function do_something
 do_something:                           # @do_something
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	a($pop0), $0
                                         # fallthrough-return
@@ -84,7 +81,7 @@ do_something:                           # @do_something
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 384
 	call    	do_something@FUNCTION, $pop0
 	i32.const	$push1=, -1071776001
@@ -105,5 +102,5 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	strlen, i32, i32

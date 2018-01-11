@@ -6,7 +6,7 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push9=, 0
 	i32.load	$push1=, x($pop9)
@@ -14,7 +14,7 @@ main:                                   # @main
 	i32.load	$push0=, x+4($pop8)
 	i32.ge_s	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push11=, 0
 	i32.load	$push4=, x+12($pop11)
 	i32.const	$push10=, 0
@@ -23,7 +23,7 @@ main:                                   # @main
 	i32.const	$push6=, -1
 	i32.gt_s	$push7=, $pop5, $pop6
 	br_if   	0, $pop7        # 0: down to label0
-# BB#2:                                 # %if.then2
+# %bb.2:                                # %if.then2
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_3:                                # %if.end3
@@ -48,6 +48,6 @@ x:
 	.size	x, 16
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

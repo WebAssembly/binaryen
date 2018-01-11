@@ -7,7 +7,7 @@
 check_float:                            # @check_float
 	.param  	i32, i32, i32, i32, i32, i32
 	.local  	f32, f32, f32, f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	f32.load	$8=, f1($pop0)
 	f32.load	$9=, 0($1)
@@ -17,10 +17,10 @@ check_float:                            # @check_float
 	block   	
 	f32.ne  	$push1=, $9, $8
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	f32.ne  	$push2=, $6, $7
 	br_if   	0, $pop2        # 0: down to label0
-# BB#2:                                 # %lor.lhs.false
+# %bb.2:                                # %lor.lhs.false
 	i32.const	$push3=, 0
 	f32.load	$8=, f2($pop3)
 	f32.load	$9=, 0($2)
@@ -29,10 +29,10 @@ check_float:                            # @check_float
 	f32.load	$7=, f2+4($pop16)
 	f32.ne  	$push4=, $9, $8
 	br_if   	0, $pop4        # 0: down to label0
-# BB#3:                                 # %lor.lhs.false
+# %bb.3:                                # %lor.lhs.false
 	f32.ne  	$push5=, $6, $7
 	br_if   	0, $pop5        # 0: down to label0
-# BB#4:                                 # %lor.lhs.false4
+# %bb.4:                                # %lor.lhs.false4
 	i32.const	$push6=, 0
 	f32.load	$8=, f3($pop6)
 	f32.load	$9=, 0($3)
@@ -41,10 +41,10 @@ check_float:                            # @check_float
 	f32.load	$7=, f3+4($pop17)
 	f32.ne  	$push7=, $9, $8
 	br_if   	0, $pop7        # 0: down to label0
-# BB#5:                                 # %lor.lhs.false4
+# %bb.5:                                # %lor.lhs.false4
 	f32.ne  	$push8=, $6, $7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#6:                                 # %lor.lhs.false8
+# %bb.6:                                # %lor.lhs.false8
 	i32.const	$push9=, 0
 	f32.load	$8=, f4($pop9)
 	f32.load	$9=, 0($4)
@@ -53,10 +53,10 @@ check_float:                            # @check_float
 	f32.load	$7=, f4+4($pop18)
 	f32.ne  	$push10=, $9, $8
 	br_if   	0, $pop10       # 0: down to label0
-# BB#7:                                 # %lor.lhs.false8
+# %bb.7:                                # %lor.lhs.false8
 	f32.ne  	$push11=, $6, $7
 	br_if   	0, $pop11       # 0: down to label0
-# BB#8:                                 # %lor.lhs.false12
+# %bb.8:                                # %lor.lhs.false12
 	i32.const	$push12=, 0
 	f32.load	$8=, f5($pop12)
 	f32.load	$9=, 0($5)
@@ -65,10 +65,10 @@ check_float:                            # @check_float
 	f32.load	$7=, f5+4($pop19)
 	f32.ne  	$push13=, $9, $8
 	br_if   	0, $pop13       # 0: down to label0
-# BB#9:                                 # %lor.lhs.false12
+# %bb.9:                                # %lor.lhs.false12
 	f32.ne  	$push14=, $6, $7
 	br_if   	0, $pop14       # 0: down to label0
-# BB#10:                                # %if.end
+# %bb.10:                               # %if.end
 	return
 .LBB0_11:                               # %if.then
 	end_block                       # label0:
@@ -85,7 +85,7 @@ check_float:                            # @check_float
 check_double:                           # @check_double
 	.param  	i32, i32, i32, i32, i32, i32
 	.local  	f64, f64, f64, f64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	f64.load	$8=, d1($pop0)
 	f64.load	$9=, 0($1)
@@ -95,10 +95,10 @@ check_double:                           # @check_double
 	block   	
 	f64.ne  	$push1=, $9, $8
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	f64.ne  	$push2=, $6, $7
 	br_if   	0, $pop2        # 0: down to label1
-# BB#2:                                 # %lor.lhs.false
+# %bb.2:                                # %lor.lhs.false
 	i32.const	$push3=, 0
 	f64.load	$8=, d2($pop3)
 	f64.load	$9=, 0($2)
@@ -107,10 +107,10 @@ check_double:                           # @check_double
 	f64.load	$7=, d2+8($pop16)
 	f64.ne  	$push4=, $9, $8
 	br_if   	0, $pop4        # 0: down to label1
-# BB#3:                                 # %lor.lhs.false
+# %bb.3:                                # %lor.lhs.false
 	f64.ne  	$push5=, $6, $7
 	br_if   	0, $pop5        # 0: down to label1
-# BB#4:                                 # %lor.lhs.false4
+# %bb.4:                                # %lor.lhs.false4
 	i32.const	$push6=, 0
 	f64.load	$8=, d3($pop6)
 	f64.load	$9=, 0($3)
@@ -119,10 +119,10 @@ check_double:                           # @check_double
 	f64.load	$7=, d3+8($pop17)
 	f64.ne  	$push7=, $9, $8
 	br_if   	0, $pop7        # 0: down to label1
-# BB#5:                                 # %lor.lhs.false4
+# %bb.5:                                # %lor.lhs.false4
 	f64.ne  	$push8=, $6, $7
 	br_if   	0, $pop8        # 0: down to label1
-# BB#6:                                 # %lor.lhs.false8
+# %bb.6:                                # %lor.lhs.false8
 	i32.const	$push9=, 0
 	f64.load	$8=, d4($pop9)
 	f64.load	$9=, 0($4)
@@ -131,10 +131,10 @@ check_double:                           # @check_double
 	f64.load	$7=, d4+8($pop18)
 	f64.ne  	$push10=, $9, $8
 	br_if   	0, $pop10       # 0: down to label1
-# BB#7:                                 # %lor.lhs.false8
+# %bb.7:                                # %lor.lhs.false8
 	f64.ne  	$push11=, $6, $7
 	br_if   	0, $pop11       # 0: down to label1
-# BB#8:                                 # %lor.lhs.false12
+# %bb.8:                                # %lor.lhs.false12
 	i32.const	$push12=, 0
 	f64.load	$8=, d5($pop12)
 	f64.load	$9=, 0($5)
@@ -143,10 +143,10 @@ check_double:                           # @check_double
 	f64.load	$7=, d5+8($pop19)
 	f64.ne  	$push13=, $9, $8
 	br_if   	0, $pop13       # 0: down to label1
-# BB#9:                                 # %lor.lhs.false12
+# %bb.9:                                # %lor.lhs.false12
 	f64.ne  	$push14=, $6, $7
 	br_if   	0, $pop14       # 0: down to label1
-# BB#10:                                # %if.end
+# %bb.10:                               # %if.end
 	return
 .LBB1_11:                               # %if.then
 	end_block                       # label1:
@@ -163,7 +163,7 @@ check_double:                           # @check_double
 check_long_double:                      # @check_long_double
 	.param  	i32, i32, i32, i32, i32, i32
 	.local  	i64, i64, i64, i64, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $1, $pop0
 	i64.load	$7=, 0($pop1)
@@ -183,10 +183,10 @@ check_long_double:                      # @check_long_double
 	i64.load	$6=, ld1+16($pop35)
 	block   	
 	br_if   	0, $10          # 0: down to label2
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.call	$push6=, __netf2@FUNCTION, $8, $7, $6, $9
 	br_if   	0, $pop6        # 0: down to label2
-# BB#2:                                 # %lor.lhs.false
+# %bb.2:                                # %lor.lhs.false
 	i32.const	$push7=, 8
 	i32.add 	$push8=, $2, $pop7
 	i64.load	$7=, 0($pop8)
@@ -205,10 +205,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push38=, 0
 	i64.load	$6=, ld2+16($pop38)
 	br_if   	0, $1           # 0: down to label2
-# BB#3:                                 # %lor.lhs.false
+# %bb.3:                                # %lor.lhs.false
 	i32.call	$push13=, __netf2@FUNCTION, $8, $7, $6, $9
 	br_if   	0, $pop13       # 0: down to label2
-# BB#4:                                 # %lor.lhs.false4
+# %bb.4:                                # %lor.lhs.false4
 	i32.const	$push14=, 8
 	i32.add 	$push15=, $3, $pop14
 	i64.load	$7=, 0($pop15)
@@ -227,10 +227,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push41=, 0
 	i64.load	$6=, ld3+16($pop41)
 	br_if   	0, $2           # 0: down to label2
-# BB#5:                                 # %lor.lhs.false4
+# %bb.5:                                # %lor.lhs.false4
 	i32.call	$push20=, __netf2@FUNCTION, $8, $7, $6, $9
 	br_if   	0, $pop20       # 0: down to label2
-# BB#6:                                 # %lor.lhs.false8
+# %bb.6:                                # %lor.lhs.false8
 	i32.const	$push21=, 8
 	i32.add 	$push22=, $4, $pop21
 	i64.load	$7=, 0($pop22)
@@ -249,10 +249,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push44=, 0
 	i64.load	$6=, ld4+16($pop44)
 	br_if   	0, $2           # 0: down to label2
-# BB#7:                                 # %lor.lhs.false8
+# %bb.7:                                # %lor.lhs.false8
 	i32.call	$push27=, __netf2@FUNCTION, $8, $7, $6, $9
 	br_if   	0, $pop27       # 0: down to label2
-# BB#8:                                 # %lor.lhs.false12
+# %bb.8:                                # %lor.lhs.false12
 	i32.const	$push28=, 8
 	i32.add 	$push29=, $5, $pop28
 	i64.load	$7=, 0($pop29)
@@ -271,10 +271,10 @@ check_long_double:                      # @check_long_double
 	i32.const	$push47=, 0
 	i64.load	$6=, ld5+16($pop47)
 	br_if   	0, $2           # 0: down to label2
-# BB#9:                                 # %lor.lhs.false12
+# %bb.9:                                # %lor.lhs.false12
 	i32.call	$push34=, __eqtf2@FUNCTION, $8, $7, $6, $9
 	br_if   	0, $pop34       # 0: down to label2
-# BB#10:                                # %if.end
+# %bb.10:                               # %if.end
 	return
 .LBB2_11:                               # %if.then
 	end_block                       # label2:
@@ -291,43 +291,42 @@ check_long_double:                      # @check_long_double
 main:                                   # @main
 	.result 	i32
 	.local  	f32, f64, f64, f64, f64, f64, f64, f64, f64, f64, i64, i64, i32, i64, i64, i64, i32, i64, i64, i64, i32, i64, i64, i64, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push75=, 0
+# %bb.0:                                # %entry
 	i32.const	$push73=, 0
 	i32.load	$push72=, __stack_pointer($pop73)
 	i32.const	$push74=, 576
-	i32.sub 	$push208=, $pop72, $pop74
-	tee_local	$push207=, $26=, $pop208
-	i32.store	__stack_pointer($pop75), $pop207
+	i32.sub 	$26=, $pop72, $pop74
+	i32.const	$push75=, 0
+	i32.store	__stack_pointer($pop75), $26
 	i32.const	$push0=, 0
 	f32.load	$push1=, f1($pop0)
 	f32.store	568($26), $pop1
-	i32.const	$push206=, 0
-	f32.load	$push2=, f1+4($pop206)
+	i32.const	$push196=, 0
+	f32.load	$push2=, f1+4($pop196)
 	f32.store	572($26), $pop2
-	i32.const	$push205=, 0
-	f32.load	$push3=, f2($pop205)
+	i32.const	$push195=, 0
+	f32.load	$push3=, f2($pop195)
 	f32.store	560($26), $pop3
-	i32.const	$push204=, 0
-	f32.load	$push4=, f2+4($pop204)
+	i32.const	$push194=, 0
+	f32.load	$push4=, f2+4($pop194)
 	f32.store	564($26), $pop4
-	i32.const	$push203=, 0
-	f32.load	$push5=, f3($pop203)
+	i32.const	$push193=, 0
+	f32.load	$push5=, f3($pop193)
 	f32.store	552($26), $pop5
-	i32.const	$push202=, 0
-	f32.load	$push6=, f3+4($pop202)
+	i32.const	$push192=, 0
+	f32.load	$push6=, f3+4($pop192)
 	f32.store	556($26), $pop6
-	i32.const	$push201=, 0
-	f32.load	$push7=, f4($pop201)
+	i32.const	$push191=, 0
+	f32.load	$push7=, f4($pop191)
 	f32.store	544($26), $pop7
-	i32.const	$push200=, 0
-	f32.load	$push8=, f4+4($pop200)
+	i32.const	$push190=, 0
+	f32.load	$push8=, f4+4($pop190)
 	f32.store	548($26), $pop8
-	i32.const	$push199=, 0
-	f32.load	$push9=, f5($pop199)
+	i32.const	$push189=, 0
+	f32.load	$push9=, f5($pop189)
 	f32.store	536($26), $pop9
-	i32.const	$push198=, 0
-	f32.load	$0=, f5+4($pop198)
+	i32.const	$push188=, 0
+	f32.load	$0=, f5+4($pop188)
 	i64.load	$push10=, 568($26)
 	i64.store	280($26), $pop10
 	f32.store	540($26), $0
@@ -350,27 +349,27 @@ main:                                   # @main
 	i32.const	$push84=, 248
 	i32.add 	$push85=, $26, $pop84
 	call    	check_float@FUNCTION, $26, $pop77, $pop79, $pop81, $pop83, $pop85
-	i32.const	$push197=, 0
-	f64.load	$1=, d1($pop197)
-	i32.const	$push196=, 0
-	f64.load	$push15=, d1+8($pop196)
+	i32.const	$push187=, 0
+	f64.load	$1=, d1($pop187)
+	i32.const	$push186=, 0
+	f64.load	$push15=, d1+8($pop186)
 	f64.store	528($26), $pop15
-	i32.const	$push195=, 0
-	f64.load	$2=, d2($pop195)
-	i32.const	$push194=, 0
-	f64.load	$3=, d2+8($pop194)
-	i32.const	$push193=, 0
-	f64.load	$4=, d3($pop193)
-	i32.const	$push192=, 0
-	f64.load	$5=, d3+8($pop192)
-	i32.const	$push191=, 0
-	f64.load	$6=, d4($pop191)
-	i32.const	$push190=, 0
-	f64.load	$7=, d4+8($pop190)
-	i32.const	$push189=, 0
-	f64.load	$8=, d5($pop189)
-	i32.const	$push188=, 0
-	f64.load	$9=, d5+8($pop188)
+	i32.const	$push185=, 0
+	f64.load	$2=, d2($pop185)
+	i32.const	$push184=, 0
+	f64.load	$3=, d2+8($pop184)
+	i32.const	$push183=, 0
+	f64.load	$4=, d3($pop183)
+	i32.const	$push182=, 0
+	f64.load	$5=, d3+8($pop182)
+	i32.const	$push181=, 0
+	f64.load	$6=, d4($pop181)
+	i32.const	$push180=, 0
+	f64.load	$7=, d4+8($pop180)
+	i32.const	$push179=, 0
+	f64.load	$8=, d5($pop179)
+	i32.const	$push178=, 0
+	f64.load	$9=, d5+8($pop178)
 	i32.const	$push86=, 232
 	i32.add 	$push87=, $26, $pop86
 	i32.const	$push16=, 8
@@ -380,8 +379,8 @@ main:                                   # @main
 	f64.store	512($26), $3
 	i32.const	$push88=, 216
 	i32.add 	$push89=, $26, $pop88
-	i32.const	$push187=, 8
-	i32.add 	$push19=, $pop89, $pop187
+	i32.const	$push177=, 8
+	i32.add 	$push19=, $pop89, $pop177
 	i64.load	$push20=, 512($26)
 	i64.store	0($pop19), $pop20
 	f64.store	520($26), $1
@@ -398,24 +397,24 @@ main:                                   # @main
 	i64.store	216($26), $pop22
 	i32.const	$push90=, 200
 	i32.add 	$push91=, $26, $pop90
-	i32.const	$push186=, 8
-	i32.add 	$push23=, $pop91, $pop186
+	i32.const	$push176=, 8
+	i32.add 	$push23=, $pop91, $pop176
 	i64.load	$push24=, 496($26)
 	i64.store	0($pop23), $pop24
 	i64.load	$push25=, 488($26)
 	i64.store	200($26), $pop25
 	i32.const	$push92=, 184
 	i32.add 	$push93=, $26, $pop92
-	i32.const	$push185=, 8
-	i32.add 	$push26=, $pop93, $pop185
+	i32.const	$push175=, 8
+	i32.add 	$push26=, $pop93, $pop175
 	i64.load	$push27=, 480($26)
 	i64.store	0($pop26), $pop27
 	i64.load	$push28=, 472($26)
 	i64.store	184($26), $pop28
 	i32.const	$push94=, 168
 	i32.add 	$push95=, $26, $pop94
-	i32.const	$push184=, 8
-	i32.add 	$push29=, $pop95, $pop184
+	i32.const	$push174=, 8
+	i32.add 	$push29=, $pop95, $pop174
 	i64.load	$push30=, 464($26)
 	i64.store	0($pop29), $pop30
 	i64.load	$push31=, 456($26)
@@ -431,60 +430,56 @@ main:                                   # @main
 	i32.const	$push104=, 168
 	i32.add 	$push105=, $26, $pop104
 	call    	check_double@FUNCTION, $26, $pop97, $pop99, $pop101, $pop103, $pop105
-	i32.const	$push183=, 0
-	i64.load	$10=, ld1($pop183)
-	i32.const	$push182=, 0
-	i64.load	$11=, ld1+8($pop182)
+	i32.const	$push173=, 0
+	i64.load	$10=, ld1($pop173)
+	i32.const	$push172=, 0
+	i64.load	$11=, ld1+8($pop172)
 	i32.const	$push106=, 416
 	i32.add 	$push107=, $26, $pop106
 	i32.const	$push32=, 24
-	i32.add 	$push181=, $pop107, $pop32
-	tee_local	$push180=, $12=, $pop181
-	i32.const	$push179=, 0
-	i64.load	$push33=, ld1+24($pop179)
-	i64.store	0($pop180), $pop33
-	i32.const	$push178=, 0
-	i64.load	$13=, ld1+16($pop178)
-	i32.const	$push177=, 0
-	i64.load	$14=, ld2($pop177)
-	i32.const	$push176=, 0
-	i64.load	$15=, ld2+8($pop176)
+	i32.add 	$12=, $pop107, $pop32
+	i32.const	$push171=, 0
+	i64.load	$push33=, ld1+24($pop171)
+	i64.store	0($12), $pop33
+	i32.const	$push170=, 0
+	i64.load	$13=, ld1+16($pop170)
+	i32.const	$push169=, 0
+	i64.load	$14=, ld2($pop169)
+	i32.const	$push168=, 0
+	i64.load	$15=, ld2+8($pop168)
 	i32.const	$push108=, 384
 	i32.add 	$push109=, $26, $pop108
-	i32.const	$push175=, 24
-	i32.add 	$push174=, $pop109, $pop175
-	tee_local	$push173=, $16=, $pop174
-	i32.const	$push172=, 0
-	i64.load	$push34=, ld2+24($pop172)
-	i64.store	0($pop173), $pop34
-	i32.const	$push171=, 0
-	i64.load	$17=, ld2+16($pop171)
-	i32.const	$push170=, 0
-	i64.load	$18=, ld3($pop170)
-	i32.const	$push169=, 0
-	i64.load	$19=, ld3+8($pop169)
+	i32.const	$push167=, 24
+	i32.add 	$16=, $pop109, $pop167
+	i32.const	$push166=, 0
+	i64.load	$push34=, ld2+24($pop166)
+	i64.store	0($16), $pop34
+	i32.const	$push165=, 0
+	i64.load	$17=, ld2+16($pop165)
+	i32.const	$push164=, 0
+	i64.load	$18=, ld3($pop164)
+	i32.const	$push163=, 0
+	i64.load	$19=, ld3+8($pop163)
 	i32.const	$push110=, 352
 	i32.add 	$push111=, $26, $pop110
-	i32.const	$push168=, 24
-	i32.add 	$push167=, $pop111, $pop168
-	tee_local	$push166=, $20=, $pop167
-	i32.const	$push165=, 0
-	i64.load	$push35=, ld3+24($pop165)
-	i64.store	0($pop166), $pop35
-	i32.const	$push164=, 0
-	i64.load	$21=, ld3+16($pop164)
-	i32.const	$push163=, 0
-	i64.load	$22=, ld4($pop163)
-	i32.const	$push162=, 0
-	i64.load	$23=, ld4+8($pop162)
+	i32.const	$push162=, 24
+	i32.add 	$20=, $pop111, $pop162
+	i32.const	$push161=, 0
+	i64.load	$push35=, ld3+24($pop161)
+	i64.store	0($20), $pop35
+	i32.const	$push160=, 0
+	i64.load	$21=, ld3+16($pop160)
+	i32.const	$push159=, 0
+	i64.load	$22=, ld4($pop159)
+	i32.const	$push158=, 0
+	i64.load	$23=, ld4+8($pop158)
 	i32.const	$push112=, 320
 	i32.add 	$push113=, $26, $pop112
-	i32.const	$push161=, 24
-	i32.add 	$push160=, $pop113, $pop161
-	tee_local	$push159=, $24=, $pop160
-	i32.const	$push158=, 0
-	i64.load	$push36=, ld4+24($pop158)
-	i64.store	0($pop159), $pop36
+	i32.const	$push157=, 24
+	i32.add 	$24=, $pop113, $pop157
+	i32.const	$push156=, 0
+	i64.load	$push36=, ld4+24($pop156)
+	i64.store	0($24), $pop36
 	i64.store	424($26), $11
 	i64.store	416($26), $10
 	i64.store	432($26), $13
@@ -496,25 +491,24 @@ main:                                   # @main
 	i64.store	368($26), $21
 	i64.store	328($26), $23
 	i64.store	320($26), $22
-	i32.const	$push157=, 0
-	i64.load	$push37=, ld4+16($pop157)
-	i64.store	336($26), $pop37
-	i32.const	$push156=, 0
-	i64.load	$push38=, ld5+8($pop156)
-	i64.store	296($26), $pop38
 	i32.const	$push155=, 0
-	i64.load	$push39=, ld5($pop155)
-	i64.store	288($26), $pop39
+	i64.load	$push37=, ld4+16($pop155)
+	i64.store	336($26), $pop37
 	i32.const	$push154=, 0
-	i64.load	$10=, ld5+16($pop154)
+	i64.load	$push38=, ld5+8($pop154)
+	i64.store	296($26), $pop38
+	i32.const	$push153=, 0
+	i64.load	$push39=, ld5($pop153)
+	i64.store	288($26), $pop39
+	i32.const	$push152=, 0
+	i64.load	$10=, ld5+16($pop152)
 	i32.const	$push114=, 288
 	i32.add 	$push115=, $26, $pop114
-	i32.const	$push153=, 24
-	i32.add 	$push152=, $pop115, $pop153
-	tee_local	$push151=, $25=, $pop152
+	i32.const	$push151=, 24
+	i32.add 	$25=, $pop115, $pop151
 	i32.const	$push150=, 0
 	i64.load	$push40=, ld5+24($pop150)
-	i64.store	0($pop151), $pop40
+	i64.store	0($25), $pop40
 	i32.const	$push116=, 128
 	i32.add 	$push117=, $26, $pop116
 	i32.const	$push149=, 24
@@ -528,10 +522,10 @@ main:                                   # @main
 	i64.load	$push45=, 432($26)
 	i64.store	0($pop44), $pop45
 	i64.store	304($26), $10
-	i64.load	$push46=, 416($26)
-	i64.store	128($26), $pop46
-	i64.load	$push47=, 424($26)
-	i64.store	136($26), $pop47
+	i64.load	$push46=, 424($26)
+	i64.store	136($26), $pop46
+	i64.load	$push47=, 416($26)
+	i64.store	128($26), $pop47
 	i32.const	$push120=, 96
 	i32.add 	$push121=, $26, $pop120
 	i32.const	$push148=, 24
@@ -769,6 +763,6 @@ ld5:
 	.size	ld5, 32
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load8_s	$push1=, a($pop0)
 	i32.const	$push2=, 1
@@ -22,7 +22,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load8_s	$push1=, a($pop0)
 	i32.const	$push2=, 5
@@ -39,23 +39,22 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load8_s	$push11=, a($pop0)
-	tee_local	$push10=, $0=, $pop11
+	i32.load8_s	$0=, a($pop0)
+	block   	
 	i32.const	$push1=, 1
-	i32.shr_u	$push2=, $pop10, $pop1
+	i32.shr_u	$push2=, $0, $pop1
 	i32.const	$push3=, 2147483646
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push5=, 5
 	i32.rem_u	$push6=, $0, $pop5
 	i32.const	$push7=, 2
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end7
+# %bb.2:                                # %if.end7
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable
@@ -76,6 +75,6 @@ a:
 	.size	a, 1
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

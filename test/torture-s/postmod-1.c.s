@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 	.local  	i32, i32, f32, f32, f32, f32, f32, f32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$2=, $0, $pop0
 	i32.const	$push1=, 3
@@ -18,70 +18,62 @@ foo:                                    # @foo
 .LBB0_1:                                # %do.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push293=, 0
-	i32.add 	$push292=, $2, $13
-	tee_local	$push291=, $0=, $pop292
-	i32.const	$push290=, array0
-	i32.add 	$push3=, $pop291, $pop290
+	i32.add 	$0=, $2, $13
+	i32.const	$push277=, array0
+	i32.add 	$push3=, $0, $pop277
 	f32.load	$push4=, 0($pop3)
-	i32.const	$push289=, 0
-	f32.load	$push5=, counter0($pop289)
-	f32.add 	$push288=, $pop4, $pop5
-	tee_local	$push287=, $3=, $pop288
-	f32.store	counter0($pop293), $pop287
-	i32.const	$push286=, 0
-	i32.const	$push285=, array1
-	i32.add 	$push6=, $0, $pop285
-	f32.load	$push7=, 0($pop6)
-	i32.const	$push284=, 0
-	f32.load	$push8=, counter1($pop284)
-	f32.add 	$push283=, $pop7, $pop8
-	tee_local	$push282=, $4=, $pop283
-	f32.store	counter1($pop286), $pop282
-	i32.const	$push281=, 0
-	i32.const	$push280=, array2
-	i32.add 	$push9=, $0, $pop280
-	f32.load	$push10=, 0($pop9)
-	i32.const	$push279=, 0
-	f32.load	$push11=, counter2($pop279)
-	f32.add 	$push278=, $pop10, $pop11
-	tee_local	$push277=, $5=, $pop278
-	f32.store	counter2($pop281), $pop277
 	i32.const	$push276=, 0
-	i32.const	$push275=, array3
-	i32.add 	$push12=, $0, $pop275
-	f32.load	$push13=, 0($pop12)
-	i32.const	$push274=, 0
-	f32.load	$push14=, counter3($pop274)
-	f32.add 	$push273=, $pop13, $pop14
-	tee_local	$push272=, $6=, $pop273
-	f32.store	counter3($pop276), $pop272
-	i32.const	$push271=, 0
-	i32.const	$push270=, array4
-	i32.add 	$push15=, $0, $pop270
-	f32.load	$push16=, 0($pop15)
+	f32.load	$push5=, counter0($pop276)
+	f32.add 	$3=, $pop4, $pop5
+	i32.const	$push275=, 0
+	f32.store	counter0($pop275), $3
+	i32.const	$push274=, array1
+	i32.add 	$push6=, $0, $pop274
+	f32.load	$push7=, 0($pop6)
+	i32.const	$push273=, 0
+	f32.load	$push8=, counter1($pop273)
+	f32.add 	$4=, $pop7, $pop8
+	i32.const	$push272=, 0
+	f32.store	counter1($pop272), $4
+	i32.const	$push271=, array2
+	i32.add 	$push9=, $0, $pop271
+	f32.load	$push10=, 0($pop9)
+	i32.const	$push270=, 0
+	f32.load	$push11=, counter2($pop270)
+	f32.add 	$5=, $pop10, $pop11
 	i32.const	$push269=, 0
-	f32.load	$push17=, counter4($pop269)
-	f32.add 	$push268=, $pop16, $pop17
-	tee_local	$push267=, $7=, $pop268
-	f32.store	counter4($pop271), $pop267
+	f32.store	counter2($pop269), $5
+	i32.const	$push268=, array3
+	i32.add 	$push12=, $0, $pop268
+	f32.load	$push13=, 0($pop12)
+	i32.const	$push267=, 0
+	f32.load	$push14=, counter3($pop267)
+	f32.add 	$6=, $pop13, $pop14
 	i32.const	$push266=, 0
-	i32.const	$push265=, array5
-	i32.add 	$push18=, $0, $pop265
-	f32.load	$push19=, 0($pop18)
+	f32.store	counter3($pop266), $6
+	i32.const	$push265=, array4
+	i32.add 	$push15=, $0, $pop265
+	f32.load	$push16=, 0($pop15)
 	i32.const	$push264=, 0
-	f32.load	$push20=, counter5($pop264)
-	f32.add 	$push263=, $pop19, $pop20
-	tee_local	$push262=, $8=, $pop263
-	f32.store	counter5($pop266), $pop262
+	f32.load	$push17=, counter4($pop264)
+	f32.add 	$7=, $pop16, $pop17
+	i32.const	$push263=, 0
+	f32.store	counter4($pop263), $7
+	i32.const	$push262=, array5
+	i32.add 	$push18=, $0, $pop262
+	f32.load	$push19=, 0($pop18)
 	i32.const	$push261=, 0
-	i32.add 	$push260=, $1, $13
-	tee_local	$push259=, $0=, $pop260
+	f32.load	$push20=, counter5($pop261)
+	f32.add 	$8=, $pop19, $pop20
+	i32.const	$push260=, 0
+	f32.store	counter5($pop260), $8
+	i32.add 	$0=, $1, $13
+	i32.const	$push259=, 0
 	i32.const	$push258=, array0
-	i32.add 	$push21=, $pop259, $pop258
+	i32.add 	$push21=, $0, $pop258
 	f32.load	$push22=, 0($pop21)
 	f32.add 	$push23=, $3, $pop22
-	f32.store	counter0($pop261), $pop23
+	f32.store	counter0($pop259), $pop23
 	i32.const	$push257=, 0
 	i32.const	$push256=, array1
 	i32.add 	$push24=, $0, $pop256
@@ -376,9 +368,9 @@ foo:                                    # @foo
 	i32.add 	$13=, $13, $pop142
 	i32.const	$push141=, 0
 	i32.load	$push139=, stop($pop141)
-	i32.eqz 	$push294=, $pop139
-	br_if   	0, $pop294      # 0: up to label0
-# BB#2:                                 # %do.end
+	i32.eqz 	$push278=, $pop139
+	br_if   	0, $pop278      # 0: up to label0
+# %bb.2:                                # %do.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -391,7 +383,7 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1073741824
 	i32.store	array0+20($pop1), $pop0
@@ -591,4 +583,4 @@ vol:
 	.size	vol, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

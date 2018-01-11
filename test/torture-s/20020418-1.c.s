@@ -7,23 +7,22 @@
 gcc_crash:                              # @gcc_crash
 	.param  	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.load	$2=, 0($0)
 	block   	
-	i32.load	$push4=, 0($0)
-	tee_local	$push3=, $2=, $pop4
 	i32.const	$push0=, 51
-	i32.le_s	$push1=, $pop3, $pop0
+	i32.le_s	$push1=, $2, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push2=, 60
 	i32.gt_s	$1=, $2, $pop2
 .LBB0_2:                                # %top
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push5=, 1
-	i32.add 	$2=, $2, $pop5
+	i32.const	$push3=, 1
+	i32.add 	$2=, $2, $pop3
 	br_if   	0, $1           # 0: up to label1
-# BB#3:                                 # %if.end6
+# %bb.3:                                # %if.end6
 	end_loop
 	i32.store	0($0), $2
 	return
@@ -41,7 +40,7 @@ gcc_crash:                              # @gcc_crash
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %gcc_crash.exit
+# %bb.0:                                # %gcc_crash.exit
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -50,5 +49,5 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

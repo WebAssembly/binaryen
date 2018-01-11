@@ -5,14 +5,14 @@
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 0
 	i32.load	$push1=, last_fn_entered($pop0)
 	i32.const	$push2=, foo@FUNCTION
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -27,57 +27,57 @@ foo:                                    # @foo
 	.globl	nfoo
 	.type	nfoo,@function
 nfoo:                                   # @nfoo
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push19=, 0
 	i32.load	$push1=, entry_calls($pop19)
 	i32.const	$push18=, 2
 	i32.ne  	$push2=, $pop1, $pop18
 	br_if   	0, $pop2        # 0: down to label1
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push21=, 0
 	i32.load	$push0=, exit_calls($pop21)
 	i32.const	$push20=, 2
 	i32.ne  	$push3=, $pop0, $pop20
 	br_if   	0, $pop3        # 0: down to label1
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push22=, 0
 	i32.load	$push4=, last_fn_entered($pop22)
 	i32.const	$push5=, foo@FUNCTION
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label1
-# BB#3:                                 # %if.end4
+# %bb.3:                                # %if.end4
 	i32.const	$push23=, 0
 	i32.load	$push7=, last_fn_exited($pop23)
 	i32.const	$push8=, foo2@FUNCTION
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label1
-# BB#4:                                 # %if.end7
+# %bb.4:                                # %if.end7
 	call    	foo@FUNCTION
 	i32.const	$push25=, 0
 	i32.load	$push11=, entry_calls($pop25)
 	i32.const	$push24=, 3
 	i32.ne  	$push12=, $pop11, $pop24
 	br_if   	0, $pop12       # 0: down to label1
-# BB#5:                                 # %if.end7
+# %bb.5:                                # %if.end7
 	i32.const	$push27=, 0
 	i32.load	$push10=, exit_calls($pop27)
 	i32.const	$push26=, 3
 	i32.ne  	$push13=, $pop10, $pop26
 	br_if   	0, $pop13       # 0: down to label1
-# BB#6:                                 # %if.end12
+# %bb.6:                                # %if.end12
 	i32.const	$push29=, 0
 	i32.load	$push14=, last_fn_entered($pop29)
 	i32.const	$push28=, foo@FUNCTION
 	i32.ne  	$push15=, $pop14, $pop28
 	br_if   	0, $pop15       # 0: down to label1
-# BB#7:                                 # %if.end15
+# %bb.7:                                # %if.end15
 	i32.const	$push31=, 0
 	i32.load	$push16=, last_fn_exited($pop31)
 	i32.const	$push30=, foo@FUNCTION
 	i32.ne  	$push17=, $pop16, $pop30
 	br_if   	0, $pop17       # 0: down to label1
-# BB#8:                                 # %if.end18
+# %bb.8:                                # %if.end18
 	return
 .LBB1_9:                                # %if.then
 	end_block                       # label1:
@@ -93,7 +93,7 @@ nfoo:                                   # @nfoo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push21=, 0
 	i32.load	$push1=, exit_calls($pop21)
@@ -101,51 +101,51 @@ main:                                   # @main
 	i32.load	$push0=, entry_calls($pop20)
 	i32.or  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	call    	foo2@FUNCTION
 	i32.const	$push23=, 0
 	i32.load	$push4=, entry_calls($pop23)
 	i32.const	$push22=, 2
 	i32.ne  	$push5=, $pop4, $pop22
 	br_if   	0, $pop5        # 0: down to label2
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push25=, 0
 	i32.load	$push3=, exit_calls($pop25)
 	i32.const	$push24=, 2
 	i32.ne  	$push6=, $pop3, $pop24
 	br_if   	0, $pop6        # 0: down to label2
-# BB#3:                                 # %if.end6
+# %bb.3:                                # %if.end6
 	i32.const	$push26=, 0
 	i32.load	$push7=, last_fn_entered($pop26)
 	i32.const	$push8=, foo@FUNCTION
 	i32.ne  	$push9=, $pop7, $pop8
 	br_if   	0, $pop9        # 0: down to label2
-# BB#4:                                 # %if.end9
+# %bb.4:                                # %if.end9
 	i32.const	$push27=, 0
 	i32.load	$push10=, last_fn_exited($pop27)
 	i32.const	$push11=, foo2@FUNCTION
 	i32.ne  	$push12=, $pop10, $pop11
 	br_if   	0, $pop12       # 0: down to label2
-# BB#5:                                 # %if.end12
+# %bb.5:                                # %if.end12
 	call    	nfoo@FUNCTION
 	i32.const	$push29=, 0
 	i32.load	$push14=, entry_calls($pop29)
 	i32.const	$push28=, 3
 	i32.ne  	$push15=, $pop14, $pop28
 	br_if   	0, $pop15       # 0: down to label2
-# BB#6:                                 # %if.end12
+# %bb.6:                                # %if.end12
 	i32.const	$push31=, 0
 	i32.load	$push13=, exit_calls($pop31)
 	i32.const	$push30=, 3
 	i32.ne  	$push16=, $pop13, $pop30
 	br_if   	0, $pop16       # 0: down to label2
-# BB#7:                                 # %if.end17
+# %bb.7:                                # %if.end17
 	i32.const	$push32=, 0
 	i32.load	$push17=, last_fn_entered($pop32)
 	i32.const	$push18=, foo@FUNCTION
 	i32.ne  	$push19=, $pop17, $pop18
 	br_if   	0, $pop19       # 0: down to label2
-# BB#8:                                 # %if.end20
+# %bb.8:                                # %if.end20
 	i32.const	$push33=, 0
 	return  	$pop33
 .LBB2_9:                                # %if.then
@@ -162,7 +162,7 @@ main:                                   # @main
 	.type	__cyg_profile_func_enter,@function
 __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	last_fn_entered($pop0), $0
 	i32.const	$push5=, 0
@@ -182,7 +182,7 @@ __cyg_profile_func_enter:               # @__cyg_profile_func_enter
 	.type	__cyg_profile_func_exit,@function
 __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	last_fn_exited($pop0), $0
 	i32.const	$push5=, 0
@@ -199,49 +199,49 @@ __cyg_profile_func_exit:                # @__cyg_profile_func_exit
 	.section	.text.foo2,"ax",@progbits
 	.type	foo2,@function          # -- Begin function foo2
 foo2:                                   # @foo2
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push17=, 0
 	i32.load	$push1=, entry_calls($pop17)
 	i32.const	$push2=, 1
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label3
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push18=, 0
 	i32.load	$push0=, exit_calls($pop18)
 	br_if   	0, $pop0        # 0: down to label3
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push19=, 0
 	i32.load	$push4=, last_fn_entered($pop19)
 	i32.const	$push5=, foo2@FUNCTION
 	i32.ne  	$push6=, $pop4, $pop5
 	br_if   	0, $pop6        # 0: down to label3
-# BB#3:                                 # %if.end4
+# %bb.3:                                # %if.end4
 	call    	foo@FUNCTION
 	i32.const	$push20=, 0
 	i32.load	$push8=, entry_calls($pop20)
 	i32.const	$push9=, 2
 	i32.ne  	$push10=, $pop8, $pop9
 	br_if   	0, $pop10       # 0: down to label3
-# BB#4:                                 # %if.end4
+# %bb.4:                                # %if.end4
 	i32.const	$push21=, 0
 	i32.load	$push7=, exit_calls($pop21)
 	i32.const	$push11=, 1
 	i32.ne  	$push12=, $pop7, $pop11
 	br_if   	0, $pop12       # 0: down to label3
-# BB#5:                                 # %if.end9
+# %bb.5:                                # %if.end9
 	i32.const	$push23=, 0
 	i32.load	$push13=, last_fn_entered($pop23)
 	i32.const	$push22=, foo@FUNCTION
 	i32.ne  	$push14=, $pop13, $pop22
 	br_if   	0, $pop14       # 0: down to label3
-# BB#6:                                 # %if.end12
+# %bb.6:                                # %if.end12
 	i32.const	$push25=, 0
 	i32.load	$push15=, last_fn_exited($pop25)
 	i32.const	$push24=, foo@FUNCTION
 	i32.ne  	$push16=, $pop15, $pop24
 	br_if   	0, $pop16       # 0: down to label3
-# BB#7:                                 # %if.end15
+# %bb.7:                                # %if.end15
 	return
 .LBB5_8:                                # %if.then
 	end_block                       # label3:
@@ -288,5 +288,5 @@ last_fn_exited:
 	.size	last_fn_exited, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

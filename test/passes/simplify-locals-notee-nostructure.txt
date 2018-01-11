@@ -1,6 +1,5 @@
 (module
  (type $0 (func))
- (memory $0 0)
  (func $contrast (; 0 ;) (type $0)
   (local $x i32)
   (local $y i32)

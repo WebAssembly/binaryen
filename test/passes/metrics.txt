@@ -61,5 +61,4 @@ Counts
  [total]        : 0       
  [vars]         : 0       
 (module
- (memory $0 0)
 )

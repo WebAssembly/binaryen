@@ -7,7 +7,7 @@
 seterr:                                 # @seterr
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.store	8($0), $1
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
@@ -22,15 +22,14 @@ seterr:                                 # @seterr
 bracket_empty:                          # @bracket_empty
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.load	$1=, 0($0)
 	block   	
 	block   	
-	i32.load	$push9=, 0($0)
-	tee_local	$push8=, $1=, $pop9
 	i32.load	$push0=, 4($0)
-	i32.ge_u	$push1=, $pop8, $pop0
+	i32.ge_u	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %land.lhs.true
+# %bb.1:                                # %land.lhs.true
 	i32.const	$push2=, 1
 	i32.add 	$push3=, $1, $pop2
 	i32.store	0($0), $pop3
@@ -56,7 +55,7 @@ bracket_empty:                          # @bracket_empty
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -64,4 +63,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

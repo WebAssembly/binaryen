@@ -2193,7 +2193,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
   passRunner.addDefaultOptimizationPasses();
-  passRunner.runFunction((Function*)func);
+  passRunner.runOnFunction((Function*)func);
 }
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
   if (tracing) {
@@ -2213,7 +2213,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
-  passRunner.runFunction((Function*)func);
+  passRunner.runOnFunction((Function*)func);
 }
 
 //

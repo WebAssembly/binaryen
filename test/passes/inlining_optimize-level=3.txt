@@ -3,7 +3,6 @@
  (type $1 (func))
  (table 1 1 anyfunc)
  (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
- (memory $0 0)
  (export "yes" (func $yes))
  (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
  (func $yes (; 0 ;) (type $0) (result i32)

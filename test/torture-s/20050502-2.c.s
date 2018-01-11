@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store8	4($0), $pop0
                                         # fallthrough-return
@@ -20,7 +20,7 @@ foo:                                    # @foo
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store8	8($0), $pop0
                                         # fallthrough-return
@@ -35,14 +35,13 @@ bar:                                    # @bar
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push16=, 0
+# %bb.0:                                # %entry
 	i32.const	$push14=, 0
 	i32.load	$push13=, __stack_pointer($pop14)
 	i32.const	$push15=, 16
-	i32.sub 	$push26=, $pop13, $pop15
-	tee_local	$push25=, $0=, $pop26
-	i32.store	__stack_pointer($pop16), $pop25
+	i32.sub 	$0=, $pop13, $pop15
+	i32.const	$push16=, 0
+	i32.store	__stack_pointer($pop16), $0
 	i32.const	$push1=, 10
 	i32.add 	$push2=, $0, $pop1
 	i32.const	$push24=, 0
@@ -63,16 +62,16 @@ main:                                   # @main
 	i32.const	$push20=, 11
 	i32.call	$push8=, memcmp@FUNCTION, $0, $pop7, $pop20
 	br_if   	0, $pop8        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push28=, 0
-	i32.store8	8($0), $pop28
+# %bb.1:                                # %if.end
+	i32.const	$push26=, 0
+	i32.store8	8($0), $pop26
 	i32.const	$push9=, 77
 	i32.store8	4($0), $pop9
 	i32.const	$push10=, .L.str.1
-	i32.const	$push27=, 11
-	i32.call	$push11=, memcmp@FUNCTION, $0, $pop10, $pop27
+	i32.const	$push25=, 11
+	i32.call	$push11=, memcmp@FUNCTION, $0, $pop10, $pop25
 	br_if   	0, $pop11       # 0: down to label0
-# BB#2:                                 # %if.end7
+# %bb.2:                                # %if.end7
 	i32.const	$push19=, 0
 	i32.const	$push17=, 16
 	i32.add 	$push18=, $0, $pop17
@@ -106,6 +105,6 @@ main:                                   # @main
 	.size	.L.str.1, 11
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	memcmp, i32, i32, i32, i32
 	.functype	abort, void

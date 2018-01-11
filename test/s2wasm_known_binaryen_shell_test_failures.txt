@@ -10,7 +10,6 @@
 20070201-1.c.s.wast
 20071030-1.c.s.wast
 20080502-1.c.s.wast
-20100708-1.c.s.wast
 20121108-1.c.s.wast
 920501-8.c.s.wast
 920501-9.c.s.wast
@@ -45,19 +44,13 @@ complex-7.c.s.wast
 # abort called: the tests are self-validating and call abort when they detect a
 # failure.  This may not be binaryen's fault (the toolchain may be emitting bad
 # code) but it could be binaryen's fault.
-20030125-1.c.s.wast
-920612-1.c.s.wast
 920625-1.c.s.wast
-920711-1.c.s.wast
 931004-10.c.s.wast
 931004-12.c.s.wast
 931004-14.c.s.wast
 931004-6.c.s.wast
-bcp-1.c.s.wast
 bitfld-3.c.s.wast
-builtin-constant.c.s.wast
 eeprof-1.c.s.wast
-pr22493-1.c.s.wast
 pr32244-1.c.s.wast
 pr34971.c.s.wast
 pr38151.c.s.wast
@@ -78,7 +71,6 @@ va-arg-pack-1.c.s.wast
 20050218-1.c.s.wast # strlen
 20050826-1.c.s.wast # memset
 20051113-1.c.s.wast # malloc
-20060412-1.c.s.wast # memset
 20071018-1.c.s.wast # __builtin_malloc
 20071120-1.c.s.wast # __builtin_malloc
 20071202-1.c.s.wast # memcpy
@@ -104,12 +96,10 @@ memcpy-2.c.s.wast # memset
 memcpy-bi.c.s.wast # memcpy
 memset-1.c.s.wast # memset
 memset-3.c.s.wast # memset
-pr28982b.c.s.wast # memset
 pr33870-1.c.s.wast # memset
 pr33870.c.s.wast # memset
 pr34456.c.s.wast # qsort
 pr36038.c.s.wast # memcpy
-pr36093.c.s.wast # memset
 pr36765.c.s.wast # __builtin_malloc
 pr39228.c.s.wast # __builtin_isinff
 pr41395-1.c.s.wast # malloc
@@ -141,11 +131,67 @@ fprintf-chk-1.c.s.wast # stdout
 vfprintf-1.c.s.wast # stdout
 vfprintf-chk-1.c.s.wast # stdout
 
-# Results of signed integer overflow are undefined in C, so don't care.
-# 'clang -O2' runs -instcombine pass that does these transformations:
-# > add nsw x, INT_MIN -> or x, INT_MIN
-# > add nuw x, INT_MIN -> xor x, INT_MIN
-# which makes the tests below fail.
-20040409-1.c.s.wast # abort()
-20040409-2.c.s.wast # abort()
-20040409-3.c.s.wast # abort()
+# Untriaged
+20000112-1.c.s.wast O0
+20001011-1.c.s.wast O0
+20010409-1.c.s.wast O0
+20010605-2.c.s.wast O0
+20010925-1.c.s.wast O0
+20011008-3.c.s.wast O0
+20011121-1.c.s.wast O0
+20021127-1.c.s.wast O0
+20030626-1.c.s.wast O0
+20030626-2.c.s.wast O0
+20030715-1.c.s.wast O0
+20030914-1.c.s.wast O0
+20030914-2.c.s.wast O0
+20031003-1.c.s.wast O0
+20040208-1.c.s.wast O0
+20040223-1.c.s.wast O0
+20040313-1.c.s.wast O0
+20040709-1.c.s.wast O0
+20040709-2.c.s.wast O0
+20041126-1.c.s.wast O0
+20050121-1.c.s.wast O0
+20090113-1.c.s.wast O0
+20111208-1.c.s.wast O0
+20120207-1.c.s.wast O0
+920810-1.c.s.wast O0
+921006-1.c.s.wast O0
+930622-2.c.s.wast O0
+930725-1.c.s.wast O0
+950426-1.c.s.wast O0
+960327-1.c.s.wast O0
+960513-1.c.s.wast O0
+complex-6.c.s.wast O0
+conversion.c.s.wast O0
+mode-dependent-address.c.s.wast O0
+nestfunc-4.c.s.wast O0
+p18298.c.s.wast O0
+pr15262-1.c.s.wast O0
+pr20621-1.c.s.wast O0
+pr22061-1.c.s.wast O0
+pr23135.c.s.wast O0
+pr30778.c.s.wast O0
+pr33142.c.s.wast O0
+pr36321.c.s.wast O0
+pr42614.c.s.wast O0
+pr49644.c.s.wast O0
+pr60062.c.s.wast O0
+string-opt-18.c.s.wast O0
+vla-dealloc-1.c.s.wast O0
+
+20030914-1.c.s.wast O2
+20040409-1.c.s.wast O2
+20040409-2.c.s.wast O2
+20040409-3.c.s.wast O2
+20060412-1.c.s.wast O2
+20100708-1.c.s.wast O2
+920612-1.c.s.wast O2
+920711-1.c.s.wast O2
+930529-1.c.s.wast O2
+bcp-1.c.s.wast O2
+builtin-constant.c.s.wast O2
+pr22493-1.c.s.wast O2
+# pr28982b.c.s.wast O2
+pr36093.c.s.wast O2

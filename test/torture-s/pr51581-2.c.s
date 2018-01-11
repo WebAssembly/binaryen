@@ -6,24 +6,23 @@
 	.type	f1,@function
 f1:                                     # @f1
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push9=, c+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, a+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, c+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, a+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 3
-	i32.rem_s	$push3=, $pop2, $pop7
+	i32.const	$push5=, 3
+	i32.rem_s	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label0
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label0
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -36,24 +35,23 @@ f1:                                     # @f1
 	.type	f2,@function
 f2:                                     # @f2
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push9=, d+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, b+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, d+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, b+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 3
-	i32.rem_u	$push3=, $pop2, $pop7
+	i32.const	$push5=, 3
+	i32.rem_u	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label1
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label1
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -66,24 +64,23 @@ f2:                                     # @f2
 	.type	f3,@function
 f3:                                     # @f3
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i32.const	$push9=, c+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, a+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, c+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, a+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 18
-	i32.rem_s	$push3=, $pop2, $pop7
+	i32.const	$push5=, 18
+	i32.rem_s	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label2
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label2
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -96,24 +93,23 @@ f3:                                     # @f3
 	.type	f4,@function
 f4:                                     # @f4
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB3_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
-	i32.const	$push9=, d+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, b+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, d+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, b+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 18
-	i32.rem_u	$push3=, $pop2, $pop7
+	i32.const	$push5=, 18
+	i32.rem_u	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label3
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label3
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -126,24 +122,23 @@ f4:                                     # @f4
 	.type	f5,@function
 f5:                                     # @f5
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB4_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label4:
-	i32.const	$push9=, c+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, a+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, c+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, a+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 19
-	i32.rem_s	$push3=, $pop2, $pop7
+	i32.const	$push5=, 19
+	i32.rem_s	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label4
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label4
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -156,24 +151,23 @@ f5:                                     # @f5
 	.type	f6,@function
 f6:                                     # @f6
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -16384
 .LBB5_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label5:
-	i32.const	$push9=, d+16384
-	i32.add 	$push0=, $0, $pop9
-	i32.const	$push8=, b+16384
-	i32.add 	$push1=, $0, $pop8
+	i32.const	$push7=, d+16384
+	i32.add 	$push0=, $0, $pop7
+	i32.const	$push6=, b+16384
+	i32.add 	$push1=, $0, $pop6
 	i32.load	$push2=, 0($pop1)
-	i32.const	$push7=, 19
-	i32.rem_u	$push3=, $pop2, $pop7
+	i32.const	$push5=, 19
+	i32.rem_u	$push3=, $pop2, $pop5
 	i32.store	0($pop0), $pop3
-	i32.const	$push6=, 4
-	i32.add 	$push5=, $0, $pop6
-	tee_local	$push4=, $0=, $pop5
-	br_if   	0, $pop4        # 0: up to label5
-# BB#2:                                 # %for.end
+	i32.const	$push4=, 4
+	i32.add 	$0=, $0, $pop4
+	br_if   	0, $0           # 0: up to label5
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -186,35 +180,33 @@ f6:                                     # @f6
 	.type	f7,@function
 f7:                                     # @f7
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -16384
 .LBB6_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label6:
-	i32.const	$push20=, c+16384
-	i32.add 	$push9=, $1, $pop20
-	i32.const	$push19=, a+16384
-	i32.add 	$push0=, $1, $pop19
-	i32.load	$push18=, 0($pop0)
-	tee_local	$push17=, $0=, $pop18
-	i64.extend_s/i32	$push2=, $pop17
-	i64.const	$push16=, 1431655766
-	i64.mul 	$push3=, $pop2, $pop16
-	i64.const	$push15=, 32
-	i64.shr_u	$push4=, $pop3, $pop15
+	i32.const	$push16=, a+16384
+	i32.add 	$push0=, $1, $pop16
+	i32.load	$0=, 0($pop0)
+	i32.const	$push15=, c+16384
+	i32.add 	$push9=, $1, $pop15
+	i64.extend_s/i32	$push2=, $0
+	i64.const	$push14=, 1431655766
+	i64.mul 	$push3=, $pop2, $pop14
+	i64.const	$push13=, 32
+	i64.shr_u	$push4=, $pop3, $pop13
 	i32.wrap/i64	$push5=, $pop4
-	i32.const	$push14=, 31
-	i32.shr_s	$push1=, $0, $pop14
+	i32.const	$push12=, 31
+	i32.shr_s	$push1=, $0, $pop12
 	i32.sub 	$push6=, $pop5, $pop1
-	i32.const	$push13=, -3
-	i32.mul 	$push7=, $pop6, $pop13
+	i32.const	$push11=, -3
+	i32.mul 	$push7=, $pop6, $pop11
 	i32.add 	$push8=, $pop7, $0
 	i32.store	0($pop9), $pop8
-	i32.const	$push12=, 4
-	i32.add 	$push11=, $1, $pop12
-	tee_local	$push10=, $1=, $pop11
-	br_if   	0, $pop10       # 0: up to label6
-# BB#2:                                 # %for.end
+	i32.const	$push10=, 4
+	i32.add 	$1=, $1, $pop10
+	br_if   	0, $1           # 0: up to label6
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -227,32 +219,30 @@ f7:                                     # @f7
 	.type	f8,@function
 f8:                                     # @f8
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -16384
 .LBB7_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label7:
-	i32.const	$push17=, d+16384
-	i32.add 	$push7=, $1, $pop17
-	i32.const	$push16=, b+16384
-	i32.add 	$push0=, $1, $pop16
-	i32.load	$push15=, 0($pop0)
-	tee_local	$push14=, $0=, $pop15
-	i64.extend_u/i32	$push1=, $pop14
-	i64.const	$push13=, 2863311531
-	i64.mul 	$push2=, $pop1, $pop13
-	i64.const	$push12=, 33
-	i64.shr_u	$push3=, $pop2, $pop12
+	i32.const	$push13=, b+16384
+	i32.add 	$push0=, $1, $pop13
+	i32.load	$0=, 0($pop0)
+	i32.const	$push12=, d+16384
+	i32.add 	$push7=, $1, $pop12
+	i64.extend_u/i32	$push1=, $0
+	i64.const	$push11=, 2863311531
+	i64.mul 	$push2=, $pop1, $pop11
+	i64.const	$push10=, 33
+	i64.shr_u	$push3=, $pop2, $pop10
 	i32.wrap/i64	$push4=, $pop3
-	i32.const	$push11=, -3
-	i32.mul 	$push5=, $pop4, $pop11
+	i32.const	$push9=, -3
+	i32.mul 	$push5=, $pop4, $pop9
 	i32.add 	$push6=, $pop5, $0
 	i32.store	0($pop7), $pop6
-	i32.const	$push10=, 4
-	i32.add 	$push9=, $1, $pop10
-	tee_local	$push8=, $1=, $pop9
-	br_if   	0, $pop8        # 0: up to label7
-# BB#2:                                 # %for.end
+	i32.const	$push8=, 4
+	i32.add 	$1=, $1, $pop8
+	br_if   	0, $1           # 0: up to label7
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -265,35 +255,33 @@ f8:                                     # @f8
 	.type	f9,@function
 f9:                                     # @f9
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -16384
 .LBB8_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label8:
-	i32.const	$push20=, c+16384
-	i32.add 	$push9=, $1, $pop20
-	i32.const	$push19=, a+16384
-	i32.add 	$push0=, $1, $pop19
-	i32.load	$push18=, 0($pop0)
-	tee_local	$push17=, $0=, $pop18
-	i64.extend_s/i32	$push2=, $pop17
-	i64.const	$push16=, 954437177
-	i64.mul 	$push3=, $pop2, $pop16
-	i64.const	$push15=, 34
-	i64.shr_s	$push4=, $pop3, $pop15
+	i32.const	$push16=, a+16384
+	i32.add 	$push0=, $1, $pop16
+	i32.load	$0=, 0($pop0)
+	i32.const	$push15=, c+16384
+	i32.add 	$push9=, $1, $pop15
+	i64.extend_s/i32	$push2=, $0
+	i64.const	$push14=, 954437177
+	i64.mul 	$push3=, $pop2, $pop14
+	i64.const	$push13=, 34
+	i64.shr_s	$push4=, $pop3, $pop13
 	i32.wrap/i64	$push5=, $pop4
-	i32.const	$push14=, 31
-	i32.shr_s	$push1=, $0, $pop14
+	i32.const	$push12=, 31
+	i32.shr_s	$push1=, $0, $pop12
 	i32.sub 	$push6=, $pop5, $pop1
-	i32.const	$push13=, -18
-	i32.mul 	$push7=, $pop6, $pop13
+	i32.const	$push11=, -18
+	i32.mul 	$push7=, $pop6, $pop11
 	i32.add 	$push8=, $pop7, $0
 	i32.store	0($pop9), $pop8
-	i32.const	$push12=, 4
-	i32.add 	$push11=, $1, $pop12
-	tee_local	$push10=, $1=, $pop11
-	br_if   	0, $pop10       # 0: up to label8
-# BB#2:                                 # %for.end
+	i32.const	$push10=, 4
+	i32.add 	$1=, $1, $pop10
+	br_if   	0, $1           # 0: up to label8
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -306,32 +294,30 @@ f9:                                     # @f9
 	.type	f10,@function
 f10:                                    # @f10
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -16384
 .LBB9_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label9:
-	i32.const	$push17=, d+16384
-	i32.add 	$push7=, $1, $pop17
-	i32.const	$push16=, b+16384
-	i32.add 	$push0=, $1, $pop16
-	i32.load	$push15=, 0($pop0)
-	tee_local	$push14=, $0=, $pop15
-	i64.extend_u/i32	$push1=, $pop14
-	i64.const	$push13=, 954437177
-	i64.mul 	$push2=, $pop1, $pop13
-	i64.const	$push12=, 34
-	i64.shr_u	$push3=, $pop2, $pop12
+	i32.const	$push13=, b+16384
+	i32.add 	$push0=, $1, $pop13
+	i32.load	$0=, 0($pop0)
+	i32.const	$push12=, d+16384
+	i32.add 	$push7=, $1, $pop12
+	i64.extend_u/i32	$push1=, $0
+	i64.const	$push11=, 954437177
+	i64.mul 	$push2=, $pop1, $pop11
+	i64.const	$push10=, 34
+	i64.shr_u	$push3=, $pop2, $pop10
 	i32.wrap/i64	$push4=, $pop3
-	i32.const	$push11=, -18
-	i32.mul 	$push5=, $pop4, $pop11
+	i32.const	$push9=, -18
+	i32.mul 	$push5=, $pop4, $pop9
 	i32.add 	$push6=, $pop5, $0
 	i32.store	0($pop7), $pop6
-	i32.const	$push10=, 4
-	i32.add 	$push9=, $1, $pop10
-	tee_local	$push8=, $1=, $pop9
-	br_if   	0, $pop8        # 0: up to label9
-# BB#2:                                 # %for.end
+	i32.const	$push8=, 4
+	i32.add 	$1=, $1, $pop8
+	br_if   	0, $1           # 0: up to label9
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -344,35 +330,33 @@ f10:                                    # @f10
 	.type	f11,@function
 f11:                                    # @f11
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$1=, -16384
 .LBB10_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label10:
-	i32.const	$push20=, c+16384
-	i32.add 	$push9=, $1, $pop20
-	i32.const	$push19=, a+16384
-	i32.add 	$push0=, $1, $pop19
-	i32.load	$push18=, 0($pop0)
-	tee_local	$push17=, $0=, $pop18
-	i64.extend_s/i32	$push2=, $pop17
-	i64.const	$push16=, 1808407283
-	i64.mul 	$push3=, $pop2, $pop16
-	i64.const	$push15=, 35
-	i64.shr_s	$push4=, $pop3, $pop15
+	i32.const	$push16=, a+16384
+	i32.add 	$push0=, $1, $pop16
+	i32.load	$0=, 0($pop0)
+	i32.const	$push15=, c+16384
+	i32.add 	$push9=, $1, $pop15
+	i64.extend_s/i32	$push2=, $0
+	i64.const	$push14=, 1808407283
+	i64.mul 	$push3=, $pop2, $pop14
+	i64.const	$push13=, 35
+	i64.shr_s	$push4=, $pop3, $pop13
 	i32.wrap/i64	$push5=, $pop4
-	i32.const	$push14=, 31
-	i32.shr_s	$push1=, $0, $pop14
+	i32.const	$push12=, 31
+	i32.shr_s	$push1=, $0, $pop12
 	i32.sub 	$push6=, $pop5, $pop1
-	i32.const	$push13=, -19
-	i32.mul 	$push7=, $pop6, $pop13
+	i32.const	$push11=, -19
+	i32.mul 	$push7=, $pop6, $pop11
 	i32.add 	$push8=, $pop7, $0
 	i32.store	0($pop9), $pop8
-	i32.const	$push12=, 4
-	i32.add 	$push11=, $1, $pop12
-	tee_local	$push10=, $1=, $pop11
-	br_if   	0, $pop10       # 0: up to label10
-# BB#2:                                 # %for.end
+	i32.const	$push10=, 4
+	i32.add 	$1=, $1, $pop10
+	br_if   	0, $1           # 0: up to label10
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -385,39 +369,36 @@ f11:                                    # @f11
 	.type	f12,@function
 f12:                                    # @f12
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$2=, -16384
 .LBB11_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label11:
-	i32.const	$push24=, d+16384
-	i32.add 	$push10=, $2, $pop24
-	i32.const	$push23=, b+16384
-	i32.add 	$push0=, $2, $pop23
-	i32.load	$push22=, 0($pop0)
-	tee_local	$push21=, $0=, $pop22
+	i32.const	$push18=, b+16384
+	i32.add 	$push0=, $2, $pop18
+	i32.load	$0=, 0($pop0)
 	i64.extend_u/i32	$push1=, $0
-	i64.const	$push20=, 2938661835
-	i64.mul 	$push2=, $pop1, $pop20
-	i64.const	$push19=, 32
-	i64.shr_u	$push3=, $pop2, $pop19
-	i32.wrap/i64	$push18=, $pop3
-	tee_local	$push17=, $1=, $pop18
-	i32.sub 	$push4=, $pop21, $pop17
-	i32.const	$push16=, 1
-	i32.shr_u	$push5=, $pop4, $pop16
+	i64.const	$push17=, 2938661835
+	i64.mul 	$push2=, $pop1, $pop17
+	i64.const	$push16=, 32
+	i64.shr_u	$push3=, $pop2, $pop16
+	i32.wrap/i64	$1=, $pop3
+	i32.const	$push15=, d+16384
+	i32.add 	$push10=, $2, $pop15
+	i32.sub 	$push4=, $0, $1
+	i32.const	$push14=, 1
+	i32.shr_u	$push5=, $pop4, $pop14
 	i32.add 	$push6=, $pop5, $1
-	i32.const	$push15=, 4
-	i32.shr_u	$push7=, $pop6, $pop15
-	i32.const	$push14=, -19
-	i32.mul 	$push8=, $pop7, $pop14
+	i32.const	$push13=, 4
+	i32.shr_u	$push7=, $pop6, $pop13
+	i32.const	$push12=, -19
+	i32.mul 	$push8=, $pop7, $pop12
 	i32.add 	$push9=, $pop8, $0
 	i32.store	0($pop10), $pop9
-	i32.const	$push13=, 4
-	i32.add 	$push12=, $2, $pop13
-	tee_local	$push11=, $2=, $pop12
-	br_if   	0, $pop11       # 0: up to label11
-# BB#2:                                 # %for.end
+	i32.const	$push11=, 4
+	i32.add 	$2=, $2, $pop11
+	br_if   	0, $2           # 0: up to label11
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -431,288 +412,281 @@ f12:                                    # @f12
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$1=, 0
-	i32.const	$0=, -16384
+# %bb.0:                                # %entry
+	i32.const	$0=, 0
+	i32.const	$1=, -16384
 .LBB12_1:                               # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label12:
 	#APP
 	#NO_APP
-	i32.const	$push90=, b+16384
-	i32.add 	$push0=, $0, $pop90
-	i32.store	0($pop0), $1
-	i32.const	$push89=, a+16384
-	i32.add 	$push2=, $0, $pop89
-	i32.const	$push88=, -2048
-	i32.add 	$push1=, $1, $pop88
+	i32.const	$push89=, b+16384
+	i32.add 	$push0=, $1, $pop89
+	i32.store	0($pop0), $0
+	i32.const	$push88=, a+16384
+	i32.add 	$push2=, $1, $pop88
+	i32.const	$push87=, -2048
+	i32.add 	$push1=, $0, $pop87
 	i32.store	0($pop2), $pop1
-	i32.const	$push87=, 1
-	i32.add 	$1=, $1, $pop87
 	i32.const	$push86=, 4
-	i32.add 	$push85=, $0, $pop86
-	tee_local	$push84=, $0=, $pop85
-	br_if   	0, $pop84       # 0: up to label12
-# BB#2:                                 # %for.end
+	i32.add 	$1=, $1, $pop86
+	i32.const	$push85=, 1
+	i32.add 	$0=, $0, $pop85
+	br_if   	0, $1           # 0: up to label12
+# %bb.2:                                # %for.end
 	end_loop
 	i32.const	$1=, 0
-	i32.const	$push94=, 0
-	i32.const	$push3=, 2147483647
-	i32.store	a+16380($pop94), $pop3
-	i32.const	$push93=, 0
-	i64.const	$push4=, -9223372030412324864
-	i64.store	a($pop93), $pop4
-	i32.const	$0=, -1
 	i32.const	$push92=, 0
-	i32.const	$push91=, -1
-	i32.store	b+16380($pop92), $pop91
+	i32.const	$push3=, 2147483647
+	i32.store	a+16380($pop92), $pop3
+	i32.const	$push91=, 0
+	i64.const	$push4=, -9223372030412324864
+	i64.store	a($pop91), $pop4
+	i32.const	$push90=, 0
+	i32.const	$push5=, -1
+	i32.store	b+16380($pop90), $pop5
 	call    	f1@FUNCTION
 	call    	f2@FUNCTION
+	i32.const	$0=, 0
 .LBB12_3:                               # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label14:
-	i32.const	$push97=, c
-	i32.add 	$push8=, $1, $pop97
-	i32.load	$push9=, 0($pop8)
-	i32.const	$push96=, a
-	i32.add 	$push5=, $1, $pop96
-	i32.load	$push6=, 0($pop5)
-	i32.const	$push95=, 3
-	i32.rem_s	$push7=, $pop6, $pop95
-	i32.ne  	$push10=, $pop9, $pop7
-	br_if   	1, $pop10       # 1: down to label13
-# BB#4:                                 # %lor.lhs.false
+	i32.const	$push95=, c
+	i32.add 	$push9=, $1, $pop95
+	i32.load	$push10=, 0($pop9)
+	i32.const	$push94=, a
+	i32.add 	$push6=, $1, $pop94
+	i32.load	$push7=, 0($pop6)
+	i32.const	$push93=, 3
+	i32.rem_s	$push8=, $pop7, $pop93
+	i32.ne  	$push11=, $pop10, $pop8
+	br_if   	1, $pop11       # 1: down to label13
+# %bb.4:                                # %lor.lhs.false
                                         #   in Loop: Header=BB12_3 Depth=1
-	i32.const	$push100=, d
-	i32.add 	$push14=, $1, $pop100
-	i32.load	$push15=, 0($pop14)
-	i32.const	$push99=, b
-	i32.add 	$push11=, $1, $pop99
-	i32.load	$push12=, 0($pop11)
-	i32.const	$push98=, 3
-	i32.rem_u	$push13=, $pop12, $pop98
-	i32.ne  	$push16=, $pop15, $pop13
-	br_if   	1, $pop16       # 1: down to label13
-# BB#5:                                 # %for.cond2
+	i32.const	$push98=, d
+	i32.add 	$push15=, $1, $pop98
+	i32.load	$push16=, 0($pop15)
+	i32.const	$push97=, b
+	i32.add 	$push12=, $1, $pop97
+	i32.load	$push13=, 0($pop12)
+	i32.const	$push96=, 3
+	i32.rem_u	$push14=, $pop13, $pop96
+	i32.ne  	$push17=, $pop16, $pop14
+	br_if   	1, $pop17       # 1: down to label13
+# %bb.5:                                # %for.cond2
                                         #   in Loop: Header=BB12_3 Depth=1
-	i32.const	$push105=, 4
-	i32.add 	$1=, $1, $pop105
-	i32.const	$push104=, 1
-	i32.add 	$push103=, $0, $pop104
-	tee_local	$push102=, $0=, $pop103
-	i32.const	$push101=, 4094
-	i32.le_u	$push17=, $pop102, $pop101
-	br_if   	0, $pop17       # 0: up to label14
-# BB#6:                                 # %for.end14
+	i32.const	$push101=, 1
+	i32.add 	$0=, $0, $pop101
+	i32.const	$push100=, 4
+	i32.add 	$1=, $1, $pop100
+	i32.const	$push99=, 4095
+	i32.le_u	$push18=, $0, $pop99
+	br_if   	0, $pop18       # 0: up to label14
+# %bb.6:                                # %for.end14
 	end_loop
 	call    	f3@FUNCTION
 	call    	f4@FUNCTION
-	i32.const	$0=, -1
 	i32.const	$1=, 0
+	i32.const	$0=, 0
 .LBB12_7:                               # %for.body17
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label15:
-	i32.const	$push108=, c
-	i32.add 	$push21=, $1, $pop108
-	i32.load	$push22=, 0($pop21)
-	i32.const	$push107=, a
-	i32.add 	$push18=, $1, $pop107
-	i32.load	$push19=, 0($pop18)
-	i32.const	$push106=, 18
-	i32.rem_s	$push20=, $pop19, $pop106
-	i32.ne  	$push23=, $pop22, $pop20
-	br_if   	1, $pop23       # 1: down to label13
-# BB#8:                                 # %lor.lhs.false22
+	i32.const	$push104=, c
+	i32.add 	$push22=, $1, $pop104
+	i32.load	$push23=, 0($pop22)
+	i32.const	$push103=, a
+	i32.add 	$push19=, $1, $pop103
+	i32.load	$push20=, 0($pop19)
+	i32.const	$push102=, 18
+	i32.rem_s	$push21=, $pop20, $pop102
+	i32.ne  	$push24=, $pop23, $pop21
+	br_if   	1, $pop24       # 1: down to label13
+# %bb.8:                                # %lor.lhs.false22
                                         #   in Loop: Header=BB12_7 Depth=1
-	i32.const	$push111=, d
-	i32.add 	$push27=, $1, $pop111
-	i32.load	$push28=, 0($pop27)
-	i32.const	$push110=, b
-	i32.add 	$push24=, $1, $pop110
-	i32.load	$push25=, 0($pop24)
-	i32.const	$push109=, 18
-	i32.rem_u	$push26=, $pop25, $pop109
-	i32.ne  	$push29=, $pop28, $pop26
-	br_if   	1, $pop29       # 1: down to label13
-# BB#9:                                 # %for.cond15
+	i32.const	$push107=, d
+	i32.add 	$push28=, $1, $pop107
+	i32.load	$push29=, 0($pop28)
+	i32.const	$push106=, b
+	i32.add 	$push25=, $1, $pop106
+	i32.load	$push26=, 0($pop25)
+	i32.const	$push105=, 18
+	i32.rem_u	$push27=, $pop26, $pop105
+	i32.ne  	$push30=, $pop29, $pop27
+	br_if   	1, $pop30       # 1: down to label13
+# %bb.9:                                # %for.cond15
                                         #   in Loop: Header=BB12_7 Depth=1
-	i32.const	$push116=, 4
-	i32.add 	$1=, $1, $pop116
-	i32.const	$push115=, 1
-	i32.add 	$push114=, $0, $pop115
-	tee_local	$push113=, $0=, $pop114
-	i32.const	$push112=, 4094
-	i32.le_u	$push30=, $pop113, $pop112
-	br_if   	0, $pop30       # 0: up to label15
-# BB#10:                                # %for.end31
+	i32.const	$push110=, 1
+	i32.add 	$0=, $0, $pop110
+	i32.const	$push109=, 4
+	i32.add 	$1=, $1, $pop109
+	i32.const	$push108=, 4095
+	i32.le_u	$push31=, $0, $pop108
+	br_if   	0, $pop31       # 0: up to label15
+# %bb.10:                               # %for.end31
 	end_loop
 	call    	f5@FUNCTION
 	call    	f6@FUNCTION
-	i32.const	$0=, -1
 	i32.const	$1=, 0
+	i32.const	$0=, 0
 .LBB12_11:                              # %for.body34
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label16:
-	i32.const	$push119=, c
-	i32.add 	$push34=, $1, $pop119
-	i32.load	$push35=, 0($pop34)
-	i32.const	$push118=, a
-	i32.add 	$push31=, $1, $pop118
-	i32.load	$push32=, 0($pop31)
-	i32.const	$push117=, 19
-	i32.rem_s	$push33=, $pop32, $pop117
-	i32.ne  	$push36=, $pop35, $pop33
-	br_if   	1, $pop36       # 1: down to label13
-# BB#12:                                # %lor.lhs.false39
+	i32.const	$push113=, c
+	i32.add 	$push35=, $1, $pop113
+	i32.load	$push36=, 0($pop35)
+	i32.const	$push112=, a
+	i32.add 	$push32=, $1, $pop112
+	i32.load	$push33=, 0($pop32)
+	i32.const	$push111=, 19
+	i32.rem_s	$push34=, $pop33, $pop111
+	i32.ne  	$push37=, $pop36, $pop34
+	br_if   	1, $pop37       # 1: down to label13
+# %bb.12:                               # %lor.lhs.false39
                                         #   in Loop: Header=BB12_11 Depth=1
-	i32.const	$push122=, d
-	i32.add 	$push40=, $1, $pop122
-	i32.load	$push41=, 0($pop40)
-	i32.const	$push121=, b
-	i32.add 	$push37=, $1, $pop121
-	i32.load	$push38=, 0($pop37)
-	i32.const	$push120=, 19
-	i32.rem_u	$push39=, $pop38, $pop120
-	i32.ne  	$push42=, $pop41, $pop39
-	br_if   	1, $pop42       # 1: down to label13
-# BB#13:                                # %for.cond32
+	i32.const	$push116=, d
+	i32.add 	$push41=, $1, $pop116
+	i32.load	$push42=, 0($pop41)
+	i32.const	$push115=, b
+	i32.add 	$push38=, $1, $pop115
+	i32.load	$push39=, 0($pop38)
+	i32.const	$push114=, 19
+	i32.rem_u	$push40=, $pop39, $pop114
+	i32.ne  	$push43=, $pop42, $pop40
+	br_if   	1, $pop43       # 1: down to label13
+# %bb.13:                               # %for.cond32
                                         #   in Loop: Header=BB12_11 Depth=1
-	i32.const	$push127=, 4
-	i32.add 	$1=, $1, $pop127
-	i32.const	$push126=, 1
-	i32.add 	$push125=, $0, $pop126
-	tee_local	$push124=, $0=, $pop125
-	i32.const	$push123=, 4094
-	i32.le_u	$push43=, $pop124, $pop123
-	br_if   	0, $pop43       # 0: up to label16
-# BB#14:                                # %for.end48
+	i32.const	$push119=, 1
+	i32.add 	$0=, $0, $pop119
+	i32.const	$push118=, 4
+	i32.add 	$1=, $1, $pop118
+	i32.const	$push117=, 4095
+	i32.le_u	$push44=, $0, $pop117
+	br_if   	0, $pop44       # 0: up to label16
+# %bb.14:                               # %for.end48
 	end_loop
 	call    	f7@FUNCTION
 	call    	f8@FUNCTION
-	i32.const	$0=, -1
 	i32.const	$1=, 0
+	i32.const	$0=, 0
 .LBB12_15:                              # %for.body51
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label17:
-	i32.const	$push130=, c
-	i32.add 	$push47=, $1, $pop130
-	i32.load	$push48=, 0($pop47)
-	i32.const	$push129=, a
-	i32.add 	$push44=, $1, $pop129
-	i32.load	$push45=, 0($pop44)
-	i32.const	$push128=, 3
-	i32.rem_s	$push46=, $pop45, $pop128
-	i32.ne  	$push49=, $pop48, $pop46
-	br_if   	1, $pop49       # 1: down to label13
-# BB#16:                                # %lor.lhs.false56
+	i32.const	$push122=, c
+	i32.add 	$push48=, $1, $pop122
+	i32.load	$push49=, 0($pop48)
+	i32.const	$push121=, a
+	i32.add 	$push45=, $1, $pop121
+	i32.load	$push46=, 0($pop45)
+	i32.const	$push120=, 3
+	i32.rem_s	$push47=, $pop46, $pop120
+	i32.ne  	$push50=, $pop49, $pop47
+	br_if   	1, $pop50       # 1: down to label13
+# %bb.16:                               # %lor.lhs.false56
                                         #   in Loop: Header=BB12_15 Depth=1
-	i32.const	$push133=, d
-	i32.add 	$push53=, $1, $pop133
-	i32.load	$push54=, 0($pop53)
-	i32.const	$push132=, b
-	i32.add 	$push50=, $1, $pop132
-	i32.load	$push51=, 0($pop50)
-	i32.const	$push131=, 3
-	i32.rem_u	$push52=, $pop51, $pop131
-	i32.ne  	$push55=, $pop54, $pop52
-	br_if   	1, $pop55       # 1: down to label13
-# BB#17:                                # %for.cond49
+	i32.const	$push125=, d
+	i32.add 	$push54=, $1, $pop125
+	i32.load	$push55=, 0($pop54)
+	i32.const	$push124=, b
+	i32.add 	$push51=, $1, $pop124
+	i32.load	$push52=, 0($pop51)
+	i32.const	$push123=, 3
+	i32.rem_u	$push53=, $pop52, $pop123
+	i32.ne  	$push56=, $pop55, $pop53
+	br_if   	1, $pop56       # 1: down to label13
+# %bb.17:                               # %for.cond49
                                         #   in Loop: Header=BB12_15 Depth=1
-	i32.const	$push138=, 4
-	i32.add 	$1=, $1, $pop138
-	i32.const	$push137=, 1
-	i32.add 	$push136=, $0, $pop137
-	tee_local	$push135=, $0=, $pop136
-	i32.const	$push134=, 4094
-	i32.le_u	$push56=, $pop135, $pop134
-	br_if   	0, $pop56       # 0: up to label17
-# BB#18:                                # %for.end65
+	i32.const	$push128=, 1
+	i32.add 	$0=, $0, $pop128
+	i32.const	$push127=, 4
+	i32.add 	$1=, $1, $pop127
+	i32.const	$push126=, 4095
+	i32.le_u	$push57=, $0, $pop126
+	br_if   	0, $pop57       # 0: up to label17
+# %bb.18:                               # %for.end65
 	end_loop
 	call    	f9@FUNCTION
 	call    	f10@FUNCTION
-	i32.const	$0=, -1
 	i32.const	$1=, 0
+	i32.const	$0=, 0
 .LBB12_19:                              # %for.body68
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label18:
-	i32.const	$push141=, c
-	i32.add 	$push60=, $1, $pop141
-	i32.load	$push61=, 0($pop60)
-	i32.const	$push140=, a
-	i32.add 	$push57=, $1, $pop140
-	i32.load	$push58=, 0($pop57)
-	i32.const	$push139=, 18
-	i32.rem_s	$push59=, $pop58, $pop139
-	i32.ne  	$push62=, $pop61, $pop59
-	br_if   	1, $pop62       # 1: down to label13
-# BB#20:                                # %lor.lhs.false73
+	i32.const	$push131=, c
+	i32.add 	$push61=, $1, $pop131
+	i32.load	$push62=, 0($pop61)
+	i32.const	$push130=, a
+	i32.add 	$push58=, $1, $pop130
+	i32.load	$push59=, 0($pop58)
+	i32.const	$push129=, 18
+	i32.rem_s	$push60=, $pop59, $pop129
+	i32.ne  	$push63=, $pop62, $pop60
+	br_if   	1, $pop63       # 1: down to label13
+# %bb.20:                               # %lor.lhs.false73
                                         #   in Loop: Header=BB12_19 Depth=1
-	i32.const	$push144=, d
-	i32.add 	$push66=, $1, $pop144
-	i32.load	$push67=, 0($pop66)
-	i32.const	$push143=, b
-	i32.add 	$push63=, $1, $pop143
-	i32.load	$push64=, 0($pop63)
-	i32.const	$push142=, 18
-	i32.rem_u	$push65=, $pop64, $pop142
-	i32.ne  	$push68=, $pop67, $pop65
-	br_if   	1, $pop68       # 1: down to label13
-# BB#21:                                # %for.cond66
+	i32.const	$push134=, d
+	i32.add 	$push67=, $1, $pop134
+	i32.load	$push68=, 0($pop67)
+	i32.const	$push133=, b
+	i32.add 	$push64=, $1, $pop133
+	i32.load	$push65=, 0($pop64)
+	i32.const	$push132=, 18
+	i32.rem_u	$push66=, $pop65, $pop132
+	i32.ne  	$push69=, $pop68, $pop66
+	br_if   	1, $pop69       # 1: down to label13
+# %bb.21:                               # %for.cond66
                                         #   in Loop: Header=BB12_19 Depth=1
-	i32.const	$push149=, 4
-	i32.add 	$1=, $1, $pop149
-	i32.const	$push148=, 1
-	i32.add 	$push147=, $0, $pop148
-	tee_local	$push146=, $0=, $pop147
-	i32.const	$push145=, 4094
-	i32.le_u	$push69=, $pop146, $pop145
-	br_if   	0, $pop69       # 0: up to label18
-# BB#22:                                # %for.end82
+	i32.const	$push137=, 1
+	i32.add 	$0=, $0, $pop137
+	i32.const	$push136=, 4
+	i32.add 	$1=, $1, $pop136
+	i32.const	$push135=, 4095
+	i32.le_u	$push70=, $0, $pop135
+	br_if   	0, $pop70       # 0: up to label18
+# %bb.22:                               # %for.end82
 	end_loop
 	call    	f11@FUNCTION
 	call    	f12@FUNCTION
-	i32.const	$0=, -1
 	i32.const	$1=, 0
+	i32.const	$0=, 0
 .LBB12_23:                              # %for.body85
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label19:
-	i32.const	$push152=, c
-	i32.add 	$push73=, $1, $pop152
-	i32.load	$push74=, 0($pop73)
-	i32.const	$push151=, a
-	i32.add 	$push70=, $1, $pop151
-	i32.load	$push71=, 0($pop70)
-	i32.const	$push150=, 19
-	i32.rem_s	$push72=, $pop71, $pop150
-	i32.ne  	$push75=, $pop74, $pop72
-	br_if   	1, $pop75       # 1: down to label13
-# BB#24:                                # %lor.lhs.false90
+	i32.const	$push140=, c
+	i32.add 	$push74=, $1, $pop140
+	i32.load	$push75=, 0($pop74)
+	i32.const	$push139=, a
+	i32.add 	$push71=, $1, $pop139
+	i32.load	$push72=, 0($pop71)
+	i32.const	$push138=, 19
+	i32.rem_s	$push73=, $pop72, $pop138
+	i32.ne  	$push76=, $pop75, $pop73
+	br_if   	1, $pop76       # 1: down to label13
+# %bb.24:                               # %lor.lhs.false90
                                         #   in Loop: Header=BB12_23 Depth=1
-	i32.const	$push155=, d
-	i32.add 	$push79=, $1, $pop155
-	i32.load	$push80=, 0($pop79)
-	i32.const	$push154=, b
-	i32.add 	$push76=, $1, $pop154
-	i32.load	$push77=, 0($pop76)
-	i32.const	$push153=, 19
-	i32.rem_u	$push78=, $pop77, $pop153
-	i32.ne  	$push81=, $pop80, $pop78
-	br_if   	1, $pop81       # 1: down to label13
-# BB#25:                                # %for.cond83
+	i32.const	$push143=, d
+	i32.add 	$push80=, $1, $pop143
+	i32.load	$push81=, 0($pop80)
+	i32.const	$push142=, b
+	i32.add 	$push77=, $1, $pop142
+	i32.load	$push78=, 0($pop77)
+	i32.const	$push141=, 19
+	i32.rem_u	$push79=, $pop78, $pop141
+	i32.ne  	$push82=, $pop81, $pop79
+	br_if   	1, $pop82       # 1: down to label13
+# %bb.25:                               # %for.cond83
                                         #   in Loop: Header=BB12_23 Depth=1
-	i32.const	$push160=, 4
-	i32.add 	$1=, $1, $pop160
-	i32.const	$push159=, 1
-	i32.add 	$push158=, $0, $pop159
-	tee_local	$push157=, $0=, $pop158
-	i32.const	$push156=, 4094
-	i32.le_u	$push82=, $pop157, $pop156
-	br_if   	0, $pop82       # 0: up to label19
-# BB#26:                                # %for.end99
+	i32.const	$push146=, 1
+	i32.add 	$0=, $0, $pop146
+	i32.const	$push145=, 4
+	i32.add 	$1=, $1, $pop145
+	i32.const	$push144=, 4095
+	i32.le_u	$push83=, $0, $pop144
+	br_if   	0, $pop83       # 0: up to label19
+# %bb.26:                               # %for.end99
 	end_loop
-	i32.const	$push83=, 0
-	return  	$pop83
+	i32.const	$push84=, 0
+	return  	$pop84
 .LBB12_27:                              # %if.then
 	end_block                       # label13:
 	call    	abort@FUNCTION
@@ -758,5 +732,5 @@ d:
 	.size	d, 16384
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

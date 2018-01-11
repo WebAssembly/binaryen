@@ -1,0 +1,9 @@
+(module
+ (import "env" "memory" (memory $0 256))
+ (export "__growWasmMemory" (func $__growWasmMemory))
+ (func $__growWasmMemory (; 0 ;) (param $0 i32) (result i32)
+  (grow_memory
+   (get_local $0)
+  )
+ )
+)

@@ -6,7 +6,7 @@
 	.type	test1,@function
 test1:                                  # @test1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -18,14 +18,14 @@ test1:                                  # @test1
 	.type	test2,@function
 test2:                                  # @test2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.load	$push0=, 0($0):p2align=0
 	i64.store	0($0):p2align=0, $pop0
 	block   	
 	i32.const	$push1=, 1
 	i32.eqz 	$push2=, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
@@ -41,7 +41,7 @@ test2:                                  # @test2
 	.type	test3,@function
 test3:                                  # @test3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -53,7 +53,7 @@ test3:                                  # @test3
 	.type	test4,@function
 test4:                                  # @test4
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end3:
@@ -65,7 +65,7 @@ test4:                                  # @test4
 	.type	test5,@function
 test5:                                  # @test5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end4:
@@ -77,7 +77,7 @@ test5:                                  # @test5
 	.type	test6,@function
 test6:                                  # @test6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end5:
@@ -89,7 +89,7 @@ test6:                                  # @test6
 	.type	test7,@function
 test7:                                  # @test7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end6:
@@ -102,21 +102,20 @@ test7:                                  # @test7
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push6=, 0
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 16
-	i32.sub 	$push11=, $pop3, $pop5
-	tee_local	$push10=, $0=, $pop11
-	i32.store	__stack_pointer($pop6), $pop10
+	i32.sub 	$0=, $pop3, $pop5
+	i32.const	$push6=, 0
+	i32.store	__stack_pointer($pop6), $0
 	i64.load	$push0=, 0($0)
 	i64.store	0($0), $pop0
 	block   	
 	i32.const	$push1=, 1
-	i32.eqz 	$push12=, $pop1
-	br_if   	0, $pop12       # 0: down to label1
-# BB#1:                                 # %test2.exit
+	i32.eqz 	$push10=, $pop1
+	br_if   	0, $pop10       # 0: down to label1
+# %bb.1:                                # %test2.exit
 	i32.const	$push9=, 0
 	i32.const	$push7=, 16
 	i32.add 	$push8=, $0, $pop7
@@ -132,6 +131,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end7-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	mempcpy, i32, i32, i32, i32

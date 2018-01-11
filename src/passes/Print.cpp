@@ -735,6 +735,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << " anyfunc)";
   }
   void visitTable(Table *curr) {
+    if (!curr->exists) return;
     // if table wasn't imported, declare it
     if (!curr->imported) {
       doIndent(o, indent);
@@ -764,6 +765,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ")";
   }
   void visitMemory(Memory* curr) {
+    if (!curr->exists) return;
     // if memory wasn't imported, declare it
     if (!curr->imported) {
       doIndent(o, indent);

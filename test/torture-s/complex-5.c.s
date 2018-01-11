@@ -6,7 +6,7 @@
 	.type	p,@function
 p:                                      # @p
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.load	$push1=, 0($1)
 	f32.load	$push0=, 0($2)
 	f32.add 	$push2=, $pop1, $pop0
@@ -27,32 +27,27 @@ p:                                      # @p
 main:                                   # @main
 	.result 	i32
 	.local  	f32, f32, f32, f32, i32
-# BB#0:                                 # %entry
-	i32.const	$push18=, 0
+# %bb.0:                                # %entry
 	i32.const	$push16=, 0
 	i32.load	$push15=, __stack_pointer($pop16)
 	i32.const	$push17=, 16
-	i32.sub 	$push40=, $pop15, $pop17
-	tee_local	$push39=, $4=, $pop40
-	i32.store	__stack_pointer($pop18), $pop39
-	i32.const	$push38=, 0
-	i32.const	$push37=, 0
-	f32.load	$push36=, x($pop37)
-	tee_local	$push35=, $0=, $pop36
-	i32.const	$push34=, 0
-	f32.load	$push2=, y($pop34)
-	f32.add 	$push33=, $pop35, $pop2
-	tee_local	$push32=, $1=, $pop33
-	f32.store	z($pop38), $pop32
-	i32.const	$push31=, 0
+	i32.sub 	$4=, $pop15, $pop17
+	i32.const	$push18=, 0
+	i32.store	__stack_pointer($pop18), $4
 	i32.const	$push30=, 0
-	f32.load	$push29=, x+4($pop30)
-	tee_local	$push28=, $2=, $pop29
+	f32.load	$0=, x($pop30)
+	i32.const	$push29=, 0
+	f32.load	$push2=, y($pop29)
+	f32.add 	$1=, $0, $pop2
+	i32.const	$push28=, 0
+	f32.store	z($pop28), $1
 	i32.const	$push27=, 0
-	f32.load	$push3=, y+4($pop27)
-	f32.add 	$push26=, $pop28, $pop3
-	tee_local	$push25=, $3=, $pop26
-	f32.store	z+4($pop31), $pop25
+	f32.load	$2=, x+4($pop27)
+	i32.const	$push26=, 0
+	f32.load	$push3=, y+4($pop26)
+	f32.add 	$3=, $2, $pop3
+	i32.const	$push25=, 0
+	f32.store	z+4($pop25), $3
 	i32.const	$push19=, 8
 	i32.add 	$push20=, $4, $pop19
 	f32.const	$push5=, 0x1p0
@@ -73,14 +68,14 @@ main:                                   # @main
 	f32.load	$push10=, w($pop21)
 	f32.ne  	$push12=, $pop11, $pop10
 	br_if   	0, $pop12       # 0: down to label0
-# BB#1:                                 # %entry
-	i32.const	$push42=, 0
-	f32.load	$push0=, z+4($pop42)
-	i32.const	$push41=, 0
-	f32.load	$push1=, w+4($pop41)
+# %bb.1:                                # %entry
+	i32.const	$push32=, 0
+	f32.load	$push0=, z+4($pop32)
+	i32.const	$push31=, 0
+	f32.load	$push1=, w+4($pop31)
 	f32.ne  	$push13=, $pop0, $pop1
 	br_if   	0, $pop13       # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push14=, 0
 	call    	exit@FUNCTION, $pop14
 	unreachable
@@ -132,7 +127,7 @@ z:
 	.size	z, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	__divsc3, void, i32, f32, f32, f32, f32
 	.functype	abort, void
 	.functype	exit, void, i32

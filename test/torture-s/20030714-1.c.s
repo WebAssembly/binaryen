@@ -6,9 +6,11 @@
 	.type	RenderBox_setStyle,@function
 RenderBox_setStyle:                     # @RenderBox_setStyle
 	.param  	i32, i32
-	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$3=, 16
+	.local  	i32
+# %bb.0:                                # %entry
+	i32.load16_u	$2=, 26($0)
+	block   	
+	block   	
 	block   	
 	block   	
 	i32.const	$push0=, 2
@@ -16,57 +18,67 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	i32.load8_u	$push2=, 0($pop1)
 	i32.const	$push3=, 4
 	i32.and 	$push4=, $pop2, $pop3
-	br_if   	0, $pop4        # 0: down to label1
-# BB#1:                                 # %sw.default
+	br_if   	0, $pop4        # 0: down to label3
+# %bb.1:                                # %sw.default
 	block   	
-	i32.load16_u	$push26=, 26($0)
-	tee_local	$push25=, $3=, $pop26
-	i32.const	$push24=, 16
-	i32.and 	$push5=, $pop25, $pop24
-	i32.eqz 	$push32=, $pop5
-	br_if   	0, $pop32       # 0: down to label2
-# BB#2:                                 # %if.then
-	i32.const	$push6=, 26
-	i32.add 	$push7=, $0, $pop6
-	i32.const	$push29=, 16
-	i32.or  	$push28=, $3, $pop29
-	tee_local	$push27=, $3=, $pop28
-	i32.store16	0($pop7), $pop27
+	i32.const	$push32=, 16
+	i32.and 	$push6=, $2, $pop32
+	i32.eqz 	$push34=, $pop6
+	br_if   	0, $pop34       # 0: down to label4
+# %bb.2:                                # %if.then
+	i32.const	$push33=, 16
+	i32.or  	$2=, $2, $pop33
+	i32.const	$push7=, 26
+	i32.add 	$push8=, $0, $pop7
+	i32.store16	0($pop8), $2
 .LBB0_3:                                # %if.end
-	end_block                       # label2:
-	i32.const	$push11=, 26
-	i32.add 	$push12=, $0, $pop11
-	i32.const	$push9=, 65519
-	i32.and 	$push10=, $3, $pop9
-	i32.store16	0($pop12), $pop10
+	end_block                       # label4:
+	i32.const	$push12=, 26
+	i32.add 	$push13=, $0, $pop12
+	i32.const	$push10=, 65519
+	i32.and 	$push11=, $2, $pop10
+	i32.store16	0($pop13), $pop11
 	i32.load	$2=, 0($1)
-	block   	
-	i32.load	$push14=, 28($0)
-	i32.call_indirect	$push15=, $0, $pop14
-	br_if   	0, $pop15       # 0: down to label3
-# BB#4:                                 # %if.end
-	i32.const	$3=, 8
-	i32.const	$push13=, 1572864
-	i32.and 	$push8=, $2, $pop13
-	br_if   	1, $pop8        # 1: down to label1
-.LBB0_5:                                # %if.else
+	i32.load	$push15=, 28($0)
+	i32.call_indirect	$push16=, $0, $pop15
+	br_if   	1, $pop16       # 1: down to label2
+# %bb.4:                                # %if.end
+	i32.const	$push14=, 1572864
+	i32.and 	$push9=, $2, $pop14
+	i32.eqz 	$push35=, $pop9
+	br_if   	1, $pop35       # 1: down to label2
+# %bb.5:                                # %if.then33
+	i32.const	$push17=, 26
+	i32.add 	$push18=, $0, $pop17
+	i32.load16_u	$push19=, 0($pop18)
+	i32.const	$push20=, 8
+	i32.or  	$2=, $pop19, $pop20
+	br      	2               # 2: down to label1
+.LBB0_6:                                # %sw.bb
 	end_block                       # label3:
-	i32.const	$3=, 64
-	i32.load	$push16=, 0($1)
-	i32.const	$push17=, 393216
-	i32.and 	$push18=, $pop16, $pop17
-	i32.const	$push19=, 131072
-	i32.ne  	$push20=, $pop18, $pop19
-	br_if   	1, $pop20       # 1: down to label0
-.LBB0_6:                                # %sw.epilog.sink.split
+	i32.const	$push5=, 16
+	i32.or  	$2=, $2, $pop5
+	br      	1               # 1: down to label1
+.LBB0_7:                                # %if.else
+	end_block                       # label2:
+	i32.load	$push21=, 0($1)
+	i32.const	$push22=, 393216
+	i32.and 	$push23=, $pop21, $pop22
+	i32.const	$push24=, 131072
+	i32.ne  	$push25=, $pop23, $pop24
+	br_if   	1, $pop25       # 1: down to label0
+# %bb.8:                                # %if.then48
+	i32.const	$push26=, 26
+	i32.add 	$push27=, $0, $pop26
+	i32.load16_u	$push28=, 0($pop27)
+	i32.const	$push29=, 64
+	i32.or  	$2=, $pop28, $pop29
+.LBB0_9:                                # %sw.epilog.sink.split
 	end_block                       # label1:
-	i32.const	$push21=, 26
-	i32.add 	$push31=, $0, $pop21
-	tee_local	$push30=, $0=, $pop31
-	i32.load16_u	$push22=, 0($0)
-	i32.or  	$push23=, $pop22, $3
-	i32.store16	0($pop30), $pop23
-.LBB0_7:                                # %sw.epilog
+	i32.const	$push30=, 26
+	i32.add 	$push31=, $0, $pop30
+	i32.store16	0($pop31), $2
+.LBB0_10:                               # %sw.epilog
 	end_block                       # label0:
                                         # fallthrough-return
 	.endfunc
@@ -79,7 +91,7 @@ RenderBox_setStyle:                     # @RenderBox_setStyle
 	.type	RenderObject_setStyle,@function
 RenderObject_setStyle:                  # @RenderObject_setStyle
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -91,7 +103,7 @@ RenderObject_setStyle:                  # @RenderObject_setStyle
 	.type	removeFromSpecialObjects,@function
 removeFromSpecialObjects:               # @removeFromSpecialObjects
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -104,7 +116,7 @@ removeFromSpecialObjects:               # @removeFromSpecialObjects
 RenderBox_isTableCell:                  # @RenderBox_isTableCell
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -117,7 +129,7 @@ RenderBox_isTableCell:                  # @RenderBox_isTableCell
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %RenderBox_setStyle.exit
+# %bb.0:                                # %RenderBox_setStyle.exit
 	i32.const	$push1=, 0
 	i32.const	$push0=, RenderBox_isTableCell@FUNCTION
 	i32.store	g_this+28($pop1), $pop0
@@ -179,5 +191,5 @@ g__style:
 	.size	g__style, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

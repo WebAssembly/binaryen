@@ -6,7 +6,7 @@
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i64.const	$push0=, 0
 	i64.store	1($0):p2align=0, $pop0
                                         # fallthrough-return
@@ -21,14 +21,13 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i64, i32
-# BB#0:                                 # %entry
-	i32.const	$push10=, 0
+# %bb.0:                                # %entry
 	i32.const	$push8=, 0
 	i32.load	$push7=, __stack_pointer($pop8)
 	i32.const	$push9=, 16
-	i32.sub 	$push16=, $pop7, $pop9
-	tee_local	$push15=, $1=, $pop16
-	i32.store	__stack_pointer($pop10), $pop15
+	i32.sub 	$1=, $pop7, $pop9
+	i32.const	$push10=, 0
+	i32.store	__stack_pointer($pop10), $1
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $1, $pop2
 	i32.const	$push0=, 0
@@ -58,4 +57,4 @@ main:                                   # @main
 	.size	.Lmain.s, 9
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

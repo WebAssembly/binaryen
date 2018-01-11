@@ -8,7 +8,9 @@ foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.const	$push0=, 62
+	i32.add 	$1=, $0, $pop0
 	i32.const	$2=, 0
 	block   	
 	block   	
@@ -44,13 +46,10 @@ foo:                                    # @foo
 	block   	
 	block   	
 	block   	
-	i32.const	$push0=, 62
-	i32.add 	$push37=, $0, $pop0
-	tee_local	$push36=, $1=, $pop37
 	i32.const	$push1=, 160
-	i32.gt_u	$push2=, $pop36, $pop1
+	i32.gt_u	$push2=, $1, $pop1
 	br_if   	0, $pop2        # 0: down to label33
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	block   	
 	br_table 	$1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 34, 0 # 0: down to label34
                                         # 1: down to label33
@@ -235,7 +234,7 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end25
+# %bb.0:                                # %if.end25
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -243,4 +242,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

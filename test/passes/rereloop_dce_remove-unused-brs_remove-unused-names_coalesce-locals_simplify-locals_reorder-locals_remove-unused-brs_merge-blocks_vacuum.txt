@@ -3,7 +3,6 @@
  (type $1 (func (result i32)))
  (type $2 (func (param i32) (result i32)))
  (type $3 (func (param i32)))
- (memory $0 0)
  (func $trivial (; 0 ;) (type $0)
   (nop)
  )

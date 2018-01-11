@@ -7,21 +7,20 @@
 fn1:                                    # @fn1
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %for.body3.split
+# %bb.0:                                # %for.body3.split
 	i32.const	$push1=, 0
 	i64.const	$push0=, 4294967297
 	i64.store	a($pop1), $pop0
-	i32.const	$push11=, 0
+	i32.const	$push9=, 0
 	i32.const	$push2=, 1
-	i32.store	a+48($pop11), $pop2
-	i32.const	$push10=, 0
-	i32.const	$push9=, 1
-	i32.store	c($pop10), $pop9
+	i32.store	a+48($pop9), $pop2
 	i32.const	$push8=, 0
-	i32.const	$push7=, 0
-	i32.load	$push6=, a+60($pop7)
-	tee_local	$push5=, $0=, $pop6
-	i32.store	a($pop8), $pop5
+	i32.const	$push7=, 1
+	i32.store	c($pop8), $pop7
+	i32.const	$push6=, 0
+	i32.load	$0=, a+60($pop6)
+	i32.const	$push5=, 0
+	i32.store	a($pop5), $0
 	i32.const	$push4=, 0
 	i32.store	a+4($pop4), $0
 	i32.const	$push3=, 0
@@ -37,25 +36,24 @@ fn1:                                    # @fn1
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push8=, 0
+# %bb.0:                                # %entry
+	i32.const	$push6=, 0
 	i32.const	$push0=, 1
-	i32.store	a+48($pop8), $pop0
-	i32.const	$push7=, 0
-	i32.const	$push6=, 1
-	i32.store	c($pop7), $pop6
+	i32.store	a+48($pop6), $pop0
 	i32.const	$push5=, 0
-	i32.const	$push4=, 0
-	i32.load	$push3=, a+60($pop4)
-	tee_local	$push2=, $0=, $pop3
-	i32.store	a($pop5), $pop2
+	i32.const	$push4=, 1
+	i32.store	c($pop5), $pop4
+	i32.const	$push3=, 0
+	i32.load	$0=, a+60($pop3)
+	i32.const	$push2=, 0
+	i32.store	a($pop2), $0
 	i32.const	$push1=, 0
 	i32.store	a+4($pop1), $0
 	block   	
 	br_if   	0, $0           # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push9=, 0
-	return  	$pop9
+# %bb.1:                                # %if.end
+	i32.const	$push7=, 0
+	return  	$pop7
 .LBB1_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -92,5 +90,5 @@ c:
 	.size	c, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

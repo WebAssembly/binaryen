@@ -7,31 +7,29 @@
 add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.param  	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, -516
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 2
-	i32.shr_s	$push7=, $pop1, $pop2
-	tee_local	$push6=, $0=, $pop7
-	i32.eqz 	$push14=, $pop6
-	br_if   	0, $pop14       # 0: down to label0
-# BB#1:                                 # %while.body.preheader
+	i32.shr_s	$0=, $pop1, $pop2
+	block   	
+	i32.eqz 	$push10=, $0
+	br_if   	0, $pop10       # 0: down to label0
+# %bb.1:                                # %while.body.preheader
 	i32.const	$2=, bytes
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push13=, 128
-	i32.or  	$push4=, $0, $pop13
-	i32.const	$push12=, 127
-	i32.and 	$push3=, $0, $pop12
-	i32.const	$push11=, 7
-	i32.shr_u	$push10=, $0, $pop11
-	tee_local	$push9=, $1=, $pop10
-	i32.select	$push5=, $pop4, $pop3, $pop9
+	i32.const	$push9=, 7
+	i32.shr_u	$1=, $0, $pop9
+	i32.const	$push8=, 128
+	i32.or  	$push4=, $0, $pop8
+	i32.const	$push7=, 127
+	i32.and 	$push3=, $0, $pop7
+	i32.select	$push5=, $pop4, $pop3, $1
 	i32.store8	0($2), $pop5
-	i32.const	$push8=, 1
-	i32.add 	$2=, $2, $pop8
+	i32.const	$push6=, 1
+	i32.add 	$2=, $2, $pop6
 	copy_local	$0=, $1
 	br_if   	0, $1           # 0: up to label1
 .LBB0_3:                                # %while.end
@@ -48,7 +46,7 @@ add_unwind_adjustsp:                    # @add_unwind_adjustsp
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1928
 	i32.store16	bytes($pop1):p2align=0, $pop0
@@ -67,4 +65,4 @@ bytes:
 	.size	bytes, 5
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

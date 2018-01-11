@@ -308,7 +308,7 @@ void PassRunner::run() {
   }
 }
 
-void PassRunner::runFunction(Function* func) {
+void PassRunner::runOnFunction(Function* func) {
   if (options.debug) {
     std::cerr << "[PassRunner] running passes on function " << func->name << std::endl;
   }
@@ -332,7 +332,7 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
-  instance->runFunction(this, wasm, func);
+  instance->runOnFunction(this, wasm, func);
 }
 
 int PassRunner::getPassDebug() {

@@ -7,12 +7,12 @@
 foo:                                    # @foo
 	.param  	i32
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32, f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
-	i32.eqz 	$push143=, $0
-	br_if   	0, $pop143      # 0: down to label1
-# BB#1:                                 # %while.body.lr.ph
+	i32.eqz 	$push141=, $0
+	br_if   	0, $pop141      # 0: down to label1
+# %bb.1:                                # %while.body.lr.ph
 	i32.const	$push119=, 0
 	i32.load	$push0=, incs($pop119)
 	i32.const	$push40=, 2
@@ -156,6 +156,8 @@ foo:                                    # @foo
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
+	i32.const	$push120=, -1
+	i32.add 	$0=, $0, $pop120
 	f32.load	$push41=, 0($40)
 	f32.add 	$60=, $60, $pop41
 	f32.load	$push42=, 0($39)
@@ -236,10 +238,7 @@ foo:                                    # @foo
 	copy_local	$39=, $pop21
 	i32.add 	$push20=, $40, $1
 	copy_local	$40=, $pop20
-	i32.const	$push122=, -1
-	i32.add 	$push121=, $0, $pop122
-	tee_local	$push120=, $0=, $pop121
-	br_if   	0, $pop120      # 0: up to label2
+	br_if   	0, $0           # 0: up to label2
 	br      	2               # 2: down to label0
 .LBB0_3:
 	end_loop
@@ -266,46 +265,46 @@ foo:                                    # @foo
 	f32.const	$60=, 0x0p0
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
-	i32.const	$push142=, 0
-	f32.store	results+4($pop142), $42
-	i32.const	$push141=, 0
-	f32.store	results($pop141), $41
 	i32.const	$push140=, 0
-	f32.store	results+8($pop140), $43
+	f32.store	results+4($pop140), $42
 	i32.const	$push139=, 0
-	f32.store	results+12($pop139), $44
+	f32.store	results($pop139), $41
 	i32.const	$push138=, 0
-	f32.store	results+16($pop138), $45
+	f32.store	results+8($pop138), $43
 	i32.const	$push137=, 0
-	f32.store	results+20($pop137), $46
+	f32.store	results+12($pop137), $44
 	i32.const	$push136=, 0
-	f32.store	results+24($pop136), $47
+	f32.store	results+16($pop136), $45
 	i32.const	$push135=, 0
-	f32.store	results+28($pop135), $48
+	f32.store	results+20($pop135), $46
 	i32.const	$push134=, 0
-	f32.store	results+32($pop134), $49
+	f32.store	results+24($pop134), $47
 	i32.const	$push133=, 0
-	f32.store	results+36($pop133), $50
+	f32.store	results+28($pop133), $48
 	i32.const	$push132=, 0
-	f32.store	results+40($pop132), $51
+	f32.store	results+32($pop132), $49
 	i32.const	$push131=, 0
-	f32.store	results+44($pop131), $52
+	f32.store	results+36($pop131), $50
 	i32.const	$push130=, 0
-	f32.store	results+48($pop130), $53
+	f32.store	results+40($pop130), $51
 	i32.const	$push129=, 0
-	f32.store	results+52($pop129), $54
+	f32.store	results+44($pop129), $52
 	i32.const	$push128=, 0
-	f32.store	results+56($pop128), $55
+	f32.store	results+48($pop128), $53
 	i32.const	$push127=, 0
-	f32.store	results+60($pop127), $56
+	f32.store	results+52($pop127), $54
 	i32.const	$push126=, 0
-	f32.store	results+64($pop126), $57
+	f32.store	results+56($pop126), $55
 	i32.const	$push125=, 0
-	f32.store	results+68($pop125), $58
+	f32.store	results+60($pop125), $56
 	i32.const	$push124=, 0
-	f32.store	results+72($pop124), $59
+	f32.store	results+64($pop124), $57
 	i32.const	$push123=, 0
-	f32.store	results+76($pop123), $60
+	f32.store	results+68($pop123), $58
+	i32.const	$push122=, 0
+	f32.store	results+72($pop122), $59
+	i32.const	$push121=, 0
+	f32.store	results+76($pop121), $60
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -318,7 +317,7 @@ foo:                                    # @foo
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, input
 	i32.const	$1=, 0
 	i32.const	$push154=, 0
@@ -431,15 +430,14 @@ main:                                   # @main
 	loop    	                # label3:
 	f32.convert_s/i32	$push33=, $1
 	f32.store	0($0), $pop33
-	i32.const	$push159=, 4
-	i32.add 	$0=, $0, $pop159
-	i32.const	$push158=, 1
-	i32.add 	$push157=, $1, $pop158
-	tee_local	$push156=, $1=, $pop157
+	i32.const	$push157=, 4
+	i32.add 	$0=, $0, $pop157
+	i32.const	$push156=, 1
+	i32.add 	$1=, $1, $pop156
 	i32.const	$push155=, 80
-	i32.ne  	$push34=, $pop156, $pop155
+	i32.ne  	$push34=, $1, $pop155
 	br_if   	0, $pop34       # 0: up to label3
-# BB#2:                                 # %for.end8
+# %bb.2:                                # %for.end8
 	end_loop
 	i32.const	$push35=, 4
 	call    	foo@FUNCTION, $pop35
@@ -447,98 +445,98 @@ main:                                   # @main
 	f32.load	$push40=, results($pop36)
 	f32.const	$push41=, 0x0p0
 	f32.ne  	$push42=, $pop40, $pop41
-	i32.const	$push178=, 0
-	f32.load	$push37=, results+4($pop178)
+	i32.const	$push176=, 0
+	f32.load	$push37=, results+4($pop176)
 	f32.const	$push38=, 0x1.4p3
 	f32.ne  	$push39=, $pop37, $pop38
 	i32.or  	$push43=, $pop42, $pop39
-	i32.const	$push177=, 0
-	f32.load	$push44=, results+8($pop177)
+	i32.const	$push175=, 0
+	f32.load	$push44=, results+8($pop175)
 	f32.const	$push45=, 0x1.4p4
 	f32.ne  	$push46=, $pop44, $pop45
 	i32.or  	$push47=, $pop43, $pop46
-	i32.const	$push176=, 0
-	f32.load	$push48=, results+12($pop176)
+	i32.const	$push174=, 0
+	f32.load	$push48=, results+12($pop174)
 	f32.const	$push49=, 0x1.ep4
 	f32.ne  	$push50=, $pop48, $pop49
 	i32.or  	$push51=, $pop47, $pop50
-	i32.const	$push175=, 0
-	f32.load	$push52=, results+16($pop175)
+	i32.const	$push173=, 0
+	f32.load	$push52=, results+16($pop173)
 	f32.const	$push53=, 0x1.4p5
 	f32.ne  	$push54=, $pop52, $pop53
 	i32.or  	$push55=, $pop51, $pop54
-	i32.const	$push174=, 0
-	f32.load	$push56=, results+20($pop174)
+	i32.const	$push172=, 0
+	f32.load	$push56=, results+20($pop172)
 	f32.const	$push57=, 0x1.9p5
 	f32.ne  	$push58=, $pop56, $pop57
 	i32.or  	$push59=, $pop55, $pop58
-	i32.const	$push173=, 0
-	f32.load	$push60=, results+24($pop173)
+	i32.const	$push171=, 0
+	f32.load	$push60=, results+24($pop171)
 	f32.const	$push61=, 0x1.ep5
 	f32.ne  	$push62=, $pop60, $pop61
 	i32.or  	$push63=, $pop59, $pop62
-	i32.const	$push172=, 0
-	f32.load	$push64=, results+28($pop172)
+	i32.const	$push170=, 0
+	f32.load	$push64=, results+28($pop170)
 	f32.const	$push65=, 0x1.18p6
 	f32.ne  	$push66=, $pop64, $pop65
 	i32.or  	$push67=, $pop63, $pop66
-	i32.const	$push171=, 0
-	f32.load	$push68=, results+32($pop171)
+	i32.const	$push169=, 0
+	f32.load	$push68=, results+32($pop169)
 	f32.const	$push69=, 0x1.4p6
 	f32.ne  	$push70=, $pop68, $pop69
 	i32.or  	$push71=, $pop67, $pop70
-	i32.const	$push170=, 0
-	f32.load	$push72=, results+36($pop170)
+	i32.const	$push168=, 0
+	f32.load	$push72=, results+36($pop168)
 	f32.const	$push73=, 0x1.68p6
 	f32.ne  	$push74=, $pop72, $pop73
 	i32.or  	$push75=, $pop71, $pop74
-	i32.const	$push169=, 0
-	f32.load	$push76=, results+40($pop169)
+	i32.const	$push167=, 0
+	f32.load	$push76=, results+40($pop167)
 	f32.const	$push77=, 0x1.9p6
 	f32.ne  	$push78=, $pop76, $pop77
 	i32.or  	$push79=, $pop75, $pop78
-	i32.const	$push168=, 0
-	f32.load	$push80=, results+44($pop168)
+	i32.const	$push166=, 0
+	f32.load	$push80=, results+44($pop166)
 	f32.const	$push81=, 0x1.b8p6
 	f32.ne  	$push82=, $pop80, $pop81
 	i32.or  	$push83=, $pop79, $pop82
-	i32.const	$push167=, 0
-	f32.load	$push84=, results+48($pop167)
+	i32.const	$push165=, 0
+	f32.load	$push84=, results+48($pop165)
 	f32.const	$push85=, 0x1.ep6
 	f32.ne  	$push86=, $pop84, $pop85
 	i32.or  	$push87=, $pop83, $pop86
-	i32.const	$push166=, 0
-	f32.load	$push88=, results+52($pop166)
+	i32.const	$push164=, 0
+	f32.load	$push88=, results+52($pop164)
 	f32.const	$push89=, 0x1.04p7
 	f32.ne  	$push90=, $pop88, $pop89
 	i32.or  	$push91=, $pop87, $pop90
-	i32.const	$push165=, 0
-	f32.load	$push92=, results+56($pop165)
+	i32.const	$push163=, 0
+	f32.load	$push92=, results+56($pop163)
 	f32.const	$push93=, 0x1.18p7
 	f32.ne  	$push94=, $pop92, $pop93
 	i32.or  	$push95=, $pop91, $pop94
-	i32.const	$push164=, 0
-	f32.load	$push96=, results+60($pop164)
+	i32.const	$push162=, 0
+	f32.load	$push96=, results+60($pop162)
 	f32.const	$push97=, 0x1.2cp7
 	f32.ne  	$push98=, $pop96, $pop97
 	i32.or  	$push99=, $pop95, $pop98
-	i32.const	$push163=, 0
-	f32.load	$push100=, results+64($pop163)
+	i32.const	$push161=, 0
+	f32.load	$push100=, results+64($pop161)
 	f32.const	$push101=, 0x1.4p7
 	f32.ne  	$push102=, $pop100, $pop101
 	i32.or  	$push103=, $pop99, $pop102
-	i32.const	$push162=, 0
-	f32.load	$push104=, results+68($pop162)
+	i32.const	$push160=, 0
+	f32.load	$push104=, results+68($pop160)
 	f32.const	$push105=, 0x1.54p7
 	f32.ne  	$push106=, $pop104, $pop105
 	i32.or  	$push107=, $pop103, $pop106
-	i32.const	$push161=, 0
-	f32.load	$push108=, results+72($pop161)
+	i32.const	$push159=, 0
+	f32.load	$push108=, results+72($pop159)
 	f32.const	$push109=, 0x1.68p7
 	f32.ne  	$push110=, $pop108, $pop109
 	i32.or  	$push111=, $pop107, $pop110
-	i32.const	$push160=, 0
-	f32.load	$push112=, results+76($pop160)
+	i32.const	$push158=, 0
+	f32.load	$push112=, results+76($pop158)
 	f32.const	$push113=, 0x1.7cp7
 	f32.ne  	$push114=, $pop112, $pop113
 	i32.or  	$push115=, $pop111, $pop114
@@ -586,4 +584,4 @@ input:
 	.size	input, 320
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

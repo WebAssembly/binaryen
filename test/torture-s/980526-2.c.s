@@ -6,12 +6,12 @@
 	.type	do_mknod,@function
 do_mknod:                               # @do_mknod
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 360710264
 	i32.ne  	$push1=, $2, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -30,7 +30,7 @@ do_mknod:                               # @do_mknod
 getname:                                # @getname
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push17=, 13
 	i32.mul 	$push18=, $0, $pop17
 	i32.const	$push13=, 7
@@ -87,7 +87,7 @@ getname:                                # @getname
 sys_mknod:                              # @sys_mknod
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 14
 	i32.shl 	$push3=, $2, $pop2
 	i32.const	$push4=, -4194304
@@ -108,7 +108,7 @@ sys_mknod:                              # @sys_mknod
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, .L.str
 	i32.const	$push0=, 305419896
 	i32.call	$drop=, sys_mknod@FUNCTION, $pop1, $0, $pop0
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
 	.functype	abort, void

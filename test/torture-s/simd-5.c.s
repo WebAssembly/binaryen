@@ -5,7 +5,7 @@
 	.globl	func0
 	.type	func0,@function
 func0:                                  # @func0
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 1
 	i32.store	dummy($pop1), $pop0
@@ -20,71 +20,63 @@ func0:                                  # @func0
 	.type	func1,@function
 func1:                                  # @func1
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push63=, 0
-	i32.load16_u	$push2=, q2+6($pop63)
-	i32.const	$push62=, 0
-	i32.load16_u	$push1=, q1+6($pop62)
-	i32.mul 	$push61=, $pop2, $pop1
-	tee_local	$push60=, $0=, $pop61
-	i32.store16	w1+6($pop0), $pop60
-	i32.const	$push59=, 0
-	i32.const	$push58=, 0
-	i32.load16_u	$push4=, q2+4($pop58)
-	i32.const	$push57=, 0
-	i32.load16_u	$push3=, q1+4($pop57)
-	i32.mul 	$push56=, $pop4, $pop3
-	tee_local	$push55=, $1=, $pop56
-	i32.store16	w1+4($pop59), $pop55
-	i32.const	$push54=, 0
-	i32.const	$push53=, 0
-	i32.load16_u	$push6=, q2+2($pop53)
-	i32.const	$push52=, 0
-	i32.load16_u	$push5=, q1+2($pop52)
-	i32.mul 	$push51=, $pop6, $pop5
-	tee_local	$push50=, $2=, $pop51
-	i32.store16	w1+2($pop54), $pop50
-	i32.const	$push49=, 0
-	i32.const	$push48=, 0
-	i32.load16_u	$push8=, q2($pop48)
+	i32.load16_u	$push2=, q2+6($pop0)
 	i32.const	$push47=, 0
-	i32.load16_u	$push7=, q1($pop47)
-	i32.mul 	$push46=, $pop8, $pop7
-	tee_local	$push45=, $3=, $pop46
-	i32.store16	w1($pop49), $pop45
+	i32.load16_u	$push1=, q1+6($pop47)
+	i32.mul 	$0=, $pop2, $pop1
+	i32.const	$push46=, 0
+	i32.store16	w1+6($pop46), $0
+	i32.const	$push45=, 0
+	i32.load16_u	$push4=, q2+4($pop45)
 	i32.const	$push44=, 0
+	i32.load16_u	$push3=, q1+4($pop44)
+	i32.mul 	$1=, $pop4, $pop3
 	i32.const	$push43=, 0
-	i32.load16_u	$push10=, q4+6($pop43)
+	i32.store16	w1+4($pop43), $1
 	i32.const	$push42=, 0
-	i32.load16_u	$push9=, q3+6($pop42)
-	i32.mul 	$push41=, $pop10, $pop9
-	tee_local	$push40=, $4=, $pop41
-	i32.store16	w2+6($pop44), $pop40
+	i32.load16_u	$push6=, q2+2($pop42)
+	i32.const	$push41=, 0
+	i32.load16_u	$push5=, q1+2($pop41)
+	i32.mul 	$2=, $pop6, $pop5
+	i32.const	$push40=, 0
+	i32.store16	w1+2($pop40), $2
 	i32.const	$push39=, 0
+	i32.load16_u	$push8=, q2($pop39)
 	i32.const	$push38=, 0
-	i32.load16_u	$push12=, q4+4($pop38)
+	i32.load16_u	$push7=, q1($pop38)
+	i32.mul 	$3=, $pop8, $pop7
 	i32.const	$push37=, 0
-	i32.load16_u	$push11=, q3+4($pop37)
-	i32.mul 	$push36=, $pop12, $pop11
-	tee_local	$push35=, $5=, $pop36
-	i32.store16	w2+4($pop39), $pop35
+	i32.store16	w1($pop37), $3
+	i32.const	$push36=, 0
+	i32.load16_u	$push10=, q4+6($pop36)
+	i32.const	$push35=, 0
+	i32.load16_u	$push9=, q3+6($pop35)
+	i32.mul 	$4=, $pop10, $pop9
 	i32.const	$push34=, 0
+	i32.store16	w2+6($pop34), $4
 	i32.const	$push33=, 0
-	i32.load16_u	$push14=, q4+2($pop33)
+	i32.load16_u	$push12=, q4+4($pop33)
 	i32.const	$push32=, 0
-	i32.load16_u	$push13=, q3+2($pop32)
-	i32.mul 	$push31=, $pop14, $pop13
-	tee_local	$push30=, $6=, $pop31
-	i32.store16	w2+2($pop34), $pop30
+	i32.load16_u	$push11=, q3+4($pop32)
+	i32.mul 	$5=, $pop12, $pop11
+	i32.const	$push31=, 0
+	i32.store16	w2+4($pop31), $5
+	i32.const	$push30=, 0
+	i32.load16_u	$push14=, q4+2($pop30)
 	i32.const	$push29=, 0
+	i32.load16_u	$push13=, q3+2($pop29)
+	i32.mul 	$6=, $pop14, $pop13
 	i32.const	$push28=, 0
-	i32.load16_u	$push16=, q4($pop28)
+	i32.store16	w2+2($pop28), $6
 	i32.const	$push27=, 0
-	i32.load16_u	$push15=, q3($pop27)
-	i32.mul 	$push26=, $pop16, $pop15
-	tee_local	$push25=, $7=, $pop26
-	i32.store16	w2($pop29), $pop25
+	i32.load16_u	$push16=, q4($pop27)
+	i32.const	$push26=, 0
+	i32.load16_u	$push15=, q3($pop26)
+	i32.mul 	$7=, $pop16, $pop15
+	i32.const	$push25=, 0
+	i32.store16	w2($pop25), $7
 	call    	func0@FUNCTION
 	i32.const	$push24=, 0
 	i32.store16	w4+6($pop24), $4
@@ -113,71 +105,63 @@ func1:                                  # @func1
 	.type	func2,@function
 func2:                                  # @func2
 	.local  	i32, i32, i32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push63=, 0
-	i32.load16_u	$push2=, q2+6($pop63)
-	i32.const	$push62=, 0
-	i32.load16_u	$push1=, q1+6($pop62)
-	i32.add 	$push61=, $pop2, $pop1
-	tee_local	$push60=, $0=, $pop61
-	i32.store16	z1+6($pop0), $pop60
-	i32.const	$push59=, 0
-	i32.const	$push58=, 0
-	i32.load16_u	$push4=, q2+4($pop58)
-	i32.const	$push57=, 0
-	i32.load16_u	$push3=, q1+4($pop57)
-	i32.add 	$push56=, $pop4, $pop3
-	tee_local	$push55=, $1=, $pop56
-	i32.store16	z1+4($pop59), $pop55
-	i32.const	$push54=, 0
-	i32.const	$push53=, 0
-	i32.load16_u	$push6=, q2+2($pop53)
-	i32.const	$push52=, 0
-	i32.load16_u	$push5=, q1+2($pop52)
-	i32.add 	$push51=, $pop6, $pop5
-	tee_local	$push50=, $2=, $pop51
-	i32.store16	z1+2($pop54), $pop50
-	i32.const	$push49=, 0
-	i32.const	$push48=, 0
-	i32.load16_u	$push8=, q2($pop48)
+	i32.load16_u	$push2=, q2+6($pop0)
 	i32.const	$push47=, 0
-	i32.load16_u	$push7=, q1($pop47)
-	i32.add 	$push46=, $pop8, $pop7
-	tee_local	$push45=, $3=, $pop46
-	i32.store16	z1($pop49), $pop45
+	i32.load16_u	$push1=, q1+6($pop47)
+	i32.add 	$0=, $pop2, $pop1
+	i32.const	$push46=, 0
+	i32.store16	z1+6($pop46), $0
+	i32.const	$push45=, 0
+	i32.load16_u	$push4=, q2+4($pop45)
 	i32.const	$push44=, 0
+	i32.load16_u	$push3=, q1+4($pop44)
+	i32.add 	$1=, $pop4, $pop3
 	i32.const	$push43=, 0
-	i32.load16_u	$push10=, q3+6($pop43)
+	i32.store16	z1+4($pop43), $1
 	i32.const	$push42=, 0
-	i32.load16_u	$push9=, q4+6($pop42)
-	i32.sub 	$push41=, $pop10, $pop9
-	tee_local	$push40=, $4=, $pop41
-	i32.store16	z2+6($pop44), $pop40
+	i32.load16_u	$push6=, q2+2($pop42)
+	i32.const	$push41=, 0
+	i32.load16_u	$push5=, q1+2($pop41)
+	i32.add 	$2=, $pop6, $pop5
+	i32.const	$push40=, 0
+	i32.store16	z1+2($pop40), $2
 	i32.const	$push39=, 0
+	i32.load16_u	$push8=, q2($pop39)
 	i32.const	$push38=, 0
-	i32.load16_u	$push12=, q3+4($pop38)
+	i32.load16_u	$push7=, q1($pop38)
+	i32.add 	$3=, $pop8, $pop7
 	i32.const	$push37=, 0
-	i32.load16_u	$push11=, q4+4($pop37)
-	i32.sub 	$push36=, $pop12, $pop11
-	tee_local	$push35=, $5=, $pop36
-	i32.store16	z2+4($pop39), $pop35
+	i32.store16	z1($pop37), $3
+	i32.const	$push36=, 0
+	i32.load16_u	$push10=, q3+6($pop36)
+	i32.const	$push35=, 0
+	i32.load16_u	$push9=, q4+6($pop35)
+	i32.sub 	$4=, $pop10, $pop9
 	i32.const	$push34=, 0
+	i32.store16	z2+6($pop34), $4
 	i32.const	$push33=, 0
-	i32.load16_u	$push14=, q3+2($pop33)
+	i32.load16_u	$push12=, q3+4($pop33)
 	i32.const	$push32=, 0
-	i32.load16_u	$push13=, q4+2($pop32)
-	i32.sub 	$push31=, $pop14, $pop13
-	tee_local	$push30=, $6=, $pop31
-	i32.store16	z2+2($pop34), $pop30
+	i32.load16_u	$push11=, q4+4($pop32)
+	i32.sub 	$5=, $pop12, $pop11
+	i32.const	$push31=, 0
+	i32.store16	z2+4($pop31), $5
+	i32.const	$push30=, 0
+	i32.load16_u	$push14=, q3+2($pop30)
 	i32.const	$push29=, 0
+	i32.load16_u	$push13=, q4+2($pop29)
+	i32.sub 	$6=, $pop14, $pop13
 	i32.const	$push28=, 0
-	i32.load16_u	$push16=, q3($pop28)
+	i32.store16	z2+2($pop28), $6
 	i32.const	$push27=, 0
-	i32.load16_u	$push15=, q4($pop27)
-	i32.sub 	$push26=, $pop16, $pop15
-	tee_local	$push25=, $7=, $pop26
-	i32.store16	z2($pop29), $pop25
+	i32.load16_u	$push16=, q3($pop27)
+	i32.const	$push26=, 0
+	i32.load16_u	$push15=, q4($pop26)
+	i32.sub 	$7=, $pop16, $pop15
+	i32.const	$push25=, 0
+	i32.store16	z2($pop25), $7
 	call    	func1@FUNCTION
 	i32.const	$push24=, 0
 	i32.store16	z4+6($pop24), $4
@@ -206,7 +190,7 @@ func2:                                  # @func2
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	func2@FUNCTION
 	block   	
 	i32.const	$push14=, 0
@@ -215,28 +199,28 @@ main:                                   # @main
 	i64.load	$push0=, w3($pop13)
 	i64.ne  	$push2=, $pop1, $pop0
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push16=, 0
 	i64.load	$push4=, w2($pop16)
 	i32.const	$push15=, 0
 	i64.load	$push3=, w4($pop15)
 	i64.ne  	$push5=, $pop4, $pop3
 	br_if   	0, $pop5        # 0: down to label0
-# BB#2:                                 # %if.end4
+# %bb.2:                                # %if.end4
 	i32.const	$push18=, 0
 	i64.load	$push7=, z1($pop18)
 	i32.const	$push17=, 0
 	i64.load	$push6=, z3($pop17)
 	i64.ne  	$push8=, $pop7, $pop6
 	br_if   	0, $pop8        # 0: down to label0
-# BB#3:                                 # %if.end8
+# %bb.3:                                # %if.end8
 	i32.const	$push20=, 0
 	i64.load	$push10=, z2($pop20)
 	i32.const	$push19=, 0
 	i64.load	$push9=, z4($pop19)
 	i64.ne  	$push11=, $pop10, $pop9
 	br_if   	0, $pop11       # 0: down to label0
-# BB#4:                                 # %if.end12
+# %bb.4:                                # %if.end12
 	i32.const	$push12=, 0
 	return  	$pop12
 .LBB3_5:                                # %if.then
@@ -377,5 +361,5 @@ z4:
 	.size	z4, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

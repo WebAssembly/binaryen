@@ -7,7 +7,7 @@
 test1:                                  # @test1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -21,7 +21,7 @@ test1:                                  # @test1
 test1u:                                 # @test1u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -35,7 +35,7 @@ test1u:                                 # @test1u
 test2:                                  # @test2
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -49,7 +49,7 @@ test2:                                  # @test2
 test2u:                                 # @test2u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -63,7 +63,7 @@ test2u:                                 # @test2u
 test3:                                  # @test3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -77,7 +77,7 @@ test3:                                  # @test3
 test3u:                                 # @test3u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -91,7 +91,7 @@ test3u:                                 # @test3u
 test4:                                  # @test4
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -105,7 +105,7 @@ test4:                                  # @test4
 test4u:                                 # @test4u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -119,7 +119,7 @@ test4u:                                 # @test4u
 test5:                                  # @test5
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -133,7 +133,7 @@ test5:                                  # @test5
 test5u:                                 # @test5u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -147,7 +147,7 @@ test5u:                                 # @test5u
 test6:                                  # @test6
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -161,7 +161,7 @@ test6:                                  # @test6
 test6u:                                 # @test6u
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -174,7 +174,7 @@ test6u:                                 # @test6u
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -182,4 +182,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end12-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

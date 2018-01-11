@@ -6,7 +6,7 @@
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push7=, 0
 	i32.const	$push6=, 0
 	i32.store8	n($pop7), $pop6
@@ -16,7 +16,7 @@ main:                                   # @main
 	i32.load	$push0=, g($pop5)
 	i32.eqz 	$push16=, $pop0
 	br_if   	0, $pop16       # 0: down to label1
-# BB#1:                                 # %fn2.exit.thread.i
+# %bb.1:                                # %fn2.exit.thread.i
 	i32.const	$push8=, 0
 	i32.load	$drop=, d($pop8)
 	br      	1               # 1: down to label0
@@ -121,4 +121,4 @@ s:
 	.size	s, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

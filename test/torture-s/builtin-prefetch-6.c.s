@@ -5,7 +5,7 @@
 	.globl	init_addrs
 	.type	init_addrs,@function
 init_addrs:                             # @init_addrs
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i64.const	$push0=, 8589934593
 	i64.store	bad_addr($pop1), $pop0
@@ -68,16 +68,15 @@ init_addrs:                             # @init_addrs
 	.type	prefetch_for_read,@function
 prefetch_for_read:                      # @prefetch_for_read
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -260
 .LBB1_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push2=, 4
-	i32.add 	$push1=, $0, $pop2
-	tee_local	$push0=, $0=, $pop1
-	br_if   	0, $pop0        # 0: up to label0
-# BB#2:                                 # %for.end
+	i32.const	$push0=, 4
+	i32.add 	$0=, $0, $pop0
+	br_if   	0, $0           # 0: up to label0
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -90,16 +89,15 @@ prefetch_for_read:                      # @prefetch_for_read
 	.type	prefetch_for_write,@function
 prefetch_for_write:                     # @prefetch_for_write
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$0=, -260
 .LBB2_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push2=, 4
-	i32.add 	$push1=, $0, $pop2
-	tee_local	$push0=, $0=, $pop1
-	br_if   	0, $pop0        # 0: up to label1
-# BB#2:                                 # %for.end
+	i32.const	$push0=, 4
+	i32.add 	$0=, $0, $pop0
+	br_if   	0, $0           # 0: up to label1
+# %bb.2:                                # %for.end
 	end_loop
                                         # fallthrough-return
 	.endfunc
@@ -112,7 +110,7 @@ prefetch_for_write:                     # @prefetch_for_write
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	init_addrs@FUNCTION
 	call    	prefetch_for_read@FUNCTION
 	call    	prefetch_for_write@FUNCTION
@@ -142,5 +140,5 @@ arr_used:
 	.size	arr_used, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

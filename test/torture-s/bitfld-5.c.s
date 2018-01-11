@@ -6,13 +6,13 @@
 	.type	g,@function
 g:                                      # @g
 	.param  	i64, i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	block   	
 	i64.ne  	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -28,7 +28,7 @@ g:                                      # @g
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	i64.load	$push0=, 0($0)
@@ -49,14 +49,13 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push8=, 0
+# %bb.0:                                # %entry
 	i32.const	$push6=, 0
 	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push17=, $pop5, $pop7
-	tee_local	$push16=, $0=, $pop17
-	i32.store	__stack_pointer($pop8), $pop16
+	i32.sub 	$0=, $pop5, $pop7
+	i32.const	$push8=, 0
+	i32.store	__stack_pointer($pop8), $0
 	i32.const	$push0=, 0
 	i64.load	$push1=, .Lmain.s($pop0)
 	i64.store	8($0), $pop1
@@ -107,5 +106,5 @@ main:                                   # @main
 	.size	.Lmain.t, 8
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

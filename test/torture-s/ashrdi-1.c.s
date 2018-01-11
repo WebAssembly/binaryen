@@ -7,95 +7,91 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i64, i32, i32
-# BB#0:                                 # %entry
-	i64.const	$0=, -1
+# %bb.0:                                # %entry
+	i64.const	$0=, 0
 	i32.const	$2=, zext
 .LBB0_1:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	block   	
 	loop    	                # label1:
-	i64.const	$push20=, 8526495107234113920
-	i64.const	$push19=, 1
-	i64.add 	$push18=, $0, $pop19
-	tee_local	$push17=, $0=, $pop18
-	i64.shr_u	$push0=, $pop20, $pop17
+	i64.const	$push17=, 8526495107234113920
+	i64.shr_u	$push0=, $pop17, $0
 	i64.load	$push1=, 0($2)
 	i64.ne  	$push2=, $pop0, $pop1
 	br_if   	1, $pop2        # 1: down to label0
-# BB#2:                                 # %for.cond
+# %bb.2:                                # %for.cond
                                         #   in Loop: Header=BB0_1 Depth=1
-	i32.const	$push22=, 8
-	i32.add 	$2=, $2, $pop22
-	i64.const	$push21=, 63
-	i64.lt_u	$push3=, $0, $pop21
+	i64.const	$push20=, 1
+	i64.add 	$0=, $0, $pop20
+	i32.const	$push19=, 8
+	i32.add 	$2=, $2, $pop19
+	i64.const	$push18=, 64
+	i64.lt_u	$push3=, $0, $pop18
 	br_if   	0, $pop3        # 0: up to label1
-# BB#3:                                 # %for.body4.preheader
+# %bb.3:                                # %for.body4.preheader
 	end_loop
-	i64.const	$0=, -1
+	i64.const	$0=, 0
 	i32.const	$2=, sext
 .LBB0_4:                                # %for.body4
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
-	i64.const	$push26=, -8152436031399644656
-	i64.const	$push25=, 1
-	i64.add 	$push24=, $0, $pop25
-	tee_local	$push23=, $0=, $pop24
-	i64.shr_s	$push4=, $pop26, $pop23
+	i64.const	$push21=, -8152436031399644656
+	i64.shr_s	$push4=, $pop21, $0
 	i64.load	$push5=, 0($2)
 	i64.ne  	$push6=, $pop4, $pop5
 	br_if   	1, $pop6        # 1: down to label0
-# BB#5:                                 # %for.cond2
+# %bb.5:                                # %for.cond2
                                         #   in Loop: Header=BB0_4 Depth=1
-	i32.const	$push28=, 8
-	i32.add 	$2=, $2, $pop28
-	i64.const	$push27=, 63
-	i64.lt_u	$push7=, $0, $pop27
+	i64.const	$push24=, 1
+	i64.add 	$0=, $0, $pop24
+	i32.const	$push23=, 8
+	i32.add 	$2=, $2, $pop23
+	i64.const	$push22=, 64
+	i64.lt_u	$push7=, $0, $pop22
 	br_if   	0, $pop7        # 0: up to label2
-# BB#6:                                 # %for.body16.preheader
+# %bb.6:                                # %for.body16.preheader
 	end_loop
-	i32.const	$2=, -1
+	i32.const	$2=, 0
 	i32.const	$1=, zext
 .LBB0_7:                                # %for.body16
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label3:
-	i64.const	$push32=, 8526495107234113920
-	i32.const	$push31=, 1
-	i32.add 	$push30=, $2, $pop31
-	tee_local	$push29=, $2=, $pop30
-	i64.call	$push8=, constant_shift@FUNCTION, $pop32, $pop29
+	i64.const	$push25=, 8526495107234113920
+	i64.call	$push8=, constant_shift@FUNCTION, $pop25, $2
 	i64.load	$push9=, 0($1)
 	i64.ne  	$push10=, $pop8, $pop9
 	br_if   	1, $pop10       # 1: down to label0
-# BB#8:                                 # %for.cond14
+# %bb.8:                                # %for.cond14
                                         #   in Loop: Header=BB0_7 Depth=1
-	i32.const	$push34=, 8
-	i32.add 	$1=, $1, $pop34
-	i32.const	$push33=, 63
-	i32.lt_u	$push11=, $2, $pop33
+	i32.const	$push28=, 1
+	i32.add 	$2=, $2, $pop28
+	i32.const	$push27=, 8
+	i32.add 	$1=, $1, $pop27
+	i32.const	$push26=, 64
+	i32.lt_u	$push11=, $2, $pop26
 	br_if   	0, $pop11       # 0: up to label3
-# BB#9:                                 # %for.body28.preheader
+# %bb.9:                                # %for.body28.preheader
 	end_loop
-	i32.const	$2=, -1
+	i32.const	$2=, 0
 	i32.const	$1=, sext
 .LBB0_10:                               # %for.body28
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label4:
-	i64.const	$push38=, -8152436031399644656
-	i32.const	$push37=, 1
-	i32.add 	$push36=, $2, $pop37
-	tee_local	$push35=, $2=, $pop36
-	i64.call	$push12=, constant_shift@FUNCTION, $pop38, $pop35
+	i64.const	$push29=, -8152436031399644656
+	i64.call	$push12=, constant_shift@FUNCTION, $pop29, $2
 	i64.load	$push13=, 0($1)
 	i64.ne  	$push14=, $pop12, $pop13
 	br_if   	1, $pop14       # 1: down to label0
-# BB#11:                                # %for.cond26
+# %bb.11:                               # %for.cond26
                                         #   in Loop: Header=BB0_10 Depth=1
-	i32.const	$push40=, 8
-	i32.add 	$1=, $1, $pop40
-	i32.const	$push39=, 62
-	i32.le_u	$push15=, $2, $pop39
+	i32.const	$push32=, 1
+	i32.add 	$2=, $2, $pop32
+	i32.const	$push31=, 8
+	i32.add 	$1=, $1, $pop31
+	i32.const	$push30=, 63
+	i32.le_u	$push15=, $2, $pop30
 	br_if   	0, $pop15       # 0: up to label4
-# BB#12:                                # %for.end37
+# %bb.12:                               # %for.end37
 	end_loop
 	i32.const	$push16=, 0
 	call    	exit@FUNCTION, $pop16
@@ -113,12 +109,12 @@ main:                                   # @main
 constant_shift:                         # @constant_shift
 	.param  	i64, i32
 	.result 	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 63
 	i32.gt_u	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label5
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	block   	
 	block   	
 	block   	
@@ -713,6 +709,6 @@ sext:
 	.size	sext, 512
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

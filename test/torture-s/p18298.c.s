@@ -7,7 +7,7 @@
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, s
 	i32.call	$push1=, strcmp@FUNCTION, $pop0, $0
 	i32.eqz 	$push2=, $pop1
@@ -22,13 +22,13 @@ foo:                                    # @foo
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push1=, 0
 	i32.load8_u	$push0=, s($pop1)
 	i32.eqz 	$push5=, $pop0
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %while.cond
+# %bb.1:                                # %while.cond
 	i32.const	$push3=, 0
 	i32.const	$push2=, 0
 	i32.store8	s($pop3), $pop2
@@ -50,5 +50,5 @@ s:
 	.size	s, 2048
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	strcmp, i32, i32, i32

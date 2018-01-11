@@ -7,18 +7,16 @@
 foobar:                                 # @foobar
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push1=, 1
-	i32.and 	$push11=, $0, $pop1
-	tee_local	$push10=, $0=, $pop11
-	i32.eqz 	$push14=, $pop10
-	br_if   	0, $pop14       # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
+	i32.and 	$0=, $0, $pop1
+	block   	
+	i32.eqz 	$push10=, $0
+	br_if   	0, $pop10       # 0: down to label0
+# %bb.1:                                # %lor.lhs.false
 	i32.const	$push0=, 3
-	i32.and 	$push13=, $1, $pop0
-	tee_local	$push12=, $1=, $pop13
-	i32.sub 	$push2=, $pop12, $0
+	i32.and 	$1=, $1, $pop0
+	i32.sub 	$push2=, $1, $0
 	i32.mul 	$push3=, $pop2, $1
 	i32.add 	$push4=, $pop3, $2
 	i32.const	$push5=, 7
@@ -26,7 +24,7 @@ foobar:                                 # @foobar
 	i32.const	$push7=, 5
 	i32.ne  	$push8=, $pop6, $pop7
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push9=, 0
 	call    	exit@FUNCTION, $pop9
 	unreachable
@@ -44,7 +42,7 @@ foobar:                                 # @foobar
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
@@ -53,6 +51,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

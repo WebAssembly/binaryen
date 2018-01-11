@@ -5,7 +5,7 @@
 	.globl	simple_global
 	.type	simple_global,@function
 simple_global:                          # @simple_global
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
@@ -16,7 +16,7 @@ simple_global:                          # @simple_global
 	.globl	simple_file
 	.type	simple_file,@function
 simple_file:                            # @simple_file
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end1:
@@ -27,7 +27,7 @@ simple_file:                            # @simple_file
 	.globl	simple_static_local
 	.type	simple_static_local,@function
 simple_static_local:                    # @simple_static_local
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
@@ -39,14 +39,13 @@ simple_static_local:                    # @simple_static_local
 	.type	simple_local,@function
 simple_local:                           # @simple_local
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push3=, 0
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 416
-	i32.sub 	$push8=, $pop0, $pop2
-	tee_local	$push7=, $0=, $pop8
-	i32.store	__stack_pointer($pop3), $pop7
+	i32.sub 	$0=, $pop0, $pop2
+	i32.const	$push3=, 0
+	i32.store	__stack_pointer($pop3), $0
 	i32.const	$push6=, 0
 	i32.const	$push4=, 416
 	i32.add 	$push5=, $0, $pop4
@@ -62,7 +61,7 @@ simple_local:                           # @simple_local
 	.type	simple_arg,@function
 simple_arg:                             # @simple_arg
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 16
@@ -78,7 +77,7 @@ simple_arg:                             # @simple_arg
 	.globl	expr_global
 	.type	expr_global,@function
 expr_global:                            # @expr_global
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end5:
@@ -89,7 +88,7 @@ expr_global:                            # @expr_global
 	.globl	expr_local
 	.type	expr_local,@function
 expr_local:                             # @expr_local
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 80
@@ -106,14 +105,13 @@ expr_local:                             # @expr_local
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push6=, 0
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.load	$push3=, __stack_pointer($pop4)
 	i32.const	$push5=, 416
-	i32.sub 	$push10=, $pop3, $pop5
-	tee_local	$push9=, $0=, $pop10
-	i32.store	__stack_pointer($pop6), $pop9
+	i32.sub 	$0=, $pop3, $pop5
+	i32.const	$push6=, 0
+	i32.store	__stack_pointer($pop6), $0
 	i32.const	$push0=, 0
 	i32.load	$push1=, glob_int($pop0)
 	i32.store	8($0), $pop1
@@ -203,5 +201,5 @@ simple_static_local.ix:
 	.size	simple_static_local.ix, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

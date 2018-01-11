@@ -7,24 +7,22 @@
 main:                                   # @main
 	.result 	i32
 	.local  	i64, i64
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push12=, 0
-	i64.load	$push0=, a($pop12)
+# %bb.0:                                # %entry
+	i32.const	$push10=, 0
+	i64.load	$push0=, a($pop10)
 	i64.const	$push1=, 8589934591
-	i64.and 	$push11=, $pop0, $pop1
-	tee_local	$push10=, $0=, $pop11
-	i64.mul 	$push2=, $pop10, $0
+	i64.and 	$0=, $pop0, $pop1
+	block   	
+	i64.mul 	$push2=, $0, $0
 	i64.const	$push3=, 0
 	i64.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
-	i32.const	$push15=, 0
-	i64.load	$push5=, a+8($pop15)
+# %bb.1:                                # %lor.lhs.false
+	i32.const	$push11=, 0
+	i64.load	$push5=, a+8($pop11)
 	i64.const	$push6=, 1099511627775
-	i64.and 	$push14=, $pop5, $pop6
-	tee_local	$push13=, $1=, $pop14
-	i64.mul 	$push7=, $pop13, $0
+	i64.and 	$1=, $pop5, $pop6
+	i64.mul 	$push7=, $1, $0
 	i64.mul 	$push8=, $1, $1
 	i64.or  	$push9=, $pop7, $pop8
 	i64.eqz 	$drop=, $pop9
@@ -118,5 +116,5 @@ c:
 	.size	c, 24
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

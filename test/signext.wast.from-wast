@@ -1,6 +1,5 @@
 (module
  (type $0 (func))
- (memory $0 0)
  (func $signext (; 0 ;) (type $0)
   (local $0 i32)
   (local $1 i64)

@@ -8,14 +8,13 @@ test_store_ccp:                         # @test_store_ccp
 	.param  	i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push11=, 0
 	i32.load	$push10=, __stack_pointer($pop11)
 	i32.const	$push12=, 16
-	i32.sub 	$push22=, $pop10, $pop12
-	tee_local	$push21=, $1=, $pop22
+	i32.sub 	$1=, $pop10, $pop12
 	i32.const	$push17=, 12
-	i32.add 	$push18=, $pop21, $pop17
+	i32.add 	$push18=, $1, $pop17
 	i32.const	$push13=, 8
 	i32.add 	$push14=, $1, $pop13
 	i32.const	$push15=, 4
@@ -25,10 +24,9 @@ test_store_ccp:                         # @test_store_ccp
 	i32.select	$push4=, $pop14, $pop16, $pop3
 	i32.const	$push0=, 5
 	i32.lt_s	$push1=, $0, $pop0
-	i32.select	$push20=, $pop18, $pop4, $pop1
-	tee_local	$push19=, $0=, $pop20
+	i32.select	$0=, $pop18, $pop4, $pop1
 	i32.const	$push5=, 10
-	i32.store	0($pop19), $pop5
+	i32.store	0($0), $pop5
 	i32.const	$push6=, 3
 	i32.store	8($1), $pop6
 	i32.load	$push7=, 0($0)
@@ -47,14 +45,13 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push9=, 0
 	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push20=, $pop8, $pop10
-	tee_local	$push19=, $2=, $pop20
+	i32.sub 	$2=, $pop8, $pop10
 	i32.const	$push15=, 12
-	i32.add 	$push16=, $pop19, $pop15
+	i32.add 	$push16=, $2, $pop15
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $2, $pop11
 	i32.const	$push13=, 4
@@ -64,9 +61,8 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	i32.select	$push4=, $pop12, $pop14, $pop3
 	i32.const	$push0=, 5
 	i32.lt_s	$push1=, $0, $pop0
-	i32.select	$push18=, $pop16, $pop4, $pop1
-	tee_local	$push17=, $1=, $pop18
-	i32.store	0($pop17), $0
+	i32.select	$1=, $pop16, $pop4, $pop1
+	i32.store	0($1), $0
 	i32.const	$push5=, 1
 	i32.add 	$push6=, $0, $pop5
 	i32.store	8($2), $pop6
@@ -82,7 +78,7 @@ test_store_copy_prop:                   # @test_store_copy_prop
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end4
+# %bb.0:                                # %if.end4
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
@@ -90,4 +86,4 @@ main:                                   # @main
 	.size	main, .Lfunc_end2-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

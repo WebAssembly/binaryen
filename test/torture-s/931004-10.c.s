@@ -8,14 +8,13 @@ f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push17=, 0
+# %bb.0:                                # %entry
 	i32.const	$push15=, 0
 	i32.load	$push14=, __stack_pointer($pop15)
 	i32.const	$push16=, 16
-	i32.sub 	$push24=, $pop14, $pop16
-	tee_local	$push23=, $4=, $pop24
-	i32.store	__stack_pointer($pop17), $pop23
+	i32.sub 	$4=, $pop14, $pop16
+	i32.const	$push17=, 0
+	i32.store	__stack_pointer($pop17), $4
 	i32.const	$push22=, 4
 	i32.add 	$push1=, $1, $pop22
 	i32.store	12($4), $pop1
@@ -24,7 +23,7 @@ f:                                      # @f
 	i32.const	$push21=, 1
 	i32.lt_s	$push2=, $0, $pop21
 	br_if   	0, $pop2        # 0: down to label1
-# BB#1:                                 # %for.body.preheader
+# %bb.1:                                # %for.body.preheader
 	i32.const	$2=, 10
 .LBB0_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
@@ -32,26 +31,26 @@ f:                                      # @f
 	i32.load8_s	$push3=, 0($1)
 	i32.ne  	$push4=, $2, $pop3
 	br_if   	2, $pop4        # 2: down to label0
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push26=, 10
-	i32.add 	$push5=, $2, $pop26
-	i32.const	$push25=, 1
-	i32.add 	$push6=, $1, $pop25
+	i32.const	$push24=, 10
+	i32.add 	$push5=, $2, $pop24
+	i32.const	$push23=, 1
+	i32.add 	$push6=, $1, $pop23
 	i32.load8_s	$push7=, 0($pop6)
 	i32.ne  	$push8=, $pop5, $pop7
 	br_if   	2, $pop8        # 2: down to label0
-# BB#4:                                 # %for.cond
+# %bb.4:                                # %for.cond
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push30=, 8
-	i32.add 	$push9=, $1, $pop30
+	i32.const	$push28=, 8
+	i32.add 	$push9=, $1, $pop28
 	i32.store	12($4), $pop9
-	i32.const	$push29=, 4
-	i32.add 	$1=, $1, $pop29
-	i32.const	$push28=, -9
-	i32.add 	$3=, $2, $pop28
-	i32.const	$push27=, 1
-	i32.add 	$push0=, $2, $pop27
+	i32.const	$push27=, 4
+	i32.add 	$1=, $1, $pop27
+	i32.const	$push26=, -9
+	i32.add 	$3=, $2, $pop26
+	i32.const	$push25=, 1
+	i32.add 	$push0=, $2, $pop25
 	copy_local	$2=, $pop0
 	i32.lt_s	$push10=, $3, $0
 	br_if   	0, $pop10       # 0: up to label2
@@ -62,7 +61,7 @@ f:                                      # @f
 	i32.const	$push12=, 123
 	i32.ne  	$push13=, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label0
-# BB#6:                                 # %if.end16
+# %bb.6:                                # %if.end16
 	i32.const	$push20=, 0
 	i32.const	$push18=, 16
 	i32.add 	$push19=, $4, $pop18
@@ -83,14 +82,13 @@ f:                                      # @f
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push11=, 0
+# %bb.0:                                # %entry
 	i32.const	$push9=, 0
 	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 32
-	i32.sub 	$push19=, $pop8, $pop10
-	tee_local	$push18=, $0=, $pop19
-	i32.store	__stack_pointer($pop11), $pop18
+	i32.sub 	$0=, $pop8, $pop10
+	i32.const	$push11=, 0
+	i32.store	__stack_pointer($pop11), $0
 	i32.const	$push0=, 5130
 	i32.store16	24($0), $pop0
 	i32.const	$push1=, 369890571
@@ -122,6 +120,6 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
                                         # -- End function
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

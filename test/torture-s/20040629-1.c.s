@@ -6,7 +6,7 @@
 	.type	ret1,@function
 ret1:                                   # @ret1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, b($pop0)
 	i32.const	$push2=, 63
@@ -22,7 +22,7 @@ ret1:                                   # @ret1
 	.type	ret2,@function
 ret2:                                   # @ret2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, b($pop0)
 	i32.const	$push2=, 6
@@ -40,7 +40,7 @@ ret2:                                   # @ret2
 	.type	ret3,@function
 ret3:                                   # @ret3
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, b($pop0)
 	i32.const	$push2=, 17
@@ -56,7 +56,7 @@ ret3:                                   # @ret3
 	.type	ret4,@function
 ret4:                                   # @ret4
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, c($pop0)
 	i32.const	$push2=, 31
@@ -72,7 +72,7 @@ ret4:                                   # @ret4
 	.type	ret5,@function
 ret5:                                   # @ret5
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, c($pop0)
 	i32.const	$push2=, 5
@@ -90,7 +90,7 @@ ret5:                                   # @ret5
 	.type	ret6,@function
 ret6:                                   # @ret6
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$push1=, c($pop0)
 	i32.const	$push2=, 6
@@ -106,7 +106,7 @@ ret6:                                   # @ret6
 	.type	ret7,@function
 ret7:                                   # @ret7
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load16_u	$push1=, d($pop0)
                                         # fallthrough-return: $pop1
@@ -120,7 +120,7 @@ ret7:                                   # @ret7
 	.type	ret8,@function
 ret8:                                   # @ret8
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, d+2($pop0)
                                         # fallthrough-return: $pop1
@@ -134,7 +134,7 @@ ret8:                                   # @ret8
 	.type	ret9,@function
 ret9:                                   # @ret9
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load8_u	$push1=, d+3($pop0)
                                         # fallthrough-return: $pop1
@@ -149,18 +149,17 @@ ret9:                                   # @ret9
 fn1_1:                                  # @fn1_1
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, b($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.add 	$push3=, $pop7, $0
+	i32.load	$1=, b($pop0)
+	i32.const	$push7=, 0
+	i32.add 	$push3=, $1, $0
 	i32.const	$push4=, 63
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end9:
@@ -173,20 +172,19 @@ fn1_1:                                  # @fn1_1
 fn2_1:                                  # @fn2_1
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 6
 	i32.shl 	$push4=, $0, $pop3
-	i32.add 	$push5=, $pop9, $pop4
+	i32.add 	$push5=, $1, $pop4
 	i32.const	$push6=, 131008
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	b($pop0), $pop8
+	i32.store	b($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end10:
@@ -198,7 +196,7 @@ fn2_1:                                  # @fn2_1
 	.type	fn3_1,@function
 fn3_1:                                  # @fn3_1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, b($pop5)
@@ -218,18 +216,17 @@ fn3_1:                                  # @fn3_1
 fn4_1:                                  # @fn4_1
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, c($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.add 	$push3=, $pop7, $0
+	i32.load	$1=, c($pop0)
+	i32.const	$push7=, 0
+	i32.add 	$push3=, $1, $0
 	i32.const	$push4=, 31
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end12:
@@ -242,20 +239,19 @@ fn4_1:                                  # @fn4_1
 fn5_1:                                  # @fn5_1
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 5
 	i32.shl 	$push4=, $0, $pop3
-	i32.add 	$push5=, $pop9, $pop4
+	i32.add 	$push5=, $1, $pop4
 	i32.const	$push6=, 32
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, -33
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	c($pop0), $pop8
+	i32.store	c($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end13:
@@ -267,7 +263,7 @@ fn5_1:                                  # @fn5_1
 	.type	fn6_1,@function
 fn6_1:                                  # @fn6_1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, c($pop5)
@@ -286,7 +282,7 @@ fn6_1:                                  # @fn6_1
 	.type	fn7_1,@function
 fn7_1:                                  # @fn7_1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load	$push1=, d($pop3)
@@ -303,7 +299,7 @@ fn7_1:                                  # @fn7_1
 	.type	fn8_1,@function
 fn8_1:                                  # @fn8_1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, d($pop7)
@@ -324,7 +320,7 @@ fn8_1:                                  # @fn8_1
 	.type	fn9_1,@function
 fn9_1:                                  # @fn9_1
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, d($pop5)
@@ -344,19 +340,18 @@ fn9_1:                                  # @fn9_1
 fn1_2:                                  # @fn1_2
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 63
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end18:
@@ -369,19 +364,18 @@ fn1_2:                                  # @fn1_2
 fn2_2:                                  # @fn2_2
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 64
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 131008
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end19:
@@ -393,7 +387,7 @@ fn2_2:                                  # @fn2_2
 	.type	fn3_2,@function
 fn3_2:                                  # @fn3_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -412,19 +406,18 @@ fn3_2:                                  # @fn3_2
 fn4_2:                                  # @fn4_2
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 31
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end21:
@@ -436,7 +429,7 @@ fn4_2:                                  # @fn4_2
 	.type	fn5_2,@function
 fn5_2:                                  # @fn5_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -454,7 +447,7 @@ fn5_2:                                  # @fn5_2
 	.type	fn6_2,@function
 fn6_2:                                  # @fn6_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -472,7 +465,7 @@ fn6_2:                                  # @fn6_2
 	.type	fn7_2,@function
 fn7_2:                                  # @fn7_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -490,7 +483,7 @@ fn7_2:                                  # @fn7_2
 	.type	fn8_2,@function
 fn8_2:                                  # @fn8_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -510,7 +503,7 @@ fn8_2:                                  # @fn8_2
 	.type	fn9_2,@function
 fn9_2:                                  # @fn9_2
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -529,19 +522,18 @@ fn9_2:                                  # @fn9_2
 fn1_3:                                  # @fn1_3
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 63
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end27:
@@ -554,19 +546,18 @@ fn1_3:                                  # @fn1_3
 fn2_3:                                  # @fn2_3
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 64
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 131008
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end28:
@@ -578,7 +569,7 @@ fn2_3:                                  # @fn2_3
 	.type	fn3_3,@function
 fn3_3:                                  # @fn3_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -597,19 +588,18 @@ fn3_3:                                  # @fn3_3
 fn4_3:                                  # @fn4_3
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 1
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 31
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end30:
@@ -621,7 +611,7 @@ fn4_3:                                  # @fn4_3
 	.type	fn5_3,@function
 fn5_3:                                  # @fn5_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -639,7 +629,7 @@ fn5_3:                                  # @fn5_3
 	.type	fn6_3,@function
 fn6_3:                                  # @fn6_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -657,7 +647,7 @@ fn6_3:                                  # @fn6_3
 	.type	fn7_3,@function
 fn7_3:                                  # @fn7_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -675,7 +665,7 @@ fn7_3:                                  # @fn7_3
 	.type	fn8_3,@function
 fn8_3:                                  # @fn8_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -695,7 +685,7 @@ fn8_3:                                  # @fn8_3
 	.type	fn9_3,@function
 fn9_3:                                  # @fn9_3
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -714,18 +704,17 @@ fn9_3:                                  # @fn9_3
 fn1_4:                                  # @fn1_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, b($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.sub 	$push3=, $pop7, $0
+	i32.load	$1=, b($pop0)
+	i32.const	$push7=, 0
+	i32.sub 	$push3=, $1, $0
 	i32.const	$push4=, 63
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end36:
@@ -738,20 +727,19 @@ fn1_4:                                  # @fn1_4
 fn2_4:                                  # @fn2_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 6
 	i32.shl 	$push4=, $0, $pop3
-	i32.sub 	$push5=, $pop9, $pop4
+	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, 131008
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	b($pop0), $pop8
+	i32.store	b($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end37:
@@ -764,20 +752,19 @@ fn2_4:                                  # @fn2_4
 fn3_4:                                  # @fn3_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 17
 	i32.shl 	$push4=, $0, $pop3
-	i32.sub 	$push5=, $pop9, $pop4
+	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, -131072
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, 131071
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	b($pop0), $pop8
+	i32.store	b($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end38:
@@ -790,18 +777,17 @@ fn3_4:                                  # @fn3_4
 fn4_4:                                  # @fn4_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, c($pop9)
-	tee_local	$push7=, $1=, $pop8
-	i32.sub 	$push3=, $pop7, $0
+	i32.load	$1=, c($pop0)
+	i32.const	$push7=, 0
+	i32.sub 	$push3=, $1, $0
 	i32.const	$push4=, 31
 	i32.and 	$push5=, $pop3, $pop4
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end39:
@@ -814,20 +800,19 @@ fn4_4:                                  # @fn4_4
 fn5_4:                                  # @fn5_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 5
 	i32.shl 	$push4=, $0, $pop3
-	i32.sub 	$push5=, $pop9, $pop4
+	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, 32
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, -33
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	c($pop0), $pop8
+	i32.store	c($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end40:
@@ -840,20 +825,19 @@ fn5_4:                                  # @fn5_4
 fn6_4:                                  # @fn6_4
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 6
 	i32.shl 	$push4=, $0, $pop3
-	i32.sub 	$push5=, $pop9, $pop4
+	i32.sub 	$push5=, $1, $pop4
 	i32.const	$push6=, -64
 	i32.and 	$push7=, $pop5, $pop6
 	i32.const	$push1=, 63
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	c($pop0), $pop8
+	i32.store	c($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end41:
@@ -865,7 +849,7 @@ fn6_4:                                  # @fn6_4
 	.type	fn7_4,@function
 fn7_4:                                  # @fn7_4
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load	$push1=, d($pop3)
@@ -882,7 +866,7 @@ fn7_4:                                  # @fn7_4
 	.type	fn8_4,@function
 fn8_4:                                  # @fn8_4
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, d($pop7)
@@ -903,7 +887,7 @@ fn8_4:                                  # @fn8_4
 	.type	fn9_4,@function
 fn9_4:                                  # @fn9_4
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, d($pop7)
@@ -925,19 +909,18 @@ fn9_4:                                  # @fn9_4
 fn1_5:                                  # @fn1_5
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 63
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 63
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end45:
@@ -950,19 +933,18 @@ fn1_5:                                  # @fn1_5
 fn2_5:                                  # @fn2_5
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 131008
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 131008
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end46:
@@ -974,7 +956,7 @@ fn2_5:                                  # @fn2_5
 	.type	fn3_5,@function
 fn3_5:                                  # @fn3_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -993,19 +975,18 @@ fn3_5:                                  # @fn3_5
 fn4_5:                                  # @fn4_5
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 31
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 31
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end48:
@@ -1017,7 +998,7 @@ fn4_5:                                  # @fn4_5
 	.type	fn5_5,@function
 fn5_5:                                  # @fn5_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -1035,7 +1016,7 @@ fn5_5:                                  # @fn5_5
 	.type	fn6_5,@function
 fn6_5:                                  # @fn6_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -1053,7 +1034,7 @@ fn6_5:                                  # @fn6_5
 	.type	fn7_5,@function
 fn7_5:                                  # @fn7_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -1071,7 +1052,7 @@ fn7_5:                                  # @fn7_5
 	.type	fn8_5,@function
 fn8_5:                                  # @fn8_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -1091,7 +1072,7 @@ fn8_5:                                  # @fn8_5
 	.type	fn9_5,@function
 fn9_5:                                  # @fn9_5
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -1110,19 +1091,18 @@ fn9_5:                                  # @fn9_5
 fn1_6:                                  # @fn1_6
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 63
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 63
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end54:
@@ -1135,19 +1115,18 @@ fn1_6:                                  # @fn1_6
 fn2_6:                                  # @fn2_6
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 131008
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 131008
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end55:
@@ -1159,7 +1138,7 @@ fn2_6:                                  # @fn2_6
 	.type	fn3_6,@function
 fn3_6:                                  # @fn3_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -1178,19 +1157,18 @@ fn3_6:                                  # @fn3_6
 fn4_6:                                  # @fn4_6
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 31
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push7=, 31
 	i32.and 	$push5=, $pop4, $pop7
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop8), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end57:
@@ -1202,7 +1180,7 @@ fn4_6:                                  # @fn4_6
 	.type	fn5_6,@function
 fn5_6:                                  # @fn5_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -1220,7 +1198,7 @@ fn5_6:                                  # @fn5_6
 	.type	fn6_6,@function
 fn6_6:                                  # @fn6_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -1238,7 +1216,7 @@ fn6_6:                                  # @fn6_6
 	.type	fn7_6,@function
 fn7_6:                                  # @fn7_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -1256,7 +1234,7 @@ fn7_6:                                  # @fn7_6
 	.type	fn8_6,@function
 fn8_6:                                  # @fn8_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -1276,7 +1254,7 @@ fn8_6:                                  # @fn8_6
 	.type	fn9_6,@function
 fn9_6:                                  # @fn9_6
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -1294,7 +1272,7 @@ fn9_6:                                  # @fn9_6
 	.type	fn1_7,@function
 fn1_7:                                  # @fn1_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push0=, -64
 	i32.or  	$push1=, $0, $pop0
@@ -1313,7 +1291,7 @@ fn1_7:                                  # @fn1_7
 	.type	fn2_7,@function
 fn2_7:                                  # @fn2_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
@@ -1334,7 +1312,7 @@ fn2_7:                                  # @fn2_7
 	.type	fn3_7,@function
 fn3_7:                                  # @fn3_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, b($pop7)
@@ -1355,7 +1333,7 @@ fn3_7:                                  # @fn3_7
 	.type	fn4_7,@function
 fn4_7:                                  # @fn4_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push0=, -32
 	i32.or  	$push1=, $0, $pop0
@@ -1374,7 +1352,7 @@ fn4_7:                                  # @fn4_7
 	.type	fn5_7,@function
 fn5_7:                                  # @fn5_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push0=, 5
 	i32.shl 	$push1=, $0, $pop0
@@ -1395,7 +1373,7 @@ fn5_7:                                  # @fn5_7
 	.type	fn6_7,@function
 fn6_7:                                  # @fn6_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, c($pop7)
@@ -1416,7 +1394,7 @@ fn6_7:                                  # @fn6_7
 	.type	fn7_7,@function
 fn7_7:                                  # @fn7_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push0=, -65536
 	i32.or  	$push1=, $0, $pop0
@@ -1435,7 +1413,7 @@ fn7_7:                                  # @fn7_7
 	.type	fn8_7,@function
 fn8_7:                                  # @fn8_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push0=, 16
 	i32.shl 	$push1=, $0, $pop0
@@ -1456,7 +1434,7 @@ fn8_7:                                  # @fn8_7
 	.type	fn9_7,@function
 fn9_7:                                  # @fn9_7
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, d($pop7)
@@ -1477,7 +1455,7 @@ fn9_7:                                  # @fn9_7
 	.type	fn1_8,@function
 fn1_8:                                  # @fn1_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, b($pop5)
@@ -1496,7 +1474,7 @@ fn1_8:                                  # @fn1_8
 	.type	fn2_8,@function
 fn2_8:                                  # @fn2_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, b($pop7)
@@ -1518,20 +1496,19 @@ fn2_8:                                  # @fn2_8
 fn3_8:                                  # @fn3_8
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop2)
+	i32.const	$push9=, 0
 	i32.const	$push3=, -131072
-	i32.and 	$push4=, $pop9, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push0=, 17
 	i32.shl 	$push1=, $0, $pop0
 	i32.or  	$push5=, $pop4, $pop1
 	i32.const	$push6=, 131071
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store	b($pop2), $pop8
+	i32.store	b($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end74:
@@ -1543,7 +1520,7 @@ fn3_8:                                  # @fn3_8
 	.type	fn4_8,@function
 fn4_8:                                  # @fn4_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, c($pop5)
@@ -1562,7 +1539,7 @@ fn4_8:                                  # @fn4_8
 	.type	fn5_8,@function
 fn5_8:                                  # @fn5_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, c($pop7)
@@ -1584,20 +1561,19 @@ fn5_8:                                  # @fn5_8
 fn6_8:                                  # @fn6_8
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop2)
+	i32.const	$push9=, 0
 	i32.const	$push3=, -64
-	i32.and 	$push4=, $pop9, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
 	i32.or  	$push5=, $pop4, $pop1
 	i32.const	$push6=, 63
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store	c($pop2), $pop8
+	i32.store	c($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end77:
@@ -1609,7 +1585,7 @@ fn6_8:                                  # @fn6_8
 	.type	fn7_8,@function
 fn7_8:                                  # @fn7_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, d($pop5)
@@ -1628,7 +1604,7 @@ fn7_8:                                  # @fn7_8
 	.type	fn8_8,@function
 fn8_8:                                  # @fn8_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, d($pop7)
@@ -1649,7 +1625,7 @@ fn8_8:                                  # @fn8_8
 	.type	fn9_8,@function
 fn9_8:                                  # @fn9_8
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, d($pop7)
@@ -1670,7 +1646,7 @@ fn9_8:                                  # @fn9_8
 	.type	fn1_9,@function
 fn1_9:                                  # @fn1_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, b($pop5)
@@ -1689,7 +1665,7 @@ fn1_9:                                  # @fn1_9
 	.type	fn2_9,@function
 fn2_9:                                  # @fn2_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, b($pop7)
@@ -1711,20 +1687,19 @@ fn2_9:                                  # @fn2_9
 fn3_9:                                  # @fn3_9
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop2)
+	i32.const	$push9=, 0
 	i32.const	$push3=, -131072
-	i32.and 	$push4=, $pop9, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push0=, 17
 	i32.shl 	$push1=, $0, $pop0
 	i32.xor 	$push5=, $pop4, $pop1
 	i32.const	$push6=, 131071
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store	b($pop2), $pop8
+	i32.store	b($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end83:
@@ -1736,7 +1711,7 @@ fn3_9:                                  # @fn3_9
 	.type	fn4_9,@function
 fn4_9:                                  # @fn4_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, c($pop5)
@@ -1755,7 +1730,7 @@ fn4_9:                                  # @fn4_9
 	.type	fn5_9,@function
 fn5_9:                                  # @fn5_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, c($pop7)
@@ -1777,20 +1752,19 @@ fn5_9:                                  # @fn5_9
 fn6_9:                                  # @fn6_9
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop2)
+	i32.const	$push9=, 0
 	i32.const	$push3=, -64
-	i32.and 	$push4=, $pop9, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push0=, 6
 	i32.shl 	$push1=, $0, $pop0
 	i32.xor 	$push5=, $pop4, $pop1
 	i32.const	$push6=, 63
 	i32.and 	$push7=, $1, $pop6
 	i32.or  	$push8=, $pop5, $pop7
-	i32.store	c($pop2), $pop8
+	i32.store	c($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end86:
@@ -1802,7 +1776,7 @@ fn6_9:                                  # @fn6_9
 	.type	fn7_9,@function
 fn7_9:                                  # @fn7_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push5=, 0
 	i32.load	$push3=, d($pop5)
@@ -1821,7 +1795,7 @@ fn7_9:                                  # @fn7_9
 	.type	fn8_9,@function
 fn8_9:                                  # @fn8_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push4=, 0
 	i32.const	$push7=, 0
 	i32.load	$push5=, d($pop7)
@@ -1842,7 +1816,7 @@ fn8_9:                                  # @fn8_9
 	.type	fn9_9,@function
 fn9_9:                                  # @fn9_9
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 0
 	i32.const	$push7=, 0
 	i32.load	$push3=, d($pop7)
@@ -1864,18 +1838,17 @@ fn9_9:                                  # @fn9_9
 fn1_a:                                  # @fn1_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, b($pop9)
-	tee_local	$push7=, $1=, $pop8
+	i32.load	$1=, b($pop0)
+	i32.const	$push7=, 0
 	i32.const	$push1=, -64
-	i32.and 	$push2=, $pop7, $pop1
+	i32.and 	$push2=, $1, $pop1
 	i32.const	$push3=, 63
 	i32.and 	$push4=, $1, $pop3
 	i32.div_u	$push5=, $pop4, $0
 	i32.or  	$push6=, $pop2, $pop5
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end90:
@@ -1888,13 +1861,12 @@ fn1_a:                                  # @fn1_a
 fn2_a:                                  # @fn2_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push13=, 0
-	i32.load	$push12=, b($pop13)
-	tee_local	$push11=, $1=, $pop12
+	i32.load	$1=, b($pop0)
+	i32.const	$push11=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop11, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 2047
 	i32.and 	$push6=, $pop4, $pop5
 	i32.div_u	$push7=, $pop6, $0
@@ -1903,7 +1875,7 @@ fn2_a:                                  # @fn2_a
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push9=, $pop8, $pop2
-	i32.store	b($pop0), $pop9
+	i32.store	b($pop11), $pop9
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end91:
@@ -1916,20 +1888,19 @@ fn2_a:                                  # @fn2_a
 fn3_a:                                  # @fn3_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 17
-	i32.shr_u	$push4=, $pop9, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.div_u	$push5=, $pop4, $0
 	i32.const	$push8=, 17
 	i32.shl 	$push6=, $pop5, $pop8
 	i32.const	$push1=, 131071
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop9), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end92:
@@ -1942,18 +1913,17 @@ fn3_a:                                  # @fn3_a
 fn4_a:                                  # @fn4_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, c($pop9)
-	tee_local	$push7=, $1=, $pop8
+	i32.load	$1=, c($pop0)
+	i32.const	$push7=, 0
 	i32.const	$push1=, -32
-	i32.and 	$push2=, $pop7, $pop1
+	i32.and 	$push2=, $1, $pop1
 	i32.const	$push3=, 31
 	i32.and 	$push4=, $1, $pop3
 	i32.div_u	$push5=, $pop4, $0
 	i32.or  	$push6=, $pop2, $pop5
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end93:
@@ -1966,13 +1936,12 @@ fn4_a:                                  # @fn4_a
 fn5_a:                                  # @fn5_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push13=, 0
-	i32.load	$push12=, c($pop13)
-	tee_local	$push11=, $1=, $pop12
+	i32.load	$1=, c($pop0)
+	i32.const	$push11=, 0
 	i32.const	$push3=, 5
-	i32.shr_u	$push4=, $pop11, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 1
 	i32.and 	$push6=, $pop4, $pop5
 	i32.div_u	$push7=, $pop6, $0
@@ -1981,7 +1950,7 @@ fn5_a:                                  # @fn5_a
 	i32.const	$push1=, -33
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push9=, $pop8, $pop2
-	i32.store	c($pop0), $pop9
+	i32.store	c($pop11), $pop9
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end94:
@@ -1994,20 +1963,19 @@ fn5_a:                                  # @fn5_a
 fn6_a:                                  # @fn6_a
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop9, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.div_u	$push5=, $pop4, $0
 	i32.const	$push8=, 6
 	i32.shl 	$push6=, $pop5, $pop8
 	i32.const	$push1=, 63
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop9), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end95:
@@ -2019,7 +1987,7 @@ fn6_a:                                  # @fn6_a
 	.type	fn7_a,@function
 fn7_a:                                  # @fn7_a
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load16_u	$push1=, d($pop3)
@@ -2036,7 +2004,7 @@ fn7_a:                                  # @fn7_a
 	.type	fn8_a,@function
 fn8_a:                                  # @fn8_a
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load8_u	$push1=, d+2($pop3)
@@ -2053,7 +2021,7 @@ fn8_a:                                  # @fn8_a
 	.type	fn9_a,@function
 fn9_a:                                  # @fn9_a
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load8_u	$push1=, d+3($pop3)
@@ -2071,18 +2039,17 @@ fn9_a:                                  # @fn9_a
 fn1_b:                                  # @fn1_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, b($pop9)
-	tee_local	$push7=, $1=, $pop8
+	i32.load	$1=, b($pop0)
+	i32.const	$push7=, 0
 	i32.const	$push3=, 63
-	i32.and 	$push4=, $pop7, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.rem_u	$push5=, $pop4, $0
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	b($pop0), $pop6
+	i32.store	b($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end99:
@@ -2095,13 +2062,12 @@ fn1_b:                                  # @fn1_b
 fn2_b:                                  # @fn2_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push13=, 0
-	i32.load	$push12=, b($pop13)
-	tee_local	$push11=, $1=, $pop12
+	i32.load	$1=, b($pop0)
+	i32.const	$push11=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop11, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 2047
 	i32.and 	$push6=, $pop4, $pop5
 	i32.rem_u	$push7=, $pop6, $0
@@ -2110,7 +2076,7 @@ fn2_b:                                  # @fn2_b
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push9=, $pop8, $pop2
-	i32.store	b($pop0), $pop9
+	i32.store	b($pop11), $pop9
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end100:
@@ -2123,20 +2089,19 @@ fn2_b:                                  # @fn2_b
 fn3_b:                                  # @fn3_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, b($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, b($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 17
-	i32.shr_u	$push4=, $pop9, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.rem_u	$push5=, $pop4, $0
 	i32.const	$push8=, 17
 	i32.shl 	$push6=, $pop5, $pop8
 	i32.const	$push1=, 131071
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop9), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end101:
@@ -2149,18 +2114,17 @@ fn3_b:                                  # @fn3_b
 fn4_b:                                  # @fn4_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push9=, 0
-	i32.load	$push8=, c($pop9)
-	tee_local	$push7=, $1=, $pop8
+	i32.load	$1=, c($pop0)
+	i32.const	$push7=, 0
 	i32.const	$push3=, 31
-	i32.and 	$push4=, $pop7, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.rem_u	$push5=, $pop4, $0
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push6=, $pop5, $pop2
-	i32.store	c($pop0), $pop6
+	i32.store	c($pop7), $pop6
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end102:
@@ -2173,13 +2137,12 @@ fn4_b:                                  # @fn4_b
 fn5_b:                                  # @fn5_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push13=, 0
-	i32.load	$push12=, c($pop13)
-	tee_local	$push11=, $1=, $pop12
+	i32.load	$1=, c($pop0)
+	i32.const	$push11=, 0
 	i32.const	$push3=, 5
-	i32.shr_u	$push4=, $pop11, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 1
 	i32.and 	$push6=, $pop4, $pop5
 	i32.rem_u	$push7=, $pop6, $0
@@ -2188,7 +2151,7 @@ fn5_b:                                  # @fn5_b
 	i32.const	$push1=, -33
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push9=, $pop8, $pop2
-	i32.store	c($pop0), $pop9
+	i32.store	c($pop11), $pop9
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end103:
@@ -2201,20 +2164,19 @@ fn5_b:                                  # @fn5_b
 fn6_b:                                  # @fn6_b
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push11=, 0
-	i32.load	$push10=, c($pop11)
-	tee_local	$push9=, $1=, $pop10
+	i32.load	$1=, c($pop0)
+	i32.const	$push9=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop9, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.rem_u	$push5=, $pop4, $0
 	i32.const	$push8=, 6
 	i32.shl 	$push6=, $pop5, $pop8
 	i32.const	$push1=, 63
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop9), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end104:
@@ -2226,7 +2188,7 @@ fn6_b:                                  # @fn6_b
 	.type	fn7_b,@function
 fn7_b:                                  # @fn7_b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load16_u	$push1=, d($pop3)
@@ -2243,7 +2205,7 @@ fn7_b:                                  # @fn7_b
 	.type	fn8_b,@function
 fn8_b:                                  # @fn8_b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load8_u	$push1=, d+2($pop3)
@@ -2260,7 +2222,7 @@ fn8_b:                                  # @fn8_b
 	.type	fn9_b,@function
 fn9_b:                                  # @fn9_b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push3=, 0
 	i32.load8_u	$push1=, d+3($pop3)
@@ -2278,19 +2240,18 @@ fn9_b:                                  # @fn9_b
 fn1_c:                                  # @fn1_c
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 3
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 63
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end108:
@@ -2303,19 +2264,18 @@ fn1_c:                                  # @fn1_c
 fn2_c:                                  # @fn2_c
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 192
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 131008
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end109:
@@ -2327,7 +2287,7 @@ fn2_c:                                  # @fn2_c
 	.type	fn3_c,@function
 fn3_c:                                  # @fn3_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2346,19 +2306,18 @@ fn3_c:                                  # @fn3_c
 fn4_c:                                  # @fn4_c
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 3
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 31
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end111:
@@ -2370,7 +2329,7 @@ fn4_c:                                  # @fn4_c
 	.type	fn5_c,@function
 fn5_c:                                  # @fn5_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2388,7 +2347,7 @@ fn5_c:                                  # @fn5_c
 	.type	fn6_c,@function
 fn6_c:                                  # @fn6_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2406,7 +2365,7 @@ fn6_c:                                  # @fn6_c
 	.type	fn7_c,@function
 fn7_c:                                  # @fn7_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2424,7 +2383,7 @@ fn7_c:                                  # @fn7_c
 	.type	fn8_c,@function
 fn8_c:                                  # @fn8_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -2444,7 +2403,7 @@ fn8_c:                                  # @fn8_c
 	.type	fn9_c,@function
 fn9_c:                                  # @fn9_c
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2463,19 +2422,18 @@ fn9_c:                                  # @fn9_c
 fn1_d:                                  # @fn1_d
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 57
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 63
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end117:
@@ -2488,19 +2446,18 @@ fn1_d:                                  # @fn1_d
 fn2_d:                                  # @fn2_d
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 130624
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 131008
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end118:
@@ -2512,7 +2469,7 @@ fn2_d:                                  # @fn2_d
 	.type	fn3_d,@function
 fn3_d:                                  # @fn3_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2531,19 +2488,18 @@ fn3_d:                                  # @fn3_d
 fn4_d:                                  # @fn4_d
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 25
-	i32.add 	$push4=, $pop8, $pop3
+	i32.add 	$push4=, $1, $pop3
 	i32.const	$push5=, 31
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end120:
@@ -2555,7 +2511,7 @@ fn4_d:                                  # @fn4_d
 	.type	fn5_d,@function
 fn5_d:                                  # @fn5_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2573,7 +2529,7 @@ fn5_d:                                  # @fn5_d
 	.type	fn6_d,@function
 fn6_d:                                  # @fn6_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2591,7 +2547,7 @@ fn6_d:                                  # @fn6_d
 	.type	fn7_d,@function
 fn7_d:                                  # @fn7_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2609,7 +2565,7 @@ fn7_d:                                  # @fn7_d
 	.type	fn8_d,@function
 fn8_d:                                  # @fn8_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, d($pop6)
@@ -2629,7 +2585,7 @@ fn8_d:                                  # @fn8_d
 	.type	fn9_d,@function
 fn9_d:                                  # @fn9_d
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2647,7 +2603,7 @@ fn9_d:                                  # @fn9_d
 	.type	fn1_e,@function
 fn1_e:                                  # @fn1_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2665,7 +2621,7 @@ fn1_e:                                  # @fn1_e
 	.type	fn2_e,@function
 fn2_e:                                  # @fn2_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2683,7 +2639,7 @@ fn2_e:                                  # @fn2_e
 	.type	fn3_e,@function
 fn3_e:                                  # @fn3_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2701,7 +2657,7 @@ fn3_e:                                  # @fn3_e
 	.type	fn4_e,@function
 fn4_e:                                  # @fn4_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2719,7 +2675,7 @@ fn4_e:                                  # @fn4_e
 	.type	fn5_e,@function
 fn5_e:                                  # @fn5_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end130:
@@ -2731,7 +2687,7 @@ fn5_e:                                  # @fn5_e
 	.type	fn6_e,@function
 fn6_e:                                  # @fn6_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2749,7 +2705,7 @@ fn6_e:                                  # @fn6_e
 	.type	fn7_e,@function
 fn7_e:                                  # @fn7_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2767,7 +2723,7 @@ fn7_e:                                  # @fn7_e
 	.type	fn8_e,@function
 fn8_e:                                  # @fn8_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2785,7 +2741,7 @@ fn8_e:                                  # @fn8_e
 	.type	fn9_e,@function
 fn9_e:                                  # @fn9_e
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2803,7 +2759,7 @@ fn9_e:                                  # @fn9_e
 	.type	fn1_f,@function
 fn1_f:                                  # @fn1_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2821,7 +2777,7 @@ fn1_f:                                  # @fn1_f
 	.type	fn2_f,@function
 fn2_f:                                  # @fn2_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2839,7 +2795,7 @@ fn2_f:                                  # @fn2_f
 	.type	fn3_f,@function
 fn3_f:                                  # @fn3_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2857,7 +2813,7 @@ fn3_f:                                  # @fn3_f
 	.type	fn4_f,@function
 fn4_f:                                  # @fn4_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2875,7 +2831,7 @@ fn4_f:                                  # @fn4_f
 	.type	fn5_f,@function
 fn5_f:                                  # @fn5_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2893,7 +2849,7 @@ fn5_f:                                  # @fn5_f
 	.type	fn6_f,@function
 fn6_f:                                  # @fn6_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -2911,7 +2867,7 @@ fn6_f:                                  # @fn6_f
 	.type	fn7_f,@function
 fn7_f:                                  # @fn7_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2929,7 +2885,7 @@ fn7_f:                                  # @fn7_f
 	.type	fn8_f,@function
 fn8_f:                                  # @fn8_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2947,7 +2903,7 @@ fn8_f:                                  # @fn8_f
 	.type	fn9_f,@function
 fn9_f:                                  # @fn9_f
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -2965,7 +2921,7 @@ fn9_f:                                  # @fn9_f
 	.type	fn1_g,@function
 fn1_g:                                  # @fn1_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -2983,7 +2939,7 @@ fn1_g:                                  # @fn1_g
 	.type	fn2_g,@function
 fn2_g:                                  # @fn2_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -3001,7 +2957,7 @@ fn2_g:                                  # @fn2_g
 	.type	fn3_g,@function
 fn3_g:                                  # @fn3_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, b($pop4)
@@ -3019,7 +2975,7 @@ fn3_g:                                  # @fn3_g
 	.type	fn4_g,@function
 fn4_g:                                  # @fn4_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -3037,7 +2993,7 @@ fn4_g:                                  # @fn4_g
 	.type	fn5_g,@function
 fn5_g:                                  # @fn5_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -3055,7 +3011,7 @@ fn5_g:                                  # @fn5_g
 	.type	fn6_g,@function
 fn6_g:                                  # @fn6_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -3073,7 +3029,7 @@ fn6_g:                                  # @fn6_g
 	.type	fn7_g,@function
 fn7_g:                                  # @fn7_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -3091,7 +3047,7 @@ fn7_g:                                  # @fn7_g
 	.type	fn8_g,@function
 fn8_g:                                  # @fn8_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -3109,7 +3065,7 @@ fn8_g:                                  # @fn8_g
 	.type	fn9_g,@function
 fn9_g:                                  # @fn9_g
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -3128,19 +3084,18 @@ fn9_g:                                  # @fn9_g
 fn1_h:                                  # @fn1_h
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 63
-	i32.and 	$push4=, $pop8, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push5=, 17
 	i32.div_u	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end153:
@@ -3153,13 +3108,12 @@ fn1_h:                                  # @fn1_h
 fn2_h:                                  # @fn2_h
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push14=, 0
-	i32.load	$push13=, b($pop14)
-	tee_local	$push12=, $1=, $pop13
+	i32.load	$1=, b($pop0)
+	i32.const	$push12=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop12, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 2047
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push7=, 17
@@ -3169,7 +3123,7 @@ fn2_h:                                  # @fn2_h
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push10=, $pop9, $pop2
-	i32.store	b($pop0), $pop10
+	i32.store	b($pop12), $pop10
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end154:
@@ -3182,19 +3136,18 @@ fn2_h:                                  # @fn2_h
 fn3_h:                                  # @fn3_h
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 2228224
-	i32.div_u	$push4=, $pop8, $pop3
+	i32.div_u	$push4=, $1, $pop3
 	i32.const	$push5=, 17
 	i32.shl 	$push6=, $pop4, $pop5
 	i32.const	$push1=, 131071
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end155:
@@ -3207,19 +3160,18 @@ fn3_h:                                  # @fn3_h
 fn4_h:                                  # @fn4_h
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 31
-	i32.and 	$push4=, $pop8, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push5=, 17
 	i32.div_u	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end156:
@@ -3231,7 +3183,7 @@ fn4_h:                                  # @fn4_h
 	.type	fn5_h,@function
 fn5_h:                                  # @fn5_h
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, c($pop4)
@@ -3250,19 +3202,18 @@ fn5_h:                                  # @fn5_h
 fn6_h:                                  # @fn6_h
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 1088
-	i32.div_u	$push4=, $pop8, $pop3
+	i32.div_u	$push4=, $1, $pop3
 	i32.const	$push5=, 6
 	i32.shl 	$push6=, $pop4, $pop5
 	i32.const	$push1=, 63
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end158:
@@ -3274,7 +3225,7 @@ fn6_h:                                  # @fn6_h
 	.type	fn7_h,@function
 fn7_h:                                  # @fn7_h
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load16_u	$push1=, d($pop4)
@@ -3292,7 +3243,7 @@ fn7_h:                                  # @fn7_h
 	.type	fn8_h,@function
 fn8_h:                                  # @fn8_h
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load8_u	$push1=, d+2($pop4)
@@ -3310,7 +3261,7 @@ fn8_h:                                  # @fn8_h
 	.type	fn9_h,@function
 fn9_h:                                  # @fn9_h
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, d($pop4)
@@ -3329,19 +3280,18 @@ fn9_h:                                  # @fn9_h
 fn1_i:                                  # @fn1_i
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, b($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, b($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 63
-	i32.and 	$push4=, $pop8, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push5=, 19
 	i32.rem_u	$push6=, $pop4, $pop5
 	i32.const	$push1=, -64
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	b($pop0), $pop7
+	i32.store	b($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end162:
@@ -3354,13 +3304,12 @@ fn1_i:                                  # @fn1_i
 fn2_i:                                  # @fn2_i
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push14=, 0
-	i32.load	$push13=, b($pop14)
-	tee_local	$push12=, $1=, $pop13
+	i32.load	$1=, b($pop0)
+	i32.const	$push12=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop12, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 2047
 	i32.and 	$push6=, $pop4, $pop5
 	i32.const	$push7=, 19
@@ -3370,7 +3319,7 @@ fn2_i:                                  # @fn2_i
 	i32.const	$push1=, -131009
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push10=, $pop9, $pop2
-	i32.store	b($pop0), $pop10
+	i32.store	b($pop12), $pop10
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end163:
@@ -3383,13 +3332,12 @@ fn2_i:                                  # @fn2_i
 fn3_i:                                  # @fn3_i
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push12=, 0
-	i32.load	$push11=, b($pop12)
-	tee_local	$push10=, $1=, $pop11
+	i32.load	$1=, b($pop0)
+	i32.const	$push10=, 0
 	i32.const	$push3=, 17
-	i32.shr_u	$push4=, $pop10, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 19
 	i32.rem_u	$push6=, $pop4, $pop5
 	i32.const	$push9=, 17
@@ -3397,7 +3345,7 @@ fn3_i:                                  # @fn3_i
 	i32.const	$push1=, 131071
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	b($pop0), $pop8
+	i32.store	b($pop10), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end164:
@@ -3410,19 +3358,18 @@ fn3_i:                                  # @fn3_i
 fn4_i:                                  # @fn4_i
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push10=, 0
-	i32.load	$push9=, c($pop10)
-	tee_local	$push8=, $1=, $pop9
+	i32.load	$1=, c($pop0)
+	i32.const	$push8=, 0
 	i32.const	$push3=, 31
-	i32.and 	$push4=, $pop8, $pop3
+	i32.and 	$push4=, $1, $pop3
 	i32.const	$push5=, 19
 	i32.rem_u	$push6=, $pop4, $pop5
 	i32.const	$push1=, -32
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push7=, $pop6, $pop2
-	i32.store	c($pop0), $pop7
+	i32.store	c($pop8), $pop7
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end165:
@@ -3434,7 +3381,7 @@ fn4_i:                                  # @fn4_i
 	.type	fn5_i,@function
 fn5_i:                                  # @fn5_i
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end166:
@@ -3447,13 +3394,12 @@ fn5_i:                                  # @fn5_i
 fn6_i:                                  # @fn6_i
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push12=, 0
-	i32.load	$push11=, c($pop12)
-	tee_local	$push10=, $1=, $pop11
+	i32.load	$1=, c($pop0)
+	i32.const	$push10=, 0
 	i32.const	$push3=, 6
-	i32.shr_u	$push4=, $pop10, $pop3
+	i32.shr_u	$push4=, $1, $pop3
 	i32.const	$push5=, 19
 	i32.rem_u	$push6=, $pop4, $pop5
 	i32.const	$push9=, 6
@@ -3461,7 +3407,7 @@ fn6_i:                                  # @fn6_i
 	i32.const	$push1=, 63
 	i32.and 	$push2=, $1, $pop1
 	i32.or  	$push8=, $pop7, $pop2
-	i32.store	c($pop0), $pop8
+	i32.store	c($pop10), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end167:
@@ -3473,7 +3419,7 @@ fn6_i:                                  # @fn6_i
 	.type	fn7_i,@function
 fn7_i:                                  # @fn7_i
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load16_u	$push1=, d($pop4)
@@ -3491,7 +3437,7 @@ fn7_i:                                  # @fn7_i
 	.type	fn8_i,@function
 fn8_i:                                  # @fn8_i
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load8_u	$push1=, d+2($pop4)
@@ -3509,7 +3455,7 @@ fn8_i:                                  # @fn8_i
 	.type	fn9_i,@function
 fn9_i:                                  # @fn9_i
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load8_u	$push1=, d+3($pop4)
@@ -3527,7 +3473,7 @@ fn9_i:                                  # @fn9_i
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end1610
+# %bb.0:                                # %if.end1610
 	i32.const	$push1=, 0
 	i32.const	$push0=, -2147483595
 	i32.store	c($pop1), $pop0
@@ -3571,4 +3517,4 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 6.0.0 (https://llvm.googlesource.com/clang.git a1774cccdccfa673c057f93ccf23bc2d8cb04932) (https://llvm.googlesource.com/llvm.git fc50e1c6121255333bc42d6faf2b524c074eae25)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
