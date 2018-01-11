@@ -33,6 +33,7 @@
 #include "cfg/Relooper.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
+#include "support/defaults.h"
 
 using namespace wasm;
 
@@ -71,9 +72,9 @@ static std::mutex BinaryenFunctionMutex;
 static std::mutex BinaryenFunctionTypeMutex;
 
 // Optimization options (default is -Os with debug info)
-static int optimizeLevel = 2;
-static int shrinkLevel = 1;
-static bool debugInfo = 1;
+static int optimizeLevel = BINARYEN_DEFAULT_OPTIMIZE_LEVEL;
+static int shrinkLevel = BINARYEN_DEFAULT_SHRINK_LEVEL;
+static bool debugInfo = BINARYEN_DEFAULT_DEBUG_INFO;
 
 // Tracing support
 
