@@ -1562,3 +1562,5 @@ else if (typeof define === 'function' && define['amd'])
   define([], function() { return Binaryen; });
 else if (typeof exports === 'object')
   exports['Binaryen'] = Binaryen;
+else
+  (typeof self !== "undefined" ? self : this)['Binaryen'] = Binaryen;
