@@ -360,6 +360,10 @@ def run_binaryen_js_tests():
     f = open('a.js', 'w')
     binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
     f.write(binaryen_js)
+    # running concatenated versions in node interferes with module loading because
+    # the concatenated file expects a 'var Binaryen' but binaryen.js assigned to
+    # module.exports. this is correct behavior but tests then need a workaround:
+    f.write('if (typeof module === "object" && typeof exports === "object") Binaryen = module.exports;\n')
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test = open(test_path).read()
     need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM

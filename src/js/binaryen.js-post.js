@@ -1555,14 +1555,12 @@ return Module;
 
 } // end of instantiate
 
-// Always export globally because scenarios like concatenating this file with a
-// test case and running the resulting file in node.js won't work otherwise.
-var defaultInstance = (typeof self !== "undefined" ? self : this)['Binaryen'] = instantiate();
-
 // Module loader code borrowed from webpack
 if (typeof exports === 'object' && typeof module === 'object')
-  module.exports = defaultInstance;
+  module.exports = instantiate();
 else if (typeof define === 'function' && define['amd'])
-  define([], function() { return defaultInstance; });
+  define([], instantiate);
 else if (typeof exports === 'object')
-  exports['Binaryen'] = defaultInstance;
+  exports['Binaryen'] = instantiate();
+else
+  (typeof self !== "undefined" ? self : this)['Binaryen'] = instantiate();
