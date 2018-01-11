@@ -2014,6 +2014,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   PassRunner passRunner(wasm);
   passRunner.options.optimizeLevel = optimizeLevel;
   passRunner.options.shrinkLevel = shrinkLevel;
+  passRunner.options.debugInfo = debugInfo;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
 }
@@ -2057,6 +2058,9 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options.optimizeLevel = optimizeLevel;
+  passRunner.options.shrinkLevel = shrinkLevel;
+  passRunner.options.debugInfo = debugInfo;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
@@ -2070,6 +2074,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options.debugInfo = debugInfo;
   passRunner.add<AutoDrop>();
   passRunner.run();
 }
@@ -2224,6 +2229,9 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options.optimizeLevel = optimizeLevel;
+  passRunner.options.shrinkLevel = shrinkLevel;
+  passRunner.options.debugInfo = debugInfo;
   passRunner.addDefaultOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
@@ -2242,6 +2250,9 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options.optimizeLevel = optimizeLevel;
+  passRunner.options.shrinkLevel = shrinkLevel;
+  passRunner.options.debugInfo = debugInfo;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
