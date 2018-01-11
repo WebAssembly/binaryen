@@ -659,6 +659,15 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 // Runs the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
+// Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+void BinaryenSetOptimizeLevel(int level);
+
+// Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
+void BinaryenSetShrinkLevel(int level);
+
+// Enables or disables debug information in emitted binaries.
+void BinaryenSetDebugInfo(int on);
+
 // Runs the specified passes on the module.
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 

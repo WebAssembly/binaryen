@@ -1529,8 +1529,36 @@ Module['parseText'] = function(text) {
   return new Module['Module'](ptr);
 };
 
+// Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+Module['setOptimizeLevel'] = function(level) {
+  return Module['_BinaryenSetOptimizeLevel'](level);
+};
+
+// Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
+Module['setShrinkLevel'] = function(level) {
+  return Module['_BinaryenSetShrinkLevel'](level);
+};
+
+// Enables or disables debug information in emitted binaries.
+Module['setDebugInfo'] = function(on) {
+  return Module['_BinaryenSetDebugInfo'](on);
+};
+
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
 
+return Module;
+
+// Export a singleton instance by immediately invoking the wrapper function
+// that is otherwise identical to the one used by MODULARIZE (see pre JS):
+}();
+
+// Module loader code borrowed from webpack
+if (typeof exports === 'object' && typeof module === 'object')
+  module.exports = Binaryen;
+else if (typeof define === 'function' && define['amd'])
+  define([], function() { return Binaryen; });
+else if (typeof exports === 'object')
+  exports['Binaryen'] = Binaryen;

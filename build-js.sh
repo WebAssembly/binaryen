@@ -109,6 +109,7 @@ echo "building shared bitcode"
   src/passes/ReReloop.cpp \
   src/passes/SafeHeap.cpp \
   src/passes/SimplifyLocals.cpp \
+  src/passes/SpillPointers.cpp \
   src/passes/SSAify.cpp \
   src/passes/TrapMode.cpp \
   src/passes/Untee.cpp \
@@ -524,6 +525,9 @@ export_function "_BinaryenModulePrint"
 export_function "_BinaryenModulePrintAsmjs"
 export_function "_BinaryenModuleValidate"
 export_function "_BinaryenModuleOptimize"
+export_function "_BinaryenSetOptimizeLevel"
+export_function "_BinaryenSetShrinkLevel"
+export_function "_BinaryenSetDebugInfo"
 export_function "_BinaryenModuleRunPasses"
 export_function "_BinaryenModuleAutoDrop"
 export_function "_BinaryenModuleWrite"
@@ -579,10 +583,5 @@ export_function "_BinaryenSetAPITracing"
   -Isrc/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o bin/binaryen${OUT_FILE_SUFFIX}.js \
-  --post-js src/js/binaryen.js-post.js \
-  -s MODULARIZE=1 \
-  -s 'EXPORT_NAME="Binaryen"'
-
-# Create a singleton instance from the MODULARIZE module
-echo "Binaryen = Binaryen();" >> bin/binaryen${OUT_FILE_SUFFIX}.js
-
+  --pre-js src/js/binaryen.js-pre.js \
+  --post-js src/js/binaryen.js-post.js

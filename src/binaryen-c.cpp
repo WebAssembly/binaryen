@@ -70,6 +70,11 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
 static std::mutex BinaryenFunctionMutex;
 static std::mutex BinaryenFunctionTypeMutex;
 
+// Optimization options (default is -Os with debug info)
+static int optimizeLevel = 2;
+static int shrinkLevel = 1;
+static bool debugInfo = 1;
+
 // Tracing support
 
 static int tracing = 0;
@@ -2007,8 +2012,34 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options.optimizeLevel = optimizeLevel;
+  passRunner.options.shrinkLevel = shrinkLevel;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+void BinaryenSetOptimizeLevel(int level) {
+  if (tracing) {
+    std::cout << "  BinaryenSetOptimizeLevel(" << level << ");\n";
+  }
+
+  optimizeLevel = level;
+}
+
+void BinaryenSetShrinkLevel(int level) {
+  if (tracing) {
+    std::cout << "  BinaryenSetShrinkLevel(" << level << ");\n";
+  }
+
+  shrinkLevel = level;
+}
+
+void BinaryenSetDebugInfo(int on) {
+  if (tracing) {
+    std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
+  }
+
+  debugInfo = bool(on);
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
@@ -2051,6 +2082,7 @@ size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t output
   Module* wasm = (Module*)module;
   BufferWithRandomAccess buffer(false);
   WasmBinaryWriter writer(wasm, buffer, false);
+  writer.setNamesSection(debugInfo);
   writer.write();
   size_t bytes = std::min(buffer.size(), outputSize);
   std::copy_n(buffer.begin(), bytes, output);
