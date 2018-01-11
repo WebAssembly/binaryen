@@ -1256,7 +1256,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'condition': Module['_BinaryenIfGetCondition'](expr),
         'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
-        'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)      
+        'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)
       };
     case Module['LoopId']:
       return {
@@ -1460,7 +1460,7 @@ Module['getExpressionInfo'] = function(expr) {
 // Obtains information about a 'FunctionType'
 Module['getFunctionTypeInfo'] = function(func) {
   return {
-    'name': Module['_BinaryenFunctionTypeGetName'](func),
+    'name': Pointer_stringify(Module['_BinaryenFunctionTypeGetName'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionTypeGetNumParams'], Module['_BinaryenFunctionTypeGetParam']),
     'result': Module['_BinaryenFunctionTypeGetResult'](func)
   };
@@ -1469,8 +1469,8 @@ Module['getFunctionTypeInfo'] = function(func) {
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
-    'name': Module['_BinaryenFunctionGetName'](func),
-    'type': Module['_BinaryenFunctionGetType'](func),
+    'name': Pointer_stringify(Module['_BinaryenFunctionGetName'](func)),
+    'type': Pointer_stringify(Module['_BinaryenFunctionGetType'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
     'result': Module['_BinaryenFunctionGetResult'](func),
     'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
@@ -1549,18 +1549,20 @@ Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
 
+// Instantiates a new unique instance of the API with its own memory etc.
+Module['instantiate'] = instantiate;
 return Module;
 
-// Export a singleton instance by immediately invoking the wrapper function
-// that is otherwise identical to the one used by MODULARIZE (see pre JS):
-}();
+} // end of instantiate
+
+// Always export globally because scenarios like concatenating this file with a
+// test case and running the resulting file in node.js won't work otherwise.
+var defaultInstance = (typeof self !== "undefined" ? self : this)['Binaryen'] = instantiate();
 
 // Module loader code borrowed from webpack
 if (typeof exports === 'object' && typeof module === 'object')
-  module.exports = Binaryen;
+  module.exports = defaultInstance;
 else if (typeof define === 'function' && define['amd'])
-  define([], function() { return Binaryen; });
+  define([], function() { return defaultInstance; });
 else if (typeof exports === 'object')
-  exports['Binaryen'] = Binaryen;
-else
-  (typeof self !== "undefined" ? self : this)['Binaryen'] = Binaryen;
+  exports['Binaryen'] = defaultInstance;

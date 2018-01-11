@@ -1,3 +1,2 @@
-var Binaryen = function(Binaryen) {
-  Binaryen = Binaryen || {};
-  var Module = Binaryen;
+function instantiate(Module) {
+  Module = Module || {};
