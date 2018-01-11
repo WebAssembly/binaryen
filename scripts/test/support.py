@@ -166,6 +166,7 @@ def run_command(cmd, expected_status=0, stderr=None,
                      "expected '%s', actual '%s'" % (expected_err, err)))
   return out
 
+
 def node_test_support():
   # running concatenated files (a.js) in node interferes with module loading because
   # the concatenated file expects a 'var Binaryen' but binaryen.js assigned to module.exports.
