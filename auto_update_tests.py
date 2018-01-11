@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, difflib
 
-from scripts.test.support import run_command, split_wast
+from scripts.test.support import run_command, split_wast, node_test_support
 from scripts.test.shared import (
     ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
@@ -231,7 +231,7 @@ for t in os.listdir(os.path.join('test', 'merge')):
         with open(out, 'w') as o: o.write(actual)
         with open(out + '.stdout', 'w') as o: o.write(stdout)
 
-if MOZJS:
+if MOZJS or NODEJS:
   print '\n[ checking binaryen.js testcases... ]\n'
 
   for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
@@ -239,10 +239,11 @@ if MOZJS:
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join('bin', 'binaryen.js')).read())
-    # node/shell test support
+    if NODEJS:
+      f.write(node_test_support())
     f.write(open(os.path.join('test', 'binaryen.js', s)).read())
     f.close()
-    cmd = [MOZJS, 'a.js']
+    cmd = [MOZJS or NODEJS, 'a.js']
     out = run_command(cmd, stderr=subprocess.STDOUT)
     with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)
 
@@ -320,4 +321,4 @@ if has_shell_timeout():
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', expected])
 
-print '\n[ success! ]'  
+print '\n[ success! ]'

@@ -20,7 +20,7 @@ import shutil
 import subprocess
 import sys
 
-from scripts.test.support import run_command, split_wast
+from scripts.test.support import run_command, split_wast, node_test_support
 from scripts.test.shared import (
     BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_METADCE,
@@ -360,10 +360,8 @@ def run_binaryen_js_tests():
     f = open('a.js', 'w')
     binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
     f.write(binaryen_js)
-    # running concatenated versions in node interferes with module loading because
-    # the concatenated file expects a 'var Binaryen' but binaryen.js assigned to
-    # module.exports. this is correct behavior but tests then need a workaround:
-    f.write('if (typeof module === "object" && typeof exports === "object") Binaryen = module.exports;\n')
+    if NODEJS:
+      f.write(node_test_support())
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test = open(test_path).read()
     need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
