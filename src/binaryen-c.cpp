@@ -71,7 +71,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
 static std::mutex BinaryenFunctionMutex;
 static std::mutex BinaryenFunctionTypeMutex;
 
-// Optimization options (default is -Os with debug info)
+// Optimization options
 static int optimizeLevel = BINARYEN_DEFAULT_OPTIMIZE_LEVEL;
 static int shrinkLevel = BINARYEN_DEFAULT_SHRINK_LEVEL;
 static bool debugInfo = BINARYEN_DEFAULT_DEBUG_INFO;
