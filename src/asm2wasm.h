@@ -976,10 +976,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       passRunner.addDefaultFunctionOptimizationPasses();
       for (auto& pair : trappingFunctions.getFunctions()) {
         auto* func = pair.second;
-        passRunner.runFunction(func);
+        passRunner.runOnFunction(func);
       }
       for (auto* func : extraSupportFunctions) {
-        passRunner.runFunction(func);
+        passRunner.runOnFunction(func);
       }
     }, debug, false /* do not validate globally yet */);
   }

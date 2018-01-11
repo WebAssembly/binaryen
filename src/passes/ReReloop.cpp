@@ -296,7 +296,7 @@ struct ReReloop final : public Pass {
     // TODO: optimize with this?
   }
 
-  void runFunction(PassRunner* runner, Module* module, Function* function) override {
+  void runOnFunction(PassRunner* runner, Module* module, Function* function) override {
     // since control flow is flattened, this is pretty simple
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow

@@ -130,7 +130,7 @@ struct PassRunner {
   void run();
 
   // Run the passes on a specific function
-  void runFunction(Function* func);
+  void runOnFunction(Function* func);
 
   // Get the last pass that was already executed of a certain type.
   template<class P>
@@ -182,7 +182,7 @@ public:
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
-  virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
+  virtual void runOnFunction(PassRunner* runner, Module* module, Function* function) {
     WASM_UNREACHABLE();
   }
 
@@ -231,7 +231,7 @@ public:
     WalkerType::walkModule(module);
   }
 
-  void runFunction(PassRunner* runner, Module* module, Function* func) override {
+  void runOnFunction(PassRunner* runner, Module* module, Function* func) override {
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
