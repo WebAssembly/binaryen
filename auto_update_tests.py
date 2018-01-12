@@ -241,11 +241,17 @@ if MOZJS or NODEJS:
     f.write(open(os.path.join('bin', 'binaryen.js')).read())
     if NODEJS:
       f.write(node_test_support())
-    f.write(open(os.path.join('test', 'binaryen.js', s)).read())
+    test_path = os.path.join('test', 'binaryen.js', s)
+    test = open(test_path).read()
+    f.write(test)
     f.close()
-    cmd = [MOZJS or NODEJS, 'a.js']
-    out = run_command(cmd, stderr=subprocess.STDOUT)
-    with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)
+    need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
+    if MOZJS or not need_wasm:
+      cmd = [MOZJS or NODEJS, 'a.js']
+      out = run_command(cmd, stderr=subprocess.STDOUT)
+      with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)
+    else:
+      print 'Skipping ' + test_path + ' because WebAssembly support might not be available'
 
 print '\n[ checking wasm-ctor-eval... ]\n'
 

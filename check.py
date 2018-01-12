@@ -376,8 +376,11 @@ def run_binaryen_js_tests():
     # run in all possible shells
     if MOZJS:
       test(MOZJS)
-    if NODEJS and not need_wasm: # TODO: check if node is new and has wasm support
-      test(NODEJS)
+    if NODEJS:
+      if not need_wasm: # TODO: check if node is new and has wasm support
+        test(NODEJS)
+      else:
+        print 'Skipping ' + test_path + ' because WebAssembly support might not be available'
 
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
