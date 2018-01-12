@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, difflib
 
-from scripts.test.support import run_command, split_wast, node_version, node_test_glue
+from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
