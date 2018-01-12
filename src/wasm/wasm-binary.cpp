@@ -1031,8 +1031,16 @@ void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->expectedType) {
-    case i32: o << int8_t(BinaryConsts::I32AtomicWait); break;
-    case i64: o << int8_t(BinaryConsts::I64AtomicWait); break;
+    case i32: {
+      o << int8_t(BinaryConsts::I32AtomicWait);
+      emitMemoryAccess(4, 4, 0);
+      break;
+    }
+    case i64: {
+      o << int8_t(BinaryConsts::I64AtomicWait);
+      emitMemoryAccess(8, 8, 0);
+      break;
+    }
     default: WASM_UNREACHABLE();
   }
 }
@@ -1043,6 +1051,7 @@ void WasmBinaryWriter::visitAtomicWake(AtomicWake *curr) {
   recurse(curr->wakeCount);
 
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
+  emitMemoryAccess(4, 4, 0);
 }
 
 void WasmBinaryWriter::visitConst(Const *curr) {
@@ -2540,7 +2549,7 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
+void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   auto rawAlignment = getU32LEB();
   if (rawAlignment > 4) throw ParseException("Alignment must be of a reasonable size");
   alignment = Pow2(rawAlignment);
@@ -2584,7 +2593,7 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code, bool isAt
   }
 
   curr->isAtomic = isAtomic;
-  readMemoryAccess(curr->align, curr->bytes, curr->offset);
+  readMemoryAccess(curr->align, curr->offset);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -2621,7 +2630,7 @@ bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code, bool isA
 
   curr->isAtomic = isAtomic;
   if (debug) std::cerr << "zz node: Store" << std::endl;
-  readMemoryAccess(curr->align, curr->bytes, curr->offset);
+  readMemoryAccess(curr->align, curr->offset);
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
@@ -2664,7 +2673,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
 
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   Address readAlign;
-  readMemoryAccess(readAlign, curr->bytes, curr->offset);
+  readMemoryAccess(readAlign, curr->offset);
   if (readAlign != curr->bytes) throw ParseException("Align of AtomicRMW must match size");
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -2695,7 +2704,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) 
 
   if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   Address readAlign;
-  readMemoryAccess(readAlign, curr->bytes, curr->offset);
+  readMemoryAccess(readAlign, curr->offset);
   if (readAlign != curr->bytes) throw ParseException("Align of AtomicCpxchg must match size");
   curr->replacement = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
@@ -2721,6 +2730,9 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
+  // TODO: use these fields
+  Address readAlign, offset;
+  readMemoryAccess(readAlign, offset);
   return true;
 }
 
@@ -2734,6 +2746,9 @@ bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
+  // TODO: use these fields
+  Address readAlign, offset;
+  readMemoryAccess(readAlign, offset);
   return true;
 }
 

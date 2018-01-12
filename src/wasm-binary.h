@@ -940,7 +940,7 @@ public:
   void visitSetLocal(SetLocal *curr, uint8_t code);
   void visitGetGlobal(GetGlobal *curr);
   void visitSetGlobal(SetGlobal *curr);
-  void readMemoryAccess(Address& alignment, size_t bytes, Address& offset);
+  void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
