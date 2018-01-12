@@ -21,7 +21,6 @@ import subprocess
 import sys
 import tempfile
 
-
 def _open_archive(tarfile, tmp_dir):
   with tempfile.TemporaryFile(mode='w+') as f:
     try:
@@ -167,7 +166,12 @@ def run_command(cmd, expected_status=0, stderr=None,
   return out
 
 
-def node_test_support():
+def node_version(cmd):
+  # gets the version of node as an array in the form [major, minor, patch]
+  return run_command([ cmd, "-v" ])[1:].strip().split('.', 3)
+
+
+def node_test_glue():
   # running concatenated files (a.js) in node interferes with module loading
   # because the concatenated file expects a 'var Binaryen' but binaryen.js
   # assigned to module.exports. this is correct behavior but tests then need

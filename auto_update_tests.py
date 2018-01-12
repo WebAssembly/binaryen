@@ -2,7 +2,7 @@
 
 import os, sys, subprocess, difflib
 
-from scripts.test.support import run_command, split_wast, node_test_support
+from scripts.test.support import run_command, split_wast, node_version, node_test_glue
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
@@ -234,24 +234,25 @@ for t in os.listdir(os.path.join('test', 'merge')):
 if MOZJS or NODEJS:
   print '\n[ checking binaryen.js testcases... ]\n'
 
+  if not MOZJS:
+    nodever = node_version(NODEJS)
   for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
     f.write(open(os.path.join('bin', 'binaryen.js')).read())
     if NODEJS:
-      f.write(node_test_support())
+      f.write(node_test_glue())
     test_path = os.path.join('test', 'binaryen.js', s)
-    test = open(test_path).read()
-    f.write(test)
+    test_src = open(test_path).read()
+    f.write(test_src)
     f.close()
-    need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
-    if MOZJS or not need_wasm:
+    if MOZJS or nodever[0] >= 8 or not 'WebAssembly.' in test_src:
       cmd = [MOZJS or NODEJS, 'a.js']
       out = run_command(cmd, stderr=subprocess.STDOUT)
       with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)
     else:
-      print 'Skipping ' + test_path + ' because WebAssembly support might not be available'
+      print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
 
 print '\n[ checking wasm-ctor-eval... ]\n'
 

@@ -20,7 +20,7 @@ import shutil
 import subprocess
 import sys
 
-from scripts.test.support import run_command, split_wast, node_test_support
+from scripts.test.support import run_command, split_wast, node_version, node_test_glue
 from scripts.test.shared import (
     BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_METADCE,
@@ -351,6 +351,8 @@ def run_spec_tests():
 def run_binaryen_js_tests():
   if not MOZJS and not NODEJS:
     return
+  if NODEJS:
+    nodever = node_version(NODEJS)
 
   print '\n[ checking binaryen.js testcases... ]\n'
 
@@ -361,10 +363,9 @@ def run_binaryen_js_tests():
     binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
     f.write(binaryen_js)
     if NODEJS:
-      f.write(node_test_support())
+      f.write(node_test_glue())
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
-    test = open(test_path).read()
-    need_wasm = 'WebAssembly.' in test # some tests use wasm support in the VM
+    test_src = open(test_path).read()
     f.write(test)
     f.close()
     def test(engine):
@@ -377,10 +378,10 @@ def run_binaryen_js_tests():
     if MOZJS:
       test(MOZJS)
     if NODEJS:
-      if not need_wasm: # TODO: check if node is new and has wasm support
+      if nodever[0] >= 8 or not 'WebAssembly.' in test_src:
         test(NODEJS)
       else:
-        print 'Skipping ' + test_path + ' because WebAssembly support might not be available'
+        print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
 
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
