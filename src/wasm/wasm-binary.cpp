@@ -2728,11 +2728,11 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->timeout = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (Pow2(readAlign) != getWasmTypeSize(curr->expectedType)) throw ParseException("Align of AtomicWait must match size");
   curr->finalize();
   out = curr;
-  // TODO: use these fields
-  Address readAlign, offset;
-  readMemoryAccess(readAlign, offset);
   return true;
 }
 
@@ -2744,11 +2744,11 @@ bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
   curr->type = i32;
   curr->wakeCount = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (Pow2(readAlign) != getWasmTypeSize(curr->type)) throw ParseException("Align of AtomicWake must match size");
   curr->finalize();
   out = curr;
-  // TODO: use these fields
-  Address readAlign, offset;
-  readMemoryAccess(readAlign, offset);
   return true;
 }
 

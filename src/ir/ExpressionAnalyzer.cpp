@@ -492,6 +492,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         break;
       }
       case Expression::Id::AtomicWaitId: {
+        HASH(AtomicWait, offset);
         HASH(AtomicWait, expectedType);
         PUSH(AtomicWait, ptr);
         PUSH(AtomicWait, expected);
@@ -499,6 +500,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         break;
       }
       case Expression::Id::AtomicWakeId: {
+        HASH(AtomicWake, offset);
         PUSH(AtomicWake, ptr);
         PUSH(AtomicWake, wakeCount);
         break;

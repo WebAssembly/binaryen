@@ -474,6 +474,7 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
+  Address offset;
   Expression* ptr;
   Expression* expected;
   Expression* timeout;
@@ -487,6 +488,7 @@ class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
   AtomicWake() = default;
   AtomicWake(MixedArena& allocator) : AtomicWake() {}
 
+  Address offset;
   Expression* ptr;
   Expression* wakeCount;
 
