@@ -2020,6 +2020,14 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
+int BinaryenGetOptimizeLevel() {
+  if (tracing) {
+    std::cout << "  BinaryenGetOptimizeLevel();\n";
+  }
+
+  return optimizeLevel;
+}
+
 void BinaryenSetOptimizeLevel(int level) {
   if (tracing) {
     std::cout << "  BinaryenSetOptimizeLevel(" << level << ");\n";
@@ -2028,12 +2036,28 @@ void BinaryenSetOptimizeLevel(int level) {
   optimizeLevel = level;
 }
 
+int BinaryenGetShrinkLevel() {
+  if (tracing) {
+    std::cout << "  BinaryenGetShrinkLevel();\n";
+  }
+
+  return shrinkLevel;
+}
+
 void BinaryenSetShrinkLevel(int level) {
   if (tracing) {
     std::cout << "  BinaryenSetShrinkLevel(" << level << ");\n";
   }
 
   shrinkLevel = level;
+}
+
+int BinaryenGetDebugInfo() {
+  if (tracing) {
+    std::cout << "  BinaryenGetDebugInfo();\n";
+  }
+
+  return debugInfo;
 }
 
 void BinaryenSetDebugInfo(int on) {

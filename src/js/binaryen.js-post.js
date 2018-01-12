@@ -1529,14 +1529,29 @@ Module['parseText'] = function(text) {
   return new Module['Module'](ptr);
 };
 
+// Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+Module['getOptimizeLevel'] = function() {
+  return Module['_BinaryenGetOptimizeLevel']();
+};
+
 // Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 Module['setOptimizeLevel'] = function(level) {
   return Module['_BinaryenSetOptimizeLevel'](level);
 };
 
+// Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
+Module['getShrinkLevel'] = function() {
+  return Module['_BinaryenGetShrinkLevel']();
+};
+
 // Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
 Module['setShrinkLevel'] = function(level) {
   return Module['_BinaryenSetShrinkLevel'](level);
+};
+
+// Gets whether generating debug information is currently enabled or not.
+Module['getDebugInfo'] = function() {
+  return Module['_BinaryenGetDebugInfo']();
 };
 
 // Enables or disables debug information in emitted binaries.

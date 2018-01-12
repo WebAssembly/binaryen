@@ -48,6 +48,7 @@
 #include <stdint.h>
 
 #include "compiler-support.h"
+#include "support/defaults.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -659,11 +660,20 @@ int BinaryenModuleValidate(BinaryenModuleRef module);
 // Runs the standard optimization passes on the module.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
+// Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+int BinaryenGetOptimizeLevel();
+
 // Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
 void BinaryenSetOptimizeLevel(int level);
 
+// Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
+int BinaryenGetShrinkLevel();
+
 // Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
 void BinaryenSetShrinkLevel(int level);
+
+// Gets whether generating debug information is currently enabled or not.
+int BinaryenGetDebugInfo();
 
 // Enables or disables debug information in emitted binaries.
 void BinaryenSetDebugInfo(int on);

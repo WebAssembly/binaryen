@@ -31,6 +31,9 @@
 )
 
 === optimized using defaults ===
+optimizeLevel=2
+shrinkLevel=1
+debugInfo=0
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
@@ -44,6 +47,9 @@
 )
 
 === optimized with -O0 ===
+optimizeLevel=0
+shrinkLevel=0
+debugInfo=0
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
@@ -57,6 +63,9 @@
 )
 
 === optimized with -Os ===
+optimizeLevel=2
+shrinkLevel=1
+debugInfo=0
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
