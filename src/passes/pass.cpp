@@ -73,6 +73,7 @@ void PassRegistry::registerPasses() {
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("flatten", "flattens out code, removing nesting", createFlattenPass);
+  registerPass("func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass("inlining", "inlines functions", createInliningPass);
   registerPass("inlining-optimizing", "inlines functions and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
