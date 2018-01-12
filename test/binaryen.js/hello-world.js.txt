@@ -24,8 +24,9 @@ optimized:
  )
 )
 
-binary size: 60
+binary size: 43
 
-[object WebAssembly.Instance]
+[ 'exports' ]
+[ 'adder' ]
 
 an addition: 42
