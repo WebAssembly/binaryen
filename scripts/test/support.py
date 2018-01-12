@@ -167,9 +167,11 @@ def run_command(cmd, expected_status=0, stderr=None,
   return out
 
 
-def node_version(cmd):
-  # gets the version of node as an array in the form [major, minor, patch]
-  return run_command([cmd, "-v"])[1:].strip().split('.', 3)
+def node_has_webassembly(cmd):
+  return run_command([
+    cmd,
+    '-e', 'process.stdout.write(typeof WebAssembly)'
+  ]) == 'object'
 
 
 def node_test_glue():

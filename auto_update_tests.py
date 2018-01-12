@@ -234,8 +234,7 @@ for t in os.listdir(os.path.join('test', 'merge')):
 if MOZJS or NODEJS:
   print '\n[ checking binaryen.js testcases... ]\n'
 
-  if not MOZJS:
-    nodever = node_version(NODEJS)
+  node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
   for s in sorted(os.listdir(os.path.join('test', 'binaryen.js'))):
     if not s.endswith('.js'): continue
     print s
@@ -247,7 +246,7 @@ if MOZJS or NODEJS:
     test_src = open(test_path).read()
     f.write(test_src)
     f.close()
-    if MOZJS or nodever[0] >= 8 or not 'WebAssembly.' in test_src:
+    if MOZJS or node_has_wasm or not 'WebAssembly.' in test_src:
       cmd = [MOZJS or NODEJS, 'a.js']
       out = run_command(cmd, stderr=subprocess.STDOUT)
       with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o: o.write(out)

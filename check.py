@@ -351,8 +351,7 @@ def run_spec_tests():
 def run_binaryen_js_tests():
   if not MOZJS and not NODEJS:
     return
-  if NODEJS:
-    nodever = node_version(NODEJS)
+  node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
 
   print '\n[ checking binaryen.js testcases... ]\n'
 
@@ -378,7 +377,7 @@ def run_binaryen_js_tests():
     if MOZJS:
       test(MOZJS)
     if NODEJS:
-      if nodever[0] >= 8 or not 'WebAssembly.' in test_src:
+      if node_has_wasm or not 'WebAssembly.' in test_src:
         test(NODEJS)
       else:
         print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
