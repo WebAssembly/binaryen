@@ -4,7 +4,7 @@ import os, sys, subprocess, difflib
 
 from scripts.test.support import run_command, split_wast, node_test_support
 from scripts.test.shared import (
-    ASM2WASM, MOZJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
+    ASM2WASM, MOZJS, NODEJS, S2WASM, WASM_SHELL, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
     BINARYEN_INSTALL_DIR, has_shell_timeout)
 from scripts.test.wasm2asm import tests, spec_tests, extra_tests, assert_tests
