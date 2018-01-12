@@ -172,5 +172,5 @@ def node_test_support():
   # because the concatenated file expects a 'var Binaryen' but binaryen.js
   # assigned to module.exports. this is correct behavior but tests then need
   # a workaround:
-  return ('if (typeof module === "object" && typeof exports === "object")\n',
+  return ('if (typeof module === "object" && typeof exports === "object")\n'
           '  Binaryen = module.exports;\n')
