@@ -19,7 +19,6 @@ console.log("=== input wast ===" + wast);
 function printOptions() {
   console.log("optimizeLevel=" + Binaryen.getOptimizeLevel());
   console.log("shrinkLevel=" + Binaryen.getShrinkLevel());
-  console.log("debugInfo=" + Binaryen.getDebugInfo());
 }
 
 // Use defaults (should be equal to -Os below)

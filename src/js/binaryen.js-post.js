@@ -1551,7 +1551,7 @@ Module['setShrinkLevel'] = function(level) {
 
 // Gets whether generating debug information is currently enabled or not.
 Module['getDebugInfo'] = function() {
-  return Module['_BinaryenGetDebugInfo']();
+  return Boolean(Module['_BinaryenGetDebugInfo']());
 };
 
 // Enables or disables debug information in emitted binaries.
