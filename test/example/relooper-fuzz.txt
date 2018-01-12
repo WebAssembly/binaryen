@@ -519,17 +519,19 @@
      )
      (br $shape$3$continue)
     )
+    (block
+     (call $print
+      (i32.const 2)
+     )
+     (drop
+      (call $check)
+     )
+     (set_local $0
+      (i32.const 6)
+     )
+     (br $shape$3$continue)
+    )
    )
-   (call $print
-    (i32.const 2)
-   )
-   (drop
-    (call $check)
-   )
-   (set_local $0
-    (i32.const 6)
-   )
-   (br $shape$3$continue)
   )
  )
 )
