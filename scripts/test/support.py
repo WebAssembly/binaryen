@@ -170,7 +170,8 @@ def run_command(cmd, expected_status=0, stderr=None,
 def node_has_webassembly(cmd):
   return run_command([
     cmd,
-    '-e', 'process.stdout.write(typeof WebAssembly)'
+    '-e',
+    'process.stdout.write(typeof WebAssembly)'
   ]) == 'object'
 
 
