@@ -366,7 +366,7 @@ def run_binaryen_js_tests():
       f.write(node_test_glue())
     test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
     test_src = open(test_path).read()
-    f.write(test)
+    f.write(test_src)
     f.close()
     def test(engine):
       cmd = [engine, 'a.js']
