@@ -666,9 +666,20 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
 
   void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
     prepare();
   }
+
+  // locations in the output binary for the various parts of the module
+  struct TableOfContents {
+    struct Entry {
+      Name name;
+      size_t offset; // where the entry starts
+      size_t size; // the size of the entry
+      Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
+    };
+    std::vector<Entry> functionBodies;
+  } tableOfContents;
 
   void setNamesSection(bool set) { debugInfo = set; }
   void setSourceMap(std::ostream* set, std::string url) {

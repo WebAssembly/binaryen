@@ -32,6 +32,7 @@ Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();
 Pass* createFlattenPass();
 Pass* createFullPrinterPass();
+Pass* createFunctionMetricsPass();
 Pass* createI64ToI32LoweringPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
