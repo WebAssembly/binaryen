@@ -3,18 +3,18 @@
  (import "env" "_importf" (func $importf (param f32) (result f32)))
  (export "main" (func $main))
  (export "exportf" (func $exportf))
- (func $exportf (; 1 ;) (param $0 f32) (result f32)
-  (f32.add
-   (get_local $0)
-   (f32.const 1)
-  )
- )
- (func $main (; 2 ;) (result i32)
+ (func $main (; 1 ;) (result i32)
   (drop
    (call $importf
     (f32.const 3.4000000953674316)
    )
   )
   (i32.const 0)
+ )
+ (func $exportf (; 2 ;) (param $0 f32) (result f32)
+  (f32.add
+   (get_local $0)
+   (f32.const 1)
+  )
  )
 )
