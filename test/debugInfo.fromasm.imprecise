@@ -1,5 +1,4 @@
 (module
- (type $FUNCSIG$vii (func (param i32 i32)))
  (export "add" (func $add))
  (export "ret" (func $ret))
  (export "opts" (func $opts))

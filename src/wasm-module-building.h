@@ -35,9 +35,9 @@ static std::mutex debug;
 // Helps build wasm modules efficiently. If you build a module by
 // adding function by function, and you want to optimize them, this class
 // starts optimizing using worker threads *while you are still adding*.
-// It runs function optimization passes at that time, and then at the end
-// it runs global module-level optimization passes. The result is a fully
-// optimized module, optimized while being generated.
+// It runs function optimization passes at that time. This does not
+// run global optimization after that by default, but you can do that
+// to by calling optimizeGlobally().
 //
 // This might also be faster than normal module optimization since it
 // runs all passes on each function, then goes on to the next function
@@ -75,7 +75,6 @@ class OptimizingIncrementalModuleBuilder {
   uint32_t numFunctions;
   PassOptions passOptions;
   std::function<void (PassRunner&)> addPrePasses;
-  std::function<void ()> beforeGlobalOptimizations;
   Function* endMarker;
   std::atomic<Function*>* list;
   uint32_t nextFunction; // only used on main thread
@@ -93,10 +92,9 @@ public:
   // this bounds helps avoid locking.
   OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions,
       std::function<void (PassRunner&)> addPrePasses,
-      std::function<void ()> beforeGlobalOptimizations,
       bool debug, bool validateGlobally)
       : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions),
-        addPrePasses(addPrePasses), beforeGlobalOptimizations(beforeGlobalOptimizations),
+        addPrePasses(addPrePasses),
         endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
@@ -178,7 +176,6 @@ public:
       wakeAllWorkers();
       waitUntilAllFinished();
     }
-    optimizeGlobally();
     // TODO: clear side thread allocators from module allocator, as these threads were transient
   }
 
@@ -230,7 +227,6 @@ private:
   }
 
   void optimizeGlobally() {
-    beforeGlobalOptimizations();
     PassRunner passRunner(wasm, passOptions);
     passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
