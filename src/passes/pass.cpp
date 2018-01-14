@@ -184,7 +184,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     add("inlining-optimizing");
   }
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
-  add("reorder-functions");
   add("remove-unused-module-elements");
   add("memory-packing");
 }

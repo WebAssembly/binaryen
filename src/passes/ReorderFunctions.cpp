@@ -19,6 +19,13 @@
 // binaries because fewer bytes are needed to encode references to frequently
 // used functions.
 //
+// This may incur a tradeoff, though, as while it reduces binary size, it may
+// increase gzip size. This might be because the new order has the functions in
+// a less beneficial position for compression, that is, mutually-compressible
+// functions are no longer together (when they were before, in the original order,
+// the has some natural tendency one way or the other). TODO: investigate
+// similarity ordering here.
+//
 
 
 #include <memory>

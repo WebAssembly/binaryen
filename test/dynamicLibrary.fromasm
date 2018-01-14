@@ -13,10 +13,7 @@
  (export "__post_instantiate" (func $__post_instantiate))
  (export "runPostSets" (func $runPostSets))
  (export "_global" (global $_global))
- (func $runPostSets (; 2 ;)
-  (nop)
- )
- (func $__ZN3FooC2Ev (; 3 ;) (param $0 i32)
+ (func $__ZN3FooC2Ev (; 2 ;) (param $0 i32)
   (local $1 i32)
   (set_local $1
    (get_global $STACKTOP)
@@ -44,6 +41,9 @@
   (set_global $STACKTOP
    (get_local $1)
   )
+ )
+ (func $runPostSets (; 3 ;)
+  (nop)
  )
  (func $__post_instantiate (; 4 ;)
   (set_global $STACKTOP

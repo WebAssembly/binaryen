@@ -19,10 +19,7 @@
  (export "runPostSets" (func $runPostSets))
  (export "_str" (global $global$2))
  (export "_foo" (func $_foo))
- (func $runPostSets (; 1 ;) (type $3)
-  (nop)
- )
- (func $_main (; 2 ;) (type $2) (result i32)
+ (func $_main (; 1 ;) (type $2) (result i32)
   (block $label$1 (result i32)
    (block $label$2 (result i32)
     (drop
@@ -34,40 +31,10 @@
    )
   )
  )
- (func $runPostSets$0 (; 3 ;) (type $3)
+ (func $runPostSets (; 2 ;) (type $3)
   (nop)
  )
- (func $_foo (; 4 ;) (type $2) (result i32)
-  (local $var$0 i32)
-  (block $label$1 (result i32)
-   (block $label$2 (result i32)
-    (set_local $var$0
-     (call $_main)
-    )
-    (get_local $var$0)
-   )
-  )
- )
- (func $__post_instantiate$0 (; 5 ;) (type $3)
-  (block $label$1
-   (block $label$2
-    (set_global $global$0$0
-     (i32.add
-      (get_global $import$0$0)
-      (i32.const 48)
-     )
-    )
-    (set_global $global$1$0
-     (i32.add
-      (get_global $global$0$0)
-      (i32.const 10)
-     )
-    )
-    (call $runPostSets$0)
-   )
-  )
- )
- (func $__post_instantiate (; 6 ;) (type $3)
+ (func $__post_instantiate (; 3 ;) (type $3)
   (call $__post_instantiate$0)
   (block $label$1
    (block $label$2
@@ -84,6 +51,39 @@
      )
     )
     (call $runPostSets)
+   )
+  )
+ )
+ (func $_foo (; 4 ;) (type $2) (result i32)
+  (local $var$0 i32)
+  (block $label$1 (result i32)
+   (block $label$2 (result i32)
+    (set_local $var$0
+     (call $_main)
+    )
+    (get_local $var$0)
+   )
+  )
+ )
+ (func $runPostSets$0 (; 5 ;) (type $3)
+  (nop)
+ )
+ (func $__post_instantiate$0 (; 6 ;) (type $3)
+  (block $label$1
+   (block $label$2
+    (set_global $global$0$0
+     (i32.add
+      (get_global $import$0$0)
+      (i32.const 48)
+     )
+    )
+    (set_global $global$1$0
+     (i32.add
+      (get_global $global$0$0)
+      (i32.const 10)
+     )
+    )
+    (call $runPostSets$0)
    )
   )
  )
