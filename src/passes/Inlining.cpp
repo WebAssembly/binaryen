@@ -50,8 +50,15 @@ static const int FLEXIBLE_SIZE_LIMIT = 20;
 struct FunctionInfo {
   std::atomic<Index> calls;
   Index size;
-  bool lightweight = true;
-  bool usedGlobally = false; // in a table or export
+  std::atomic<bool> lightweight;
+  bool usedGlobally; // in a table or export
+
+  FunctionInfo() {
+    calls = 0;
+    size = 0;
+    lightweight = true;
+    usedGlobally = false;
+  }
 
   bool worthInlining(PassOptions& options, bool allowMultipleInliningsPerFunction) {
     // if it's big, it's just not worth doing (TODO: investigate more)
