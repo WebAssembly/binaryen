@@ -180,11 +180,11 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
-  add("remove-unused-module-elements");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("inlining-optimizing");
   }
+  add("duplicate-function-elimination"); // optimizations show more functions as duplicate
+  add("remove-unused-module-elements");
   add("memory-packing");
 }
 

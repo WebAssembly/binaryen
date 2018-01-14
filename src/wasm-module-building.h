@@ -234,7 +234,6 @@ private:
     PassRunner passRunner(wasm, passOptions);
     passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
-
   }
 
   // worker code
