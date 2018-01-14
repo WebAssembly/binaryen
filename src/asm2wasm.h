@@ -1411,6 +1411,10 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add<ApplyDebugInfo>();
     passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
   }
+  if (runOptimizationPasses) {
+    // optimizations show more functions as duplicate
+    passRunner.add("duplicate-function-elimination");
+  }
   passRunner.run();
 
   // remove the debug info intrinsic
