@@ -184,7 +184,7 @@ When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to W
 Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly backend into WebAssembly. You can receive `.s` output from `llc`, and then run `s2wasm` on that:
 
 ```
-llc code.ll -march=wasm32 -filetype=asm -o code.s
+llc code.ll -mtriple=wasm32-unknown-unknown-elf -filetype=asm -o code.s
 s2wasm code.s > code.wast
 ```
 
