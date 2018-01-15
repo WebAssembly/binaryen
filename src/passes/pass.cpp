@@ -180,7 +180,10 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+  // inline when working hard, and when not preserving debug info
+  // (inlining+optimizing can remove the annotations)
+  if ((options.optimizeLevel >= 2 || options.shrinkLevel >= 2) &&
+      !options.debugInfo) {
     add("inlining-optimizing");
   }
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
