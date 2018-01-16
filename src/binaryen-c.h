@@ -665,7 +665,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module);
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
 int BinaryenGetOptimizeLevel();
 
-// Sets the optimization level to use, Applies to all modules, globally.
+// Sets the optimization level to use. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
 void BinaryenSetOptimizeLevel(int level);
 
