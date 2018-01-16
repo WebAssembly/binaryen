@@ -120,7 +120,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // things that use locals that are known to be constant. otherwise,
     // we just look at what is immediately before us
     if (propagate) {
-      optimizeLocals(func, getModule());
+      optimizeLocals(func);
     }
     // do the main and final walk over everything
     super::doWalkFunction(func);
@@ -210,13 +210,13 @@ private:
     return flow.value;
   }
 
-  void optimizeLocals(Function* func, Module* module) {
+  void optimizeLocals(Function* func) {
     // using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
     // constant).
     // compute all dependencies
-    LocalGraph localGraph(func, module);
+    LocalGraph localGraph(func);
     localGraph.computeInfluences();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything

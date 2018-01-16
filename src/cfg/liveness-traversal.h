@@ -15,16 +15,7 @@
  */
 
 //
-// Convert the AST to a CFG, while traversing it.
-//
-// Note that this is not the same as the relooper CFG. The relooper is
-// designed for compilation to an AST, this is for processing. There is
-// no built-in support for transforming this CFG into the AST back
-// again, it is just metadata on the side for computation purposes.
-//
-// Usage: As the traversal proceeds, you can note information and add it to
-// the current basic block using currBasicBlock, on the contents
-// property, whose type is user-defined.
+// Computes liveness information for locals.
 //
 
 #ifndef liveness_traversal_h

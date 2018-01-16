@@ -96,7 +96,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   void optimizeCopies() {
     if (copies.empty()) return;
     // compute all dependencies
-    LocalGraph preGraph(getFunction(), getModule());
+    LocalGraph preGraph(getFunction());
     preGraph.computeInfluences();
     // optimize each copy
     std::unordered_map<SetLocal*, SetLocal*> optimizedToCopy, optimizedToTrivial;
@@ -168,7 +168,7 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
       // if one does not work, we need to undo all its siblings (don't extend
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
-      LocalGraph postGraph(getFunction(), getModule());
+      LocalGraph postGraph(getFunction());
       postGraph.computeInfluences();
       for (auto& pair : optimizedToCopy) {
         auto* copy = pair.first;
