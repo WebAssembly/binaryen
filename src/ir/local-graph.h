@@ -38,10 +38,12 @@ struct LocalGraph {
 
   typedef std::map<GetLocal*, Sets> GetSetses;
 
+  typedef std::map<Expression*, Expression**> Locations;
+
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the initial
                                        // value (0 for a var, the received value for a param)
-  std::map<Expression*, Expression**> locations; // where each get and set is (for easy replacing)
+  Locations locations; // where each get and set is (for easy replacing)
 
   // optional computation: compute the influence graphs between sets and gets
   // (useful for algorithms that propagate changes)

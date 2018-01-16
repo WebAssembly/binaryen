@@ -62,9 +62,24 @@ struct Info {
   }
 };
 
-// flower helper class. flows the gets to their sets
+// flow helper class. flows the gets to their sets
 
 struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
+  LocalGraph::GetSetses& getSetses;
+  LocalGraph::Locations & locations;
+
+  Index numLocals;
+
+  Flower(LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations, Function* func) : getSetses(getSetses), locations(locations) {
+    numLocals = func->getNumLocals();
+    // create the CFG by walking the IR
+    CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
+    // flow gets across blocks
+    flow();
+    // compute our output data structures
+    computeGetSetses();
+  }
+
   // cfg traversal work
 
   static void doVisitGetLocal(Flower* self, Expression** currp) {
@@ -72,6 +87,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
      // if in unreachable code, skip
     if (!self->currBasicBlock) return;
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, curr);
+    self->locations[curr] = currp;
   }
 
   static void doVisitSetLocal(Flower* self, Expression** currp) {
@@ -79,20 +95,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     // if in unreachable code, skip
     if (!self->currBasicBlock) return;
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
-  }
-
-  // main entry point
-
-  Index numLocals;
-
-  void compute(Function* func, LocalGraph::GetSetses& getSetses) {
-    numLocals = func->getNumLocals();
-    // create the CFG by walking the IR
-    CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
-    // flow gets across blocks
-    flow();
-    // compute our output data structures
-    computeGetSetses(getSetses);
+    self->locations[curr] = currp;
   }
 
   void flow() {
@@ -114,7 +117,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // liveness is now calculated at the start. if something
       // changed, all predecessor blocks need recomputation
       if (curr->contents.start == gets) continue;
-      assert(curr->contents.start.size() < gets.size());
       curr->contents.start = gets;
       for (auto* in : curr->in) {
         queue.insert(in);
@@ -161,7 +163,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     return old != ret;
   }
 
-  void computeGetSetses(LocalGraph::GetSetses& getSetses) {
+  void computeGetSetses() {
     for (auto& block : basicBlocks) {
       auto& actions = block->contents.actions;
       Gets gets = block->contents.end;
@@ -178,6 +180,16 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           gets.erase(action.index);
         }
       }
+      // the entry block is special: any get active at the start is
+      // influenced by the zero init or incoming param
+      if (block.get() == entry) {
+        for (auto& pair : gets) {
+          auto& data = pair.second;
+          for (auto* get : data) {
+            getSetses[get].insert(nullptr);
+          }
+        }
+      }
     }
   }
 };
@@ -185,8 +197,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func) {
-  Flower flower;
-  flower.compute(func, getSetses);
+  Flower flower(getSetses, locations, func);
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -198,6 +209,7 @@ LocalGraph::LocalGraph(Function* func) {
       std::cout << set << '\n';
     }
   }
+  std::cout << "total locations: " << locations.size() << '\n';
 #endif
 }
 
