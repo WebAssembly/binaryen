@@ -145,18 +145,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // more than one, so we must merge
       for (Index i = 1; i < blocks.size(); i++) {
         auto* curr = blocks[i];
-        for (Index j = 0; j < numLocals; j++) {
-          auto& currStart = curr->contents.start;
-          if (!currStart.count(j)) continue; // nothing to add
-          if (ret.count(j)) {
-            // both, do a merge
-            for (auto* get : currStart[j]) {
-              ret[j].insert(get);
-            }
-          } else {
-            // copy over
-            ret[j] = currStart[j];
-          }
+        for (const auto& pair : curr->contents.start) {
+          const Index index = pair.first;
+          const auto& data = pair.second;
+          ret[index].insert(data.begin(), data.end());
         }
       }
     }
