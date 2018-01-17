@@ -29,7 +29,8 @@ public:
   EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
     : wasm(wasm),
       builder(wasm),
-      stackPointerOffset(stackPointerOffset) { }
+      stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) { }
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
@@ -48,6 +49,7 @@ private:
   Module& wasm;
   Builder builder;
   Address stackPointerOffset;
+  bool useStackPointerGlobal;
 
   Global* getStackPointerGlobal();
   Expression* generateLoadStackPointer();

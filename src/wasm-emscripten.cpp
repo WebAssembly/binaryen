@@ -46,7 +46,7 @@ Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
 }
 
 Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
-  if (stackPointerOffset > 0) {
+  if (!useStackPointerGlobal) {
     return builder.makeLoad(
       /* bytes  =*/ 4,
       /* signed =*/ false,
@@ -61,7 +61,7 @@ Expression* EmscriptenGlueGenerator::generateLoadStackPointer() {
 }
 
 Expression* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value) {
-  if (stackPointerOffset > 0) {
+  if (!useStackPointerGlobal) {
     return builder.makeStore(
       /* bytes  =*/ 4,
       /* offset =*/ stackPointerOffset,
