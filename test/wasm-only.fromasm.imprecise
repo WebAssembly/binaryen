@@ -1,19 +1,11 @@
 (module
- (type $FUNCSIG$vdji (func (param f64 i64 i32)))
- (type $FUNCSIG$j (func (result i64)))
- (type $FUNCSIG$ff (func (param f32) (result f32)))
  (type $FUNCSIG$v (func))
  (type $legaltype$illegalImport (func (param f64 i32 i32 i32)))
  (type $legaltype$illegalImportResult (func (result i32)))
  (type $legaltype$_fabsf (func (param f64) (result f64)))
- (type $legaltype$do_i64 (func (result i32)))
  (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 3 3 anyfunc))
  (import "env" "tableBase" (global $tableBase i32))
- (import "env" "illegalImport" (func $illegalImport (param f64 i64 i32)))
- (import "env" "illegalImportResult" (func $illegalImportResult (result i64)))
- (import "env" "_fabsf" (func $_fabsf (param f32) (result f32)))
- (import "env" "do_i64" (func $do_i64 (result i64)))
  (import "env" "abort" (func $abort))
  (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
@@ -23,12 +15,12 @@
  (elem (get_global $tableBase) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
  (export "test64" (func $test64))
  (export "illegalParam" (func $legalstub$illegalParam))
- (export "illegalResult" (func $legalstub$result))
+ (export "illegalResult" (func $legalstub$illegalResult))
  (export "keepAlive" (func $keepAlive))
- (func $loads (; 9 ;)
+ (func $loads (; 5 ;)
   (nop)
  )
- (func $stores (; 10 ;)
+ (func $stores (; 6 ;)
   (local $0 i32)
   (local $1 f64)
   (local $2 f32)
@@ -121,7 +113,7 @@
    (get_local $1)
   )
  )
- (func $test (; 11 ;)
+ (func $test (; 7 ;)
   (local $0 f32)
   (local $1 i32)
   (set_local $1
@@ -130,7 +122,7 @@
    )
   )
  )
- (func $test64 (; 12 ;)
+ (func $test64 (; 8 ;)
   (local $0 i64)
   (local $1 i32)
   (local $2 i64)
@@ -172,15 +164,25 @@
    )
   )
  )
- (func $imports (; 13 ;) (result i64)
+ (func $imports (; 9 ;) (result i64)
   (call $legalfunc$illegalImport
    (f64.const -3.13159)
    (i64.const 94489280523)
    (i32.const -33)
   )
-  (call $legalfunc$illegalImportResult)
+  (i64.or
+   (i64.extend_u/i32
+    (call $legalimport$illegalImportResult)
+   )
+   (i64.shl
+    (i64.extend_u/i32
+     (get_global $tempRet0)
+    )
+    (i64.const 32)
+   )
+  )
  )
- (func $arg (; 14 ;) (param $0 i64)
+ (func $arg (; 10 ;) (param $0 i64)
   (i64.store
    (i32.const 100)
    (get_local $0)
@@ -189,7 +191,7 @@
    (get_local $0)
   )
  )
- (func $illegalParam (; 15 ;) (param $0 i32) (param $1 i64) (param $2 f64)
+ (func $illegalParam (; 11 ;) (param $0 i32) (param $1 i64) (param $2 f64)
   (i64.store
    (i32.const 100)
    (get_local $1)
@@ -200,15 +202,12 @@
    (f64.const 12.34)
   )
  )
- (func $result (; 16 ;) (result i64)
-  (i64.const 8589934593)
- )
- (func $call1 (; 17 ;) (param $0 i64) (result i64)
+ (func $call1 (; 12 ;) (param $0 i64) (result i64)
   (call $call1
    (get_local $0)
   )
  )
- (func $call2 (; 18 ;) (param $0 i64) (result i64)
+ (func $call2 (; 13 ;) (param $0 i64) (result i64)
   (drop
    (call $call2
     (call $call2
@@ -218,21 +217,21 @@
   )
   (i64.const 245127260211081)
  )
- (func $returnCastConst (; 19 ;) (result i64)
+ (func $returnCastConst (; 14 ;) (result i64)
   (i64.const 0)
  )
- (func $ifValue64 (; 20 ;) (param $0 i64) (param $1 i64) (result i64)
+ (func $ifValue64 (; 15 ;) (param $0 i64) (param $1 i64) (result i64)
   (call $call2
    (get_local $0)
   )
  )
- (func $ifValue32 (; 21 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $ifValue32 (; 16 ;) (param $0 i32) (param $1 i32) (result i32)
   (call $ifValue32
    (get_local $0)
    (get_local $1)
   )
  )
- (func $switch64 (; 22 ;) (param $0 i64) (result i32)
+ (func $switch64 (; 17 ;) (param $0 i64) (result i32)
   (block $switch (result i32)
    (block $switch-default
     (block $switch-case0
@@ -267,7 +266,7 @@
    (i32.const 1)
   )
  )
- (func $unreachable_leftovers (; 23 ;) (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $unreachable_leftovers (; 18 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (block $__rjto$0
    (if
     (i32.eqz
@@ -290,7 +289,7 @@
    )
   )
  )
- (func $switch64TOOMUCH (; 24 ;) (param $0 i64) (result i32)
+ (func $switch64TOOMUCH (; 19 ;) (param $0 i64) (result i32)
   (local $1 i32)
   (local $2 i64)
   (block $switch-default
@@ -367,7 +366,7 @@
   )
   (i32.const 44)
  )
- (func $_memchr (; 25 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $_memchr (; 20 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
@@ -598,33 +597,7 @@
    (get_local $0)
   )
  )
- (func $switch64_big_condition1 (; 26 ;) (param $0 i64)
-  (local $1 i64)
-  (block $switch-default
-   (block $switch-case
-    (br_if $switch-default
-     (i32.wrap/i64
-      (i64.shr_u
-       (tee_local $1
-        (i64.sub
-         (get_local $0)
-         (i64.const 9218868437227405312)
-        )
-       )
-       (i64.const 32)
-      )
-     )
-    )
-    (br_table $switch-case $switch-default
-     (i32.wrap/i64
-      (get_local $1)
-     )
-    )
-   )
-   (call $abort)
-  )
- )
- (func $keepAlive (; 27 ;)
+ (func $keepAlive (; 21 ;)
   (call $loads)
   (call $loads)
   (call $stores)
@@ -725,14 +698,36 @@
     (i64.const 0)
    )
   )
-  (call $switch64_big_condition1
-   (i64.const 0)
+  (if
+   (i32.eqz
+    (i32.wrap/i64
+     (i64.shr_u
+      (i64.const -9218868437227405312)
+      (i64.const 32)
+     )
+    )
+   )
+   (block
+    (nop)
+    (call $abort)
+   )
   )
-  (call $switch64_big_condition1
-   (i64.const 0)
+  (if
+   (i32.eqz
+    (i32.wrap/i64
+     (i64.shr_u
+      (i64.const -9218868437227405312)
+      (i64.const 32)
+     )
+    )
+   )
+   (block
+    (nop)
+    (call $abort)
+   )
   )
  )
- (func $legalstub$illegalParam (; 28 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
+ (func $legalstub$illegalParam (; 22 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
   (call $illegalParam
    (get_local $0)
    (i64.or
@@ -749,24 +744,13 @@
    (get_local $3)
   )
  )
- (func $legalstub$result (; 29 ;) (result i32)
-  (local $0 i64)
-  (set_local $0
-   (call $result)
-  )
+ (func $legalstub$illegalResult (; 23 ;) (result i32)
   (set_global $tempRet0
-   (i32.wrap/i64
-    (i64.shr_u
-     (get_local $0)
-     (i64.const 32)
-    )
-   )
+   (i32.const 2)
   )
-  (i32.wrap/i64
-   (get_local $0)
-  )
+  (i32.const 1)
  )
- (func $legalfunc$illegalImport (; 30 ;) (param $0 f64) (param $1 i64) (param $2 i32)
+ (func $legalfunc$illegalImport (; 24 ;) (param $0 f64) (param $1 i64) (param $2 i32)
   (call $legalimport$illegalImport
    (get_local $0)
    (i32.wrap/i64
@@ -781,20 +765,7 @@
    (get_local $2)
   )
  )
- (func $legalfunc$illegalImportResult (; 31 ;) (result i64)
-  (i64.or
-   (i64.extend_u/i32
-    (call $legalimport$illegalImportResult)
-   )
-   (i64.shl
-    (i64.extend_u/i32
-     (get_global $tempRet0)
-    )
-    (i64.const 32)
-   )
-  )
- )
- (func $legalfunc$_fabsf (; 32 ;) (param $0 f32) (result f32)
+ (func $legalfunc$_fabsf (; 25 ;) (param $0 f32) (result f32)
   (f32.demote/f64
    (call $legalimport$_fabsf
     (f64.promote/f32
@@ -803,7 +774,7 @@
    )
   )
  )
- (func $legalfunc$do_i64 (; 33 ;) (result i64)
+ (func $legalfunc$do_i64 (; 26 ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$do_i64)

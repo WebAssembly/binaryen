@@ -268,6 +268,7 @@ struct RemoveUnusedModuleElements : public Pass {
     module->functionTypes.erase(std::remove_if(module->functionTypes.begin(), module->functionTypes.end(), [&needed](std::unique_ptr<FunctionType>& type) {
       return needed.count(type.get()) == 0;
     }), module->functionTypes.end());
+    module->updateMaps();
   }
 };
 
