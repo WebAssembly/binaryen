@@ -65,14 +65,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   LocalGraph::GetSetses& getSetses;
   LocalGraph::Locations & locations;
 
-  Index numLocals;
-
   Flower(LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations, Function* func) : getSetses(getSetses), locations(locations) {
-    numLocals = func->getNumLocals();
     // create the CFG by walking the IR
     CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
     // flow gets across blocks
-    flow();
+    flow(func);
   }
 
   // cfg traversal work
@@ -94,7 +91,12 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     self->locations[curr] = currp;
   }
 
-  void flow() {
+  void flow(Function* func) {
+    auto numLocals = func->getNumLocals();
+    std::vector<std::vector<GetLocal*>> allGets;
+    allGets.resize(numLocals);
+    std::unordered_set<BasicBlock*> seen;
+    std::vector<BasicBlock*> work;
     for (auto& block : basicBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << block.get() << " :\n";
@@ -107,14 +109,13 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 #endif
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
-      std::unordered_map<Index, std::unordered_set<GetLocal*>> allGets; // TODO
       auto& actions = block->contents.actions;
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
         auto index = action.index;
         if (action.isGet()) {
-          allGets[index].insert(action.expr->cast<GetLocal>());
+          allGets[index].push_back(action.expr->cast<GetLocal>());
         } else {
           // this set is the only set for all those gets
           auto* set = action.expr->cast<SetLocal>();
@@ -122,17 +123,16 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           for (auto* get : gets) {
             getSetses[get].insert(set);
           }
-          allGets.erase(index);
+          gets.clear();
         }
       }
       // if anything is left, we must flow it back through other blocks. we
       // can do that for all gets as a whole, they will get the same results
-      for (auto& pair : allGets) {
-        auto index = pair.first;
-        auto& gets = pair.second;
-        std::unordered_set<BasicBlock*> seen; // TODO
-        std::vector<BasicBlock*> work; // TODO
+      for (Index index = 0; index < numLocals; index++) {
+        auto& gets = allGets[index];
+        if (gets.empty()) continue;
         work.push_back(block.get());
+        seen.clear();
         // note that we may need to revisit the later parts of this initial
         // block, if we are in a loop, so don't mark it as seen
         while (!work.empty()) {
@@ -166,6 +166,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           }
         }
+        gets.clear();
       }
     }
   }
