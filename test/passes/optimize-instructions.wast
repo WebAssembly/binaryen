@@ -2663,6 +2663,50 @@
       (i32.and (i32.wrap/i64 (i64.const 1)) (i32.eqz (get_local $y)))
     )
   )
+  (func $subzero1 (param $0 i32) (result i32)
+    (i32.add
+     (i32.sub
+      (i32.const 1)
+      (i32.clz
+       (get_local $0)
+      )
+     )
+     (i32.const 31)
+    )
+  )
+  (func $subzero2 (param $0 i32) (result i32)
+    (i32.add
+     (i32.const 31)
+     (i32.sub
+      (i32.const 1)
+      (i32.clz
+       (get_local $0)
+      )
+     )
+    )
+  )
+  (func $subzero3 (param $0 i32) (param $1 i32) (result i32)
+    (i32.add
+     (i32.sub
+      (i32.const 0)
+      (i32.clz
+       (get_local $0)
+      )
+     )
+     (get_local $1)
+    )
+  )
+  (func $subzero4 (param $0 i32) (param $1 i32) (result i32)
+    (i32.add
+     (get_local $0)
+     (i32.sub
+      (i32.const 0)
+      (i32.clz
+       (get_local $1)
+      )
+     )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
@@ -2680,3 +2724,4 @@
    )
   )
 )
+
