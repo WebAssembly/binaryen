@@ -169,7 +169,12 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     if (indirectFunc == dummyFunction) {
       continue;
     }
-    std::string sig(getSig(wasm.getFunction(indirectFunc)));
+    std::string sig;
+    if (auto import = wasm.getImportOrNull(indirectFunc)) {
+      sig = getSig(wasm.getFunctionType(import->functionType));
+    } else {
+      sig = getSig(wasm.getFunction(indirectFunc));
+    }
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
