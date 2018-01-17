@@ -96,6 +96,15 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   void flow() {
     for (auto& block : basicBlocks) {
+#ifdef LOCAL_GRAPH_DEBUG
+      std::cout << "basic block " << block.get() << " :\n";
+      for (auto& action : block->contents.actions) {
+        std::cout << "  action: " << action.expr << '\n';
+      }
+      for (auto& pair : block->contents.lastSets) {
+        std::cout << "  last set for " << pair.first << " : " << pair.second << '\n';
+      }
+#endif
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
       std::unordered_map<Index, std::unordered_set<GetLocal*>> allGets; // TODO
@@ -124,7 +133,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         std::unordered_set<BasicBlock*> seen; // TODO
         std::vector<BasicBlock*> work; // TODO
         work.push_back(block.get());
-        seen.insert(block.get());
+        // note that we may need to revisit the later parts of this initial
+        // block, if we are in a loop, so don't mark it as seen
         while (!work.empty()) {
           auto* curr = work.back();
           work.pop_back();
