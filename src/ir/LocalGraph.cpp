@@ -48,7 +48,7 @@ struct Action {
 // information about a basic block
 struct Info {
   std::vector<Action> actions; // actions occurring in this block
-  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
+  std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
     if (actions.empty()) return;
@@ -63,13 +63,22 @@ struct Info {
 
 struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   LocalGraph::GetSetses& getSetses;
-  LocalGraph::Locations & locations;
+  LocalGraph::Locations& locations;
 
   Flower(LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations, Function* func) : getSetses(getSetses), locations(locations) {
+    setFunction(func);
     // create the CFG by walking the IR
     CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
     // flow gets across blocks
     flow(func);
+  }
+
+  BasicBlock* makeBasicBlock() {
+    auto* ret = new BasicBlock();
+    auto& lastSets = ret->contents.lastSets;
+    lastSets.resize(getFunction()->getNumLocals());
+    std::fill(lastSets.begin(), lastSets.end(), nullptr);
+    return ret;
   }
 
   // cfg traversal work
@@ -103,8 +112,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       for (auto& action : block->contents.actions) {
         std::cout << "  action: " << action.expr << '\n';
       }
-      for (auto& pair : block->contents.lastSets) {
-        std::cout << "  last set for " << pair.first << " : " << pair.second << '\n';
+      for (auto* lastSet : block->contents.lastSets) {
+        std::cout << "  last set " << lastSet << '\n';
       }
 #endif
       // go through the block, finding each get and adding it to its index,
@@ -151,13 +160,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             for (auto* pred : curr->in) {
               if (seen.count(pred)) continue;
               seen.insert(pred);
-              auto& lastSets = pred->contents.lastSets;
-              auto iter = lastSets.find(index);
-              if (iter != lastSets.end()) {
+              auto* lastSet = pred->contents.lastSets[index];
+              if (lastSet) {
                 // there is a set here, apply it, and stop the flow
-                SetLocal* set = iter->second;
                 for (auto* get : gets) {
-                  getSetses[get].insert(set);
+                  getSetses[get].insert(lastSet);
                 }
               } else {
                 // keep on flowing
