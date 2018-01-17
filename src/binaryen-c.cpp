@@ -33,7 +33,6 @@
 #include "cfg/Relooper.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
-#include "support/defaults.h"
 
 using namespace wasm;
 
@@ -72,9 +71,7 @@ static std::mutex BinaryenFunctionMutex;
 static std::mutex BinaryenFunctionTypeMutex;
 
 // Optimization options
-static int optimizeLevel = BINARYEN_DEFAULT_OPTIMIZE_LEVEL;
-static int shrinkLevel = BINARYEN_DEFAULT_SHRINK_LEVEL;
-static bool debugInfo = BINARYEN_DEFAULT_DEBUG_INFO;
+static PassOptions globalPassOptions = PassOptions::getWithDefaultOptimizationOptions();
 
 // Tracing support
 
@@ -2013,9 +2010,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
-  passRunner.options.optimizeLevel = optimizeLevel;
-  passRunner.options.shrinkLevel = shrinkLevel;
-  passRunner.options.debugInfo = debugInfo;
+  passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
 }
@@ -2025,7 +2020,7 @@ int BinaryenGetOptimizeLevel() {
     std::cout << "  BinaryenGetOptimizeLevel();\n";
   }
 
-  return optimizeLevel;
+  return globalPassOptions.optimizeLevel;
 }
 
 void BinaryenSetOptimizeLevel(int level) {
@@ -2033,7 +2028,7 @@ void BinaryenSetOptimizeLevel(int level) {
     std::cout << "  BinaryenSetOptimizeLevel(" << level << ");\n";
   }
 
-  optimizeLevel = level;
+  globalPassOptions.optimizeLevel = level;
 }
 
 int BinaryenGetShrinkLevel() {
@@ -2041,7 +2036,7 @@ int BinaryenGetShrinkLevel() {
     std::cout << "  BinaryenGetShrinkLevel();\n";
   }
 
-  return shrinkLevel;
+  return globalPassOptions.shrinkLevel;
 }
 
 void BinaryenSetShrinkLevel(int level) {
@@ -2049,7 +2044,7 @@ void BinaryenSetShrinkLevel(int level) {
     std::cout << "  BinaryenSetShrinkLevel(" << level << ");\n";
   }
 
-  shrinkLevel = level;
+  globalPassOptions.shrinkLevel = level;
 }
 
 int BinaryenGetDebugInfo() {
@@ -2057,7 +2052,7 @@ int BinaryenGetDebugInfo() {
     std::cout << "  BinaryenGetDebugInfo();\n";
   }
 
-  return debugInfo;
+  return globalPassOptions.debugInfo;
 }
 
 void BinaryenSetDebugInfo(int on) {
@@ -2065,7 +2060,7 @@ void BinaryenSetDebugInfo(int on) {
     std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
   }
 
-  debugInfo = bool(on);
+  globalPassOptions.debugInfo = bool(on);
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
@@ -2083,9 +2078,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
-  passRunner.options.optimizeLevel = optimizeLevel;
-  passRunner.options.shrinkLevel = shrinkLevel;
-  passRunner.options.debugInfo = debugInfo;
+  passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
@@ -2099,7 +2092,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
-  passRunner.options.debugInfo = debugInfo;
+  passRunner.options = globalPassOptions;
   passRunner.add<AutoDrop>();
   passRunner.run();
 }
@@ -2112,7 +2105,7 @@ size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t output
   Module* wasm = (Module*)module;
   BufferWithRandomAccess buffer(false);
   WasmBinaryWriter writer(wasm, buffer, false);
-  writer.setNamesSection(debugInfo);
+  writer.setNamesSection(globalPassOptions.debugInfo);
   writer.write();
   size_t bytes = std::min(buffer.size(), outputSize);
   std::copy_n(buffer.begin(), bytes, output);
@@ -2254,9 +2247,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
-  passRunner.options.optimizeLevel = optimizeLevel;
-  passRunner.options.shrinkLevel = shrinkLevel;
-  passRunner.options.debugInfo = debugInfo;
+  passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
@@ -2275,9 +2266,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
-  passRunner.options.optimizeLevel = optimizeLevel;
-  passRunner.options.shrinkLevel = shrinkLevel;
-  passRunner.options.debugInfo = debugInfo;
+  passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
