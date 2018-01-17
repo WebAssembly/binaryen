@@ -24,9 +24,6 @@
 
 namespace wasm {
 
-// A set of live get_locals, for each index
-typedef std::unordered_map<Index, std::unordered_set<GetLocal*>> Gets;
-
 // A relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark
 // their position in a block
@@ -50,8 +47,8 @@ struct Action {
 
 // information about a basic block
 struct Info {
-  Gets start, end; // live gets at the start and end
   std::vector<Action> actions; // actions occurring in this block
+  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
     if (actions.empty()) return;
@@ -76,8 +73,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
     // flow gets across blocks
     flow();
-    // compute our output data structures
-    computeGetSetses();
   }
 
   // cfg traversal work
@@ -95,90 +90,70 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     // if in unreachable code, skip
     if (!self->currBasicBlock) return;
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
+    self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
   }
 
   void flow() {
-    // keep working while stuff is flowing
-    std::unordered_set<BasicBlock*> queue;
-    for (auto& curr : basicBlocks) {
-      queue.insert(curr.get());
-      // do the first scan through the block, starting with nothing at the end, and updating to the start
-      scanThroughActions(curr->contents.actions, curr->contents.start);
-    }
-    while (queue.size() > 0) {
-      auto iter = queue.begin();
-      auto* curr = *iter;
-      queue.erase(iter);
-      Gets gets;
-      if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, gets)) continue;
-      curr->contents.end = gets;
-      scanThroughActions(curr->contents.actions, gets);
-      // liveness is now calculated at the start. if something
-      // changed, all predecessor blocks need recomputation
-      if (curr->contents.start == gets) continue;
-      curr->contents.start = gets;
-      for (auto* in : curr->in) {
-        queue.insert(in);
-      }
-    }
-  }
-
-  void scanThroughActions(std::vector<Action>& actions, Gets& gets) {
-    // move towards the front
-    for (int i = int(actions.size()) - 1; i >= 0; i--) {
-      auto& action = actions[i];
-      if (action.isGet()) {
-        gets[action.index].insert(action.expr->cast<GetLocal>());
-      } else {
-        gets.erase(action.index);
-      }
-    }
-  }
-
-  // merge starts of a list of blocks. return
-  // whether anything changed vs an old state (which indicates further processing is necessary).
-  bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, Gets& old, Gets& ret) {
-    if (blocks.size() == 0) return false;
-    ret = blocks[0]->contents.start;
-    if (blocks.size() > 1) {
-      // more than one, so we must merge
-      for (Index i = 1; i < blocks.size(); i++) {
-        auto* curr = blocks[i];
-        for (const auto& pair : curr->contents.start) {
-          const Index index = pair.first;
-          const auto& data = pair.second;
-          ret[index].insert(data.begin(), data.end());
-        }
-      }
-    }
-    return old != ret;
-  }
-
-  void computeGetSetses() {
     for (auto& block : basicBlocks) {
+      // go through the block, finding each get and adding it to its index,
+      // and seeing how sets affect that
+      std::unordered_map<Index, std::unordered_set<GetLocal*>> allGets; // TODO
       auto& actions = block->contents.actions;
-      Gets gets = block->contents.end;
+      // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
         auto index = action.index;
         if (action.isGet()) {
-          gets[action.index].insert(action.expr->cast<GetLocal>());
+          allGets[index].insert(action.expr->cast<GetLocal>());
         } else {
+          // this set is the only set for all those gets
           auto* set = action.expr->cast<SetLocal>();
-          for (auto* get : gets[index]) {
+          auto& gets = allGets[index];
+          for (auto* get : gets) {
             getSetses[get].insert(set);
           }
-          gets.erase(action.index);
+          allGets.erase(index);
         }
       }
-      // the entry block is special: any get active at the start is
-      // influenced by the zero init or incoming param
-      if (block.get() == entry) {
-        for (auto& pair : gets) {
-          auto& data = pair.second;
-          for (auto* get : data) {
-            getSetses[get].insert(nullptr);
+      // if anything is left, we must flow it back through other blocks. we
+      // can do that for all gets as a whole, they will get the same results
+      for (auto& pair : allGets) {
+        auto index = pair.first;
+        auto& gets = pair.second;
+        std::unordered_set<BasicBlock*> seen; // TODO
+        std::vector<BasicBlock*> work; // TODO
+        work.push_back(block.get());
+        seen.insert(block.get());
+        while (!work.empty()) {
+          auto* curr = work.back();
+          work.pop_back();
+          // we have gone through this block; now we must handle flowing to
+          // the inputs
+          if (curr->in.empty()) {
+            if (curr == entry) {
+              // these receive a param or zero init value
+              for (auto* get : gets) {
+                getSetses[get].insert(nullptr);
+              }
+            }
+          } else {
+            for (auto* pred : curr->in) {
+              if (seen.count(pred)) continue;
+              seen.insert(pred);
+              auto& lastSets = pred->contents.lastSets;
+              auto iter = lastSets.find(index);
+              if (iter != lastSets.end()) {
+                // there is a set here, apply it, and stop the flow
+                SetLocal* set = iter->second;
+                for (auto* get : gets) {
+                  getSetses[get].insert(set);
+                }
+              } else {
+                // keep on flowing
+                work.push_back(pred);
+              }
+            }
           }
         }
       }
