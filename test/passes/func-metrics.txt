@@ -89,5 +89,4 @@ global
  [funcs]        : 0       
  [total]        : 0       
 (module
- (memory $0 0)
 )

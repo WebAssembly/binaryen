@@ -747,7 +747,17 @@ void Module::removeFunction(Name name) {
   functionsMap.erase(name);
 }
 
-  // TODO: remove* for other elements
+void Module::removeFunctionType(Name name) {
+  for (size_t i = 0; i < functionTypes.size(); i++) {
+    if (functionTypes[i]->name == name) {
+      functionTypes.erase(functionTypes.begin() + i);
+      break;
+    }
+  }
+  functionTypesMap.erase(name);
+}
+
+// TODO: remove* for other elements
 
 void Module::updateMaps() {
   functionsMap.clear();

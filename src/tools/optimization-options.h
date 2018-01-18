@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "support/command-line.h"
+
 //
 // Shared optimization options for commandline tools
 //
@@ -31,8 +33,7 @@ struct OptimizationOptions : public Options {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
-                  passOptions.optimizeLevel = 2;
-                  passOptions.shrinkLevel = 1;
+                  passOptions.setDefaultOptimizationOptions();
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-O0", "execute no optimization passes",

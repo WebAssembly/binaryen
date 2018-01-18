@@ -70,6 +70,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
 static std::mutex BinaryenFunctionMutex;
 static std::mutex BinaryenFunctionTypeMutex;
 
+// Optimization options
+static PassOptions globalPassOptions = PassOptions::getWithDefaultOptimizationOptions();
+
 // Tracing support
 
 static int tracing = 0;
@@ -379,6 +382,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     std::cout << "    BinaryenExpressionRef children[] = { ";
     for (BinaryenIndex i = 0; i < numChildren; i++) {
       if (i > 0) std::cout << ", ";
+      if (i % 6 == 5) std::cout << "\n       "; // don't create hugely long lines
       std::cout << "expressions[" << expressions[children[i]] << "]";
     }
     if (numChildren == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
@@ -2007,8 +2011,57 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.run();
+}
+
+int BinaryenGetOptimizeLevel() {
+  if (tracing) {
+    std::cout << "  BinaryenGetOptimizeLevel();\n";
+  }
+
+  return globalPassOptions.optimizeLevel;
+}
+
+void BinaryenSetOptimizeLevel(int level) {
+  if (tracing) {
+    std::cout << "  BinaryenSetOptimizeLevel(" << level << ");\n";
+  }
+
+  globalPassOptions.optimizeLevel = level;
+}
+
+int BinaryenGetShrinkLevel() {
+  if (tracing) {
+    std::cout << "  BinaryenGetShrinkLevel();\n";
+  }
+
+  return globalPassOptions.shrinkLevel;
+}
+
+void BinaryenSetShrinkLevel(int level) {
+  if (tracing) {
+    std::cout << "  BinaryenSetShrinkLevel(" << level << ");\n";
+  }
+
+  globalPassOptions.shrinkLevel = level;
+}
+
+int BinaryenGetDebugInfo() {
+  if (tracing) {
+    std::cout << "  BinaryenGetDebugInfo();\n";
+  }
+
+  return globalPassOptions.debugInfo;
+}
+
+void BinaryenSetDebugInfo(int on) {
+  if (tracing) {
+    std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
+  }
+
+  globalPassOptions.debugInfo = bool(on);
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
@@ -2026,6 +2079,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }
@@ -2039,6 +2093,7 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options = globalPassOptions;
   passRunner.add<AutoDrop>();
   passRunner.run();
 }
@@ -2051,6 +2106,7 @@ size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t output
   Module* wasm = (Module*)module;
   BufferWithRandomAccess buffer(false);
   WasmBinaryWriter writer(wasm, buffer, false);
+  writer.setNamesSection(globalPassOptions.debugInfo);
   writer.write();
   size_t bytes = std::min(buffer.size(), outputSize);
   std::copy_n(buffer.begin(), bytes, output);
@@ -2192,6 +2248,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options = globalPassOptions;
   passRunner.addDefaultOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
@@ -2210,6 +2267,7 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
 
   Module* wasm = (Module*)module;
   PassRunner passRunner(wasm);
+  passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
     passRunner.add(passes[i]);
   }

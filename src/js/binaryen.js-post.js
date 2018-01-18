@@ -1256,7 +1256,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'condition': Module['_BinaryenIfGetCondition'](expr),
         'ifTrue': Module['_BinaryenIfGetIfTrue'](expr),
-        'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)      
+        'ifFalse': Module['_BinaryenIfGetIfFalse'](expr)
       };
     case Module['LoopId']:
       return {
@@ -1460,7 +1460,7 @@ Module['getExpressionInfo'] = function(expr) {
 // Obtains information about a 'FunctionType'
 Module['getFunctionTypeInfo'] = function(func) {
   return {
-    'name': Module['_BinaryenFunctionTypeGetName'](func),
+    'name': Pointer_stringify(Module['_BinaryenFunctionTypeGetName'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionTypeGetNumParams'], Module['_BinaryenFunctionTypeGetParam']),
     'result': Module['_BinaryenFunctionTypeGetResult'](func)
   };
@@ -1469,8 +1469,8 @@ Module['getFunctionTypeInfo'] = function(func) {
 // Obtains information about a 'Function'
 Module['getFunctionInfo'] = function(func) {
   return {
-    'name': Module['_BinaryenFunctionGetName'](func),
-    'type': Module['_BinaryenFunctionGetType'](func),
+    'name': Pointer_stringify(Module['_BinaryenFunctionGetName'](func)),
+    'type': Pointer_stringify(Module['_BinaryenFunctionGetType'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
     'result': Module['_BinaryenFunctionGetResult'](func),
     'vars': getAllNested(func, Module['_BinaryenFunctionGetNumVars'], Module['_BinaryenFunctionGetVar']),
@@ -1529,8 +1529,53 @@ Module['parseText'] = function(text) {
   return new Module['Module'](ptr);
 };
 
+// Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+Module['getOptimizeLevel'] = function() {
+  return Module['_BinaryenGetOptimizeLevel']();
+};
+
+// Sets the optimization level to use. 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+Module['setOptimizeLevel'] = function(level) {
+  return Module['_BinaryenSetOptimizeLevel'](level);
+};
+
+// Gets the currently set shrink level. 0, 1, 2 correspond to -O0, -Os, -Oz.
+Module['getShrinkLevel'] = function() {
+  return Module['_BinaryenGetShrinkLevel']();
+};
+
+// Sets the shrink level to use. 0, 1, 2 correspond to -O0, -Os, -Oz.
+Module['setShrinkLevel'] = function(level) {
+  return Module['_BinaryenSetShrinkLevel'](level);
+};
+
+// Gets whether generating debug information is currently enabled or not.
+Module['getDebugInfo'] = function() {
+  return Boolean(Module['_BinaryenGetDebugInfo']());
+};
+
+// Enables or disables debug information in emitted binaries.
+Module['setDebugInfo'] = function(on) {
+  return Module['_BinaryenSetDebugInfo'](on);
+};
+
 // Enables or disables C-API tracing
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
 
+// Instantiates a new unique instance of the API with its own memory etc.
+Module['instantiate'] = instantiate;
+return Module;
+
+} // end of instantiate
+
+// Module loader code borrowed from webpack
+if (typeof exports === 'object' && typeof module === 'object')
+  module.exports = instantiate();
+else if (typeof define === 'function' && define['amd'])
+  define([], instantiate);
+else if (typeof exports === 'object')
+  exports['Binaryen'] = instantiate();
+else
+  (typeof self !== "undefined" ? self : this)['Binaryen'] = instantiate();

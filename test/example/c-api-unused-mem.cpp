@@ -81,6 +81,7 @@ int main() {
   // check that binary read-write works
   {
     char buffer[1024];
+    BinaryenSetDebugInfo(1);
     size_t size = BinaryenModuleWrite(the_module, buffer, 1024);
     printf("%d\n", size);
     BinaryenModuleRef copy = BinaryenModuleRead(buffer, size);
