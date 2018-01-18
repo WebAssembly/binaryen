@@ -400,24 +400,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   void visitModule(Module* curr) {
     assert(curr == module.get());
-    // try to remove exports
-    std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
-    std::vector<Export> exports;
-    for (auto& exp : module->exports) {
-      exports.push_back(*exp);
-    }
-    for (auto& exp : exports) {
-      module->removeExport(exp.name);
-      ProgramResult result;
-      if (!writeAndTestReduction(result)) {
-        module->addExport(new Export(exp));
-      } else {
-        std::cerr << "|      removed export " << exp.name << '\n';
-        noteReduction();
-        // perhaps we can remove the function too
-        tryToRemoveFunctions({ exp.value });
-      }
-    }
     // try to remove functions
     std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
@@ -442,6 +424,22 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         skip = std::max(skip / 2, size_t(1)); // or 1?
       }
       std::cout << "|        (new skip: " << skip << ")\n";
+    }
+    // try to remove exports
+    std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
+    std::vector<Export> exports;
+    for (auto& exp : module->exports) {
+      exports.push_back(*exp);
+    }
+    for (auto& exp : exports) {
+      module->removeExport(exp.name);
+      ProgramResult result;
+      if (!writeAndTestReduction(result)) {
+        module->addExport(new Export(exp));
+      } else {
+        std::cerr << "|      removed export " << exp.name << '\n';
+        noteReduction();
+      }
     }
   }
 
@@ -664,7 +662,7 @@ int main(int argc, const char* argv[]) {
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = workingSize;
+  int factor = workingSize * 2;
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 
