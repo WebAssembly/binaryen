@@ -382,6 +382,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
     std::cout << "    BinaryenExpressionRef children[] = { ";
     for (BinaryenIndex i = 0; i < numChildren; i++) {
       if (i > 0) std::cout << ", ";
+      if (i % 6 == 5) std::cout << "\n       "; // don't create hugely long lines
       std::cout << "expressions[" << expressions[children[i]] << "]";
     }
     if (numChildren == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
