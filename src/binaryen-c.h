@@ -48,7 +48,6 @@
 #include <stdint.h>
 
 #include "compiler-support.h"
-#include "support/defaults.h"
 
 #ifdef __cplusplus
 extern "C" {
