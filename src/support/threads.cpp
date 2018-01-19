@@ -41,18 +41,19 @@ namespace wasm {
 
 // Global thread information
 
+static std::mutex poolMutex;
 static std::unique_ptr<ThreadPool> pool;
 
 
 // Thread
 
 Thread::Thread() {
-  assert(!ThreadPool::get()->isRunning());
+  assert(!ThreadPool::isRunning());
   thread = make_unique<std::thread>(mainLoop, this);
 }
 
 Thread::~Thread() {
-  assert(!ThreadPool::get()->isRunning());
+  assert(!ThreadPool::isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
@@ -138,6 +139,7 @@ size_t ThreadPool::getNumCores() {
 }
 
 ThreadPool* ThreadPool::get() {
+  std::lock_guard<std::mutex> lock(poolMutex);
   if (!pool) {
     pool = make_unique<ThreadPool>();
     pool->initialize(getNumCores());
