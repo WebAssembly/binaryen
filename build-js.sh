@@ -24,7 +24,7 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ] || [ "$1" == "-help" ]; then
   exit 1
 fi
 
-if [ -z $EMSCRIPTEN ]; then
+if [ -z "$EMSCRIPTEN" ]; then
   if (which emcc >/dev/null); then
     # Found emcc in PATH -- set EMSCRIPTEN (we need this to access webidl_binder.py)
     EMSCRIPTEN=$(dirname "$(which emcc)")
@@ -57,85 +57,91 @@ else
   # See https://gist.github.com/rsms/e33c61a25a31c08260161a087be03169
 fi
 
+# input sources relative to this script
+BINARYEN_SRC="$(dirname $0)/src"
+
+# output binaries relative to current working directory
+BINARYEN_BIN="$PWD/bin"
+
 echo "building shared bitcode"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  src/asmjs/asm_v_wasm.cpp \
-  src/asmjs/shared-constants.cpp \
-  src/cfg/Relooper.cpp \
-  src/emscripten-optimizer/optimizer-shared.cpp \
-  src/emscripten-optimizer/parser.cpp \
-  src/emscripten-optimizer/simple_ast.cpp \
-  src/ir/ExpressionAnalyzer.cpp \
-  src/ir/ExpressionManipulator.cpp \
-  src/ir/LocalGraph.cpp \
-  src/passes/pass.cpp \
-  src/passes/CoalesceLocals.cpp \
-  src/passes/CodeFolding.cpp \
-  src/passes/CodePushing.cpp \
-  src/passes/ConstHoisting.cpp \
-  src/passes/DeadCodeElimination.cpp \
-  src/passes/DuplicateFunctionElimination.cpp \
-  src/passes/ExtractFunction.cpp \
-  src/passes/Flatten.cpp \
-  src/passes/I64ToI32Lowering.cpp \
-  src/passes/Inlining.cpp \
-  src/passes/InstrumentLocals.cpp \
-  src/passes/InstrumentMemory.cpp \
-  src/passes/LegalizeJSInterface.cpp \
-  src/passes/LocalCSE.cpp \
-  src/passes/LogExecution.cpp \
-  src/passes/MemoryPacking.cpp \
-  src/passes/MergeBlocks.cpp \
-  src/passes/MergeLocals.cpp \
-  src/passes/Metrics.cpp \
-  src/passes/NameList.cpp \
-  src/passes/OptimizeInstructions.cpp \
-  src/passes/PickLoadSigns.cpp \
-  src/passes/PostEmscripten.cpp \
-  src/passes/Precompute.cpp \
-  src/passes/Print.cpp \
-  src/passes/PrintCallGraph.cpp \
-  src/passes/RedundantSetElimination.cpp \
-  src/passes/RelooperJumpThreading.cpp \
-  src/passes/RemoveImports.cpp \
-  src/passes/RemoveMemory.cpp \
-  src/passes/RemoveUnusedBrs.cpp \
-  src/passes/RemoveUnusedModuleElements.cpp \
-  src/passes/RemoveUnusedNames.cpp \
-  src/passes/ReorderFunctions.cpp \
-  src/passes/ReorderLocals.cpp \
-  src/passes/ReReloop.cpp \
-  src/passes/SafeHeap.cpp \
-  src/passes/SimplifyLocals.cpp \
-  src/passes/SpillPointers.cpp \
-  src/passes/SSAify.cpp \
-  src/passes/TrapMode.cpp \
-  src/passes/Untee.cpp \
-  src/passes/Vacuum.cpp \
-  src/support/bits.cpp \
-  src/support/colors.cpp \
-  src/support/safe_integer.cpp \
-  src/support/threads.cpp \
-  src/wasm/literal.cpp \
-  src/wasm/wasm-binary.cpp \
-  src/wasm/wasm-s-parser.cpp \
-  src/wasm/wasm-type.cpp \
-  src/wasm/wasm-validator.cpp \
-  src/wasm/wasm.cpp \
-  src/wasm-emscripten.cpp \
-  -Isrc/ \
+  $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
+  $BINARYEN_SRC/asmjs/shared-constants.cpp \
+  $BINARYEN_SRC/cfg/Relooper.cpp \
+  $BINARYEN_SRC/emscripten-optimizer/optimizer-shared.cpp \
+  $BINARYEN_SRC/emscripten-optimizer/parser.cpp \
+  $BINARYEN_SRC/emscripten-optimizer/simple_ast.cpp \
+  $BINARYEN_SRC/ir/ExpressionAnalyzer.cpp \
+  $BINARYEN_SRC/ir/ExpressionManipulator.cpp \
+  $BINARYEN_SRC/ir/LocalGraph.cpp \
+  $BINARYEN_SRC/passes/pass.cpp \
+  $BINARYEN_SRC/passes/CoalesceLocals.cpp \
+  $BINARYEN_SRC/passes/CodeFolding.cpp \
+  $BINARYEN_SRC/passes/CodePushing.cpp \
+  $BINARYEN_SRC/passes/ConstHoisting.cpp \
+  $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
+  $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
+  $BINARYEN_SRC/passes/ExtractFunction.cpp \
+  $BINARYEN_SRC/passes/Flatten.cpp \
+  $BINARYEN_SRC/passes/I64ToI32Lowering.cpp \
+  $BINARYEN_SRC/passes/Inlining.cpp \
+  $BINARYEN_SRC/passes/InstrumentLocals.cpp \
+  $BINARYEN_SRC/passes/InstrumentMemory.cpp \
+  $BINARYEN_SRC/passes/LegalizeJSInterface.cpp \
+  $BINARYEN_SRC/passes/LocalCSE.cpp \
+  $BINARYEN_SRC/passes/LogExecution.cpp \
+  $BINARYEN_SRC/passes/MemoryPacking.cpp \
+  $BINARYEN_SRC/passes/MergeBlocks.cpp \
+  $BINARYEN_SRC/passes/MergeLocals.cpp \
+  $BINARYEN_SRC/passes/Metrics.cpp \
+  $BINARYEN_SRC/passes/NameList.cpp \
+  $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
+  $BINARYEN_SRC/passes/PickLoadSigns.cpp \
+  $BINARYEN_SRC/passes/PostEmscripten.cpp \
+  $BINARYEN_SRC/passes/Precompute.cpp \
+  $BINARYEN_SRC/passes/Print.cpp \
+  $BINARYEN_SRC/passes/PrintCallGraph.cpp \
+  $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
+  $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
+  $BINARYEN_SRC/passes/RemoveImports.cpp \
+  $BINARYEN_SRC/passes/RemoveMemory.cpp \
+  $BINARYEN_SRC/passes/RemoveUnusedBrs.cpp \
+  $BINARYEN_SRC/passes/RemoveUnusedModuleElements.cpp \
+  $BINARYEN_SRC/passes/RemoveUnusedNames.cpp \
+  $BINARYEN_SRC/passes/ReorderFunctions.cpp \
+  $BINARYEN_SRC/passes/ReorderLocals.cpp \
+  $BINARYEN_SRC/passes/ReReloop.cpp \
+  $BINARYEN_SRC/passes/SafeHeap.cpp \
+  $BINARYEN_SRC/passes/SimplifyLocals.cpp \
+  $BINARYEN_SRC/passes/SpillPointers.cpp \
+  $BINARYEN_SRC/passes/SSAify.cpp \
+  $BINARYEN_SRC/passes/TrapMode.cpp \
+  $BINARYEN_SRC/passes/Untee.cpp \
+  $BINARYEN_SRC/passes/Vacuum.cpp \
+  $BINARYEN_SRC/support/bits.cpp \
+  $BINARYEN_SRC/support/colors.cpp \
+  $BINARYEN_SRC/support/safe_integer.cpp \
+  $BINARYEN_SRC/support/threads.cpp \
+  $BINARYEN_SRC/wasm/literal.cpp \
+  $BINARYEN_SRC/wasm/wasm-binary.cpp \
+  $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
+  $BINARYEN_SRC/wasm/wasm-type.cpp \
+  $BINARYEN_SRC/wasm/wasm-validator.cpp \
+  $BINARYEN_SRC/wasm/wasm.cpp \
+  $BINARYEN_SRC/wasm-emscripten.cpp \
+  -I$BINARYEN_SRC \
   -o shared.bc
 
 echo "building wasm.js"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  src/wasm-js.cpp \
+  $BINARYEN_SRC/wasm-js.cpp \
   shared.bc \
-  -Isrc/ \
-  -o bin/wasm${OUT_FILE_SUFFIX}.js \
+  -I$BINARYEN_SRC/ \
+  -o $BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
   -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
@@ -581,10 +587,10 @@ export_function "_BinaryenSetAPITracing"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  src/binaryen-c.cpp \
+  $BINARYEN_SRC/binaryen-c.cpp \
   shared.bc \
-  -Isrc/ \
+  -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o bin/binaryen${OUT_FILE_SUFFIX}.js \
-  --pre-js src/js/binaryen.js-pre.js \
-  --post-js src/js/binaryen.js-post.js
+  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  --pre-js $BINARYEN_SRC/js/binaryen.js-pre.js \
+  --post-js $BINARYEN_SRC/js/binaryen.js-post.js
