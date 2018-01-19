@@ -693,10 +693,7 @@
      )
     )
    )
-   (block
-    (nop)
-    (call $abort)
-   )
+   (call $abort)
   )
   (if
    (i32.eqz
@@ -707,10 +704,7 @@
      )
     )
    )
-   (block
-    (nop)
-    (call $abort)
-   )
+   (call $abort)
   )
  )
  (func $legalstub$illegalParam (; 20 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)

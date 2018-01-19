@@ -352,10 +352,11 @@ struct Inlining : public Pass {
     runner.add("remove-unused-names");
     runner.add("coalesce-locals");
     runner.add("simplify-locals");
-    runner.add("vacuum"); // TODO: move to end, or add another at the end
+    runner.add("vacuum");
     runner.add("reorder-locals");
     runner.add("remove-unused-brs");
     runner.add("merge-blocks");
+    runner.add("vacuum");
     runner.run();
     // restore all the funcs
     for (auto& func : module->functions) {

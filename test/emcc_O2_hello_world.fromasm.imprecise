@@ -8300,13 +8300,9 @@
        (get_local $0)
       )
      )
-     (drop
+     (set_local $2
       (i32.eqz
-       (tee_local $2
-        (i32.eqz
-         (i32.const 0)
-        )
-       )
+       (i32.const 0)
       )
      )
     )
@@ -8370,9 +8366,6 @@
            (get_local $1)
           )
          )
-        )
-        (drop
-         (get_local $0)
         )
         (br_if $while-in
          (tee_local $2
@@ -9197,9 +9190,6 @@
     )
    )
   )
-  (drop
-   (get_local $3)
-  )
   (i32.shr_s
    (i32.shl
     (get_local $0)
@@ -9370,20 +9360,11 @@
     )
     (i32.const -1)
    )
-   (block
-    (set_local $0
-     (call $___fwritex
-      (get_local $0)
-      (get_local $4)
-      (get_local $3)
-     )
-    )
-    (drop
-     (i32.eqz
-      (i32.eqz
-       (i32.const 0)
-      )
-     )
+   (set_local $0
+    (call $___fwritex
+     (get_local $0)
+     (get_local $4)
+     (get_local $3)
     )
    )
    (set_local $0
