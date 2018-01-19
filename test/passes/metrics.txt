@@ -2,7 +2,7 @@ total
  [funcs]        : 1       
  [memory-data]  : 9       
  [table-data]   : 3       
- [total]        : 41      
+ [total]        : 27      
  [vars]         : 1       
  binary         : 1       
  block          : 1       
@@ -57,8 +57,5 @@ total
  )
 )
 total
- [funcs]        : 0       
- [total]        : 0       
- [vars]         : 0       
 (module
 )
