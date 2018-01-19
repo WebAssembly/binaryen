@@ -1988,7 +1988,7 @@ int main() {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
-  imports[1] = BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
+  imports[0] = BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {
