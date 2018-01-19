@@ -59,14 +59,8 @@ public:
     read_data(input);
   }
 
-  void read_data(std::vector<char> input) {
-    bytes.swap(input);
-    pos = 0;
-    finishedInput = false;
-    // ensure *some* input to be read
-    if (bytes.size() == 0) {
-      bytes.push_back(0);
-    }
+  TranslateToFuzzReader(Module& wasm, std::vector<char> input) : wasm(wasm), builder(wasm) {
+    read_data(input);
   }
 
   void pickPasses(OptimizationOptions& options) {
@@ -183,6 +177,17 @@ private:
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
+
+
+  void read_data(std::vector<char> input) {
+    bytes.swap(input);
+    pos = 0;
+    finishedInput = false;
+    // ensure *some* input to be read
+    if (bytes.size() == 0) {
+      bytes.push_back(0);
+    }
+  }
 
   int8_t get() {
     if (pos == bytes.size()) {
