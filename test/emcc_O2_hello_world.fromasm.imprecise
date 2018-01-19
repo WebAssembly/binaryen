@@ -8287,7 +8287,7 @@
        (i32.const -1)
       )
       (block
-       (set_local $2
+       (set_local $1
         (call $___fflush_unlocked
          (get_local $0)
         )
@@ -8296,23 +8296,17 @@
       )
      )
      (set_local $1
-      (i32.eqz
-       (call $___lockfile
-        (get_local $0)
-       )
-      )
-     )
-     (set_local $2
       (call $___fflush_unlocked
        (get_local $0)
       )
      )
-     (if
+     (drop
       (i32.eqz
-       (get_local $1)
-      )
-      (call $___unlockfile
-       (get_local $0)
+       (tee_local $2
+        (i32.eqz
+         (i32.const 0)
+        )
+       )
       )
      )
     )
@@ -8334,67 +8328,62 @@
       (i32.const 36)
      )
      (if
-      (tee_local $2
+      (tee_local $1
        (i32.load
         (i32.const 32)
        )
       )
       (block
-       (set_local $1
-        (get_local $2)
-       )
        (set_local $2
+        (get_local $1)
+       )
+       (set_local $1
         (get_local $0)
        )
        (loop $while-in
         (set_local $0
-         (if (result i32)
+         (select
+          (i32.const 0)
+          (i32.const 0)
           (i32.gt_s
            (i32.load offset=76
-            (get_local $1)
+            (get_local $2)
            )
            (i32.const -1)
           )
-          (call $___lockfile
-           (get_local $1)
-          )
-          (i32.const 0)
          )
         )
         (if
          (i32.gt_u
           (i32.load offset=20
-           (get_local $1)
+           (get_local $2)
           )
           (i32.load offset=28
-           (get_local $1)
-          )
-         )
-         (set_local $2
-          (i32.or
-           (call $___fflush_unlocked
-            (get_local $1)
-           )
            (get_local $2)
           )
          )
-        )
-        (if
-         (get_local $0)
-         (call $___unlockfile
-          (get_local $1)
+         (set_local $1
+          (i32.or
+           (call $___fflush_unlocked
+            (get_local $2)
+           )
+           (get_local $1)
+          )
          )
         )
+        (drop
+         (get_local $0)
+        )
         (br_if $while-in
-         (tee_local $1
+         (tee_local $2
           (i32.load offset=56
-           (get_local $1)
+           (get_local $2)
           )
          )
         )
        )
       )
-      (set_local $2
+      (set_local $1
        (get_local $0)
       )
      )
@@ -8404,7 +8393,7 @@
     )
    )
   )
-  (get_local $2)
+  (get_local $1)
  )
  (func $_strlen (; 20 ;) (param $0 i32) (result i32)
   (local $1 i32)
@@ -9132,9 +9121,7 @@
      )
      (i32.const -1)
     )
-    (call $___lockfile
-     (get_local $1)
-    )
+    (i32.const 0)
     (i32.const 0)
    )
   )
@@ -9210,11 +9197,8 @@
     )
    )
   )
-  (if
+  (drop
    (get_local $3)
-   (call $___unlockfile
-    (get_local $1)
-   )
   )
   (i32.shr_s
    (i32.shl
@@ -9373,7 +9357,6 @@
  )
  (func $_fwrite (; 29 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (local $4 i32)
-  (local $5 i32)
   (set_local $4
    (i32.mul
     (get_local $2)
@@ -9388,13 +9371,6 @@
     (i32.const -1)
    )
    (block
-    (set_local $5
-     (i32.eqz
-      (call $___lockfile
-       (get_local $3)
-      )
-     )
-    )
     (set_local $0
      (call $___fwritex
       (get_local $0)
@@ -9402,12 +9378,11 @@
       (get_local $3)
      )
     )
-    (if
+    (drop
      (i32.eqz
-      (get_local $5)
-     )
-     (call $___unlockfile
-      (get_local $3)
+      (i32.eqz
+       (i32.const 0)
+      )
      )
     )
    )
@@ -9626,16 +9601,7 @@
   )
  )
  (func $_cleanup_418 (; 38 ;) (param $0 i32)
-  (if
-   (i32.eqz
-    (i32.load offset=68
-     (get_local $0)
-    )
-   )
-   (call $___unlockfile
-    (get_local $0)
-   )
-  )
+  (nop)
  )
  (func $establishStackSpace (; 39 ;) (param $0 i32) (param $1 i32)
   (set_global $STACKTOP
@@ -9679,16 +9645,10 @@
   )
   (i32.const 0)
  )
- (func $___unlockfile (; 45 ;) (param $0 i32)
-  (nop)
- )
- (func $___lockfile (; 46 ;) (param $0 i32) (result i32)
-  (i32.const 0)
- )
- (func $getTempRet0 (; 47 ;) (result i32)
+ (func $getTempRet0 (; 45 ;) (result i32)
   (get_global $tempRet0)
  )
- (func $_main (; 48 ;) (result i32)
+ (func $_main (; 46 ;) (result i32)
   (drop
    (call $_puts
     (i32.const 672)
@@ -9696,10 +9656,10 @@
   )
   (i32.const 0)
  )
- (func $stackSave (; 49 ;) (result i32)
+ (func $stackSave (; 47 ;) (result i32)
   (get_global $STACKTOP)
  )
- (func $b2 (; 50 ;) (param $0 i32)
+ (func $b2 (; 48 ;) (param $0 i32)
   (call $abort
    (i32.const 2)
   )

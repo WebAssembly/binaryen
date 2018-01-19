@@ -5,9 +5,13 @@
     (local $x i32)
     (local $y f64)
     (call $exported)
+    (call $exported_small)
     (call $tabled)
+    (call $tabled_small)
     (call $multi)
     (call $multi)
+    (call $multi_small)
+    (call $multi_small)
     (call $ok)
     (drop (call $int))
     (drop (call $double))
@@ -21,11 +25,19 @@
   )
   (func $exported (export "exported")
     (nop)
+    (nop)
+  )
+  (func $exported_small (export "exported_small")
+    (nop)
   )
   (func $recursive
     (call $recursive)
   )
   (func $tabled
+    (nop)
+    (nop)
+  )
+  (func $tabled_small
     (nop)
   )
   (func $cycle1
@@ -35,6 +47,10 @@
     (call $cycle1)
   )
   (func $multi
+    (nop)
+    (nop)
+  )
+  (func $multi_small
     (nop)
   )
   (func $ok

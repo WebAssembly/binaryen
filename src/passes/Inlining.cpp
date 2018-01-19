@@ -46,6 +46,10 @@ static const int CAREFUL_SIZE_LIMIT = 15;
 // functions (i32s-div, f64-to-int, etc.), that can affect perf.
 static const int FLEXIBLE_SIZE_LIMIT = 20;
 
+// A size so small that after optimizations, the inlined code will be
+// smaller than the call instruction itself.
+static const int INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT = 1;
+
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
   std::atomic<Index> calls;
@@ -60,9 +64,14 @@ struct FunctionInfo {
     usedGlobally = false;
   }
 
-  bool worthInlining(PassOptions& options, bool allowMultipleInliningsPerFunction) {
+  bool worthInlining(PassOptions& options,
+                     bool allowMultipleInliningsPerFunction,
+                     bool optimizing) {
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
+    // if it's so small we have a guarantee that after we optimize the
+    // size will not increase, inline it
+    if (optimizing && size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
@@ -130,9 +139,11 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
 
   void visitCall(Call* curr) {
     // plan to inline if we know this is valid to inline, and if the call is
-    // actually performed - if it is dead code, it's pointless to inline
+    // actually performed - if it is dead code, it's pointless to inline.
+    // we also cannot inline ourselves.
     if (state->worthInlining.count(curr->target) &&
-        curr->type != unreachable) {
+        curr->type != unreachable &&
+        curr->target != getFunction()->name) {
       // nest the call in a block. that way the location of the pointer to the call will not
       // change even if we inline multiple times into the same function, otherwise
       // call1(call2()) might be a problem
@@ -144,11 +155,7 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
   }
 
   void doWalkFunction(Function* func) {
-    // we shouldn't inline into us if we are to be inlined
-    // ourselves - that has the risk of cycles
-    if (state->worthInlining.count(func->name) == 0) {
-      walk(func->body);
-    }
+    walk(func->body);
   }
 
 private:
@@ -261,7 +268,9 @@ struct Inlining : public Pass {
     InliningState state;
     for (auto& func : module->functions) {
       // on the first iteration, allow multiple inlinings per function
-      if (infos[func->name].worthInlining(runner->options, firstIteration /* allowMultipleInliningsPerFunction */)) {
+      if (infos[func->name].worthInlining(runner->options,
+                                          firstIteration /* allowMultipleInliningsPerFunction */,
+                                          optimize)) {
         state.worthInlining.insert(func->name);
       }
     }
@@ -281,8 +290,22 @@ struct Inlining : public Pass {
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     std::unordered_set<Function*> inlinedInto; // which functions were inlined into
     for (auto& func : module->functions) {
+      // if we've inlined a function, don't inline into it in this iteration,
+      // avoid risk of loops
+      // note that we do not risk stalling progress, as each iteration() will
+      // inline at least one call before hitting this
+      if (inlinedUses.count(func->name)) continue;
       for (auto& action : state.actionsForFunction[func->name]) {
-        Name inlinedName = action.contents->name;
+        auto* inlinedFunction = action.contents;
+        // if we've inlined into a function, don't inline it in this iteration,
+        // avoid risk of loops
+        // note that we do not risk stalling progress, as each iteration() will
+        // inline at least one call before hitting this
+        if (inlinedInto.count(inlinedFunction)) continue;
+        Name inlinedName = inlinedFunction->name;
+#ifdef INLINING_DEBUG
+        std::cout << "inline " << inlinedName << " into " << func->name << '\n';
+#endif
         doInlining(module, func.get(), action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
@@ -301,7 +324,11 @@ struct Inlining : public Pass {
     funcs.erase(std::remove_if(funcs.begin(), funcs.end(), [&](const std::unique_ptr<Function>& curr) {
       auto name = curr->name;
       auto& info = infos[name];
-      return inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
+      bool canRemove = inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
+#ifdef INLINING_DEBUG
+      std::cout << "removing " << name << '\n';
+#endif
+      return canRemove;
     }), funcs.end());
     // return whether we did any work
     return inlinedUses.size() > 0;
@@ -325,7 +352,7 @@ struct Inlining : public Pass {
     runner.add("remove-unused-names");
     runner.add("coalesce-locals");
     runner.add("simplify-locals");
-    runner.add("vacuum");
+    runner.add("vacuum"); // TODO: move to end, or add another at the end
     runner.add("reorder-locals");
     runner.add("remove-unused-brs");
     runner.add("merge-blocks");
