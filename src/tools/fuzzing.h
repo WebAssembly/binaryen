@@ -56,11 +56,11 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm, std::string& filename) : wasm(wasm), builder(wasm) {
     auto input(read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
-    read_data(input);
+    readData(input);
   }
 
   TranslateToFuzzReader(Module& wasm, std::vector<char> input) : wasm(wasm), builder(wasm) {
-    read_data(input);
+    readData(input);
   }
 
   void pickPasses(OptimizationOptions& options) {
@@ -179,7 +179,7 @@ private:
   int xorFactor = 0;
 
 
-  void read_data(std::vector<char> input) {
+  void readData(std::vector<char> input) {
     bytes.swap(input);
     pos = 0;
     finishedInput = false;
