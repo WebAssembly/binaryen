@@ -17,7 +17,7 @@
 import os
 from support import run_command
 from shared import (
-    fail, fail_with_error, options,
+    fail, fail_with_error, files_with_pattern, options,
     WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
 )
 
@@ -25,15 +25,10 @@ from shared import (
 def test_wasm_link_metadata():
   print '\n[ checking wasm-link-metadata testcases... ]\n'
 
-  lld_path = os.path.join(options.binaryen_test, 'lld')
-  for obj_file in sorted(os.listdir(lld_path)):
-    if not obj_file.endswith('.o'):
-      continue
-    print '..', obj_file
-    json_file = obj_file.replace('.o', '.json')
-    expected_file = os.path.join(lld_path, json_file)
+  for obj_path in files_with_pattern(options.binaryen_test, 'lld', '*.o'):
+    print '..', obj_path
+    expected_file = obj_path.replace('.o', '.json')
 
-    obj_path = os.path.join(lld_path, obj_file)
     cmd = WASM_LINK_METADATA + [obj_path]
     actual = run_command(cmd)
 
@@ -48,12 +43,8 @@ def test_wasm_link_metadata():
 def test_wasm_emscripten_finalize():
   print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
 
-  lld_path = os.path.join(options.binaryen_test, 'lld')
-  for wast_file in sorted(os.listdir(lld_path)):
-    if not wast_file.endswith('.wast'):
-      continue
-    print '..', wast_file
-    wast_path = os.path.join(lld_path, wast_file)
+  for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
+    print '..', wast_path
     expected_file = wast_path + '.out'
     cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S']
     actual = run_command(cmd)

@@ -1,5 +1,6 @@
 import argparse
 import difflib
+import glob
 import os
 import shutil
 import subprocess
@@ -432,3 +433,7 @@ def minify_check(wast, verify_final_result=True):
     os.unlink('a.wast')
   if os.path.exists('b.wast'):
     os.unlink('b.wast')
+
+
+def files_with_pattern(*path_pattern):
+  return sorted(glob.glob(os.path.join(*path_pattern)))
