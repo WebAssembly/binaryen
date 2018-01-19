@@ -36,11 +36,7 @@
 using namespace cashew;
 using namespace wasm;
 
-void parseLinkingSection(
-    std::vector<char> const& data,
-    Module& wasm,
-    uint32_t &dataSize,
-    std::vector<Name> &initializerFunctions) {
+void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
   unsigned idx = 0;
   auto get = [&idx, &data](){ return data[idx++]; };
   auto readNext = [get](){
@@ -48,12 +44,6 @@ void parseLinkingSection(
     leb.read(get);
     return leb.value;
   };
-
-  uint32_t importedFunctions = 0;
-  for (auto& import : wasm.imports) {
-    if (import->kind != ExternalKind::Function) continue;
-    importedFunctions++;
-  }
 
   while (idx < data.size()) {
     ABI::LinkType type = static_cast<ABI::LinkType>(readNext());
@@ -63,18 +53,6 @@ void parseLinkingSection(
     switch(type) {
     case ABI::WASM_DATA_SIZE: {
       dataSize = readNext();
-      break;
-    }
-    case ABI::WASM_INIT_FUNCS: {
-      uint32_t numInit = readNext();
-      for (uint32_t i = 0; i < numInit; ++i) {
-        uint32_t priority = readNext();
-        (void)priority;
-        uint32_t rawIdx = readNext();
-        uint32_t functionIdx = rawIdx - importedFunctions;
-        auto name = wasm.functions[functionIdx]->name;
-        initializerFunctions.push_back(name);
-      }
       break;
     }
     default: {
@@ -122,13 +100,14 @@ int main(int argc, const char *argv[]) {
   }
 
   uint32_t dataSize = 0;
-  std::vector<Name> initializerFunctions;
-
   for (auto &section : wasm.userSections) {
     if (section.name == "linking") {
-      parseLinkingSection(section.data, wasm, dataSize, initializerFunctions);
+      parseLinkingSection(section.data, dataSize);
     }
   }
+
+  std::vector<Name> initializerFunctions;
+  initializerFunctions.push_back("__wasm_call_ctors");
 
   EmscriptenGlueGenerator generator(wasm);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);

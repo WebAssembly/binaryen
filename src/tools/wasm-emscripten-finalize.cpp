@@ -54,23 +54,6 @@ int main(int argc, const char *argv[]) {
            [&emitBinary](Options*, const std::string &) {
              emitBinary = false;
            })
-      .add("--force-exports", "", "Comma-separated list of functions to export",
-           Options::Arguments::One,
-           [&forcedExports](Options *o, const std::string &argument) {
-              std::string name = "";
-              for (unsigned i = 0; i < argument.size(); ++i) {
-                char c = argument[i];
-                if (c == ',') {
-                  forcedExports.push_back(name);
-                  name = "";
-                } else {
-                  name += c;
-                }
-              }
-              if (name != "") {
-                forcedExports.push_back(name);
-              }
-           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
                         infile = argument;
@@ -91,23 +74,6 @@ int main(int argc, const char *argv[]) {
   if (options.debug) {
     std::cerr << "Module before:\n";
     WasmPrinter::printModule(&wasm, std::cerr);
-  }
-
-  // for (Name name : forcedExports) {
-  // TODO: only export initializer functions and maybe certain Emscripten-expected
-  // functions. Today lld assumes linking is done and only exports main by
-  // default, dynamic linking support should allow other symbols to be exported
-  // according to C visibility, which is less than all functions. For now this works.
-  for (auto& function : wasm.functions) {
-    auto name = function->name;
-    if (wasm.getExportOrNull(name)) {
-      continue;
-    }
-    auto exported = make_unique<Export>();
-    exported->name = name;
-    exported->value = name;
-    exported->kind = ExternalKind::Function;
-    wasm.addExport(exported.release());
   }
 
   EmscriptenGlueGenerator generator(wasm);

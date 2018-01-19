@@ -67,6 +67,7 @@ def generate_wast_files(lld_bin):
         obj_path, '-o', wasm_path,
         '--entry=main',
         '--allow-undefined',
+        '--export', '__wasm_call_ctors',
     ])
     try:
       run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])

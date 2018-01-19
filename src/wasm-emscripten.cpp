@@ -41,7 +41,7 @@ void addExportedFunction(Module& wasm, Function* function) {
 }
 
 Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
-  assert(wasm.globals.size() == 1);
+  // Assumption: first global is __stack_pointer
   return wasm.globals[0].get();
 }
 

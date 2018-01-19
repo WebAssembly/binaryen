@@ -1,1 +1,1 @@
-{ "asmConsts": {},"staticBump": 8, "initializers": ["init_x", "init_y"] }
+{ "asmConsts": {},"staticBump": 8, "initializers": ["__wasm_call_ctors"] }

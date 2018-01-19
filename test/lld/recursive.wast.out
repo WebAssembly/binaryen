@@ -1,15 +1,18 @@
 (module
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func (result i32)))
+ (type $2 (func))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (import "env" "printf" (func $import$0 (param i32 i32) (result i32)))
+ (import "env" "printf" (func $printf (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66592))
+ (global $global$1 i32 (i32.const 66592))
  (table 1 1 anyfunc)
  (memory $0 2)
  (data (i32.const 1024) "%d:%d\n\00Result: %d\n\00")
  (export "memory" (memory $0))
  (export "main" (func $main))
- (export "foo" (func $foo))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__heap_base" (global $global$1))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
@@ -33,7 +36,7 @@
    (get_local $var$0)
   )
   (drop
-   (call $import$0
+   (call $printf
     (i32.const 1024)
     (get_local $var$2)
    )
@@ -67,7 +70,7 @@
    )
   )
   (drop
-   (call $import$0
+   (call $printf
     (i32.const 1031)
     (get_local $var$0)
    )
@@ -80,10 +83,13 @@
   )
   (i32.const 0)
  )
- (func $stackSave (; 3 ;) (result i32)
+ (func $__wasm_call_ctors (; 3 ;) (type $2)
+  (nop)
+ )
+ (func $stackSave (; 4 ;) (result i32)
   (get_global $global$0)
  )
- (func $stackAlloc (; 4 ;) (param $0 i32) (result i32)
+ (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_global $global$0
    (tee_local $1
@@ -98,12 +104,12 @@
   )
   (get_local $1)
  )
- (func $stackRestore (; 5 ;) (param $0 i32)
+ (func $stackRestore (; 6 ;) (param $0 i32)
   (set_global $global$0
    (get_local $0)
   )
  )
- (func $__growWasmMemory (; 6 ;) (param $newSize i32) (result i32)
+ (func $__growWasmMemory (; 7 ;) (param $newSize i32) (result i32)
   (grow_memory
    (get_local $newSize)
   )
