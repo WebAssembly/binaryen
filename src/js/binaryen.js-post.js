@@ -1563,19 +1563,3 @@ Module['setDebugInfo'] = function(on) {
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
-
-// Instantiates a new unique instance of the API with its own memory etc.
-Module['instantiate'] = instantiate;
-return Module;
-
-} // end of instantiate
-
-// Module loader code borrowed from webpack
-if (typeof exports === 'object' && typeof module === 'object')
-  module.exports = instantiate();
-else if (typeof define === 'function' && define['amd'])
-  define([], instantiate);
-else if (typeof exports === 'object')
-  exports['Binaryen'] = instantiate();
-else
-  (typeof self !== "undefined" ? self : this)['Binaryen'] = instantiate();

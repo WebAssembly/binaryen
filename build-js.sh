@@ -586,5 +586,6 @@ export_function "_BinaryenSetAPITracing"
   -Isrc/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o bin/binaryen${OUT_FILE_SUFFIX}.js \
-  --pre-js src/js/binaryen.js-pre.js \
+  -s MODULARIZE_INSTANCE=1 \
+  -s 'EXPORT_NAME="Binaryen"' \
   --post-js src/js/binaryen.js-post.js
