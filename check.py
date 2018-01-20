@@ -369,7 +369,7 @@ def run_binaryen_js_tests():
         f.write(node_test_glue())
       f.write(test_src)
       f.close()
-      cmd = [engine, os.path.join(options.binaryen_bin, 'a.js')]
+      cmd = [engine, 'a.js']
       out = run_command(cmd, stderr=subprocess.STDOUT, cwd=options.binaryen_bin)
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
       if expected not in out:
