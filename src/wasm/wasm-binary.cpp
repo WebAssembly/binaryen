@@ -940,7 +940,10 @@ void WasmBinaryWriter::visitStore(Store *curr) {
 void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
   recurse(curr->value);
+  if (curr->value->type == unreachable) return;
 
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
@@ -991,8 +994,12 @@ void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
 void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
   recurse(curr->expected);
+  if (curr->expected->type == unreachable) return;
   recurse(curr->replacement);
+  if (curr->replacement->type == unreachable) return;
 
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
@@ -1027,8 +1034,12 @@ void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
 void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
   if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
   recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
   recurse(curr->expected);
+  if (curr->expected->type == unreachable) return;
   recurse(curr->timeout);
+  if (curr->timeout->type == unreachable) return;
 
   o << int8_t(BinaryConsts::AtomicPrefix);
   switch (curr->expectedType) {
@@ -1049,7 +1060,10 @@ void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
 void WasmBinaryWriter::visitAtomicWake(AtomicWake *curr) {
   if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
   recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
   recurse(curr->wakeCount);
+  if (curr->wakeCount->type == unreachable) return;
 
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
   emitMemoryAccess(4, 4, 0);
