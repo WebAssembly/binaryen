@@ -357,6 +357,8 @@ def run_binaryen_js_tests():
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
     if not s.endswith('.js'): continue
+    test_path = os.path.join(options.binaryen_test, file, s)
+    test_src = open(test_path).read()
     def test(engine, file):
       print file + ": " + s
       f = open('a.js', 'w')
@@ -364,8 +366,6 @@ def run_binaryen_js_tests():
       f.write(binaryen_js)
       if (engine == NODEJS):
         f.write(node_test_glue())
-      test_path = os.path.join(options.binaryen_test, file, s)
-      test_src = open(test_path).read()
       f.write(test_src)
       f.close()
       cmd = [engine, '../a.js']
