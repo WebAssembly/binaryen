@@ -357,28 +357,35 @@ def run_binaryen_js_tests():
 
   for s in sorted(os.listdir(os.path.join(options.binaryen_test, 'binaryen.js'))):
     if not s.endswith('.js'): continue
-    print s
-    f = open('a.js', 'w')
-    binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
-    f.write(binaryen_js)
-    if NODEJS:
-      f.write(node_test_glue())
-    test_path = os.path.join(options.binaryen_test, 'binaryen.js', s)
-    test_src = open(test_path).read()
-    f.write(test_src)
-    f.close()
-    def test(engine):
-      cmd = [engine, 'a.js']
-      out = run_command(cmd, stderr=subprocess.STDOUT)
-      expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
+    def test(engine, file):
+      print file + ": " + s
+      f = open('a.js', 'w')
+      binaryen_js = open(os.path.join(options.binaryen_bin, file)).read()
+      f.write(binaryen_js)
+      if (engine == NODEJS):
+        f.write(node_test_glue())
+      test_path = os.path.join(options.binaryen_test, file, s)
+      test_src = open(test_path).read()
+      f.write(test_src)
+      f.close()
+      cmd = [engine, '../a.js']
+      # FIXME: we need an explicit cwd here for now because binaryen-wasm.js
+      # otherwise can't find binaryen-wasm.wasm next to it (looks in cwd).
+      out = run_command(cmd, stderr=subprocess.STDOUT, cwd=os.path.dirname(options.binaryen_bin))
+      expected = open(os.path.join(options.binaryen_test, file, s + '.txt')).read()
       if expected not in out:
         fail(out, expected)
     # run in all possible shells
     if MOZJS:
-      test(MOZJS)
+      test(MOZJS, "binaryen.js")
+      test(MOZJS, "binaryen-wasm.js")
     if NODEJS:
       if node_has_wasm or not 'WebAssembly.' in test_src:
-        test(NODEJS)
+        test(NODEJS, "binaryen.js")
+        if node_has_wasm:
+          test(NODEJS, "binaryen-wasm.js")
+        else:
+          print 'Skipping ' + test_path + ' using binaryen-wasm.js because WebAssembly might not be supported'
       else:
         print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
 
