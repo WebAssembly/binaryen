@@ -1595,7 +1595,7 @@ if (Module['isReady']) {
         onRuntimeInitialized();
       Module['isReady'] = true;
       while (i < promises.length)
-        promises[i++].resolve();
+        promises[i++].resolve(Module);
     } catch (e) {
       Module['isError'] = e;
       while (i < promises.length)
@@ -1614,9 +1614,15 @@ Object.defineProperty(Module, 'ready', {
       if (Module['isError'])
         reject(Module['isError']);
       else if (Module['isReady'])
-        resolve();
+        resolve(Module);
       else
         promises.push({ resolve: resolve, reject: reject });
     });
   }
 });
+
+// Emulate the otherwise MODULARIZE-only 'then' functionality on top of 'ready'
+if (!Module['then'])
+  Module['then'] = function(callback) {
+    Module['ready']['then'](callback, function(err) { throw err; });
+  };
