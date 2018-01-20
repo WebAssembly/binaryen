@@ -369,7 +369,7 @@ def run_binaryen_js_tests():
         f.write(node_test_glue())
       f.write(test_src)
       f.close()
-      cmd = [engine, '../a.js']
+      cmd = [engine, os.getcwd() + '/a.js']
       # FIXME: we need an explicit cwd here for now because binaryen-wasm.js
       # otherwise can't find binaryen-wasm.wasm next to it (looks in cwd).
       out = run_command(cmd, stderr=subprocess.STDOUT, cwd=os.path.dirname(options.binaryen_bin))

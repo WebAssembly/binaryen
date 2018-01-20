@@ -153,6 +153,8 @@ def run_command(cmd, expected_status=0, stderr=None,
     assert stderr == subprocess.PIPE or stderr is None,\
         "Can't redirect stderr if using expected_err"
     stderr = subprocess.PIPE
+  if not cwd:
+    cwd = os.getcwd()
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, cwd=cwd)
   out, err = proc.communicate()
