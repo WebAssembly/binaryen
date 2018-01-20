@@ -966,21 +966,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       // optimize relooper label variable usage at the wasm level, where it is easy
       passRunner.add("relooper-jump-threading");
-    }, [&]() {
-      // beforeGlobalOptimizations
-      // if we added any helper functions (like non-trapping i32-div, etc.), then those
-      // have not been optimized (the optimizing builder has just been fed the asm.js
-      // functions). Optimize those now. Typically there are very few, just do it
-      // sequentially.
-      PassRunner passRunner(&wasm, passOptions);
-      passRunner.addDefaultFunctionOptimizationPasses();
-      for (auto& pair : trappingFunctions.getFunctions()) {
-        auto* func = pair.second;
-        passRunner.runOnFunction(func);
-      }
-      for (auto* func : extraSupportFunctions) {
-        passRunner.runOnFunction(func);
-      }
     }, debug, false /* do not validate globally yet */);
   }
 
@@ -1190,6 +1175,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
+    // if we added any helper functions (like non-trapping i32-div, etc.), then those
+    // have not been optimized (the optimizing builder has just been fed the asm.js
+    // functions). Optimize those now. Typically there are very few, just do it
+    // sequentially.
+    PassRunner passRunner(&wasm, passOptions);
+    passRunner.addDefaultFunctionOptimizationPasses();
+    for (auto& pair : trappingFunctions.getFunctions()) {
+      auto* func = pair.second;
+      passRunner.runOnFunction(func);
+    }
+    for (auto* func : extraSupportFunctions) {
+      passRunner.runOnFunction(func);
+    }
   }
   wasm.debugInfoFileNames = std::move(preprocessor.debugInfoFileNames);
 
@@ -1382,7 +1380,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   };
 
-  PassRunner passRunner(&wasm);
+  PassRunner passRunner(&wasm, passOptions);
   passRunner.setFeatures(passOptions.features);
   if (debug) {
     passRunner.setDebug(true);
@@ -1410,6 +1408,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   if (preprocessor.debugInfo) {
     passRunner.add<ApplyDebugInfo>();
     passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
+  }
+  if (runOptimizationPasses) {
+    // do final global optimizations after all function work is done
+    // (e.g. duplicate funcs may appear thanks to that work)
+    passRunner.addDefaultGlobalOptimizationPostPasses();
   }
   passRunner.run();
 

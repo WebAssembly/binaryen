@@ -666,9 +666,20 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
 
   void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
     prepare();
   }
+
+  // locations in the output binary for the various parts of the module
+  struct TableOfContents {
+    struct Entry {
+      Name name;
+      size_t offset; // where the entry starts
+      size_t size; // the size of the entry
+      Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
+    };
+    std::vector<Entry> functionBodies;
+  } tableOfContents;
 
   void setNamesSection(bool set) { debugInfo = set; }
   void setSourceMap(std::ostream* set, std::string url) {
@@ -791,7 +802,7 @@ public:
 class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
-  std::vector<char>& input;
+  const std::vector<char>& input;
   bool debug;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
@@ -803,7 +814,7 @@ class WasmBinaryBuilder {
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
+  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);

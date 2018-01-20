@@ -81,9 +81,6 @@ optimized:
     )
    )
   )
-  (set_local $1
-   (i32.const 0)
-  )
   (loop $clear
    (i32.store8
     (get_local $1)

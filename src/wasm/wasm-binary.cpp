@@ -287,6 +287,7 @@ void WasmBinaryWriter::writeFunctions() {
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
       o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
+    tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
   }
   currFunction = nullptr;
   finishSection(start);

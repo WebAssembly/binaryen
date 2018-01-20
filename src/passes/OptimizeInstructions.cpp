@@ -506,7 +506,43 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
         // note that both left and right may be consts, but then we let precompute compute the constant result
-      } else if (binary->op == AddInt32 || binary->op == SubInt32) {
+      } else if (binary->op == AddInt32) {
+        // try to get rid of (0 - ..), that is, a zero only used to negate an
+        // int. an add of a subtract can be flipped in order to remove it:
+        //   (i32.add
+        //     (i32.sub
+        //       (i32.const 0)
+        //       X
+        //     )
+        //     Y
+        //   )
+        // =>
+        //   (i32.sub
+        //     Y
+        //     X
+        //   )
+        if (auto* sub = binary->left->dynCast<Binary>()) {
+          if (sub->op == SubInt32) {
+            if (auto* subZero = sub->left->dynCast<Const>()) {
+              if (subZero->value.geti32() == 0) {
+                sub->left = binary->right;
+                return sub;
+              }
+            }
+          }
+        }
+        if (auto* sub = binary->right->dynCast<Binary>()) {
+          if (sub->op == SubInt32) {
+            if (auto* subZero = sub->left->dynCast<Const>()) {
+              if (subZero->value.geti32() == 0) {
+                sub->left = binary->left;
+                return sub;
+              }
+            }
+          }
+        }
+        return optimizeAddedConstants(binary);
+      } else if (binary->op == SubInt32) {
         return optimizeAddedConstants(binary);
       }
       // a bunch of operations on a constant right side can be simplified

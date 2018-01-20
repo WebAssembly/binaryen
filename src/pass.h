@@ -63,6 +63,18 @@ struct PassOptions {
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
   bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
   FeatureSet features = Feature::MVP; // Which wasm features to accept, and be allowed to use
+
+  void setDefaultOptimizationOptions() {
+    // -Os is our default
+    optimizeLevel = 2;
+    shrinkLevel = 1;
+  }
+
+  static PassOptions getWithDefaultOptimizationOptions() {
+    PassOptions ret;
+    ret.setDefaultOptimizationOptions();
+    return ret;
+  }
 };
 
 //

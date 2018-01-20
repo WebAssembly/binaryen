@@ -1,0 +1,33 @@
+=== default ===
+debugInfo=false
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (export "test" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+ )
+)
+
+=== with debug info ===
+debugInfo=true
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (export "test" (func $test))
+ (func $test (; 0 ;) (type $0)
+  (nop)
+ )
+)
+
+=== without debug info ===
+debugInfo=false
+(module
+ (type $0 (func))
+ (memory $0 0)
+ (export "test" (func $0))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+ )
+)
+

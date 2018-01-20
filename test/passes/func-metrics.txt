@@ -1,22 +1,51 @@
-total
- [funcs]        : 1       
+global
+ [funcs]        : 3       
  [memory-data]  : 9       
  [table-data]   : 3       
- [total]        : 41      
+ [total]        : 18      
+ const          : 3       
+func: empty
+ [binary-bytes] : 3       
+ [total]        : 4       
+ [vars]         : 0       
+ nop            : 1       
+func: small
+ [binary-bytes] : 9       
+ [total]        : 14      
+ [vars]         : 0       
+ block          : 1       
+ const          : 1       
+ drop           : 1       
+ nop            : 1       
+ return         : 1       
+func: ifs
+ [binary-bytes] : 51      
+ [total]        : 76      
  [vars]         : 1       
  binary         : 1       
  block          : 1       
- const          : 15      
+ const          : 12      
  drop           : 6       
  if             : 4       
 (module
  (type $0 (func (param i32)))
+ (type $1 (func))
  (global $glob i32 (i32.const 1337))
  (table 256 256 anyfunc)
  (elem (i32.const 0) $ifs $ifs $ifs)
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
- (func $ifs (; 0 ;) (type $0) (param $x i32)
+ (func $empty (; 0 ;) (type $1)
+  (nop)
+ )
+ (func $small (; 1 ;) (type $1)
+  (nop)
+  (drop
+   (i32.const 100421)
+  )
+  (return)
+ )
+ (func $ifs (; 2 ;) (type $0) (param $x i32)
   (local $y f32)
   (block $block0
    (if
@@ -56,9 +85,8 @@ total
   )
  )
 )
-total
+global
  [funcs]        : 0       
  [total]        : 0       
- [vars]         : 0       
 (module
 )

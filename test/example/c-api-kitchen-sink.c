@@ -514,7 +514,9 @@ void test_binaries() {
                           y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
     BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
     BinaryenFunctionRef adder = BinaryenAddFunction(module, "adder", iii, NULL, 0, add);
+    BinaryenSetDebugInfo(1); // include names section
     size = BinaryenModuleWrite(module, buffer, 1024); // write out the module
+    BinaryenSetDebugInfo(0);
     BinaryenModuleDispose(module);
   }
 
