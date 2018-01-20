@@ -155,7 +155,7 @@ def run_command(cmd, expected_status=0, stderr=None,
     stderr = subprocess.PIPE
   if not cwd:
     cwd = os.getcwd()
-  print 'executing: ', ' '.join(cmd)
+  print 'executing: ', ' '.join(cmd), '[cwd=' + cwd + ']'
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, cwd=cwd)
   out, err = proc.communicate()
   code = proc.returncode
