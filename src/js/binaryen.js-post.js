@@ -1577,31 +1577,32 @@ try {
   Module['isReady'] = false;
 }
 
-// Remembers all the promises we make in an asynchronous build
+// Remember all the promises we make in an asynchronous build
 var promises = [];
 
 // Initialize right away if synchronous
 if (Module['isReady']) {
   initializeConstants();
 
-// Otherwise wait for the runtime to become ready
+// Otherwise wait for the runtime to ready up, resolving collected promises
 } else {
   var onRuntimeInitialized = Module['onRuntimeInitialized'];
   Module['onRuntimeInitialized'] = function() {
+    var i = 0;
     try {
       initializeConstants();
       if (onRuntimeInitialized)
         onRuntimeInitialized();
       Module['isReady'] = true;
-      promises.forEach(function(promise) {
-        promise.resolve();
-      });
+      while (i < promises.length)
+        promises[i++].resolve();
     } catch (e) {
-      promises.forEach(function(promise) {
-        promise.reject(e);
-      });
+      Module['isError'] = e;
+      while (i < promises.length)
+        promises[i++].reject(e);
+    } finally {
+      promises = [];
     }
-    promises.length = 0;
   };
 }
 
@@ -1610,11 +1611,12 @@ if (Module['isReady']) {
 Object.defineProperty(Module, 'ready', {
   get: function() {
     return new Promise(function(resolve, reject) {
-      if (Module['isReady']) {
+      if (Module['isError'])
+        reject(Module['isError']);
+      else if (Module['isReady'])
         resolve();
-      } else {
+      else
         promises.push({ resolve: resolve, reject: reject });
-      }
     });
   }
 });
