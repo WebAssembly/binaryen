@@ -174,6 +174,9 @@ private:
   // Whether to emit atomics
   static const bool ATOMICS = true;
 
+  // Whether to emit atomic waits (which in single-threaded mode, may hang...)
+  static const bool ATOMIC_WAITS = false;
+
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
@@ -1242,7 +1245,7 @@ private:
     if (!ATOMICS || (type != i32 && type != i64)) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
-      if (oneIn(2)) {
+      if (ATOMIC_WAITS && oneIn(2)) {
         auto* ptr = makePointer();
         auto expectedType = pick(i32, i64);
         auto* expected = make(expectedType);
