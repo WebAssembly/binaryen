@@ -1,5 +1,6 @@
-
 // kitchen sink, tests the full API
+
+Binaryen.ready.then(main, function(err) { throw err; });
 
 function cleanInfo(info) {
   var ret = {};
@@ -585,6 +586,3 @@ function main() {
   test_tracing();
   test_parsing();
 }
-
-main();
-

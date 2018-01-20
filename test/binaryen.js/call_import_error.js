@@ -1,13 +1,17 @@
-var module = new Binaryen.Module();
+Binaryen.ready.then(main, function(err) { throw err; });
 
-var signature = module.addFunctionType("v", Binaryen.none, []);
-module.addFunctionImport("fn", "env", "fn", signature);
+function main() {
+  var module = new Binaryen.Module();
 
-module.addFunction("main", signature, [], module.block("", [
-  module.call("fn", [], Binaryen.none) // should be callImport
-]));
-module.addFunctionExport("main", "main");
+  var signature = module.addFunctionType("v", Binaryen.none, []);
+  module.addFunctionImport("fn", "env", "fn", signature);
 
-console.log(module.emitText());
+  module.addFunction("main", signature, [], module.block("", [
+    module.call("fn", [], Binaryen.none) // should be callImport
+  ]));
+  module.addFunctionExport("main", "main");
 
-module.validate(); // fails
+  console.log(module.emitText());
+
+  module.validate(); // fails
+}

@@ -1,4 +1,6 @@
-(function() {
+Binaryen.ready.then(main, function(err) { throw err; });
+
+function testMissingGlobal() {
   var mod = new Binaryen.Module();
   var funcType = mod.addFunctionType("v", Binaryen.void, []);
   var func = mod.addFunction("test", funcType, [],
@@ -10,9 +12,9 @@
   );
   mod.addExport("test", func);
   console.log(mod.validate())
-})();
+}
 
-(function() {
+function testMissingLocal() {
   var mod = new Binaryen.Module();
   var funcType = mod.addFunctionType("v", Binaryen.void, []);
   var func = mod.addFunction("test", funcType, [],
@@ -24,5 +26,9 @@
   );
   mod.addFunctionExport("test", "test", func);
   console.log(mod.validate())
-})();
+}
 
+function main() {
+  testMissingGlobal();
+  testMissingLocal();
+}

@@ -1,11 +1,15 @@
-var module = new Binaryen.Module();
+Binaryen.ready.then(main, function(err) { throw err; });
 
-var signature = module.addFunctionType("ii", Binaryen.i32, [ Binaryen.i32 ]);
+function main() {
+  var module = new Binaryen.Module();
 
-module.addFunction("main", signature, [], module.getLocal(0, Binaryen.i32));
+  var signature = module.addFunctionType("ii", Binaryen.i32, [ Binaryen.i32 ]);
 
-module.addFunctionExport("main", "main");
+  module.addFunction("main", signature, [], module.getLocal(0, Binaryen.i32));
 
-module.validate(); // should validate before calling emitAsmjs
+  module.addFunctionExport("main", "main");
 
-console.log(module.emitAsmjs());
+  module.validate(); // should validate before calling emitAsmjs
+
+  console.log(module.emitAsmjs());
+}
