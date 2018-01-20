@@ -146,8 +146,6 @@ echo "building wasm.js"
   -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
 
-echo "building binaryen.js"
-
 function export_function { if [ -z ${EXPORTED_FUNCTIONS} ]; then EXPORTED_FUNCTIONS='"'$1'"'; else EXPORTED_FUNCTIONS=${EXPORTED_FUNCTIONS}',"'$1'"'; fi }
 
 # Types
@@ -585,6 +583,8 @@ export_function "_RelooperRenderAndDispose"
 # Tracing
 export_function "_BinaryenSetAPITracing"
 
+echo "building binaryen.js"
+
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/binaryen-c.cpp \
@@ -592,6 +592,21 @@ export_function "_BinaryenSetAPITracing"
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
   -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -s MODULARIZE_INSTANCE=1 \
+  -s 'EXPORT_NAME="Binaryen"' \
+  --post-js $BINARYEN_SRC/js/binaryen.js-post.js
+
+echo "building binaryen-wasm.js"
+
+"$EMSCRIPTEN/em++" \
+  $EMCC_ARGS \
+  $BINARYEN_SRC/binaryen-c.cpp \
+  shared.bc \
+  -I$BINARYEN_SRC/ \
+  -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
+  -o $BINARYEN_BIN/binaryen-wasm${OUT_FILE_SUFFIX}.js \
+  -s BINARYEN=1 \
+  -s 'BINARYEN_METHOD="native-wasm"' \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
   --post-js $BINARYEN_SRC/js/binaryen.js-post.js
