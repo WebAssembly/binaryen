@@ -411,6 +411,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(' ;
     prepareColor(o);
     o << printWasmType(curr->expectedType) << ".wait";
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
     restoreNormalColor(o);
     incIndent();
     printFullLine(curr->ptr);
@@ -420,6 +423,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitAtomicWake(AtomicWake* curr) {
     printOpening(o, "wake");
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
     incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->wakeCount);

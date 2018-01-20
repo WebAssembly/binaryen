@@ -1247,11 +1247,11 @@ private:
         auto expectedType = pick(i32, i64);
         auto* expected = make(expectedType);
         auto* timeout = make(i64);
-        return builder.makeAtomicWait(ptr, expected, timeout, expectedType);
+        return builder.makeAtomicWait(ptr, expected, timeout, expectedType, logify(get()));
       } else {
         auto* ptr = makePointer();
         auto* count = make(i32);
-        return builder.makeAtomicWake(ptr, count);
+        return builder.makeAtomicWake(ptr, count, logify(get()));
       }
     }
     Index bytes;

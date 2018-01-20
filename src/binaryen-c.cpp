@@ -809,7 +809,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIn
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType expectedType) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicWait((Expression*)ptr, (Expression*)expected, (Expression*)timeout, WasmType(expectedType));
+  auto* ret = Builder(*((Module*)module)).makeAtomicWait((Expression*)ptr, (Expression*)expected, (Expression*)timeout, WasmType(expectedType), 0);
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -819,7 +819,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpre
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicWake((Expression*)ptr, (Expression*)wakeCount);
+  auto* ret = Builder(*((Module*)module)).makeAtomicWake((Expression*)ptr, (Expression*)wakeCount, 0);
 
   if (tracing) {
     auto id = noteExpression(ret);
