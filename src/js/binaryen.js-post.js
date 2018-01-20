@@ -1569,14 +1569,52 @@ Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
 
-// When instantiating lazily, initialize once ready
-if (Module['then']) {
+// Check if this is a synchronous or asynchronous build
+try {
+  Module['_BinaryenTypeNone'](); // conveniently throws
+  Module['isReady'] = true;
+} catch (e) {
+  Module['isReady'] = false;
+}
+
+// Remembers all the promises we make in an asynchronous build
+var promises = [];
+
+// Initialize right away if synchronous
+if (Module['isReady']) {
+  initializeConstants();
+
+// Otherwise wait for the runtime to become ready
+} else {
   var onRuntimeInitialized = Module['onRuntimeInitialized'];
   Module['onRuntimeInitialized'] = function() {
-    initializeConstants();
-    if (onRuntimeInitialized)
-      onRuntimeInitialized();
+    try {
+      initializeConstants();
+      if (onRuntimeInitialized)
+        onRuntimeInitialized();
+      Module['isReady'] = true;
+      promises.forEach(function(promise) {
+        promise.resolve();
+      });
+    } catch (e) {
+      promises.forEach(function(promise) {
+        promise.reject(e);
+      });
+    }
+    promises.length = 0;
+  };
+}
+
+// Provide a mechanism to tell when the module is ready. Usage is:
+// Binaryen.ready.then(function onSuccess() { .. }, function onError() { .. })
+Object.defineProperty(Module, 'ready', {
+  get: function() {
+    return new Promise(function(resolve, reject) {
+      if (Module['isReady']) {
+        resolve();
+      } else {
+        promises.push({ resolve: resolve, reject: reject });
+      }
+    });
   }
-// Otherwise initialize right away
-} else
-  initializeConstants();
+});
