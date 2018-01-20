@@ -152,3 +152,48 @@ export: b (func_b)
   (call $waka)
  )
 )
+global
+ [funcs]        : 1       
+func: func_a
+ [binary-bytes] : 12      
+ [total]        : 6       
+ block          : 1       
+ call_import    : 5       
+export: a (func_a)
+ [removable-bytes-without-it]: 7       
+start: func_a
+ [removable-bytes-without-it]: 3       
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (start $func_a)
+ (func $func_a (; 1 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+global
+ [funcs]        : 1       
+func: func_a
+ [binary-bytes] : 12      
+ [total]        : 6       
+ block          : 1       
+ call_import    : 5       
+start: func_a
+ [removable-bytes-without-it]: 67      
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $waka))
+ (start $func_a)
+ (func $func_a (; 1 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)

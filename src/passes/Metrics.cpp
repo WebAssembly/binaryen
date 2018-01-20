@@ -116,12 +116,20 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
         Module test;
         ModuleUtils::copyModule(*module, test);
         test.removeExport(exp->name);
-        auto size = sizeAfterGlobalCleanup(&test);
         counts.clear();
-        counts["[removable-bytes-without-it]"] = baseline - size;
+        counts["[removable-bytes-without-it]"] = baseline - sizeAfterGlobalCleanup(&test);
         printCounts(std::string("export: ") + exp->name.str + " (" + exp->value.str + ')');
       }
-      // can't comapre detailed info between passes yet
+      // check how much size depends on the start method
+      if (!module->start.isNull()) {
+        Module test;
+        ModuleUtils::copyModule(*module, test);
+        test.start = Name();
+        counts.clear();
+        counts["[removable-bytes-without-it]"] = baseline - sizeAfterGlobalCleanup(&test);
+        printCounts(std::string("start: ") + module->start.str);
+      }
+      // can't compare detailed info between passes yet
       lastMetricsPass = nullptr;
     } else {
       // add function info

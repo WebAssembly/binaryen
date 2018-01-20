@@ -98,4 +98,28 @@
   (call $waka)
  )
 )
+;; start size checking
+(module
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (start $func_a)
+ (func $func_a
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+(module
+ (import "env" "waka" (func $waka))
+ (start $func_a)
+ (func $func_a
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
 
