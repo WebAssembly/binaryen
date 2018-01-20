@@ -56,13 +56,11 @@ class TranslateToFuzzReader {
 public:
   TranslateToFuzzReader(Module& wasm, std::string& filename) : wasm(wasm), builder(wasm) {
     auto input(read_file<std::vector<char>>(filename, Flags::Binary, Flags::Release));
-    bytes.swap(input);
-    pos = 0;
-    finishedInput = false;
-    // ensure *some* input to be read
-    if (bytes.size() == 0) {
-      bytes.push_back(0);
-    }
+    readData(input);
+  }
+
+  TranslateToFuzzReader(Module& wasm, std::vector<char> input) : wasm(wasm), builder(wasm) {
+    readData(input);
   }
 
   void pickPasses(OptimizationOptions& options) {
@@ -179,6 +177,17 @@ private:
   // after we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
+
+
+  void readData(std::vector<char> input) {
+    bytes.swap(input);
+    pos = 0;
+    finishedInput = false;
+    // ensure *some* input to be read
+    if (bytes.size() == 0) {
+      bytes.push_back(0);
+    }
+  }
 
   int8_t get() {
     if (pos == bytes.size()) {
