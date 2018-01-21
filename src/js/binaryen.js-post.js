@@ -1,4 +1,4 @@
-// export friendly API methods
+// BEGIN FRIENDLY API
 
 function preserveStack(func) {
   try {
@@ -1569,7 +1569,11 @@ Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
 
-// Check if this is a synchronous or asynchronous build
+// END OF FRIENDLY API
+
+// Check if this is a synchronous or asynchronous build. This isn't relevant
+// for binaryen.js, but for binaryen-wasm.js in environments where the
+// underlying .wasm file is loaded asynchronously.
 try {
   Module['_BinaryenTypeNone'](); // conveniently throws
   Module['isReady'] = true;
@@ -1577,10 +1581,10 @@ try {
   Module['isReady'] = false;
 }
 
-// Remember all the promises we make in an asynchronous build
+// Remember all the promises we make in an asynchronous scenario
 var promises = [];
 
-// Initialize right away if synchronous
+// Initialize right away in a synchronous scenario
 if (Module['isReady']) {
   initializeConstants();
 
@@ -1606,8 +1610,9 @@ if (Module['isReady']) {
   };
 }
 
-// Provide a mechanism to tell when the module is ready. Usage is:
-// Binaryen.ready.then(function onSuccess() { .. }, function onError() { .. })
+// Provide a mechanism to tell when the module is ready that is independent of
+// whether using binaryen.js or binaryen-wasm.js and the environment. Usage is:
+// Binaryen.ready.then(function onSuccess() { .. }, function onError(e) { .. })
 Object.defineProperty(Module, 'ready', {
   get: function() {
     return new Promise(function(resolve, reject) {
@@ -1620,9 +1625,3 @@ Object.defineProperty(Module, 'ready', {
     });
   }
 });
-
-// Emulate the otherwise MODULARIZE-only 'then' functionality on top of 'ready'
-if (!Module['then'])
-  Module['then'] = function(callback) {
-    Module['ready']['then'](callback, function(err) { throw err; });
-  };
