@@ -1,5 +1,6 @@
 import argparse
 import difflib
+import glob
 import os
 import shutil
 import subprocess
@@ -169,6 +170,9 @@ WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
+WASM_LINK_METADATA = [os.path.join(options.binaryen_bin, 'wasm-link-metadata')]
+WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
+                                         'wasm-emscripten-finalize')]
 
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]
@@ -429,3 +433,7 @@ def minify_check(wast, verify_final_result=True):
     os.unlink('a.wast')
   if os.path.exists('b.wast'):
     os.unlink('b.wast')
+
+
+def files_with_pattern(*path_pattern):
+  return sorted(glob.glob(os.path.join(*path_pattern)))

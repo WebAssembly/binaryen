@@ -42,6 +42,9 @@ public:
   void readBinary(std::string filename, Module& wasm);
   // read text or binary, checking the contents for what it is
   void read(std::string filename, Module& wasm);
+
+  // check whether a file is a wasm binary
+  bool isBinaryFile(std::string filename);
 };
 
 class ModuleWriter : public ModuleIO {

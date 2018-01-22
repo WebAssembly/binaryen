@@ -29,7 +29,8 @@ public:
   EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
     : wasm(wasm),
       builder(wasm),
-      stackPointerOffset(stackPointerOffset) { }
+      stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) { }
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
@@ -41,13 +42,18 @@ public:
   std::string generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions);
 
+  // Replace placeholder emscripten_asm_const functions with *_signature versions.
+  void fixEmAsmConsts();
+
 private:
   Module& wasm;
   Builder builder;
   Address stackPointerOffset;
+  bool useStackPointerGlobal;
 
-  Load* generateLoadStackPointer();
-  Store* generateStoreStackPointer(Expression* value);
+  Global* getStackPointerGlobal();
+  Expression* generateLoadStackPointer();
+  Expression* generateStoreStackPointer(Expression* value);
   void generateStackSaveFunction();
   void generateStackAllocFunction();
   void generateStackRestoreFunction();
