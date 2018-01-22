@@ -45,6 +45,8 @@ cmake_install.cmake
 *.vcxproj*
 *.dir/
 *.sln
+*.sdf
+*.VC.opendb
 bin/
 lib/
 Win32/

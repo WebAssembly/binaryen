@@ -275,6 +275,28 @@ SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS s2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+SET(wasm-link-metadata_SOURCES
+  src/tools/wasm-link-metadata.cpp
+  src/wasm-emscripten.cpp
+)
+ADD_EXECUTABLE(wasm-link-metadata
+               ${wasm-link-metadata_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-link-metadata passes wasm asmjs ir cfg support)
+SET_PROPERTY(TARGET wasm-link-metadata PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-link-metadata PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-link-metadata DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+SET(wasm-emscripten-finalize_SOURCES
+  src/tools/wasm-emscripten-finalize.cpp
+  src/wasm-emscripten.cpp
+)
+ADD_EXECUTABLE(wasm-emscripten-finalize
+               ${wasm-emscripten-finalize_SOURCES})
+TARGET_LINK_LIBRARIES(wasm-emscripten-finalize passes wasm asmjs ir cfg support)
+SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD 11)
+SET_PROPERTY(TARGET wasm-emscripten-finalize PROPERTY CXX_STANDARD_REQUIRED ON)
+INSTALL(TARGETS wasm-emscripten-finalize DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 SET(wasm_as_SOURCES
   src/tools/wasm-as.cpp
 )

@@ -490,7 +490,9 @@ function test_binaries() {
         y = module.getLocal(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
+    Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
+    Binaryen.setDebugInfo(false);
     size = buffer.length; // write out the module
     module.dispose();
   }

@@ -421,10 +421,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitGetGlobal(GetGlobal* curr) {
+    if (curr->type != i64) return;
     assert(false && "GetGlobal not implemented");
   }
 
   void visitSetGlobal(SetGlobal* curr) {
+    if (curr->type != i64) return;
     assert(false && "SetGlobal not implemented");
   }
 

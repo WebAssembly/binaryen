@@ -656,10 +656,36 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 //  @return 0 if an error occurred, 1 if validated succesfully
 int BinaryenModuleValidate(BinaryenModuleRef module);
 
-// Runs the standard optimization passes on the module.
+// Runs the standard optimization passes on the module. Uses the currently set
+// global optimize and shrink level.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
 
-// Runs the specified passes on the module.
+// Gets the currently set optimize level. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
+int BinaryenGetOptimizeLevel();
+
+// Sets the optimization level to use. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
+void BinaryenSetOptimizeLevel(int level);
+
+// Gets the currently set shrink level. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -Os (default), -Oz.
+int BinaryenGetShrinkLevel();
+
+// Sets the shrink level to use. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -Os (default), -Oz.
+void BinaryenSetShrinkLevel(int level);
+
+// Gets whether generating debug information is currently enabled or not.
+// Applies to all modules, globally.
+int BinaryenGetDebugInfo();
+
+// Enables or disables debug information in emitted binaries.
+// Applies to all modules, globally.
+void BinaryenSetDebugInfo(int on);
+
+// Runs the specified passes on the module. Uses the currently set global
+// optimize and shrink level.
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 // Auto-generate drop() operations where needed. This lets you generate code without
@@ -667,7 +693,7 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, Bina
 // but simpler to use autodrop).
 void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 
-// Serialize a module into binary form.
+// Serialize a module into binary form. Uses the currently set global debugInfo option.
 // @return how many bytes were written. This will be less than or equal to outputSize
 size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
 
@@ -713,10 +739,12 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func, BinaryenIndex inde
 // Gets the body of the specified `Function`.
 BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
 
-// Runs the standard optimization passes on the function.
+// Runs the standard optimization passes on the function. Uses the currently set
+// global optimize and shrink level.
 void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);
 
-// Runs the specified passes on the function.
+// Runs the specified passes on the function. Uses the currently set global
+// optimize and shrink level.
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 //

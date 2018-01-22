@@ -724,6 +724,7 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
+  void writeUserSections();
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
@@ -802,7 +803,7 @@ public:
 class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
-  std::vector<char>& input;
+  const std::vector<char>& input;
   bool debug;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
@@ -814,7 +815,14 @@ class WasmBinaryBuilder {
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
+  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug)
+    : wasm(wasm),
+      allocator(wasm.allocator),
+      input(input),
+      debug(debug),
+      sourceMap(nullptr),
+      nextDebugLocation(0, { 0, 0, 0 }),
+      useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);

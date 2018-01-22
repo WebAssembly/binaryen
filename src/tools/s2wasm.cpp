@@ -184,7 +184,7 @@ int main(int argc, const char *argv[]) {
       std::cerr << "Emscripten gluing..." << std::endl;
       WasmPrinter::printModule(&wasm, std::cerr);
     }
-    metadata = emscriptenGlue(
+    metadata = ";; METADATA: " + emscriptenGlue(
       wasm,
       allowMemoryGrowth,
       linker.getStackPointerAddress(),

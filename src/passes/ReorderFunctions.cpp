@@ -19,6 +19,13 @@
 // binaries because fewer bytes are needed to encode references to frequently
 // used functions.
 //
+// This may incur a tradeoff, though, as while it reduces binary size, it may
+// increase gzip size. This might be because the new order has the functions in
+// a less beneficial position for compression, that is, mutually-compressible
+// functions are no longer together (when they were before, in the original order,
+// the has some natural tendency one way or the other). TODO: investigate
+// similarity ordering here.
+//
 
 
 #include <memory>
@@ -28,10 +35,41 @@
 
 namespace wasm {
 
-struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions>> {
-  std::map<Name, uint32_t> counts;
+typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
 
-  void visitModule(Module *module) {
+struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
+  bool isFunctionParallel() override { return true; }
+
+  CallCountScanner(NameCountMap* counts) : counts(counts) {}
+
+  CallCountScanner* create() override {
+    return new CallCountScanner(counts);
+  }
+
+  void visitCall(Call* curr) {
+    assert(counts->count(curr->target) > 0); // can't add a new element in parallel
+    (*counts)[curr->target]++;
+  }
+
+private:
+  NameCountMap* counts;
+};
+
+struct ReorderFunctions : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    NameCountMap counts;
+    // fill in info, as we operate on it in parallel (each function to its own entry)
+    for (auto& func : module->functions) {
+      counts[func->name];
+    }
+    // find counts on function calls
+    {
+      PassRunner runner(module);
+      runner.setIsNested(true);
+      runner.add<CallCountScanner>(&counts);
+      runner.run();
+    }
+    // find counts on global usages
     if (module->start.is()) {
       counts[module->start]++;
     }
@@ -43,19 +81,15 @@ struct ReorderFunctions : public WalkerPass<PostWalker<ReorderFunctions>> {
         counts[curr]++;
       }
     }
-    std::sort(module->functions.begin(), module->functions.end(), [this](
+    // sort
+    std::sort(module->functions.begin(), module->functions.end(), [&counts](
       const std::unique_ptr<Function>& a,
       const std::unique_ptr<Function>& b) -> bool {
-      if (this->counts[a->name] == this->counts[b->name]) {
+      if (counts[a->name] == counts[b->name]) {
         return strcmp(a->name.str, b->name.str) > 0;
       }
-      return this->counts[a->name] > this->counts[b->name];
+      return counts[a->name] > counts[b->name];
     });
-    counts.clear();
-  }
-
-  void visitCall(Call *curr) {
-    counts[curr->target]++;
   }
 };
 
