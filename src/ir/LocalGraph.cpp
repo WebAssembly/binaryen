@@ -24,10 +24,12 @@
 
 namespace wasm {
 
+namespace LocalGraphInternal {
+
 // A relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark
 // their position in a block
-struct LocalAction {
+struct Action {
   enum What {
     Get = 0,
     Set = 1
@@ -36,7 +38,7 @@ struct LocalAction {
   Index index; // the local index read or written
   Expression* expr; // the expression itself
 
-  LocalAction(What what, Index index, Expression* expr) : what(what), index(index), expr(expr) {
+  Action(What what, Index index, Expression* expr) : what(what), index(index), expr(expr) {
     if (what == Get) assert(expr->is<GetLocal>());
     if (what == Set) assert(expr->is<SetLocal>());
   }
@@ -47,7 +49,7 @@ struct LocalAction {
 
 // information about a basic block
 struct Info {
-  std::vector<LocalAction> actions; // actions occurring in this block
+  std::vector<Action> actions; // actions occurring in this block
   std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
@@ -87,7 +89,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto* curr = (*currp)->cast<GetLocal>();
      // if in unreachable code, skip
     if (!self->currBasicBlock) return;
-    self->currBasicBlock->contents.actions.emplace_back(LocalAction::Get, curr->index, curr);
+    self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, curr);
     self->locations[curr] = currp;
   }
 
@@ -95,7 +97,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) return;
-    self->currBasicBlock->contents.actions.emplace_back(LocalAction::Set, curr->index, curr);
+    self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
   }
@@ -179,10 +181,12 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 };
 
+} // namespace LocalGraphInternal
+
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func) {
-  Flower flower(getSetses, locations, func);
+  LocalGraphInternal::Flower flower(getSetses, locations, func);
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
