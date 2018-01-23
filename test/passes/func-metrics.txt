@@ -2,17 +2,15 @@ global
  [funcs]        : 3       
  [memory-data]  : 9       
  [table-data]   : 3       
- [total]        : 18      
+ [total]        : 3       
  const          : 3       
 func: empty
  [binary-bytes] : 3       
- [total]        : 4       
- [vars]         : 0       
+ [total]        : 1       
  nop            : 1       
 func: small
  [binary-bytes] : 9       
- [total]        : 14      
- [vars]         : 0       
+ [total]        : 5       
  block          : 1       
  const          : 1       
  drop           : 1       
@@ -20,7 +18,7 @@ func: small
  return         : 1       
 func: ifs
  [binary-bytes] : 51      
- [total]        : 76      
+ [total]        : 24      
  [vars]         : 1       
  binary         : 1       
  block          : 1       
@@ -86,7 +84,116 @@ func: ifs
  )
 )
 global
- [funcs]        : 0       
- [total]        : 0       
 (module
+)
+global
+ [funcs]        : 3       
+func: func_a
+ [binary-bytes] : 16      
+ [total]        : 8       
+ block          : 1       
+ call           : 2       
+ call_import    : 5       
+func: func_b
+ [binary-bytes] : 22      
+ [total]        : 11      
+ block          : 1       
+ call_import    : 10      
+func: func_c
+ [binary-bytes] : 32      
+ [total]        : 16      
+ block          : 1       
+ call_import    : 15      
+export: a (func_a)
+ [removable-bytes-without-it]: 72      
+export: b (func_b)
+ [removable-bytes-without-it]: 18      
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (export "b" (func $func_b))
+ (func $func_a (; 1 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $func_b)
+  (call $func_c)
+ )
+ (func $func_b (; 2 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+ (func $func_c (; 3 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+global
+ [funcs]        : 1       
+func: func_a
+ [binary-bytes] : 12      
+ [total]        : 6       
+ block          : 1       
+ call_import    : 5       
+export: a (func_a)
+ [removable-bytes-without-it]: 7       
+start: func_a
+ [removable-bytes-without-it]: 3       
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (start $func_a)
+ (func $func_a (; 1 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+global
+ [funcs]        : 1       
+func: func_a
+ [binary-bytes] : 12      
+ [total]        : 6       
+ block          : 1       
+ call_import    : 5       
+start: func_a
+ [removable-bytes-without-it]: 67      
+(module
+ (type $FUNCSIG$v (func))
+ (import "env" "waka" (func $waka))
+ (start $func_a)
+ (func $func_a (; 1 ;) (type $FUNCSIG$v)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
 )

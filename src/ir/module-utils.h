@@ -18,6 +18,7 @@
 #define wasm_ir_module_h
 
 #include "wasm.h"
+#include "ir/manipulation.h"
 
 namespace wasm {
 
@@ -50,6 +51,39 @@ struct BinaryIndexes {
     }
   }
 };
+
+inline void copyModule(Module& in, Module& out) {
+  // we use names throughout, not raw points, so simple copying is fine
+  // for everything *but* expressions
+  for (auto& curr : in.functionTypes) {
+    out.addFunctionType(new FunctionType(*curr));
+  }
+  for (auto& curr : in.imports) {
+    out.addImport(new Import(*curr));
+  }
+  for (auto& curr : in.exports) {
+    out.addExport(new Export(*curr));
+  }
+  for (auto& curr : in.functions) {
+    auto* func = new Function(*curr);
+    func->body = ExpressionManipulator::copy(func->body, out);
+    out.addFunction(func);
+  }
+  for (auto& curr : in.globals) {
+    out.addGlobal(new Global(*curr));
+  }
+  out.table = in.table;
+  for (auto& segment : out.table.segments) {
+    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  }
+  out.memory = in.memory;
+  for (auto& segment : out.memory.segments) {
+    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  }
+  out.start = in.start;
+  out.userSections = in.userSections;
+  out.debugInfoFileNames = in.debugInfoFileNames;
+}
 
 } // namespace ModuleUtils
 

@@ -54,3 +54,72 @@
 ;; module with no table or memory or anything for that matter
 (module
 )
+;; export size checking
+(module
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (export "b" (func $func_b))
+ (func $func_a
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $func_b)
+  (call $func_c)
+ )
+ (func $func_b
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+ (func $func_c
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+;; start size checking
+(module
+ (import "env" "waka" (func $waka))
+ (export "a" (func $func_a))
+ (start $func_a)
+ (func $func_a
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+(module
+ (import "env" "waka" (func $waka))
+ (start $func_a)
+ (func $func_a
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+  (call $waka)
+ )
+)
+

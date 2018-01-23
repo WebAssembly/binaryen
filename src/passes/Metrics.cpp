@@ -20,6 +20,7 @@
 #include <support/colors.h>
 #include <wasm.h>
 #include <wasm-binary.h>
+#include <ir/module-utils.h>
 
 namespace wasm {
 
@@ -92,7 +93,43 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
         counts["[binary-bytes]"] = writer.tableOfContents.functionBodies[i].size;
         printCounts(std::string("func: ") + func->name.str);
       }
-      // can't comapre detailed info between passes yet
+      // print for each export how much code size is due to it, i.e.,
+      // how much the module could shrink without it.
+      auto sizeAfterGlobalCleanup = [](Module* module) {
+        PassRunner runner(module, PassOptions::getWithDefaultOptimizationOptions());
+        runner.setIsNested(true);
+        runner.addDefaultGlobalOptimizationPostPasses(); // remove stuff
+        runner.run();
+        BufferWithRandomAccess buffer;
+        WasmBinaryWriter writer(module, buffer);
+        writer.write();
+        return buffer.size();
+      };
+      size_t baseline;
+      {
+        Module test;
+        ModuleUtils::copyModule(*module, test);
+        baseline = sizeAfterGlobalCleanup(&test);
+      }
+      for (auto& exp : module->exports) {
+        // create a test module where we remove the export and then see how much can be removed thanks to that
+        Module test;
+        ModuleUtils::copyModule(*module, test);
+        test.removeExport(exp->name);
+        counts.clear();
+        counts["[removable-bytes-without-it]"] = baseline - sizeAfterGlobalCleanup(&test);
+        printCounts(std::string("export: ") + exp->name.str + " (" + exp->value.str + ')');
+      }
+      // check how much size depends on the start method
+      if (!module->start.isNull()) {
+        Module test;
+        ModuleUtils::copyModule(*module, test);
+        test.start = Name();
+        counts.clear();
+        counts["[removable-bytes-without-it]"] = baseline - sizeAfterGlobalCleanup(&test);
+        printCounts(std::string("start: ") + module->start.str);
+      }
+      // can't compare detailed info between passes yet
       lastMetricsPass = nullptr;
     } else {
       // add function info
@@ -116,7 +153,10 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     int total = 0;
     for (auto i : counts) {
       keys.push_back(i.first);
-      total += i.second;
+      // total is of all the normal stuff, not the special [things]
+      if (i.first[0] != '[') {
+        total += i.second;
+      }
     }
     keys.push_back("[total]");
     counts["[total]"] = total;
@@ -127,6 +167,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];
+      if (value == 0) continue;
       o << " " << left << setw(15) << key << ": " << setw(8)
         << value;
       if (lastMetricsPass) {
