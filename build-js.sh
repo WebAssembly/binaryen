@@ -67,81 +67,81 @@ echo "building shared bitcode"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
-  $BINARYEN_SRC/asmjs/shared-constants.cpp \
-  $BINARYEN_SRC/cfg/Relooper.cpp \
-  $BINARYEN_SRC/emscripten-optimizer/optimizer-shared.cpp \
-  $BINARYEN_SRC/emscripten-optimizer/parser.cpp \
-  $BINARYEN_SRC/emscripten-optimizer/simple_ast.cpp \
-  $BINARYEN_SRC/ir/ExpressionAnalyzer.cpp \
-  $BINARYEN_SRC/ir/ExpressionManipulator.cpp \
-  $BINARYEN_SRC/ir/LocalGraph.cpp \
-  $BINARYEN_SRC/passes/pass.cpp \
-  $BINARYEN_SRC/passes/CoalesceLocals.cpp \
-  $BINARYEN_SRC/passes/CodeFolding.cpp \
-  $BINARYEN_SRC/passes/CodePushing.cpp \
-  $BINARYEN_SRC/passes/ConstHoisting.cpp \
-  $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
-  $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
-  $BINARYEN_SRC/passes/ExtractFunction.cpp \
-  $BINARYEN_SRC/passes/Flatten.cpp \
-  $BINARYEN_SRC/passes/I64ToI32Lowering.cpp \
-  $BINARYEN_SRC/passes/Inlining.cpp \
-  $BINARYEN_SRC/passes/InstrumentLocals.cpp \
-  $BINARYEN_SRC/passes/InstrumentMemory.cpp \
-  $BINARYEN_SRC/passes/LegalizeJSInterface.cpp \
-  $BINARYEN_SRC/passes/LocalCSE.cpp \
-  $BINARYEN_SRC/passes/LogExecution.cpp \
-  $BINARYEN_SRC/passes/MemoryPacking.cpp \
-  $BINARYEN_SRC/passes/MergeBlocks.cpp \
-  $BINARYEN_SRC/passes/MergeLocals.cpp \
-  $BINARYEN_SRC/passes/Metrics.cpp \
-  $BINARYEN_SRC/passes/NameList.cpp \
-  $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
-  $BINARYEN_SRC/passes/PickLoadSigns.cpp \
-  $BINARYEN_SRC/passes/PostEmscripten.cpp \
-  $BINARYEN_SRC/passes/Precompute.cpp \
-  $BINARYEN_SRC/passes/Print.cpp \
-  $BINARYEN_SRC/passes/PrintCallGraph.cpp \
-  $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
-  $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
-  $BINARYEN_SRC/passes/RemoveImports.cpp \
-  $BINARYEN_SRC/passes/RemoveMemory.cpp \
-  $BINARYEN_SRC/passes/RemoveUnusedBrs.cpp \
-  $BINARYEN_SRC/passes/RemoveUnusedModuleElements.cpp \
-  $BINARYEN_SRC/passes/RemoveUnusedNames.cpp \
-  $BINARYEN_SRC/passes/ReorderFunctions.cpp \
-  $BINARYEN_SRC/passes/ReorderLocals.cpp \
-  $BINARYEN_SRC/passes/ReReloop.cpp \
-  $BINARYEN_SRC/passes/SafeHeap.cpp \
-  $BINARYEN_SRC/passes/SimplifyLocals.cpp \
-  $BINARYEN_SRC/passes/SpillPointers.cpp \
-  $BINARYEN_SRC/passes/SSAify.cpp \
-  $BINARYEN_SRC/passes/TrapMode.cpp \
-  $BINARYEN_SRC/passes/Untee.cpp \
-  $BINARYEN_SRC/passes/Vacuum.cpp \
-  $BINARYEN_SRC/support/bits.cpp \
-  $BINARYEN_SRC/support/colors.cpp \
-  $BINARYEN_SRC/support/safe_integer.cpp \
-  $BINARYEN_SRC/support/threads.cpp \
-  $BINARYEN_SRC/wasm/literal.cpp \
-  $BINARYEN_SRC/wasm/wasm-binary.cpp \
-  $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
-  $BINARYEN_SRC/wasm/wasm-type.cpp \
-  $BINARYEN_SRC/wasm/wasm-validator.cpp \
-  $BINARYEN_SRC/wasm/wasm.cpp \
-  $BINARYEN_SRC/wasm-emscripten.cpp \
-  -I$BINARYEN_SRC \
+  "$BINARYEN_SRC/asmjs/asm_v_wasm.cpp" \
+  "$BINARYEN_SRC/asmjs/shared-constants.cpp" \
+  "$BINARYEN_SRC/cfg/Relooper.cpp" \
+  "$BINARYEN_SRC/emscripten-optimizer/optimizer-shared.cpp" \
+  "$BINARYEN_SRC/emscripten-optimizer/parser.cpp" \
+  "$BINARYEN_SRC/emscripten-optimizer/simple_ast.cpp" \
+  "$BINARYEN_SRC/ir/ExpressionAnalyzer.cpp" \
+  "$BINARYEN_SRC/ir/ExpressionManipulator.cpp" \
+  "$BINARYEN_SRC/ir/LocalGraph.cpp" \
+  "$BINARYEN_SRC/passes/pass.cpp" \
+  "$BINARYEN_SRC/passes/CoalesceLocals.cpp" \
+  "$BINARYEN_SRC/passes/CodeFolding.cpp" \
+  "$BINARYEN_SRC/passes/CodePushing.cpp" \
+  "$BINARYEN_SRC/passes/ConstHoisting.cpp" \
+  "$BINARYEN_SRC/passes/DeadCodeElimination.cpp" \
+  "$BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp" \
+  "$BINARYEN_SRC/passes/ExtractFunction.cpp" \
+  "$BINARYEN_SRC/passes/Flatten.cpp" \
+  "$BINARYEN_SRC/passes/I64ToI32Lowering.cpp" \
+  "$BINARYEN_SRC/passes/Inlining.cpp" \
+  "$BINARYEN_SRC/passes/InstrumentLocals.cpp" \
+  "$BINARYEN_SRC/passes/InstrumentMemory.cpp" \
+  "$BINARYEN_SRC/passes/LegalizeJSInterface.cpp" \
+  "$BINARYEN_SRC/passes/LocalCSE.cpp" \
+  "$BINARYEN_SRC/passes/LogExecution.cpp" \
+  "$BINARYEN_SRC/passes/MemoryPacking.cpp" \
+  "$BINARYEN_SRC/passes/MergeBlocks.cpp" \
+  "$BINARYEN_SRC/passes/MergeLocals.cpp" \
+  "$BINARYEN_SRC/passes/Metrics.cpp" \
+  "$BINARYEN_SRC/passes/NameList.cpp" \
+  "$BINARYEN_SRC/passes/OptimizeInstructions.cpp" \
+  "$BINARYEN_SRC/passes/PickLoadSigns.cpp" \
+  "$BINARYEN_SRC/passes/PostEmscripten.cpp" \
+  "$BINARYEN_SRC/passes/Precompute.cpp" \
+  "$BINARYEN_SRC/passes/Print.cpp" \
+  "$BINARYEN_SRC/passes/PrintCallGraph.cpp" \
+  "$BINARYEN_SRC/passes/RedundantSetElimination.cpp" \
+  "$BINARYEN_SRC/passes/RelooperJumpThreading.cpp" \
+  "$BINARYEN_SRC/passes/RemoveImports.cpp" \
+  "$BINARYEN_SRC/passes/RemoveMemory.cpp" \
+  "$BINARYEN_SRC/passes/RemoveUnusedBrs.cpp" \
+  "$BINARYEN_SRC/passes/RemoveUnusedModuleElements.cpp" \
+  "$BINARYEN_SRC/passes/RemoveUnusedNames.cpp" \
+  "$BINARYEN_SRC/passes/ReorderFunctions.cpp" \
+  "$BINARYEN_SRC/passes/ReorderLocals.cpp" \
+  "$BINARYEN_SRC/passes/ReReloop.cpp" \
+  "$BINARYEN_SRC/passes/SafeHeap.cpp" \
+  "$BINARYEN_SRC/passes/SimplifyLocals.cpp" \
+  "$BINARYEN_SRC/passes/SpillPointers.cpp" \
+  "$BINARYEN_SRC/passes/SSAify.cpp" \
+  "$BINARYEN_SRC/passes/TrapMode.cpp" \
+  "$BINARYEN_SRC/passes/Untee.cpp" \
+  "$BINARYEN_SRC/passes/Vacuum.cpp" \
+  "$BINARYEN_SRC/support/bits.cpp" \
+  "$BINARYEN_SRC/support/colors.cpp" \
+  "$BINARYEN_SRC/support/safe_integer.cpp" \
+  "$BINARYEN_SRC/support/threads.cpp" \
+  "$BINARYEN_SRC/wasm/literal.cpp" \
+  "$BINARYEN_SRC/wasm/wasm-binary.cpp" \
+  "$BINARYEN_SRC/wasm/wasm-s-parser.cpp" \
+  "$BINARYEN_SRC/wasm/wasm-type.cpp" \
+  "$BINARYEN_SRC/wasm/wasm-validator.cpp" \
+  "$BINARYEN_SRC/wasm/wasm.cpp" \
+  "$BINARYEN_SRC/wasm-emscripten.cpp" \
+  "-I$BINARYEN_SRC" \
   -o shared.bc
 
 echo "building wasm.js"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  $BINARYEN_SRC/wasm-js.cpp \
+  "$BINARYEN_SRC/wasm-js.cpp" \
   shared.bc \
-  -I$BINARYEN_SRC/ \
-  -o $BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js \
+  "-I$BINARYEN_SRC/" \
+  -o "$BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js" \
   -s MODULARIZE=1 \
   -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
@@ -587,26 +587,29 @@ echo "building binaryen.js"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  $BINARYEN_SRC/binaryen-c.cpp \
+  "$BINARYEN_SRC/binaryen-c.cpp" \
   shared.bc \
-  -I$BINARYEN_SRC/ \
+  "-I$BINARYEN_SRC/" \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -o "$BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js" \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
-  --post-js $BINARYEN_SRC/js/binaryen.js-post.js
+  --post-js "$BINARYEN_SRC/js/binaryen.js-post.js"
+# note: does not need --pre-js currently
 
 echo "building binaryen-wasm.js"
 
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
-  $BINARYEN_SRC/binaryen-c.cpp \
+  "$BINARYEN_SRC/binaryen-c.cpp" \
   shared.bc \
-  -I$BINARYEN_SRC/ \
+  "-I$BINARYEN_SRC/" \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen-wasm${OUT_FILE_SUFFIX}.js \
+  -o "$BINARYEN_BIN/binaryen-wasm${OUT_FILE_SUFFIX}.js" \
   -s BINARYEN=1 \
   -s 'BINARYEN_METHOD="native-wasm"' \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
-  --post-js $BINARYEN_SRC/js/binaryen.js-post.js
+  -s NO_EXIT_RUNTIME=0 \
+  --pre-js "$BINARYEN_SRC/js/binaryen.js-pre.js" \
+  --post-js "$BINARYEN_SRC/js/binaryen.js-post.js"

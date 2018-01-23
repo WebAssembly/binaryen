@@ -1574,12 +1574,7 @@ Module['setAPITracing'] = function(on) {
 // Check if this is a synchronous or asynchronous build. This isn't relevant
 // for binaryen.js, but for binaryen-wasm.js in environments where the
 // underlying .wasm file is loaded asynchronously.
-try {
-  Module['_BinaryenTypeNone'](); // conveniently throws
-  Module['isReady'] = true;
-} catch (e) {
-  Module['isReady'] = false;
-}
+Module['isReady'] = runtimeInitialized;
 
 // Remember all the promises we make in an asynchronous scenario
 var promises = [];
