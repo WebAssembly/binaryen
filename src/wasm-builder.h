@@ -240,8 +240,9 @@ public:
     load->isAtomic = true;
     return load;
   }
-  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType expectedType) {
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType expectedType, Address offset) {
     auto* wait = allocator.alloc<AtomicWait>();
+    wait->offset = offset;
     wait->ptr = ptr;
     wait->expected = expected;
     wait->timeout = timeout;
@@ -249,8 +250,9 @@ public:
     wait->finalize();
     return wait;
   }
-  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount) {
+  AtomicWake* makeAtomicWake(Expression* ptr, Expression* wakeCount, Address offset) {
     auto* wake = allocator.alloc<AtomicWake>();
+    wake->offset = offset;
     wake->ptr = ptr;
     wake->wakeCount = wakeCount;
     wake->finalize();

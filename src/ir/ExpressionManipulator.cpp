@@ -116,10 +116,10 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
                                        curr->type);
     }
     Expression* visitAtomicWait(AtomicWait* curr) {
-      return builder.makeAtomicWait(copy(curr->ptr), copy(curr->expected), copy(curr->timeout), curr->expectedType);
+      return builder.makeAtomicWait(copy(curr->ptr), copy(curr->expected), copy(curr->timeout), curr->expectedType, curr->offset);
     }
     Expression* visitAtomicWake(AtomicWake* curr) {
-      return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount));
+      return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount), curr->offset);
     }
     Expression* visitConst(Const *curr) {
       return builder.makeConst(curr->value);
