@@ -361,7 +361,7 @@ def run_binaryen_js_tests():
     test_src = open(test_path).read()
     def test(engine, runner):
       print runner + ": " + s
-      f = open(os.path.join(options.binaryen_bin, 'a.js'), 'w')
+      f = open('a.js', 'w')
       runner_path = os.path.join(options.binaryen_bin, runner)
       runner_src = open(runner_path).read()
       f.write(runner_src)
