@@ -610,6 +610,5 @@ echo "building binaryen-wasm.js"
   -s 'BINARYEN_METHOD="native-wasm"' \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
-  -s NO_EXIT_RUNTIME=0 \
   --pre-js "$BINARYEN_SRC/js/binaryen.js-pre.js" \
   --post-js "$BINARYEN_SRC/js/binaryen.js-post.js"

@@ -42,6 +42,7 @@ cmake_install.cmake
 .ninja_log
 
 .vs/
+.vscode/
 *.vcxproj*
 *.dir/
 *.sln
