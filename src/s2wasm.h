@@ -915,7 +915,7 @@ class S2WasmBuilder {
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
-        curr->align = 1U << getInt(attributes[0] + 8);
+        curr->align = Address(1) << getInt(attributes[0] + 8);
       }
       setOutput(curr, assign);
     };
@@ -938,7 +938,7 @@ class S2WasmBuilder {
       curr->align = curr->bytes;
       if (attributes[0]) {
         assert(strncmp(attributes[0], "p2align=", 8) == 0);
-        curr->align = 1U << getInt(attributes[0] + 8);
+        curr->align = Address(1) << getInt(attributes[0] + 8);
       }
       curr->value = inputs[1];
       curr->finalize();
@@ -1430,7 +1430,7 @@ class S2WasmBuilder {
     Address localAlign = 1;
     if (*s == ',') {
       skipComma();
-      localAlign = 1 << getInt();
+      localAlign = Address(1) << getInt();
     }
     linkerObj->addStatic(size, std::max(align, localAlign), name);
   }
