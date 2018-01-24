@@ -74,6 +74,8 @@ IF(MSVC)
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
   ADD_COMPILE_FLAG("/D_CRT_SECURE_NO_WARNINGS")
   ADD_COMPILE_FLAG("/D_SCL_SECURE_NO_WARNINGS")
+  # Don't warn about using "strdup" as a reserved name.
+  ADD_COMPILE_FLAG("/D_CRT_NONSTDC_NO_DEPRECATE")
 
   ADD_NONDEBUG_COMPILE_FLAG("/UNDEBUG") # Keep asserts.
   # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
