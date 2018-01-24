@@ -67,6 +67,8 @@ IF(MSVC)
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   ADD_COMPILE_FLAG("/wd4267")
   ADD_COMPILE_FLAG("/wd4244")
+  # 4722 warns that destructors never return, even with WASM_NORETURN.
+  ADD_COMPILE_FLAG("/wd4722")
   ADD_COMPILE_FLAG("/WX-")
   ADD_DEBUG_COMPILE_FLAG("/Od")
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
