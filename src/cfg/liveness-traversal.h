@@ -15,16 +15,7 @@
  */
 
 //
-// Convert the AST to a CFG, while traversing it.
-//
-// Note that this is not the same as the relooper CFG. The relooper is
-// designed for compilation to an AST, this is for processing. There is
-// no built-in support for transforming this CFG into the AST back
-// again, it is just metadata on the side for computation purposes.
-//
-// Usage: As the traversal proceeds, you can note information and add it to
-// the current basic block using currBasicBlock, on the contents
-// property, whose type is user-defined.
+// Computes liveness information for locals.
 //
 
 #ifndef liveness_traversal_h
@@ -48,7 +39,7 @@ typedef SortedVector LocalSet;
 // A liveness-relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark
 // their position in a block
-struct Action {
+struct LivenessAction {
   enum What {
     Get = 0,
     Set = 1,
@@ -59,12 +50,12 @@ struct Action {
   Expression** origin; // the origin
   bool effective; // whether a store is actually effective, i.e., may be read
 
-  Action(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {
+  LivenessAction(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {
     assert(what != Other);
     if (what == Get) assert((*origin)->is<GetLocal>());
     if (what == Set) assert((*origin)->is<SetLocal>());
   }
-  Action(Expression** origin) : what(Other), origin(origin) {}
+  LivenessAction(Expression** origin) : what(Other), origin(origin) {}
 
   bool isGet() { return what == Get; }
   bool isSet() { return what == Set; }
@@ -74,7 +65,7 @@ struct Action {
 // information about liveness in a basic block
 struct Liveness {
   LocalSet start, end; // live locals at the start and end
-  std::vector<Action> actions; // actions occurring in this block
+  std::vector<LivenessAction> actions; // actions occurring in this block
 
   void dump(Function* func) {
     if (actions.empty()) return;
@@ -103,7 +94,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
     }
-    self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, currp);
+    self->currBasicBlock->contents.actions.emplace_back(LivenessAction::Get, curr->index, currp);
   }
 
   static void doVisitSetLocal(SubType* self, Expression** currp) {
@@ -117,7 +108,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       }
       return;
     }
-    self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, currp);
+    self->currBasicBlock->contents.actions.emplace_back(LivenessAction::Set, curr->index, currp);
     // if this is a copy, note it
     if (auto* get = self->getCopy(curr)) {
       // add 2 units, so that backedge prioritization can decide ties, but not much more
@@ -204,7 +195,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     return old != ret;
   }
 
-  void scanLivenessThroughActions(std::vector<Action>& actions, LocalSet& live) {
+  void scanLivenessThroughActions(std::vector<LivenessAction>& actions, LocalSet& live) {
     // move towards the front
     for (int i = int(actions.size()) - 1; i >= 0; i--) {
       auto& action = actions[i];

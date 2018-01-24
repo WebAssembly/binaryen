@@ -103,7 +103,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
       auto* arrivingBlock = in[i];
       if (arrivingBlock->out.size() > 1) continue; // we just want unconditional branches to the loop top, true phi fragments
       for (auto& action : arrivingBlock->contents.actions) {
-        if (action.what == Action::Set) {
+        if (action.isSet()) {
           auto* set = (*action.origin)->cast<SetLocal>();
           if (auto* get = getCopy(set)) {
             // this is indeed a copy, add to the cost (default cost is 2, so this adds 50%, and can mostly break ties)

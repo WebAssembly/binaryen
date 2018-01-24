@@ -66,7 +66,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   std::vector<BasicBlock*> loopStack;
 
   void startBasicBlock() {
-    currBasicBlock = makeBasicBlock();
+    currBasicBlock = ((SubType*)this)->makeBasicBlock();
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
   }
 

@@ -57,7 +57,7 @@ struct SSAify : public Pass {
   void runOnFunction(PassRunner* runner, Module* module_, Function* func_) override {
     module = module_;
     func = func_;
-    LocalGraph graph(func, module);
+    LocalGraph graph(func);
     // create new local indexes, one for each set
     createNewIndexes(graph);
     // we now know the sets for each get, and can compute get indexes and handle phis
