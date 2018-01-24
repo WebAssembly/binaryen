@@ -83,8 +83,7 @@ public:
   // Get the number of cores we can use.
   static size_t getNumCores();
 
-  // Get the singleton threadpool. This can return null
-  // if there is just one thread available.
+  // Get the singleton threadpool.
   static ThreadPool* get();
 
   // Execute a bunch of tasks by the pool. This calls
