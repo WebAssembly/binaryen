@@ -56,7 +56,6 @@
     (i32.const 5242880)
    )
   )
-  (call $runPostSets)
   (call $__ZN3FooC2Ev
    (i32.add
     (get_global $memoryBase)

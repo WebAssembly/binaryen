@@ -8489,24 +8489,14 @@
        (br $do-once)
       )
      )
-     (set_local $2
-      (i32.eqz
-       (call $Ya
-        (get_local $0)
-       )
-      )
-     )
      (set_local $1
       (call $$a
        (get_local $0)
       )
      )
-     (if
+     (set_local $2
       (i32.eqz
-       (get_local $2)
-      )
-      (call $Ta
-       (get_local $0)
+       (i32.const 0)
       )
      )
     )
@@ -8542,17 +8532,15 @@
        )
        (loop $while-in
         (set_local $0
-         (if (result i32)
+         (select
+          (i32.const 0)
+          (i32.const 0)
           (i32.gt_s
            (i32.load offset=76
             (get_local $1)
            )
            (i32.const -1)
           )
-          (call $Ya
-           (get_local $1)
-          )
-          (i32.const 0)
          )
         )
         (if
@@ -8571,12 +8559,6 @@
            )
            (get_local $2)
           )
-         )
-        )
-        (if
-         (get_local $0)
-         (call $Ta
-          (get_local $1)
          )
         )
         (br_if $while-in
@@ -9191,9 +9173,7 @@
      )
      (i32.const -1)
     )
-    (call $Ya
-     (get_local $1)
-    )
+    (i32.const 0)
     (i32.const 0)
    )
   )
@@ -9268,12 +9248,6 @@
       )
      )
     )
-   )
-  )
-  (if
-   (get_local $3)
-   (call $Ta
-    (get_local $1)
    )
   )
   (i32.shr_s
@@ -9364,7 +9338,6 @@
  )
  (func $bb (; 26 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (local $4 i32)
-  (local $5 i32)
   (set_local $4
    (i32.mul
     (get_local $2)
@@ -9378,28 +9351,11 @@
     )
     (i32.const -1)
    )
-   (block
-    (set_local $5
-     (i32.eqz
-      (call $Ya
-       (get_local $3)
-      )
-     )
-    )
-    (set_local $0
-     (call $Wa
-      (get_local $0)
-      (get_local $4)
-      (get_local $3)
-     )
-    )
-    (if
-     (i32.eqz
-      (get_local $5)
-     )
-     (call $Ta
-      (get_local $3)
-     )
+   (set_local $0
+    (call $Wa
+     (get_local $0)
+     (get_local $4)
+     (get_local $3)
     )
    )
    (set_local $0
@@ -9616,14 +9572,14 @@
   )
  )
  (func $Qa (; 31 ;) (result i32)
-  (if (result i32)
+  (select
+   (i32.load offset=64
+    (i32.const 0)
+   )
+   (i32.const 1204)
    (i32.load
     (i32.const 1160)
    )
-   (i32.load offset=64
-    (call $ib)
-   )
-   (i32.const 1204)
   )
  )
  (func $lb (; 32 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
@@ -9693,16 +9649,7 @@
   )
  )
  (func $Sa (; 37 ;) (param $0 i32)
-  (if
-   (i32.eqz
-    (i32.load offset=68
-     (get_local $0)
-    )
-   )
-   (call $Ta
-    (get_local $0)
-   )
-  )
+  (nop)
  )
  (func $mb (; 38 ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $FUNCSIG$vi)
@@ -9738,34 +9685,28 @@
   )
   (i32.const 0)
  )
- (func $Ya (; 42 ;) (param $0 i32) (result i32)
-  (i32.const 0)
- )
- (func $Ta (; 43 ;) (param $0 i32)
-  (nop)
- )
- (func $pb (; 44 ;) (param $0 i32)
+ (func $pb (; 42 ;) (param $0 i32)
   (call $ja
    (i32.const 2)
   )
  )
- (func $La (; 45 ;) (param $0 i32)
+ (func $La (; 43 ;) (param $0 i32)
   (set_global $K
    (get_local $0)
   )
  )
- (func $Ga (; 46 ;) (param $0 i32)
+ (func $Ga (; 44 ;) (param $0 i32)
   (set_global $r
    (get_local $0)
   )
  )
- (func $Ma (; 47 ;) (result i32)
+ (func $Ma (; 45 ;) (result i32)
   (get_global $K)
  )
- (func $Fa (; 48 ;) (result i32)
+ (func $Fa (; 46 ;) (result i32)
   (get_global $r)
  )
- (func $ib (; 49 ;) (result i32)
+ (func $ib (; 47 ;) (result i32)
   (i32.const 0)
  )
 )

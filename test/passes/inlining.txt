@@ -86,9 +86,11 @@
   (block
    (block $__inlined_func$multipass
     (block
-     (block $__inlined_func$multipass2
-      (drop
-       (i32.const 6)
+     (block
+      (block $__inlined_func$multipass2
+       (drop
+        (i32.const 6)
+       )
       )
      )
     )
@@ -129,12 +131,13 @@
   (nop)
  )
  (func $cycle1 (; 4 ;) (type $0)
-  (call $cycle2)
+  (block $__inlined_func$cycle2
+   (block
+    (call $cycle1)
+   )
+  )
  )
- (func $cycle2 (; 5 ;) (type $0)
-  (call $cycle1)
- )
- (func $multi (; 6 ;) (type $0)
+ (func $multi (; 5 ;) (type $0)
   (nop)
  )
 )
