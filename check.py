@@ -501,12 +501,12 @@ def run_gcc_torture_tests():
       else:
         src = os.path.join(options.binaryen_test, 'example', t)
         expected = os.path.join(options.binaryen_test, 'example', '.'.join(t.split('.')[:-1]) + '.txt')
-      if src.endswith('.cpp'):
-        extra += ['-std=c++11']
       if src.endswith(('.c', '.cpp')):
         # build the C file separately
         extra = [NATIVECC, src, '-c', '-o', 'example.o',
                  '-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-pthread']
+        if src.endswith('.cpp'):
+          extra += ['-std=c++11']
         print 'build: ', ' '.join(extra)
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using an executable-relative rpath
