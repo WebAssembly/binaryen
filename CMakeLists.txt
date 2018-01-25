@@ -67,11 +67,15 @@ IF(MSVC)
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   ADD_COMPILE_FLAG("/wd4267")
   ADD_COMPILE_FLAG("/wd4244")
+  # 4722 warns that destructors never return, even with WASM_NORETURN.
+  ADD_COMPILE_FLAG("/wd4722")
   ADD_COMPILE_FLAG("/WX-")
   ADD_DEBUG_COMPILE_FLAG("/Od")
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
   ADD_COMPILE_FLAG("/D_CRT_SECURE_NO_WARNINGS")
   ADD_COMPILE_FLAG("/D_SCL_SECURE_NO_WARNINGS")
+  # Don't warn about using "strdup" as a reserved name.
+  ADD_COMPILE_FLAG("/D_CRT_NONSTDC_NO_DEPRECATE")
 
   ADD_NONDEBUG_COMPILE_FLAG("/UNDEBUG") # Keep asserts.
   # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
