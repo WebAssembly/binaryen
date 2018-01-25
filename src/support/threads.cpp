@@ -39,11 +39,6 @@ static std::mutex debug;
 
 namespace wasm {
 
-// Global thread information
-
-static std::mutex poolMutex;
-static std::unique_ptr<ThreadPool> pool;
-
 
 // Thread
 
@@ -102,13 +97,21 @@ void Thread::mainLoop(void *self_) {
   }
 }
 
+// Global threadPool state. We have a singleton pool, which can only be
+// used from one place at a time.
+
+static std::unique_ptr<ThreadPool> pool;
+
+std::mutex ThreadPool::creationMutex;
+std::mutex ThreadPool::workMutex;
+std::mutex ThreadPool::threadMutex;
 
 // ThreadPool
 
 void ThreadPool::initialize(size_t num) {
   if (num == 1) return; // no multiple cores, don't create threads
   DEBUG_POOL("initialize()\n");
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(threadMutex);
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
@@ -143,7 +146,7 @@ ThreadPool* ThreadPool::get() {
   bool created = false;
   {
     // lock on the creation
-    std::lock_guard<std::mutex> lock(poolMutex);
+    std::lock_guard<std::mutex> poolLock(creationMutex);
     if (!pool) {
       DEBUG_POOL("::get() creating\n");
       created = true;
@@ -173,10 +176,13 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   // run in parallel on threads
   // TODO: fancy work stealing
   DEBUG_POOL("work() on threads\n");
+  // lock globally on doing work in the pool - the threadPool can only be used
+  // from one thread at a time, all others must wait patiently
+  std::lock_guard<std::mutex> poolLock(workMutex);
   assert(doWorkers.size() == num);
   assert(!running);
   running = true;
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(threadMutex);
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
     threads[i]->work(doWorkers[i]);
@@ -199,7 +205,7 @@ bool ThreadPool::isRunning() {
 
 void ThreadPool::notifyThreadIsReady() {
   DEBUG_POOL("notify thread is ready\n";)
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::mutex> lock(threadMutex);
   ready.fetch_add(1);
   condition.notify_one();
 }
