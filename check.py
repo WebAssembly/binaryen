@@ -501,6 +501,8 @@ def run_gcc_torture_tests():
       else:
         src = os.path.join(options.binaryen_test, 'example', t)
         expected = os.path.join(options.binaryen_test, 'example', '.'.join(t.split('.')[:-1]) + '.txt')
+      if src.endswith('.cpp'):
+        extra += ['-std=c++11']
       if src.endswith(('.c', '.cpp')):
         # build the C file separately
         extra = [NATIVECC, src, '-c', '-o', 'example.o',
@@ -511,8 +513,6 @@ def run_gcc_torture_tests():
         cmd = ['example.o', '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
       else:
         continue
-      if src.endswith('.cpp'):
-        extra += ['-std=c++11']
       print '  ', t, src, expected
       if os.environ.get('COMPILER_FLAGS'):
         for f in os.environ.get('COMPILER_FLAGS').split(' '):
