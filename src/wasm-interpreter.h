@@ -649,15 +649,14 @@ public:
   }
 
   // call an exported function
-  Literal callExport(Name name, LiteralList& arguments) {
+  Literal callExport(Name name, const LiteralList& arguments) {
     Export *export_ = wasm.getExportOrNull(name);
     if (!export_) externalInterface->trap("callExport not found");
     return callFunction(export_->value, arguments);
   }
 
   Literal callExport(Name name) {
-    LiteralList arguments;
-    return callExport(name, arguments);
+    return callExport(name, LiteralList());
   }
 
   // get an exported global
@@ -689,7 +688,7 @@ private:
 
 public:
   // Call a function, starting an invocation.
-  Literal callFunction(Name name, LiteralList& arguments) {
+  Literal callFunction(Name name, const LiteralList& arguments) {
     // if the last call ended in a jump up the stack, it might have left stuff for us to clean up here
     callDepth = 0;
     functionStack.clear();
@@ -697,14 +696,14 @@ public:
   }
 
   // Internal function call. Must be public so that callTable implementations can use it (refactor?)
-  Literal callFunctionInternal(Name name, LiteralList& arguments) {
+  Literal callFunctionInternal(Name name, const LiteralList& arguments) {
 
     class FunctionScope {
      public:
       std::vector<Literal> locals;
       Function* function;
 
-      FunctionScope(Function* function, LiteralList& arguments)
+      FunctionScope(Function* function, const LiteralList& arguments)
           : function(function) {
         if (function->params.size() != arguments.size()) {
           std::cerr << "Function `" << function->name << "` expects "
