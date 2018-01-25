@@ -39,16 +39,43 @@ static std::mutex debug;
 
 namespace wasm {
 
+// Global threadPool state. We have a singleton pool, which can only be
+// used from one place at a time.
+
+static std::unique_ptr<ThreadPool> pool;
+
+std::mutex ThreadPool::creationMutex;
+std::mutex ThreadPool::workMutex;
+std::mutex ThreadPool::threadMutex;
+
+// During the creation of the singleton threadPool, the worker threads
+// communicate with it using this pointer.
+static ThreadPool* poolDuringCreation = nullptr;
+
+// Gets the threadPool from a worker. If this is during creation, we
+// use poolDuringCreation
+static ThreadPool* getPoolFromWorker() {
+  if (poolDuringCreation) {
+    DEBUG_THREAD("getPoolFromWorker: during creation\n");
+    assert(!pool);
+    return poolDuringCreation;
+  } else {
+    DEBUG_THREAD("getPoolFromWorker: after creation\n");
+    assert(!poolDuringCreation);
+    assert(pool);
+    return pool->get();
+  }
+}
 
 // Thread
 
 Thread::Thread() {
-  assert(!ThreadPool::isRunning());
+  assert(!getPoolFromWorker()->isRunning());
   thread = make_unique<std::thread>(mainLoop, this);
 }
 
 Thread::~Thread() {
-  assert(!ThreadPool::isRunning());
+  assert(!getPoolFromWorker()->isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
@@ -86,7 +113,7 @@ void Thread::mainLoop(void *self_) {
         return;
       }
     }
-    ThreadPool::get()->notifyThreadIsReady();
+    getPoolFromWorker()->notifyThreadIsReady();
     {
       std::unique_lock<std::mutex> lock(self->mutex);
       if (!self->done && !self->doWork) {
@@ -96,15 +123,6 @@ void Thread::mainLoop(void *self_) {
     }
   }
 }
-
-// Global threadPool state. We have a singleton pool, which can only be
-// used from one place at a time.
-
-static std::unique_ptr<ThreadPool> pool;
-
-std::mutex ThreadPool::creationMutex;
-std::mutex ThreadPool::workMutex;
-std::mutex ThreadPool::threadMutex;
 
 // ThreadPool
 
@@ -143,21 +161,18 @@ size_t ThreadPool::getNumCores() {
 
 ThreadPool* ThreadPool::get() {
   DEBUG_POOL("::get()\n");
-  bool created = false;
-  {
-    // lock on the creation
-    std::lock_guard<std::mutex> poolLock(creationMutex);
-    if (!pool) {
-      DEBUG_POOL("::get() creating\n");
-      created = true;
-      pool = make_unique<ThreadPool>();
-    }
-  }
-  if (created) {
-    // if we created it here, do the initialization too. this
-    // is outside of the mutex, as we create child threads who
-    // will call ::get() themselves
-    pool->initialize(getNumCores());
+  // lock on the creation
+  std::lock_guard<std::mutex> poolLock(creationMutex);
+  if (!pool) {
+    DEBUG_POOL("::get() creating\n");
+    std::unique_ptr<ThreadPool> temp = make_unique<ThreadPool>();
+    // during creation, the workers need to report to it, before
+    // we set the global pool
+    poolDuringCreation = temp.get();
+    temp->initialize(getNumCores());
+    poolDuringCreation = nullptr;
+    // assign it to the global location now that it is all ready
+    pool.swap(temp);
     DEBUG_POOL("::get() created\n");
   }
   return pool.get();
@@ -181,6 +196,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   std::lock_guard<std::mutex> poolLock(workMutex);
   assert(doWorkers.size() == num);
   assert(!running);
+  DEBUG_POOL("running = true\n");
   running = true;
   std::unique_lock<std::mutex> lock(threadMutex);
   resetThreadsAreReady();
@@ -190,6 +206,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   DEBUG_POOL("main thread waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
   DEBUG_POOL("main thread waiting\n");
+  DEBUG_POOL("running = false\n");
   running = false;
   DEBUG_POOL("work() is done\n");
 }
