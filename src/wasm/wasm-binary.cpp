@@ -55,7 +55,7 @@ void WasmBinaryWriter::write() {
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
-  if (sourceMap) writeSourceMapUrl();
+  if (sourceMap && !sourceMapUrl.empty()) writeSourceMapUrl();
   if (symbolMap.size() > 0) writeSymbolMap();
 
   if (sourceMap) {
