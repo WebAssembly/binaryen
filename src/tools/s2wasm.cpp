@@ -121,6 +121,13 @@ int main(int argc, const char *argv[]) {
              }
              o->extra["validate"] = argument;
            })
+      .add("--reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["reservedFunctionPointers"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
                         o->extra["infile"] = argument;
@@ -150,6 +157,10 @@ int main(int argc, const char *argv[]) {
   uint64_t maxMem =
       options.extra.find("max-memory") != options.extra.end()
           ? std::stoull(options.extra["max-memory"])
+          : 0;
+  unsigned numReservedFunctionPointers =
+      options.extra.find("reservedFunctionPointers") != options.extra.end()
+          ? std::stoi(options.extra["reservedFunctionPointers"])
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
 
@@ -189,7 +200,8 @@ int main(int argc, const char *argv[]) {
       allowMemoryGrowth,
       linker.getStackPointerAddress(),
       linker.getStaticBump(),
-      linker.getOutput().getInitializerFunctions());
+      linker.getOutput().getInitializerFunctions(),
+      numReservedFunctionPointers);
   }
 
   if (options.extra["validate"] != "none") {

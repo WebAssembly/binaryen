@@ -196,6 +196,58 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
   }
 }
 
+struct JSCallWalker : public PostWalker<JSCallWalker> {
+  Module& wasm;
+  JSCallWalker(Module& _wasm)
+      : wasm(_wasm), jsCallStartIndex(wasm.table.segments[0].data.size()) {}
+  void visitCallIndirect(CallIndirect* curr);
+
+  unsigned jsCallStartIndex;
+  // Function Types used in call_indirect instructions
+  std::set<FunctionType*> indirectlyCallableTypes;
+};
+
+void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
+  indirectlyCallableTypes.insert(wasm.getFunctionType(curr->fullType));
+}
+
+JSCallWalker getJsCallWalker(Module& wasm) {
+  JSCallWalker walker(wasm);
+  walker.walkModule(&wasm);
+  return walker;
+}
+
+void EmscriptenGlueGenerator::generateJsCallThunks(
+    unsigned numReservedFunctionPointers) {
+  JSCallWalker walker = getJsCallWalker(wasm);
+  for (const auto& funcType : walker.indirectlyCallableTypes) {
+    std::string sig = getSig(funcType);
+    auto import = new Import;
+    import->name = import->base = "jsCall_" + sig;
+    import->module = ENV;
+    import->functionType = funcType->name;
+    import->kind = ExternalKind::Function;
+    wasm.addImport(import);
+
+    for (unsigned i = 0; i < numReservedFunctionPointers; ++i) {
+      std::vector<NameType> params;
+      int p = 0;
+      for (const auto& ty : funcType->params) {
+        params.emplace_back(std::to_string(p++), ty);
+      }
+      Function* f =
+          builder.makeFunction(std::string("jsCall_") + sig, std::move(params),
+                               funcType->result, {});
+      std::vector<Expression*> args;
+      for (unsigned i = 0; i < funcType->params.size(); ++i) {
+        args.push_back(builder.makeGetLocal(i, funcType->params[i]));
+      }
+      Expression* call = builder.makeCall(import->name, args, funcType->result);
+      f->body = call;
+    }
+  }
+}
+
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
@@ -362,22 +414,23 @@ void printSet(std::ostream& o, C& c) {
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions) {
+    Address staticBump, std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers) {
   std::stringstream meta;
   meta << "{ ";
 
-  AsmConstWalker walker = fixEmAsmConstsAndReturnWalker(wasm);
+  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
+  JSCallWalker jsCallWalker = getJsCallWalker(wasm);
 
   // print
   meta << "\"asmConsts\": {";
   bool first = true;
-  for (auto& pair : walker.sigsForCode) {
+  for (auto& pair : emAsmWalker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
     if (first) first = false;
     else meta << ",";
-    meta << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
+    meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
@@ -394,6 +447,15 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "]";
 
+  if (numReservedFunctionPointers) {
+    meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
+    meta << "\"jsCallFuncType\": [";
+    for (const auto& funcType : jsCallWalker.indirectlyCallableTypes) {
+      std::string sig = getSig(funcType);
+    }
+    meta << "]";
+  }
+
   meta << " }\n";
 
   return meta.str();
@@ -404,7 +466,8 @@ std::string emscriptenGlue(
     bool allowMemoryGrowth,
     Address stackPointer,
     Address staticBump,
-    std::vector<Name> const& initializerFunctions) {
+    std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers) {
   EmscriptenGlueGenerator generator(wasm, stackPointer);
   generator.generateRuntimeFunctions();
 
@@ -414,7 +477,12 @@ std::string emscriptenGlue(
 
   generator.generateDynCallThunks();
 
-  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions);
+  if (numReservedFunctionPointers) {
+    generator.generateJsCallThunks(numReservedFunctionPointers);
+  }
+
+  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions,
+                                              numReservedFunctionPointers);
 }
 
 } // namespace wasm

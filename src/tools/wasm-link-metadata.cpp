@@ -76,6 +76,13 @@ int main(int argc, const char *argv[]) {
              outfile = argument;
              Colors::disable();
            })
+      .add("--reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["reservedFunctionPointers"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
                         infile = argument;
@@ -85,6 +92,10 @@ int main(int argc, const char *argv[]) {
   if (infile == "") {
     Fatal() << "Need to specify an infile\n";
   }
+  unsigned numReservedFunctionPointers =
+      options.extra.find("reservedFunctionPointers") != options.extra.end()
+          ? std::stoi(options.extra["reservedFunctionPointers"])
+          : 0;
 
   Module wasm;
   try {
@@ -110,7 +121,8 @@ int main(int argc, const char *argv[]) {
   initializerFunctions.push_back("__wasm_call_ctors");
 
   EmscriptenGlueGenerator generator(wasm);
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+  std::string metadata = generator.generateEmscriptenMetadata(
+      dataSize, initializerFunctions, numReservedFunctionPointers);
   Output output(outfile, Flags::Text, Flags::Release);
   output << metadata;
 

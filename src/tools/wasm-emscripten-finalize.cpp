@@ -54,6 +54,13 @@ int main(int argc, const char *argv[]) {
            [&emitBinary](Options*, const std::string &) {
              emitBinary = false;
            })
+      .add("--reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["reservedFunctionPointers"] = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
                         infile = argument;
@@ -66,6 +73,10 @@ int main(int argc, const char *argv[]) {
   if (outfile == "" && emitBinary) {
     Fatal() << "Need to specify an outfile, or use text output\n";
   }
+  unsigned numReservedFunctionPointers =
+      options.extra.find("reservedFunctionPointers") != options.extra.end()
+          ? std::stoi(options.extra["reservedFunctionPointers"])
+          : 0;
 
   Module wasm;
   ModuleReader reader;
@@ -80,6 +91,7 @@ int main(int argc, const char *argv[]) {
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
+  generator.generateJsCallThunks(numReservedFunctionPointers);
   generator.fixEmAsmConsts();
 
   if (options.debug) {
