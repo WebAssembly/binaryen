@@ -104,7 +104,7 @@ public:
 
   size_t size();
 
-  static bool isRunning();
+  bool isRunning();
 
   // Called by helper threads when they are free and ready.
   void notifyThreadIsReady();

@@ -194,7 +194,7 @@ size_t ThreadPool::size() {
 
 bool ThreadPool::isRunning() {
   DEBUG_POOL("check if running\n");
-  return pool && pool->running;
+  return running;
 }
 
 void ThreadPool::notifyThreadIsReady() {
