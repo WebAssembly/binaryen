@@ -184,6 +184,8 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
            src, '-c', '-o', 'example.o',
            '-Isrc', '-g', '-L' + libdir, '-pthread']
   print 'build: ', ' '.join(extra)
+  if src.endswith('.cpp'):
+    extra += ['-std=c++11']
   print os.getcwd()
   subprocess.check_call(extra)
   # Link against the binaryen C library DSO, using rpath

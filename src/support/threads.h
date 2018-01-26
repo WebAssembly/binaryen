@@ -38,6 +38,8 @@ enum class ThreadWorkState {
   Finished
 };
 
+class ThreadPool;
+
 //
 // A helper thread.
 //
@@ -45,6 +47,7 @@ enum class ThreadWorkState {
 //
 
 class Thread {
+  ThreadPool* parent;
   std::unique_ptr<std::thread> thread;
   std::mutex mutex;
   std::condition_variable condition;
@@ -52,7 +55,7 @@ class Thread {
   std::function<ThreadWorkState ()> doWork = nullptr;
 
 public:
-  Thread();
+  Thread(ThreadPool* parent);
   ~Thread();
 
   // Start to do work, calling doWork() until
@@ -72,9 +75,16 @@ private:
 class ThreadPool {
   std::vector<std::unique_ptr<Thread>> threads;
   bool running = false;
-  std::mutex mutex;
   std::condition_variable condition;
   std::atomic<size_t> ready;
+
+  // A mutex for creating the pool safely
+  static std::mutex creationMutex;
+  // A mutex for work() so that the pool can only work on one
+  // thing at a time
+  static std::mutex workMutex;
+  // A mutex for communication with the worker threads
+  static std::mutex threadMutex;
 
 private:
   void initialize(size_t num);
