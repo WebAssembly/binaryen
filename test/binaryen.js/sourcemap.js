@@ -4,6 +4,9 @@ var signature = module.addFunctionType("i", Binaryen.i32, []);
 
 var fileIndex = module.addDebugInfoFileName("module.c");
 
+console.log(module.getDebugInfoFileName(fileIndex));
+console.log();
+
 var expr = module.i32.const(1);
 var body = module.block("", [
   expr
