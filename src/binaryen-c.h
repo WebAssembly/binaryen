@@ -697,6 +697,16 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 // @return how many bytes were written. This will be less than or equal to outputSize
 size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
 
+typedef struct BinaryenBufferSizes {
+  size_t outputBytes;
+  size_t sourceMapBytes;
+} BinaryenBufferSizes;
+
+// Serialize a module into binary form including its source map. Uses the currently set
+// global debugInfo option.
+// @returns how many bytes were written. This will be less than or equal to outputSize
+BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, const char* url, char* output, size_t outputSize, char* sourceMap, size_t sourceMapSize);
+
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 
@@ -704,6 +714,13 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 // the module, run it in the interpreter - which means running the start method -
 // and then destroying the instance.
 void BinaryenModuleInterpret(BinaryenModuleRef module);
+
+// Adds a debug info file name to the module and returns its index.
+BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module, const char* filename);
+
+// Gets the name of the debug info file at the specified index. Returns `NULL` if it
+// does not exist.
+const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module, BinaryenIndex index);
 
 //
 // ======== FunctionType Operations ========
@@ -746,6 +763,9 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 // Runs the specified passes on the function. Uses the currently set global
 // optimize and shrink level.
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+
+// Sets the debug location of the specified `Expression` within the specified `Function`.
+void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressionRef expr, BinaryenIndex fileIndex, BinaryenIndex lineNumber, BinaryenIndex columnNumber);
 
 //
 // ========== Import Operations ==========
