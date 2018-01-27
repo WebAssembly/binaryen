@@ -47,7 +47,6 @@ Thread::Thread(ThreadPool* parent) : parent(parent) {
 }
 
 Thread::~Thread() {
-  assert(!parent->isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
