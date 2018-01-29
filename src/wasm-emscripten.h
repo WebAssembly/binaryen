@@ -40,7 +40,7 @@ public:
   void generateDynCallThunks();
 
   // TODO
-  void generateJsCallThunks(unsigned numReservedFunctionPointers);
+  void generateJSCallThunks(unsigned numReservedFunctionPointers);
 
   std::string generateEmscriptenMetadata(
       Address staticBump, std::vector<Name> const& initializerFunctions,

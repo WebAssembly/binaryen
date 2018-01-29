@@ -202,6 +202,7 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
       : wasm(_wasm), jsCallStartIndex(wasm.table.segments[0].data.size()) {}
   void visitCallIndirect(CallIndirect* curr);
 
+  bool createJSCallThunks;
   unsigned jsCallStartIndex;
   // Function Types used in call_indirect instructions
   std::set<FunctionType*> indirectlyCallableTypes;
@@ -211,15 +212,15 @@ void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
   indirectlyCallableTypes.insert(wasm.getFunctionType(curr->fullType));
 }
 
-JSCallWalker getJsCallWalker(Module& wasm) {
+JSCallWalker getJSCallWalker(Module& wasm) {
   JSCallWalker walker(wasm);
   walker.walkModule(&wasm);
   return walker;
 }
 
-void EmscriptenGlueGenerator::generateJsCallThunks(
+void EmscriptenGlueGenerator::generateJSCallThunks(
     unsigned numReservedFunctionPointers) {
-  JSCallWalker walker = getJsCallWalker(wasm);
+  JSCallWalker walker = getJSCallWalker(wasm);
   for (const auto& funcType : walker.indirectlyCallableTypes) {
     std::string sig = getSig(funcType);
     auto import = new Import;
@@ -229,21 +230,23 @@ void EmscriptenGlueGenerator::generateJsCallThunks(
     import->kind = ExternalKind::Function;
     wasm.addImport(import);
 
-    for (unsigned i = 0; i < numReservedFunctionPointers; ++i) {
+    for (unsigned fp = 0; fp < numReservedFunctionPointers; ++fp) {
       std::vector<NameType> params;
       int p = 0;
       for (const auto& ty : funcType->params) {
         params.emplace_back(std::to_string(p++), ty);
       }
-      Function* f =
-          builder.makeFunction(std::string("jsCall_") + sig, std::move(params),
-                               funcType->result, {});
+      Function* f = builder.makeFunction(
+          std::string("jsCall_") + sig + "_" + std::to_string(fp),
+          std::move(params), funcType->result, {});
       std::vector<Expression*> args;
       for (unsigned i = 0; i < funcType->params.size(); ++i) {
         args.push_back(builder.makeGetLocal(i, funcType->params[i]));
       }
-      Expression* call = builder.makeCall(import->name, args, funcType->result);
+      Expression* call =
+          builder.makeCallImport(import->name, args, funcType->result);
       f->body = call;
+      wasm.addFunction(f);
     }
   }
 }
@@ -420,7 +423,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
-  JSCallWalker jsCallWalker = getJsCallWalker(wasm);
+  JSCallWalker jsCallWalker = getJSCallWalker(wasm);
 
   // print
   meta << "\"asmConsts\": {";
@@ -448,10 +451,15 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "]";
 
   if (numReservedFunctionPointers) {
+    meta << ", ";
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
+    bool first = true;
     for (const auto& funcType : jsCallWalker.indirectlyCallableTypes) {
+      if (!first) meta << ", ";
+      first = false;
       std::string sig = getSig(funcType);
+      meta << "\"" << sig << "\"";
     }
     meta << "]";
   }
@@ -478,7 +486,7 @@ std::string emscriptenGlue(
   generator.generateDynCallThunks();
 
   if (numReservedFunctionPointers) {
-    generator.generateJsCallThunks(numReservedFunctionPointers);
+    generator.generateJSCallThunks(numReservedFunctionPointers);
   }
 
   return generator.generateEmscriptenMetadata(staticBump, initializerFunctions,

@@ -91,7 +91,7 @@ int main(int argc, const char *argv[]) {
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
-  generator.generateJsCallThunks(numReservedFunctionPointers);
+  generator.generateJSCallThunks(numReservedFunctionPointers);
   generator.fixEmAsmConsts();
 
   if (options.debug) {
