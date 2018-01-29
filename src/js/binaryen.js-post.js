@@ -286,8 +286,8 @@ Module['Module'] = function(module) {
   // need to make their own Literals, as the C API handles them by value,
   // which means we would leak them. Instead, this is the only API that
   // accepts Literals, so fuse it with Literal creation
-  var literal = _malloc(16); // a single literal in memory. the LLVM C ABI
-                             // makes us pass pointers to this.
+  var temp = _malloc(16); // a single literal in memory. the LLVM C ABI
+                          // makes us pass pointers to this.
 
   this['i32'] = {
     'load': function(offset, align, ptr) {
@@ -315,8 +315,8 @@ Module['Module'] = function(module) {
       return Module['_BinaryenStore'](module, 2, offset, align, ptr, value, Module['i32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralInt32'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralInt32'](temp, x);
+      return Module['_BinaryenConst'](module, temp);
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt32'], value);
@@ -556,8 +556,8 @@ Module['Module'] = function(module) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['i64']);
     },
     'const': function(x, y) {
-      Module['_BinaryenLiteralInt64'](literal, x, y);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralInt64'](temp, x, y);
+      return Module['_BinaryenConst'](module, temp);
     },
     'clz': function(value) {
       return Module['_BinaryenUnary'](module, Module['ClzInt64'], value);
@@ -802,12 +802,12 @@ Module['Module'] = function(module) {
       return Module['_BinaryenStore'](module, 4, offset, align, ptr, value, Module['f32']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat32'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralFloat32'](temp, x);
+      return Module['_BinaryenConst'](module, temp);
     },
     'const_bits': function(x) {
-      Module['_BinaryenLiteralFloat32Bits'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralFloat32Bits'](temp, x);
+      return Module['_BinaryenConst'](module, temp);
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat32'], value);
@@ -901,12 +901,12 @@ Module['Module'] = function(module) {
       return Module['_BinaryenStore'](module, 8, offset, align, ptr, value, Module['f64']);
     },
     'const': function(x) {
-      Module['_BinaryenLiteralFloat64'](literal, x);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralFloat64'](temp, x);
+      return Module['_BinaryenConst'](module, temp);
     },
     'const_bits': function(x, y) {
-      Module['_BinaryenLiteralFloat64Bits'](literal, x, y);
-      return Module['_BinaryenConst'](module, literal);
+      Module['_BinaryenLiteralFloat64Bits'](temp, x, y);
+      return Module['_BinaryenConst'](module, temp);
     },
     'neg': function(value) {
       return Module['_BinaryenUnary'](module, Module['NegFloat64'], value);
@@ -1185,15 +1185,41 @@ Module['Module'] = function(module) {
     Module['_BinaryenModuleDispose'](module);
   };
   var MAX = 1024*1024; // TODO: fix this hard-wired limit
-  var writeBuffer = null;
-  this['emitBinary'] = function() {
-    if (!writeBuffer) writeBuffer = _malloc(MAX);
-    var bytes = Module['_BinaryenModuleWrite'](module, writeBuffer, MAX);
+  var outputBuffer = null;
+  var sourceMapBuffer = null;
+  this['emitBinary'] = function(sourceMapUrl) {
+    if (!outputBuffer) outputBuffer = _malloc(MAX);
+    var bytes = Module['_BinaryenModuleWrite'](module, outputBuffer, MAX);
     assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
-    return new Uint8Array(HEAPU8.subarray(writeBuffer, writeBuffer + bytes));
+    return new Uint8Array(HEAPU8.subarray(outputBuffer, outputBuffer + bytes));
+  };
+  this['emitBinaryWithSourceMap'] = function(sourceMapUrl) {
+    if (!outputBuffer) outputBuffer = _malloc(MAX);
+    if (!sourceMapBuffer) sourceMapBuffer = _malloc(MAX);
+    return preserveStack(function() {
+      Module['_BinaryenModuleWriteWithSourceMap'](temp, module, strToStack(sourceMapUrl), outputBuffer, MAX, sourceMapBuffer, MAX);
+      var outputBytes = HEAPU32[temp >>> 2];
+      var sourceMapBytes = HEAPU32[(temp + 1) >>> 2];
+      assert(outputBytes < MAX && sourceMapBytes < MAX, 'FIXME: hardcoded limit on module size'); // see above
+      return {
+        'binary': new Uint8Array(HEAPU8.subarray(outputBuffer, outputBuffer + outputBytes)),
+        'sourceMap': Pointer_stringify(sourceMapBuffer)
+      };
+    });
   };
   this['interpret'] = function() {
     return Module['_BinaryenModuleInterpret'](module);
+  };
+  this['addDebugInfoFileName'] = function(filename) {
+    return preserveStack(function() {
+      return Module['_BinaryenModuleAddDebugInfoFileName'](module, strToStack(filename));
+    });
+  };
+  this['getDebugInfoFileName'] = function(index) {
+    return Pointer_stringify(Module['_BinaryenModuleGetDebugInfoFileName'](module, index));
+  };
+  this['setDebugLocation'] = function(func, expr, fileIndex, lineNumber, columnNumber) {
+    return Module['_BinaryenFunctionSetDebugLocation'](func, expr, fileIndex, lineNumber, columnNumber);
   };
 };
 

@@ -540,8 +540,11 @@ export_function "_BinaryenSetDebugInfo"
 export_function "_BinaryenModuleRunPasses"
 export_function "_BinaryenModuleAutoDrop"
 export_function "_BinaryenModuleWrite"
+export_function "_BinaryenModuleWriteWithSourceMap"
 export_function "_BinaryenModuleRead"
 export_function "_BinaryenModuleInterpret"
+export_function "_BinaryenModuleAddDebugInfoFileName"
+export_function "_BinaryenModuleGetDebugInfoFileName"
 
 # 'FunctionType' operations
 export_function "_BinaryenFunctionTypeGetName"
@@ -560,6 +563,7 @@ export_function "_BinaryenFunctionGetVar"
 export_function "_BinaryenFunctionGetBody"
 export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
+export_function "_BinaryenFunctionSetDebugLocation"
 
 # 'Import' operations
 export_function "_BinaryenImportGetKind"

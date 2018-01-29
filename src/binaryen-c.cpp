@@ -2100,19 +2100,43 @@ void BinaryenModuleAutoDrop(BinaryenModuleRef module) {
   passRunner.run();
 }
 
+static BinaryenBufferSizes writeModule(BinaryenModuleRef module, char* output, size_t outputSize, const char* sourceMapUrl, char* sourceMap, size_t sourceMapSize) {
+  Module* wasm = (Module*)module;
+  BufferWithRandomAccess buffer(false);
+  WasmBinaryWriter writer(wasm, buffer, false);
+  writer.setNamesSection(globalPassOptions.debugInfo);
+  std::ostringstream os;
+  if (sourceMapUrl) {
+    writer.setSourceMap(&os, sourceMapUrl);
+  }
+  writer.write();
+  size_t bytes = std::min(buffer.size(), outputSize);
+  std::copy_n(buffer.begin(), bytes, output);
+  size_t sourceMapBytes = 0;
+  if (sourceMapUrl) {
+    auto str = os.str();
+    sourceMapBytes = std::min(str.length(), sourceMapSize);
+    std::copy_n(str.c_str(), sourceMapBytes, sourceMap);
+  }
+  return { bytes, sourceMapBytes };
+}
+
 size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize) {
   if (tracing) {
     std::cout << "  // BinaryenModuleWrite\n";
   }
 
-  Module* wasm = (Module*)module;
-  BufferWithRandomAccess buffer(false);
-  WasmBinaryWriter writer(wasm, buffer, false);
-  writer.setNamesSection(globalPassOptions.debugInfo);
-  writer.write();
-  size_t bytes = std::min(buffer.size(), outputSize);
-  std::copy_n(buffer.begin(), bytes, output);
-  return bytes;
+  return writeModule((Module*)module, output, outputSize, nullptr, nullptr, 0).outputBytes;
+}
+
+BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, const char* url, char* output, size_t outputSize, char* sourceMap, size_t sourceMapSize) {
+  if (tracing) {
+    std::cout << "  // BinaryenModuleWriteWithSourceMap\n";
+  }
+
+  assert(url);
+  assert(sourceMap);
+  return writeModule((Module*)module, output, outputSize, url, sourceMap, sourceMapSize);
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
@@ -2142,6 +2166,26 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
   Module* wasm = (Module*)module;
   ShellExternalInterface interface;
   ModuleInstance instance(*wasm, &interface);
+}
+
+BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module, const char* filename) {
+  if (tracing) {
+    std::cout << "  BinaryenModuleAddDebugInfoFileName(the_module, \"" << filename << "\");\n";
+  }
+
+  Module* wasm = (Module*)module;
+  BinaryenIndex index = wasm->debugInfoFileNames.size();
+  wasm->debugInfoFileNames.push_back(filename);
+  return index;
+}
+
+const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module, BinaryenIndex index) {
+  if (tracing) {
+    std::cout << "  BinaryenModuleGetDebugInfoFileName(the_module, \"" << index << "\");\n";
+  }
+
+  Module* wasm = (Module*)module;
+  return index < wasm->debugInfoFileNames.size() ? wasm->debugInfoFileNames.at(index).c_str() : nullptr;
 }
 
 //
@@ -2274,6 +2318,21 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
     passRunner.add(passes[i]);
   }
   passRunner.runOnFunction((Function*)func);
+}
+void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressionRef expr, BinaryenIndex fileIndex, BinaryenIndex lineNumber, BinaryenIndex columnNumber) {
+  if (tracing) {
+    std::cout << "  BinaryenFunctionSetDebugLocation(functions[" << functions[func] << "], expressions[" << expressions[expr] << "], " << fileIndex << ", " << lineNumber << ", " << columnNumber << ");\n";
+  }
+
+  auto* fn = (Function*)func;
+  auto* ex = (Expression*)expr;
+
+  Function::DebugLocation loc;
+  loc.fileIndex = fileIndex;
+  loc.lineNumber = lineNumber;
+  loc.columnNumber = columnNumber;
+
+  fn->debugLocations[ex] = loc;
 }
 
 //
