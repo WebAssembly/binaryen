@@ -707,6 +707,19 @@ typedef struct BinaryenBufferSizes {
 // @returns how many bytes were written. This will be less than or equal to outputSize
 BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, const char* url, char* output, size_t outputSize, char* sourceMap, size_t sourceMapSize);
 
+// Result structure of BinaryenModuleToBinary. Allocated buffers for both the output and
+// the source map must be freed manually.
+typedef struct BinaryenModuleToBinaryResult {
+  void* binary;
+  size_t binaryBytes;
+  char* sourceMap;
+} BinaryenModuleToBinaryResult;
+
+// Serializes a module into binary form, optionally including its source map if
+// sourceMapUrl has been specified. Uses the currently set global debugInfo option.
+// Allocated buffers for both the output and the source map must be freed manually.
+BinaryenModuleToBinaryResult BinaryenModuleToBinary(BinaryenModuleRef module, const char* sourceMapUrl);
+
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 
