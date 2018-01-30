@@ -2141,7 +2141,7 @@ BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, c
 
 BinaryenModuleToBinaryResult BinaryenModuleToBinary(BinaryenModuleRef module, const char* sourceMapUrl) {
   if (tracing) {
-    std::cout << "  BinaryenModuleToBinary(the_module, ";
+    std::cout << " // BinaryenModuleToBinary(the_module, ";
     traceNameOrNULL(sourceMapUrl);
     std::cout << ");\n";
   }
@@ -2155,18 +2155,15 @@ BinaryenModuleToBinaryResult BinaryenModuleToBinary(BinaryenModuleRef module, co
     writer.setSourceMap(&os, sourceMapUrl);
   }
   writer.write();
-  BinaryenModuleToBinaryResult result;
-  result.binaryBytes = buffer.size();
-  result.binary = malloc(result.binaryBytes);
-  std::copy_n(buffer.begin(), buffer.size(), static_cast<char*>(result.binary));
+  void* binary = malloc(buffer.size());
+  std::copy_n(buffer.begin(), buffer.size(), static_cast<char*>(binary));
+  char* sourceMap = nullptr;
   if (sourceMapUrl) {
     auto str = os.str();
-    result.sourceMap = (char*)malloc(str.length() + 1);
-    std::copy_n(str.c_str(), str.length() + 1, result.sourceMap);
-  } else {
-    result.sourceMap = nullptr;
+    sourceMap = (char*)malloc(str.length() + 1);
+    std::copy_n(str.c_str(), str.length() + 1, sourceMap);
   }
-  return result;
+  return { binary, buffer.size(), sourceMap };
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
