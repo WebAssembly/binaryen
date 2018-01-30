@@ -449,7 +449,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
-  JSCallWalker jsCallWalker = getJSCallWalker(wasm);
 
   // print
   meta << "\"asmConsts\": {";
@@ -477,6 +476,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "]";
 
   if (numReservedFunctionPointers) {
+    JSCallWalker jsCallWalker = getJSCallWalker(wasm);
     meta << ", ";
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
