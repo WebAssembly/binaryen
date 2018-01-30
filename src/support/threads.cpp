@@ -47,7 +47,6 @@ Thread::Thread(ThreadPool* parent) : parent(parent) {
 }
 
 Thread::~Thread() {
-  assert(!parent->isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
@@ -194,7 +193,7 @@ size_t ThreadPool::size() {
 
 bool ThreadPool::isRunning() {
   DEBUG_POOL("check if running\n");
-  return pool && pool->running;
+  return running;
 }
 
 void ThreadPool::notifyThreadIsReady() {
