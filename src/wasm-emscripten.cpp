@@ -197,15 +197,30 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
 }
 
 struct JSCallWalker : public PostWalker<JSCallWalker> {
-  Module& wasm;
-  JSCallWalker(Module& _wasm)
-      : wasm(_wasm), jsCallStartIndex(wasm.table.segments[0].data.size()) {}
-  void visitCallIndirect(CallIndirect* curr);
+  Module &wasm;
+  JSCallWalker(Module &_wasm) : wasm(_wasm) {
+    if (wasm.table.segments.size() == 0) {
+      auto emptySegment =
+          wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
+      wasm.table.segments.emplace_back(emptySegment);
+    }
+    std::vector<Name> tableSegmentData = wasm.table.segments[0].data;
+
+    // Check if jsCalls have already been created
+    for (unsigned i = 0; i < tableSegmentData.size(); ++i) {
+      if (tableSegmentData[i].startsWith("jsCall_")) {
+        jsCallStartIndex = i;
+        return;
+      }
+    }
+    jsCallStartIndex = wasm.table.segments[0].data.size();
+  }
+  void visitCallIndirect(CallIndirect *curr);
 
   bool createJSCallThunks;
   unsigned jsCallStartIndex;
   // Function Types used in call_indirect instructions
-  std::set<FunctionType*> indirectlyCallableTypes;
+  std::set<FunctionType *> indirectlyCallableTypes;
 };
 
 void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
@@ -222,14 +237,22 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     unsigned numReservedFunctionPointers) {
   JSCallWalker walker = getJSCallWalker(wasm);
   for (const auto& funcType : walker.indirectlyCallableTypes) {
+    // Add imports for jsCall_sig (e.g. jsCall_vi).
+    // Imported jsCall_sig functions have their first parameter as an index to
+    // the function table, so we should prepend an 'i' to parameters' signature
+    // (e.g. If the signature of the callee is 'vi', the imported jsCall_vi
+    // function would have signature 'vii'.)
     std::string sig = getSig(funcType);
+    std::string importSig = std::string(1, sig[0]) + 'i' + sig.substr(1);
+    FunctionType *importType = ensureFunctionType(importSig, &wasm);
     auto import = new Import;
     import->name = import->base = "jsCall_" + sig;
     import->module = ENV;
-    import->functionType = funcType->name;
+    import->functionType = importType->name;
     import->kind = ExternalKind::Function;
     wasm.addImport(import);
 
+    // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
     for (unsigned fp = 0; fp < numReservedFunctionPointers; ++fp) {
       std::vector<NameType> params;
       int p = 0;
@@ -240,6 +263,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
           std::string("jsCall_") + sig + "_" + std::to_string(fp),
           std::move(params), funcType->result, {});
       std::vector<Expression*> args;
+      args.push_back(builder.makeConst(Literal(fp)));
       for (unsigned i = 0; i < funcType->params.size(); ++i) {
         args.push_back(builder.makeGetLocal(i, funcType->params[i]));
       }
@@ -247,8 +271,10 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
           builder.makeCallImport(import->name, args, funcType->result);
       f->body = call;
       wasm.addFunction(f);
+      wasm.table.segments[0].data.push_back(f->name);
     }
   }
+  wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
