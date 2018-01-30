@@ -2063,7 +2063,7 @@ void BinaryenSetDebugInfo(int on) {
     std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
   }
 
-  globalPassOptions.debugInfo = on ? true : false;
+  globalPassOptions.debugInfo = on != 0;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
@@ -2139,9 +2139,9 @@ BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, c
   return writeModule((Module*)module, output, outputSize, url, sourceMap, sourceMapSize);
 }
 
-BinaryenModuleToBinaryResult BinaryenModuleToBinary(BinaryenModuleRef module, const char* sourceMapUrl) {
+BinaryenModuleAllocateAndWriteResult BinaryenModuleAllocateAndWrite(BinaryenModuleRef module, const char* sourceMapUrl) {
   if (tracing) {
-    std::cout << " // BinaryenModuleToBinary(the_module, ";
+    std::cout << " // BinaryenModuleAllocateAndWrite(the_module, ";
     traceNameOrNULL(sourceMapUrl);
     std::cout << ");\n";
   }

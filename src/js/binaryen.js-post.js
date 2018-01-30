@@ -1186,7 +1186,7 @@ Module['Module'] = function(module) {
   };
   this['emitBinary'] = function(sourceMapUrl) {
     return preserveStack(function() {
-      Module['_BinaryenModuleToBinary'](temp, module, strToStack(sourceMapUrl));
+      Module['_BinaryenModuleAllocateAndWrite'](temp, module, strToStack(sourceMapUrl));
       var binaryPtr    = HEAPU32[ temp >>> 2     ];
       var binaryBytes  = HEAPU32[(temp >>> 2) + 1];
       var sourceMapPtr = HEAPU32[(temp >>> 2) + 2];
