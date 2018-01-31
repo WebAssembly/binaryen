@@ -17,14 +17,17 @@
 //
 // Inlining.
 //
-// By default, this does a conservative inlining of all functions that have
-// exactly one use, and are fairly small. That should not increase code
-// size, and may have speed benefits.
+// This uses some simple heuristics to decide when to inline.
 //
-// When opt level is 3+ (-O3 or above), we more aggressively inline
-// even functions with more than one use, that seem to be "lightweight"
-// (no loops or calls etc.), so inlining them may get rid of call overhead
-// that would be noticeable otherwise
+// Two versions are provided: inlining and inlining-optimizing. You
+// probably want the optimizing version, which will optimize locations
+// we inlined into, as inlining by itself creates a block to house the
+// inlined code, some temp locals, etc., which can usually be removed
+// by optimizations. Note that the two versions use the same heuristics,
+// so we don't take into account the overhead if you don't optimize
+// afterwards. The non-optimizing version is mainly useful for debugging,
+// or if you intend to run a full set of optimizations anyhow on
+// everything later.
 //
 
 #include <atomic>
@@ -72,13 +75,12 @@ struct FunctionInfo {
     usedGlobally = false;
   }
 
-  bool worthInlining(PassOptions& options,
-                     bool optimizing) {
+  bool worthInlining(PassOptions& options) {
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
     // if it's so small we have a guarantee that after we optimize the
     // size will not increase, inline it
-    if (optimizing && size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
+    if (size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
@@ -283,7 +285,7 @@ struct Inlining : public Pass {
     InliningState state;
     for (auto& func : module->functions) {
       // on the first iteration, allow multiple inlinings per function
-      if (infos[func->name].worthInlining(runner->options, optimize)) {
+      if (infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
     }
