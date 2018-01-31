@@ -65,7 +65,6 @@ struct FunctionInfo {
   }
 
   bool worthInlining(PassOptions& options,
-                     bool allowMultipleInliningsPerFunction,
                      bool optimizing) {
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
@@ -76,11 +75,10 @@ struct FunctionInfo {
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
     if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
-    if (!allowMultipleInliningsPerFunction) return false;
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
     // about size, and if it's lightweight so a good candidate for
-    // speeding us up
+    // speeding us up.
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 && lightweight;
   }
 };
@@ -277,9 +275,7 @@ struct Inlining : public Pass {
     InliningState state;
     for (auto& func : module->functions) {
       // on the first iteration, allow multiple inlinings per function
-      if (infos[func->name].worthInlining(runner->options,
-                                          iterationNumber == 0 /* allowMultipleInliningsPerFunction */,
-                                          optimize)) {
+      if (infos[func->name].worthInlining(runner->options, optimize)) {
         state.worthInlining.insert(func->name);
       }
     }
