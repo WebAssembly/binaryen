@@ -221,19 +221,28 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
+  // the information for each function. recomputed in each iteraction
   NameInfoMap infos;
 
-  bool firstIteration;
+  Index iterationNumber;
 
   void run(PassRunner* runner, Module* module) override {
+    Index numFunctions = module->functions.size();
     // keep going while we inline, to handle nesting. TODO: optimize
-    firstIteration = true;
-    while (1) {
+    iterationNumber = 0;
+    // no point to do more iterations than the number of functions, as
+    // it means we infinitely recursing (which should
+    // be very rare in practice, but it is possible that a recursive call
+    // can look like it is worth inlining)
+    while (iterationNumber <= numFunctions) {
+#ifdef INLINING_DEBUG
+      std::cout << "inlining loop iter " << iterationNumber << " (numFunctions: " << numFunctions << ")\n";
+#endif
       calculateInfos(module);
       if (!iteration(runner, module)) {
         return;
       }
-      firstIteration = false;
+      iterationNumber++;
     }
   }
 
@@ -269,7 +278,7 @@ struct Inlining : public Pass {
     for (auto& func : module->functions) {
       // on the first iteration, allow multiple inlinings per function
       if (infos[func->name].worthInlining(runner->options,
-                                          firstIteration /* allowMultipleInliningsPerFunction */,
+                                          iterationNumber == 0 /* allowMultipleInliningsPerFunction */,
                                           optimize)) {
         state.worthInlining.insert(func->name);
       }
@@ -291,14 +300,14 @@ struct Inlining : public Pass {
     std::unordered_set<Function*> inlinedInto; // which functions were inlined into
     for (auto& func : module->functions) {
       // if we've inlined a function, don't inline into it in this iteration,
-      // avoid risk of loops
+      // avoid risk of races
       // note that we do not risk stalling progress, as each iteration() will
       // inline at least one call before hitting this
       if (inlinedUses.count(func->name)) continue;
       for (auto& action : state.actionsForFunction[func->name]) {
         auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
-        // avoid risk of loops
+        // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
         // inline at least one call before hitting this
         if (inlinedInto.count(inlinedFunction)) continue;
@@ -326,7 +335,7 @@ struct Inlining : public Pass {
       auto& info = infos[name];
       bool canRemove = inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
 #ifdef INLINING_DEBUG
-      std::cout << "removing " << name << '\n';
+      if (canRemove) std::cout << "removing " << name << '\n';
 #endif
       return canRemove;
     }), funcs.end());

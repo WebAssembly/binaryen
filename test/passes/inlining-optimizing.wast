@@ -117,3 +117,27 @@
   (i64.const 0)
  )
 )
+;; potential infinite recursion
+(module
+ (func $main
+  (call $one)
+  (call $one)
+ )
+ (func $one
+  (call $one)
+ )
+)
+;; potential infinite cycling recursion
+(module
+ (func $main
+  (call $one)
+  (call $one)
+ )
+ (func $one
+  (call $two)
+ )
+ (func $two
+  (call $one)
+ )
+)
+
