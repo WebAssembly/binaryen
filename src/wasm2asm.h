@@ -160,11 +160,12 @@ public:
     // TODO: more clever name fixing, including checking we do not collide
     const char* str = name.str;
     // check the various issues, and recurse so we check the others
-    if (strchr(str, '-')) {
+    if (strchr(str, '-') || strchr(str, ':')) {
       char* mod = strdup(str);
       str = mod;
       while (*mod) {
         if (*mod == '-') *mod = '_';
+        else if (*mod == ':') *mod = '_';
         mod++;
       }
       IString result = fromName(IString(str, false));
@@ -1557,7 +1558,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     Ref visitHost(Host* curr) {
-      abort();
+      return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
     Ref visitNop(Nop* curr) {
