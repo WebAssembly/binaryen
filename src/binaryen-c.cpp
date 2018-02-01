@@ -2063,7 +2063,7 @@ void BinaryenSetDebugInfo(int on) {
     std::cout << "  BinaryenSetDebugInfo(" << on << ");\n";
   }
 
-  globalPassOptions.debugInfo = bool(on);
+  globalPassOptions.debugInfo = on != 0;
 }
 
 void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
@@ -2137,6 +2137,33 @@ BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, c
   assert(url);
   assert(sourceMap);
   return writeModule((Module*)module, output, outputSize, url, sourceMap, sourceMapSize);
+}
+
+BinaryenModuleAllocateAndWriteResult BinaryenModuleAllocateAndWrite(BinaryenModuleRef module, const char* sourceMapUrl) {
+  if (tracing) {
+    std::cout << " // BinaryenModuleAllocateAndWrite(the_module, ";
+    traceNameOrNULL(sourceMapUrl);
+    std::cout << ");\n";
+  }
+
+  Module* wasm = (Module*)module;
+  BufferWithRandomAccess buffer(false);
+  WasmBinaryWriter writer(wasm, buffer, false);
+  writer.setNamesSection(globalPassOptions.debugInfo);
+  std::ostringstream os;
+  if (sourceMapUrl) {
+    writer.setSourceMap(&os, sourceMapUrl);
+  }
+  writer.write();
+  void* binary = malloc(buffer.size());
+  std::copy_n(buffer.begin(), buffer.size(), static_cast<char*>(binary));
+  char* sourceMap = nullptr;
+  if (sourceMapUrl) {
+    auto str = os.str();
+    sourceMap = (char*)malloc(str.length() + 1);
+    std::copy_n(str.c_str(), str.length() + 1, sourceMap);
+  }
+  return { binary, buffer.size(), sourceMap };
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {

@@ -1160,7 +1160,7 @@ Module['Module'] = function(module) {
     return Module['_BinaryenModuleOptimize'](module);
   };
   this['optimizeFunction'] = function(func) {
-    if (typeof func === "string") func = this['getFunction'](func);
+    if (typeof func === 'string') func = this['getFunction'](func);
     return Module['_BinaryenFunctionOptimize'](func, module);
   };
   this['runPasses'] = function(passes) {
@@ -1171,7 +1171,7 @@ Module['Module'] = function(module) {
     });
   };
   this['runPassesOnFunction'] = function(func, passes) {
-    if (typeof func === "string") func = this['getFunction'](func);
+    if (typeof func === 'string') func = this['getFunction'](func);
     return preserveStack(function() {
       return Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(
         passes.map(strToStack)
@@ -1184,27 +1184,22 @@ Module['Module'] = function(module) {
   this['dispose'] = function() {
     Module['_BinaryenModuleDispose'](module);
   };
-  var MAX = 1024*1024; // TODO: fix this hard-wired limit
-  var outputBuffer = null;
-  var sourceMapBuffer = null;
   this['emitBinary'] = function(sourceMapUrl) {
-    if (!outputBuffer) outputBuffer = _malloc(MAX);
-    var bytes = Module['_BinaryenModuleWrite'](module, outputBuffer, MAX);
-    assert(bytes < MAX, 'FIXME: hardcoded limit on module size'); // we should not use the whole buffer
-    return new Uint8Array(HEAPU8.subarray(outputBuffer, outputBuffer + bytes));
-  };
-  this['emitBinaryWithSourceMap'] = function(sourceMapUrl) {
-    if (!outputBuffer) outputBuffer = _malloc(MAX);
-    if (!sourceMapBuffer) sourceMapBuffer = _malloc(MAX);
     return preserveStack(function() {
-      Module['_BinaryenModuleWriteWithSourceMap'](temp, module, strToStack(sourceMapUrl), outputBuffer, MAX, sourceMapBuffer, MAX);
-      var outputBytes = HEAPU32[temp >>> 2];
-      var sourceMapBytes = HEAPU32[(temp + 1) >>> 2];
-      assert(outputBytes < MAX && sourceMapBytes < MAX, 'FIXME: hardcoded limit on module size'); // see above
-      return {
-        'binary': new Uint8Array(HEAPU8.subarray(outputBuffer, outputBuffer + outputBytes)),
-        'sourceMap': Pointer_stringify(sourceMapBuffer)
-      };
+      Module['_BinaryenModuleAllocateAndWrite'](temp, module, strToStack(sourceMapUrl));
+      var binaryPtr    = HEAPU32[ temp >>> 2     ];
+      var binaryBytes  = HEAPU32[(temp >>> 2) + 1];
+      var sourceMapPtr = HEAPU32[(temp >>> 2) + 2];
+      try {
+        var buffer = new Uint8Array(binaryBytes);
+        buffer.set(HEAPU8.subarray(binaryPtr, binaryPtr + binaryBytes));
+        return typeof sourceMapUrl === 'undefined'
+          ? buffer
+          : { 'binary': buffer, 'sourceMap': Pointer_stringify(sourceMapPtr) };
+      } finally {
+        _free(binaryPtr);
+        if (sourceMapPtr) _free(sourceMapPtr);
+      }
     });
   };
   this['interpret'] = function() {

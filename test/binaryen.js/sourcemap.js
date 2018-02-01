@@ -17,7 +17,7 @@ var func = module.addFunction("main", signature, [], body);
 module.setDebugLocation(func, expr, fileIndex, 1, 2);
 module.setDebugLocation(func, body, fileIndex, 0, 3);
 
-var output = module.emitBinaryWithSourceMap("module.wasm.map");
+var output = module.emitBinary("module.wasm.map");
 
 function dumpBinary(buffer) {
   var hex = [], o, b, h;
