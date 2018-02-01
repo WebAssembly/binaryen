@@ -121,7 +121,7 @@ int main(int argc, const char *argv[]) {
              }
              o->extra["validate"] = argument;
            })
-      .add("--reserved-function-pointers", "",
+      .add("--emscripten-reserved-function-pointers", "",
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,

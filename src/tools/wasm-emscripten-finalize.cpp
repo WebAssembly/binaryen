@@ -54,7 +54,14 @@ int main(int argc, const char *argv[]) {
            [&emitBinary](Options*, const std::string &) {
              emitBinary = false;
            })
-      .add("--reserved-function-pointers", "",
+      .add("--emscripten-reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [](Options *o, const std::string &argument) {
+             o->extra["reservedFunctionPointers"] = argument;
+           })
+      .add("--emscripten-reserved-function-pointers", "",
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,

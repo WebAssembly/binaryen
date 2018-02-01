@@ -219,12 +219,12 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
 
   bool createJSCallThunks;
   unsigned jsCallStartIndex;
-  // Function Types used in call_indirect instructions
-  std::set<FunctionType *> indirectlyCallableTypes;
+  // Function type signatures used in call_indirect instructions
+  std::set<std::string> indirectlyCallableSigs;
 };
 
 void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
-  indirectlyCallableTypes.insert(wasm.getFunctionType(curr->fullType));
+  indirectlyCallableSigs.insert(getSig(wasm.getFunctionType(curr->fullType)));
 }
 
 JSCallWalker getJSCallWalker(Module& wasm) {
@@ -235,14 +235,16 @@ JSCallWalker getJSCallWalker(Module& wasm) {
 
 void EmscriptenGlueGenerator::generateJSCallThunks(
     unsigned numReservedFunctionPointers) {
+  if (numReservedFunctionPointers == 0)
+    return;
+
   JSCallWalker walker = getJSCallWalker(wasm);
-  for (const auto& funcType : walker.indirectlyCallableTypes) {
+  for (std::string sig : walker.indirectlyCallableSigs) {
     // Add imports for jsCall_sig (e.g. jsCall_vi).
     // Imported jsCall_sig functions have their first parameter as an index to
     // the function table, so we should prepend an 'i' to parameters' signature
     // (e.g. If the signature of the callee is 'vi', the imported jsCall_vi
     // function would have signature 'vii'.)
-    std::string sig = getSig(funcType);
     std::string importSig = std::string(1, sig[0]) + 'i' + sig.substr(1);
     FunctionType *importType = ensureFunctionType(importSig, &wasm);
     auto import = new Import;
@@ -251,6 +253,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     import->functionType = importType->name;
     import->kind = ExternalKind::Function;
     wasm.addImport(import);
+    FunctionType *funcType = ensureFunctionType(sig, &wasm);
 
     // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
     for (unsigned fp = 0; fp < numReservedFunctionPointers; ++fp) {
@@ -481,10 +484,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
     bool first = true;
-    for (const auto& funcType : jsCallWalker.indirectlyCallableTypes) {
+    for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
       if (!first) meta << ", ";
       first = false;
-      std::string sig = getSig(funcType);
       meta << "\"" << sig << "\"";
     }
     meta << "]";

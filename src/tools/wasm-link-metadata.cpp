@@ -76,7 +76,7 @@ int main(int argc, const char *argv[]) {
              outfile = argument;
              Colors::disable();
            })
-      .add("--reserved-function-pointers", "",
+      .add("--emscripten-reserved-function-pointers", "",
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,

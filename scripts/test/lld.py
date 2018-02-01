@@ -21,40 +21,56 @@ from shared import (
     WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
 )
 
-
 def test_wasm_link_metadata():
   print '\n[ checking wasm-link-metadata testcases... ]\n'
 
+  extension_arg_map = {
+    '.json': [],
+    '.jscall.json': ['--emscripten-reserved-function-pointers=3'],
+  }
+
   for obj_path in files_with_pattern(options.binaryen_test, 'lld', '*.o'):
     print '..', obj_path
-    expected_file = obj_path.replace('.o', '.json')
+    for ext, ext_args in extension_arg_map.items():
+      expected_file = obj_path.replace('.o', ext)
+      if ext != '.json' and not os.path.exists(expected_file):
+        continue
 
-    cmd = WASM_LINK_METADATA + [obj_path]
-    actual = run_command(cmd)
+      cmd = WASM_LINK_METADATA + [obj_path] + ext_args
+      actual = run_command(cmd)
 
-    if not os.path.exists(expected_file):
-      print actual
-      fail_with_error('output ' + expected_file + ' does not exist')
-    expected = open(expected_file, 'rb').read()
-    if actual != expected:
-      fail(actual, expected)
+      if not os.path.exists(expected_file):
+        print actual
+        fail_with_error('output ' + expected_file + ' does not exist')
+      expected = open(expected_file, 'rb').read()
+      if actual != expected:
+        fail(actual, expected)
 
 
 def test_wasm_emscripten_finalize():
   print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
 
+  extension_arg_map = {
+    '.out': [],
+    '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
+  }
+
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
     print '..', wast_path
-    expected_file = wast_path + '.out'
-    cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S']
-    actual = run_command(cmd)
+    for ext, ext_args in extension_arg_map.items():
+      expected_file = wast_path + ext
+      if ext != '.out' and not os.path.exists(expected_file):
+        continue
 
-    if not os.path.exists(expected_file):
-      print actual
-      fail_with_error('output ' + expected_file + ' does not exist')
-    expected = open(expected_file, 'rb').read()
-    if actual != expected:
-      fail(actual, expected)
+      cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+      actual = run_command(cmd)
+
+      if not os.path.exists(expected_file):
+        print actual
+        fail_with_error('output ' + expected_file + ' does not exist')
+      expected = open(expected_file, 'rb').read()
+      if actual != expected:
+        fail(actual, expected)
 
 
 if __name__ == '__main__':
