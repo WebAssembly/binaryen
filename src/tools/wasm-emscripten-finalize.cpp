@@ -61,13 +61,6 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string &argument) {
              o->extra["reservedFunctionPointers"] = argument;
            })
-      .add("--emscripten-reserved-function-pointers", "",
-           "Number of reserved function pointers for emscripten addFunction "
-           "support",
-           Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["reservedFunctionPointers"] = argument;
-           })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
                         infile = argument;

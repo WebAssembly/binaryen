@@ -39,7 +39,9 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
-  // TODO
+  // Create thunks to support emscripten's addFunction functionality. Creates (#
+  // of reserved function pointers) thunks for each indirectly called function
+  // signature.
   void generateJSCallThunks(unsigned numReservedFunctionPointers);
 
   std::string generateEmscriptenMetadata(

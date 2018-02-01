@@ -223,6 +223,8 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
   std::set<std::string> indirectlyCallableSigs;
 };
 
+// Gather all function signatures used in call_indirect, because any of them
+// can be used to call function pointers created by emscripten's addFunction.
 void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
   indirectlyCallableSigs.insert(getSig(wasm.getFunctionType(curr->fullType)));
 }
@@ -256,6 +258,10 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     FunctionType *funcType = ensureFunctionType(sig, &wasm);
 
     // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
+    // e.g. If # of reserved function pointers (given by a command line
+    // argument) is 3 and there are two possible signature 'vi' and 'ii', the
+    // genereated thunks will be jsCall_vi_0, jsCall_vi_1, jsCall_vi_2,
+    // jsCall_ii_0, jsCall_ii_1, and jsCall_ii_2.
     for (unsigned fp = 0; fp < numReservedFunctionPointers; ++fp) {
       std::vector<NameType> params;
       int p = 0;

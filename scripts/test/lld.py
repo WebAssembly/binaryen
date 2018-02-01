@@ -21,6 +21,7 @@ from shared import (
     WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
 )
 
+
 def test_wasm_link_metadata():
   print '\n[ checking wasm-link-metadata testcases... ]\n'
 
