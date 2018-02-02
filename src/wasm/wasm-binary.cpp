@@ -2192,9 +2192,15 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       continue;
     }
     auto num = getU32LEB();
+    std::map<Name, int> nameCounts;
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       auto name = getInlineString();
+      // De-duplicate names by appending _1, _2, etc.
+      if (nameCounts[name] != 0) {
+        name = name.str + std::string("_") + std::to_string(nameCounts[name]);
+      }
+      nameCounts[name]++;
       // note: we silently ignore errors here, as name section errors
       //       are not fatal. should we warn?
       auto numFunctionImports = functionImports.size();
@@ -2202,13 +2208,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         functionImports[index]->name = name;
       } else if (index - numFunctionImports < functions.size()) {
         functions[index - numFunctionImports]->name = name;
-      }
-    }
-    // disallow duplicate names
-    std::set<Name> functionNames;
-    for (auto* func : functions) {
-      if (!functionNames.insert(func->name).second) {
-        throw ParseException("duplicate function name: " + std::string(func->name.str));
+      } else {
+        throw ParseException("index out of bounds: " + std::string(name.str));
       }
     }
     if (pos != subsectionPos + subsectionSize) {
