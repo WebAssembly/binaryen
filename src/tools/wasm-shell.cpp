@@ -208,7 +208,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
         } else {
           Literal expected;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          if (!expected.`bitwiseEqual(result)) {
+          if (!expected.bitwiseEqual(result)) {
             std::cout << "unexpected, should be identical\n";
             abort();
           }
