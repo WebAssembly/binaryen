@@ -2192,15 +2192,15 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       continue;
     }
     auto num = getU32LEB();
-    std::map<Name, int> nameCounts;
+    std::set<Name> usedNames;
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
-      auto name = getInlineString();
-      // De-duplicate names by appending _1, _2, etc.
-      if (nameCounts[name] != 0) {
-        name = name.str + std::string("_") + std::to_string(nameCounts[name]);
+      auto rawName = getInlineString();
+      auto name = rawName;
+      // De-duplicate names by appending .1, .2, etc.
+      for (int i = 1; !usedNames.insert(name).second; ++i) {
+        name = rawName.str + std::string(".") + std::to_string(i);
       }
-      nameCounts[name]++;
       // note: we silently ignore errors here, as name section errors
       //       are not fatal. should we warn?
       auto numFunctionImports = functionImports.size();
