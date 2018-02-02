@@ -523,7 +523,7 @@ private:
       // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
       // the parent), so we must be (us, somethingElse), and so our return is void
       if (parent[0] != SEQ) {
-        result = detectType(parent, data);
+        result = detectWasmType(parent, data);
       }
     }
     return result;
@@ -569,7 +569,7 @@ private:
     return detectType(ast, data, false, Math_fround, wasmOnly);
   }
 
-  Type detectType(Ref ast, AsmData *data) {
+  Type detectWasmType(Ref ast, AsmData *data) {
     return asmToWasmType(detectAsmType(ast, data));
   }
 
@@ -2193,7 +2193,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->target = builder.makeBinary(BinaryOp::AddInt32, ret->target, builder.makeCallImport(target[1]->getIString(), {}, i32));
       return ret;
     } else if (what == RETURN) {
-      Type type = !!ast[1] ? detectType(ast[1], &asmData) : none;
+      Type type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;
       if (seenReturn) {
         assert(function->result == type);
       } else {
