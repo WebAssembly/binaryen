@@ -84,7 +84,7 @@ private:
       }
       case f32:
       case f64: {
-        size = getWasmTypeSize(value.type);
+        size = getTypeSize(value.type);
         break;
       }
       default: WASM_UNREACHABLE();

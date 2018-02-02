@@ -113,7 +113,7 @@ class SExpressionWasmBuilder {
   std::vector<Name> globalNames;
   int functionCounter;
   int globalCounter;
-  std::map<Name, WasmType> functionTypes; // we need to know function return types before we parse their contents
+  std::map<Name, Type> functionTypes; // we need to know function return types before we parse their contents
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
 public:
@@ -129,7 +129,7 @@ private:
 
   // function parsing state
   std::unique_ptr<Function> currFunction;
-  std::map<Name, WasmType> currLocalTypes;
+  std::map<Name, Type> currLocalTypes;
   size_t localIndex; // params and vars
   size_t otherIndex;
   bool brokeToAutoBlock;
@@ -145,12 +145,12 @@ private:
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  WasmType stringToWasmType(cashew::IString str, bool allowError=false, bool prefix=false) {
-    return stringToWasmType(str.str, allowError, prefix);
+  Type stringToType(cashew::IString str, bool allowError=false, bool prefix=false) {
+    return stringToType(str.str, allowError, prefix);
   }
-  WasmType stringToWasmType(const char* str, bool allowError=false, bool prefix=false);
-  bool isWasmType(cashew::IString str) {
-    return stringToWasmType(str, true) != none;
+  Type stringToType(const char* str, bool allowError=false, bool prefix=false);
+  bool isType(cashew::IString str) {
+    return stringToType(str, true) != none;
   }
 
 public:
@@ -165,8 +165,8 @@ public:
 
 private:
   Expression* makeExpression(Element& s);
-  Expression* makeBinary(Element& s, BinaryOp op, WasmType type);
-  Expression* makeUnary(Element& s, UnaryOp op, WasmType type);
+  Expression* makeBinary(Element& s, BinaryOp op, Type type);
+  Expression* makeUnary(Element& s, UnaryOp op, Type type);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
   Expression* makeHost(Element& s, HostOp op);
@@ -178,16 +178,16 @@ private:
   Expression* makeSetGlobal(Element& s);
   Expression* makeBlock(Element& s);
   Expression* makeThenOrElse(Element& s);
-  Expression* makeConst(Element& s, WasmType type);
-  Expression* makeLoad(Element& s, WasmType type, bool isAtomic);
-  Expression* makeStore(Element& s, WasmType type, bool isAtomic);
-  Expression* makeAtomicRMWOrCmpxchg(Element& s, WasmType type);
-  Expression* makeAtomicRMW(Element& s, WasmType type, uint8_t bytes, const char* extra);
-  Expression* makeAtomicCmpxchg(Element& s, WasmType type, uint8_t bytes, const char* extra);
-  Expression* makeAtomicWait(Element& s, WasmType type);
+  Expression* makeConst(Element& s, Type type);
+  Expression* makeLoad(Element& s, Type type, bool isAtomic);
+  Expression* makeStore(Element& s, Type type, bool isAtomic);
+  Expression* makeAtomicRMWOrCmpxchg(Element& s, Type type);
+  Expression* makeAtomicRMW(Element& s, Type type, uint8_t bytes, const char* extra);
+  Expression* makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra);
+  Expression* makeAtomicWait(Element& s, Type type);
   Expression* makeAtomicWake(Element& s);
   Expression* makeIf(Element& s);
-  Expression* makeMaybeBlock(Element& s, size_t i, WasmType type);
+  Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s);
   Expression* makeCallImport(Element& s);
@@ -204,7 +204,7 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
 
-  WasmType parseOptionalResultType(Element& s, Index& i);
+  Type parseOptionalResultType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);

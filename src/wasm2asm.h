@@ -135,14 +135,14 @@ public:
   Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
-  IString getTemp(WasmType type, Function* func) {
+  IString getTemp(Type type, Function* func) {
     IString ret;
     if (frees[type].size() > 0) {
       ret = frees[type].back();
       frees[type].pop_back();
     } else {
       size_t index = temps[type]++;
-      ret = IString((std::string("wasm2asm_") + printWasmType(type) + "$" +
+      ret = IString((std::string("wasm2asm_") + printType(type) + "$" +
                      std::to_string(index)).c_str(), false);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
@@ -152,7 +152,7 @@ public:
   }
 
   // Free a temp var.
-  void freeTemp(WasmType type, IString temp) {
+  void freeTemp(Type type, IString temp) {
     frees[type].push_back(temp);
   }
 
@@ -232,7 +232,7 @@ static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
   BinaryOp xorOp   = is32Bit ? XorInt32    : XorInt64;
   UnaryOp  clzOp   = is32Bit ? ClzInt32    : ClzInt64;
   UnaryOp  eqzOp   = is32Bit ? EqZInt32    : EqZInt64;
-  WasmType argType = is32Bit ? i32         : i64;
+  Type argType = is32Bit ? i32         : i64;
   Binary* xorExp = b.makeBinary(
     xorOp,
     b.makeGetLocal(0, i32),
@@ -275,7 +275,7 @@ static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
   BinaryOp subOp   = is32Bit ? SubInt32       : SubInt64;
   BinaryOp andOp   = is32Bit ? AndInt32       : AndInt64;
   UnaryOp  eqzOp   = is32Bit ? EqZInt32       : EqZInt64;
-  WasmType argType = is32Bit ? i32            : i64;
+  Type argType = is32Bit ? i32            : i64;
   Name loopName("l");
   Name blockName("b");
   Break* brIf = b.makeBreak(
@@ -338,7 +338,7 @@ Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
   BinaryOp orOp    = is32Bit ? OrInt32  : OrInt64;
   BinaryOp andOp   = is32Bit ? AndInt32 : AndInt64;
   BinaryOp subOp   = is32Bit ? SubInt32 : SubInt64;
-  WasmType argType = is32Bit ? i32      : i64;
+  Type argType = is32Bit ? i32      : i64;
   Literal widthMask =
       is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1));
   Literal width =
@@ -723,13 +723,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // A scoped temporary variable.
     struct ScopedTemp {
       Wasm2AsmBuilder* parent;
-      WasmType type;
+      Type type;
       IString temp;
       bool needFree;
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(WasmType type, Wasm2AsmBuilder* parent, Function* func,
+      ScopedTemp(Type type, Wasm2AsmBuilder* parent, Function* func,
                  IString possible = NO_RESULT) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
@@ -767,7 +767,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     // this result is for an asm expression slot, but it might be a statement
-    Ref visitForExpression(Expression* curr, WasmType type, IString& tempName) {
+    Ref visitForExpression(Expression* curr, Type type, IString& tempName) {
       if (isStatement(curr)) {
         ScopedTemp temp(type, parent, func);
         tempName = temp.temp;
@@ -915,7 +915,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, WasmType type) {
+    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, Type type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
         temps.push_back(new ScopedTemp(operand->type, parent, func));
@@ -1625,7 +1625,7 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
     }
   } else if (e.size() == 3) {
     Expression* expected = sexpBuilder.parseExpression(e[2]);
-    WasmType resType = expected->type;
+    Type resType = expected->type;
     actual->type = resType;
     BinaryOp eqOp;
     switch (resType) {

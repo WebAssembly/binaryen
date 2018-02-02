@@ -27,7 +27,7 @@ static std::string generateSpecWrapper(Module& wasm) {
     auto* func = wasm.getFunctionOrNull(exp->value);
     if (!func) continue; // something exported other than a function
     ret += std::string("(invoke \"hangLimitInitializer\") (invoke \"") + exp->name.str + "\" ";
-    for (WasmType param : func->params) {
+    for (Type param : func->params) {
       // zeros in arguments TODO more?
       switch (param) {
         case i32: ret += "(i32.const 0)"; break;

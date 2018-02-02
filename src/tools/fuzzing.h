@@ -243,7 +243,7 @@ private:
     wasm.table.segments.emplace_back(builder.makeConst(Literal(int32_t(0))));
   }
 
-  std::map<WasmType, std::vector<Name>> globalsByType;
+  std::map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
     size_t index = 0;
@@ -314,7 +314,7 @@ private:
   }
 
   void addDeNanSupport() {
-    auto add = [&](Name name, WasmType type, Literal literal, BinaryOp op) {
+    auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
       auto* func = new Function;
       func->name = name;
       func->params.push_back(type);
@@ -354,7 +354,7 @@ private:
   // which we try to minimize the risk of
   std::vector<Expression*> hangStack;
 
-  std::map<WasmType, std::vector<Index>> typeLocals; // type => list of locals with that type
+  std::map<Type, std::vector<Index>> typeLocals; // type => list of locals with that type
 
   Function* addFunction() {
     Index num = wasm.functions.size();
@@ -427,7 +427,7 @@ private:
         args.push_back(makeConst(type));
       }
       Expression* invoke = builder.makeCall(func->name, args, func->result);
-      if (isConcreteWasmType(func->result)) {
+      if (isConcreteType(func->result)) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -454,12 +454,12 @@ private:
 
   int nesting = 0;
 
-  Expression* make(WasmType type) {
+  Expression* make(Type type) {
     // when we should stop, emit something small (but not necessarily trivial)
     if (finishedInput ||
         nesting >= 5 * NESTING_LIMIT || // hard limit
         (nesting >= NESTING_LIMIT && !oneIn(3))) {
-      if (isConcreteWasmType(type)) {
+      if (isConcreteType(type)) {
         if (oneIn(2)) {
           return makeConst(type);
         } else {
@@ -491,7 +491,7 @@ private:
     return ret;
   }
 
-  Expression* _makeConcrete(WasmType type) {
+  Expression* _makeConcrete(Type type) {
     auto choice = upTo(100);
     if (choice < 10) return makeConst(type);
     if (choice < 30) return makeSetLocal(type);
@@ -565,8 +565,8 @@ private:
   }
 
   // make something with no chance of infinite recursion
-  Expression* makeTrivial(WasmType type) {
-    if (isConcreteWasmType(type)) {
+  Expression* makeTrivial(Type type) {
+    if (isConcreteType(type)) {
       if (oneIn(2)) {
         return makeGetLocal(type);
       } else {
@@ -577,7 +577,7 @@ private:
     }
     assert(type == unreachable);
     Expression* ret = nullptr;
-    if (isConcreteWasmType(func->result)) {
+    if (isConcreteType(func->result)) {
       ret = makeTrivial(func->result);
     }
     return builder.makeReturn(ret);
@@ -585,7 +585,7 @@ private:
 
   // specific expression creators
 
-  Expression* makeBlock(WasmType type) {
+  Expression* makeBlock(Type type) {
     auto* ret = builder.makeBlock();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
@@ -609,13 +609,13 @@ private:
     }
     // give a chance to make the final element an unreachable break, instead
     // of concrete - a common pattern (branch to the top of a loop etc.)
-    if (!finishedInput && isConcreteWasmType(type) && oneIn(2)) {
+    if (!finishedInput && isConcreteType(type) && oneIn(2)) {
       ret->list.push_back(makeBreak(unreachable));
     } else {
       ret->list.push_back(make(type));
     }
     breakableStack.pop_back();
-    if (isConcreteWasmType(type)) {
+    if (isConcreteType(type)) {
       ret->finalize(type);
     } else {
       ret->finalize();
@@ -628,7 +628,7 @@ private:
     return ret;
   }
 
-  Expression* makeLoop(WasmType type) {
+  Expression* makeLoop(Type type) {
     auto* ret = wasm.allocator.alloc<Loop>();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
@@ -669,7 +669,7 @@ private:
   }
 
   // make something, with a good chance of it being a block
-  Expression* makeMaybeBlock(WasmType type) {
+  Expression* makeMaybeBlock(Type type) {
     // if past the limit, prefer not to emit blocks
     if (nesting >= NESTING_LIMIT || oneIn(3)) {
       return make(type);
@@ -678,7 +678,7 @@ private:
     }
   }
 
-  Expression* makeIf(WasmType type) {
+  Expression* makeIf(Type type) {
     auto* condition = makeCondition();
     hangStack.push_back(nullptr);
     auto* ret = makeIf({ condition, makeMaybeBlock(type), makeMaybeBlock(type) });
@@ -690,7 +690,7 @@ private:
     return builder.makeIf(args.a, args.b, args.c);
   }
 
-  Expression* makeBreak(WasmType type) {
+  Expression* makeBreak(Type type) {
     if (breakableStack.empty()) return makeTrivial(type);
     Expression* condition = nullptr;
     if (type != unreachable) {
@@ -703,7 +703,7 @@ private:
       auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
-      if (isConcreteWasmType(type)) {
+      if (isConcreteType(type)) {
         // we are flowing out a value
         if (valueType != type) {
           // we need to break to a proper place
@@ -765,7 +765,7 @@ private:
     return makeTrivial(type);
   }
 
-  Expression* makeCall(WasmType type) {
+  Expression* makeCall(Type type) {
     // seems ok, go on
     int tries = TRIES;
     while (tries-- > 0) {
@@ -787,7 +787,7 @@ private:
     return make(type);
   }
 
-  Expression* makeCallIndirect(WasmType type) {
+  Expression* makeCallIndirect(Type type) {
     auto& data = wasm.table.segments[0].data;
     if (data.empty()) return make(type);
     // look for a call target with the right type
@@ -825,15 +825,15 @@ private:
     );
   }
 
-  Expression* makeGetLocal(WasmType type) {
+  Expression* makeGetLocal(Type type) {
     auto& locals = typeLocals[type];
     if (locals.empty()) return makeConst(type);
     return builder.makeGetLocal(vectorPick(locals), type);
   }
 
-  Expression* makeSetLocal(WasmType type) {
+  Expression* makeSetLocal(Type type) {
     bool tee = type != none;
-    WasmType valueType;
+    Type valueType;
     if (tee) {
       valueType = type;
     } else {
@@ -849,13 +849,13 @@ private:
     }
   }
 
-  Expression* makeGetGlobal(WasmType type) {
+  Expression* makeGetGlobal(Type type) {
     auto& globals = globalsByType[type];
     if (globals.empty()) return makeConst(type);
     return builder.makeGetGlobal(vectorPick(globals), type);
   }
 
-  Expression* makeSetGlobal(WasmType type) {
+  Expression* makeSetGlobal(Type type) {
     assert(type == none);
     type = getConcreteType();
     auto& globals = globalsByType[type];
@@ -878,7 +878,7 @@ private:
     return ret;
   }
 
-  Load* makeNonAtomicLoad(WasmType type) {
+  Load* makeNonAtomicLoad(Type type) {
     auto offset = logify(get());
     auto ptr = makePointer();
     switch (type) {
@@ -911,7 +911,7 @@ private:
     }
   }
 
-  Expression* makeLoad(WasmType type) {
+  Expression* makeLoad(Type type) {
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
     if (!ATOMICS || oneIn(2)) return ret;
@@ -923,7 +923,7 @@ private:
     return ret;
   }
 
-  Store* makeNonAtomicStore(WasmType type) {
+  Store* makeNonAtomicStore(Type type) {
     if (type == unreachable) {
       // make a normal store, then make it unreachable
       auto* ret = makeNonAtomicStore(getConcreteType());
@@ -971,7 +971,7 @@ private:
     }
   }
 
-  Store* makeStore(WasmType type) {
+  Store* makeStore(Type type) {
     auto* ret = makeNonAtomicStore(type);
     if (ret->value->type != i32 && ret->value->type != i64) return ret;
     if (!ATOMICS || oneIn(2)) return ret;
@@ -982,7 +982,7 @@ private:
     return ret;
   }
 
-  Expression* makeConst(WasmType type) {
+  Expression* makeConst(Type type) {
     Literal value;
     switch (upTo(4)) {
       case 0: {
@@ -1085,7 +1085,7 @@ private:
     return builder.makeUnary(args.a, args.b);
   }
 
-  Expression* makeUnary(WasmType type) {
+  Expression* makeUnary(Type type) {
     if (type == unreachable) {
       if (auto* unary = makeUnary(getConcreteType())->dynCast<Unary>()) {
         return makeDeNanOp(builder.makeUnary(unary->op, make(unreachable)));
@@ -1153,7 +1153,7 @@ private:
     return builder.makeBinary(args.a, args.b, args.c);
   }
 
-  Expression* makeBinary(WasmType type) {
+  Expression* makeBinary(Type type) {
     if (type == unreachable) {
       if (auto* binary = makeBinary(getConcreteType())->dynCast<Binary>()) {
         return makeDeNanOp(makeBinary({ binary->op, make(unreachable), make(unreachable) }));
@@ -1189,17 +1189,17 @@ private:
     return builder.makeSelect(args.a, args.b, args.c);
   }
 
-  Expression* makeSelect(WasmType type) {
+  Expression* makeSelect(Type type) {
     return makeDeNanOp(makeSelect({ make(i32), make(type), make(type) }));
   }
 
-  Expression* makeSwitch(WasmType type) {
+  Expression* makeSwitch(Type type) {
     assert(type == unreachable);
     if (breakableStack.empty()) return make(type);
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
-    WasmType valueType = unreachable;
+    Type valueType = unreachable;
     while (tries-- > 0) {
       auto* target = vectorPick(breakableStack);
       auto name = getTargetName(target);
@@ -1219,29 +1219,29 @@ private:
     }
     auto default_ = names.back();
     names.pop_back();
-    auto temp1 = make(i32), temp2 = isConcreteWasmType(valueType) ? make(valueType) : nullptr;
+    auto temp1 = make(i32), temp2 = isConcreteType(valueType) ? make(valueType) : nullptr;
     return builder.makeSwitch(names, default_, temp1, temp2);
   }
 
-  Expression* makeDrop(WasmType type) {
+  Expression* makeDrop(Type type) {
     return builder.makeDrop(make(type == unreachable ? type : getConcreteType()));
   }
 
-  Expression* makeReturn(WasmType type) {
-    return builder.makeReturn(isConcreteWasmType(func->result) ? make(func->result) : nullptr);
+  Expression* makeReturn(Type type) {
+    return builder.makeReturn(isConcreteType(func->result) ? make(func->result) : nullptr);
   }
 
-  Expression* makeNop(WasmType type) {
+  Expression* makeNop(Type type) {
     assert(type == none);
     return builder.makeNop();
   }
 
-  Expression* makeUnreachable(WasmType type) {
+  Expression* makeUnreachable(Type type) {
     assert(type == unreachable);
     return builder.makeUnreachable();
   }
 
-  Expression* makeAtomic(WasmType type) {
+  Expression* makeAtomic(Type type) {
     if (!ATOMICS || (type != i32 && type != i64)) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
@@ -1295,7 +1295,7 @@ private:
 
   // special getters
 
-  WasmType getType() {
+  Type getType() {
     switch (upTo(6)) {
       case 0: return i32;
       case 1: return i64;
@@ -1307,7 +1307,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  WasmType getReachableType() {
+  Type getReachableType() {
     switch (upTo(5)) {
       case 0: return i32;
       case 1: return i64;
@@ -1318,7 +1318,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  WasmType getConcreteType() {
+  Type getConcreteType() {
     switch (upTo(4)) {
       case 0: return i32;
       case 1: return i64;
@@ -1423,7 +1423,7 @@ private:
     WASM_UNREACHABLE();
   }
 
-  WasmType getTargetType(Expression* target) {
+  Type getTargetType(Expression* target) {
     if (auto* block = target->dynCast<Block>()) {
       return block->type;
     } else if (target->is<Loop>()) {

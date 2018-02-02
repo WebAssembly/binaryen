@@ -36,9 +36,9 @@ const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"),
 
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
-  ret += printWasmType(curr->type);
+  ret += printType(curr->type);
   ret += "_" + std::to_string(curr->bytes) + "_";
-  if (!isWasmTypeFloat(curr->type) && !curr->signed_) {
+  if (!isTypeFloat(curr->type) && !curr->signed_) {
     ret += "U_";
   }
   if (curr->isAtomic) {
@@ -51,7 +51,7 @@ static Name getLoadName(Load* curr) {
 
 static Name getStoreName(Store* curr) {
   std::string ret = "SAFE_HEAP_STORE_";
-  ret += printWasmType(curr->valueType);
+  ret += printType(curr->valueType);
   ret += "_" + std::to_string(curr->bytes) + "_";
   if (curr->isAtomic) {
     ret += "A";
@@ -157,10 +157,10 @@ struct SafeHeap : public Pass {
       load.type = type;
       for (Index bytes : { 1, 2, 4, 8 }) {
         load.bytes = bytes;
-        if (bytes > getWasmTypeSize(type)) continue;
+        if (bytes > getTypeSize(type)) continue;
         for (auto signed_ : { true, false }) {
           load.signed_ = signed_;
-          if (isWasmTypeFloat(type) && signed_) continue;
+          if (isTypeFloat(type) && signed_) continue;
           for (Index align : { 1, 2, 4, 8 }) {
             load.align = align;
             if (align > bytes) continue;
@@ -181,7 +181,7 @@ struct SafeHeap : public Pass {
       store.type = none;
       for (Index bytes : { 1, 2, 4, 8 }) {
         store.bytes = bytes;
-        if (bytes > getWasmTypeSize(valueType)) continue;
+        if (bytes > getTypeSize(valueType)) continue;
         for (Index align : { 1, 2, 4, 8 }) {
           store.align = align;
           if (align > bytes) continue;
@@ -295,7 +295,7 @@ struct SafeHeap : public Pass {
     );
   }
 
-  Expression* makeBoundsCheck(WasmType type, Builder& builder, Index local) {
+  Expression* makeBoundsCheck(Type type, Builder& builder, Index local) {
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
@@ -309,7 +309,7 @@ struct SafeHeap : public Pass {
           builder.makeBinary(
             AddInt32,
             builder.makeGetLocal(local, i32),
-            builder.makeConst(Literal(int32_t(getWasmTypeSize(type))))
+            builder.makeConst(Literal(int32_t(getTypeSize(type))))
           ),
           builder.makeLoad(4, false, 0, 4,
             builder.makeGetGlobal(dynamicTopPtr, i32), i32

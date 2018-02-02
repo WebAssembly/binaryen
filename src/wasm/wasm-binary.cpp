@@ -145,13 +145,13 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     o << U32LEB(type->params.size());
     for (auto param : type->params) {
-      o << binaryWasmType(param);
+      o << binaryType(param);
     }
     if (type->result == none) {
       o << U32LEB(0);
     } else {
       o << U32LEB(1);
-      o << binaryWasmType(type->result);
+      o << binaryType(type->result);
     }
   }
   finishSection(start);
@@ -188,7 +188,7 @@ void WasmBinaryWriter::writeImports() {
         break;
       }
       case ExternalKind::Global:
-        o << binaryWasmType(import->globalType);
+        o << binaryType(import->globalType);
         o << U32LEB(0); // Mutable global's can't be imported for now.
         break;
       default: WASM_UNREACHABLE();
@@ -205,10 +205,10 @@ void WasmBinaryWriter::mapLocals(Function* function) {
   for (auto type : function->vars) {
     numLocalsByType[type]++;
   }
-  std::map<WasmType, size_t> currLocalsByType;
+  std::map<Type, size_t> currLocalsByType;
   for (Index i = function->getVarIndexBase(); i < function->getNumLocals(); i++) {
     size_t index = function->getVarIndexBase();
-    WasmType type = function->getLocalType(i);
+    Type type = function->getLocalType(i);
     currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
     if (type == i32) {
       mappedLocals[i] = index + currLocalsByType[i32] - 1;
@@ -273,10 +273,10 @@ void WasmBinaryWriter::writeFunctions() {
         (numLocalsByType[f32] ? 1 : 0) +
         (numLocalsByType[f64] ? 1 : 0)
                 );
-    if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryWasmType(i32);
-    if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
-    if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
-    if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
+    if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
+    if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryType(i64);
+    if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryType(f32);
+    if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
 
     recursePossibleBlockContents(function->body);
     o << int8_t(BinaryConsts::End);
@@ -303,7 +303,7 @@ void WasmBinaryWriter::writeGlobals() {
   o << U32LEB(wasm->globals.size());
   for (auto& curr : wasm->globals) {
     if (debug) std::cerr << "write one" << std::endl;
-    o << binaryWasmType(curr->type);
+    o << binaryType(curr->type);
     o << U32LEB(curr->mutable_);
     writeExpression(curr->init);
     o << int8_t(BinaryConsts::End);
@@ -628,7 +628,7 @@ static bool brokenTo(Block* block) {
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   o << int8_t(BinaryConsts::Block);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
   Index i = 0;
   for (auto* child : curr->list) {
@@ -678,7 +678,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
   }
   recurse(curr->condition);
   o << int8_t(BinaryConsts::If);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
   recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
   breakStack.pop_back();
@@ -701,7 +701,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
 void WasmBinaryWriter::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   o << int8_t(BinaryConsts::Loop);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
   recursePossibleBlockContents(curr->body);
   breakStack.pop_back();
@@ -1478,7 +1478,7 @@ int64_t WasmBinaryBuilder::getS64LEB() {
   return ret.value;
 }
 
-WasmType WasmBinaryBuilder::getWasmType() {
+Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
@@ -1579,7 +1579,7 @@ void WasmBinaryBuilder::readSignatures() {
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
-      curr->params.push_back(getWasmType());
+      curr->params.push_back(getType());
     }
     auto numResults = getU32LEB();
     if (numResults == 0) {
@@ -1588,7 +1588,7 @@ void WasmBinaryBuilder::readSignatures() {
       if (numResults != 1) {
         throw ParseException("signature must have 1 result");
       }
-      curr->result = getWasmType();
+      curr->result = getType();
     }
     curr->name = Name::fromInt(wasm.functionTypes.size());
     wasm.addFunctionType(curr);
@@ -1661,7 +1661,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        curr->globalType = getWasmType();
+        curr->globalType = getType();
         auto globalMutable = getU32LEB();
         // TODO: actually use the globalMutable flag. Currently mutable global
         // imports is a future feature, to be implemented with thread support.
@@ -1717,7 +1717,7 @@ void WasmBinaryBuilder::readFunctions() {
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
-      auto type = getWasmType();
+      auto type = getType();
       while (num > 0) {
         vars.emplace_back(addVar(), type);
         num--;
@@ -1925,7 +1925,7 @@ void WasmBinaryBuilder::readGlobals() {
   if (debug) std::cerr << "num: " << num << std::endl;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto type = getWasmType();
+    auto type = getType();
     auto mutable_ = getU32LEB();
     if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
     auto* init = readExpression();
@@ -2302,7 +2302,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end)
     curr->list.push_back(item);
     if (i < end - 1) {
       // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
-      if (isConcreteWasmType(item->type)) {
+      if (isConcreteType(item->type)) {
         curr->list.back() = Builder(wasm).makeDrop(item);
         if (consumable == NONE) {
           // this is the first, and hence consumable value. note the location
@@ -2331,7 +2331,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   // a common pattern that can be very highly nested.
   std::vector<Block*> stack;
   while (1) {
-    curr->type = getWasmType();
+    curr->type = getType();
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type != none});
     stack.push_back(curr);
@@ -2367,7 +2367,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
   }
 }
 
-Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   Name label = getNextLabel();
   breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
@@ -2394,7 +2394,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(WasmType type) {
 
 void WasmBinaryBuilder::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
-  curr->type = getWasmType();
+  curr->type = getType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
   if (lastSeparator == BinaryConsts::Else) {
@@ -2408,7 +2408,7 @@ void WasmBinaryBuilder::visitIf(If *curr) {
 
 void WasmBinaryBuilder::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
-  curr->type = getWasmType();
+  curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
   // find the expressions in the block, and create the body
@@ -2759,7 +2759,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getWasmTypeSize(curr->expectedType)) throw ParseException("Align of AtomicWait must match size");
+  if (readAlign != getTypeSize(curr->expectedType)) throw ParseException("Align of AtomicWait must match size");
   curr->finalize();
   out = curr;
   return true;
@@ -2775,7 +2775,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getWasmTypeSize(curr->type)) throw ParseException("Align of AtomicWake must match size");
+  if (readAlign != getTypeSize(curr->type)) throw ParseException("Align of AtomicWake must match size");
   curr->finalize();
   out = curr;
   return true;

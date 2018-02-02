@@ -207,7 +207,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str + extra);
   }
 
-  Literal callTable(Index index, LiteralList& arguments, WasmType result, EvallingModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, Type result, EvallingModuleInstance& instance) override {
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
     for (auto& segment : wasm->table.segments) {

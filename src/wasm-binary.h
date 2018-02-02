@@ -638,7 +638,7 @@ enum MemoryFlags {
 } // namespace BinaryConsts
 
 
-inline S32LEB binaryWasmType(WasmType type) {
+inline S32LEB binaryType(Type type) {
   int ret;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
@@ -704,7 +704,7 @@ public:
   void writeImports();
 
   std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function);
   void writeFunctionSignatures();
@@ -839,7 +839,7 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
-  WasmType getWasmType();
+  Type getType();
   Name getString();
   Name getInlineString();
   void verifyInt8(int8_t x);
@@ -934,7 +934,7 @@ public:
   void visitBlock(Block *curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(WasmType type);
+  Expression* getBlockOrSingleton(Type type);
 
   void visitIf(If *curr);
   void visitLoop(Loop *curr);

@@ -78,7 +78,7 @@ bool isTruncOpSigned(UnaryOp op) {
 
 Function* generateBinaryFunc(Module& wasm, Binary *curr) {
   BinaryOp op = curr->op;
-  WasmType type = curr->type;
+  Type type = curr->type;
   bool isI64 = type == i64;
   Builder builder(wasm);
   Expression* result = builder.makeBinary(op,
@@ -134,8 +134,8 @@ void makeClampLimitLiterals(Literal& iMin, Literal& fMin, Literal& fMax) {
 }
 
 Function* generateUnaryFunc(Module& wasm, Unary *curr) {
-  WasmType type = curr->value->type;
-  WasmType retType = curr->type;
+  Type type = curr->value->type;
+  Type retType = curr->type;
   UnaryOp truncOp = curr->op;
   bool isF64 = type == f64;
 
@@ -238,7 +238,7 @@ Expression* makeTrappingBinary(Binary* curr, TrappingFunctionContainer &trapping
   }
 
   // the wasm operation might trap if done over 0, so generate a safe call
-  WasmType type = curr->type;
+  Type type = curr->type;
   Module& wasm = trappingFunctions.getModule();
   Builder builder(wasm);
   ensureBinaryFunc(curr, wasm, trappingFunctions);

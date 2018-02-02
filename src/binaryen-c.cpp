@@ -44,10 +44,10 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
   BinaryenLiteral ret;
   ret.type = x.type;
   switch (x.type) {
-    case WasmType::i32: ret.i32 = x.geti32(); break;
-    case WasmType::i64: ret.i64 = x.geti64(); break;
-    case WasmType::f32: ret.i32 = x.reinterpreti32(); break;
-    case WasmType::f64: ret.i64 = x.reinterpreti64(); break;
+    case Type::i32: ret.i32 = x.geti32(); break;
+    case Type::i64: ret.i64 = x.geti64(); break;
+    case Type::f32: ret.i32 = x.reinterpreti32(); break;
+    case Type::f64: ret.i64 = x.reinterpreti64(); break;
     default: abort();
   }
   return ret;
@@ -55,10 +55,10 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
 
 Literal fromBinaryenLiteral(BinaryenLiteral x) {
   switch (x.type) {
-    case WasmType::i32: return Literal(x.i32);
-    case WasmType::i64: return Literal(x.i64);
-    case WasmType::f32: return Literal(x.i32).castToF32();
-    case WasmType::f64: return Literal(x.i64).castToF64();
+    case Type::i32: return Literal(x.i32);
+    case Type::i64: return Literal(x.i64);
+    case Type::f32: return Literal(x.i32).castToF32();
+    case Type::f64: return Literal(x.i64).castToF64();
     default: abort();
   }
 }
@@ -195,9 +195,9 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   auto* ret = new FunctionType;
   if (name) ret->name = name;
   else ret->name = Name::fromInt(wasm->functionTypes.size());
-  ret->result = WasmType(result);
+  ret->result = Type(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
-    ret->params.push_back(WasmType(paramTypes[i]));
+    ret->params.push_back(Type(paramTypes[i]));
   }
 
   // Lock. This can be called from multiple threads at once, and is a
@@ -376,7 +376,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }
-  if (type != BinaryenTypeAuto()) ret->finalize(WasmType(type));
+  if (type != BinaryenTypeAuto()) ret->finalize(Type(type));
   else ret->finalize();
 
   if (tracing) {
@@ -484,7 +484,7 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target,
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
-  ret->type = WasmType(returnType);
+  ret->type = Type(returnType);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -509,7 +509,7 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *t
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
-  ret->type = WasmType(returnType);
+  ret->type = Type(returnType);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -549,7 +549,7 @@ BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex i
   }
 
   ret->index = index;
-  ret->type = WasmType(type);
+  ret->type = Type(type);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -590,7 +590,7 @@ BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *na
   }
 
   ret->name = name;
-  ret->type = WasmType(type);
+  ret->type = Type(type);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -619,7 +619,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
   ret->signed_ = !!signed_;
   ret->offset = offset;
   ret->align = align ? align : bytes;
-  ret->type = WasmType(type);
+  ret->type = Type(type);
   ret->ptr = (Expression*)ptr;
   ret->finalize();
   return static_cast<Expression*>(ret);
@@ -637,7 +637,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   ret->align = align ? align : bytes;
   ret->ptr = (Expression*)ptr;
   ret->value = (Expression*)value;
-  ret->valueType = WasmType(type);
+  ret->valueType = Type(type);
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
@@ -646,16 +646,16 @@ BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral va
   if (tracing) {
     auto id = noteExpression(ret);
     switch (value.type) {
-      case WasmType::i32: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt32(" << value.i32 << "));\n"; break;
-      case WasmType::i64: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt64(" << value.i64 << "));\n"; break;
-      case WasmType::f32: {
+      case Type::i32: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt32(" << value.i32 << "));\n"; break;
+      case Type::i64: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt64(" << value.i64 << "));\n"; break;
+      case Type::f32: {
         std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralFloat32(";
         if (std::isnan(value.f32)) std::cout << "NAN";
         else std::cout << value.f32;
         std::cout << "));\n";
         break;
       }
-      case WasmType::f64: {
+      case Type::f64: {
         std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralFloat64(";
         if (std::isnan(value.f64)) std::cout << "NAN";
         else std::cout << value.f64;
@@ -769,7 +769,7 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenType type, BinaryenExpressionRef ptr) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicLoad(bytes, offset, (Expression*)ptr, WasmType(type));
+  auto* ret = Builder(*((Module*)module)).makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type));
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -779,7 +779,7 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t byte
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicStore(bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
+  auto* ret = Builder(*((Module*)module)).makeAtomicStore(bytes, offset, (Expression*)ptr, (Expression*)value, Type(type));
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -789,7 +789,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t byt
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, WasmType(type));
+  auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, Type(type));
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -799,7 +799,7 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicCmpxchg(bytes, offset, (Expression*)ptr, (Expression*)expected, (Expression*)replacement, WasmType(type));
+  auto* ret = Builder(*((Module*)module)).makeAtomicCmpxchg(bytes, offset, (Expression*)ptr, (Expression*)expected, (Expression*)replacement, Type(type));
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -809,7 +809,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIn
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType expectedType) {
-  auto* ret = Builder(*((Module*)module)).makeAtomicWait((Expression*)ptr, (Expression*)expected, (Expression*)timeout, WasmType(expectedType), 0);
+  auto* ret = Builder(*((Module*)module)).makeAtomicWait((Expression*)ptr, (Expression*)expected, (Expression*)timeout, Type(expectedType), 0);
 
   if (tracing) {
     auto id = noteExpression(ret);
@@ -1635,7 +1635,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
   ret->result = functionType->result;
   ret->params = functionType->params;
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
-    ret->vars.push_back(WasmType(varTypes[i]));
+    ret->vars.push_back(Type(varTypes[i]));
   }
   ret->body = (Expression*)body;
 
@@ -1673,7 +1673,7 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   auto* wasm = (Module*)module;
   auto* ret = new Global();
   ret->name = name;
-  ret->type = WasmType(type);
+  ret->type = Type(type);
   ret->mutable_ = !!mutable_;
   ret->init = (Expression*)init;
   wasm->addGlobal(ret);
@@ -1756,7 +1756,7 @@ BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->globalType = WasmType(globalType);
+  ret->globalType = Type(globalType);
   ret->kind = ExternalKind::Global;
   wasm->addImport(ret);
   return ret;
@@ -2560,9 +2560,9 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
 
   auto* wasm = (Module*)module;
   FunctionType test;
-  test.result = WasmType(result);
+  test.result = Type(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
-    test.params.push_back(WasmType(paramTypes[i]));
+    test.params.push_back(Type(paramTypes[i]));
   }
 
   // Lock. Guard against reading the list while types are being added.

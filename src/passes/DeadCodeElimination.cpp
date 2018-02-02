@@ -331,7 +331,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
 
   // Append the reachable operands of the current node to a block, and replace
   // it with the block
-  void blockifyReachableOperands(std::vector<Expression*>&& list, WasmType type) {
+  void blockifyReachableOperands(std::vector<Expression*>&& list, Type type) {
     for (size_t i = 0; i < list.size(); ++i) {
       auto* elem = list[i];
       if (isUnreachable(elem)) {

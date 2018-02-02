@@ -26,9 +26,9 @@ namespace wasm {
 
 struct NameType {
   Name name;
-  WasmType type;
+  Type type;
   NameType() : name(nullptr), type(none) {}
-  NameType(Name name, WasmType type) : name(name), type(type) {}
+  NameType(Name name, Type type) : name(name), type(type) {}
 };
 
 // General AST node builder
@@ -44,7 +44,7 @@ public:
 
   Function* makeFunction(Name name,
                          std::vector<NameType>&& params,
-                         WasmType resultType,
+                         Type resultType,
                          std::vector<NameType>&& vars,
                          Expression* body = nullptr) {
     auto* func = new Function;
@@ -97,7 +97,7 @@ public:
     ret->finalize();
     return ret;
   }
-  Block* makeBlock(const ExpressionList& items, WasmType type) {
+  Block* makeBlock(const ExpressionList& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->list.set(items);
     ret->finalize(type);
@@ -110,7 +110,7 @@ public:
     ret->finalize();
     return ret;
   }
-  Block* makeBlock(Name name, const ExpressionList& items, WasmType type) {
+  Block* makeBlock(Name name, const ExpressionList& items, Type type) {
     auto* ret = allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
@@ -123,7 +123,7 @@ public:
     ret->finalize();
     return ret;
   }
-  If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse, WasmType type) {
+  If* makeIf(Expression* condition, Expression* ifTrue, Expression* ifFalse, Type type) {
     auto* ret = allocator.alloc<If>();
     ret->condition = condition; ret->ifTrue = ifTrue; ret->ifFalse = ifFalse;
     ret->finalize(type);
@@ -148,14 +148,14 @@ public:
     ret->default_ = default_; ret->value = value; ret->condition = condition;
     return ret;
   }
-  Call* makeCall(Name target, const std::vector<Expression*>& args, WasmType type) {
+  Call* makeCall(Name target, const std::vector<Expression*>& args, Type type) {
     auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
     call->target = target;
     call->operands.set(args);
     return call;
   }
-  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, WasmType type) {
+  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, Type type) {
     auto* call = allocator.alloc<CallImport>();
     call->type = type; // similar to makeCall, for consistency
     call->target = target;
@@ -163,7 +163,7 @@ public:
     return call;
   }
   template<typename T>
-  Call* makeCall(Name target, const T& args, WasmType type) {
+  Call* makeCall(Name target, const T& args, Type type) {
     auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
     call->target = target;
@@ -171,7 +171,7 @@ public:
     return call;
   }
   template<typename T>
-  CallImport* makeCallImport(Name target, const T& args, WasmType type) {
+  CallImport* makeCallImport(Name target, const T& args, Type type) {
     auto* call = allocator.alloc<CallImport>();
     call->type = type; // similar to makeCall, for consistency
     call->target = target;
@@ -186,7 +186,7 @@ public:
     call->operands.set(args);
     return call;
   }
-  CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, WasmType type) {
+  CallIndirect* makeCallIndirect(Name fullType, Expression* target, const std::vector<Expression*>& args, Type type) {
     auto* call = allocator.alloc<CallIndirect>();
     call->fullType = fullType;
     call->type = type;
@@ -195,7 +195,7 @@ public:
     return call;
   }
   // FunctionType
-  GetLocal* makeGetLocal(Index index, WasmType type) {
+  GetLocal* makeGetLocal(Index index, Type type) {
     auto* ret = allocator.alloc<GetLocal>();
     ret->index = index;
     ret->type = type;
@@ -215,7 +215,7 @@ public:
     ret->setTee(true);
     return ret;
   }
-  GetGlobal* makeGetGlobal(Name name, WasmType type) {
+  GetGlobal* makeGetGlobal(Name name, Type type) {
     auto* ret = allocator.alloc<GetGlobal>();
     ret->name = name;
     ret->type = type;
@@ -228,19 +228,19 @@ public:
     ret->finalize();
     return ret;
   }
-  Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, WasmType type) {
+  Load* makeLoad(unsigned bytes, bool signed_, uint32_t offset, unsigned align, Expression *ptr, Type type) {
     auto* ret = allocator.alloc<Load>();
     ret->isAtomic = false;
     ret->bytes = bytes; ret->signed_ = signed_; ret->offset = offset; ret->align = align; ret->ptr = ptr;
     ret->type = type;
     return ret;
   }
-  Load* makeAtomicLoad(unsigned bytes, uint32_t offset, Expression* ptr, WasmType type) {
+  Load* makeAtomicLoad(unsigned bytes, uint32_t offset, Expression* ptr, Type type) {
     Load* load = makeLoad(bytes, false, offset, bytes, ptr, type);
     load->isAtomic = true;
     return load;
   }
-  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, WasmType expectedType, Address offset) {
+  AtomicWait* makeAtomicWait(Expression* ptr, Expression* expected, Expression* timeout, Type expectedType, Address offset) {
     auto* wait = allocator.alloc<AtomicWait>();
     wait->offset = offset;
     wait->ptr = ptr;
@@ -258,21 +258,21 @@ public:
     wake->finalize();
     return wake;
   }
-  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, WasmType type) {
+  Store* makeStore(unsigned bytes, uint32_t offset, unsigned align, Expression *ptr, Expression *value, Type type) {
     auto* ret = allocator.alloc<Store>();
     ret->isAtomic = false;
     ret->bytes = bytes; ret->offset = offset; ret->align = align; ret->ptr = ptr; ret->value = value; ret->valueType = type;
     ret->finalize();
-    assert(isConcreteWasmType(ret->value->type) ? ret->value->type == type : true);
+    assert(isConcreteType(ret->value->type) ? ret->value->type == type : true);
     return ret;
   }
-  Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, WasmType type) {
+  Store* makeAtomicStore(unsigned bytes, uint32_t offset, Expression* ptr, Expression* value, Type type) {
     Store* store = makeStore(bytes, offset, bytes, ptr, value, type);
     store->isAtomic = true;
     return store;
   }
   AtomicRMW* makeAtomicRMW(AtomicRMWOp op, unsigned bytes, uint32_t offset,
-                           Expression* ptr, Expression* value, WasmType type) {
+                           Expression* ptr, Expression* value, Type type) {
     auto* ret = allocator.alloc<AtomicRMW>();
     ret->op = op;
     ret->bytes = bytes;
@@ -285,7 +285,7 @@ public:
   }
   AtomicCmpxchg* makeAtomicCmpxchg(unsigned bytes, uint32_t offset,
                                    Expression* ptr, Expression* expected,
-                                   Expression* replacement, WasmType type) {
+                                   Expression* replacement, Type type) {
     auto* ret = allocator.alloc<AtomicCmpxchg>();
     ret->bytes = bytes;
     ret->offset = offset;
@@ -297,7 +297,7 @@ public:
     return ret;
   }
   Const* makeConst(Literal value) {
-    assert(isConcreteWasmType(value.type));
+    assert(isConcreteType(value.type));
     auto* ret = allocator.alloc<Const>();
     ret->value = value;
     ret->type = value.type;
@@ -350,7 +350,7 @@ public:
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 
-  static Index addParam(Function* func, Name name, WasmType type) {
+  static Index addParam(Function* func, Name name, Type type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
     assert(func->localIndices.size() == func->params.size());
     assert(name.is());
@@ -361,7 +361,7 @@ public:
     return index;
   }
 
-  static Index addVar(Function* func, Name name, WasmType type) {
+  static Index addVar(Function* func, Name name, Type type) {
     // always ok to add a var, it does not affect other indices
     Index index = func->getNumLocals();
     if (name.is()) {
@@ -372,7 +372,7 @@ public:
     return index;
   }
 
-  static Index addVar(Function* func, WasmType type) {
+  static Index addVar(Function* func, Type type) {
     return addVar(func, Name(), type);
   }
 
@@ -451,7 +451,7 @@ public:
 
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
-    if (!isConcreteWasmType(curr->type)) return curr;
+    if (!isConcreteType(curr->type)) return curr;
     return makeDrop(curr);
   }
 
@@ -485,7 +485,7 @@ public:
     Immutable
   };
 
-  static Global* makeGlobal(Name name, WasmType type, Expression* init, Mutability mutable_) {
+  static Global* makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
     auto* glob = new Global;
     glob->name = name;
     glob->type = type;

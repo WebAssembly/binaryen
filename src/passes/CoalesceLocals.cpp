@@ -201,7 +201,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   }
 #endif
   // TODO: take into account distribution (99-1 is better than 50-50 with two registers, for gzip)
-  std::vector<WasmType> types;
+  std::vector<Type> types;
   std::vector<bool> newInterferences; // new index * numLocals => list of all interferences of locals merged to it
   std::vector<uint8_t> newCopies; // new index * numLocals => list of all copies of locals merged to it
   indices.resize(numLocals);

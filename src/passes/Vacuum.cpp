@@ -174,7 +174,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     size_t size = list.size();
     for (size_t z = 0; z < size; z++) {
       auto* child = list[z];
-      auto* optimized = optimize(child, z == size - 1 && isConcreteWasmType(curr->type));
+      auto* optimized = optimize(child, z == size - 1 && isConcreteType(curr->type));
       if (!optimized) {
         typeUpdater.noteRecursiveRemoval(child);
         skip++;
@@ -294,7 +294,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
       // note that the last element may be concrete but not the block, if the
       // block has an unreachable element in the middle, making the block unreachable
       // despite later elements and in particular the last
-      if (isConcreteWasmType(last->type) && block->type == last->type) {
+      if (isConcreteType(last->type) && block->type == last->type) {
         last = optimize(last, false);
         if (!last) {
           // we may be able to remove this, if there are no brs
@@ -327,14 +327,14 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     }
     // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
     auto* iff = curr->value->dynCast<If>();
-    if (iff && iff->ifFalse && isConcreteWasmType(iff->type)) {
+    if (iff && iff->ifFalse && isConcreteType(iff->type)) {
       // reuse the drop in both cases
-      if (iff->ifTrue->type == unreachable && isConcreteWasmType(iff->ifFalse->type)) {
+      if (iff->ifTrue->type == unreachable && isConcreteType(iff->ifFalse->type)) {
         curr->value = iff->ifFalse;
         iff->ifFalse = curr;
         iff->type = none;
         replaceCurrent(iff);
-      } else if (iff->ifFalse->type == unreachable && isConcreteWasmType(iff->ifTrue->type)) {
+      } else if (iff->ifFalse->type == unreachable && isConcreteType(iff->ifTrue->type)) {
         curr->value = iff->ifTrue;
         iff->ifTrue = curr;
         iff->type = none;

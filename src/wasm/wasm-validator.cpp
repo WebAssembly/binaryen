@@ -153,7 +153,7 @@ struct ValidationInfo {
     return true;
   }
 
-  void shouldBeIntOrUnreachable(WasmType ty, Expression* curr, const char* text, Function* func = nullptr) {
+  void shouldBeIntOrUnreachable(Type ty, Expression* curr, const char* text, Function* func = nullptr) {
     switch (ty) {
       case i32:
       case i64:
@@ -176,16 +176,16 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
   struct BreakInfo {
-    WasmType type;
+    Type type;
     Index arity;
     BreakInfo() {}
-    BreakInfo(WasmType type, Index arity) : type(type), arity(arity) {}
+    BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
   };
 
   std::map<Name, Expression*> breakTargets;
   std::map<Expression*, BreakInfo> breakInfos;
 
-  WasmType returnType = unreachable; // type used in returns
+  Type returnType = unreachable; // type used in returns
 
   std::set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
 
@@ -274,13 +274,13 @@ private:
     return info.shouldBeUnequal(left, right, curr, text, getFunction());
   }
 
-  void shouldBeIntOrUnreachable(WasmType ty, Expression* curr, const char* text) {
+  void shouldBeIntOrUnreachable(Type ty, Expression* curr, const char* text) {
     return info.shouldBeIntOrUnreachable(ty, curr, text, getFunction());
   }
 
-  void validateAlignment(size_t align, WasmType type, Index bytes, bool isAtomic,
+  void validateAlignment(size_t align, Type type, Index bytes, bool isAtomic,
                          Expression* curr);
-  void validateMemBytes(uint8_t bytes, WasmType type, Expression* curr);
+  void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -295,22 +295,22 @@ void FunctionValidator::visitBlock(Block *curr) {
     noteLabelName(curr->name);
     if (breakInfos.count(curr) > 0) {
       auto& info = breakInfos[curr];
-      if (isConcreteWasmType(curr->type)) {
+      if (isConcreteType(curr->type)) {
         shouldBeTrue(info.arity != 0, curr, "break arities must be > 0 if block has a value");
       } else {
         shouldBeTrue(info.arity == 0, curr, "break arities must be 0 if block has no value");
       }
       // none or unreachable means a poison value that we should ignore - if consumed, it will error
-      if (isConcreteWasmType(info.type) && isConcreteWasmType(curr->type)) {
+      if (isConcreteType(info.type) && isConcreteType(curr->type)) {
         shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks return a value");
       }
-      if (isConcreteWasmType(curr->type) && info.arity && info.type != unreachable) {
+      if (isConcreteType(curr->type) && info.arity && info.type != unreachable) {
         shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks have arity");
       }
       shouldBeTrue(info.arity != Index(-1), curr, "break arities must match");
       if (curr->list.size() > 0) {
         auto last = curr->list.back()->type;
-        if (isConcreteWasmType(last) && info.type != unreachable) {
+        if (isConcreteType(last) && info.type != unreachable) {
           shouldBeEqual(last, info.type, curr, "block+breaks must have right type if block ends with a reachable value");
         }
         if (last == none) {
@@ -322,24 +322,24 @@ void FunctionValidator::visitBlock(Block *curr) {
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
-      if (!shouldBeTrue(!isConcreteWasmType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !info.quiet) {
+      if (!shouldBeTrue(!isConcreteType(curr->list[i]->type), curr, "non-final block elements returning a value must be drop()ed (binaryen's autodrop option might help you)") && !info.quiet) {
         getStream() << "(on index " << i << ":\n" << curr->list[i] << "\n), type: " << curr->list[i]->type << "\n";
       }
     }
   }
   if (curr->list.size() > 0) {
     auto backType = curr->list.back()->type;
-    if (!isConcreteWasmType(curr->type)) {
-      shouldBeFalse(isConcreteWasmType(backType), curr, "if block is not returning a value, final element should not flow out a value");
+    if (!isConcreteType(curr->type)) {
+      shouldBeFalse(isConcreteType(backType), curr, "if block is not returning a value, final element should not flow out a value");
     } else {
-      if (isConcreteWasmType(backType)) {
+      if (isConcreteType(backType)) {
         shouldBeEqual(curr->type, backType, curr, "block with value and last element with value must match types");
       } else {
         shouldBeUnequal(backType, none, curr, "block with value must not have last element that is none");
       }
     }
   }
-  if (isConcreteWasmType(curr->type)) {
+  if (isConcreteType(curr->type)) {
     shouldBeTrue(curr->list.size() > 0, curr, "block with a value must not be empty");
   }
 }
@@ -354,14 +354,14 @@ void FunctionValidator::visitLoop(Loop *curr) {
     }
   }
   if (curr->type == none) {
-    shouldBeFalse(isConcreteWasmType(curr->body->type), curr, "bad body for a loop that has no value");
+    shouldBeFalse(isConcreteType(curr->body->type), curr, "bad body for a loop that has no value");
   }
 }
 
 void FunctionValidator::visitIf(If *curr) {
   shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "if condition must be valid");
   if (!curr->ifFalse) {
-    shouldBeFalse(isConcreteWasmType(curr->ifTrue->type), curr, "if without else must not return a value in body");
+    shouldBeFalse(isConcreteType(curr->ifTrue->type), curr, "if without else must not return a value in body");
     if (curr->condition->type != unreachable) {
       shouldBeEqual(curr->type, none, curr, "if without else and reachable condition must be none");
     }
@@ -375,11 +375,11 @@ void FunctionValidator::visitIf(If *curr) {
         shouldBeEqual(curr->ifFalse->type, unreachable, curr, "unreachable if-else must have unreachable false");
       }
     }
-    if (isConcreteWasmType(curr->ifTrue->type)) {
+    if (isConcreteType(curr->ifTrue->type)) {
       shouldBeEqual(curr->type, curr->ifTrue->type, curr, "if type must match concrete ifTrue");
       shouldBeEqualOrFirstIsUnreachable(curr->ifFalse->type, curr->ifTrue->type, curr, "other arm must match concrete ifTrue");
     }
-    if (isConcreteWasmType(curr->ifFalse->type)) {
+    if (isConcreteType(curr->ifFalse->type)) {
       shouldBeEqual(curr->type, curr->ifFalse->type, curr, "if type must match concrete ifFalse");
       shouldBeEqualOrFirstIsUnreachable(curr->ifTrue->type, curr->ifFalse->type, curr, "other arm must match concrete ifFalse");
     }
@@ -387,7 +387,7 @@ void FunctionValidator::visitIf(If *curr) {
 }
 
 void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr) {
-  WasmType valueType = none;
+  Type valueType = none;
   Index arity = 0;
   if (value) {
     valueType = value->type;
@@ -473,7 +473,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect *curr) {
 
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "get_local index must be small enough");
-  shouldBeTrue(isConcreteWasmType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
+  shouldBeTrue(isConcreteType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
 }
 
 void FunctionValidator::visitSetLocal(SetLocal *curr) {
@@ -558,7 +558,7 @@ void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->wakeCount->type, i32, curr, "AtomicWake wakeCount type must be i32");
 }
 
-void FunctionValidator::validateMemBytes(uint8_t bytes, WasmType type, Expression* curr) {
+void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* curr) {
   switch (bytes) {
     case 1:
     case 2:
@@ -567,7 +567,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes, WasmType type, Expressio
       // if we have a concrete type for the load, then we know the size of the mem operation and
       // can validate it
       if (type != unreachable) {
-        shouldBeEqual(getWasmTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
+        shouldBeEqual(getTypeSize(type), 8U, curr, "8-byte mem operations are only allowed with 8-byte wasm types");
       }
       break;
     }
@@ -764,7 +764,7 @@ void FunctionValidator::visitSelect(Select* curr) {
 }
 
 void FunctionValidator::visitDrop(Drop* curr) {
-  shouldBeTrue(isConcreteWasmType(curr->value->type) || curr->value->type == unreachable, curr, "can only drop a valid value");
+  shouldBeTrue(isConcreteType(curr->value->type) || curr->value->type == unreachable, curr, "can only drop a valid value");
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
@@ -840,7 +840,7 @@ static bool checkOffset(Expression* curr, Address add, Address max) {
   return offset + add <= max;
 }
 
-void FunctionValidator::validateAlignment(size_t align, WasmType type, Index bytes,
+void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
                                       bool isAtomic, Expression* curr) {
   if (isAtomic) {
     shouldBeEqual(align, (size_t)bytes, curr, "atomic accesses must have natural alignment");
@@ -891,9 +891,9 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         //
         // The block has an added type, not derived from the ast itself, so it is
         // ok for it to be either i32 or unreachable.
-        if (!(isConcreteWasmType(oldType) && newType == unreachable)) {
+        if (!(isConcreteType(oldType) && newType == unreachable)) {
           std::ostringstream ss;
-          ss << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printWasmType(oldType) << ", should be " << printWasmType(newType) << ")\n";
+          ss << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printType(oldType) << ", should be " << printType(newType) << ")\n";
           info.fail(ss.str(), curr, getFunction());
         }
         curr->type = oldType;
@@ -912,7 +912,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
       if (info.validateWeb) {
         auto* functionType = module.getFunctionType(curr->functionType);
         info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-        for (WasmType param : functionType->params) {
+        for (Type param : functionType->params) {
           info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
         }
       }

@@ -107,7 +107,7 @@ const char* getExpressionName(Expression* curr) {
 struct TypeSeeker : public PostWalker<TypeSeeker> {
   Expression* target; // look for this one
   Name targetName;
-  std::vector<WasmType> types;
+  std::vector<Type> types;
 
 
   TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
@@ -149,8 +149,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   }
 };
 
-static WasmType mergeTypes(std::vector<WasmType>& types) {
-  WasmType type = unreachable;
+static Type mergeTypes(std::vector<Type>& types) {
+  Type type = unreachable;
   for (auto other : types) {
     // once none, stop. it then indicates a poison value, that must not be consumed
     // and ignore unreachable
@@ -177,7 +177,7 @@ static void handleUnreachable(Block* block) {
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
-  if (isConcreteWasmType(block->type)) return;
+  if (isConcreteType(block->type)) return;
   // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
@@ -190,7 +190,7 @@ static void handleUnreachable(Block* block) {
   }
 }
 
-void Block::finalize(WasmType type_) {
+void Block::finalize(Type type_) {
   type = type_;
   if (type == none && list.size() > 0) {
     handleUnreachable(this);
@@ -209,7 +209,7 @@ void Block::finalize() {
       //  (return)
       //  (i32.const 10)
       // )
-      if (isConcreteWasmType(type)) return;
+      if (isConcreteType(type)) return;
       // if we are unreachable, we are done
       if (type == unreachable) return;
       // we may still be unreachable if we have an unreachable
@@ -231,7 +231,7 @@ void Block::finalize() {
   handleUnreachable(this);
 }
 
-void If::finalize(WasmType type_) {
+void If::finalize(Type type_) {
   type = type_;
   if (type == none && (condition->type == unreachable || (ifFalse && ifTrue->type == unreachable && ifFalse->type == unreachable))) {
     type = unreachable;
@@ -242,9 +242,9 @@ void If::finalize() {
   if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
       type = ifFalse->type;
     } else {
       type = none;
@@ -265,7 +265,7 @@ void If::finalize() {
   }
 }
 
-void Loop::finalize(WasmType type_) {
+void Loop::finalize(Type type_) {
   type = type_;
   if (type == none && body->type == unreachable) {
     type = unreachable;
@@ -613,7 +613,7 @@ Index Function::getVarIndexBase() {
   return params.size();
 }
 
-WasmType Function::getLocalType(Index index) {
+Type Function::getLocalType(Index index) {
   if (isParam(index)) {
     return params[index];
   } else if (isVar(index)) {

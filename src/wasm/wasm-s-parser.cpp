@@ -377,13 +377,13 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   functionCounter++;
   FunctionType* type = nullptr;
   functionTypes[name] = none;
-  std::vector<WasmType> params;
+  std::vector<Type> params;
   for (;i < s.size(); i++) {
     Element& curr = *s[i];
     IString id = curr[0]->str();
     if (id == RESULT) {
       if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
-      functionTypes[name] = stringToWasmType(curr[1]->str());
+      functionTypes[name] = stringToType(curr[1]->str());
     } else if (id == TYPE) {
       Name typeName = getFunctionTypeName(*curr[1]);
       if (!wasm.getFunctionTypeOrNull(typeName)) throw ParseException("unknown function type", curr.line, curr.col);
@@ -393,10 +393,10 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
       Index j = 1;
       if (curr[j]->dollared()) {
         // dollared input symbols cannot be types
-        params.push_back(stringToWasmType(curr[j + 1]->str(), true));
+        params.push_back(stringToType(curr[j + 1]->str(), true));
       } else {
         while (j < curr.size()) {
-          params.push_back(stringToWasmType(curr[j++]->str(), true));
+          params.push_back(stringToType(curr[j++]->str(), true));
         }
       }
     }
@@ -485,7 +485,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   std::vector<NameType> typeParams; // we may have both params and a type. store the type info here
   std::vector<NameType> params;
   std::vector<NameType> vars;
-  WasmType result = none;
+  Type result = none;
   Name type;
   Block* autoBlock = nullptr; // we may need to add a block for the very top level
   Name importModule, importBase;
@@ -511,16 +511,16 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
       size_t j = 1;
       while (j < curr.size()) {
         IString name;
-        WasmType type = none;
+        Type type = none;
         if (!curr[j]->dollared()) { // dollared input symbols cannot be types
-          type = stringToWasmType(curr[j]->str(), true);
+          type = stringToType(curr[j]->str(), true);
         }
         if (type != none) {
           // a type, so an unnamed parameter
           name = Name::fromInt(localIndex);
         } else {
           name = curr[j]->str();
-          type = stringToWasmType(curr[j+1]->str());
+          type = stringToType(curr[j+1]->str());
           j++;
         }
         j++;
@@ -534,7 +534,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
       }
     } else if (id == RESULT) {
       if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
-      result = stringToWasmType(curr[1]->str());
+      result = stringToType(curr[1]->str());
     } else if (id == TYPE) {
       Name name = getFunctionTypeName(*curr[1]);
       type = name;
@@ -543,7 +543,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
       result = type->result;
       for (size_t j = 0; j < type->params.size(); j++) {
         IString name = Name::fromInt(j);
-        WasmType currType = type->params[j];
+        Type currType = type->params[j];
         typeParams.emplace_back(name, currType);
         currLocalTypes[name] = currType;
       }
@@ -614,7 +614,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   nameMapper.clear();
 }
 
-WasmType SExpressionWasmBuilder::stringToWasmType(const char* str, bool allowError, bool prefix) {
+Type SExpressionWasmBuilder::stringToType(const char* str, bool allowError, bool prefix) {
   if (str[0] == 'i') {
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) return i32;
     if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return i64;
@@ -650,7 +650,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
   const char *dot = strchr(str, '.');
   if (dot) {
     // type.operation (e.g. i32.add)
-    WasmType type = stringToWasmType(str, false, true);
+    Type type = stringToType(str, false, true);
     // Local copy to index into op without bounds checking.
     enum { maxNameSize = 15 };
     char op[maxNameSize + 1] = {'\0'};
@@ -760,7 +760,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       case 'r': {
         if (op[1] == 'e') {
           if (op[2] == 'm') return makeBinary(s, op[4] == 'u' ? BINARY_INT(RemU) : BINARY_INT(RemS), type);
-          if (op[2] == 'i') return makeUnary(s, isWasmTypeFloat(type) ? (type == f32 ? UnaryOp::ReinterpretInt32 : UnaryOp::ReinterpretInt64) : (type == i32 ? UnaryOp::ReinterpretFloat32 : UnaryOp::ReinterpretFloat64), type);
+          if (op[2] == 'i') return makeUnary(s, isTypeFloat(type) ? (type == f32 ? UnaryOp::ReinterpretInt32 : UnaryOp::ReinterpretInt64) : (type == i32 ? UnaryOp::ReinterpretFloat32 : UnaryOp::ReinterpretFloat64), type);
         }
         if (op[1] == 'o' && op[2] == 't') {
           return makeBinary(s, op[3] == 'l' ? BINARY_INT(RotL) : BINARY_INT(RotR), type);
@@ -882,7 +882,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
   abort_on("unrecognized input string for parsing");
 }
 
-Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op, WasmType type) {
+Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op, Type type) {
   auto ret = allocator.alloc<Binary>();
   ret->op = op;
   ret->left = parseExpression(s[1]);
@@ -892,7 +892,7 @@ Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op, WasmType
 }
 
 
-Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op, WasmType type) {
+Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op, Type type) {
   auto ret = allocator.alloc<Unary>();
   ret->op = op;
   ret->value = parseExpression(s[1]);
@@ -922,7 +922,7 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op, WasmType t
     case ClzInt64:
     case CtzInt64:
     case PopcntInt64: {
-      if (ret->value->type != unreachable && type != ret->value->type) throw ParseException(std::string("bad type for ") + getExpressionName(ret) + ": " + printWasmType(type) + " vs value type " + printWasmType(ret->value->type), s.line, s.col);
+      if (ret->value->type != unreachable && type != ret->value->type) throw ParseException(std::string("bad type for ") + getExpressionName(ret) + ": " + printType(type) + " vs value type " + printType(ret->value->type), s.line, s.col);
       break;
     }
     case ExtendSInt32: case ExtendUInt32:
@@ -1069,7 +1069,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     Name sName;
     if (i < s.size() && s[i]->isStr()) {
       // could be a name or a type
-      if (s[i]->dollared() || stringToWasmType(s[i]->str(), true /* allowError */) == none) {
+      if (s[i]->dollared() || stringToType(s[i]->str(), true /* allowError */) == none) {
         sName = s[i++]->str();
       } else {
         sName = "block";
@@ -1132,7 +1132,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeConst(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   auto ret = parseConst(s[1]->str(), type, allocator);
   if (!ret) throw ParseException("bad const");
   return ret;
@@ -1180,13 +1180,13 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
   return i;
 }
 
-Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isAtomic) {
+Expression* SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
   if (isAtomic) extra += 7; // after "type.atomic.load"
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  ret->bytes = parseMemBytes(&extra, getTypeSize(type));
   ret->signed_ = extra[0] && extra[1] == 's';
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
@@ -1194,13 +1194,13 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, WasmType type, bool isA
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool isAtomic) {
+Expression* SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
   if (isAtomic) extra += 7; // after "type.atomic.store"
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  ret->bytes = parseMemBytes(&extra, getTypeSize(type));
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
 
   ret->ptr = parseExpression(s[i]);
@@ -1209,9 +1209,9 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, WasmType type, bool is
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s, Type type) {
   const char* extra = strchr(s[0]->c_str(), '.') + 11; // afer "type.atomic.rmw"
-  auto bytes = parseMemBytes(&extra, getWasmTypeSize(type));
+  auto bytes = parseMemBytes(&extra, getTypeSize(type));
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) throw ParseException("malformed atomic rmw instruction");
   extra++; // after the '.'
@@ -1219,7 +1219,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s, WasmType 
   return makeAtomicRMW(s, type, bytes, extra);
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type, uint8_t bytes, const char* extra) {
+Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, Type type, uint8_t bytes, const char* extra) {
   auto ret = allocator.alloc<AtomicRMW>();
   ret->type = type;
   ret->bytes = bytes;
@@ -1239,7 +1239,7 @@ Expression* SExpressionWasmBuilder::makeAtomicRMW(Element& s, WasmType type, uin
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, WasmType type, uint8_t bytes, const char* extra) {
+Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, Type type, uint8_t bytes, const char* extra) {
   auto ret = allocator.alloc<AtomicCmpxchg>();
   ret->type = type;
   ret->bytes = bytes;
@@ -1253,7 +1253,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s, WasmType type,
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, WasmType type) {
+Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   auto ret = allocator.alloc<AtomicWait>();
   ret->type = i32;
   ret->expectedType = type;
@@ -1285,7 +1285,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   }
   auto label = nameMapper.pushLabelName(sName);
   // if signature
-  WasmType type = parseOptionalResultType(s, i);
+  Type type = parseOptionalResultType(s, i);
   ret->condition = parseExpression(s[i++]);
   ret->ifTrue = parseExpression(*s[i++]);
   if (i < s.size()) {
@@ -1305,7 +1305,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
 }
 
 
-Expression* SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, WasmType type) {
+Expression* SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, Type type) {
   Index stopAt = -1;
   if (s.size() == i) return allocator.alloc<Nop>();
   if (s.size() == i+1) return parseExpression(s[i]);
@@ -1320,14 +1320,14 @@ Expression* SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, WasmTyp
   return ret;
 }
 
-WasmType SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
+Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
   if (s.size() == i)
     return none;
 
   // TODO(sbc): Remove support for old result syntax (bare streing) once the
   // spec tests are updated.
   if (s[i]->isStr())
-    return stringToWasmType(s[i++]->str());
+    return stringToType(s[i++]->str());
 
   Element& params = *s[i];
   IString id = params[0]->str();
@@ -1335,7 +1335,7 @@ WasmType SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
     return none;
 
   i++;
-  return stringToWasmType(params[1]->str());
+  return stringToType(params[1]->str());
 }
 
 Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
@@ -1725,10 +1725,10 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       IString id = params[0]->str();
       if (id == PARAM) {
         for (size_t k = 1; k < params.size(); k++) {
-          type->params.push_back(stringToWasmType(params[k]->str()));
+          type->params.push_back(stringToType(params[k]->str()));
         }
       } else if (id == RESULT) {
-        type->result = stringToWasmType(params[1]->str());
+        type->result = stringToType(params[1]->str());
       } else if (id == TYPE) {
         IString name = params[1]->str();
         if (!wasm.getFunctionTypeOrNull(name)) throw ParseException("bad function type for import");
@@ -1739,17 +1739,17 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       if (inner.size() > j+1) {
         Element& result = *inner[j+1];
         if (result[0]->str() != RESULT) throw ParseException("expected result");
-        type->result = stringToWasmType(result[1]->str());
+        type->result = stringToType(result[1]->str());
       }
     }
     im->functionType = ensureFunctionType(getSig(type.get()), &wasm)->name;
   } else if (im->kind == ExternalKind::Global) {
     if (inner[j]->isStr()) {
-      im->globalType = stringToWasmType(inner[j]->str());
+      im->globalType = stringToType(inner[j]->str());
     } else {
       auto& inner2 = *inner[j];
       if (inner2[0]->str() != MUT) throw ParseException("expected mut");
-      im->globalType = stringToWasmType(inner2[1]->str());
+      im->globalType = stringToType(inner2[1]->str());
       throw ParseException("cannot import a mutable global", s.line, s.col);
     }
   } else if (im->kind == ExternalKind::Table) {
@@ -1779,7 +1779,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
 void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   std::unique_ptr<Global> global = make_unique<Global>();
   size_t i = 1;
-  if (s[i]->dollared() && !(s[i]->isStr() && isWasmType(s[i]->str()))) {
+  if (s[i]->dollared() && !(s[i]->isStr() && isType(s[i]->str()))) {
     global->name = s[i++]->str();
   } else {
     global->name = Name::fromInt(globalCounter);
@@ -1787,7 +1787,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   globalCounter++;
   globalNames.push_back(global->name);
   bool mutable_ = false;
-  WasmType type = none;
+  Type type = none;
   bool exported = false;
   Name importModule, importBase;
   while (i < s.size() && s[i]->isList()) {
@@ -1807,7 +1807,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
       i++;
     } else if (inner[0]->str() == MUT) {
       mutable_ = true;
-      type = stringToWasmType(inner[1]->str());
+      type = stringToType(inner[1]->str());
       i++;
     } else {
       break;
@@ -1815,7 +1815,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   }
   if (exported && mutable_) throw ParseException("cannot export a mutable global", s.line, s.col);
   if (type == none) {
-    type = stringToWasmType(s[i++]->str());
+    type = stringToType(s[i++]->str());
   }
   if (importModule.is()) {
     // this is an import, actually
@@ -1949,11 +1949,11 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     Element& curr = *func[k];
     if (curr[0]->str() == PARAM) {
       for (size_t j = 1; j < curr.size(); j++) {
-        type->params.push_back(stringToWasmType(curr[j]->str()));
+        type->params.push_back(stringToType(curr[j]->str()));
       }
     } else if (curr[0]->str() == RESULT) {
       if (curr.size() > 2) throw ParseException("invalid result arity", curr.line, curr.col);
-      type->result = stringToWasmType(curr[1]->str());
+      type->result = stringToType(curr[1]->str());
     }
   }
   if (!type->name.is()) {

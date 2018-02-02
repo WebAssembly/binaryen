@@ -200,7 +200,7 @@ public:
   };
   Id _id;
 
-  WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
+  Type type; // the type of the expression: its *output*, not necessarily its input(s)
 
   Expression(Id id) : _id(id), type(none) {}
 
@@ -253,7 +253,7 @@ public:
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
   // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  void finalize(Type type_);
 
   // set the type purely based on its contents. this scans the block, so it is not fast
   void finalize();
@@ -271,7 +271,7 @@ public:
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
   // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -288,7 +288,7 @@ public:
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
   // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -345,8 +345,8 @@ public:
 class FunctionType {
 public:
   Name name;
-  WasmType result;
-  std::vector<WasmType> params;
+  Type result;
+  std::vector<Type> params;
 
   FunctionType() : result(none) {}
 
@@ -436,7 +436,7 @@ public:
   bool isAtomic;
   Expression* ptr;
   Expression* value;
-  WasmType valueType; // the store never returns a value
+  Type valueType; // the store never returns a value
 
   void finalize();
 };
@@ -478,7 +478,7 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
   Expression* ptr;
   Expression* expected;
   Expression* timeout;
-  WasmType expectedType;
+  Type expectedType;
 
   void finalize();
 };
@@ -593,9 +593,9 @@ public:
 class Function {
 public:
   Name name;
-  WasmType result;
-  std::vector<WasmType> params; // function locals are
-  std::vector<WasmType> vars;   // params plus vars
+  Type result;
+  std::vector<Type> params; // function locals are
+  std::vector<Type> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
   Expression* body;
 
@@ -622,7 +622,7 @@ public:
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
   Index getVarIndexBase();
-  WasmType getLocalType(Index index);
+  Type getLocalType(Index index);
 
   Name getLocalNameOrDefault(Index index);
   Name getLocalNameOrGeneric(Index index);
@@ -644,7 +644,7 @@ public:
   Name name, module, base; // name = module.base
   ExternalKind kind;
   Name functionType; // for Function imports
-  WasmType globalType; // for Global imports
+  Type globalType; // for Global imports
 };
 
 class Export {
@@ -721,7 +721,7 @@ public:
 class Global {
 public:
   Name name;
-  WasmType type;
+  Type type;
   Expression* init;
   bool mutable_;
 };

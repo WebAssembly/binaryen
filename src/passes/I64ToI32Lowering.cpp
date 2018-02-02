@@ -113,7 +113,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitFunctionType(FunctionType* curr) {
-    std::vector<WasmType> params;
+    std::vector<Type> params;
     for (auto t : curr->params) {
       if (t == i64) {
         params.push_back(i32);
@@ -146,10 +146,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       assert(oldFunc.hasLocalName(i));
       Name lowName = oldFunc.getLocalName(i);
       Name highName = makeHighName(lowName);
-      WasmType paramType = oldFunc.getLocalType(i);
+      Type paramType = oldFunc.getLocalType(i);
       auto builderFunc = (i < oldFunc.getVarIndexBase()) ?
           Builder::addParam :
-          static_cast<Index (*)(Function*, Name, WasmType)>(Builder::addVar);
+          static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
       if (paramType == i64) {
         builderFunc(func, lowName, i32);
         builderFunc(func, highName, i32);
@@ -312,7 +312,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   template <typename T>
-  using BuilderFunc = std::function<T*(std::vector<Expression*>&, WasmType)>;
+  using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
 
   template <typename T>
   void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
@@ -346,7 +346,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitCall(Call* curr) {
     visitGenericCall<Call>(
       curr,
-      [&](std::vector<Expression*>& args, WasmType ty) {
+      [&](std::vector<Expression*>& args, Type ty) {
         return builder->makeCall(curr->target, args, ty);
       }
     );
@@ -360,7 +360,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitCallIndirect(CallIndirect* curr) {
     visitGenericCall<CallIndirect>(
       curr,
-      [&](std::vector<Expression*>& args, WasmType ty) {
+      [&](std::vector<Expression*>& args, Type ty) {
         return builder->makeCallIndirect(
           curr->fullType,
           curr->target,

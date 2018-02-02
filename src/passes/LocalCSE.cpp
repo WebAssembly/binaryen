@@ -118,7 +118,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (curr->is<GetLocal>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteWasmType(curr->type)) {
+    if (!isConcreteType(curr->type)) {
       return false; // don't bother with unreachable etc.
     }
     if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {

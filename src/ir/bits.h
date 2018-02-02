@@ -44,7 +44,7 @@ struct Bits {
 
   // gets the number of effective shifts a shift operation does. In
   // wasm, only 5 bits matter for 32-bit shifts, and 6 for 64.
-  static Index getEffectiveShifts(Index amount, WasmType type) {
+  static Index getEffectiveShifts(Index amount, Type type) {
     if (type == i32) {
       return amount & 31;
     } else if (type == i64) {

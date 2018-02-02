@@ -83,7 +83,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     PointerMap pointerMap;
     for (Index i = 0; i < func->getNumLocals(); i++) {
       if (func->getLocalType(i) == ABI::PointerType) {
-        auto offset = pointerMap.size() * getWasmTypeSize(ABI::PointerType);
+        auto offset = pointerMap.size() * getTypeSize(ABI::PointerType);
         pointerMap[i] = offset;
       }
     }
@@ -136,7 +136,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     }
     if (spilled) {
       // get the stack space, and set the local to it
-      ABI::getStackSpace(spillLocal, func, getWasmTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
+      ABI::getStackSpace(spillLocal, func, getTypeSize(ABI::PointerType) * pointerMap.size(), *getModule());
     }
   }
 
@@ -176,9 +176,9 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     // add the spills
     for (auto index : toSpill) {
       block->list.push_back(builder.makeStore(
-        getWasmTypeSize(ABI::PointerType),
+        getTypeSize(ABI::PointerType),
         pointerMap[index],
-        getWasmTypeSize(ABI::PointerType),
+        getTypeSize(ABI::PointerType),
         builder.makeGetLocal(spillLocal, ABI::PointerType),
         builder.makeGetLocal(index, ABI::PointerType),
         ABI::PointerType
