@@ -27,7 +27,7 @@ def files_with_extensions(path, extensions):
       yield file, ext
 
 
-def generate_object_files(clang_bin):
+def generate_object_files(clang_bin, emscripten_root):
   print '\n[ building object files from C sources... ]\n'
 
   lld_path = os.path.join(shared.options.binaryen_test, 'lld')
@@ -44,7 +44,7 @@ def generate_object_files(clang_bin):
         '-nostdinc',
         '-Xclang', '-nobuiltininc',
         '-Xclang', '-nostdsysteminc',
-        '-Xclang', '-I/s/work/emscripten/system/include',
+        '-Xclang', '-I%s/system/include' % emscripten_root,
         '-O1',
     ])
 
@@ -77,8 +77,9 @@ def generate_wast_files(lld_bin):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) != 3:
-    print 'Usage: generate_lld_tests.py [path/to/clang] [path/to/lld]'
+  if len(sys.argv) != 4:
+    print 'Usage: generate_lld_tests.py [path/to/clang] [path/to/lld] \
+[path/to/emscripten]'
     sys.exit(1)
-  generate_object_files(sys.argv[1])
+  generate_object_files(sys.argv[1], sys.argv[3])
   generate_wast_files(sys.argv[2])
