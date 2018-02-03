@@ -15,10 +15,26 @@
   (local $4 f32)
   (local $5 i64)
   (local $6 f32)
-  (call $exported)
-  (call $tabled)
-  (call $multi)
-  (call $multi)
+  (block
+   (block $__inlined_func$exported
+    (nop)
+   )
+  )
+  (block
+   (block $__inlined_func$tabled
+    (nop)
+   )
+  )
+  (block
+   (block $__inlined_func$multi
+    (nop)
+   )
+  )
+  (block
+   (block $__inlined_func$multi0
+    (nop)
+   )
+  )
   (block
    (block $__inlined_func$ok
     (drop
@@ -136,9 +152,6 @@
     (call $cycle1)
    )
   )
- )
- (func $multi (; 5 ;) (type $0)
-  (nop)
  )
 )
 (module

@@ -17,14 +17,17 @@
 //
 // Inlining.
 //
-// By default, this does a conservative inlining of all functions that have
-// exactly one use, and are fairly small. That should not increase code
-// size, and may have speed benefits.
+// This uses some simple heuristics to decide when to inline.
 //
-// When opt level is 3+ (-O3 or above), we more aggressively inline
-// even functions with more than one use, that seem to be "lightweight"
-// (no loops or calls etc.), so inlining them may get rid of call overhead
-// that would be noticeable otherwise
+// Two versions are provided: inlining and inlining-optimizing. You
+// probably want the optimizing version, which will optimize locations
+// we inlined into, as inlining by itself creates a block to house the
+// inlined code, some temp locals, etc., which can usually be removed
+// by optimizations. Note that the two versions use the same heuristics,
+// so we don't take into account the overhead if you don't optimize
+// afterwards. The non-optimizing version is mainly useful for debugging,
+// or if you intend to run a full set of optimizations anyhow on
+// everything later.
 //
 
 #include <atomic>
@@ -47,8 +50,16 @@ static const int CAREFUL_SIZE_LIMIT = 15;
 static const int FLEXIBLE_SIZE_LIMIT = 20;
 
 // A size so small that after optimizations, the inlined code will be
-// smaller than the call instruction itself.
-static const int INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT = 1;
+// smaller than the call instruction itself. 2 is a safe number because
+// there is no risk of things like
+//  (func $reverse (param $x i32) (param $y i32)
+//   (call $something (get_local $y) (get_local $x))
+//  )
+// in which case the reversing of the params means we'll possibly need
+// a block and a temp local. But that takes at least 3 nodes, and 2 < 3.
+// More generally, with 2 items we may have a get_local, but no way to
+// require it to be saved instead of directly consumed.
+static const int INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT = 2;
 
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
@@ -64,23 +75,20 @@ struct FunctionInfo {
     usedGlobally = false;
   }
 
-  bool worthInlining(PassOptions& options,
-                     bool allowMultipleInliningsPerFunction,
-                     bool optimizing) {
+  bool worthInlining(PassOptions& options) {
     // if it's big, it's just not worth doing (TODO: investigate more)
     if (size > FLEXIBLE_SIZE_LIMIT) return false;
     // if it's so small we have a guarantee that after we optimize the
     // size will not increase, inline it
-    if (optimizing && size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
+    if (size <= INLINING_OPTIMIZING_WILL_DECREASE_SIZE_LIMIT) return true;
     // if it has one use, then inlining it would likely reduce code size
     // since we are just moving code around, + optimizing, so worth it
     // if small enough that we are pretty sure its ok
     if (calls == 1 && !usedGlobally && size <= CAREFUL_SIZE_LIMIT) return true;
-    if (!allowMultipleInliningsPerFunction) return false;
     // more than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
     // about size, and if it's lightweight so a good candidate for
-    // speeding us up
+    // speeding us up.
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 && lightweight;
   }
 };
@@ -221,19 +229,28 @@ struct Inlining : public Pass {
   // whether to optimize where we inline
   bool optimize = false;
 
+  // the information for each function. recomputed in each iteraction
   NameInfoMap infos;
 
-  bool firstIteration;
+  Index iterationNumber;
 
   void run(PassRunner* runner, Module* module) override {
+    Index numFunctions = module->functions.size();
     // keep going while we inline, to handle nesting. TODO: optimize
-    firstIteration = true;
-    while (1) {
+    iterationNumber = 0;
+    // no point to do more iterations than the number of functions, as
+    // it means we infinitely recursing (which should
+    // be very rare in practice, but it is possible that a recursive call
+    // can look like it is worth inlining)
+    while (iterationNumber <= numFunctions) {
+#ifdef INLINING_DEBUG
+      std::cout << "inlining loop iter " << iterationNumber << " (numFunctions: " << numFunctions << ")\n";
+#endif
       calculateInfos(module);
       if (!iteration(runner, module)) {
         return;
       }
-      firstIteration = false;
+      iterationNumber++;
     }
   }
 
@@ -268,9 +285,7 @@ struct Inlining : public Pass {
     InliningState state;
     for (auto& func : module->functions) {
       // on the first iteration, allow multiple inlinings per function
-      if (infos[func->name].worthInlining(runner->options,
-                                          firstIteration /* allowMultipleInliningsPerFunction */,
-                                          optimize)) {
+      if (infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
     }
@@ -291,14 +306,14 @@ struct Inlining : public Pass {
     std::unordered_set<Function*> inlinedInto; // which functions were inlined into
     for (auto& func : module->functions) {
       // if we've inlined a function, don't inline into it in this iteration,
-      // avoid risk of loops
+      // avoid risk of races
       // note that we do not risk stalling progress, as each iteration() will
       // inline at least one call before hitting this
       if (inlinedUses.count(func->name)) continue;
       for (auto& action : state.actionsForFunction[func->name]) {
         auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
-        // avoid risk of loops
+        // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
         // inline at least one call before hitting this
         if (inlinedInto.count(inlinedFunction)) continue;
@@ -326,7 +341,7 @@ struct Inlining : public Pass {
       auto& info = infos[name];
       bool canRemove = inlinedUses.count(name) && inlinedUses[name] == info.calls && !info.usedGlobally;
 #ifdef INLINING_DEBUG
-      std::cout << "removing " << name << '\n';
+      if (canRemove) std::cout << "removing " << name << '\n';
 #endif
       return canRemove;
     }), funcs.end());
