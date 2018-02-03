@@ -1408,9 +1408,9 @@ Name SExpressionWasmBuilder::getLabel(Element& s) {
     uint64_t offset;
     try {
       offset = std::stoll(s.c_str(), nullptr, 0);
-    } catch (std::invalid_argument) {
+    } catch (std::invalid_argument&) {
       throw ParseException("invalid break offset");
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range&) {
       throw ParseException("out of range break offset");
     }
     if (offset > nameMapper.labelStack.size()) throw ParseException("invalid label", s.line, s.col);
