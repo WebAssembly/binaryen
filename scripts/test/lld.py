@@ -26,8 +26,8 @@ def test_wasm_link_metadata():
   print '\n[ checking wasm-link-metadata testcases... ]\n'
 
   extension_arg_map = {
-    '.json': [],
-    '.jscall.json': ['--emscripten-reserved-function-pointers=3'],
+      '.json': [],
+      '.jscall.json': ['--emscripten-reserved-function-pointers=3'],
   }
 
   for obj_path in files_with_pattern(options.binaryen_test, 'lld', '*.o'):
@@ -52,8 +52,8 @@ def test_wasm_emscripten_finalize():
   print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
 
   extension_arg_map = {
-    '.out': [],
-    '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
+      '.out': [],
+      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
   }
 
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
