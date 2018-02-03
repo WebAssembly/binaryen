@@ -279,7 +279,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   void visitExpression(Expression* curr) {
     if (curr->type == none) {
       if (tryToReduceCurrentToNone()) return;
-    } else if (isConcreteWasmType(curr->type)) {
+    } else if (isConcreteType(curr->type)) {
       if (tryToReduceCurrentToConst()) return;
     } else {
       assert(curr->type == unreachable);

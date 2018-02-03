@@ -260,7 +260,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         } else {
           // this is already an if-else. if one side is a dead end, we can append to the other, if
           // there is no returned value to concern us
-          assert(!isConcreteWasmType(iff->type)); // can't be, since in the middle of a block
+          assert(!isConcreteType(iff->type)); // can't be, since in the middle of a block
 
           // ensures the first node is a block, if it isn't already, and merges in the second,
           // either as a single element or, if a block, by appending to the first block. this
@@ -275,7 +275,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             if (!block || block->name.is()) {
               block = builder.makeBlock(any);
             } else {
-              assert(!isConcreteWasmType(block->type));
+              assert(!isConcreteType(block->type));
             }
             auto* other = append->dynCast<Block>();
             if (!other) {
@@ -461,7 +461,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
-          if (!iff || !iff->ifFalse || isConcreteWasmType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
+          if (!iff || !iff->ifFalse || isConcreteType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value, passOptions)) {
             // we are an if-else where the ifTrue is a break without a condition, so we can do this
@@ -542,7 +542,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // we may have simplified ifs enough to turn them into selects
         // this is helpful for code size, but can be a tradeoff with performance as we run both code paths
         if (!shrink) return;
-        if (curr->ifFalse && isConcreteWasmType(curr->ifTrue->type) && isConcreteWasmType(curr->ifFalse->type)) {
+        if (curr->ifFalse && isConcreteType(curr->ifTrue->type) && isConcreteType(curr->ifFalse->type)) {
           // if with else, consider turning it into a select if there is no control flow
           // TODO: estimate cost
           EffectAnalyzer condition(passOptions, curr->condition);

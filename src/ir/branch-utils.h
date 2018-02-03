@@ -110,7 +110,7 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
   bool named = true;
 
   Index found;
-  WasmType valueType;
+  Type valueType;
 
   BranchSeeker(Name target) : target(target), found(0) {}
 

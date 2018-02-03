@@ -120,10 +120,10 @@ class ExpressionRunner : public Visitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
     auto ret = Visitor<SubType, Flow>::visit(curr);
-    if (!ret.breaking() && (isConcreteWasmType(curr->type) || isConcreteWasmType(ret.value.type))) {
+    if (!ret.breaking() && (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
 #if 1 // def WASM_INTERPRETER_DEBUG
       if (ret.value.type != curr->type) {
-        std::cerr << "expected " << printWasmType(curr->type) << ", seeing " << printWasmType(ret.value.type) << " from\n" << curr << '\n';
+        std::cerr << "expected " << printType(curr->type) << ", seeing " << printType(ret.value.type) << " from\n" << curr << '\n';
       }
 #endif
       assert(ret.value.type == curr->type);
@@ -333,8 +333,8 @@ public:
     if (flow.breaking()) return flow;
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
-    assert(isConcreteWasmType(curr->left->type) ? left.type == curr->left->type : true);
-    assert(isConcreteWasmType(curr->right->type) ? right.type == curr->right->type : true);
+    assert(isConcreteType(curr->left->type) ? left.type == curr->left->type : true);
+    assert(isConcreteType(curr->right->type) ? right.type == curr->right->type : true);
     if (left.type == i32) {
       switch (curr->op) {
         case AddInt32:      return left.add(right);
@@ -568,7 +568,7 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, SubType& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, Type result, SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
 
@@ -740,9 +740,9 @@ public:
             assert(function->isParam(i));
             if (function->params[i] != arguments[i].type) {
               std::cerr << "Function `" << function->name << "` expects type "
-                        << printWasmType(function->params[i])
+                        << printType(function->params[i])
                         << " for parameter " << i << ", got "
-                        << printWasmType(arguments[i].type) << "." << std::endl;
+                        << printType(arguments[i].type) << "." << std::endl;
               WASM_UNREACHABLE();
             }
             locals[i] = arguments[i];
@@ -922,7 +922,7 @@ public:
         auto timeout = this->visit(curr->timeout);
         NOTE_EVAL1(timeout);
         if (timeout.breaking()) return timeout;
-        auto bytes = getWasmTypeSize(curr->expectedType);
+        auto bytes = getTypeSize(curr->expectedType);
         auto addr = instance.getFinalAddress(ptr.value, bytes);
         auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
         NOTE_EVAL1(loaded);
@@ -1050,7 +1050,7 @@ protected:
     trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
   }
 
-  Literal doAtomicLoad(Address addr, Index bytes, WasmType type) {
+  Literal doAtomicLoad(Address addr, Index bytes, Type type) {
     checkLoadAddress(addr, bytes);
     Const ptr;
     ptr.value = Literal(int32_t(addr));

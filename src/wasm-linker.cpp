@@ -235,7 +235,7 @@ void Linker::layout() {
       // TODO allow calling with non-default values.
       std::vector<Expression*> args;
       Index paramNum = 0;
-      for (WasmType type : target->params) {
+      for (Type type : target->params) {
         Name name = Name::fromInt(paramNum++);
         Builder::addVar(func, name, type);
         auto* param = builder.makeGetLocal(func->getLocalIndex(name), type);
@@ -382,7 +382,7 @@ void Linker::makeDummyFunction() {
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
   Expression *unreachable = wasmBuilder.makeUnreachable();
-  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, WasmType::none, {}, unreachable);
+  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, Type::none, {}, unreachable);
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
 }

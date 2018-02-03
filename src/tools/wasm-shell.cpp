@@ -104,7 +104,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
         LiteralList arguments;
-        for (WasmType param : function->params) {
+        for (Type param : function->params) {
           arguments.push_back(Literal(param));
         }
         try {

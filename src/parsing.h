@@ -76,11 +76,11 @@ struct MapParseException {
   }
 };
 
-inline Expression* parseConst(cashew::IString s, WasmType type, MixedArena& allocator) {
+inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   const char *str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
-  if (isWasmTypeFloat(type)) {
+  if (isTypeFloat(type)) {
     if (s == _INFINITY) {
       switch (type) {
         case f32: ret->value = Literal(std::numeric_limits<float>::infinity()); break;

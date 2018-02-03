@@ -34,7 +34,7 @@ namespace BlockUtils {
       // just one element. try to replace the block
       auto* singleton = list[0];
       auto sideEffects = EffectAnalyzer(parent->getPassOptions(), singleton).hasSideEffects();
-      if (!sideEffects && !isConcreteWasmType(singleton->type)) {
+      if (!sideEffects && !isConcreteType(singleton->type)) {
         // no side effects, and singleton is not returning a value, so we can throw away
         // the block and its contents, basically
         return Builder(*parent->getModule()).replaceWithIdenticalType(block);
@@ -44,7 +44,7 @@ namespace BlockUtils {
         // (side effects +) type change, must be block with declared value but inside is unreachable
         // (if both concrete, must match, and since no name on block, we can't be
         // branched to, so if singleton is unreachable, so is the block)
-        assert(isConcreteWasmType(block->type) && singleton->type == unreachable);
+        assert(isConcreteType(block->type) && singleton->type == unreachable);
         // we could replace with unreachable, but would need to update all
         // the parent's types
       }

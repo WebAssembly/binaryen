@@ -148,7 +148,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   void visitDrop(Drop* curr) {
     // if we dropped a br_if whose value we removed, then we are now dropping a (block (drop value) (br_if)) with type none, which does not need a drop
     // likewise, unreachable does not need to be dropped, so we just leave drops of concrete values
-    if (!isConcreteWasmType(curr->value->type)) {
+    if (!isConcreteType(curr->value->type)) {
       replaceCurrent(curr->value);
     }
   }
@@ -228,7 +228,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       if (!merged.empty()) {
         auto* last = merged.back();
         for (auto*& item : merged) {
-          if (item != last && isConcreteWasmType(item->type)) {
+          if (item != last && isConcreteType(item->type)) {
             Builder builder(*module);
             item = builder.makeDrop(item);
           }

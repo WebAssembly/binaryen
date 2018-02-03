@@ -167,7 +167,7 @@ struct SSAify : public Pass {
     }
   }
 
-  Index addLocal(WasmType type) {
+  Index addLocal(Type type) {
     return Builder::addVar(func, type);
   }
 

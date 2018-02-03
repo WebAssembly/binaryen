@@ -28,7 +28,7 @@ namespace wasm {
 
 class Literal {
 public:
-  WasmType type;
+  Type type;
 
 private:
   // store only integers, whose bits are deterministic. floats
@@ -45,14 +45,14 @@ private:
   }
 
 public:
-  Literal() : type(WasmType::none), i64(0) {}
-  explicit Literal(WasmType type) : type(type), i64(0) {}
-  explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
-  explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
+  Literal() : type(Type::none), i64(0) {}
+  explicit Literal(Type type) : type(type), i64(0) {}
+  explicit Literal(int32_t  init) : type(Type::i32), i32(init) {}
+  explicit Literal(uint32_t init) : type(Type::i32), i32(init) {}
+  explicit Literal(int64_t  init) : type(Type::i64), i64(init) {}
+  explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
+  explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
+  explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
 
   bool isConcrete() { return type != none; }
   bool isNull() { return type == none; }
@@ -62,17 +62,17 @@ public:
   Literal castToI32();
   Literal castToI64();
 
-  int32_t geti32() const { assert(type == WasmType::i32); return i32; }
-  int64_t geti64() const { assert(type == WasmType::i64); return i64; }
-  float   getf32() const { assert(type == WasmType::f32); return bit_cast<float>(i32); }
-  double  getf64() const { assert(type == WasmType::f64); return bit_cast<double>(i64); }
+  int32_t geti32() const { assert(type == Type::i32); return i32; }
+  int64_t geti64() const { assert(type == Type::i64); return i64; }
+  float   getf32() const { assert(type == Type::f32); return bit_cast<float>(i32); }
+  double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
 
-  int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
+  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; } // careful!
 
-  int32_t reinterpreti32() const { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() const { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
+  int32_t reinterpreti32() const { assert(type == Type::f32); return i32; }
+  int64_t reinterpreti64() const { assert(type == Type::f64); return i64; }
+  float   reinterpretf32() const { assert(type == Type::i32); return bit_cast<float>(i32); }
+  double  reinterpretf64() const { assert(type == Type::i64); return bit_cast<double>(i64); }
 
   int64_t getInteger() const;
   double getFloat() const;

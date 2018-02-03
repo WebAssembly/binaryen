@@ -95,7 +95,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void printFullLine(Expression *expression) {
     !minify && doIndent(o, indent);
     if (full) {
-      o << "[" << printWasmType(expression->type) << "] ";
+      o << "[" << printType(expression->type) << "] ";
     }
     visit(expression);
     o << maybeNewLine;
@@ -129,15 +129,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       if (stack.size() > 0) doIndent(o, indent);
       stack.push_back(curr);
       if (full) {
-        o << "[" << printWasmType(curr->type) << "] ";
+        o << "[" << printType(curr->type) << "] ";
       }
       printOpening(o, "block");
       if (curr->name.is()) {
         o << ' ';
         printName(curr->name);
       }
-      if (isConcreteWasmType(curr->type)) {
-        o << " (result " << printWasmType(curr->type) << ')';
+      if (isConcreteType(curr->type)) {
+        o << " (result " << printType(curr->type) << ')';
       }
       incIndent();
       if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
@@ -167,8 +167,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitIf(If *curr) {
     printOpening(o, "if");
-    if (isConcreteWasmType(curr->type)) {
-      o << " (result " << printWasmType(curr->type) << ')';
+    if (isConcreteType(curr->type)) {
+      o << " (result " << printType(curr->type) << ')';
     }
     incIndent();
     printFullLine(curr->condition);
@@ -192,8 +192,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
-    if (isConcreteWasmType(curr->type)) {
-      o << " (result " << printWasmType(curr->type) << ')';
+    if (isConcreteType(curr->type)) {
+      o << " (result " << printType(curr->type) << ')';
     }
     incIndent();
     auto block = curr->body->dynCast<Block>();
@@ -299,7 +299,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitLoad(Load *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->type);
+    prepareColor(o) << printType(curr->type);
     if (curr->isAtomic) o << ".atomic";
     o << ".load";
     if (curr->bytes < 4 || (curr->type == i64 && curr->bytes < 8)) {
@@ -327,7 +327,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitStore(Store *curr) {
     o << '(';
-    prepareColor(o) << printWasmType(curr->valueType);
+    prepareColor(o) << printType(curr->valueType);
     if (curr->isAtomic) o << ".atomic";
     o << ".store";
     if (curr->bytes < 4 || (curr->valueType == i64 && curr->bytes < 8)) {
@@ -353,11 +353,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  static void printRMWSize(std::ostream& o, WasmType type, uint8_t bytes) {
-    prepareColor(o) << printWasmType(type) << ".atomic.rmw";
+  static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
+    prepareColor(o) << printType(type) << ".atomic.rmw";
     if (type == unreachable) {
       o << '?';
-    } else if (bytes != getWasmTypeSize(type)) {
+    } else if (bytes != getTypeSize(type)) {
       if (bytes == 1) {
         o << '8';
       } else if (bytes == 2) {
@@ -410,7 +410,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitAtomicWait(AtomicWait* curr) {
     o << '(' ;
     prepareColor(o);
-    o << printWasmType(curr->expectedType) << ".wait";
+    o << printType(curr->expectedType) << ".wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -643,13 +643,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << maybeSpace;
       printMinorOpening(o, "param");
       for (auto& param : curr->params) {
-        o << ' ' << printWasmType(param);
+        o << ' ' << printType(param);
       }
       o << ')';
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
+      printMinorOpening(o, "result ") << printType(curr->result) << ')';
     }
     o << ")";
   }
@@ -661,7 +661,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExternalKind::Function: if (curr->functionType.is()) visitFunctionType(currModule->getFunctionType(curr->functionType), &curr->name); break;
       case ExternalKind::Table:    printTableHeader(&currModule->table); break;
       case ExternalKind::Memory:   printMemoryHeader(&currModule->memory); break;
-      case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printWasmType(curr->globalType) << ")"; break;
+      case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printType(curr->globalType) << ")"; break;
       default: WASM_UNREACHABLE();
     }
     o << ')';
@@ -683,9 +683,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printOpening(o, "global ");
     printName(curr->name) << ' ';
     if (curr->mutable_) {
-      o << "(mut " << printWasmType(curr->type) << ") ";
+      o << "(mut " << printType(curr->type) << ") ";
     } else {
-      o << printWasmType(curr->type) << ' ';
+      o << printType(curr->type) << ' ';
     }
     visit(curr->init);
     o << ')';
@@ -709,17 +709,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ')';
+        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
       }
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printWasmType(curr->result) << ')';
+      printMinorOpening(o, "result ") << printType(curr->result) << ')';
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printWasmType(curr->getLocalType(i)) << ')';
+      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
@@ -913,7 +913,7 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
   print.setMinify(minify);
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[" << printWasmType(expression->type) << "] ";
+    o << "[" << printType(expression->type) << "] ";
   }
   print.visit(expression);
   return o;

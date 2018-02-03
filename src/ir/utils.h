@@ -86,7 +86,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   // block finalization is O(bad) if we do each block by itself, so do it in bulk,
   // tracking break value types so we just do a linear pass
 
-  std::map<Name, WasmType> breakValues;
+  std::map<Name, Type> breakValues;
 
   void visitBlock(Block *curr) {
     if (curr->list.size() == 0) {
@@ -99,7 +99,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     curr->type = curr->list.back()->type;
     // if concrete, it doesn't matter if we have an unreachable child, and we
     // don't need to look at breaks
-    if (isConcreteWasmType(curr->type)) return;
+    if (isConcreteType(curr->type)) return;
     // otherwise, we have no final fallthrough element to determine the type,
     // could be determined by breaks
     if (curr->name.is()) {
@@ -111,7 +111,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
           // all we have are breaks with values of type unreachable, and no
           // concrete fallthrough either. we must have had an existing type, then
           curr->type = old;
-          assert(isConcreteWasmType(curr->type));
+          assert(isConcreteType(curr->type));
         } else {
           curr->type = type;
         }
@@ -183,11 +183,11 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
-  WasmType getValueType(Expression* value) {
+  Type getValueType(Expression* value) {
     return value ? value->type : none;
   }
 
-  void updateBreakValueType(Name name, WasmType type) {
+  void updateBreakValueType(Name name, Type type) {
     if (type != unreachable || breakValues.count(name) == 0) {
       breakValues[name] = type;
     }
@@ -256,7 +256,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   bool maybeDrop(Expression*& child) {
     bool acted = false;
-    if (isConcreteWasmType(child->type)) {
+    if (isConcreteType(child->type)) {
       expressionStack.push_back(child);
       if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) && !ExpressionAnalyzer::isResultDropped(expressionStack)) {
         child = Builder(*getModule()).makeDrop(child);
@@ -275,7 +275,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     if (curr->list.size() == 0) return;
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
-      if (isConcreteWasmType(child->type)) {
+      if (isConcreteType(child->type)) {
         curr->list[i] = Builder(*getModule()).makeDrop(child);
       }
     }
@@ -300,7 +300,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->result == none && isConcreteWasmType(curr->body->type)) {
+    if (curr->result == none && isConcreteType(curr->body->type)) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

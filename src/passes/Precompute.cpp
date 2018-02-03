@@ -181,7 +181,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       return;
     }
     // this was precomputed
-    if (isConcreteWasmType(flow.value.type)) {
+    if (isConcreteType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
     } else {
       ExpressionManipulator::nop(curr);

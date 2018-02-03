@@ -24,7 +24,7 @@ namespace wasm {
 namespace ABI {
 
 // The pointer type. Will need to update this for wasm64
-const static WasmType PointerType = WasmType::i32;
+const static Type PointerType = Type::i32;
 
 } // namespace ABI
 

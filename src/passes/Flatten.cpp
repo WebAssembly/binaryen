@@ -109,7 +109,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         block->list.swap(newList);
         // remove a block return value
         auto type = block->type;
-        if (isConcreteWasmType(type)) {
+        if (isConcreteType(type)) {
           // if there is a temp index for breaking to the block, use that
           Index temp;
           auto iter = breakTemps.find(block->name);
@@ -119,7 +119,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
             temp = builder.addVar(getFunction(), type);
           }
           auto*& last = block->list.back();
-          if (isConcreteWasmType(last->type)) {
+          if (isConcreteType(last->type)) {
             last = builder.makeSetLocal(temp, last);
           }
           block->finalize(none);
@@ -139,12 +139,12 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         auto* originalIfFalse = iff->ifFalse;
         auto type = iff->type;
         Expression* prelude = nullptr;
-        if (isConcreteWasmType(type)) {
+        if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
-          if (isConcreteWasmType(iff->ifTrue->type)) {
+          if (isConcreteType(iff->ifTrue->type)) {
             iff->ifTrue = builder.makeSetLocal(temp, iff->ifTrue);
           }
-          if (iff->ifFalse && isConcreteWasmType(iff->ifFalse->type)) {
+          if (iff->ifFalse && isConcreteType(iff->ifFalse->type)) {
             iff->ifFalse = builder.makeSetLocal(temp, iff->ifFalse);
           }
           // the whole if (+any preludes from the condition) is now a prelude
@@ -165,7 +165,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
         Expression* rep = loop;
         auto* originalBody = loop->body;
         auto type = loop->type;
-        if (isConcreteWasmType(type)) {
+        if (isConcreteType(type)) {
           Index temp = builder.addVar(getFunction(), type);
           loop->body = builder.makeSetLocal(temp, loop->body);
           // and we leave just a get of the value
@@ -202,14 +202,14 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
       } else if (auto* br = curr->dynCast<Break>()) {
         if (br->value) {
           auto type = br->value->type;
-          if (isConcreteWasmType(type)) {
+          if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = getTempForBreakTarget(br->name, type);
             ourPreludes.push_back(builder.makeSetLocal(temp, br->value));
             if (br->condition) {
               // the value must also flow out
               ourPreludes.push_back(br);
-              if (isConcreteWasmType(br->type)) {
+              if (isConcreteType(br->type)) {
                 replaceCurrent(builder.makeGetLocal(temp, type));
               } else {
                 assert(br->type == unreachable);
@@ -227,7 +227,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
       } else if (auto* sw = curr->dynCast<Switch>()) {
         if (sw->value) {
           auto type = sw->value->type;
-          if (isConcreteWasmType(type)) {
+          if (isConcreteType(type)) {
             // we are sending a value. use a local instead
             Index temp = builder.addVar(getFunction(), type);
             ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
@@ -299,7 +299,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
   void visitFunction(Function* curr) {
     auto* originalBody = curr->body;
     // if the body is a block with a result, turn that into a return
-    if (isConcreteWasmType(curr->body->type)) {
+    if (isConcreteType(curr->body->type)) {
       curr->body = Builder(*getModule()).makeReturn(curr->body);
     }
     // the body may have preludes
@@ -333,7 +333,7 @@ private:
 
   // get the temp local to be used for breaks to that target. allocates
   // one if there isn't one yet
-  Index getTempForBreakTarget(Name name, WasmType type) {
+  Index getTempForBreakTarget(Name name, Type type) {
     auto iter = breakTemps.find(name);
     if (iter != breakTemps.end()) {
       return iter->second;

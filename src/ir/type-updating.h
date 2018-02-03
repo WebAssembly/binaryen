@@ -187,7 +187,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
 
   // alters the type of a node to a new type.
   // this propagates the type change through all the parents.
-  void changeTypeTo(Expression* curr, WasmType newType) {
+  void changeTypeTo(Expression* curr, Type newType) {
     if (curr->type == newType) return; // nothing to do
     curr->type = newType;
     propagateTypesUp(curr);
@@ -214,7 +214,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       // but exceptions exist
       if (auto* block = curr->dynCast<Block>()) {
         // if the block has a fallthrough, it can keep its type
-        if (isConcreteWasmType(block->list.back()->type)) {
+        if (isConcreteType(block->list.back()->type)) {
           return; // did not turn
         }
         // if the block has breaks, it can keep its type
@@ -240,7 +240,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // unreachable, and it does this efficiently, without scanning the full
   // contents
   void maybeUpdateTypeToUnreachable(Block* curr) {
-    if (!isConcreteWasmType(curr->type)) {
+    if (!isConcreteType(curr->type)) {
       return; // nothing concrete to change to unreachable
     }
     if (curr->name.is() && blockInfos[curr->name].numBreaks > 0) {
@@ -255,7 +255,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
       return; // no change possible
     }
     if (!curr->list.empty() &&
-        isConcreteWasmType(curr->list.back()->type)) {
+        isConcreteType(curr->list.back()->type)) {
       return; // should keep type due to fallthrough, even if has an unreachable child
     }
     for (auto* child : curr->list) {
@@ -271,7 +271,7 @@ struct TypeUpdater : public ExpressionStackWalker<TypeUpdater, UnifiedExpression
   // can remove a concrete type and turn the if unreachable when it is
   // unreachable
   void maybeUpdateTypeToUnreachable(If* curr) {
-    if (!isConcreteWasmType(curr->type)) {
+    if (!isConcreteType(curr->type)) {
       return; // nothing concrete to change to unreachable
     }
     curr->finalize();

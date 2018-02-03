@@ -49,7 +49,7 @@ static std::string generateJSWrapper(Module& wasm) {
     auto* func = wasm.getFunctionOrNull(exp->value);
     if (!func) continue; // something exported other than a function
     auto bad = false; // check for things we can't support
-    for (WasmType param : func->params) {
+    for (Type param : func->params) {
       if (param == i64) bad = true;
     }
     if (func->result == i64) bad = true;
@@ -62,7 +62,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (WasmType param : func->params) {
+    for (Type param : func->params) {
       WASM_UNUSED(param);
       // zeros in arguments TODO more?
       if (first) {

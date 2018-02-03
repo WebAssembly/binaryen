@@ -116,7 +116,7 @@ struct Match {
       if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return false;
       Index index = call->operands[0]->cast<Const>()->value.geti32();
       // handle our special functions
-      auto checkMatch = [&](WasmType type) {
+      auto checkMatch = [&](Type type) {
         if (type != none && subSeen->type != type) return false;
         while (index >= wildcards.size()) {
           wildcards.push_back(nullptr);
@@ -338,7 +338,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     return getBitsForType(get->type);
   }
 
-  Index getBitsForType(WasmType type) {
+  Index getBitsForType(Type type) {
     switch (type) {
       case i32: return 32;
       case i64: return 64;
@@ -704,7 +704,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             } else {
               // the types diff. as the condition is reachable, that means the if must be
               // concrete while the arm is not
-              assert(isConcreteWasmType(iff->type) && iff->ifTrue->type == unreachable);
+              assert(isConcreteType(iff->type) && iff->ifTrue->type == unreachable);
               // emit a block with a forced type
               auto* ret = builder.makeBlock();
               if (needCondition) {

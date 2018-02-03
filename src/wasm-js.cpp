@@ -264,7 +264,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    Literal getResultFromJS(double ret, WasmType type) {
+    Literal getResultFromJS(double ret, Type type) {
       switch (type) {
         case none: return Literal();
         case i32: return Literal((int32_t)ret);
@@ -308,7 +308,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       return getResultFromJS(ret, module->getFunctionType(import->functionType)->result);
     }
 
-    Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
+    Literal callTable(Index index, LiteralList& arguments, Type result, ModuleInstance& instance) override {
       void* ptr = (void*)EM_ASM_INT({
         var value = Module['outside']['wasmTable'][$0];
         return typeof value === "number" ? value : -1;
@@ -369,8 +369,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
           return ret;
-        }, (uint32_t)addr, load->bytes, isWasmTypeFloat(load->type), load->signed_, &out64);
-        if (!isWasmTypeFloat(load->type)) {
+        }, (uint32_t)addr, load->bytes, isTypeFloat(load->type), load->signed_, &out64);
+        if (!isTypeFloat(load->type)) {
           if (load->type == i64) {
             if (load->bytes == 8) {
               return Literal(out64);
@@ -391,7 +391,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         abort();
       }
       // nicely aligned
-      if (!isWasmTypeFloat(load->type)) {
+      if (!isTypeFloat(load->type)) {
         int64_t ret;
         if (load->bytes == 1) {
           if (load->signed_) {
@@ -430,7 +430,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     void store(Store* store_, Address address, Literal value) override {
       uint32_t addr = address;
       // support int64 stores
-      if (value.type == WasmType::i64 && store_->bytes == 8) {
+      if (value.type == Type::i64 && store_->bytes == 8) {
         Store fake = *store_;
         fake.bytes = 4;
         fake.type = i32;
@@ -463,11 +463,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, (uint32_t)addr, store_->bytes, isWasmTypeFloat(store_->valueType), isWasmTypeFloat(store_->valueType) ? value.getFloat() : (double)value.getInteger());
+        }, (uint32_t)addr, store_->bytes, isTypeFloat(store_->valueType), isTypeFloat(store_->valueType) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
-      if (!isWasmTypeFloat(store_->valueType)) {
+      if (!isTypeFloat(store_->valueType)) {
         if (store_->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, (uint32_t)value.getInteger());
         } else if (store_->bytes == 2) {
@@ -539,7 +539,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE call_from_js(const char *target) {
   size_t actual = function->params.size();
   LiteralList arguments;
   for (size_t i = 0; i < actual; i++) {
-    WasmType type = function->params[i];
+    Type type = function->params[i];
     // add the parameter, with a zero value if JS did not provide it.
     if (type == i32) {
       arguments.push_back(Literal(i < seen ? EM_ASM_INT({ return Module['tempArguments'][$0] }, i) : (int32_t)0));

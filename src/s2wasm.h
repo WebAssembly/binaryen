@@ -391,7 +391,7 @@ class S2WasmBuilder {
     return str;
   }
 
-  WasmType tryGetType() {
+  Type tryGetType() {
     if (match("i32")) return i32;
     if (match("i64")) return i64;
     if (match("f32")) return f32;
@@ -399,9 +399,9 @@ class S2WasmBuilder {
     return none;
   }
 
-  WasmType tryGetTypeWithoutNewline() {
+  Type tryGetTypeWithoutNewline() {
     const char* saved = s;
-    WasmType type = tryGetType();
+    Type type = tryGetType();
     if (type != none && strchr(saved, '\n') > s) {
       s = saved;
       type = none;
@@ -409,8 +409,8 @@ class S2WasmBuilder {
     return type;
   }
 
-  WasmType getType() {
-    WasmType t = tryGetType();
+  Type getType() {
+    Type t = tryGetType();
     if (t != none) {
       return t;
     }
@@ -690,16 +690,16 @@ class S2WasmBuilder {
     };
     wasm::Builder builder(*wasm);
     std::vector<NameType> params;
-    WasmType resultType = none;
+    Type resultType = none;
     std::vector<NameType> vars;
 
-    std::map<Name, WasmType> localTypes;
+    std::map<Name, Type> localTypes;
     // params and result
     while (1) {
       if (match(".param")) {
         while (1) {
           Name name = getNextId();
-          WasmType type = getType();
+          Type type = getType();
           params.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
@@ -717,7 +717,7 @@ class S2WasmBuilder {
       } else if (match(".local")) {
         while (1) {
           Name name = getNextId();
-          WasmType type = getType();
+          Type type = getType();
           vars.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
@@ -810,7 +810,7 @@ class S2WasmBuilder {
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[0] == 'd') { // drop
         auto* add = curr;
-        if (isConcreteWasmType(curr->type)) {
+        if (isConcreteType(curr->type)) {
           add = builder.makeDrop(curr);
         }
         addToBlock(add);
@@ -843,7 +843,7 @@ class S2WasmBuilder {
       return attributes;
     };
     //
-    auto makeBinary = [&](BinaryOp op, WasmType type) {
+    auto makeBinary = [&](BinaryOp op, Type type) {
       Name assign = getAssign();
       skipComma();
       auto curr = allocator->alloc<Binary>();
@@ -855,7 +855,7 @@ class S2WasmBuilder {
       assert(curr->type == type);
       setOutput(curr, assign);
     };
-    auto makeUnary = [&](UnaryOp op, WasmType type) {
+    auto makeUnary = [&](UnaryOp op, Type type) {
       Name assign = getAssign();
       skipComma();
       auto curr = allocator->alloc<Unary>();
@@ -898,13 +898,13 @@ class S2WasmBuilder {
       add->right = reloc;
       return (Expression*)add;
     };
-    auto makeLoad = [&](WasmType type) {
+    auto makeLoad = [&](Type type) {
       skipComma();
       auto curr = allocator->alloc<Load>();
       curr->isAtomic = false;
       curr->type = type;
       int32_t bytes = getInt() / CHAR_BIT;
-      curr->bytes = bytes > 0 ? bytes : getWasmTypeSize(type);
+      curr->bytes = bytes > 0 ? bytes : getTypeSize(type);
       curr->signed_ = match("_s");
       match("_u");
       Name assign = getAssign();
@@ -919,7 +919,7 @@ class S2WasmBuilder {
       }
       setOutput(curr, assign);
     };
-    auto makeStore = [&](WasmType type) {
+    auto makeStore = [&](Type type) {
       auto curr = allocator->alloc<Store>();
       curr->isAtomic = false;
       curr->valueType = type;
@@ -927,7 +927,7 @@ class S2WasmBuilder {
       if(!isspace(*s)) {
         curr->bytes = getInt() / CHAR_BIT;
       } else {
-        curr->bytes = getWasmTypeSize(type);
+        curr->bytes = getTypeSize(type);
       }
       skipWhitespace();
       auto relocation = getRelocatableExpression(&curr->offset.addr);
@@ -944,7 +944,7 @@ class S2WasmBuilder {
       curr->finalize();
       addToBlock(curr);
     };
-    auto makeSelect = [&](WasmType type) {
+    auto makeSelect = [&](Type type) {
       Name assign = getAssign();
       skipComma();
       auto curr = allocator->alloc<Select>();
@@ -956,7 +956,7 @@ class S2WasmBuilder {
       curr->type = type;
       setOutput(curr, assign);
     };
-    auto makeCall = [&](WasmType type) {
+    auto makeCall = [&](Type type) {
       if (match("_indirect")) {
         // indirect call
         Name assign = getAssign();
@@ -996,7 +996,7 @@ class S2WasmBuilder {
     #define BINARY_INT_OR_FLOAT(op) (type == i32 ? BinaryOp::op##Int32 : (type == i64 ? BinaryOp::op##Int64 : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
     #define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
     #define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
-    auto handleTyped = [&](WasmType type) {
+    auto handleTyped = [&](Type type) {
       switch (*s) {
         case 'a': {
           if (match("add")) makeBinary(BINARY_INT_OR_FLOAT(Add), type);
@@ -1171,7 +1171,7 @@ class S2WasmBuilder {
       } else if (match("f64.")) {
         handleTyped(f64);
       } else if (match("block")) {
-        WasmType blockType = tryGetTypeWithoutNewline();
+        Type blockType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Block>();
         curr->type = blockType;
         curr->name = getNextLabel();
@@ -1180,7 +1180,7 @@ class S2WasmBuilder {
       } else if (match("end_block")) {
         auto* block = bstack.back()->cast<Block>();
         block->finalize(block->type);
-        if (isConcreteWasmType(block->type) && block->list.size() == 0) {
+        if (isConcreteType(block->type) && block->list.size() == 0) {
           // empty blocks that return a value are not valid, fix that up
           block->list.push_back(allocator->alloc<Unreachable>());
           block->finalize();
@@ -1194,7 +1194,7 @@ class S2WasmBuilder {
           recordLabel();
         } else s = strchr(s, '\n');
       } else if (match("loop")) {
-        WasmType loopType = tryGetTypeWithoutNewline();
+        Type loopType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Loop>();
         addToBlock(curr);
         curr->type = loopType;
@@ -1472,7 +1472,7 @@ class S2WasmBuilder {
   // 2. Converts invoke wrapper names.
   //    Refer to the comments in fixEmExceptionInvoke below.
   template<typename ListType>
-  Name fixEmEHSjLjNames(const Name &name, WasmType result,
+  Name fixEmEHSjLjNames(const Name &name, Type result,
                         const ListType &operands) {
     return fixEmEHSjLjNames(name, getSig(result, operands));
   }

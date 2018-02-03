@@ -146,7 +146,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, Type result, ModuleInstance& instance) override {
     if (index >= table.size()) trap("callTable overflow");
     auto* func = instance.wasm.getFunctionOrNull(table[index]);
     if (!func) trap("uninitialized table element");

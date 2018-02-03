@@ -105,7 +105,7 @@ struct ExecutionResults {
         instance.callFunction("hangLimitInitializer", arguments);
       }
       // call the method
-      for (WasmType param : func->params) {
+      for (Type param : func->params) {
         // zeros in arguments TODO: more?
         arguments.push_back(Literal(param));
       }
