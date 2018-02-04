@@ -219,7 +219,13 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
   // Gather all function signatures used in call_indirect, because any of them
   // can be used to call function pointers created by emscripten's addFunction.
   void visitCallIndirect(CallIndirect *curr) {
-    indirectlyCallableSigs.insert(getSig(wasm.getFunctionType(curr->fullType)));
+    // dynCall thunks are generated in binaryen and call_indirect instructions
+    // within them cannot be used to call function pointers returned by
+    // emscripten's addFunction.
+    if (!getFunction()->name.startsWith("dynCall_")) {
+      indirectlyCallableSigs.insert(
+          getSig(wasm.getFunctionType(curr->fullType)));
+    }
   }
 
   bool createJSCallThunks;
