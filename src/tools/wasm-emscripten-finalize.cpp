@@ -39,6 +39,7 @@ int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
   bool emitBinary = true;
+  unsigned numReservedFunctionPointers = 0;
   std::vector<Name> forcedExports;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
@@ -58,8 +59,9 @@ int main(int argc, const char *argv[]) {
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["reservedFunctionPointers"] = argument;
+           [&numReservedFunctionPointers](Options *,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
@@ -73,10 +75,6 @@ int main(int argc, const char *argv[]) {
   if (outfile == "" && emitBinary) {
     Fatal() << "Need to specify an outfile, or use text output\n";
   }
-  unsigned numReservedFunctionPointers =
-      options.extra.find("reservedFunctionPointers") != options.extra.end()
-          ? std::stoi(options.extra["reservedFunctionPointers"])
-          : 0;
 
   Module wasm;
   ModuleReader reader;

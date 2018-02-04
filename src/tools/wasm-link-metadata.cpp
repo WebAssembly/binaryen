@@ -67,6 +67,7 @@ void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
+  unsigned numReservedFunctionPointers = 0;
   Options options("wasm-link-metadata",
                   "Reads wasm .o file and emits .json metadata");
   options
@@ -80,8 +81,9 @@ int main(int argc, const char *argv[]) {
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["reservedFunctionPointers"] = argument;
+           [&numReservedFunctionPointers](Options *o,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string &argument) {
@@ -92,10 +94,6 @@ int main(int argc, const char *argv[]) {
   if (infile == "") {
     Fatal() << "Need to specify an infile\n";
   }
-  unsigned numReservedFunctionPointers =
-      options.extra.find("reservedFunctionPointers") != options.extra.end()
-          ? std::stoi(options.extra["reservedFunctionPointers"])
-          : 0;
 
   Module wasm;
   try {

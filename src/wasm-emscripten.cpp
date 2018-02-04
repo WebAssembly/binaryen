@@ -204,10 +204,10 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
           wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
       wasm.table.segments.emplace_back(emptySegment);
     }
-    std::vector<Name> tableSegmentData = wasm.table.segments[0].data;
+    const auto& tableSegmentData = wasm.table.segments[0].data;
 
     // Check if jsCalls have already been created
-    for (unsigned i = 0; i < tableSegmentData.size(); ++i) {
+    for (Index i = 0; i < tableSegmentData.size(); ++i) {
       if (tableSegmentData[i].startsWith("jsCall_")) {
         jsCallStartIndex = i;
         return;
@@ -215,19 +215,18 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
     }
     jsCallStartIndex = wasm.table.segments[0].data.size();
   }
-  void visitCallIndirect(CallIndirect *curr);
+
+  // Gather all function signatures used in call_indirect, because any of them
+  // can be used to call function pointers created by emscripten's addFunction.
+  void visitCallIndirect(CallIndirect *curr) {
+    indirectlyCallableSigs.insert(getSig(wasm.getFunctionType(curr->fullType)));
+  }
 
   bool createJSCallThunks;
-  unsigned jsCallStartIndex;
+  Index jsCallStartIndex;
   // Function type signatures used in call_indirect instructions
   std::set<std::string> indirectlyCallableSigs;
 };
-
-// Gather all function signatures used in call_indirect, because any of them
-// can be used to call function pointers created by emscripten's addFunction.
-void JSCallWalker::visitCallIndirect(CallIndirect* curr) {
-  indirectlyCallableSigs.insert(getSig(wasm.getFunctionType(curr->fullType)));
-}
 
 JSCallWalker getJSCallWalker(Module& wasm) {
   JSCallWalker walker(wasm);

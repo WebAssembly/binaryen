@@ -41,6 +41,7 @@ int main(int argc, const char *argv[]) {
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
+  unsigned numReservedFunctionPointers = 0;
   Options options("s2wasm", "Link .s file into .wast");
   options.extra["validate"] = "wasm";
   options
@@ -125,8 +126,9 @@ int main(int argc, const char *argv[]) {
            "Number of reserved function pointers for emscripten addFunction "
            "support",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
-             o->extra["reservedFunctionPointers"] = argument;
+           [&numReservedFunctionPointers](Options *o,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string &argument) {
@@ -157,10 +159,6 @@ int main(int argc, const char *argv[]) {
   uint64_t maxMem =
       options.extra.find("max-memory") != options.extra.end()
           ? std::stoull(options.extra["max-memory"])
-          : 0;
-  unsigned numReservedFunctionPointers =
-      options.extra.find("reservedFunctionPointers") != options.extra.end()
-          ? std::stoi(options.extra["reservedFunctionPointers"])
           : 0;
   if (options.debug) std::cerr << "Global base " << globalBase << '\n';
 
