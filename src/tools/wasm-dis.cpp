@@ -32,15 +32,15 @@ int main(int argc, const char *argv[]) {
   Options options("wasm-dis", "Un-assemble a .wasm (WebAssembly binary format) into a .wast (WebAssembly text format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
-              [](Options *o, const std::string &argument) {
+              [](Options *o, const std::string& argument) {
                 o->extra["output"] = argument;
                 Colors::disable();
               })
       .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
            Options::Arguments::One,
-           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
+           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
       .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
+                      [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);

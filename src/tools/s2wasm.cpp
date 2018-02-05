@@ -46,50 +46,50 @@ int main(int argc, const char *argv[]) {
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["output"] = argument;
              Colors::disable();
            })
       .add("--ignore-unknown", "", "Ignore unknown symbols",
            Options::Arguments::Zero,
-           [&ignoreUnknownSymbols](Options *, const std::string &) {
+           [&ignoreUnknownSymbols](Options *, const std::string& ) {
              ignoreUnknownSymbols = true;
            })
       .add("--start", "", "Generate the start method (default: main)",
            Options::Arguments::Optional,
-           [&startFunction](Options *, const std::string &argument) {
+           [&startFunction](Options *, const std::string& argument) {
              startFunction = argument.size() ? argument : "main";
            })
       .add("--global-base", "-g", "Where to start to place globals",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["global-base"] = argument;
            })
       .add("--allocate-stack", "-s", "Size of the user stack in linear memory",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["stack-allocation"] = argument;
            })
       .add("--initial-memory", "-i", "Initial size of the linear memory",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["initial-memory"] = argument;
            })
       .add("--max-memory", "-m", "Maximum size of the linear memory",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["max-memory"] = argument;
            })
       .add("--allow-memory-growth", "", "Allow linear memory to grow at runtime",
            Options::Arguments::Zero,
-           [&allowMemoryGrowth](Options *, const std::string &) {
+           [&allowMemoryGrowth](Options *, const std::string& ) {
              allowMemoryGrowth = true;
            })
       .add("--trap-mode", "",
            "Strategy for handling potentially trapping instructions. Valid "
              "values are \"allow\", \"js\", and \"clamp\"",
            Options::Arguments::One,
-           [&trapMode](Options *o, const std::string &argument) {
+           [&trapMode](Options *o, const std::string& argument) {
              try {
                trapMode = trapModeFromString(argument);
              } catch (std::invalid_argument& e) {
@@ -99,22 +99,22 @@ int main(int argc, const char *argv[]) {
            })
       .add("--emscripten-glue", "-e", "Generate emscripten glue",
            Options::Arguments::Zero,
-           [&generateEmscriptenGlue](Options *, const std::string &) {
+           [&generateEmscriptenGlue](Options *, const std::string& ) {
              generateEmscriptenGlue = true;
            })
       .add("--import-memory", "", "Import the linear memory instead of exporting it",
            Options::Arguments::Zero,
-           [&importMemory](Options *, const std::string &) {
+           [&importMemory](Options *, const std::string& ) {
              importMemory = true;
            })
       .add("--library", "-l", "Add archive library",
            Options::Arguments::N,
-           [&archiveLibraries](Options *o, const std::string &argument) {
+           [&archiveLibraries](Options *o, const std::string& argument) {
              archiveLibraries.push_back(argument);
            })
       .add("--validate", "-v", "Control validation of the output module",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              if (argument != "web" && argument != "none" && argument != "wasm") {
                std::cerr << "Valid arguments for --validate flag are 'wasm', 'web' and 'none'.\n";
                exit(1);
@@ -122,7 +122,7 @@ int main(int argc, const char *argv[]) {
              o->extra["validate"] = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
+                      [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);

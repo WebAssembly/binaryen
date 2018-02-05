@@ -48,7 +48,7 @@ int main(int argc, const char *argv[]) {
              builderFlags.pedantic = true;
            })
       .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
+                      [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);

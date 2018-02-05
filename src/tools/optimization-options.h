@@ -29,7 +29,7 @@ struct OptimizationOptions : public Options {
   PassOptions passOptions;
   FeatureSet features = Feature::Atomics;
 
-  OptimizationOptions(const std::string &command, const std::string &description) : Options(command, description) {
+  OptimizationOptions(const std::string& command, const std::string& description) : Options(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {

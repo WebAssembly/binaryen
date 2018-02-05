@@ -48,43 +48,43 @@ int main(int argc, const char *argv[]) {
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["output"] = argument;
              Colors::disable();
            })
       .add("--mapped-globals", "-n", "Mapped globals", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              std::cerr << "warning: the --mapped-globals/-m option is deprecated (a mapped globals file is no longer needed as we use wasm globals)" << std::endl;
            })
       .add("--mem-init", "-t", "Import a memory initialization file into the output module", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["mem init"] = argument;
            })
       .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the memoryBase global import is used.", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["mem base"] = argument;
            })
       .add("--mem-max", "-mm", "Set the maximum size of memory in the wasm module (in bytes). -1 means no limit. Without this, TOTAL_MEMORY is used (as it is used for the initial value), or if memory growth is enabled, no limit is set. This overrides both of those.", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["mem max"] = argument;
            })
       .add("--total-memory", "-m", "Total memory size", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["total memory"] = argument;
            })
       .add("--table-max", "-tM", "Set the maximum size of the table. Without this, it is set depending on how many functions are in the module. -1 means no limit", Options::Arguments::One,
-           [](Options *o, const std::string &argument) {
+           [](Options *o, const std::string& argument) {
              o->extra["table max"] = argument;
            })
       .add("--no-opts", "-n", "Disable optimization passes (deprecated)", Options::Arguments::Zero,
-           [](Options *o, const std::string &) {
+           [](Options *o, const std::string& ) {
              std::cerr << "--no-opts is deprecated (use -O0, etc.)\n";
            })
       .add("--trap-mode", "",
            "Strategy for handling potentially trapping instructions. Valid "
              "values are \"allow\", \"js\", and \"clamp\"",
            Options::Arguments::One,
-           [&trapMode](Options *o, const std::string &argument) {
+           [&trapMode](Options *o, const std::string& argument) {
              try {
                trapMode = trapModeFromString(argument);
              } catch (std::invalid_argument& e) {
@@ -93,33 +93,33 @@ int main(int argc, const char *argv[]) {
              }
            })
       .add("--wasm-only", "-w", "Input is in WebAssembly-only format, and not actually valid asm.js", Options::Arguments::Zero,
-           [&wasmOnly](Options *o, const std::string &) {
+           [&wasmOnly](Options *o, const std::string& ) {
              wasmOnly = true;
            })
       .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
-           [&legalizeJavaScriptFFI](Options *o, const std::string &) {
+           [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
              legalizeJavaScriptFFI = false;
            })
       .add("--debuginfo", "-g", "Emit names section in wasm binary (or full debuginfo in wast)",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { options.passOptions.debugInfo = true; })
+           [&](Options *o, const std::string& arguments) { options.passOptions.debugInfo = true; })
       .add("--source-map", "-sm", "Emit source map (if using binary output) to the specified file",
            Options::Arguments::One,
-           [&sourceMapFilename](Options *o, const std::string &argument) { sourceMapFilename = argument; })
+           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
       .add("--source-map-url", "-su", "Use specified string as source map URL",
            Options::Arguments::One,
-           [&sourceMapUrl](Options *o, const std::string &argument) { sourceMapUrl = argument; })
+           [&sourceMapUrl](Options *o, const std::string& argument) { sourceMapUrl = argument; })
       .add("--symbolmap", "-s", "Emit a symbol map (indexes => names)",
            Options::Arguments::One,
-           [&](Options *o, const std::string &argument) { symbolMap = argument; })
+           [&](Options *o, const std::string& argument) { symbolMap = argument; })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { emitBinary = false; })
+           [&](Options *o, const std::string& argument) { emitBinary = false; })
       .add("--enable-threads", "-a", "Enable the Atomics wasm feature",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { options.passOptions.features |= Feature::Atomics; })
+           [&](Options *o, const std::string& argument) { options.passOptions.features |= Feature::Atomics; })
       .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string &argument) {
+                      [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);

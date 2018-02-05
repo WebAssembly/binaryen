@@ -82,31 +82,31 @@ int main(int argc, const char* argv[]) {
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { emitBinary = false; })
+           [&](Options *o, const std::string& argument) { emitBinary = false; })
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+           [&](Options *o, const std::string& arguments) { debugInfo = true; })
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { fuzzExec = true; })
+           [&](Options *o, const std::string& arguments) { fuzzExec = true; })
       .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { fuzzBinary = true; })
+           [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
       .add("--extra-fuzz-command", "-efc", "An extra command to run on the output before and after optimizing. The output is compared between the two, and an error occurs if they are not equal",
            Options::Arguments::One,
-           [&](Options *o, const std::string &arguments) { extraFuzzCommand = arguments; })
+           [&](Options *o, const std::string& arguments) { extraFuzzCommand = arguments; })
       .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { translateToFuzz = true; })
+           [&](Options *o, const std::string& arguments) { translateToFuzz = true; })
       .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { fuzzPasses = true; })
+           [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
       .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
-           [&](Options *o, const std::string &arguments) { emitJSWrapper = arguments; })
+           [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
       .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
-           [&](Options *o, const std::string &arguments) { emitSpecWrapper = arguments; })
+           [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;

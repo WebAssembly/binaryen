@@ -45,17 +45,17 @@ int main(int argc, const char *argv[]) {
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
-           [&outfile](Options*, const std::string &argument) {
+           [&outfile](Options*, const std::string& argument) {
              outfile = argument;
              Colors::disable();
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&emitBinary](Options*, const std::string &) {
+           [&emitBinary](Options*, const std::string& ) {
              emitBinary = false;
            })
       .add_positional("INFILE", Options::Arguments::One,
-                      [&infile](Options *o, const std::string &argument) {
+                      [&infile](Options *o, const std::string& argument) {
                         infile = argument;
                       });
   options.parse(argc, argv);

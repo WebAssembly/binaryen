@@ -1477,7 +1477,7 @@ class S2WasmBuilder {
     return fixEmEHSjLjNames(name, getSig(result, operands));
   }
 
-  Name fixEmEHSjLjNames(const Name &name, const std::string &sig) {
+  Name fixEmEHSjLjNames(const Name &name, const std::string& sig) {
     if (name == "emscripten_longjmp_jmpbuf")
       return "emscripten_longjmp";
     return fixEmExceptionInvoke(name, sig);
@@ -1511,7 +1511,7 @@ class S2WasmBuilder {
   // This function converts the names of invoke wrappers based on their lowered
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
-  Name fixEmExceptionInvoke(const Name &name, const std::string &sig) {
+  Name fixEmExceptionInvoke(const Name &name, const std::string& sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
