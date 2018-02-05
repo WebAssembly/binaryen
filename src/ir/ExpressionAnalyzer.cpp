@@ -214,6 +214,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         }
         CHECK(Load, offset);
         CHECK(Load, align);
+        CHECK(Load, isAtomic);
         PUSH(Load, ptr);
         break;
       }
@@ -222,6 +223,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         CHECK(Store, offset);
         CHECK(Store, align);
         CHECK(Store, valueType);
+        CHECK(Store, isAtomic);
         PUSH(Store, ptr);
         PUSH(Store, value);
         break;
