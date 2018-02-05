@@ -72,12 +72,12 @@ int main(int argc, const char *argv[]) {
   options
       .add("--output", "-o", "Output file",
            Options::Arguments::One,
-           [&outfile](Options *o, const std::string &argument) {
+           [&outfile](Options *o, const std::string& argument) {
              outfile = argument;
              Colors::disable();
            })
       .add_positional("INFILE", Options::Arguments::One,
-                      [&infile](Options *o, const std::string &argument) {
+                      [&infile](Options *o, const std::string& argument) {
                         infile = argument;
                       });
   options.parse(argc, argv);

@@ -22,7 +22,7 @@
 #include <limits>
 
 template <typename T>
-T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
+T wasm::read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
@@ -52,10 +52,10 @@ T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
-template std::vector<char> wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
+template std::string wasm::read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
+template std::vector<char> wasm::read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
 
-wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug)
+wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug)
     : outfile(), out([this, filename, binary, debug]() {
         std::streambuf *buffer;
         if (filename.size()) {

@@ -567,7 +567,7 @@ int main(int argc, const char* argv[]) {
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { emitBinary = false; })
+           [&](Options *o, const std::string& argument) { emitBinary = false; })
       .add("--finalize-memory-base", "-fmb", "Finalize the env.memoryBase import",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
@@ -589,7 +589,7 @@ int main(int argc, const char* argv[]) {
              verbose = true;
            })
       .add_positional("INFILES", Options::Arguments::N,
-                      [&](Options *o, const std::string &argument) {
+                      [&](Options *o, const std::string& argument) {
                         filenames.push_back(argument);
                       });
   options.parse(argc, argv);

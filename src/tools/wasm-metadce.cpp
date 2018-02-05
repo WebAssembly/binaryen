@@ -411,10 +411,10 @@ int main(int argc, const char* argv[]) {
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { emitBinary = false; })
+           [&](Options *o, const std::string& argument) { emitBinary = false; })
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+           [&](Options *o, const std::string& arguments) { debugInfo = true; })
       .add("--graph-file", "-f", "Filename of the graph description file",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
@@ -422,7 +422,7 @@ int main(int argc, const char* argv[]) {
            })
       .add("--dump", "-d", "Dump the combined graph file (useful for debugging)",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { dump = true; })
+           [&](Options *o, const std::string& arguments) { dump = true; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
