@@ -215,7 +215,7 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
     }
     jsCallStartIndex =
         wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-        wasm.table.segments[0].data.size();
+        tableSegmentData.size();
   }
 
   // Gather all function signatures used in call_indirect, because any of them
@@ -248,6 +248,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     return;
 
   JSCallWalker walker = getJSCallWalker(wasm);
+  auto& tableSegmentData = wasm.table.segments[0].data;
   for (std::string sig : walker.indirectlyCallableSigs) {
     // Add imports for jsCall_sig (e.g. jsCall_vi).
     // Imported jsCall_sig functions have their first parameter as an index to
@@ -287,12 +288,12 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
           builder.makeCallImport(import->name, args, funcType->result);
       f->body = call;
       wasm.addFunction(f);
-      wasm.table.segments[0].data.push_back(f->name);
+      tableSegmentData.push_back(f->name);
     }
   }
   wasm.table.initial = wasm.table.max =
       wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-      wasm.table.segments[0].data.size();
+      tableSegmentData.size();
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
