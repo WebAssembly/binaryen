@@ -31,6 +31,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/path.h"
+#include "support/timing.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ir/literal-utils.h"
@@ -44,6 +45,7 @@ size_t timeout = 2;
 struct ProgramResult {
   int code;
   std::string output;
+  double time;
 
   ProgramResult() {}
   ProgramResult(std::string command) {
@@ -53,6 +55,8 @@ struct ProgramResult {
   // runs the command and notes the output
   // TODO: also stderr, not just stdout?
   void getFromExecution(std::string command) {
+    Timer timer;
+    timer.start();
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
     code = system(("timeout " + std::to_string(timeout) + "s " + command + " > /dev/null 2> /dev/null").c_str());
@@ -63,6 +67,8 @@ struct ProgramResult {
       output.append(buffer);
     }
     pclose(stream);
+    timer.stop();
+    time = timer.getTotal() / 2;
   }
 
   bool operator==(ProgramResult& other) {
@@ -77,7 +83,7 @@ struct ProgramResult {
   }
 
   void dump(std::ostream& o) {
-    o << "[ProgramResult] code: " << code << " stdout: \n" << output << "[/ProgramResult]\n";
+    o << "[ProgramResult] code: " << code << " stdout: \n" << output << "[====]\nin " << time << " seconds\n[/ProgramResult]\n";
   }
 };
 
@@ -177,8 +183,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     funcsSeen = 0;
     // before we do any changes, it should be valid to write out the module:
     // size should be as expected, and output should be as expected
-    if (!writeAndTestReduction()) {
-      std::cerr << "\n|! WARNING: writing before destructive reduction fails, very unlikely reduction can work\n\n";
+    ProgramResult result;
+    if (!writeAndTestReduction(result)) {
+      std::cerr << "\n|! WARNING: writing before destructive reduction fails, very unlikely reduction can work\n" << result << '\n';
     }
     // destroy!
     walkModule(getModule());
@@ -408,7 +415,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     size_t skip = 1;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 10000))) continue;
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
@@ -417,13 +424,14 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
       }
       if (names.size() == 0) continue;
+      std::cout << "|    try to remove " << names.size() << " functions (skip: " << skip << ")\n";
       if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
+        i += skip;
         skip = std::min(size_t(factor), 2 * skip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
       }
-      std::cout << "|        (new skip: " << skip << ")\n";
     }
     // try to remove exports
     std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
@@ -431,14 +439,28 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (auto& exp : module->exports) {
       exports.push_back(*exp);
     }
-    for (auto& exp : exports) {
-      module->removeExport(exp.name);
+    skip = 1;
+    for (size_t i = 0; i < exports.size(); i++) {
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+      std::vector<Export> currExports;
+      for (size_t j = 0; currExports.size() < skip && i + j < exports.size(); j++) {
+        auto exp = exports[i + j];
+        if (module->getExportOrNull(exp.name)) {
+          currExports.push_back(exp);
+          module->removeExport(exp.name);
+        }
+      }
       ProgramResult result;
       if (!writeAndTestReduction(result)) {
-        module->addExport(new Export(exp));
+        for (auto exp : currExports) {
+          module->addExport(new Export(exp));
+        }
+        skip = std::max(skip / 2, size_t(1)); // or 1?
       } else {
-        std::cerr << "|      removed export " << exp.name << '\n';
-        noteReduction();
+        std::cerr << "|      removed " << currExports.size() << " exports\n";
+        noteReduction(currExports.size());
+        i += skip;
+        skip = std::min(size_t(factor), 2 * skip);
       }
     }
   }
@@ -451,6 +473,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // remove all references to them
     struct FunctionReferenceRemover : public PostWalker<FunctionReferenceRemover> {
       std::unordered_set<Name> names;
+      std::vector<Name> exportsToRemove;
+
       FunctionReferenceRemover(std::vector<Name>& vec) {
         for (auto name : vec) {
           names.insert(name);
@@ -459,6 +483,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       void visitCall(Call* curr) {
         if (names.count(curr->target)) {
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        }
+      }
+      void visitExport(Export* curr) {
+        if (names.count(curr->value)) {
+          exportsToRemove.push_back(curr->name);
         }
       }
       void visitTable(Table* curr) {
@@ -481,11 +510,17 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           }
         }
       }
+      void doWalkModule(Module* module) {
+        PostWalker<FunctionReferenceRemover>::doWalkModule(module);
+        for (auto name : exportsToRemove) {
+          module->removeExport(name);
+        }
+      }
     };
     FunctionReferenceRemover referenceRemover(names);
     referenceRemover.walkModule(module.get());
 
-    if (WasmValidator().validate(*module, Feature::MVP, WasmValidator::Globally | WasmValidator::Quiet) &&
+    if (WasmValidator().validate(*module, Feature::All, WasmValidator::Globally /* | WasmValidator::Quiet */) &&
         writeAndTestReduction()) {
       std::cerr << "|      removed " << names.size() << " functions\n";
       return true;
@@ -622,6 +657,7 @@ int main(int argc, const char* argv[]) {
   expected.getFromExecution(command);
 
   std::cerr << "|expected result:\n" << expected << '\n';
+  std::cerr << "|!! Make sure the above is what you expect! !!\n\n";
 
   auto stopIfNotForced = [&](std::string message, ProgramResult& result) {
     std::cerr << "|! " << message << '\n' << result << '\n';
@@ -630,7 +666,11 @@ int main(int argc, const char* argv[]) {
     }
   };
 
-  std::cerr << "|checking that command has different behavior on invalid binary\n";
+  if (expected.time + 1 >= timeout) {
+    stopIfNotForced("execution time is dangerously close to the timeout - you should probably increase the timeout", expected);
+  }
+
+  std::cerr << "|checking that command has different behavior on invalid binary (this verifies that the test file is used by the command)\n";
   {
     {
       std::ofstream dst(test, std::ios::binary);

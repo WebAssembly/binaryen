@@ -31,7 +31,7 @@ class Timer {
   double total = 0;
 
 public:
-  Timer(std::string name) : name(name) {}
+  Timer(std::string name = "") : name(name) {}
 
   void start() {
     startTime = std::chrono::steady_clock::now();
