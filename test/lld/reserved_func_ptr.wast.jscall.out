@@ -27,7 +27,7 @@
  (import "env" "jsCall_viii" (func $jsCall_viii (param i32 i32 i32 i32)))
  (global $global$0 (mut i32) (i32.const 66560))
  (global $global$1 i32 (i32.const 66560))
- (table 20 20 anyfunc)
+ (table 21 21 anyfunc)
  (elem (i32.const 1) $_Z18address_taken_funciii $_Z19address_taken_func2iii $jsCall_ddi_0 $jsCall_ddi_1 $jsCall_ddi_2 $jsCall_fffi_0 $jsCall_fffi_1 $jsCall_fffi_2 $jsCall_iii_0 $jsCall_iii_1 $jsCall_iii_2 $jsCall_v_0 $jsCall_v_1 $jsCall_v_2 $jsCall_vi_0 $jsCall_vi_1 $jsCall_vi_2 $jsCall_viii_0 $jsCall_viii_1 $jsCall_viii_2)
  (memory $0 2)
  (export "memory" (memory $0))
