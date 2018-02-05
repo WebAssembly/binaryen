@@ -92,7 +92,7 @@ int main(int argc, const char *argv[]) {
            [&trapMode](Options *o, const std::string &argument) {
              try {
                trapMode = trapModeFromString(argument);
-             } catch (std::invalid_argument e) {
+             } catch (std::invalid_argument& e) {
                std::cerr << "Error: " << e.what() << "\n";
                exit(EXIT_FAILURE);
              }
