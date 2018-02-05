@@ -213,7 +213,9 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
         return;
       }
     }
-    jsCallStartIndex = wasm.table.segments[0].data.size();
+    jsCallStartIndex =
+        wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
+        wasm.table.segments[0].data.size();
   }
 
   // Gather all function signatures used in call_indirect, because any of them
@@ -288,7 +290,9 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
       wasm.table.segments[0].data.push_back(f->name);
     }
   }
-  wasm.table.initial = wasm.table.max = wasm.table.segments[0].data.size();
+  wasm.table.initial = wasm.table.max =
+      wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
+      wasm.table.segments[0].data.size();
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
