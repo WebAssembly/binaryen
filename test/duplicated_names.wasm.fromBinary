@@ -1,0 +1,13 @@
+(module
+ (type $0 (func (result i32)))
+ (func $foo (; 0 ;) (type $0) (result i32)
+  (i32.const 0)
+ )
+ (func $foo.1 (; 1 ;) (type $0) (result i32)
+  (i32.const 1)
+ )
+ (func $foo.2 (; 2 ;) (type $0) (result i32)
+  (i32.const 2)
+ )
+)
+
