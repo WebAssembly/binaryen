@@ -65,6 +65,7 @@ extern cashew::IString GLOBAL,
                 I32_TEMP,
                 DEBUGGER,
                 USE_ASM,
+                ALMOST_ASM,
                 BUFFER,
                 ENV,
                 INSTRUMENT,
@@ -87,7 +88,9 @@ extern cashew::IString GLOBAL,
                 WASM_ROTL32,
                 WASM_ROTL64,
                 WASM_ROTR32,
-                WASM_ROTR64;
+                WASM_ROTR64,
+                WASM_GROW_MEMORY,
+                WASM_CURRENT_MEMORY;
 }
 
 #endif // wasm_asmjs_shared_constants_h

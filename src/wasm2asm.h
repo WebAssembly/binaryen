@@ -205,11 +205,15 @@ private:
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
 
+  bool almostASM = false;
+
   void addBasics(Ref ast);
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addWasmCompatibilityFuncs(Module* wasm);
+  void setNeedsAlmostASM(const char *reason);
+  void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                            Builder& wasmBuilder,
@@ -522,11 +526,54 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
 void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
-    ValueBuilder::appendToObject(
-      exports,
-      fromName(export_->name),
-      ValueBuilder::makeName(fromName(export_->value))
-    );
+    if (export_->kind == ExternalKind::Function) {
+      ValueBuilder::appendToObject(
+        exports,
+        fromName(export_->name),
+        ValueBuilder::makeName(fromName(export_->value))
+      );
+    }
+    if (export_->kind == ExternalKind::Memory) {
+      setNeedsAlmostASM("memory export");
+      Ref descs = ValueBuilder::makeObject();
+      Ref growDesc = ValueBuilder::makeObject();
+      ValueBuilder::appendToObject(
+        descs,
+        IString("grow"),
+        growDesc);
+      ValueBuilder::appendToObject(
+        growDesc,
+        IString("value"),
+        ValueBuilder::makeName(WASM_GROW_MEMORY));
+      Ref bufferDesc = ValueBuilder::makeObject();
+      Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
+      bufferGetter[3]->push_back(ValueBuilder::makeReturn(
+        ValueBuilder::makeName(BUFFER)
+      ));
+      ValueBuilder::appendToObject(
+        bufferDesc,
+        IString("get"),
+        bufferGetter);
+      ValueBuilder::appendToObject(
+        descs,
+        IString("buffer"),
+        bufferDesc);
+      Ref memory = ValueBuilder::makeCall(
+        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("create")),
+        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("prototype")));
+      ValueBuilder::appendToCall(
+        memory,
+        descs);
+      ValueBuilder::appendToObject(
+        exports,
+        fromName(export_->name),
+        memory);
+    }
+  }
+  if (almostASM) {
+    // replace "use asm"
+    ast[0] = ValueBuilder::makeStatement(ValueBuilder::makeString(ALMOST_ASM));
+    addMemoryGrowthFuncs(ast);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
@@ -1557,7 +1604,18 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     Ref visitHost(Host* curr) {
-      abort();
+      if (curr->op == HostOp::GrowMemory) {
+        parent->setNeedsAlmostASM("grow_memory op");
+        return ValueBuilder::makeCall(WASM_GROW_MEMORY,
+          makeAsmCoercion(
+            visit(curr->operands[0], EXPRESSION_RESULT),
+            wasmToAsmType(curr->operands[0]->type)));
+      }
+      if (curr->op == HostOp::CurrentMemory) {
+        parent->setNeedsAlmostASM("current_memory op");
+        return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+      }
+      return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
     Ref visitNop(Nop* curr) {
@@ -1694,6 +1752,164 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
       catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   return outerFunc;
+}
+
+void Wasm2AsmBuilder::setNeedsAlmostASM(const char *reason) {
+  if (!almostASM) {
+    almostASM = true;
+    std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
+  }
+}
+
+void Wasm2AsmBuilder::addMemoryGrowthFuncs(Ref ast) {
+  Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
+  ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
+
+  growMemoryFunc[3]->push_back(
+    ValueBuilder::makeStatement(
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("pagesToAdd")), SET,
+        makeAsmCoercion(
+          ValueBuilder::makeName(IString("pagesToAdd")),
+          AsmType::ASM_INT
+        )
+      )
+    )
+  );
+
+  Ref oldPages = ValueBuilder::makeVar();
+  growMemoryFunc[3]->push_back(oldPages);
+  ValueBuilder::appendToVar(
+    oldPages,
+    IString("oldPages"),
+    makeAsmCoercion(ValueBuilder::makeCall(WASM_CURRENT_MEMORY), AsmType::ASM_INT));
+
+  Ref newPages = ValueBuilder::makeVar();
+  growMemoryFunc[3]->push_back(newPages);
+  ValueBuilder::appendToVar(
+    newPages,
+    IString("newPages"),
+    makeAsmCoercion(ValueBuilder::makeBinary(
+      ValueBuilder::makeName(IString("oldPages")),
+      PLUS,
+      ValueBuilder::makeName(IString("pagesToAdd"))
+    ), AsmType::ASM_INT));
+
+  Ref block = ValueBuilder::makeBlock();
+  growMemoryFunc[3]->push_back(ValueBuilder::makeIf(
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("oldPages")),
+        LT,
+        ValueBuilder::makeName(IString("newPages"))
+      ),
+      IString("&&"),
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("newPages")),
+        LT,
+        ValueBuilder::makeInt(Memory::kMaxSize)
+      )
+    ), block, NULL));
+
+  Ref newBuffer = ValueBuilder::makeVar();
+  ValueBuilder::appendToBlock(block, newBuffer);
+  ValueBuilder::appendToVar(
+    newBuffer,
+    IString("newBuffer"),
+    ValueBuilder::makeNew(ValueBuilder::makeCall(
+      ARRAY_BUFFER,
+      ValueBuilder::makeCall(
+        MATH_IMUL,
+        ValueBuilder::makeName(IString("newPages")),
+        ValueBuilder::makeInt(Memory::kPageSize)))));
+
+  Ref newHEAP8 = ValueBuilder::makeVar();
+  ValueBuilder::appendToBlock(block, newHEAP8);
+  ValueBuilder::appendToVar(
+    newHEAP8,
+    IString("newHEAP8"),
+    ValueBuilder::makeNew(
+      ValueBuilder::makeCall(
+        ValueBuilder::makeDot(
+          ValueBuilder::makeName(GLOBAL),
+          INT8ARRAY
+        ),
+        ValueBuilder::makeName(IString("newBuffer"))
+      )
+    ));
+
+  ValueBuilder::appendToBlock(block,
+    ValueBuilder::makeCall(
+      ValueBuilder::makeDot(
+        ValueBuilder::makeName(IString("newHEAP8")),
+        IString("set")
+      ),
+      ValueBuilder::makeName(HEAP8)
+    )
+  );
+
+  ValueBuilder::appendToBlock(block,
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeName(HEAP8),
+      SET,
+      ValueBuilder::makeName(IString("newHEAP8"))
+    )
+  );
+
+  auto setHeap = [&](IString name, IString view) {
+    ValueBuilder::appendToBlock(block,
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeName(name),
+        SET,
+        ValueBuilder::makeNew(
+          ValueBuilder::makeCall(
+            ValueBuilder::makeDot(
+              ValueBuilder::makeName(GLOBAL),
+              view
+            ),
+            ValueBuilder::makeName(IString("newBuffer"))
+          )
+        )
+      )
+    );
+  };
+
+  setHeap(HEAP16, INT16ARRAY);
+  setHeap(HEAP32, INT32ARRAY);
+  setHeap(HEAPU8,  UINT8ARRAY);
+  setHeap(HEAPU16, UINT16ARRAY);
+  setHeap(HEAPU32, UINT32ARRAY);
+  setHeap(HEAPF32, FLOAT32ARRAY);
+  setHeap(HEAPF64, FLOAT64ARRAY);
+
+  ValueBuilder::appendToBlock(block,
+    ValueBuilder::makeBinary(
+      ValueBuilder::makeName(BUFFER),
+      SET,
+      ValueBuilder::makeName(IString("newBuffer"))
+    )
+  );
+
+  growMemoryFunc[3]->push_back(
+    ValueBuilder::makeReturn(
+      ValueBuilder::makeName(IString("oldPages"))));
+
+  Ref currentMemoryFunc = ValueBuilder::makeFunction(WASM_CURRENT_MEMORY);
+  currentMemoryFunc[3]->push_back(ValueBuilder::makeReturn(
+    makeAsmCoercion(
+      ValueBuilder::makeBinary(
+        ValueBuilder::makeDot(
+          ValueBuilder::makeName(BUFFER),
+          IString("byteLength")
+        ),
+        DIV,
+        ValueBuilder::makeInt(Memory::kPageSize)
+      ),
+      AsmType::ASM_INT
+    )
+  ));
+  ast->push_back(growMemoryFunc);
+  ast->push_back(currentMemoryFunc);
 }
 
 bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
