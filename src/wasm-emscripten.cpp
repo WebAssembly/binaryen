@@ -296,77 +296,17 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
       tableSegmentData.size();
 }
 
-struct AsmConstWalker : public PostWalker<AsmConstWalker> {
-  Module& wasm;
-  std::vector<Address> segmentOffsets; // segment index => address offset
-
-  std::map<std::string, std::set<std::string>> sigsForCode;
-  std::map<std::string, Address> ids;
-  std::set<std::string> allSigs;
-
-  AsmConstWalker(Module& _wasm) : wasm(_wasm) {
-    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-      Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
-      auto address = addrConst->value.geti32();
-      segmentOffsets.push_back(address);
-    }
-  }
-
-  void visitCallImport(CallImport* curr);
-
-private:
-  std::string codeForConstAddr(Const* addrConst);
-  const char* stringAtAddr(Address adddress);
-  Literal idLiteralForCode(std::string code);
-  std::string asmConstSig(std::string baseSig);
-  Name nameForImportWithSig(std::string sig);
-  void addImport(Name importName, std::string baseSig);
-  std::string escape(const char *input);
-};
-
-void AsmConstWalker::visitCallImport(CallImport* curr) {
-  Import* import = wasm.getImport(curr->target);
-  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
-    auto arg = curr->operands[0]->cast<Const>();
-    auto code = codeForConstAddr(arg);
-    arg->value = idLiteralForCode(code);
-    auto baseSig = getSig(curr);
-    auto sig = asmConstSig(baseSig);
-    sigsForCode[code].insert(sig);
-    auto importName = nameForImportWithSig(sig);
-    curr->target = importName;
-
-    if (allSigs.count(sig) == 0) {
-      allSigs.insert(sig);
-      addImport(importName, baseSig);
-    }
-  }
-}
-
-std::string AsmConstWalker::codeForConstAddr(Const* addrConst) {
-  auto address = addrConst->value.geti32();
-  const char* str = stringAtAddr(address);
-  if (!str) {
-    // If we can't find the segment corresponding with the address, then we
-    // omitted the segment and the address points to an empty string.
-    return escape("");
-  }
-  auto result = escape(str);
-  return result;
-}
-
-const char* AsmConstWalker::stringAtAddr(Address address) {
+std::vector<Address> getSegmentOffsets(Module& wasm) {
+  std::vector<Address> segmentOffsets;
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Memory::Segment &segment = wasm.memory.segments[i];
-    Address offset = segmentOffsets[i];
-    if (address >= offset && address < offset + segment.data.size()) {
-      return &segment.data[address - offset];
-    }
+    Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
+    auto address = addrConst->value.geti32();
+    segmentOffsets.push_back(address);
   }
-  return nullptr;
+  return segmentOffsets;
 }
 
-std::string AsmConstWalker::escape(const char *input) {
+std::string escape(const char *input) {
   std::string code = input;
   // replace newlines quotes with escaped newlines
   size_t curr = 0;
@@ -386,6 +326,73 @@ std::string AsmConstWalker::escape(const char *input) {
     }
   }
   return code;
+}
+
+const char* stringAtAddr(Module& wasm,
+                         std::vector<Address> const& segmentOffsets,
+                         Address address) {
+  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+    Memory::Segment &segment = wasm.memory.segments[i];
+    Address offset = segmentOffsets[i];
+    if (address >= offset && address < offset + segment.data.size()) {
+      return &segment.data[address - offset];
+    }
+  }
+  return nullptr;
+}
+
+std::string codeForConstAddr(Module& wasm,
+                             std::vector<Address> const& segmentOffsets,
+                             Const* addrConst) {
+  auto address = addrConst->value.geti32();
+  const char* str = stringAtAddr(wasm, segmentOffsets, address);
+  if (!str) {
+    // If we can't find the segment corresponding with the address, then we
+    // omitted the segment and the address points to an empty string.
+    return escape("");
+  }
+  auto result = escape(str);
+  return result;
+}
+
+struct AsmConstWalker : public PostWalker<AsmConstWalker> {
+  Module& wasm;
+  std::vector<Address> segmentOffsets; // segment index => address offset
+
+  std::map<std::string, std::set<std::string>> sigsForCode;
+  std::map<std::string, Address> ids;
+  std::set<std::string> allSigs;
+
+  AsmConstWalker(Module& _wasm)
+    : wasm(_wasm),
+      segmentOffsets(getSegmentOffsets(wasm)) { }
+
+  void visitCallImport(CallImport* curr);
+
+private:
+  Literal idLiteralForCode(std::string code);
+  std::string asmConstSig(std::string baseSig);
+  Name nameForImportWithSig(std::string sig);
+  void addImport(Name importName, std::string baseSig);
+};
+
+void AsmConstWalker::visitCallImport(CallImport* curr) {
+  Import* import = wasm.getImport(curr->target);
+  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    auto arg = curr->operands[0]->cast<Const>();
+    auto code = codeForConstAddr(wasm, segmentOffsets, arg);
+    arg->value = idLiteralForCode(code);
+    auto baseSig = getSig(curr);
+    auto sig = asmConstSig(baseSig);
+    sigsForCode[code].insert(sig);
+    auto importName = nameForImportWithSig(sig);
+    curr->target = importName;
+
+    if (allSigs.count(sig) == 0) {
+      allSigs.insert(sig);
+      addImport(importName, baseSig);
+    }
+  }
 }
 
 Literal AsmConstWalker::idLiteralForCode(std::string code) {
@@ -445,8 +452,34 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   return walker;
 }
 
+struct EmJsWalker : public PostWalker<EmJsWalker> {
+  Module& wasm;
+  std::vector<Address> segmentOffsets; // segment index => address offset
+
+  std::map<std::string, std::set<std::string>> sigsForCode;
+  std::map<std::string, Address> ids;
+  std::set<std::string> allSigs;
+
+  EmJsWalker(Module& _wasm)
+    : wasm(_wasm),
+      segmentOffsets(getSegmentOffsets(wasm)) { }
+
+  void visitFunction(Function* curr) {
+    if (!curr->name.startsWith("__em_js__")) {
+      return;
+    }
+    std::cerr << "In an EM_JS function!" << std::endl;
+    auto* addrConst = curr->body->cast<Const>();
+    auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
+    std::cerr << "  Found code: " << code << std::endl;
+  }
+};
+
 void EmscriptenGlueGenerator::fixEmAsmConsts() {
   fixEmAsmConstsAndReturnWalker(wasm);
+
+  EmJsWalker jsWalker(wasm);
+  jsWalker.walkModule(&wasm);
 }
 
 template<class C>
