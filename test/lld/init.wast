@@ -12,19 +12,19 @@
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (func $init_x (type $0)
+ (func $init_x (; 0 ;) (type $0)
   (i32.store offset=1024
    (i32.const 0)
    (i32.const 14)
   )
  )
- (func $init_y (type $0)
+ (func $init_y (; 1 ;) (type $0)
   (i32.store offset=1028
    (i32.const 0)
    (i32.const 144)
   )
  )
- (func $main (type $1) (result i32)
+ (func $main (; 2 ;) (type $1) (result i32)
   (i32.add
    (i32.load offset=1024
     (i32.const 0)
@@ -34,9 +34,10 @@
    )
   )
  )
- (func $__wasm_call_ctors (type $0)
+ (func $__wasm_call_ctors (; 3 ;) (type $0)
   (call $init_x)
   (call $init_y)
  )
+ ;; custom section "linking", size 3
 )
 

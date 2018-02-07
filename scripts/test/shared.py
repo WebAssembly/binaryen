@@ -170,7 +170,6 @@ WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
-WASM_LINK_METADATA = [os.path.join(options.binaryen_bin, 'wasm-link-metadata')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
 

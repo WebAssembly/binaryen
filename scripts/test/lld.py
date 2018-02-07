@@ -18,34 +18,8 @@ import os
 from support import run_command
 from shared import (
     fail, fail_with_error, files_with_pattern, options,
-    WASM_LINK_METADATA, WASM_EMSCRIPTEN_FINALIZE
+    WASM_EMSCRIPTEN_FINALIZE
 )
-
-
-def test_wasm_link_metadata():
-  print '\n[ checking wasm-link-metadata testcases... ]\n'
-
-  extension_arg_map = {
-      '.json': [],
-      '.jscall.json': ['--emscripten-reserved-function-pointers=3'],
-  }
-
-  for obj_path in files_with_pattern(options.binaryen_test, 'lld', '*.o'):
-    print '..', obj_path
-    for ext, ext_args in extension_arg_map.items():
-      expected_file = obj_path.replace('.o', ext)
-      if ext != '.json' and not os.path.exists(expected_file):
-        continue
-
-      cmd = WASM_LINK_METADATA + [obj_path] + ext_args
-      actual = run_command(cmd)
-
-      if not os.path.exists(expected_file):
-        print actual
-        fail_with_error('output ' + expected_file + ' does not exist')
-      expected = open(expected_file, 'rb').read()
-      if actual != expected:
-        fail(actual, expected)
 
 
 def test_wasm_emscripten_finalize():
@@ -75,5 +49,4 @@ def test_wasm_emscripten_finalize():
 
 
 if __name__ == '__main__':
-  test_wasm_link_metadata()
   test_wasm_emscripten_finalize()

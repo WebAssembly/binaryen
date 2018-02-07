@@ -4,9 +4,9 @@
  (type $2 (func (param i32 i32) (result i32)))
  (type $3 (func (result i32)))
  (type $4 (func))
- (import "env" "_Z24emscripten_asm_const_intIJEEiPKcDpT_" (func $import$0 (param i32) (result i32)))
- (import "env" "_Z24emscripten_asm_const_intIJiiEEiPKcDpT_" (func $import$1 (param i32 i32 i32) (result i32)))
- (import "env" "_Z24emscripten_asm_const_intIJiEEiPKcDpT_" (func $import$2 (param i32 i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJEEiPKcDpT_ (param i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJiiEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJiiEEiPKcDpT_ (param i32 i32 i32) (result i32)))
+ (import "env" "_Z24emscripten_asm_const_intIJiEEiPKcDpT_" (func $_Z24emscripten_asm_const_intIJiEEiPKcDpT_ (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66656))
  (global $global$1 i32 (i32.const 66656))
  (global $global$2 i32 (i32.const 1108))
@@ -18,16 +18,16 @@
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (func $main (type $3) (result i32)
+ (func $main (; 3 ;) (type $3) (result i32)
   (drop
-   (call $import$0
+   (call $_Z24emscripten_asm_const_intIJEEiPKcDpT_
     (i32.const 1024)
    )
   )
   (drop
-   (call $import$2
+   (call $_Z24emscripten_asm_const_intIJiEEiPKcDpT_
     (i32.const 1077)
-    (call $import$1
+    (call $_Z24emscripten_asm_const_intIJiiEEiPKcDpT_
      (i32.const 1057)
      (i32.const 13)
      (i32.const 27)
@@ -36,7 +36,8 @@
   )
   (i32.const 0)
  )
- (func $__wasm_call_ctors (type $4)
+ (func $__wasm_call_ctors (; 4 ;) (type $4)
  )
+ ;; custom section "linking", size 3
 )
 

@@ -2,7 +2,7 @@
  (type $0 (func (param i32) (result i32)))
  (type $1 (func (result i32)))
  (type $2 (func))
- (import "env" "puts" (func $import$0 (param i32) (result i32)))
+ (import "env" "puts" (func $puts (param i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 66576))
  (global $global$1 i32 (i32.const 66576))
  (global $global$2 i32 (i32.const 1037))
@@ -14,15 +14,16 @@
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (func $main (type $1) (result i32)
+ (func $main (; 1 ;) (type $1) (result i32)
   (drop
-   (call $import$0
+   (call $puts
     (i32.const 1024)
    )
   )
   (i32.const 0)
  )
- (func $__wasm_call_ctors (type $2)
+ (func $__wasm_call_ctors (; 2 ;) (type $2)
  )
+ ;; custom section "linking", size 3
 )
 

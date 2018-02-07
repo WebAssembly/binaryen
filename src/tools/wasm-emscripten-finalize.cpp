@@ -85,12 +85,29 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
+  Export* dataEndExport = wasm.getExport("__data_end");
+  if (dataEndExport == nullptr) {
+    Fatal() << "__data_end export not found";
+  }
+  Global* dataEnd = wasm.getGlobal(dataEndExport->value);
+  if (dataEnd == nullptr) {
+    Fatal() << "__data_end global not found";
+  }
+  if (dataEnd->type != Type::i32) {
+    Fatal() << "__data_end global has wrong type";
+  }
+  Const* dataEndConst = dataEnd->init->cast<Const>();
+  uint32_t dataSize = dataEndConst->value.geti32();
+
+  std::vector<Name> initializerFunctions;
+  initializerFunctions.push_back("__wasm_call_ctors");
+
   EmscriptenGlueGenerator generator(wasm);
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
-  generator.fixEmAsmConsts();
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
 
   if (options.debug) {
     std::cerr << "Module after:\n";
@@ -109,22 +126,10 @@ int main(int argc, const char *argv[]) {
   // }
   writer.write(wasm, outfile);
 
-  Export* dataEndExport = wasm.getExport("__data_end");
-  if (dataEndExport == nullptr)
-    Fatal() << "__data_end export not found";
-  Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-  if (dataEnd == nullptr)
-    Fatal() << "__data_end global not found";
-  if (dataEnd->type != WasmType::i32)
-    Fatal() << "__data_end global has wrong type";
-  Const* dataEndConst = dataEnd->init->cast<Const>();
-  uint32_t dataSize = dataEndConst->value.geti32();
-
-  std::vector<Name> initializerFunctions;
-  initializerFunctions.push_back("__wasm_call_ctors");
-
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
   Output output(outfile, Flags::Text, Flags::Release);
+  if (outfile == "") {
+    output << ";; METADATA: ";
+  }
   output << metadata;
 
   return 0;
