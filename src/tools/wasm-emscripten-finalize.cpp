@@ -40,7 +40,7 @@ int main(int argc, const char *argv[]) {
   std::string outfile;
   bool emitBinary = true;
   unsigned numReservedFunctionPointers = 0;
-  std::vector<Name> forcedExports;
+  uint64_t globalBase;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
   options
@@ -62,6 +62,10 @@ int main(int argc, const char *argv[]) {
            [&numReservedFunctionPointers](Options *,
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
+      .add("--global-base", "", "Where lld started to place globals",
+           Options::Arguments::One,
+           [&globalBase](Options*, const std::string&argument ) {
+             globalBase = std::stoull(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
@@ -97,7 +101,7 @@ int main(int argc, const char *argv[]) {
     Fatal() << "__data_end global has wrong type";
   }
   Const* dataEndConst = dataEnd->init->cast<Const>();
-  uint32_t dataSize = dataEndConst->value.geti32();
+  uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
 
   std::vector<Name> initializerFunctions;
   initializerFunctions.push_back("__wasm_call_ctors");

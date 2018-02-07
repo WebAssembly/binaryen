@@ -37,7 +37,8 @@ def test_wasm_emscripten_finalize():
       if ext != '.out' and not os.path.exists(expected_file):
         continue
 
-      cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S'] + ext_args
+      cmd = (WASM_EMSCRIPTEN_FINALIZE +
+             [wast_path, '-S', '--global-base=1024'] + ext_args)
       actual = run_command(cmd)
 
       if not os.path.exists(expected_file):

@@ -59,4 +59,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1037, "initializers": ["__wasm_call_ctors"] }
+;; METADATA: { "asmConsts": {},"staticBump": 13, "initializers": ["__wasm_call_ctors"] }
