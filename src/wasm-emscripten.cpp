@@ -29,6 +29,7 @@
 namespace wasm {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+cashew::IString EM_JS_PREFIX("__em_js__");
 
 static constexpr const char* dummyFunction = "__wasm_nullptr";
 
@@ -456,30 +457,47 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
 
-  std::map<std::string, std::set<std::string>> sigsForCode;
-  std::map<std::string, Address> ids;
-  std::set<std::string> allSigs;
+  std::vector<std::string> foundCode;
 
   EmJsWalker(Module& _wasm)
     : wasm(_wasm),
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
   void visitFunction(Function* curr) {
-    if (!curr->name.startsWith("__em_js__")) {
+    if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
-    std::cerr << "In an EM_JS function!" << std::endl;
     auto* addrConst = curr->body->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
-    std::cerr << "  Found code: " << code << std::endl;
+    foundCode.push_back(code);
   }
 };
 
+EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
+  // Collect imports to remove
+  // This would find our generated functions if we ran it later
+  std::vector<Name> toRemove;
+  for (auto& func : wasm.functions) {
+    if (func->name.startsWith(EM_JS_PREFIX.str)) {
+      toRemove.push_back(func->name);
+    }
+  }
+
+  // Walk the module, generate _sig versions of EM_ASM functions
+  EmJsWalker walker(wasm);
+  walker.walkModule(&wasm);
+
+  // Remove the base functions that we didn't generate
+  for (auto funcName : toRemove) {
+    wasm.removeFunction(funcName);
+    wasm.removeExport(funcName);
+  }
+  return walker;
+}
+
 void EmscriptenGlueGenerator::fixEmAsmConsts() {
   fixEmAsmConstsAndReturnWalker(wasm);
-
-  EmJsWalker jsWalker(wasm);
-  jsWalker.walkModule(&wasm);
+  fixEmJsFuncsAndReturnWalker(wasm);
 }
 
 template<class C>
@@ -511,6 +529,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
+  EmJsWalker jsWalker = fixEmJsFuncsAndReturnWalker(wasm);
 
   // print
   commaFirst = true;
@@ -524,6 +543,14 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "]";
   }
   meta << "},";
+
+  meta << "\"emJsFuncs\": [";
+  commaFirst = true;
+  for (auto& code : jsWalker.foundCode) {
+    meta << maybeComma();
+    meta << '"' << code << '"';
+  }
+  meta << "],";
 
   meta << "\"staticBump\": " << staticBump << ", ";
 
