@@ -67,6 +67,7 @@ void parseLinkingSection(std::vector<char> const& data, uint32_t &dataSize) {
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
+  unsigned numReservedFunctionPointers = 0;
   Options options("wasm-link-metadata",
                   "Reads wasm .o file and emits .json metadata");
   options
@@ -75,6 +76,14 @@ int main(int argc, const char *argv[]) {
            [&outfile](Options *o, const std::string& argument) {
              outfile = argument;
              Colors::disable();
+           })
+      .add("--emscripten-reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [&numReservedFunctionPointers](Options *o,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
@@ -110,7 +119,8 @@ int main(int argc, const char *argv[]) {
   initializerFunctions.push_back("__wasm_call_ctors");
 
   EmscriptenGlueGenerator generator(wasm);
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+  std::string metadata = generator.generateEmscriptenMetadata(
+      dataSize, initializerFunctions, numReservedFunctionPointers);
   Output output(outfile, Flags::Text, Flags::Release);
   output << metadata;
 

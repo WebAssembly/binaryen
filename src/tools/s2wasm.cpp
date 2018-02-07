@@ -41,6 +41,7 @@ int main(int argc, const char *argv[]) {
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
+  unsigned numReservedFunctionPointers = 0;
   Options options("s2wasm", "Link .s file into .wast");
   options.extra["validate"] = "wasm";
   options
@@ -121,6 +122,14 @@ int main(int argc, const char *argv[]) {
              }
              o->extra["validate"] = argument;
            })
+      .add("--emscripten-reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [&numReservedFunctionPointers](Options *o,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -189,7 +198,8 @@ int main(int argc, const char *argv[]) {
       allowMemoryGrowth,
       linker.getStackPointerAddress(),
       linker.getStaticBump(),
-      linker.getOutput().getInitializerFunctions());
+      linker.getOutput().getInitializerFunctions(),
+      numReservedFunctionPointers);
   }
 
   if (options.extra["validate"] != "none") {

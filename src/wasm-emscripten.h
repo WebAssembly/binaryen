@@ -39,8 +39,14 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
+  // Create thunks to support emscripten's addFunction functionality. Creates (#
+  // of reserved function pointers) thunks for each indirectly called function
+  // signature.
+  void generateJSCallThunks(unsigned numReservedFunctionPointers);
+
   std::string generateEmscriptenMetadata(
-    Address staticBump, std::vector<Name> const& initializerFunctions);
+      Address staticBump, std::vector<Name> const& initializerFunctions,
+      unsigned numReservedFunctionPointers);
 
   // Replace placeholder emscripten_asm_const functions with *_signature versions.
   void fixEmAsmConsts();
@@ -64,7 +70,8 @@ std::string emscriptenGlue(
     bool allowMemoryGrowth,
     Address stackPointer,
     Address staticBump,
-    std::vector<Name> const& initializerFunctions);
+    std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers);
 
 } // namespace wasm
 

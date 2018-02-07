@@ -39,6 +39,7 @@ int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
   bool emitBinary = true;
+  unsigned numReservedFunctionPointers = 0;
   std::vector<Name> forcedExports;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
@@ -53,6 +54,14 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::Zero,
            [&emitBinary](Options*, const std::string& ) {
              emitBinary = false;
+           })
+      .add("--emscripten-reserved-function-pointers", "",
+           "Number of reserved function pointers for emscripten addFunction "
+           "support",
+           Options::Arguments::One,
+           [&numReservedFunctionPointers](Options *,
+                                          const std::string &argument) {
+             numReservedFunctionPointers = std::stoi(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
@@ -80,6 +89,7 @@ int main(int argc, const char *argv[]) {
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
+  generator.generateJSCallThunks(numReservedFunctionPointers);
   generator.fixEmAsmConsts();
 
   if (options.debug) {

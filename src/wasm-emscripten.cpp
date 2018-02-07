@@ -196,6 +196,106 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
   }
 }
 
+struct JSCallWalker : public PostWalker<JSCallWalker> {
+  Module &wasm;
+  JSCallWalker(Module &_wasm) : wasm(_wasm) {
+    if (wasm.table.segments.size() == 0) {
+      auto emptySegment =
+          wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0)));
+      wasm.table.segments.emplace_back(emptySegment);
+    }
+    const auto& tableSegmentData = wasm.table.segments[0].data;
+
+    // Check if jsCalls have already been created
+    for (Index i = 0; i < tableSegmentData.size(); ++i) {
+      if (tableSegmentData[i].startsWith("jsCall_")) {
+        jsCallStartIndex = i;
+        return;
+      }
+    }
+    jsCallStartIndex =
+        wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
+        tableSegmentData.size();
+  }
+
+  // Gather all function signatures used in call_indirect, because any of them
+  // can be used to call function pointers created by emscripten's addFunction.
+  void visitCallIndirect(CallIndirect *curr) {
+    // dynCall thunks are generated in binaryen and call_indirect instructions
+    // within them cannot be used to call function pointers returned by
+    // emscripten's addFunction.
+    if (!getFunction()->name.startsWith("dynCall_")) {
+      indirectlyCallableSigs.insert(
+          getSig(wasm.getFunctionType(curr->fullType)));
+    }
+  }
+
+  bool createJSCallThunks;
+  Index jsCallStartIndex;
+  // Function type signatures used in call_indirect instructions
+  std::set<std::string> indirectlyCallableSigs;
+};
+
+JSCallWalker getJSCallWalker(Module& wasm) {
+  JSCallWalker walker(wasm);
+  walker.walkModule(&wasm);
+  return walker;
+}
+
+void EmscriptenGlueGenerator::generateJSCallThunks(
+    unsigned numReservedFunctionPointers) {
+  if (numReservedFunctionPointers == 0)
+    return;
+
+  JSCallWalker walker = getJSCallWalker(wasm);
+  auto& tableSegmentData = wasm.table.segments[0].data;
+  for (std::string sig : walker.indirectlyCallableSigs) {
+    // Add imports for jsCall_sig (e.g. jsCall_vi).
+    // Imported jsCall_sig functions have their first parameter as an index to
+    // the function table, so we should prepend an 'i' to parameters' signature
+    // (e.g. If the signature of the callee is 'vi', the imported jsCall_vi
+    // function would have signature 'vii'.)
+    std::string importSig = std::string(1, sig[0]) + 'i' + sig.substr(1);
+    FunctionType *importType = ensureFunctionType(importSig, &wasm);
+    auto import = new Import;
+    import->name = import->base = "jsCall_" + sig;
+    import->module = ENV;
+    import->functionType = importType->name;
+    import->kind = ExternalKind::Function;
+    wasm.addImport(import);
+    FunctionType *funcType = ensureFunctionType(sig, &wasm);
+
+    // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
+    // e.g. If # of reserved function pointers (given by a command line
+    // argument) is 3 and there are two possible signature 'vi' and 'ii', the
+    // genereated thunks will be jsCall_vi_0, jsCall_vi_1, jsCall_vi_2,
+    // jsCall_ii_0, jsCall_ii_1, and jsCall_ii_2.
+    for (unsigned fp = 0; fp < numReservedFunctionPointers; ++fp) {
+      std::vector<NameType> params;
+      int p = 0;
+      for (const auto& ty : funcType->params) {
+        params.emplace_back(std::to_string(p++), ty);
+      }
+      Function* f = builder.makeFunction(
+          std::string("jsCall_") + sig + "_" + std::to_string(fp),
+          std::move(params), funcType->result, {});
+      std::vector<Expression*> args;
+      args.push_back(builder.makeConst(Literal(fp)));
+      for (unsigned i = 0; i < funcType->params.size(); ++i) {
+        args.push_back(builder.makeGetLocal(i, funcType->params[i]));
+      }
+      Expression* call =
+          builder.makeCallImport(import->name, args, funcType->result);
+      f->body = call;
+      wasm.addFunction(f);
+      tableSegmentData.push_back(f->name);
+    }
+  }
+  wasm.table.initial = wasm.table.max =
+      wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
+      tableSegmentData.size();
+}
+
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
@@ -362,22 +462,22 @@ void printSet(std::ostream& o, C& c) {
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions) {
+    Address staticBump, std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers) {
   std::stringstream meta;
   meta << "{ ";
 
-  AsmConstWalker walker = fixEmAsmConstsAndReturnWalker(wasm);
+  AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
 
   // print
   meta << "\"asmConsts\": {";
   bool first = true;
-  for (auto& pair : walker.sigsForCode) {
+  for (auto& pair : emAsmWalker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
     if (first) first = false;
     else meta << ",";
-    meta << '"' << walker.ids[code] << "\": [\"" << code << "\", ";
+    meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
@@ -394,6 +494,20 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "]";
 
+  if (numReservedFunctionPointers) {
+    JSCallWalker jsCallWalker = getJSCallWalker(wasm);
+    meta << ", ";
+    meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
+    meta << "\"jsCallFuncType\": [";
+    bool first = true;
+    for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
+      if (!first) meta << ", ";
+      first = false;
+      meta << "\"" << sig << "\"";
+    }
+    meta << "]";
+  }
+
   meta << " }\n";
 
   return meta.str();
@@ -404,7 +518,8 @@ std::string emscriptenGlue(
     bool allowMemoryGrowth,
     Address stackPointer,
     Address staticBump,
-    std::vector<Name> const& initializerFunctions) {
+    std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers) {
   EmscriptenGlueGenerator generator(wasm, stackPointer);
   generator.generateRuntimeFunctions();
 
@@ -414,7 +529,12 @@ std::string emscriptenGlue(
 
   generator.generateDynCallThunks();
 
-  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions);
+  if (numReservedFunctionPointers) {
+    generator.generateJSCallThunks(numReservedFunctionPointers);
+  }
+
+  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions,
+                                              numReservedFunctionPointers);
 }
 
 } // namespace wasm
