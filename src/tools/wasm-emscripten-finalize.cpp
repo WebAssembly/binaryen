@@ -114,23 +114,27 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
-  ModuleWriter writer;
-  // writer.setDebug(options.debug);
-  writer.setDebugInfo(true);
-  // writer.setDebugInfo(options.passOptions.debugInfo);
-  // writer.setSymbolMap(symbolMap);
-  writer.setBinary(emitBinary);
-  // if (emitBinary) {
-  //   writer.setSourceMapFilename(sourceMapFilename);
-  //   writer.setSourceMapUrl(sourceMapUrl);
-  // }
-  writer.write(wasm, outfile);
-
-  Output output(outfile, Flags::Text, Flags::Release);
-  if (outfile == "") {
-    output << ";; METADATA: ";
+  if (!emitBinary) {
+    Output output(outfile, Flags::Text, Flags::Release);
+    WasmPrinter::printModule(&wasm, output.getStream());
+    output << ";; METADATA: " << metadata;
+  } else {
+    ModuleWriter writer;
+    // writer.setDebug(options.debug);
+    writer.setDebugInfo(true);
+    // writer.setDebugInfo(options.passOptions.debugInfo);
+    // writer.setSymbolMap(symbolMap);
+    writer.setBinary(emitBinary);
+    // if (emitBinary) {
+    //   writer.setSourceMapFilename(sourceMapFilename);
+    //   writer.setSourceMapUrl(sourceMapUrl);
+    // }
+    writer.write(wasm, outfile);
+    if (outfile == "") {
+      std::cout << ";; METADATA: ";
+    }
+    std::cout << metadata;
   }
-  output << metadata;
 
   return 0;
 }
