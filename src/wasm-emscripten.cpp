@@ -533,7 +533,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
-  EmJsWalker jsWalker = fixEmJsFuncsAndReturnWalker(wasm);
+  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
 
   // print
   commaFirst = true;
@@ -548,15 +548,17 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "},";
 
-  meta << "\"emJsFuncs\": {";
-  commaFirst = true;
-  for (auto& pair : jsWalker.codeByName) {
-    auto& name = pair.first;
-    auto& code = pair.second;
-    meta << maybeComma();
-    meta << '"' << name << "\": \"" << code << '"';
+  if (emJsWalker.codeByName.size() > 0) {
+    meta << "\"emJsFuncs\": {";
+    commaFirst = true;
+    for (auto& pair : jsWalker.codeByName) {
+      auto& name = pair.first;
+      auto& code = pair.second;
+      meta << maybeComma();
+      meta << '"' << name << "\": \"" << code << '"';
+    }
+    meta << "},";
   }
-  meta << "},";
 
   meta << "\"staticBump\": " << staticBump << ", ";
 
