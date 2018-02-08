@@ -131,7 +131,7 @@ int main(int argc, const char *argv[]) {
   //   writer.setSourceMapUrl(sourceMapUrl);
   // }
   writer.write(wasm, output);
-  if (outfile == "") {
+  if (!emitBinary) {
     output << ";; METADATA: ";
   }
   output << metadata;
