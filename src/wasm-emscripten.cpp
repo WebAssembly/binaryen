@@ -467,7 +467,10 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
-    auto* addrConst = curr->body->cast<Const>();
+    Const* addrConst = curr->body->dynCast<Const>();
+    if (addrConst == nullptr) {
+      addrConst = curr->body->cast<Block>()->list[0]->cast<Const>();
+    }
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
     foundCode.push_back(code);
   }
