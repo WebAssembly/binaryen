@@ -4,7 +4,7 @@
 
 Binaryen is a compiler and toolchain infrastructure library for WebAssembly, written in C++. It aims to make [compiling to WebAssembly](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen) **easy, fast, and effective**:
 
- * **Easy**: Binaryen has a simple [C API](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1) in a single header, and can also be [used from JavaScript](https://github.com/WebAssembly/binaryen/blob/master/docs/binaryen.js.Markdown). It accepts input in [WebAssembly-like form](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly) but also accepts a general [control flow graph](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api) for compilers that prefer that.
+ * **Easy**: Binaryen has a simple [C API](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#c-api-1) in a single header, and can also be [used from JavaScript](https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API). It accepts input in [WebAssembly-like form](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly) but also accepts a general [control flow graph](https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api) for compilers that prefer that.
  * **Fast**: Binaryen's internal IR uses compact data structures and is designed for completely parallel codegen and optimization, using all available CPU cores. Binaryen's IR also compiles down to WebAssembly extremely easily and quickly because it is essentially a subset of WebAssembly.
  * **Effective**: Binaryen's optimizer has [many passes](https://github.com/WebAssembly/binaryen/tree/master/src/passes) that can improve code very significantly (e.g. local coloring to coalesce local variables; dead code elimination; precomputing expressions when possible at compile time; etc.). These optimizations aim to make Binaryen powerful enough to be [used as a compiler backend by itself](https://kripken.github.io/talks/binaryen.html#/9). One specific area of focus is on WebAssembly-specific optimizations (that general-purpose compilers might not do), which you can think of as [wasm minification](https://kripken.github.io/talks/binaryen.html#/2), similar to minification for JavaScript, CSS, etc., all of which are language-specific (an example of such an optimization is block return value generation in `SimplifyLocals`).
 
@@ -12,7 +12,7 @@ Compilers built using Binaryen include
 
  * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
  * [`s2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/s2wasm.h) which compiles the LLVM WebAssembly's backend `.s` output format
- * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript)
+ * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
  * [`wasm2asm`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2asm.h) which compiles WebAssembly to asm.js
  * [`mir2wasm`](https://github.com/brson/mir2wasm/) which compiles Rust MIR
 
