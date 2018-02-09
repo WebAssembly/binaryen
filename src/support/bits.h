@@ -29,6 +29,9 @@
  *
  * We instead use portable and reasonably-fast implementations, while
  * avoiding implementations with large lookup tables.
+ *
+ * TODO: The convention here should be changed PopCount => popCount,
+ *       initial lowercase, to match the rest of the codebase.
  */
 
 namespace wasm {
@@ -64,6 +67,10 @@ int CountTrailingZeroes(T v) {
 template <typename T>
 int CountLeadingZeroes(T v) {
   return CountLeadingZeroes(typename std::make_unsigned<T>::type(v));
+}
+template <typename T>
+bool IsPowerOf2(T v) {
+  return v != 0 && PopCount(v) == 1;
 }
 
 template <typename T, typename U>
