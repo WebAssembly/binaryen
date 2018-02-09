@@ -133,7 +133,9 @@ jobs:
 
     # Build binaries for other architectures using QEMU user-mode emulation.
     # Note: We don't run tests for these architectures, because some fail under
-    # QEMU/binfmt and it takes too long time (hits time limit on Travis).
+    #       QEMU/binfmt and it takes too long time (hits time limit on Travis).
+    # Note: We had to remove ppc64le, because it takes more than 50 minutes
+    #       (Travis limit) to build. :(
     - <<: *build-alpine
       env: ARCH=x86
 
@@ -142,9 +144,6 @@ jobs:
 
     - <<: *build-alpine
       env: ARCH=armhf
-
-    - <<: *build-alpine
-      env: ARCH=ppc64le
 
 notifications:
   email: false
