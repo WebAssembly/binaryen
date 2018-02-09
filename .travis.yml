@@ -76,8 +76,8 @@ jobs:
       env: ARCH=x86_64
       before_install:
         - &download-alpine-script
-          "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.6.0/alpine-chroot-install' \
-              && echo 'a827a4ba3d0817e7c88bae17fe34e50204983d1e  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
+          "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.7.0/alpine-chroot-install' \
+              && echo '090d323d887ef3a2fd4e752428553f22a52b87bb  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
         - &define-alpine-func
           alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
       install:
