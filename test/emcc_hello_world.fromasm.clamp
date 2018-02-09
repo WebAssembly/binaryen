@@ -4047,25 +4047,14 @@
                (set_local $7
                 (block $do-once49 (result i32)
                  (if (result i32)
-                  (i32.or
-                   (i32.lt_u
-                    (tee_local $5
-                     (i32.and
-                      (i32.load offset=4
-                       (get_global $tempDoublePtr)
-                      )
-                      (i32.const 2146435072)
-                     )
+                  (i32.lt_u
+                   (i32.and
+                    (i32.load offset=4
+                     (get_global $tempDoublePtr)
                     )
                     (i32.const 2146435072)
                    )
-                   (i32.and
-                    (i32.eq
-                     (get_local $5)
-                     (i32.const 2146435072)
-                    )
-                    (i32.const 0)
-                   )
+                   (i32.const 2146435072)
                   )
                   (block (result i32)
                    (if
@@ -6341,12 +6330,9 @@
                         (i32.const 0)
                         (get_local $27)
                         (tee_local $6
-                         (i32.or
-                          (f64.ne
-                           (get_local $15)
-                           (get_local $15)
-                          )
-                          (i32.const 0)
+                         (f64.ne
+                          (get_local $15)
+                          (get_local $15)
                          )
                         )
                        )

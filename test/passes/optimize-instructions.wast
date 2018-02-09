@@ -2707,6 +2707,137 @@
      )
     )
   )
+  (func $mul-power-2 (param $x i32) (result i32)
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 4)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 5)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (call $mul-power-2 (i32.const 123)) ;; side effects
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 0xffffffff)
+        )
+      )
+    )
+    (drop
+      (call $mul-power-2
+        (i32.mul
+          (get_local $x)
+          (i32.const 0x80000000)
+        )
+      )
+    )
+    (unreachable)
+  )
+  (func $urem-power-2 (param $x i32) (result i32)
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 4)
+        )
+      )
+    )
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 5)
+        )
+      )
+    )
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+    )
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 0)
+        )
+      )
+    )
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 0xffffffff)
+        )
+      )
+    )
+    (drop
+      (call $urem-power-2
+        (i32.rem_u
+          (get_local $x)
+          (i32.const 0x80000000)
+        )
+      )
+    )
+    (unreachable)
+  )
+  (func $orZero (param $0 i32) (result i32)
+    (i32.or
+      (get_local $0)
+      (i32.const 0)
+    )
+  )
+  (func $andZero (param $0 i32) (result i32)
+    (drop
+      (i32.and
+        (get_local $0)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i32.and
+        (call $andZero (i32.const 1234)) ;; side effects
+        (i32.const 0)
+      )
+    )
+    (unreachable)
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

@@ -1044,6 +1044,10 @@ private:
 
   // Optimize a multiply by a power of two on the right, which
   // can be a shift.
+  // This doesn't shrink code size, and VMs likely optimize it anyhow,
+  // but it's still worth doing since
+  //  * Often shifts are more common than muls.
+  //  * The constant is smaller.
   Expression* optimizePowerOf2Mul(Binary* binary, uint32_t c) {
     uint32_t shifts = CountTrailingZeroes(c);
     binary->op = ShlInt32;
@@ -1053,6 +1057,10 @@ private:
 
   // Optimize an unsigned divide by a power of two on the right,
   // which can be an AND mask
+  // This doesn't shrink code size, and VMs likely optimize it anyhow,
+  // but it's still worth doing since
+  //  * Usually ands are more common than urems.
+  //  * The constant is slightly smaller.
   Expression* optimizePowerOf2URem(Binary* binary, uint32_t c) {
     binary->op = AndInt32;
     binary->right->cast<Const>()->value = Literal(int32_t(c - 1));
