@@ -478,20 +478,15 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
 };
 
 EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
-  // Collect imports to remove
-  // This would find our generated functions if we ran it later
+  EmJsWalker walker(wasm);
+  walker.walkModule(&wasm);
+
   std::vector<Name> toRemove;
   for (auto& func : wasm.functions) {
     if (func->name.startsWith(EM_JS_PREFIX.str)) {
       toRemove.push_back(func->name);
     }
   }
-
-  // Walk the module, generate _sig versions of EM_ASM functions
-  EmJsWalker walker(wasm);
-  walker.walkModule(&wasm);
-
-  // Remove the base functions that we didn't generate
   for (auto funcName : toRemove) {
     wasm.removeFunction(funcName);
     wasm.removeExport(funcName);
@@ -533,7 +528,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
-  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
 
   // print
   commaFirst = true;
@@ -548,6 +542,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "},";
 
+  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
   if (emJsWalker.codeByName.size() > 0) {
     meta << "\"emJsFuncs\": {";
     commaFirst = true;
