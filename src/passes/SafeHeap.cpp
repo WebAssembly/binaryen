@@ -218,7 +218,7 @@ struct SafeHeap : public Pass {
     );
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2)
+      makeBoundsCheck(style.type, builder, 2, load->bytes, load->align)
     );
     // check proper alignment
     if (style.align > 1) {
@@ -265,7 +265,7 @@ struct SafeHeap : public Pass {
     );
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3)
+      makeBoundsCheck(style.valueType, builder, 3, store->bytes, store->align)
     );
     // check proper alignment
     if (style.align > 1) {
@@ -295,7 +295,7 @@ struct SafeHeap : public Pass {
     );
   }
 
-  Expression* makeBoundsCheck(Type type, Builder& builder, Index local) {
+  Expression* makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes, Index align) {
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
@@ -309,9 +309,9 @@ struct SafeHeap : public Pass {
           builder.makeBinary(
             AddInt32,
             builder.makeGetLocal(local, i32),
-            builder.makeConst(Literal(int32_t(getTypeSize(type))))
+            builder.makeConst(Literal(int32_t(bytes)))
           ),
-          builder.makeLoad(4, false, 0, 4,
+          builder.makeLoad(bytes, false, 0, align,
             builder.makeGetGlobal(dynamicTopPtr, i32), i32
           )
         )
