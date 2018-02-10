@@ -1303,6 +1303,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (auto* block = target->dynCast<Block>()) {
         target = block->list.back();
       }
+      // the something might have been optimized out, leaving only the call
+      if (auto* call = target->dynCast<CallImport>()) {
+        auto tableName = call->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
+        curr->target = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        return;
+      }
       auto* add = target->dynCast<Binary>();
       if (!add) return;
       if (add->right->is<CallImport>()) {
