@@ -1,0 +1,16 @@
+appveyor.yml
+auto_update_tests.py
+build-js.sh
+check.py
+CMakeLists.txt
+Contributing.md
+emsdk-portable
+LICENSE
+media
+scripts
+setup.cfg
+shared.bc
+src
+test
+travis-emcc-tests.sh
+ubsan.blacklist
