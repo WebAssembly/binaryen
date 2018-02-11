@@ -151,9 +151,6 @@ private:
   // beyond a nesting limit, greatly decrease the chance to continue to nest
   static const int NESTING_LIMIT = 11;
 
-  // reduce the chance for a function to call itself by this factor
-  static const int RECURSION_FACTOR = 10;
-
   // the maximum size of a block
   static const int BLOCK_FACTOR = 5;
 
@@ -774,8 +771,6 @@ private:
         target = vectorPick(wasm.functions).get();
       }
       if (target->result != type) continue;
-      // reduce the odds of recursion dramatically, to limit infinite loops
-      if (target == func && !oneIn(RECURSION_FACTOR * TRIES)) continue;
       // we found one!
       std::vector<Expression*> args;
       for (auto argType : target->params) {
