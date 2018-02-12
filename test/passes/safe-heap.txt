@@ -180,7 +180,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -216,7 +216,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -246,7 +246,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -276,7 +276,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -306,7 +306,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -336,7 +336,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -379,7 +379,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -416,7 +416,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -446,7 +446,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -483,7 +483,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -802,7 +802,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -838,7 +838,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -868,7 +868,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -898,7 +898,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -928,7 +928,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -958,7 +958,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1001,7 +1001,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1038,7 +1038,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1068,7 +1068,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1105,7 +1105,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1142,7 +1142,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1172,7 +1172,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1209,7 +1209,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1252,7 +1252,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1289,7 +1289,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1319,7 +1319,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1356,7 +1356,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1393,7 +1393,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1786,7 +1786,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1816,7 +1816,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1846,7 +1846,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1876,7 +1876,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -1913,7 +1913,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2091,7 +2091,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2121,7 +2121,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2151,7 +2151,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2181,7 +2181,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2218,7 +2218,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2255,7 +2255,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2285,7 +2285,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2322,7 +2322,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2359,7 +2359,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2574,7 +2574,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2605,7 +2605,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2636,7 +2636,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2667,7 +2667,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2705,7 +2705,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2888,7 +2888,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2919,7 +2919,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2950,7 +2950,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -2981,7 +2981,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3019,7 +3019,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3057,7 +3057,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3088,7 +3088,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3126,7 +3126,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3164,7 +3164,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3385,7 +3385,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3416,7 +3416,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3447,7 +3447,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3478,7 +3478,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3516,7 +3516,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3699,7 +3699,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3730,7 +3730,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3761,7 +3761,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3792,7 +3792,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3830,7 +3830,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3868,7 +3868,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3899,7 +3899,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3937,7 +3937,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -3975,7 +3975,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4212,7 +4212,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4242,7 +4242,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4272,7 +4272,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4302,7 +4302,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4339,7 +4339,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4369,7 +4369,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4614,7 +4614,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4644,7 +4644,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4674,7 +4674,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4704,7 +4704,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4741,7 +4741,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4771,7 +4771,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4808,7 +4808,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4838,7 +4838,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4875,7 +4875,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4912,7 +4912,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4942,7 +4942,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -4979,7 +4979,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5298,7 +5298,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5328,7 +5328,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5358,7 +5358,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5499,7 +5499,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5529,7 +5529,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5559,7 +5559,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5596,7 +5596,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5626,7 +5626,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5663,7 +5663,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5841,7 +5841,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5872,7 +5872,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -5903,7 +5903,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6048,7 +6048,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6079,7 +6079,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6110,7 +6110,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6148,7 +6148,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6179,7 +6179,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6217,7 +6217,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6400,7 +6400,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6431,7 +6431,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6462,7 +6462,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6607,7 +6607,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6638,7 +6638,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6669,7 +6669,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6707,7 +6707,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6738,7 +6738,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6776,7 +6776,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -6979,7 +6979,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7015,7 +7015,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7045,7 +7045,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7075,7 +7075,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7105,7 +7105,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7135,7 +7135,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7178,7 +7178,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7215,7 +7215,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7245,7 +7245,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7282,7 +7282,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7601,7 +7601,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7637,7 +7637,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7667,7 +7667,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7697,7 +7697,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7727,7 +7727,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7757,7 +7757,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7800,7 +7800,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7837,7 +7837,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7867,7 +7867,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7904,7 +7904,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7941,7 +7941,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -7971,7 +7971,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8008,7 +8008,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8051,7 +8051,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8088,7 +8088,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8118,7 +8118,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8155,7 +8155,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8192,7 +8192,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8585,7 +8585,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8615,7 +8615,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8645,7 +8645,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8675,7 +8675,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8712,7 +8712,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8890,7 +8890,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8920,7 +8920,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8950,7 +8950,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -8980,7 +8980,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9017,7 +9017,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9054,7 +9054,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9084,7 +9084,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9121,7 +9121,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9158,7 +9158,7 @@
     (i32.gt_u
      (i32.add
       (get_local $2)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9373,7 +9373,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9404,7 +9404,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9435,7 +9435,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9466,7 +9466,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9504,7 +9504,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9687,7 +9687,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9718,7 +9718,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9749,7 +9749,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9780,7 +9780,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9818,7 +9818,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9856,7 +9856,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9887,7 +9887,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9925,7 +9925,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -9963,7 +9963,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10184,7 +10184,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10215,7 +10215,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10246,7 +10246,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10277,7 +10277,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10315,7 +10315,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 4)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10498,7 +10498,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10529,7 +10529,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 1)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10560,7 +10560,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10591,7 +10591,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10629,7 +10629,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 2)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10667,7 +10667,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10698,7 +10698,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10736,7 +10736,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
@@ -10774,7 +10774,7 @@
     (i32.gt_u
      (i32.add
       (get_local $3)
-      (i32.const 8)
+      (i32.const 4)
      )
      (i32.load
       (get_global $DYNAMICTOP_PTR)
