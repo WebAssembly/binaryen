@@ -339,5 +339,49 @@
     (br $label$1) ;; back to the top, where we will return the zero
    )
   )
+  (func $ssa-merge-tricky (result i32)
+   (local $var$0 i32)
+   (local $var$1 i32)
+   (set_local $var$1
+    (tee_local $var$0
+     (i32.const 0) ;; both vars start out identical
+    )
+   )
+   (loop $label$1
+    (if
+     (i32.eqz
+      (get_global $global$0)
+     )
+     (return
+      (i32.const 12345)
+     )
+    )
+    (set_global $global$0
+     (i32.const 0)
+    )
+    (if
+     (i32.eqz
+      (get_local $var$0) ;; check $0 here. this will get a phi var
+     )
+     (br_if $label$1
+      (i32.eqz
+       (tee_local $var$0 ;; set $0 to 1. here the two diverge. for the phi, we'll get a set here and above
+        (i32.const 1)
+       )
+      )
+     )
+    )
+    (br_if $label$1
+     (i32.eqz ;; indeed equal, enter loop again, and then hang prevention kicks in
+      (tee_local $var$1 ;; set them all to 0
+       (tee_local $var$0
+        (get_local $var$1) ;; this must get $1, not the phis, as even though the sets appear in both sources, we only execute 1.
+       )
+      )
+     )
+    )
+   )
+   (i32.const -54)
+  )
 )
 
