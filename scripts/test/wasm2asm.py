@@ -3,15 +3,18 @@
 import os
 
 from support import run_command
-from shared import (WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, tests)
-
+from shared import (
+    WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, options, tests
+)
 
 # tests with i64s, invokes, etc.
-spec_tests = [os.path.join('spec', t)
-              for t in sorted(os.listdir(os.path.join('test', 'spec')))
+spec_dir = os.path.join(options.binaryen_test, 'spec')
+spec_tests = [os.path.join(spec_dir, t)
+              for t in sorted(os.listdir(spec_dir))
               if '.fail' not in t]
-extra_tests = [os.path.join('wasm2asm', t) for t in
-               sorted(os.listdir(os.path.join('test', 'wasm2asm')))]
+wasm2asm_dir = os.path.join(options.binaryen_test, 'wasm2asm')
+extra_tests = [os.path.join(wasm2asm_dir, t) for t in
+               sorted(os.listdir(wasm2asm_dir))]
 assert_tests = ['wasm2asm.wast.asserts']
 
 
@@ -21,14 +24,14 @@ def test_wasm2asm_output():
       continue
 
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-    expected_file = os.path.join('test', asm)
+    expected_file = os.path.join(options.binaryen_test, asm)
 
     if not os.path.exists(expected_file):
       continue
 
     print '..', wasm
 
-    cmd = WASM2ASM + [os.path.join('test', wasm)]
+    cmd = WASM2ASM + [os.path.join(options.binaryen_test, wasm)]
     out = run_command(cmd)
     expected = open(expected_file).read()
     fail_if_not_identical(out, expected)
@@ -68,10 +71,11 @@ def test_asserts_output():
 
     asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
     traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-    asserts_expected_file = os.path.join('test', asserts)
-    traps_expected_file = os.path.join('test', traps)
+    asserts_expected_file = os.path.join(options.binaryen_test, asserts)
+    traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-    cmd = WASM2ASM + [os.path.join('test', wasm), '--allow-asserts']
+    wasm = os.path.join(options.binaryen_test, wasm)
+    cmd = WASM2ASM + [wasm, '--allow-asserts']
     out = run_command(cmd)
     expected = open(asserts_expected_file).read()
     fail_if_not_identical(out, expected)
