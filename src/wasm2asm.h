@@ -1489,12 +1489,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case ShrSInt32:
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
               break;
-            case MinFloat32:
-              ret = ValueBuilder::makeCall(MATH_MIN, left, right);
-              break;
-            case MaxFloat32:
-              ret = ValueBuilder::makeCall(MATH_MAX, left, right);
-              break;
             case EqInt32: {
               // TODO: check if this condition is still valid/necessary
               if (curr->left->type == i32) {
@@ -1600,8 +1594,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               break;
             case MinFloat32:
             case MinFloat64:
+              ret = ValueBuilder::makeCall(MATH_MIN, left, right);
+              break;
             case MaxFloat32:
             case MaxFloat64:
+              ret = ValueBuilder::makeCall(MATH_MAX, left, right);
+              break;
             case CopySignFloat32:
             case CopySignFloat64:
             default:

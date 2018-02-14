@@ -176,6 +176,38 @@ function asmFunc(global, env, buffer) {
   return wasm2asm_i32$0 | 0;
  }
  
+ function $$21($$0, $$1) {
+  $$0 = Math_fround($$0);
+  $$1 = Math_fround($$1);
+  var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = Math_fround(0), wasm2asm_f32$0 = Math_fround(0);
+  return Math_fround(Math_fround(Math_min($$0, $$1)));
+  return Math_fround(wasm2asm_f32$0);
+ }
+ 
+ function $$22($$0, $$1) {
+  $$0 = Math_fround($$0);
+  $$1 = Math_fround($$1);
+  var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = Math_fround(0), wasm2asm_f32$0 = Math_fround(0);
+  return Math_fround(Math_fround(Math_max($$0, $$1)));
+  return Math_fround(wasm2asm_f32$0);
+ }
+ 
+ function $$23($$0, $$1) {
+  $$0 = +$$0;
+  $$1 = +$$1;
+  var $$2 = 0.0, $$3 = 0.0, $$4 = 0.0, wasm2asm_f64$0 = 0.0;
+  return +Math_min($$0, $$1);
+  return +wasm2asm_f64$0;
+ }
+ 
+ function $$24($$0, $$1) {
+  $$0 = +$$0;
+  $$1 = +$$1;
+  var $$2 = 0.0, $$3 = 0.0, $$4 = 0.0, wasm2asm_f64$0 = 0.0;
+  return +Math_max($$0, $$1);
+  return +wasm2asm_f64$0;
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0;
@@ -236,7 +268,11 @@ function asmFunc(global, env, buffer) {
   "f64.ge": $$17, 
   "f64.gt": $$18, 
   "f64.le": $$19, 
-  "f64.lt": $$20
+  "f64.lt": $$20, 
+  "f32.min": $$21, 
+  "f32.max": $$22, 
+  "f64.min": $$23, 
+  "f64.max": $$24
  };
 }
 

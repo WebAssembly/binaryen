@@ -61,4 +61,17 @@
 
   (func (export "f64.lt") (param $0 f64) (param $1 f64) (result i32)
     (f64.lt (get_local $0) (get_local $1)))
+
+  ;; min/max
+  (func (export "f32.min") (param $0 f32) (param $1 f32) (result f32)
+    (f32.min (get_local $0) (get_local $1)))
+
+  (func (export "f32.max") (param $0 f32) (param $1 f32) (result f32)
+    (f32.max (get_local $0) (get_local $1)))
+
+  (func (export "f64.min") (param $0 f64) (param $1 f64) (result f64)
+    (f64.min (get_local $0) (get_local $1)))
+
+  (func (export "f64.max") (param $0 f64) (param $1 f64) (result f64)
+    (f64.max (get_local $0) (get_local $1)))
 )
