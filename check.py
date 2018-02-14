@@ -108,7 +108,7 @@ def run_wasm_opt_tests():
             if 'BINARYEN_PASS_DEBUG' in os.environ:
               del os.environ['BINARYEN_PASS_DEBUG']
 
-      fail_if_not_identical(actual, open(os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
+      fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
 
       if 'emit-js-wrapper' in t:
         with open('a.js') as actual:
@@ -175,10 +175,11 @@ def run_wasm_dis_tests():
 def run_wasm_merge_tests():
   print '\n[ checking wasm-merge... ]\n'
 
-  for t in os.listdir(os.path.join('test', 'merge')):
+  test_dir = os.path.join(options.binaryen_test, 'merge')
+  for t in os.listdir(test_dir):
     if t.endswith(('.wast', '.wasm')):
       print '..', t
-      t = os.path.join('test', 'merge', t)
+      t = os.path.join(test_dir, t)
       u = t + '.toMerge'
       for finalize in [0, 1]:
         for opt in [0, 1]:
@@ -198,10 +199,11 @@ def run_wasm_merge_tests():
 def run_crash_tests():
   print "\n[ checking we don't crash on tricky inputs... ]\n"
 
-  for t in os.listdir(os.path.join('test', 'crash')):
+  test_dir = os.path.join(options.binaryen_test, 'crash')
+  for t in os.listdir(test_dir):
     if t.endswith(('.wast', '.wasm')):
       print '..', t
-      t = os.path.join('test', 'crash', t)
+      t = os.path.join(test_dir, t)
       cmd = WASM_OPT + [t]
       # expect a parse error to be reported
       run_command(cmd, expected_err='parse exception:', err_contains=True, expected_status=1)
@@ -209,10 +211,11 @@ def run_crash_tests():
 def run_ctor_eval_tests():
   print '\n[ checking wasm-ctor-eval... ]\n'
 
-  for t in os.listdir(os.path.join('test', 'ctor-eval')):
+  test_dir = os.path.join(options.binaryen_test, 'ctor-eval')
+  for t in os.listdir(test_dir):
     if t.endswith(('.wast', '.wasm')):
       print '..', t
-      t = os.path.join('test', 'ctor-eval', t)
+      t = os.path.join(test_dir, t)
       ctors = open(t + '.ctors').read().strip()
       cmd = WASM_CTOR_EVAL + [t, '-o', 'a.wast', '-S', '--ctors', ctors]
       stdout = run_command(cmd)
@@ -224,10 +227,11 @@ def run_ctor_eval_tests():
 def run_wasm_metadce_tests():
   print '\n[ checking wasm-metadce ]\n'
 
-  for t in os.listdir(os.path.join('test', 'metadce')):
+  test_dir = os.path.join(options.binaryen_test, 'metadce')
+  for t in os.listdir(test_dir):
     if t.endswith(('.wast', '.wasm')):
       print '..', t
-      t = os.path.join('test', 'metadce', t)
+      t = os.path.join(test_dir, t)
       graph = t + '.graph.txt'
       cmd = WASM_METADCE + [t, '--graph-file=' + graph, '-o', 'a.wast', '-S']
       stdout = run_command(cmd)
@@ -241,10 +245,11 @@ def run_wasm_metadce_tests():
 def run_wasm_reduce_tests():
   print '\n[ checking wasm-reduce ]\n'
 
-  for t in os.listdir(os.path.join('test', 'reduce')):
+  test_dir = os.path.join(options.binaryen_test, 'reduce')
+  for t in os.listdir(test_dir):
     if t.endswith('.wast'):
       print '..', t
-      t = os.path.join('test', 'reduce', t)
+      t = os.path.join(test_dir, t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
       print run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
