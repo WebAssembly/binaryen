@@ -1542,6 +1542,36 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case RotRInt32:
               return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
                                  ASM_SIGNED);
+            case EqFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, EQ, right),
+                                     ASM_FLOAT);
+            case EqFloat64:
+              return ValueBuilder::makeBinary(left, EQ, right);
+            case NeFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, NE, right),
+                                     ASM_FLOAT);
+            case NeFloat64:
+              return ValueBuilder::makeBinary(left, NE, right);
+            case GeFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, GE, right),
+                                     ASM_FLOAT);
+            case GeFloat64:
+              return ValueBuilder::makeBinary(left, GE, right);
+            case GtFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, GT, right),
+                                     ASM_FLOAT);
+            case GtFloat64:
+              return ValueBuilder::makeBinary(left, GT, right);
+            case LeFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, LE, right),
+                                     ASM_FLOAT);
+            case LeFloat64:
+              return ValueBuilder::makeBinary(left, LE, right);
+            case LtFloat32:
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, LT, right),
+                                     ASM_FLOAT);
+            case LtFloat64:
+              return ValueBuilder::makeBinary(left, LT, right);
             default: {
               std::cerr << "Unhandled i32 binary operator: " << curr << std::endl;
               abort();

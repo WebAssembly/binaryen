@@ -24,4 +24,41 @@
 
   (func (export "f64.div") (param $0 f64) (param $1 f64) (result f64)
     (f64.div (get_local $0) (get_local $1)))
+
+  ;; comparisons
+  (func (export "f32.eq") (param $0 f32) (param $1 f32) (result i32)
+    (f32.eq (get_local $0) (get_local $1)))
+
+  (func (export "f32.ne") (param $0 f32) (param $1 f32) (result i32)
+    (f32.ne (get_local $0) (get_local $1)))
+
+  (func (export "f32.ge") (param $0 f32) (param $1 f32) (result i32)
+    (f32.ge (get_local $0) (get_local $1)))
+
+  (func (export "f32.gt") (param $0 f32) (param $1 f32) (result i32)
+    (f32.gt (get_local $0) (get_local $1)))
+
+  (func (export "f32.le") (param $0 f32) (param $1 f32) (result i32)
+    (f32.le (get_local $0) (get_local $1)))
+
+  (func (export "f32.lt") (param $0 f32) (param $1 f32) (result i32)
+    (f32.lt (get_local $0) (get_local $1)))
+
+  (func (export "f64.eq") (param $0 f64) (param $1 f64) (result i32)
+    (f64.eq (get_local $0) (get_local $1)))
+
+  (func (export "f64.ne") (param $0 f64) (param $1 f64) (result i32)
+    (f64.ne (get_local $0) (get_local $1)))
+
+  (func (export "f64.ge") (param $0 f64) (param $1 f64) (result i32)
+    (f64.ge (get_local $0) (get_local $1)))
+
+  (func (export "f64.gt") (param $0 f64) (param $1 f64) (result i32)
+    (f64.gt (get_local $0) (get_local $1)))
+
+  (func (export "f64.le") (param $0 f64) (param $1 f64) (result i32)
+    (f64.le (get_local $0) (get_local $1)))
+
+  (func (export "f64.lt") (param $0 f64) (param $1 f64) (result i32)
+    (f64.lt (get_local $0) (get_local $1)))
 )
