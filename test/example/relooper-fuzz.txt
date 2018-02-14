@@ -449,9 +449,9 @@
    (i32.const 0)
   )
   (if
-   (i32.rem_u
+   (i32.and
     (call $check)
-    (i32.const 2)
+    (i32.const 1)
    )
    (block
     (call $print
@@ -480,9 +480,9 @@
      )
      (br_if $shape$3$continue
       (i32.eqz
-       (i32.rem_u
+       (i32.and
         (call $check)
-        (i32.const 2)
+        (i32.const 1)
        )
       )
      )

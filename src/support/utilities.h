@@ -26,6 +26,8 @@
 #include <iostream>
 #include <type_traits>
 
+#include "support/bits.h"
+
 namespace wasm {
 
 // Type punning needs to be done through this function to avoid undefined
@@ -41,12 +43,8 @@ inline Destination bit_cast(const Source& source) {
   return destination;
 }
 
-inline bool isPowerOf2(uint32_t v) {
-  return v && !(v & (v - 1));
-}
-
 inline size_t alignAddr(size_t address, size_t alignment) {
-  assert(alignment && isPowerOf2((uint32_t)alignment) &&
+  assert(alignment && IsPowerOf2((uint32_t)alignment) &&
          "Alignment is not a power of two!");
 
   assert(address + alignment - 1 >= address);

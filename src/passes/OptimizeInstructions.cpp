@@ -567,9 +567,16 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        // some operations have no effect TODO: many more
+        // some math operations have trivial results TODO: many more
         if (right->value == Literal(int32_t(0))) {
-          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32) {
+          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 || binary->op == OrInt32) {
+            return binary->left;
+          } else if ((binary->op == MulInt32 || binary->op == AndInt32) &&
+                     !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+            return binary->right;
+          }
+        } else if (right->value == Literal(int32_t(1))) {
+          if (binary->op == MulInt32) {
             return binary->left;
           }
         }
@@ -594,6 +601,17 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
                   return left;
                 } // TODO: handle overflows
               }
+            }
+          }
+        }
+        // math operations on a constant power of 2 right side can be optimized
+        if (right->type == i32) {
+          uint32_t c = right->value.geti32();
+          if (IsPowerOf2(c)) {
+            if (binary->op == MulInt32) {
+              return optimizePowerOf2Mul(binary, c);
+            } else if (binary->op == RemUInt32) {
+              return optimizePowerOf2URem(binary, c);
             }
           }
         }
@@ -1022,6 +1040,31 @@ private:
         offset = 0;
       }
     }
+  }
+
+  // Optimize a multiply by a power of two on the right, which
+  // can be a shift.
+  // This doesn't shrink code size, and VMs likely optimize it anyhow,
+  // but it's still worth doing since
+  //  * Often shifts are more common than muls.
+  //  * The constant is smaller.
+  Expression* optimizePowerOf2Mul(Binary* binary, uint32_t c) {
+    uint32_t shifts = CountTrailingZeroes(c);
+    binary->op = ShlInt32;
+    binary->right->cast<Const>()->value = Literal(int32_t(shifts));
+    return binary;
+  }
+
+  // Optimize an unsigned divide by a power of two on the right,
+  // which can be an AND mask
+  // This doesn't shrink code size, and VMs likely optimize it anyhow,
+  // but it's still worth doing since
+  //  * Usually ands are more common than urems.
+  //  * The constant is slightly smaller.
+  Expression* optimizePowerOf2URem(Binary* binary, uint32_t c) {
+    binary->op = AndInt32;
+    binary->right->cast<Const>()->value = Literal(int32_t(c - 1));
+    return binary;
   }
 
   Expression* makeZeroExt(Expression* curr, int32_t bits) {
