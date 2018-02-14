@@ -553,7 +553,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           if (mask == -1) {
             return binary->left;
           }
-          // small loads do not need to be masted, the load itself masks
+          // small loads do not need to be masked, the load itself masks
           if (auto* load = binary->left->dynCast<Load>()) {
             if ((load->bytes == 1 && mask == 0xff) ||
                 (load->bytes == 2 && mask == 0xffff)) {
@@ -1073,7 +1073,7 @@ private:
   }
 
   // given an "almost" sign extend - either a proper one, or it
-  // has too many shifts left - we remove the sig extend. If there are
+  // has too many shifts left - we remove the sign extend. If there are
   // too many shifts, we split the shifts first, so this removes the
   // two sign extend shifts and adds one (smaller one)
   Expression* removeAlmostSignExt(Binary* outer) {
