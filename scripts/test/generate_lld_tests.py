@@ -49,7 +49,6 @@ def generate_wast_files(clang_bin, lld_bin, emscripten_root):
           '-O1',
       ])
 
-
       wasm_file = src_file.replace(ext, '.wasm')
       wast_file = src_file.replace(ext, '.wast')
 
