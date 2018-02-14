@@ -74,4 +74,11 @@
 
   (func (export "f64.max") (param $0 f64) (param $1 f64) (result f64)
     (f64.max (get_local $0) (get_local $1)))
+
+  ;; promotion/demotion
+  (func (export "f64.promote") (param $0 f32) (result f64)
+    (f64.promote/f32 (get_local $0)))
+
+  (func (export "f32.demote") (param $0 f64) (result f32)
+    (f32.demote/f64 (get_local $0)))
 )

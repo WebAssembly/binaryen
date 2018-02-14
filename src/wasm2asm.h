@@ -1400,6 +1400,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                 visit(curr->value, EXPRESSION_RESULT)
               );
               break;
+            case PromoteFloat32:
+              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
+                                     ASM_DOUBLE);
+            case DemoteFloat64:
+              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
+                                     ASM_FLOAT);
             // TODO: more complex unary conversions
             default:
               std::cerr << "Unhandled unary float operator: " << curr

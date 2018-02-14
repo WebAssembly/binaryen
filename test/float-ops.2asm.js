@@ -208,6 +208,20 @@ function asmFunc(global, env, buffer) {
   return +wasm2asm_f64$0;
  }
  
+ function $$25($$0) {
+  $$0 = Math_fround($$0);
+  var $$1 = Math_fround(0), $$2 = 0.0, wasm2asm_f64$0 = 0.0;
+  return +(+$$0);
+  return +wasm2asm_f64$0;
+ }
+ 
+ function $$26($$0) {
+  $$0 = +$$0;
+  var $$1 = 0.0, $$2 = Math_fround(0), wasm2asm_f32$0 = Math_fround(0);
+  return Math_fround(Math_fround($$0));
+  return Math_fround(wasm2asm_f32$0);
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0;
@@ -272,7 +286,9 @@ function asmFunc(global, env, buffer) {
   "f32.min": $$21, 
   "f32.max": $$22, 
   "f64.min": $$23, 
-  "f64.max": $$24
+  "f64.max": $$24, 
+  "f64.promote": $$25, 
+  "f32.demote": $$26
  };
 }
 
