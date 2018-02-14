@@ -1438,112 +1438,122 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref left = visit(curr->left, EXPRESSION_RESULT);
       Ref right = visit(curr->right, EXPRESSION_RESULT);
       Ref ret;
-      switch (curr->op) {
-        case AddInt32:
-          ret = ValueBuilder::makeBinary(left, PLUS, right);
-          break;
-        case SubInt32:
-          ret = ValueBuilder::makeBinary(left, MINUS, right);
-          break;
-        case MulInt32: {
-          if (curr->type == i32) {
-            // TODO: when one operand is a small int, emit a multiply
-            return ValueBuilder::makeCall(MATH_IMUL, left, right);
-          } else {
-            return ValueBuilder::makeBinary(left, MUL, right);
+      switch (curr->type) {
+        case i32: {
+          switch (curr->op) {
+            case AddInt32:
+              ret = ValueBuilder::makeBinary(left, PLUS, right);
+              break;
+            case SubInt32:
+              ret = ValueBuilder::makeBinary(left, MINUS, right);
+              break;
+            case MulInt32: {
+              if (curr->type == i32) {
+                // TODO: when one operand is a small int, emit a multiply
+                return ValueBuilder::makeCall(MATH_IMUL, left, right);
+              } else {
+                return ValueBuilder::makeBinary(left, MUL, right);
+              }
+            }
+            case DivSInt32:
+              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), DIV,
+                                             makeSigning(right, ASM_SIGNED));
+              break;
+            case DivUInt32:
+              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV,
+                                             makeSigning(right, ASM_UNSIGNED));
+              break;
+            case RemSInt32:
+              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), MOD,
+                                             makeSigning(right, ASM_SIGNED));
+              break;
+            case RemUInt32:
+              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD,
+                                             makeSigning(right, ASM_UNSIGNED));
+              break;
+            case AndInt32:
+              ret = ValueBuilder::makeBinary(left, AND, right);
+              break;
+            case OrInt32:
+              ret = ValueBuilder::makeBinary(left, OR, right);
+              break;
+            case XorInt32:
+              ret = ValueBuilder::makeBinary(left, XOR, right);
+              break;
+            case ShlInt32:
+              ret = ValueBuilder::makeBinary(left, LSHIFT, right);
+              break;
+            case ShrUInt32:
+              ret = ValueBuilder::makeBinary(left, TRSHIFT, right);
+              break;
+            case ShrSInt32:
+              ret = ValueBuilder::makeBinary(left, RSHIFT, right);
+              break;
+            case MinFloat32:
+              ret = ValueBuilder::makeCall(MATH_MIN, left, right);
+              break;
+            case MaxFloat32:
+              ret = ValueBuilder::makeCall(MATH_MAX, left, right);
+              break;
+            case EqInt32: {
+              // TODO: check if this condition is still valid/necessary
+              if (curr->left->type == i32) {
+                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
+                                                makeSigning(right, ASM_SIGNED));
+              } else {
+                return ValueBuilder::makeBinary(left, EQ, right);
+              }
+            }
+            case NeInt32: {
+              if (curr->left->type == i32) {
+                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
+                                                makeSigning(right, ASM_SIGNED));
+              } else {
+                return ValueBuilder::makeBinary(left, NE, right);
+              }
+            }
+            case LtSInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
+                                              makeSigning(right, ASM_SIGNED));
+            case LtUInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT,
+                                              makeSigning(right, ASM_UNSIGNED));
+            case LeSInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LE,
+                                              makeSigning(right, ASM_SIGNED));
+            case LeUInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LE,
+                                              makeSigning(right, ASM_UNSIGNED));
+            case GtSInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GT,
+                                              makeSigning(right, ASM_SIGNED));
+            case GtUInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GT,
+                                              makeSigning(right, ASM_UNSIGNED));
+            case GeSInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GE,
+                                              makeSigning(right, ASM_SIGNED));
+            case GeUInt32:
+              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
+                                              makeSigning(right, ASM_UNSIGNED));
+            case RotLInt32:
+              return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right),
+                                 ASM_SIGNED);
+            case RotRInt32:
+              return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
+                                 ASM_SIGNED);
+            default: {
+              std::cerr << "Unhandled i32 binary operator: " << curr << std::endl;
+              abort();
+            }
           }
+          break;
         }
-        case DivSInt32:
-          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), DIV,
-                                         makeSigning(right, ASM_SIGNED));
-          break;
-        case DivUInt32:
-          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV,
-                                         makeSigning(right, ASM_UNSIGNED));
-          break;
-        case RemSInt32:
-          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), MOD,
-                                         makeSigning(right, ASM_SIGNED));
-          break;
-        case RemUInt32:
-          ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD,
-                                         makeSigning(right, ASM_UNSIGNED));
-          break;
-        case AndInt32:
-          ret = ValueBuilder::makeBinary(left, AND, right);
-          break;
-        case OrInt32:
-          ret = ValueBuilder::makeBinary(left, OR, right);
-          break;
-        case XorInt32:
-          ret = ValueBuilder::makeBinary(left, XOR, right);
-          break;
-        case ShlInt32:
-          ret = ValueBuilder::makeBinary(left, LSHIFT, right);
-          break;
-        case ShrUInt32:
-          ret = ValueBuilder::makeBinary(left, TRSHIFT, right);
-          break;
-        case ShrSInt32:
-          ret = ValueBuilder::makeBinary(left, RSHIFT, right);
-          break;
-        case MinFloat32:
-          ret = ValueBuilder::makeCall(MATH_MIN, left, right);
-          break;
-        case MaxFloat32:
-          ret = ValueBuilder::makeCall(MATH_MAX, left, right);
-          break;
-        case EqInt32: {
-          // TODO: check if this condition is still valid/necessary
-          if (curr->left->type == i32) {
-            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
-                                            makeSigning(right, ASM_SIGNED));
-          } else {
-            return ValueBuilder::makeBinary(left, EQ, right);
-          }
-        }
-        case NeInt32: {
-          if (curr->left->type == i32) {
-            return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
-                                            makeSigning(right, ASM_SIGNED));
-          } else {
-            return ValueBuilder::makeBinary(left, NE, right);
-          }
-        }
-        case LtSInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
-                                          makeSigning(right, ASM_SIGNED));
-        case LtUInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT,
-                                          makeSigning(right, ASM_UNSIGNED));
-        case LeSInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LE,
-                                          makeSigning(right, ASM_SIGNED));
-        case LeUInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LE,
-                                          makeSigning(right, ASM_UNSIGNED));
-        case GtSInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GT,
-                                          makeSigning(right, ASM_SIGNED));
-        case GtUInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GT,
-                                          makeSigning(right, ASM_UNSIGNED));
-        case GeSInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GE,
-                                          makeSigning(right, ASM_SIGNED));
-        case GeUInt32:
-          return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
-                                          makeSigning(right, ASM_UNSIGNED));
-        case RotLInt32:
-          return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right),
-                             ASM_SIGNED);
-        case RotRInt32:
-          return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
-                             ASM_SIGNED);
-        default: {
-          std::cerr << "Unhandled binary operator: " << curr << std::endl;
+        case f32:
+        case f64:
+        default:
+          std::cerr << "Unhandled type in binary: " << curr << std::endl;
           abort();
-        }
       }
       return makeAsmCoercion(ret, wasmToAsmType(curr->type));
     }
