@@ -1015,6 +1015,50 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
+  Block* lowerSComp(BinaryOp op, Block* result, TempVar&& leftLow,
+		    TempVar&& leftHigh, TempVar&& rightLow,
+		    TempVar&& rightHigh) {
+    BinaryOp highOp1, highOp2, lowOp;
+    switch (op) {
+      case LtSInt64: highOp1 = LtSInt32; highOp2 = LeSInt32; lowOp = GeUInt32; break;
+      case LeSInt64: highOp1 = LtSInt32; highOp2 = LeSInt32; lowOp = GtUInt32; break;
+      case GtSInt64: highOp1 = GtSInt32; highOp2 = GeSInt32; lowOp = LeUInt32; break;
+      case GeSInt64: highOp1 = GtSInt32; highOp2 = GeSInt32; lowOp = LtUInt32; break;
+      default: abort();
+    }
+    Binary* compHigh1 = builder->makeBinary(
+      highOp1,
+      builder->makeGetLocal(leftHigh, i32),
+      builder->makeGetLocal(rightHigh, i32)
+    );
+    Binary* compHigh2 = builder->makeBinary(
+      highOp2,
+      builder->makeGetLocal(leftHigh, i32),
+      builder->makeGetLocal(rightHigh, i32)
+    );
+    Binary* compLow = builder->makeBinary(
+      lowOp,
+      builder->makeGetLocal(leftLow, i32),
+      builder->makeGetLocal(rightLow, i32)
+    );
+    If* lowIf = builder->makeIf(
+      compLow,
+      builder->makeConst(Literal(int32_t(0))),
+      builder->makeConst(Literal(int32_t(1)))
+    );
+    If* highIf2 = builder->makeIf(
+      compHigh2,
+      lowIf,
+      builder->makeConst(Literal(int32_t(0)))
+    );
+    If* highIf1 = builder->makeIf(
+      compHigh1,
+      builder->makeConst(Literal(int32_t(1))),
+      highIf2
+    );
+    return builder->blockify(result, highIf1);
+  }
+
   bool binaryNeedsLowering(BinaryOp op) {
     switch (op) {
       case AddInt64:
@@ -1131,7 +1175,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case LtSInt64:
       case LeSInt64:
       case GtSInt64:
-      case GeSInt64: goto err;
+      case GeSInt64:
+        replaceCurrent(
+          lowerSComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
+                     std::move(rightLow), std::move(rightHigh))
+        );
+	break;
       case LtUInt64:
       case LeUInt64:
       case GtUInt64:
