@@ -27,7 +27,6 @@
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
 #include "wasm-binary.h"
-#include "support/file.h"
 
 namespace wasm {
 
@@ -65,14 +64,17 @@ void ModuleReader::read(std::string filename, Module& wasm) {
   }
 }
 
-void ModuleWriter::writeText(Module& wasm, std::string filename) {
-  if (debug) std::cerr << "writing text to " << filename << "\n";
-  Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
+void ModuleWriter::writeText(Module& wasm, Output& output) {
   WasmPrinter::printModule(&wasm, output.getStream());
 }
 
-void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
-  if (debug) std::cerr << "writing binary to " << filename << "\n";
+void ModuleWriter::writeText(Module& wasm, std::string filename) {
+  if (debug) std::cerr << "writing text to " << filename << "\n";
+  Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
+  writeText(wasm, output);
+}
+
+void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   BufferWithRandomAccess buffer(debug);
   WasmBinaryWriter writer(&wasm, buffer, debug);
   // if debug info is used, then we want to emit the names section
@@ -85,10 +87,23 @@ void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
   }
   if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
   writer.write();
-  Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
   if (sourceMapStream) {
     sourceMapStream->close();
+  }
+}
+
+void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
+  if (debug) std::cerr << "writing binary to " << filename << "\n";
+  Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
+  writeBinary(wasm, output);
+}
+
+void ModuleWriter::write(Module& wasm, Output& output) {
+  if (binary) {
+    writeBinary(wasm, output);
+  } else {
+    writeText(wasm, output);
   }
 }
 

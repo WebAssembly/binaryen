@@ -23,6 +23,7 @@
 
 #include "wasm.h"
 #include "parsing.h"
+#include "support/file.h"
 
 namespace wasm {
 
@@ -62,12 +63,15 @@ public:
   void setSourceMapUrl(std::string sourceMapUrl_) { sourceMapUrl = sourceMapUrl_; }
 
   // write text
+  void writeText(Module& wasm, Output& output);
   void writeText(Module& wasm, std::string filename);
   // write binary
+  void writeBinary(Module& wasm, Output& output);
   void writeBinary(Module& wasm, std::string filename);
   // write text or binary, defaulting to binary unless setBinary(false),
   // and unless there is no output file (in which case we write text
   // to stdout).
+  void write(Module& wasm, Output& output);
   void write(Module& wasm, std::string filename);
 };
 

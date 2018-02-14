@@ -360,7 +360,7 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
-    binaryen_js = open(os.path.join(options.binaryen_bin, 'binaryen.js')).read()
+    binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
     f.write(binaryen_js)
     if NODEJS:
       f.write(node_test_glue())
@@ -607,7 +607,6 @@ def main():
   run_binaryen_js_tests()
   s2wasm.test_s2wasm()
   s2wasm.test_linker()
-  lld.test_wasm_link_metadata()
   lld.test_wasm_emscripten_finalize()
   wasm2asm.test_wasm2asm()
   run_validator_tests()

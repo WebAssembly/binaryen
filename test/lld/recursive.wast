@@ -3,15 +3,17 @@
  (type $1 (func (result i32)))
  (type $2 (func))
  (import "env" "printf" (func $printf (param i32 i32) (result i32)))
- (global $global$0 (mut i32) (i32.const 66592))
- (global $global$1 i32 (i32.const 66592))
+ (global $global$0 (mut i32) (i32.const 66128))
+ (global $global$1 i32 (i32.const 66128))
+ (global $global$2 i32 (i32.const 587))
  (table 1 1 anyfunc)
  (memory $0 2)
- (data (i32.const 1024) "%d:%d\n\00Result: %d\n\00")
+ (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (export "memory" (memory $0))
- (export "main" (func $main))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "main" (func $main))
  (export "__heap_base" (global $global$1))
+ (export "__data_end" (global $global$2))
  (func $foo (; 1 ;) (type $0) (param $var$0 i32) (param $var$1 i32) (result i32)
   (local $var$2 i32)
   (set_global $global$0
@@ -32,7 +34,7 @@
   )
   (drop
    (call $printf
-    (i32.const 1024)
+    (i32.const 568)
     (get_local $var$2)
    )
   )
@@ -66,7 +68,7 @@
   )
   (drop
    (call $printf
-    (i32.const 1031)
+    (i32.const 575)
     (get_local $var$0)
    )
   )

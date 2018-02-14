@@ -40,7 +40,7 @@ int main(int argc, const char *argv[]) {
   std::string outfile;
   bool emitBinary = true;
   unsigned numReservedFunctionPointers = 0;
-  std::vector<Name> forcedExports;
+  uint64_t globalBase;
   Options options("wasm-emscripten-finalize",
                   "Performs Emscripten-specific transforms on .wasm files");
   options
@@ -62,6 +62,11 @@ int main(int argc, const char *argv[]) {
            [&numReservedFunctionPointers](Options *,
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
+           })
+      .add("--global-base", "", "Where lld started to place globals",
+           Options::Arguments::One,
+           [&globalBase](Options*, const std::string&argument ) {
+             globalBase = std::stoull(argument);
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
@@ -85,18 +90,37 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
+  Export* dataEndExport = wasm.getExport("__data_end");
+  if (dataEndExport == nullptr) {
+    Fatal() << "__data_end export not found";
+  }
+  Global* dataEnd = wasm.getGlobal(dataEndExport->value);
+  if (dataEnd == nullptr) {
+    Fatal() << "__data_end global not found";
+  }
+  if (dataEnd->type != Type::i32) {
+    Fatal() << "__data_end global has wrong type";
+  }
+  Const* dataEndConst = dataEnd->init->cast<Const>();
+  uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
+
+  std::vector<Name> initializerFunctions;
+  initializerFunctions.push_back("__wasm_call_ctors");
+
   EmscriptenGlueGenerator generator(wasm);
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
-  generator.fixEmAsmConsts();
+  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
 
   if (options.debug) {
     std::cerr << "Module after:\n";
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
+  auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
+  Output output(outfile, outputBinaryFlag, Flags::Release);
   ModuleWriter writer;
   // writer.setDebug(options.debug);
   writer.setDebugInfo(true);
@@ -107,7 +131,11 @@ int main(int argc, const char *argv[]) {
   //   writer.setSourceMapFilename(sourceMapFilename);
   //   writer.setSourceMapUrl(sourceMapUrl);
   // }
-  writer.write(wasm, outfile);
+  writer.write(wasm, output);
+  if (!emitBinary) {
+    output << ";; METADATA: ";
+  }
+  output << metadata;
 
   return 0;
 }
