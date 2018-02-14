@@ -1551,6 +1551,37 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
         case f32:
         case f64:
+	  switch (curr->op) {
+	    case AddFloat32:
+	    case AddFloat64:
+	      ret = ValueBuilder::makeBinary(left, PLUS, right);
+              break;
+            case SubFloat32:
+            case SubFloat64:
+              ret = ValueBuilder::makeBinary(left, MINUS, right);
+              break;
+            case MulFloat32:
+            case MulFloat64:
+              ret = ValueBuilder::makeBinary(left, MUL, right);
+              break;
+            case DivFloat32:
+            case DivFloat64:
+              ret = ValueBuilder::makeBinary(left, DIV, right);
+              break;
+            case MinFloat32:
+            case MinFloat64:
+            case MaxFloat32:
+            case MaxFloat64:
+            case CopySignFloat32:
+            case CopySignFloat64:
+            default:
+              std::cerr << "Unhandled binary float operator: " << curr << std::endl;
+              abort();
+          }
+          if (curr->type == f32) {
+            return makeAsmCoercion(ret, ASM_FLOAT);
+          }
+          return ret;
         default:
           std::cerr << "Unhandled type in binary: " << curr << std::endl;
           abort();
