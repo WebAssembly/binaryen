@@ -28,7 +28,7 @@ def files_with_extensions(path, extensions):
 
 
 def generate_wast_files(clang_bin, lld_bin, emscripten_root):
-  print '\n[ building wasm files from C sources... ]\n'
+  print '\n[ building wast files from C sources... ]\n'
 
   lld_path = os.path.join(shared.options.binaryen_test, 'lld')
   for src_file, ext in files_with_extensions(lld_path, ['.c', '.cpp']):
