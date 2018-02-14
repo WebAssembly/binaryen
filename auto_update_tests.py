@@ -86,7 +86,8 @@ for wast_path in files_with_pattern('test', 'lld', '*.wast'):
     out_path = wast_path + ext
     if ext != '.out' and not os.path.exists(out_path):
       continue
-    cmd = WASM_EMSCRIPTEN_FINALIZE + [wast_path, '-S', '--global-base=1024'] + ext_args
+    cmd = (WASM_EMSCRIPTEN_FINALIZE +
+           [wast_path, '-S', '--global-base=568'] + ext_args)
     actual = run_command(cmd)
     with open(out_path, 'w') as o: o.write(actual)
 

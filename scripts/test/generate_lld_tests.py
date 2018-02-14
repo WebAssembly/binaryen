@@ -63,7 +63,7 @@ def generate_wast_files(clang_bin, lld_bin, emscripten_root):
           '--entry=main',
           '--allow-undefined',
           '--export', '__wasm_call_ctors',
-          '--global-base=1024',
+          '--global-base=568',
       ])
       run_command(shared.WASM_DIS + [wasm_path, '-o', wast_path])
     finally:
