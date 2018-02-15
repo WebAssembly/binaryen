@@ -39,12 +39,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
    * Consequently Binaryen's text format allows only s-expressions. WebAssembly's official text format is primarily a linear instruction list (with s-expression extensions). Binaryen can't read the linear style, but it can read a wasm text file if it contains only s-expressions.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows block/if/loop to take it, allowing [local transforms that don't need to know the global context](https://github.com/WebAssembly/binaryen/issues/903).
-   * Binaryen ignores unreachable code when reading WebAssembly binaries. That means that if you read a wasm file with unreachable code, that code will be discarded as if it were optimized out (often this is what you want anyhow, and optimized programs have no unreachable code anyway, but if you write an unoptimized file and then read it, it may look different). The reason for this behavior is that unreachable code in WebAssembly has corner cases that are tricky to handle in Binaryen IR (it can be very unstructured, and Binaryen IR is more structured than WebAssembly as noted earlier). Note that Binaryen does support unreachable code in .was text files, since as we saw Binaryen only supports s-expressions there, which are structured.
+   * Binaryen ignores unreachable code when reading WebAssembly binaries. That means that if you read a wasm file with unreachable code, that code will be discarded as if it were optimized out (often this is what you want anyhow, and optimized programs have no unreachable code anyway, but if you write an unoptimized file and then read it, it may look different). The reason for this behavior is that unreachable code in WebAssembly has corner cases that are tricky to handle in Binaryen IR (it can be very unstructured, and Binaryen IR is more structured than WebAssembly as noted earlier). Note that Binaryen does support unreachable code in .wat text files, since as we saw Binaryen only supports s-expressions there, which are structured.
  * Blocks
    * Binaryen IR has only one node that contains a variable-length list of operands: the block. WebAssembly on the other hand allows lists in loops, if arms, and the top level of a function. Binaryen's IR has a single operand for all non-block nodes; this operand may of course be a block. The motivation for this property is that many passes need special code for iterating on lists, so having a single IR node with a list simplifies them.
    * As in wasm, blocks and loops may have names. Branch targets in the IR are resolved by name (as opposed to nesting depth). This has 2 consequences:
      * Blocks without names may not be branch targets.
-     * Names are required to be unique. (Reading .was files with duplicate names is supported; the names are modified when the IR is constructed).
+     * Names are required to be unique. (Reading .wat files with duplicate names is supported; the names are modified when the IR is constructed).
    * As an optimization, a block that is the child of a loop (or if arm, or function toplevel) and which has no branches targeting it will not be emitted when generating wasm. Instead its list of operands will be directly used in the containing node. Such a block is sometimes called an "implicit block".
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
@@ -113,7 +113,7 @@ If you also want to compile C/C++ to WebAssembly (and not just asm.js to WebAsse
 Run
 
 ````
-bin/wasm-opt [.wasm or .was file] [options] [passes, see --help] [--help]
+bin/wasm-opt [.wasm or .wat file] [options] [passes, see --help] [--help]
 ````
 
 The wasm optimizer receives WebAssembly as input, and can run transformation passes on it, as well as print it (before and/or after the transformations). For example, try
@@ -185,7 +185,7 @@ Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly
 
 ```
 llc code.ll -mtriple=wasm32-unknown-unknown-elf -filetype=asm -o code.s
-s2wasm code.s > code.was
+s2wasm code.s > code.wat
 ```
 
 You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.). You can use either normal Emscripten, including it's "fastcomp" fork of LLVM, or you can use "vanilla" LLVM, that is, pure upstream LLVM without Emscripten's additions. With Vanilla LLVM, you can build with
