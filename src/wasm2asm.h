@@ -211,6 +211,7 @@ private:
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
+  void addGlobal(Ref ast, Global* global);
   void addWasmCompatibilityFuncs(Module* wasm);
   void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast);
@@ -418,6 +419,10 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     pow2ed <<= 1;
   }
   tableSize = pow2ed;
+  // globals
+  for (auto& global : wasm->globals) {
+    addGlobal(asmFunc[3], global.get());
+  }
   // functions
   for (auto& func : wasm->functions) {
     asmFunc[3]->push_back(processFunction(func.get()));
@@ -576,6 +581,49 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
     addMemoryGrowthFuncs(ast);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
+}
+
+void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
+  assert(global->init);
+
+  if (global->init->is<Const>()) {
+    auto const_ = static_cast<Const*>(global->init);
+    switch (const_->type) {
+      case Type::i32: {
+        Ref theVar = ValueBuilder::makeVar();
+        ast->push_back(theVar);
+        ValueBuilder::appendToVar(theVar,
+          fromName(global->name),
+          ValueBuilder::makeInt(const_->value.geti32())
+        );
+        break;
+      }
+      case Type::f32: {
+        Ref theVar = ValueBuilder::makeVar();
+        ast->push_back(theVar);
+        ValueBuilder::appendToVar(theVar,
+          fromName(global->name),
+          ValueBuilder::makeCall(MATH_FROUND,
+            makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf32()), ASM_DOUBLE)
+          )
+        );
+        break;
+      }
+      case Type::f64: {
+        Ref theVar = ValueBuilder::makeVar();
+        ast->push_back(theVar);
+        ValueBuilder::appendToVar(theVar,
+          fromName(global->name),
+          makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE)
+        );
+        break;
+      }
+      default:
+        assert(false && "Global const type not supported");
+    }
+  } else {
+    assert(false && "Global init type not supported");
+  }
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
