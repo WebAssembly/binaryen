@@ -68,6 +68,7 @@ echo "building shared bitcode"
 "$EMSCRIPTEN/em++" \
   $EMCC_ARGS \
   $BINARYEN_SRC/asmjs/asm_v_wasm.cpp \
+  $BINARYEN_SRC/asmjs/asmangle.cpp \
   $BINARYEN_SRC/asmjs/shared-constants.cpp \
   $BINARYEN_SRC/cfg/Relooper.cpp \
   $BINARYEN_SRC/emscripten-optimizer/optimizer-shared.cpp \
