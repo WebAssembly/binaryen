@@ -144,4 +144,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["atoi"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["atoi"], "externs": [], "implementedFunctions": ["__Z18address_taken_funciii","__Z19address_taken_func2iii","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_viii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_viii"] }

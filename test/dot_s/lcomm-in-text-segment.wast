@@ -35,4 +35,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_stackSave","_stackAlloc","_stackRestore"], "exports": ["stackSave","stackAlloc","stackRestore"] }

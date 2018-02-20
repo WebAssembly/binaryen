@@ -71,4 +71,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 8, "initializers": ["__wasm_call_ctors"], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 8, "initializers": ["__wasm_call_ctors"], "declares": [], "externs": [], "implementedFunctions": ["_init_x","_init_y","_main","___wasm_call_ctors","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"] }

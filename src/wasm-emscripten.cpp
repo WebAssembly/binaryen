@@ -536,6 +536,20 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "]";
 
+  meta << ", \"implementedFunctions\": [";
+  commaFirst = true;
+  for (const auto& func : wasm.functions) {
+    meta << maybeComma() << "\"_" << func->name.str << '"';
+  }
+  meta << "]";
+
+  meta << ", \"exports\": [";
+  commaFirst = true;
+  for (const auto& ex : wasm.exports) {
+    meta << maybeComma() << '"' << ex->name.str << '"';
+  }
+  meta << "]";
+
   meta << " }\n";
 
   return meta.str();

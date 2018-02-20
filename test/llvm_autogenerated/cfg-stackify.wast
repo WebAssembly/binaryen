@@ -993,4 +993,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["a","bar","something","test15_callee0","test15_callee1"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["a","bar","something","test15_callee0","test15_callee1"], "externs": [], "implementedFunctions": ["_test0","_test1","_test2","_doublediamond","_triangle","_diamond","_single_block","_minimal_loop","_simple_loop","_doubletriangle","_ifelse_earlyexits","_doublediamond_in_a_loop","_test3","_test4","_test5","_test6","_test7","_test8","_test9","_test10","_test11","_test12","_test13","_test14","_test15","_stackSave","_stackAlloc","_stackRestore"], "exports": ["test0","test1","test2","doublediamond","triangle","diamond","single_block","minimal_loop","simple_loop","doubletriangle","ifelse_earlyexits","doublediamond_in_a_loop","test3","test4","test5","test6","test7","test8","test9","test10","test11","test12","test13","test14","test15","stackSave","stackAlloc","stackRestore"] }

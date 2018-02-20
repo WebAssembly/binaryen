@@ -203,4 +203,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_zero_i32","_one_i32","_max_i32","_min_i32","_zero_i64","_one_i64","_max_i64","_min_i64","_negzero_f32","_zero_f32","_one_f32","_two_f32","_nan_f32","_negnan_f32","_inf_f32","_neginf_f32","_custom_nan_f32","_custom_nans_f32","_negzero_f64","_zero_f64","_one_f64","_two_f64","_nan_f64","_negnan_f64","_inf_f64","_neginf_f64","_custom_nan_f64","_custom_nans_f64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["zero_i32","one_i32","max_i32","min_i32","zero_i64","one_i64","max_i64","min_i64","negzero_f32","zero_f32","one_f32","two_f32","nan_f32","negnan_f32","inf_f32","neginf_f32","custom_nan_f32","custom_nans_f32","negzero_f64","zero_f64","one_f64","two_f64","nan_f64","negnan_f64","inf_f64","neginf_f64","custom_nan_f64","custom_nans_f64","stackSave","stackAlloc","stackRestore"] }

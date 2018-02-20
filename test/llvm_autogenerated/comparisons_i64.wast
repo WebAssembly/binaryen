@@ -125,4 +125,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_eq_i64","_ne_i64","_slt_i64","_sle_i64","_ult_i64","_ule_i64","_sgt_i64","_sge_i64","_ugt_i64","_uge_i64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["eq_i64","ne_i64","slt_i64","sle_i64","ult_i64","ule_i64","sgt_i64","sge_i64","ugt_i64","uge_i64","stackSave","stackAlloc","stackRestore"] }

@@ -46,4 +46,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["v"]]},"staticBump": 51, "initializers": [], "declares": ["emscripten_asm_const_v"], "externs": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["v"]]},"staticBump": 51, "initializers": [], "declares": ["emscripten_asm_const_v"], "externs": [], "implementedFunctions": ["_main","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","stackSave","stackAlloc","stackRestore"] }

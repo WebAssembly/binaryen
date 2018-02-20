@@ -119,4 +119,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_unreachable_block_void","_unreachable_block_i32","_unreachable_block_i64","_unreachable_block_f32","_unreachable_block_f64","_unreachable_loop_void","_unreachable_loop_i32","_unreachable_loop_i64","_unreachable_loop_f32","_unreachable_loop_f64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["stackSave","stackAlloc","stackRestore"] }

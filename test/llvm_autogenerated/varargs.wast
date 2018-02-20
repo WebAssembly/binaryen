@@ -217,4 +217,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["callee"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["callee"], "externs": [], "implementedFunctions": ["_start","_end","_copy","_arg_i8","_arg_i32","_arg_i128","_caller_none","_caller_some","_startbb","_stackSave","_stackAlloc","_stackRestore"], "exports": ["start","end","copy","arg_i8","arg_i32","arg_i128","caller_none","caller_some","startbb","stackSave","stackAlloc","stackRestore"] }

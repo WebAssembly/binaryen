@@ -55,4 +55,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_fold_promote","_fold_demote","_stackSave","_stackAlloc","_stackRestore"], "exports": ["fold_promote","fold_demote","stackSave","stackAlloc","stackRestore"] }

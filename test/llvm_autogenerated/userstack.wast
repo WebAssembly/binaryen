@@ -488,4 +488,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["ext_func","ext_func_i32","use_i8_star"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["ext_func","ext_func_i32","use_i8_star"], "externs": [], "implementedFunctions": ["_alloca32","_alloca3264","_allocarray","_non_mem_use","_allocarray_inbounds","_dynamic_alloca","_dynamic_alloca_redzone","_dynamic_static_alloca","_llvm_stack_builtins","_dynamic_alloca_nouse","_copytoreg_fi","_frameaddress_0","_frameaddress_1","_inline_asm","_stackSave","_stackAlloc","_stackRestore"], "exports": ["alloca32","alloca3264","allocarray","non_mem_use","allocarray_inbounds","dynamic_alloca","dynamic_alloca_redzone","dynamic_static_alloca","llvm_stack_builtins","dynamic_alloca_nouse","copytoreg_fi","frameaddress_0","frameaddress_1","inline_asm","stackSave","stackAlloc","stackRestore"] }

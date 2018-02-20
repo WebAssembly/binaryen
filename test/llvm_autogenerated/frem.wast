@@ -57,4 +57,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["fmod","fmodf"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["fmod","fmodf"], "externs": [], "implementedFunctions": ["_frem32","_frem64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["frem32","frem64","stackSave","stackAlloc","stackRestore"] }

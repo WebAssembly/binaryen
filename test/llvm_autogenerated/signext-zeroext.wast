@@ -87,4 +87,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_z2s_func","_s2z_func","_z2s_call","_s2z_call","_stackSave","_stackAlloc","_stackRestore"], "exports": ["z2s_func","s2z_func","z2s_call","s2z_call","stackSave","stackAlloc","stackRestore"] }

@@ -212,4 +212,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["big_byval_callee","ext_byval_func","ext_byval_func_align8","ext_byval_func_alignedstruct","ext_byval_func_empty","ext_func","ext_func_empty","memcpy"], "externs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["big_byval_callee","ext_byval_func","ext_byval_func_align8","ext_byval_func_alignedstruct","ext_byval_func_empty","ext_func","ext_func_empty","memcpy"], "externs": [], "implementedFunctions": ["_byval_arg","_byval_arg_align8","_byval_arg_double","_byval_param","_byval_empty_caller","_byval_empty_callee","_big_byval","_stackSave","_stackAlloc","_stackRestore"], "exports": ["byval_arg","byval_arg_align8","byval_arg_double","byval_param","byval_empty_caller","byval_empty_callee","big_byval","stackSave","stackAlloc","stackRestore"] }
