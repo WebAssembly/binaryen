@@ -19,20 +19,18 @@
 
 std::string asmangle(std::string name) {
   bool mightBeKeyword = true;
+  size_t i = 1;
 
   // Names cannot be empty
   if (!name.length()) {
     assert(false && "Name must not be empty");
     name = "$$";
+    i = 2;
     mightBeKeyword = false;
 
   // Names must start with a character, $ or _
   } else {
     switch (auto ch = name[0]) {
-      case '$':
-      case '_':
-        mightBeKeyword = false;
-        break;
       case '0':
       case '1':
       case '2':
@@ -44,6 +42,9 @@ std::string asmangle(std::string name) {
       case '8':
       case '9':
         name = "$" + name;
+        i = 2;
+      case '$':
+      case '_':
         mightBeKeyword = false;
         break;
       default:
@@ -58,8 +59,19 @@ std::string asmangle(std::string name) {
   }
 
   // Names must contain only characters, digits, $ or _
-  for (size_t i = 1, k = name.length(); i < k; ++i) {
-    switch (auto ch = name[i]) {
+  size_t len = name.length();
+  for (; i < len; ++i) {
+    switch (char ch = name[i]) {
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
       case '$':
       case '_':
         mightBeKeyword = false;
@@ -67,8 +79,7 @@ std::string asmangle(std::string name) {
       default:
         if (
           !(ch >= 'a' && ch <= 'z') &&
-          !(ch >= 'A' && ch <= 'Z') &&
-          !(ch >= '0' && ch <= '9')
+          !(ch >= 'A' && ch <= 'Z')
         ) {
           name = name.substr(0, i) + "_" + name.substr(i + 1);
           mightBeKeyword = false;
@@ -77,17 +88,16 @@ std::string asmangle(std::string name) {
   }
 
   // Names must not collide with keywords
-  auto len = name.length();
   if (mightBeKeyword && len >= 2 && len <= 10) {
     switch (name[0]) {
       case 'a':
         if (name == "arguments") {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'b':
         if (name == "break") {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'c':
@@ -98,7 +108,7 @@ std::string asmangle(std::string name) {
           name == "const" ||
           name == "class"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'd':
@@ -107,7 +117,7 @@ std::string asmangle(std::string name) {
           name == "default" ||
           name == "debugger"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'e':
@@ -118,7 +128,7 @@ std::string asmangle(std::string name) {
           name == "export" ||
           name == "extends"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'f':
@@ -128,7 +138,7 @@ std::string asmangle(std::string name) {
           name == "finally" ||
           name == "function"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'i':
@@ -140,12 +150,12 @@ std::string asmangle(std::string name) {
           name == "implements" ||
           name == "instanceof"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'l':
         if (name == "let") {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'n':
@@ -153,7 +163,7 @@ std::string asmangle(std::string name) {
           name == "new" ||
           name == "null"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'p':
@@ -163,12 +173,12 @@ std::string asmangle(std::string name) {
           name == "private" ||
           name == "protected"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'r':
         if (name == "return") {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 's':
@@ -177,7 +187,7 @@ std::string asmangle(std::string name) {
           name == "static" ||
           name == "switch"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 't':
@@ -188,7 +198,7 @@ std::string asmangle(std::string name) {
           name == "throw" ||
           name == "typeof"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'v':
@@ -196,7 +206,7 @@ std::string asmangle(std::string name) {
           name == "var" ||
           name == "void"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'w':
@@ -204,15 +214,15 @@ std::string asmangle(std::string name) {
           name == "with" ||
           name == "while"
         ) {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
       case 'y':
         if (name == "yield") {
-          goto mangle;
+          goto mangleKeyword;
         }
         break;
-      mangle:
+      mangleKeyword:
         name = name + "_";
     }
   }
