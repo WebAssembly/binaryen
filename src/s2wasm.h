@@ -1337,7 +1337,7 @@ class S2WasmBuilder {
     }
     skipWhitespace();
     Address align = 4; // XXX default?
-    if (match(".globl")) {
+    if (match(".globl") || match(".weak")) {
       mustMatch(name.str);
       skipWhitespace();
     }
