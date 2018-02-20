@@ -113,8 +113,9 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
   while (*i < root->size()) {
     Element& curr = *(*root)[*i];
     IString id = curr[0]->str();
-    if (id == MODULE)
+    if (id == MODULE) {
       break;
+}
     *checked = true;
     Colors::red(std::cerr);
     std::cerr << *i << '/' << (root->size() - 1);
@@ -208,8 +209,9 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
           }
         }
       }
-      if (id == ASSERT_TRAP)
+      if (id == ASSERT_TRAP) {
         assert(trapped);
+}
     }
     *i += 1;
   }
@@ -251,9 +253,10 @@ int main(int argc, const char* argv[]) {
   bool checked = false;
 
   try {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "parsing text to s-expressions...\n";
-    SExpressionParser parser(input.data());
+    
+}SExpressionParser parser(input.data());
     Element& root = *parser.root;
 
     // A .wast may have multiple modules, with some asserts after them
@@ -269,9 +272,10 @@ int main(int argc, const char* argv[]) {
       }
       IString id = curr[0]->str();
       if (id == MODULE) {
-        if (options.debug)
+        if (options.debug) {
           std::cerr << "parsing s-expressions to wasm...\n";
-        Colors::green(std::cerr);
+        
+}Colors::green(std::cerr);
         std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
         auto module = wasm::make_unique<Module>();

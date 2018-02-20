@@ -37,9 +37,10 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
       }
       os << nextWord;
       space -= nextWord.size() + 1;
-      if (space > 0)
+      if (space > 0) {
         os << ' ';
-      nextWord.clear();
+      
+}nextWord.clear();
       if (content[i] == '\n') {
         os << '\n';
         space = SCREEN_WIDTH - leftPad;
@@ -53,8 +54,9 @@ Options::Options(const std::string& command, const std::string& description)
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
     [this, command, description](Options* o, const std::string&) {
       std::cerr << command;
-      if (positional != Arguments::Zero)
+      if (positional != Arguments::Zero) {
         std::cerr << ' ' << positionalName;
+}
       std::cerr << "\n\n";
       printWrap(std::cerr, 0, description);
       std::cerr << "\n\nOptions:\n";
@@ -98,8 +100,9 @@ void Options::parse(int argc, const char* argv[]) {
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
     for (size_t i = 0;; ++i) {
-      if (s[i] != '-')
+      if (s[i] != '-') {
         return i;
+}
     }
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
@@ -135,9 +138,11 @@ void Options::parse(int argc, const char* argv[]) {
       currentOption = currentOption.substr(0, equal);
     }
     Option* option = nullptr;
-    for (auto& o : options)
-      if (o.longName == currentOption || o.shortName == currentOption)
+    for (auto& o : options) {
+      if (o.longName == currentOption || o.shortName == currentOption) {
         option = &o;
+}
+}
     if (!option) {
       std::cerr << "Unknown option '" << currentOption << "'\n";
       exit(EXIT_FAILURE);
@@ -168,8 +173,9 @@ void Options::parse(int argc, const char* argv[]) {
         break;
       case Arguments::Optional:
         if (!argument.size()) {
-          if (i + 1 != e)
+          if (i + 1 != e) {
             argument = argv[++i];
+}
         }
         break;
     }

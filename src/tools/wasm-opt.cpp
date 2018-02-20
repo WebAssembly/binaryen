@@ -125,10 +125,11 @@ int main(int argc, const char* argv[]) {
   // don't expect any passes to accidentally generate atomic ops
   FeatureSet features = Feature::Atomics;
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "reading...\n";
 
-  if (!translateToFuzz) {
+  
+}if (!translateToFuzz) {
     ModuleReader reader;
     reader.setDebug(options.debug);
     try {
@@ -181,8 +182,9 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "writing binary before opts, for extra fuzz command..." << std::endl;
+}
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
@@ -213,9 +215,10 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.runningPasses()) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "running passes...\n";
-    options.runPasses(*curr);
+    
+}options.runPasses(*curr);
     bool valid = WasmValidator().validate(*curr, features);
     if (!valid) {
       WasmPrinter::printModule(&*curr);
@@ -228,8 +231,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra.count("output") > 0) {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "writing..." << std::endl;
+}
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);

@@ -31,11 +31,13 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     Copier(Module& wasm, CustomCopier custom) : wasm(wasm), custom(custom), builder(wasm) {}
 
     Expression* copy(Expression* curr) {
-      if (!curr)
+      if (!curr) {
         return nullptr;
+}
       auto* ret = custom(curr);
-      if (ret)
+      if (ret) {
         return ret;
+}
       return Visitor<Copier, Expression*>::visit(curr);
     }
 

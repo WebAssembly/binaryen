@@ -78,15 +78,17 @@ struct PrintCallGraph : public Pass {
       }
       void visitCall(Call* curr) {
         auto* target = module->getFunction(curr->target);
-        if (visitedTargets.count(target->name) > 0)
+        if (visitedTargets.count(target->name) > 0) {
           return;
+}
         visitedTargets.insert(target->name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
       }
       void visitCallImport(CallImport* curr) {
         auto name = curr->target;
-        if (visitedTargets.count(name) > 0)
+        if (visitedTargets.count(name) > 0) {
           return;
+}
         visitedTargets.insert(name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }

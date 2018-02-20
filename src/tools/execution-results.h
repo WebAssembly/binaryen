@@ -40,8 +40,9 @@ struct ExecutionResults {
     ModuleInstance instance(wasm, &interface);
     // execute all exported methods (that are therefore preserved through opts)
     for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function)
+      if (exp->kind != ExternalKind::Function) {
         continue;
+}
       auto* func = wasm.getFunction(exp->value);
       if (func->result != none) {
         // this has a result

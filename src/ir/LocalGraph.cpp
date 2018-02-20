@@ -36,10 +36,12 @@ struct Action {
   Expression* expr; // the expression itself
 
   Action(What what, Index index, Expression* expr) : what(what), index(index), expr(expr) {
-    if (what == Get)
+    if (what == Get) {
       assert(expr->is<GetLocal>());
-    if (what == Set)
+}
+    if (what == Set) {
       assert(expr->is<SetLocal>());
+}
   }
 
   bool isGet() { return what == Get; }
@@ -52,8 +54,9 @@ struct Info {
   std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
-    if (actions.empty())
+    if (actions.empty()) {
       return;
+}
     std::cout << "    actions:\n";
     for (auto& action : actions) {
       std::cout << "      " << (action.isGet() ? "get" : "set") << " "
@@ -90,8 +93,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   static void doVisitGetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<GetLocal>();
     // if in unreachable code, skip
-    if (!self->currBasicBlock)
+    if (!self->currBasicBlock) {
       return;
+}
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, curr);
     self->locations[curr] = currp;
   }
@@ -99,8 +103,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   static void doVisitSetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, skip
-    if (!self->currBasicBlock)
+    if (!self->currBasicBlock) {
       return;
+}
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
@@ -145,8 +150,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // can do that for all gets as a whole, they will get the same results
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
-        if (gets.empty())
+        if (gets.empty()) {
           continue;
+}
         work.push_back(block.get());
         seen.clear();
         // note that we may need to revisit the later parts of this initial
@@ -165,8 +171,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           } else {
             for (auto* pred : curr->in) {
-              if (seen.count(pred))
+              if (seen.count(pred)) {
                 continue;
+}
               seen.insert(pred);
               auto* lastSet = pred->contents.lastSets[index];
               if (lastSet) {

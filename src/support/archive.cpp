@@ -45,8 +45,9 @@ std::string ArchiveMemberHeader::getName() const {
     endChar = '/'; // regular name
   }
   auto* end = static_cast<const uint8_t*>(memchr(fileName, endChar, sizeof(fileName)));
-  if (!end)
+  if (!end) {
     end = fileName + sizeof(fileName);
+}
   return std::string((char*)(fileName), end - fileName);
 }
 
@@ -78,16 +79,18 @@ Archive::Archive(Buffer& b, bool& error)
     return;
   }
   child_iterator end = child_end();
-  if (it == end)
+  if (it == end) {
     return; // Empty archive.
+}
 
   const Child* c = &*it;
 
   auto increment = [&]() {
     ++it;
     error = it.hasError();
-    if (error)
+    if (error) {
       return true;
+}
     c = &*it;
     return false;
   };
@@ -95,15 +98,17 @@ Archive::Archive(Buffer& b, bool& error)
   std::string name = c->getRawName();
   if (name == "/") {
     symbolTable = c->getBuffer();
-    if (increment() || it == end)
+    if (increment() || it == end) {
       return;
+}
     name = c->getRawName();
   }
 
   if (name == "//") {
     stringTable = c->getBuffer();
-    if (increment() || it == end)
+    if (increment() || it == end) {
       return;
+}
     setFirstRegular(*c);
     return;
   }
@@ -117,8 +122,9 @@ Archive::Archive(Buffer& b, bool& error)
 
 Archive::Child::Child(const Archive* parent, const uint8_t* data, bool* error)
   : parent(parent), data(data) {
-  if (!data)
+  if (!data) {
     return;
+}
   len = sizeof(ArchiveMemberHeader) + getHeader()->getSize();
   startOfFile = sizeof(ArchiveMemberHeader);
 }
@@ -172,8 +178,9 @@ std::string Archive::Child::getName() const {
 }
 
 Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
-  if (data.size() == 0)
+  if (data.size() == 0) {
     return child_end();
+}
 
   if (SkipInternal) {
     child_iterator it;

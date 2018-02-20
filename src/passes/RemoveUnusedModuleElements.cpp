@@ -232,8 +232,9 @@ struct RemoveUnusedModuleElements : public Pass {
     std::unordered_map<std::string, FunctionType*> canonicals;
     std::unordered_set<FunctionType*> needed;
     auto canonicalize = [&](Name name) {
-      if (!name.is())
+      if (!name.is()) {
         return name;
+}
       FunctionType* type = module->getFunctionType(name);
       auto sig = getSig(type);
       auto iter = canonicals.find(sig);

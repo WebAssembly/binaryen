@@ -44,8 +44,9 @@ static void PrintDebug(const char* Format, ...);
 
 static wasm::Expression* HandleFollowupMultiples(
   wasm::Expression* Ret, Shape* Parent, RelooperBuilder& Builder, bool InLoop) {
-  if (!Parent->Next)
+  if (!Parent->Next) {
     return Ret;
+}
 
   auto* Curr = Ret->dynCast<wasm::Block>();
   if (!Curr || Curr->name.is()) {
@@ -54,8 +55,9 @@ static wasm::Expression* HandleFollowupMultiples(
   // for each multiple after us, we create a block target for breaks to reach
   while (Parent->Next) {
     auto* Multiple = Shape::IsMultiple(Parent->Next);
-    if (!Multiple)
+    if (!Multiple) {
       break;
+}
     for (auto& iter : Multiple->InnerMap) {
       int Id = iter.first;
       Shape* Body = iter.second;
@@ -114,10 +116,12 @@ Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit
 
 wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block* Target, bool SetLabel) {
   auto* Ret = Builder.makeBlock();
-  if (Code)
+  if (Code) {
     Ret->list.push_back(Code);
-  if (SetLabel)
+}
+  if (SetLabel) {
     Ret->list.push_back(Builder.makeSetLabel(Target->Id));
+}
   if (Type == Break) {
     Ret->list.push_back(Builder.makeBlockBreak(Target->Id));
   } else if (Type == Continue) {
@@ -160,8 +164,9 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   if (IsCheckedMultipleEntry && InLoop) {
     Ret->list.push_back(Builder.makeSetLabel(0));
   }
-  if (Code)
+  if (Code) {
     Ret->list.push_back(Code);
+}
 
   if (!ProcessedBranchesOut.size()) {
     Ret->finalize();
@@ -240,8 +245,9 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
       Branch* Details;
       if (iter != ProcessedBranchesOut.end()) {
         Target = iter->first;
-        if (Target == DefaultTarget)
+        if (Target == DefaultTarget) {
           continue; // done at the end
+}
         Details = iter->second;
         assert(Details->Condition); // must have a condition if this is not the default target
       } else {
@@ -300,8 +306,9 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
           RemainingConditions = Now;
         }
       }
-      if (IsDefault)
+      if (IsDefault) {
         break;
+}
     }
 
     // finalize the if-chains
@@ -363,16 +370,18 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
         if (!Details->SwitchValues) {
           // this is the default, and it has no content. So make the default be the leave
           for (auto& Value : Table) {
-            if (Value == SwitchDefault)
+            if (Value == SwitchDefault) {
               Value = SwitchLeave;
+}
           }
           SwitchDefault = SwitchLeave;
         }
       }
       if (Details->SwitchValues) {
         for (auto Value : *Details->SwitchValues) {
-          while (Table.size() <= Value)
+          while (Table.size() <= Value) {
             Table.push_back(SwitchDefault);
+}
           Table[Value] = CurrName;
         }
       }
@@ -454,10 +463,12 @@ Relooper::Relooper()
 }
 
 Relooper::~Relooper() {
-  for (unsigned i = 0; i < Blocks.size(); i++)
+  for (unsigned i = 0; i < Blocks.size(); i++) {
     delete Blocks[i];
-  for (unsigned i = 0; i < Shapes.size(); i++)
+}
+  for (unsigned i = 0; i < Shapes.size(); i++) {
     delete Shapes[i];
+}
 }
 
 void Relooper::AddBlock(Block* New, int Id) {
@@ -484,8 +495,9 @@ void Relooper::Calculate(Block* Entry) {
       while (ToInvestigate.size() > 0) {
         Block* Curr = ToInvestigate.front();
         ToInvestigate.pop_front();
-        if (contains(Live, Curr))
+        if (contains(Live, Curr)) {
           continue;
+}
         Live.insert(Curr);
         for (BlockBranchMap::iterator iter = Curr->BranchesOut.begin();
              iter != Curr->BranchesOut.end(); iter++) {
@@ -500,8 +512,9 @@ void Relooper::Calculate(Block* Entry) {
   // Add incoming branches from live blocks, ignoring dead code
   for (unsigned i = 0; i < Blocks.size(); i++) {
     Block* Curr = Blocks[i];
-    if (!contains(Pre.Live, Curr))
+    if (!contains(Pre.Live, Curr)) {
       continue;
+}
     for (BlockBranchMap::iterator iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end();
          iter++) {
       iter->first->BranchesIn.insert(Curr);
@@ -751,8 +764,9 @@ void Relooper::Calculate(Block* Entry) {
         Queue.pop_front();
         Block* Owner =
           Helper.Ownership[Curr]; // Curr must be in the ownership map if we are in the queue
-        if (!Owner)
+        if (!Owner) {
           continue; // we have been invalidated meanwhile after being reached from two entries
+}
         // Add all children
         for (BlockBranchMap::iterator iter = Curr->BranchesOut.begin();
              iter != Curr->BranchesOut.end(); iter++) {
@@ -766,8 +780,9 @@ void Relooper::Calculate(Block* Entry) {
             continue;
           }
           Block* NewOwner = Known->second;
-          if (!NewOwner)
+          if (!NewOwner) {
             continue; // We reached an invalidated node
+}
           if (NewOwner != Owner) {
             // Invalidate this and all reachable that we have seen - we reached this from two
             // locations
@@ -791,8 +806,9 @@ void Relooper::Calculate(Block* Entry) {
           for (BlockSet::iterator iter = Child->BranchesIn.begin(); iter != Child->BranchesIn.end();
                iter++) {
             Block* Parent = *iter;
-            if (Ignore && contains(*Ignore, Parent))
+            if (Ignore && contains(*Ignore, Parent)) {
               continue;
+}
             if (Helper.Ownership[Parent] != Helper.Ownership[Child]) {
               ToInvalidate.push_back(Child);
             }
@@ -906,8 +922,9 @@ void Relooper::Calculate(Block* Entry) {
         NextEntries = &TempEntries[CurrTempIndex];
         NextEntries->clear();
 
-        if (Entries->size() == 0)
+        if (Entries->size() == 0) {
           return Ret;
+}
         if (Entries->size() == 1) {
           Block* Curr = *(Entries->begin());
           if (Curr->BranchesIn.size() == 0) {
@@ -988,8 +1005,9 @@ void Relooper::Calculate(Block* Entry) {
                     break;
                   }
                 }
-                if (!DeadEnd)
+                if (!DeadEnd) {
                   break;
+}
               }
               if (DeadEnd) {
                 PrintDebug(

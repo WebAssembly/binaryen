@@ -52,10 +52,12 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
   void optimizeMemoryAccess(Expression*& ptr, Address& offset) {
     while (1) {
       auto* add = ptr->dynCast<Binary>();
-      if (!add)
+      if (!add) {
         break;
-      if (add->op != AddInt32)
+}
+      if (add->op != AddInt32) {
         break;
+}
       auto* left = add->left->dynCast<Const>();
       auto* right = add->right->dynCast<Const>();
       // note: in optimized code, we shouldn't see an add of two constants, so don't worry about

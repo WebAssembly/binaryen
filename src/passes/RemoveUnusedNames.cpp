@@ -61,15 +61,18 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
           if (Break* br = branch->dynCast<Break>()) {
-            if (br->name == curr->name)
+            if (br->name == curr->name) {
               br->name = child->name;
+}
           } else if (Switch* sw = branch->dynCast<Switch>()) {
             for (auto& target : sw->targets) {
-              if (target == curr->name)
+              if (target == curr->name) {
                 target = child->name;
+}
             }
-            if (sw->default_ == curr->name)
+            if (sw->default_ == curr->name) {
               sw->default_ = child->name;
+}
           } else {
             WASM_UNREACHABLE();
           }

@@ -755,17 +755,20 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
     while (1) {
       auto* curr = controlFlowStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
-        if (name == block->name)
+        if (name == block->name) {
           return curr;
+}
       } else if (Loop* loop = curr->template dynCast<Loop>()) {
-        if (name == loop->name)
+        if (name == loop->name) {
           return curr;
+}
       } else {
         // an if, ignorable
         assert(curr->template is<If>());
       }
-      if (i == 0)
+      if (i == 0) {
         return nullptr;
+}
       i--;
     }
   }
@@ -821,23 +824,27 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     while (1) {
       auto* curr = expressionStack[i];
       if (Block* block = curr->template dynCast<Block>()) {
-        if (name == block->name)
+        if (name == block->name) {
           return curr;
+}
       } else if (Loop* loop = curr->template dynCast<Loop>()) {
-        if (name == loop->name)
+        if (name == loop->name) {
           return curr;
+}
       } else {
         WASM_UNREACHABLE();
       }
-      if (i == 0)
+      if (i == 0) {
         return nullptr;
+}
       i--;
     }
   }
 
   Expression* getParent() {
-    if (expressionStack.size() == 1)
+    if (expressionStack.size() == 1) {
       return nullptr;
+}
     assert(expressionStack.size() >= 2);
     return expressionStack[expressionStack.size() - 2];
   }

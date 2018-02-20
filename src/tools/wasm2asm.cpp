@@ -44,8 +44,9 @@ int main(int argc, const char* argv[]) {
     .add_positional("INFILE", Options::Arguments::One,
       [](Options* o, const std::string& argument) { o->extra["infile"] = argument; });
   options.parse(argc, argv);
-  if (options.debug)
+  if (options.debug) {
     builderFlags.debug = true;
+}
 
   auto input(read_file<std::vector<char>>(
     options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
@@ -55,23 +56,27 @@ int main(int argc, const char* argv[]) {
   Ref asmjs;
 
   try {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "s-parsing..." << std::endl;
+}
     SExpressionParser parser(input.data());
     root = parser.root;
 
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "w-parsing..." << std::endl;
+}
     SExpressionWasmBuilder builder(wasm, *(*root)[0]);
 
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "asming..." << std::endl;
+}
     Wasm2AsmBuilder wasm2asm(builderFlags);
     asmjs = wasm2asm.processWasm(&wasm);
 
     if (options.extra["asserts"] == "1") {
-      if (options.debug)
+      if (options.debug) {
         std::cerr << "asserting..." << std::endl;
+}
       flattenAppend(asmjs, wasm2asm.processAsserts(*root, builder));
     }
   } catch (ParseException& p) {
@@ -88,14 +93,16 @@ int main(int argc, const char* argv[]) {
     std::cout << '\n';
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "j-printing..." << std::endl;
+}
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
   Output output(
     options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   output << jser.buffer << std::endl;
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "done." << std::endl;
+}
 }

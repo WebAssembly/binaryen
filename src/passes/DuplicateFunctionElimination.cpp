@@ -37,11 +37,13 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   void doWalkFunction(Function* func) {
     assert(digest == 0);
     hash(func->getNumParams());
-    for (auto type : func->params)
+    for (auto type : func->params) {
       hash(type);
+}
     hash(func->getNumVars());
-    for (auto type : func->vars)
+    for (auto type : func->vars) {
       hash(type);
+}
     hash(func->result);
     hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
     hash(ExpressionAnalyzer::hash(func->body));
@@ -100,19 +102,22 @@ struct DuplicateFunctionElimination : public Pass {
       for (auto& pair : hashGroups) {
         auto& group = pair.second;
         Index size = group.size();
-        if (size == 1)
+        if (size == 1) {
           continue;
+}
         // The groups should be fairly small, and even if a group is large we should
         // have almost all of them identical, so we should not hit actual O(N^2)
         // here unless the hash is quite poor.
         for (Index i = 0; i < size - 1; i++) {
           auto* first = group[i];
-          if (duplicates.count(first->name))
+          if (duplicates.count(first->name)) {
             continue;
+}
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
-            if (duplicates.count(second->name))
+            if (duplicates.count(second->name)) {
               continue;
+}
             if (equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
@@ -169,18 +174,23 @@ private:
   std::map<Function*, uint32_t> hashes;
 
   bool equal(Function* left, Function* right) {
-    if (left->getNumParams() != right->getNumParams())
+    if (left->getNumParams() != right->getNumParams()) {
       return false;
-    if (left->getNumVars() != right->getNumVars())
+}
+    if (left->getNumVars() != right->getNumVars()) {
       return false;
+}
     for (Index i = 0; i < left->getNumLocals(); i++) {
-      if (left->getLocalType(i) != right->getLocalType(i))
+      if (left->getLocalType(i) != right->getLocalType(i)) {
         return false;
+}
     }
-    if (left->result != right->result)
+    if (left->result != right->result) {
       return false;
-    if (left->type != right->type)
+}
+    if (left->type != right->type) {
       return false;
+}
     return ExpressionAnalyzer::equal(left->body, right->body);
   }
 };

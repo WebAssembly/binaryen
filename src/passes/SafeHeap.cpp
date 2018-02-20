@@ -66,8 +66,9 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter* create() override { return new AccessInstrumenter; }
 
   void visitLoad(Load* curr) {
-    if (curr->type == unreachable)
+    if (curr->type == unreachable) {
       return;
+}
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(getLoadName(curr),
       {
@@ -77,8 +78,9 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == unreachable)
+    if (curr->type == unreachable) {
       return;
+}
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(getStoreName(curr),
       {
@@ -147,22 +149,27 @@ struct SafeHeap : public Pass {
       load.type = type;
       for (Index bytes : {1, 2, 4, 8}) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type))
+        if (bytes > getTypeSize(type)) {
           continue;
+}
         for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isTypeFloat(type) && signed_)
+          if (isTypeFloat(type) && signed_) {
             continue;
+}
           for (Index align : {1, 2, 4, 8}) {
             load.align = align;
-            if (align > bytes)
+            if (align > bytes) {
               continue;
+}
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
-              if (isAtomic && align != bytes)
+              if (isAtomic && align != bytes) {
                 continue;
-              if (isAtomic && !module->memory.shared)
+}
+              if (isAtomic && !module->memory.shared) {
                 continue;
+}
               addLoadFunc(load, module);
             }
           }
@@ -176,18 +183,22 @@ struct SafeHeap : public Pass {
       store.type = none;
       for (Index bytes : {1, 2, 4, 8}) {
         store.bytes = bytes;
-        if (bytes > getTypeSize(valueType))
+        if (bytes > getTypeSize(valueType)) {
           continue;
+}
         for (Index align : {1, 2, 4, 8}) {
           store.align = align;
-          if (align > bytes)
+          if (align > bytes) {
             continue;
+}
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
-            if (isAtomic && align != bytes)
+            if (isAtomic && align != bytes) {
               continue;
-            if (isAtomic && !module->memory.shared)
+}
+            if (isAtomic && !module->memory.shared) {
               continue;
+}
             addStoreFunc(store, module);
           }
         }

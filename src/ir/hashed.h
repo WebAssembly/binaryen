@@ -42,8 +42,9 @@ struct ExpressionHasher {
 
 struct ExpressionComparer {
   bool operator()(const HashedExpression a, const HashedExpression b) const {
-    if (a.hash != b.hash)
+    if (a.hash != b.hash) {
       return false;
+}
     return ExpressionAnalyzer::equal(a.expr, b.expr);
   }
 };

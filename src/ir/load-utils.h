@@ -28,8 +28,9 @@ namespace LoadUtils {
 // fill in bits either signed or unsigned wise)
 inline bool isSignRelevant(Load* load) {
   auto type = load->type;
-  if (load->type == unreachable)
+  if (load->type == unreachable) {
     return false;
+}
   return !isTypeFloat(type) && load->bytes < getTypeSize(type);
 }
 

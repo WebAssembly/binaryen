@@ -76,12 +76,14 @@ int main(int argc, const char* argv[]) {
   Module wasm;
 
   try {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "s-parsing..." << std::endl;
+}
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "w-parsing..." << std::endl;
+}
     SExpressionWasmBuilder builder(wasm, *root[0]);
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -89,8 +91,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra["validate"] != "none") {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "Validating..." << std::endl;
+}
     if (!wasm::WasmValidator().validate(wasm, Feature::All,
           WasmValidator::Globally |
             (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
@@ -99,8 +102,9 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "binarification..." << std::endl;
+}
   BufferWithRandomAccess buffer(options.debug);
   WasmBinaryWriter writer(&wasm, buffer, options.debug);
   // if debug info is used, then we want to emit the names section
@@ -111,12 +115,14 @@ int main(int argc, const char* argv[]) {
     sourceMapStream->open(sourceMapFilename);
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
-  if (symbolMap.size() > 0)
+  if (symbolMap.size() > 0) {
     writer.setSymbolMap(symbolMap);
+}
   writer.write();
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "writing to output..." << std::endl;
+}
   Output output(
     options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
   buffer.writeTo(output);
@@ -124,6 +130,7 @@ int main(int argc, const char* argv[]) {
     sourceMapStream->close();
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Done." << std::endl;
+}
 }

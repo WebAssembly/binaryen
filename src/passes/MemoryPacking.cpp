@@ -25,8 +25,9 @@ const Index OVERHEAD = 8;
 
 struct MemoryPacking : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->memory.exists)
+    if (!module->memory.exists) {
       return;
+}
     std::vector<Memory::Segment> packed;
     for (auto& segment : module->memory.segments) {
       // skip final zeros

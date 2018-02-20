@@ -209,8 +209,9 @@ struct MetaDCEGraph {
       MetaDCEGraph* parent;
 
       void handleGlobal(Name name) {
-        if (!getFunction())
+        if (!getFunction()) {
           return; // non-function stuff (initializers) are handled separately
+}
         Name dceName;
         if (getModule()->getGlobalOrNull(name)) {
           // its a global
@@ -423,9 +424,10 @@ int main(int argc, const char* argv[]) {
   Module wasm;
 
   {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "reading...\n";
-    ModuleReader reader;
+    
+}ModuleReader reader;
     reader.setDebug(options.debug);
 
     try {

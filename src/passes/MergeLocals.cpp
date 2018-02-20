@@ -95,8 +95,9 @@ struct MergeLocals
   }
 
   void optimizeCopies() {
-    if (copies.empty())
+    if (copies.empty()) {
       return;
+}
     // compute all dependencies
     LocalGraph preGraph(getFunction());
     preGraph.computeInfluences();

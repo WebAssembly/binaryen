@@ -33,17 +33,21 @@ static Name getInnerName(int i) { return Name(std::string("__rjti$") + std::to_s
 static Name getOuterName(int i) { return Name(std::string("__rjto$") + std::to_string(i)); }
 
 static If* isLabelCheckingIf(Expression* curr, Index labelIndex) {
-  if (!curr)
+  if (!curr) {
     return nullptr;
+}
   auto* iff = curr->dynCast<If>();
-  if (!iff)
+  if (!iff) {
     return nullptr;
+}
   auto* condition = iff->condition->dynCast<Binary>();
-  if (!(condition && condition->op == EqInt32))
+  if (!(condition && condition->op == EqInt32)) {
     return nullptr;
+}
   auto* left = condition->left->dynCast<GetLocal>();
-  if (!(left && left->index == labelIndex))
+  if (!(left && left->index == labelIndex)) {
     return nullptr;
+}
   return iff;
 }
 
@@ -52,13 +56,16 @@ static Index getCheckedLabelValue(If* iff) {
 }
 
 static SetLocal* isLabelSettingSetLocal(Expression* curr, Index labelIndex) {
-  if (!curr)
+  if (!curr) {
     return nullptr;
+}
   auto* set = curr->dynCast<SetLocal>();
-  if (!set)
+  if (!set) {
     return nullptr;
-  if (set->index != labelIndex)
+}
+  if (set->index != labelIndex) {
     return nullptr;
+}
   return set;
 }
 
@@ -99,8 +106,9 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
   void visitBlock(Block* curr) {
     // look for the  if label == X  pattern
     auto& list = curr->list;
-    if (list.size() == 0)
+    if (list.size() == 0) {
       return;
+}
     for (Index i = 0; i < list.size() - 1; i++) {
       // once we see something that might be irreducible, we must skip that if and the rest of the
       // dependents
@@ -173,8 +181,9 @@ private:
     while (iff) {
       auto num = getCheckedLabelValue(iff);
       assert(labelChecks[num] > 0);
-      if (labelChecks[num] > 1)
+      if (labelChecks[num] > 1) {
         return true; // checked more than once, somewhere in function
+}
       assert(labelChecksInOrigin[num] == 0);
       if (labelSetsInOrigin[num] != labelSets[num]) {
         assert(labelSetsInOrigin[num] < labelSets[num]);

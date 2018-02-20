@@ -403,10 +403,12 @@ public:
   // ensure a node is a block, if it isn't already, and optionally append to the block
   Block* blockify(Expression* any, Expression* append = nullptr) {
     Block* block = nullptr;
-    if (any)
+    if (any) {
       block = any->dynCast<Block>();
-    if (!block)
+}
+    if (!block) {
       block = makeBlock(any);
+}
     if (append) {
       block->list.push_back(append);
       block->finalize();
@@ -422,10 +424,12 @@ public:
   // this variant sets a name for the block, so it will not reuse a block already named
   Block* blockifyWithName(Expression* any, Name name, Expression* append = nullptr) {
     Block* block = nullptr;
-    if (any)
+    if (any) {
       block = any->dynCast<Block>();
-    if (!block || block->name.is())
+}
+    if (!block || block->name.is()) {
       block = makeBlock(any);
+}
     block->name = name;
     if (append) {
       block->list.push_back(append);
@@ -471,8 +475,9 @@ public:
 
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
-    if (!isConcreteType(curr->type))
+    if (!isConcreteType(curr->type)) {
       return curr;
+}
     return makeDrop(curr);
   }
 

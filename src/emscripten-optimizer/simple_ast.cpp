@@ -98,11 +98,12 @@ void Value::stringify(std::ostream& os, bool pretty) {
       }
       for (size_t i = 0; i < arr->size(); i++) {
         if (i > 0) {
-          if (pretty)
+          if (pretty) {
             os << "," << std::endl;
-          else
+          } else {
             os << ", ";
-        }
+        
+}}
         indentify();
         (*arr)[i]->stringify(os, pretty);
       }
@@ -134,8 +135,9 @@ void Value::stringify(std::ostream& os, bool pretty) {
           first = false;
         } else {
           os << ", ";
-          if (pretty)
+          if (pretty) {
             os << std::endl;
+}
         }
         indentify();
         os << '"' << i.first.c_str() << "\": ";
@@ -171,11 +173,12 @@ void Value::stringify(std::ostream& os, bool pretty) {
 
 void dump(const char* str, Ref node, bool pretty) {
   std::cerr << str << ": ";
-  if (!!node)
+  if (!!node) {
     node->stringify(std::cerr, pretty);
-  else
+  } else {
     std::cerr << "(nullptr)";
-  std::cerr << std::endl;
+  
+}std::cerr << std::endl;
 }
 
 // AST traversals
@@ -198,8 +201,9 @@ template <class T, int init> struct StackedStack { // a stack, on the stack
 
   StackedStack() : used(0), available(init), alloced(false) { storage = stackStorage; }
   ~StackedStack() {
-    if (alloced)
+    if (alloced) {
       free(storage);
+}
   }
 
   int size() { return used; }
@@ -241,8 +245,9 @@ template <class T, int init> struct StackedStack { // a stack, on the stack
 
 // Traverse, calling visit before the children
 void traversePre(Ref node, std::function<void(Ref)> visit) {
-  if (!visitable(node))
+  if (!visitable(node)) {
     return;
+}
   visit(node);
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
@@ -265,8 +270,9 @@ void traversePre(Ref node, std::function<void(Ref)> visit) {
       }
     } else {
       stack.pop_back();
-      if (stack.size() == 0)
+      if (stack.size() == 0) {
         break;
+}
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -279,8 +285,9 @@ void traversePre(Ref node, std::function<void(Ref)> visit) {
 // Traverse, calling visitPre before the children and visitPost after
 void traversePrePost(
   Ref node, std::function<void(Ref)> visitPre, std::function<void(Ref)> visitPost) {
-  if (!visitable(node))
+  if (!visitable(node)) {
     return;
+}
   visitPre(node);
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
@@ -304,8 +311,9 @@ void traversePrePost(
     } else {
       visitPost(stack.back().node);
       stack.pop_back();
-      if (stack.size() == 0)
+      if (stack.size() == 0) {
         break;
+}
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -319,10 +327,12 @@ void traversePrePost(
 // traverse children
 void traversePrePostConditional(
   Ref node, std::function<bool(Ref)> visitPre, std::function<void(Ref)> visitPost) {
-  if (!visitable(node))
+  if (!visitable(node)) {
     return;
-  if (!visitPre(node))
+}
+  if (!visitPre(node)) {
     return;
+}
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
   ArrayStorage* arr = &node->getArray();
@@ -346,8 +356,9 @@ void traversePrePostConditional(
     } else {
       visitPost(stack.back().node);
       stack.pop_back();
-      if (stack.size() == 0)
+      if (stack.size() == 0) {
         break;
+}
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -359,14 +370,16 @@ void traversePrePostConditional(
 
 // Traverses all the top-level functions in the document
 void traverseFunctions(Ref ast, std::function<void(Ref)> visit) {
-  if (!ast || ast->size() == 0)
+  if (!ast || ast->size() == 0) {
     return;
+}
   if (ast[0] == TOPLEVEL) {
     Ref stats = ast[1];
     for (size_t i = 0; i < stats->size(); i++) {
       Ref curr = stats[i];
-      if (curr[0] == DEFUN)
+      if (curr[0] == DEFUN) {
         visit(curr);
+}
     }
   } else if (ast[0] == DEFUN) {
     visit(ast);

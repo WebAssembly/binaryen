@@ -30,22 +30,26 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
     if (curr->is<Block>()) {
       auto* block = curr->cast<Block>();
       for (size_t j = 0; j < block->list.size() - 1; j++) {
-        if (block->list[j] == above)
+        if (block->list[j] == above) {
           return false;
+}
       }
       assert(block->list.back() == above);
       // continue down
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
-      if (above == iff->condition)
+      if (above == iff->condition) {
         return true;
-      if (!iff->ifFalse)
+}
+      if (!iff->ifFalse) {
         return false;
+}
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
-      if (curr->is<Drop>())
+      if (curr->is<Drop>()) {
         return false;
+}
       return true; // all other node types use the result
     }
   }
@@ -61,22 +65,26 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
     if (curr->is<Block>()) {
       auto* block = curr->cast<Block>();
       for (size_t j = 0; j < block->list.size() - 1; j++) {
-        if (block->list[j] == above)
+        if (block->list[j] == above) {
           return false;
+}
       }
       assert(block->list.back() == above);
       // continue down
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
-      if (above == iff->condition)
+      if (above == iff->condition) {
         return false;
-      if (!iff->ifFalse)
+}
+      if (!iff->ifFalse) {
         return false;
+}
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
-      if (curr->is<Drop>())
+      if (curr->is<Drop>()) {
         return true; // dropped
+}
       return false;  // all other node types use the result
     }
   }
@@ -93,8 +101,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
   std::vector<Expression*> rightStack;
 
   auto noteNames = [&](Name left, Name right) {
-    if (left.is() != right.is())
+    if (left.is() != right.is()) {
       return false;
+}
     if (left.is()) {
       nameStack.push_back(left);
       rightNames[left].push_back(right);
@@ -105,8 +114,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
   };
   auto checkNames = [&](Name left, Name right) {
     auto iter = rightNames.find(left);
-    if (iter == rightNames.end())
+    if (iter == rightNames.end()) {
       return left == right; // non-internal name
+}
     return iter->second.back() == right;
   };
   auto popName = [&]() {
@@ -123,19 +133,23 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     leftStack.pop_back();
     right = rightStack.back();
     rightStack.pop_back();
-    if (!left != !right)
+    if (!left != !right) {
       return false;
-    if (!left)
+}
+    if (!left) {
       continue;
+}
     if (left == &popNameMarker) {
       popName();
       continue;
     }
-    if (comparer(left, right))
+    if (comparer(left, right)) {
       continue; // comparison hook, before all the rest
+}
     // continue with normal structural comparison
-    if (left->_id != right->_id)
+    if (left->_id != right->_id) {
       return false;
+}
 #define PUSH(clazz, what)                                                                          \
   leftStack.push_back(left->cast<clazz>()->what);                                                  \
   rightStack.push_back(right->cast<clazz>()->what);
@@ -144,8 +158,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     return false;
     switch (left->_id) {
       case Expression::Id::BlockId: {
-        if (!noteNames(left->cast<Block>()->name, right->cast<Block>()->name))
+        if (!noteNames(left->cast<Block>()->name, right->cast<Block>()->name)) {
           return false;
+}
         CHECK(Block, list.size());
         for (Index i = 0; i < left->cast<Block>()->list.size(); i++) {
           PUSH(Block, list[i]);
@@ -159,14 +174,16 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         break;
       }
       case Expression::Id::LoopId: {
-        if (!noteNames(left->cast<Loop>()->name, right->cast<Loop>()->name))
+        if (!noteNames(left->cast<Loop>()->name, right->cast<Loop>()->name)) {
           return false;
+}
         PUSH(Loop, body);
         break;
       }
       case Expression::Id::BreakId: {
-        if (!checkNames(left->cast<Break>()->name, right->cast<Break>()->name))
+        if (!checkNames(left->cast<Break>()->name, right->cast<Break>()->name)) {
           return false;
+}
         PUSH(Break, condition);
         PUSH(Break, value);
         break;
@@ -174,11 +191,13 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       case Expression::Id::SwitchId: {
         CHECK(Switch, targets.size());
         for (Index i = 0; i < left->cast<Switch>()->targets.size(); i++) {
-          if (!checkNames(left->cast<Switch>()->targets[i], right->cast<Switch>()->targets[i]))
+          if (!checkNames(left->cast<Switch>()->targets[i], right->cast<Switch>()->targets[i])) {
             return false;
+}
         }
-        if (!checkNames(left->cast<Switch>()->default_, right->cast<Switch>()->default_))
+        if (!checkNames(left->cast<Switch>()->default_, right->cast<Switch>()->default_)) {
           return false;
+}
         PUSH(Switch, condition);
         PUSH(Switch, value);
         break;
@@ -329,8 +348,9 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
 #undef CHECK
 #undef PUSH
   }
-  if (leftStack.size() > 0 || rightStack.size() > 0)
+  if (leftStack.size() > 0 || rightStack.size() > 0) {
     return false;
+}
   return true;
 }
 
@@ -360,10 +380,11 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
   };
   auto hashName = [&](Name curr) {
     auto iter = internalNames.find(curr);
-    if (iter == internalNames.end())
+    if (iter == internalNames.end()) {
       hash64(uint64_t(curr.str));
-    else
+    } else {
       hash(iter->second.back());
+}
   };
   auto popName = [&]() {
     auto curr = nameStack.back();
@@ -376,8 +397,9 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
   while (stack.size() > 0) {
     curr = stack.back();
     stack.pop_back();
-    if (!curr)
+    if (!curr) {
       continue;
+}
     if (curr == &popNameMarker) {
       popName();
       continue;

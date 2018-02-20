@@ -31,7 +31,7 @@ struct SortedVector : std::vector<Index> {
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
     ret.resize(size() + other.size());
-    Index i = 0, j = 0, t = 0;
+    Index i = 0, j; = 0, t = 0;
     while (i < size() && j < other.size()) {
       auto left = (*this)[i];
       auto right = other[j];

@@ -104,13 +104,15 @@ struct Precompute
 
   void visitExpression(Expression* curr) {
     // TODO: if get_local, only replace with a constant if we don't care about size...?
-    if (curr->is<Const>() || curr->is<Nop>())
+    if (curr->is<Const>() || curr->is<Nop>()) {
       return;
+}
     // try to evaluate this into a const
     Flow flow = precomputeFlow(curr);
     if (flow.breaking()) {
-      if (flow.breakTo == NONSTANDALONE_FLOW)
+      if (flow.breakTo == NONSTANDALONE_FLOW) {
         return;
+}
       if (flow.breakTo == RETURN_FLOW) {
         // this expression causes a return. if it's already a return, reuse the node
         if (auto* ret = curr->dynCast<Return>()) {
@@ -216,8 +218,9 @@ private:
       // mark it as such and add everything it influences to the work list,
       // as they may be constant too.
       if (auto* set = curr->dynCast<SetLocal>()) {
-        if (setValues[set].isConcrete())
+        if (setValues[set].isConcrete()) {
           continue; // already known constant
+}
         auto value = setValues[set] = precomputeValue(set->value);
         if (value.isConcrete()) {
           for (auto* get : localGraph.setInfluences[set]) {
@@ -226,8 +229,9 @@ private:
         }
       } else {
         auto* get = curr->cast<GetLocal>();
-        if (getValues[get].isConcrete())
+        if (getValues[get].isConcrete()) {
           continue; // already known constant
+}
         // for this get to have constant value, all sets must agree
         Literal value;
         bool first = true;

@@ -40,8 +40,9 @@ inline std::string getPathSeparator() {
 
 inline std::string getBinaryenRoot() {
   auto* envVar = getenv("BINARYEN_ROOT");
-  if (envVar)
+  if (envVar) {
     return envVar;
+}
   return ".";
 }
 

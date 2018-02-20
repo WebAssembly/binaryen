@@ -33,7 +33,7 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
     walk(ast);
   }
 
-  void visitGetLocal(GetLocal* curr) { num[curr->index]++; }
+  void visitGetLocal(GetLocal* curr) { enum[curr->index]++; }
 };
 
 } // namespace wasm

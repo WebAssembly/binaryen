@@ -93,11 +93,12 @@ static PassOptions globalPassOptions = PassOptions::getWithDefaultOptimizationOp
 static int tracing = 0;
 
 void traceNameOrNULL(const char* name) {
-  if (name)
+  if (name) {
     std::cout << "\"" << name << "\"";
-  else
+  } else {
     std::cout << "NULL";
-}
+
+}}
 
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
@@ -219,10 +220,11 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
   BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams) {
   auto* wasm = (Module*)module;
   auto* ret = new FunctionType;
-  if (name)
+  if (name) {
     ret->name = name;
-  else
+  } else {
     ret->name = Name::fromInt(wasm->functionTypes.size());
+}
   ret->result = Type(result);
   for (BinaryenIndex i = 0; i < numParams; i++) {
     ret->params.push_back(Type(paramTypes[i]));
@@ -239,13 +241,15 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
     std::cout << "  {\n";
     std::cout << "    BinaryenType paramTypes[] = { ";
     for (BinaryenIndex i = 0; i < numParams; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << paramTypes[i];
+      
+}std::cout << paramTypes[i];
     }
-    if (numParams == 0)
+    if (numParams == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     size_t id = functionTypes.size();
     std::cout << "    functionTypes[" << id << "] = BinaryenAddFunctionType(the_module, ";
     functionTypes[ret] = id;
@@ -407,37 +411,43 @@ BinaryenOp BinaryenAtomicRMWXchg(void) { return AtomicRMWOp::Xchg; }
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name,
   BinaryenExpressionRef* children, BinaryenIndex numChildren, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<Block>();
-  if (name)
+  if (name) {
     ret->name = name;
+}
   for (BinaryenIndex i = 0; i < numChildren; i++) {
     ret->list.push_back((Expression*)children[i]);
   }
-  if (type != BinaryenTypeAuto())
+  if (type != BinaryenTypeAuto()) {
     ret->finalize(Type(type));
-  else
+  } else {
     ret->finalize();
+}
 
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    BinaryenExpressionRef children[] = { ";
     for (BinaryenIndex i = 0; i < numChildren; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      if (i % 6 == 5)
+      
+}if (i % 6 == 5) {
         std::cout << "\n       "; // don't create hugely long lines
-      std::cout << "expressions[" << expressions[children[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[children[i]] << "]";
     }
-    if (numChildren == 0)
+    if (numChildren == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
     traceNameOrNULL(name);
     std::cout << ", children, " << numChildren << ", ";
-    if (type == BinaryenTypeAuto())
+    if (type == BinaryenTypeAuto()) {
       std::cout << "BinaryenTypeAuto()";
-    else
+    } else {
       std::cout << type;
+}
     std::cout << ");\n";
     std::cout << "  }\n";
   }
@@ -497,13 +507,15 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** name
     std::cout << "  {\n";
     std::cout << "    const char* names[] = { ";
     for (BinaryenIndex i = 0; i < numNames; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "\"" << names[i] << "\"";
+      
+}std::cout << "\"" << names[i] << "\"";
     }
-    if (numNames == 0)
+    if (numNames == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenSwitch(the_module, names, " << numNames
               << ", \"" << defaultName << "\", expressions[" << expressions[condition]
@@ -528,13 +540,15 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target,
     std::cout << "  {\n";
     std::cout << "    BinaryenExpressionRef operands[] = { ";
     for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
-    if (numOperands == 0)
+    if (numOperands == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCall(the_module, \"" << target
               << "\", operands, " << numOperands << ", " << returnType << ");\n";
@@ -557,13 +571,15 @@ BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char* t
     std::cout << "  {\n";
     std::cout << "    BinaryenExpressionRef operands[] = { ";
     for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
-    if (numOperands == 0)
+    if (numOperands == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCallImport(the_module, \"" << target
               << "\", operands, " << numOperands << ", " << returnType << ");\n";
@@ -587,13 +603,15 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
     std::cout << "  {\n";
     std::cout << "    BinaryenExpressionRef operands[] = { ";
     for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
-    if (numOperands == 0)
+    if (numOperands == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCallIndirect(the_module, expressions["
               << expressions[target] << "], operands, " << numOperands << ", \"" << type
@@ -743,20 +761,22 @@ BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral va
       case Type::f32: {
         std::cout << "  expressions[" << id
                   << "] = BinaryenConst(the_module, BinaryenLiteralFloat32(";
-        if (std::isnan(value.f32))
+        if (std::isnan(value.f32)) {
           std::cout << "NAN";
-        else
+        } else {
           std::cout << value.f32;
+}
         std::cout << "));\n";
         break;
       }
       case Type::f64: {
         std::cout << "  expressions[" << id
                   << "] = BinaryenConst(the_module, BinaryenLiteralFloat64(";
-        if (std::isnan(value.f64))
+        if (std::isnan(value.f64)) {
           std::cout << "NAN";
-        else
+        } else {
           std::cout << value.f64;
+}
         std::cout << "));\n";
         break;
       }
@@ -841,13 +861,15 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
     std::cout << "  {\n";
     std::cout << "    BinaryenExpressionRef operands[] = { ";
     for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
-    if (numOperands == 0)
+    if (numOperands == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "  expressions[" << id << "] = BinaryenHost(the_module, " << op << ", \"" << name
               << "\", operands, " << numOperands << ");\n";
@@ -855,8 +877,9 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
   }
 
   ret->op = HostOp(op);
-  if (name)
+  if (name) {
     ret->nameOperand = name;
+}
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
   }
@@ -1773,13 +1796,15 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* na
     std::cout << "  {\n";
     std::cout << "    BinaryenType varTypes[] = { ";
     for (BinaryenIndex i = 0; i < numVarTypes; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << varTypes[i];
+      
+}std::cout << varTypes[i];
     }
-    if (numVarTypes == 0)
+    if (numVarTypes == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     auto id = functions.size();
     functions[ret] = id;
     std::cout << "    functions[" << id << "] = BinaryenAddFunction(the_module, \"" << name
@@ -2050,13 +2075,15 @@ void BinaryenSetFunctionTable(
     std::cout << "  {\n";
     std::cout << "    BinaryenFunctionRef funcs[] = { ";
     for (BinaryenIndex i = 0; i < numFuncs; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "functions[" << functions[funcs[i]] << "]";
+      
+}std::cout << "functions[" << functions[funcs[i]] << "]";
     }
-    if (numFuncs == 0)
+    if (numFuncs == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     std::cout << "    BinaryenSetFunctionTable(the_module, funcs, " << numFuncs << ");\n";
     std::cout << "  }\n";
   }
@@ -2081,39 +2108,46 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     for (BinaryenIndex i = 0; i < numSegments; i++) {
       std::cout << "    const char segment" << i << "[] = { ";
       for (BinaryenIndex j = 0; j < segmentSizes[i]; j++) {
-        if (j > 0)
+        if (j > 0) {
           std::cout << ", ";
-        std::cout << int(segments[i][j]);
+        
+}std::cout << int(segments[i][j]);
       }
       std::cout << " };\n";
     }
     std::cout << "    const char* segments[] = { ";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "segment" << i;
+      
+}std::cout << "segment" << i;
     }
-    if (numSegments == 0)
+    if (numSegments == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     std::cout << "    BinaryenExpressionRef segmentOffsets[] = { ";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "expressions[" << expressions[segmentOffsets[i]] << "]";
+      
+}std::cout << "expressions[" << expressions[segmentOffsets[i]] << "]";
     }
-    if (numSegments == 0)
+    if (numSegments == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     std::cout << "    BinaryenIndex segmentSizes[] = { ";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << segmentSizes[i];
+      
+}std::cout << segmentSizes[i];
     }
-    if (numSegments == 0)
+    if (numSegments == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
     traceNameOrNULL(exportName);
     std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ");\n";
@@ -2269,9 +2303,10 @@ void BinaryenModuleRunPasses(
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
     for (BinaryenIndex i = 0; i < numPasses; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "\"" << passes[i] << "\"";
+      
+}std::cout << "\"" << passes[i] << "\"";
     }
     std::cout << " };\n";
     std::cout << "    BinaryenModuleRunPasses(the_module, passes, " << numPasses << ");\n";
@@ -2538,9 +2573,10 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef modul
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
     for (BinaryenIndex i = 0; i < numPasses; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << "\"" << passes[i] << "\"";
+      
+}std::cout << "\"" << passes[i] << "\"";
     }
     std::cout << " };\n";
     std::cout << "    BinaryenFunctionRunPasses(functions[" << functions[func]
@@ -2709,13 +2745,15 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, Bina
     std::cout << "  {\n";
     std::cout << "    BinaryenIndex indexes[] = { ";
     for (BinaryenIndex i = 0; i < numIndexes; i++) {
-      if (i > 0)
+      if (i > 0) {
         std::cout << ", ";
-      std::cout << indexes[i];
+      
+}std::cout << indexes[i];
     }
-    if (numIndexes == 0)
+    if (numIndexes == 0) {
       std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    
+}std::cout << " };\n";
     std::cout << "    RelooperAddBranchForSwitch(relooperBlocks[" << relooperBlocks[from]
               << "], relooperBlocks[" << relooperBlocks[to] << "], indexes, " << numIndexes
               << ", expressions[" << expressions[code] << "]);\n";

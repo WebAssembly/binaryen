@@ -131,12 +131,15 @@ struct IString {
   bool startsWith(const char* prefix) const {
     const char* ptr = str;
     while (true) {
-      if (*prefix == 0)
+      if (*prefix == 0) {
         return true;
-      if (*ptr == 0)
+}
+      if (*ptr == 0) {
         return false;
-      if (*ptr++ != *prefix++)
+}
+      if (*ptr++ != *prefix++) {
         return false;
+}
     }
   }
 };
@@ -177,11 +180,13 @@ public:
     strncpy(curr, init, size);
     while (1) {
       char* end = strchr(curr, ' ');
-      if (end)
+      if (end) {
         *end = 0;
+}
       insert(curr);
-      if (!end)
+      if (!end) {
         break;
+}
       curr = end + 1;
     }
   }

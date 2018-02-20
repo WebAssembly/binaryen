@@ -54,8 +54,9 @@ public:
   void build(LinkerObject* obj) {
     // If getSymbolInfo has not already been called, populate the symbol
     // info now.
-    if (!symbolInfo)
+    if (!symbolInfo) {
       symbolInfo.reset(getSymbolInfo());
+}
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -79,12 +80,15 @@ private:
 
   void skipWhitespace() {
     while (1) {
-      while (*s && isspace(*s))
+      while (*s && isspace(*s)) {
         s++;
-      if (*s != '#')
+}
+      if (*s != '#') {
         break;
-      while (*s != '\n')
+}
+      while (*s != '\n') {
         s++;
+}
     }
   }
 
@@ -95,8 +99,9 @@ private:
 
   bool skipComma() {
     skipWhitespace();
-    if (*s != ',')
+    if (*s != ',') {
       return false;
+}
     s++;
     skipWhitespace();
     return true;
@@ -104,8 +109,9 @@ private:
 
   bool skipEqual() {
     skipWhitespace();
-    if (*s != '=')
+    if (*s != '=') {
       return false;
+}
     s++;
     skipWhitespace();
     return true;
@@ -141,8 +147,9 @@ private:
   void dump(const char* text) {
     std::cerr << "[[" << text << "]]:\n==========\n";
     for (size_t i = 0; i < 60; i++) {
-      if (!s[i])
+      if (!s[i]) {
         break;
+}
       std::cerr << s[i];
     }
     std::cerr << "\n==========\n";
@@ -341,8 +348,9 @@ private:
 
   Name getAssign() {
     skipWhitespace();
-    if (*s != '$')
+    if (*s != '$') {
       return Name();
+}
     const char* before = s;
     s++;
     std::string str;
@@ -414,14 +422,18 @@ private:
   }
 
   Type tryGetType() {
-    if (match("i32"))
+    if (match("i32")) {
       return i32;
-    if (match("i64"))
+}
+    if (match("i64")) {
       return i64;
-    if (match("f32"))
+}
+    if (match("f32")) {
       return f32;
-    if (match("f64"))
+}
+    if (match("f64")) {
       return f64;
+}
     return none;
   }
 
@@ -447,8 +459,9 @@ private:
   bool isFunctionName(Name name) { return !!strstr(name.str, "@FUNCTION"); }
   // Drop the @ and after it.
   Name cleanFunction(Name name) {
-    if (!strchr(name.str, '@'))
+    if (!strchr(name.str, '@')) {
       return name;
+}
     char* temp = strdup(name.str);
     *strchr(temp, '@') = 0;
     Name ret = cashew::IString(temp, false);
@@ -467,10 +480,12 @@ private:
       if (match(".type")) {
         Name name = getCommaSeparated();
         skipComma();
-        if (!match("@function"))
+        if (!match("@function")) {
           continue;
-        if (match(".hidden"))
+}
+        if (match(".hidden")) {
           mustMatch(name.str);
+}
         mustMatch(name.str);
         if (match(":")) {
           info->implementedFunctions.insert(name);
@@ -479,9 +494,10 @@ private:
           mustMatch("@FUNCTION");
           auto ret = info->aliasedSymbols.insert(
             {name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
-          if (!ret.second)
+          if (!ret.second) {
             std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
-        } else {
+        
+}} else {
           abort_on("unknown directive");
         }
       } else if (match(".import_global")) {
@@ -492,13 +508,15 @@ private:
         // add data aliases
         Name lhs = getStrToSep();
         // When the current line contains only one word, e.g.".text"
-        if (match("\n"))
+        if (match("\n")) {
           continue;
+}
         // When the current line contains more than one word
         if (!skipEqual()) {
           s = strchr(s, '\n');
-          if (!s)
+          if (!s) {
             break;
+}
           continue;
         }
 
@@ -522,61 +540,68 @@ private:
         // add the new alias
         auto ret = symbolInfo->aliasedSymbols.insert(
           {lhs, LinkerObject::SymbolAlias(rhs, LinkerObject::Relocation::kData, offset)});
-        if (!ret.second)
+        if (!ret.second) {
           std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
-      }
+      
+}}
     }
   }
 
   void process() {
     while (*s) {
       skipWhitespace();
-      if (debug)
+      if (debug) {
         dump("process");
-      if (!*s)
+}
+      if (!*s) {
         break;
-      if (*s != '.')
+}
+      if (*s != '.') {
         skipObjectAlias(false);
+}
       s++;
-      if (match("text"))
+      if (match("text")) {
         parseText();
-      else if (match("type"))
+      } else if (match("type")) {
         parseType();
-      else if (match("weak") || match("hidden") || match("protected") || match("internal"))
+      } else if (match("weak") || match("hidden") || match("protected") || match("internal")) {
         getStr(); // contents are in the content that follows
-      else if (match("imports"))
+      } else if (match("imports")) {
         skipImports();
-      else if (match("data")) {
-      } else if (match("ident"))
+      } else if (match("data")) {
+      } else if (match("ident")) {
         skipToEOL();
-      else if (match("section"))
+      } else if (match("section")) {
         parseToplevelSection();
-      else if (match("file"))
+      } else if (match("file")) {
         parseFile();
-      else if (match("align") || match("p2align"))
+      } else if (match("align") || match("p2align")) {
         skipToEOL();
-      else if (match("import_global")) {
+      } else if (match("import_global")) {
         skipToEOL();
         skipWhitespace();
         if (match(".size")) {
           skipToEOL();
         }
-      } else if (match("globl"))
+      } else if (match("globl")) {
         parseGlobl();
-      else if (match("functype"))
+      } else if (match("functype")) {
         parseFuncType();
-      else
+      } else {
         skipObjectAlias(true);
+}
     }
   }
 
   void skipObjectAlias(bool prefix) {
-    if (debug)
+    if (debug) {
       dump("object_alias");
+}
 
     // grab the dot that was consumed earlier
-    if (prefix)
+    if (prefix) {
       s--;
+}
     Name lhs = getStrToSep();
     WASM_UNUSED(lhs);
     if (!skipEqual())
@@ -587,8 +612,9 @@ private:
     skipWhitespace();
 
     // if no size attribute (e.g. weak symbol), skip
-    if (!match(".size"))
+    if (!match(".size")) {
       return;
+}
 
     mustMatch(lhs.str);
     mustMatch(",");
@@ -632,20 +658,22 @@ private:
   void parseText() {
     while (*s) {
       skipWhitespace();
-      if (!*s)
+      if (!*s) {
         break;
-      if (*s != '.')
+}
+      if (*s != '.') {
         break;
+}
       s++;
-      if (parseVersionMin())
+      if (parseVersionMin()) {
         ;
-      else if (match("file"))
+      } else if (match("file")) {
         parseFile();
-      else if (match("globl"))
+      } else if (match("globl")) {
         parseGlobl();
-      else if (match("type"))
+      } else if (match("type")) {
         parseType();
-      else {
+      } else {
         s--;
         break;
       }
@@ -653,8 +681,9 @@ private:
   }
 
   void parseFile() {
-    if (debug)
+    if (debug) {
       dump("file");
+}
     size_t fileId = 0;
     if (*s != '"') {
       fileId = getInt();
@@ -680,8 +709,9 @@ private:
     } else {
       decl->result = getType();
     }
-    while (*s && skipComma())
+    while (*s && skipComma()) {
       decl->params.push_back(getType());
+}
     std::string sig = getSig(decl.get());
     decl->name = "FUNCSIG$" + sig;
 
@@ -702,13 +732,15 @@ private:
       s = strchr(s, '\n');
       skipWhitespace();
       return true;
-    } else
+    } else {
       return false;
+}
   }
 
   void parseFunction() {
-    if (debug)
+    if (debug) {
       dump("func");
+}
     Name name = getStrToSep();
     if (match(" =")) {
       /* alias = */ getAtSeparated();
@@ -721,8 +753,9 @@ private:
     Function::DebugLocation debugLocation = {0, 0, 0};
     bool useDebugLocation = false;
     auto recordLoc = [&]() {
-      if (debug)
+      if (debug) {
         dump("loc");
+}
       size_t fileId = getInt();
       skipWhitespace();
       uint32_t row = getInt();
@@ -737,8 +770,9 @@ private:
       s = strchr(s, '\n');
     };
     auto recordLabel = [&]() {
-      if (debug)
+      if (debug) {
         dump("label");
+}
       Name label = getStrToSep();
       // TODO: track and create map of labels and their ranges for our AST
       WASM_UNUSED(label);
@@ -764,8 +798,9 @@ private:
           params.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
-          if (!match(","))
+          if (!match(",")) {
             break;
+}
         }
       } else if (match(".result")) {
         resultType = getType();
@@ -783,8 +818,9 @@ private:
           vars.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
-          if (!match(","))
+          if (!match(",")) {
             break;
+}
         }
       } else if (match(".file")) {
         parseFile();
@@ -795,8 +831,9 @@ private:
       } else if (peek(".Lfunc_begin")) {
         recordLabel();
         skipWhitespace();
-      } else
+      } else {
         break;
+}
     }
     Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
 
@@ -831,8 +868,9 @@ private:
       int ret = 1;
       const char* t = s;
       while (*t != '\n') {
-        if (*t == ',')
+        if (*t == ',') {
           ret++;
+}
         t++;
       }
       return ret;
@@ -857,18 +895,21 @@ private:
         } else {
           abort_on("bad input register");
         }
-        if (*s == ')')
+        if (*s == ')') {
           s++;           // tolerate 0(argument) syntax, where we started at the 'a'
+}
         if (*s == ':') { // tolerate :attribute=value syntax (see getAttributes)
           s++;
           skipToSep();
         }
-        if (i < num - 1)
+        if (i < num - 1) {
           skipComma();
+}
       }
       for (int i = num - 1; i >= 0; i--) {
-        if (inputs[i] == nullptr)
+        if (inputs[i] == nullptr) {
           inputs[i] = pop();
+}
       }
       return inputs;
     };
@@ -897,15 +938,17 @@ private:
       attributes.resize(num);
       for (int i = 0; i < num; i++) {
         skipToSep();
-        if (*s == ')')
+        if (*s == ')') {
           s++; // tolerate 0(argument) syntax, where we started at the 'a'
+}
         if (*s == ':') {
           attributes[i] = s + 1;
         } else {
           attributes[i] = nullptr;
         }
-        if (i < num - 1)
+        if (i < num - 1) {
           skipComma();
+}
       }
       s = before;
       return attributes;
@@ -1069,13 +1112,13 @@ private:
     auto handleTyped = [&](Type type) {
       switch (*s) {
         case 'a': {
-          if (match("add"))
+          if (match("add")) {
             makeBinary(BINARY_INT_OR_FLOAT(Add), type);
-          else if (match("and"))
+          } else if (match("and")) {
             makeBinary(BINARY_INT(And), type);
-          else if (match("abs"))
+          } else if (match("abs")) {
             makeUnary(type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
-          else
+          } else
             abort_on("type.a");
           break;
         }
@@ -1093,213 +1136,213 @@ private:
               cashew::IString str = getStr();
               setOutput(parseConst(str, type, *allocator), assign);
             }
-          } else if (match("call"))
+          } else if (match("call")) {
             makeCall(type);
-          else if (match("convert_s/i32"))
+          } else if (match("convert_s/i32")) {
             makeUnary(
               type == f32 ? UnaryOp::ConvertSInt32ToFloat32 : UnaryOp::ConvertSInt32ToFloat64,
               type);
-          else if (match("convert_u/i32"))
+          } else if (match("convert_u/i32")) {
             makeUnary(
               type == f32 ? UnaryOp::ConvertUInt32ToFloat32 : UnaryOp::ConvertUInt32ToFloat64,
               type);
-          else if (match("convert_s/i64"))
+          } else if (match("convert_s/i64")) {
             makeUnary(
               type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64,
               type);
-          else if (match("convert_u/i64"))
+          } else if (match("convert_u/i64")) {
             makeUnary(
               type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64,
               type);
-          else if (match("clz"))
+          } else if (match("clz")) {
             makeUnary(type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
-          else if (match("ctz"))
+          } else if (match("ctz")) {
             makeUnary(type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
-          else if (match("copysign"))
+          } else if (match("copysign")) {
             makeBinary(BINARY_FLOAT(CopySign), type);
-          else if (match("ceil"))
+          } else if (match("ceil")) {
             makeUnary(type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
-          else
+          } else
             abort_on("type.c");
           break;
         }
         case 'd': {
-          if (match("demote/f64"))
+          if (match("demote/f64")) {
             makeUnary(UnaryOp::DemoteFloat64, type);
-          else if (match("div_s"))
+          } else if (match("div_s")) {
             makeBinary(BINARY_INT(DivS), type);
-          else if (match("div_u"))
+          } else if (match("div_u")) {
             makeBinary(BINARY_INT(DivU), type);
-          else if (match("div"))
+          } else if (match("div")) {
             makeBinary(BINARY_FLOAT(Div), type);
-          else
+          } else
             abort_on("type.g");
           break;
         }
         case 'e': {
-          if (match("eqz"))
+          if (match("eqz")) {
             makeUnary(type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
-          else if (match("eq"))
+          } else if (match("eq")) {
             makeBinary(BINARY_INT_OR_FLOAT(Eq), i32);
-          else if (match("extend_s/i32"))
+          } else if (match("extend_s/i32")) {
             makeUnary(UnaryOp::ExtendSInt32, type);
-          else if (match("extend_u/i32"))
+          } else if (match("extend_u/i32")) {
             makeUnary(UnaryOp::ExtendUInt32, type);
-          else
+          } else
             abort_on("type.e");
           break;
         }
         case 'f': {
-          if (match("floor"))
+          if (match("floor")) {
             makeUnary(type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
-          else
+          } else
             abort_on("type.e");
           break;
         }
         case 'g': {
-          if (match("gt_s"))
+          if (match("gt_s")) {
             makeBinary(BINARY_INT(GtS), i32);
-          else if (match("gt_u"))
+          } else if (match("gt_u")) {
             makeBinary(BINARY_INT(GtU), i32);
-          else if (match("ge_s"))
+          } else if (match("ge_s")) {
             makeBinary(BINARY_INT(GeS), i32);
-          else if (match("ge_u"))
+          } else if (match("ge_u")) {
             makeBinary(BINARY_INT(GeU), i32);
-          else if (match("gt"))
+          } else if (match("gt")) {
             makeBinary(BINARY_FLOAT(Gt), i32);
-          else if (match("ge"))
+          } else if (match("ge")) {
             makeBinary(BINARY_FLOAT(Ge), i32);
-          else
+          } else
             abort_on("type.g");
           break;
         }
         case 'l': {
-          if (match("lt_s"))
+          if (match("lt_s")) {
             makeBinary(BINARY_INT(LtS), i32);
-          else if (match("lt_u"))
+          } else if (match("lt_u")) {
             makeBinary(BINARY_INT(LtU), i32);
-          else if (match("le_s"))
+          } else if (match("le_s")) {
             makeBinary(BINARY_INT(LeS), i32);
-          else if (match("le_u"))
+          } else if (match("le_u")) {
             makeBinary(BINARY_INT(LeU), i32);
-          else if (match("load"))
+          } else if (match("load")) {
             makeLoad(type);
-          else if (match("lt"))
+          } else if (match("lt")) {
             makeBinary(BINARY_FLOAT(Lt), i32);
-          else if (match("le"))
+          } else if (match("le")) {
             makeBinary(BINARY_FLOAT(Le), i32);
-          else
+          } else
             abort_on("type.g");
           break;
         }
         case 'm': {
-          if (match("mul"))
+          if (match("mul")) {
             makeBinary(BINARY_INT_OR_FLOAT(Mul), type);
-          else if (match("min"))
+          } else if (match("min")) {
             makeBinary(BINARY_FLOAT(Min), type);
-          else if (match("max"))
+          } else if (match("max")) {
             makeBinary(BINARY_FLOAT(Max), type);
-          else
+          } else
             abort_on("type.m");
           break;
         }
         case 'n': {
-          if (match("neg"))
+          if (match("neg")) {
             makeUnary(type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
-          else if (match("nearest"))
+          } else if (match("nearest")) {
             makeUnary(type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
-          else if (match("ne"))
+          } else if (match("ne")) {
             makeBinary(BINARY_INT_OR_FLOAT(Ne), i32);
-          else
+          } else
             abort_on("type.n");
           break;
         }
         case 'o': {
-          if (match("or"))
+          if (match("or")) {
             makeBinary(BINARY_INT(Or), type);
-          else
+          } else
             abort_on("type.o");
           break;
         }
         case 'p': {
-          if (match("promote/f32"))
+          if (match("promote/f32")) {
             makeUnary(UnaryOp::PromoteFloat32, type);
-          else if (match("popcnt"))
+          } else if (match("popcnt")) {
             makeUnary(type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
-          else
+          } else
             abort_on("type.p");
           break;
         }
         case 'r': {
-          if (match("rem_s"))
+          if (match("rem_s")) {
             makeBinary(BINARY_INT(RemS), type);
-          else if (match("rem_u"))
+          } else if (match("rem_u")) {
             makeBinary(BINARY_INT(RemU), type);
-          else if (match("reinterpret/i32"))
+          } else if (match("reinterpret/i32")) {
             makeUnary(UnaryOp::ReinterpretInt32, type);
-          else if (match("reinterpret/i64"))
+          } else if (match("reinterpret/i64")) {
             makeUnary(UnaryOp::ReinterpretInt64, type);
-          else if (match("reinterpret/f32"))
+          } else if (match("reinterpret/f32")) {
             makeUnary(UnaryOp::ReinterpretFloat32, type);
-          else if (match("reinterpret/f64"))
+          } else if (match("reinterpret/f64")) {
             makeUnary(UnaryOp::ReinterpretFloat64, type);
-          else if (match("rotl"))
+          } else if (match("rotl")) {
             makeBinary(BINARY_INT(RotL), type);
-          else if (match("rotr"))
+          } else if (match("rotr")) {
             makeBinary(BINARY_INT(RotR), type);
-          else
+          } else
             abort_on("type.r");
           break;
         }
         case 's': {
-          if (match("shr_s"))
+          if (match("shr_s")) {
             makeBinary(BINARY_INT(ShrS), type);
-          else if (match("shr_u"))
+          } else if (match("shr_u")) {
             makeBinary(BINARY_INT(ShrU), type);
-          else if (match("shl"))
+          } else if (match("shl")) {
             makeBinary(BINARY_INT(Shl), type);
-          else if (match("sub"))
+          } else if (match("sub")) {
             makeBinary(BINARY_INT_OR_FLOAT(Sub), type);
-          else if (peek("store"))
+          } else if (peek("store")) {
             makeStore(type);
-          else if (match("select"))
+          } else if (match("select")) {
             makeSelect(type);
-          else if (match("sqrt"))
+          } else if (match("sqrt")) {
             makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
-          else
+          } else
             abort_on("type.s");
           break;
         }
         case 't': {
-          if (match("trunc_s/f32"))
+          if (match("trunc_s/f32")) {
             makeUnary(
               type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64, type);
-          else if (match("trunc_u/f32"))
+          } else if (match("trunc_u/f32")) {
             makeUnary(
               type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64, type);
-          else if (match("trunc_s/f64"))
+          } else if (match("trunc_s/f64")) {
             makeUnary(
               type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64, type);
-          else if (match("trunc_u/f64"))
+          } else if (match("trunc_u/f64")) {
             makeUnary(
               type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64, type);
-          else if (match("trunc"))
+          } else if (match("trunc")) {
             makeUnary(type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
-          else
+          } else
             abort_on("type.t");
           break;
         }
         case 'w': {
-          if (match("wrap/i64"))
+          if (match("wrap/i64")) {
             makeUnary(UnaryOp::WrapInt64, type);
-          else
+          } else
             abort_on("type.w");
           break;
         }
         case 'x': {
-          if (match("xor"))
+          if (match("xor")) {
             makeBinary(BINARY_INT(Xor), type);
-          else
+          } else
             abort_on("type.x");
           break;
         }
@@ -1324,8 +1367,9 @@ private:
     // main loop
     while (1) {
       skipWhitespace();
-      if (debug)
+      if (debug) {
         dump("main function loop");
+}
       if (match("i32.")) {
         handleTyped(i32);
       } else if (match("i64.")) {
@@ -1353,12 +1397,14 @@ private:
       } else if (peek(".LBB")) {
         // FIXME legacy tests: it can be leftover from "loop" or "block", but it can be a label too
         auto p = s;
-        while (*p && *p != ':' && *p != '#' && *p != '\n')
+        while (*p && *p != ':' && *p != '#' && *p != '\n') {
           p++;
+}
         if (*p == ':') { // it's a label
           recordLabel();
-        } else
+        } else {
           s = strchr(s, '\n');
+}
       } else if (match("loop")) {
         Type loopType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Loop>();
@@ -1463,13 +1509,15 @@ private:
   }
 
   void parseType() {
-    if (debug)
+    if (debug) {
       dump("type");
+}
     Name name = getStrToSep();
     skipComma();
     if (match("@function")) {
-      if (match(".hidden"))
+      if (match(".hidden")) {
         mustMatch(name.str);
+}
       return parseFunction();
     } else if (match("@object")) {
       return parseObject(name);
@@ -1478,9 +1526,10 @@ private:
   }
 
   void parseObject(Name name) {
-    if (debug)
+    if (debug) {
       std::cerr << "parseObject " << name << '\n';
-    if (match(".data") || match(".bss")) {
+    
+}if (match(".data") || match(".bss")) {
     } else if (match(".section")) {
       s = strchr(s, '\n');
     } else if (match(".lcomm")) {
@@ -1520,8 +1569,9 @@ private:
         }
         auto quoted = getQuoted();
         raw.insert(raw.end(), quoted.begin(), quoted.end());
-        if (z)
+        if (z) {
           raw.push_back(0);
+}
         zero = false;
       } else if (match(".zero") || match(".skip")) {
         Address size = getInt();
@@ -1531,8 +1581,9 @@ private:
         unsigned char value = 0;
         if (skipComma()) {
           value = getInt();
-          if (value != 0)
+          if (value != 0) {
             zero = false;
+}
         }
         for (Address i = 0, e = size; i < e; ++i) {
           raw.push_back(value);
@@ -1652,18 +1703,20 @@ private:
   }
 
   Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
-    if (name == "emscripten_longjmp_jmpbuf")
+    if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
-    return fixEmExceptionInvoke(name, sig);
+    
+}return fixEmExceptionInvoke(name, sig);
   }
 
   // This version only converts emscripten_longjmp_jmpbuf and does not deal
   // with invoke wrappers. This is used when we only have a function name as
   // relocatable constant.
   Name fixEmLongjmp(const Name& name) {
-    if (name == "emscripten_longjmp_jmpbuf")
+    if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
-    return name;
+    
+}return name;
   }
 
   // Converts invoke wrapper names generated by LLVM backend to real invoke

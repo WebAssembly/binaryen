@@ -103,8 +103,9 @@ struct MixedArena {
         // otherwise, the cmpxchg updated seen, and we continue to loop
         curr = seen;
       }
-      if (allocated)
+      if (allocated) {
         delete allocated;
+}
       return curr->allocSpace(size);
     }
     size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
@@ -138,8 +139,9 @@ struct MixedArena {
 
   ~MixedArena() {
     clear();
-    if (next.load())
+    if (next.load()) {
       delete next.load();
+}
   }
 };
 

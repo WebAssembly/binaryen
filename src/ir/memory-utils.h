@@ -28,13 +28,15 @@ namespace wasm {
 namespace MemoryUtils {
 // flattens memory into a single data segment. returns true if successful
 inline bool flatten(Memory& memory) {
-  if (memory.segments.size() == 0)
+  if (memory.segments.size() == 0) {
     return true;
+}
   std::vector<char> data;
   for (auto& segment : memory.segments) {
     auto* offset = segment.offset->dynCast<Const>();
-    if (!offset)
+    if (!offset) {
       return false;
+}
   }
   for (auto& segment : memory.segments) {
     auto* offset = segment.offset->dynCast<Const>();

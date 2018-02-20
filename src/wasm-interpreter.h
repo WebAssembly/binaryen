@@ -176,17 +176,20 @@ public:
   Flow visitIf(If* curr) {
     NOTE_ENTER("If");
     Flow flow = visit(curr->condition);
-    if (flow.breaking())
+    if (flow.breaking()) {
       return flow;
+}
     NOTE_EVAL1(flow.value);
     if (flow.value.geti32()) {
       Flow flow = visit(curr->ifTrue);
-      if (!flow.breaking() && !curr->ifFalse)
+      if (!flow.breaking() && !curr->ifFalse) {
         flow.value = Literal(); // if_else returns a value, but if does not
+}
       return flow;
     }
-    if (curr->ifFalse)
+    if (curr->ifFalse) {
       return visit(curr->ifFalse);
+}
     return Flow();
   }
   Flow visitLoop(Loop* curr) {
@@ -194,8 +197,9 @@ public:
     while (1) {
       Flow flow = visit(curr->body);
       if (flow.breaking()) {
-        if (flow.breakTo == curr->name)
+        if (flow.breakTo == curr->name) {
           continue; // lol
+}
       }
       return flow; // loop does not loop automatically, only continue achieves that
     }
@@ -206,16 +210,19 @@ public:
     Flow flow;
     if (curr->value) {
       flow = visit(curr->value);
-      if (flow.breaking())
+      if (flow.breaking()) {
         return flow;
+}
     }
     if (curr->condition) {
       Flow conditionFlow = visit(curr->condition);
-      if (conditionFlow.breaking())
+      if (conditionFlow.breaking()) {
         return conditionFlow;
+}
       condition = conditionFlow.value.getInteger() != 0;
-      if (!condition)
+      if (!condition) {
         return flow;
+}
     }
     flow.breakTo = curr->name;
     return flow;
@@ -226,14 +233,16 @@ public:
     Literal value;
     if (curr->value) {
       flow = visit(curr->value);
-      if (flow.breaking())
+      if (flow.breaking()) {
         return flow;
+}
       value = flow.value;
       NOTE_EVAL1(value);
     }
     flow = visit(curr->condition);
-    if (flow.breaking())
+    if (flow.breaking()) {
       return flow;
+}
     int64_t index = flow.value.getInteger();
     Name target = curr->default_;
     if (index >= 0 && (size_t)index < curr->targets.size()) {
@@ -252,8 +261,9 @@ public:
   Flow visitUnary(Unary* curr) {
     NOTE_ENTER("Unary");
     Flow flow = visit(curr->value);
-    if (flow.breaking())
+    if (flow.breaking()) {
       return flow;
+}
     Literal value = flow.value;
     NOTE_EVAL1(value);
     if (value.type == i32) {
@@ -376,23 +386,29 @@ public:
           return value.castToI64();
         case DemoteFloat64: {
           double val = value.getFloat();
-          if (std::isnan(val))
+          if (std::isnan(val)) {
             return Literal(float(val));
-          if (std::isinf(val))
+}
+          if (std::isinf(val)) {
             return Literal(float(val));
+}
           // when close to the limit, but still truncatable to a valid value, do that
           // see
           // https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
           uint64_t bits = value.reinterpreti64();
-          if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL)
+          if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) {
             return Literal(std::numeric_limits<float>::max());
-          if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL)
+}
+          if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) {
             return Literal(-std::numeric_limits<float>::max());
+}
           // when we must convert to infinity, do that
-          if (val < -std::numeric_limits<float>::max())
+          if (val < -std::numeric_limits<float>::max()) {
             return Literal(-std::numeric_limits<float>::infinity());
-          if (val > std::numeric_limits<float>::max())
+}
+          if (val > std::numeric_limits<float>::max()) {
             return Literal(std::numeric_limits<float>::infinity());
+}
           return value.truncateToF32();
         }
         default:
@@ -404,12 +420,14 @@ public:
   Flow visitBinary(Binary* curr) {
     NOTE_ENTER("Binary");
     Flow flow = visit(curr->left);
-    if (flow.breaking())
+    if (flow.breaking()) {
       return flow;
+}
     Literal left = flow.value;
     flow = visit(curr->right);
-    if (flow.breaking())
+    if (flow.breaking()) {
       return flow;
+}
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
     assert(isConcreteType(curr->left->type) ? left.type == curr->left->type : true);
@@ -423,27 +441,33 @@ public:
         case MulInt32:
           return left.mul(right);
         case DivSInt32: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i32.div_s by 0");
-          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1)
+}
+          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) {
             trap("i32.div_s overflow"); // signed division overflow
+}
           return left.divS(right);
         }
         case DivUInt32: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i32.div_u by 0");
+}
           return left.divU(right);
         }
         case RemSInt32: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i32.rem_s by 0");
-          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1)
+}
+          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) {
             return Literal(int32_t(0));
+}
           return left.remS(right);
         }
         case RemUInt32: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i32.rem_u by 0");
+}
           return left.remU(right);
         }
         case AndInt32:
@@ -494,27 +518,33 @@ public:
         case MulInt64:
           return left.mul(right);
         case DivSInt64: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i64.div_s by 0");
-          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL)
+}
+          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) {
             trap("i64.div_s overflow"); // signed division overflow
+}
           return left.divS(right);
         }
         case DivUInt64: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i64.div_u by 0");
+}
           return left.divU(right);
         }
         case RemSInt64: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i64.rem_s by 0");
-          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL)
+}
+          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) {
             return Literal(int64_t(0));
+}
           return left.remS(right);
         }
         case RemUInt64: {
-          if (right.getInteger() == 0)
+          if (right.getInteger() == 0) {
             trap("i64.rem_u by 0");
+}
           return left.remU(right);
         }
         case AndInt64:
@@ -606,22 +636,26 @@ public:
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
     Flow ifTrue = visit(curr->ifTrue);
-    if (ifTrue.breaking())
+    if (ifTrue.breaking()) {
       return ifTrue;
+}
     Flow ifFalse = visit(curr->ifFalse);
-    if (ifFalse.breaking())
+    if (ifFalse.breaking()) {
       return ifFalse;
+}
     Flow condition = visit(curr->condition);
-    if (condition.breaking())
+    if (condition.breaking()) {
       return condition;
+}
     NOTE_EVAL1(condition.value);
     return condition.value.geti32() ? ifTrue : ifFalse; // ;-)
   }
   Flow visitDrop(Drop* curr) {
     NOTE_ENTER("Drop");
     Flow value = visit(curr->value);
-    if (value.breaking())
+    if (value.breaking()) {
       return value;
+}
     return Flow();
   }
   Flow visitReturn(Return* curr) {
@@ -629,8 +663,9 @@ public:
     Flow flow;
     if (curr->value) {
       flow = visit(curr->value);
-      if (flow.breaking())
+      if (flow.breaking()) {
         return flow;
+}
       NOTE_EVAL1(flow.value);
     }
     flow.breakTo = RETURN_FLOW;
@@ -648,24 +683,29 @@ public:
 
   Literal truncSFloat(Unary* curr, Literal value) {
     double val = value.getFloat();
-    if (std::isnan(val))
+    if (std::isnan(val)) {
       trap("truncSFloat of nan");
+}
     if (curr->type == i32) {
       if (value.type == f32) {
-        if (!isInRangeI32TruncS(value.reinterpreti32()))
+        if (!isInRangeI32TruncS(value.reinterpreti32())) {
           trap("i32.truncSFloat overflow");
+}
       } else {
-        if (!isInRangeI32TruncS(value.reinterpreti64()))
+        if (!isInRangeI32TruncS(value.reinterpreti64())) {
           trap("i32.truncSFloat overflow");
+}
       }
       return Literal(int32_t(val));
     } else {
       if (value.type == f32) {
-        if (!isInRangeI64TruncS(value.reinterpreti32()))
+        if (!isInRangeI64TruncS(value.reinterpreti32())) {
           trap("i64.truncSFloat overflow");
+}
       } else {
-        if (!isInRangeI64TruncS(value.reinterpreti64()))
+        if (!isInRangeI64TruncS(value.reinterpreti64())) {
           trap("i64.truncSFloat overflow");
+}
       }
       return Literal(int64_t(val));
     }
@@ -673,24 +713,29 @@ public:
 
   Literal truncUFloat(Unary* curr, Literal value) {
     double val = value.getFloat();
-    if (std::isnan(val))
+    if (std::isnan(val)) {
       trap("truncUFloat of nan");
+}
     if (curr->type == i32) {
       if (value.type == f32) {
-        if (!isInRangeI32TruncU(value.reinterpreti32()))
+        if (!isInRangeI32TruncU(value.reinterpreti32())) {
           trap("i32.truncUFloat overflow");
+}
       } else {
-        if (!isInRangeI32TruncU(value.reinterpreti64()))
+        if (!isInRangeI32TruncU(value.reinterpreti64())) {
           trap("i32.truncUFloat overflow");
+}
       }
       return Literal(uint32_t(val));
     } else {
       if (value.type == f32) {
-        if (!isInRangeI64TruncU(value.reinterpreti32()))
+        if (!isInRangeI64TruncU(value.reinterpreti32())) {
           trap("i64.truncUFloat overflow");
+}
       } else {
-        if (!isInRangeI64TruncU(value.reinterpreti64()))
+        if (!isInRangeI64TruncU(value.reinterpreti64())) {
           trap("i64.truncUFloat overflow");
+}
       }
       return Literal(uint64_t(val));
     }
@@ -885,8 +930,9 @@ public:
   // call an exported function
   Literal callExport(Name name, LiteralList& arguments) {
     Export* export_ = wasm.getExportOrNull(name);
-    if (!export_)
+    if (!export_) {
       externalInterface->trap("callExport not found");
+}
     return callFunction(export_->value, arguments);
   }
 
@@ -898,12 +944,14 @@ public:
   // get an exported global
   Literal getExport(Name name) {
     Export* export_ = wasm.getExportOrNull(name);
-    if (!export_)
+    if (!export_) {
       externalInterface->trap("getExport external not found");
+}
     Name internalName = export_->value;
     auto iter = globals.find(internalName);
-    if (iter == globals.end())
+    if (iter == globals.end()) {
       externalInterface->trap("getExport internal not found");
+}
     return iter->second;
   }
 
@@ -981,8 +1029,9 @@ public:
         arguments.reserve(operands.size());
         for (auto expression : operands) {
           Flow flow = this->visit(expression);
-          if (flow.breaking())
+          if (flow.breaking()) {
             return flow;
+}
           NOTE_EVAL1(flow.value);
           arguments.push_back(flow.value);
         }
@@ -994,8 +1043,9 @@ public:
         NOTE_NAME(curr->target);
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         Flow ret = instance.callFunctionInternal(curr->target, arguments);
 #ifdef WASM_INTERPRETER_DEBUG
         std::cout << "(returned to " << scope.function->name << ")\n";
@@ -1006,8 +1056,9 @@ public:
         NOTE_ENTER("CallImport");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         return instance.externalInterface->callImport(
           instance.wasm.getImport(curr->target), arguments);
       }
@@ -1015,11 +1066,13 @@ public:
         NOTE_ENTER("CallIndirect");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         Flow target = this->visit(curr->target);
-        if (target.breaking())
+        if (target.breaking()) {
           return target;
+}
         Index index = target.value.geti32();
         return instance.externalInterface->callTable(
           index, arguments, curr->type, *instance.self());
@@ -1036,8 +1089,9 @@ public:
         NOTE_ENTER("SetLocal");
         auto index = curr->index;
         Flow flow = this->visit(curr->value);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         NOTE_EVAL1(index);
         NOTE_EVAL1(flow.value);
         assert(curr->isTee() ? flow.value.type == curr->type : true);
@@ -1057,8 +1111,9 @@ public:
         NOTE_ENTER("SetGlobal");
         auto name = curr->name;
         Flow flow = this->visit(curr->value);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         NOTE_EVAL1(name);
         NOTE_EVAL1(flow.value);
         instance.globals[name] = flow.value;
@@ -1068,8 +1123,9 @@ public:
       Flow visitLoad(Load* curr) {
         NOTE_ENTER("Load");
         Flow flow = this->visit(curr->ptr);
-        if (flow.breaking())
+        if (flow.breaking()) {
           return flow;
+}
         NOTE_EVAL1(flow);
         auto addr = instance.getFinalAddress(curr, flow.value);
         auto ret = instance.externalInterface->load(curr, addr);
@@ -1080,11 +1136,13 @@ public:
       Flow visitStore(Store* curr) {
         NOTE_ENTER("Store");
         Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking())
+        if (ptr.breaking()) {
           return ptr;
+}
         Flow value = this->visit(curr->value);
-        if (value.breaking())
+        if (value.breaking()) {
           return value;
+}
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
         NOTE_EVAL1(value);
@@ -1095,11 +1153,13 @@ public:
       Flow visitAtomicRMW(AtomicRMW* curr) {
         NOTE_ENTER("AtomicRMW");
         Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking())
+        if (ptr.breaking()) {
           return ptr;
+}
         auto value = this->visit(curr->value);
-        if (value.breaking())
+        if (value.breaking()) {
           return value;
+}
         NOTE_EVAL1(ptr);
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
@@ -1135,15 +1195,18 @@ public:
       Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
         NOTE_ENTER("AtomicCmpxchg");
         Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking())
+        if (ptr.breaking()) {
           return ptr;
+}
         NOTE_EVAL1(ptr);
         auto expected = this->visit(curr->expected);
-        if (expected.breaking())
+        if (expected.breaking()) {
           return expected;
+}
         auto replacement = this->visit(curr->replacement);
-        if (replacement.breaking())
+        if (replacement.breaking()) {
           return replacement;
+}
         auto addr = instance.getFinalAddress(curr, ptr.value);
         NOTE_EVAL1(addr);
         NOTE_EVAL1(expected);
@@ -1158,17 +1221,20 @@ public:
       Flow visitAtomicWait(AtomicWait* curr) {
         NOTE_ENTER("AtomicWait");
         Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking())
+        if (ptr.breaking()) {
           return ptr;
+}
         NOTE_EVAL1(ptr);
         auto expected = this->visit(curr->expected);
         NOTE_EVAL1(expected);
-        if (expected.breaking())
+        if (expected.breaking()) {
           return expected;
+}
         auto timeout = this->visit(curr->timeout);
         NOTE_EVAL1(timeout);
-        if (timeout.breaking())
+        if (timeout.breaking()) {
           return timeout;
+}
         auto bytes = getTypeSize(curr->expectedType);
         auto addr = instance.getFinalAddress(ptr.value, bytes);
         auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
@@ -1183,13 +1249,15 @@ public:
       Flow visitAtomicWake(AtomicWake* curr) {
         NOTE_ENTER("AtomicWake");
         Flow ptr = this->visit(curr->ptr);
-        if (ptr.breaking())
+        if (ptr.breaking()) {
           return ptr;
+}
         NOTE_EVAL1(ptr);
         auto count = this->visit(curr->wakeCount);
         NOTE_EVAL1(count);
-        if (count.breaking())
+        if (count.breaking()) {
           return count;
+}
         // TODO: add threads support!
         return Literal(int32_t(0)); // none woken up
       }
@@ -1204,17 +1272,21 @@ public:
           case GrowMemory: {
             auto fail = Literal(int32_t(-1));
             Flow flow = this->visit(curr->operands[0]);
-            if (flow.breaking())
+            if (flow.breaking()) {
               return flow;
+}
             int32_t ret = instance.memorySize;
             uint32_t delta = flow.value.geti32();
-            if (delta > uint32_t(-1) / Memory::kPageSize)
+            if (delta > uint32_t(-1) / Memory::kPageSize) {
               return fail;
-            if (instance.memorySize >= uint32_t(-1) - delta)
+}
+            if (instance.memorySize >= uint32_t(-1) - delta) {
               return fail;
+}
             uint32_t newSize = instance.memorySize + delta;
-            if (newSize > instance.wasm.memory.max)
+            if (newSize > instance.wasm.memory.max) {
               return fail;
+}
             instance.externalInterface->growMemory(
               instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
@@ -1222,8 +1294,9 @@ public:
           }
           case HasFeature: {
             Name id = curr->nameOperand;
-            if (id == WASM)
+            if (id == WASM) {
               return Literal(1);
+}
             return Literal((int32_t)0);
           }
           default:
@@ -1234,8 +1307,9 @@ public:
       void trap(const char* why) override { instance.externalInterface->trap(why); }
     };
 
-    if (callDepth > maxCallDepth)
+    if (callDepth > maxCallDepth) {
       externalInterface->trap("stack limit");
+}
     auto previousCallDepth = callDepth;
     callDepth++;
     auto previousFunctionStackSize = functionStack.size();

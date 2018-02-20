@@ -49,10 +49,12 @@ struct LivenessAction {
   LivenessAction(What what, Index index, Expression** origin)
     : what(what), index(index), origin(origin), effective(false) {
     assert(what != Other);
-    if (what == Get)
+    if (what == Get) {
       assert((*origin)->is<GetLocal>());
-    if (what == Set)
+}
+    if (what == Set) {
       assert((*origin)->is<SetLocal>());
+}
   }
   LivenessAction(Expression** origin) : what(Other), origin(origin) {}
 
@@ -67,8 +69,9 @@ struct Liveness {
   std::vector<LivenessAction> actions; // actions occurring in this block
 
   void dump(Function* func) {
-    if (actions.empty())
+    if (actions.empty()) {
       return;
+}
     std::cout << "    actions:\n";
     for (auto& action : actions) {
       std::cout << "      " << (action.isGet() ? "get" : "set") << " "
@@ -128,14 +131,17 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // count to see if worth it.
   // TODO: an if can have two copies
   GetLocal* getCopy(SetLocal* set) {
-    if (auto* get = set->value->dynCast<GetLocal>())
+    if (auto* get = set->value->dynCast<GetLocal>()) {
       return get;
+}
     if (auto* iff = set->value->dynCast<If>()) {
-      if (auto* get = iff->ifTrue->dynCast<GetLocal>())
+      if (auto* get = iff->ifTrue->dynCast<GetLocal>()) {
         return get;
+}
       if (iff->ifFalse) {
-        if (auto* get = iff->ifFalse->dynCast<GetLocal>())
+        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) {
           return get;
+}
       }
     }
     return nullptr;
@@ -163,8 +169,9 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // keep working while stuff is flowing
     std::unordered_set<BasicBlock*> queue;
     for (auto& curr : CFGWalker<SubType, VisitorType, Liveness>::basicBlocks) {
-      if (liveBlocks.count(curr.get()) == 0)
+      if (liveBlocks.count(curr.get()) == 0) {
         continue; // ignore dead blocks
+}
       queue.insert(curr.get());
       // do the first scan through the block, starting with nothing live at the end, and updating
       // the liveness at the start
@@ -177,15 +184,17 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       auto* curr = *iter;
       queue.erase(iter);
       LocalSet live;
-      if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live))
+      if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) {
         continue;
+}
       assert(curr->contents.end.size() < live.size());
       curr->contents.end = live;
       scanLivenessThroughActions(curr->contents.actions, live);
       // liveness is now calculated at the start. if something
       // changed, all predecessor blocks need recomputation
-      if (curr->contents.start == live)
+      if (curr->contents.start == live) {
         continue;
+}
       assert(curr->contents.start.size() < live.size());
       curr->contents.start = live;
       for (auto* in : curr->in) {
@@ -197,8 +206,9 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // merge starts of a list of blocks. return
   // whether anything changed vs an old state (which indicates further processing is necessary).
   bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret) {
-    if (blocks.size() == 0)
+    if (blocks.size() == 0) {
       return false;
+}
     ret = blocks[0]->contents.start;
     if (blocks.size() > 1) {
       // more than one, so we must merge

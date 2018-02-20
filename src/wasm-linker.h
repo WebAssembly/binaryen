@@ -38,8 +38,9 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
     assert(!must_export);
     return;
   }
-  if (wasm.getExportOrNull(name))
+  if (wasm.getExportOrNull(name)) {
     return; // Already exported
+}
   auto exp = new Export;
   exp->name = exp->value = name;
   exp->kind = ExternalKind::Function;
@@ -110,15 +111,17 @@ public:
   // If name is an alias, return what it points to. Otherwise return name.
   Name resolveAlias(Name name, Relocation::Kind kind) {
     auto aliased = symbolInfo.aliasedSymbols.find(name);
-    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind)
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) {
       return aliased->second.symbol;
+}
     return name;
   }
 
   SymbolAlias* getAlias(Name name, Relocation::Kind kind) {
     auto aliased = symbolInfo.aliasedSymbols.find(name);
-    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind)
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) {
       return &aliased->second;
+}
     return nullptr;
   }
 
@@ -148,8 +151,9 @@ public:
   void addExternType(Name name, FunctionType* ty) { externTypesMap[name] = ty; }
   FunctionType* getExternType(Name name) {
     auto f = externTypesMap.find(name);
-    if (f == externTypesMap.end())
+    if (f == externTypesMap.end()) {
       return nullptr;
+}
     return f->second;
   }
 
@@ -223,8 +227,9 @@ public:
     }
 
     // Don't allow anything to be allocated at address 0
-    if (globalBase == 0)
+    if (globalBase == 0) {
       nextStatic = 1;
+}
 
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).

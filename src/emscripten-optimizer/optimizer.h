@@ -72,8 +72,9 @@ struct AsmData {
 
   AsmType getType(const cashew::IString& name) {
     auto ret = locals.find(name);
-    if (ret != locals.end())
+    if (ret != locals.end()) {
       return ret->second.type;
+}
     return ASM_NONE;
   }
   void setType(const cashew::IString& name, AsmType type) { locals[name].type = type; }

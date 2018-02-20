@@ -68,12 +68,15 @@ bool isTypeFloat(Type type) {
 }
 
 Type getType(unsigned size, bool float_) {
-  if (size < 4)
+  if (size < 4) {
     return Type::i32;
-  if (size == 4)
+}
+  if (size == 4) {
     return float_ ? Type::f32 : Type::i32;
-  if (size == 8)
+}
+  if (size == 8) {
     return float_ ? Type::f64 : Type::i64;
+}
   abort();
 }
 

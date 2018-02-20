@@ -33,8 +33,9 @@ void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
     return (getenv("COLORS") && getenv("COLORS")[0] == '1') ||                           // forced
            (isatty(STDOUT_FILENO) && (!getenv("COLORS") || getenv("COLORS")[0] != '0')); // implicit
   }();
-  if (has_color && !colors_disabled)
+  if (has_color && !colors_disabled) {
     stream << colorCode;
+}
 }
 #elif defined(_WIN32)
 #include <io.h>

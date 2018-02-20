@@ -21,6 +21,7 @@
 #ifndef wasm_support_threads_h
 #define wasm_support_threads_h
 
+#include <cassert>
 #include <atomic>
 #include <condition_variable>
 #include <functional>

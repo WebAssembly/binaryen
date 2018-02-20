@@ -45,12 +45,13 @@ IString ASM_FUNC("asmFunc"), ABORT_FUNC("abort"), FUNCTION_TABLE("FUNCTION_TABLE
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast[0] == BLOCK || ast[0] == TOPLEVEL)
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) {
     index = 1;
-  else if (ast[0] == DEFUN)
+  } else if (ast[0] == DEFUN) {
     index = 3;
-  else
+  } else {
     abort();
+}
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
@@ -162,9 +163,10 @@ public:
       char* mod = strdup(str);
       str = mod;
       while (*mod) {
-        if (*mod == '-')
+        if (*mod == '-') {
           *mod = '_';
-        mod++;
+        
+}mod++;
       }
       IString result = fromName(IString(str, false));
       free((void*)str);
@@ -700,8 +702,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     bool isBlock(Ref ast) { return !!ast && ast->isArray() && ast[0] == BLOCK; }
 
     Ref blockify(Ref ast) {
-      if (isBlock(ast))
+      if (isBlock(ast)) {
         return ast;
+}
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
@@ -778,8 +781,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       } else {
         theBreak = ValueBuilder::makeContinue(fromName(curr->name));
       }
-      if (!curr->value)
+      if (!curr->value) {
         return theBreak;
+}
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
       ret = blockify(ret);

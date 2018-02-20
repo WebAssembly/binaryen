@@ -115,8 +115,9 @@ int main(int argc, const char* argv[]) {
   auto debugFlag = options.debug ? Flags::Debug : Flags::Release;
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, debugFlag));
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Parsing and wasming..." << std::endl;
+}
   uint64_t globalBase = options.extra.find("global-base") != options.extra.end()
                           ? std::stoull(options.extra["global-base"])
                           : 0;
@@ -129,10 +130,11 @@ int main(int argc, const char* argv[]) {
   uint64_t maxMem = options.extra.find("max-memory") != options.extra.end()
                       ? std::stoull(options.extra["max-memory"])
                       : 0;
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Global base " << globalBase << '\n';
 
-  Linker linker(globalBase, stackAllocation, initialMem, maxMem,
+  
+}Linker linker(globalBase, stackAllocation, initialMem, maxMem,
     importMemory || generateEmscriptenGlue, ignoreUnknownSymbols, startFunction, options.debug);
 
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
@@ -149,9 +151,10 @@ int main(int argc, const char* argv[]) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
     bool error;
     Archive lib(archiveFile, error);
-    if (error)
+    if (error) {
       Fatal() << "Error opening archive " << m << "\n";
-    linker.linkArchive(lib);
+    
+}linker.linkArchive(lib);
   }
 
   linker.layout();
@@ -170,8 +173,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra["validate"] != "none") {
-    if (options.debug)
+    if (options.debug) {
       std::cerr << "Validating..." << std::endl;
+}
     Module* output = &linker.getOutput().wasm;
     if (!wasm::WasmValidator().validate(
           *output, WasmValidator::Globally |
@@ -181,14 +185,16 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Printing..." << std::endl;
+}
   Output output(
     options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
   output << metadata;
 
-  if (options.debug)
+  if (options.debug) {
     std::cerr << "Done." << std::endl;
+}
   return 0;
 }
