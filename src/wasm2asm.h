@@ -584,43 +584,33 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
 }
 
 void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
-  assert(global->init);
-
-  if (global->init->is<Const>()) {
-    auto const_ = static_cast<Const*>(global->init);
+  if (auto* const_ = global->init->dynCast<Const>()) {
+    Ref theValue;
     switch (const_->type) {
       case Type::i32: {
-        Ref theVar = ValueBuilder::makeVar();
-        ast->push_back(theVar);
-        ValueBuilder::appendToVar(theVar,
-          fromName(global->name),
-          ValueBuilder::makeInt(const_->value.geti32())
-        );
+        theValue = ValueBuilder::makeInt(const_->value.geti32());
         break;
       }
       case Type::f32: {
-        Ref theVar = ValueBuilder::makeVar();
-        ast->push_back(theVar);
-        ValueBuilder::appendToVar(theVar,
-          fromName(global->name),
-          ValueBuilder::makeCall(MATH_FROUND,
-            makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf32()), ASM_DOUBLE)
-          )
+        theValue = ValueBuilder::makeCall(MATH_FROUND,
+          makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf32()), ASM_DOUBLE)
         );
         break;
       }
       case Type::f64: {
-        Ref theVar = ValueBuilder::makeVar();
-        ast->push_back(theVar);
-        ValueBuilder::appendToVar(theVar,
-          fromName(global->name),
-          makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE)
-        );
+        theValue = makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE);
         break;
       }
-      default:
+      default: {
         assert(false && "Global const type not supported");
+      }
     }
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      fromName(global->name),
+      theValue
+    );
   } else {
     assert(false && "Global init type not supported");
   }
