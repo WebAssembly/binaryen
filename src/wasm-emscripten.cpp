@@ -520,6 +520,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   for (const auto& import : wasm.imports) {
     if (import->kind == ExternalKind::Function &&
         // !import->name.startsWith(EM_JS_PREFIX.str) &&
+        !import->name.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->name.startsWith("invoke_") &&
         !import->name.startsWith("jsCall_")) {
       meta << maybeComma() << '"' << import->name.str << '"';
