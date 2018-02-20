@@ -294,4 +294,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"], "jsCallStartIndex": 2, "jsCallFuncType": ["ddi", "fffi", "iii", "v", "vi", "viii"] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"], "jsCallStartIndex": 2, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"] }

@@ -464,32 +464,40 @@ void printSet(std::ostream& o, C& c) {
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions,
     unsigned numReservedFunctionPointers) {
+  bool commaFirst;
+  auto maybeComma = [&commaFirst](){
+    if (commaFirst) {
+      commaFirst = false;
+      return "";
+    } else {
+      return ",";
+    }
+  };
+
   std::stringstream meta;
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
 
   // print
+  commaFirst = true;
   meta << "\"asmConsts\": {";
-  bool first = true;
   for (auto& pair : emAsmWalker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
-    if (first) first = false;
-    else meta << ",";
+    meta << maybeComma();
     meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
-  meta << "}";
-  meta << ",";
+  meta << "},";
+
   meta << "\"staticBump\": " << staticBump << ", ";
 
   meta << "\"initializers\": [";
-  first = true;
+  commaFirst = true;
   for (const auto& func : initializerFunctions) {
-    if (first) first = false;
-    else meta << ", ";
+    meta << maybeComma();
     meta << "\"" << func.c_str() << "\"";
   }
   meta << "]";
@@ -499,10 +507,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << ", ";
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
-    bool first = true;
+    commaFirst = true;
     for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
-      if (!first) meta << ", ";
-      first = false;
+      meta << maybeComma();
       meta << "\"" << sig << "\"";
     }
     meta << "]";
