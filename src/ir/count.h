@@ -17,6 +17,9 @@
 #ifndef wasm_ir_count_h
 #define wasm_ir_count_h
 
+#include "wasm.h"
+#include "wasm-traversal.h"
+
 namespace wasm {
 
 struct GetLocalCounter : public PostWalker<GetLocalCounter> {
@@ -33,7 +36,7 @@ struct GetLocalCounter : public PostWalker<GetLocalCounter> {
     walk(ast);
   }
 
-  void visitGetLocal(GetLocal* curr) { enum[curr->index]++; }
+  void visitGetLocal(GetLocal* curr) { num[curr->index]++; }
 };
 
 } // namespace wasm
