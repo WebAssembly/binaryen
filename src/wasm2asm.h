@@ -25,31 +25,32 @@
 #include <cmath>
 #include <numeric>
 
-#include "asmjs/shared-constants.h"
-#include "wasm.h"
-#include "wasm-builder.h"
-#include "emscripten-optimizer/optimizer.h"
-#include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/optimizer.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
 #include "passes/passes.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
 using namespace cashew;
 
-IString ASM_FUNC("asmFunc"),
-        ABORT_FUNC("abort"),
-        FUNCTION_TABLE("FUNCTION_TABLE"),
-        NO_RESULT("wasm2asm$noresult"), // no result at all
-        EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
+IString ASM_FUNC("asmFunc"), ABORT_FUNC("abort"), FUNCTION_TABLE("FUNCTION_TABLE"),
+  NO_RESULT("wasm2asm$noresult"),          // no result at all
+  EXPRESSION_RESULT("wasm2asm$expresult"); // result in an expression, no temp var
 
 // Appends extra to block, flattening out if extra is a block as well
 void flattenAppend(Ref ast, Ref extra) {
   int index;
-  if (ast[0] == BLOCK || ast[0] == TOPLEVEL) index = 1;
-  else if (ast[0] == DEFUN) index = 3;
-  else abort();
+  if (ast[0] == BLOCK || ast[0] == TOPLEVEL)
+    index = 1;
+  else if (ast[0] == DEFUN)
+    index = 3;
+  else
+    abort();
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
@@ -105,7 +106,6 @@ void flattenAppend(Ref ast, Ref extra) {
 // can then pass forward that temp var to its children,
 // optimizing away unnecessary forwarding.
 
-
 class Wasm2AsmBuilder {
   MixedArena allocator;
 
@@ -142,8 +142,8 @@ public:
       frees[type].pop_back();
     } else {
       size_t index = temps[type]++;
-      ret = IString((std::string("wasm2asm_") + printType(type) + "$" +
-                     std::to_string(index)).c_str(), false);
+      ret = IString(
+        (std::string("wasm2asm_") + printType(type) + "$" + std::to_string(index)).c_str(), false);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
       Builder::addVar(func, ret, type);
@@ -152,9 +152,7 @@ public:
   }
 
   // Free a temp var.
-  void freeTemp(Type type, IString temp) {
-    frees[type].push_back(temp);
-  }
+  void freeTemp(Type type, IString temp) { frees[type].push_back(temp); }
 
   static IString fromName(Name name) {
     // TODO: more clever name fixing, including checking we do not collide
@@ -164,7 +162,8 @@ public:
       char* mod = strdup(str);
       str = mod;
       while (*mod) {
-        if (*mod == '-') *mod = '_';
+        if (*mod == '-')
+          *mod = '_';
         mod++;
       }
       IString result = fromName(IString(str, false));
@@ -179,17 +178,13 @@ public:
     return name;
   }
 
-  void setStatement(Expression* curr) {
-    willBeStatement.insert(curr);
-  }
+  void setStatement(Expression* curr) { willBeStatement.insert(curr); }
 
   bool isStatement(Expression* curr) {
     return curr && willBeStatement.find(curr) != willBeStatement.end();
   }
 
-  size_t getTableSize() {
-    return tableSize;
-  }
+  size_t getTableSize() { return tableSize; }
 
 private:
   Flags flags;
@@ -212,18 +207,16 @@ private:
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addWasmCompatibilityFuncs(Module* wasm);
-  void setNeedsAlmostASM(const char *reason);
+  void setNeedsAlmostASM(const char* reason);
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
-  Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                           Builder& wasmBuilder,
-                           Element& e, Name testFuncName);
-  Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                         Builder& wasmBuilder,
-                         Element& e, Name testFuncName);
+  Ref makeAssertReturnFunc(
+    SExpressionWasmBuilder& sexpBuilder, Builder& wasmBuilder, Element& e, Name testFuncName);
+  Ref makeAssertTrapFunc(
+    SExpressionWasmBuilder& sexpBuilder, Builder& wasmBuilder, Element& e, Name testFuncName);
   Wasm2AsmBuilder() = delete;
-  Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
-  Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder&) = delete;
+  Wasm2AsmBuilder(const Wasm2AsmBuilder&) = delete;
+  Wasm2AsmBuilder& operator=(const Wasm2AsmBuilder&) = delete;
 };
 
 static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
@@ -231,41 +224,22 @@ static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
   Builder b(allocator);
   // if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
   bool is32Bit = (op == CtzInt32);
-  Name funcName    = is32Bit ? Name(WASM_CTZ32) : Name(WASM_CTZ64);
-  BinaryOp subOp   = is32Bit ? SubInt32    : SubInt64;
-  BinaryOp xorOp   = is32Bit ? XorInt32    : XorInt64;
-  UnaryOp  clzOp   = is32Bit ? ClzInt32    : ClzInt64;
-  UnaryOp  eqzOp   = is32Bit ? EqZInt32    : EqZInt64;
-  Type argType = is32Bit ? i32         : i64;
-  Binary* xorExp = b.makeBinary(
-    xorOp,
-    b.makeGetLocal(0, i32),
-    b.makeBinary(
-      subOp,
-      b.makeGetLocal(0, i32),
-      b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1)))
-    )
-  );
-  Binary* subExp = b.makeBinary(
-    subOp,
-    b.makeConst(is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1))),
-    b.makeUnary(clzOp, xorExp)
-  );
-  If* body = b.makeIf(
-    b.makeUnary(
-      eqzOp,
-      b.makeGetLocal(0, i32)
-    ),
-    b.makeConst(is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64))),
-    subExp
-  );
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType)},
-    argType,
-    std::vector<NameType>{},
-    body
-  );
+  Name funcName = is32Bit ? Name(WASM_CTZ32) : Name(WASM_CTZ64);
+  BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
+  BinaryOp xorOp = is32Bit ? XorInt32 : XorInt64;
+  UnaryOp clzOp = is32Bit ? ClzInt32 : ClzInt64;
+  UnaryOp eqzOp = is32Bit ? EqZInt32 : EqZInt64;
+  Type argType = is32Bit ? i32 : i64;
+  Binary* xorExp = b.makeBinary(xorOp, b.makeGetLocal(0, i32),
+    b.makeBinary(subOp, b.makeGetLocal(0, i32),
+      b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1)))));
+  Binary* subExp =
+    b.makeBinary(subOp, b.makeConst(is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1))),
+      b.makeUnary(clzOp, xorExp));
+  If* body = b.makeIf(b.makeUnary(eqzOp, b.makeGetLocal(0, i32)),
+    b.makeConst(is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64))), subExp);
+  return b.makeFunction(funcName, std::vector<NameType>{NameType("x", argType)}, argType,
+    std::vector<NameType>{}, body);
 }
 
 static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
@@ -274,89 +248,54 @@ static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
   // popcnt implemented as:
   // int c; for (c = 0; x != 0; c++) { x = x & (x - 1) }; return c
   bool is32Bit = (op == PopcntInt32);
-  Name funcName    = is32Bit ? Name(WASM_POPCNT32) : Name(WASM_POPCNT64);
-  BinaryOp addOp   = is32Bit ? AddInt32       : AddInt64;
-  BinaryOp subOp   = is32Bit ? SubInt32       : SubInt64;
-  BinaryOp andOp   = is32Bit ? AndInt32       : AndInt64;
-  UnaryOp  eqzOp   = is32Bit ? EqZInt32       : EqZInt64;
-  Type argType = is32Bit ? i32            : i64;
+  Name funcName = is32Bit ? Name(WASM_POPCNT32) : Name(WASM_POPCNT64);
+  BinaryOp addOp = is32Bit ? AddInt32 : AddInt64;
+  BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
+  BinaryOp andOp = is32Bit ? AndInt32 : AndInt64;
+  UnaryOp eqzOp = is32Bit ? EqZInt32 : EqZInt64;
+  Type argType = is32Bit ? i32 : i64;
   Name loopName("l");
   Name blockName("b");
-  Break* brIf = b.makeBreak(
-    blockName,
-    b.makeGetLocal(1, i32),
-    b.makeUnary(
-      eqzOp,
-      b.makeGetLocal(0, argType)
-    )
-  );
-  SetLocal* update = b.makeSetLocal(
-    0,
-    b.makeBinary(
-      andOp,
-      b.makeGetLocal(0, argType),
-      b.makeBinary(
-        subOp,
-        b.makeGetLocal(0, argType),
-        b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1)))
-      )
-    )
-  );
-  SetLocal* inc = b.makeSetLocal(
-    1,
-    b.makeBinary(
-      addOp,
-      b.makeGetLocal(1, argType),
-      b.makeConst(Literal(1))
-    )
-  );
+  Break* brIf =
+    b.makeBreak(blockName, b.makeGetLocal(1, i32), b.makeUnary(eqzOp, b.makeGetLocal(0, argType)));
+  SetLocal* update =
+    b.makeSetLocal(0, b.makeBinary(andOp, b.makeGetLocal(0, argType),
+                        b.makeBinary(subOp, b.makeGetLocal(0, argType),
+                          b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1))))));
+  SetLocal* inc =
+    b.makeSetLocal(1, b.makeBinary(addOp, b.makeGetLocal(1, argType), b.makeConst(Literal(1))));
   Break* cont = b.makeBreak(loopName);
   Loop* loop = b.makeLoop(loopName, b.blockify(brIf, update, inc, cont));
   Block* loopBlock = b.blockifyWithName(loop, blockName);
   SetLocal* initCount = b.makeSetLocal(1, b.makeConst(Literal(0)));
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType)},
-    argType,
-    std::vector<NameType>{NameType("count", argType)},
-    b.blockify(initCount, loopBlock)
-  );
+  return b.makeFunction(funcName, std::vector<NameType>{NameType("x", argType)}, argType,
+    std::vector<NameType>{NameType("count", argType)}, b.blockify(initCount, loopBlock));
 }
 
 Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
-  assert(op == RotLInt32 || op == RotRInt32 ||
-         op == RotLInt64 || op == RotRInt64);
+  assert(op == RotLInt32 || op == RotRInt32 || op == RotLInt64 || op == RotRInt64);
   Builder b(allocator);
   // left rotate is:
   // (((((~0) >>> k) & x) << k) | ((((~0) << (w - k)) & x) >>> (w - k)))
   // where k is shift modulo w. reverse shifts for right rotate
   bool is32Bit = (op == RotLInt32 || op == RotRInt32);
-  bool isLRot  = (op == RotLInt32 || op == RotLInt64);
-  static Name names[2][2] = {{Name(WASM_ROTR64), Name(WASM_ROTR32)},
-                             {Name(WASM_ROTL64), Name(WASM_ROTL32)}};
-  static BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32},
-                                    {ShlInt64, ShlInt32}};
+  bool isLRot = (op == RotLInt32 || op == RotLInt64);
+  static Name names[2][2] = {
+    {Name(WASM_ROTR64), Name(WASM_ROTR32)}, {Name(WASM_ROTL64), Name(WASM_ROTL32)}};
+  static BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32}, {ShlInt64, ShlInt32}};
   Name funcName = names[isLRot][is32Bit];
   BinaryOp lshift = shifters[isLRot][is32Bit];
   BinaryOp rshift = shifters[!isLRot][is32Bit];
-  BinaryOp orOp    = is32Bit ? OrInt32  : OrInt64;
-  BinaryOp andOp   = is32Bit ? AndInt32 : AndInt64;
-  BinaryOp subOp   = is32Bit ? SubInt32 : SubInt64;
-  Type argType = is32Bit ? i32      : i64;
-  Literal widthMask =
-      is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1));
-  Literal width =
-      is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64));
+  BinaryOp orOp = is32Bit ? OrInt32 : OrInt64;
+  BinaryOp andOp = is32Bit ? AndInt32 : AndInt64;
+  BinaryOp subOp = is32Bit ? SubInt32 : SubInt64;
+  Type argType = is32Bit ? i32 : i64;
+  Literal widthMask = is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1));
+  Literal width = is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64));
   auto shiftVal = [&]() {
-    return b.makeBinary(
-      andOp,
-      b.makeGetLocal(1, argType),
-      b.makeConst(widthMask)
-    );
+    return b.makeBinary(andOp, b.makeGetLocal(1, argType), b.makeConst(widthMask));
   };
-  auto widthSub = [&]() {
-    return b.makeBinary(subOp, b.makeConst(width), shiftVal());
-  };
+  auto widthSub = [&]() { return b.makeBinary(subOp, b.makeConst(width), shiftVal()); };
   auto fullMask = [&]() {
     return b.makeConst(is32Bit ? Literal(~int32_t(0)) : Literal(~int64_t(0)));
   };
@@ -364,18 +303,12 @@ Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
   Binary* lowMask = b.makeBinary(andOp, maskRShift, b.makeGetLocal(0, argType));
   Binary* lowShift = b.makeBinary(lshift, lowMask, shiftVal());
   Binary* maskLShift = b.makeBinary(lshift, fullMask(), widthSub());
-  Binary* highMask =
-      b.makeBinary(andOp, maskLShift, b.makeGetLocal(0, argType));
+  Binary* highMask = b.makeBinary(andOp, maskLShift, b.makeGetLocal(0, argType));
   Binary* highShift = b.makeBinary(rshift, highMask, widthSub());
   Binary* body = b.makeBinary(orOp, lowShift, highShift);
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType),
-          NameType("k", argType)},
-    argType,
-    std::vector<NameType>{},
-    body
-  );
+  return b.makeFunction(funcName,
+    std::vector<NameType>{NameType("x", argType), NameType("k", argType)}, argType,
+    std::vector<NameType>{}, body);
 }
 
 void Wasm2AsmBuilder::addWasmCompatibilityFuncs(Module* wasm) {
@@ -408,11 +341,8 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     addImport(asmFunc[3], import.get());
   }
   // figure out the table size
-  tableSize = std::accumulate(wasm->table.segments.begin(),
-                              wasm->table.segments.end(),
-                              0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size();
-                              });
+  tableSize = std::accumulate(wasm->table.segments.begin(), wasm->table.segments.end(), 0,
+    [&](size_t size, Table::Segment seg) -> size_t { return size + seg.data.size(); });
   size_t pow2ed = 1;
   while (pow2ed < tableSize) {
     pow2ed <<= 1;
@@ -433,23 +363,15 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   auto addHeap = [&](IString name, IString view) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
-    ValueBuilder::appendToVar(theVar,
-      name,
+    ValueBuilder::appendToVar(theVar, name,
       ValueBuilder::makeNew(
-        ValueBuilder::makeCall(
-          ValueBuilder::makeDot(
-            ValueBuilder::makeName(GLOBAL),
-            view
-          ),
-          ValueBuilder::makeName(BUFFER)
-        )
-      )
-    );
+        ValueBuilder::makeCall(ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
+          ValueBuilder::makeName(BUFFER))));
   };
-  addHeap(HEAP8,  INT8ARRAY);
+  addHeap(HEAP8, INT8ARRAY);
   addHeap(HEAP16, INT16ARRAY);
   addHeap(HEAP32, INT32ARRAY);
-  addHeap(HEAPU8,  UINT8ARRAY);
+  addHeap(HEAPU8, UINT8ARRAY);
   addHeap(HEAPU16, UINT16ARRAY);
   addHeap(HEAPU32, UINT32ARRAY);
   addHeap(HEAPF32, FLOAT32ARRAY);
@@ -458,16 +380,8 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   auto addMath = [&](IString name, IString base) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
-    ValueBuilder::appendToVar(theVar,
-      name,
-      ValueBuilder::makeDot(
-        ValueBuilder::makeDot(
-          ValueBuilder::makeName(GLOBAL),
-          MATH
-        ),
-        base
-      )
-    );
+    ValueBuilder::appendToVar(theVar, name,
+      ValueBuilder::makeDot(ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), MATH), base));
   };
   addMath(MATH_IMUL, IMUL);
   addMath(MATH_FROUND, FROUND);
@@ -479,13 +393,8 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
-  ValueBuilder::appendToVar(theVar,
-    fromName(import->name),
-    ValueBuilder::makeDot(
-      module,
-      fromName(import->base)
-    )
-  );
+  ValueBuilder::appendToVar(
+    theVar, fromName(import->name), ValueBuilder::makeDot(module, fromName(import->base)));
 }
 
 void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
@@ -497,7 +406,8 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
       std::string sig = getSig(func);
       auto& table = tables[sig];
       if (table.size() == 0) {
-        // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
+        // fill it with the first of its type seen. we have to fill with something; and for asm2wasm
+        // output, the first is the null anyhow
         table.resize(tableSize);
         for (size_t j = 0; j < tableSize; j++) {
           table[j] = fromName(name);
@@ -528,46 +438,25 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
   for (auto& export_ : wasm->exports) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObject(
-        exports,
-        fromName(export_->name),
-        ValueBuilder::makeName(fromName(export_->value))
-      );
+        exports, fromName(export_->name), ValueBuilder::makeName(fromName(export_->value)));
     }
     if (export_->kind == ExternalKind::Memory) {
       setNeedsAlmostASM("memory export");
       Ref descs = ValueBuilder::makeObject();
       Ref growDesc = ValueBuilder::makeObject();
+      ValueBuilder::appendToObject(descs, IString("grow"), growDesc);
       ValueBuilder::appendToObject(
-        descs,
-        IString("grow"),
-        growDesc);
-      ValueBuilder::appendToObject(
-        growDesc,
-        IString("value"),
-        ValueBuilder::makeName(WASM_GROW_MEMORY));
+        growDesc, IString("value"), ValueBuilder::makeName(WASM_GROW_MEMORY));
       Ref bufferDesc = ValueBuilder::makeObject();
       Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
-      bufferGetter[3]->push_back(ValueBuilder::makeReturn(
-        ValueBuilder::makeName(BUFFER)
-      ));
-      ValueBuilder::appendToObject(
-        bufferDesc,
-        IString("get"),
-        bufferGetter);
-      ValueBuilder::appendToObject(
-        descs,
-        IString("buffer"),
-        bufferDesc);
+      bufferGetter[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeName(BUFFER)));
+      ValueBuilder::appendToObject(bufferDesc, IString("get"), bufferGetter);
+      ValueBuilder::appendToObject(descs, IString("buffer"), bufferDesc);
       Ref memory = ValueBuilder::makeCall(
         ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("create")),
         ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("prototype")));
-      ValueBuilder::appendToCall(
-        memory,
-        descs);
-      ValueBuilder::appendToObject(
-        exports,
-        fromName(export_->name),
-        memory);
+      ValueBuilder::appendToCall(memory, descs);
+      ValueBuilder::appendToObject(exports, fromName(export_->name), memory);
     }
   }
   if (almostASM) {
@@ -581,8 +470,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (flags.debug) {
     static int fns = 0;
-    std::cerr << "processFunction " << (fns++) << " " << func->name
-              << std::endl;
+    std::cerr << "processFunction " << (fns++) << " " << func->name << std::endl;
   }
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
@@ -595,42 +483,27 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     IString name = fromName(func->getLocalNameOrGeneric(i));
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
-      ValueBuilder::makeStatement(
-        ValueBuilder::makeBinary(
-          ValueBuilder::makeName(name), SET,
-          makeAsmCoercion(
-            ValueBuilder::makeName(name),
-            wasmToAsmType(func->getLocalType(i))
-          )
-        )
-      )
-    );
+      ValueBuilder::makeStatement(ValueBuilder::makeBinary(ValueBuilder::makeName(name), SET,
+        makeAsmCoercion(ValueBuilder::makeName(name), wasmToAsmType(func->getLocalType(i))))));
   }
   Ref theVar = ValueBuilder::makeVar();
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  auto appendFinalReturn = [&] (Ref retVal) {
+  auto appendFinalReturn = [&](Ref retVal) {
     flattenAppend(
-      ret,
-      ValueBuilder::makeReturn(
-        makeAsmCoercion(retVal, wasmToAsmType(func->result))
-      )
-    );
+      ret, ValueBuilder::makeReturn(makeAsmCoercion(retVal, wasmToAsmType(func->result))));
   };
   scanFunctionBody(func->body);
   bool isBodyBlock = (func->body->_id == Expression::BlockId);
-  ExpressionList* stats = isBodyBlock ?
-      &static_cast<Block*>(func->body)->list : nullptr;
-  bool endsInReturn =
-      (isBodyBlock && ((*stats)[stats->size()-1]->_id == Expression::ReturnId));
+  ExpressionList* stats = isBodyBlock ? &static_cast<Block*>(func->body)->list : nullptr;
+  bool endsInReturn = (isBodyBlock && ((*stats)[stats->size() - 1]->_id == Expression::ReturnId));
   if (endsInReturn) {
     // return already taken care of
     flattenAppend(ret, processFunctionBody(func, NO_RESULT));
   } else if (isStatement(func->body)) {
     // store result in variable then return it
-    IString result =
-      func->result != none ? getTemp(func->result, func) : NO_RESULT;
+    IString result = func->result != none ? getTemp(func->result, func) : NO_RESULT;
     flattenAppend(ret, processFunctionBody(func, result));
     if (func->result != none) {
       appendFinalReturn(ValueBuilder::makeName(result));
@@ -645,11 +518,8 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   }
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-    ValueBuilder::appendToVar(
-      theVar,
-      fromName(func->getLocalNameOrGeneric(i)),
-      makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i)))
-    );
+    ValueBuilder::appendToVar(theVar, fromName(func->getLocalNameOrGeneric(i)),
+      makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -671,21 +541,11 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
 
     // Visitors
 
-    void visitBlock(Block* curr) {
-      parent->setStatement(curr);
-    }
-    void visitIf(If* curr) {
-      parent->setStatement(curr);
-    }
-    void visitLoop(Loop* curr) {
-      parent->setStatement(curr);
-    }
-    void visitBreak(Break* curr) {
-      parent->setStatement(curr);
-    }
-    void visitSwitch(Switch* curr) {
-      parent->setStatement(curr);
-    }
+    void visitBlock(Block* curr) { parent->setStatement(curr); }
+    void visitIf(If* curr) { parent->setStatement(curr); }
+    void visitLoop(Loop* curr) { parent->setStatement(curr); }
+    void visitBreak(Break* curr) { parent->setStatement(curr); }
+    void visitSwitch(Switch* curr) { parent->setStatement(curr); }
     void visitCall(Call* curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
@@ -740,13 +600,12 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitSelect(Select* curr) {
-      if (parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse) || parent->isStatement(curr->condition)) {
+      if (parent->isStatement(curr->ifTrue) || parent->isStatement(curr->ifFalse) ||
+          parent->isStatement(curr->condition)) {
         parent->setStatement(curr);
       }
     }
-    void visitReturn(Return* curr) {
-      parent->setStatement(curr);
-    }
+    void visitReturn(Return* curr) { parent->setStatement(curr); }
     void visitHost(Host* curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
@@ -776,8 +635,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(Type type, Wasm2AsmBuilder* parent, Function* func,
-                 IString possible = NO_RESULT) : parent(parent), type(type) {
+      ScopedTemp(Type type, Wasm2AsmBuilder* parent, Function* func, IString possible = NO_RESULT)
+        : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
           temp = parent->getTemp(type, func);
@@ -793,25 +652,20 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
       }
 
-      IString getName() {
-        return temp;
-      }
-      Ref getAstName() {
-        return ValueBuilder::makeName(temp);
-      }
+      IString getName() { return temp; }
+      Ref getAstName() { return ValueBuilder::makeName(temp); }
     };
 
     Ref visit(Expression* curr, IString nextResult) {
       IString old = result;
       result = nextResult;
       Ref ret = Visitor::visit(curr);
-      result = old; // keep it consistent for the rest of this frame, which may call visit on multiple children
+      result = old; // keep it consistent for the rest of this frame, which may call visit on
+                    // multiple children
       return ret;
     }
 
-    Ref visit(Expression* curr, ScopedTemp& temp) {
-      return visit(curr, temp.temp);
-    }
+    Ref visit(Expression* curr, ScopedTemp& temp) { return visit(curr, temp.temp); }
 
     // this result is for an asm expression slot, but it might be a statement
     Ref visitForExpression(Expression* curr, Type type, IString& tempName) {
@@ -830,7 +684,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // (if it is a statement, it already assigns to the result var)
       if (!isStatement(curr) && result != NO_RESULT) {
         ret = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
+          ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
       return ret;
     }
@@ -839,18 +693,15 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return visitAndAssign(curr, temp.getName());
     }
 
-    bool isStatement(Expression* curr) {
-      return parent->isStatement(curr);
-    }
+    bool isStatement(Expression* curr) { return parent->isStatement(curr); }
 
     // Expressions with control flow turn into a block, which we must
     // then handle, even if we are an expression.
-    bool isBlock(Ref ast) {
-      return !!ast && ast->isArray() && ast[0] == BLOCK;
-    }
+    bool isBlock(Ref ast) { return !!ast && ast->isArray() && ast[0] == BLOCK; }
 
     Ref blockify(Ref ast) {
-      if (isBlock(ast)) return ast;
+      if (isBlock(ast))
+        return ast;
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
@@ -863,9 +714,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
     std::unordered_set<Name> continueLabels;
 
-    IString fromName(Name name) {
-      return parent->fromName(name);
-    }
+    IString fromName(Name name) { return parent->fromName(name); }
 
     // Visitors
 
@@ -873,12 +722,12 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       breakResults[curr->name] = result;
       Ref ret = ValueBuilder::makeBlock();
       size_t size = curr->list.size();
-      auto noResults = result == NO_RESULT ? size : size-1;
+      auto noResults = result == NO_RESULT ? size : size - 1;
       for (size_t i = 0; i < noResults; i++) {
         flattenAppend(ret, ValueBuilder::makeStatement(visit(curr->list[i], NO_RESULT)));
       }
       if (result != NO_RESULT) {
-        flattenAppend(ret, visitAndAssign(curr->list[size-1], result));
+        flattenAppend(ret, visitAndAssign(curr->list[size - 1], result));
       }
       if (curr->name.is()) {
         ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
@@ -929,7 +778,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       } else {
         theBreak = ValueBuilder::makeContinue(fromName(curr->name));
       }
-      if (!curr->value) return theBreak;
+      if (!curr->value)
+        return theBreak;
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
       ret = blockify(ret);
@@ -950,31 +800,33 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       } else {
         condition = visit(curr->condition, EXPRESSION_RESULT);
       }
-      Ref theSwitch =
-        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
+      Ref theSwitch = ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
       ret[1]->push_back(theSwitch);
       for (size_t i = 0; i < curr->targets.size(); i++) {
         ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i]))), false);
+        ValueBuilder::appendCodeToSwitch(
+          theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i]))), false);
       }
       ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_))), false);
+      ValueBuilder::appendCodeToSwitch(
+        theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_))), false);
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, Type type) {
+    Ref makeStatementizedCall(
+      ExpressionList& operands, Ref ret, Ref theCall, IString result, Type type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
         temps.push_back(new ScopedTemp(operand->type, parent, func));
         IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
-        theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
+        theCall[2]->push_back(
+          makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
       if (result != NO_RESULT) {
         theCall = ValueBuilder::makeStatement(
-            ValueBuilder::makeBinary(
-                ValueBuilder::makeName(result), SET, theCall));
+          ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, theCall));
       }
       flattenAppend(ret, theCall);
       for (auto temp : temps) {
@@ -983,27 +835,23 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ret;
     }
 
-    Ref visitGenericCall(Expression* curr, Name target,
-                         ExpressionList& operands) {
+    Ref visitGenericCall(Expression* curr, Name target, ExpressionList& operands) {
       Ref theCall = ValueBuilder::makeCall(fromName(target));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a
         // simple expression
         for (auto operand : operands) {
           theCall[2]->push_back(
-            makeAsmCoercion(visit(operand, EXPRESSION_RESULT),
-                            wasmToAsmType(operand->type)));
+            makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
         }
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
       // we must statementize them all
-      return makeStatementizedCall(operands, ValueBuilder::makeBlock(), theCall,
-                                   result, curr->type);
+      return makeStatementizedCall(
+        operands, ValueBuilder::makeBlock(), theCall, result, curr->type);
     }
 
-    Ref visitCall(Call* curr) {
-      return visitGenericCall(curr, curr->target, curr->operands);
-    }
+    Ref visitCall(Call* curr) { return visitGenericCall(curr, curr->target, curr->operands); }
 
     Ref visitCallImport(CallImport* curr) {
       return visitGenericCall(curr, curr->target, curr->operands);
@@ -1014,15 +862,15 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
         return ValueBuilder::makeCall(ValueBuilder::makeSub(
-          ValueBuilder::makeName(table),
-          ValueBuilder::makeBinary(target, AND, ValueBuilder::makeInt(parent->getTableSize()-1))
-        ));
+          ValueBuilder::makeName(table), ValueBuilder::makeBinary(target, AND,
+                                           ValueBuilder::makeInt(parent->getTableSize() - 1))));
       };
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a simple expression
         Ref theCall = makeTableCall(visit(curr->target, EXPRESSION_RESULT));
         for (auto operand : curr->operands) {
-          theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
+          theCall[2]->push_back(
+            makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
         }
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
@@ -1037,43 +885,29 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref makeSetVar(Expression* curr, Expression* value, Name name) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeBinary(
-          ValueBuilder::makeName(fromName(name)), SET,
-          visit(value, EXPRESSION_RESULT)
-        );
+          ValueBuilder::makeName(fromName(name)), SET, visit(value, EXPRESSION_RESULT));
       }
       // if result was provided, our child can just assign there.
       // Otherwise, allocate a temp for it to assign to.
       ScopedTemp temp(value->type, parent, func, result);
       Ref ret = blockify(visit(value, temp));
       // the output was assigned to result, so we can just assign it to our target
-      ret[1]->push_back(
-        ValueBuilder::makeStatement(
-          ValueBuilder::makeBinary(
-            ValueBuilder::makeName(fromName(name)), SET,
-            temp.getAstName()
-          )
-        )
-      );
+      ret[1]->push_back(ValueBuilder::makeStatement(
+        ValueBuilder::makeBinary(ValueBuilder::makeName(fromName(name)), SET, temp.getAstName())));
       return ret;
     }
 
     Ref visitGetLocal(GetLocal* curr) {
-      return ValueBuilder::makeName(
-        fromName(func->getLocalNameOrGeneric(curr->index))
-      );
+      return ValueBuilder::makeName(fromName(func->getLocalNameOrGeneric(curr->index)));
     }
 
     Ref visitSetLocal(SetLocal* curr) {
       return makeSetVar(curr, curr->value, func->getLocalNameOrGeneric(curr->index));
     }
 
-    Ref visitGetGlobal(GetGlobal* curr) {
-      return ValueBuilder::makeName(fromName(curr->name));
-    }
+    Ref visitGetGlobal(GetGlobal* curr) { return ValueBuilder::makeName(fromName(curr->name)); }
 
-    Ref visitSetGlobal(SetGlobal* curr) {
-      return makeSetVar(curr, curr->value, curr->name);
-    }
+    Ref visitSetGlobal(SetGlobal* curr) { return makeSetVar(curr, curr->value, curr->name); }
 
     Ref visitLoad(Load* curr) {
       if (isStatement(curr)) {
@@ -1106,7 +940,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             for (size_t i = 1; i < curr->bytes; i++) {
               ++load.offset;
               Ref add = makeAsmCoercion(visit(&load, EXPRESSION_RESULT), ASM_INT);
-              add = ValueBuilder::makeBinary(add, LSHIFT, ValueBuilder::makeNum(8*i));
+              add = ValueBuilder::makeBinary(add, LSHIFT, ValueBuilder::makeNum(8 * i));
               rest = ValueBuilder::makeBinary(rest, OR, add);
             }
             break;
@@ -1122,43 +956,38 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       if (curr->offset) {
         ptr = makeAsmCoercion(
-            ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)),
-            ASM_INT);
+          ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
       }
       Ref ret;
       switch (curr->type) {
         case i32: {
           switch (curr->bytes) {
             case 1:
-              ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP8 : HEAPU8 ),
-                  ValueBuilder::makePtrShift(ptr, 0));
+              ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP8 : HEAPU8),
+                ValueBuilder::makePtrShift(ptr, 0));
               break;
             case 2:
-              ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16),
-                  ValueBuilder::makePtrShift(ptr, 1));
+              ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP16 : HEAPU16),
+                ValueBuilder::makePtrShift(ptr, 1));
               break;
             case 4:
-              ret = ValueBuilder::makeSub(
-                  ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
-                  ValueBuilder::makePtrShift(ptr, 2));
+              ret = ValueBuilder::makeSub(ValueBuilder::makeName(curr->signed_ ? HEAP32 : HEAPU32),
+                ValueBuilder::makePtrShift(ptr, 2));
               break;
             default: {
-              std::cerr << "Unhandled number of bytes in i32 load: "
-                        << curr->bytes << std::endl;
+              std::cerr << "Unhandled number of bytes in i32 load: " << curr->bytes << std::endl;
               abort();
             }
           }
           break;
         }
         case f32:
-          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32),
-                                      ValueBuilder::makePtrShift(ptr, 2));
+          ret = ValueBuilder::makeSub(
+            ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2));
           break;
         case f64:
-          ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64),
-                                      ValueBuilder::makePtrShift(ptr, 3));
+          ret = ValueBuilder::makeSub(
+            ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3));
           break;
         default: {
           std::cerr << "Unhandled type in load: " << curr->type << std::endl;
@@ -1213,7 +1042,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             _255.type = i32;
             for (size_t i = 0; i < curr->bytes; i++) {
               Const shift(allocator);
-              shift.value = Literal(int32_t(8*i));
+              shift.value = Literal(int32_t(8 * i));
               shift.type = i32;
               Binary shifted(allocator);
               shifted.op = ShrUInt32;
@@ -1222,7 +1051,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               shifted.type = i32;
               Binary anded(allocator);
               anded.op = AndInt32;
-              anded.left = i > 0 ? static_cast<Expression*>(&shifted) : static_cast<Expression*>(&getValue);
+              anded.left =
+                i > 0 ? static_cast<Expression*>(&shifted) : static_cast<Expression*>(&getValue);
               anded.right = &_255;
               anded.type = i32;
               store.value = &anded;
@@ -1237,8 +1067,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             break;
           }
           default: {
-            std::cerr << "Unhandled type in store: " <<  curr->valueType
-                      << std::endl;
+            std::cerr << "Unhandled type in store: " << curr->valueType << std::endl;
             abort();
           }
         }
@@ -1247,25 +1076,41 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       // normal store
       Ref ptr = visit(curr->ptr, EXPRESSION_RESULT);
       if (curr->offset) {
-        ptr = makeAsmCoercion(ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
+        ptr = makeAsmCoercion(
+          ValueBuilder::makeBinary(ptr, PLUS, ValueBuilder::makeNum(curr->offset)), ASM_INT);
       }
       Ref value = visit(curr->value, EXPRESSION_RESULT);
       Ref ret;
       switch (curr->valueType) {
         case i32: {
           switch (curr->bytes) {
-            case 1: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP8),  ValueBuilder::makePtrShift(ptr, 0)); break;
-            case 2: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP16), ValueBuilder::makePtrShift(ptr, 1)); break;
-            case 4: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), ValueBuilder::makePtrShift(ptr, 2)); break;
-            default: abort();
+            case 1:
+              ret = ValueBuilder::makeSub(
+                ValueBuilder::makeName(HEAP8), ValueBuilder::makePtrShift(ptr, 0));
+              break;
+            case 2:
+              ret = ValueBuilder::makeSub(
+                ValueBuilder::makeName(HEAP16), ValueBuilder::makePtrShift(ptr, 1));
+              break;
+            case 4:
+              ret = ValueBuilder::makeSub(
+                ValueBuilder::makeName(HEAP32), ValueBuilder::makePtrShift(ptr, 2));
+              break;
+            default:
+              abort();
           }
           break;
         }
-        case f32: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2)); break;
-        case f64: ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3)); break;
+        case f32:
+          ret = ValueBuilder::makeSub(
+            ValueBuilder::makeName(HEAPF32), ValueBuilder::makePtrShift(ptr, 2));
+          break;
+        case f64:
+          ret = ValueBuilder::makeSub(
+            ValueBuilder::makeName(HEAPF64), ValueBuilder::makePtrShift(ptr, 3));
+          break;
         default: {
-          std::cerr << "Unhandled type in store: " << curr->valueType
-                    << std::endl;
+          std::cerr << "Unhandled type in store: " << curr->valueType << std::endl;
           abort();
         }
       }
@@ -1279,7 +1124,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
 
     Ref visitConst(Const* curr) {
       switch (curr->type) {
-        case i32: return ValueBuilder::makeInt(curr->value.geti32());
+        case i32:
+          return ValueBuilder::makeInt(curr->value.geti32());
         case f32: {
           Ref ret = ValueBuilder::makeCall(MATH_FROUND);
           Const fake(allocator);
@@ -1291,11 +1137,13 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case f64: {
           double d = curr->value.getf64();
           if (d == 0 && std::signbit(d)) { // negative zero
-            return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
+            return ValueBuilder::makeUnary(
+              PLUS, ValueBuilder::makeUnary(MINUS, ValueBuilder::makeDouble(0)));
           }
           return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeDouble(curr->value.getf64()));
         }
-        default: abort();
+        default:
+          abort();
       }
     }
 
@@ -1315,34 +1163,21 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         case i32: {
           switch (curr->op) {
             case ClzInt32:
-              return ValueBuilder::makeCall(
-                MATH_CLZ32,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              return ValueBuilder::makeCall(MATH_CLZ32, visit(curr->value, EXPRESSION_RESULT));
             case CtzInt32:
               return makeSigning(
-                ValueBuilder::makeCall(
-                  WASM_CTZ32,
-                  visit(curr->value, EXPRESSION_RESULT)
-                ),
-                ASM_SIGNED
-              );
+                ValueBuilder::makeCall(WASM_CTZ32, visit(curr->value, EXPRESSION_RESULT)),
+                ASM_SIGNED);
             case PopcntInt32:
               return makeSigning(
-                ValueBuilder::makeCall(
-                  WASM_POPCNT32,
-                  visit(curr->value, EXPRESSION_RESULT)
-                ),
-                ASM_SIGNED
-              );
+                ValueBuilder::makeCall(WASM_POPCNT32, visit(curr->value, EXPRESSION_RESULT)),
+                ASM_SIGNED);
             case EqZInt32:
               return ValueBuilder::makeBinary(
-                  makeAsmCoercion(visit(curr->value,
-                                        EXPRESSION_RESULT), ASM_INT), EQ,
-                  makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
+                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_INT), EQ,
+                makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
             default: {
-              std::cerr << "Unhandled unary i32 operator: " << curr
-                        << std::endl;
+              std::cerr << "Unhandled unary i32 operator: " << curr << std::endl;
               abort();
             }
           }
@@ -1353,63 +1188,39 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           switch (curr->op) {
             case NegFloat32:
             case NegFloat64:
-              ret = ValueBuilder::makeUnary(
-                MINUS,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeUnary(MINUS, visit(curr->value, EXPRESSION_RESULT));
               break;
             case AbsFloat32:
             case AbsFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_ABS,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_ABS, visit(curr->value, EXPRESSION_RESULT));
               break;
             case CeilFloat32:
             case CeilFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_CEIL,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_CEIL, visit(curr->value, EXPRESSION_RESULT));
               break;
             case FloorFloat32:
             case FloorFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_FLOOR,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_FLOOR, visit(curr->value, EXPRESSION_RESULT));
               break;
             case TruncFloat32:
             case TruncFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_TRUNC,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_TRUNC, visit(curr->value, EXPRESSION_RESULT));
               break;
             case NearestFloat32:
             case NearestFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_NEAREST,
-                visit(curr->value,EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_NEAREST, visit(curr->value, EXPRESSION_RESULT));
               break;
             case SqrtFloat32:
             case SqrtFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_SQRT,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
+              ret = ValueBuilder::makeCall(MATH_SQRT, visit(curr->value, EXPRESSION_RESULT));
               break;
             case PromoteFloat32:
-              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
-                                     ASM_DOUBLE);
+              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_DOUBLE);
             case DemoteFloat64:
-              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_FLOAT);
             // TODO: more complex unary conversions
             default:
-              std::cerr << "Unhandled unary float operator: " << curr
-                        << std::endl;
+              std::cerr << "Unhandled unary float operator: " << curr << std::endl;
               abort();
           }
           if (curr->type == f32) { // doubles need much less coercing
@@ -1462,20 +1273,20 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               }
             }
             case DivSInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), DIV,
-                                             makeSigning(right, ASM_SIGNED));
+              ret = ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), DIV, makeSigning(right, ASM_SIGNED));
               break;
             case DivUInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), DIV,
-                                             makeSigning(right, ASM_UNSIGNED));
+              ret = ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), DIV, makeSigning(right, ASM_UNSIGNED));
               break;
             case RemSInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), MOD,
-                                             makeSigning(right, ASM_SIGNED));
+              ret = ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), MOD, makeSigning(right, ASM_SIGNED));
               break;
             case RemUInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), MOD,
-                                             makeSigning(right, ASM_UNSIGNED));
+              ret = ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), MOD, makeSigning(right, ASM_UNSIGNED));
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
@@ -1498,78 +1309,70 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case EqInt32: {
               // TODO: check if this condition is still valid/necessary
               if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), EQ,
-                                                makeSigning(right, ASM_SIGNED));
+                return ValueBuilder::makeBinary(
+                  makeSigning(left, ASM_SIGNED), EQ, makeSigning(right, ASM_SIGNED));
               } else {
                 return ValueBuilder::makeBinary(left, EQ, right);
               }
             }
             case NeInt32: {
               if (curr->left->type == i32) {
-                return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), NE,
-                                                makeSigning(right, ASM_SIGNED));
+                return ValueBuilder::makeBinary(
+                  makeSigning(left, ASM_SIGNED), NE, makeSigning(right, ASM_SIGNED));
               } else {
                 return ValueBuilder::makeBinary(left, NE, right);
               }
             }
             case LtSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LT,
-                                              makeSigning(right, ASM_SIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), LT, makeSigning(right, ASM_SIGNED));
             case LtUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LT,
-                                              makeSigning(right, ASM_UNSIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), LT, makeSigning(right, ASM_UNSIGNED));
             case LeSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), LE,
-                                              makeSigning(right, ASM_SIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), LE, makeSigning(right, ASM_SIGNED));
             case LeUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), LE,
-                                              makeSigning(right, ASM_UNSIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), LE, makeSigning(right, ASM_UNSIGNED));
             case GtSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GT,
-                                              makeSigning(right, ASM_SIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), GT, makeSigning(right, ASM_SIGNED));
             case GtUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GT,
-                                              makeSigning(right, ASM_UNSIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), GT, makeSigning(right, ASM_UNSIGNED));
             case GeSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED), GE,
-                                              makeSigning(right, ASM_SIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_SIGNED), GE, makeSigning(right, ASM_SIGNED));
             case GeUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
-                                              makeSigning(right, ASM_UNSIGNED));
+              return ValueBuilder::makeBinary(
+                makeSigning(left, ASM_UNSIGNED), GE, makeSigning(right, ASM_UNSIGNED));
             case RotLInt32:
-              return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right),
-                                 ASM_SIGNED);
+              return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right), ASM_SIGNED);
             case RotRInt32:
-              return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
-                                 ASM_SIGNED);
+              return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right), ASM_SIGNED);
             case EqFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, EQ, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, EQ, right), ASM_FLOAT);
             case EqFloat64:
               return ValueBuilder::makeBinary(left, EQ, right);
             case NeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, NE, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, NE, right), ASM_FLOAT);
             case NeFloat64:
               return ValueBuilder::makeBinary(left, NE, right);
             case GeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, GE, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, GE, right), ASM_FLOAT);
             case GeFloat64:
               return ValueBuilder::makeBinary(left, GE, right);
             case GtFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, GT, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, GT, right), ASM_FLOAT);
             case GtFloat64:
               return ValueBuilder::makeBinary(left, GT, right);
             case LeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, LE, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, LE, right), ASM_FLOAT);
             case LeFloat64:
               return ValueBuilder::makeBinary(left, LE, right);
             case LtFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, LT, right),
-                                     ASM_FLOAT);
+              return makeAsmCoercion(ValueBuilder::makeBinary(left, LT, right), ASM_FLOAT);
             case LtFloat64:
               return ValueBuilder::makeBinary(left, LT, right);
             default: {
@@ -1581,10 +1384,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         }
         case f32:
         case f64:
-	  switch (curr->op) {
-	    case AddFloat32:
-	    case AddFloat64:
-	      ret = ValueBuilder::makeBinary(left, PLUS, right);
+          switch (curr->op) {
+            case AddFloat32:
+            case AddFloat64:
+              ret = ValueBuilder::makeBinary(left, PLUS, right);
               break;
             case SubFloat32:
             case SubFloat64:
@@ -1648,43 +1451,29 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
       Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
-      ScopedTemp tempIfTrue(curr->type, parent, func),
-          tempIfFalse(curr->type, parent, func),
-          tempCondition(i32, parent, func);
-      return
-        ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
-          ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
-            ValueBuilder::makeSeq(
-              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
-              ValueBuilder::makeConditional(
-                tempCondition.getAstName(),
-                tempIfTrue.getAstName(),
-                tempIfFalse.getAstName()
-              )
-            )
-          )
-        );
+      ScopedTemp tempIfTrue(curr->type, parent, func), tempIfFalse(curr->type, parent, func),
+        tempCondition(i32, parent, func);
+      return ValueBuilder::makeSeq(
+        ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
+        ValueBuilder::makeSeq(ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
+          ValueBuilder::makeSeq(ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+            ValueBuilder::makeConditional(
+              tempCondition.getAstName(), tempIfTrue.getAstName(), tempIfFalse.getAstName()))));
     }
 
     Ref visitReturn(Return* curr) {
-      Ref val = (curr->value == nullptr) ?
-          Ref() :
-          makeAsmCoercion(
-            visit(curr->value, NO_RESULT),
-            wasmToAsmType(curr->value->type)
-          );
+      Ref val = (curr->value == nullptr) ? Ref()
+                                         : makeAsmCoercion(visit(curr->value, NO_RESULT),
+                                             wasmToAsmType(curr->value->type));
       return ValueBuilder::makeReturn(val);
     }
 
     Ref visitHost(Host* curr) {
       if (curr->op == HostOp::GrowMemory) {
         parent->setNeedsAlmostASM("grow_memory op");
-        return ValueBuilder::makeCall(WASM_GROW_MEMORY,
-          makeAsmCoercion(
-            visit(curr->operands[0], EXPRESSION_RESULT),
-            wasmToAsmType(curr->operands[0]->type)));
+        return ValueBuilder::makeCall(
+          WASM_GROW_MEMORY, makeAsmCoercion(visit(curr->operands[0], EXPRESSION_RESULT),
+                              wasmToAsmType(curr->operands[0]->type)));
       }
       if (curr->op == HostOp::CurrentMemory) {
         parent->setNeedsAlmostASM("current_memory op");
@@ -1693,13 +1482,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
 
-    Ref visitNop(Nop* curr) {
-      return ValueBuilder::makeToplevel();
-    }
+    Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
 
-    Ref visitUnreachable(Unreachable* curr) {
-      return ValueBuilder::makeCall(ABORT_FUNC);
-    }
+    Ref visitUnreachable(Unreachable* curr) { return ValueBuilder::makeCall(ABORT_FUNC); }
   };
   return ExpressionProcessor(this, func).visit(func->body, result);
 }
@@ -1719,8 +1504,8 @@ static Ref makeInstantiation() {
   insertItem(FLOAT32ARRAY);
   insertItem(FLOAT64ARRAY);
   Ref env = ValueBuilder::makeObject();
-  Ref mem = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
+  Ref mem =
+    ValueBuilder::makeNew(ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
   Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env, mem);
   Ref ret = ValueBuilder::makeVar();
   ValueBuilder::appendToVar(ret, ASM_MODULE, call);
@@ -1735,24 +1520,20 @@ static void prefixCalls(Ref asmjs) {
     }
     if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
       assert(arr.size() >= 2);
-      Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
-                                           arr[1]->getIString());
+      Ref prefixed =
+        ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE), arr[1]->getIString());
       arr[1]->setArray(prefixed->getArray());
     }
   }
 }
 
-Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                                          Builder& wasmBuilder,
-                                          Element& e, Name testFuncName) {
+Ref Wasm2AsmBuilder::makeAssertReturnFunc(
+  SExpressionWasmBuilder& sexpBuilder, Builder& wasmBuilder, Element& e, Name testFuncName) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
-    if  (actual->type == none) {
-      body = wasmBuilder.blockify(
-        actual,
-        wasmBuilder.makeConst(Literal(uint32_t(1)))
-      );
+    if (actual->type == none) {
+      body = wasmBuilder.blockify(actual, wasmBuilder.makeConst(Literal(uint32_t(1))));
     } else {
       body = actual;
     }
@@ -1762,10 +1543,18 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
     actual->type = resType;
     BinaryOp eqOp;
     switch (resType) {
-      case i32: eqOp = EqInt32; break;
-      case i64: eqOp = EqInt64; break;
-      case f32: eqOp = EqFloat32; break;
-      case f64: eqOp = EqFloat64; break;
+      case i32:
+        eqOp = EqInt32;
+        break;
+      case i64:
+        eqOp = EqInt64;
+        break;
+      case f32:
+        eqOp = EqFloat32;
+        break;
+      case f64:
+        eqOp = EqFloat64;
+        break;
       default: {
         std::cerr << "Unhandled type in assert: " << resType << std::endl;
         abort();
@@ -1775,32 +1564,19 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
   } else {
     assert(false && "Unexpected number of parameters in assert_return");
   }
-  std::unique_ptr<Function> testFunc(
-    wasmBuilder.makeFunction(
-      testFuncName,
-      std::vector<NameType>{},
-      body->type,
-      std::vector<NameType>{},
-      body
-    )
-  );
+  std::unique_ptr<Function> testFunc(wasmBuilder.makeFunction(
+    testFuncName, std::vector<NameType>{}, body->type, std::vector<NameType>{}, body));
   Ref jsFunc = processFunction(testFunc.get());
   prefixCalls(jsFunc);
   return jsFunc;
 }
 
-Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                                        Builder& wasmBuilder,
-                                        Element& e, Name testFuncName) {
+Ref Wasm2AsmBuilder::makeAssertTrapFunc(
+  SExpressionWasmBuilder& sexpBuilder, Builder& wasmBuilder, Element& e, Name testFuncName) {
   Name innerFuncName("f");
   Expression* expr = sexpBuilder.parseExpression(e[1]);
-  std::unique_ptr<Function> exprFunc(
-    wasmBuilder.makeFunction(innerFuncName,
-                             std::vector<NameType>{},
-                             expr->type,
-                             std::vector<NameType>{},
-                             expr)
-  );
+  std::unique_ptr<Function> exprFunc(wasmBuilder.makeFunction(
+    innerFuncName, std::vector<NameType>{}, expr->type, std::vector<NameType>{}, expr));
   IString expectedErr = e[2]->str();
   Ref innerFunc = processFunction(exprFunc.get());
   Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
@@ -1808,28 +1584,18 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
   Ref tryBlock = ValueBuilder::makeBlock();
   ValueBuilder::appendToBlock(tryBlock, ValueBuilder::makeCall(innerFuncName));
   Ref catchBlock = ValueBuilder::makeBlock();
-  ValueBuilder::appendToBlock(
-    catchBlock,
-    ValueBuilder::makeReturn(
-      ValueBuilder::makeCall(
-        ValueBuilder::makeDot(
-          ValueBuilder::makeName(IString("e")),
-          ValueBuilder::makeName(IString("message")),
-          ValueBuilder::makeName(IString("includes"))
-        ),
-        ValueBuilder::makeString(expectedErr)
-      )
-    )
-  );
-  outerFunc[3]->push_back(ValueBuilder::makeTry(
-      tryBlock,
-      ValueBuilder::makeName((IString("e"))),
-      catchBlock));
+  ValueBuilder::appendToBlock(catchBlock,
+    ValueBuilder::makeReturn(ValueBuilder::makeCall(
+      ValueBuilder::makeDot(ValueBuilder::makeName(IString("e")),
+        ValueBuilder::makeName(IString("message")), ValueBuilder::makeName(IString("includes"))),
+      ValueBuilder::makeString(expectedErr))));
+  outerFunc[3]->push_back(
+    ValueBuilder::makeTry(tryBlock, ValueBuilder::makeName((IString("e"))), catchBlock));
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   return outerFunc;
 }
 
-void Wasm2AsmBuilder::setNeedsAlmostASM(const char *reason) {
+void Wasm2AsmBuilder::setNeedsAlmostASM(const char* reason) {
   if (!almostASM) {
     almostASM = true;
     std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
@@ -1840,163 +1606,94 @@ void Wasm2AsmBuilder::addMemoryGrowthFuncs(Ref ast) {
   Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
   ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
 
-  growMemoryFunc[3]->push_back(
-    ValueBuilder::makeStatement(
-      ValueBuilder::makeBinary(
-        ValueBuilder::makeName(IString("pagesToAdd")), SET,
-        makeAsmCoercion(
-          ValueBuilder::makeName(IString("pagesToAdd")),
-          AsmType::ASM_INT
-        )
-      )
-    )
-  );
+  growMemoryFunc[3]->push_back(ValueBuilder::makeStatement(
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("pagesToAdd")), SET,
+      makeAsmCoercion(ValueBuilder::makeName(IString("pagesToAdd")), AsmType::ASM_INT))));
 
   Ref oldPages = ValueBuilder::makeVar();
   growMemoryFunc[3]->push_back(oldPages);
-  ValueBuilder::appendToVar(
-    oldPages,
-    IString("oldPages"),
+  ValueBuilder::appendToVar(oldPages, IString("oldPages"),
     makeAsmCoercion(ValueBuilder::makeCall(WASM_CURRENT_MEMORY), AsmType::ASM_INT));
 
   Ref newPages = ValueBuilder::makeVar();
   growMemoryFunc[3]->push_back(newPages);
-  ValueBuilder::appendToVar(
-    newPages,
-    IString("newPages"),
-    makeAsmCoercion(ValueBuilder::makeBinary(
-      ValueBuilder::makeName(IString("oldPages")),
-      PLUS,
-      ValueBuilder::makeName(IString("pagesToAdd"))
-    ), AsmType::ASM_INT));
+  ValueBuilder::appendToVar(newPages, IString("newPages"),
+    makeAsmCoercion(ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")), PLUS,
+                      ValueBuilder::makeName(IString("pagesToAdd"))),
+      AsmType::ASM_INT));
 
   Ref block = ValueBuilder::makeBlock();
   growMemoryFunc[3]->push_back(ValueBuilder::makeIf(
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeBinary(
-        ValueBuilder::makeName(IString("oldPages")),
-        LT,
-        ValueBuilder::makeName(IString("newPages"))
-      ),
+    ValueBuilder::makeBinary(ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
+                               LT, ValueBuilder::makeName(IString("newPages"))),
       IString("&&"),
       ValueBuilder::makeBinary(
-        ValueBuilder::makeName(IString("newPages")),
-        LT,
-        ValueBuilder::makeInt(Memory::kMaxSize)
-      )
-    ), block, NULL));
+        ValueBuilder::makeName(IString("newPages")), LT, ValueBuilder::makeInt(Memory::kMaxSize))),
+    block, NULL));
 
   Ref newBuffer = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newBuffer);
-  ValueBuilder::appendToVar(
-    newBuffer,
-    IString("newBuffer"),
+  ValueBuilder::appendToVar(newBuffer, IString("newBuffer"),
     ValueBuilder::makeNew(ValueBuilder::makeCall(
-      ARRAY_BUFFER,
-      ValueBuilder::makeCall(
-        MATH_IMUL,
-        ValueBuilder::makeName(IString("newPages")),
-        ValueBuilder::makeInt(Memory::kPageSize)))));
+      ARRAY_BUFFER, ValueBuilder::makeCall(MATH_IMUL, ValueBuilder::makeName(IString("newPages")),
+                      ValueBuilder::makeInt(Memory::kPageSize)))));
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
-  ValueBuilder::appendToVar(
-    newHEAP8,
-    IString("newHEAP8"),
+  ValueBuilder::appendToVar(newHEAP8, IString("newHEAP8"),
     ValueBuilder::makeNew(
-      ValueBuilder::makeCall(
-        ValueBuilder::makeDot(
-          ValueBuilder::makeName(GLOBAL),
-          INT8ARRAY
-        ),
-        ValueBuilder::makeName(IString("newBuffer"))
-      )
-    ));
+      ValueBuilder::makeCall(ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), INT8ARRAY),
+        ValueBuilder::makeName(IString("newBuffer")))));
 
-  ValueBuilder::appendToBlock(block,
-    ValueBuilder::makeCall(
-      ValueBuilder::makeDot(
-        ValueBuilder::makeName(IString("newHEAP8")),
-        IString("set")
-      ),
-      ValueBuilder::makeName(HEAP8)
-    )
-  );
+  ValueBuilder::appendToBlock(
+    block, ValueBuilder::makeCall(
+             ValueBuilder::makeDot(ValueBuilder::makeName(IString("newHEAP8")), IString("set")),
+             ValueBuilder::makeName(HEAP8)));
 
-  ValueBuilder::appendToBlock(block,
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeName(HEAP8),
-      SET,
-      ValueBuilder::makeName(IString("newHEAP8"))
-    )
-  );
+  ValueBuilder::appendToBlock(block, ValueBuilder::makeBinary(ValueBuilder::makeName(HEAP8), SET,
+                                       ValueBuilder::makeName(IString("newHEAP8"))));
 
   auto setHeap = [&](IString name, IString view) {
-    ValueBuilder::appendToBlock(block,
-      ValueBuilder::makeBinary(
-        ValueBuilder::makeName(name),
-        SET,
-        ValueBuilder::makeNew(
-          ValueBuilder::makeCall(
-            ValueBuilder::makeDot(
-              ValueBuilder::makeName(GLOBAL),
-              view
-            ),
-            ValueBuilder::makeName(IString("newBuffer"))
-          )
-        )
-      )
-    );
+    ValueBuilder::appendToBlock(
+      block, ValueBuilder::makeBinary(ValueBuilder::makeName(name), SET,
+               ValueBuilder::makeNew(
+                 ValueBuilder::makeCall(ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
+                   ValueBuilder::makeName(IString("newBuffer"))))));
   };
 
   setHeap(HEAP16, INT16ARRAY);
   setHeap(HEAP32, INT32ARRAY);
-  setHeap(HEAPU8,  UINT8ARRAY);
+  setHeap(HEAPU8, UINT8ARRAY);
   setHeap(HEAPU16, UINT16ARRAY);
   setHeap(HEAPU32, UINT32ARRAY);
   setHeap(HEAPF32, FLOAT32ARRAY);
   setHeap(HEAPF64, FLOAT64ARRAY);
 
-  ValueBuilder::appendToBlock(block,
-    ValueBuilder::makeBinary(
-      ValueBuilder::makeName(BUFFER),
-      SET,
-      ValueBuilder::makeName(IString("newBuffer"))
-    )
-  );
+  ValueBuilder::appendToBlock(block, ValueBuilder::makeBinary(ValueBuilder::makeName(BUFFER), SET,
+                                       ValueBuilder::makeName(IString("newBuffer"))));
 
   growMemoryFunc[3]->push_back(
-    ValueBuilder::makeReturn(
-      ValueBuilder::makeName(IString("oldPages"))));
+    ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldPages"))));
 
   Ref currentMemoryFunc = ValueBuilder::makeFunction(WASM_CURRENT_MEMORY);
   currentMemoryFunc[3]->push_back(ValueBuilder::makeReturn(
-    makeAsmCoercion(
-      ValueBuilder::makeBinary(
-        ValueBuilder::makeDot(
-          ValueBuilder::makeName(BUFFER),
-          IString("byteLength")
-        ),
-        DIV,
-        ValueBuilder::makeInt(Memory::kPageSize)
-      ),
-      AsmType::ASM_INT
-    )
-  ));
+    makeAsmCoercion(ValueBuilder::makeBinary(
+                      ValueBuilder::makeDot(ValueBuilder::makeName(BUFFER), IString("byteLength")),
+                      DIV, ValueBuilder::makeInt(Memory::kPageSize)),
+      AsmType::ASM_INT)));
   ast->push_back(growMemoryFunc);
   ast->push_back(currentMemoryFunc);
 }
 
 bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
-  return e.isList() && e.size() >= 2 && e[0]->isStr()
-      && (e[0]->str() == Name("assert_return") ||
-          (flags.pedantic && e[0]->str() == Name("assert_trap")))
-      && e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr()
-      && (*e[1])[0]->str() == Name("invoke");
+  return e.isList() && e.size() >= 2 && e[0]->isStr() &&
+         (e[0]->str() == Name("assert_return") ||
+           (flags.pedantic && e[0]->str() == Name("assert_trap"))) &&
+         e[1]->isList() && e[1]->size() >= 2 && (*e[1])[0]->isStr() &&
+         (*e[1])[0]->str() == Name("invoke");
 }
 
-Ref Wasm2AsmBuilder::processAsserts(Element& root,
-                                   SExpressionWasmBuilder& sexpBuilder) {
+Ref Wasm2AsmBuilder::processAsserts(Element& root, SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
   Ref ret = ValueBuilder::makeBlock();
   flattenAppend(ret, makeInstantiation());
@@ -2014,25 +1711,18 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
     // Need to claim dollared to get string as function target
     testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
-    Ref testFunc = isReturn ?
-        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
-        makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName);
+    Ref testFunc = isReturn ? makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName)
+                            : makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName);
 
     flattenAppend(ret, testFunc);
     std::stringstream failFuncName;
     failFuncName << "fail" << std::to_string(i);
-    flattenAppend(
-      ret,
-      ValueBuilder::makeIf(
-        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
-        ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
-        Ref()
-      )
-    );
+    flattenAppend(ret,
+      ValueBuilder::makeIf(ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
+        ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)), Ref()));
   }
   return ret;
 }
-
 
 } // namespace wasm
 

@@ -35,43 +35,33 @@
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   std::string infile;
   std::string outfile;
   bool emitBinary = true;
   unsigned numReservedFunctionPointers = 0;
   uint64_t globalBase;
-  Options options("wasm-emscripten-finalize",
-                  "Performs Emscripten-specific transforms on .wasm files");
+  Options options(
+    "wasm-emscripten-finalize", "Performs Emscripten-specific transforms on .wasm files");
   options
-      .add("--output", "-o", "Output file",
-           Options::Arguments::One,
-           [&outfile](Options*, const std::string& argument) {
-             outfile = argument;
-             Colors::disable();
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&emitBinary](Options*, const std::string& ) {
-             emitBinary = false;
-           })
-      .add("--emscripten-reserved-function-pointers", "",
-           "Number of reserved function pointers for emscripten addFunction "
-           "support",
-           Options::Arguments::One,
-           [&numReservedFunctionPointers](Options *,
-                                          const std::string &argument) {
-             numReservedFunctionPointers = std::stoi(argument);
-           })
-      .add("--global-base", "", "Where lld started to place globals",
-           Options::Arguments::One,
-           [&globalBase](Options*, const std::string&argument ) {
-             globalBase = std::stoull(argument);
-           })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [&infile](Options *o, const std::string& argument) {
-                        infile = argument;
-                      });
+    .add("--output", "-o", "Output file", Options::Arguments::One,
+      [&outfile](Options*, const std::string& argument) {
+        outfile = argument;
+        Colors::disable();
+      })
+    .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+      Options::Arguments::Zero, [&emitBinary](Options*, const std::string&) { emitBinary = false; })
+    .add("--emscripten-reserved-function-pointers", "",
+      "Number of reserved function pointers for emscripten addFunction "
+      "support",
+      Options::Arguments::One,
+      [&numReservedFunctionPointers](Options*, const std::string& argument) {
+        numReservedFunctionPointers = std::stoi(argument);
+      })
+    .add("--global-base", "", "Where lld started to place globals", Options::Arguments::One,
+      [&globalBase](Options*, const std::string& argument) { globalBase = std::stoull(argument); })
+    .add_positional("INFILE", Options::Arguments::One,
+      [&infile](Options* o, const std::string& argument) { infile = argument; });
   options.parse(argc, argv);
 
   if (infile == "") {
@@ -112,7 +102,8 @@ int main(int argc, const char *argv[]) {
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
-  std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
+  std::string metadata = generator.generateEmscriptenMetadata(
+    dataSize, initializerFunctions, numReservedFunctionPointers);
 
   if (options.debug) {
     std::cerr << "Module after:\n";

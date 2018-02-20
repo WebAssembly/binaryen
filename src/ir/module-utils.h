@@ -17,8 +17,8 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "wasm.h"
 #include "ir/manipulation.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -90,4 +90,3 @@ inline void copyModule(Module& in, Module& out) {
 } // namespace wasm
 
 #endif // wasm_ir_module_h
-

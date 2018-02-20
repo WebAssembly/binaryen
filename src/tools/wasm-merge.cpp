@@ -23,22 +23,22 @@
 
 #include <memory>
 
+#include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
 #include "parsing.h"
 #include "pass.h"
 #include "shared-constants.h"
-#include "asmjs/shared-constants.h"
-#include "asm_v_wasm.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-io.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-io.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
 
 // Calls note() on every import that has form "env".(base)
-static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
+static void findImportsByBase(Module& wasm, Name base, std::function<void(Name)> note) {
   for (auto& curr : wasm.imports) {
     if (curr->module == ENV) {
       if (curr->base == base) {
@@ -49,8 +49,7 @@ static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)
 }
 
 // Ensure a memory or table is of at least a size
-template<typename T>
-static void ensureSize(T& what, Index size) {
+template <typename T> static void ensureSize(T& what, Index size) {
   // ensure the size is sufficient
   while (what.initial * what.kPageSize < size) {
     what.initial = what.initial + 1;
@@ -114,14 +113,14 @@ struct Mergeable {
       }
     }
     // align them
-    while (totalMemorySize % 16 != 0) totalMemorySize++;
-    while (totalTableSize % 2 != 0) totalTableSize++;
+    while (totalMemorySize % 16 != 0)
+      totalMemorySize++;
+    while (totalTableSize % 2 != 0)
+      totalTableSize++;
   }
 
   void findImports() {
-    findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
-      memoryBaseGlobals.insert(name);
-    });
+    findImportsByBase(wasm, MEMORY_BASE, [&](Name name) { memoryBaseGlobals.insert(name); });
     if (memoryBaseGlobals.size() == 0) {
       // add one
       auto* import = new Import;
@@ -133,9 +132,7 @@ struct Mergeable {
       wasm.addImport(import);
       memoryBaseGlobals.insert(import->name);
     }
-    findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
-      tableBaseGlobals.insert(name);
-    });
+    findImportsByBase(wasm, TABLE_BASE, [&](Name name) { tableBaseGlobals.insert(name); });
     if (tableBaseGlobals.size() == 0) {
       auto* import = new Import;
       import->name = TABLE_BASE;
@@ -149,7 +146,8 @@ struct Mergeable {
   }
 
   void standardizeSegments() {
-    standardizeSegment<Memory, char, Memory::Segment>(wasm, wasm.memory, totalMemorySize, 0, *memoryBaseGlobals.begin());
+    standardizeSegment<Memory, char, Memory::Segment>(
+      wasm, wasm.memory, totalMemorySize, 0, *memoryBaseGlobals.begin());
     // if there are no functions, and we need one, we need to add one as the zero
     if (totalTableSize > 0 && wasm.functions.empty()) {
       auto func = new Function;
@@ -162,12 +160,13 @@ struct Mergeable {
     if (totalTableSize > 0) {
       zero = wasm.functions.begin()->get()->name;
     }
-    standardizeSegment<Table, Name, Table::Segment>(wasm, wasm.table, totalTableSize, zero, *tableBaseGlobals.begin());
+    standardizeSegment<Table, Name, Table::Segment>(
+      wasm, wasm.table, totalTableSize, zero, *tableBaseGlobals.begin());
   }
 
   // utilities
 
-  Name getNonColliding(Name initial, std::function<bool (Name)> checkIfCollides) {
+  Name getNonColliding(Name initial, std::function<bool(Name)> checkIfCollides) {
     if (!checkIfCollides(initial)) {
       return initial;
     }
@@ -186,7 +185,7 @@ struct Mergeable {
   // not using a dylink section and instead having enough zeros at
   // the end. this makes linking much simpler.ta
   // there may be other non-relocatable segments too.
-  template<typename T, typename U, typename Segment>
+  template <typename T, typename U, typename Segment>
   void standardizeSegment(Module& wasm, T& what, Index size, U zero, Name globalName) {
     Segment* relocatable = nullptr;
     for (auto& segment : what.segments) {
@@ -212,8 +211,7 @@ struct Mergeable {
 
   // copies a relocatable segment from the input to the output, and
   // copies the non-relocatable ones as well
-  template<typename T, typename V>
-  void copySegments(T& output, T& input, V updater) {
+  template <typename T, typename V> void copySegments(T& output, T& input, V updater) {
     for (auto& inputSegment : input.segments) {
       Expression* inputOffset = inputSegment.offset;
       if (inputOffset->is<GetGlobal>()) {
@@ -241,7 +239,8 @@ struct Mergeable {
 // A mergeable that is an output, that is, that we merge into. This adds
 // logic to update it for the new data, namely, when an import is provided
 // by the other merged unit, we resolve to access that value directly.
-struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergeable>>, public Mergeable {
+struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergeable>>,
+                         public Mergeable {
   OutputMergeable(Module& wasm) : Mergeable(wasm) {}
 
   void visitCallImport(CallImport* curr) {
@@ -275,17 +274,19 @@ struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergea
 // A mergeable that is an input, that is, that we merge into another.
 // This adds logic to disambiguate its names from the other, and to
 // perform all other merging operations.
-struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<InputMergeable>>, public Mergeable {
-  InputMergeable(Module& wasm, OutputMergeable& outputMergeable) : Mergeable(wasm), outputMergeable(outputMergeable) {}
+struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<InputMergeable>>,
+                        public Mergeable {
+  InputMergeable(Module& wasm, OutputMergeable& outputMergeable)
+    : Mergeable(wasm), outputMergeable(outputMergeable) {}
 
   // The unit we are being merged into
   OutputMergeable& outputMergeable;
 
   // mappings (after disambiguating with the other mergeable), old name => new name
   std::map<Name, Name> ftNames; // function types
-  std::map<Name, Name> eNames; // exports
-  std::map<Name, Name> fNames; // functions
-  std::map<Name, Name> gNames; // globals
+  std::map<Name, Name> eNames;  // exports
+  std::map<Name, Name> fNames;  // functions
+  std::map<Name, Name> gNames;  // globals
 
   void visitCall(Call* curr) {
     curr->target = fNames[curr->target];
@@ -335,7 +336,8 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     // TODO make maps, avoid N^2
     for (auto& imp : wasm.imports) {
       // per wasm dynamic library rules, we expect to see exports on 'env'
-      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) &&
+          imp->module == ENV) {
         // seek an export on the other side that matches
         for (auto& exp : outputMergeable.wasm.exports) {
           if (exp->kind == imp->kind && exp->name == imp->base) {
@@ -360,30 +362,29 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
 
     // find new names
     for (auto& curr : wasm.functionTypes) {
-      curr->name = ftNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputMergeable.wasm.getFunctionTypeOrNull(name);
-      });
+      curr->name = ftNames[curr->name] = getNonColliding(curr->name,
+        [&](Name name) -> bool { return outputMergeable.wasm.getFunctionTypeOrNull(name); });
     }
     for (auto& curr : wasm.imports) {
       if (curr->kind == ExternalKind::Function) {
         curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getFunctionOrNull(name);
+          return !!outputMergeable.wasm.getImportOrNull(name) ||
+                 !!outputMergeable.wasm.getFunctionOrNull(name);
         });
       } else if (curr->kind == ExternalKind::Global) {
         curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getGlobalOrNull(name);
+          return !!outputMergeable.wasm.getImportOrNull(name) ||
+                 !!outputMergeable.wasm.getGlobalOrNull(name);
         });
       }
     }
     for (auto& curr : wasm.functions) {
-      curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputMergeable.wasm.getFunctionOrNull(name);
-      });
+      curr->name = fNames[curr->name] = getNonColliding(curr->name,
+        [&](Name name) -> bool { return outputMergeable.wasm.getFunctionOrNull(name); });
     }
     for (auto& curr : wasm.globals) {
-      curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-        return outputMergeable.wasm.getGlobalOrNull(name);
-      });
+      curr->name = gNames[curr->name] = getNonColliding(
+        curr->name, [&](Name name) -> bool { return outputMergeable.wasm.getGlobalOrNull(name); });
     }
 
     // update global names in input
@@ -404,7 +405,8 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
 
     // find function imports in output that are implemented in the input
     for (auto& imp : outputMergeable.wasm.imports) {
-      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) &&
+          imp->module == ENV) {
         for (auto& exp : wasm.exports) {
           if (exp->kind == imp->kind && exp->name == imp->base) {
             if (imp->kind == ExternalKind::Function) {
@@ -420,7 +422,9 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
 
     // update the output before bringing anything in. avoid doing so when possible, as in the
     // common case the output module is very large.
-    if (outputMergeable.implementedFunctionImports.size() + outputMergeable.implementedGlobalImports.size() > 0) {
+    if (outputMergeable.implementedFunctionImports.size() +
+          outputMergeable.implementedGlobalImports.size() >
+        0) {
       outputMergeable.walkModule(&outputMergeable.wasm);
     }
 
@@ -431,17 +435,17 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     // update the new contents about to be merged in
     walkModule(&wasm);
 
-    // handle the dylink post-instantiate. this is special, as if it exists in both, we must in fact call both
+    // handle the dylink post-instantiate. this is special, as if it exists in both, we must in fact
+    // call both
     Name POST_INSTANTIATE("__post_instantiate");
     if (fNames.find(POST_INSTANTIATE) != fNames.end() &&
         outputMergeable.wasm.getExportOrNull(POST_INSTANTIATE)) {
       // indeed, both exist. add a call to the second (wasm spec does not give an order requirement)
-      auto* func = outputMergeable.wasm.getFunction(outputMergeable.wasm.getExport(POST_INSTANTIATE)->value);
+      auto* func =
+        outputMergeable.wasm.getFunction(outputMergeable.wasm.getExport(POST_INSTANTIATE)->value);
       Builder builder(outputMergeable.wasm);
-      func->body = builder.makeSequence(
-        builder.makeCall(fNames[POST_INSTANTIATE], {}, none),
-        func->body
-      );
+      func->body =
+        builder.makeSequence(builder.makeCall(fNames[POST_INSTANTIATE], {}, none), func->body);
     }
 
     // copy in the data
@@ -503,20 +507,18 @@ private:
       }
     }
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeBinary(
-        AddInt32,
-        expressionStack.back(),
-        builder.makeConst(Literal(int32_t(bump)))
-      )
-    );
+    replaceCurrent(builder.makeBinary(
+      AddInt32, expressionStack.back(), builder.makeConst(Literal(int32_t(bump)))));
   }
 };
 
 // Finalize the memory/table bases, assinging concrete values into them
 void finalizeBases(Module& wasm, Index memory, Index table) {
-  struct FinalizableMergeable : public Mergeable, public PostWalker<FinalizableMergeable, Visitor<FinalizableMergeable>> {
-    FinalizableMergeable(Module& wasm, Index memory, Index table) : Mergeable(wasm), memory(memory), table(table) {
+  struct FinalizableMergeable
+    : public Mergeable,
+      public PostWalker<FinalizableMergeable, Visitor<FinalizableMergeable>> {
+    FinalizableMergeable(Module& wasm, Index memory, Index table)
+      : Mergeable(wasm), memory(memory), table(table) {
       walkModule(&wasm);
       // ensure memory and table sizes suffice, after finalization we have absolute locations now
       for (auto& segment : wasm.memory.segments) {
@@ -552,46 +554,32 @@ void finalizeBases(Module& wasm, Index memory, Index table) {
 int main(int argc, const char* argv[]) {
   std::vector<std::string> filenames;
   bool emitBinary = true;
-  Index finalizeMemoryBase = Index(-1),
-        finalizeTableBase = Index(-1);
+  Index finalizeMemoryBase = Index(-1), finalizeTableBase = Index(-1);
   bool optimize = false;
   bool verbose = false;
 
   Options options("wasm-merge", "Merge wasm files");
   options
-      .add("--output", "-o", "Output file",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add("--finalize-memory-base", "-fmb", "Finalize the env.memoryBase import",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             finalizeMemoryBase = atoi(argument.c_str());
-           })
-      .add("--finalize-table-base", "-ftb", "Finalize the env.tableBase import",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             finalizeTableBase = atoi(argument.c_str());
-           })
-      .add("-O", "-O", "Perform merge-time/finalize-time optimizations",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             optimize = true;
-           })
-      .add("--verbose", "-v", "Verbose output",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             verbose = true;
-           })
-      .add_positional("INFILES", Options::Arguments::N,
-                      [&](Options *o, const std::string& argument) {
-                        filenames.push_back(argument);
-                      });
+    .add("--output", "-o", "Output file", Options::Arguments::One,
+      [](Options* o, const std::string& argument) {
+        o->extra["output"] = argument;
+        Colors::disable();
+      })
+    .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--finalize-memory-base", "-fmb", "Finalize the env.memoryBase import",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { finalizeMemoryBase = atoi(argument.c_str()); })
+    .add("--finalize-table-base", "-ftb", "Finalize the env.tableBase import",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { finalizeTableBase = atoi(argument.c_str()); })
+    .add("-O", "-O", "Perform merge-time/finalize-time optimizations", Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { optimize = true; })
+    .add("--verbose", "-v", "Verbose output", Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { verbose = true; })
+    .add_positional("INFILES", Options::Arguments::N,
+      [&](Options* o, const std::string& argument) { filenames.push_back(argument); });
   options.parse(argc, argv);
 
   Module output;
@@ -638,7 +626,8 @@ int main(int argc, const char* argv[]) {
 
   if (optimize) {
     // merge-time/finalize-time optimization
-    // it is beneficial to do global optimizations, as well as precomputing to get rid of finalized constants
+    // it is beneficial to do global optimizations, as well as precomputing to get rid of finalized
+    // constants
     PassRunner passRunner(&output);
     passRunner.add("precompute");
     passRunner.add("optimize-instructions"); // things now-constant may be further optimized

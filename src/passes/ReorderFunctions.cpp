@@ -27,11 +27,10 @@
 // similarity ordering here.
 //
 
-
 #include <memory>
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -42,9 +41,7 @@ struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
 
   CallCountScanner(NameCountMap* counts) : counts(counts) {}
 
-  CallCountScanner* create() override {
-    return new CallCountScanner(counts);
-  }
+  CallCountScanner* create() override { return new CallCountScanner(counts); }
 
   void visitCall(Call* curr) {
     assert(counts->count(curr->target) > 0); // can't add a new element in parallel
@@ -82,19 +79,16 @@ struct ReorderFunctions : public Pass {
       }
     }
     // sort
-    std::sort(module->functions.begin(), module->functions.end(), [&counts](
-      const std::unique_ptr<Function>& a,
-      const std::unique_ptr<Function>& b) -> bool {
-      if (counts[a->name] == counts[b->name]) {
-        return strcmp(a->name.str, b->name.str) > 0;
-      }
-      return counts[a->name] > counts[b->name];
-    });
+    std::sort(module->functions.begin(), module->functions.end(),
+      [&counts](const std::unique_ptr<Function>& a, const std::unique_ptr<Function>& b) -> bool {
+        if (counts[a->name] == counts[b->name]) {
+          return strcmp(a->name.str, b->name.str) > 0;
+        }
+        return counts[a->name] > counts[b->name];
+      });
   }
 };
 
-Pass *createReorderFunctionsPass() {
-  return new ReorderFunctions();
-}
+Pass* createReorderFunctionsPass() { return new ReorderFunctions(); }
 
 } // namespace wasm

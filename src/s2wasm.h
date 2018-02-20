@@ -23,12 +23,12 @@
 
 #include <limits.h>
 
-#include "wasm.h"
+#include "asm_v_wasm.h"
 #include "parsing.h"
 #include "pass.h"
-#include "asm_v_wasm.h"
 #include "wasm-builder.h"
 #include "wasm-linker.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -46,20 +46,16 @@ class S2WasmBuilder {
   std::unique_ptr<LinkerObject::SymbolInfo> symbolInfo;
   std::unordered_map<uint32_t, uint32_t> fileIndexMap;
 
- public:
+public:
   S2WasmBuilder(const char* input, bool debug)
-      : inputStart(input),
-        s(input),
-        debug(debug),
-        wasm(nullptr),
-        allocator(nullptr),
-        linkerObj(nullptr)
-        {}
+    : inputStart(input), s(input), debug(debug), wasm(nullptr), allocator(nullptr),
+      linkerObj(nullptr) {}
 
-  void build(LinkerObject *obj) {
+  void build(LinkerObject* obj) {
     // If getSymbolInfo has not already been called, populate the symbol
     // info now.
-    if (!symbolInfo) symbolInfo.reset(getSymbolInfo());
+    if (!symbolInfo)
+      symbolInfo.reset(getSymbolInfo());
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -78,14 +74,17 @@ class S2WasmBuilder {
     return symbolInfo.get();
   }
 
- private:
+private:
   // utilities
 
   void skipWhitespace() {
     while (1) {
-      while (*s && isspace(*s)) s++;
-      if (*s != '#') break;
-      while (*s != '\n') s++;
+      while (*s && isspace(*s))
+        s++;
+      if (*s != '#')
+        break;
+      while (*s != '\n')
+        s++;
     }
   }
 
@@ -96,7 +95,8 @@ class S2WasmBuilder {
 
   bool skipComma() {
     skipWhitespace();
-    if (*s != ',') return false;
+    if (*s != ',')
+      return false;
     s++;
     skipWhitespace();
     return true;
@@ -104,23 +104,23 @@ class S2WasmBuilder {
 
   bool skipEqual() {
     skipWhitespace();
-    if (*s != '=') return false;
+    if (*s != '=')
+      return false;
     s++;
     skipWhitespace();
     return true;
   }
 
-  #define abort_on(why) { \
-    dump(why ":");        \
-    abort();              \
+#define abort_on(why)                                                                              \
+  {                                                                                                \
+    dump(why ":");                                                                                 \
+    abort();                                                                                       \
   }
 
-  bool peek(const char *pattern) {
-    return strncmp(s, pattern, strlen(pattern)) == 0;
-  }
+  bool peek(const char* pattern) { return strncmp(s, pattern, strlen(pattern)) == 0; }
 
   // match and skip the pattern, if matched
-  bool match(const char *pattern) {
+  bool match(const char* pattern) {
     size_t size = strlen(pattern);
     if (strncmp(s, pattern, size) == 0) {
       s += size;
@@ -130,7 +130,7 @@ class S2WasmBuilder {
     return false;
   }
 
-  void mustMatch(const char *pattern) {
+  void mustMatch(const char* pattern) {
     bool matched = match(pattern);
     if (!matched) {
       std::cerr << "<< " << pattern << " >>\n";
@@ -138,18 +138,17 @@ class S2WasmBuilder {
     }
   }
 
-  void dump(const char *text) {
+  void dump(const char* text) {
     std::cerr << "[[" << text << "]]:\n==========\n";
     for (size_t i = 0; i < 60; i++) {
-      if (!s[i]) break;
+      if (!s[i])
+        break;
       std::cerr << s[i];
     }
     std::cerr << "\n==========\n";
   }
 
-  void unget(Name str) {
-    s -= strlen(str.str);
-  }
+  void unget(Name str) { s -= strlen(str.str); }
 
   Name getStr() {
     std::string str; // TODO: optimize this and the other get* methods
@@ -161,14 +160,16 @@ class S2WasmBuilder {
   }
 
   void skipToSep() {
-    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' &&
+           *s != '-') {
       s++;
     }
   }
 
   Name getStrToSep() {
     std::string str;
-    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' && *s != '-' && *s != '=') {
+    while (*s && !isspace(*s) && *s != ',' && *s != '(' && *s != ')' && *s != ':' && *s != '+' &&
+           *s != '-' && *s != '=') {
       str += *s;
       s++;
     }
@@ -207,7 +208,7 @@ class S2WasmBuilder {
     }
     if (neg) {
       uint32_t positive_int_min =
-          (uint32_t) - (1 + std::numeric_limits<int32_t>::min()) + (uint32_t)1;
+        (uint32_t) - (1 + std::numeric_limits<int32_t>::min()) + (uint32_t)1;
       if (value > positive_int_min) {
         abort_on("negative int32_t overflow");
       }
@@ -219,8 +220,8 @@ class S2WasmBuilder {
   }
 
   // get an int from an arbitrary string, with our full error handling
-  int32_t getInt(const char *from) {
-    const char *before = s;
+  int32_t getInt(const char* from) {
+    const char* before = s;
     s = from;
     auto ret = getInt();
     s = before;
@@ -239,9 +240,8 @@ class S2WasmBuilder {
 
     // a global constant, we need to fix it up later
     Name name = getStrToSep();
-    LinkerObject::Relocation::Kind kind = isFunctionName(name) ?
-        LinkerObject::Relocation::kFunction :
-        LinkerObject::Relocation::kData;
+    LinkerObject::Relocation::Kind kind =
+      isFunctionName(name) ? LinkerObject::Relocation::kFunction : LinkerObject::Relocation::kData;
     int offset = 0;
     if (*s == '+') {
       s++;
@@ -250,8 +250,7 @@ class S2WasmBuilder {
       s++;
       offset = -getInt();
     }
-    return new LinkerObject::Relocation(
-        kind, target, fixEmLongjmp(cleanFunction(name)), offset);
+    return new LinkerObject::Relocation(kind, target, fixEmLongjmp(cleanFunction(name)), offset);
   }
   Expression* relocationToGetGlobal(LinkerObject::Relocation* relocation) {
     if (!relocation) {
@@ -316,7 +315,7 @@ class S2WasmBuilder {
     }
     if (neg) {
       uint64_t positive_int_min =
-          (uint64_t) - (1 + std::numeric_limits<int64_t>::min()) + (uint64_t)1;
+        (uint64_t) - (1 + std::numeric_limits<int64_t>::min()) + (uint64_t)1;
       if (value > positive_int_min) {
         abort_on("negative int64_t overflow");
       }
@@ -342,8 +341,9 @@ class S2WasmBuilder {
 
   Name getAssign() {
     skipWhitespace();
-    if (*s != '$') return Name();
-    const char *before = s;
+    if (*s != '$')
+      return Name();
+    const char* before = s;
     s++;
     std::string str;
     while (*s && *s != '=' && *s != '\n' && *s != ',') {
@@ -366,20 +366,42 @@ class S2WasmBuilder {
     while (*s && *s != '\"') {
       if (s[0] == '\\') {
         switch (s[1]) {
-          case 'n': str.push_back('\n'); s += 2; continue;
-          case 'r': str.push_back('\r'); s += 2; continue;
-          case 't': str.push_back('\t'); s += 2; continue;
-          case 'f': str.push_back('\f'); s += 2; continue;
-          case 'b': str.push_back('\b'); s += 2; continue;
-          case '\\': str.push_back('\\'); s += 2; continue;
-          case '"': str.push_back('"'); s += 2; continue;
+          case 'n':
+            str.push_back('\n');
+            s += 2;
+            continue;
+          case 'r':
+            str.push_back('\r');
+            s += 2;
+            continue;
+          case 't':
+            str.push_back('\t');
+            s += 2;
+            continue;
+          case 'f':
+            str.push_back('\f');
+            s += 2;
+            continue;
+          case 'b':
+            str.push_back('\b');
+            s += 2;
+            continue;
+          case '\\':
+            str.push_back('\\');
+            s += 2;
+            continue;
+          case '"':
+            str.push_back('"');
+            s += 2;
+            continue;
           default: {
             if (isdigit(s[1])) {
-              int code = (s[1] - '0')*8*8 + (s[2] - '0')*8 + (s[3] - '0');
+              int code = (s[1] - '0') * 8 * 8 + (s[2] - '0') * 8 + (s[3] - '0');
               str.push_back(char(code));
               s += 4;
               continue;
-            } else abort_on("getQuoted-escape");
+            } else
+              abort_on("getQuoted-escape");
           }
         }
       }
@@ -392,10 +414,14 @@ class S2WasmBuilder {
   }
 
   Type tryGetType() {
-    if (match("i32")) return i32;
-    if (match("i64")) return i64;
-    if (match("f32")) return f32;
-    if (match("f64")) return f64;
+    if (match("i32"))
+      return i32;
+    if (match("i64"))
+      return i64;
+    if (match("f32"))
+      return f32;
+    if (match("f64"))
+      return f64;
     return none;
   }
 
@@ -418,13 +444,12 @@ class S2WasmBuilder {
   }
 
   // The LLVM backend emits function names as name@FUNCTION.
-  bool isFunctionName(Name name) {
-    return !!strstr(name.str, "@FUNCTION");
-  }
+  bool isFunctionName(Name name) { return !!strstr(name.str, "@FUNCTION"); }
   // Drop the @ and after it.
   Name cleanFunction(Name name) {
-    if (!strchr(name.str, '@')) return name;
-    char *temp = strdup(name.str);
+    if (!strchr(name.str, '@'))
+      return name;
+    char* temp = strdup(name.str);
     *strchr(temp, '@') = 0;
     Name ret = cashew::IString(temp, false);
     free(temp);
@@ -442,16 +467,20 @@ class S2WasmBuilder {
       if (match(".type")) {
         Name name = getCommaSeparated();
         skipComma();
-        if (!match("@function")) continue;
-        if (match(".hidden")) mustMatch(name.str);
+        if (!match("@function"))
+          continue;
+        if (match(".hidden"))
+          mustMatch(name.str);
         mustMatch(name.str);
         if (match(":")) {
           info->implementedFunctions.insert(name);
         } else if (match("=")) {
           Name alias = getAtSeparated();
           mustMatch("@FUNCTION");
-          auto ret = info->aliasedSymbols.insert({name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
-          if (!ret.second) std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
+          auto ret = info->aliasedSymbols.insert(
+            {name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
+          if (!ret.second)
+            std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
         } else {
           abort_on("unknown directive");
         }
@@ -466,9 +495,10 @@ class S2WasmBuilder {
         if (match("\n"))
           continue;
         // When the current line contains more than one word
-        if (!skipEqual()){
+        if (!skipEqual()) {
           s = strchr(s, '\n');
-          if (!s) break;
+          if (!s)
+            break;
           continue;
         }
 
@@ -483,15 +513,17 @@ class S2WasmBuilder {
 
         // check if the rhs is already an alias
         const auto alias = symbolInfo->aliasedSymbols.find(rhs);
-        if (alias != symbolInfo->aliasedSymbols.end() && alias->second.kind == LinkerObject::Relocation::kData) {
+        if (alias != symbolInfo->aliasedSymbols.end() &&
+            alias->second.kind == LinkerObject::Relocation::kData) {
           offset += alias->second.offset;
           rhs = alias->second.symbol;
         }
 
         // add the new alias
-        auto ret = symbolInfo->aliasedSymbols.insert({lhs, LinkerObject::SymbolAlias(rhs,
-          LinkerObject::Relocation::kData, offset)});
-        if (!ret.second) std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
+        auto ret = symbolInfo->aliasedSymbols.insert(
+          {lhs, LinkerObject::SymbolAlias(rhs, LinkerObject::Relocation::kData, offset)});
+        if (!ret.second)
+          std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
       }
     }
   }
@@ -499,47 +531,64 @@ class S2WasmBuilder {
   void process() {
     while (*s) {
       skipWhitespace();
-      if (debug) dump("process");
-      if (!*s) break;
-      if (*s != '.') skipObjectAlias(false);
+      if (debug)
+        dump("process");
+      if (!*s)
+        break;
+      if (*s != '.')
+        skipObjectAlias(false);
       s++;
-      if (match("text")) parseText();
-      else if (match("type")) parseType();
-      else if (match("weak") || match("hidden") || match("protected") || match("internal")) getStr(); // contents are in the content that follows
-      else if (match("imports")) skipImports();
-      else if (match("data")) {}
-      else if (match("ident")) skipToEOL();
-      else if (match("section")) parseToplevelSection();
-      else if (match("file")) parseFile();
-      else if (match("align") || match("p2align")) skipToEOL();
+      if (match("text"))
+        parseText();
+      else if (match("type"))
+        parseType();
+      else if (match("weak") || match("hidden") || match("protected") || match("internal"))
+        getStr(); // contents are in the content that follows
+      else if (match("imports"))
+        skipImports();
+      else if (match("data")) {
+      } else if (match("ident"))
+        skipToEOL();
+      else if (match("section"))
+        parseToplevelSection();
+      else if (match("file"))
+        parseFile();
+      else if (match("align") || match("p2align"))
+        skipToEOL();
       else if (match("import_global")) {
         skipToEOL();
         skipWhitespace();
         if (match(".size")) {
           skipToEOL();
         }
-      }
-      else if (match("globl")) parseGlobl();
-      else if (match("functype")) parseFuncType();
-      else skipObjectAlias(true);
+      } else if (match("globl"))
+        parseGlobl();
+      else if (match("functype"))
+        parseFuncType();
+      else
+        skipObjectAlias(true);
     }
   }
 
   void skipObjectAlias(bool prefix) {
-    if (debug) dump("object_alias");
+    if (debug)
+      dump("object_alias");
 
     // grab the dot that was consumed earlier
-    if (prefix) s--;
+    if (prefix)
+      s--;
     Name lhs = getStrToSep();
     WASM_UNUSED(lhs);
-    if (!skipEqual()) abort_on("object_alias");
+    if (!skipEqual())
+      abort_on("object_alias");
 
     Name rhs = getStr();
     WASM_UNUSED(rhs);
     skipWhitespace();
 
     // if no size attribute (e.g. weak symbol), skip
-    if (!match(".size")) return;
+    if (!match(".size"))
+      return;
 
     mustMatch(lhs.str);
     mustMatch(",");
@@ -552,7 +601,7 @@ class S2WasmBuilder {
     auto section = getCommaSeparated();
     // Skipping .debug_ sections
     if (!strncmp(section.c_str(), ".debug_", strlen(".debug_"))) {
-      const char *next = strstr(s, ".section");
+      const char* next = strstr(s, ".section");
       s = !next ? s + strlen(s) : next;
       return;
     }
@@ -583,13 +632,19 @@ class S2WasmBuilder {
   void parseText() {
     while (*s) {
       skipWhitespace();
-      if (!*s) break;
-      if (*s != '.') break;
+      if (!*s)
+        break;
+      if (*s != '.')
+        break;
       s++;
-      if (parseVersionMin());
-      else if (match("file")) parseFile();
-      else if (match("globl")) parseGlobl();
-      else if (match("type")) parseType();
+      if (parseVersionMin())
+        ;
+      else if (match("file"))
+        parseFile();
+      else if (match("globl"))
+        parseGlobl();
+      else if (match("type"))
+        parseType();
       else {
         s--;
         break;
@@ -598,7 +653,8 @@ class S2WasmBuilder {
   }
 
   void parseFile() {
-    if (debug) dump("file");
+    if (debug)
+      dump("file");
     size_t fileId = 0;
     if (*s != '"') {
       fileId = getInt();
@@ -619,16 +675,17 @@ class S2WasmBuilder {
     auto decl = make_unique<FunctionType>();
     Name rawName = getCommaSeparated();
     skipComma();
-    if(match("void")) {
+    if (match("void")) {
       decl->result = none;
     } else {
       decl->result = getType();
     }
-    while (*s && skipComma()) decl->params.push_back(getType());
+    while (*s && skipComma())
+      decl->params.push_back(getType());
     std::string sig = getSig(decl.get());
     decl->name = "FUNCSIG$" + sig;
 
-    FunctionType *ty = wasm->getFunctionTypeOrNull(decl->name);
+    FunctionType* ty = wasm->getFunctionTypeOrNull(decl->name);
     Name name = fixEmEHSjLjNames(rawName, sig);
     if (!ty) {
       // The wasm module takes ownership of the FunctionType if we insert it.
@@ -640,7 +697,8 @@ class S2WasmBuilder {
   }
 
   bool parseVersionMin() {
-    if (match("watchos_version_min") || match("tvos_version_min") || match("ios_version_min") || match("macosx_version_min")) {
+    if (match("watchos_version_min") || match("tvos_version_min") || match("ios_version_min") ||
+        match("macosx_version_min")) {
       s = strchr(s, '\n');
       skipWhitespace();
       return true;
@@ -649,7 +707,8 @@ class S2WasmBuilder {
   }
 
   void parseFunction() {
-    if (debug) dump("func");
+    if (debug)
+      dump("func");
     Name name = getStrToSep();
     if (match(" =")) {
       /* alias = */ getAtSeparated();
@@ -659,10 +718,11 @@ class S2WasmBuilder {
 
     mustMatch(":");
 
-    Function::DebugLocation debugLocation = { 0, 0, 0 };
+    Function::DebugLocation debugLocation = {0, 0, 0};
     bool useDebugLocation = false;
     auto recordLoc = [&]() {
-      if (debug) dump("loc");
+      if (debug)
+        dump("loc");
       size_t fileId = getInt();
       skipWhitespace();
       uint32_t row = getInt();
@@ -673,11 +733,12 @@ class S2WasmBuilder {
         abort_on("idx");
       }
       useDebugLocation = true;
-      debugLocation = { iter->second, row, column };
+      debugLocation = {iter->second, row, column};
       s = strchr(s, '\n');
     };
     auto recordLabel = [&]() {
-      if (debug) dump("label");
+      if (debug)
+        dump("label");
       Name label = getStrToSep();
       // TODO: track and create map of labels and their ranges for our AST
       WASM_UNUSED(label);
@@ -703,7 +764,8 @@ class S2WasmBuilder {
           params.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
-          if (!match(",")) break;
+          if (!match(","))
+            break;
         }
       } else if (match(".result")) {
         resultType = getType();
@@ -721,7 +783,8 @@ class S2WasmBuilder {
           vars.emplace_back(name, type);
           localTypes[name] = type;
           skipWhitespace();
-          if (!match(",")) break;
+          if (!match(","))
+            break;
         }
       } else if (match(".file")) {
         parseFile();
@@ -732,7 +795,8 @@ class S2WasmBuilder {
       } else if (peek(".Lfunc_begin")) {
         recordLabel();
         skipWhitespace();
-      } else break;
+      } else
+        break;
     }
     Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
 
@@ -752,7 +816,7 @@ class S2WasmBuilder {
     bstack.push_back(func->body);
     std::vector<Expression*> estack;
     auto push = [&](Expression* curr) {
-      //std::cerr << "push " << curr << '\n';
+      // std::cerr << "push " << curr << '\n';
       estack.push_back(curr);
     };
     auto pop = [&]() {
@@ -760,14 +824,15 @@ class S2WasmBuilder {
       Expression* ret = estack.back();
       assert(ret);
       estack.pop_back();
-      //std::cerr << "pop " << ret << '\n';
+      // std::cerr << "pop " << ret << '\n';
       return ret;
     };
     auto getNumInputs = [&]() {
       int ret = 1;
-      const char *t = s;
+      const char* t = s;
       while (*t != '\n') {
-        if (*t == ',') ret++;
+        if (*t == ',')
+          ret++;
         t++;
       }
       return ret;
@@ -792,21 +857,22 @@ class S2WasmBuilder {
         } else {
           abort_on("bad input register");
         }
-        if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        if (*s == ')')
+          s++;           // tolerate 0(argument) syntax, where we started at the 'a'
         if (*s == ':') { // tolerate :attribute=value syntax (see getAttributes)
           s++;
           skipToSep();
         }
-        if (i < num - 1) skipComma();
+        if (i < num - 1)
+          skipComma();
       }
-      for (int i = num-1; i >= 0; i--) {
-        if (inputs[i] == nullptr) inputs[i] = pop();
+      for (int i = num - 1; i >= 0; i--) {
+        if (inputs[i] == nullptr)
+          inputs[i] = pop();
       }
       return inputs;
     };
-    auto getInput = [&]() {
-      return getInputs(1)[0];
-    };
+    auto getInput = [&]() { return getInputs(1)[0]; };
     auto setOutput = [&](Expression* curr, Name assign) {
       if (assign.isNull() || assign.str[0] == 'd') { // drop
         auto* add = curr;
@@ -826,18 +892,20 @@ class S2WasmBuilder {
       }
     };
     auto getAttributes = [&](int num) {
-      const char *before = s;
+      const char* before = s;
       std::vector<const char*> attributes; // TODO: optimize (if .s format doesn't change)
       attributes.resize(num);
       for (int i = 0; i < num; i++) {
         skipToSep();
-        if (*s == ')') s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        if (*s == ')')
+          s++; // tolerate 0(argument) syntax, where we started at the 'a'
         if (*s == ':') {
           attributes[i] = s + 1;
         } else {
           attributes[i] = nullptr;
         }
-        if (i < num - 1) skipComma();
+        if (i < num - 1)
+          skipComma();
       }
       s = before;
       return attributes;
@@ -880,13 +948,12 @@ class S2WasmBuilder {
       curr->finalize();
       setOutput(curr, assign);
     };
-    auto useRelocationExpression = [&](Expression *expr, Expression *reloc) {
+    auto useRelocationExpression = [&](Expression* expr, Expression* reloc) {
       if (!reloc) {
         return expr;
       }
       // Optimization: if the given expr is (i32.const 0), ignore it
-      if (expr->_id == Expression::ConstId &&
-          ((Const*)expr)->value.getInteger() == 0) {
+      if (expr->_id == Expression::ConstId && ((Const*)expr)->value.getInteger() == 0) {
         return reloc;
       }
 
@@ -924,7 +991,7 @@ class S2WasmBuilder {
       curr->isAtomic = false;
       curr->valueType = type;
       s += strlen("store");
-      if(!isspace(*s)) {
+      if (!isspace(*s)) {
         curr->bytes = getInt() / CHAR_BIT;
       } else {
         curr->bytes = getTypeSize(type);
@@ -983,8 +1050,8 @@ class S2WasmBuilder {
             curr->operands.push_back(inputs[i]);
           }
         }
-        Name target = linkerObj->resolveAlias(
-            fixEmEHSjLjNames(rawTarget, curr->type, curr->operands),
+        Name target =
+          linkerObj->resolveAlias(fixEmEHSjLjNames(rawTarget, curr->type, curr->operands),
             LinkerObject::Relocation::kFunction);
         curr->target = target;
         if (!linkerObj->isFunctionImplemented(target)) {
@@ -993,16 +1060,23 @@ class S2WasmBuilder {
         setOutput(curr, assign);
       }
     };
-    #define BINARY_INT_OR_FLOAT(op) (type == i32 ? BinaryOp::op##Int32 : (type == i64 ? BinaryOp::op##Int64 : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
-    #define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
-    #define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
+#define BINARY_INT_OR_FLOAT(op)                                                                    \
+  (type == i32 ? BinaryOp::op##Int32                                                               \
+               : (type == i64 ? BinaryOp::op##Int64                                                \
+                              : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
+#define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
+#define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
     auto handleTyped = [&](Type type) {
       switch (*s) {
         case 'a': {
-          if (match("add")) makeBinary(BINARY_INT_OR_FLOAT(Add), type);
-          else if (match("and")) makeBinary(BINARY_INT(And), type);
-          else if (match("abs")) makeUnary(type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
-          else abort_on("type.a");
+          if (match("add"))
+            makeBinary(BINARY_INT_OR_FLOAT(Add), type);
+          else if (match("and"))
+            makeBinary(BINARY_INT(And), type);
+          else if (match("abs"))
+            makeUnary(type == f32 ? UnaryOp::AbsFloat32 : UnaryOp::AbsFloat64, type);
+          else
+            abort_on("type.a");
           break;
         }
         case 'c': {
@@ -1019,129 +1093,218 @@ class S2WasmBuilder {
               cashew::IString str = getStr();
               setOutput(parseConst(str, type, *allocator), assign);
             }
-          }
-          else if (match("call")) makeCall(type);
-          else if (match("convert_s/i32")) makeUnary(type == f32 ? UnaryOp::ConvertSInt32ToFloat32 : UnaryOp::ConvertSInt32ToFloat64, type);
-          else if (match("convert_u/i32")) makeUnary(type == f32 ? UnaryOp::ConvertUInt32ToFloat32 : UnaryOp::ConvertUInt32ToFloat64, type);
-          else if (match("convert_s/i64")) makeUnary(type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64, type);
-          else if (match("convert_u/i64")) makeUnary(type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64, type);
-          else if (match("clz")) makeUnary(type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
-          else if (match("ctz")) makeUnary(type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
-          else if (match("copysign")) makeBinary(BINARY_FLOAT(CopySign), type);
-          else if (match("ceil")) makeUnary(type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
-          else abort_on("type.c");
+          } else if (match("call"))
+            makeCall(type);
+          else if (match("convert_s/i32"))
+            makeUnary(
+              type == f32 ? UnaryOp::ConvertSInt32ToFloat32 : UnaryOp::ConvertSInt32ToFloat64,
+              type);
+          else if (match("convert_u/i32"))
+            makeUnary(
+              type == f32 ? UnaryOp::ConvertUInt32ToFloat32 : UnaryOp::ConvertUInt32ToFloat64,
+              type);
+          else if (match("convert_s/i64"))
+            makeUnary(
+              type == f32 ? UnaryOp::ConvertSInt64ToFloat32 : UnaryOp::ConvertSInt64ToFloat64,
+              type);
+          else if (match("convert_u/i64"))
+            makeUnary(
+              type == f32 ? UnaryOp::ConvertUInt64ToFloat32 : UnaryOp::ConvertUInt64ToFloat64,
+              type);
+          else if (match("clz"))
+            makeUnary(type == i32 ? UnaryOp::ClzInt32 : UnaryOp::ClzInt64, type);
+          else if (match("ctz"))
+            makeUnary(type == i32 ? UnaryOp::CtzInt32 : UnaryOp::CtzInt64, type);
+          else if (match("copysign"))
+            makeBinary(BINARY_FLOAT(CopySign), type);
+          else if (match("ceil"))
+            makeUnary(type == f32 ? UnaryOp::CeilFloat32 : UnaryOp::CeilFloat64, type);
+          else
+            abort_on("type.c");
           break;
         }
         case 'd': {
-          if (match("demote/f64")) makeUnary(UnaryOp::DemoteFloat64, type);
-          else if (match("div_s")) makeBinary(BINARY_INT(DivS), type);
-          else if (match("div_u")) makeBinary(BINARY_INT(DivU), type);
-          else if (match("div")) makeBinary(BINARY_FLOAT(Div), type);
-          else abort_on("type.g");
+          if (match("demote/f64"))
+            makeUnary(UnaryOp::DemoteFloat64, type);
+          else if (match("div_s"))
+            makeBinary(BINARY_INT(DivS), type);
+          else if (match("div_u"))
+            makeBinary(BINARY_INT(DivU), type);
+          else if (match("div"))
+            makeBinary(BINARY_FLOAT(Div), type);
+          else
+            abort_on("type.g");
           break;
         }
         case 'e': {
-          if (match("eqz")) makeUnary(type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
-          else if (match("eq")) makeBinary(BINARY_INT_OR_FLOAT(Eq), i32);
-          else if (match("extend_s/i32")) makeUnary(UnaryOp::ExtendSInt32, type);
-          else if (match("extend_u/i32")) makeUnary(UnaryOp::ExtendUInt32, type);
-          else abort_on("type.e");
+          if (match("eqz"))
+            makeUnary(type == i32 ? UnaryOp::EqZInt32 : UnaryOp::EqZInt64, type);
+          else if (match("eq"))
+            makeBinary(BINARY_INT_OR_FLOAT(Eq), i32);
+          else if (match("extend_s/i32"))
+            makeUnary(UnaryOp::ExtendSInt32, type);
+          else if (match("extend_u/i32"))
+            makeUnary(UnaryOp::ExtendUInt32, type);
+          else
+            abort_on("type.e");
           break;
         }
         case 'f': {
-          if (match("floor")) makeUnary(type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
-          else abort_on("type.e");
+          if (match("floor"))
+            makeUnary(type == f32 ? UnaryOp::FloorFloat32 : UnaryOp::FloorFloat64, type);
+          else
+            abort_on("type.e");
           break;
         }
         case 'g': {
-          if (match("gt_s")) makeBinary(BINARY_INT(GtS), i32);
-          else if (match("gt_u")) makeBinary(BINARY_INT(GtU), i32);
-          else if (match("ge_s")) makeBinary(BINARY_INT(GeS), i32);
-          else if (match("ge_u")) makeBinary(BINARY_INT(GeU), i32);
-          else if (match("gt")) makeBinary(BINARY_FLOAT(Gt), i32);
-          else if (match("ge")) makeBinary(BINARY_FLOAT(Ge), i32);
-          else abort_on("type.g");
+          if (match("gt_s"))
+            makeBinary(BINARY_INT(GtS), i32);
+          else if (match("gt_u"))
+            makeBinary(BINARY_INT(GtU), i32);
+          else if (match("ge_s"))
+            makeBinary(BINARY_INT(GeS), i32);
+          else if (match("ge_u"))
+            makeBinary(BINARY_INT(GeU), i32);
+          else if (match("gt"))
+            makeBinary(BINARY_FLOAT(Gt), i32);
+          else if (match("ge"))
+            makeBinary(BINARY_FLOAT(Ge), i32);
+          else
+            abort_on("type.g");
           break;
         }
         case 'l': {
-          if (match("lt_s")) makeBinary(BINARY_INT(LtS), i32);
-          else if (match("lt_u")) makeBinary(BINARY_INT(LtU), i32);
-          else if (match("le_s")) makeBinary(BINARY_INT(LeS), i32);
-          else if (match("le_u")) makeBinary(BINARY_INT(LeU), i32);
-          else if (match("load")) makeLoad(type);
-          else if (match("lt")) makeBinary(BINARY_FLOAT(Lt), i32);
-          else if (match("le")) makeBinary(BINARY_FLOAT(Le), i32);
-          else abort_on("type.g");
+          if (match("lt_s"))
+            makeBinary(BINARY_INT(LtS), i32);
+          else if (match("lt_u"))
+            makeBinary(BINARY_INT(LtU), i32);
+          else if (match("le_s"))
+            makeBinary(BINARY_INT(LeS), i32);
+          else if (match("le_u"))
+            makeBinary(BINARY_INT(LeU), i32);
+          else if (match("load"))
+            makeLoad(type);
+          else if (match("lt"))
+            makeBinary(BINARY_FLOAT(Lt), i32);
+          else if (match("le"))
+            makeBinary(BINARY_FLOAT(Le), i32);
+          else
+            abort_on("type.g");
           break;
         }
         case 'm': {
-          if (match("mul")) makeBinary(BINARY_INT_OR_FLOAT(Mul), type);
-          else if (match("min")) makeBinary(BINARY_FLOAT(Min), type);
-          else if (match("max")) makeBinary(BINARY_FLOAT(Max), type);
-          else abort_on("type.m");
+          if (match("mul"))
+            makeBinary(BINARY_INT_OR_FLOAT(Mul), type);
+          else if (match("min"))
+            makeBinary(BINARY_FLOAT(Min), type);
+          else if (match("max"))
+            makeBinary(BINARY_FLOAT(Max), type);
+          else
+            abort_on("type.m");
           break;
         }
         case 'n': {
-          if (match("neg")) makeUnary(type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
-          else if (match("nearest")) makeUnary(type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
-          else if (match("ne")) makeBinary(BINARY_INT_OR_FLOAT(Ne), i32);
-          else abort_on("type.n");
+          if (match("neg"))
+            makeUnary(type == f32 ? UnaryOp::NegFloat32 : UnaryOp::NegFloat64, type);
+          else if (match("nearest"))
+            makeUnary(type == f32 ? UnaryOp::NearestFloat32 : UnaryOp::NearestFloat64, type);
+          else if (match("ne"))
+            makeBinary(BINARY_INT_OR_FLOAT(Ne), i32);
+          else
+            abort_on("type.n");
           break;
         }
         case 'o': {
-          if (match("or")) makeBinary(BINARY_INT(Or), type);
-          else abort_on("type.o");
+          if (match("or"))
+            makeBinary(BINARY_INT(Or), type);
+          else
+            abort_on("type.o");
           break;
         }
         case 'p': {
-          if (match("promote/f32")) makeUnary(UnaryOp::PromoteFloat32, type);
-          else if (match("popcnt")) makeUnary(type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
-          else abort_on("type.p");
+          if (match("promote/f32"))
+            makeUnary(UnaryOp::PromoteFloat32, type);
+          else if (match("popcnt"))
+            makeUnary(type == i32 ? UnaryOp::PopcntInt32 : UnaryOp::PopcntInt64, type);
+          else
+            abort_on("type.p");
           break;
         }
         case 'r': {
-          if (match("rem_s")) makeBinary(BINARY_INT(RemS), type);
-          else if (match("rem_u")) makeBinary(BINARY_INT(RemU), type);
-          else if (match("reinterpret/i32")) makeUnary(UnaryOp::ReinterpretInt32, type);
-          else if (match("reinterpret/i64")) makeUnary(UnaryOp::ReinterpretInt64, type);
-          else if (match("reinterpret/f32")) makeUnary(UnaryOp::ReinterpretFloat32, type);
-          else if (match("reinterpret/f64")) makeUnary(UnaryOp::ReinterpretFloat64, type);
-          else if (match("rotl")) makeBinary(BINARY_INT(RotL), type);
-          else if (match("rotr")) makeBinary(BINARY_INT(RotR), type);
-          else abort_on("type.r");
+          if (match("rem_s"))
+            makeBinary(BINARY_INT(RemS), type);
+          else if (match("rem_u"))
+            makeBinary(BINARY_INT(RemU), type);
+          else if (match("reinterpret/i32"))
+            makeUnary(UnaryOp::ReinterpretInt32, type);
+          else if (match("reinterpret/i64"))
+            makeUnary(UnaryOp::ReinterpretInt64, type);
+          else if (match("reinterpret/f32"))
+            makeUnary(UnaryOp::ReinterpretFloat32, type);
+          else if (match("reinterpret/f64"))
+            makeUnary(UnaryOp::ReinterpretFloat64, type);
+          else if (match("rotl"))
+            makeBinary(BINARY_INT(RotL), type);
+          else if (match("rotr"))
+            makeBinary(BINARY_INT(RotR), type);
+          else
+            abort_on("type.r");
           break;
         }
         case 's': {
-          if (match("shr_s")) makeBinary(BINARY_INT(ShrS), type);
-          else if (match("shr_u")) makeBinary(BINARY_INT(ShrU), type);
-          else if (match("shl")) makeBinary(BINARY_INT(Shl), type);
-          else if (match("sub")) makeBinary(BINARY_INT_OR_FLOAT(Sub), type);
-          else if (peek("store")) makeStore(type);
-          else if (match("select")) makeSelect(type);
-          else if (match("sqrt")) makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
-          else abort_on("type.s");
+          if (match("shr_s"))
+            makeBinary(BINARY_INT(ShrS), type);
+          else if (match("shr_u"))
+            makeBinary(BINARY_INT(ShrU), type);
+          else if (match("shl"))
+            makeBinary(BINARY_INT(Shl), type);
+          else if (match("sub"))
+            makeBinary(BINARY_INT_OR_FLOAT(Sub), type);
+          else if (peek("store"))
+            makeStore(type);
+          else if (match("select"))
+            makeSelect(type);
+          else if (match("sqrt"))
+            makeUnary(type == f32 ? UnaryOp::SqrtFloat32 : UnaryOp::SqrtFloat64, type);
+          else
+            abort_on("type.s");
           break;
         }
         case 't': {
-          if (match("trunc_s/f32")) makeUnary(type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64, type);
-          else if (match("trunc_u/f32")) makeUnary(type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64, type);
-          else if (match("trunc_s/f64")) makeUnary(type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64, type);
-          else if (match("trunc_u/f64")) makeUnary(type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64, type);
-          else if (match("trunc")) makeUnary(type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
-          else abort_on("type.t");
+          if (match("trunc_s/f32"))
+            makeUnary(
+              type == i32 ? UnaryOp::TruncSFloat32ToInt32 : UnaryOp::TruncSFloat32ToInt64, type);
+          else if (match("trunc_u/f32"))
+            makeUnary(
+              type == i32 ? UnaryOp::TruncUFloat32ToInt32 : UnaryOp::TruncUFloat32ToInt64, type);
+          else if (match("trunc_s/f64"))
+            makeUnary(
+              type == i32 ? UnaryOp::TruncSFloat64ToInt32 : UnaryOp::TruncSFloat64ToInt64, type);
+          else if (match("trunc_u/f64"))
+            makeUnary(
+              type == i32 ? UnaryOp::TruncUFloat64ToInt32 : UnaryOp::TruncUFloat64ToInt64, type);
+          else if (match("trunc"))
+            makeUnary(type == f32 ? UnaryOp::TruncFloat32 : UnaryOp::TruncFloat64, type);
+          else
+            abort_on("type.t");
           break;
         }
         case 'w': {
-          if (match("wrap/i64")) makeUnary(UnaryOp::WrapInt64, type);
-          else abort_on("type.w");
+          if (match("wrap/i64"))
+            makeUnary(UnaryOp::WrapInt64, type);
+          else
+            abort_on("type.w");
           break;
         }
         case 'x': {
-          if (match("xor")) makeBinary(BINARY_INT(Xor), type);
-          else abort_on("type.x");
+          if (match("xor"))
+            makeBinary(BINARY_INT(Xor), type);
+          else
+            abort_on("type.x");
           break;
         }
-        default: abort_on("type.?");
+        default:
+          abort_on("type.?");
       }
     };
     // labels
@@ -1161,7 +1324,8 @@ class S2WasmBuilder {
     // main loop
     while (1) {
       skipWhitespace();
-      if (debug) dump("main function loop");
+      if (debug)
+        dump("main function loop");
       if (match("i32.")) {
         handleTyped(i32);
       } else if (match("i64.")) {
@@ -1189,10 +1353,12 @@ class S2WasmBuilder {
       } else if (peek(".LBB")) {
         // FIXME legacy tests: it can be leftover from "loop" or "block", but it can be a label too
         auto p = s;
-        while (*p && *p != ':' && *p != '#' && *p != '\n') p++;
+        while (*p && *p != ':' && *p != '#' && *p != '\n')
+          p++;
         if (*p == ':') { // it's a label
           recordLabel();
-        } else s = strchr(s, '\n');
+        } else
+          s = strchr(s, '\n');
       } else if (match("loop")) {
         Type loopType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Loop>();
@@ -1297,11 +1463,13 @@ class S2WasmBuilder {
   }
 
   void parseType() {
-    if (debug) dump("type");
+    if (debug)
+      dump("type");
     Name name = getStrToSep();
     skipComma();
     if (match("@function")) {
-      if (match(".hidden")) mustMatch(name.str);
+      if (match(".hidden"))
+        mustMatch(name.str);
       return parseFunction();
     } else if (match("@object")) {
       return parseObject(name);
@@ -1310,7 +1478,8 @@ class S2WasmBuilder {
   }
 
   void parseObject(Name name) {
-    if (debug) std::cerr << "parseObject " << name << '\n';
+    if (debug)
+      std::cerr << "parseObject " << name << '\n';
     if (match(".data") || match(".bss")) {
     } else if (match(".section")) {
       s = strchr(s, '\n');
@@ -1337,7 +1506,8 @@ class S2WasmBuilder {
     mustMatch(":");
     std::vector<char> raw;
     bool zero = true;
-    std::vector<std::pair<LinkerObject::Relocation*, Address>> currRelocations; // [relocation, offset in raw]
+    std::vector<std::pair<LinkerObject::Relocation*, Address>>
+      currRelocations; // [relocation, offset in raw]
     while (1) {
       skipWhitespace();
       if (match(".asci")) {
@@ -1350,7 +1520,8 @@ class S2WasmBuilder {
         }
         auto quoted = getQuoted();
         raw.insert(raw.end(), quoted.begin(), quoted.end());
-        if (z) raw.push_back(0);
+        if (z)
+          raw.push_back(0);
         zero = false;
       } else if (match(".zero") || match(".skip")) {
         Address size = getInt();
@@ -1360,7 +1531,8 @@ class S2WasmBuilder {
         unsigned char value = 0;
         if (skipComma()) {
           value = getInt();
-          if (value != 0) zero = false;
+          if (value != 0)
+            zero = false;
         }
         for (Address i = 0, e = size; i < e; ++i) {
           raw.push_back(value);
@@ -1379,10 +1551,13 @@ class S2WasmBuilder {
       } else if (match(".int32")) {
         Address size = raw.size();
         raw.resize(size + 4);
-        auto relocation = getRelocatableConst((uint32_t*)&raw[size]); // just the size, as we may reallocate; we must fix this later, if it's a relocation
+        auto relocation =
+          getRelocatableConst((uint32_t*)&raw[size]); // just the size, as we may reallocate; we
+                                                      // must fix this later, if it's a relocation
         if (relocation) {
           if (!linkerObj->isObjectImplemented(relocation->symbol)) {
-            abort_on("s2wasm is currently unable to model imported globals in data segment initializers");
+            abort_on(
+              "s2wasm is currently unable to model imported globals in data segment initializers");
           }
           linkerObj->addRelocation(relocation);
           currRelocations.emplace_back(relocation, size);
@@ -1423,7 +1598,7 @@ class S2WasmBuilder {
     }
   }
 
-  void parseLcomm(Name name, Address align=1) {
+  void parseLcomm(Name name, Address align = 1) {
     mustMatch(name.str);
     skipComma();
     Address size = getInt();
@@ -1471,13 +1646,12 @@ class S2WasmBuilder {
   //    emscripten_longjmp here.
   // 2. Converts invoke wrapper names.
   //    Refer to the comments in fixEmExceptionInvoke below.
-  template<typename ListType>
-  Name fixEmEHSjLjNames(const Name &name, Type result,
-                        const ListType &operands) {
+  template <typename ListType>
+  Name fixEmEHSjLjNames(const Name& name, Type result, const ListType& operands) {
     return fixEmEHSjLjNames(name, getSig(result, operands));
   }
 
-  Name fixEmEHSjLjNames(const Name &name, const std::string& sig) {
+  Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
     if (name == "emscripten_longjmp_jmpbuf")
       return "emscripten_longjmp";
     return fixEmExceptionInvoke(name, sig);
@@ -1486,7 +1660,7 @@ class S2WasmBuilder {
   // This version only converts emscripten_longjmp_jmpbuf and does not deal
   // with invoke wrappers. This is used when we only have a function name as
   // relocatable constant.
-  Name fixEmLongjmp(const Name &name) {
+  Name fixEmLongjmp(const Name& name) {
     if (name == "emscripten_longjmp_jmpbuf")
       return "emscripten_longjmp";
     return name;
@@ -1511,7 +1685,7 @@ class S2WasmBuilder {
   // This function converts the names of invoke wrappers based on their lowered
   // argument types and a return type. In the example above, the resulting new
   // wrapper name becomes "invoke_vii".
-  Name fixEmExceptionInvoke(const Name &name, const std::string& sig) {
+  Name fixEmExceptionInvoke(const Name& name, const std::string& sig) {
     std::string nameStr = name.c_str();
     if (nameStr.front() == '"' && nameStr.back() == '"') {
       nameStr = nameStr.substr(1, nameStr.size() - 2);
@@ -1522,7 +1696,6 @@ class S2WasmBuilder {
     std::string sigWoOrigFunc = sig.front() + sig.substr(2, sig.size() - 2);
     return Name("invoke_" + sigWoOrigFunc);
   }
-
 };
 
 } // namespace wasm

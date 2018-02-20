@@ -30,12 +30,12 @@
 
 #include <iterator>
 
-#include "wasm.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "support/permutations.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
+#include "pass.h"
+#include "support/permutations.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -110,14 +110,15 @@ struct SSAify : public Pass {
       };
       auto indexes = gatherIndexes(*sets.begin());
       for (auto* set : sets) {
-        if (set == *sets.begin()) continue;
+        if (set == *sets.begin())
+          continue;
         auto currIndexes = gatherIndexes(set);
         std::vector<Index> intersection;
-        std::set_intersection(indexes.begin(), indexes.end(),
-                              currIndexes.begin(), currIndexes.end(),
-                              std::back_inserter(intersection));
+        std::set_intersection(indexes.begin(), indexes.end(), currIndexes.begin(),
+          currIndexes.end(), std::back_inserter(intersection));
         indexes.clear();
-        if (intersection.empty()) break;
+        if (intersection.empty())
+          break;
         // TODO: or keep sorted vectors?
         for (Index i : intersection) {
           indexes.insert(i);
@@ -137,10 +138,7 @@ struct SSAify : public Pass {
           if (set) {
             // a set exists, just add a tee of its value
             auto* value = set->value;
-            auto* tee = builder.makeTeeLocal(
-              new_,
-              value
-            );
+            auto* tee = builder.makeTeeLocal(new_, value);
             set->value = tee;
             // the value may have been something we tracked the location
             // of. if so, update that, since we moved it into the tee
@@ -153,10 +151,8 @@ struct SSAify : public Pass {
             if (func->isParam(old)) {
               // we add a set with the proper
               // param value at the beginning of the function
-              auto* set = builder.makeSetLocal(
-                new_,
-                builder.makeGetLocal(old, func->getLocalType(old))
-              );
+              auto* set =
+                builder.makeSetLocal(new_, builder.makeGetLocal(old, func->getLocalType(old)));
               functionPrepends.push_back(set);
             } else {
               // this is a zero init, so we don't need to do anything actually
@@ -167,9 +163,7 @@ struct SSAify : public Pass {
     }
   }
 
-  Index addLocal(Type type) {
-    return Builder::addVar(func, type);
-  }
+  Index addLocal(Type type) { return Builder::addVar(func, type); }
 
   void addPrepends() {
     if (functionPrepends.size() > 0) {
@@ -185,9 +179,6 @@ struct SSAify : public Pass {
   }
 };
 
-Pass *createSSAifyPass() {
-  return new SSAify();
-}
+Pass* createSSAifyPass() { return new SSAify(); }
 
 } // namespace wasm
-

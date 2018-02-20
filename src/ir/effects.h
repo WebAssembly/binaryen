@@ -23,20 +23,22 @@ namespace wasm {
 // TODO: optimize
 
 struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
-  EffectAnalyzer(PassOptions& passOptions, Expression *ast = nullptr) {
+  EffectAnalyzer(PassOptions& passOptions, Expression* ast = nullptr) {
     ignoreImplicitTraps = passOptions.ignoreImplicitTraps;
     debugInfo = passOptions.debugInfo;
-    if (ast) analyze(ast);
+    if (ast)
+      analyze(ast);
   }
 
   bool ignoreImplicitTraps;
   bool debugInfo;
 
-  void analyze(Expression *ast) {
+  void analyze(Expression* ast) {
     breakNames.clear();
     walk(ast);
     // if we are left with breaks, they are external
-    if (breakNames.size() > 0) branches = true;
+    if (breakNames.size() > 0)
+      branches = true;
   }
 
   bool branches = false; // branches out of this expression, returns, infinite loops, etc
@@ -52,30 +54,36 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // remove them, as they count as side effects, and we
                              // can't move them in a way that would cause other noticeable
                              // (global) side effects
-  bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
-                         // has a defined ordering wrt atomics (e.g. grow_memory)
+  bool isAtomic = false;     // An atomic load/store/RMW/Cmpxchg or an operator that
+                             // has a defined ordering wrt atomics (e.g. grow_memory)
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
-  bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory || isAtomic; }
-  bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
-  bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
+  bool hasGlobalSideEffects() {
+    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic;
+  }
+  bool hasSideEffects() {
+    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap;
+  }
+  bool hasAnything() {
+    return branches || calls || accessesLocal() || readsMemory || writesMemory ||
+           accessesGlobal() || implicitTrap || isAtomic;
+  }
 
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() { return !breakNames.empty(); }
 
-  // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone that reads, they can't be moved past us)
+  // checks if these effects would invalidate another set (e.g., if we write, we invalidate someone
+  // that reads, they can't be moved past us)
   bool invalidates(EffectAnalyzer& other) {
-    if (branches || other.branches
-                 || ((writesMemory || calls) && other.accessesMemory())
-                 || (accessesMemory() && (other.writesMemory || other.calls))) {
+    if (branches || other.branches || ((writesMemory || calls) && other.accessesMemory()) ||
+        (accessesMemory() && (other.writesMemory || other.calls))) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
     // memory references.
-    if ((isAtomic && other.accessesMemory()) ||
-        (other.isAtomic && accessesMemory())) {
+    if ((isAtomic && other.accessesMemory()) || (other.isAtomic && accessesMemory())) {
       return true;
     }
     for (auto local : localsWritten) {
@@ -84,7 +92,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local)) return true;
+      if (other.localsWritten.count(local))
+        return true;
     }
     if ((accessesGlobal() && other.calls) || (other.accessesGlobal() && calls)) {
       return true;
@@ -95,14 +104,16 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
     for (auto global : globalsRead) {
-      if (other.globalsWritten.count(global)) return true;
+      if (other.globalsWritten.count(global))
+        return true;
     }
     // we are ok to reorder implicit traps, but not conditionalize them
     if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
       return true;
     }
     // we can't reorder an implicit trap in a way that alters global state
-    if ((implicitTrap && other.hasGlobalSideEffects()) || (other.implicitTrap && hasGlobalSideEffects())) {
+    if ((implicitTrap && other.hasGlobalSideEffects()) ||
+        (other.implicitTrap && hasGlobalSideEffects())) {
       return true;
     }
     return false;
@@ -113,10 +124,14 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
-    for (auto i : other.localsRead) localsRead.insert(i);
-    for (auto i : other.localsWritten) localsWritten.insert(i);
-    for (auto i : other.globalsRead) globalsRead.insert(i);
-    for (auto i : other.globalsWritten) globalsWritten.insert(i);
+    for (auto i : other.localsRead)
+      localsRead.insert(i);
+    for (auto i : other.localsWritten)
+      localsWritten.insert(i);
+    for (auto i : other.globalsRead)
+      globalsRead.insert(i);
+    for (auto i : other.globalsWritten)
+      globalsWritten.insert(i);
   }
 
   // the checks above happen after the node's children were processed, in the order of execution
@@ -139,20 +154,20 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
 
   std::set<Name> breakNames;
 
-  void visitBreak(Break *curr) {
-    breakNames.insert(curr->name);
-  }
-  void visitSwitch(Switch *curr) {
+  void visitBreak(Break* curr) { breakNames.insert(curr->name); }
+  void visitSwitch(Switch* curr) {
     for (auto name : curr->targets) {
       breakNames.insert(name);
     }
     breakNames.insert(curr->default_);
   }
   void visitBlock(Block* curr) {
-    if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
+    if (curr->name.is())
+      breakNames.erase(curr->name); // these were internal breaks
   }
   void visitLoop(Loop* curr) {
-    if (curr->name.is()) breakNames.erase(curr->name); // these were internal breaks
+    if (curr->name.is())
+      breakNames.erase(curr->name); // these were internal breaks
     // if the loop is unreachable, then there is branching control flow:
     //  (1) if the body is unreachable because of a (return), uncaught (br) etc., then we
     //      already noted branching, so it is ok to mark it again  (if we have *caught*
@@ -167,8 +182,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
   }
 
-  void visitCall(Call *curr) { calls = true; }
-  void visitCallImport(CallImport *curr) {
+  void visitCall(Call* curr) { calls = true; }
+  void visitCallImport(CallImport* curr) {
     calls = true;
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
@@ -176,40 +191,36 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       branches = true; // !
     }
   }
-  void visitCallIndirect(CallIndirect *curr) { calls = true; }
-  void visitGetLocal(GetLocal *curr) {
-    localsRead.insert(curr->index);
-  }
-  void visitSetLocal(SetLocal *curr) {
-    localsWritten.insert(curr->index);
-  }
-  void visitGetGlobal(GetGlobal *curr) {
-    globalsRead.insert(curr->name);
-  }
-  void visitSetGlobal(SetGlobal *curr) {
-    globalsWritten.insert(curr->name);
-  }
-  void visitLoad(Load *curr) {
+  void visitCallIndirect(CallIndirect* curr) { calls = true; }
+  void visitGetLocal(GetLocal* curr) { localsRead.insert(curr->index); }
+  void visitSetLocal(SetLocal* curr) { localsWritten.insert(curr->index); }
+  void visitGetGlobal(GetGlobal* curr) { globalsRead.insert(curr->name); }
+  void visitSetGlobal(SetGlobal* curr) { globalsWritten.insert(curr->name); }
+  void visitLoad(Load* curr) {
     readsMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   }
-  void visitStore(Store *curr) {
+  void visitStore(Store* curr) {
     writesMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   }
   void visitAtomicRMW(AtomicRMW* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   }
   void visitAtomicWait(AtomicWait* curr) {
     readsMemory = true;
@@ -218,7 +229,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     // write.
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   }
   void visitAtomicWake(AtomicWake* curr) {
     // AtomicWake doesn't strictly write memory, but it does modify the waiters
@@ -227,9 +239,10 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) implicitTrap = true;
+    if (!ignoreImplicitTraps)
+      implicitTrap = true;
   };
-  void visitUnary(Unary *curr) {
+  void visitUnary(Unary* curr) {
     if (!ignoreImplicitTraps) {
       switch (curr->op) {
         case TruncSFloat32ToInt32:
@@ -247,7 +260,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
   }
-  void visitBinary(Binary *curr) {
+  void visitBinary(Binary* curr) {
     if (!ignoreImplicitTraps) {
       switch (curr->op) {
         case DivSInt32:
@@ -265,15 +278,15 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       }
     }
   }
-  void visitReturn(Return *curr) { branches = true; }
-  void visitHost(Host *curr) {
+  void visitReturn(Return* curr) { branches = true; }
+  void visitHost(Host* curr) {
     calls = true;
     // grow_memory modifies the set of valid addresses, and thus can be modeled as modifying memory
     writesMemory = true;
     // Atomics are also sequentially consistent with grow_memory.
     isAtomic = true;
   }
-  void visitUnreachable(Unreachable *curr) { branches = true; }
+  void visitUnreachable(Unreachable* curr) { branches = true; }
 };
 
 } // namespace wasm

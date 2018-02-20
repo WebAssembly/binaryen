@@ -23,18 +23,18 @@
 // much more debuggable manner).
 //
 
-#include <memory>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
+#include "ir/literal-utils.h"
 #include "pass.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/path.h"
 #include "support/timing.h"
-#include "wasm-io.h"
 #include "wasm-builder.h"
-#include "ir/literal-utils.h"
+#include "wasm-io.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
@@ -48,9 +48,7 @@ struct ProgramResult {
   double time;
 
   ProgramResult() {}
-  ProgramResult(std::string command) {
-    getFromExecution(command);
-  }
+  ProgramResult(std::string command) { getFromExecution(command); }
 
   // runs the command and notes the output
   // TODO: also stderr, not just stdout?
@@ -59,10 +57,13 @@ struct ProgramResult {
     timer.start();
     // do this using just core stdio.h and stdlib.h, for portability
     // sadly this requires two invokes
-    code = system(("timeout " + std::to_string(timeout) + "s " + command + " > /dev/null 2> /dev/null").c_str());
+    code =
+      system(("timeout " + std::to_string(timeout) + "s " + command + " > /dev/null 2> /dev/null")
+               .c_str());
     const int MAX_BUFFER = 1024;
     char buffer[MAX_BUFFER];
-    FILE *stream = popen(("timeout " + std::to_string(timeout) + "s " + command + " 2> /dev/null").c_str(), "r");
+    FILE* stream =
+      popen(("timeout " + std::to_string(timeout) + "s " + command + " 2> /dev/null").c_str(), "r");
     while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
       output.append(buffer);
     }
@@ -71,19 +72,14 @@ struct ProgramResult {
     time = timer.getTotal() / 2;
   }
 
-  bool operator==(ProgramResult& other) {
-    return code == other.code && output == other.output;
-  }
-  bool operator!=(ProgramResult& other) {
-    return !(*this == other);
-  }
+  bool operator==(ProgramResult& other) { return code == other.code && output == other.output; }
+  bool operator!=(ProgramResult& other) { return !(*this == other); }
 
-  bool failed() {
-    return code != 0;
-  }
+  bool failed() { return code != 0; }
 
   void dump(std::ostream& o) {
-    o << "[ProgramResult] code: " << code << " stdout: \n" << output << "[====]\nin " << time << " seconds\n[/ProgramResult]\n";
+    o << "[ProgramResult] code: " << code << " stdout: \n"
+      << output << "[====]\nin " << time << " seconds\n[/ProgramResult]\n";
   }
 };
 
@@ -94,7 +90,7 @@ inline std::ostream& operator<<(std::ostream& o, ProgramResult& result) {
   return o;
 }
 
-}
+} // namespace std
 
 ProgramResult expected;
 
@@ -104,58 +100,45 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo) : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo)
+    : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
   void reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
-    std::vector<std::string> passes = {
-      "-Oz",
-      "-Os",
-      "-O1",
-      "-O2",
-      "-O3",
-      "--coalesce-locals --vacuum",
-      "--dce",
-      "--duplicate-function-elimination",
-      "--inlining",
-      "--inlining-optimizing",
-      "--optimize-level=3 --inlining-optimizing",
-      "--local-cse --vacuum",
-      "--memory-packing",
-      "--remove-unused-names --merge-blocks --vacuum",
-      "--optimize-instructions",
-      "--precompute",
-      "--remove-imports",
-      "--remove-memory",
-      "--remove-unused-names --remove-unused-brs",
-      "--remove-unused-module-elements",
-      "--reorder-functions",
-      "--reorder-locals",
-      "--simplify-locals --vacuum",
-      "--vacuum"
-    };
+    std::vector<std::string> passes = {"-Oz", "-Os", "-O1", "-O2", "-O3",
+      "--coalesce-locals --vacuum", "--dce", "--duplicate-function-elimination", "--inlining",
+      "--inlining-optimizing", "--optimize-level=3 --inlining-optimizing", "--local-cse --vacuum",
+      "--memory-packing", "--remove-unused-names --merge-blocks --vacuum",
+      "--optimize-instructions", "--precompute", "--remove-imports", "--remove-memory",
+      "--remove-unused-names --remove-unused-brs", "--remove-unused-module-elements",
+      "--reorder-functions", "--reorder-locals", "--simplify-locals --vacuum", "--vacuum"};
     auto oldSize = file_size(working);
     bool more = true;
     while (more) {
-      //std::cerr << "|    starting passes loop iteration\n";
+      // std::cerr << "|    starting passes loop iteration\n";
       more = false;
-      // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
-      for (auto shrinking : { false, true }) {
+      // try both combining with a generic shrink (so minor pass overhead is compensated for), and
+      // without
+      for (auto shrinking : {false, true}) {
         for (auto pass : passes) {
           std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-          if (shrinking) currCommand += " --dce --vacuum ";
+          if (shrinking)
+            currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
-          if (debugInfo) currCommand += " -g ";
-          if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
+          if (debugInfo)
+            currCommand += " -g ";
+          if (verbose)
+            std::cerr << "|    trying pass command: " << currCommand << "\n";
           if (!ProgramResult(currCommand).failed()) {
             auto newSize = file_size(test);
             if (newSize < oldSize) {
               // the pass didn't fail, and the size looks smaller, so promising
               // see if it is still has the property we are preserving
               if (ProgramResult(command) == expected) {
-                std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
+                std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to "
+                          << newSize << ", and preserved the property\n";
                 copy_file(test, working);
                 more = true;
                 oldSize = newSize;
@@ -165,7 +148,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
       }
     }
-    if (verbose) std::cerr << "|    done with passes for now\n";
+    if (verbose)
+      std::cerr << "|    done with passes for now\n";
   }
 
   // does one pass of slow and destructive reduction. returns whether it
@@ -185,7 +169,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // size should be as expected, and output should be as expected
     ProgramResult result;
     if (!writeAndTestReduction(result)) {
-      std::cerr << "\n|! WARNING: writing before destructive reduction fails, very unlikely reduction can work\n" << result << '\n';
+      std::cerr << "\n|! WARNING: writing before destructive reduction fails, very unlikely "
+                   "reduction can work\n"
+                << result << '\n';
     }
     // destroy!
     walkModule(getModule());
@@ -240,9 +226,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // tests a reduction on the current traversal node, and undos if it failed
   bool tryToReplaceCurrent(Expression* with) {
     auto* curr = getCurrent();
-    //std::cerr << "try " << curr << " => " << with << '\n';
-    if (curr->type != with->type) return false;
-    if (!shouldTryToReduce()) return false;
+    // std::cerr << "try " << curr << " => " << with << '\n';
+    if (curr->type != with->type)
+      return false;
+    if (!shouldTryToReduce())
+      return false;
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
       replaceCurrent(curr);
@@ -260,8 +248,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   // tests a reduction on an arbitrary child
   bool tryToReplaceChild(Expression*& child, Expression* with) {
-    if (child->type != with->type) return false;
-    if (!shouldTryToReduce()) return false;
+    if (child->type != with->type)
+      return false;
+    if (!shouldTryToReduce())
+      return false;
     auto* before = child;
     child = with;
     if (!writeAndTestReduction()) {
@@ -269,13 +259,14 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       return false;
     }
     std::cerr << "|      tryToReplaceChild succeeded (in " << getLocation() << ")\n";
-    //std::cerr << "|      " << before << " => " << with << '\n';
+    // std::cerr << "|      " << before << " => " << with << '\n';
     noteReduction();
     return true;
   }
 
   std::string getLocation() {
-    if (getFunction()) return getFunction()->name.str;
+    if (getFunction())
+      return getFunction()->name.str;
     return "(non-function context)";
   }
 
@@ -285,12 +276,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   void visitExpression(Expression* curr) {
     if (curr->type == none) {
-      if (tryToReduceCurrentToNone()) return;
+      if (tryToReduceCurrentToNone())
+        return;
     } else if (isConcreteType(curr->type)) {
-      if (tryToReduceCurrentToConst()) return;
+      if (tryToReduceCurrentToConst())
+        return;
     } else {
       assert(curr->type == unreachable);
-      if (tryToReduceCurrentToUnreachable()) return;
+      if (tryToReduceCurrentToUnreachable())
+        return;
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
@@ -325,7 +319,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     } else if (auto* call = curr->dynCast<CallImport>()) {
       handleCall(call);
     } else if (auto* call = curr->dynCast<CallIndirect>()) {
-      if (tryToReplaceCurrent(call->target)) return;
+      if (tryToReplaceCurrent(call->target))
+        return;
       handleCall(call);
     }
   }
@@ -354,7 +349,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         first = item;
         break;
       }
-      if (!first.isNull()) break;
+      if (!first.isNull())
+        break;
     }
     visitSegmented(curr, first, 100);
   }
@@ -364,18 +360,19 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     visitSegmented(curr, 0, 2);
   }
 
-  template<typename T, typename U>
-  void visitSegmented(T* curr, U zero, size_t bonus) {
+  template <typename T, typename U> void visitSegmented(T* curr, U zero, size_t bonus) {
     // try to reduce to first function
     // shrink segment elements
     for (auto& segment : curr->segments) {
       auto& data = segment.data;
       size_t skip = 1; // when we succeed, try to shrink by more and more, similar to bisection
       for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!shouldTryToReduce(bonus)) continue;
+        if (!shouldTryToReduce(bonus))
+          continue;
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
-          if (!data.empty()) data.pop_back();
+          if (!data.empty())
+            data.pop_back();
         }
         if (writeAndTestReduction()) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
@@ -389,10 +386,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : curr->segments) {
-      if (segment.data.empty()) continue;
+      if (segment.data.empty())
+        continue;
       for (auto& item : segment.data) {
-        if (!shouldTryToReduce(bonus)) continue;
-        if (item == zero) continue;
+        if (!shouldTryToReduce(bonus))
+          continue;
+        if (item == zero)
+          continue;
         auto save = item;
         item = zero;
         if (writeAndTestReduction()) {
@@ -415,7 +415,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     size_t skip = 1;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000)))
+        continue;
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
@@ -423,7 +424,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           names.push_back(name);
         }
       }
-      if (names.size() == 0) continue;
+      if (names.size() == 0)
+        continue;
       std::cout << "|    try to remove " << names.size() << " functions (skip: " << skip << ")\n";
       if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
@@ -441,7 +443,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     skip = 1;
     for (size_t i = 0; i < exports.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000)))
+        continue;
       std::vector<Export> currExports;
       for (size_t j = 0; currExports.size() < skip && i + j < exports.size(); j++) {
         auto exp = exports[i + j];
@@ -499,9 +502,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
               break;
             }
           }
-          if (!other.isNull()) break;
+          if (!other.isNull())
+            break;
         }
-        if (other.isNull()) return; // we failed to find a replacement
+        if (other.isNull())
+          return; // we failed to find a replacement
         for (auto& segment : curr->segments) {
           for (auto& name : segment.data) {
             if (names.count(name)) {
@@ -520,7 +525,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     FunctionReferenceRemover referenceRemover(names);
     referenceRemover.walkModule(module.get());
 
-    if (WasmValidator().validate(*module, Feature::All, WasmValidator::Globally | WasmValidator::Quiet) &&
+    if (WasmValidator().validate(
+          *module, Feature::All, WasmValidator::Globally | WasmValidator::Quiet) &&
         writeAndTestReduction()) {
       std::cerr << "|      removed " << names.size() << " functions\n";
       return true;
@@ -534,8 +540,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   // try to replace condition with always true and always false
   void handleCondition(Expression*& condition) {
-    if (!condition) return;
-    if (condition->is<Const>()) return;
+    if (!condition)
+      return;
+    if (condition->is<Const>())
+      return;
     auto* c = builder->makeConst(Literal(int32_t(0)));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
@@ -543,16 +551,17 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
   }
 
-  template<typename T>
-  void handleCall(T* call) {
+  template <typename T> void handleCall(T* call) {
     for (auto* op : call->operands) {
-      if (tryToReplaceCurrent(op)) return;
+      if (tryToReplaceCurrent(op))
+        return;
     }
   }
 
   bool tryToReduceCurrentToNone() {
     auto* curr = getCurrent();
-    if (curr->is<Nop>()) return false;
+    if (curr->is<Nop>())
+      return false;
     // try to replace with a trivial value
     Nop nop;
     if (tryToReplaceCurrent(&nop)) {
@@ -565,10 +574,12 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // try to replace a concrete value with a trivial constant
   bool tryToReduceCurrentToConst() {
     auto* curr = getCurrent();
-    if (curr->is<Const>()) return false;
+    if (curr->is<Const>())
+      return false;
     // try to replace with a trivial value
     Const* c = builder->makeConst(Literal(int32_t(0)));
-    if (tryToReplaceCurrent(c)) return true;
+    if (tryToReplaceCurrent(c))
+      return true;
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
@@ -576,7 +587,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   bool tryToReduceCurrentToUnreachable() {
     auto* curr = getCurrent();
-    if (curr->is<Unreachable>()) return false;
+    if (curr->is<Unreachable>())
+      return false;
     // try to replace with a trivial value
     Unreachable un;
     if (tryToReplaceCurrent(&un)) {
@@ -594,58 +606,46 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
-  bool verbose = false,
-       debugInfo = false,
-       force = false;
-  Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
+  bool verbose = false, debugInfo = false, force = false;
+  Options options("wasm-reduce",
+    "Reduce a wasm file to a smaller one that has the same behavior on a given command");
   options
-      .add("--command", "-cmd", "The command to run on the test, that we want to reduce while keeping the command's output identical. "
-                                "We look at the command's return code and stdout here (TODO: stderr), "
-                                "and we reduce while keeping those unchanged.",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             command = argument;
-           })
-      .add("--test", "-t", "Test file (this will be written to to test, the given command should read it when we call it)",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             test = argument;
-           })
-      .add("--working", "-w", "Working file (this will contain the current good state while doing temporary computations, "
-                              "and will contain the final best result at the end)",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             working = argument;
-           })
-      .add("--verbose", "-v", "Verbose output mode",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             verbose = true;
-           })
-      .add("--debugInfo", "-g", "Keep debug info in binaries",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             debugInfo = true;
-           })
-      .add("--force", "-f", "Force the reduction attempt, ignoring problems that imply it is unlikely to succeed",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             force = true;
-           })
-      .add("--timeout", "-to", "A timeout to apply to each execution of the command, in seconds (default: 2)",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             timeout = atoi(argument.c_str());
-             std::cout << "|applying timeout: " << timeout << "\n";
-           })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [&](Options* o, const std::string& argument) {
-                        input = argument;
-                      });
+    .add("--command", "-cmd",
+      "The command to run on the test, that we want to reduce while keeping the command's output "
+      "identical. "
+      "We look at the command's return code and stdout here (TODO: stderr), "
+      "and we reduce while keeping those unchanged.",
+      Options::Arguments::One, [&](Options* o, const std::string& argument) { command = argument; })
+    .add("--test", "-t",
+      "Test file (this will be written to to test, the given command should read it when we call "
+      "it)",
+      Options::Arguments::One, [&](Options* o, const std::string& argument) { test = argument; })
+    .add("--working", "-w",
+      "Working file (this will contain the current good state while doing temporary computations, "
+      "and will contain the final best result at the end)",
+      Options::Arguments::One, [&](Options* o, const std::string& argument) { working = argument; })
+    .add("--verbose", "-v", "Verbose output mode", Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { verbose = true; })
+    .add("--debugInfo", "-g", "Keep debug info in binaries", Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { debugInfo = true; })
+    .add("--force", "-f",
+      "Force the reduction attempt, ignoring problems that imply it is unlikely to succeed",
+      Options::Arguments::Zero, [&](Options* o, const std::string& argument) { force = true; })
+    .add("--timeout", "-to",
+      "A timeout to apply to each execution of the command, in seconds (default: 2)",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) {
+        timeout = atoi(argument.c_str());
+        std::cout << "|applying timeout: " << timeout << "\n";
+      })
+    .add_positional("INFILE", Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
 
-  if (test.size() == 0) Fatal() << "test file not provided\n";
-  if (working.size() == 0) Fatal() << "working file not provided\n";
+  if (test.size() == 0)
+    Fatal() << "test file not provided\n";
+  if (working.size() == 0)
+    Fatal() << "working file not provided\n";
 
   std::cerr << "|wasm-reduce\n";
   std::cerr << "|input: " << input << '\n';
@@ -662,15 +662,19 @@ int main(int argc, const char* argv[]) {
   auto stopIfNotForced = [&](std::string message, ProgramResult& result) {
     std::cerr << "|! " << message << '\n' << result << '\n';
     if (!force) {
-      Fatal() << "|! stopping, as it is very unlikely reduction can succeed (use -f to ignore this check)";
+      Fatal() << "|! stopping, as it is very unlikely reduction can succeed (use -f to ignore this "
+                 "check)";
     }
   };
 
   if (expected.time + 1 >= timeout) {
-    stopIfNotForced("execution time is dangerously close to the timeout - you should probably increase the timeout", expected);
+    stopIfNotForced("execution time is dangerously close to the timeout - you should probably "
+                    "increase the timeout",
+      expected);
   }
 
-  std::cerr << "|checking that command has different behavior on invalid binary (this verifies that the test file is used by the command)\n";
+  std::cerr << "|checking that command has different behavior on invalid binary (this verifies "
+               "that the test file is used by the command)\n";
   {
     {
       std::ofstream dst(test, std::ios::binary);
@@ -682,7 +686,8 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
+  std::cerr
+    << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
     ProgramResult readWrite(Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test);
@@ -691,7 +696,8 @@ int main(int argc, const char* argv[]) {
     } else {
       ProgramResult result(command);
       if (result != expected) {
-        stopIfNotForced("running command on the canonicalized module should give the same results", result);
+        stopIfNotForced(
+          "running command on the canonicalized module should give the same results", result);
       }
     }
   }
@@ -723,7 +729,8 @@ int main(int argc, const char* argv[]) {
     std::cerr << "|  after pass reduction: " << newSize << "\n";
 
     // always stop after a pass reduction attempt, for final cleanup
-    if (stopping) break;
+    if (stopping)
+      break;
 
     // check if the full cycle (destructive/passes) has helped or not
     if (lastPostPassesSize && newSize >= lastPostPassesSize) {
@@ -740,7 +747,8 @@ int main(int argc, const char* argv[]) {
 
     // if destructive reductions lead to useful proportionate pass reductions, keep
     // going at the same factor, as pass reductions are far faster
-    std::cerr << "|  pass progress: " << passProgress << ", last destructive: " << lastDestructiveReductions << '\n';
+    std::cerr << "|  pass progress: " << passProgress
+              << ", last destructive: " << lastDestructiveReductions << '\n';
     if (passProgress >= 4 * lastDestructiveReductions) {
       // don't change
       std::cerr << "|  progress is good, do not quickly decrease factor\n";
@@ -762,7 +770,8 @@ int main(int argc, const char* argv[]) {
     while (1) {
       std::cerr << "|  reduce destructively... (factor: " << factor << ")\n";
       lastDestructiveReductions = reducer.reduceDestructively(factor);
-      if (lastDestructiveReductions > 0) break;
+      if (lastDestructiveReductions > 0)
+        break;
       // we failed to reduce destructively
       if (factor == 1) {
         stopping = true;
@@ -776,4 +785,3 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|finished, final size: " << file_size(working) << "\n";
   copy_file(working, test); // just to avoid confusion
 }
-

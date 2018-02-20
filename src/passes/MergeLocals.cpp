@@ -28,7 +28,7 @@
 //   (i32.const 100)
 //   (get_local $x)
 //  )
-// 
+//
 // If that assignment of $y is never used again, everything is fine. But if
 // if is, then the live range of $y does not end in that get, and will
 // necessarily overlap with that of $x - making them appear to interfere
@@ -46,14 +46,15 @@
 // TODO: investigate more
 //
 
-#include <wasm.h>
+#include <ir/local-graph.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/local-graph.h>
+#include <wasm.h>
 
 namespace wasm {
 
-struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
+struct MergeLocals
+  : public WalkerPass<PostWalker<MergeLocals, UnifiedExpressionVisitor<MergeLocals>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new MergeLocals(); }
@@ -94,7 +95,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   }
 
   void optimizeCopies() {
-    if (copies.empty()) return;
+    if (copies.empty())
+      return;
     // compute all dependencies
     LocalGraph preGraph(getFunction());
     preGraph.computeInfluences();
@@ -134,7 +136,8 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
         // we can look for uses of $x that could instead be uses of $y. this extends
         // $y's live range, but if it removes the conflict between $x and $y, it may be
         // worth it
-        if (!trivialInfluences.empty()) { // if the trivial set we added has influences, it means $y lives on
+        if (!trivialInfluences
+               .empty()) { // if the trivial set we added has influences, it means $y lives on
           auto& copyInfluences = preGraph.setInfluences[copy];
           if (!copyInfluences.empty()) {
             bool canOptimizeToTrivial = true;
@@ -212,9 +215,6 @@ struct MergeLocals : public WalkerPass<PostWalker<MergeLocals, UnifiedExpression
   }
 };
 
-Pass *createMergeLocalsPass() {
-  return new MergeLocals();
-}
+Pass* createMergeLocalsPass() { return new MergeLocals(); }
 
 } // namespace wasm
-

@@ -17,8 +17,8 @@
 #ifndef wasm_wasm_emscripten_h
 #define wasm_wasm_emscripten_h
 
-#include "wasm.h"
 #include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -27,10 +27,8 @@ namespace wasm {
 class EmscriptenGlueGenerator {
 public:
   EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
-    : wasm(wasm),
-      builder(wasm),
-      stackPointerOffset(stackPointerOffset),
-      useStackPointerGlobal(stackPointerOffset == 0) { }
+    : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) {}
 
   void generateRuntimeFunctions();
   Function* generateMemoryGrowthFunction();
@@ -44,9 +42,8 @@ public:
   // signature.
   void generateJSCallThunks(unsigned numReservedFunctionPointers);
 
-  std::string generateEmscriptenMetadata(
-      Address staticBump, std::vector<Name> const& initializerFunctions,
-      unsigned numReservedFunctionPointers);
+  std::string generateEmscriptenMetadata(Address staticBump,
+    std::vector<Name> const& initializerFunctions, unsigned numReservedFunctionPointers);
 
   // Replace placeholder emscripten_asm_const functions with *_signature versions.
   void fixEmAsmConsts();
@@ -65,13 +62,9 @@ private:
   void generateStackRestoreFunction();
 };
 
-std::string emscriptenGlue(
-    Module& wasm,
-    bool allowMemoryGrowth,
-    Address stackPointer,
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions,
-    unsigned numReservedFunctionPointers);
+std::string emscriptenGlue(Module& wasm, bool allowMemoryGrowth, Address stackPointer,
+  Address staticBump, std::vector<Name> const& initializerFunctions,
+  unsigned numReservedFunctionPointers);
 
 } // namespace wasm
 

@@ -43,18 +43,13 @@
 #include <sstream>
 #include <unordered_set>
 
-#include "wasm.h"
 #include "wasm-printing.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct WasmValidator {
-  enum FlagValues {
-    Minimal = 0,
-    Web = 1 << 0,
-    Globally = 1 << 1,
-    Quiet = 1 << 2
-  };
+  enum FlagValues { Minimal = 0, Web = 1 << 0, Globally = 1 << 1, Quiet = 1 << 2 };
   typedef uint32_t Flags;
 
   bool validate(Module& module, FeatureSet features = MVP, Flags flags = Globally);

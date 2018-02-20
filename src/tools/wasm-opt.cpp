@@ -21,21 +21,21 @@
 
 #include <memory>
 
-#include "pass.h"
-#include "support/command-line.h"
-#include "support/file.h"
-#include "wasm-printing.h"
-#include "wasm-s-parser.h"
-#include "wasm-validator.h"
-#include "wasm-io.h"
-#include "wasm-interpreter.h"
-#include "wasm-binary.h"
-#include "shell-interface.h"
-#include "optimization-options.h"
 #include "execution-results.h"
 #include "fuzzing.h"
 #include "js-wrapper.h"
+#include "optimization-options.h"
+#include "pass.h"
+#include "shell-interface.h"
 #include "spec-wrapper.h"
+#include "support/command-line.h"
+#include "support/file.h"
+#include "wasm-binary.h"
+#include "wasm-interpreter.h"
+#include "wasm-io.h"
+#include "wasm-printing.h"
+#include "wasm-s-parser.h"
+#include "wasm-validator.h"
 
 using namespace wasm;
 
@@ -45,7 +45,7 @@ std::string runCommand(std::string command) {
   std::string output;
   const int MAX_BUFFER = 1024;
   char buffer[MAX_BUFFER];
-  FILE *stream = popen(command.c_str(), "r");
+  FILE* stream = popen(command.c_str(), "r");
   while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
     output.append(buffer);
   }
@@ -74,43 +74,50 @@ int main(int argc, const char* argv[]) {
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add("--debuginfo", "-g", "Emit names section and debug info",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { debugInfo = true; })
-      .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzExec = true; })
-      .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
-      .add("--extra-fuzz-command", "-efc", "An extra command to run on the output before and after optimizing. The output is compared between the two, and an error occurs if they are not equal",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { extraFuzzCommand = arguments; })
-      .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { translateToFuzz = true; })
-      .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
-      .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
-      .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
-           Options::Arguments::One,
-           [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output", "-o", "Output file (stdout if not specified)", Options::Arguments::One,
+      [](Options* o, const std::string& argument) {
+        o->extra["output"] = argument;
+        Colors::disable();
+      })
+    .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo", "-g", "Emit names section and debug info", Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { debugInfo = true; })
+    .add("--fuzz-exec", "-fe",
+      "Execute functions before and after optimization, helping fuzzing find bugs",
+      Options::Arguments::Zero, [&](Options* o, const std::string& arguments) { fuzzExec = true; })
+    .add("--fuzz-binary", "-fb",
+      "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find "
+      "binary format bugs",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzBinary = true; })
+    .add("--extra-fuzz-command", "-efc",
+      "An extra command to run on the output before and after optimizing. The output is compared "
+      "between the two, and an error occurs if they are not equal",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { extraFuzzCommand = arguments; })
+    .add("--translate-to-fuzz", "-ttf",
+      "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { translateToFuzz = true; })
+    .add("--fuzz-passes", "-fp",
+      "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz "
+      "(it picks the passes from the input)",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { fuzzPasses = true; })
+    .add("--emit-js-wrapper", "-ejw",
+      "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for "
+      "fuzzing",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { emitJSWrapper = arguments; })
+    .add("--emit-spec-wrapper", "-esw",
+      "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, "
+      "useful for fuzzing",
+      Options::Arguments::One,
+      [&](Options* o, const std::string& arguments) { emitSpecWrapper = arguments; })
+    .add_positional("INFILE", Options::Arguments::One,
+      [](Options* o, const std::string& argument) { o->extra["infile"] = argument; });
   options.parse(argc, argv);
 
   Module wasm;
@@ -118,7 +125,8 @@ int main(int argc, const char* argv[]) {
   // don't expect any passes to accidentally generate atomic ops
   FeatureSet features = Feature::Atomics;
 
-  if (options.debug) std::cerr << "reading...\n";
+  if (options.debug)
+    std::cerr << "reading...\n";
 
   if (!translateToFuzz) {
     ModuleReader reader;
@@ -129,7 +137,8 @@ int main(int argc, const char* argv[]) {
       p.dump(std::cerr);
       Fatal() << "error in parsing input";
     } catch (std::bad_alloc& b) {
-      Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+      Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly "
+                 "amounts of memory)";
     }
 
     if (!WasmValidator().validate(wasm, features)) {
@@ -172,7 +181,8 @@ int main(int argc, const char* argv[]) {
   std::string firstOutput;
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
-    if (options.debug) std::cerr << "writing binary before opts, for extra fuzz command..." << std::endl;
+    if (options.debug)
+      std::cerr << "writing binary before opts, for extra fuzz command..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
@@ -203,7 +213,8 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.runningPasses()) {
-    if (options.debug) std::cerr << "running passes...\n";
+    if (options.debug)
+      std::cerr << "running passes...\n";
     options.runPasses(*curr);
     bool valid = WasmValidator().validate(*curr, features);
     if (!valid) {
@@ -217,7 +228,8 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra.count("output") > 0) {
-    if (options.debug) std::cerr << "writing..." << std::endl;
+    if (options.debug)
+      std::cerr << "writing..." << std::endl;
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);

@@ -18,11 +18,10 @@
 // with (mostly) just the code you want to debug (function-parallel,
 // non-lto) passes on.
 
-#include "wasm.h"
 #include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
-
 
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
@@ -44,9 +43,6 @@ struct ExtractFunction : public Pass {
 
 // declare pass
 
-Pass *createExtractFunctionPass() {
-  return new ExtractFunction();
-}
+Pass* createExtractFunctionPass() { return new ExtractFunction(); }
 
 } // namespace wasm
-

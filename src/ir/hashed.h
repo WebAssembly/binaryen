@@ -16,9 +16,9 @@
 
 #ifndef _wasm_ir_hashed_h
 
+#include "ir/utils.h"
 #include "support/hash.h"
 #include "wasm.h"
-#include "ir/utils.h"
 
 namespace wasm {
 
@@ -37,23 +37,21 @@ struct HashedExpression {
 };
 
 struct ExpressionHasher {
-  size_t operator()(const HashedExpression value) const {
-    return value.hash;
-  }
+  size_t operator()(const HashedExpression value) const { return value.hash; }
 };
 
 struct ExpressionComparer {
   bool operator()(const HashedExpression a, const HashedExpression b) const {
-    if (a.hash != b.hash) return false;
+    if (a.hash != b.hash)
+      return false;
     return ExpressionAnalyzer::equal(a.expr, b.expr);
   }
 };
 
-template<typename T>
-class HashedExpressionMap : public std::unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
-};
+template <typename T>
+class HashedExpressionMap
+  : public std::unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {};
 
 } // namespace wasm
 
 #endif // _wasm_ir_hashed_h
-

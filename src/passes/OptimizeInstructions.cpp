@@ -20,27 +20,25 @@
 
 #include <algorithm>
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-s-parser.h>
-#include <support/threads.h>
-#include <ir/utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
-#include <ir/manipulation.h>
-#include <ir/properties.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
+#include <ir/manipulation.h>
+#include <ir/properties.h>
+#include <ir/utils.h>
+#include <pass.h>
+#include <support/threads.h>
+#include <wasm-s-parser.h>
+#include <wasm.h>
 
-// TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on the availability of atomics.
+// TODO: Use the new sign-extension opcodes where appropriate. This needs to be conditionalized on
+// the availability of atomics.
 
 namespace wasm {
 
-Name I32_EXPR  = "i32.expr",
-     I64_EXPR  = "i64.expr",
-     F32_EXPR  = "f32.expr",
-     F64_EXPR  = "f64.expr",
-     ANY_EXPR  = "any.expr";
+Name I32_EXPR = "i32.expr", I64_EXPR = "i64.expr", F32_EXPR = "f32.expr", F64_EXPR = "f64.expr",
+     ANY_EXPR = "any.expr";
 
 // A pattern
 struct Pattern {
@@ -62,7 +60,7 @@ struct PatternDatabase {
   PatternDatabase() {
     // generate module
     input = strdup(
-      #include "OptimizeInstructions.wast.processed"
+#include "OptimizeInstructions.wast.processed"
     );
     try {
       SExpressionParser parser(input);
@@ -103,7 +101,8 @@ struct Match {
 
   Match(Module& wasm, Pattern& pattern) : wasm(wasm), pattern(pattern) {}
 
-  std::vector<Expression*> wildcards; // id in i32.any(id) etc. => the expression it represents in this match
+  std::vector<Expression*>
+    wildcards; // id in i32.any(id) etc. => the expression it represents in this match
 
   // Comparing/checking
 
@@ -113,11 +112,14 @@ struct Match {
     assert(wildcards.size() == 0);
     auto compare = [this](Expression* subInput, Expression* subSeen) {
       CallImport* call = subInput->dynCast<CallImport>();
-      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return false;
+      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 ||
+          !call->operands[0]->is<Const>())
+        return false;
       Index index = call->operands[0]->cast<Const>()->value.geti32();
       // handle our special functions
       auto checkMatch = [&](Type type) {
-        if (type != none && subSeen->type != type) return false;
+        if (type != none && subSeen->type != type)
+          return false;
         while (index >= wildcards.size()) {
           wildcards.push_back(nullptr);
         }
@@ -131,15 +133,20 @@ struct Match {
         };
       };
       if (call->target == I32_EXPR) {
-        if (checkMatch(i32)) return true;
+        if (checkMatch(i32))
+          return true;
       } else if (call->target == I64_EXPR) {
-        if (checkMatch(i64)) return true;
+        if (checkMatch(i64))
+          return true;
       } else if (call->target == F32_EXPR) {
-        if (checkMatch(f32)) return true;
+        if (checkMatch(f32))
+          return true;
       } else if (call->target == F64_EXPR) {
-        if (checkMatch(f64)) return true;
+        if (checkMatch(f64))
+          return true;
       } else if (call->target == ANY_EXPR) {
-        if (checkMatch(none)) return true;
+        if (checkMatch(none))
+          return true;
       }
       return false;
     };
@@ -147,19 +154,23 @@ struct Match {
     return ExpressionAnalyzer::flexibleEqual(pattern.input, seen, compare);
   }
 
-
   // Applying/copying
 
-  // Apply the match, generate an output expression from the matched input, performing substitutions as necessary
+  // Apply the match, generate an output expression from the matched input, performing substitutions
+  // as necessary
   Expression* apply() {
     // When copying a wildcard, perform the substitution.
-    // TODO: we can reuse nodes, not copying a wildcard when it appears just once, and we can reuse other individual nodes when they are discarded anyhow.
+    // TODO: we can reuse nodes, not copying a wildcard when it appears just once, and we can reuse
+    // other individual nodes when they are discarded anyhow.
     auto copy = [this](Expression* curr) -> Expression* {
       CallImport* call = curr->dynCast<CallImport>();
-      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 || !call->operands[0]->is<Const>()) return nullptr;
+      if (!call || call->operands.size() != 1 || call->operands[0]->type != i32 ||
+          !call->operands[0]->is<Const>())
+        return nullptr;
       Index index = call->operands[0]->cast<Const>()->value.geti32();
       // handle our special functions
-      if (call->target == I32_EXPR || call->target == I64_EXPR || call->target == F32_EXPR || call->target == F64_EXPR || call->target == ANY_EXPR) {
+      if (call->target == I32_EXPR || call->target == I64_EXPR || call->target == F32_EXPR ||
+          call->target == F64_EXPR || call->target == ANY_EXPR) {
         return ExpressionManipulator::copy(wildcards.at(index), wasm);
       }
       return nullptr;
@@ -174,32 +185,49 @@ struct Match {
 // not extremely precise (doesn't look into add operands, etc.)
 // LocalInfoProvider is an optional class that can provide answers about
 // get_local.
-template<typename LocalInfoProvider>
+template <typename LocalInfoProvider>
 Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   if (auto* const_ = curr->dynCast<Const>()) {
     switch (curr->type) {
-      case i32: return 32 - const_->value.countLeadingZeroes().geti32();
-      case i64: return 64 - const_->value.countLeadingZeroes().geti64();
-      default: WASM_UNREACHABLE();
+      case i32:
+        return 32 - const_->value.countLeadingZeroes().geti32();
+      case i64:
+        return 64 - const_->value.countLeadingZeroes().geti64();
+      default:
+        WASM_UNREACHABLE();
     }
   } else if (auto* binary = curr->dynCast<Binary>()) {
     switch (binary->op) {
       // 32-bit
-      case AddInt32: case SubInt32: case MulInt32:
-      case DivSInt32: case DivUInt32: case RemSInt32:
-      case RemUInt32: case RotLInt32: case RotRInt32: return 32;
-      case AndInt32: return std::min(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
-      case OrInt32: case XorInt32: return std::max(getMaxBits(binary->left, localInfoProvider), getMaxBits(binary->right, localInfoProvider));
+      case AddInt32:
+      case SubInt32:
+      case MulInt32:
+      case DivSInt32:
+      case DivUInt32:
+      case RemSInt32:
+      case RemUInt32:
+      case RotLInt32:
+      case RotRInt32:
+        return 32;
+      case AndInt32:
+        return std::min(getMaxBits(binary->left, localInfoProvider),
+          getMaxBits(binary->right, localInfoProvider));
+      case OrInt32:
+      case XorInt32:
+        return std::max(getMaxBits(binary->left, localInfoProvider),
+          getMaxBits(binary->right, localInfoProvider));
       case ShlInt32: {
         if (auto* shifts = binary->right->dynCast<Const>()) {
-          return std::min(Index(32), getMaxBits(binary->left, localInfoProvider) + Bits::getEffectiveShifts(shifts));
+          return std::min(Index(32),
+            getMaxBits(binary->left, localInfoProvider) + Bits::getEffectiveShifts(shifts));
         }
         return 32;
       }
       case ShrUInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)), maxBits); // can ignore more shifts than zero us out
+          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)),
+            maxBits); // can ignore more shifts than zero us out
           return std::max(Index(0), maxBits - shifts);
         }
         return 32;
@@ -207,34 +235,66 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
       case ShrSInt32: {
         if (auto* shift = binary->right->dynCast<Const>()) {
           auto maxBits = getMaxBits(binary->left, localInfoProvider);
-          if (maxBits == 32) return 32;
-          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)), maxBits); // can ignore more shifts than zero us out
+          if (maxBits == 32)
+            return 32;
+          auto shifts = std::min(Index(Bits::getEffectiveShifts(shift)),
+            maxBits); // can ignore more shifts than zero us out
           return std::max(Index(0), maxBits - shifts);
         }
         return 32;
       }
       // 64-bit TODO
       // comparisons
-      case EqInt32: case NeInt32: case LtSInt32:
-      case LtUInt32: case LeSInt32: case LeUInt32:
-      case GtSInt32: case GtUInt32: case GeSInt32:
+      case EqInt32:
+      case NeInt32:
+      case LtSInt32:
+      case LtUInt32:
+      case LeSInt32:
+      case LeUInt32:
+      case GtSInt32:
+      case GtUInt32:
+      case GeSInt32:
       case GeUInt32:
-      case EqInt64: case NeInt64: case LtSInt64:
-      case LtUInt64: case LeSInt64: case LeUInt64:
-      case GtSInt64: case GtUInt64: case GeSInt64:
+      case EqInt64:
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case LeSInt64:
+      case LeUInt64:
+      case GtSInt64:
+      case GtUInt64:
+      case GeSInt64:
       case GeUInt64:
-      case EqFloat32: case NeFloat32:
-      case LtFloat32: case LeFloat32: case GtFloat32: case GeFloat32:
-      case EqFloat64: case NeFloat64:
-      case LtFloat64: case LeFloat64: case GtFloat64: case GeFloat64: return 1;
+      case EqFloat32:
+      case NeFloat32:
+      case LtFloat32:
+      case LeFloat32:
+      case GtFloat32:
+      case GeFloat32:
+      case EqFloat64:
+      case NeFloat64:
+      case LtFloat64:
+      case LeFloat64:
+      case GtFloat64:
+      case GeFloat64:
+        return 1;
       default: {}
     }
   } else if (auto* unary = curr->dynCast<Unary>()) {
     switch (unary->op) {
-      case ClzInt32: case CtzInt32: case PopcntInt32: return 6;
-      case ClzInt64: case CtzInt64: case PopcntInt64: return 7;
-      case EqZInt32: case EqZInt64: return 1;
-      case WrapInt64: return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
+      case ClzInt32:
+      case CtzInt32:
+      case PopcntInt32:
+        return 6;
+      case ClzInt64:
+      case CtzInt64:
+      case PopcntInt64:
+        return 7;
+      case EqZInt32:
+      case EqZInt64:
+        return 1;
+      case WrapInt64:
+        return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       default: {}
     }
   } else if (auto* set = curr->dynCast<SetLocal>()) {
@@ -250,10 +310,14 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
     }
   }
   switch (curr->type) {
-    case i32: return 32;
-    case i64: return 64;
-    case unreachable: return 64; // not interesting, but don't crash
-    default: WASM_UNREACHABLE();
+    case i32:
+      return 32;
+    case i64:
+      return 64;
+    case unreachable:
+      return 64; // not interesting, but don't crash
+    default:
+      WASM_UNREACHABLE();
   }
 }
 
@@ -293,7 +357,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
       auto& info = localInfo[i];
       if (func->isParam(i)) {
         info.maxBits = getBitsForType(func->getLocalType(i)); // worst-case
-        info.signExtedBits = LocalInfo::kUnknown; // we will never know anything
+        info.signExtedBits = LocalInfo::kUnknown;             // we will never know anything
       } else {
         info.maxBits = info.signExtedBits = 0; // we are open to learning
       }
@@ -311,9 +375,11 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
   void visitSetLocal(SetLocal* curr) {
     auto* func = getFunction();
-    if (func->isParam(curr->index)) return;
+    if (func->isParam(curr->index))
+      return;
     auto type = getFunction()->getLocalType(curr->index);
-    if (type != i32 && type != i64) return;
+    if (type != i32 && type != i64)
+      return;
     // an integer var, worth processing
     auto* value = getFallthrough(curr->value);
     auto& info = localInfo[curr->index];
@@ -333,22 +399,26 @@ struct LocalScanner : PostWalker<LocalScanner> {
     }
   }
 
-  // define this for the templated getMaxBits method. we know nothing here yet about locals, so return the maxes
-  Index getMaxBitsForLocal(GetLocal* get) {
-    return getBitsForType(get->type);
-  }
+  // define this for the templated getMaxBits method. we know nothing here yet about locals, so
+  // return the maxes
+  Index getMaxBitsForLocal(GetLocal* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
     switch (type) {
-      case i32: return 32;
-      case i64: return 64;
-      default: return -1;
+      case i32:
+        return 32;
+      case i64:
+        return 64;
+      default:
+        return -1;
     }
   }
 };
 
 // Main pass class
-struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions, UnifiedExpressionVisitor<OptimizeInstructions>>> {
+struct OptimizeInstructions
+  : public WalkerPass<
+      PostWalker<OptimizeInstructions, UnifiedExpressionVisitor<OptimizeInstructions>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new OptimizeInstructions; }
@@ -370,7 +440,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
   }
 
   void visitExpression(Expression* curr) {
-    // we may be able to apply multiple patterns, one may open opportunities that look deeper NB: patterns must not have cycles
+    // we may be able to apply multiple patterns, one may open opportunities that look deeper NB:
+    // patterns must not have cycles
     while (1) {
       auto* handOptimized = handOptimize(curr);
       if (handOptimized) {
@@ -405,8 +476,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
     // might change (if might not be unreachable if just one arm is, for example).
     // this optimization pass focuses on actually executing code. the only
     // exceptions are control flow changes
-    if (curr->type == unreachable &&
-        !curr->is<Break>() && !curr->is<Switch>() && !curr->is<If>()) {
+    if (curr->type == unreachable && !curr->is<Break>() && !curr->is<Switch>() && !curr->is<If>()) {
       return nullptr;
     }
     if (auto* binary = curr->dynCast<Binary>()) {
@@ -421,10 +491,12 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
         if (extraShifts == 0) {
           if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
-            // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
+            // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24
+            // as well, etc.
             if (LoadUtils::canBeSigned(load) &&
                 ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {
-              // if the value falls through, we can't alter the load, as it might be captured in a tee
+              // if the value falls through, we can't alter the load, as it might be captured in a
+              // tee
               if (load->signed_ == true || load == ext) {
                 load->signed_ = true;
                 return ext;
@@ -465,8 +537,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             uint32_t count = PopCount(upperConstValue);
             auto constSignBit = constValue & (1 << (bits - 1));
             if ((count > 0 && count < 32 - bits) || (constSignBit && count == 0)) {
-              // mixed or [zero upper const bits with sign bit set]; the compared values can never be identical, so
-              // force something definitely impossible even after zext
+              // mixed or [zero upper const bits with sign bit set]; the compared values can never
+              // be identical, so force something definitely impossible even after zext
               assert(bits < 32);
               c->value = Literal(int32_t(0x80000000));
               // TODO: if no side effects, we can just replace it all with 1 or 0
@@ -480,7 +552,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           if (auto* right = Properties::getSignExtValue(binary->right)) {
             auto bits = Properties::getSignExtBits(binary->left);
             if (Properties::getSignExtBits(binary->right) == bits) {
-              // we are comparing two sign-exts with the same bits, so we may as well replace both with cheaper zexts
+              // we are comparing two sign-exts with the same bits, so we may as well replace both
+              // with cheaper zexts
               binary->left = makeZeroExt(left, bits);
               binary->right = makeZeroExt(right, bits);
               return binary;
@@ -505,7 +578,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        // note that both left and right may be consts, but then we let precompute compute the constant result
+        // note that both left and right may be consts, but then we let precompute compute the
+        // constant result
       } else if (binary->op == AddInt32) {
         // try to get rid of (0 - ..), that is, a zero only used to negate an
         // int. an add of a subtract can be flipped in order to remove it:
@@ -555,8 +629,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
           // small loads do not need to be masked, the load itself masks
           if (auto* load = binary->left->dynCast<Load>()) {
-            if ((load->bytes == 1 && mask == 0xff) ||
-                (load->bytes == 2 && mask == 0xffff)) {
+            if ((load->bytes == 1 && mask == 0xff) || (load->bytes == 2 && mask == 0xffff)) {
               load->signed_ = false;
               return binary->left;
             }
@@ -569,7 +642,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         }
         // some math operations have trivial results TODO: many more
         if (right->value == Literal(int32_t(0))) {
-          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 || binary->op == OrInt32) {
+          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 ||
+              binary->op == OrInt32) {
             return binary->left;
           } else if ((binary->op == MulInt32 || binary->op == AndInt32) &&
                      !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
@@ -650,33 +724,81 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
           switch (inner->op) {
-            case EqInt32:  inner->op = NeInt32;  return inner;
-            case NeInt32:  inner->op = EqInt32;  return inner;
-            case LtSInt32: inner->op = GeSInt32; return inner;
-            case LtUInt32: inner->op = GeUInt32; return inner;
-            case LeSInt32: inner->op = GtSInt32; return inner;
-            case LeUInt32: inner->op = GtUInt32; return inner;
-            case GtSInt32: inner->op = LeSInt32; return inner;
-            case GtUInt32: inner->op = LeUInt32; return inner;
-            case GeSInt32: inner->op = LtSInt32; return inner;
-            case GeUInt32: inner->op = LtUInt32; return inner;
+            case EqInt32:
+              inner->op = NeInt32;
+              return inner;
+            case NeInt32:
+              inner->op = EqInt32;
+              return inner;
+            case LtSInt32:
+              inner->op = GeSInt32;
+              return inner;
+            case LtUInt32:
+              inner->op = GeUInt32;
+              return inner;
+            case LeSInt32:
+              inner->op = GtSInt32;
+              return inner;
+            case LeUInt32:
+              inner->op = GtUInt32;
+              return inner;
+            case GtSInt32:
+              inner->op = LeSInt32;
+              return inner;
+            case GtUInt32:
+              inner->op = LeUInt32;
+              return inner;
+            case GeSInt32:
+              inner->op = LtSInt32;
+              return inner;
+            case GeUInt32:
+              inner->op = LtUInt32;
+              return inner;
 
-            case EqInt64:  inner->op = NeInt64;  return inner;
-            case NeInt64:  inner->op = EqInt64;  return inner;
-            case LtSInt64: inner->op = GeSInt64; return inner;
-            case LtUInt64: inner->op = GeUInt64; return inner;
-            case LeSInt64: inner->op = GtSInt64; return inner;
-            case LeUInt64: inner->op = GtUInt64; return inner;
-            case GtSInt64: inner->op = LeSInt64; return inner;
-            case GtUInt64: inner->op = LeUInt64; return inner;
-            case GeSInt64: inner->op = LtSInt64; return inner;
-            case GeUInt64: inner->op = LtUInt64; return inner;
+            case EqInt64:
+              inner->op = NeInt64;
+              return inner;
+            case NeInt64:
+              inner->op = EqInt64;
+              return inner;
+            case LtSInt64:
+              inner->op = GeSInt64;
+              return inner;
+            case LtUInt64:
+              inner->op = GeUInt64;
+              return inner;
+            case LeSInt64:
+              inner->op = GtSInt64;
+              return inner;
+            case LeUInt64:
+              inner->op = GtUInt64;
+              return inner;
+            case GtSInt64:
+              inner->op = LeSInt64;
+              return inner;
+            case GtUInt64:
+              inner->op = LeUInt64;
+              return inner;
+            case GeSInt64:
+              inner->op = LtSInt64;
+              return inner;
+            case GeUInt64:
+              inner->op = LtUInt64;
+              return inner;
 
-            case EqFloat32: inner->op = NeFloat32; return inner;
-            case NeFloat32: inner->op = EqFloat32; return inner;
+            case EqFloat32:
+              inner->op = NeFloat32;
+              return inner;
+            case NeFloat32:
+              inner->op = EqFloat32;
+              return inner;
 
-            case EqFloat64: inner->op = NeFloat64; return inner;
-            case NeFloat64: inner->op = EqFloat64; return inner;
+            case EqFloat64:
+              inner->op = NeFloat64;
+              return inner;
+            case NeFloat64:
+              inner->op = EqFloat64;
+              return inner;
 
             default: {}
           }
@@ -705,7 +827,8 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             std::swap(iff->ifTrue, iff->ifFalse);
           }
         }
-        if (iff->condition->type != unreachable && ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
+        if (iff->condition->type != unreachable &&
+            ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the condition, do that
           auto needCondition = EffectAnalyzer(getPassOptions(), iff->condition).hasSideEffects();
@@ -715,10 +838,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           } else {
             Builder builder(*getModule());
             if (typeIsIdentical) {
-              return builder.makeSequence(
-                builder.makeDrop(iff->condition),
-                iff->ifTrue
-              );
+              return builder.makeSequence(builder.makeDrop(iff->condition), iff->ifTrue);
             } else {
               // the types diff. as the condition is reachable, that means the if must be
               // concrete while the arm is not
@@ -766,10 +886,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             // can reorder
             if (!condition.invalidates(value)) {
               Builder builder(*getModule());
-              return builder.makeSequence(
-                builder.makeDrop(select->condition),
-                select->ifTrue
-              );
+              return builder.makeSequence(builder.makeDrop(select->condition), select->ifTrue);
             }
           }
         }
@@ -788,8 +905,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           if (auto* right = binary->right->dynCast<Const>()) {
             if (right->type == i32) {
               auto mask = right->value.geti32();
-              if ((store->bytes == 1 && mask == 0xff) ||
-                  (store->bytes == 2 && mask == 0xffff)) {
+              if ((store->bytes == 1 && mask == 0xff) || (store->bytes == 2 && mask == 0xffff)) {
                 store->value = binary->left;
               }
             }
@@ -867,7 +983,7 @@ private:
   Expression* optimizeAddedConstants(Binary* binary) {
     int32_t constant = 0;
     std::vector<Const*> constants;
-    std::function<void (Expression*, int)> seek = [&](Expression* curr, int mul) {
+    std::function<void(Expression*, int)> seek = [&](Expression* curr, int mul) {
       if (auto* c = curr->dynCast<Const>()) {
         auto value = c->value.geti32();
         if (value != 0) {
@@ -945,19 +1061,23 @@ private:
             return;
           }
         } else if (curr->op == ShlInt32) {
-          // shifting a 0 is a 0, or anything by 0 has no effect, all unless the shift has side effects
-          if (((left && left->value.geti32() == 0) || (right && Bits::getEffectiveShifts(right) == 0)) &&
+          // shifting a 0 is a 0, or anything by 0 has no effect, all unless the shift has side
+          // effects
+          if (((left && left->value.geti32() == 0) ||
+                (right && Bits::getEffectiveShifts(right) == 0)) &&
               !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
             replaceCurrent(curr->left);
             return;
           }
         } else if (curr->op == MulInt32) {
           // multiplying by zero is a zero, unless the other side has side effects
-          if (left && left->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
+          if (left && left->value.geti32() == 0 &&
+              !EffectAnalyzer(passOptions, curr->right).hasSideEffects()) {
             replaceCurrent(left);
             return;
           }
-          if (right && right->value.geti32() == 0 && !EffectAnalyzer(passOptions, curr->left).hasSideEffects()) {
+          if (right && right->value.geti32() == 0 &&
+              !EffectAnalyzer(passOptions, curr->left).hasSideEffects()) {
             replaceCurrent(right);
             return;
           }
@@ -966,17 +1086,15 @@ private:
     };
     Expression* walked = binary;
     ZeroRemover(getPassOptions()).walk(walked);
-    if (constant == 0) return walked; // nothing more to do
+    if (constant == 0)
+      return walked; // nothing more to do
     if (auto* c = walked->dynCast<Const>()) {
       assert(c->value.geti32() == 0);
       c->value = Literal(constant);
       return c;
     }
     Builder builder(*getModule());
-    return builder.makeBinary(AddInt32,
-      walked,
-      builder.makeConst(Literal(constant))
-    );
+    return builder.makeBinary(AddInt32, walked, builder.makeConst(Literal(constant)));
   }
 
   //   expensive1 | expensive2 can be turned into expensive1 ? 1 : expensive2, and
@@ -985,31 +1103,39 @@ private:
   Expression* conditionalizeExpensiveOnBitwise(Binary* binary) {
     // this operation can increase code size, so don't always do it
     auto& options = getPassRunner()->options;
-    if (options.optimizeLevel < 2 || options.shrinkLevel > 0) return nullptr;
+    if (options.optimizeLevel < 2 || options.shrinkLevel > 0)
+      return nullptr;
     const auto MIN_COST = 7;
     assert(binary->op == AndInt32 || binary->op == OrInt32);
-    if (binary->right->is<Const>()) return nullptr; // trivial
+    if (binary->right->is<Const>())
+      return nullptr; // trivial
     // bitwise logical operator on two non-numerical values, check if they are boolean
     auto* left = binary->left;
     auto* right = binary->right;
-    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) return nullptr;
+    if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right))
+      return nullptr;
     auto leftEffects = EffectAnalyzer(getPassOptions(), left);
     auto rightEffects = EffectAnalyzer(getPassOptions(), right);
     auto leftHasSideEffects = leftEffects.hasSideEffects();
     auto rightHasSideEffects = rightEffects.hasSideEffects();
-    if (leftHasSideEffects && rightHasSideEffects) return nullptr; // both must execute
+    if (leftHasSideEffects && rightHasSideEffects)
+      return nullptr; // both must execute
     // canonicalize with side effects, if any, happening on the left
     if (rightHasSideEffects) {
-      if (CostAnalyzer(left).cost < MIN_COST) return nullptr; // avoidable code is too cheap
-      if (leftEffects.invalidates(rightEffects)) return nullptr; // cannot reorder
+      if (CostAnalyzer(left).cost < MIN_COST)
+        return nullptr; // avoidable code is too cheap
+      if (leftEffects.invalidates(rightEffects))
+        return nullptr; // cannot reorder
       std::swap(left, right);
     } else if (leftHasSideEffects) {
-      if (CostAnalyzer(right).cost < MIN_COST) return nullptr; // avoidable code is too cheap
+      if (CostAnalyzer(right).cost < MIN_COST)
+        return nullptr; // avoidable code is too cheap
     } else {
       // no side effects, reorder based on cost estimation
       auto leftCost = CostAnalyzer(left).cost;
       auto rightCost = CostAnalyzer(right).cost;
-      if (std::max(leftCost, rightCost) < MIN_COST) return nullptr; // avoidable code is too cheap
+      if (std::max(leftCost, rightCost) < MIN_COST)
+        return nullptr; // avoidable code is too cheap
       // canonicalize with expensive code on the right
       if (leftCost > rightCost) {
         std::swap(left, right);
@@ -1081,7 +1207,8 @@ private:
     auto* outerConst = outer->right->cast<Const>();
     auto* innerConst = inner->right->cast<Const>();
     auto* value = inner->left;
-    if (outerConst->value == innerConst->value) return value;
+    if (outerConst->value == innerConst->value)
+      return value;
     // add a shift, by reusing the existing node
     innerConst->value = innerConst->value.sub(outerConst->value);
     return inner;
@@ -1100,8 +1227,6 @@ private:
   }
 };
 
-Pass *createOptimizeInstructionsPass() {
-  return new OptimizeInstructions();
-}
+Pass* createOptimizeInstructionsPass() { return new OptimizeInstructions(); }
 
 } // namespace wasm

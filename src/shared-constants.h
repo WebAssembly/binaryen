@@ -21,43 +21,10 @@
 
 namespace wasm {
 
-extern Name GROW_WASM_MEMORY,
-            MEMORY_BASE,
-            TABLE_BASE,
-            NEW_SIZE,
-            MODULE,
-            START,
-            FUNC,
-            PARAM,
-            RESULT,
-            MEMORY,
-            DATA,
-            SEGMENT,
-            EXPORT,
-            IMPORT,
-            TABLE,
-            ELEM,
-            LOCAL,
-            TYPE,
-            CALL,
-            CALL_IMPORT,
-            CALL_INDIRECT,
-            BLOCK,
-            BR_IF,
-            THEN,
-            ELSE,
-            _NAN,
-            _INFINITY,
-            NEG_INFINITY,
-            NEG_NAN,
-            CASE,
-            BR,
-            ANYFUNC,
-            FAKE_RETURN,
-            MUT,
-            SPECTEST,
-            PRINT,
-            EXIT;
+extern Name GROW_WASM_MEMORY, MEMORY_BASE, TABLE_BASE, NEW_SIZE, MODULE, START, FUNC, PARAM, RESULT,
+  MEMORY, DATA, SEGMENT, EXPORT, IMPORT, TABLE, ELEM, LOCAL, TYPE, CALL, CALL_IMPORT, CALL_INDIRECT,
+  BLOCK, BR_IF, THEN, ELSE, _NAN, _INFINITY, NEG_INFINITY, NEG_NAN, CASE, BR, ANYFUNC, FAKE_RETURN,
+  MUT, SPECTEST, PRINT, EXIT;
 
 } // namespace wasm
 

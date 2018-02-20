@@ -80,7 +80,10 @@ struct Address {
     return *this;
   }
   operator address_t() const { return addr; }
-  Address& operator++() { ++addr; return *this; }
+  Address& operator++() {
+    ++addr;
+    return *this;
+  }
 };
 
 // An offset into memory
@@ -88,62 +91,157 @@ typedef int32_t Offset;
 
 // Types
 
-
 // Operators
 
 enum UnaryOp {
-  ClzInt32, ClzInt64, CtzInt32, CtzInt64, PopcntInt32, PopcntInt64, // int
-  NegFloat32, NegFloat64, AbsFloat32, AbsFloat64, CeilFloat32, CeilFloat64, FloorFloat32, FloorFloat64, TruncFloat32, TruncFloat64, NearestFloat32, NearestFloat64, SqrtFloat32, SqrtFloat64, // float
+  ClzInt32,
+  ClzInt64,
+  CtzInt32,
+  CtzInt64,
+  PopcntInt32,
+  PopcntInt64, // int
+  NegFloat32,
+  NegFloat64,
+  AbsFloat32,
+  AbsFloat64,
+  CeilFloat32,
+  CeilFloat64,
+  FloorFloat32,
+  FloorFloat64,
+  TruncFloat32,
+  TruncFloat64,
+  NearestFloat32,
+  NearestFloat64,
+  SqrtFloat32,
+  SqrtFloat64, // float
   // relational
-  EqZInt32, EqZInt64,
+  EqZInt32,
+  EqZInt64,
   // conversions
-  ExtendSInt32, ExtendUInt32, // extend i32 to i64
-  WrapInt64, // i64 to i32
-  TruncSFloat32ToInt32, TruncSFloat32ToInt64, TruncUFloat32ToInt32, TruncUFloat32ToInt64, TruncSFloat64ToInt32, TruncSFloat64ToInt64, TruncUFloat64ToInt32, TruncUFloat64ToInt64, // float to int
-  ReinterpretFloat32, ReinterpretFloat64, // reintepret bits to int
-  ConvertSInt32ToFloat32, ConvertSInt32ToFloat64, ConvertUInt32ToFloat32, ConvertUInt32ToFloat64, ConvertSInt64ToFloat32, ConvertSInt64ToFloat64, ConvertUInt64ToFloat32, ConvertUInt64ToFloat64, // int to float
-  PromoteFloat32, // f32 to f64
-  DemoteFloat64, // f64 to f32
-  ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
+  ExtendSInt32,
+  ExtendUInt32, // extend i32 to i64
+  WrapInt64,    // i64 to i32
+  TruncSFloat32ToInt32,
+  TruncSFloat32ToInt64,
+  TruncUFloat32ToInt32,
+  TruncUFloat32ToInt64,
+  TruncSFloat64ToInt32,
+  TruncSFloat64ToInt64,
+  TruncUFloat64ToInt32,
+  TruncUFloat64ToInt64, // float to int
+  ReinterpretFloat32,
+  ReinterpretFloat64, // reintepret bits to int
+  ConvertSInt32ToFloat32,
+  ConvertSInt32ToFloat64,
+  ConvertUInt32ToFloat32,
+  ConvertUInt32ToFloat64,
+  ConvertSInt64ToFloat32,
+  ConvertSInt64ToFloat64,
+  ConvertUInt64ToFloat32,
+  ConvertUInt64ToFloat64, // int to float
+  PromoteFloat32,         // f32 to f64
+  DemoteFloat64,          // f64 to f32
+  ReinterpretInt32,
+  ReinterpretInt64, // reinterpret bits to float
   // The following sign-extention operators go along with wasm atomics support.
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
   // because the input integer is in an i64 value insetad of an i32 value.
-  ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
+  ExtendS8Int32,
+  ExtendS16Int32,
+  ExtendS8Int64,
+  ExtendS16Int64,
+  ExtendS32Int64,
 };
 
 enum BinaryOp {
-  AddInt32, SubInt32, MulInt32, // int or float
-  DivSInt32, DivUInt32, RemSInt32, RemUInt32, AndInt32, OrInt32, XorInt32, ShlInt32, ShrUInt32, ShrSInt32, RotLInt32, RotRInt32, // int
+  AddInt32,
+  SubInt32,
+  MulInt32, // int or float
+  DivSInt32,
+  DivUInt32,
+  RemSInt32,
+  RemUInt32,
+  AndInt32,
+  OrInt32,
+  XorInt32,
+  ShlInt32,
+  ShrUInt32,
+  ShrSInt32,
+  RotLInt32,
+  RotRInt32, // int
   // relational ops
-  EqInt32, NeInt32, // int or float
-  LtSInt32, LtUInt32, LeSInt32, LeUInt32, GtSInt32, GtUInt32, GeSInt32, GeUInt32, // int
+  EqInt32,
+  NeInt32, // int or float
+  LtSInt32,
+  LtUInt32,
+  LeSInt32,
+  LeUInt32,
+  GtSInt32,
+  GtUInt32,
+  GeSInt32,
+  GeUInt32, // int
 
-  AddInt64, SubInt64, MulInt64, // int or float
-  DivSInt64, DivUInt64, RemSInt64, RemUInt64, AndInt64, OrInt64, XorInt64, ShlInt64, ShrUInt64, ShrSInt64, RotLInt64, RotRInt64, // int
+  AddInt64,
+  SubInt64,
+  MulInt64, // int or float
+  DivSInt64,
+  DivUInt64,
+  RemSInt64,
+  RemUInt64,
+  AndInt64,
+  OrInt64,
+  XorInt64,
+  ShlInt64,
+  ShrUInt64,
+  ShrSInt64,
+  RotLInt64,
+  RotRInt64, // int
   // relational ops
-  EqInt64, NeInt64, // int or float
-  LtSInt64, LtUInt64, LeSInt64, LeUInt64, GtSInt64, GtUInt64, GeSInt64, GeUInt64, // int
+  EqInt64,
+  NeInt64, // int or float
+  LtSInt64,
+  LtUInt64,
+  LeSInt64,
+  LeUInt64,
+  GtSInt64,
+  GtUInt64,
+  GeSInt64,
+  GeUInt64, // int
 
-  AddFloat32, SubFloat32, MulFloat32, // int or float
-  DivFloat32, CopySignFloat32, MinFloat32, MaxFloat32, // float
+  AddFloat32,
+  SubFloat32,
+  MulFloat32, // int or float
+  DivFloat32,
+  CopySignFloat32,
+  MinFloat32,
+  MaxFloat32, // float
   // relational ops
-  EqFloat32, NeFloat32, // int or float
-  LtFloat32, LeFloat32, GtFloat32, GeFloat32, // float
+  EqFloat32,
+  NeFloat32, // int or float
+  LtFloat32,
+  LeFloat32,
+  GtFloat32,
+  GeFloat32, // float
 
-  AddFloat64, SubFloat64, MulFloat64, // int or float
-  DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64, // float
+  AddFloat64,
+  SubFloat64,
+  MulFloat64, // int or float
+  DivFloat64,
+  CopySignFloat64,
+  MinFloat64,
+  MaxFloat64, // float
   // relational ops
-  EqFloat64, NeFloat64, // int or float
-  LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+  EqFloat64,
+  NeFloat64, // int or float
+  LtFloat64,
+  LeFloat64,
+  GtFloat64,
+  GeFloat64, // float
 };
 
-enum HostOp {
-  PageSize, CurrentMemory, GrowMemory, HasFeature
-};
+enum HostOp { PageSize, CurrentMemory, GrowMemory, HasFeature };
 
-enum AtomicRMWOp {
-  Add, Sub, And, Or, Xor, Xchg
-};
+enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
 
 //
 // Expressions
@@ -206,18 +304,11 @@ public:
 
   void finalize() {}
 
-  template<class T>
-  bool is() {
-    return int(_id) == int(T::SpecificId);
-  }
+  template <class T> bool is() { return int(_id) == int(T::SpecificId); }
 
-  template<class T>
-  T* dynCast() {
-    return int(_id) == int(T::SpecificId) ? (T*)this : nullptr;
-  }
+  template <class T> T* dynCast() { return int(_id) == int(T::SpecificId) ? (T*)this : nullptr; }
 
-  template<class T>
-  T* cast() {
+  template <class T> T* cast() {
     assert(int(_id) == int(T::SpecificId));
     return (T*)this;
   }
@@ -227,8 +318,7 @@ const char* getExpressionName(Expression* curr);
 
 typedef ArenaVector<Expression*> ExpressionList;
 
-template<Expression::Id SID>
-class SpecificExpression : public Expression {
+template <Expression::Id SID> class SpecificExpression : public Expression {
 public:
   enum {
     SpecificId = SID // compile-time access to the type for the class
@@ -297,9 +387,7 @@ public:
 class Break : public SpecificExpression<Expression::BreakId> {
 public:
   Break() : value(nullptr), condition(nullptr) {}
-  Break(MixedArena& allocator) : Break() {
-    type = unreachable;
-  }
+  Break(MixedArena& allocator) : Break() { type = unreachable; }
 
   Name name;
   Expression* value;
@@ -442,7 +530,7 @@ public:
 };
 
 class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
- public:
+public:
   AtomicRMW() = default;
   AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
 
@@ -456,7 +544,7 @@ class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
 };
 
 class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
- public:
+public:
   AtomicCmpxchg() = default;
   AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
 
@@ -470,7 +558,7 @@ class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
 };
 
 class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
- public:
+public:
   AtomicWait() = default;
   AtomicWait(MixedArena& allocator) : AtomicWait() {}
 
@@ -484,7 +572,7 @@ class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
 };
 
 class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
- public:
+public:
   AtomicWake() = default;
   AtomicWake(MixedArena& allocator) : AtomicWake() {}
 
@@ -561,9 +649,7 @@ public:
 
 class Return : public SpecificExpression<Expression::ReturnId> {
 public:
-  Return() : value(nullptr) {
-    type = unreachable;
-  }
+  Return() : value(nullptr) { type = unreachable; }
   Return(MixedArena& allocator) : Return() {}
 
   Expression* value;
@@ -582,9 +668,7 @@ public:
 
 class Unreachable : public SpecificExpression<Expression::UnreachableId> {
 public:
-  Unreachable() {
-    type = unreachable;
-  }
+  Unreachable() { type = unreachable; }
   Unreachable(MixedArena& allocator) : Unreachable() {}
 };
 
@@ -596,7 +680,7 @@ public:
   Type result;
   std::vector<Type> params; // function locals are
   std::vector<Type> vars;   // params plus vars
-  Name type; // if null, it is implicit in params and result
+  Name type;                // if null, it is implicit in params and result
   Expression* body;
 
   // local names. these are optional.
@@ -605,7 +689,10 @@ public:
 
   struct DebugLocation {
     uint32_t fileIndex, lineNumber, columnNumber;
-    bool operator==(const DebugLocation& other) const { return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
+    bool operator==(const DebugLocation& other) const {
+      return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
+             columnNumber == other.columnNumber;
+    }
     bool operator!=(const DebugLocation& other) const { return !(*this == other); }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
@@ -630,12 +717,7 @@ public:
   bool hasLocalName(Index index) const;
 };
 
-enum class ExternalKind {
-  Function = 0,
-  Table = 1,
-  Memory = 2,
-  Global = 3
-};
+enum class ExternalKind { Function = 0, Table = 1, Memory = 2, Global = 3 };
 
 class Import {
 public:
@@ -644,12 +726,13 @@ public:
   Name name, module, base; // name = module.base
   ExternalKind kind;
   Name functionType; // for Function imports
-  Type globalType; // for Global imports
+  Type globalType;   // for Global imports
 };
 
 class Export {
 public:
-  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
+  Name name;  // exported name - note that this is the key, as the internal name is non-unique (can
+              // have multiple exports for an internal, also over kinds)
   Name value; // internal name
   ExternalKind kind;
 };
@@ -664,22 +747,18 @@ public:
     std::vector<Name> data;
     Segment() {}
     Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
-      data.swap(init);
-    }
+    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) { data.swap(init); }
   };
 
-  // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
-  // The table can exist but be empty and have no defined initial or max size.
+  // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or
+  // imported. The table can exist but be empty and have no defined initial or max size.
   bool exists;
   bool imported;
   Name name;
   Address initial, max;
   std::vector<Segment> segments;
 
-  Table() : exists(false), imported(false), initial(0), max(kMaxSize) {
-    name = Name::fromInt(0);
-  }
+  Table() : exists(false), imported(false), initial(0), max(kMaxSize) { name = Name::fromInt(0); }
   bool hasMax() { return max != kMaxSize; }
 };
 
@@ -698,9 +777,7 @@ public:
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
-    Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
-      data.swap(init);
-    }
+    Segment(Expression* offset, std::vector<char>& init) : offset(offset) { data.swap(init); }
   };
 
   Name name;
@@ -736,7 +813,8 @@ public:
 
 class Module {
 public:
-  // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
+  // wasm contents (generally you shouldn't access these from outside, except maybe for iterating;
+  // use add*() and the get() functions)
   std::vector<std::unique_ptr<FunctionType>> functionTypes;
   std::vector<std::unique_ptr<Import>> imports;
   std::vector<std::unique_ptr<Export>> exports;
@@ -761,7 +839,7 @@ private:
   std::map<Name, Global*> globalsMap;
 
 public:
-  Module() {};
+  Module(){};
 
   FunctionType* getFunctionType(Name name);
   Import* getImport(Name name);
@@ -795,11 +873,11 @@ public:
 } // namespace wasm
 
 namespace std {
-template<> struct hash<wasm::Address> {
+template <> struct hash<wasm::Address> {
   size_t operator()(const wasm::Address a) const {
     return std::hash<wasm::Address::address_t>()(a.addr);
   }
 };
-}
+} // namespace std
 
 #endif // wasm_wasm_h

@@ -18,8 +18,8 @@
 // Shared execution result checking code
 //
 
-#include "wasm.h"
 #include "shell-interface.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -40,12 +40,14 @@ struct ExecutionResults {
     ModuleInstance instance(wasm, &interface);
     // execute all exported methods (that are therefore preserved through opts)
     for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function) continue;
+      if (exp->kind != ExternalKind::Function)
+        continue;
       auto* func = wasm.getFunction(exp->value);
       if (func->result != none) {
         // this has a result
         results[exp->name] = run(func, wasm, instance);
-        std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
+        std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name]
+                  << '\n';
       } else {
         // no result, run it anyhow (it might modify memory etc.)
         run(func, wasm, instance);
@@ -82,9 +84,7 @@ struct ExecutionResults {
     return true;
   }
 
-  bool operator!=(ExecutionResults& other) {
-    return !((*this) == other);
-  }
+  bool operator!=(ExecutionResults& other) { return !((*this) == other); }
 
   Literal run(Function* func, Module& wasm) {
     ShellExternalInterface interface;
@@ -117,4 +117,3 @@ struct ExecutionResults {
 };
 
 } // namespace wasm
-

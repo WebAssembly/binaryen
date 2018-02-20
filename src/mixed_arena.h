@@ -103,7 +103,8 @@ struct MixedArena {
         // otherwise, the cmpxchg updated seen, and we continue to loop
         curr = seen;
       }
-      if (allocated) delete allocated;
+      if (allocated)
+        delete allocated;
       return curr->allocSpace(size);
     }
     size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
@@ -121,10 +122,10 @@ struct MixedArena {
     return static_cast<void*>(ret);
   }
 
-  template<class T>
-  T* alloc() {
+  template <class T> T* alloc() {
     auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
-    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later if necessary
+    new (ret) T(*this); // allocated objects receive the allocator, so they can allocate more later
+                        // if necessary
     return ret;
   }
 
@@ -137,22 +138,20 @@ struct MixedArena {
 
   ~MixedArena() {
     clear();
-    if (next.load()) delete next.load();
+    if (next.load())
+      delete next.load();
   }
 };
-
 
 //
 // A vector that allocates in an arena.
 //
 // TODO: specialize on the initial size of the array
 
-template <typename SubType, typename T>
-class ArenaVectorBase {
+template <typename SubType, typename T> class ArenaVectorBase {
 protected:
   T* data = nullptr;
-  size_t usedElements = 0,
-         allocatedElements = 0;
+  size_t usedElements = 0, allocatedElements = 0;
 
   void reallocate(size_t size) {
     T* old = data;
@@ -170,13 +169,9 @@ public:
     return data[index];
   }
 
-  size_t size() const {
-    return usedElements;
-  }
+  size_t size() const { return usedElements; }
 
-  bool empty() const {
-    return size() == 0;
-  }
+  bool empty() const { return size() == 0; }
 
   void resize(size_t size) {
     if (size > allocatedElements) {
@@ -218,9 +213,7 @@ public:
     usedElements -= size;
   }
 
-  void clear() {
-    usedElements = 0;
-  }
+  void clear() { usedElements = 0; }
 
   void reserve(size_t size) {
     if (size > allocatedElements) {
@@ -228,8 +221,7 @@ public:
     }
   }
 
-  template<typename ListType>
-  void set(const ListType& list) {
+  template <typename ListType> void set(const ListType& list) {
     size_t size = list.size();
     if (allocatedElements < size) {
       static_cast<SubType*>(this)->allocate(size);
@@ -240,9 +232,7 @@ public:
     usedElements = size;
   }
 
-  void operator=(SubType& other) {
-    set(other);
-  }
+  void operator=(SubType& other) { set(other); }
 
   void swap(SubType& other) {
     data = other.data;
@@ -265,30 +255,20 @@ public:
       return index != other.index || parent != other.parent;
     }
 
-    void operator++() {
-      index++;
-    }
+    void operator++() { index++; }
 
     Iterator& operator+=(int off) {
       index += off;
       return *this;
     }
 
-    const Iterator operator+(int off) const {
-      return Iterator(*this) += off;
-    }
+    const Iterator operator+(int off) const { return Iterator(*this) += off; }
 
-    T& operator*() {
-      return (*parent)[index];
-    }
+    T& operator*() { return (*parent)[index]; }
   };
 
-  Iterator begin() const {
-    return Iterator(static_cast<const SubType*>(this), 0);
-  }
-  Iterator end() const {
-    return Iterator(static_cast<const SubType*>(this), usedElements);
-  }
+  Iterator begin() const { return Iterator(static_cast<const SubType*>(this), 0); }
+  Iterator end() const { return Iterator(static_cast<const SubType*>(this), usedElements); }
 
   void allocate(size_t size) {
     abort(); // must be implemented in children
@@ -301,17 +281,14 @@ public:
 //       passed in when needed, would make this (and thus Blocks etc.
 //       smaller)
 
-template <typename T>
-class ArenaVector : public ArenaVectorBase<ArenaVector<T>, T> {
+template <typename T> class ArenaVector : public ArenaVectorBase<ArenaVector<T>, T> {
 private:
   MixedArena& allocator;
 
 public:
   ArenaVector(MixedArena& allocator) : allocator(allocator) {}
 
-  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
-  }
+  ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) { *this = other; }
 
   void allocate(size_t size) {
     this->allocatedElements = size;

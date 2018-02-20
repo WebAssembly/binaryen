@@ -19,32 +19,31 @@
 // This assumes the very specific output the fastcomp relooper emits,
 // including the name of the 'label' variable.
 
-#include "wasm.h"
-#include "pass.h"
-#include "ir/utils.h"
 #include "ir/manipulation.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
-
 static Name LABEL("label");
 
-static Name getInnerName(int i) {
-  return Name(std::string("__rjti$") + std::to_string(i));
-}
+static Name getInnerName(int i) { return Name(std::string("__rjti$") + std::to_string(i)); }
 
-static Name getOuterName(int i) {
-  return Name(std::string("__rjto$") + std::to_string(i));
-}
+static Name getOuterName(int i) { return Name(std::string("__rjto$") + std::to_string(i)); }
 
 static If* isLabelCheckingIf(Expression* curr, Index labelIndex) {
-  if (!curr) return nullptr;
+  if (!curr)
+    return nullptr;
   auto* iff = curr->dynCast<If>();
-  if (!iff) return nullptr;
+  if (!iff)
+    return nullptr;
   auto* condition = iff->condition->dynCast<Binary>();
-  if (!(condition && condition->op == EqInt32)) return nullptr;
+  if (!(condition && condition->op == EqInt32))
+    return nullptr;
   auto* left = condition->left->dynCast<GetLocal>();
-  if (!(left && left->index == labelIndex)) return nullptr;
+  if (!(left && left->index == labelIndex))
+    return nullptr;
   return iff;
 }
 
@@ -53,23 +52,25 @@ static Index getCheckedLabelValue(If* iff) {
 }
 
 static SetLocal* isLabelSettingSetLocal(Expression* curr, Index labelIndex) {
-  if (!curr) return nullptr;
+  if (!curr)
+    return nullptr;
   auto* set = curr->dynCast<SetLocal>();
-  if (!set) return nullptr;
-  if (set->index != labelIndex) return nullptr;
+  if (!set)
+    return nullptr;
+  if (set->index != labelIndex)
+    return nullptr;
   return set;
 }
 
-static Index getSetLabelValue(SetLocal* set) {
-  return set->value->cast<Const>()->value.geti32();
-}
+static Index getSetLabelValue(SetLocal* set) { return set->value->cast<Const>()->value.geti32(); }
 
 struct LabelUseFinder : public PostWalker<LabelUseFinder> {
   Index labelIndex;
   std::map<Index, Index>& checks; // label value => number of checks on it
   std::map<Index, Index>& sets;   // label value => number of sets to it
 
-  LabelUseFinder(Index labelIndex, std::map<Index, Index>& checks, std::map<Index, Index>& sets) : labelIndex(labelIndex), checks(checks), sets(sets) {}
+  LabelUseFinder(Index labelIndex, std::map<Index, Index>& checks, std::map<Index, Index>& sets)
+    : labelIndex(labelIndex), checks(checks), sets(sets) {}
 
   void visitIf(If* curr) {
     if (isLabelCheckingIf(curr, labelIndex)) {
@@ -98,9 +99,11 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
   void visitBlock(Block* curr) {
     // look for the  if label == X  pattern
     auto& list = curr->list;
-    if (list.size() == 0) return;
+    if (list.size() == 0)
+      return;
     for (Index i = 0; i < list.size() - 1; i++) {
-      // once we see something that might be irreducible, we must skip that if and the rest of the dependents
+      // once we see something that might be irreducible, we must skip that if and the rest of the
+      // dependents
       bool irreducible = false;
       Index origin = i;
       for (Index j = i + 1; j < list.size(); j++) {
@@ -121,7 +124,9 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
               if (!irreducible) {
                 // this is indeed a holder. we can process the ifs, and must also move
                 // the block to enclose the origin, so it is properly reachable
-                assert(holder->list.size() == 1); // must be size 1, a relooper multiple will have its own label, and is an if-else sequence and nothing more
+                assert(holder->list.size() == 1); // must be size 1, a relooper multiple will have
+                                                  // its own label, and is an if-else sequence and
+                                                  // nothing more
                 optimizeJumpsToLabelCheck(list[origin], iff);
                 holder->list[0] = list[origin];
                 list[origin] = holder;
@@ -155,13 +160,12 @@ struct RelooperJumpThreading : public WalkerPass<ExpressionStackWalker<RelooperJ
   }
 
 private:
-
   bool hasIrreducibleControlFlow(If* iff, Expression* origin) {
     // Gather the checks in this if chain. If all the label values checked are only set in origin,
     // then since origin is right before us, this is not irreducible - we can replace all sets
-    // in origin with jumps forward to us, and since there is nothing else, this is safe and complete.
-    // We must also have the property that there is just one check for the label value, as otherwise
-    // node splitting has complicated things.
+    // in origin with jumps forward to us, and since there is nothing else, this is safe and
+    // complete. We must also have the property that there is just one check for the label value, as
+    // otherwise node splitting has complicated things.
     std::map<Index, Index> labelChecksInOrigin;
     std::map<Index, Index> labelSetsInOrigin;
     LabelUseFinder finder(labelIndex, labelChecksInOrigin, labelSetsInOrigin);
@@ -169,7 +173,8 @@ private:
     while (iff) {
       auto num = getCheckedLabelValue(iff);
       assert(labelChecks[num] > 0);
-      if (labelChecks[num] > 1) return true; // checked more than once, somewhere in function
+      if (labelChecks[num] > 1)
+        return true; // checked more than once, somewhere in function
       assert(labelChecksInOrigin[num] == 0);
       if (labelSetsInOrigin[num] != labelSets[num]) {
         assert(labelSetsInOrigin[num] < labelSets[num]);
@@ -203,11 +208,13 @@ private:
     // create a new block for this jump target
     Builder builder(*getModule());
     // origin is where all jumps to this target must come from - the element right before this if
-    // we break out of inner to reach the target. instead of flowing out of normally, we break out of the outer, so we skip the target.
+    // we break out of inner to reach the target. instead of flowing out of normally, we break out
+    // of the outer, so we skip the target.
     auto innerName = getInnerName(nameCounter);
     auto outerName = getOuterName(nameCounter);
     auto* ifFalse = iff->ifFalse;
-    // all assignments of label to the target can be replaced with breaks to the target, via innerName
+    // all assignments of label to the target can be replaced with breaks to the target, via
+    // innerName
     struct JumpUpdater : public PostWalker<JumpUpdater> {
       Index labelIndex;
       Index targetNum;
@@ -241,9 +248,6 @@ private:
 
 // declare pass
 
-Pass *createRelooperJumpThreadingPass() {
-  return new RelooperJumpThreading();
-}
+Pass* createRelooperJumpThreadingPass() { return new RelooperJumpThreading(); }
 
 } // namespace wasm
-

@@ -19,10 +19,10 @@
 
 #include <functional>
 
-#include "wasm.h"
-#include "wasm-traversal.h"
 #include "mixed_arena.h"
 #include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -36,9 +36,9 @@ struct PassRegistry {
 
   static PassRegistry* get();
 
-  typedef std::function<Pass* ()> Creator;
+  typedef std::function<Pass*()> Creator;
 
-  void registerPass(const char* name, const char *description, Creator create);
+  void registerPass(const char* name, const char* description, Creator create);
   Pass* createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
@@ -58,9 +58,10 @@ private:
 struct PassOptions {
   bool debug = false; // run passes in debug mode, doing extra validation and timing checks
   bool validateGlobally = false; // when validating validate globally and not just locally
-  int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
-  int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
-  bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
+  int optimizeLevel = 0;         // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
+  int shrinkLevel = 0;           // 0, 1, 2 correspond to -O0, -Os, -Oz
+  bool ignoreImplicitTraps =
+    false;                // optimize assuming things like div by 0, bad load/store, will not trap
   bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
   FeatureSet features = Feature::MVP; // Which wasm features to accept, and be allowed to use
 
@@ -87,7 +88,8 @@ struct PassRunner {
   PassOptions options;
 
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
-  PassRunner(Module* wasm, PassOptions options) : wasm(wasm), allocator(&wasm->allocator), options(options) {}
+  PassRunner(Module* wasm, PassOptions options)
+    : wasm(wasm), allocator(&wasm->allocator), options(options) {}
 
   // no copying, we control |passes|
   PassRunner(const PassRunner&) = delete;
@@ -97,28 +99,19 @@ struct PassRunner {
     options.debug = debug_;
     options.validateGlobally = debug_; // validate everything by default if debugging
   }
-  void setValidateGlobally(bool validate) {
-    options.validateGlobally = validate;
-  }
-  void setFeatures(FeatureSet features) {
-    options.features = features;
-  }
+  void setValidateGlobally(bool validate) { options.validateGlobally = validate; }
+  void setFeatures(FeatureSet features) { options.features = features; }
 
   void add(std::string passName) {
     auto pass = PassRegistry::get()->createPass(passName);
-    if (!pass) Fatal() << "Could not find pass: " << passName << "\n";
+    if (!pass)
+      Fatal() << "Could not find pass: " << passName << "\n";
     doAdd(pass);
   }
 
-  template<class P>
-  void add() {
-    doAdd(new P());
-  }
+  template <class P> void add() { doAdd(new P()); }
 
-  template<class P, class Arg>
-  void add(Arg arg){
-    doAdd(new P(arg));
-  }
+  template <class P, class Arg> void add(Arg arg) { doAdd(new P(arg)); }
 
   // Adds the default set of optimization passes; this is
   // what -O does.
@@ -145,19 +138,17 @@ struct PassRunner {
   void runOnFunction(Function* func);
 
   // Get the last pass that was already executed of a certain type.
-  template<class P>
-  P* getLast();
+  template <class P> P* getLast();
 
   ~PassRunner();
 
   // When running a pass runner within another pass runner, this
   // flag should be set. This influences how pass debugging works,
   // and may influence other things in the future too.
-  void setIsNested(bool nested) {
-    isNested = nested;
-  }
+  void setIsNested(bool nested) { isNested = nested; }
 
-  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their times,
+  // BINARYEN_PASS_DEBUG is a convenient commandline way to log out the toplevel passes, their
+  // times,
   //                     and validate between each pass.
   //                     (we don't recurse pass debug into sub-passes, as it doesn't help anyhow and
   //                     also is bad for e.g. printing which is a pass)
@@ -181,16 +172,14 @@ private:
 //
 class Pass {
 public:
-  virtual ~Pass() {};
+  virtual ~Pass(){};
 
   // Override this to perform preparation work before the pass runs.
   // This will be called before the pass is run on a module.
   virtual void prepareToRun(PassRunner* runner, Module* module) {}
 
   // Implement this with code to run the pass on the whole module
-  virtual void run(PassRunner* runner, Module* module) {
-    WASM_UNREACHABLE();
-  }
+  virtual void run(PassRunner* runner, Module* module) { WASM_UNREACHABLE(); }
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
@@ -221,17 +210,16 @@ public:
 
 protected:
   Pass() {}
-  Pass(Pass &) {}
-  Pass &operator=(const Pass&) = delete;
+  Pass(Pass&) {}
+  Pass& operator=(const Pass&) = delete;
 };
 
 //
 // Core pass class that uses AST walking. This class can be parameterized by
 // different types of AST walkers.
 //
-template <typename WalkerType>
-class WalkerPass : public Pass, public WalkerType {
-  PassRunner *runner;
+template <typename WalkerType> class WalkerPass : public Pass, public WalkerType {
+  PassRunner* runner;
 
 protected:
   typedef WalkerPass<WalkerType> super;
@@ -249,17 +237,11 @@ public:
     WalkerType::walkFunction(func);
   }
 
-  PassRunner* getPassRunner() {
-    return runner;
-  }
+  PassRunner* getPassRunner() { return runner; }
 
-  PassOptions& getPassOptions() {
-    return runner->options;
-  }
+  PassOptions& getPassOptions() { return runner->options; }
 
-  void setPassRunner(PassRunner* runner_) {
-    runner = runner_;
-  }
+  void setPassRunner(PassRunner* runner_) { runner = runner_; }
 };
 
 // Standard passes. All passes in /passes/ are runnable from the shell,

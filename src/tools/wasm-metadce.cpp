@@ -26,14 +26,14 @@
 
 #include <memory>
 
+#include "ir/import-utils.h"
 #include "pass.h"
+#include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/json.h"
-#include "support/colors.h"
-#include "wasm-io.h"
 #include "wasm-builder.h"
-#include "ir/import-utils.h"
+#include "wasm-io.h"
 
 using namespace wasm;
 
@@ -51,9 +51,9 @@ struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
   std::unordered_set<Name> roots;
 
-  std::unordered_map<Name, Name> exportToDCENode; // export exported name => DCE name
+  std::unordered_map<Name, Name> exportToDCENode;   // export exported name => DCE name
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
-  std::unordered_map<Name, Name> globalToDCENode; // global name => DCE name
+  std::unordered_map<Name, Name> globalToDCENode;   // global name => DCE name
 
   std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
   std::unordered_map<Name, Name> DCENodeToFunction;
@@ -135,14 +135,11 @@ struct MetaDCEGraph {
     // if we provide a parent DCE name, that is who can reach what we see
     // if none is provided, then it is something we must root
     struct InitScanner : public PostWalker<InitScanner> {
-      InitScanner(MetaDCEGraph* parent, Name parentDceName) : parent(parent), parentDceName(parentDceName) {}
+      InitScanner(MetaDCEGraph* parent, Name parentDceName)
+        : parent(parent), parentDceName(parentDceName) {}
 
-      void visitGetGlobal(GetGlobal* curr) {
-        handleGlobal(curr->name);
-      }
-      void visitSetGlobal(SetGlobal* curr) {
-        handleGlobal(curr->name);
-      }
+      void visitGetGlobal(GetGlobal* curr) { handleGlobal(curr->name); }
+      void visitSetGlobal(SetGlobal* curr) { handleGlobal(curr->name); }
 
     private:
       MetaDCEGraph* parent;
@@ -194,33 +191,26 @@ struct MetaDCEGraph {
 
       Scanner(MetaDCEGraph* parent) : parent(parent) {}
 
-      Scanner* create() override {
-        return new Scanner(parent);
-      }
+      Scanner* create() override { return new Scanner(parent); }
 
       void visitCall(Call* curr) {
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->functionToDCENode[curr->target]
-        );
+          parent->functionToDCENode[curr->target]);
       }
       void visitCallImport(CallImport* curr) {
         assert(parent->functionToDCENode.count(getFunction()->name) > 0);
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->importIdToDCENode[parent->getImportId(curr->target)]
-        );
+          parent->importIdToDCENode[parent->getImportId(curr->target)]);
       }
-      void visitGetGlobal(GetGlobal* curr) {
-        handleGlobal(curr->name);
-      }
-      void visitSetGlobal(SetGlobal* curr) {
-        handleGlobal(curr->name);
-      }
+      void visitGetGlobal(GetGlobal* curr) { handleGlobal(curr->name); }
+      void visitSetGlobal(SetGlobal* curr) { handleGlobal(curr->name); }
 
     private:
       MetaDCEGraph* parent;
 
       void handleGlobal(Name name) {
-        if (!getFunction()) return; // non-function stuff (initializers) are handled separately
+        if (!getFunction())
+          return; // non-function stuff (initializers) are handled separately
         Name dceName;
         if (getModule()->getGlobalOrNull(name)) {
           // its a global
@@ -292,7 +282,8 @@ public:
     // Now they are gone, standard optimization passes can do the rest!
     PassRunner passRunner(&wasm);
     passRunner.add("remove-unused-module-elements");
-    passRunner.add("reorder-functions"); // removing functions may alter the optimum order, as # of calls can change
+    passRunner.add("reorder-functions"); // removing functions may alter the optimum order, as # of
+                                         // calls can change
     passRunner.run();
   }
 
@@ -331,7 +322,8 @@ public:
         std::cout << "  is import " << importMap[name] << '\n';
       }
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name].str << ", " << wasm.getExport(DCENodeToExport[name])->value << '\n';
+        std::cout << "  is export " << DCENodeToExport[name].str << ", "
+                  << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
       if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
         std::cout << "  is function " << DCENodeToFunction[name] << '\n';
@@ -359,74 +351,67 @@ int main(int argc, const char* argv[]) {
   std::string graphFile;
   bool dump = false;
 
-  Options options("wasm-metadce", "This tool performs dead code elimination (DCE) on a larger space "
-                                  "that the wasm module is just a part of. For example, if you have "
-                                  "JS and wasm that are connected, this can DCE the combined graph. "
-                                  "By doing so, it is able to eliminate wasm module exports, which "
-                                  "otherwise regular optimizations cannot.\n\n"
-                                  "This tool receives a representation of the reachability graph "
-                                  "that the wasm module resides in, which contains abstract nodes "
-                                  "and connections showing what they reach. Some of those nodes "
-                                  "can represent the wasm module's imports and exports. The tool "
-                                  "then completes the graph by adding the internal parts of the "
-                                  "module, and does DCE on the entire thing.\n\n"
-                                  "This tool will output a wasm module with dead code eliminated, "
-                                  "and metadata describing the things in the rest of the graph "
-                                  "that can be eliminated as well.\n\n"
-                                  "The graph description file should represent the graph in the following "
-                                  "JSON-like notation (note, this is not true JSON, things like "
-                                  "comments, escaping, single-quotes, etc. are not supported):\n\n"
-                                  "  [\n"
-                                  "    {\n"
-                                  "      \"name\": \"entity1\",\n"
-                                  "      \"reaches\": [\"entity2, \"entity3\"],\n"
-                                  "      \"root\": true\n"
-                                  "    },\n"
-                                  "    {\n"
-                                  "      \"name\": \"entity2\",\n"
-                                  "      \"reaches\": [\"entity1, \"entity4\"]\n"
-                                  "    },\n"
-                                  "    {\n"
-                                  "      \"name\": \"entity3\",\n"
-                                  "      \"reaches\": [\"entity1\"],\n"
-                                  "      \"export\": \"export1\"\n"
-                                  "    },\n"
-                                  "    {\n"
-                                  "      \"name\": \"entity4\",\n"
-                                  "      \"import\": [\"module\", \"import1\"]\n"
-                                  "    },\n"
-                                  "  ]\n\n"
-                                  "Each entity has a name and an optional list of the other "
-                                  "entities it reaches. It can also be marked as a root, "
-                                  "export (with the export string), or import (with the "
-                                  "module and import strings). DCE then computes what is "
-                                  "reachable from the roots.");
+  Options options("wasm-metadce",
+    "This tool performs dead code elimination (DCE) on a larger space "
+    "that the wasm module is just a part of. For example, if you have "
+    "JS and wasm that are connected, this can DCE the combined graph. "
+    "By doing so, it is able to eliminate wasm module exports, which "
+    "otherwise regular optimizations cannot.\n\n"
+    "This tool receives a representation of the reachability graph "
+    "that the wasm module resides in, which contains abstract nodes "
+    "and connections showing what they reach. Some of those nodes "
+    "can represent the wasm module's imports and exports. The tool "
+    "then completes the graph by adding the internal parts of the "
+    "module, and does DCE on the entire thing.\n\n"
+    "This tool will output a wasm module with dead code eliminated, "
+    "and metadata describing the things in the rest of the graph "
+    "that can be eliminated as well.\n\n"
+    "The graph description file should represent the graph in the following "
+    "JSON-like notation (note, this is not true JSON, things like "
+    "comments, escaping, single-quotes, etc. are not supported):\n\n"
+    "  [\n"
+    "    {\n"
+    "      \"name\": \"entity1\",\n"
+    "      \"reaches\": [\"entity2, \"entity3\"],\n"
+    "      \"root\": true\n"
+    "    },\n"
+    "    {\n"
+    "      \"name\": \"entity2\",\n"
+    "      \"reaches\": [\"entity1, \"entity4\"]\n"
+    "    },\n"
+    "    {\n"
+    "      \"name\": \"entity3\",\n"
+    "      \"reaches\": [\"entity1\"],\n"
+    "      \"export\": \"export1\"\n"
+    "    },\n"
+    "    {\n"
+    "      \"name\": \"entity4\",\n"
+    "      \"import\": [\"module\", \"import1\"]\n"
+    "    },\n"
+    "  ]\n\n"
+    "Each entity has a name and an optional list of the other "
+    "entities it reaches. It can also be marked as a root, "
+    "export (with the export string), or import (with the "
+    "module and import strings). DCE then computes what is "
+    "reachable from the roots.");
 
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--emit-text", "-S", "Emit text instead of binary for the output file",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add("--debuginfo", "-g", "Emit names section and debug info",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { debugInfo = true; })
-      .add("--graph-file", "-f", "Filename of the graph description file",
-           Options::Arguments::One,
-           [&](Options* o, const std::string& argument) {
-             graphFile = argument;
-           })
-      .add("--dump", "-d", "Dump the combined graph file (useful for debugging)",
-           Options::Arguments::Zero,
-           [&](Options *o, const std::string& arguments) { dump = true; })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output", "-o", "Output file (stdout if not specified)", Options::Arguments::One,
+      [](Options* o, const std::string& argument) {
+        o->extra["output"] = argument;
+        Colors::disable();
+      })
+    .add("--emit-text", "-S", "Emit text instead of binary for the output file",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo", "-g", "Emit names section and debug info", Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { debugInfo = true; })
+    .add("--graph-file", "-f", "Filename of the graph description file", Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { graphFile = argument; })
+    .add("--dump", "-d", "Dump the combined graph file (useful for debugging)",
+      Options::Arguments::Zero, [&](Options* o, const std::string& arguments) { dump = true; })
+    .add_positional("INFILE", Options::Arguments::One,
+      [](Options* o, const std::string& argument) { o->extra["infile"] = argument; });
   options.parse(argc, argv);
 
   if (graphFile.size() == 0) {
@@ -438,7 +423,8 @@ int main(int argc, const char* argv[]) {
   Module wasm;
 
   {
-    if (options.debug) std::cerr << "reading...\n";
+    if (options.debug)
+      std::cerr << "reading...\n";
     ModuleReader reader;
     reader.setDebug(options.debug);
 
@@ -457,11 +443,8 @@ int main(int argc, const char* argv[]) {
 
   // parse the JSON into our graph, doing all the JSON parsing here, leaving
   // the abstract computation for the class itself
-  const json::IString NAME("name"),
-                        REACHES("reaches"),
-                        ROOT("root"),
-                        EXPORT("export"),
-                        IMPORT("import");
+  const json::IString NAME("name"), REACHES("reaches"), ROOT("root"), EXPORT("export"),
+    IMPORT("import");
 
   MetaDCEGraph graph(wasm);
 
@@ -510,7 +493,8 @@ int main(int argc, const char* argv[]) {
     if (ref->has(IMPORT)) {
       json::Ref imp = ref[IMPORT];
       if (!imp->isArray() || imp->size() != 2 || !imp[0]->isString() || !imp[1]->isString()) {
-        Fatal() << "node.import, if it exists, must be an array of two strings. see --help for the form";
+        Fatal()
+          << "node.import, if it exists, must be an array of two strings. see --help for the form";
       }
       auto id = graph.getImportId(imp[0]->getIString(), imp[1]->getIString());
       graph.importIdToDCENode[id] = node.name;

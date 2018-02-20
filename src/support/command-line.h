@@ -29,12 +29,11 @@
 
 #include "wasm.h"
 
-
 namespace wasm {
 
 class Options {
- public:
-  typedef std::function<void(Options *, const std::string& )> Action;
+public:
+  typedef std::function<void(Options*, const std::string&)> Action;
   enum class Arguments { Zero, One, N, Optional };
 
   bool debug;
@@ -42,17 +41,15 @@ class Options {
 
   Options(const std::string& command, const std::string& description);
   ~Options();
-  Options &add(const std::string& longName, const std::string& shortName,
-               const std::string& description, Arguments arguments,
-               const Action &action);
-  Options &add_positional(const std::string& name, Arguments arguments,
-                          const Action &action);
-  void parse(int argc, const char *argv[]);
+  Options& add(const std::string& longName, const std::string& shortName,
+    const std::string& description, Arguments arguments, const Action& action);
+  Options& add_positional(const std::string& name, Arguments arguments, const Action& action);
+  void parse(int argc, const char* argv[]);
 
- private:
+private:
   Options() = delete;
-  Options(const Options &) = delete;
-  Options &operator=(const Options &) = delete;
+  Options(const Options&) = delete;
+  Options& operator=(const Options&) = delete;
 
   struct Option {
     std::string longName;
@@ -68,6 +65,6 @@ class Options {
   Action positionalAction;
 };
 
-}  // namespace wasm
+} // namespace wasm
 
 #endif // wasm_support_command_line_h

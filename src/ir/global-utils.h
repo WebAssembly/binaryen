@@ -26,30 +26,30 @@
 namespace wasm {
 
 namespace GlobalUtils {
-  // find a global initialized to the value of an import, or null if no such global
-  inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
-    // find the import
-    Name imported;
-    for (auto& import : wasm.imports) {
-      if (import->module == module && import->base == base) {
-        imported = import->name;
-        break;
-      }
+// find a global initialized to the value of an import, or null if no such global
+inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
+  // find the import
+  Name imported;
+  for (auto& import : wasm.imports) {
+    if (import->module == module && import->base == base) {
+      imported = import->name;
+      break;
     }
-    if (imported.isNull()) return nullptr;
-    // find a global inited to it
-    for (auto& global : wasm.globals) {
-      if (auto* init = global->init->dynCast<GetGlobal>()) {
-        if (init->name == imported) {
-          return global.get();
-        }
-      }
-    }
-    return nullptr;
   }
-};
+  if (imported.isNull())
+    return nullptr;
+  // find a global inited to it
+  for (auto& global : wasm.globals) {
+    if (auto* init = global->init->dynCast<GetGlobal>()) {
+      if (init->name == imported) {
+        return global.get();
+      }
+    }
+  }
+  return nullptr;
+}
+}; // namespace GlobalUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_global_h
-

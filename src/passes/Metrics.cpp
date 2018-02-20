@@ -16,11 +16,11 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <ir/module-utils.h>
 #include <pass.h>
 #include <support/colors.h>
-#include <wasm.h>
 #include <wasm-binary.h>
-#include <ir/module-utils.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -32,9 +32,9 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
 
   Metrics(bool byFunction) : byFunction(byFunction) {}
 
-  static Metrics *lastMetricsPass;
+  static Metrics* lastMetricsPass;
 
-  map<const char *, int> counts;
+  map<const char*, int> counts;
 
   void visitExpression(Expression* curr) {
     auto name = getExpressionName(curr);
@@ -64,14 +64,14 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     // add memory and table
     if (module->memory.exists) {
       Index size = 0;
-      for (auto& segment: module->memory.segments) {
+      for (auto& segment : module->memory.segments) {
         size += segment.data.size();
       }
       counts["[memory-data]"] = size;
     }
     if (module->table.exists) {
       Index size = 0;
-      for (auto& segment: module->table.segments) {
+      for (auto& segment : module->table.segments) {
         size += segment.data.size();
       }
       counts["[table-data]"] = size;
@@ -112,7 +112,8 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
         baseline = sizeAfterGlobalCleanup(&test);
       }
       for (auto& exp : module->exports) {
-        // create a test module where we remove the export and then see how much can be removed thanks to that
+        // create a test module where we remove the export and then see how much can be removed
+        // thanks to that
         Module test;
         ModuleUtils::copyModule(*module, test);
         test.removeExport(exp->name);
@@ -147,7 +148,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
   }
 
   void printCounts(std::string title) {
-    ostream &o = cout;
+    ostream& o = cout;
     vector<const char*> keys;
     // add total
     int total = 0;
@@ -161,15 +162,14 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     keys.push_back("[total]");
     counts["[total]"] = total;
     // sort
-    sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
-      return strcmp(b, a) > 0;
-    });
+    sort(keys.begin(), keys.end(),
+      [](const char* a, const char* b) -> bool { return strcmp(b, a) > 0; });
     o << title << "\n";
     for (auto* key : keys) {
       auto value = counts[key];
-      if (value == 0) continue;
-      o << " " << left << setw(15) << key << ": " << setw(8)
-        << value;
+      if (value == 0)
+        continue;
+      o << " " << left << setw(15) << key << ": " << setw(8) << value;
       if (lastMetricsPass) {
         if (lastMetricsPass->counts.count(key)) {
           int before = lastMetricsPass->counts[key];
@@ -191,14 +191,10 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
   }
 };
 
-Pass *createMetricsPass() {
-  return new Metrics(false);
-}
+Pass* createMetricsPass() { return new Metrics(false); }
 
-Pass *createFunctionMetricsPass() {
-  return new Metrics(true);
-}
+Pass* createFunctionMetricsPass() { return new Metrics(true); }
 
-Metrics *Metrics::lastMetricsPass;
+Metrics* Metrics::lastMetricsPass;
 
 } // namespace wasm

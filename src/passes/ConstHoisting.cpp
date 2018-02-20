@@ -27,10 +27,10 @@
 
 #include <map>
 
-#include <wasm.h>
 #include <pass.h>
 #include <wasm-binary.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -44,9 +44,7 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
   std::map<Literal, std::vector<Expression**>> uses;
 
-  void visitConst(Const* curr) {
-    uses[curr->value].push_back(getCurrentPointer());
-  }
+  void visitConst(Const* curr) { uses[curr->value].push_back(getCurrentPointer()); }
 
   void visitFunction(Function* curr) {
     std::vector<Expression*> prelude;
@@ -61,16 +59,14 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
     if (!prelude.empty()) {
       Builder builder(*getModule());
       // merge-blocks can optimize this into a single block later in most cases
-      curr->body = builder.makeSequence(
-        builder.makeBlock(prelude),
-        curr->body
-      );
+      curr->body = builder.makeSequence(builder.makeBlock(prelude), curr->body);
     }
   }
 
 private:
   bool worthHoisting(Literal value, Index num) {
-    if (num < MIN_USES) return false;
+    if (num < MIN_USES)
+      return false;
     // measure the size of the constant
     Index size;
     switch (value.type) {
@@ -87,7 +83,8 @@ private:
         size = getTypeSize(value.type);
         break;
       }
-      default: WASM_UNREACHABLE();
+      default:
+        WASM_UNREACHABLE();
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use
@@ -100,8 +97,7 @@ private:
     return after < before;
   }
 
-  template<typename T>
-  Index getWrittenSize(const T& thing) {
+  template <typename T> Index getWrittenSize(const T& thing) {
     BufferWithRandomAccess buffer;
     buffer << thing;
     return buffer.size();
@@ -113,10 +109,7 @@ private:
     auto type = (*(vec[0]))->type;
     Builder builder(*getModule());
     auto temp = builder.addVar(getFunction(), type);
-    auto* ret = builder.makeSetLocal(
-      temp,
-      *(vec[0])
-    );
+    auto* ret = builder.makeSetLocal(temp, *(vec[0]));
     for (auto item : vec) {
       *item = builder.makeGetLocal(temp, type);
     }
@@ -124,8 +117,6 @@ private:
   }
 };
 
-Pass *createConstHoistingPass() {
-  return new ConstHoisting();
-}
+Pass* createConstHoistingPass() { return new ConstHoisting(); }
 
 } // namespace wasm

@@ -23,19 +23,18 @@
 namespace wasm {
 
 namespace ImportUtils {
-  // find an import by the module.base that is being imported.
-  // return the internal name
-  inline Import* getImport(Module& wasm, Name module, Name base) {
-    for (auto& import : wasm.imports) {
-      if (import->module == module && import->base == base) {
-        return import.get();
-      }
+// find an import by the module.base that is being imported.
+// return the internal name
+inline Import* getImport(Module& wasm, Name module, Name base) {
+  for (auto& import : wasm.imports) {
+    if (import->module == module && import->base == base) {
+      return import.get();
     }
-    return nullptr;
   }
-};
+  return nullptr;
+}
+}; // namespace ImportUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_import_h
-

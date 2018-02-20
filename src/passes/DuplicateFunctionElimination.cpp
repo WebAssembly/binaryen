@@ -20,10 +20,10 @@
 // identical when finally lowered into concrete wasm code.
 //
 
-#include "wasm.h"
-#include "pass.h"
 #include "ir/utils.h"
+#include "pass.h"
 #include "support/hash.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -32,16 +32,16 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
 
   FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
 
-  FunctionHasher* create() override {
-    return new FunctionHasher(output);
-  }
+  FunctionHasher* create() override { return new FunctionHasher(output); }
 
   void doWalkFunction(Function* func) {
     assert(digest == 0);
     hash(func->getNumParams());
-    for (auto type : func->params) hash(type);
+    for (auto type : func->params)
+      hash(type);
     hash(func->getNumVars());
-    for (auto type : func->vars) hash(type);
+    for (auto type : func->vars)
+      hash(type);
     hash(func->result);
     hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
     hash(ExpressionAnalyzer::hash(func->body));
@@ -52,9 +52,7 @@ private:
   std::map<Function*, uint32_t>* output;
   uint32_t digest = 0;
 
-  void hash(uint32_t hash) {
-    digest = rehash(digest, hash);
-  }
+  void hash(uint32_t hash) { digest = rehash(digest, hash); }
   void hash64(uint64_t hash) {
     digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
   };
@@ -65,9 +63,7 @@ struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
 
   FunctionReplacer(std::map<Name, Name>* replacements) : replacements(replacements) {}
 
-  FunctionReplacer* create() override {
-    return new FunctionReplacer(replacements);
-  }
+  FunctionReplacer* create() override { return new FunctionReplacer(replacements); }
 
   void visitCall(Call* curr) {
     auto iter = replacements->find(curr->target);
@@ -86,7 +82,8 @@ struct DuplicateFunctionElimination : public Pass {
       // Hash all the functions
       hashes.clear();
       for (auto& func : module->functions) {
-        hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
+        hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map
+                                // shape in parallel, just the values
       }
       PassRunner hasherRunner(module);
       hasherRunner.setIsNested(true);
@@ -103,16 +100,19 @@ struct DuplicateFunctionElimination : public Pass {
       for (auto& pair : hashGroups) {
         auto& group = pair.second;
         Index size = group.size();
-        if (size == 1) continue;
+        if (size == 1)
+          continue;
         // The groups should be fairly small, and even if a group is large we should
         // have almost all of them identical, so we should not hit actual O(N^2)
         // here unless the hash is quite poor.
         for (Index i = 0; i < size - 1; i++) {
           auto* first = group[i];
-          if (duplicates.count(first->name)) continue;
+          if (duplicates.count(first->name))
+            continue;
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
-            if (duplicates.count(second->name)) continue;
+            if (duplicates.count(second->name))
+              continue;
             if (equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
@@ -125,9 +125,11 @@ struct DuplicateFunctionElimination : public Pass {
       if (replacements.size() > 0) {
         // remove the duplicates
         auto& v = module->functions;
-        v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
-          return duplicates.count(curr->name) > 0;
-        }), v.end());
+        v.erase(std::remove_if(v.begin(), v.end(),
+                  [&](const std::unique_ptr<Function>& curr) {
+                    return duplicates.count(curr->name) > 0;
+                  }),
+          v.end());
         module->updateMaps();
         // replace direct calls
         PassRunner replacerRunner(module);
@@ -167,19 +169,22 @@ private:
   std::map<Function*, uint32_t> hashes;
 
   bool equal(Function* left, Function* right) {
-    if (left->getNumParams() != right->getNumParams()) return false;
-    if (left->getNumVars() != right->getNumVars()) return false;
+    if (left->getNumParams() != right->getNumParams())
+      return false;
+    if (left->getNumVars() != right->getNumVars())
+      return false;
     for (Index i = 0; i < left->getNumLocals(); i++) {
-      if (left->getLocalType(i) != right->getLocalType(i)) return false;
+      if (left->getLocalType(i) != right->getLocalType(i))
+        return false;
     }
-    if (left->result != right->result) return false;
-    if (left->type != right->type) return false;
+    if (left->result != right->result)
+      return false;
+    if (left->type != right->type)
+      return false;
     return ExpressionAnalyzer::equal(left->body, right->body);
   }
 };
 
-Pass *createDuplicateFunctionEliminationPass() {
-  return new DuplicateFunctionElimination();
-}
+Pass* createDuplicateFunctionEliminationPass() { return new DuplicateFunctionElimination(); }
 
 } // namespace wasm

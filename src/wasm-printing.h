@@ -19,8 +19,8 @@
 
 #include <ostream>
 
-#include "wasm.h"
 #include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -34,14 +34,13 @@ struct WasmPrinter {
     return o;
   }
 
-  static std::ostream& printModule(Module* module) {
-    return printModule(module, std::cout);
-  }
+  static std::ostream& printModule(Module* module) { return printModule(module, std::cout); }
 
-  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false);
+  static std::ostream& printExpression(
+    Expression* expression, std::ostream& o, bool minify = false, bool full = false);
 };
 
-}
+} // namespace wasm
 
 namespace std {
 
@@ -53,6 +52,6 @@ inline std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
   return wasm::WasmPrinter::printExpression(expression, o);
 }
 
-}
+} // namespace std
 
 #endif // wasm_wasm_printing_h

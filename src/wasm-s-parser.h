@@ -22,20 +22,19 @@
 #ifndef wasm_wasm_s_parser_h
 #define wasm_wasm_s_parser_h
 
-#include "wasm.h"
 #include "mixed_arena.h"
 #include "parsing.h" // for UniqueNameMapper. TODO: move dependency to cpp file?
+#include "wasm.h"
 
 namespace wasm {
 
-class SourceLocation
-{
+class SourceLocation {
 public:
   cashew::IString filename;
   uint32_t line;
   uint32_t column;
   SourceLocation(cashew::IString filename_, uint32_t line_, uint32_t column_ = 0)
-   : filename(filename_), line(line_), column(column_) {}
+    : filename(filename_), line(line_), column(column_) {}
 };
 
 //
@@ -51,7 +50,8 @@ class Element {
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
+  Element(MixedArena& allocator)
+    : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
 
   bool isList() const { return isList_; }
   bool isStr() const { return !isList_; }
@@ -64,9 +64,7 @@ public:
   // list methods
   List& list();
   Element* operator[](unsigned i);
-  size_t size() {
-    return list().size();
-  }
+  size_t size() { return list().size(); }
 
   // string methods
   cashew::IString str() const;
@@ -113,7 +111,8 @@ class SExpressionWasmBuilder {
   std::vector<Name> globalNames;
   int functionCounter;
   int globalCounter;
-  std::map<Name, Type> functionTypes; // we need to know function return types before we parse their contents
+  std::map<Name, Type>
+    functionTypes; // we need to know function return types before we parse their contents
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
 public:
@@ -121,7 +120,8 @@ public:
   SExpressionWasmBuilder(Module& wasm, Element& module, Name* moduleName = nullptr);
 
 private:
-  // pre-parse types and function definitions, so we know function return types before parsing their contents
+  // pre-parse types and function definitions, so we know function return types before parsing their
+  // contents
   void preParseFunctionType(Element& s);
   bool isImport(Element& curr);
   void preParseImports(Element& curr);
@@ -139,29 +139,23 @@ private:
   Name getFunctionName(Element& s);
   Name getFunctionTypeName(Element& s);
   Name getGlobalName(Element& s);
-  void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1]));}
+  void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
   size_t parseFunctionNames(Element& s, Name& name, Name& exportName);
   void parseFunction(Element& s, bool preParseImport = false);
 
-  Type stringToType(cashew::IString str, bool allowError=false, bool prefix=false) {
+  Type stringToType(cashew::IString str, bool allowError = false, bool prefix = false) {
     return stringToType(str.str, allowError, prefix);
   }
-  Type stringToType(const char* str, bool allowError=false, bool prefix=false);
-  bool isType(cashew::IString str) {
-    return stringToType(str, true) != none;
-  }
+  Type stringToType(const char* str, bool allowError = false, bool prefix = false);
+  bool isType(cashew::IString str) { return stringToType(str, true) != none; }
 
 public:
-  Expression* parseExpression(Element* s) {
-    return parseExpression(*s);
-  }
+  Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);
 
-  MixedArena& getAllocator() {
-    return allocator;
-  }
+  MixedArena& getAllocator() { return allocator; }
 
 private:
   Expression* makeExpression(Element& s);
@@ -192,8 +186,7 @@ private:
   Expression* makeCall(Element& s);
   Expression* makeCallImport(Element& s);
   Expression* makeCallIndirect(Element& s);
-  template<class T>
-  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+  template <class T> void parseCallOperands(Element& s, Index i, Index j, T* call) {
     while (i < j) {
       call->operands.push_back(parseExpression(s[i]));
       i++;

@@ -22,23 +22,23 @@
 #ifndef wasm_asm2wasm_h
 #define wasm_asm2wasm_h
 
-#include "wasm.h"
-#include "emscripten-optimizer/optimizer.h"
-#include "mixed_arena.h"
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
-#include "passes/passes.h"
-#include "pass.h"
-#include "parsing.h"
+#include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/optimizer.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/trapping.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
+#include "parsing.h"
+#include "pass.h"
+#include "passes/passes.h"
+#include "shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -46,89 +46,30 @@ using namespace cashew;
 
 // Names
 
-Name I32_CTTZ("i32_cttz"),
-     I32_CTPOP("i32_ctpop"),
-     I32_BC2F("i32_bc2f"),
-     I32_BC2I("i32_bc2i"),
-     I64("i64"),
-     I64_CONST("i64_const"),
-     I64_ADD("i64_add"),
-     I64_SUB("i64_sub"),
-     I64_MUL("i64_mul"),
-     I64_UDIV("i64_udiv"),
-     I64_SDIV("i64_sdiv"),
-     I64_UREM("i64_urem"),
-     I64_SREM("i64_srem"),
-     I64_AND("i64_and"),
-     I64_OR("i64_or"),
-     I64_XOR("i64_xor"),
-     I64_SHL("i64_shl"),
-     I64_ASHR("i64_ashr"),
-     I64_LSHR("i64_lshr"),
-     I64_EQ("i64_eq"),
-     I64_NE("i64_ne"),
-     I64_ULE("i64_ule"),
-     I64_SLE("i64_sle"),
-     I64_UGE("i64_uge"),
-     I64_SGE("i64_sge"),
-     I64_ULT("i64_ult"),
-     I64_SLT("i64_slt"),
-     I64_UGT("i64_ugt"),
-     I64_SGT("i64_sgt"),
-     I64_TRUNC("i64_trunc"),
-     I64_SEXT("i64_sext"),
-     I64_ZEXT("i64_zext"),
-     I64_S2F("i64_s2f"),
-     I64_S2D("i64_s2d"),
-     I64_U2F("i64_u2f"),
-     I64_U2D("i64_u2d"),
-     I64_F2S("i64_f2s"),
-     I64_D2S("i64_d2s"),
-     I64_F2U("i64_f2u"),
-     I64_D2U("i64_d2u"),
-     I64_BC2D("i64_bc2d"),
-     I64_BC2I("i64_bc2i"),
-     I64_CTTZ("i64_cttz"),
-     I64_CTLZ("i64_ctlz"),
-     I64_CTPOP("i64_ctpop"),
-     F32_COPYSIGN("f32_copysign"),
-     F64_COPYSIGN("f64_copysign"),
-     LOAD1("load1"),
-     LOAD2("load2"),
-     LOAD4("load4"),
-     LOAD8("load8"),
-     LOADF("loadf"),
-     LOADD("loadd"),
-     STORE1("store1"),
-     STORE2("store2"),
-     STORE4("store4"),
-     STORE8("store8"),
-     STOREF("storef"),
-     STORED("stored"),
-     FTCALL("ftCall_"),
-     MFTCALL("mftCall_"),
-     MAX_("max"),
-     MIN_("min"),
-     ATOMICS("Atomics"),
-     ATOMICS_LOAD("load"),
-     ATOMICS_STORE("store"),
-     ATOMICS_EXCHANGE("exchange"),
-     ATOMICS_COMPARE_EXCHANGE("compareExchange"),
-     ATOMICS_ADD("add"),
-     ATOMICS_SUB("sub"),
-     ATOMICS_AND("and"),
-     ATOMICS_OR("or"),
-     ATOMICS_XOR("xor"),
-     I64_ATOMICS_LOAD("i64_atomics_load"),
-     I64_ATOMICS_STORE("i64_atomics_store"),
-     I64_ATOMICS_AND("i64_atomics_and"),
-     I64_ATOMICS_OR("i64_atomics_or"),
-     I64_ATOMICS_XOR("i64_atomics_xor"),
-     I64_ATOMICS_ADD("i64_atomics_add"),
-     I64_ATOMICS_SUB("i64_atomics_sub"),
-     I64_ATOMICS_EXCHANGE("i64_atomics_exchange"),
-     I64_ATOMICS_COMPAREEXCHANGE("i64_atomics_compareExchange"),
-     EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
+Name I32_CTTZ("i32_cttz"), I32_CTPOP("i32_ctpop"), I32_BC2F("i32_bc2f"), I32_BC2I("i32_bc2i"),
+  I64("i64"), I64_CONST("i64_const"), I64_ADD("i64_add"), I64_SUB("i64_sub"), I64_MUL("i64_mul"),
+  I64_UDIV("i64_udiv"), I64_SDIV("i64_sdiv"), I64_UREM("i64_urem"), I64_SREM("i64_srem"),
+  I64_AND("i64_and"), I64_OR("i64_or"), I64_XOR("i64_xor"), I64_SHL("i64_shl"),
+  I64_ASHR("i64_ashr"), I64_LSHR("i64_lshr"), I64_EQ("i64_eq"), I64_NE("i64_ne"),
+  I64_ULE("i64_ule"), I64_SLE("i64_sle"), I64_UGE("i64_uge"), I64_SGE("i64_sge"),
+  I64_ULT("i64_ult"), I64_SLT("i64_slt"), I64_UGT("i64_ugt"), I64_SGT("i64_sgt"),
+  I64_TRUNC("i64_trunc"), I64_SEXT("i64_sext"), I64_ZEXT("i64_zext"), I64_S2F("i64_s2f"),
+  I64_S2D("i64_s2d"), I64_U2F("i64_u2f"), I64_U2D("i64_u2d"), I64_F2S("i64_f2s"),
+  I64_D2S("i64_d2s"), I64_F2U("i64_f2u"), I64_D2U("i64_d2u"), I64_BC2D("i64_bc2d"),
+  I64_BC2I("i64_bc2i"), I64_CTTZ("i64_cttz"), I64_CTLZ("i64_ctlz"), I64_CTPOP("i64_ctpop"),
+  F32_COPYSIGN("f32_copysign"), F64_COPYSIGN("f64_copysign"), LOAD1("load1"), LOAD2("load2"),
+  LOAD4("load4"), LOAD8("load8"), LOADF("loadf"), LOADD("loadd"), STORE1("store1"),
+  STORE2("store2"), STORE4("store4"), STORE8("store8"), STOREF("storef"), STORED("stored"),
+  FTCALL("ftCall_"), MFTCALL("mftCall_"), MAX_("max"), MIN_("min"), ATOMICS("Atomics"),
+  ATOMICS_LOAD("load"), ATOMICS_STORE("store"), ATOMICS_EXCHANGE("exchange"),
+  ATOMICS_COMPARE_EXCHANGE("compareExchange"), ATOMICS_ADD("add"), ATOMICS_SUB("sub"),
+  ATOMICS_AND("and"), ATOMICS_OR("or"), ATOMICS_XOR("xor"), I64_ATOMICS_LOAD("i64_atomics_load"),
+  I64_ATOMICS_STORE("i64_atomics_store"), I64_ATOMICS_AND("i64_atomics_and"),
+  I64_ATOMICS_OR("i64_atomics_or"), I64_ATOMICS_XOR("i64_atomics_xor"),
+  I64_ATOMICS_ADD("i64_atomics_add"), I64_ATOMICS_SUB("i64_atomics_sub"),
+  I64_ATOMICS_EXCHANGE("i64_atomics_exchange"),
+  I64_ATOMICS_COMPAREEXCHANGE("i64_atomics_compareExchange"),
+  EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
 
@@ -143,22 +84,16 @@ static void abort_on(std::string why, IString element) {
   abort();
 }
 
-Index indexOr(Index x, Index y) {
-  return x ? x : y;
-}
+Index indexOr(Index x, Index y) { return x ? x : y; }
 
 // useful when we need to see our parent, in an asm.js expression stack
 struct AstStackHelper {
   static std::vector<Ref> astStack;
-  AstStackHelper(Ref curr) {
-    astStack.push_back(curr);
-  }
-  ~AstStackHelper() {
-    astStack.pop_back();
-  }
+  AstStackHelper(Ref curr) { astStack.push_back(curr); }
+  ~AstStackHelper() { astStack.pop_back(); }
   Ref getParent() {
     if (astStack.size() >= 2) {
-      return astStack[astStack.size()-2];
+      return astStack[astStack.size() - 2];
     } else {
       return Ref();
     }
@@ -167,11 +102,14 @@ struct AstStackHelper {
 
 std::vector<Ref> AstStackHelper::astStack;
 
-static bool startsWith(const char* string, const char *prefix) {
+static bool startsWith(const char* string, const char* prefix) {
   while (1) {
-    if (*prefix == 0) return true;
-    if (*string == 0) return false;
-    if (*string++ != *prefix++) return false;
+    if (*prefix == 0)
+      return true;
+    if (*string == 0)
+      return false;
+    if (*string++ != *prefix++)
+      return false;
   }
 };
 
@@ -190,7 +128,8 @@ struct Asm2WasmPreProcessor {
   char* allocatedCopy = nullptr;
 
   ~Asm2WasmPreProcessor() {
-    if (allocatedCopy) free(allocatedCopy);
+    if (allocatedCopy)
+      free(allocatedCopy);
   }
 
   char* process(char* input) {
@@ -207,7 +146,7 @@ struct Asm2WasmPreProcessor {
         input++;
         num--;
       }
-      char *end = input + num - 1;
+      char* end = input + num - 1;
       while (*end != '}') {
         *end = 0;
         end--;
@@ -217,21 +156,26 @@ struct Asm2WasmPreProcessor {
     // asm.js memory growth uses a quite elaborate pattern. Instead of parsing and
     // matching it, we do a simpler detection on emscripten's asm.js output format
     const char* START_FUNCS = "// EMSCRIPTEN_START_FUNCS";
-    char *marker = strstr(input, START_FUNCS);
+    char* marker = strstr(input, START_FUNCS);
     if (marker) {
       *marker = 0; // look for memory growth code just up to here, as an optimization
     }
-    char *growthSign = strstr(input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
+    char* growthSign = strstr(
+      input, "return true;"); // this can only show up in growth code, as normal asm.js lacks "true"
     if (growthSign) {
       memoryGrowth = true;
       // clean out this function, we don't need it. first where it starts
-      char *growthFuncStart = growthSign;
-      while (*growthFuncStart != '{') growthFuncStart--; // skip body
-      while (*growthFuncStart != '(') growthFuncStart--; // skip params
-      while (*growthFuncStart != ' ') growthFuncStart--; // skip function name
-      while (*growthFuncStart != 'f') growthFuncStart--; // skip 'function'
+      char* growthFuncStart = growthSign;
+      while (*growthFuncStart != '{')
+        growthFuncStart--; // skip body
+      while (*growthFuncStart != '(')
+        growthFuncStart--; // skip params
+      while (*growthFuncStart != ' ')
+        growthFuncStart--; // skip function name
+      while (*growthFuncStart != 'f')
+        growthFuncStart--; // skip 'function'
       assert(strstr(growthFuncStart, "function ") == growthFuncStart);
-      char *growthFuncEnd = strchr(growthSign, '}');
+      char* growthFuncEnd = strchr(growthSign, '}');
       assert(growthFuncEnd > growthFuncStart + 5);
       growthFuncStart[0] = '/';
       growthFuncStart[1] = '*';
@@ -253,8 +197,10 @@ struct Asm2WasmPreProcessor {
       // that, we can apply the debug info to the wasm node right
       // before it - this is guaranteed to be correct without opts,
       // and is usually decently accurate with them.
-      const auto SCALE_FACTOR = 1.25; // an upper bound on how much more space we need as a multiple of the original
-      const auto ADD_FACTOR = 100; // an upper bound on how much we write for each debug info element itself
+      const auto SCALE_FACTOR =
+        1.25; // an upper bound on how much more space we need as a multiple of the original
+      const auto ADD_FACTOR =
+        100; // an upper bound on how much we write for each debug info element itself
       auto size = strlen(input);
       auto upperBound = Index(size * SCALE_FACTOR) + ADD_FACTOR;
       char* copy = allocatedCopy = (char*)malloc(upperBound);
@@ -360,13 +306,12 @@ struct AdjustDebugInfo : public WalkerPass<PostWalker<AdjustDebugInfo, Visitor<A
 
   Pass* create() override { return new AdjustDebugInfo(); }
 
-  AdjustDebugInfo() {
-    name = "adjust-debug-info";
-  }
+  AdjustDebugInfo() { name = "adjust-debug-info"; }
 
   void visitBlock(Block* curr) {
     // look for a debug info call that is unreachable
-    if (curr->list.size() == 0) return;
+    if (curr->list.size() == 0)
+      return;
     auto* back = curr->list.back();
     for (Index i = 1; i < curr->list.size(); i++) {
       if (checkDebugInfo(curr->list[i]) && !checkDebugInfo(curr->list[i - 1])) {
@@ -389,7 +334,7 @@ class Asm2WasmBuilder {
 public:
   Module& wasm;
 
-  MixedArena &allocator;
+  MixedArena& allocator;
 
   Builder builder;
 
@@ -403,11 +348,13 @@ public:
     IString module, base;
     MappedGlobal() : type(none), import(false) {}
     MappedGlobal(Type type) : type(type), import(false) {}
-    MappedGlobal(Type type, bool import, IString module, IString base) : type(type), import(import), module(module), base(base) {}
+    MappedGlobal(Type type, bool import, IString module, IString base)
+      : type(type), import(import), module(module), base(base) {}
   };
 
   // function table
-  std::map<IString, int> functionTableStarts; // each asm function table gets a range in the one wasm table, starting at a location
+  std::map<IString, int> functionTableStarts; // each asm function table gets a range in the one
+                                              // wasm table, starting at a location
 
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
@@ -425,12 +372,8 @@ private:
   void allocateGlobal(IString name, Type type) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     mappedGlobals.emplace(name, MappedGlobal(type));
-    wasm.addGlobal(builder.makeGlobal(
-      name,
-      type,
-      LiteralUtils::makeZero(type, wasm),
-      Builder::Mutable
-    ));
+    wasm.addGlobal(
+      builder.makeGlobal(name, type, LiteralUtils::makeZero(type, wasm), Builder::Mutable));
   }
 
   struct View {
@@ -438,7 +381,8 @@ private:
     bool integer, signed_;
     AsmType type;
     View() : bytes(0) {}
-    View(unsigned bytes, bool integer, bool signed_, AsmType type) : bytes(bytes), integer(integer), signed_(signed_), type(type) {}
+    View(unsigned bytes, bool integer, bool signed_, AsmType type)
+      : bytes(bytes), integer(integer), signed_(signed_), type(type) {}
   };
 
   std::map<IString, View> views; // name (e.g. HEAP8) => view info
@@ -482,7 +426,8 @@ private:
     assert(ast[0] == CALL && ast[1]->isString());
     IString importName = ast[1]->getIString();
     auto type = make_unique<FunctionType>();
-    type->name = IString((std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
+    type->name = IString(
+      (std::string("type$") + importName.str).c_str(), false); // TODO: make a list of such types
     type->result = resultType;
     for (auto* operand : call->operands) {
       type->params.push_back(operand->type);
@@ -491,9 +436,9 @@ private:
     if (importedFunctionTypes.find(importName) != importedFunctionTypes.end()) {
       FunctionType* previous = importedFunctionTypes[importName].get();
       if (*type != *previous) {
-        // merge it in. we'll add on extra 0 parameters for ones not actually used, and upgrade types to
-        // double where there is a conflict (which is ok since in JS, double can contain everything
-        // i32 and f32 can).
+        // merge it in. we'll add on extra 0 parameters for ones not actually used, and upgrade
+        // types to double where there is a conflict (which is ok since in JS, double can contain
+        // everything i32 and f32 can).
         for (size_t i = 0; i < type->params.size(); i++) {
           if (previous->params.size() > i) {
             if (previous->params[i] == none) {
@@ -505,7 +450,8 @@ private:
             previous->params.push_back(type->params[i]); // add a new param
           }
         }
-        // we accept none and a concrete type, but two concrete types mean we need to use an f64 to contain anything
+        // we accept none and a concrete type, but two concrete types mean we need to use an f64 to
+        // contain anything
         if (previous->result == none) {
           previous->result = type->result; // use a more concrete type
         } else if (previous->result != type->result && type->result != none) {
@@ -520,8 +466,8 @@ private:
   Type getResultTypeOfCallUsingParent(Ref parent, AsmData* data) {
     auto result = none;
     if (!!parent) {
-      // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
-      // the parent), so we must be (us, somethingElse), and so our return is void
+      // if the parent is a seq, we cannot be the last element in it (we would have a coercion,
+      // which would be the parent), so we must be (us, somethingElse), and so our return is void
       if (parent[0] != SEQ) {
         result = detectWasmType(parent, data);
       }
@@ -535,23 +481,17 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
-     : wasm(wasm),
-       allocator(wasm.allocator),
-       builder(wasm),
-       preprocessor(preprocessor),
-       debug(debug),
-       trapMode(trapMode),
-       trappingFunctions(trapMode, wasm, /* immediate = */ true),
-       passOptions(passOptions),
-       legalizeJavaScriptFFI(legalizeJavaScriptFFI),
-       runOptimizationPasses(runOptimizationPasses),
-       wasmOnly(wasmOnly) {}
+  Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode,
+    PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
+    : wasm(wasm), allocator(wasm.allocator), builder(wasm), preprocessor(preprocessor),
+      debug(debug), trapMode(trapMode), trappingFunctions(trapMode, wasm, /* immediate = */ true),
+      passOptions(passOptions), legalizeJavaScriptFFI(legalizeJavaScriptFFI),
+      runOptimizationPasses(runOptimizationPasses), wasmOnly(wasmOnly) {}
 
- void processAsm(Ref ast);
+  void processAsm(Ref ast);
 
 private:
-  AsmType detectAsmType(Ref ast, AsmData *data) {
+  AsmType detectAsmType(Ref ast, AsmData* data) {
     if (ast->isString()) {
       IString name = ast->getIString();
       if (!data->isLocal(name)) {
@@ -569,13 +509,9 @@ private:
     return detectType(ast, data, false, Math_fround, wasmOnly);
   }
 
-  Type detectWasmType(Ref ast, AsmData *data) {
-    return asmToWasmType(detectAsmType(ast, data));
-  }
+  Type detectWasmType(Ref ast, AsmData* data) { return asmToWasmType(detectAsmType(ast, data)); }
 
-  bool isUnsignedCoercion(Ref ast) {
-    return detectSign(ast, Math_fround) == ASM_UNSIGNED;
-  }
+  bool isUnsignedCoercion(Ref ast) { return detectSign(ast, Math_fround) == ASM_UNSIGNED; }
 
   bool isParentUnsignedCoercion(Ref parent) {
     // parent may not exist, or may be a non-relevant node
@@ -585,21 +521,38 @@ private:
     return false;
   }
 
-  BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, Expression* leftWasm, Expression* rightWasm) {
+  BinaryOp parseAsmBinaryOp(
+    IString op, Ref left, Ref right, Expression* leftWasm, Expression* rightWasm) {
     Type leftType = leftWasm->type;
     bool isInteger = leftType == Type::i32;
 
-    if (op == PLUS) return isInteger ? BinaryOp::AddInt32 : (leftType == f32 ? BinaryOp::AddFloat32 : BinaryOp::AddFloat64);
-    if (op == MINUS) return isInteger ? BinaryOp::SubInt32 : (leftType == f32 ? BinaryOp::SubFloat32 : BinaryOp::SubFloat64);
-    if (op == MUL) return isInteger ? BinaryOp::MulInt32 : (leftType == f32 ? BinaryOp::MulFloat32 : BinaryOp::MulFloat64);
-    if (op == AND) return BinaryOp::AndInt32;
-    if (op == OR) return BinaryOp::OrInt32;
-    if (op == XOR) return BinaryOp::XorInt32;
-    if (op == LSHIFT) return BinaryOp::ShlInt32;
-    if (op == RSHIFT) return BinaryOp::ShrSInt32;
-    if (op == TRSHIFT) return BinaryOp::ShrUInt32;
-    if (op == EQ) return isInteger ? BinaryOp::EqInt32 : (leftType == f32 ? BinaryOp::EqFloat32 : BinaryOp::EqFloat64);
-    if (op == NE) return isInteger ? BinaryOp::NeInt32 : (leftType == f32 ? BinaryOp::NeFloat32 : BinaryOp::NeFloat64);
+    if (op == PLUS)
+      return isInteger ? BinaryOp::AddInt32
+                       : (leftType == f32 ? BinaryOp::AddFloat32 : BinaryOp::AddFloat64);
+    if (op == MINUS)
+      return isInteger ? BinaryOp::SubInt32
+                       : (leftType == f32 ? BinaryOp::SubFloat32 : BinaryOp::SubFloat64);
+    if (op == MUL)
+      return isInteger ? BinaryOp::MulInt32
+                       : (leftType == f32 ? BinaryOp::MulFloat32 : BinaryOp::MulFloat64);
+    if (op == AND)
+      return BinaryOp::AndInt32;
+    if (op == OR)
+      return BinaryOp::OrInt32;
+    if (op == XOR)
+      return BinaryOp::XorInt32;
+    if (op == LSHIFT)
+      return BinaryOp::ShlInt32;
+    if (op == RSHIFT)
+      return BinaryOp::ShrSInt32;
+    if (op == TRSHIFT)
+      return BinaryOp::ShrUInt32;
+    if (op == EQ)
+      return isInteger ? BinaryOp::EqInt32
+                       : (leftType == f32 ? BinaryOp::EqFloat32 : BinaryOp::EqFloat64);
+    if (op == NE)
+      return isInteger ? BinaryOp::NeInt32
+                       : (leftType == f32 ? BinaryOp::NeFloat32 : BinaryOp::NeFloat64);
 
     bool isUnsigned = isUnsignedCoercion(left) || isUnsignedCoercion(right);
 
@@ -613,7 +566,8 @@ private:
       if (isInteger) {
         return isUnsigned ? BinaryOp::RemUInt32 : BinaryOp::RemSInt32;
       }
-      return BinaryOp::RemSInt32; // XXX no floating-point remainder op, this must be handled by the caller
+      return BinaryOp::RemSInt32; // XXX no floating-point remainder op, this must be handled by the
+                                  // caller
     }
     if (op == GE) {
       if (isInteger) {
@@ -645,10 +599,14 @@ private:
 
   int32_t bytesToShift(unsigned bytes) {
     switch (bytes) {
-      case 1: return 0;
-      case 2: return 1;
-      case 4: return 2;
-      case 8: return 3;
+      case 1:
+        return 0;
+      case 2:
+        return 1;
+      case 4:
+        return 2;
+      case 8:
+        return 3;
       default: {}
     }
     abort();
@@ -670,14 +628,18 @@ private:
       }
       if (ast[1] == MINUS && ast[2]->isNumber()) {
         double num = -ast[2]->getNumber();
-        if (isSInteger32(num)) return Literal((int32_t)num);
-        if (isUInteger32(num)) return Literal((uint32_t)num);
+        if (isSInteger32(num))
+          return Literal((int32_t)num);
+        if (isUInteger32(num))
+          return Literal((uint32_t)num);
         assert(false && "expected signed or unsigned int32");
       }
-      if (ast[1] == PLUS && ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == MINUS && ast[2][2]->isNumber()) {
+      if (ast[1] == PLUS && ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == MINUS &&
+          ast[2][2]->isNumber()) {
         return Literal((double)-ast[2][2]->getNumber());
       }
-      if (ast[1] == MINUS && ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS && ast[2][2]->isNumber()) {
+      if (ast[1] == MINUS && ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS &&
+          ast[2][2]->isNumber()) {
         return Literal((double)-ast[2][2]->getNumber());
       }
     } else if (wasmOnly && ast->isArray(CALL) && ast[1]->isString() && ast[1] == I64_CONST) {
@@ -690,14 +652,18 @@ private:
 
   Literal getLiteral(Ref ast) {
     Literal ret = checkLiteral(ast);
-    if (ret.type == none) abort();
+    if (ret.type == none)
+      abort();
     return ret;
   }
 
   void fixCallType(Expression* call, Type type) {
-    if (call->is<Call>()) call->cast<Call>()->type = type;
-    if (call->is<CallImport>()) call->cast<CallImport>()->type = type;
-    else if (call->is<CallIndirect>()) call->cast<CallIndirect>()->type = type;
+    if (call->is<Call>())
+      call->cast<Call>()->type = type;
+    if (call->is<CallImport>())
+      call->cast<CallImport>()->type = type;
+    else if (call->is<CallIndirect>())
+      call->cast<CallIndirect>()->type = type;
   }
 
   FunctionType* getBuiltinFunctionType(Name module, Name base, ExpressionList* operands = nullptr) {
@@ -705,9 +671,12 @@ private:
       if (base == ABS) {
         assert(operands && operands->size() == 1);
         Type type = (*operands)[0]->type;
-        if (type == i32) return ensureFunctionType("ii", &wasm);
-        if (type == f32) return ensureFunctionType("ff", &wasm);
-        if (type == f64) return ensureFunctionType("dd", &wasm);
+        if (type == i32)
+          return ensureFunctionType("ii", &wasm);
+        if (type == f32)
+          return ensureFunctionType("ff", &wasm);
+        if (type == f64)
+          return ensureFunctionType("dd", &wasm);
       }
     }
     return nullptr;
@@ -715,20 +684,21 @@ private:
 
   // ensure a nameless block
   Block* blockify(Expression* expression) {
-    if (expression->is<Block>() && !expression->cast<Block>()->name.is()) return expression->dynCast<Block>();
+    if (expression->is<Block>() && !expression->cast<Block>()->name.is())
+      return expression->dynCast<Block>();
     auto ret = allocator.alloc<Block>();
     ret->list.push_back(expression);
     ret->finalize();
     return ret;
   }
 
-  Expression* ensureDouble(Expression* expr) {
-    return wasm::ensureDouble(expr, allocator);
-  }
+  Expression* ensureDouble(Expression* expr) { return wasm::ensureDouble(expr, allocator); }
 
   Expression* truncateToInt32(Expression* value) {
-    if (value->type == i64) return builder.makeUnary(UnaryOp::WrapInt64, value);
-    // either i32, or a call_import whose type we don't know yet (but would be legalized to i32 anyhow)
+    if (value->type == i64)
+      return builder.makeUnary(UnaryOp::WrapInt64, value);
+    // either i32, or a call_import whose type we don't know yet (but would be legalized to i32
+    // anyhow)
     return value;
   }
 
@@ -740,7 +710,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   Ref asmFunction = ast[1][0];
   assert(asmFunction[0] == DEFUN);
   Ref body = asmFunction[3];
-  assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") || body[0][1]->getIString() == IString("almost asm")));
+  assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") ||
+                                   body[0][1]->getIString() == IString("almost asm")));
 
   // extra functions that we add, that are not from the compiled code. we need
   // to make sure to optimize them normally (OptimizingIncrementalModuleBuilder
@@ -886,7 +857,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       std::string fullName = module[1]->getCString();
       fullName += '.';
-      fullName += + module[2]->getCString();
+      fullName += +module[2]->getCString();
       moduleName = IString(fullName.c_str(), false);
     } else {
       assert(module->isString());
@@ -896,7 +867,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         if (base == TEMP_DOUBLE_PTR) {
           assert(tempDoublePtr.isNull());
           tempDoublePtr = name;
-          // we don't return here, as we can only optimize out some uses of tDP. So it remains imported
+          // we don't return here, as we can only optimize out some uses of tDP. So it remains
+          // imported
         } else if (base == LLVM_CTTZ_I32) {
           assert(llvm_cttz_i32.isNull());
           llvm_cttz_i32 = name;
@@ -925,11 +897,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
         {
           wasm.addGlobal(builder.makeGlobal(
-            name,
-            type,
-            builder.makeGetGlobal(import->name, type),
-            Builder::Mutable
-          ));
+            name, type, builder.makeGetGlobal(import->name, type), Builder::Mutable));
         }
       }
     } else {
@@ -943,33 +911,39 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.addImport(import.release());
   };
 
-  IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
+  IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array,
+    Float64Array;
 
   // set up optimization
 
   if (runOptimizationPasses) {
     Index numFunctions = 0;
     for (unsigned i = 1; i < body->size(); i++) {
-      if (body[i][0] == DEFUN) numFunctions++;
+      if (body[i][0] == DEFUN)
+        numFunctions++;
     }
-    optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
-      // addPrePasses
-      if (debug) {
-        passRunner.setDebug(true);
-        passRunner.setValidateGlobally(false);
-      }
-      // run autodrop first, before optimizations
-      passRunner.add<AutoDrop>();
-      if (preprocessor.debugInfo) {
-        // fix up debug info to better survive optimization
-        passRunner.add<AdjustDebugInfo>();
-      }
-      // optimize relooper label variable usage at the wasm level, where it is easy
-      passRunner.add("relooper-jump-threading");
-    }, debug, false /* do not validate globally yet */);
+    optimizingBuilder =
+      make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions,
+        [&](PassRunner& passRunner) {
+          // addPrePasses
+          if (debug) {
+            passRunner.setDebug(true);
+            passRunner.setValidateGlobally(false);
+          }
+          // run autodrop first, before optimizations
+          passRunner.add<AutoDrop>();
+          if (preprocessor.debugInfo) {
+            // fix up debug info to better survive optimization
+            passRunner.add<AdjustDebugInfo>();
+          }
+          // optimize relooper label variable usage at the wasm level, where it is easy
+          passRunner.add("relooper-jump-threading");
+        },
+        debug, false /* do not validate globally yet */);
   }
 
-  // if we see no function tables in the processing below, then the table still exists and has size 0
+  // if we see no function tables in the processing below, then the table still exists and has size
+  // 0
 
   wasm.table.initial = wasm.table.max = 0;
 
@@ -1005,7 +979,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             addImport(name, import, Type::f64);
           }
         } else if (value[0] == CALL) {
-          assert(value[1]->isString() && value[1] == Math_fround && value[2][0]->isNumber() && value[2][0]->getNumber() == 0);
+          assert(value[1]->isString() && value[1] == Math_fround && value[2][0]->isNumber() &&
+                 value[2][0]->getNumber() == 0);
           allocateGlobal(name, Type::f32);
         } else if (value[0] == DOT) {
           // simple module.base import. can be a view, or a function.
@@ -1045,21 +1020,45 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           if (constructor->isArray(DOT)) { // global.*Array
             IString heap = constructor[2]->getIString();
             if (heap == INT8ARRAY) {
-              bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 1;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (heap == INT16ARRAY) {
-              bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 2;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (heap == INT32ARRAY) {
-              bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 4;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (heap == UINT8ARRAY) {
-              bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 1;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (heap == UINT16ARRAY) {
-              bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 2;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (heap == UINT32ARRAY) {
-              bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 4;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (heap == FLOAT32ARRAY) {
-              bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
+              bytes = 4;
+              integer = false;
+              signed_ = true;
+              asmType = ASM_FLOAT;
             } else if (heap == FLOAT64ARRAY) {
-              bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+              bytes = 8;
+              integer = false;
+              signed_ = true;
+              asmType = ASM_DOUBLE;
             } else {
               abort_on("invalid view import", heap);
             }
@@ -1067,21 +1066,45 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             assert(constructor->isString());
             IString viewName = constructor->getIString();
             if (viewName == Int8Array) {
-              bytes = 1; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 1;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (viewName == Int16Array) {
-              bytes = 2; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 2;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (viewName == Int32Array) {
-              bytes = 4; integer = true; signed_ = true; asmType = ASM_INT;
+              bytes = 4;
+              integer = true;
+              signed_ = true;
+              asmType = ASM_INT;
             } else if (viewName == UInt8Array) {
-              bytes = 1; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 1;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (viewName == UInt16Array) {
-              bytes = 2; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 2;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (viewName == UInt32Array) {
-              bytes = 4; integer = true; signed_ = false; asmType = ASM_INT;
+              bytes = 4;
+              integer = true;
+              signed_ = false;
+              asmType = ASM_INT;
             } else if (viewName == Float32Array) {
-              bytes = 4; integer = false; signed_ = true; asmType = ASM_FLOAT;
+              bytes = 4;
+              integer = false;
+              signed_ = true;
+              asmType = ASM_FLOAT;
             } else if (viewName == Float64Array) {
-              bytes = 8; integer = false; signed_ = true; asmType = ASM_DOUBLE;
+              bytes = 8;
+              integer = false;
+              signed_ = true;
+              asmType = ASM_DOUBLE;
             } else {
               abort_on("invalid short view import", viewName);
             }
@@ -1089,10 +1112,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(views.find(name) == views.end());
           views.emplace(name, View(bytes, integer, signed_, asmType));
         } else if (value[0] == ARRAY) {
-          // function table. we merge them into one big table, so e.g.   [foo, b1] , [b2, bar]  =>  [foo, b1, b2, bar]
+          // function table. we merge them into one big table, so e.g.   [foo, b1] , [b2, bar]  =>
+          // [foo, b1, b2, bar]
           // TODO: when not using aliasing function pointers, we could merge them by noticing that
           //       index 0 in each table is the null func, and each other index should only have one
-          //       non-null func. However, that breaks down when function pointer casts are emulated.
+          //       non-null func. However, that breaks down when function pointer casts are
+          //       emulated.
           if (wasm.table.segments.size() == 0) {
             wasm.table.segments.emplace_back(builder.makeGetGlobal(Name("tableBase"), i32));
           }
@@ -1131,7 +1156,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // exporting a function
           IString value = pair[1]->getIString();
           if (key == Name("_emscripten_replace_memory")) {
-            // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
+            // asm.js memory growth provides this special non-asm function, which we don't need (we
+            // use grow_memory)
             assert(!wasm.getFunctionOrNull(value));
             continue;
           } else if (key == UDIVMODDI4) {
@@ -1156,11 +1182,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(exported.count(key) == 0);
           auto value = pair[1]->getInteger();
           auto* global = builder.makeGlobal(
-            key,
-            i32,
-            builder.makeConst(Literal(int32_t(value))),
-            Builder::Immutable
-          );
+            key, i32, builder.makeConst(Literal(int32_t(value))), Builder::Immutable);
           wasm.addGlobal(global);
           auto* export_ = new Export;
           export_->name = key;
@@ -1196,7 +1218,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   std::vector<IString> toErase;
 
   for (auto& import : wasm.imports) {
-    if (import->kind != ExternalKind::Function) continue;
+    if (import->kind != ExternalKind::Function)
+      continue;
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
@@ -1205,9 +1228,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         import->functionType = builtin->name;
         continue;
       }
-      import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm)->name;
+      import->functionType =
+        ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm)->name;
     } else if (import->module != ASM2WASM) { // special-case the special module
-      // never actually used, which means we don't know the function type since the usage tells us, so illegal for it to remain
+      // never actually used, which means we don't know the function type since the usage tells us,
+      // so illegal for it to remain
       toErase.push_back(name);
     }
   }
@@ -1225,9 +1250,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     Asm2WasmBuilder* parent;
 
-    FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) {
-      name = "finalize-calls";
-    }
+    FinalizeCalls(Asm2WasmBuilder* parent) : parent(parent) { name = "finalize-calls"; }
 
     void visitCall(Call* curr) {
       if (!getModule()->getFunctionOrNull(curr->target)) {
@@ -1241,9 +1264,11 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void visitCallImport(CallImport* curr) {
-      // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
+      // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm
+      // does not
       auto iter = parent->importedFunctionTypes.find(curr->target);
-      if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
+      if (iter == parent->importedFunctionTypes.end())
+        return; // one of our fake imports for callIndirect fixups
       auto type = iter->second.get();
       for (size_t i = 0; i < type->params.size(); i++) {
         if (i >= curr->operands.size()) {
@@ -1257,21 +1282,27 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(type->params[i] == f64 || curr->operands[i]->type == unreachable);
           // overloaded, upgrade to f64
           switch (curr->operands[i]->type) {
-            case i32: curr->operands[i] = parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]); break;
-            case f32: curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]); break;
+            case i32:
+              curr->operands[i] =
+                parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]);
+              break;
+            case f32:
+              curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]);
+              break;
             default: {} // f64, unreachable, etc., are all good
           }
         }
       }
       Module* wasm = getModule();
-      auto importResult = wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
+      auto importResult =
+        wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
       if (curr->type != importResult) {
         auto old = curr->type;
         curr->type = importResult;
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
           switch (old) {
-            case i32:  {
+            case i32: {
               Unary* trunc = parent->builder.makeUnary(TruncSFloat64ToInt32, curr);
               replaceCurrent(makeTrappingUnary(trunc, parent->trappingFunctions));
               break;
@@ -1285,7 +1316,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
               // autodrop will do that for us.
               break;
             }
-            default: WASM_UNREACHABLE();
+            default:
+              WASM_UNREACHABLE();
           }
         } else {
           assert(old == none);
@@ -1296,8 +1328,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void visitCallIndirect(CallIndirect* curr) {
-      // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
-      // note that for an ftCall or mftCall, we have no asm.js mask, so have nothing to do here
+      // we already call into target = something + offset, where offset is a callImport with the
+      // name of the table. replace that with the table offset note that for an ftCall or mftCall,
+      // we have no asm.js mask, so have nothing to do here
       auto* target = curr->target;
       // might be a block with a fallthrough
       if (auto* block = target->dynCast<Block>()) {
@@ -1306,23 +1339,31 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       // the something might have been optimized out, leaving only the call
       if (auto* call = target->dynCast<CallImport>()) {
         auto tableName = call->target;
-        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
-        curr->target = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end())
+          return;
+        curr->target =
+          parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
         return;
       }
       auto* add = target->dynCast<Binary>();
-      if (!add) return;
+      if (!add)
+        return;
       if (add->right->is<CallImport>()) {
         auto* offset = add->right->cast<CallImport>();
         auto tableName = offset->target;
-        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
-        add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end())
+          return;
+        add->right =
+          parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       } else {
         auto* offset = add->left->dynCast<CallImport>();
-        if (!offset) return;
+        if (!offset)
+          return;
         auto tableName = offset->target;
-        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
-        add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end())
+          return;
+        add->left =
+          parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       }
     }
 
@@ -1334,14 +1375,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   };
 
   // apply debug info, reducing intrinsic calls into annotations on the ast nodes
-  struct ApplyDebugInfo : public WalkerPass<ExpressionStackWalker<ApplyDebugInfo, UnifiedExpressionVisitor<ApplyDebugInfo>>> {
+  struct ApplyDebugInfo
+    : public WalkerPass<
+        ExpressionStackWalker<ApplyDebugInfo, UnifiedExpressionVisitor<ApplyDebugInfo>>> {
     bool isFunctionParallel() override { return true; }
 
     Pass* create() override { return new ApplyDebugInfo(); }
 
-    ApplyDebugInfo() {
-      name = "apply-debug-info";
-    }
+    ApplyDebugInfo() { name = "apply-debug-info"; }
 
     CallImport* lastDebugInfo = nullptr;
 
@@ -1359,9 +1400,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           Index i = expressionStack.size() - 1;
           while (1) {
             auto* exp = expressionStack[i];
-            bool parentIsStructure = i > 0 && (expressionStack[i - 1]->is<Block>() ||
-                                               expressionStack[i - 1]->is<Loop>() ||
-                                               expressionStack[i - 1]->is<If>());
+            bool parentIsStructure =
+              i > 0 && (expressionStack[i - 1]->is<Block>() || expressionStack[i - 1]->is<Loop>() ||
+                         expressionStack[i - 1]->is<If>());
             if (i == 0 || parentIsStructure || exp->type == none || exp->type == unreachable) {
               if (debugLocations.count(exp) > 0) {
                 // already present, so look back up
@@ -1369,13 +1410,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
                 while (i < expressionStack.size()) {
                   exp = expressionStack[i];
                   if (debugLocations.count(exp) == 0) {
-                    debugLocations[exp] = { fileIndex, lineNumber, 0 };
+                    debugLocations[exp] = {fileIndex, lineNumber, 0};
                     break;
                   }
                   i++;
                 }
               } else {
-                debugLocations[exp] = { fileIndex, lineNumber, 0 };
+                debugLocations[exp] = {fileIndex, lineNumber, 0};
               }
               break;
             }
@@ -1414,7 +1455,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
   if (preprocessor.debugInfo) {
     passRunner.add<ApplyDebugInfo>();
-    passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
+    passRunner.add(
+      "vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
   }
   if (runOptimizationPasses) {
     // do final global optimizations after all function work is done
@@ -1430,13 +1472,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
-    // we can only do this if we know getTempRet0 as well since we use it to figure out which minified global is tempRet0
-    // (getTempRet0 might be an import, if this is a shared module, so we can't optimize that case)
+    // we can only do this if we know getTempRet0 as well since we use it to figure out which
+    // minified global is tempRet0 (getTempRet0 might be an import, if this is a shared module, so
+    // we can't optimize that case)
     Name tempRet0;
     {
       Expression* curr = wasm.getFunction(getTempRet0)->body;
-      if (curr->is<Block>()) curr = curr->cast<Block>()->list.back();
-      if (curr->is<Return>()) curr = curr->cast<Return>()->value;
+      if (curr->is<Block>())
+        curr = curr->cast<Block>()->list.back();
+      if (curr->is<Return>())
+        curr = curr->cast<Return>()->value;
       auto* get = curr->cast<GetGlobal>();
       tempRet0 = get->name;
     }
@@ -1446,47 +1491,22 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     auto* func = wasm.getFunction(udivmoddi4);
     assert(!func->type.is());
     Builder::clearLocals(func);
-    Index xl  = Builder::addParam(func, "xl", i32),
-          xh  = Builder::addParam(func, "xh", i32),
-          yl  = Builder::addParam(func, "yl", i32),
-          yh  = Builder::addParam(func, "yh", i32),
-          r   = Builder::addParam(func, "r", i32),
-          x64 = Builder::addVar(func, "x64", i64),
+    Index xl = Builder::addParam(func, "xl", i32), xh = Builder::addParam(func, "xh", i32),
+          yl = Builder::addParam(func, "yl", i32), yh = Builder::addParam(func, "yh", i32),
+          r = Builder::addParam(func, "r", i32), x64 = Builder::addVar(func, "x64", i64),
           y64 = Builder::addVar(func, "y64", i64);
     auto* body = allocator.alloc<Block>();
     body->list.push_back(builder.makeSetLocal(x64, I64Utilities::recreateI64(builder, xl, xh)));
     body->list.push_back(builder.makeSetLocal(y64, I64Utilities::recreateI64(builder, yl, yh)));
+    body->list.push_back(builder.makeIf(
+      builder.makeGetLocal(r, i32), builder.makeStore(8, 0, 8, builder.makeGetLocal(r, i32),
+                                      builder.makeBinary(RemUInt64, builder.makeGetLocal(x64, i64),
+                                        builder.makeGetLocal(y64, i64)),
+                                      i64)));
     body->list.push_back(
-      builder.makeIf(
-        builder.makeGetLocal(r, i32),
-        builder.makeStore(
-          8, 0, 8,
-          builder.makeGetLocal(r, i32),
-          builder.makeBinary(
-            RemUInt64,
-            builder.makeGetLocal(x64, i64),
-            builder.makeGetLocal(y64, i64)
-          ),
-          i64
-        )
-      )
-    );
-    body->list.push_back(
-      builder.makeSetLocal(
-        x64,
-        builder.makeBinary(
-          DivUInt64,
-          builder.makeGetLocal(x64, i64),
-          builder.makeGetLocal(y64, i64)
-        )
-      )
-    );
-    body->list.push_back(
-      builder.makeSetGlobal(
-        tempRet0,
-        I64Utilities::getI64High(builder, x64)
-      )
-    );
+      builder.makeSetLocal(x64, builder.makeBinary(DivUInt64, builder.makeGetLocal(x64, i64),
+                                  builder.makeGetLocal(y64, i64))));
+    body->list.push_back(builder.makeSetGlobal(tempRet0, I64Utilities::getI64High(builder, x64)));
     body->list.push_back(I64Utilities::getI64Low(builder, x64));
     body->finalize();
     func->body = body;
@@ -1517,8 +1537,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   IStringSet functionVariables; // params or vars
 
-  IString parentLabel; // set in LABEL, then read in WHILE/DO/SWITCH
-  std::vector<IString> breakStack; // where a break will go
+  IString parentLabel;                // set in LABEL, then read in WHILE/DO/SWITCH
+  std::vector<IString> breakStack;    // where a break will go
   std::vector<IString> continueStack; // where a continue will go
 
   AsmData asmData; // need to know var and param types, for asm type detection
@@ -1548,7 +1568,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   bool addedI32Temp = false;
   auto ensureI32Temp = [&]() {
-    if (addedI32Temp) return;
+    if (addedI32Temp)
+      return;
     addedI32Temp = true;
     Builder::addVar(function, I32_TEMP, i32);
     functionVariables.insert(I32_TEMP);
@@ -1557,10 +1578,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   bool seenReturn = false; // function->result is updated if we see a return
   // processors
-  std::function<Expression* (Ref, unsigned)> processStatements;
-  std::function<Expression* (Ref, unsigned)> processUnshifted;
+  std::function<Expression*(Ref, unsigned)> processStatements;
+  std::function<Expression*(Ref, unsigned)> processUnshifted;
 
-  std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
+  std::function<Expression*(Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
     if (ast->isString()) {
       IString name = ast->getIString();
@@ -1572,7 +1593,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       if (name == DEBUGGER) {
-        CallImport *call = allocator.alloc<CallImport>();
+        CallImport* call = allocator.alloc<CallImport>();
         call->target = DEBUGGER;
         call->type = none;
         static bool addedImport = false;
@@ -1589,7 +1610,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return call;
       }
       // global var
-      assert(mappedGlobals.find(name) != mappedGlobals.end() ? true : (std::cerr << name.str << '\n', false));
+      assert(mappedGlobals.find(name) != mappedGlobals.end()
+               ? true
+               : (std::cerr << name.str << '\n', false));
       MappedGlobal& global = mappedGlobals[name];
       return builder.makeGetGlobal(name, global.type);
     }
@@ -1620,9 +1643,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // global var
       assert(mappedGlobals.find(name) != mappedGlobals.end());
       auto* ret = builder.makeSetGlobal(name, process(assign->value()));
-      // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
+      // set_global does not return; if our value is trivially not used, don't emit a load (if
+      // nontrivially not used, opts get it later)
       auto parent = astStackHelper.getParent();
-      if (!parent || parent->isArray(BLOCK) || parent->isArray(IF)) return ret;
+      if (!parent || parent->isArray(BLOCK) || parent->isArray(IF))
+        return ret;
       return builder.makeSequence(ret, builder.makeGetGlobal(name, ret->value->type));
     }
     if (ast->isAssign()) {
@@ -1671,8 +1696,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->op = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], ret->left, ret->right);
       ret->finalize();
       if (ret->op == BinaryOp::RemSInt32 && isTypeFloat(ret->type)) {
-        // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
-        CallImport *call = allocator.alloc<CallImport>();
+        // WebAssembly does not have floating-point remainder, we have to emit a call to a special
+        // import of ours
+        CallImport* call = allocator.alloc<CallImport>();
         call->target = F64_REM;
         call->operands.push_back(ensureDouble(ret->left));
         call->operands.push_back(ensureDouble(ret->right));
@@ -1726,7 +1752,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         fixCallType(ret, f64);
         return ret;
       } else if (ast[1] == MINUS) {
-        if (ast[2]->isNumber() || (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS && ast[2][2]->isNumber())) {
+        if (ast[2]->isNumber() ||
+            (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS && ast[2][2]->isNumber())) {
           auto ret = allocator.alloc<Const>();
           ret->value = getLiteral(ast);
           ret->type = ret->value.type;
@@ -1791,7 +1818,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == IF) {
       auto* condition = process(ast[1]);
       auto* ifTrue = process(ast[2]);
-      return builder.makeIf(truncateToInt32(condition), ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
+      return builder.makeIf(
+        truncateToInt32(condition), ifTrue, !!ast[3] ? process(ast[3]) : nullptr);
     } else if (what == CALL) {
       if (ast[1]->isString()) {
         IString name = ast[1]->getIString();
@@ -1892,10 +1920,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto ret = allocator.alloc<Unary>();
           ret->value = value;
           if (value->type == f32) {
-            ret->op = name == Math_floor ? FloorFloat32 : name == Math_ceil ? CeilFloat32 : SqrtFloat32;
+            ret->op =
+              name == Math_floor ? FloorFloat32 : name == Math_ceil ? CeilFloat32 : SqrtFloat32;
             ret->type = value->type;
           } else if (value->type == f64) {
-            ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
+            ret->op =
+              name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
             ret->type = value->type;
           } else {
             abort();
@@ -1918,15 +1948,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->type = ret->left->type;
           return ret;
         }
-        if (name == Atomics_load ||
-            name == Atomics_store ||
-            name == Atomics_exchange ||
-            name == Atomics_compareExchange ||
-            name == Atomics_add ||
-            name == Atomics_sub ||
-            name == Atomics_and ||
-            name == Atomics_or ||
-            name == Atomics_xor) {
+        if (name == Atomics_load || name == Atomics_store || name == Atomics_exchange ||
+            name == Atomics_compareExchange || name == Atomics_add || name == Atomics_sub ||
+            name == Atomics_and || name == Atomics_or || name == Atomics_xor) {
           // atomic operation
           Ref target = ast[2][0];
           assert(target->isString());
@@ -1935,7 +1959,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           View& view = views[heap];
           wasm.memory.shared = true;
           if (name == Atomics_load) {
-            Expression* ret = builder.makeAtomicLoad(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
+            Expression* ret = builder.makeAtomicLoad(
+              view.bytes, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
             if (view.signed_) {
               // atomic loads are unsigned; add a signing
               ret = Bits::makeSignExt(ret, view.bytes, wasm);
@@ -1947,24 +1972,35 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             auto temp = Builder::addVar(function, type);
             return builder.makeSequence(
               builder.makeAtomicStore(view.bytes, 0, processUnshifted(ast[2][1], view.bytes),
-                                      builder.makeTeeLocal(temp, process(ast[2][2])),
-                                      type),
-              builder.makeGetLocal(temp, type)
-            );
+                builder.makeTeeLocal(temp, process(ast[2][2])), type),
+              builder.makeGetLocal(temp, type));
           } else if (name == Atomics_exchange) {
-            return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           } else if (name == Atomics_compareExchange) {
-            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
+            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes),
+              process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
           } else if (name == Atomics_add) {
-            return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           } else if (name == Atomics_sub) {
-            return builder.makeAtomicRMW(AtomicRMWOp::Sub, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::Sub, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           } else if (name == Atomics_and) {
-            return builder.makeAtomicRMW(AtomicRMWOp::And, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::And, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           } else if (name == Atomics_or) {
-            return builder.makeAtomicRMW(AtomicRMWOp::Or, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::Or, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           } else if (name == Atomics_xor) {
-            return builder.makeAtomicRMW(AtomicRMWOp::Xor, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+            return builder.makeAtomicRMW(AtomicRMWOp::Xor, view.bytes, 0,
+              processUnshifted(ast[2][1], view.bytes), process(ast[2][2]),
+              asmToWasmType(view.type));
           }
           WASM_UNREACHABLE();
         }
@@ -1974,20 +2010,33 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           switch (name.str[0]) {
             case 'l': {
               auto align = num == 2 ? ast[2][1]->getInteger() : 0;
-              if (name == LOAD1) return builder.makeLoad(1, true, 0, 1,                 process(ast[2][0]), i32);
-              if (name == LOAD2) return builder.makeLoad(2, true, 0, indexOr(align, 2), process(ast[2][0]), i32);
-              if (name == LOAD4) return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), i32);
-              if (name == LOAD8) return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), i64);
-              if (name == LOADF) return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), f32);
-              if (name == LOADD) return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), f64);
+              if (name == LOAD1)
+                return builder.makeLoad(1, true, 0, 1, process(ast[2][0]), i32);
+              if (name == LOAD2)
+                return builder.makeLoad(2, true, 0, indexOr(align, 2), process(ast[2][0]), i32);
+              if (name == LOAD4)
+                return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), i32);
+              if (name == LOAD8)
+                return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), i64);
+              if (name == LOADF)
+                return builder.makeLoad(4, true, 0, indexOr(align, 4), process(ast[2][0]), f32);
+              if (name == LOADD)
+                return builder.makeLoad(8, true, 0, indexOr(align, 8), process(ast[2][0]), f64);
               break;
             }
             case 's': {
               auto align = num == 3 ? ast[2][2]->getInteger() : 0;
-              if (name == STORE1) return builder.makeStore(1, 0, 1,                 process(ast[2][0]), process(ast[2][1]), i32);
-              if (name == STORE2) return builder.makeStore(2, 0, indexOr(align, 2), process(ast[2][0]), process(ast[2][1]), i32);
-              if (name == STORE4) return builder.makeStore(4, 0, indexOr(align, 4), process(ast[2][0]), process(ast[2][1]), i32);
-              if (name == STORE8) return builder.makeStore(8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), i64);
+              if (name == STORE1)
+                return builder.makeStore(1, 0, 1, process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE2)
+                return builder.makeStore(
+                  2, 0, indexOr(align, 2), process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE4)
+                return builder.makeStore(
+                  4, 0, indexOr(align, 4), process(ast[2][0]), process(ast[2][1]), i32);
+              if (name == STORE8)
+                return builder.makeStore(
+                  8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), i64);
               if (name == STOREF) {
                 auto* value = process(ast[2][1]);
                 if (value->type == f64) {
@@ -1996,33 +2045,48 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 }
                 return builder.makeStore(4, 0, indexOr(align, 4), process(ast[2][0]), value, f32);
               }
-              if (name == STORED) return builder.makeStore(8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), f64);
+              if (name == STORED)
+                return builder.makeStore(
+                  8, 0, indexOr(align, 8), process(ast[2][0]), process(ast[2][1]), f64);
               break;
             }
             case 'i': {
               if (num == 1) {
                 auto* value = process(ast[2][0]);
                 if (name == I64) {
-                  // no-op "coercion" / "cast", although we also tolerate i64(0) for constants that fit in i32
+                  // no-op "coercion" / "cast", although we also tolerate i64(0) for constants that
+                  // fit in i32
                   if (value->type == i32) {
-                    return builder.makeConst(Literal(int64_t(value->cast<Const>()->value.geti32())));
+                    return builder.makeConst(
+                      Literal(int64_t(value->cast<Const>()->value.geti32())));
                   } else {
                     fixCallType(value, i64);
                     return value;
                   }
                 }
-                if (name == I32_CTTZ) return builder.makeUnary(UnaryOp::CtzInt32, value);
-                if (name == I32_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt32, value);
-                if (name == I32_BC2F) return builder.makeUnary(UnaryOp::ReinterpretInt32, value);
-                if (name == I32_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat32, value);
+                if (name == I32_CTTZ)
+                  return builder.makeUnary(UnaryOp::CtzInt32, value);
+                if (name == I32_CTPOP)
+                  return builder.makeUnary(UnaryOp::PopcntInt32, value);
+                if (name == I32_BC2F)
+                  return builder.makeUnary(UnaryOp::ReinterpretInt32, value);
+                if (name == I32_BC2I)
+                  return builder.makeUnary(UnaryOp::ReinterpretFloat32, value);
 
-                if (name == I64_TRUNC) return builder.makeUnary(UnaryOp::WrapInt64, value);
-                if (name == I64_SEXT) return builder.makeUnary(UnaryOp::ExtendSInt32, value);
-                if (name == I64_ZEXT) return builder.makeUnary(UnaryOp::ExtendUInt32, value);
-                if (name == I64_S2F) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat32, value);
-                if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
-                if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
-                if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
+                if (name == I64_TRUNC)
+                  return builder.makeUnary(UnaryOp::WrapInt64, value);
+                if (name == I64_SEXT)
+                  return builder.makeUnary(UnaryOp::ExtendSInt32, value);
+                if (name == I64_ZEXT)
+                  return builder.makeUnary(UnaryOp::ExtendUInt32, value);
+                if (name == I64_S2F)
+                  return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat32, value);
+                if (name == I64_S2D)
+                  return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
+                if (name == I64_U2F)
+                  return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
+                if (name == I64_U2D)
+                  return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
                 if (name == I64_F2S) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
                   return makeTrappingUnary(conv, trappingFunctions);
@@ -2039,20 +2103,30 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                   Unary* conv = builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
                   return makeTrappingUnary(conv, trappingFunctions);
                 }
-                if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
-                if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
-                if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
-                if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
-                if (name == I64_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt64, value);
-                if (name == I64_ATOMICS_LOAD) return builder.makeAtomicLoad(8, 0, value, i64);
+                if (name == I64_BC2D)
+                  return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
+                if (name == I64_BC2I)
+                  return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
+                if (name == I64_CTTZ)
+                  return builder.makeUnary(UnaryOp::CtzInt64, value);
+                if (name == I64_CTLZ)
+                  return builder.makeUnary(UnaryOp::ClzInt64, value);
+                if (name == I64_CTPOP)
+                  return builder.makeUnary(UnaryOp::PopcntInt64, value);
+                if (name == I64_ATOMICS_LOAD)
+                  return builder.makeAtomicLoad(8, 0, value, i64);
               } else if (num == 2) { // 2 params,binary
-                if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
+                if (name == I64_CONST)
+                  return builder.makeConst(getLiteral(ast));
                 auto* left = process(ast[2][0]);
                 auto* right = process(ast[2][1]);
                 // maths
-                if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
-                if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
-                if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
+                if (name == I64_ADD)
+                  return builder.makeBinary(BinaryOp::AddInt64, left, right);
+                if (name == I64_SUB)
+                  return builder.makeBinary(BinaryOp::SubInt64, left, right);
+                if (name == I64_MUL)
+                  return builder.makeBinary(BinaryOp::MulInt64, left, right);
                 if (name == I64_UDIV) {
                   Binary* div = builder.makeBinary(BinaryOp::DivUInt64, left, right);
                   return makeTrappingBinary(div, trappingFunctions);
@@ -2069,23 +2143,39 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                   Binary* rem = builder.makeBinary(BinaryOp::RemSInt64, left, right);
                   return makeTrappingBinary(rem, trappingFunctions);
                 }
-                if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
-                if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
-                if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
-                if (name == I64_SHL) return builder.makeBinary(BinaryOp::ShlInt64, left, right);
-                if (name == I64_ASHR) return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
-                if (name == I64_LSHR) return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
+                if (name == I64_AND)
+                  return builder.makeBinary(BinaryOp::AndInt64, left, right);
+                if (name == I64_OR)
+                  return builder.makeBinary(BinaryOp::OrInt64, left, right);
+                if (name == I64_XOR)
+                  return builder.makeBinary(BinaryOp::XorInt64, left, right);
+                if (name == I64_SHL)
+                  return builder.makeBinary(BinaryOp::ShlInt64, left, right);
+                if (name == I64_ASHR)
+                  return builder.makeBinary(BinaryOp::ShrSInt64, left, right);
+                if (name == I64_LSHR)
+                  return builder.makeBinary(BinaryOp::ShrUInt64, left, right);
                 // comps
-                if (name == I64_EQ) return builder.makeBinary(BinaryOp::EqInt64, left, right);
-                if (name == I64_NE) return builder.makeBinary(BinaryOp::NeInt64, left, right);
-                if (name == I64_ULE) return builder.makeBinary(BinaryOp::LeUInt64, left, right);
-                if (name == I64_SLE) return builder.makeBinary(BinaryOp::LeSInt64, left, right);
-                if (name == I64_UGE) return builder.makeBinary(BinaryOp::GeUInt64, left, right);
-                if (name == I64_SGE) return builder.makeBinary(BinaryOp::GeSInt64, left, right);
-                if (name == I64_ULT) return builder.makeBinary(BinaryOp::LtUInt64, left, right);
-                if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
-                if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
-                if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
+                if (name == I64_EQ)
+                  return builder.makeBinary(BinaryOp::EqInt64, left, right);
+                if (name == I64_NE)
+                  return builder.makeBinary(BinaryOp::NeInt64, left, right);
+                if (name == I64_ULE)
+                  return builder.makeBinary(BinaryOp::LeUInt64, left, right);
+                if (name == I64_SLE)
+                  return builder.makeBinary(BinaryOp::LeSInt64, left, right);
+                if (name == I64_UGE)
+                  return builder.makeBinary(BinaryOp::GeUInt64, left, right);
+                if (name == I64_SGE)
+                  return builder.makeBinary(BinaryOp::GeSInt64, left, right);
+                if (name == I64_ULT)
+                  return builder.makeBinary(BinaryOp::LtUInt64, left, right);
+                if (name == I64_SLT)
+                  return builder.makeBinary(BinaryOp::LtSInt64, left, right);
+                if (name == I64_UGT)
+                  return builder.makeBinary(BinaryOp::GtUInt64, left, right);
+                if (name == I64_SGT)
+                  return builder.makeBinary(BinaryOp::GtSInt64, left, right);
                 // atomics
                 if (name == I64_ATOMICS_STORE) {
                   wasm.memory.shared = true;
@@ -2118,14 +2208,19 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               } else if (num == 3) {
                 if (name == I64_ATOMICS_COMPAREEXCHANGE) {
                   wasm.memory.shared = true;
-                  return builder.makeAtomicCmpxchg(8, 0, process(ast[2][0]), process(ast[2][1]), process(ast[2][2]), i64);
+                  return builder.makeAtomicCmpxchg(
+                    8, 0, process(ast[2][0]), process(ast[2][1]), process(ast[2][2]), i64);
                 }
               }
               break;
             }
             case 'f': {
-              if (name == F32_COPYSIGN) return builder.makeBinary(BinaryOp::CopySignFloat32, process(ast[2][0]), process(ast[2][1]));
-              if (name == F64_COPYSIGN) return builder.makeBinary(BinaryOp::CopySignFloat64, process(ast[2][0]), process(ast[2][1]));
+              if (name == F32_COPYSIGN)
+                return builder.makeBinary(
+                  BinaryOp::CopySignFloat32, process(ast[2][0]), process(ast[2][1]));
+              if (name == F64_COPYSIGN)
+                return builder.makeBinary(
+                  BinaryOp::CopySignFloat64, process(ast[2][0]), process(ast[2][1]));
               break;
             }
             default: {}
@@ -2166,7 +2261,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (tableCall) {
           auto specific = ret->dynCast<CallIndirect>();
           // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
-          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands, &asmData);
+          auto* fullType =
+            getFunctionType(astStackHelper.getParent(), specific->operands, &asmData);
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
@@ -2187,7 +2283,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       // function pointers
       auto ret = allocator.alloc<CallIndirect>();
       Ref target = ast[1];
-      assert(target[0] == SUB && target[1]->isString() && target[2][0] == BINARY && target[2][1] == AND && target[2][3]->isNumber()); // FUNCTION_TABLE[(expr) & mask]
+      assert(target[0] == SUB && target[1]->isString() && target[2][0] == BINARY &&
+             target[2][1] == AND && target[2][3]->isNumber()); // FUNCTION_TABLE[(expr) & mask]
       ret->target = process(target[2]); // TODO: as an optimization, we could look through the mask
       Ref args = ast[2];
       for (unsigned i = 0; i < args->size(); i++) {
@@ -2196,8 +2293,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands, &asmData);
       ret->fullType = fullType->name;
       ret->type = fullType->result;
-      // we don't know the table offset yet. emit target = target + callImport(tableName), which we fix up later when we know how asm function tables are layed out inside the wasm table.
-      ret->target = builder.makeBinary(BinaryOp::AddInt32, ret->target, builder.makeCallImport(target[1]->getIString(), {}, i32));
+      // we don't know the table offset yet. emit target = target + callImport(tableName), which we
+      // fix up later when we know how asm function tables are layed out inside the wasm table.
+      ret->target = builder.makeBinary(
+        BinaryOp::AddInt32, ret->target, builder.makeCallImport(target[1]->getIString(), {}, i32));
       return ret;
     } else if (what == RETURN) {
       Type type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;
@@ -2236,12 +2335,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     } else if (what == BREAK) {
       auto ret = allocator.alloc<Break>();
       assert(breakStack.size() > 0);
-      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getBreakLabelName(ast[1]->getIString())) : breakStack.back();
+      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getBreakLabelName(ast[1]->getIString()))
+                           : breakStack.back();
       return ret;
     } else if (what == CONTINUE) {
       auto ret = allocator.alloc<Break>();
       assert(continueStack.size() > 0);
-      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getContinueLabelName(ast[1]->getIString())) : continueStack.back();
+      ret->name = !!ast[1] ? nameMapper.sourceToUnique(getContinueLabelName(ast[1]->getIString()))
+                           : continueStack.back();
       return ret;
     } else if (what == WHILE) {
       bool forever = ast[1]->isNumber() && ast[1]->getInteger() == 1;
@@ -2263,9 +2364,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (forever) {
         ret->body = process(ast[2]);
       } else {
-        Break *breakOut = allocator.alloc<Break>();
+        Break* breakOut = allocator.alloc<Break>();
         breakOut->name = out;
-        If *condition = allocator.alloc<If>();
+        If* condition = allocator.alloc<If>();
         condition->condition = builder.makeUnary(EqZInt32, process(ast[1]));
         condition->ifTrue = breakOut;
         condition->finalize();
@@ -2314,7 +2415,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto block = allocator.alloc<Block>();
           block->list.push_back(child);
           if (isConcreteType(child->type)) {
-            block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
+            block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has
+                                                      // guaranteed none type and no values fall
+                                                      // through
           }
           block->name = stop;
           block->finalize();
@@ -2348,19 +2451,16 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       breakStack.pop_back();
       nameMapper.popLabelName(in);
       nameMapper.popLabelName(out);
-      Break *continuer = allocator.alloc<Break>();
+      Break* continuer = allocator.alloc<Break>();
       continuer->name = in;
       continuer->condition = process(ast[1]);
       continuer->finalize();
-      Block *block = builder.blockifyWithName(loop->body, out, continuer);
+      Block* block = builder.blockifyWithName(loop->body, out, continuer);
       loop->body = block;
       loop->finalize();
       return loop;
     } else if (what == FOR) {
-      Ref finit = ast[1],
-          fcond = ast[2],
-          finc = ast[3],
-          fbody = ast[4];
+      Ref finit = ast[1], fcond = ast[2], finc = ast[3], fbody = ast[4];
       auto ret = allocator.alloc<Loop>();
       IString out, in;
       if (!parentLabel.isNull()) {
@@ -2376,9 +2476,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->name = in;
       breakStack.push_back(out);
       continueStack.push_back(in);
-      Break *breakOut = allocator.alloc<Break>();
+      Break* breakOut = allocator.alloc<Break>();
       breakOut->name = out;
-      If *condition = allocator.alloc<If>();
+      If* condition = allocator.alloc<If>();
       condition->condition = builder.makeUnary(EqZInt32, process(fcond));
       condition->ifTrue = breakOut;
       condition->finalize();
@@ -2398,7 +2498,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       breakStack.pop_back();
       nameMapper.popLabelName(in);
       nameMapper.popLabelName(out);
-      Block *outer = allocator.alloc<Block>();
+      Block* outer = allocator.alloc<Block>();
       // add an outer block for the init as well
       outer->list.push_back(process(finit));
       outer->list.push_back(ret);
@@ -2423,15 +2523,17 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       if (ast[1]->isAssign()) {
         auto* assign = ast[1]->asAssign();
         Ref target = assign->target();
-        if (target->isArray(SUB) && target[1]->isString() && target[2]->isArray(BINARY) && target[2][1] == RSHIFT &&
-            target[2][2]->isString() && target[2][2] == tempDoublePtr && target[2][3]->isNumber() && target[2][3]->getNumber() == 2) {
+        if (target->isArray(SUB) && target[1]->isString() && target[2]->isArray(BINARY) &&
+            target[2][1] == RSHIFT && target[2][2]->isString() && target[2][2] == tempDoublePtr &&
+            target[2][3]->isNumber() && target[2][3]->getNumber() == 2) {
           // (?[tempDoublePtr >> 2] = ?, ?)  so far
           auto heap = target[1]->getIString();
           if (views.find(heap) != views.end()) {
             AsmType writeType = views[heap].type;
             AsmType readType = ASM_NONE;
             Ref readValue;
-            if (ast[2]->isArray(BINARY) && ast[2][1] == OR && ast[2][3]->isNumber() && ast[2][3]->getNumber() == 0) {
+            if (ast[2]->isArray(BINARY) && ast[2][1] == OR && ast[2][3]->isNumber() &&
+                ast[2][3]->getNumber() == 0) {
               readType = ASM_INT;
               readValue = ast[2][2];
             } else if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == PLUS) {
@@ -2442,8 +2544,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
               readValue = ast[2][2][0];
             }
             if (readType != ASM_NONE) {
-              if (readValue->isArray(SUB) && readValue[1]->isString() && readValue[2]->isArray(BINARY) && readValue[2][1] == RSHIFT &&
-                  readValue[2][2]->isString() && readValue[2][2] == tempDoublePtr && readValue[2][3]->isNumber() && readValue[2][3]->getNumber() == 2) {
+              if (readValue->isArray(SUB) && readValue[1]->isString() &&
+                  readValue[2]->isArray(BINARY) && readValue[2][1] == RSHIFT &&
+                  readValue[2][2]->isString() && readValue[2][2] == tempDoublePtr &&
+                  readValue[2][3]->isNumber() && readValue[2][3]->getNumber() == 2) {
                 // pattern looks right!
                 Ref writtenValue = assign->value();
                 if (writeType == ASM_INT && (readType == ASM_FLOAT || readType == ASM_DOUBLE)) {
@@ -2504,8 +2608,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             min = index;
             max = index;
           } else {
-            if (index < min) min = index;
-            if (index > max) max = index;
+            if (index < min)
+              min = index;
+            if (index > max)
+              max = index;
           }
         }
       }
@@ -2530,7 +2636,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           br->condition = offsetor;
         } else {
           assert(br->condition->type == i64);
-          // 64-bit condition. after offsetting it must be in a reasonable range, but the offsetting itself must be 64-bit
+          // 64-bit condition. after offsetting it must be in a reasonable range, but the offsetting
+          // itself must be 64-bit
           Binary* offsetor = allocator.alloc<Binary>();
           offsetor->op = BinaryOp::SubInt64;
           offsetor->left = br->condition;
@@ -2544,18 +2651,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           block->list.push_back(builder.makeSetLocal(temp, offsetor));
           // if high bits, we can break to the default (we'll fill in the name later)
           breakWhenNotMatching = builder.makeBreak(Name(), nullptr,
-            builder.makeUnary(
-              UnaryOp::WrapInt64,
-              builder.makeBinary(BinaryOp::ShrUInt64,
-                builder.makeGetLocal(temp, i64),
-                builder.makeConst(Literal(int64_t(32)))
-              )
-            )
-          );
+            builder.makeUnary(UnaryOp::WrapInt64,
+              builder.makeBinary(BinaryOp::ShrUInt64, builder.makeGetLocal(temp, i64),
+                builder.makeConst(Literal(int64_t(32))))));
           block->list.push_back(breakWhenNotMatching);
-          block->list.push_back(
-            builder.makeGetLocal(temp, i64)
-          );
+          block->list.push_back(builder.makeGetLocal(temp, i64));
           block->finalize();
           br->condition = builder.makeUnary(UnaryOp::WrapInt64, block);
         }
@@ -2602,7 +2702,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           breakWhenNotMatching->name = br->default_;
         }
         for (size_t i = 0; i < br->targets.size(); i++) {
-          if (br->targets[i].isNull()) br->targets[i] = br->default_;
+          if (br->targets[i].isNull())
+            br->targets[i] = br->default_;
         }
       } else {
         // we can't switch, make an if-chain instead of br_table
@@ -2622,17 +2723,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             name = br->default_ = nameMapper.pushLabelName("switch-default");
           } else {
             name = nameMapper.pushLabelName("switch-case");
-            auto* iff = builder.makeIf(
-              builder.makeBinary(
-                br->condition->type == i32 ? EqInt32 : EqInt64,
-                builder.makeGetLocal(var, br->condition->type),
-                builder.makeConst(getLiteral(condition))
-              ),
-              builder.makeBreak(name),
-              chain
-            );
+            auto* iff =
+              builder.makeIf(builder.makeBinary(br->condition->type == i32 ? EqInt32 : EqInt64,
+                               builder.makeGetLocal(var, br->condition->type),
+                               builder.makeConst(getLiteral(condition))),
+                builder.makeBreak(name), chain);
             chain = iff;
-            if (!first) first = iff;
+            if (!first)
+              first = iff;
           }
           auto next = allocator.alloc<Block>();
           top->name = name;
@@ -2669,8 +2767,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   processUnshifted = [&](Ref ptr, unsigned bytes) {
     auto shifts = bytesToShift(bytes);
     // HEAP?[addr >> ?], or HEAP8[x | 0]
-    if ((ptr->isArray(BINARY) && ptr[1] == RSHIFT && ptr[3]->isNumber() && ptr[3]->getInteger() == shifts) ||
-        (bytes == 1 && ptr->isArray(BINARY) && ptr[1] == OR && ptr[3]->isNumber() && ptr[3]->getInteger() == 0)) {
+    if ((ptr->isArray(BINARY) && ptr[1] == RSHIFT && ptr[3]->isNumber() &&
+          ptr[3]->getInteger() == shifts) ||
+        (bytes == 1 && ptr->isArray(BINARY) && ptr[1] == OR && ptr[3]->isNumber() &&
+          ptr[3]->getInteger() == 0)) {
       return process(ptr[2]); // look through it
     } else if (ptr->isNumber()) {
       // constant, apply a shift (e.g. HEAP32[1] is address 4)
@@ -2684,8 +2784,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
   processStatements = [&](Ref ast, unsigned from) -> Expression* {
     unsigned size = ast->size() - from;
-    if (size == 0) return allocator.alloc<Nop>();
-    if (size == 1) return process(ast[from]);
+    if (size == 0)
+      return allocator.alloc<Nop>();
+    if (size == 1)
+      return process(ast[from]);
     auto block = allocator.alloc<Block>();
     for (unsigned i = from; i < ast->size(); i++) {
       block->list.push_back(process(ast[i]));

@@ -18,12 +18,12 @@
 // Removes obviously unneeded code
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <ir/block-utils.h>
 #include <ir/effects.h>
 #include <ir/type-updating.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -47,18 +47,25 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     walk(func->body);
   }
 
-  // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be replaced
+  // returns nullptr if curr is dead, curr if it must stay as is, or another node if it can be
+  // replaced
   Expression* optimize(Expression* curr, bool resultUsed) {
     // an unreachable node must not be changed
-    if (curr->type == unreachable) return curr;
+    if (curr->type == unreachable)
+      return curr;
     while (1) {
       switch (curr->_id) {
-        case Expression::Id::NopId: return nullptr; // never needed
+        case Expression::Id::NopId:
+          return nullptr; // never needed
 
-        case Expression::Id::BlockId: return curr; // not always needed, but handled in visitBlock()
-        case Expression::Id::IfId: return curr; // not always needed, but handled in visitIf()
-        case Expression::Id::LoopId: return curr; // not always needed, but handled in visitLoop()
-        case Expression::Id::DropId: return curr; // not always needed, but handled in visitDrop()
+        case Expression::Id::BlockId:
+          return curr; // not always needed, but handled in visitBlock()
+        case Expression::Id::IfId:
+          return curr; // not always needed, but handled in visitIf()
+        case Expression::Id::LoopId:
+          return curr; // not always needed, but handled in visitLoop()
+        case Expression::Id::DropId:
+          return curr; // not always needed, but handled in visitDrop()
 
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
@@ -70,7 +77,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::ReturnId:
         case Expression::Id::SetGlobalId:
         case Expression::Id::HostId:
-        case Expression::Id::UnreachableId: return curr; // always needed
+        case Expression::Id::UnreachableId:
+          return curr; // always needed
 
         case Expression::Id::LoadId: {
           // it is ok to remove a load if the result is not used, and it has no
@@ -83,7 +91,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::ConstId:
         case Expression::Id::GetLocalId:
         case Expression::Id::GetGlobalId: {
-          if (!resultUsed) return nullptr;
+          if (!resultUsed)
+            return nullptr;
           return curr;
         }
 
@@ -162,12 +171,13 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
           }
         }
 
-        default: return curr; // assume needed
+        default:
+          return curr; // assume needed
       }
     }
   }
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     // compress out nops and other dead code
     int skip = 0;
     auto& list = curr->list;
@@ -271,7 +281,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   }
 
   void visitLoop(Loop* curr) {
-    if (curr->body->is<Nop>()) ExpressionManipulator::nop(curr);
+    if (curr->body->is<Nop>())
+      ExpressionManipulator::nop(curr);
   }
 
   void visitDrop(Drop* curr) {
@@ -325,7 +336,8 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         }
       }
     }
-    // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a branch, this can make that branch optimizable and more vaccuming possible
+    // sink a drop into an arm of an if-else if the other arm ends in an unreachable, as it if is a
+    // branch, this can make that branch optimizable and more vaccuming possible
     auto* iff = curr->value->dynCast<If>();
     if (iff && iff->ifFalse && isConcreteType(iff->type)) {
       // reuse the drop in both cases
@@ -356,9 +368,6 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   }
 };
 
-Pass *createVacuumPass() {
-  return new Vacuum();
-}
+Pass* createVacuumPass() { return new Vacuum(); }
 
 } // namespace wasm
-

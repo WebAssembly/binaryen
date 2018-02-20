@@ -47,9 +47,7 @@ struct Name : public cashew::IString {
     }
   }
 
-  static Name fromInt(size_t i) {
-    return cashew::IString(std::to_string(i).c_str(), false);
-  }
+  static Name fromInt(size_t i) { return cashew::IString(std::to_string(i).c_str(), false); }
 
   bool hasSubstring(cashew::IString substring) {
     return strstr(c_str(), substring.c_str()) != nullptr;
@@ -63,6 +61,5 @@ namespace std {
 template <> struct hash<wasm::Name> : hash<cashew::IString> {};
 
 } // namespace std
-
 
 #endif // wasm_support_string_h

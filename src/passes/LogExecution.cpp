@@ -24,27 +24,23 @@
 // call site. You need to provide that import on the JS side.
 //
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <pass.h>
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
+#include "shared-constants.h"
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
 Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
-  void visitLoop(Loop* curr) {
-    curr->body = makeLogCall(curr->body);
-  }
+  void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
 
-  void visitFunction(Function* curr) {
-    curr->body = makeLogCall(curr->body);
-  }
+  void visitFunction(Function* curr) { curr->body = makeLogCall(curr->body); }
 
-  void visitModule(Module *curr) {
+  void visitModule(Module* curr) {
     // Add the import
     auto import = new Import;
     import->name = LOGGER;
@@ -60,18 +56,10 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCallImport(
-        LOGGER,
-        { builder.makeConst(Literal(int32_t(id++))) },
-        none
-      ),
-      curr
-    );
+      builder.makeCallImport(LOGGER, {builder.makeConst(Literal(int32_t(id++)))}, none), curr);
   }
 };
 
-Pass *createLogExecutionPass() {
-  return new LogExecution();
-}
+Pass* createLogExecutionPass() { return new LogExecution(); }
 
 } // namespace wasm

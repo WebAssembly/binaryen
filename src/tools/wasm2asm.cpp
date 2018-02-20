@@ -18,70 +18,68 @@
 // wasm2asm console tool
 //
 
+#include "wasm2asm.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-s-parser.h"
-#include "wasm2asm.h"
 
 using namespace cashew;
 using namespace wasm;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[]) {
   Wasm2AsmBuilder::Flags builderFlags;
   Options options("wasm2asm", "Transform .wast files to asm.js");
   options
-      .add("--output", "-o", "Output file (stdout if not specified)",
-           Options::Arguments::One,
-           [](Options* o, const std::string& argument) {
-             o->extra["output"] = argument;
-             Colors::disable();
-           })
-      .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
-           Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
-             o->extra["asserts"] = "1";
-           })
-      .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
-           Options::Arguments::Zero,
-           [&](Options* o, const std::string& argument) {
-             builderFlags.pedantic = true;
-           })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options *o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--output", "-o", "Output file (stdout if not specified)", Options::Arguments::One,
+      [](Options* o, const std::string& argument) {
+        o->extra["output"] = argument;
+        Colors::disable();
+      })
+    .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
+      Options::Arguments::Zero,
+      [](Options* o, const std::string& argument) { o->extra["asserts"] = "1"; })
+    .add("--pedantic", "", "Emulate WebAssembly trapping behavior", Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { builderFlags.pedantic = true; })
+    .add_positional("INFILE", Options::Arguments::One,
+      [](Options* o, const std::string& argument) { o->extra["infile"] = argument; });
   options.parse(argc, argv);
-  if (options.debug) builderFlags.debug = true;
+  if (options.debug)
+    builderFlags.debug = true;
 
-  auto input(
-      read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+  auto input(read_file<std::vector<char>>(
+    options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   Element* root;
   Module wasm;
   Ref asmjs;
 
   try {
-    if (options.debug) std::cerr << "s-parsing..." << std::endl;
+    if (options.debug)
+      std::cerr << "s-parsing..." << std::endl;
     SExpressionParser parser(input.data());
     root = parser.root;
 
-    if (options.debug) std::cerr << "w-parsing..." << std::endl;
+    if (options.debug)
+      std::cerr << "w-parsing..." << std::endl;
     SExpressionWasmBuilder builder(wasm, *(*root)[0]);
 
-    if (options.debug) std::cerr << "asming..." << std::endl;
+    if (options.debug)
+      std::cerr << "asming..." << std::endl;
     Wasm2AsmBuilder wasm2asm(builderFlags);
     asmjs = wasm2asm.processWasm(&wasm);
 
     if (options.extra["asserts"] == "1") {
-      if (options.debug) std::cerr << "asserting..." << std::endl;
+      if (options.debug)
+        std::cerr << "asserting..." << std::endl;
       flattenAppend(asmjs, wasm2asm.processAsserts(*root, builder));
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   } catch (std::bad_alloc&) {
-    Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+    Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly "
+               "amounts of memory)";
   }
 
   if (options.debug) {
@@ -90,11 +88,14 @@ int main(int argc, const char *argv[]) {
     std::cout << '\n';
   }
 
-  if (options.debug) std::cerr << "j-printing..." << std::endl;
+  if (options.debug)
+    std::cerr << "j-printing..." << std::endl;
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
+  Output output(
+    options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   output << jser.buffer << std::endl;
 
-  if (options.debug) std::cerr << "done." << std::endl;
+  if (options.debug)
+    std::cerr << "done." << std::endl;
 }

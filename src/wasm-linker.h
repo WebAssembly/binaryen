@@ -38,7 +38,8 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
     assert(!must_export);
     return;
   }
-  if (wasm.getExportOrNull(name)) return; // Already exported
+  if (wasm.getExportOrNull(name))
+    return; // Already exported
   auto exp = new Export;
   exp->name = exp->value = name;
   exp->kind = ExternalKind::Function;
@@ -48,7 +49,7 @@ inline void exportFunction(Module& wasm, Name name, bool must_export) {
 // An "object file" for linking. Contains a wasm module, plus the associated
 // information needed for linking/layout.
 class LinkerObject {
- public:
+public:
   struct Relocation {
     enum Kind { kData, kFunction };
     Kind kind; // Whether the symbol refers to data or a function.
@@ -56,16 +57,16 @@ class LinkerObject {
     // a pointer to the memory to rewrite.
     uint32_t* data;
     Name symbol; // Like the symbol index in ELF r_info field
-    int addend; // Like the ELF r_addend field
-    Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
-        kind(kind), data(data), symbol(symbol), addend(addend) {}
+    int addend;  // Like the ELF r_addend field
+    Relocation(Kind kind, uint32_t* data, Name symbol, int addend)
+      : kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
   struct SymbolAlias {
     Name symbol;
     Relocation::Kind kind;
     Offset offset;
-    SymbolAlias(Name symbol, Relocation::Kind kind, Offset offset) :
-      symbol(symbol), kind(kind), offset(offset) {}
+    SymbolAlias(Name symbol, Relocation::Kind kind, Offset offset)
+      : symbol(symbol), kind(kind), offset(offset) {}
   };
   // Information about symbols
   struct SymbolInfo {
@@ -82,12 +83,10 @@ class LinkerObject {
       for (const auto& func : other.implementedFunctions) {
         undefinedFunctions.erase(func);
       }
-      implementedFunctions.insert(other.implementedFunctions.begin(),
-                                  other.implementedFunctions.end());
-      importedObjects.insert(other.importedObjects.begin(),
-                             other.importedObjects.end());
-      aliasedSymbols.insert(other.aliasedSymbols.begin(),
-                            other.aliasedSymbols.end());
+      implementedFunctions.insert(
+        other.implementedFunctions.begin(), other.implementedFunctions.end());
+      importedObjects.insert(other.importedObjects.begin(), other.importedObjects.end());
+      aliasedSymbols.insert(other.aliasedSymbols.begin(), other.aliasedSymbols.end());
     }
   };
 
@@ -98,46 +97,42 @@ class LinkerObject {
     staticObjects.emplace_back(allocSize, alignment, name);
   }
 
-  void addGlobal(Name name) {
-    globls.push_back(name);
-  }
+  void addGlobal(Name name) { globls.push_back(name); }
 
   // This takes ownership of the added Relocation
-  void addRelocation(Relocation* relocation) {
-    relocations.emplace_back(relocation);
-  }
+  void addRelocation(Relocation* relocation) { relocations.emplace_back(relocation); }
 
-  bool isFunctionImplemented(Name name) {
-    return symbolInfo.implementedFunctions.count(name) != 0;
-  }
+  bool isFunctionImplemented(Name name) { return symbolInfo.implementedFunctions.count(name) != 0; }
 
   // An object is considered implemented if it is not imported
-  bool isObjectImplemented(Name name) {
-    return symbolInfo.importedObjects.count(name) == 0;
-  }
+  bool isObjectImplemented(Name name) { return symbolInfo.importedObjects.count(name) == 0; }
 
   // If name is an alias, return what it points to. Otherwise return name.
   Name resolveAlias(Name name, Relocation::Kind kind) {
     auto aliased = symbolInfo.aliasedSymbols.find(name);
-    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) return aliased->second.symbol;
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind)
+      return aliased->second.symbol;
     return name;
   }
 
-  SymbolAlias *getAlias(Name name, Relocation::Kind kind) {
+  SymbolAlias* getAlias(Name name, Relocation::Kind kind) {
     auto aliased = symbolInfo.aliasedSymbols.find(name);
-    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind) return &aliased->second;
+    if (aliased != symbolInfo.aliasedSymbols.end() && aliased->second.kind == kind)
+      return &aliased->second;
     return nullptr;
   }
 
   // Add an initializer segment for the named static variable.
   void addSegment(Name name, const char* data, Address size) {
     segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data, size);
+    wasm.memory.segments.emplace_back(
+      wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data, size);
   }
 
   void addSegment(Name name, std::vector<char>& data) {
     segments[name] = wasm.memory.segments.size();
-    wasm.memory.segments.emplace_back(wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data);
+    wasm.memory.segments.emplace_back(
+      wasm.allocator.alloc<Const>()->set(Literal(uint32_t(0))), data);
   }
 
   void addInitializerFunction(Name name) {
@@ -150,12 +145,11 @@ class LinkerObject {
     undefinedFunctionCalls[call->target].push_back(call);
   }
 
-  void addExternType(Name name, FunctionType* ty) {
-    externTypesMap[name] = ty;
-  }
+  void addExternType(Name name, FunctionType* ty) { externTypesMap[name] = ty; }
   FunctionType* getExternType(Name name) {
     auto f = externTypesMap.find(name);
-    if (f == externTypesMap.end()) return nullptr;
+    if (f == externTypesMap.end())
+      return nullptr;
     return f->second;
   }
 
@@ -164,25 +158,21 @@ class LinkerObject {
     indirectIndexes[name] = index;
   }
 
-  bool isEmpty() {
-    return wasm.functions.empty();
-  }
+  bool isEmpty() { return wasm.functions.empty(); }
 
-  std::vector<Name> const& getInitializerFunctions() const {
-    return initializerFunctions;
-  }
+  std::vector<Name> const& getInitializerFunctions() const { return initializerFunctions; }
 
   friend class Linker;
 
   Module wasm;
 
- private:
+private:
   struct StaticObject {
     Address allocSize;
     Address alignment;
     Name name;
-    StaticObject(Address allocSize, Address alignment, Name name) :
-        allocSize(allocSize), alignment(alignment), name(name) {}
+    StaticObject(Address allocSize, Address alignment, Name name)
+      : allocSize(allocSize), alignment(alignment), name(name) {}
   };
 
   std::vector<Name> globls;
@@ -207,41 +197,34 @@ class LinkerObject {
 
   LinkerObject(const LinkerObject&) = delete;
   LinkerObject& operator=(const LinkerObject&) = delete;
-
 };
 
 // Class which performs some linker-like functionality; namely taking an object
 // file with relocations, laying out the linear memory and segments, and
 // applying the relocations, resulting in an executable wasm module.
 class Linker {
- public:
+public:
   Linker(Address globalBase, Address stackAllocation, Address userInitialMemory,
-         Address userMaxMemory, bool importMemory, bool ignoreUnknownSymbols,
-         Name startFunction, bool debug)
-      : ignoreUnknownSymbols(ignoreUnknownSymbols),
-        startFunction(startFunction),
-        globalBase(globalBase),
-        nextStatic(globalBase),
-        userInitialMemory(userInitialMemory),
-        userMaxMemory(userMaxMemory),
-        importMemory(importMemory),
-        stackAllocation(stackAllocation),
-        debug(debug) {
+    Address userMaxMemory, bool importMemory, bool ignoreUnknownSymbols, Name startFunction,
+    bool debug)
+    : ignoreUnknownSymbols(ignoreUnknownSymbols), startFunction(startFunction),
+      globalBase(globalBase), nextStatic(globalBase), userInitialMemory(userInitialMemory),
+      userMaxMemory(userMaxMemory), importMemory(importMemory), stackAllocation(stackAllocation),
+      debug(debug) {
     if (userMaxMemory && userMaxMemory < userInitialMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory <<
-          " is < specified initial memory " << userInitialMemory;
+      Fatal() << "Specified max memory " << userMaxMemory << " is < specified initial memory "
+              << userInitialMemory;
     }
     if (roundUpToPageSize(userMaxMemory) != userMaxMemory) {
-      Fatal() << "Specified max memory " << userMaxMemory <<
-          " is not a multiple of 64k";
+      Fatal() << "Specified max memory " << userMaxMemory << " is not a multiple of 64k";
     }
     if (roundUpToPageSize(userInitialMemory) != userInitialMemory) {
-      Fatal() << "Specified initial memory " << userInitialMemory <<
-          " is not a multiple of 64k";
+      Fatal() << "Specified initial memory " << userInitialMemory << " is not a multiple of 64k";
     }
 
     // Don't allow anything to be allocated at address 0
-    if (globalBase == 0) nextStatic = 1;
+    if (globalBase == 0)
+      nextStatic = 1;
 
     // Place the stack pointer at the bottom of the linear memory, to keep its
     // address small (and thus with a small encoding).
@@ -277,7 +260,7 @@ class Linker {
   // Returns the total size of all static allocations.
   Address getStaticBump() const;
 
- private:
+private:
   // Allocate a static variable and return its address in linear memory
   Address allocateStatic(Address allocSize, Address alignment, Name name) {
     Address address = alignAddr(nextStatic, alignment);
@@ -322,21 +305,21 @@ class Linker {
 
   // where globals can start to be statically allocated, i.e., the data segment
   Address globalBase;
-  Address nextStatic; // location of next static allocation
+  Address nextStatic;        // location of next static allocation
   Address userInitialMemory; // Initial memory size (in bytes) specified by the user.
-  Address userMaxMemory; // Max memory size (in bytes) specified by the user.
+  Address userMaxMemory;     // Max memory size (in bytes) specified by the user.
   //(after linking, this is rounded and set on the wasm object in pages)
-  bool importMemory;  // Whether the memory should be imported instead of
-                      // defined.
+  bool importMemory; // Whether the memory should be imported instead of
+                     // defined.
   Address stackAllocation;
   bool debug;
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
-  std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
+  std::unordered_map<Address, Address> segmentsByAddress;       // address => segment index
   std::unordered_map<cashew::IString, Address> functionIndexes;
   std::map<Address, cashew::IString> functionNames;
 };
 
-}
+} // namespace wasm
 
 #endif // wasm_wasm_linker_h
