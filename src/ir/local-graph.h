@@ -17,6 +17,13 @@
 #ifndef wasm_ir_local_graph_h
 #define wasm_ir_local_graph_h
 
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+
+#include "wasm.h"
+
 namespace wasm {
 
 //

@@ -17,6 +17,9 @@
 #ifndef wasm_ir_effects_h
 #define wasm_ir_effects_h
 
+#include <wasm-traversal.h>
+#include <pass.h>
+
 namespace wasm {
 
 // Look for side effects, including control flow

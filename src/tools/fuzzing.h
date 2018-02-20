@@ -25,8 +25,11 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
-#include <ir/literal-utils.h>
-#include <wasm-builder.h>
+#include "asm_v_wasm.h"
+#include "optimization-options.h"
+#include "ir/literal-utils.h"
+#include "support/file.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 

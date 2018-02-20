@@ -32,6 +32,7 @@
 #include "mixed_arena.h"
 #include "passes/passes.h"
 #include "wasm-builder.h"
+#include "wasm-s-parser.h"
 #include "wasm.h"
 
 namespace wasm {

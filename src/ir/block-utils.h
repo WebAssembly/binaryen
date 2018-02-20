@@ -19,8 +19,10 @@
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/manipulation.h"
 #include "literal.h"
 #include "wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 

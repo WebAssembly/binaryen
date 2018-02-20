@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
+#ifndef wasm_tools_optimization_options_h
+#define wasm_tools_optimization_options_h
+
 #include "support/command-line.h"
+#include "pass.h"
+#include "wasm.h"
 
 //
 // Shared optimization options for commandline tools
@@ -124,3 +129,5 @@ struct OptimizationOptions : public Options {
 };
 
 } // namespace wasm
+
+#endif // wasm_tools_optimization_options_h
