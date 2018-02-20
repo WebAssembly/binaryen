@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
+#ifndef wasm_asmjs_asmangle_h
+#define wasm_asmjs_asmangle_h
+
 #include <string>
 
-// Mangles a WebAssembly name to a valid JavaScript identifier.
-std::string asmangle(std::string name);
+
+namespace wasm {
+
+  // Mangles a WebAssembly name to a valid JavaScript identifier.
+  std::string asmangle(std::string name);
+
+} // namespace wasm
+
+#endif // wasm_asmjs_asmangle_h

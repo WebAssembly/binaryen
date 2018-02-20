@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,49 +14,48 @@
  * limitations under the License.
  */
 
-#include <assert.h>
 #include "asmjs/asmangle.h"
+#include "wasm.h"
+
+
+namespace wasm {
 
 std::string asmangle(std::string name) {
   bool mightBeKeyword = true;
   size_t i = 1;
 
-  // Names cannot be empty
-  if (!name.length()) {
-    assert(false && "Name must not be empty");
-    name = "$$";
-    i = 2;
-    mightBeKeyword = false;
+  assert(!name.empty());
 
   // Names must start with a character, $ or _
-  } else {
-    switch (auto ch = name[0]) {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        name = "$" + name;
-        i = 2;
+  switch (auto ch = name[0]) {
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': {
+      name = "$" + name;
+      i = 2;
+      goto notKeyword;
+    }
+    notKeyword:
+    case '$':
+    case '_': {
+      mightBeKeyword = false;
+      break;
+    }
+    default: {
+      if (
+        !(ch >= 'a' && ch <= 'z') &&
+        !(ch >= 'A' && ch <= 'Z')
+      ) {
+        name = "$" + name.substr(1);
         mightBeKeyword = false;
-        break;
-      case '$':
-      case '_':
-        mightBeKeyword = false;
-        break;
-      default:
-        if (
-          !(ch >= 'a' && ch <= 'z') &&
-          !(ch >= 'A' && ch <= 'Z')
-        ) {
-          name = "$" + name.substr(1);
-          mightBeKeyword = false;
-        }
+      }
     }
   }
 
@@ -75,10 +74,11 @@ std::string asmangle(std::string name) {
       case '8':
       case '9':
       case '$':
-      case '_':
+      case '_': {
         mightBeKeyword = false;
         break;
-      default:
+      }
+      default: {
         if (
           !(ch >= 'a' && ch <= 'z') &&
           !(ch >= 'A' && ch <= 'Z')
@@ -86,23 +86,26 @@ std::string asmangle(std::string name) {
           name = name.substr(0, i) + "_" + name.substr(i + 1);
           mightBeKeyword = false;
         }
+      }
     }
   }
 
   // Names must not collide with keywords
   if (mightBeKeyword && len >= 2 && len <= 10) {
     switch (name[0]) {
-      case 'a':
+      case 'a': {
         if (name == "arguments") {
           goto mangleKeyword;
         }
         break;
-      case 'b':
+      }
+      case 'b': {
         if (name == "break") {
           goto mangleKeyword;
         }
         break;
-      case 'c':
+      }
+      case 'c': {
         if (
           name == "case" ||
           name == "continue" ||
@@ -113,7 +116,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'd':
+      }
+      case 'd': {
         if (
           name == "do" ||
           name == "default" ||
@@ -122,7 +126,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'e':
+      }
+      case 'e': {
         if (
           name == "else" ||
           name == "enum" ||
@@ -133,7 +138,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'f':
+      }
+      case 'f': {
         if (
           name == "for" ||
           name == "false" ||
@@ -143,7 +149,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'i':
+      }
+      case 'i': {
         if (
           name == "if" ||
           name == "in" ||
@@ -155,12 +162,14 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'l':
+      }
+      case 'l': {
         if (name == "let") {
           goto mangleKeyword;
         }
         break;
-      case 'n':
+      }
+      case 'n': {
         if (
           name == "new" ||
           name == "null"
@@ -168,7 +177,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'p':
+      }
+      case 'p': {
         if (
           name == "public" ||
           name == "package" ||
@@ -178,12 +188,14 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'r':
+      }
+      case 'r': {
         if (name == "return") {
           goto mangleKeyword;
         }
         break;
-      case 's':
+      }
+      case 's': {
         if (
           name == "super" ||
           name == "static" ||
@@ -192,7 +204,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 't':
+      }
+      case 't': {
         if (
           name == "try" ||
           name == "this" ||
@@ -203,7 +216,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'v':
+      }
+      case 'v': {
         if (
           name == "var" ||
           name == "void"
@@ -211,7 +225,8 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'w':
+      }
+      case 'w': {
         if (
           name == "with" ||
           name == "while"
@@ -219,14 +234,19 @@ std::string asmangle(std::string name) {
           goto mangleKeyword;
         }
         break;
-      case 'y':
+      }
+      case 'y': {
         if (name == "yield") {
           goto mangleKeyword;
         }
         break;
-      mangleKeyword:
+      }
+      mangleKeyword: {
         name = name + "_";
+      }
     }
   }
   return name;
 }
+
+} // namespace wasm
