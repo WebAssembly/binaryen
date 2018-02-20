@@ -43,6 +43,8 @@ std::string asmangle(std::string name) {
       case '9':
         name = "$" + name;
         i = 2;
+        mightBeKeyword = false;
+        break;
       case '$':
       case '_':
         mightBeKeyword = false;
