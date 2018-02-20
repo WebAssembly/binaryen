@@ -85,17 +85,17 @@ template <class NodeRef, class Builder> class Parser {
         curr += 2;
         while (*curr && *curr != '\n') {
           curr++;
-}
+        }
         if (*curr) {
           curr++;
-}
+        }
         continue;
       }
       if (curr[0] == '/' && curr[1] == '*') {
         curr += 2;
         while (*curr && (curr[0] != '*' || curr[1] != '/')) {
           curr++;
-}
+        }
         curr += 2;
         continue;
       }
@@ -109,8 +109,8 @@ template <class NodeRef, class Builder> class Parser {
     while (*list) {
       if (*list++ == x) {
         return true;
-}
-}
+      }
+    }
     return false;
   }
 
@@ -176,7 +176,7 @@ template <class NodeRef, class Builder> class Parser {
               num += *src - 'A' + 10;
             } else {
               break;
-}
+            }
             src++;
           }
         } else {
@@ -330,13 +330,13 @@ template <class NodeRef, class Builder> class Parser {
       case SEPARATOR: {
         if (frag.str == OPEN_PAREN) {
           return parseExpression(parseAfterParen(src), src, seps);
-}
+        }
         if (frag.str == OPEN_BRACE) {
           return parseExpression(parseAfterBrace(src), src, seps);
-}
+        }
         if (frag.str == OPEN_CURLY) {
           return parseExpression(parseAfterCurly(src), src, seps);
-}
+        }
         abort();
       }
       case OPERATOR: {
@@ -390,7 +390,7 @@ template <class NodeRef, class Builder> class Parser {
       return parseNew(src, seps);
     } else if (frag.str == FOR) {
       return parseFor(src, seps);
-}
+    }
     dump(frag.str.str, src);
     abort();
     return nullptr;
@@ -412,7 +412,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == ')') {
         break;
-}
+      }
       Frag arg(src);
       assert(arg.type == IDENT);
       src += arg.size;
@@ -420,7 +420,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == ')') {
         break;
-}
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -439,7 +439,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == ';') {
         break;
-}
+      }
       Frag name(src);
       assert(name.type == IDENT);
       NodeRef value;
@@ -454,7 +454,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == ';') {
         break;
-}
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -472,7 +472,7 @@ template <class NodeRef, class Builder> class Parser {
     assert(hasChar(seps, *src));
     if (*src == ';') {
       src++;
-}
+    }
     return Builder::makeReturn(value);
   }
 
@@ -532,7 +532,7 @@ template <class NodeRef, class Builder> class Parser {
     Frag next(src);
     if (next.type == IDENT) {
       src += next.size;
-}
+    }
     return Builder::makeBreak(next.type == IDENT ? next.str : IString());
   }
 
@@ -541,7 +541,7 @@ template <class NodeRef, class Builder> class Parser {
     Frag next(src);
     if (next.type == IDENT) {
       src += next.size;
-}
+    }
     return Builder::makeContinue(next.type == IDENT ? next.str : IString());
   }
 
@@ -555,7 +555,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == '}') {
         break;
-}
+      }
       Frag next(src);
       if (next.type == KEYWORD) {
         if (next.str == CASE) {
@@ -618,10 +618,10 @@ template <class NodeRef, class Builder> class Parser {
     skipSpace(src);
     if (*src == '(') {
       return parseExpression(parseCall(parseFrag(frag), src), src, seps);
-}
+    }
     if (*src == '[') {
       return parseExpression(parseIndexing(parseFrag(frag), src), src, seps);
-}
+    }
     if (*src == ':' && expressionPartsStack.back().size() == 0) {
       src++;
       skipSpace(src);
@@ -635,7 +635,7 @@ template <class NodeRef, class Builder> class Parser {
     }
     if (*src == '.') {
       return parseExpression(parseDotting(parseFrag(frag), src), src, seps);
-}
+    }
     return parseExpression(parseFrag(frag), src, seps);
   }
 
@@ -648,12 +648,12 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == ')') {
         break;
-}
+      }
       Builder::appendToCall(ret, parseElement(src, ",)"));
       skipSpace(src);
       if (*src == ')') {
         break;
-}
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -708,13 +708,13 @@ template <class NodeRef, class Builder> class Parser {
       assert(*src);
       if (*src == ']') {
         break;
-}
+      }
       NodeRef element = parseElement(src, ",]");
       Builder::appendToArray(ret, element);
       skipSpace(src);
       if (*src == ']') {
         break;
-}
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -733,7 +733,7 @@ template <class NodeRef, class Builder> class Parser {
       assert(*src);
       if (*src == '}') {
         break;
-}
+      }
       Frag key(src);
       assert(key.type == IDENT || key.type == STRING);
       src += key.size;
@@ -745,7 +745,7 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == '}') {
         break;
-}
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -812,7 +812,7 @@ template <class NodeRef, class Builder> class Parser {
     NodeRef last = parseElement(src, seps);
     if (!top) {
       return last;
-}
+    }
     {
       ExpressionParts& parts =
         expressionPartsStack.back(); // |parts| may have been invalidated by that call
@@ -825,11 +825,11 @@ template <class NodeRef, class Builder> class Parser {
           for (int i = parts.size() - 1; i >= 0; i--) {
             if (parts[i].isNode) {
               continue;
-}
+            }
             IString op = parts[i].getOp();
             if (!ops.ops.has(op)) {
               continue;
-}
+            }
             if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size() - 1) {
               parts[i] = makeBinary(parts[i - 1].getNode(), op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
@@ -837,7 +837,7 @@ template <class NodeRef, class Builder> class Parser {
             } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size() - 1) {
               if (i > 0 && parts[i - 1].isNode) {
                 continue; // cannot apply prefix operator if it would join two nodes
-}
+              }
               parts[i] = Builder::makePrefix(op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
             } else if (ops.type == OperatorClass::Tertiary) {
@@ -846,11 +846,11 @@ template <class NodeRef, class Builder> class Parser {
               // dumpParts(parts, i);
               if (op != COLON) {
                 continue;
-}
+              }
               assert(i < (int)parts.size() - 1 && i >= 3);
               if (parts[i - 2].getOp() != QUESTION) {
                 continue; // e.g. x ? y ? 1 : 0 : 2
-}
+              }
               parts[i - 3] = Builder::makeConditional(
                 parts[i - 3].getNode(), parts[i - 1].getNode(), parts[i + 1].getNode());
               parts.erase(parts.begin() + i - 2, parts.begin() + i + 2);
@@ -862,11 +862,11 @@ template <class NodeRef, class Builder> class Parser {
           for (int i = 0; i < (int)parts.size(); i++) {
             if (parts[i].isNode) {
               continue;
-}
+            }
             IString op = parts[i].getOp();
             if (!ops.ops.has(op)) {
               continue;
-}
+            }
             if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size() - 1) {
               parts[i] = makeBinary(parts[i - 1].getNode(), op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
@@ -875,7 +875,7 @@ template <class NodeRef, class Builder> class Parser {
             } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size() - 1) {
               if (i > 0 && parts[i - 1].isNode) {
                 continue; // cannot apply prefix operator if it would join two nodes
-}
+              }
               parts[i] = Builder::makePrefix(op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
               i = std::max(i - 2, 0); // allow a previous prefix operator to cascade
@@ -899,25 +899,25 @@ template <class NodeRef, class Builder> class Parser {
       skipSpace(src);
       if (*src == 0) {
         break;
-}
+      }
       if (*src == ';') {
         src++; // skip a statement in this block
         continue;
       }
       if (hasChar(seps, *src)) {
         break;
-}
+      }
       if (!!keywordSep1) {
         Frag next(src);
         if (next.type == KEYWORD && next.str == keywordSep1) {
           break;
-}
+        }
       }
       if (!!keywordSep2) {
         Frag next(src);
         if (next.type == KEYWORD && next.str == keywordSep2) {
           break;
-}
+        }
       }
       NodeRef element = parseElementOrStatement(src, seps);
       Builder::appendToBlock(block, element);
@@ -999,12 +999,12 @@ template <class NodeRef, class Builder> class Parser {
         newlinesLeft--;
         if (newlinesLeft == 0) {
           break;
-}
+        }
       }
       charsLeft--;
       if (charsLeft == 0) {
         break;
-}
+      }
       fprintf(stderr, "%c", *curr++);
     }
     fprintf(stderr, "\n\n");

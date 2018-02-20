@@ -150,7 +150,7 @@ struct Value {
       arr->clear();
     } else if (type == Object) {
       delete obj;
-}
+    }
     type = Null;
     num = 0;
   }
@@ -284,7 +284,7 @@ struct Value {
   bool operator==(const Value& other) {
     if (type != other.type) {
       return false;
-}
+    }
     switch (other.type) {
       case String:
         return str == other.str;
@@ -333,7 +333,7 @@ struct Value {
         skip();
         if (*curr == ']') {
           break;
-}
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -377,7 +377,7 @@ struct Value {
         skip();
         if (*curr == '}') {
           break;
-}
+        }
         assert(*curr == ',');
         curr++;
         skip();
@@ -410,7 +410,7 @@ struct Value {
     auto old = arr->size();
     if (old != size) {
       arr->resize(size);
-}
+    }
     if (old < size) {
       for (auto i = old; i < size; i++) {
         (*arr)[i] = arena.alloc<Value>();
@@ -439,7 +439,7 @@ struct Value {
     assert(isArray());
     if (arr->size() == 0) {
       return nullptr;
-}
+    }
     return arr->back();
   }
 
@@ -453,7 +453,7 @@ struct Value {
     for (size_t i = 0; i < arr->size(); i++) {
       if (other == (*arr)[i]) {
         return i;
-}
+      }
     }
     return -1;
   }
@@ -476,7 +476,7 @@ struct Value {
       Ref curr = (*arr)[i];
       if (func(curr)) {
         ret->push_back(curr);
-}
+      }
     }
     return ret;
   }
@@ -605,7 +605,7 @@ struct JSPrinter {
     maybeSpace(c);
     if (!pretty && c == '}' && buffer[used - 1] == ';') {
       used--; // optimize ;} into }, the ; is not separating anything
-}
+    }
     ensure(1);
     buffer[used++] = c;
   }
@@ -621,17 +621,17 @@ struct JSPrinter {
   void newline() {
     if (!pretty) {
       return;
-}
+    }
     emit('\n');
     for (int i = 0; i < indent; i++) {
       emit(' ');
-}
+    }
   }
 
   void space() {
     if (pretty) {
       emit(' ');
-}
+    }
   }
 
   void safeSpace() {
@@ -639,7 +639,7 @@ struct JSPrinter {
       emit(' ');
     } else {
       possibleSpace = true;
-}
+    }
   }
 
   void maybeSpace(char s) {
@@ -647,7 +647,7 @@ struct JSPrinter {
       possibleSpace = false;
       if (isIdentPart(s)) {
         emit(' ');
-}
+      }
     }
   }
 
@@ -686,7 +686,7 @@ struct JSPrinter {
           printArray(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'b': {
@@ -698,7 +698,7 @@ struct JSPrinter {
           printBreak(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'c': {
@@ -710,7 +710,7 @@ struct JSPrinter {
           printContinue(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'd': {
@@ -722,7 +722,7 @@ struct JSPrinter {
           printDot(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'i': {
@@ -730,7 +730,7 @@ struct JSPrinter {
           printIf(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'l': {
@@ -738,7 +738,7 @@ struct JSPrinter {
           printLabel(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'n': {
@@ -746,13 +746,13 @@ struct JSPrinter {
           printNew(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'o': {
         if (type == OBJECT) {
           printObject(node);
-}
+        }
         break;
       }
       case 'r': {
@@ -760,7 +760,7 @@ struct JSPrinter {
           printReturn(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 's': {
@@ -774,7 +774,7 @@ struct JSPrinter {
           printString(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 't': {
@@ -784,7 +784,7 @@ struct JSPrinter {
           printTry(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'u': {
@@ -792,7 +792,7 @@ struct JSPrinter {
           printUnaryPrefix(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'v': {
@@ -800,7 +800,7 @@ struct JSPrinter {
           printVar(node);
         } else {
           abort();
-}
+        }
         break;
       }
       case 'w': {
@@ -808,7 +808,7 @@ struct JSPrinter {
           printWhile(node);
         } else {
           abort();
-}
+        }
         break;
       }
       default: {
@@ -824,7 +824,7 @@ struct JSPrinter {
     print(node);
     if (used == last) {
       emit(otherwise);
-}
+    }
   }
 
   void printStats(Ref stats) {
@@ -836,7 +836,7 @@ struct JSPrinter {
           first = false;
         } else {
           newline();
-}
+        }
         print(curr);
         if (!isDefun(curr) && !isBlock(curr) && !isIf(curr)) {
           emit(';');
@@ -873,7 +873,7 @@ struct JSPrinter {
     for (size_t i = 0; i < args->size(); i++) {
       if (i > 0) {
         (pretty ? emit(", ") : emit(','));
-}
+      }
       emit(args[i]->getCString());
     }
     emit(')');
@@ -916,7 +916,7 @@ struct JSPrinter {
     bool neg = d < 0;
     if (neg) {
       d = -d;
-}
+    }
     // try to emit the fewest necessary characters
     bool integer = fmod(d, 1) == 0;
 #define BUFFERSIZE 1000
@@ -950,7 +950,7 @@ struct JSPrinter {
           // temp == d);
           if (temp == d) {
             break;
-}
+          }
         }
       } else {
         // integer
@@ -984,7 +984,7 @@ struct JSPrinter {
         char* end = dot + 1;
         while (*end >= '0' && *end <= '9') {
           end++;
-}
+        }
         end--;
         while (*end == '0') {
           char* copy = end;
@@ -1011,7 +1011,7 @@ struct JSPrinter {
         // if not zero
         while ((*test == '0' || test - buffer > 24) && test > buffer) {
           test--;
-}
+        }
         int num = end - test;
         if (num >= 3) {
           test++;
@@ -1097,10 +1097,10 @@ struct JSPrinter {
 
     if (childPrecedence > parentPrecedence) {
       return true; // child is definitely a danger
-}
+    }
     if (childPrecedence < parentPrecedence) {
       return false; //          definitely cool
-}
+    }
     // equal precedence, so associativity (rtl/ltr) is what matters
     // (except for some exceptions, where multiple operators can combine into confusion)
     if (parent->isArray() && parent[0] == UNARY_PREFIX) {
@@ -1112,27 +1112,27 @@ struct JSPrinter {
     }
     if (childPosition == 0) {
       return true; // child could be anywhere, so always paren
-}
+    }
     if (childPrecedence < 0) {
       return false; // both precedences are safe
-}
+    }
     // check if child is on the dangerous side
     if (OperatorClass::getRtl(parentPrecedence)) {
       return childPosition < 0;
     } else {
       return childPosition > 0;
-}
+    }
   }
 
   void printChild(Ref child, Ref parent, int childPosition = 0) {
     bool parens = needParens(parent, child, childPosition);
     if (parens) {
       emit('(');
-}
+    }
     print(child);
     if (parens) {
       emit(')');
-}
+    }
   }
 
   void printBinary(Ref node) {
@@ -1155,7 +1155,7 @@ struct JSPrinter {
       buffer[used] = 0;
       if (strchr(curr, '.')) {
         return; // already a decimal point, all good
-}
+      }
       char* e = strchr(curr, 'e');
       if (!e) {
         emit(".0");
@@ -1200,7 +1200,7 @@ struct JSPrinter {
     for (size_t i = 0; i < args->size(); i++) {
       if (i > 0) {
         (pretty ? emit(", ") : emit(','));
-}
+      }
       printChild(args[i], node, 0);
     }
     emit(')');
@@ -1248,7 +1248,7 @@ struct JSPrinter {
           newline();
         } else {
           used--; // avoid the extra indentation we added tentatively
-}
+        }
       } else {
         newline();
       }
@@ -1278,7 +1278,7 @@ struct JSPrinter {
     for (size_t i = 0; i < args->size(); i++) {
       if (i > 0) {
         (pretty ? emit(", ") : emit(','));
-}
+      }
       emit(args[i][0]->getCString());
       if (args[i]->size() > 1) {
         space();
@@ -1331,7 +1331,7 @@ struct JSPrinter {
       print(node[2], "{}");
       if (!isBlock(node[2])) {
         emit(';');
-}
+      }
     }
     if (hasElse) {
       space();
@@ -1340,7 +1340,7 @@ struct JSPrinter {
       print(node[3], "{}");
       if (!isBlock(node[3])) {
         emit(';');
-}
+      }
     }
   }
 
@@ -1409,7 +1409,7 @@ struct JSPrinter {
     for (size_t i = 0; i < args->size(); i++) {
       if (i > 0) {
         (pretty ? emit(", ") : emit(','));
-}
+      }
       print(args[i]);
     }
     emit(']');
@@ -1437,11 +1437,11 @@ struct JSPrinter {
       }
       if (needQuote) {
         emit('"');
-}
+      }
       emit(str);
       if (needQuote) {
         emit('"');
-}
+      }
       emit(":");
       space();
       print(args[i][1]);
@@ -1483,7 +1483,7 @@ public:
       target[3]->setArray(block[1]->getArray());
     } else {
       abort();
-}
+    }
   }
 
   static void appendToBlock(Ref block, Ref element) {
@@ -1589,7 +1589,7 @@ public:
     Ref array = &makeRawArray(1)->push_back(makeRawString(name));
     if (!!value) {
       array->push_back(value);
-}
+    }
     var[1]->push_back(array);
   }
 

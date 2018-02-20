@@ -49,7 +49,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       // free overwritten idx
       if (!moved) {
         freeIdx();
-}
+      }
       idx = rhs.idx;
       rhs.moved = true;
       moved = false;
@@ -59,7 +59,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     ~TempVar() {
       if (!moved) {
         freeIdx();
-}
+      }
     }
 
     bool operator==(const TempVar& rhs) {
@@ -98,13 +98,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void doWalkModule(Module* module) {
     if (!builder) {
       builder = make_unique<Builder>(*module);
-}
+    }
     // add new globals for high bits
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
       auto& curr = module->globals[i];
       if (curr->type != i64) {
         continue;
-}
+      }
       curr->type = i32;
       auto* high = new Global(*curr);
       high->name = makeHighName(curr->name);
@@ -133,7 +133,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // create builder here if this is first entry to module for this object
     if (!builder) {
       builder = make_unique<Builder>(*getModule());
-}
+    }
     indexMap.clear();
     highBitVars.clear();
     labelHighBitVars.clear();
@@ -192,10 +192,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) {
       return;
-}
+    }
     if (curr->type == i64) {
       curr->type = i32;
-}
+    }
     auto highBitsIt = labelHighBitVars.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
       if (highBitsIt != labelHighBitVars.end()) {
@@ -225,7 +225,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   template <typename T> void visitBranching(T* curr) {
     if (!hasOutParam(curr->ifTrue)) {
       return;
-}
+    }
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
     TempVar highBits = fetchOutParam(curr->ifTrue);
     TempVar falseBits = fetchOutParam(curr->ifFalse);
@@ -243,7 +243,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
     if (curr->type != i64) {
       return;
-}
+    }
     curr->type = i32;
     setOutParam(curr, fetchOutParam(curr->body));
   }
@@ -251,7 +251,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBreak(Break* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     assert(curr->value != nullptr);
     TempVar valHighBits = fetchOutParam(curr->value);
     auto blockHighBitsIt = labelHighBitVars.find(curr->name);
@@ -273,7 +273,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitSwitch(Switch* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     TempVar outParam = fetchOutParam(curr->value);
     TempVar tmp = getTemp();
     Expression* result = curr;
@@ -346,7 +346,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitGetLocal(GetLocal* curr) {
     if (curr->type != i64) {
       return;
-}
+    }
     curr->index = indexMap[curr->index];
     curr->type = i32;
     TempVar highBits = getTemp();
@@ -374,7 +374,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitSetLocal(SetLocal* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     if (curr->isTee()) {
       lowerTee(curr);
       return;
@@ -390,21 +390,21 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitGetGlobal(GetGlobal* curr) {
     if (curr->type != i64) {
       return;
-}
+    }
     assert(false && "GetGlobal not implemented");
   }
 
   void visitSetGlobal(SetGlobal* curr) {
     if (curr->type != i64) {
       return;
-}
+    }
     assert(false && "SetGlobal not implemented");
   }
 
   void visitLoad(Load* curr) {
     if (curr->type != i64) {
       return;
-}
+    }
     assert(!curr->isAtomic && "atomic load not implemented");
     TempVar highBits = getTemp();
     TempVar ptrTemp = getTemp();
@@ -429,7 +429,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitStore(Store* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
     TempVar highBits = fetchOutParam(curr->value);
@@ -454,7 +454,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitConst(Const* curr) {
     if (curr->type != i64) {
       return;
-}
+    }
     TempVar highBits = getTemp();
     Const* lowVal = builder->makeConst(Literal(int32_t(curr->value.geti64() & 0xffffffff)));
     SetLocal* setHigh = builder->makeSetLocal(
@@ -513,7 +513,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitUnary(Unary* curr) {
     if (!unaryNeedsLowering(curr->op)) {
       return;
-}
+    }
     if (curr->type == unreachable || curr->value->type == unreachable) {
       assert(!hasOutParam(curr->value));
       replaceCurrent(curr->value);
@@ -895,7 +895,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitBinary(Binary* curr) {
     if (!binaryNeedsLowering(curr->op)) {
       return;
-}
+    }
     if (!hasOutParam(curr->left)) {
       // left unreachable, replace self with left
       replaceCurrent(curr->left);
@@ -996,7 +996,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitDrop(Drop* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     // free temp var
     fetchOutParam(curr->value);
   }
@@ -1004,7 +1004,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitReturn(Return* curr) {
     if (!hasOutParam(curr->value)) {
       return;
-}
+    }
     TempVar lowBits = getTemp();
     TempVar highBits = fetchOutParam(curr->value);
     SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);

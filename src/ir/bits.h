@@ -29,7 +29,7 @@ struct Bits {
     uint32_t ret = -1;
     if (bits >= 32) {
       return ret;
-}
+    }
     return ret >> (32 - bits);
   }
 
@@ -38,14 +38,14 @@ struct Bits {
   static uint32_t getMaskedBits(uint32_t mask) {
     if (mask == uint32_t(-1)) {
       return 32; // all the bits
-}
+    }
     if (mask == 0) {
       return 0; // trivially not a mask
-}
+    }
     // otherwise, see if adding one turns this into a 1-bit thing, 00011111 + 1 => 00100000
     if (PopCount(mask + 1) != 1) {
       return 0;
-}
+    }
     // this is indeed a mask
     return 32 - CountLeadingZeroes(mask);
   }

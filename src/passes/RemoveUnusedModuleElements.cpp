@@ -234,7 +234,7 @@ struct RemoveUnusedModuleElements : public Pass {
     auto canonicalize = [&](Name name) {
       if (!name.is()) {
         return name;
-}
+      }
       FunctionType* type = module->getFunctionType(name);
       auto sig = getSig(type);
       auto iter = canonicals.find(sig);

@@ -119,11 +119,11 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
     for (auto name : curr->targets) {
       if (name == targetName) {
         types.push_back(curr->value ? curr->value->type : none);
-}
+      }
     }
     if (curr->default_ == targetName) {
       types.push_back(curr->value ? curr->value->type : none);
-}
+    }
   }
 
   void visitBlock(Block* curr) {
@@ -172,16 +172,16 @@ static Type mergeTypes(std::vector<Type>& types) {
 static void handleUnreachable(Block* block) {
   if (block->type == unreachable) {
     return; // nothing to do
-}
+  }
   if (block->list.size() == 0) {
     return; // nothing to do
-}
+  }
   // if we are concrete, stop - even an unreachable child
   // won't change that (since we have a break with a value,
   // or the final child flows out a value)
   if (isConcreteType(block->type)) {
     return;
-}
+  }
   // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
@@ -215,11 +215,11 @@ void Block::finalize() {
       // )
       if (isConcreteType(type)) {
         return;
-}
+      }
       // if we are unreachable, we are done
       if (type == unreachable) {
         return;
-}
+      }
       // we may still be unreachable if we have an unreachable
       // child
       for (auto* child : list) {
@@ -322,14 +322,14 @@ void CallIndirect::finalize() {
 bool FunctionType::structuralComparison(FunctionType& b) {
   if (result != b.result) {
     return false;
-}
+  }
   if (params.size() != b.params.size()) {
     return false;
-}
+  }
   for (size_t i = 0; i < params.size(); i++) {
     if (params[i] != b.params[i]) {
       return false;
-}
+    }
   }
   return true;
 }
@@ -337,7 +337,7 @@ bool FunctionType::structuralComparison(FunctionType& b) {
 bool FunctionType::operator==(FunctionType& b) {
   if (name != b.name) {
     return false;
-}
+  }
   return structuralComparison(b);
 }
 bool FunctionType::operator!=(FunctionType& b) { return !(*this == b); }
@@ -349,7 +349,7 @@ void SetLocal::setTee(bool is) {
     type = value->type;
   } else {
     type = none;
-}
+  }
   finalize(); // type may need to be unreachable
 }
 
@@ -676,35 +676,35 @@ Global* Module::getGlobal(Name name) {
 FunctionType* Module::getFunctionTypeOrNull(Name name) {
   if (!functionTypesMap.count(name)) {
     return nullptr;
-}
+  }
   return functionTypesMap[name];
 }
 
 Import* Module::getImportOrNull(Name name) {
   if (!importsMap.count(name)) {
     return nullptr;
-}
+  }
   return importsMap[name];
 }
 
 Export* Module::getExportOrNull(Name name) {
   if (!exportsMap.count(name)) {
     return nullptr;
-}
+  }
   return exportsMap[name];
 }
 
 Function* Module::getFunctionOrNull(Name name) {
   if (!functionsMap.count(name)) {
     return nullptr;
-}
+  }
   return functionsMap[name];
 }
 
 Global* Module::getGlobalOrNull(Name name) {
   if (!globalsMap.count(name)) {
     return nullptr;
-}
+  }
   return globalsMap[name];
 }
 

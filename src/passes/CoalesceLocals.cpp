@@ -67,7 +67,7 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
   void interfere(Index i, Index j) {
     if (i == j) {
       return;
-}
+    }
     interferences[std::min(i, j) * numLocals + std::max(i, j)] = 1;
   }
 
@@ -104,7 +104,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
       auto* arrivingBlock = in[i];
       if (arrivingBlock->out.size() > 1) {
         continue; // we just want unconditional branches to the loop top, true phi fragments
-}
+      }
       for (auto& action : arrivingBlock->contents.actions) {
         if (action.isSet()) {
           auto* set = (*action.origin)->cast<SetLocal>();
@@ -125,7 +125,7 @@ void CoalesceLocals::calculateInterferences() {
   for (auto& curr : basicBlocks) {
     if (liveBlocks.count(curr.get()) == 0) {
       continue; // ignore dead blocks
-}
+    }
     // everything coming in might interfere, as it might come from a different block
     auto live = curr->contents.end;
     calculateInterferences(live);
@@ -291,7 +291,7 @@ std::vector<Index> adjustOrderByPriorities(
 void CoalesceLocals::pickIndices(std::vector<Index>& indices) {
   if (numLocals == 0) {
     return;
-}
+  }
   if (numLocals == 1) {
     indices.push_back(0);
     return;
@@ -442,8 +442,8 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       std::cout << text + ": ( ";
       for (Index i = 0; i < size(); i++) {
         std::cout << (*this)[i] << " ";
-      
-}std::cout << ")\n";
+      }
+      std::cout << ")\n";
       std::cout << "of quality: " << getFitness() << "\n";
     }
 
@@ -468,7 +468,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
       for (Index i = 0; i < parent->numLocals; i++) {
         if ((*order)[i] == i) {
           fitness += fragment; // boost for each that wasn't moved
-}
+        }
       }
       fitness = (100 * fitness) + removedCopies; // removing copies is a secondary concern
       order->setFitness(fitness);
@@ -552,7 +552,7 @@ void CoalesceLocalsWithLearning::pickIndices(std::vector<Index>& indices) {
     auto newBest = learner.getBest()->getFitness();
     if (newBest == oldBest) {
       break; // unlikely we can improve
-}
+    }
     oldBest = newBest;
 #ifdef CFG_LEARN_DEBUG
     learner.getBest()->dump("current best");

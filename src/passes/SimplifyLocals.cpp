@@ -296,7 +296,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     // we can never move a tee
     if (set->isTee()) {
       return false;
-}
+    }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1 use as that would make
     // a tee
     if ((firstCycle || !allowTee) && getCounter.num[set->index] > 1)
@@ -337,7 +337,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     }
     if (!found) {
       return;
-}
+    }
     // If one of our brs is a br_if, then we will give it a value. since
     // the value executes before the condition, it is dangerous if we are
     // moving code out of the condition,
@@ -448,7 +448,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     }
     if (!found) {
       return;
-}
+    }
     // great, we can optimize!
     // ensure we have a place to write the return values for, if not, we
     // need another cycle

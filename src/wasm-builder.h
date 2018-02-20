@@ -405,10 +405,10 @@ public:
     Block* block = nullptr;
     if (any) {
       block = any->dynCast<Block>();
-}
+    }
     if (!block) {
       block = makeBlock(any);
-}
+    }
     if (append) {
       block->list.push_back(append);
       block->finalize();
@@ -426,10 +426,10 @@ public:
     Block* block = nullptr;
     if (any) {
       block = any->dynCast<Block>();
-}
+    }
     if (!block || block->name.is()) {
       block = makeBlock(any);
-}
+    }
     block->name = name;
     if (append) {
       block->list.push_back(append);
@@ -477,7 +477,7 @@ public:
   Expression* dropIfConcretelyTyped(Expression* curr) {
     if (!isConcreteType(curr->type)) {
       return curr;
-}
+    }
     return makeDrop(curr);
   }
 

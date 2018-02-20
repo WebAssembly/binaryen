@@ -32,7 +32,7 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
       for (size_t j = 0; j < block->list.size() - 1; j++) {
         if (block->list[j] == above) {
           return false;
-}
+        }
       }
       assert(block->list.back() == above);
       // continue down
@@ -40,16 +40,16 @@ bool ExpressionAnalyzer::isResultUsed(std::vector<Expression*> stack, Function* 
       auto* iff = curr->cast<If>();
       if (above == iff->condition) {
         return true;
-}
+      }
       if (!iff->ifFalse) {
         return false;
-}
+      }
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
       if (curr->is<Drop>()) {
         return false;
-}
+      }
       return true; // all other node types use the result
     }
   }
@@ -67,7 +67,7 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
       for (size_t j = 0; j < block->list.size() - 1; j++) {
         if (block->list[j] == above) {
           return false;
-}
+        }
       }
       assert(block->list.back() == above);
       // continue down
@@ -75,17 +75,17 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
       auto* iff = curr->cast<If>();
       if (above == iff->condition) {
         return false;
-}
+      }
       if (!iff->ifFalse) {
         return false;
-}
+      }
       assert(above == iff->ifTrue || above == iff->ifFalse);
       // continue down
     } else {
       if (curr->is<Drop>()) {
         return true; // dropped
-}
-      return false;  // all other node types use the result
+      }
+      return false; // all other node types use the result
     }
   }
   return false;
@@ -103,7 +103,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
   auto noteNames = [&](Name left, Name right) {
     if (left.is() != right.is()) {
       return false;
-}
+    }
     if (left.is()) {
       nameStack.push_back(left);
       rightNames[left].push_back(right);
@@ -116,7 +116,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     auto iter = rightNames.find(left);
     if (iter == rightNames.end()) {
       return left == right; // non-internal name
-}
+    }
     return iter->second.back() == right;
   };
   auto popName = [&]() {
@@ -135,21 +135,21 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
     rightStack.pop_back();
     if (!left != !right) {
       return false;
-}
+    }
     if (!left) {
       continue;
-}
+    }
     if (left == &popNameMarker) {
       popName();
       continue;
     }
     if (comparer(left, right)) {
       continue; // comparison hook, before all the rest
-}
+    }
     // continue with normal structural comparison
     if (left->_id != right->_id) {
       return false;
-}
+    }
 #define PUSH(clazz, what)                                                                          \
   leftStack.push_back(left->cast<clazz>()->what);                                                  \
   rightStack.push_back(right->cast<clazz>()->what);
@@ -160,7 +160,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       case Expression::Id::BlockId: {
         if (!noteNames(left->cast<Block>()->name, right->cast<Block>()->name)) {
           return false;
-}
+        }
         CHECK(Block, list.size());
         for (Index i = 0; i < left->cast<Block>()->list.size(); i++) {
           PUSH(Block, list[i]);
@@ -176,14 +176,14 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       case Expression::Id::LoopId: {
         if (!noteNames(left->cast<Loop>()->name, right->cast<Loop>()->name)) {
           return false;
-}
+        }
         PUSH(Loop, body);
         break;
       }
       case Expression::Id::BreakId: {
         if (!checkNames(left->cast<Break>()->name, right->cast<Break>()->name)) {
           return false;
-}
+        }
         PUSH(Break, condition);
         PUSH(Break, value);
         break;
@@ -193,11 +193,11 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         for (Index i = 0; i < left->cast<Switch>()->targets.size(); i++) {
           if (!checkNames(left->cast<Switch>()->targets[i], right->cast<Switch>()->targets[i])) {
             return false;
-}
+          }
         }
         if (!checkNames(left->cast<Switch>()->default_, right->cast<Switch>()->default_)) {
           return false;
-}
+        }
         PUSH(Switch, condition);
         PUSH(Switch, value);
         break;
@@ -350,7 +350,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
   }
   if (leftStack.size() > 0 || rightStack.size() > 0) {
     return false;
-}
+  }
   return true;
 }
 
@@ -384,7 +384,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
       hash64(uint64_t(curr.str));
     } else {
       hash(iter->second.back());
-}
+    }
   };
   auto popName = [&]() {
     auto curr = nameStack.back();
@@ -399,7 +399,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
     stack.pop_back();
     if (!curr) {
       continue;
-}
+    }
     if (curr == &popNameMarker) {
       popName();
       continue;

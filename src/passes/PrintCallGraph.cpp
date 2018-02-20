@@ -80,7 +80,7 @@ struct PrintCallGraph : public Pass {
         auto* target = module->getFunction(curr->target);
         if (visitedTargets.count(target->name) > 0) {
           return;
-}
+        }
         visitedTargets.insert(target->name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
       }
@@ -88,7 +88,7 @@ struct PrintCallGraph : public Pass {
         auto name = curr->target;
         if (visitedTargets.count(name) > 0) {
           return;
-}
+        }
         visitedTargets.insert(name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }

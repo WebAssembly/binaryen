@@ -169,7 +169,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       auto value = counts[key];
       if (value == 0) {
         continue;
-}
+      }
       o << " " << left << setw(15) << key << ": " << setw(8) << value;
       if (lastMetricsPass) {
         if (lastMetricsPass->counts.count(key)) {

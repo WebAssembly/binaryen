@@ -171,13 +171,13 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   void visitBlock(Block* curr) {
     if (curr->list.empty()) {
       return;
-}
+    }
     if (!curr->name.is()) {
       return;
-}
+    }
     if (unoptimizables.count(curr->name) > 0) {
       return;
-}
+    }
     // we can't optimize a fallthrough value
     if (isConcreteType(curr->list.back()->type)) {
       return;
@@ -185,7 +185,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     auto iter = breakTails.find(curr->name);
     if (iter == breakTails.end()) {
       return;
-}
+    }
     // looks promising
     auto& tails = iter->second;
     // see if there is a fallthrough
@@ -204,7 +204,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   void visitIf(If* curr) {
     if (!curr->ifFalse) {
       return;
-}
+    }
     // if both sides are identical, this is easy to fold
     // (except if the condition is unreachable and we return a value, then we can't just replace
     // outselves with a drop
@@ -278,15 +278,15 @@ private:
   template <typename T> void optimizeExpressionTails(std::vector<Tail>& tails, T* curr) {
     if (tails.size() < 2) {
       return;
-}
+    }
     // see if anything is untoward, and we should not do this
     for (auto& tail : tails) {
       if (tail.expr && modifieds.count(tail.expr) > 0) {
         return;
-}
+      }
       if (modifieds.count(tail.block) > 0) {
         return;
-}
+      }
       // if we were not modified, then we should be valid for processing
       tail.validate();
     }
@@ -322,7 +322,7 @@ private:
       }
       if (stop) {
         break;
-}
+      }
       auto* item = getMergeable(tails[0], num);
       for (auto& tail : tails) {
         if (!ExpressionAnalyzer::equal(item, getMergeable(tail, num))) {
@@ -333,11 +333,11 @@ private:
       }
       if (stop) {
         break;
-}
+      }
       // we may have found another one we can merge - can we move it?
       if (!canMove({item}, curr)) {
         break;
-}
+      }
       // we found another one we can merge
       mergeable.push_back(item);
       num++;
@@ -345,7 +345,7 @@ private:
     }
     if (saved == 0) {
       return;
-}
+    }
     // we may be able to save enough.
     if (saved < WORTH_ADDING_BLOCK_TO_REMOVE_THIS_MUCH) {
       // it's not obvious we can save enough. see if we get rid
@@ -441,16 +441,16 @@ private:
   bool optimizeTerminatingTails(std::vector<Tail>& tails, Index num = 0) {
     if (tails.size() < 2) {
       return false;
-}
+    }
     // remove things that are untoward and cannot be optimized
     tails.erase(std::remove_if(tails.begin(), tails.end(),
                   [&](Tail& tail) {
                     if (tail.expr && modifieds.count(tail.expr) > 0) {
                       return true;
-}
+                    }
                     if (tail.block && modifieds.count(tail.block) > 0) {
                       return true;
-}
+                    }
                     // if we were not modified, then we should be valid for processing
                     tail.validate();
                     return false;
@@ -520,7 +520,7 @@ private:
                  [&](Tail& tail) {
                    if (effectiveSize(tail) < num + 1) {
                      return true;
-}
+                   }
                    auto* newItem = getItem(tail, num);
                    // ignore tails that break to outside blocks. we want to move code to
                    // the very outermost position, so such code cannot be moved
@@ -545,7 +545,7 @@ private:
         auto& items = iter.second;
         if (items.size() == 1) {
           continue;
-}
+        }
         assert(items.size() > 0);
         // look for an item that has another match.
         while (items.size() >= 2) {
@@ -590,11 +590,11 @@ private:
     // but if we are at num == 0, then we found nothing at all
     if (num == 0) {
       return false;
-}
+    }
     // if not worth it, stop
     if (!worthIt(num, tails)) {
       return false;
-}
+    }
     // this is worth doing, do it!
     auto mergeable = getTailItems(num, tails); // the elements we can merge
     // since we managed a merge, then it might open up more opportunities later
@@ -640,7 +640,7 @@ private:
         auto* toplevel = old->dynCast<Block>();
         if (toplevel) {
           toplevel->finalize();
-}
+        }
         if (old->type != unreachable) {
           inner->list.push_back(builder.makeReturn(old));
         } else {

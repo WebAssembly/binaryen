@@ -218,11 +218,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       }
       if (!child) {
         continue;
-}
+      }
       if (child->name.is()) {
         continue; // named blocks can have breaks to them (and certainly do, if we ran
-}
-                  // RemoveUnusedNames and RemoveUnusedBrs)
+      }
+      // RemoveUnusedNames and RemoveUnusedBrs)
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
         merged.push_back(curr->list[j]);
@@ -283,7 +283,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     Expression** dependency1 = nullptr, Expression** dependency2 = nullptr) {
     if (!child) {
       return outer;
-}
+    }
     if ((dependency1 && *dependency1) || (dependency2 && *dependency2)) {
       // there are dependencies, things we must be reordered through. make sure no problems there
       EffectAnalyzer childEffects(getPassOptions(), child);

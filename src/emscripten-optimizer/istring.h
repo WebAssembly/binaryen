@@ -133,13 +133,13 @@ struct IString {
     while (true) {
       if (*prefix == 0) {
         return true;
-}
+      }
       if (*ptr == 0) {
         return false;
-}
+      }
       if (*ptr++ != *prefix++) {
         return false;
-}
+      }
     }
   }
 };
@@ -182,11 +182,11 @@ public:
       char* end = strchr(curr, ' ');
       if (end) {
         *end = 0;
-}
+      }
       insert(curr);
       if (!end) {
         break;
-}
+      }
       curr = end + 1;
     }
   }

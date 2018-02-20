@@ -120,7 +120,7 @@ struct Match {
       auto checkMatch = [&](Type type) {
         if (type != none && subSeen->type != type) {
           return false;
-}
+        }
         while (index >= wildcards.size()) {
           wildcards.push_back(nullptr);
         }
@@ -136,23 +136,23 @@ struct Match {
       if (call->target == I32_EXPR) {
         if (checkMatch(i32)) {
           return true;
-}
+        }
       } else if (call->target == I64_EXPR) {
         if (checkMatch(i64)) {
           return true;
-}
+        }
       } else if (call->target == F32_EXPR) {
         if (checkMatch(f32)) {
           return true;
-}
+        }
       } else if (call->target == F64_EXPR) {
         if (checkMatch(f64)) {
           return true;
-}
+        }
       } else if (call->target == ANY_EXPR) {
         if (checkMatch(none)) {
           return true;
-}
+        }
       }
       return false;
     };
@@ -1120,7 +1120,7 @@ private:
     auto* right = binary->right;
     if (!Properties::emitsBoolean(left) || !Properties::emitsBoolean(right)) {
       return nullptr;
-}
+    }
     auto leftEffects = EffectAnalyzer(getPassOptions(), left);
     auto rightEffects = EffectAnalyzer(getPassOptions(), right);
     auto leftHasSideEffects = leftEffects.hasSideEffects();

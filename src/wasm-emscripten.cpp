@@ -139,11 +139,11 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
 static bool hasI64ResultOrParam(FunctionType* ft) {
   if (ft->result == i64) {
     return true;
-}
+  }
   for (auto ty : ft->params) {
     if (ty == i64) {
       return true;
-}
+    }
   }
   return false;
 }
@@ -168,16 +168,16 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) {
       continue; // Can't export i64s on the web.
-}
+    }
     if (!sigs.insert(sig).second) {
       continue; // Sig is already in the set
-}
+    }
     std::vector<NameType> params;
     params.emplace_back("fptr", i32); // function pointer param
     int p = 0;
     for (const auto& ty : funcType->params) {
       params.emplace_back(std::to_string(p++), ty);
-}
+    }
     Function* f =
       builder.makeFunction(std::string("dynCall_") + sig, std::move(params), funcType->result, {});
     Expression* fptr = builder.makeGetLocal(0, i32);
@@ -239,7 +239,7 @@ JSCallWalker getJSCallWalker(Module& wasm) {
 void EmscriptenGlueGenerator::generateJSCallThunks(unsigned numReservedFunctionPointers) {
   if (numReservedFunctionPointers == 0) {
     return;
-}
+  }
 
   JSCallWalker walker = getJSCallWalker(wasm);
   auto& tableSegmentData = wasm.table.segments[0].data;
@@ -451,8 +451,8 @@ template <class C> void printSet(std::ostream& o, C& c) {
       first = false;
     } else {
       o << ",";
-    
-}o << '"' << item << '"';
+    }
+    o << '"' << item << '"';
   }
   o << "]";
 }
@@ -474,8 +474,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(Address staticBu
       first = false;
     } else {
       meta << ",";
-    
-}meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
+    }
+    meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
@@ -490,8 +490,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(Address staticBu
       first = false;
     } else {
       meta << ", ";
-    
-}meta << "\"" << func.c_str() << "\"";
+    }
+    meta << "\"" << func.c_str() << "\"";
   }
   meta << "]";
 
@@ -504,8 +504,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(Address staticBu
     for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
       if (!first) {
         meta << ", ";
-      
-}first = false;
+      }
+      first = false;
       meta << "\"" << sig << "\"";
     }
     meta << "]";

@@ -42,7 +42,7 @@ inline std::string getBinaryenRoot() {
   auto* envVar = getenv("BINARYEN_ROOT");
   if (envVar) {
     return envVar;
-}
+  }
   return ".";
 }
 

@@ -33,8 +33,8 @@ namespace wasm {
 void ModuleReader::readText(std::string filename, Module& wasm) {
   if (debug) {
     std::cerr << "reading text from " << filename << "\n";
-  
-}auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
+  }
+  auto input(read_file<std::string>(filename, Flags::Text, debug ? Flags::Debug : Flags::Release));
   SExpressionParser parser(const_cast<char*>(input.c_str()));
   Element& root = *parser.root;
   SExpressionWasmBuilder builder(wasm, *root[0]);
@@ -43,8 +43,8 @@ void ModuleReader::readText(std::string filename, Module& wasm) {
 void ModuleReader::readBinary(std::string filename, Module& wasm) {
   if (debug) {
     std::cerr << "reading binary from " << filename << "\n";
-  
-}auto input(
+  }
+  auto input(
     read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
   WasmBinaryBuilder parser(wasm, input, debug);
   parser.read();
@@ -76,8 +76,8 @@ void ModuleWriter::writeText(Module& wasm, Output& output) {
 void ModuleWriter::writeText(Module& wasm, std::string filename) {
   if (debug) {
     std::cerr << "writing text to " << filename << "\n";
-  
-}Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
+  }
+  Output output(filename, Flags::Text, debug ? Flags::Debug : Flags::Release);
   writeText(wasm, output);
 }
 
@@ -94,7 +94,7 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   }
   if (symbolMap.size() > 0) {
     writer.setSymbolMap(symbolMap);
-}
+  }
   writer.write();
   buffer.writeTo(output);
   if (sourceMapStream) {
@@ -105,8 +105,8 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
 void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
   if (debug) {
     std::cerr << "writing binary to " << filename << "\n";
-  
-}Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
+  }
+  Output output(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release);
   writeBinary(wasm, output);
 }
 

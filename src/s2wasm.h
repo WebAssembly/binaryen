@@ -56,7 +56,7 @@ public:
     // info now.
     if (!symbolInfo) {
       symbolInfo.reset(getSymbolInfo());
-}
+    }
     linkerObj = obj;
     wasm = &obj->wasm;
     allocator = &wasm->allocator;
@@ -82,13 +82,13 @@ private:
     while (1) {
       while (*s && isspace(*s)) {
         s++;
-}
+      }
       if (*s != '#') {
         break;
-}
+      }
       while (*s != '\n') {
         s++;
-}
+      }
     }
   }
 
@@ -101,7 +101,7 @@ private:
     skipWhitespace();
     if (*s != ',') {
       return false;
-}
+    }
     s++;
     skipWhitespace();
     return true;
@@ -111,7 +111,7 @@ private:
     skipWhitespace();
     if (*s != '=') {
       return false;
-}
+    }
     s++;
     skipWhitespace();
     return true;
@@ -149,7 +149,7 @@ private:
     for (size_t i = 0; i < 60; i++) {
       if (!s[i]) {
         break;
-}
+      }
       std::cerr << s[i];
     }
     std::cerr << "\n==========\n";
@@ -350,7 +350,7 @@ private:
     skipWhitespace();
     if (*s != '$') {
       return Name();
-}
+    }
     const char* before = s;
     s++;
     std::string str;
@@ -424,16 +424,16 @@ private:
   Type tryGetType() {
     if (match("i32")) {
       return i32;
-}
+    }
     if (match("i64")) {
       return i64;
-}
+    }
     if (match("f32")) {
       return f32;
-}
+    }
     if (match("f64")) {
       return f64;
-}
+    }
     return none;
   }
 
@@ -461,7 +461,7 @@ private:
   Name cleanFunction(Name name) {
     if (!strchr(name.str, '@')) {
       return name;
-}
+    }
     char* temp = strdup(name.str);
     *strchr(temp, '@') = 0;
     Name ret = cashew::IString(temp, false);
@@ -482,10 +482,10 @@ private:
         skipComma();
         if (!match("@function")) {
           continue;
-}
+        }
         if (match(".hidden")) {
           mustMatch(name.str);
-}
+        }
         mustMatch(name.str);
         if (match(":")) {
           info->implementedFunctions.insert(name);
@@ -496,8 +496,8 @@ private:
             {name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
           if (!ret.second) {
             std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
-        
-}} else {
+          }
+        } else {
           abort_on("unknown directive");
         }
       } else if (match(".import_global")) {
@@ -510,13 +510,13 @@ private:
         // When the current line contains only one word, e.g.".text"
         if (match("\n")) {
           continue;
-}
+        }
         // When the current line contains more than one word
         if (!skipEqual()) {
           s = strchr(s, '\n');
           if (!s) {
             break;
-}
+          }
           continue;
         }
 
@@ -542,8 +542,8 @@ private:
           {lhs, LinkerObject::SymbolAlias(rhs, LinkerObject::Relocation::kData, offset)});
         if (!ret.second) {
           std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
-      
-}}
+        }
+      }
     }
   }
 
@@ -552,13 +552,13 @@ private:
       skipWhitespace();
       if (debug) {
         dump("process");
-}
+      }
       if (!*s) {
         break;
-}
+      }
       if (*s != '.') {
         skipObjectAlias(false);
-}
+      }
       s++;
       if (match("text")) {
         parseText();
@@ -589,19 +589,19 @@ private:
         parseFuncType();
       } else {
         skipObjectAlias(true);
-}
+      }
     }
   }
 
   void skipObjectAlias(bool prefix) {
     if (debug) {
       dump("object_alias");
-}
+    }
 
     // grab the dot that was consumed earlier
     if (prefix) {
       s--;
-}
+    }
     Name lhs = getStrToSep();
     WASM_UNUSED(lhs);
     if (!skipEqual())
@@ -614,7 +614,7 @@ private:
     // if no size attribute (e.g. weak symbol), skip
     if (!match(".size")) {
       return;
-}
+    }
 
     mustMatch(lhs.str);
     mustMatch(",");
@@ -660,10 +660,10 @@ private:
       skipWhitespace();
       if (!*s) {
         break;
-}
+      }
       if (*s != '.') {
         break;
-}
+      }
       s++;
       if (parseVersionMin()) {
         ;
@@ -683,7 +683,7 @@ private:
   void parseFile() {
     if (debug) {
       dump("file");
-}
+    }
     size_t fileId = 0;
     if (*s != '"') {
       fileId = getInt();
@@ -711,7 +711,7 @@ private:
     }
     while (*s && skipComma()) {
       decl->params.push_back(getType());
-}
+    }
     std::string sig = getSig(decl.get());
     decl->name = "FUNCSIG$" + sig;
 
@@ -734,13 +734,13 @@ private:
       return true;
     } else {
       return false;
-}
+    }
   }
 
   void parseFunction() {
     if (debug) {
       dump("func");
-}
+    }
     Name name = getStrToSep();
     if (match(" =")) {
       /* alias = */ getAtSeparated();
@@ -755,7 +755,7 @@ private:
     auto recordLoc = [&]() {
       if (debug) {
         dump("loc");
-}
+      }
       size_t fileId = getInt();
       skipWhitespace();
       uint32_t row = getInt();
@@ -772,7 +772,7 @@ private:
     auto recordLabel = [&]() {
       if (debug) {
         dump("label");
-}
+      }
       Name label = getStrToSep();
       // TODO: track and create map of labels and their ranges for our AST
       WASM_UNUSED(label);
@@ -800,7 +800,7 @@ private:
           skipWhitespace();
           if (!match(",")) {
             break;
-}
+          }
         }
       } else if (match(".result")) {
         resultType = getType();
@@ -820,7 +820,7 @@ private:
           skipWhitespace();
           if (!match(",")) {
             break;
-}
+          }
         }
       } else if (match(".file")) {
         parseFile();
@@ -833,7 +833,7 @@ private:
         skipWhitespace();
       } else {
         break;
-}
+      }
     }
     Function* func = builder.makeFunction(name, std::move(params), resultType, std::move(vars));
 
@@ -870,7 +870,7 @@ private:
       while (*t != '\n') {
         if (*t == ',') {
           ret++;
-}
+        }
         t++;
       }
       return ret;
@@ -896,20 +896,20 @@ private:
           abort_on("bad input register");
         }
         if (*s == ')') {
-          s++;           // tolerate 0(argument) syntax, where we started at the 'a'
-}
+          s++; // tolerate 0(argument) syntax, where we started at the 'a'
+        }
         if (*s == ':') { // tolerate :attribute=value syntax (see getAttributes)
           s++;
           skipToSep();
         }
         if (i < num - 1) {
           skipComma();
-}
+        }
       }
       for (int i = num - 1; i >= 0; i--) {
         if (inputs[i] == nullptr) {
           inputs[i] = pop();
-}
+        }
       }
       return inputs;
     };
@@ -940,7 +940,7 @@ private:
         skipToSep();
         if (*s == ')') {
           s++; // tolerate 0(argument) syntax, where we started at the 'a'
-}
+        }
         if (*s == ':') {
           attributes[i] = s + 1;
         } else {
@@ -948,7 +948,7 @@ private:
         }
         if (i < num - 1) {
           skipComma();
-}
+        }
       }
       s = before;
       return attributes;
@@ -1369,7 +1369,7 @@ private:
       skipWhitespace();
       if (debug) {
         dump("main function loop");
-}
+      }
       if (match("i32.")) {
         handleTyped(i32);
       } else if (match("i64.")) {
@@ -1399,12 +1399,12 @@ private:
         auto p = s;
         while (*p && *p != ':' && *p != '#' && *p != '\n') {
           p++;
-}
+        }
         if (*p == ':') { // it's a label
           recordLabel();
         } else {
           s = strchr(s, '\n');
-}
+        }
       } else if (match("loop")) {
         Type loopType = tryGetTypeWithoutNewline();
         auto curr = allocator->alloc<Loop>();
@@ -1511,13 +1511,13 @@ private:
   void parseType() {
     if (debug) {
       dump("type");
-}
+    }
     Name name = getStrToSep();
     skipComma();
     if (match("@function")) {
       if (match(".hidden")) {
         mustMatch(name.str);
-}
+      }
       return parseFunction();
     } else if (match("@object")) {
       return parseObject(name);
@@ -1528,8 +1528,8 @@ private:
   void parseObject(Name name) {
     if (debug) {
       std::cerr << "parseObject " << name << '\n';
-    
-}if (match(".data") || match(".bss")) {
+    }
+    if (match(".data") || match(".bss")) {
     } else if (match(".section")) {
       s = strchr(s, '\n');
     } else if (match(".lcomm")) {
@@ -1571,7 +1571,7 @@ private:
         raw.insert(raw.end(), quoted.begin(), quoted.end());
         if (z) {
           raw.push_back(0);
-}
+        }
         zero = false;
       } else if (match(".zero") || match(".skip")) {
         Address size = getInt();
@@ -1583,7 +1583,7 @@ private:
           value = getInt();
           if (value != 0) {
             zero = false;
-}
+          }
         }
         for (Address i = 0, e = size; i < e; ++i) {
           raw.push_back(value);
@@ -1705,8 +1705,8 @@ private:
   Name fixEmEHSjLjNames(const Name& name, const std::string& sig) {
     if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
-    
-}return fixEmExceptionInvoke(name, sig);
+    }
+    return fixEmExceptionInvoke(name, sig);
   }
 
   // This version only converts emscripten_longjmp_jmpbuf and does not deal
@@ -1715,8 +1715,8 @@ private:
   Name fixEmLongjmp(const Name& name) {
     if (name == "emscripten_longjmp_jmpbuf") {
       return "emscripten_longjmp";
-    
-}return name;
+    }
+    return name;
   }
 
   // Converts invoke wrapper names generated by LLVM backend to real invoke

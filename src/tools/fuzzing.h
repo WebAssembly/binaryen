@@ -356,7 +356,7 @@ private:
   Expression* makeDeNanOp(Expression* expr) {
     if (!DE_NAN) {
       return expr;
-}
+    }
     if (expr->type == f32) {
       return builder.makeCall("deNan32", {expr}, f32);
     } else if (expr->type == f64) {
@@ -452,7 +452,7 @@ private:
     }
     if (invocations.empty()) {
       return;
-}
+    }
     auto* invoker = new Function;
     invoker->name = func->name.str + std::string("_invoker");
     invoker->result = none;
@@ -519,25 +519,25 @@ private:
     auto choice = upTo(100);
     if (choice < 10) {
       return makeConst(type);
-}
+    }
     if (choice < 30) {
       return makeSetLocal(type);
-}
+    }
     if (choice < 50) {
       return makeGetLocal(type);
-}
+    }
     if (choice < 60) {
       return makeBlock(type);
-}
+    }
     if (choice < 70) {
       return makeIf(type);
-}
+    }
     if (choice < 80) {
       return makeLoop(type);
-}
+    }
     if (choice < 90) {
       return makeBreak(type);
-}
+    }
     switch (upTo(15)) {
       case 0:
         return makeBlock(type);
@@ -577,19 +577,19 @@ private:
     auto choice = upTo(100);
     if (choice < 50) {
       return makeSetLocal(none);
-}
+    }
     if (choice < 60) {
       return makeBlock(none);
-}
+    }
     if (choice < 70) {
       return makeIf(none);
-}
+    }
     if (choice < 80) {
       return makeLoop(none);
-}
+    }
     if (choice < 90) {
       return makeBreak(none);
-}
+    }
     switch (upTo(11)) {
       case 0:
         return makeBlock(none);
@@ -780,7 +780,7 @@ private:
   Expression* makeBreak(Type type) {
     if (breakableStack.empty()) {
       return makeTrivial(type);
-}
+    }
     Expression* condition = nullptr;
     if (type != unreachable) {
       hangStack.push_back(nullptr);
@@ -835,19 +835,19 @@ private:
           case 0: {
             if (!oneIn(4)) {
               continue;
-}
+            }
             break;
           }
           case 1: {
             if (!oneIn(2)) {
               continue;
-}
+            }
             break;
           }
           default: {
             if (oneIn(conditions + 1)) {
               continue;
-}
+            }
           }
         }
         return builder.makeBreak(name);
@@ -870,7 +870,7 @@ private:
       }
       if (target->result != type) {
         continue;
-}
+      }
       // we found one!
       std::vector<Expression*> args;
       for (auto argType : target->params) {
@@ -886,7 +886,7 @@ private:
     auto& data = wasm.table.segments[0].data;
     if (data.empty()) {
       return make(type);
-}
+    }
     // look for a call target with the right type
     Index start = upTo(data.size());
     Index i = start;
@@ -900,10 +900,10 @@ private:
       i++;
       if (i == data.size()) {
         i = 0;
-}
+      }
       if (i == start) {
         return make(type);
-}
+      }
     }
     // with high probability, make sure the type is valid  otherwise, most are
     // going to trap
@@ -925,7 +925,7 @@ private:
     auto& locals = typeLocals[type];
     if (locals.empty()) {
       return makeConst(type);
-}
+    }
     return builder.makeGetLocal(vectorPick(locals), type);
   }
 
@@ -940,7 +940,7 @@ private:
     auto& locals = typeLocals[valueType];
     if (locals.empty()) {
       return makeTrivial(type);
-}
+    }
     auto* value = make(valueType);
     if (tee) {
       return builder.makeTeeLocal(vectorPick(locals), value);
@@ -953,7 +953,7 @@ private:
     auto& globals = globalsByType[type];
     if (globals.empty()) {
       return makeConst(type);
-}
+    }
     return builder.makeGetGlobal(vectorPick(globals), type);
   }
 
@@ -963,7 +963,7 @@ private:
     auto& globals = globalsByType[type];
     if (globals.empty()) {
       return makeTrivial(none);
-}
+    }
     auto* value = make(type);
     return builder.makeSetGlobal(vectorPick(globals), value);
   }
@@ -1025,10 +1025,10 @@ private:
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) {
       return ret;
-}
+    }
     if (!ATOMICS || oneIn(2)) {
       return ret;
-}
+    }
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
@@ -1104,10 +1104,10 @@ private:
     auto* ret = makeNonAtomicStore(type);
     if (ret->value->type != i32 && ret->value->type != i64) {
       return ret;
-}
+    }
     if (!ATOMICS || oneIn(2)) {
       return ret;
-}
+    }
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
@@ -1423,7 +1423,7 @@ private:
     assert(type == unreachable);
     if (breakableStack.empty()) {
       return make(type);
-}
+    }
     // we need to find proper targets to break to; try a bunch
     int tries = TRIES;
     std::vector<Name> names;
@@ -1472,7 +1472,7 @@ private:
   Expression* makeAtomic(Type type) {
     if (!ATOMICS || (type != i32 && type != i64)) {
       return makeTrivial(type);
-}
+    }
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {
@@ -1602,7 +1602,7 @@ private:
   Index upTo(Index x) {
     if (x == 0) {
       return 0;
-}
+    }
     Index raw;
     if (x <= 255) {
       raw = get();
@@ -1659,7 +1659,7 @@ private:
   template <typename T, typename... Args> T pickGivenNum(size_t num, T first, Args... args) {
     if (num == 0) {
       return first;
-}
+    }
     return pickGivenNum<T>(num - 1, args...);
   }
 

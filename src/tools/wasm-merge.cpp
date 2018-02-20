@@ -115,10 +115,10 @@ struct Mergeable {
     // align them
     while (totalMemorySize % 16 != 0) {
       totalMemorySize++;
-}
+    }
     while (totalTableSize % 2 != 0) {
       totalTableSize++;
-}
+    }
   }
 
   void findImports() {

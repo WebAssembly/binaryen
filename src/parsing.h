@@ -147,10 +147,10 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           }
           if (negative) {
             pattern |= 0x80000000U;
-}
+          }
           if (!std::isnan(bit_cast<float>(pattern))) {
             pattern |= 1U;
-}
+          }
           ret->value = Literal(pattern).castToF32();
           break;
         }
@@ -165,10 +165,10 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           }
           if (negative) {
             pattern |= 0x8000000000000000ULL;
-}
+          }
           if (!std::isnan(bit_cast<double>(pattern))) {
             pattern |= 1ULL;
-}
+          }
           ret->value = Literal(pattern).castToF64();
           break;
         }
@@ -199,7 +199,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         bool negative = str[0] == '-';
         if (negative) {
           str++;
-}
+        }
         std::istringstream istr(str);
         uint32_t temp;
         istr >> std::hex >> temp;
@@ -217,7 +217,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         bool negative = str[0] == '-';
         if (negative) {
           str++;
-}
+        }
         std::istringstream istr(str);
         uint64_t temp;
         istr >> std::hex >> temp;
@@ -262,13 +262,13 @@ struct UniqueNameMapper {
   Name getPrefixedName(Name prefix) {
     if (reverseLabelMapping.find(prefix) == reverseLabelMapping.end()) {
       return prefix;
-}
+    }
     // make sure to return a unique name not already on the stack
     while (1) {
       Name ret = Name(prefix.str + std::to_string(otherIndex++));
       if (reverseLabelMapping.find(ret) == reverseLabelMapping.end()) {
         return ret;
-}
+      }
     }
   }
 
@@ -320,11 +320,11 @@ struct UniqueNameMapper {
         if (auto* block = curr->dynCast<Block>()) {
           if (block->name.is()) {
             block->name = self->mapper.pushLabelName(block->name);
-}
+          }
         } else if (auto* loop = curr->dynCast<Loop>()) {
           if (loop->name.is()) {
             loop->name = self->mapper.pushLabelName(loop->name);
-}
+          }
         }
       }
       static void doPostVisitControlFlow(Walker* self, Expression** currp) {
@@ -332,11 +332,11 @@ struct UniqueNameMapper {
         if (auto* block = curr->dynCast<Block>()) {
           if (block->name.is()) {
             self->mapper.popLabelName(block->name);
-}
+          }
         } else if (auto* loop = curr->dynCast<Loop>()) {
           if (loop->name.is()) {
             self->mapper.popLabelName(loop->name);
-}
+          }
         }
       }
 

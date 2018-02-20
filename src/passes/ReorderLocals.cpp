@@ -45,17 +45,17 @@ struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
     sort(newToOld.begin(), newToOld.end(), [this, curr](Index a, Index b) -> bool {
       if (curr->isParam(a) && !curr->isParam(b)) {
         return true;
-}
+      }
       if (curr->isParam(b) && !curr->isParam(a)) {
         return false;
-}
+      }
       if (curr->isParam(b) && curr->isParam(a)) {
         return a < b;
       }
       if (counts[a] == counts[b]) {
         if (counts[a] == 0) {
           return a < b;
-}
+        }
         return firstUses[a] < firstUses[b];
       }
       return counts[a] > counts[b];

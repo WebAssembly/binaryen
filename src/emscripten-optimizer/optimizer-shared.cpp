@@ -57,15 +57,15 @@ AsmType detectType(
       AsmType ret = asmData->getType(node->getCString());
       if (ret != ASM_NONE) {
         return ret;
-}
+      }
     }
     if (!inVarDef) {
       if (node == INF || node == NaN) {
         return ASM_DOUBLE;
-}
+      }
       if (node == TEMP_RET0) {
         return ASM_INT;
-}
+      }
       return ASM_NONE;
     }
     // We are in a variable definition, where Math_fround(0) optimized into a global constant
@@ -74,13 +74,13 @@ AsmType detectType(
       ASM_FLOAT_ZERO = node->getIString();
     } else {
       assert(node == ASM_FLOAT_ZERO);
-}
+    }
     return ASM_FLOAT;
   }
   if (node->isNumber()) {
     if (!wasm::isInteger(node->getNumber())) {
       return ASM_DOUBLE;
-}
+    }
     return ASM_INT;
   }
   switch (node[0]->getCString()[0]) {
@@ -117,7 +117,7 @@ AsmType detectType(
             return ASM_INT16X8;
           } else if (name == SIMD_INT32X4 || name == SIMD_INT32X4_CHECK) {
             return ASM_INT32X4;
-}
+          }
         }
         return ASM_NONE;
       } else if (node[0] == CONDITIONAL) {
@@ -155,7 +155,7 @@ AsmType detectType(
         HeapInfo info = parseHeap(node[1][1]->getCString());
         if (info.valid) {
           return ASM_NONE;
-}
+        }
         return info.floaty ? ASM_DOUBLE : ASM_INT; // XXX ASM_FLOAT?
       }
       break;
@@ -180,13 +180,13 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     double value = node->getNumber();
     if (value < 0) {
       return ASM_SIGNED;
-}
+    }
     if (value > uint32_t(-1) || fmod(value, 1) != 0) {
       return ASM_NONSIGNED;
-}
+    }
     if (wasm::isSInteger32(value)) {
       return ASM_FLEXIBLE;
-}
+    }
     return ASM_UNSIGNED;
   }
   IString type = node[0]->getIString();
@@ -196,7 +196,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
       case '>': {
         if (op == TRSHIFT) {
           return ASM_UNSIGNED;
-}
+        }
       } // fallthrough
       case '|':
       case '&':
@@ -231,7 +231,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
   } else if (type == CALL) {
     if (node[1]->isString() && (node[1] == MATH_FROUND || node[1] == minifiedFround)) {
       return ASM_NONSIGNED;
-}
+    }
   } else if (type == SEQ) {
     return detectSign(node[2], minifiedFround);
   }

@@ -90,11 +90,11 @@ struct LegalizeJSInterface : public Pass {
           auto iter = illegalToLegal->find(curr->target);
           if (iter == illegalToLegal->end()) {
             return;
-}
+          }
 
           if (iter->second == getFunction()->name) {
             return; // inside the stub function itself, is the one safe place to do the call
-}
+          }
           replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
         }
       };
@@ -114,11 +114,11 @@ private:
     for (auto param : t->params) {
       if (param == i64 || param == f32) {
         return true;
-}
+      }
     }
     if (t->result == i64 || t->result == f32) {
       return true;
-}
+    }
     return false;
   }
 

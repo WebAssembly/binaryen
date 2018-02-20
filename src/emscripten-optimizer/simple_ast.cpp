@@ -102,8 +102,8 @@ void Value::stringify(std::ostream& os, bool pretty) {
             os << "," << std::endl;
           } else {
             os << ", ";
-        
-}}
+          }
+        }
         indentify();
         (*arr)[i]->stringify(os, pretty);
       }
@@ -137,7 +137,7 @@ void Value::stringify(std::ostream& os, bool pretty) {
           os << ", ";
           if (pretty) {
             os << std::endl;
-}
+          }
         }
         indentify();
         os << '"' << i.first.c_str() << "\": ";
@@ -177,8 +177,8 @@ void dump(const char* str, Ref node, bool pretty) {
     node->stringify(std::cerr, pretty);
   } else {
     std::cerr << "(nullptr)";
-  
-}std::cerr << std::endl;
+  }
+  std::cerr << std::endl;
 }
 
 // AST traversals
@@ -203,7 +203,7 @@ template <class T, int init> struct StackedStack { // a stack, on the stack
   ~StackedStack() {
     if (alloced) {
       free(storage);
-}
+    }
   }
 
   int size() { return used; }
@@ -247,7 +247,7 @@ template <class T, int init> struct StackedStack { // a stack, on the stack
 void traversePre(Ref node, std::function<void(Ref)> visit) {
   if (!visitable(node)) {
     return;
-}
+  }
   visit(node);
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
@@ -272,7 +272,7 @@ void traversePre(Ref node, std::function<void(Ref)> visit) {
       stack.pop_back();
       if (stack.size() == 0) {
         break;
-}
+      }
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -287,7 +287,7 @@ void traversePrePost(
   Ref node, std::function<void(Ref)> visitPre, std::function<void(Ref)> visitPost) {
   if (!visitable(node)) {
     return;
-}
+  }
   visitPre(node);
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
@@ -313,7 +313,7 @@ void traversePrePost(
       stack.pop_back();
       if (stack.size() == 0) {
         break;
-}
+      }
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -329,10 +329,10 @@ void traversePrePostConditional(
   Ref node, std::function<bool(Ref)> visitPre, std::function<void(Ref)> visitPost) {
   if (!visitable(node)) {
     return;
-}
+  }
   if (!visitPre(node)) {
     return;
-}
+  }
   StackedStack<TraverseInfo, TRAV_STACK> stack;
   int index = 0;
   ArrayStorage* arr = &node->getArray();
@@ -358,7 +358,7 @@ void traversePrePostConditional(
       stack.pop_back();
       if (stack.size() == 0) {
         break;
-}
+      }
       TraverseInfo& back = stack.back();
       index = back.index;
       arr = back.arr;
@@ -372,14 +372,14 @@ void traversePrePostConditional(
 void traverseFunctions(Ref ast, std::function<void(Ref)> visit) {
   if (!ast || ast->size() == 0) {
     return;
-}
+  }
   if (ast[0] == TOPLEVEL) {
     Ref stats = ast[1];
     for (size_t i = 0; i < stats->size(); i++) {
       Ref curr = stats[i];
       if (curr[0] == DEFUN) {
         visit(curr);
-}
+      }
     }
   } else if (ast[0] == DEFUN) {
     visit(ast);

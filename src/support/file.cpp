@@ -26,12 +26,12 @@ T wasm::read_file(
   const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) {
     std::cerr << "Loading '" << filename << "'..." << std::endl;
-}
+  }
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
   if (binary == Flags::Binary) {
     flags |= std::ifstream::binary;
-}
+  }
   infile.open(filename, flags);
   if (!infile.is_open()) {
     std::cerr << "Failed opening '" << filename << "'" << std::endl;
@@ -49,7 +49,7 @@ T wasm::read_file(
   T input(size_t(insize) + (binary == Flags::Binary ? 0 : 1), '\0');
   if (size_t(insize) == 0) {
     return input;
-}
+  }
   infile.seekg(0);
   infile.read(&input[0], insize);
   if (binary == Flags::Text) {
@@ -74,11 +74,11 @@ wasm::Output::Output(
       if (filename.size()) {
         if (debug == Flags::Debug) {
           std::cerr << "Opening '" << filename << "'" << std::endl;
-}
+        }
         auto flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
-}
+        }
         outfile.open(filename, flags);
         if (!outfile.is_open()) {
           std::cerr << "Failed opening '" << filename << "'" << std::endl;

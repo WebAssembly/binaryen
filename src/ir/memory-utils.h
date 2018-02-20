@@ -30,13 +30,13 @@ namespace MemoryUtils {
 inline bool flatten(Memory& memory) {
   if (memory.segments.size() == 0) {
     return true;
-}
+  }
   std::vector<char> data;
   for (auto& segment : memory.segments) {
     auto* offset = segment.offset->dynCast<Const>();
     if (!offset) {
       return false;
-}
+    }
   }
   for (auto& segment : memory.segments) {
     auto* offset = segment.offset->dynCast<Const>();

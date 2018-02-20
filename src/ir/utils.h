@@ -95,7 +95,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     // don't need to look at breaks
     if (isConcreteType(curr->type)) {
       return;
-}
+    }
     // otherwise, we have no final fallthrough element to determine the type,
     // could be determined by breaks
     if (curr->name.is()) {
@@ -116,7 +116,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     }
     if (curr->type == unreachable) {
       return;
-}
+    }
     // type is none, but we might be unreachable
     if (curr->type == none) {
       for (auto* child : curr->list) {
@@ -269,7 +269,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) {
       return;
-}
+    }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
       if (isConcreteType(child->type)) {
@@ -286,11 +286,11 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     bool acted = false;
     if (maybeDrop(curr->ifTrue)) {
       acted = true;
-}
+    }
     if (curr->ifFalse) {
       if (maybeDrop(curr->ifFalse)) {
         acted = true;
-}
+      }
     }
     if (acted) {
       reFinalize();

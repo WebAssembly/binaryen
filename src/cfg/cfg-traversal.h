@@ -81,7 +81,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   void link(BasicBlock* from, BasicBlock* to) {
     if (!from || !to) {
       return; // if one of them is not reachable, ignore
-}
+    }
     from->out.push_back(to);
     to->in.push_back(from);
   }
@@ -90,15 +90,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto* curr = (*currp)->cast<Block>();
     if (!curr->name.is()) {
       return;
-}
+    }
     auto iter = self->branches.find(curr);
     if (iter == self->branches.end()) {
       return;
-}
+    }
     auto& origins = iter->second;
     if (origins.size() == 0) {
       return;
-}
+    }
     // we have branches to here, so we need a new block
     auto* last = self->currBasicBlock;
     self->startBasicBlock();
@@ -274,7 +274,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       for (auto* out : curr->out) {
         if (!alive.count(out)) {
           queue.insert(out);
-}
+        }
       }
     }
     return alive;
@@ -303,7 +303,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   void generateDebugIds() {
     if (debugIds.size() > 0) {
       return;
-}
+    }
     for (auto& block : basicBlocks) {
       debugIds[block.get()] = debugIds.size();
     }

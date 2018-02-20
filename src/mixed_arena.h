@@ -105,7 +105,7 @@ struct MixedArena {
       }
       if (allocated) {
         delete allocated;
-}
+      }
       return curr->allocSpace(size);
     }
     size = (size + 7) & (-8); // same alignment as malloc TODO optimize?
@@ -141,7 +141,7 @@ struct MixedArena {
     clear();
     if (next.load()) {
       delete next.load();
-}
+    }
   }
 };
 

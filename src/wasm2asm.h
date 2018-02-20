@@ -51,7 +51,7 @@ void flattenAppend(Ref ast, Ref extra) {
     index = 3;
   } else {
     abort();
-}
+  }
   if (extra->isArray() && extra[0] == BLOCK) {
     for (size_t i = 0; i < extra[1]->size(); i++) {
       ast[index]->push_back(extra[1][i]);
@@ -165,8 +165,8 @@ public:
       while (*mod) {
         if (*mod == '-') {
           *mod = '_';
-        
-}mod++;
+        }
+        mod++;
       }
       IString result = fromName(IString(str, false));
       free((void*)str);
@@ -704,7 +704,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     Ref blockify(Ref ast) {
       if (isBlock(ast)) {
         return ast;
-}
+      }
       Ref ret = ValueBuilder::makeBlock();
       ret[1]->push_back(ValueBuilder::makeStatement(ast));
       return ret;
@@ -783,7 +783,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       }
       if (!curr->value) {
         return theBreak;
-}
+      }
       // generate the value, including assigning to the result, and then do the break
       Ref ret = visitAndAssign(curr->value, breakResults[curr->name]);
       ret = blockify(ret);

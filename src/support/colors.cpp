@@ -35,7 +35,7 @@ void Colors::outputColorCode(std::ostream& stream, const char* colorCode) {
   }();
   if (has_color && !colors_disabled) {
     stream << colorCode;
-}
+  }
 }
 #elif defined(_WIN32)
 #include <io.h>

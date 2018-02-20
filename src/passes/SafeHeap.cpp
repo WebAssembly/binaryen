@@ -68,7 +68,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   void visitLoad(Load* curr) {
     if (curr->type == unreachable) {
       return;
-}
+    }
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(getLoadName(curr),
       {
@@ -80,7 +80,7 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   void visitStore(Store* curr) {
     if (curr->type == unreachable) {
       return;
-}
+    }
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(getStoreName(curr),
       {
@@ -151,25 +151,25 @@ struct SafeHeap : public Pass {
         load.bytes = bytes;
         if (bytes > getTypeSize(type)) {
           continue;
-}
+        }
         for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
           if (isTypeFloat(type) && signed_) {
             continue;
-}
+          }
           for (Index align : {1, 2, 4, 8}) {
             load.align = align;
             if (align > bytes) {
               continue;
-}
+            }
             for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
               if (isAtomic && align != bytes) {
                 continue;
-}
+              }
               if (isAtomic && !module->memory.shared) {
                 continue;
-}
+              }
               addLoadFunc(load, module);
             }
           }
@@ -185,20 +185,20 @@ struct SafeHeap : public Pass {
         store.bytes = bytes;
         if (bytes > getTypeSize(valueType)) {
           continue;
-}
+        }
         for (Index align : {1, 2, 4, 8}) {
           store.align = align;
           if (align > bytes) {
             continue;
-}
+          }
           for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
             if (isAtomic && align != bytes) {
               continue;
-}
+            }
             if (isAtomic && !module->memory.shared) {
               continue;
-}
+            }
             addStoreFunc(store, module);
           }
         }

@@ -87,7 +87,7 @@ struct ReReloop final : public Pass {
     std::vector<Index> list;
     for (auto i : values) {
       list.push_back(i);
-}
+    }
     from->AddSwitchBranchTo(to, std::move(list));
   }
 

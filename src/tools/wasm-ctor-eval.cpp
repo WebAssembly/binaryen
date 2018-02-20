@@ -379,8 +379,8 @@ int main(int argc, const char* argv[]) {
   {
     if (options.debug) {
       std::cerr << "reading...\n";
-    
-}ModuleReader reader;
+    }
+    ModuleReader reader;
     reader.setDebug(options.debug);
 
     try {
@@ -414,7 +414,7 @@ int main(int argc, const char* argv[]) {
   if (options.extra.count("output") > 0) {
     if (options.debug) {
       std::cerr << "writing..." << std::endl;
-}
+    }
     ModuleWriter writer;
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);

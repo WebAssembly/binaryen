@@ -112,7 +112,7 @@ struct SSAify : public Pass {
       for (auto* set : sets) {
         if (set == *sets.begin()) {
           continue;
-}
+        }
         auto currIndexes = gatherIndexes(set);
         std::vector<Index> intersection;
         std::set_intersection(indexes.begin(), indexes.end(), currIndexes.begin(),
@@ -120,7 +120,7 @@ struct SSAify : public Pass {
         indexes.clear();
         if (intersection.empty()) {
           break;
-}
+        }
         // TODO: or keep sorted vectors?
         for (Index i : intersection) {
           indexes.insert(i);

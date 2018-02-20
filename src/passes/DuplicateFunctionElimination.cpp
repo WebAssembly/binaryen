@@ -39,11 +39,11 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     hash(func->getNumParams());
     for (auto type : func->params) {
       hash(type);
-}
+    }
     hash(func->getNumVars());
     for (auto type : func->vars) {
       hash(type);
-}
+    }
     hash(func->result);
     hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
     hash(ExpressionAnalyzer::hash(func->body));
@@ -104,7 +104,7 @@ struct DuplicateFunctionElimination : public Pass {
         Index size = group.size();
         if (size == 1) {
           continue;
-}
+        }
         // The groups should be fairly small, and even if a group is large we should
         // have almost all of them identical, so we should not hit actual O(N^2)
         // here unless the hash is quite poor.
@@ -112,12 +112,12 @@ struct DuplicateFunctionElimination : public Pass {
           auto* first = group[i];
           if (duplicates.count(first->name)) {
             continue;
-}
+          }
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
             if (duplicates.count(second->name)) {
               continue;
-}
+            }
             if (equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
@@ -176,21 +176,21 @@ private:
   bool equal(Function* left, Function* right) {
     if (left->getNumParams() != right->getNumParams()) {
       return false;
-}
+    }
     if (left->getNumVars() != right->getNumVars()) {
       return false;
-}
+    }
     for (Index i = 0; i < left->getNumLocals(); i++) {
       if (left->getLocalType(i) != right->getLocalType(i)) {
         return false;
-}
+      }
     }
     if (left->result != right->result) {
       return false;
-}
+    }
     if (left->type != right->type) {
       return false;
-}
+    }
     return ExpressionAnalyzer::equal(left->body, right->body);
   }
 };

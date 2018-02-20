@@ -112,7 +112,7 @@ template <typename T, typename MiniT> struct LEB {
       value |= significant_payload << shift;
       if (last) {
         break;
-}
+      }
       shift += 7;
       if (size_t(shift) >= sizeof(T) * 8) {
         throw ParseException("LEB overflow");
@@ -153,14 +153,14 @@ public:
   BufferWithRandomAccess& operator<<(int8_t x) {
     if (debug) {
       std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
-}
+    }
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
     if (debug) {
       std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
-}
+    }
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
@@ -168,7 +168,7 @@ public:
   BufferWithRandomAccess& operator<<(int32_t x) {
     if (debug) {
       std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
-}
+    }
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -181,7 +181,7 @@ public:
   BufferWithRandomAccess& operator<<(int64_t x) {
     if (debug) {
       std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
-}
+    }
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -264,27 +264,27 @@ public:
   BufferWithRandomAccess& operator<<(float x) {
     if (debug) {
       std::cerr << "writeFloat32: " << x << " (at " << size() << ")" << std::endl;
-}
+    }
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
     if (debug) {
       std::cerr << "writeFloat64: " << x << " (at " << size() << ")" << std::endl;
-}
+    }
     return *this << Literal(x).reinterpreti64();
   }
 
   void writeAt(size_t i, uint16_t x) {
     if (debug) {
       std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
-}
+    }
     (*this)[i] = x & 0xff;
     (*this)[i + 1] = x >> 8;
   }
   void writeAt(size_t i, uint32_t x) {
     if (debug) {
       std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
-}
+    }
     (*this)[i] = x & 0xff;
     x >>= 8;
     (*this)[i + 1] = x & 0xff;
@@ -299,7 +299,7 @@ public:
   void writeAtFullFixedSize(size_t i, U32LEB x) {
     if (debug) {
       std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-}
+    }
     x.writeAt(this, i, MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
   }
   // writes out an LEB of normal size
@@ -307,14 +307,14 @@ public:
   size_t writeAt(size_t i, U32LEB x) {
     if (debug) {
       std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-}
+    }
     return x.writeAt(this, i);
   }
 
   template <typename T> void writeTo(T& o) {
     for (auto c : *this) {
       o << c;
-}
+    }
   }
 
   std::vector<char> getAsChars() {

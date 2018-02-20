@@ -50,7 +50,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
     auto* old = getCurrent();
     if (old == expression) {
       return expression;
-}
+    }
     super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
@@ -312,7 +312,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   Expression* drop(Expression* toDrop) {
     if (toDrop->type == unreachable) {
       return toDrop;
-}
+    }
     return Builder(*getModule()).makeDrop(toDrop);
   }
 
@@ -344,7 +344,7 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   void visitCallIndirect(CallIndirect* curr) {
     if (handleCall(curr) != curr) {
       return;
-}
+    }
     if (isUnreachable(curr->target)) {
       auto* block = getModule()->allocator.alloc<Block>();
       for (auto* operand : curr->operands) {

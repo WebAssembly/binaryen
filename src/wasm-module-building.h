@@ -155,7 +155,7 @@ public:
     wasm->addFunction(func);
     if (!useWorkers()) {
       return; // we optimize at the end in that case
-}
+    }
     queueFunction(func);
     // wake workers if needed
     auto wake = availableFuncs.load();
@@ -225,7 +225,7 @@ private:
     DEBUG_THREAD("joining");
     for (auto& thread : threads) {
       thread->join();
-}
+    }
     DEBUG_THREAD("joined");
   }
 

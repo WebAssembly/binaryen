@@ -38,7 +38,7 @@ inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base
   }
   if (imported.isNull()) {
     return nullptr;
-}
+  }
   // find a global inited to it
   for (auto& global : wasm.globals) {
     if (auto* init = global->init->dynCast<GetGlobal>()) {

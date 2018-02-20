@@ -51,7 +51,7 @@ int main(int argc, const char* argv[]) {
 
   if (options.debug) {
     std::cerr << "parsing binary..." << std::endl;
-}
+  }
   Module wasm;
   try {
     std::unique_ptr<std::ifstream> sourceMapStream;
@@ -75,7 +75,7 @@ int main(int argc, const char* argv[]) {
 
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
-}
+  }
   Output output(
     options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   WasmPrinter::printModule(&wasm, output.getStream());
@@ -83,5 +83,5 @@ int main(int argc, const char* argv[]) {
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;
-}
+  }
 }

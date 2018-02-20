@@ -39,8 +39,8 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
       space -= nextWord.size() + 1;
       if (space > 0) {
         os << ' ';
-      
-}nextWord.clear();
+      }
+      nextWord.clear();
       if (content[i] == '\n') {
         os << '\n';
         space = SCREEN_WIDTH - leftPad;
@@ -56,7 +56,7 @@ Options::Options(const std::string& command, const std::string& description)
       std::cerr << command;
       if (positional != Arguments::Zero) {
         std::cerr << ' ' << positionalName;
-}
+      }
       std::cerr << "\n\n";
       printWrap(std::cerr, 0, description);
       std::cerr << "\n\nOptions:\n";
@@ -102,7 +102,7 @@ void Options::parse(int argc, const char* argv[]) {
     for (size_t i = 0;; ++i) {
       if (s[i] != '-') {
         return i;
-}
+      }
     }
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
@@ -141,8 +141,8 @@ void Options::parse(int argc, const char* argv[]) {
     for (auto& o : options) {
       if (o.longName == currentOption || o.shortName == currentOption) {
         option = &o;
-}
-}
+      }
+    }
     if (!option) {
       std::cerr << "Unknown option '" << currentOption << "'\n";
       exit(EXIT_FAILURE);
@@ -175,7 +175,7 @@ void Options::parse(int argc, const char* argv[]) {
         if (!argument.size()) {
           if (i + 1 != e) {
             argument = argv[++i];
-}
+          }
         }
         break;
     }

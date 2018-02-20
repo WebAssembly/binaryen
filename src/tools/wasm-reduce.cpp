@@ -126,15 +126,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
           if (shrinking) {
             currCommand += " --dce --vacuum ";
-          
-}currCommand += working + " -o " + test + " " + pass;
+          }
+          currCommand += working + " -o " + test + " " + pass;
           if (debugInfo) {
             currCommand += " -g ";
-          
-}if (verbose) {
+          }
+          if (verbose) {
             std::cerr << "|    trying pass command: " << currCommand << "\n";
-          
-}if (!ProgramResult(currCommand).failed()) {
+          }
+          if (!ProgramResult(currCommand).failed()) {
             auto newSize = file_size(test);
             if (newSize < oldSize) {
               // the pass didn't fail, and the size looks smaller, so promising
@@ -153,8 +153,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
     if (verbose) {
       std::cerr << "|    done with passes for now\n";
-  
-}}
+    }
+  }
 
   // does one pass of slow and destructive reduction. returns whether it
   // succeeded or not
@@ -233,10 +233,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // std::cerr << "try " << curr << " => " << with << '\n';
     if (curr->type != with->type) {
       return false;
-}
+    }
     if (!shouldTryToReduce()) {
       return false;
-}
+    }
     replaceCurrent(with);
     if (!writeAndTestReduction()) {
       replaceCurrent(curr);
@@ -256,10 +256,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   bool tryToReplaceChild(Expression*& child, Expression* with) {
     if (child->type != with->type) {
       return false;
-}
+    }
     if (!shouldTryToReduce()) {
       return false;
-}
+    }
     auto* before = child;
     child = with;
     if (!writeAndTestReduction()) {
@@ -275,7 +275,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   std::string getLocation() {
     if (getFunction()) {
       return getFunction()->name.str;
-}
+    }
     return "(non-function context)";
   }
 
@@ -287,16 +287,16 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     if (curr->type == none) {
       if (tryToReduceCurrentToNone()) {
         return;
-}
+      }
     } else if (isConcreteType(curr->type)) {
       if (tryToReduceCurrentToConst()) {
         return;
-}
+      }
     } else {
       assert(curr->type == unreachable);
       if (tryToReduceCurrentToUnreachable()) {
         return;
-}
+      }
     }
     // specific reductions
     if (auto* iff = curr->dynCast<If>()) {
@@ -333,7 +333,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     } else if (auto* call = curr->dynCast<CallIndirect>()) {
       if (tryToReplaceCurrent(call->target)) {
         return;
-}
+      }
       handleCall(call);
     }
   }
@@ -364,7 +364,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       }
       if (!first.isNull()) {
         break;
-}
+      }
     }
     visitSegmented(curr, first, 100);
   }
@@ -383,12 +383,12 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       for (size_t i = 0; i < data.size() && !data.empty(); i++) {
         if (!shouldTryToReduce(bonus)) {
           continue;
-}
+        }
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) {
             data.pop_back();
-}
+          }
         }
         if (writeAndTestReduction()) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
@@ -404,14 +404,14 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (auto& segment : curr->segments) {
       if (segment.data.empty()) {
         continue;
-}
+      }
       for (auto& item : segment.data) {
         if (!shouldTryToReduce(bonus)) {
           continue;
-}
+        }
         if (item == zero) {
           continue;
-}
+        }
         auto save = item;
         item = zero;
         if (writeAndTestReduction()) {
@@ -436,7 +436,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (size_t i = 0; i < functionNames.size(); i++) {
       if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
         continue;
-}
+      }
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
@@ -446,7 +446,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       }
       if (names.size() == 0) {
         continue;
-}
+      }
       std::cout << "|    try to remove " << names.size() << " functions (skip: " << skip << ")\n";
       if (tryToRemoveFunctions(names)) {
         noteReduction(names.size());
@@ -466,7 +466,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (size_t i = 0; i < exports.size(); i++) {
       if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
         continue;
-}
+      }
       std::vector<Export> currExports;
       for (size_t j = 0; currExports.size() < skip && i + j < exports.size(); j++) {
         auto exp = exports[i + j];
@@ -526,11 +526,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           }
           if (!other.isNull()) {
             break;
-}
+          }
         }
         if (other.isNull()) {
           return; // we failed to find a replacement
-}
+        }
         for (auto& segment : curr->segments) {
           for (auto& name : segment.data) {
             if (names.count(name)) {
@@ -566,10 +566,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   void handleCondition(Expression*& condition) {
     if (!condition) {
       return;
-}
+    }
     if (condition->is<Const>()) {
       return;
-}
+    }
     auto* c = builder->makeConst(Literal(int32_t(0)));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
@@ -581,7 +581,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (auto* op : call->operands) {
       if (tryToReplaceCurrent(op)) {
         return;
-}
+      }
     }
   }
 
@@ -589,7 +589,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     auto* curr = getCurrent();
     if (curr->is<Nop>()) {
       return false;
-}
+    }
     // try to replace with a trivial value
     Nop nop;
     if (tryToReplaceCurrent(&nop)) {
@@ -604,12 +604,12 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     auto* curr = getCurrent();
     if (curr->is<Const>()) {
       return false;
-}
+    }
     // try to replace with a trivial value
     Const* c = builder->makeConst(Literal(int32_t(0)));
     if (tryToReplaceCurrent(c)) {
       return true;
-}
+    }
     c->value = LiteralUtils::makeLiteralFromInt32(1, curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
@@ -619,7 +619,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     auto* curr = getCurrent();
     if (curr->is<Unreachable>()) {
       return false;
-}
+    }
     // try to replace with a trivial value
     Unreachable un;
     if (tryToReplaceCurrent(&un)) {
@@ -675,12 +675,11 @@ int main(int argc, const char* argv[]) {
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";
-  
-}if (working.size() == 0) {
+  }
+  if (working.size() == 0) {
     Fatal() << "working file not provided\n";
-
-  
-}std::cerr << "|wasm-reduce\n";
+  }
+  std::cerr << "|wasm-reduce\n";
   std::cerr << "|input: " << input << '\n';
   std::cerr << "|test: " << test << '\n';
   std::cerr << "|working: " << working << '\n';
@@ -764,7 +763,7 @@ int main(int argc, const char* argv[]) {
     // always stop after a pass reduction attempt, for final cleanup
     if (stopping) {
       break;
-}
+    }
 
     // check if the full cycle (destructive/passes) has helped or not
     if (lastPostPassesSize && newSize >= lastPostPassesSize) {
@@ -806,7 +805,7 @@ int main(int argc, const char* argv[]) {
       lastDestructiveReductions = reducer.reduceDestructively(factor);
       if (lastDestructiveReductions > 0) {
         break;
-}
+      }
       // we failed to reduce destructively
       if (factor == 1) {
         stopping = true;

@@ -54,10 +54,10 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
       auto* add = ptr->dynCast<Binary>();
       if (!add) {
         break;
-}
+      }
       if (add->op != AddInt32) {
         break;
-}
+      }
       auto* left = add->left->dynCast<Const>();
       auto* right = add->right->dynCast<Const>();
       // note: in optimized code, we shouldn't see an add of two constants, so don't worry about

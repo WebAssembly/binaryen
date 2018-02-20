@@ -91,7 +91,7 @@ int64_t Literal::getBits() const {
 bool Literal::operator==(const Literal& other) const {
   if (type != other.type) {
     return false;
-}
+  }
   switch (type) {
     case Type::none:
       return true;
@@ -113,10 +113,10 @@ bool Literal::operator!=(const Literal& other) const { return !(*this == other);
 bool Literal::bitwiseEqual(const Literal& other) const {
   if (type != other.type) {
     return false;
-}
+  }
   if (type == none) {
     return true;
-}
+  }
   return getBits() == other.getBits();
 }
 
@@ -215,30 +215,30 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
 Literal Literal::countLeadingZeroes() const {
   if (type == Type::i32) {
     return Literal((int32_t)CountLeadingZeroes(i32));
-}
+  }
   if (type == Type::i64) {
     return Literal((int64_t)CountLeadingZeroes(i64));
-}
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::countTrailingZeroes() const {
   if (type == Type::i32) {
     return Literal((int32_t)CountTrailingZeroes(i32));
-}
+  }
   if (type == Type::i64) {
     return Literal((int64_t)CountTrailingZeroes(i64));
-}
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::popCount() const {
   if (type == Type::i32) {
     return Literal((int32_t)PopCount(i32));
-}
+  }
   if (type == Type::i64) {
     return Literal((int64_t)PopCount(i64));
-}
+  }
   WASM_UNREACHABLE();
 }
 
@@ -270,40 +270,40 @@ Literal Literal::truncateToF32() const {
 Literal Literal::convertSToF32() const {
   if (type == Type::i32) {
     return Literal(float(i32));
-}
+  }
   if (type == Type::i64) {
     return Literal(float(i64));
-}
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertUToF32() const {
   if (type == Type::i32) {
     return Literal(float(uint32_t(i32)));
-}
+  }
   if (type == Type::i64) {
     return Literal(float(uint64_t(i64)));
-}
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertSToF64() const {
   if (type == Type::i32) {
     return Literal(double(i32));
-}
+  }
   if (type == Type::i64) {
     return Literal(double(i64));
-}
+  }
   WASM_UNREACHABLE();
 }
 
 Literal Literal::convertUToF64() const {
   if (type == Type::i32) {
     return Literal(double(uint32_t(i32)));
-}
+  }
   if (type == Type::i64) {
     return Literal(double(uint64_t(i64)));
-}
+  }
   WASM_UNREACHABLE();
 }
 
@@ -796,30 +796,30 @@ Literal Literal::min(const Literal& other) const {
       auto l = getf32(), r = other.getf32();
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
-}
+      }
       auto result = std::min(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
       if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-}
+      }
       if (!lnan && !rnan) {
         return Literal((int32_t)0x7fc00000).castToF32();
-}
+      }
       return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
-}
+      }
       auto result = std::min(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
       if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-}
+      }
       if (!lnan && !rnan) {
         return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-}
+      }
       return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
     }
     default:
@@ -833,30 +833,30 @@ Literal Literal::max(const Literal& other) const {
       auto l = getf32(), r = other.getf32();
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
-}
+      }
       auto result = std::max(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
       if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-}
+      }
       if (!lnan && !rnan) {
         return Literal((int32_t)0x7fc00000).castToF32();
-}
+      }
       return Literal(lnan ? l : r).castToI32().or_(Literal(0xc00000)).castToF32();
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
-}
+      }
       auto result = std::max(l, r);
       bool lnan = std::isnan(l), rnan = std::isnan(r);
       if (!std::isnan(result) && !lnan && !rnan) {
         return Literal(result);
-}
+      }
       if (!lnan && !rnan) {
         return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-}
+      }
       return Literal(lnan ? l : r).castToI64().or_(Literal(int64_t(0x8000000000000LL))).castToF64();
     }
     default:

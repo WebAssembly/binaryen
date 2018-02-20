@@ -51,7 +51,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     // if in unreachable code, ignore
     if (!currBasicBlock) {
       return;
-}
+    }
     auto* pointer = getCurrentPointer();
     currBasicBlock->contents.actions.emplace_back(pointer);
     actualPointers[pointer] = pointer; // starts out as correct, may change later
@@ -87,7 +87,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     for (auto& curr : basicBlocks) {
       if (liveBlocks.count(curr.get()) == 0) {
         continue; // ignore dead blocks
-}
+      }
       auto& liveness = curr->contents;
       auto& actions = liveness.actions;
       Index lastCall = -1;
@@ -99,7 +99,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
       }
       if (lastCall == Index(-1)) {
         continue; // nothing to see here
-}
+      }
       // scan through the block, spilling around the calls
       // TODO: we can filter on pointerMap everywhere
       LocalSet live = liveness.end;
@@ -145,7 +145,7 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     auto* call = *origin;
     if (call->type == unreachable) {
       return; // the call is never reached anyhow, ignore
-}
+    }
     Builder builder(*module);
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed

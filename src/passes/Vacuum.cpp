@@ -53,7 +53,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
     // an unreachable node must not be changed
     if (curr->type == unreachable) {
       return curr;
-}
+    }
     while (1) {
       switch (curr->_id) {
         case Expression::Id::NopId:
@@ -94,7 +94,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::GetGlobalId: {
           if (!resultUsed) {
             return nullptr;
-}
+          }
           return curr;
         }
 
@@ -285,7 +285,7 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
   void visitLoop(Loop* curr) {
     if (curr->body->is<Nop>()) {
       ExpressionManipulator::nop(curr);
-}
+    }
   }
 
   void visitDrop(Drop* curr) {

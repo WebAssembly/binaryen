@@ -116,7 +116,7 @@ std::mutex ThreadPool::threadMutex;
 void ThreadPool::initialize(size_t num) {
   if (num == 1) {
     return; // no multiple cores, don't create threads
-}
+  }
   DEBUG_POOL("initialize()\n");
   std::unique_lock<std::mutex> lock(threadMutex);
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
