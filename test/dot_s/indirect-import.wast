@@ -169,4 +169,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["extern_ijidf","extern_v","extern_vj","extern_fd","extern_struct","extern_sret"], "externs": [] }

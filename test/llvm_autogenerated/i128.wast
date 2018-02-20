@@ -1038,4 +1038,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["__ashlti3","__ashrti3","__divti3","__lshrti3","__modti3","__multi3","__udivti3","__umodti3"], "externs": [] }

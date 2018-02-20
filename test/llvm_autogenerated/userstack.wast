@@ -488,4 +488,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["ext_func","ext_func_i32","use_i8_star"], "externs": [] }

@@ -278,4 +278,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"], "declares": ["atoi"], "externs": [] }

@@ -155,4 +155,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"], "declares": ["_Z4atoiPKc"], "externs": [] }

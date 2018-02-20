@@ -145,4 +145,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["double_nullary","float_nullary","i32_binary","i32_nullary","i32_unary","i64_nullary","void_nullary"], "externs": [] }

@@ -993,4 +993,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["a","bar","something","test15_callee0","test15_callee1"], "externs": [] }

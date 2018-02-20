@@ -625,4 +625,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["blue","callee","evoke_side_effects","green","readnone_callee","readonly_callee","red","stackpointer_callee","use_2","use_a","use_b","use_memory"], "externs": [] }

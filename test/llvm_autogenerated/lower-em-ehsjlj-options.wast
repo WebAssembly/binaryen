@@ -149,4 +149,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [], "declares": ["__cxa_begin_catch","__cxa_end_catch","__cxa_find_matching_catch_3","longjmp","setjmp","foo"], "externs": [] }

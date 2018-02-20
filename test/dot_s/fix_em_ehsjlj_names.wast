@@ -136,4 +136,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["emscripten_longjmp"], "externs": [] }

@@ -212,4 +212,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["big_byval_callee","ext_byval_func","ext_byval_func_align8","ext_byval_func_alignedstruct","ext_byval_func_empty","ext_func","ext_func_empty","memcpy"], "externs": [] }

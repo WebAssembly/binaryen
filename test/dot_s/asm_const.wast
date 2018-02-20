@@ -46,4 +46,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["v"]]},"staticBump": 51, "initializers": [] }
+;; METADATA: { "asmConsts": {"0": ["{ Module.print(\"hello, world!\"); }", ["v"]]},"staticBump": 51, "initializers": [], "declares": ["emscripten_asm_const_v"], "externs": [] }

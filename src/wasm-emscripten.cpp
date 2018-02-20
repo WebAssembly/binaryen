@@ -515,6 +515,27 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "]";
   }
 
+  meta << ", \"declares\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Function &&
+        // !import->name.startsWith(EM_JS_PREFIX.str) &&
+        !import->name.startsWith("invoke_") &&
+        !import->name.startsWith("jsCall_")) {
+      meta << maybeComma() << '"' << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
+  meta << ", \"externs\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Global) {
+      meta << maybeComma() << "\"_" << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
   meta << " }\n";
 
   return meta.str();

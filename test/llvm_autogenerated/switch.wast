@@ -120,4 +120,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["foo0","foo1","foo2","foo3","foo4","foo5"], "externs": [] }
