@@ -180,7 +180,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         var mod = Pointer_stringify($0);
         var base = Pointer_stringify($1);
         var name = Pointer_stringify($2);
-        assert(Module['lookupImport'](mod, base) != = undefined,
+        assert(Module['lookupImport'](mod, base) !== undefined,
           'checking import ' + name + ' = ' + mod + '.' + base);
       },
       import->module.str, import->base.str, import->name.str);
@@ -347,7 +347,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       void* ptr = (void*)EM_ASM_INT(
         {
           var value = Module['outside']['wasmTable'][$0];
-          return typeof value == = "number" ? value : -1;
+          return typeof value === "number" ? value : -1;
         },
         index);
       if (ptr == nullptr)
@@ -396,22 +396,22 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             }
             var ret;
             if (!isFloat) {
-              if (bytes == = 1)
+              if (bytes === 1)
                 ret = isSigned ? HEAP8[0] : HEAPU8[0];
-              else if (bytes == = 2)
+              else if (bytes === 2)
                 ret = isSigned ? HEAP16[0] : HEAPU16[0];
-              else if (bytes == = 4)
+              else if (bytes === 4)
                 ret = isSigned ? HEAP32[0] : HEAPU32[0];
-              else if (bytes == = 8) {
+              else if (bytes === 8) {
                 for (var i = 0; i < bytes; i++) {
                   HEAPU8[out64 + i] = HEAPU8[i];
                 }
               } else
                 abort();
             } else {
-              if (bytes == = 4)
+              if (bytes === 4)
                 ret = HEAPF32[0];
-              else if (bytes == = 8)
+              else if (bytes === 8)
                 ret = HEAPF64[0];
               else
                 abort();
@@ -504,18 +504,18 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             var save0 = HEAP32[0];
             var save1 = HEAP32[1];
             if (!isFloat) {
-              if (bytes == = 1)
+              if (bytes === 1)
                 HEAPU8[0] = value;
-              else if (bytes == = 2)
+              else if (bytes === 2)
                 HEAPU16[0] = value;
-              else if (bytes == = 4)
+              else if (bytes === 4)
                 HEAPU32[0] = value;
               else
                 abort();
             } else {
-              if (bytes == = 4)
+              if (bytes === 4)
                 HEAPF32[0] = value;
-              else if (bytes == = 8)
+              else if (bytes === 8)
                 HEAPF64[0] = value;
               else
                 abort();
