@@ -1,0 +1,9 @@
+(module
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (data (get_global $memoryBase) "bad_params.asm.js")
+ (export "ex" (func $ex))
+ (func $ex (; 0 ;)
+  (nop)
+ )
+)
