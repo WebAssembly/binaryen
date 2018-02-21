@@ -25,13 +25,13 @@
 #include <ostream>
 #include <type_traits>
 
-#include "wasm.h"
-#include "wasm-traversal.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
-#include "wasm-builder.h"
+#include "asmjs/shared-constants.h"
 #include "parsing.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -42,13 +42,9 @@ enum {
 
 // wasm VMs on the web have decided to impose some limits on what they
 // accept
-enum WebLimitations {
-  MaxDataSegments = 100 * 1000,
-  MaxFunctionBodySize = 128 * 1024
-};
+enum WebLimitations { MaxDataSegments = 100 * 1000, MaxFunctionBodySize = 128 * 1024 };
 
-template<typename T, typename MiniT>
-struct LEB {
+template <typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 
   T value;
@@ -58,7 +54,9 @@ struct LEB {
 
   bool hasMore(T temp, MiniT byte) {
     // for signed, we must ensure the last bit has the right sign, as it will zero extend
-    return std::is_signed<T>::value ? (temp != 0 && temp != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
+    return std::is_signed<T>::value ? (temp != 0 && temp != -1) || (value >= 0 && (byte & 64)) ||
+                                        (value < 0 && !(byte & 64))
+                                    : (temp != 0);
   }
 
   void write(std::vector<uint8_t>* out) {
@@ -103,9 +101,8 @@ struct LEB {
       bool last = !(byte & 128);
       T payload = byte & 127;
       typedef typename std::make_unsigned<T>::type mask_type;
-      auto shift_mask = 0 == shift
-                            ? ~mask_type(0)
-                            : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
+      auto shift_mask =
+        0 == shift ? ~mask_type(0) : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
       T significant_payload = payload & shift_mask;
       if (significant_payload != payload) {
         if (!(std::is_signed<T>::value && last)) {
@@ -113,7 +110,9 @@ struct LEB {
         }
       }
       value |= significant_payload << shift;
-      if (last) break;
+      if (last) {
+        break;
+      }
       shift += 7;
       if (size_t(shift) >= sizeof(T) * 8) {
         throw ParseException("LEB overflow");
@@ -152,33 +151,51 @@ public:
   BufferWithRandomAccess(bool debug = false) : debug(debug) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
-    if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
+    if (debug) {
+      std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
+    }
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
-    if (debug) std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
+    if (debug) {
+      std::cerr << "writeInt16: " << x << " (at " << size() << ")" << std::endl;
+    }
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
-    if (debug) std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
+    if (debug) {
+      std::cerr << "writeInt32: " << x << " (at " << size() << ")" << std::endl;
+    }
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
     push_back(x & 0xff);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
-    if (debug) std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
-    push_back(x & 0xff); x >>= 8;
+    if (debug) {
+      std::cerr << "writeInt64: " << x << " (at " << size() << ")" << std::endl;
+    }
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
+    push_back(x & 0xff);
+    x >>= 8;
     push_back(x & 0xff);
     return *this;
   }
@@ -239,57 +256,65 @@ public:
     return *this;
   }
 
-  BufferWithRandomAccess& operator<<(uint8_t x) {
-    return *this << (int8_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint16_t x) {
-    return *this << (int16_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint32_t x) {
-    return *this << (int32_t)x;
-  }
-  BufferWithRandomAccess& operator<<(uint64_t x) {
-    return *this << (int64_t)x;
-  }
+  BufferWithRandomAccess& operator<<(uint8_t x) { return *this << (int8_t)x; }
+  BufferWithRandomAccess& operator<<(uint16_t x) { return *this << (int16_t)x; }
+  BufferWithRandomAccess& operator<<(uint32_t x) { return *this << (int32_t)x; }
+  BufferWithRandomAccess& operator<<(uint64_t x) { return *this << (int64_t)x; }
 
   BufferWithRandomAccess& operator<<(float x) {
-    if (debug) std::cerr << "writeFloat32: " << x << " (at " << size() << ")" << std::endl;
+    if (debug) {
+      std::cerr << "writeFloat32: " << x << " (at " << size() << ")" << std::endl;
+    }
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
-    if (debug) std::cerr << "writeFloat64: " << x << " (at " << size() << ")" << std::endl;
+    if (debug) {
+      std::cerr << "writeFloat64: " << x << " (at " << size() << ")" << std::endl;
+    }
     return *this << Literal(x).reinterpreti64();
   }
 
   void writeAt(size_t i, uint16_t x) {
-    if (debug) std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
+    if (debug) {
+      std::cerr << "backpatchInt16: " << x << " (at " << i << ")" << std::endl;
+    }
     (*this)[i] = x & 0xff;
-    (*this)[i+1] = x >> 8;
+    (*this)[i + 1] = x >> 8;
   }
   void writeAt(size_t i, uint32_t x) {
-    if (debug) std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
-    (*this)[i] = x & 0xff; x >>= 8;
-    (*this)[i+1] = x & 0xff; x >>= 8;
-    (*this)[i+2] = x & 0xff; x >>= 8;
-    (*this)[i+3] = x & 0xff;
+    if (debug) {
+      std::cerr << "backpatchInt32: " << x << " (at " << i << ")" << std::endl;
+    }
+    (*this)[i] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 1] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 2] = x & 0xff;
+    x >>= 8;
+    (*this)[i + 3] = x & 0xff;
   }
 
   // writes out an LEB to an arbitrary location. this writes the LEB as a full
   // 5 bytes, the fixed amount that can easily be set aside ahead of time
   void writeAtFullFixedSize(size_t i, U32LEB x) {
-    if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    if (debug) {
+      std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    }
     x.writeAt(this, i, MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
   }
   // writes out an LEB of normal size
   // returns how many bytes were written
   size_t writeAt(size_t i, U32LEB x) {
-    if (debug) std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    if (debug) {
+      std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    }
     return x.writeAt(this, i);
   }
 
-  template <typename T>
-  void writeTo(T& o) {
-    for (auto c : *this) o << c;
+  template <typename T> void writeTo(T& o) {
+    for (auto c : *this) {
+      o << c;
+    }
   }
 
   std::vector<char> getAsChars() {
@@ -302,10 +327,7 @@ public:
 
 namespace BinaryConsts {
 
-enum Meta {
-  Magic = 0x6d736100,
-  Version = 0x01
-};
+enum Meta { Magic = 0x6d736100, Version = 0x01 };
 
 enum Section {
   User = 0,
@@ -344,7 +366,7 @@ enum Subsection {
   NameFunction = 1,
   NameLocal = 2,
 };
-}
+} // namespace UserSections
 
 enum ASTNodes {
   Unreachable = 0x00,
@@ -371,7 +393,6 @@ enum ASTNodes {
   TeeLocal = 0x22,
   GetGlobal = 0x23,
   SetGlobal = 0x24,
-
 
   I32LoadMem = 0x28,
   I64LoadMem = 0x29,
@@ -623,31 +644,37 @@ enum AtomicOpcodes {
   AtomicCmpxchgOps_End = 0x4e
 };
 
-
 enum MemoryAccess {
-  Offset = 0x10,     // bit 4
-  Alignment = 0x80,  // bit 7
+  Offset = 0x10,    // bit 4
+  Alignment = 0x80, // bit 7
   NaturalAlignment = 0
 };
 
-enum MemoryFlags {
-  HasMaximum = 1 << 0,
-  IsShared = 1 << 1
-};
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
 
 } // namespace BinaryConsts
-
 
 inline S32LEB binaryType(Type type) {
   int ret;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
-    case none: ret = BinaryConsts::EncodedType::Empty; break;
-    case i32: ret = BinaryConsts::EncodedType::i32; break;
-    case i64: ret = BinaryConsts::EncodedType::i64; break;
-    case f32: ret = BinaryConsts::EncodedType::f32; break;
-    case f64: ret = BinaryConsts::EncodedType::f64; break;
-    default: abort();
+    case none:
+      ret = BinaryConsts::EncodedType::Empty;
+      break;
+    case i32:
+      ret = BinaryConsts::EncodedType::i32;
+      break;
+    case i64:
+      ret = BinaryConsts::EncodedType::i64;
+      break;
+    case f32:
+      ret = BinaryConsts::EncodedType::f32;
+      break;
+    case f64:
+      ret = BinaryConsts::EncodedType::f64;
+      break;
+    default:
+      abort();
   }
   return S32LEB(ret);
 }
@@ -665,8 +692,10 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   MixedArena allocator;
 
   void prepare();
+
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false)
+    : wasm(input), o(o), debug(debug) {
     prepare();
   }
 
@@ -675,7 +704,7 @@ public:
     struct Entry {
       Name name;
       size_t offset; // where the entry starts
-      size_t size; // the size of the entry
+      size_t size;   // the size of the entry
       Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
     };
     std::vector<Entry> functionBodies;
@@ -692,8 +721,7 @@ public:
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
   void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
-  template<typename T>
-  int32_t startSection(T code);
+  template <typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
@@ -703,8 +731,10 @@ public:
   int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
-  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+  std::map<Index, size_t>
+    mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
+  std::map<Type, size_t>
+    numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function);
   void writeFunctionSignatures();
@@ -714,8 +744,10 @@ public:
   void writeExports();
   void writeDataSegments();
 
-  std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
-  std::unordered_map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
+  std::unordered_map<Name, Index>
+    mappedFunctions; // name of the Function => index. first imports, then internals
+  std::unordered_map<Name, uint32_t>
+    mappedGlobals; // name of the Global => index. first imported globals, then internal globals
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
 
@@ -738,13 +770,14 @@ public:
     const char* data;
     size_t size;
     size_t pointerLocation;
-    Buffer(const char* data, size_t size, size_t pointerLocation) : data(data), size(size), pointerLocation(pointerLocation) {}
+    Buffer(const char* data, size_t size, size_t pointerLocation)
+      : data(data), size(size), pointerLocation(pointerLocation) {}
   };
 
   std::vector<Buffer> buffersToWrite;
 
   void emitBuffer(const char* data, size_t size);
-  void emitString(const char *str);
+  void emitString(const char* str);
   void finishUp();
 
   // AST writing via visitors
@@ -767,37 +800,37 @@ public:
     Visitor<WasmBinaryWriter>::visit(curr);
   }
 
-  void visitBlock(Block *curr);
+  void visitBlock(Block* curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
   void recursePossibleBlockContents(Expression* curr);
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
   int32_t getBreakIndex(Name name);
-  void visitBreak(Break *curr);
-  void visitSwitch(Switch *curr);
-  void visitCall(Call *curr);
-  void visitCallImport(CallImport *curr);
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
-  void visitSetLocal(SetLocal *curr);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallImport(CallImport* curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
+  void visitSetLocal(SetLocal* curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
-  void visitLoad(Load *curr);
-  void visitStore(Store *curr);
-  void visitAtomicRMW(AtomicRMW *curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
-  void visitAtomicWait(AtomicWait *curr);
-  void visitAtomicWake(AtomicWake *curr);
-  void visitConst(Const *curr);
-  void visitUnary(Unary *curr);
-  void visitBinary(Binary *curr);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
-  void visitHost(Host *curr);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
+  void visitLoad(Load* curr);
+  void visitStore(Store* curr);
+  void visitAtomicRMW(AtomicRMW* curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
+  void visitAtomicWait(AtomicWait* curr);
+  void visitAtomicWake(AtomicWake* curr);
+  void visitConst(Const* curr);
+  void visitUnary(Unary* curr);
+  void visitBinary(Binary* curr);
+  void visitSelect(Select* curr);
+  void visitReturn(Return* curr);
+  void visitHost(Host* curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
+  void visitDrop(Drop* curr);
 };
 
 class WasmBinaryBuilder {
@@ -816,17 +849,12 @@ class WasmBinaryBuilder {
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug)
-    : wasm(wasm),
-      allocator(wasm.allocator),
-      input(input),
-      debug(debug),
-      sourceMap(nullptr),
-      nextDebugLocation(0, { 0, 0, 0 }),
-      useDebugLocation(false) {}
+    : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr),
+      nextDebugLocation(0, {0, 0, 0}), useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
-  bool more() { return pos < input.size();}
+  bool more() { return pos < input.size(); }
 
   uint8_t getInt8();
   uint16_t getInt16();
@@ -867,12 +895,17 @@ public:
   }
 
   // We read functions before we know their names, so we need to backpatch the names later
-  std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
-  std::vector<Import*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
-  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the defined function i
-  std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
+  std::vector<Function*>
+    functions; // we store functions here before wasm.addFunction after we know their names
+  std::vector<Import*> functionImports; // we store function imports here before
+                                        // wasm.addFunctionImport after we know their names
+  std::map<Index, std::vector<Call*>>
+    functionCalls; // at index i we have all calls to the defined function i
+  std::map<Index, std::vector<CallImport*>>
+    functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
-  Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
+  Index endOfFunction = -1; // before we see a function (like global init expressions), there is no
+                            // end of function to check
 
   void readFunctions();
 
@@ -893,8 +926,9 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  bool definitelyUnreachable; // set when we know code is definitely unreachable. this helps parse
-                              // stacky wasm code, which can be unsuitable for our IR when unreachable
+  bool
+    definitelyUnreachable; // set when we know code is definitely unreachable. this helps parse
+                           // stacky wasm code, which can be unsuitable for our IR when unreachable
 
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
@@ -905,7 +939,8 @@ public:
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
-  std::map<Index, Name> mappedGlobals; // index of the Global => name. first imported globals, then internal globals
+  std::map<Index, Name>
+    mappedGlobals; // index of the Global => name. first imported globals, then internal globals
 
   Name getGlobalName(Index index);
   void processFunctions();
@@ -918,9 +953,7 @@ public:
   void readNames(size_t);
 
   // Debug information reading helpers
-  void setDebugLocations(std::istream* sourceMap_) {
-      sourceMap = sourceMap_;
-  }
+  void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
   Function::DebugLocation debugLocation;
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
@@ -931,19 +964,18 @@ public:
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, size_t start, size_t end);
-  void visitBlock(Block *curr);
+  void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
   Expression* getBlockOrSingleton(Type type);
 
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
   BreakTarget getBreakTarget(int32_t offset);
-  void visitBreak(Break *curr, uint8_t code);
-  void visitSwitch(Switch *curr);
+  void visitBreak(Break* curr, uint8_t code);
+  void visitSwitch(Switch* curr);
 
-  template<typename T>
-  void fillCall(T* call, FunctionType* type) {
+  template <typename T> void fillCall(T* call, FunctionType* type) {
     assert(type);
     auto num = type->params.size();
     call->operands.resize(num);
@@ -954,11 +986,11 @@ public:
   }
 
   Expression* visitCall();
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
-  void visitSetLocal(SetLocal *curr, uint8_t code);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
+  void visitSetLocal(SetLocal* curr, uint8_t code);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
   void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
@@ -969,12 +1001,12 @@ public:
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
+  void visitSelect(Select* curr);
+  void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
+  void visitDrop(Drop* curr);
 };
 
 } // namespace wasm

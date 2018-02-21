@@ -23,37 +23,42 @@ namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
   std::string ret;
-  ret += "if (typeof console === 'undefined') {\n"
-         "  console = { log: print };\n"
-         "}\n"
-         "var binary;\n"
-         "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
-         "  var args = process.argv.slice(2);\n"
-         "  binary = require('fs').readFileSync(args[0]);\n"
-         "  if (!binary.buffer) binary = new Uint8Array(binary);\n"
-         "} else {\n"
-         "  var args;\n"
-         "  if (typeof scriptArgs != 'undefined') {\n"
-         "    args = scriptArgs;\n"
-         "  } else if (typeof arguments != 'undefined') {\n"
-         "    args = arguments;\n"
-         "  }\n"
-         "  if (typeof readbuffer === 'function') {\n"
-         "    binary = new Uint8Array(readbuffer(args[0]));\n"
-         "  } else {\n"
-         "    binary = read(args[0], 'binary');\n"
-         "  }\n"
-         "}\n"
-         "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});\n";
+  ret +=
+    "if (typeof console === 'undefined') {\n"
+    "  console = { log: print };\n"
+    "}\n"
+    "var binary;\n"
+    "if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {\n"
+    "  var args = process.argv.slice(2);\n"
+    "  binary = require('fs').readFileSync(args[0]);\n"
+    "  if (!binary.buffer) binary = new Uint8Array(binary);\n"
+    "} else {\n"
+    "  var args;\n"
+    "  if (typeof scriptArgs != 'undefined') {\n"
+    "    args = scriptArgs;\n"
+    "  } else if (typeof arguments != 'undefined') {\n"
+    "    args = arguments;\n"
+    "  }\n"
+    "  if (typeof readbuffer === 'function') {\n"
+    "    binary = new Uint8Array(readbuffer(args[0]));\n"
+    "  } else {\n"
+    "    binary = read(args[0], 'binary');\n"
+    "  }\n"
+    "}\n"
+    "var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {});\n";
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
-    if (!func) continue; // something exported other than a function
+    if (!func)
+      continue;       // something exported other than a function
     auto bad = false; // check for things we can't support
     for (Type param : func->params) {
-      if (param == i64) bad = true;
+      if (param == i64)
+        bad = true;
     }
-    if (func->result == i64) bad = true;
-    if (bad) continue;
+    if (func->result == i64)
+      bad = true;
+    if (bad)
+      continue;
     ret += "if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
     ret += std::string("  console.log('calling: ") + exp->name.str + "');\n";
@@ -86,4 +91,3 @@ static std::string generateJSWrapper(Module& wasm) {
 }
 
 } // namespace wasm
-

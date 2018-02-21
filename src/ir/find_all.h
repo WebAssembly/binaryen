@@ -23,8 +23,7 @@ namespace wasm {
 
 // Find all instances of a certain node type
 
-template<typename T>
-struct FindAll {
+template <typename T> struct FindAll {
   std::vector<T*> list;
 
   FindAll(Expression* ast) {
@@ -54,8 +53,7 @@ struct PointerFinder : public PostWalker<PointerFinder, UnifiedExpressionVisitor
   }
 };
 
-template<typename T>
-struct FindAllPointers {
+template <typename T> struct FindAllPointers {
   std::vector<Expression**> list;
 
   FindAllPointers(Expression* ast) {
@@ -69,4 +67,3 @@ struct FindAllPointers {
 } // namespace wasm
 
 #endif // wasm_ir_find_all_h
-

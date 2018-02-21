@@ -17,34 +17,28 @@
 #ifndef wasm_ir_count_h
 #define wasm_ir_count_h
 
+#include "wasm.h"
+#include "wasm-traversal.h"
+
 namespace wasm {
 
 struct GetLocalCounter : public PostWalker<GetLocalCounter> {
   std::vector<Index> num;
 
   GetLocalCounter() {}
-  GetLocalCounter(Function* func) {
-    analyze(func, func->body);
-  }
-  GetLocalCounter(Function* func, Expression* ast) {
-    analyze(func, ast);
-  }
+  GetLocalCounter(Function* func) { analyze(func, func->body); }
+  GetLocalCounter(Function* func, Expression* ast) { analyze(func, ast); }
 
-  void analyze(Function* func) {
-    analyze(func, func->body);
-  }
+  void analyze(Function* func) { analyze(func, func->body); }
   void analyze(Function* func, Expression* ast) {
     num.resize(func->getNumLocals());
     std::fill(num.begin(), num.end(), 0);
     walk(ast);
   }
 
-  void visitGetLocal(GetLocal *curr) {
-    num[curr->index]++;
-  }
+  void visitGetLocal(GetLocal* curr) { num[curr->index]++; }
 };
 
 } // namespace wasm
 
 #endif // wasm_ir_count_h
-

@@ -33,13 +33,13 @@
 // here).
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
 #include <cfg/cfg-traversal.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
+#include <pass.h>
 #include <support/unique_deferring_queue.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -55,7 +55,8 @@ struct Info {
   std::vector<Expression**> setps;
 };
 
-struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>> {
+struct RedundantSetElimination
+  : public WalkerPass<CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RedundantSetElimination(); }
@@ -75,7 +76,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
     // create the CFG by walking the IR
-    CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::doWalkFunction(func);
+    CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::doWalkFunction(
+      func);
     // flow values across blocks
     flowValues(func);
     // remove redundant sets
@@ -84,10 +86,11 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   // numbering
 
-  Index nextValue = 1; // 0 is reserved for the "unseen value"
-  std::unordered_map<Literal, Index> literalValues; // each constant has a value
+  Index nextValue = 1;                                     // 0 is reserved for the "unseen value"
+  std::unordered_map<Literal, Index> literalValues;        // each constant has a value
   std::unordered_map<Expression*, Index> expressionValues; // each value can have a value
-  std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>> blockMergeValues; // each block has values for each merge
+  std::unordered_map<BasicBlock*, std::unordered_map<Index, Index>>
+    blockMergeValues; // each block has values for each merge
 
   Index getUnseenValue() { // we haven't seen this location yet
     return 0;
@@ -135,10 +138,14 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
 
   bool isBlockMergeValue(BasicBlock* block, Index index, Index value) {
     auto iter = blockMergeValues.find(block);
-    if (iter == blockMergeValues.end()) return false;
+    if (iter == blockMergeValues.end()) {
+      return false;
+    }
     auto& mergeValues = iter->second;
     auto iter2 = mergeValues.find(index);
-    if (iter2 == mergeValues.end()) return false;
+    if (iter2 == mergeValues.end()) {
+      return false;
+    }
     return value == iter2->second;
   }
 
@@ -286,7 +293,7 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
         // the first element)
         continue;
       }
-      // update the end state and update children
+// update the end state and update children
 #ifndef NDEBUG
       // verify the convergence property mentioned in the NB comment
       // above: the value numbers at the end must be nondecreasing
@@ -366,9 +373,6 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
   }
 };
 
-Pass *createRedundantSetEliminationPass() {
-  return new RedundantSetElimination();
-}
+Pass* createRedundantSetEliminationPass() { return new RedundantSetElimination(); }
 
 } // namespace wasm
-

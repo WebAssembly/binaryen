@@ -18,9 +18,9 @@
 // Write out the name list of the module, similar to `nm`.
 //
 
-#include "wasm.h"
-#include "pass.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -32,9 +32,6 @@ struct NameList : public Pass {
   }
 };
 
-Pass *createNameListPass() {
-  return new NameList();
-}
+Pass* createNameListPass() { return new NameList(); }
 
 } // namespace wasm
-

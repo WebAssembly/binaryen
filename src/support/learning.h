@@ -43,24 +43,22 @@ namespace wasm {
 // and the learner can be discarded (with all the rest of the population
 // cleaned up).
 
-template<typename Genome, typename Fitness, typename Generator>
-class GeneticLearner {
+template <typename Genome, typename Fitness, typename Generator> class GeneticLearner {
   Generator& generator;
 
   typedef std::unique_ptr<Genome> unique_ptr;
   std::vector<unique_ptr> population;
 
   void sort() {
-    std::sort(population.begin(), population.end(), [](const unique_ptr& left, const unique_ptr& right) {
-      return left->getFitness() > right->getFitness();
-    });
+    std::sort(
+      population.begin(), population.end(), [](const unique_ptr& left, const unique_ptr& right) {
+        return left->getFitness() > right->getFitness();
+      });
   }
 
   std::mt19937 noise;
 
-  size_t randomIndex() {
-    return noise() % population.size();
-  }
+  size_t randomIndex() { return noise() % population.size(); }
 
 public:
   GeneticLearner(Generator& generator, size_t size) : generator(generator), noise(1337) {
@@ -71,18 +69,15 @@ public:
     sort();
   }
 
-  Genome* getBest() {
-    return population[0].get();
-  }
+  Genome* getBest() { return population[0].get(); }
 
-  unique_ptr acquireBest() {
-    return population[0];
-  }
+  unique_ptr acquireBest() { return population[0]; }
 
   void runGeneration() {
     size_t size = population.size();
 
-    // we have a mix of promoted from the last generation, mixed from the last generation, and random
+    // we have a mix of promoted from the last generation, mixed from the last generation, and
+    // random
     const size_t promoted = (25 * size) / 100;
     const size_t mixed = (50 * size) / 100;
 
@@ -91,7 +86,8 @@ public:
     std::vector<unique_ptr> mixtures;
     mixtures.resize(mixed);
     for (size_t i = 0; i < mixed; i++) {
-      mixtures[i] = unique_ptr(generator.makeMixture(population[randomIndex()].get(), population[randomIndex()].get()));
+      mixtures[i] = unique_ptr(
+        generator.makeMixture(population[randomIndex()].get(), population[randomIndex()].get()));
     }
     for (size_t i = 0; i < mixed; i++) {
       population[promoted + i].swap(mixtures[i]);
@@ -106,6 +102,6 @@ public:
   }
 };
 
-}  // namespace wasm
+} // namespace wasm
 
-#endif  // wasm_learning_h
+#endif // wasm_learning_h

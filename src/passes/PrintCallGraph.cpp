@@ -18,19 +18,18 @@
 // Prints the call graph in .dot format. You can use http://www.graphviz.org/ to view .dot files.
 //
 
-
-#include <memory>
 #include <iomanip>
+#include <memory>
 
-#include "wasm.h"
-#include "pass.h"
 #include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
 struct PrintCallGraph : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    std::ostream &o = std::cout;
+    std::ostream& o = std::cout;
     o << "digraph call {\n"
          "  rankdir = LR;\n"
          "  subgraph cluster_key {\n"
@@ -65,11 +64,11 @@ struct PrintCallGraph : public Pass {
     }
 
     struct CallPrinter : public PostWalker<CallPrinter> {
-      Module *module;
-      Function *currFunction;
+      Module* module;
+      Function* currFunction;
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
       std::vector<Function*> allIndirectTargets;
-      CallPrinter(Module *module) : module(module) {
+      CallPrinter(Module* module) : module(module) {
         // Walk function bodies.
         for (auto& func : module->functions) {
           currFunction = func.get();
@@ -77,15 +76,19 @@ struct PrintCallGraph : public Pass {
           walk(func.get()->body);
         }
       }
-      void visitCall(Call *curr) {
+      void visitCall(Call* curr) {
         auto* target = module->getFunction(curr->target);
-        if (visitedTargets.count(target->name) > 0) return;
+        if (visitedTargets.count(target->name) > 0) {
+          return;
+        }
         visitedTargets.insert(target->name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
       }
-      void visitCallImport(CallImport *curr) {
+      void visitCallImport(CallImport* curr) {
         auto name = curr->target;
-        if (visitedTargets.count(name) > 0) return;
+        if (visitedTargets.count(name) > 0) {
+          return;
+        }
         visitedTargets.insert(name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }
@@ -104,8 +107,6 @@ struct PrintCallGraph : public Pass {
   }
 };
 
-Pass *createPrintCallGraphPass() {
-  return new PrintCallGraph();
-}
+Pass* createPrintCallGraphPass() { return new PrintCallGraph(); }
 
 } // namespace wasm

@@ -17,6 +17,13 @@
 #ifndef wasm_ir_local_graph_h
 #define wasm_ir_local_graph_h
 
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+
+#include "wasm.h"
+
 namespace wasm {
 
 //
@@ -42,14 +49,16 @@ struct LocalGraph {
 
   // externally useful information
   GetSetses getSetses; // the sets affecting each get. a nullptr set means the initial
-                                       // value (0 for a var, the received value for a param)
+                       // value (0 for a var, the received value for a param)
   Locations locations; // where each get and set is (for easy replacing)
 
   // optional computation: compute the influence graphs between sets and gets
   // (useful for algorithms that propagate changes)
 
-  std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>> getInfluences; // for each get, the sets whose values are influenced by that get
-  std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>> setInfluences; // for each set, the gets whose values are influenced by that set
+  std::unordered_map<GetLocal*, std::unordered_set<SetLocal*>>
+    getInfluences; // for each get, the sets whose values are influenced by that get
+  std::unordered_map<SetLocal*, std::unordered_set<GetLocal*>>
+    setInfluences; // for each set, the gets whose values are influenced by that set
 
   void computeInfluences();
 };
@@ -57,4 +66,3 @@ struct LocalGraph {
 } // namespace wasm
 
 #endif // wasm_ir_local_graph_h
-

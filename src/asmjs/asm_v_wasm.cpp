@@ -17,16 +17,20 @@
 #include "asm_v_wasm.h"
 #include "wasm.h"
 
-
 namespace wasm {
 
 Type asmToWasmType(AsmType asmType) {
   switch (asmType) {
-    case ASM_INT: return Type::i32;
-    case ASM_DOUBLE: return Type::f64;
-    case ASM_FLOAT: return Type::f32;
-    case ASM_INT64: return Type::i64;
-    case ASM_NONE: return Type::none;
+    case ASM_INT:
+      return Type::i32;
+    case ASM_DOUBLE:
+      return Type::f64;
+    case ASM_FLOAT:
+      return Type::f32;
+    case ASM_INT64:
+      return Type::i64;
+    case ASM_NONE:
+      return Type::none;
     default: {}
   }
   abort();
@@ -34,11 +38,16 @@ Type asmToWasmType(AsmType asmType) {
 
 AsmType wasmToAsmType(Type type) {
   switch (type) {
-    case Type::i32: return ASM_INT;
-    case Type::f32: return ASM_FLOAT;
-    case Type::f64: return ASM_DOUBLE;
-    case Type::i64: return ASM_INT64;
-    case Type::none: return ASM_NONE;
+    case Type::i32:
+      return ASM_INT;
+    case Type::f32:
+      return ASM_FLOAT;
+    case Type::f64:
+      return ASM_DOUBLE;
+    case Type::i64:
+      return ASM_INT64;
+    case Type::none:
+      return ASM_NONE;
     default: {}
   }
   abort();
@@ -46,16 +55,22 @@ AsmType wasmToAsmType(Type type) {
 
 char getSig(Type type) {
   switch (type) {
-    case i32:  return 'i';
-    case i64:  return 'j';
-    case f32:  return 'f';
-    case f64:  return 'd';
-    case none: return 'v';
-    default: abort();
+    case i32:
+      return 'i';
+    case i64:
+      return 'j';
+    case f32:
+      return 'f';
+    case f64:
+      return 'd';
+    case none:
+      return 'v';
+    default:
+      abort();
   }
 }
 
-std::string getSig(const FunctionType *type) {
+std::string getSig(const FunctionType* type) {
   std::string ret;
   ret += getSig(type->result);
   for (auto param : type->params) {
@@ -64,7 +79,7 @@ std::string getSig(const FunctionType *type) {
   return ret;
 }
 
-std::string getSig(Function *func) {
+std::string getSig(Function* func) {
   std::string ret;
   ret += getSig(func->result);
   for (auto type : func->params) {
@@ -75,12 +90,18 @@ std::string getSig(Function *func) {
 
 Type sigToType(char sig) {
   switch (sig) {
-    case 'i': return i32;
-    case 'j': return i64;
-    case 'f': return f32;
-    case 'd': return f64;
-    case 'v': return none;
-    default: abort();
+    case 'i':
+      return i32;
+    case 'j':
+      return i64;
+    case 'f':
+      return f32;
+    case 'd':
+      return f64;
+    case 'v':
+      return none;
+    default:
+      abort();
   }
 }
 

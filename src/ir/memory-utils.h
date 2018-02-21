@@ -26,31 +26,34 @@
 namespace wasm {
 
 namespace MemoryUtils {
-  // flattens memory into a single data segment. returns true if successful
-  inline bool flatten(Memory& memory) {
-    if (memory.segments.size() == 0) return true;
-    std::vector<char> data;
-    for (auto& segment : memory.segments) {
-      auto* offset = segment.offset->dynCast<Const>();
-      if (!offset) return false;
-    }
-    for (auto& segment : memory.segments) {
-      auto* offset = segment.offset->dynCast<Const>();
-      auto start = offset->value.getInteger();
-      auto end = start + segment.data.size();
-      if (end > data.size()) {
-        data.resize(end);
-      }
-      std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
-    }
-    memory.segments.resize(1);
-    memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
-    memory.segments[0].data.swap(data);
+// flattens memory into a single data segment. returns true if successful
+inline bool flatten(Memory& memory) {
+  if (memory.segments.size() == 0) {
     return true;
   }
-};
+  std::vector<char> data;
+  for (auto& segment : memory.segments) {
+    auto* offset = segment.offset->dynCast<Const>();
+    if (!offset) {
+      return false;
+    }
+  }
+  for (auto& segment : memory.segments) {
+    auto* offset = segment.offset->dynCast<Const>();
+    auto start = offset->value.getInteger();
+    auto end = start + segment.data.size();
+    if (end > data.size()) {
+      data.resize(end);
+    }
+    std::copy(segment.data.begin(), segment.data.end(), data.begin() + start);
+  }
+  memory.segments.resize(1);
+  memory.segments[0].offset->cast<Const>()->value = Literal(int32_t(0));
+  memory.segments[0].data.swap(data);
+  return true;
+}
+}; // namespace MemoryUtils
 
 } // namespace wasm
 
 #endif // wasm_ir_memory_h
-

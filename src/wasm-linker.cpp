@@ -75,7 +75,9 @@ void Linker::layout() {
   // Convert calls to undefined functions to call_imports
   for (const auto& f : out.undefinedFunctionCalls) {
     Name target = f.first;
-    if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
+    if (!out.symbolInfo.undefinedFunctions.count(target)) {
+      continue;
+    }
     // Create an import for the target if necessary.
     ensureFunctionImport(target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
@@ -86,7 +88,8 @@ void Linker::layout() {
       ExpressionList operands(out.wasm.allocator);
       operands.swap(call->operands);
       auto target = call->target;
-      CallImport* newCall = ExpressionManipulator::convert<Call, CallImport>(call, out.wasm.allocator);
+      CallImport* newCall =
+        ExpressionManipulator::convert<Call, CallImport>(call, out.wasm.allocator);
       newCall->type = type;
       newCall->operands.swap(operands);
       newCall->target = target;
@@ -101,13 +104,16 @@ void Linker::layout() {
   // Update the segments with their addresses now that they have been allocated.
   for (const auto& seg : out.segments) {
     Address address = staticAddresses[seg.first];
-    out.wasm.memory.segments[seg.second].offset = out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(address)));
+    out.wasm.memory.segments[seg.second].offset =
+      out.wasm.allocator.alloc<Const>()->set(Literal(uint32_t(address)));
     segmentsByAddress[address] = seg.second;
   }
 
   // Place the stack after the user's static data, to keep those addresses
   // small.
-  if (stackAllocation) allocateStatic(stackAllocation, 16, ".stack");
+  if (stackAllocation) {
+    allocateStatic(stackAllocation, 16, ".stack");
+  }
 
   // The minimum initial memory size is the amount of static variables we have
   // allocated. Round it up to a page, and update the page-increment versions
@@ -115,8 +121,8 @@ void Linker::layout() {
   Address initialMem = roundUpToPageSize(nextStatic);
   if (userInitialMemory) {
     if (initialMem > userInitialMemory) {
-      Fatal() << "Specified initial memory size " << userInitialMemory <<
-          " is smaller than required size " << initialMem;
+      Fatal() << "Specified initial memory size " << userInitialMemory
+              << " is smaller than required size " << initialMem;
     }
     out.wasm.memory.initial = userInitialMemory / Memory::kPageSize;
   } else {
@@ -124,7 +130,9 @@ void Linker::layout() {
   }
   out.wasm.memory.exists = true;
 
-  if (userMaxMemory) out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
+  if (userMaxMemory) {
+    out.wasm.memory.max = userMaxMemory / Memory::kPageSize;
+  }
 
   if (importMemory) {
     auto memoryImport = make_unique<Import>();
@@ -148,8 +156,12 @@ void Linker::layout() {
   }
 
   // XXX For now, export all functions marked .globl.
-  for (Name name : out.globls) exportFunction(out.wasm, name, false);
-  for (Name name : out.initializerFunctions) exportFunction(out.wasm, name, true);
+  for (Name name : out.globls) {
+    exportFunction(out.wasm, name, false);
+  }
+  for (Name name : out.initializerFunctions) {
+    exportFunction(out.wasm, name, true);
+  }
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
@@ -158,14 +170,12 @@ void Linker::layout() {
 
   // Pre-assign the function indexes
   for (auto& pair : out.indirectIndexes) {
-    if (functionIndexes.count(pair.first) != 0 ||
-        functionNames.count(pair.second) != 0) {
-      Fatal() << "Function " << pair.first << " already has an index " <<
-          functionIndexes[pair.first] << " while setting index " << pair.second;
+    if (functionIndexes.count(pair.first) != 0 || functionNames.count(pair.second) != 0) {
+      Fatal() << "Function " << pair.first << " already has an index "
+              << functionIndexes[pair.first] << " while setting index " << pair.second;
     }
     if (debug) {
-      std::cerr << "pre-assigned function index: " << pair.first << ": "
-                << pair.second << '\n';
+      std::cerr << "pre-assigned function index: " << pair.first << ": " << pair.second << '\n';
     }
     functionIndexes[pair.first] = pair.second;
     functionNames[pair.second] = pair.first;
@@ -179,11 +189,12 @@ void Linker::layout() {
 
   for (auto& relocation : out.relocations) {
     // TODO: Handle weak symbols properly, instead of always taking the weak definition.
-    auto *alias = out.getAlias(relocation->symbol, relocation->kind);
+    auto* alias = out.getAlias(relocation->symbol, relocation->kind);
     Name name = relocation->symbol;
 
-    if (debug) std::cerr << "fix relocation " << name << '\n';
-
+    if (debug) {
+      std::cerr << "fix relocation " << name << '\n';
+    }
     if (alias) {
       name = alias->symbol;
       relocation->addend += alias->offset;
@@ -191,9 +202,13 @@ void Linker::layout() {
 
     if (relocation->kind == LinkerObject::Relocation::kData) {
       const auto& symbolAddress = staticAddresses.find(name);
-      if (symbolAddress == staticAddresses.end()) Fatal() << "Unknown relocation: " << name << '\n';
+      if (symbolAddress == staticAddresses.end()) {
+        Fatal() << "Unknown relocation: " << name << '\n';
+      }
       *(relocation->data) = symbolAddress->second + relocation->addend;
-      if (debug) std::cerr << "  ==> " << *(relocation->data) << '\n';
+      if (debug) {
+        std::cerr << "  ==> " << *(relocation->data) << '\n';
+      }
     } else {
       // function address
       if (!out.wasm.getFunctionOrNull(name)) {
@@ -204,7 +219,9 @@ void Linker::layout() {
           *(relocation->data) = getFunctionIndex(thunk->name) + relocation->addend;
         } else {
           std::cerr << "Unknown symbol: " << name << '\n';
-          if (!ignoreUnknownSymbols) Fatal() << "undefined reference\n";
+          if (!ignoreUnknownSymbols) {
+            Fatal() << "undefined reference\n";
+          }
           *(relocation->data) = 0;
         }
       } else {
@@ -218,7 +235,7 @@ void Linker::layout() {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
     }
-    const auto *target = out.wasm.getFunction(startFunction);
+    const auto* target = out.wasm.getFunction(startFunction);
     Name start("_start");
     if (out.symbolInfo.implementedFunctions.count(start) != 0) {
       Fatal() << "Start function already present: `" << start << "`\n";
@@ -243,7 +260,9 @@ void Linker::layout() {
       }
       auto* call = builder.makeCall(startFunction, args, target->result);
       Expression* e = call;
-      if (target->result != none) e = builder.makeDrop(call);
+      if (target->result != none) {
+        e = builder.makeDrop(call);
+      }
       block->list.push_back(e);
       block->finalize();
     }
@@ -277,7 +296,7 @@ void Linker::layout() {
 }
 
 bool Linker::linkObject(S2WasmBuilder& builder) {
-  LinkerObject::SymbolInfo *newSymbols = builder.getSymbolInfo();
+  LinkerObject::SymbolInfo* newSymbols = builder.getSymbolInfo();
   // check for multiple definitions
   for (const Name& symbol : newSymbols->implementedFunctions) {
     if (out.symbolInfo.implementedFunctions.count(symbol)) {
@@ -292,10 +311,10 @@ bool Linker::linkObject(S2WasmBuilder& builder) {
   // TODO: figure out what the semantics of merging aliases should be.
   for (const auto& alias : newSymbols->aliasedSymbols) {
     if (out.symbolInfo.aliasedSymbols.count(alias.first) &&
-      (out.symbolInfo.aliasedSymbols.at(alias.first).symbol != alias.second.symbol ||
-      out.symbolInfo.aliasedSymbols.at(alias.first).kind != alias.second.kind)) {
-      std::cerr << "Error: conflicting definitions for alias "
-                << alias.first.c_str() << "of type " << alias.second.kind << "\n";
+        (out.symbolInfo.aliasedSymbols.at(alias.first).symbol != alias.second.symbol ||
+          out.symbolInfo.aliasedSymbols.at(alias.first).kind != alias.second.kind)) {
+      std::cerr << "Error: conflicting definitions for alias " << alias.first.c_str() << "of type "
+                << alias.second.kind << "\n";
       return false;
     }
   }
@@ -308,8 +327,7 @@ bool Linker::linkArchive(Archive& archive) {
   bool selected;
   do {
     selected = false;
-    for (auto child = archive.child_begin(), end = archive.child_end();
-         child != end; ++child) {
+    for (auto child = archive.child_begin(), end = archive.child_end(); child != end; ++child) {
       Archive::SubBuffer memberBuf = child->getBuffer();
       // S2WasmBuilder expects its input to be NUL-terminated. Archive members
       // are
@@ -321,7 +339,9 @@ bool Linker::linkArchive(Archive& archive) {
       auto* memberSymbols = memberBuilder.getSymbolInfo();
       for (const Name& symbol : memberSymbols->implementedFunctions) {
         if (out.symbolInfo.undefinedFunctions.count(symbol)) {
-          if (!linkObject(memberBuilder)) return false;
+          if (!linkObject(memberBuilder)) {
+            return false;
+          }
           selected = true;
           break;
         }
@@ -333,9 +353,7 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-Address Linker::getStaticBump() const {
-  return nextStatic - globalBase;
-}
+Address Linker::getStaticBump() const { return nextStatic - globalBase; }
 
 void Linker::ensureTableSegment() {
   if (out.wasm.table.segments.size() == 0) {
@@ -362,8 +380,7 @@ Index Linker::getFunctionIndex(Name name) {
     functionIndexes[name] = getTableData().size();
     getTableDataRef().push_back(name);
     if (debug) {
-      std::cerr << "function index: " << name << ": "
-                << functionIndexes[name] << '\n';
+      std::cerr << "function index: " << name << ": " << functionIndexes[name] << '\n';
     }
   }
   return functionIndexes[name];
@@ -379,23 +396,29 @@ void Linker::makeDummyFunction() {
     }
   }
 
-  if (!create) return;
+  if (!create) {
+    return;
+  }
   wasm::Builder wasmBuilder(out.wasm);
-  Expression *unreachable = wasmBuilder.makeUnreachable();
-  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, Type::none, {}, unreachable);
+  Expression* unreachable = wasmBuilder.makeUnreachable();
+  Function* dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, Type::none, {}, unreachable);
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
 }
 
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
-  if (Function* thunk = out.wasm.getFunctionOrNull(thunkName)) return thunk;
+  if (Function* thunk = out.wasm.getFunctionOrNull(thunkName)) {
+    return thunk;
+  }
   ensureFunctionImport(name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;
-  for (const auto& ty : funcType->params) params.emplace_back(std::to_string(p++), ty);
-  Function *f = wasmBuilder.makeFunction(thunkName, std::move(params), funcType->result, {});
+  for (const auto& ty : funcType->params) {
+    params.emplace_back(std::to_string(p++), ty);
+  }
+  Function* f = wasmBuilder.makeFunction(thunkName, std::move(params), funcType->result, {});
   std::vector<Expression*> args;
   for (Index i = 0; i < funcType->params.size(); ++i) {
     args.push_back(wasmBuilder.makeGetLocal(i, funcType->params[i]));
@@ -406,6 +429,4 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   return f;
 }
 
-Address Linker::getStackPointerAddress() const {
-  return Address(staticAddresses.at(stackPointer));
-}
+Address Linker::getStackPointerAddress() const { return Address(staticAddresses.at(stackPointer)); }

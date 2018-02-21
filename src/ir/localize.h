@@ -44,4 +44,3 @@ struct Localizer {
 } // namespace wasm
 
 #endif // wasm_ir_localizer_h
-

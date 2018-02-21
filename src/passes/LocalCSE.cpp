@@ -25,12 +25,12 @@
 // TODO: global, inter-block gvn etc.
 //
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <wasm-traversal.h>
-#include <pass.h>
 #include <ir/effects.h>
 #include <ir/hashed.h>
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm-traversal.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -47,7 +47,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     Index index; // if not UNUSED, then the local we are assigned to, use that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression** item, PassOptions& passOptions) : item(item), index(UNUSED), effects(passOptions, *item) {}
+    UsableInfo(Expression** item, PassOptions& passOptions)
+      : item(item), index(UNUSED), effects(passOptions, *item) {}
   };
 
   // a list of usables in a linear execution trace
@@ -56,9 +57,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // locals in current linear execution trace, which we try to sink
   Usables usables;
 
-  static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
-    self->usables.clear();
-  }
+  static void doNoteNonLinear(LocalCSE* self, Expression** currp) { self->usables.clear(); }
 
   void checkInvalidations(EffectAnalyzer& effects) {
     // TODO: this is O(bad)
@@ -139,9 +138,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         auto index = info.index = Builder::addVar(getFunction(), curr->type);
         (*info.item) = Builder(*getModule()).makeTeeLocal(index, *info.item);
       }
-      replaceCurrent(
-        Builder(*getModule()).makeGetLocal(info.index, curr->type)
-      );
+      replaceCurrent(Builder(*getModule()).makeGetLocal(info.index, curr->type));
     } else {
       // not in table, add this, maybe we can help others later
       usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions())));
@@ -149,8 +146,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   }
 };
 
-Pass *createLocalCSEPass() {
-  return new LocalCSE();
-}
+Pass* createLocalCSEPass() { return new LocalCSE(); }
 
 } // namespace wasm

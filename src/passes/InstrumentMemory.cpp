@@ -55,12 +55,12 @@
 //    (i32.const 4)
 //   )
 
-#include <wasm.h>
-#include <wasm-builder.h>
-#include <pass.h>
-#include "shared-constants.h"
-#include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "asmjs/shared-constants.h"
+#include "shared-constants.h"
+#include <pass.h>
+#include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -69,13 +69,9 @@ Name store("store");
 // TODO: Add support for atomicRMW/cmpxchg
 
 struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
-  void visitLoad(Load* curr) {
-    makeLoadCall(curr);
-  }
-  void visitStore(Store* curr) {
-    makeStoreCall(curr);
-  }
-  void addImport(Module *curr, Name name, std::string sig) {
+  void visitLoad(Load* curr) { makeLoadCall(curr); }
+  void visitStore(Store* curr) { makeStoreCall(curr); }
+  void addImport(Module* curr, Name name, std::string sig) {
     auto import = new Import;
     import->name = name;
     import->module = INSTRUMENT;
@@ -85,9 +81,9 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     curr->addImport(import);
   }
 
-  void visitModule(Module *curr) {
-    addImport(curr, load,  "iiiii");
-    addImport(curr, store,  "iiiii");
+  void visitModule(Module* curr) {
+    addImport(curr, load, "iiiii");
+    addImport(curr, store, "iiiii");
   }
 
 private:
@@ -95,30 +91,24 @@ private:
   Expression* makeLoadCall(Load* curr) {
     Builder builder(*getModule());
     curr->ptr = builder.makeCallImport(load,
-      { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
+      {builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
-        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-        curr->ptr},
-      i32
-    );
+        builder.makeConst(Literal(int32_t(curr->offset.addr))), curr->ptr},
+      i32);
     return curr;
   }
 
   Expression* makeStoreCall(Store* curr) {
     Builder builder(*getModule());
     curr->ptr = builder.makeCallImport(store,
-      { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
+      {builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
-        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-        curr->ptr },
-      i32
-    );
+        builder.makeConst(Literal(int32_t(curr->offset.addr))), curr->ptr},
+      i32);
     return curr;
   }
 };
 
-Pass *createInstrumentMemoryPass() {
-  return new InstrumentMemory();
-}
+Pass* createInstrumentMemoryPass() { return new InstrumentMemory(); }
 
 } // namespace wasm

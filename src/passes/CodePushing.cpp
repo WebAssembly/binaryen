@@ -19,10 +19,10 @@
 // a location behind a condition, where it might not always execute.
 //
 
-#include <wasm.h>
+#include <ir/effects.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/effects.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -50,26 +50,23 @@ struct LocalAnalyzer : public PostWalker<LocalAnalyzer> {
     std::fill(sfa.begin() + func->getNumParams(), sfa.end(), true);
     walk(func->body);
     for (Index i = 0; i < num; i++) {
-      if (numSets[i] == 0) sfa[i] = false;
+      if (numSets[i] == 0)
+        sfa[i] = false;
     }
   }
 
-  bool isSFA(Index i) {
-    return sfa[i];
-  }
+  bool isSFA(Index i) { return sfa[i]; }
 
-  Index getNumGets(Index i) {
-    return numGets[i];
-  }
+  Index getNumGets(Index i) { return numGets[i]; }
 
-  void visitGetLocal(GetLocal *curr) {
+  void visitGetLocal(GetLocal* curr) {
     if (numSets[curr->index] == 0) {
       sfa[curr->index] = false;
     }
     numGets[curr->index]++;
   }
 
-  void visitSetLocal(SetLocal *curr) {
+  void visitSetLocal(SetLocal* curr) {
     numSets[curr->index]++;
     if (numSets[curr->index] > 1) {
       sfa[curr->index] = false;
@@ -86,7 +83,9 @@ class Pusher {
   PassOptions& passOptions;
 
 public:
-  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar, PassOptions& passOptions) : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar), passOptions(passOptions) {
+  Pusher(Block* block, LocalAnalyzer& analyzer, std::vector<Index>& numGetsSoFar,
+    PassOptions& passOptions)
+    : list(block->list), analyzer(analyzer), numGetsSoFar(numGetsSoFar), passOptions(passOptions) {
     // Find an optimization segment: from the first pushable thing, to the first
     // point past which we want to push. We then push in that range before
     // continuing forward.
@@ -114,12 +113,12 @@ public:
 private:
   SetLocal* isPushable(Expression* curr) {
     auto* set = curr->dynCast<SetLocal>();
-    if (!set) return nullptr;
+    if (!set)
+      return nullptr;
     auto index = set->index;
     // to be pushable, this must be SFA and the right # of gets,
     // but also have no side effects, as it may not execute if pushed.
-    if (analyzer.isSFA(index) &&
-        numGetsSoFar[index] == analyzer.getNumGets(index) &&
+    if (analyzer.isSFA(index) && numGetsSoFar[index] == analyzer.getNumGets(index) &&
         !EffectAnalyzer(passOptions, set->value).hasSideEffects()) {
       return set;
     }
@@ -133,7 +132,8 @@ private:
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>()) return true;
+    if (curr->is<If>())
+      return true;
     if (auto* br = curr->dynCast<Break>()) {
       return !!br->condition;
     }
@@ -159,11 +159,10 @@ private:
       if (pushable) {
         auto iter = pushableEffects.find(pushable);
         if (iter == pushableEffects.end()) {
-          iter = pushableEffects.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(pushable),
-            std::forward_as_tuple(passOptions, pushable)
-          ).first;
+          iter = pushableEffects
+                   .emplace(std::piecewise_construct, std::forward_as_tuple(pushable),
+                     std::forward_as_tuple(passOptions, pushable))
+                   .first;
         }
         auto& effects = iter->second;
         if (cumulativeEffects.invalidates(effects)) {
@@ -236,15 +235,14 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
     walk(func->body);
   }
 
-  void visitGetLocal(GetLocal *curr) {
-    numGetsSoFar[curr->index]++;
-  }
+  void visitGetLocal(GetLocal* curr) { numGetsSoFar[curr->index]++; }
 
   void visitBlock(Block* curr) {
     // Pushing code only makes sense if we are size 3 or above: we need
     // one element to push, an element to push it past, and an element to use
     // what we pushed.
-    if (curr->list.size() < 3) return;
+    if (curr->list.size() < 3)
+      return;
     // At this point in the postorder traversal we have gone through all our children.
     // Therefore any variable whose gets seen so far is equal to the total gets must
     // have no further users after this block. And therefore when we see an SFA
@@ -257,9 +255,6 @@ struct CodePushing : public WalkerPass<PostWalker<CodePushing>> {
   }
 };
 
-Pass *createCodePushingPass() {
-  return new CodePushing();
-}
+Pass* createCodePushingPass() { return new CodePushing(); }
 
 } // namespace wasm
-

@@ -1,0 +1,3 @@
+# clang-tidy -checks="-*,readability-braces-around-statements" `find -name "*.h"` -fix-errors -- -xc++ -std=c++11 -I. -w
+Checks: readability-braces-around-statements
+

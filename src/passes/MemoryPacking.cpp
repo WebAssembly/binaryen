@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -25,7 +25,9 @@ const Index OVERHEAD = 8;
 
 struct MemoryPacking : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    if (!module->memory.exists) return;
+    if (!module->memory.exists) {
+      return;
+    }
     std::vector<Memory::Segment> packed;
     for (auto& segment : module->memory.segments) {
       // skip final zeros
@@ -45,7 +47,7 @@ struct MemoryPacking : public Pass {
             start++;
           }
           Index end = start; // end of data-containing part
-          Index next = end; // after zeros we can skip. preserves next >= end
+          Index next = end;  // after zeros we can skip. preserves next >= end
           while (next < data.size() && (next - end < OVERHEAD)) {
             if (data[end] != 0) {
               end++;
@@ -60,7 +62,8 @@ struct MemoryPacking : public Pass {
             }
           }
           if (end != start) {
-            packed.emplace_back(Builder(*module).makeConst(Literal(int32_t(base + start))), &data[start], end - start);
+            packed.emplace_back(Builder(*module).makeConst(Literal(int32_t(base + start))),
+              &data[start], end - start);
           }
           start = next;
         }
@@ -72,9 +75,6 @@ struct MemoryPacking : public Pass {
   }
 };
 
-Pass *createMemoryPackingPass() {
-  return new MemoryPacking();
-}
+Pass* createMemoryPackingPass() { return new MemoryPacking(); }
 
 } // namespace wasm
-

@@ -25,8 +25,7 @@ using namespace wasm;
 bool wasm::isInteger(double x) { return fmod(x, 1) == 0; }
 
 bool wasm::isUInteger32(double x) {
-  return !std::signbit(x) && isInteger(x) &&
-         x <= std::numeric_limits<uint32_t>::max();
+  return !std::signbit(x) && isInteger(x) && x <= std::numeric_limits<uint32_t>::max();
 }
 
 bool wasm::isSInteger32(double x) {
@@ -35,22 +34,21 @@ bool wasm::isSInteger32(double x) {
 }
 
 uint32_t wasm::toUInteger32(double x) {
-  return std::signbit(x) ? 0 : (x < std::numeric_limits<uint32_t>::max()
-                                    ? (uint32_t)x
-                                    : std::numeric_limits<uint32_t>::max());
+  return std::signbit(x)
+           ? 0
+           : (x < std::numeric_limits<uint32_t>::max() ? (uint32_t)x
+                                                       : std::numeric_limits<uint32_t>::max());
 }
 
 int32_t wasm::toSInteger32(double x) {
-  return (x > std::numeric_limits<int32_t>::min() &&
-          x < std::numeric_limits<int32_t>::max())
-             ? (int32_t)x
-             : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
-                                : std::numeric_limits<int32_t>::max());
+  return (x > std::numeric_limits<int32_t>::min() && x < std::numeric_limits<int32_t>::max())
+           ? (int32_t)x
+           : (std::signbit(x) ? std::numeric_limits<int32_t>::min()
+                              : std::numeric_limits<int32_t>::max());
 }
 
 bool wasm::isUInteger64(double x) {
-  return !std::signbit(x) && isInteger(x) &&
-         x <= std::numeric_limits<uint64_t>::max();
+  return !std::signbit(x) && isInteger(x) && x <= std::numeric_limits<uint64_t>::max();
 }
 
 bool wasm::isSInteger64(double x) {
@@ -59,17 +57,18 @@ bool wasm::isSInteger64(double x) {
 }
 
 uint64_t wasm::toUInteger64(double x) {
-  return std::signbit(x) ? 0 : (x < (double)std::numeric_limits<uint64_t>::max()
-                                    ? (uint64_t)x
-                                    : std::numeric_limits<uint64_t>::max());
+  return std::signbit(x) ? 0
+                         : (x < (double)std::numeric_limits<uint64_t>::max()
+                               ? (uint64_t)x
+                               : std::numeric_limits<uint64_t>::max());
 }
 
 int64_t wasm::toSInteger64(double x) {
   return (x > (double)std::numeric_limits<int64_t>::min() &&
-          x < (double)std::numeric_limits<int64_t>::max())
-             ? (int64_t)x
-             : (std::signbit(x) ? std::numeric_limits<int64_t>::min()
-                                : std::numeric_limits<int64_t>::max());
+           x < (double)std::numeric_limits<int64_t>::max())
+           ? (int64_t)x
+           : (std::signbit(x) ? std::numeric_limits<int64_t>::min()
+                              : std::numeric_limits<int64_t>::max());
 }
 
 /* 3 32222222 222...00
@@ -142,24 +141,20 @@ bool wasm::isInRangeI64TruncU(int32_t i) {
 
 bool wasm::isInRangeI32TruncS(int64_t i) {
   uint64_t u = i;
-  return (u <= 0x41dfffffffc00000ULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xc1e0000000000000ULL);
+  return (u <= 0x41dfffffffc00000ULL) || (u >= 0x8000000000000000ULL && u <= 0xc1e0000000000000ULL);
 }
 
 bool wasm::isInRangeI32TruncU(int64_t i) {
   uint64_t u = i;
-  return (u <= 0x41efffffffe00000ULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xbfefffffffffffffULL);
+  return (u <= 0x41efffffffe00000ULL) || (u >= 0x8000000000000000ULL && u <= 0xbfefffffffffffffULL);
 }
 
 bool wasm::isInRangeI64TruncS(int64_t i) {
   uint64_t u = i;
-  return (u < 0x43e0000000000000ULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xc3e0000000000000ULL);
+  return (u < 0x43e0000000000000ULL) || (u >= 0x8000000000000000ULL && u <= 0xc3e0000000000000ULL);
 }
 
 bool wasm::isInRangeI64TruncU(int64_t i) {
   uint64_t u = i;
-  return (u < 0x43f0000000000000ULL) ||
-         (u >= 0x8000000000000000ULL && u <= 0xbfefffffffffffffULL);
+  return (u < 0x43f0000000000000ULL) || (u >= 0x8000000000000000ULL && u <= 0xbfefffffffffffffULL);
 }

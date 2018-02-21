@@ -20,20 +20,16 @@
 // and remove if unneeded)
 //
 
-
 #include <memory>
 
-#include "wasm.h"
-#include "pass.h"
-#include "ir/utils.h"
 #include "asm_v_wasm.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 
-enum class ModuleElementKind {
-  Function,
-  Global
-};
+enum class ModuleElementKind { Function, Global };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -88,9 +84,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.emplace_back(ModuleElementKind::Function, curr->target);
     }
   }
-  void visitCallIndirect(CallIndirect* curr) {
-    usesTable = true;
-  }
+  void visitCallIndirect(CallIndirect* curr) { usesTable = true; }
 
   void visitGetGlobal(GetGlobal* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0) {
@@ -103,24 +97,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
 
-  void visitLoad(Load* curr) {
-    usesMemory = true;
-  }
-  void visitStore(Store* curr) {
-    usesMemory = true;
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    usesMemory = true;
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    usesMemory = true;
-  }
-  void visitAtomicWait(AtomicWait* curr) {
-    usesMemory = true;
-  }
-  void visitAtomicWake(AtomicWake* curr) {
-    usesMemory = true;
-  }
+  void visitLoad(Load* curr) { usesMemory = true; }
+  void visitStore(Store* curr) { usesMemory = true; }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { usesMemory = true; }
+  void visitAtomicRMW(AtomicRMW* curr) { usesMemory = true; }
+  void visitAtomicWait(AtomicWait* curr) { usesMemory = true; }
+  void visitAtomicWake(AtomicWake* curr) { usesMemory = true; }
   void visitHost(Host* curr) {
     if (curr->op == CurrentMemory || curr->op == GrowMemory) {
       usesMemory = true;
@@ -147,9 +129,7 @@ struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
     }
   }
 
-  void visitCallIndirect(CallIndirect* curr) {
-    indirectCalls.push_back(curr);
-  }
+  void visitCallIndirect(CallIndirect* curr) { indirectCalls.push_back(curr); }
 };
 
 struct RemoveUnusedModuleElements : public Pass {
@@ -189,26 +169,36 @@ struct RemoveUnusedModuleElements : public Pass {
     // Remove unreachable elements.
     {
       auto& v = module->functions;
-      v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
-        return analyzer.reachable.count(ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
-      }), v.end());
+      v.erase(std::remove_if(v.begin(), v.end(),
+                [&](const std::unique_ptr<Function>& curr) {
+                  return analyzer.reachable.count(
+                           ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
+                }),
+        v.end());
     }
     {
       auto& v = module->globals;
-      v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Global>& curr) {
-        return analyzer.reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
-      }), v.end());
+      v.erase(std::remove_if(v.begin(), v.end(),
+                [&](const std::unique_ptr<Global>& curr) {
+                  return analyzer.reachable.count(
+                           ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
+                }),
+        v.end());
     }
     {
       auto& v = module->imports;
-      v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Import>& curr) {
-        if (curr->kind == ExternalKind::Function) {
-          return analyzer.reachable.count(ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
-        } else if (curr->kind == ExternalKind::Global) {
-          return analyzer.reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
-        }
-        return false;
-      }), v.end());
+      v.erase(std::remove_if(v.begin(), v.end(),
+                [&](const std::unique_ptr<Import>& curr) {
+                  if (curr->kind == ExternalKind::Function) {
+                    return analyzer.reachable.count(
+                             ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
+                  } else if (curr->kind == ExternalKind::Global) {
+                    return analyzer.reachable.count(
+                             ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
+                  }
+                  return false;
+                }),
+        v.end());
     }
     module->updateMaps();
     // Handle the memory and table
@@ -230,9 +220,9 @@ struct RemoveUnusedModuleElements : public Pass {
 
   void removeImport(ExternalKind kind, Module* module) {
     auto& v = module->imports;
-    v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Import>& curr) {
-      return curr->kind == kind;
-    }), v.end());
+    v.erase(std::remove_if(v.begin(), v.end(),
+              [&](const std::unique_ptr<Import>& curr) { return curr->kind == kind; }),
+      v.end());
   }
 
   void optimizeFunctionTypes(Module* module) {
@@ -242,7 +232,9 @@ struct RemoveUnusedModuleElements : public Pass {
     std::unordered_map<std::string, FunctionType*> canonicals;
     std::unordered_set<FunctionType*> needed;
     auto canonicalize = [&](Name name) {
-      if (!name.is()) return name;
+      if (!name.is()) {
+        return name;
+      }
       FunctionType* type = module->getFunctionType(name);
       auto sig = getSig(type);
       auto iter = canonicals.find(sig);
@@ -265,15 +257,14 @@ struct RemoveUnusedModuleElements : public Pass {
       call->fullType = canonicalize(call->fullType);
     }
     // remove no-longer used types
-    module->functionTypes.erase(std::remove_if(module->functionTypes.begin(), module->functionTypes.end(), [&needed](std::unique_ptr<FunctionType>& type) {
-      return needed.count(type.get()) == 0;
-    }), module->functionTypes.end());
+    module->functionTypes.erase(
+      std::remove_if(module->functionTypes.begin(), module->functionTypes.end(),
+        [&needed](std::unique_ptr<FunctionType>& type) { return needed.count(type.get()) == 0; }),
+      module->functionTypes.end());
     module->updateMaps();
   }
 };
 
-Pass* createRemoveUnusedModuleElementsPass() {
-  return new RemoveUnusedModuleElements();
-}
+Pass* createRemoveUnusedModuleElementsPass() { return new RemoveUnusedModuleElements(); }
 
 } // namespace wasm

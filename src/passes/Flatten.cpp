@@ -50,11 +50,11 @@
 //     on a non-nested-expression location.
 //
 
-#include <wasm.h>
+#include <ir/effects.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/utils.h>
-#include <ir/effects.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -73,7 +73,8 @@ namespace wasm {
 // Once exception is that we allow an (unreachable) node, which is used
 // when we move something unreachable to another place, and need a
 // placeholder. We will never reach that (unreachable) anyhow
-struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
+struct Flatten
+  : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new Flatten; }
@@ -91,7 +92,8 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     if (isControlFlowStructure(curr)) {
       // handle control flow explicitly. our children do not have control flow,
       // but they do have preludes which we need to set up in the right place
-      assert(preludes.find(curr) == preludes.end()); // no one should have given us preludes, they are on the children
+      assert(preludes.find(curr) ==
+             preludes.end()); // no one should have given us preludes, they are on the children
       if (auto* block = curr->dynCast<Block>()) {
         // make a new list, where each item's preludes are added before it
         ExpressionList newList(getModule()->allocator);
@@ -153,7 +155,8 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
           rep = builder.makeGetLocal(temp, type);
         }
         iff->ifTrue = getPreludesWithExpression(originalIfTrue, iff->ifTrue);
-        if (iff->ifFalse) iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
+        if (iff->ifFalse)
+          iff->ifFalse = getPreludesWithExpression(originalIfFalse, iff->ifFalse);
         iff->finalize();
         if (prelude) {
           ReFinalizeNode().visit(prelude);
@@ -239,9 +242,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
             names.insert(sw->default_);
             for (auto name : names) {
               ourPreludes.push_back(builder.makeSetLocal(
-                getTempForBreakTarget(name, type),
-                builder.makeGetLocal(temp, type)
-              ));
+                getTempForBreakTarget(name, type), builder.makeGetLocal(temp, type)));
             }
             sw->value = nullptr;
             sw->finalize();
@@ -321,7 +322,8 @@ private:
   // preludes (which we use up) for another expression before it
   Expression* getPreludesWithExpression(Expression* preluder, Expression* after) {
     auto iter = preludes.find(preluder);
-    if (iter == preludes.end()) return after;
+    if (iter == preludes.end())
+      return after;
     // we have preludes
     auto& thePreludes = iter->second;
     auto* ret = Builder(*getModule()).makeBlock(thePreludes);
@@ -343,9 +345,6 @@ private:
   }
 };
 
-Pass *createFlattenPass() {
-  return new Flatten();
-}
+Pass* createFlattenPass() { return new Flatten(); }
 
 } // namespace wasm
-

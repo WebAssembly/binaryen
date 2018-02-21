@@ -16,11 +16,11 @@
 
 #include <iterator>
 
-#include <wasm-builder.h>
-#include <wasm-printing.h>
+#include <cfg/cfg-traversal.h>
 #include <ir/find_all.h>
 #include <ir/local-graph.h>
-#include <cfg/cfg-traversal.h>
+#include <wasm-builder.h>
+#include <wasm-printing.h>
 
 namespace wasm {
 
@@ -30,17 +30,18 @@ namespace LocalGraphInternal {
 // "other" which can be used for other purposes, to mark
 // their position in a block
 struct Action {
-  enum What {
-    Get = 0,
-    Set = 1
-  };
+  enum What { Get = 0, Set = 1 };
   What what;
-  Index index; // the local index read or written
+  Index index;      // the local index read or written
   Expression* expr; // the expression itself
 
   Action(What what, Index index, Expression* expr) : what(what), index(index), expr(expr) {
-    if (what == Get) assert(expr->is<GetLocal>());
-    if (what == Set) assert(expr->is<SetLocal>());
+    if (what == Get) {
+      assert(expr->is<GetLocal>());
+    }
+    if (what == Set) {
+      assert(expr->is<SetLocal>());
+    }
   }
 
   bool isGet() { return what == Get; }
@@ -49,14 +50,17 @@ struct Action {
 
 // information about a basic block
 struct Info {
-  std::vector<Action> actions; // actions occurring in this block
+  std::vector<Action> actions;     // actions occurring in this block
   std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
-    if (actions.empty()) return;
+    if (actions.empty()) {
+      return;
+    }
     std::cout << "    actions:\n";
     for (auto& action : actions) {
-      std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
+      std::cout << "      " << (action.isGet() ? "get" : "set") << " "
+                << func->getLocalName(action.index) << "\n";
     }
   }
 };
@@ -67,7 +71,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   LocalGraph::GetSetses& getSetses;
   LocalGraph::Locations& locations;
 
-  Flower(LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations, Function* func) : getSetses(getSetses), locations(locations) {
+  Flower(LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations, Function* func)
+    : getSetses(getSetses), locations(locations) {
     setFunction(func);
     // create the CFG by walking the IR
     CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
@@ -87,8 +92,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   static void doVisitGetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<GetLocal>();
-     // if in unreachable code, skip
-    if (!self->currBasicBlock) return;
+    // if in unreachable code, skip
+    if (!self->currBasicBlock) {
+      return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, curr);
     self->locations[curr] = currp;
   }
@@ -96,7 +103,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   static void doVisitSetLocal(Flower* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, skip
-    if (!self->currBasicBlock) return;
+    if (!self->currBasicBlock) {
+      return;
+    }
     self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
@@ -141,7 +150,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // can do that for all gets as a whole, they will get the same results
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
-        if (gets.empty()) continue;
+        if (gets.empty()) {
+          continue;
+        }
         work.push_back(block.get());
         seen.clear();
         // note that we may need to revisit the later parts of this initial
@@ -160,7 +171,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           } else {
             for (auto* pred : curr->in) {
-              if (seen.count(pred)) continue;
+              if (seen.count(pred)) {
+                continue;
+              }
               seen.insert(pred);
               auto* lastSet = pred->contents.lastSets[index];
               if (lastSet) {
@@ -220,4 +233,3 @@ void LocalGraph::computeInfluences() {
 }
 
 } // namespace wasm
-

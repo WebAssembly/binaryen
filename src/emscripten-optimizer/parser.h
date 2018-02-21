@@ -35,92 +35,14 @@ namespace cashew {
 
 // common strings
 
-extern IString TOPLEVEL,
-               DEFUN,
-               BLOCK,
-               VAR,
-               CONST,
-               CONDITIONAL,
-               BINARY,
-               RETURN,
-               IF,
-               ELSE,
-               WHILE,
-               DO,
-               FOR,
-               SEQ,
-               SUB,
-               CALL,
-               LABEL,
-               BREAK,
-               CONTINUE,
-               SWITCH,
-               STRING,
-               TRY,
-               INF,
-               NaN,
-               TEMP_RET0,
-               GET_TEMP_RET0,
-               LLVM_CTTZ_I32,
-               UDIVMODDI4,
-               UNARY_PREFIX,
-               UNARY_POSTFIX,
-               MATH_FROUND,
-               MATH_CLZ32,
-               INT64,
-               INT64_CONST,
-               SIMD_FLOAT32X4,
-               SIMD_FLOAT64X2,
-               SIMD_INT8X16,
-               SIMD_INT16X8,
-               SIMD_INT32X4,
-               PLUS,
-               MINUS,
-               OR,
-               AND,
-               XOR,
-               L_NOT,
-               B_NOT,
-               LT,
-               GE,
-               LE,
-               GT,
-               EQ,
-               NE,
-               DIV,
-               MOD,
-               MUL,
-               RSHIFT,
-               LSHIFT,
-               TRSHIFT,
-               TEMP_DOUBLE_PTR,
-               HEAP8,
-               HEAP16,
-               HEAP32,
-               HEAPF32,
-               HEAPU8,
-               HEAPU16,
-               HEAPU32,
-               HEAPF64,
-               F0,
-               EMPTY,
-               FUNCTION,
-               OPEN_PAREN,
-               OPEN_BRACE,
-               OPEN_CURLY,
-               CLOSE_CURLY,
-               COMMA,
-               QUESTION,
-               COLON,
-               CASE,
-               DEFAULT,
-               DOT,
-               PERIOD,
-               NEW,
-               ARRAY,
-               OBJECT,
-               THROW,
-               SET;
+extern IString TOPLEVEL, DEFUN, BLOCK, VAR, CONST, CONDITIONAL, BINARY, RETURN, IF, ELSE, WHILE, DO,
+  FOR, SEQ, SUB, CALL, LABEL, BREAK, CONTINUE, SWITCH, STRING, TRY, INF, NaN, TEMP_RET0,
+  GET_TEMP_RET0, LLVM_CTTZ_I32, UDIVMODDI4, UNARY_PREFIX, UNARY_POSTFIX, MATH_FROUND, MATH_CLZ32,
+  INT64, INT64_CONST, SIMD_FLOAT32X4, SIMD_FLOAT64X2, SIMD_INT8X16, SIMD_INT16X8, SIMD_INT32X4,
+  PLUS, MINUS, OR, AND, XOR, L_NOT, B_NOT, LT, GE, LE, GT, EQ, NE, DIV, MOD, MUL, RSHIFT, LSHIFT,
+  TRSHIFT, TEMP_DOUBLE_PTR, HEAP8, HEAP16, HEAP32, HEAPF32, HEAPU8, HEAPU16, HEAPU32, HEAPF64, F0,
+  EMPTY, FUNCTION, OPEN_PAREN, OPEN_BRACE, OPEN_CURLY, CLOSE_CURLY, COMMA, QUESTION, COLON, CASE,
+  DEFAULT, DOT, PERIOD, NEW, ARRAY, OBJECT, THROW, SET;
 
 extern IStringSet keywords;
 
@@ -129,12 +51,7 @@ extern const char *OPERATOR_INITS, *SEPARATORS;
 extern int MAX_OPERATOR_SIZE, LOWEST_PREC;
 
 struct OperatorClass {
-  enum Type {
-    Binary = 0,
-    Prefix = 1,
-    Postfix = 2,
-    Tertiary = 3
-  };
+  enum Type { Binary = 0, Prefix = 1, Postfix = 2, Tertiary = 3 };
 
   IStringSet ops;
   bool rtl;
@@ -153,10 +70,11 @@ extern bool isIdentPart(char x);
 
 // parser
 
-template<class NodeRef, class Builder>
-class Parser {
+template <class NodeRef, class Builder> class Parser {
 
-  static bool isSpace(char x) { return x == 32 || x == 9 || x == 10 || x == 13; } /* space, tab, linefeed/newline, or return */
+  static bool isSpace(char x) {
+    return x == 32 || x == 9 || x == 10 || x == 13;
+  } /* space, tab, linefeed/newline, or return */
   static void skipSpace(char*& curr) {
     while (*curr) {
       if (isSpace(*curr)) {
@@ -165,13 +83,19 @@ class Parser {
       }
       if (curr[0] == '/' && curr[1] == '/') {
         curr += 2;
-        while (*curr && *curr != '\n') curr++;
-        if (*curr) curr++;
+        while (*curr && *curr != '\n') {
+          curr++;
+        }
+        if (*curr) {
+          curr++;
+        }
         continue;
       }
       if (curr[0] == '/' && curr[1] == '*') {
         curr += 2;
-        while (*curr && (curr[0] != '*' || curr[1] != '/')) curr++;
+        while (*curr && (curr[0] != '*' || curr[1] != '/')) {
+          curr++;
+        }
         curr += 2;
         continue;
       }
@@ -181,7 +105,14 @@ class Parser {
 
   static bool isDigit(char x) { return x >= '0' && x <= '9'; }
 
-  static bool hasChar(const char* list, char x) { while (*list) if (*list++ == x) return true; return false; }
+  static bool hasChar(const char* list, char x) {
+    while (*list) {
+      if (*list++ == x) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   // An atomic fragment of something. Stops at a natural boundary.
   enum FragType {
@@ -195,7 +126,8 @@ class Parser {
   };
 
   struct Frag {
-#ifndef _MSC_VER // MSVC does not allow unrestricted unions: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
+#ifndef _MSC_VER // MSVC does not allow unrestricted unions:
+                 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
     union {
 #endif
       IString str;
@@ -206,12 +138,10 @@ class Parser {
     int size;
     FragType type;
 
-    bool isNumber() const {
-      return type == INT || type == DOUBLE;
-    }
+    bool isNumber() const { return type == INT || type == DOUBLE; }
 
     explicit Frag(char* src) {
-      char *start = src;
+      char* start = src;
       if (isIdentInit(*src)) {
         // read an identifier or a keyword
         src++;
@@ -235,10 +165,18 @@ class Parser {
           src += 2;
           num = 0;
           while (1) {
-            if (*src >= '0' && *src <= '9') { num *= 16; num += *src - '0'; }
-            else if (*src >= 'a' && *src <= 'f') { num *= 16; num += *src - 'a' + 10; }
-            else if (*src >= 'A' && *src <= 'F') { num *= 16; num += *src - 'A' + 10; }
-            else break;
+            if (*src >= '0' && *src <= '9') {
+              num *= 16;
+              num += *src - '0';
+            } else if (*src >= 'a' && *src <= 'f') {
+              num *= 16;
+              num += *src - 'a' + 10;
+            } else if (*src >= 'A' && *src <= 'F') {
+              num *= 16;
+              num += *src - 'A' + 10;
+            } else {
+              break;
+            }
             src++;
           }
         } else {
@@ -250,30 +188,65 @@ class Parser {
         // in the emscripten optimizer pipeline, we use simple_ast where INT/DOUBLE
         // is quite the same at this point anyhow
         type = (std::find(start, src, '.') == src &&
-                (wasm::isSInteger32(num) || wasm::isUInteger32(num)))
-                   ? INT
-                   : DOUBLE;
+                 (wasm::isSInteger32(num) || wasm::isUInteger32(num)))
+                 ? INT
+                 : DOUBLE;
         assert(src > start);
       } else if (hasChar(OPERATOR_INITS, *src)) {
         switch (*src) {
-          case '!': str = src[1] == '=' ? NE : L_NOT; break;
-          case '%': str = MOD; break;
-          case '&': str = AND; break;
-          case '*': str = MUL; break;
-          case '+': str = PLUS; break;
-          case ',': str = COMMA; break;
-          case '-': str = MINUS; break;
-          case '.': str = PERIOD; break;
-          case '/': str = DIV; break;
-          case ':': str = COLON; break;
-          case '<': str = src[1] == '<' ? LSHIFT : (src[1] == '=' ? LE : LT); break;
-          case '=': str = src[1] == '=' ? EQ : SET; break;
-          case '>': str = src[1] == '>' ? (src[2] == '>' ? TRSHIFT : RSHIFT) : (src[1] == '=' ? GE : GT); break;
-          case '?': str = QUESTION; break;
-          case '^': str = XOR; break;
-          case '|': str = OR; break;
-          case '~': str = B_NOT; break;
-          default: abort();
+          case '!':
+            str = src[1] == '=' ? NE : L_NOT;
+            break;
+          case '%':
+            str = MOD;
+            break;
+          case '&':
+            str = AND;
+            break;
+          case '*':
+            str = MUL;
+            break;
+          case '+':
+            str = PLUS;
+            break;
+          case ',':
+            str = COMMA;
+            break;
+          case '-':
+            str = MINUS;
+            break;
+          case '.':
+            str = PERIOD;
+            break;
+          case '/':
+            str = DIV;
+            break;
+          case ':':
+            str = COLON;
+            break;
+          case '<':
+            str = src[1] == '<' ? LSHIFT : (src[1] == '=' ? LE : LT);
+            break;
+          case '=':
+            str = src[1] == '=' ? EQ : SET;
+            break;
+          case '>':
+            str = src[1] == '>' ? (src[2] == '>' ? TRSHIFT : RSHIFT) : (src[1] == '=' ? GE : GT);
+            break;
+          case '?':
+            str = QUESTION;
+            break;
+          case '^':
+            str = XOR;
+            break;
+          case '|':
+            str = OR;
+            break;
+          case '~':
+            str = B_NOT;
+            break;
+          default:
+            abort();
         }
         size = strlen(str.str);
 #ifndef NDEBUG
@@ -292,10 +265,10 @@ class Parser {
         src[1] = temp;
         src++;
       } else if (*src == '"' || *src == '\'') {
-        char *end = strchr(src+1, *src);
+        char* end = strchr(src + 1, *src);
         *end = 0;
-        str.set(src+1);
-        src = end+1;
+        str.set(src + 1);
+        src = end + 1;
         type = STRING;
       } else {
         dump("frag parsing", src);
@@ -307,7 +280,8 @@ class Parser {
 
   struct ExpressionElement {
     bool isNode;
-#ifndef _MSC_VER // MSVC does not allow unrestricted unions: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
+#ifndef _MSC_VER // MSVC does not allow unrestricted unions:
+                 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
     union {
 #endif
       NodeRef node;
@@ -329,13 +303,15 @@ class Parser {
   };
 
   // This is a list of the current stack of node-operator-node-operator-etc.
-  // this works by each parseExpression call appending to the vector; then recursing out, and the toplevel sorts it all
+  // this works by each parseExpression call appending to the vector; then recursing out, and the
+  // toplevel sorts it all
   typedef std::vector<ExpressionElement> ExpressionParts;
   std::vector<ExpressionParts> expressionPartsStack;
 
-  // Parses an element in a list of such elements, e.g. list of statements in a block, or list of parameters in a call
-  NodeRef parseElement(char*& src, const char* seps=";") {
-    //dump("parseElement", src);
+  // Parses an element in a list of such elements, e.g. list of statements in a block, or list of
+  // parameters in a call
+  NodeRef parseElement(char*& src, const char* seps = ";") {
+    // dump("parseElement", src);
     skipSpace(src);
     Frag frag(src);
     src += frag.size;
@@ -352,44 +328,69 @@ class Parser {
         return parseExpression(parseFrag(frag), src, seps);
       }
       case SEPARATOR: {
-        if (frag.str == OPEN_PAREN) return parseExpression(parseAfterParen(src), src, seps);
-        if (frag.str == OPEN_BRACE) return parseExpression(parseAfterBrace(src), src, seps);
-        if (frag.str == OPEN_CURLY) return parseExpression(parseAfterCurly(src), src, seps);
+        if (frag.str == OPEN_PAREN) {
+          return parseExpression(parseAfterParen(src), src, seps);
+        }
+        if (frag.str == OPEN_BRACE) {
+          return parseExpression(parseAfterBrace(src), src, seps);
+        }
+        if (frag.str == OPEN_CURLY) {
+          return parseExpression(parseAfterCurly(src), src, seps);
+        }
         abort();
       }
       case OPERATOR: {
         return parseExpression(frag.str, src, seps);
       }
-      default: /* dump("parseElement", src); printf("bad frag type: %d\n", frag.type); */ abort();
+      default: /* dump("parseElement", src); printf("bad frag type: %d\n", frag.type); */
+        abort();
     }
     return nullptr;
   }
 
   NodeRef parseFrag(Frag& frag) {
     switch (frag.type) {
-      case IDENT:  return Builder::makeName(frag.str);
-      case STRING: return Builder::makeString(frag.str);
-      case INT:    return Builder::makeInt(uint32_t(frag.num));
-      case DOUBLE: return Builder::makeDouble(frag.num);
-      default: abort();
+      case IDENT:
+        return Builder::makeName(frag.str);
+      case STRING:
+        return Builder::makeString(frag.str);
+      case INT:
+        return Builder::makeInt(uint32_t(frag.num));
+      case DOUBLE:
+        return Builder::makeDouble(frag.num);
+      default:
+        abort();
     }
     return nullptr;
   }
 
   NodeRef parseAfterKeyword(Frag& frag, char*& src, const char* seps) {
     skipSpace(src);
-    if (frag.str == FUNCTION) return parseFunction(src, seps);
-    else if (frag.str == VAR) return parseVar(src, seps, false);
-    else if (frag.str == CONST) return parseVar(src, seps, true);
-    else if (frag.str == RETURN) return parseReturn(src, seps);
-    else if (frag.str == IF) return parseIf(src, seps);
-    else if (frag.str == DO) return parseDo(src, seps);
-    else if (frag.str == WHILE) return parseWhile(src, seps);
-    else if (frag.str == BREAK) return parseBreak(src, seps);
-    else if (frag.str == CONTINUE) return parseContinue(src, seps);
-    else if (frag.str == SWITCH) return parseSwitch(src, seps);
-    else if (frag.str == NEW) return parseNew(src, seps);
-    else if (frag.str == FOR) return parseFor(src, seps);
+    if (frag.str == FUNCTION) {
+      return parseFunction(src, seps);
+    } else if (frag.str == VAR) {
+      return parseVar(src, seps, false);
+    } else if (frag.str == CONST) {
+      return parseVar(src, seps, true);
+    } else if (frag.str == RETURN) {
+      return parseReturn(src, seps);
+    } else if (frag.str == IF) {
+      return parseIf(src, seps);
+    } else if (frag.str == DO) {
+      return parseDo(src, seps);
+    } else if (frag.str == WHILE) {
+      return parseWhile(src, seps);
+    } else if (frag.str == BREAK) {
+      return parseBreak(src, seps);
+    } else if (frag.str == CONTINUE) {
+      return parseContinue(src, seps);
+    } else if (frag.str == SWITCH) {
+      return parseSwitch(src, seps);
+    } else if (frag.str == NEW) {
+      return parseNew(src, seps);
+    } else if (frag.str == FOR) {
+      return parseFor(src, seps);
+    }
     dump(frag.str.str, src);
     abort();
     return nullptr;
@@ -409,13 +410,17 @@ class Parser {
     src++;
     while (1) {
       skipSpace(src);
-      if (*src == ')') break;
+      if (*src == ')') {
+        break;
+      }
       Frag arg(src);
       assert(arg.type == IDENT);
       src += arg.size;
       Builder::appendArgumentToFunction(ret, arg.str);
       skipSpace(src);
-      if (*src == ')') break;
+      if (*src == ')') {
+        break;
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -432,7 +437,9 @@ class Parser {
     NodeRef ret = Builder::makeVar(is_const);
     while (1) {
       skipSpace(src);
-      if (*src == ';') break;
+      if (*src == ';') {
+        break;
+      }
       Frag name(src);
       assert(name.type == IDENT);
       NodeRef value;
@@ -445,7 +452,9 @@ class Parser {
       }
       Builder::appendToVar(ret, name.str, value);
       skipSpace(src);
-      if (*src == ';') break;
+      if (*src == ';') {
+        break;
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -461,7 +470,9 @@ class Parser {
     NodeRef value = !hasChar(seps, *src) ? parseElement(src, seps) : nullptr;
     skipSpace(src);
     assert(hasChar(seps, *src));
-    if (*src == ';') src++;
+    if (*src == ';') {
+      src++;
+    }
     return Builder::makeReturn(value);
   }
 
@@ -519,14 +530,18 @@ class Parser {
   NodeRef parseBreak(char*& src, const char* seps) {
     skipSpace(src);
     Frag next(src);
-    if (next.type == IDENT) src += next.size;
+    if (next.type == IDENT) {
+      src += next.size;
+    }
     return Builder::makeBreak(next.type == IDENT ? next.str : IString());
   }
 
   NodeRef parseContinue(char*& src, const char* seps) {
     skipSpace(src);
     Frag next(src);
-    if (next.type == IDENT) src += next.size;
+    if (next.type == IDENT) {
+      src += next.size;
+    }
     return Builder::makeContinue(next.type == IDENT ? next.str : IString());
   }
 
@@ -538,7 +553,9 @@ class Parser {
     while (1) {
       // find all cases and possibly a default
       skipSpace(src);
-      if (*src == '}') break;
+      if (*src == '}') {
+        break;
+      }
       Frag next(src);
       if (next.type == KEYWORD) {
         if (next.str == CASE) {
@@ -583,7 +600,8 @@ class Parser {
       // not case X: or default: or }, so must be some code
       skipSpace(src);
       bool explicitBlock = *src == '{';
-      NodeRef subBlock = explicitBlock ? parseBracketedBlock(src) : parseBlock(src, ";}", CASE, DEFAULT);
+      NodeRef subBlock =
+        explicitBlock ? parseBracketedBlock(src) : parseBlock(src, ";}", CASE, DEFAULT);
       Builder::appendCodeToSwitch(ret, subBlock, explicitBlock);
     }
     skipSpace(src);
@@ -598,8 +616,12 @@ class Parser {
 
   NodeRef parseAfterIdent(Frag& frag, char*& src, const char* seps) {
     skipSpace(src);
-    if (*src == '(') return parseExpression(parseCall(parseFrag(frag), src), src, seps);
-    if (*src == '[') return parseExpression(parseIndexing(parseFrag(frag), src), src, seps);
+    if (*src == '(') {
+      return parseExpression(parseCall(parseFrag(frag), src), src, seps);
+    }
+    if (*src == '[') {
+      return parseExpression(parseIndexing(parseFrag(frag), src), src, seps);
+    }
     if (*src == ':' && expressionPartsStack.back().size() == 0) {
       src++;
       skipSpace(src);
@@ -611,21 +633,27 @@ class Parser {
       }
       return Builder::makeLabel(frag.str, inner);
     }
-    if (*src == '.') return parseExpression(parseDotting(parseFrag(frag), src), src, seps);
+    if (*src == '.') {
+      return parseExpression(parseDotting(parseFrag(frag), src), src, seps);
+    }
     return parseExpression(parseFrag(frag), src, seps);
   }
 
   NodeRef parseCall(NodeRef target, char*& src) {
-    expressionPartsStack.resize(expressionPartsStack.size()+1);
+    expressionPartsStack.resize(expressionPartsStack.size() + 1);
     assert(*src == '(');
     src++;
     NodeRef ret = Builder::makeCall(target);
     while (1) {
       skipSpace(src);
-      if (*src == ')') break;
+      if (*src == ')') {
+        break;
+      }
       Builder::appendToCall(ret, parseElement(src, ",)"));
       skipSpace(src);
-      if (*src == ')') break;
+      if (*src == ')') {
+        break;
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -639,7 +667,7 @@ class Parser {
   }
 
   NodeRef parseIndexing(NodeRef target, char*& src) {
-    expressionPartsStack.resize(expressionPartsStack.size()+1);
+    expressionPartsStack.resize(expressionPartsStack.size() + 1);
     assert(*src == '[');
     src++;
     NodeRef ret = Builder::makeIndexing(target, parseElement(src, "]"));
@@ -661,7 +689,7 @@ class Parser {
   }
 
   NodeRef parseAfterParen(char*& src) {
-    expressionPartsStack.resize(expressionPartsStack.size()+1);
+    expressionPartsStack.resize(expressionPartsStack.size() + 1);
     skipSpace(src);
     NodeRef ret = parseElement(src, ")");
     skipSpace(src);
@@ -673,16 +701,20 @@ class Parser {
   }
 
   NodeRef parseAfterBrace(char*& src) {
-    expressionPartsStack.resize(expressionPartsStack.size()+1);
+    expressionPartsStack.resize(expressionPartsStack.size() + 1);
     NodeRef ret = Builder::makeArray();
     while (1) {
       skipSpace(src);
       assert(*src);
-      if (*src == ']') break;
+      if (*src == ']') {
+        break;
+      }
       NodeRef element = parseElement(src, ",]");
       Builder::appendToArray(ret, element);
       skipSpace(src);
-      if (*src == ']') break;
+      if (*src == ']') {
+        break;
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -694,12 +726,14 @@ class Parser {
   }
 
   NodeRef parseAfterCurly(char*& src) {
-    expressionPartsStack.resize(expressionPartsStack.size()+1);
+    expressionPartsStack.resize(expressionPartsStack.size() + 1);
     NodeRef ret = Builder::makeObject();
     while (1) {
       skipSpace(src);
       assert(*src);
-      if (*src == '}') break;
+      if (*src == '}') {
+        break;
+      }
       Frag key(src);
       assert(key.type == IDENT || key.type == STRING);
       src += key.size;
@@ -709,7 +743,9 @@ class Parser {
       NodeRef value = parseElement(src, ",}");
       Builder::appendToObject(ret, key.str, value);
       skipSpace(src);
-      if (*src == '}') break;
+      if (*src == '}') {
+        break;
+      }
       if (*src == ',') {
         src++;
         continue;
@@ -738,12 +774,12 @@ class Parser {
     if (op == PERIOD) {
       return Builder::makeDot(left, right);
     } else {
-      return Builder::makeBinary(left, op ,right);
+      return Builder::makeBinary(left, op, right);
     }
   }
 
-  NodeRef parseExpression(ExpressionElement initial, char*&src, const char* seps) {
-    //dump("parseExpression", src);
+  NodeRef parseExpression(ExpressionElement initial, char*& src, const char* seps) {
+    // dump("parseExpression", src);
     ExpressionParts& parts = expressionPartsStack.back();
     skipSpace(src);
     if (*src == 0 || hasChar(seps, *src)) {
@@ -774,56 +810,76 @@ class Parser {
       parts.push_back(initial);
     }
     NodeRef last = parseElement(src, seps);
-    if (!top) return last;
+    if (!top) {
+      return last;
+    }
     {
-      ExpressionParts& parts = expressionPartsStack.back(); // |parts| may have been invalidated by that call
+      ExpressionParts& parts =
+        expressionPartsStack.back(); // |parts| may have been invalidated by that call
       // we are the toplevel. sort it all out
       // collapse right to left, highest priority first
-      //dumpParts(parts, 0);
+      // dumpParts(parts, 0);
       for (auto& ops : operatorClasses) {
         if (ops.rtl) {
           // right to left
-          for (int i = parts.size()-1; i >= 0; i--) {
-            if (parts[i].isNode) continue;
+          for (int i = parts.size() - 1; i >= 0; i--) {
+            if (parts[i].isNode) {
+              continue;
+            }
             IString op = parts[i].getOp();
-            if (!ops.ops.has(op)) continue;
-            if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size()-1) {
-              parts[i] = makeBinary(parts[i-1].getNode(), op, parts[i+1].getNode());
+            if (!ops.ops.has(op)) {
+              continue;
+            }
+            if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size() - 1) {
+              parts[i] = makeBinary(parts[i - 1].getNode(), op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
               parts.erase(parts.begin() + i - 1);
-            } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size()-1) {
-              if (i > 0 && parts[i-1].isNode) continue; // cannot apply prefix operator if it would join two nodes
-              parts[i] = Builder::makePrefix(op, parts[i+1].getNode());
+            } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size() - 1) {
+              if (i > 0 && parts[i - 1].isNode) {
+                continue; // cannot apply prefix operator if it would join two nodes
+              }
+              parts[i] = Builder::makePrefix(op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
             } else if (ops.type == OperatorClass::Tertiary) {
               // we must be at  X ? Y : Z
               //                      ^
-              //dumpParts(parts, i);
-              if (op != COLON) continue;
-              assert(i < (int)parts.size()-1 && i >= 3);
-              if (parts[i-2].getOp() != QUESTION) continue; // e.g. x ? y ? 1 : 0 : 2
-              parts[i-3] = Builder::makeConditional(parts[i-3].getNode(), parts[i-1].getNode(), parts[i+1].getNode());
+              // dumpParts(parts, i);
+              if (op != COLON) {
+                continue;
+              }
+              assert(i < (int)parts.size() - 1 && i >= 3);
+              if (parts[i - 2].getOp() != QUESTION) {
+                continue; // e.g. x ? y ? 1 : 0 : 2
+              }
+              parts[i - 3] = Builder::makeConditional(
+                parts[i - 3].getNode(), parts[i - 1].getNode(), parts[i + 1].getNode());
               parts.erase(parts.begin() + i - 2, parts.begin() + i + 2);
               i = parts.size(); // basically a reset, due to things like x ? y ? 1 : 0 : 2
-            } // TODO: postfix
+            }                   // TODO: postfix
           }
         } else {
           // left to right
           for (int i = 0; i < (int)parts.size(); i++) {
-            if (parts[i].isNode) continue;
+            if (parts[i].isNode) {
+              continue;
+            }
             IString op = parts[i].getOp();
-            if (!ops.ops.has(op)) continue;
-            if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size()-1) {
-              parts[i] = makeBinary(parts[i-1].getNode(), op, parts[i+1].getNode());
+            if (!ops.ops.has(op)) {
+              continue;
+            }
+            if (ops.type == OperatorClass::Binary && i > 0 && i < (int)parts.size() - 1) {
+              parts[i] = makeBinary(parts[i - 1].getNode(), op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
               parts.erase(parts.begin() + i - 1);
               i--;
-            } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size()-1) {
-              if (i > 0 && parts[i-1].isNode) continue; // cannot apply prefix operator if it would join two nodes
-              parts[i] = Builder::makePrefix(op, parts[i+1].getNode());
+            } else if (ops.type == OperatorClass::Prefix && i < (int)parts.size() - 1) {
+              if (i > 0 && parts[i - 1].isNode) {
+                continue; // cannot apply prefix operator if it would join two nodes
+              }
+              parts[i] = Builder::makePrefix(op, parts[i + 1].getNode());
               parts.erase(parts.begin() + i + 1);
-              i = std::max(i-2, 0); // allow a previous prefix operator to cascade
-            } // TODO: tertiary, postfix
+              i = std::max(i - 2, 0); // allow a previous prefix operator to cascade
+            }                         // TODO: tertiary, postfix
           }
         }
       }
@@ -835,24 +891,33 @@ class Parser {
   }
 
   // Parses a block of code (e.g. a bunch of statements inside {,}, or the top level of o file)
-  NodeRef parseBlock(char*& src, const char* seps=";", IString keywordSep1=IString(), IString keywordSep2=IString()) {
+  NodeRef parseBlock(char*& src, const char* seps = ";", IString keywordSep1 = IString(),
+    IString keywordSep2 = IString()) {
     NodeRef block = Builder::makeBlock();
-    //dump("parseBlock", src);
+    // dump("parseBlock", src);
     while (1) {
       skipSpace(src);
-      if (*src == 0) break;
+      if (*src == 0) {
+        break;
+      }
       if (*src == ';') {
         src++; // skip a statement in this block
         continue;
       }
-      if (hasChar(seps, *src)) break;
+      if (hasChar(seps, *src)) {
+        break;
+      }
       if (!!keywordSep1) {
         Frag next(src);
-        if (next.type == KEYWORD && next.str == keywordSep1) break;
+        if (next.type == KEYWORD && next.str == keywordSep1) {
+          break;
+        }
       }
       if (!!keywordSep2) {
         Frag next(src);
-        if (next.type == KEYWORD && next.str == keywordSep2) break;
+        if (next.type == KEYWORD && next.str == keywordSep2) {
+          break;
+        }
       }
       NodeRef element = parseElementOrStatement(src, seps);
       Builder::appendToBlock(block, element);
@@ -864,20 +929,22 @@ class Parser {
     skipSpace(src);
     assert(*src == '{');
     src++;
-    NodeRef block = parseBlock(src, ";}"); // the two are not symmetrical, ; is just internally separating, } is the final one - parseBlock knows all this
+    NodeRef block = parseBlock(src, ";}"); // the two are not symmetrical, ; is just internally
+                                           // separating, } is the final one - parseBlock knows all
+                                           // this
     assert(*src == '}');
     src++;
     return block;
   }
 
-  NodeRef parseElementOrStatement(char*& src, const char *seps) {
+  NodeRef parseElementOrStatement(char*& src, const char* seps) {
     skipSpace(src);
     if (*src == ';') {
       src++;
       return Builder::makeBlock(); // we don't need the brackets here, but oh well
     }
     if (*src == '{') { // detect a trivial {} in a statement context
-      char *before = src;
+      char* before = src;
       src++;
       skipSpace(src);
       if (*src == '}') {
@@ -895,7 +962,7 @@ class Parser {
     return ret;
   }
 
-  NodeRef parseMaybeBracketed(char*& src, const char *seps) {
+  NodeRef parseMaybeBracketed(char*& src, const char* seps) {
     skipSpace(src);
     return *src == '{' ? parseBracketedBlock(src) : parseElementOrStatement(src, seps);
   }
@@ -913,10 +980,10 @@ class Parser {
 
   // Debugging
 
-  char *allSource;
+  char* allSource;
   int allSize;
 
-  static void dump(const char *where, char* curr) {
+  static void dump(const char* where, char* curr) {
     /*
     printf("%s:\n=============\n", where);
     for (int i = 0; i < allSize; i++) printf("%c", allSource[i] ? allSource[i] : '?');
@@ -930,20 +997,21 @@ class Parser {
     while (*curr) {
       if (*curr == '\n') {
         newlinesLeft--;
-        if (newlinesLeft == 0) break;
+        if (newlinesLeft == 0) {
+          break;
+        }
       }
       charsLeft--;
-      if (charsLeft == 0) break;
+      if (charsLeft == 0) {
+        break;
+      }
       fprintf(stderr, "%c", *curr++);
     }
     fprintf(stderr, "\n\n");
   }
 
 public:
-
-  Parser() : allSource(nullptr), allSize(0) {
-    expressionPartsStack.resize(1);
-  }
+  Parser() : allSource(nullptr), allSize(0) { expressionPartsStack.resize(1); }
 
   // Highest-level parsing, as of a JavaScript script file.
   NodeRef parseToplevel(char* src) {

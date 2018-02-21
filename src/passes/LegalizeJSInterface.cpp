@@ -26,11 +26,11 @@
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
 
-#include <wasm.h>
+#include <ir/literal-utils.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/utils.h>
-#include <ir/literal-utils.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -53,7 +53,8 @@ struct LegalizeJSInterface : public Pass {
     // for each illegal import, we must call a legalized stub instead
     std::vector<Import*> newImports; // add them at the end, to not invalidate the iter
     for (auto& im : module->imports) {
-      if (im->kind == ExternalKind::Function && isIllegal(module->getFunctionType(im->functionType))) {
+      if (im->kind == ExternalKind::Function &&
+          isIllegal(module->getFunctionType(im->functionType))) {
         Name funcName;
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
@@ -87,9 +88,13 @@ struct LegalizeJSInterface : public Pass {
 
         void visitCallImport(CallImport* curr) {
           auto iter = illegalToLegal->find(curr->target);
-          if (iter == illegalToLegal->end()) return;
+          if (iter == illegalToLegal->end()) {
+            return;
+          }
 
-          if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
+          if (iter->second == getFunction()->name) {
+            return; // inside the stub function itself, is the one safe place to do the call
+          }
           replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
         }
       };
@@ -105,12 +110,15 @@ private:
   // map of illegal to legal names for imports
   std::map<Name, Name> illegalToLegal;
 
-  template<typename T>
-  bool isIllegal(T* t) {
+  template <typename T> bool isIllegal(T* t) {
     for (auto param : t->params) {
-      if (param == i64 || param == f32) return true;
+      if (param == i64 || param == f32) {
+        return true;
+      }
     }
-    if (t->result == i64 || t->result == f32) return true;
+    if (t->result == i64 || t->result == f32) {
+      return true;
+    }
     return false;
   }
 
@@ -126,11 +134,13 @@ private:
 
     for (auto param : func->params) {
       if (param == i64) {
-        call->operands.push_back(I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
+        call->operands.push_back(
+          I64Utilities::recreateI64(builder, legal->params.size(), legal->params.size() + 1));
         legal->params.push_back(i32);
         legal->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
+        call->operands.push_back(
+          builder.makeUnary(DemoteFloat64, builder.makeGetLocal(legal->params.size(), f64)));
         legal->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(legal->params.size(), param));
@@ -144,10 +154,8 @@ private:
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
       ensureTempRet0(module);
-      block->list.push_back(builder.makeSetGlobal(
-        TEMP_RET_0,
-        I64Utilities::getI64High(builder, index)
-      ));
+      block->list.push_back(
+        builder.makeSetGlobal(TEMP_RET_0, I64Utilities::getI64High(builder, index)));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
       block->finalize();
       legal->body = block;
@@ -170,7 +178,7 @@ private:
   Import* makeLegalStub(Import* im, Module* module, Name& funcName) {
     Builder builder(*module);
     auto* type = new FunctionType();
-    type->name =  Name(std::string("legaltype$") + im->name.str);
+    type->name = Name(std::string("legaltype$") + im->name.str);
     auto* legal = new Import();
     legal->name = Name(std::string("legalimport$") + im->name.str);
     legal->module = im->module;
@@ -193,7 +201,8 @@ private:
         type->params.push_back(i32);
         type->params.push_back(i32);
       } else if (param == f32) {
-        call->operands.push_back(builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
+        call->operands.push_back(
+          builder.makeUnary(PromoteFloat32, builder.makeGetLocal(func->params.size(), f32)));
         type->params.push_back(f64);
       } else {
         call->operands.push_back(builder.makeGetLocal(func->params.size(), param));
@@ -228,18 +237,11 @@ private:
   void ensureTempRet0(Module* module) {
     if (!module->getGlobalOrNull(TEMP_RET_0)) {
       module->addGlobal(Builder::makeGlobal(
-        TEMP_RET_0,
-        i32,
-        LiteralUtils::makeZero(i32, *module),
-        Builder::Mutable
-      ));
+        TEMP_RET_0, i32, LiteralUtils::makeZero(i32, *module), Builder::Mutable));
     }
   }
 };
 
-Pass *createLegalizeJSInterfacePass() {
-  return new LegalizeJSInterface();
-}
+Pass* createLegalizeJSInterfacePass() { return new LegalizeJSInterface(); }
 
 } // namespace wasm
-

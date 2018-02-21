@@ -17,11 +17,11 @@
 #ifndef wasm_ir_utils_h
 #define wasm_ir_utils_h
 
-#include "wasm.h"
-#include "wasm-traversal.h"
-#include "wasm-builder.h"
-#include "pass.h"
 #include "ir/branch-utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -30,9 +30,7 @@ namespace wasm {
 struct Measurer : public PostWalker<Measurer, UnifiedExpressionVisitor<Measurer>> {
   Index size = 0;
 
-  void visitExpression(Expression* curr) {
-    size++;
-  }
+  void visitExpression(Expression* curr) { size++; }
 
   static Index measure(Expression* tree) {
     Measurer measurer;
@@ -51,17 +49,13 @@ struct ExpressionAnalyzer {
   static bool isResultDropped(std::vector<Expression*> stack);
 
   // Checks if a break is a simple - no condition, no value, just a plain branching
-  static bool isSimple(Break* curr) {
-    return !curr->condition && !curr->value;
-  }
+  static bool isSimple(Break* curr) { return !curr->condition && !curr->value; }
 
   using ExprComparer = std::function<bool(Expression*, Expression*)>;
   static bool flexibleEqual(Expression* left, Expression* right, ExprComparer comparer);
 
   static bool equal(Expression* left, Expression* right) {
-    auto comparer = [](Expression* left, Expression* right) {
-      return false;
-    };
+    auto comparer = [](Expression* left, Expression* right) { return false; };
     return flexibleEqual(left, right, comparer);
   }
 
@@ -88,7 +82,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
 
   std::map<Name, Type> breakValues;
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     if (curr->list.size() == 0) {
       curr->type = none;
       return;
@@ -99,7 +93,9 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     curr->type = curr->list.back()->type;
     // if concrete, it doesn't matter if we have an unreachable child, and we
     // don't need to look at breaks
-    if (isConcreteType(curr->type)) return;
+    if (isConcreteType(curr->type)) {
+      return;
+    }
     // otherwise, we have no final fallthrough element to determine the type,
     // could be determined by breaks
     if (curr->name.is()) {
@@ -118,7 +114,9 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
         return;
       }
     }
-    if (curr->type == unreachable) return;
+    if (curr->type == unreachable) {
+      return;
+    }
     // type is none, but we might be unreachable
     if (curr->type == none) {
       for (auto* child : curr->list) {
@@ -129,13 +127,13 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       }
     }
   }
-  void visitIf(If *curr) { curr->finalize(); }
-  void visitLoop(Loop *curr) { curr->finalize(); }
-  void visitBreak(Break *curr) {
+  void visitIf(If* curr) { curr->finalize(); }
+  void visitLoop(Loop* curr) { curr->finalize(); }
+  void visitBreak(Break* curr) {
     curr->finalize();
     updateBreakValueType(curr->name, getValueType(curr->value));
   }
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     curr->finalize();
     auto valueType = getValueType(curr->value);
     for (auto target : curr->targets) {
@@ -143,28 +141,28 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     }
     updateBreakValueType(curr->default_, valueType);
   }
-  void visitCall(Call *curr) { curr->finalize(); }
-  void visitCallImport(CallImport *curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
-  void visitLoad(Load *curr) { curr->finalize(); }
-  void visitStore(Store *curr) { curr->finalize(); }
-  void visitAtomicRMW(AtomicRMW *curr) { curr->finalize(); }
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr) { curr->finalize(); }
+  void visitCall(Call* curr) { curr->finalize(); }
+  void visitCallImport(CallImport* curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+  void visitLoad(Load* curr) { curr->finalize(); }
+  void visitStore(Store* curr) { curr->finalize(); }
+  void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
-  void visitConst(Const *curr) { curr->finalize(); }
-  void visitUnary(Unary *curr) { curr->finalize(); }
-  void visitBinary(Binary *curr) { curr->finalize(); }
-  void visitSelect(Select *curr) { curr->finalize(); }
-  void visitDrop(Drop *curr) { curr->finalize(); }
-  void visitReturn(Return *curr) { curr->finalize(); }
-  void visitHost(Host *curr) { curr->finalize(); }
-  void visitNop(Nop *curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+  void visitConst(Const* curr) { curr->finalize(); }
+  void visitUnary(Unary* curr) { curr->finalize(); }
+  void visitBinary(Binary* curr) { curr->finalize(); }
+  void visitSelect(Select* curr) { curr->finalize(); }
+  void visitDrop(Drop* curr) { curr->finalize(); }
+  void visitReturn(Return* curr) { curr->finalize(); }
+  void visitHost(Host* curr) { curr->finalize(); }
+  void visitNop(Nop* curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
 
   void visitFunction(Function* curr) {
     // we may have changed the body from unreachable to none, which might be bad
@@ -183,9 +181,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
-  Type getValueType(Expression* value) {
-    return value ? value->type : none;
-  }
+  Type getValueType(Expression* value) { return value ? value->type : none; }
 
   void updateBreakValueType(Name name, Type type) {
     if (type != unreachable || breakValues.count(name) == 0) {
@@ -197,33 +193,33 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
 struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
-  void visitBlock(Block *curr) { curr->finalize(); }
-  void visitIf(If *curr) { curr->finalize(); }
-  void visitLoop(Loop *curr) { curr->finalize(); }
-  void visitBreak(Break *curr) { curr->finalize(); }
-  void visitSwitch(Switch *curr) { curr->finalize(); }
-  void visitCall(Call *curr) { curr->finalize(); }
-  void visitCallImport(CallImport *curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
-  void visitLoad(Load *curr) { curr->finalize(); }
-  void visitStore(Store *curr) { curr->finalize(); }
+  void visitBlock(Block* curr) { curr->finalize(); }
+  void visitIf(If* curr) { curr->finalize(); }
+  void visitLoop(Loop* curr) { curr->finalize(); }
+  void visitBreak(Break* curr) { curr->finalize(); }
+  void visitSwitch(Switch* curr) { curr->finalize(); }
+  void visitCall(Call* curr) { curr->finalize(); }
+  void visitCallImport(CallImport* curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+  void visitLoad(Load* curr) { curr->finalize(); }
+  void visitStore(Store* curr) { curr->finalize(); }
   void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
-  void visitConst(Const *curr) { curr->finalize(); }
-  void visitUnary(Unary *curr) { curr->finalize(); }
-  void visitBinary(Binary *curr) { curr->finalize(); }
-  void visitSelect(Select *curr) { curr->finalize(); }
-  void visitDrop(Drop *curr) { curr->finalize(); }
-  void visitReturn(Return *curr) { curr->finalize(); }
-  void visitHost(Host *curr) { curr->finalize(); }
-  void visitNop(Nop *curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+  void visitConst(Const* curr) { curr->finalize(); }
+  void visitUnary(Unary* curr) { curr->finalize(); }
+  void visitBinary(Binary* curr) { curr->finalize(); }
+  void visitSelect(Select* curr) { curr->finalize(); }
+  void visitDrop(Drop* curr) { curr->finalize(); }
+  void visitReturn(Return* curr) { curr->finalize(); }
+  void visitHost(Host* curr) { curr->finalize(); }
+  void visitNop(Nop* curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
 
   void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
   void visitImport(Import* curr) { WASM_UNREACHABLE(); }
@@ -258,7 +254,8 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     bool acted = false;
     if (isConcreteType(child->type)) {
       expressionStack.push_back(child);
-      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) && !ExpressionAnalyzer::isResultDropped(expressionStack)) {
+      if (!ExpressionAnalyzer::isResultUsed(expressionStack, getFunction()) &&
+          !ExpressionAnalyzer::isResultDropped(expressionStack)) {
         child = Builder(*getModule()).makeDrop(child);
         acted = true;
       }
@@ -267,12 +264,12 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     return acted;
   }
 
-  void reFinalize() {
-    ReFinalizeNode::updateStack(expressionStack);
-  }
+  void reFinalize() { ReFinalizeNode::updateStack(expressionStack); }
 
   void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) return;
+    if (curr->list.size() == 0) {
+      return;
+    }
     for (Index i = 0; i < curr->list.size() - 1; i++) {
       auto* child = curr->list[i];
       if (isConcreteType(child->type)) {
@@ -287,9 +284,13 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
   void visitIf(If* curr) {
     bool acted = false;
-    if (maybeDrop(curr->ifTrue)) acted = true;
+    if (maybeDrop(curr->ifTrue)) {
+      acted = true;
+    }
     if (curr->ifFalse) {
-      if (maybeDrop(curr->ifFalse)) acted = true;
+      if (maybeDrop(curr->ifFalse)) {
+        acted = true;
+      }
     }
     if (acted) {
       reFinalize();
@@ -309,23 +310,9 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
 
 struct I64Utilities {
   static Expression* recreateI64(Builder& builder, Expression* low, Expression* high) {
-    return
+    return builder.makeBinary(OrInt64, builder.makeUnary(ExtendUInt32, low),
       builder.makeBinary(
-        OrInt64,
-        builder.makeUnary(
-          ExtendUInt32,
-          low
-        ),
-        builder.makeBinary(
-          ShlInt64,
-          builder.makeUnary(
-            ExtendUInt32,
-            high
-          ),
-          builder.makeConst(Literal(int64_t(32)))
-        )
-      )
-    ;
+        ShlInt64, builder.makeUnary(ExtendUInt32, high), builder.makeConst(Literal(int64_t(32)))));
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
@@ -333,25 +320,13 @@ struct I64Utilities {
   };
 
   static Expression* getI64High(Builder& builder, Index index) {
-    return
-      builder.makeUnary(
-        WrapInt64,
-        builder.makeBinary(
-          ShrUInt64,
-          builder.makeGetLocal(index, i64),
-          builder.makeConst(Literal(int64_t(32)))
-        )
-      )
-    ;
+    return builder.makeUnary(
+      WrapInt64, builder.makeBinary(ShrUInt64, builder.makeGetLocal(index, i64),
+                   builder.makeConst(Literal(int64_t(32)))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {
-    return
-      builder.makeUnary(
-        WrapInt64,
-        builder.makeGetLocal(index, i64)
-      )
-    ;
+    return builder.makeUnary(WrapInt64, builder.makeGetLocal(index, i64));
   }
 };
 

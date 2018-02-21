@@ -21,11 +21,11 @@
 #ifndef liveness_traversal_h
 #define liveness_traversal_h
 
+#include "cfg-traversal.h"
 #include "support/sorted_vector.h"
-#include "wasm.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
-#include "cfg-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -40,20 +40,21 @@ typedef SortedVector LocalSet;
 // "other" which can be used for other purposes, to mark
 // their position in a block
 struct LivenessAction {
-  enum What {
-    Get = 0,
-    Set = 1,
-    Other = 2
-  };
+  enum What { Get = 0, Set = 1, Other = 2 };
   What what;
-  Index index; // the local index read or written
+  Index index;         // the local index read or written
   Expression** origin; // the origin
-  bool effective; // whether a store is actually effective, i.e., may be read
+  bool effective;      // whether a store is actually effective, i.e., may be read
 
-  LivenessAction(What what, Index index, Expression** origin) : what(what), index(index), origin(origin), effective(false) {
+  LivenessAction(What what, Index index, Expression** origin)
+    : what(what), index(index), origin(origin), effective(false) {
     assert(what != Other);
-    if (what == Get) assert((*origin)->is<GetLocal>());
-    if (what == Set) assert((*origin)->is<SetLocal>());
+    if (what == Get) {
+      assert((*origin)->is<GetLocal>());
+    }
+    if (what == Set) {
+      assert((*origin)->is<SetLocal>());
+    }
   }
   LivenessAction(Expression** origin) : what(Other), origin(origin) {}
 
@@ -64,32 +65,37 @@ struct LivenessAction {
 
 // information about liveness in a basic block
 struct Liveness {
-  LocalSet start, end; // live locals at the start and end
+  LocalSet start, end;                 // live locals at the start and end
   std::vector<LivenessAction> actions; // actions occurring in this block
 
   void dump(Function* func) {
-    if (actions.empty()) return;
+    if (actions.empty()) {
+      return;
+    }
     std::cout << "    actions:\n";
     for (auto& action : actions) {
-      std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
+      std::cout << "      " << (action.isGet() ? "get" : "set") << " "
+                << func->getLocalName(action.index) << "\n";
     }
   }
 };
 
-template<typename SubType, typename VisitorType>
+template <typename SubType, typename VisitorType>
 struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   typedef typename CFGWalker<SubType, VisitorType, Liveness>::BasicBlock BasicBlock;
 
   Index numLocals;
   std::unordered_set<BasicBlock*> liveBlocks;
-  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high) TODO: use a map for high N, as this tends to be sparse? or don't look at copies at all for big N?
+  std::vector<uint8_t> copies; // canonicalized - accesses should check (low, high) TODO: use a map
+                               // for high N, as this tends to be sparse? or don't look at copies at
+                               // all for big N?
   std::vector<Index> totalCopies; // total # of copies for each local, with all others
 
   // cfg traversal work
 
   static void doVisitGetLocal(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<GetLocal>();
-     // if in unreachable code, ignore
+    // if in unreachable code, ignore
     if (!self->currBasicBlock) {
       *currp = Builder(*self->getModule()).replaceWithIdenticalType(curr);
       return;
@@ -99,7 +105,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
 
   static void doVisitSetLocal(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<SetLocal>();
-    // if in unreachable code, we don't need the tee (but might need the value, if it has side effects)
+    // if in unreachable code, we don't need the tee (but might need the value, if it has side
+    // effects)
     if (!self->currBasicBlock) {
       if (curr->isTee()) {
         *currp = curr->value;
@@ -124,11 +131,17 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // count to see if worth it.
   // TODO: an if can have two copies
   GetLocal* getCopy(SetLocal* set) {
-    if (auto* get = set->value->dynCast<GetLocal>()) return get;
+    if (auto* get = set->value->dynCast<GetLocal>()) {
+      return get;
+    }
     if (auto* iff = set->value->dynCast<If>()) {
-      if (auto* get = iff->ifTrue->dynCast<GetLocal>()) return get;
+      if (auto* get = iff->ifTrue->dynCast<GetLocal>()) {
+        return get;
+      }
       if (iff->ifFalse) {
-        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) return get;
+        if (auto* get = iff->ifFalse->dynCast<GetLocal>()) {
+          return get;
+        }
       }
     }
     return nullptr;
@@ -144,7 +157,8 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     std::fill(totalCopies.begin(), totalCopies.end(), 0);
     // create the CFG by walking the IR
     CFGWalker<SubType, VisitorType, Liveness>::doWalkFunction(func);
-    // ignore links to dead blocks, so they don't confuse us and we can see their stores are all ineffective
+    // ignore links to dead blocks, so they don't confuse us and we can see their stores are all
+    // ineffective
     liveBlocks = CFGWalker<SubType, VisitorType, Liveness>::findLiveBlocks();
     CFGWalker<SubType, VisitorType, Liveness>::unlinkDeadBlocks(liveBlocks);
     // flow liveness across blocks
@@ -155,24 +169,32 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // keep working while stuff is flowing
     std::unordered_set<BasicBlock*> queue;
     for (auto& curr : CFGWalker<SubType, VisitorType, Liveness>::basicBlocks) {
-      if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
+      if (liveBlocks.count(curr.get()) == 0) {
+        continue; // ignore dead blocks
+      }
       queue.insert(curr.get());
-      // do the first scan through the block, starting with nothing live at the end, and updating the liveness at the start
+      // do the first scan through the block, starting with nothing live at the end, and updating
+      // the liveness at the start
       scanLivenessThroughActions(curr->contents.actions, curr->contents.start);
     }
-    // at every point in time, we assume we already noted interferences between things already known alive at the end, and scanned back through the block using that
+    // at every point in time, we assume we already noted interferences between things already known
+    // alive at the end, and scanned back through the block using that
     while (queue.size() > 0) {
       auto iter = queue.begin();
       auto* curr = *iter;
       queue.erase(iter);
       LocalSet live;
-      if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) continue;
+      if (!mergeStartsAndCheckChange(curr->out, curr->contents.end, live)) {
+        continue;
+      }
       assert(curr->contents.end.size() < live.size());
       curr->contents.end = live;
       scanLivenessThroughActions(curr->contents.actions, live);
       // liveness is now calculated at the start. if something
       // changed, all predecessor blocks need recomputation
-      if (curr->contents.start == live) continue;
+      if (curr->contents.start == live) {
+        continue;
+      }
       assert(curr->contents.start.size() < live.size());
       curr->contents.start = live;
       for (auto* in : curr->in) {
@@ -184,7 +206,9 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
   // merge starts of a list of blocks. return
   // whether anything changed vs an old state (which indicates further processing is necessary).
   bool mergeStartsAndCheckChange(std::vector<BasicBlock*>& blocks, LocalSet& old, LocalSet& ret) {
-    if (blocks.size() == 0) return false;
+    if (blocks.size() == 0) {
+      return false;
+    }
     ret = blocks[0]->contents.start;
     if (blocks.size() > 1) {
       // more than one, so we must merge

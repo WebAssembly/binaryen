@@ -21,27 +21,23 @@
 // global.
 //
 
-#include <algorithm>
-#include "wasm.h"
-#include "pass.h"
 #include "emscripten-optimizer/istring.h"
+#include "ir/names.h"
+#include "pass.h"
 #include "support/name.h"
 #include "wasm-builder.h"
-#include "ir/names.h"
-
+#include "wasm.h"
+#include <algorithm>
 
 namespace wasm {
 
 static Name makeHighName(Name n) {
-  return Name(
-    cashew::IString((std::string(n.c_str()) + "$hi").c_str(), false)
-  );
+  return Name(cashew::IString((std::string(n.c_str()) + "$hi").c_str(), false));
 }
 
 struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   struct TempVar {
-    TempVar(Index idx, I64ToI32Lowering& pass) :
-      idx(idx), pass(pass), moved(false) {}
+    TempVar(Index idx, I64ToI32Lowering& pass) : idx(idx), pass(pass), moved(false) {}
 
     TempVar(TempVar&& other) : idx(other), pass(other.pass), moved(false) {
       assert(!other.moved);
@@ -51,7 +47,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar& operator=(TempVar&& rhs) {
       assert(!rhs.moved);
       // free overwritten idx
-      if (!moved) freeIdx();
+      if (!moved) {
+        freeIdx();
+      }
       idx = rhs.idx;
       rhs.moved = true;
       moved = false;
@@ -59,7 +57,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
 
     ~TempVar() {
-      if (!moved) freeIdx();
+      if (!moved) {
+        freeIdx();
+      }
     }
 
     bool operator==(const TempVar& rhs) {
@@ -78,8 +78,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   private:
     void freeIdx() {
-      assert(std::find(pass.freeTemps.begin(), pass.freeTemps.end(), idx) ==
-             pass.freeTemps.end());
+      assert(std::find(pass.freeTemps.begin(), pass.freeTemps.end(), idx) == pass.freeTemps.end());
       pass.freeTemps.push_back(idx);
     }
 
@@ -94,16 +93,18 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   // TODO: allow module-level transformations in parallel passes
   bool isFunctionParallel() override { return false; }
 
-  Pass* create() override {
-    return new I64ToI32Lowering;
-  }
+  Pass* create() override { return new I64ToI32Lowering; }
 
   void doWalkModule(Module* module) {
-    if (!builder) builder = make_unique<Builder>(*module);
+    if (!builder) {
+      builder = make_unique<Builder>(*module);
+    }
     // add new globals for high bits
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
       auto& curr = module->globals[i];
-      if (curr->type != i64) continue;
+      if (curr->type != i64) {
+        continue;
+      }
       curr->type = i32;
       auto* high = new Global(*curr);
       high->name = makeHighName(curr->name);
@@ -130,7 +131,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void doWalkFunction(Function* func) {
     // create builder here if this is first entry to module for this object
-    if (!builder) builder = make_unique<Builder>(*getModule());
+    if (!builder) {
+      builder = make_unique<Builder>(*getModule());
+    }
     indexMap.clear();
     highBitVars.clear();
     labelHighBitVars.clear();
@@ -147,9 +150,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       Name lowName = oldFunc.getLocalName(i);
       Name highName = makeHighName(lowName);
       Type paramType = oldFunc.getLocalType(i);
-      auto builderFunc = (i < oldFunc.getVarIndexBase()) ?
-          Builder::addParam :
-          static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
+      auto builderFunc = (i < oldFunc.getVarIndexBase())
+                           ? Builder::addParam
+                           : static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
       if (paramType == i64) {
         builderFunc(func, lowName, i32);
         builderFunc(func, highName, i32);
@@ -171,14 +174,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       if (hasOutParam(func->body)) {
         TempVar highBits = fetchOutParam(func->body);
         TempVar lowBits = getTemp();
-        SetLocal* setLow = builder->makeSetLocal(
-          lowBits,
-          func->body
-        );
-        SetGlobal* setHigh = builder->makeSetGlobal(
-          highBitsGlobal,
-          builder->makeGetLocal(highBits, i32)
-        );
+        SetLocal* setLow = builder->makeSetLocal(lowBits, func->body);
+        SetGlobal* setHigh =
+          builder->makeSetGlobal(highBitsGlobal, builder->makeGetLocal(highBits, i32));
         GetLocal* getLow = builder->makeGetLocal(lowBits, i32);
         func->body = builder->blockify(setLow, setHigh, getLow);
       }
@@ -192,8 +190,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) return;
-    if (curr->type == i64) curr->type = i32;
+    if (curr->list.size() == 0) {
+      return;
+    }
+    if (curr->type == i64) {
+      curr->type = i32;
+    }
     auto highBitsIt = labelHighBitVars.find(curr->name);
     if (!hasOutParam(curr->list.back())) {
       if (highBitsIt != labelHighBitVars.end()) {
@@ -202,8 +204,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     TempVar lastHighBits = fetchOutParam(curr->list.back());
-    if (highBitsIt == labelHighBitVars.end() ||
-        highBitsIt->second == lastHighBits) {
+    if (highBitsIt == labelHighBitVars.end() || highBitsIt->second == lastHighBits) {
       setOutParam(curr, std::move(lastHighBits));
       if (highBitsIt != labelHighBitVars.end()) {
         labelHighBitVars.erase(highBitsIt);
@@ -214,48 +215,43 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar tmp = getTemp();
     labelHighBitVars.erase(highBitsIt);
     SetLocal* setLow = builder->makeSetLocal(tmp, curr->list.back());
-    SetLocal* setHigh = builder->makeSetLocal(
-      highBits,
-      builder->makeGetLocal(lastHighBits, i32)
-    );
+    SetLocal* setHigh = builder->makeSetLocal(highBits, builder->makeGetLocal(lastHighBits, i32));
     GetLocal* getLow = builder->makeGetLocal(tmp, i32);
     curr->list.back() = builder->blockify(setLow, setHigh, getLow);
     setOutParam(curr, std::move(highBits));
   }
 
   // If and Select have identical code
-  template <typename T>
-  void visitBranching(T* curr) {
-    if (!hasOutParam(curr->ifTrue)) return;
+  template <typename T> void visitBranching(T* curr) {
+    if (!hasOutParam(curr->ifTrue)) {
+      return;
+    }
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
     TempVar highBits = fetchOutParam(curr->ifTrue);
     TempVar falseBits = fetchOutParam(curr->ifFalse);
     TempVar tmp = getTemp();
     curr->type = i32;
-    curr->ifFalse = builder->blockify(
-      builder->makeSetLocal(tmp, curr->ifFalse),
-      builder->makeSetLocal(
-        highBits,
-        builder->makeGetLocal(falseBits, i32)
-      ),
-      builder->makeGetLocal(tmp, i32)
-    );
+    curr->ifFalse = builder->blockify(builder->makeSetLocal(tmp, curr->ifFalse),
+      builder->makeSetLocal(highBits, builder->makeGetLocal(falseBits, i32)),
+      builder->makeGetLocal(tmp, i32));
     setOutParam(curr, std::move(highBits));
   }
 
-  void visitIf(If* curr) {
-    visitBranching<If>(curr);
-  }
+  void visitIf(If* curr) { visitBranching<If>(curr); }
 
   void visitLoop(Loop* curr) {
     assert(labelHighBitVars.find(curr->name) == labelHighBitVars.end());
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     curr->type = i32;
     setOutParam(curr, fetchOutParam(curr->body));
   }
 
   void visitBreak(Break* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     assert(curr->value != nullptr);
     TempVar valHighBits = fetchOutParam(curr->value);
     auto blockHighBitsIt = labelHighBitVars.find(curr->name);
@@ -267,17 +263,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar blockHighBits = std::move(blockHighBitsIt->second);
     TempVar tmp = getTemp();
     SetLocal* setLow = builder->makeSetLocal(tmp, curr->value);
-    SetLocal* setHigh = builder->makeSetLocal(
-      blockHighBits,
-      builder->makeGetLocal(valHighBits, i32)
-    );
+    SetLocal* setHigh =
+      builder->makeSetLocal(blockHighBits, builder->makeGetLocal(valHighBits, i32));
     curr->value = builder->makeGetLocal(tmp, i32);
     curr->type = i32;
     replaceCurrent(builder->blockify(setLow, setHigh, curr));
   }
 
   void visitSwitch(Switch* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     TempVar outParam = fetchOutParam(curr->value);
     TempVar tmp = getTemp();
     Expression* result = curr;
@@ -289,18 +285,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         labelHighBitVars.emplace(target, getTemp());
         labelIt = labelHighBitVars.find(target);
       }
-      Name newLabel("$i64toi32_" + std::string(target.c_str()) +
-                    "_" + std::to_string(blockID++));
+      Name newLabel("$i64toi32_" + std::string(target.c_str()) + "_" + std::to_string(blockID++));
       Block* trampoline = builder->makeBlock(newLabel, result);
       trampoline->type = i32;
-      result = builder->blockify(
-        builder->makeSetLocal(tmp, trampoline),
-        builder->makeSetLocal(
-          labelIt->second,
-          builder->makeGetLocal(outParam, i32)
-        ),
-        builder->makeBreak(target, builder->makeGetLocal(tmp, i32))
-      );
+      result = builder->blockify(builder->makeSetLocal(tmp, trampoline),
+        builder->makeSetLocal(labelIt->second, builder->makeGetLocal(outParam, i32)),
+        builder->makeBreak(target, builder->makeGetLocal(tmp, i32)));
       return newLabel;
     };
     for (auto target : curr->targets) {
@@ -311,11 +301,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
-  template <typename T>
-  using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
+  template <typename T> using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
 
-  template <typename T>
-  void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
+  template <typename T> void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {
       args.push_back(e);
@@ -330,26 +318,18 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
     TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
-    SetLocal* doCall = builder->makeSetLocal(
-      lowBits,
-      callBuilder(args, i32)
-    );
-    SetLocal* setHigh = builder->makeSetLocal(
-      highBits,
-      builder->makeGetGlobal(highBitsGlobal, i32)
-    );
+    SetLocal* doCall = builder->makeSetLocal(lowBits, callBuilder(args, i32));
+    SetLocal* setHigh =
+      builder->makeSetLocal(highBits, builder->makeGetGlobal(highBitsGlobal, i32));
     GetLocal* getLow = builder->makeGetLocal(lowBits, i32);
     Block* result = builder->blockify(doCall, setHigh, getLow);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
   void visitCall(Call* curr) {
-    visitGenericCall<Call>(
-      curr,
-      [&](std::vector<Expression*>& args, Type ty) {
-        return builder->makeCall(curr->target, args, ty);
-      }
-    );
+    visitGenericCall<Call>(curr, [&](std::vector<Expression*>& args, Type ty) {
+      return builder->makeCall(curr->target, args, ty);
+    });
   }
 
   void visitCallImport(CallImport* curr) {
@@ -358,31 +338,20 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    visitGenericCall<CallIndirect>(
-      curr,
-      [&](std::vector<Expression*>& args, Type ty) {
-        return builder->makeCallIndirect(
-          curr->fullType,
-          curr->target,
-          args,
-          ty
-        );
-      }
-    );
+    visitGenericCall<CallIndirect>(curr, [&](std::vector<Expression*>& args, Type ty) {
+      return builder->makeCallIndirect(curr->fullType, curr->target, args, ty);
+    });
   }
 
   void visitGetLocal(GetLocal* curr) {
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     curr->index = indexMap[curr->index];
     curr->type = i32;
     TempVar highBits = getTemp();
-    SetLocal *setHighBits = builder->makeSetLocal(
-      highBits,
-      builder->makeGetLocal(
-        curr->index + 1,
-        i32
-      )
-    );
+    SetLocal* setHighBits =
+      builder->makeSetLocal(highBits, builder->makeGetLocal(curr->index + 1, i32));
     Block* result = builder->blockify(setHighBits, curr);
     replaceCurrent(result);
     setOutParam(result, std::move(highBits));
@@ -394,10 +363,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     curr->index = indexMap[curr->index];
     curr->type = i32;
     SetLocal* setLow = builder->makeSetLocal(tmp, curr);
-    SetLocal* setHigh = builder->makeSetLocal(
-      curr->index + 1,
-      builder->makeGetLocal(highBits, i32)
-    );
+    SetLocal* setHigh =
+      builder->makeSetLocal(curr->index + 1, builder->makeGetLocal(highBits, i32));
     GetLocal* getLow = builder->makeGetLocal(tmp, i32);
     Block* result = builder->blockify(setLow, setHigh, getLow);
     replaceCurrent(result);
@@ -405,55 +372,50 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetLocal(SetLocal* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     if (curr->isTee()) {
       lowerTee(curr);
       return;
     }
     TempVar highBits = fetchOutParam(curr->value);
     curr->index = indexMap[curr->index];
-    SetLocal* setHigh = builder->makeSetLocal(
-      curr->index + 1,
-      builder->makeGetLocal(highBits, i32)
-    );
+    SetLocal* setHigh =
+      builder->makeSetLocal(curr->index + 1, builder->makeGetLocal(highBits, i32));
     Block* result = builder->blockify(curr, setHigh);
     replaceCurrent(result);
   }
 
   void visitGetGlobal(GetGlobal* curr) {
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     assert(false && "GetGlobal not implemented");
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     assert(false && "SetGlobal not implemented");
   }
 
   void visitLoad(Load* curr) {
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     assert(!curr->isAtomic && "atomic load not implemented");
     TempVar highBits = getTemp();
     TempVar ptrTemp = getTemp();
     SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
     SetLocal* loadHigh;
     if (curr->bytes == 8) {
-      loadHigh = builder->makeSetLocal(
-        highBits,
-        builder->makeLoad(
-          4,
-          curr->signed_,
-          curr->offset + 4,
-          1,
-          builder->makeGetLocal(ptrTemp, i32),
-          i32
-        )
-      );
+      loadHigh =
+        builder->makeSetLocal(highBits, builder->makeLoad(4, curr->signed_, curr->offset + 4, 1,
+                                          builder->makeGetLocal(ptrTemp, i32), i32));
     } else {
-      loadHigh = builder->makeSetLocal(
-        highBits,
-        builder->makeConst(Literal(int32_t(0)))
-      );
+      loadHigh = builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0))));
     }
     curr->type = i32;
     curr->bytes = std::min(curr->bytes, uint8_t(4));
@@ -465,7 +427,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitStore(Store* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     assert(curr->offset + 4 > curr->offset);
     assert(!curr->isAtomic && "atomic store not implemented");
     TempVar highBits = fetchOutParam(curr->value);
@@ -477,38 +441,24 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       TempVar ptrTemp = getTemp();
       SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
       curr->ptr = builder->makeGetLocal(ptrTemp, i32);
-      Store* storeHigh = builder->makeStore(
-        4,
-        curr->offset + 4,
-        1,
-        builder->makeGetLocal(ptrTemp, i32),
-        builder->makeGetLocal(highBits, i32),
-        i32
-      );
+      Store* storeHigh = builder->makeStore(4, curr->offset + 4, 1,
+        builder->makeGetLocal(ptrTemp, i32), builder->makeGetLocal(highBits, i32), i32);
       replaceCurrent(builder->blockify(setPtr, curr, storeHigh));
     }
   }
 
-  void visitAtomicRMW(AtomicRMW* curr) {
-    assert(false && "AtomicRMW not implemented");
-  }
+  void visitAtomicRMW(AtomicRMW* curr) { assert(false && "AtomicRMW not implemented"); }
 
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    assert(false && "AtomicCmpxchg not implemented");
-  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { assert(false && "AtomicCmpxchg not implemented"); }
 
   void visitConst(Const* curr) {
-    if (curr->type != i64) return;
+    if (curr->type != i64) {
+      return;
+    }
     TempVar highBits = getTemp();
-    Const* lowVal = builder->makeConst(
-      Literal(int32_t(curr->value.geti64() & 0xffffffff))
-    );
+    Const* lowVal = builder->makeConst(Literal(int32_t(curr->value.geti64() & 0xffffffff)));
     SetLocal* setHigh = builder->makeSetLocal(
-      highBits,
-      builder->makeConst(
-        Literal(int32_t(uint64_t(curr->value.geti64()) >> 32))
-      )
-    );
+      highBits, builder->makeConst(Literal(int32_t(uint64_t(curr->value.geti64()) >> 32))));
     Block* result = builder->blockify(setHigh, lowVal);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
@@ -516,21 +466,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void lowerEqZInt64(Unary* curr) {
     TempVar highBits = fetchOutParam(curr->value);
-    replaceCurrent(
-      builder->makeBinary(
-        AndInt32,
-        builder->makeUnary(EqZInt32, builder->makeGetLocal(highBits, i32)),
-        builder->makeUnary(EqZInt32, curr->value)
-      )
-    );
+    replaceCurrent(builder->makeBinary(AndInt32,
+      builder->makeUnary(EqZInt32, builder->makeGetLocal(highBits, i32)),
+      builder->makeUnary(EqZInt32, curr->value)));
   }
 
   void lowerExtendUInt32(Unary* curr) {
     TempVar highBits = getTemp();
     Block* result = builder->blockify(
-      builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))),
-      curr->value
-    );
+      builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))), curr->value);
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
   }
@@ -559,13 +503,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertSInt64ToFloat64:
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64:
-      case ReinterpretInt64: return true;
-      default: return false;
+      case ReinterpretInt64:
+        return true;
+      default:
+        return false;
     }
   }
 
   void visitUnary(Unary* curr) {
-    if (!unaryNeedsLowering(curr->op)) return;
+    if (!unaryNeedsLowering(curr->op)) {
+      return;
+    }
     if (curr->type == unreachable || curr->value->type == unreachable) {
       assert(!hasOutParam(curr->value));
       replaceCurrent(curr->value);
@@ -575,11 +523,19 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     switch (curr->op) {
       case ClzInt64:
       case CtzInt64:
-      case PopcntInt64: goto err;
-      case EqZInt64:               lowerEqZInt64(curr);     break;
-      case ExtendSInt32: goto err;
-      case ExtendUInt32:           lowerExtendUInt32(curr); break;
-      case WrapInt64:              lowerWrapInt64(curr);    break;
+      case PopcntInt64:
+        goto err;
+      case EqZInt64:
+        lowerEqZInt64(curr);
+        break;
+      case ExtendSInt32:
+        goto err;
+      case ExtendUInt32:
+        lowerExtendUInt32(curr);
+        break;
+      case WrapInt64:
+        lowerWrapInt64(curr);
+        break;
       case TruncSFloat32ToInt64:
       case TruncUFloat32ToInt64:
       case TruncSFloat64ToInt64:
@@ -590,99 +546,61 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64:
       case ReinterpretInt64:
-      err: default:
+      err:
+      default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
     }
   }
 
-  Block* lowerAdd(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
-                  TempVar&& rightLow, TempVar&& rightHigh) {
+  Block* lowerAdd(
+    Block* result, TempVar&& leftLow, TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
     TempVar lowResult = getTemp();
     TempVar highResult = getTemp();
     SetLocal* addLow = builder->makeSetLocal(
-      lowResult,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(rightLow, i32)
-      )
-    );
+      lowResult, builder->makeBinary(AddInt32, builder->makeGetLocal(leftLow, i32),
+                   builder->makeGetLocal(rightLow, i32)));
     SetLocal* addHigh = builder->makeSetLocal(
-      highResult,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeGetLocal(leftHigh, i32),
-        builder->makeGetLocal(rightHigh, i32)
-      )
-    );
+      highResult, builder->makeBinary(AddInt32, builder->makeGetLocal(leftHigh, i32),
+                    builder->makeGetLocal(rightHigh, i32)));
     SetLocal* carryBit = builder->makeSetLocal(
-      highResult,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeGetLocal(highResult, i32),
-        builder->makeConst(Literal(int32_t(1)))
-      )
-    );
-    If* checkOverflow = builder->makeIf(
-      builder->makeBinary(
-        LtUInt32,
-        builder->makeGetLocal(lowResult, i32),
-        builder->makeGetLocal(rightLow, i32)
-      ),
-      carryBit
-    );
+      highResult, builder->makeBinary(AddInt32, builder->makeGetLocal(highResult, i32),
+                    builder->makeConst(Literal(int32_t(1)))));
+    If* checkOverflow =
+      builder->makeIf(builder->makeBinary(LtUInt32, builder->makeGetLocal(lowResult, i32),
+                        builder->makeGetLocal(rightLow, i32)),
+        carryBit);
     GetLocal* getLow = builder->makeGetLocal(lowResult, i32);
     result = builder->blockify(result, addLow, addHigh, checkOverflow, getLow);
     setOutParam(result, std::move(highResult));
     return result;
   }
 
-  Block* lowerSub(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
-                  TempVar&& rightLow, TempVar&& rightHigh) {
+  Block* lowerSub(
+    Block* result, TempVar&& leftLow, TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
     TempVar lowResult = getTemp();
     TempVar highResult = getTemp();
     TempVar borrow = getTemp();
     SetLocal* subLow = builder->makeSetLocal(
-      lowResult,
-      builder->makeBinary(
-        SubInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(rightLow, i32)
-      )
-    );
+      lowResult, builder->makeBinary(SubInt32, builder->makeGetLocal(leftLow, i32),
+                   builder->makeGetLocal(rightLow, i32)));
     SetLocal* borrowBit = builder->makeSetLocal(
-      borrow,
-      builder->makeBinary(
-        LtUInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(rightLow, i32)
-      )
-    );
+      borrow, builder->makeBinary(LtUInt32, builder->makeGetLocal(leftLow, i32),
+                builder->makeGetLocal(rightLow, i32)));
     SetLocal* subHigh1 = builder->makeSetLocal(
-      highResult,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeGetLocal(borrow, i32),
-        builder->makeGetLocal(rightHigh, i32)
-      )
-    );
+      highResult, builder->makeBinary(AddInt32, builder->makeGetLocal(borrow, i32),
+                    builder->makeGetLocal(rightHigh, i32)));
     SetLocal* subHigh2 = builder->makeSetLocal(
-      highResult,
-      builder->makeBinary(
-        SubInt32,
-        builder->makeGetLocal(leftHigh, i32),
-        builder->makeGetLocal(highResult, i32)
-      )
-    );
+      highResult, builder->makeBinary(SubInt32, builder->makeGetLocal(leftHigh, i32),
+                    builder->makeGetLocal(highResult, i32)));
     GetLocal* getLow = builder->makeGetLocal(lowResult, i32);
     result = builder->blockify(result, subLow, borrowBit, subHigh1, subHigh2, getLow);
     setOutParam(result, std::move(highResult));
     return result;
   }
 
-  Block* lowerMul(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
-                  TempVar&& rightLow, TempVar&& rightHigh) {
+  Block* lowerMul(
+    Block* result, TempVar&& leftLow, TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
     // high bits = ll*rh + lh*rl + ll1*rl1 + (ll0*rl1)>>16 + (ll1*rl0)>>16
     // low bits = ll*rl
     TempVar leftLow0 = getTemp();
@@ -690,228 +608,111 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     TempVar rightLow0 = getTemp();
     TempVar rightLow1 = getTemp();
     SetLocal* setLL0 = builder->makeSetLocal(
-      leftLow0,
-      builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeConst(Literal(int32_t(0xffff)))
-      )
-    );
+      leftLow0, builder->makeBinary(AndInt32, builder->makeGetLocal(leftLow, i32),
+                  builder->makeConst(Literal(int32_t(0xffff)))));
     SetLocal* setLL1 = builder->makeSetLocal(
-      leftLow1,
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeConst(Literal(int32_t(16)))
-      )
-    );
+      leftLow1, builder->makeBinary(ShrUInt32, builder->makeGetLocal(leftLow, i32),
+                  builder->makeConst(Literal(int32_t(16)))));
     SetLocal* setRL0 = builder->makeSetLocal(
-      rightLow0,
-      builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(rightLow, i32),
-        builder->makeConst(Literal(int32_t(0xffff)))
-      )
-    );
+      rightLow0, builder->makeBinary(AndInt32, builder->makeGetLocal(rightLow, i32),
+                   builder->makeConst(Literal(int32_t(0xffff)))));
     SetLocal* setRL1 = builder->makeSetLocal(
-      rightLow1,
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeGetLocal(rightLow, i32),
-        builder->makeConst(Literal(int32_t(16)))
-      )
-    );
+      rightLow1, builder->makeBinary(ShrUInt32, builder->makeGetLocal(rightLow, i32),
+                   builder->makeConst(Literal(int32_t(16)))));
     SetLocal* setLLRH = builder->makeSetLocal(
-      rightHigh,
-      builder->makeBinary(
-        MulInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(rightHigh, i32)
-      )
-    );
+      rightHigh, builder->makeBinary(MulInt32, builder->makeGetLocal(leftLow, i32),
+                   builder->makeGetLocal(rightHigh, i32)));
     auto addToHighBits = [&](Expression* expr) -> SetLocal* {
       return builder->makeSetLocal(
-        rightHigh,
-        builder->makeBinary(
-          AddInt32,
-          builder->makeGetLocal(rightHigh, i32),
-          expr
-        )
-      );
+        rightHigh, builder->makeBinary(AddInt32, builder->makeGetLocal(rightHigh, i32), expr));
     };
-    SetLocal* addLHRL = addToHighBits(
+    SetLocal* addLHRL = addToHighBits(builder->makeBinary(
+      MulInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightLow, i32)));
+    SetLocal* addLL1RL1 = addToHighBits(builder->makeBinary(
+      MulInt32, builder->makeGetLocal(leftLow1, i32), builder->makeGetLocal(rightLow1, i32)));
+    SetLocal* addLL0RL1 = addToHighBits(builder->makeBinary(ShrUInt32,
       builder->makeBinary(
-        MulInt32,
-        builder->makeGetLocal(leftHigh, i32),
-        builder->makeGetLocal(rightLow, i32)
-      )
-    );
-    SetLocal* addLL1RL1 = addToHighBits(
+        MulInt32, builder->makeGetLocal(leftLow0, i32), builder->makeGetLocal(rightLow1, i32)),
+      builder->makeConst(Literal(int32_t(16)))));
+    SetLocal* addLL1RL0 = addToHighBits(builder->makeBinary(ShrUInt32,
       builder->makeBinary(
-        MulInt32,
-        builder->makeGetLocal(leftLow1, i32),
-        builder->makeGetLocal(rightLow1, i32)
-      )
-    );
-    SetLocal* addLL0RL1 = addToHighBits(
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeBinary(
-          MulInt32,
-          builder->makeGetLocal(leftLow0, i32),
-          builder->makeGetLocal(rightLow1, i32)
-        ),
-        builder->makeConst(Literal(int32_t(16)))
-      )
-    );
-    SetLocal* addLL1RL0 = addToHighBits(
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeBinary(
-          MulInt32,
-          builder->makeGetLocal(leftLow1, i32),
-          builder->makeGetLocal(rightLow0, i32)
-        ),
-        builder->makeConst(Literal(int32_t(16)))
-      )
-    );
+        MulInt32, builder->makeGetLocal(leftLow1, i32), builder->makeGetLocal(rightLow0, i32)),
+      builder->makeConst(Literal(int32_t(16)))));
     Binary* getLow = builder->makeBinary(
-      MulInt32,
-      builder->makeGetLocal(leftLow, i32),
-      builder->makeGetLocal(rightLow, i32)
-    );
-    result = builder->blockify(
-      result,
-      setLL0,
-      setLL1,
-      setRL0,
-      setRL1,
-      setLLRH,
-      addLHRL,
-      addLL1RL1,
-      addLL0RL1,
-      addLL1RL0,
-      getLow
-    );
+      MulInt32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32));
+    result = builder->blockify(result, setLL0, setLL1, setRL0, setRL1, setLLRH, addLHRL, addLL1RL1,
+      addLL0RL1, addLL1RL0, getLow);
     setOutParam(result, std::move(rightHigh));
     return result;
   }
 
-  Block* lowerBitwise(BinaryOp op, Block* result, TempVar&& leftLow,
-                      TempVar&& leftHigh, TempVar&& rightLow,
-                      TempVar&& rightHigh) {
+  Block* lowerBitwise(BinaryOp op, Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+    TempVar&& rightLow, TempVar&& rightHigh) {
     BinaryOp op32;
     switch (op) {
-      case AndInt64: op32 = AndInt32; break;
-      case  OrInt64: op32 =  OrInt32; break;
-      case XorInt64: op32 = XorInt32; break;
-      default: abort();
+      case AndInt64:
+        op32 = AndInt32;
+        break;
+      case OrInt64:
+        op32 = OrInt32;
+        break;
+      case XorInt64:
+        op32 = XorInt32;
+        break;
+      default:
+        abort();
     }
-    result = builder->blockify(
-      result,
+    result = builder->blockify(result,
       builder->makeSetLocal(
-        rightHigh,
-        builder->makeBinary(
-          op32,
-          builder->makeGetLocal(leftHigh, i32),
-          builder->makeGetLocal(rightHigh, i32)
-        )
-      ),
+        rightHigh, builder->makeBinary(op32, builder->makeGetLocal(leftHigh, i32),
+                     builder->makeGetLocal(rightHigh, i32))),
       builder->makeBinary(
-        op32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(rightLow, i32)
-      )
-    );
+        op32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32)));
     setOutParam(result, std::move(rightHigh));
     return result;
   }
 
   Block* makeLargeShl(Index highBits, Index leftLow, Index shift) {
-    return builder->blockify(
-      builder->makeSetLocal(
-        highBits,
-        builder->makeBinary(
-          ShlInt32,
-          builder->makeGetLocal(leftLow, i32),
-          builder->makeGetLocal(shift, i32)
-        )
-      ),
-      builder->makeConst(Literal(int32_t(0)))
-    );
+    return builder->blockify(builder->makeSetLocal(highBits,
+                               builder->makeBinary(ShlInt32, builder->makeGetLocal(leftLow, i32),
+                                 builder->makeGetLocal(shift, i32))),
+      builder->makeConst(Literal(int32_t(0))));
   }
 
   Block* makeLargeShrU(Index highBits, Index leftHigh, Index shift) {
     return builder->blockify(
       builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))),
       builder->makeBinary(
-        ShrUInt32,
-        builder->makeGetLocal(leftHigh, i32),
-        builder->makeGetLocal(shift, i32)
-      )
-    );
+        ShrUInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(shift, i32)));
   }
 
-  Block* makeSmallShl(Index highBits, Index leftLow, Index leftHigh,
-                      Index shift, Binary* shiftMask, Binary* widthLessShift) {
-    Binary* shiftedInBits = builder->makeBinary(
-      AndInt32,
-      shiftMask,
-      builder->makeBinary(
-        ShrUInt32,
-        builder->makeGetLocal(leftLow, i32),
-        widthLessShift
-      )
-    );
+  Block* makeSmallShl(Index highBits, Index leftLow, Index leftHigh, Index shift, Binary* shiftMask,
+    Binary* widthLessShift) {
+    Binary* shiftedInBits = builder->makeBinary(AndInt32, shiftMask,
+      builder->makeBinary(ShrUInt32, builder->makeGetLocal(leftLow, i32), widthLessShift));
     Binary* shiftHigh = builder->makeBinary(
-      ShlInt32,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(shift, i32)
-    );
+      ShlInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(shift, i32));
     return builder->blockify(
-      builder->makeSetLocal(
-        highBits,
-        builder->makeBinary(OrInt32, shiftedInBits, shiftHigh)
-      ),
+      builder->makeSetLocal(highBits, builder->makeBinary(OrInt32, shiftedInBits, shiftHigh)),
       builder->makeBinary(
-        ShlInt32,
-        builder->makeGetLocal(leftLow, i32),
-        builder->makeGetLocal(shift, i32)
-      )
-    );
+        ShlInt32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(shift, i32)));
   }
 
-  Block* makeSmallShrU(Index highBits, Index leftLow, Index leftHigh,
-                       Index shift, Binary* shiftMask, Binary* widthLessShift) {
-    Binary* shiftedInBits = builder->makeBinary(
-      ShlInt32,
-      builder->makeBinary(
-        AndInt32,
-        shiftMask,
-        builder->makeGetLocal(leftHigh, i32)
-      ),
-      widthLessShift
-    );
+  Block* makeSmallShrU(Index highBits, Index leftLow, Index leftHigh, Index shift,
+    Binary* shiftMask, Binary* widthLessShift) {
+    Binary* shiftedInBits = builder->makeBinary(ShlInt32,
+      builder->makeBinary(AndInt32, shiftMask, builder->makeGetLocal(leftHigh, i32)),
+      widthLessShift);
     Binary* shiftLow = builder->makeBinary(
-      ShrUInt32,
-      builder->makeGetLocal(leftLow, i32),
-      builder->makeGetLocal(shift, i32)
-    );
-    return builder->blockify(
-      builder->makeSetLocal(
-        highBits,
-        builder->makeBinary(
-          ShrUInt32,
-          builder->makeGetLocal(leftHigh, i32),
-          builder->makeGetLocal(shift, i32)
-        )
-      ),
-      builder->makeBinary(OrInt32, shiftedInBits, shiftLow)
-    );
+      ShrUInt32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(shift, i32));
+    return builder->blockify(builder->makeSetLocal(highBits,
+                               builder->makeBinary(ShrUInt32, builder->makeGetLocal(leftHigh, i32),
+                                 builder->makeGetLocal(shift, i32))),
+      builder->makeBinary(OrInt32, shiftedInBits, shiftLow));
   }
 
-  Block* lowerShU(BinaryOp op, Block* result, TempVar&& leftLow,
-                  TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
+  Block* lowerShU(BinaryOp op, Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+    TempVar&& rightLow, TempVar&& rightHigh) {
     assert(op == ShlInt64 || op == ShrUInt64);
     // shift left lowered as:
     // if 32 <= rightLow % 64:
@@ -922,185 +723,139 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     // where k = shift % 32. shift right is similar.
     TempVar shift = getTemp();
     SetLocal* setShift = builder->makeSetLocal(
-      shift,
-      builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(rightLow, i32),
-        builder->makeConst(Literal(int32_t(32 - 1)))
-      )
-    );
-    Binary* isLargeShift = builder->makeBinary(
-      LeUInt32,
-      builder->makeConst(Literal(int32_t(32))),
-      builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(rightLow, i32),
-        builder->makeConst(Literal(int32_t(64 - 1)))
-      )
-    );
+      shift, builder->makeBinary(AndInt32, builder->makeGetLocal(rightLow, i32),
+               builder->makeConst(Literal(int32_t(32 - 1)))));
+    Binary* isLargeShift = builder->makeBinary(LeUInt32, builder->makeConst(Literal(int32_t(32))),
+      builder->makeBinary(AndInt32, builder->makeGetLocal(rightLow, i32),
+        builder->makeConst(Literal(int32_t(64 - 1)))));
     Block* largeShiftBlock;
     switch (op) {
       case ShlInt64:
-        largeShiftBlock = makeLargeShl(rightHigh, leftLow, shift); break;
+        largeShiftBlock = makeLargeShl(rightHigh, leftLow, shift);
+        break;
       case ShrUInt64:
-        largeShiftBlock = makeLargeShrU(rightHigh, leftHigh, shift); break;
-      default: abort();
+        largeShiftBlock = makeLargeShrU(rightHigh, leftHigh, shift);
+        break;
+      default:
+        abort();
     }
-    Binary* shiftMask = builder->makeBinary(
-      SubInt32,
+    Binary* shiftMask = builder->makeBinary(SubInt32,
       builder->makeBinary(
-        ShlInt32,
-        builder->makeConst(Literal(int32_t(1))),
-        builder->makeGetLocal(shift, i32)
-      ),
-      builder->makeConst(Literal(int32_t(1)))
-    );
+        ShlInt32, builder->makeConst(Literal(int32_t(1))), builder->makeGetLocal(shift, i32)),
+      builder->makeConst(Literal(int32_t(1))));
     Binary* widthLessShift = builder->makeBinary(
-      SubInt32,
-      builder->makeConst(Literal(int32_t(32))),
-      builder->makeGetLocal(shift, i32)
-    );
+      SubInt32, builder->makeConst(Literal(int32_t(32))), builder->makeGetLocal(shift, i32));
     Block* smallShiftBlock;
-    switch(op) {
+    switch (op) {
       case ShlInt64: {
-        smallShiftBlock = makeSmallShl(rightHigh, leftLow, leftHigh,
-                                       shift, shiftMask, widthLessShift);
+        smallShiftBlock =
+          makeSmallShl(rightHigh, leftLow, leftHigh, shift, shiftMask, widthLessShift);
         break;
       }
       case ShrUInt64: {
-        smallShiftBlock = makeSmallShrU(rightHigh, leftLow, leftHigh,
-                                        shift, shiftMask, widthLessShift);
+        smallShiftBlock =
+          makeSmallShrU(rightHigh, leftLow, leftHigh, shift, shiftMask, widthLessShift);
         break;
       }
-      default: abort();
+      default:
+        abort();
     }
-    If* ifLargeShift = builder->makeIf(
-      isLargeShift,
-      largeShiftBlock,
-      smallShiftBlock
-    );
+    If* ifLargeShift = builder->makeIf(isLargeShift, largeShiftBlock, smallShiftBlock);
     result = builder->blockify(result, setShift, ifLargeShift);
     setOutParam(result, std::move(rightHigh));
     return result;
   }
 
-  Block* lowerEq(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
-                    TempVar&& rightLow, TempVar&& rightHigh) {
-    return builder->blockify(
-      result,
-      builder->makeBinary(
-        AndInt32,
+  Block* lowerEq(
+    Block* result, TempVar&& leftLow, TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
+    return builder->blockify(result,
+      builder->makeBinary(AndInt32,
         builder->makeBinary(
-          EqInt32,
-          builder->makeGetLocal(leftLow, i32),
-          builder->makeGetLocal(rightLow, i32)
-        ),
+          EqInt32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32)),
         builder->makeBinary(
-          EqInt32,
-          builder->makeGetLocal(leftHigh, i32),
-          builder->makeGetLocal(rightHigh, i32)
-        )
-      )
-    );
+          EqInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32))));
   }
 
-  Block* lowerNe(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
-                 TempVar&& rightLow, TempVar&& rightHigh) {
-    return builder->blockify(
-      result,
-      builder->makeBinary(
-        OrInt32,
+  Block* lowerNe(
+    Block* result, TempVar&& leftLow, TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
+    return builder->blockify(result,
+      builder->makeBinary(OrInt32,
         builder->makeBinary(
-          NeInt32,
-          builder->makeGetLocal(leftLow, i32),
-          builder->makeGetLocal(rightLow, i32)
-        ),
+          NeInt32, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32)),
         builder->makeBinary(
-          NeInt32,
-          builder->makeGetLocal(leftHigh, i32),
-          builder->makeGetLocal(rightHigh, i32)
-        )
-      )
-    );
+          NeInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32))));
   }
 
-  Block* lowerUComp(BinaryOp op, Block* result, TempVar&& leftLow,
-                    TempVar&& leftHigh, TempVar&& rightLow,
-                    TempVar&& rightHigh) {
+  Block* lowerUComp(BinaryOp op, Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+    TempVar&& rightLow, TempVar&& rightHigh) {
     BinaryOp highOp, lowOp;
     switch (op) {
-      case LtUInt64: highOp = LtUInt32; lowOp = LtUInt32; break;
-      case LeUInt64: highOp = LtUInt32; lowOp = LeUInt32; break;
-      case GtUInt64: highOp = GtUInt32; lowOp = GtUInt32; break;
-      case GeUInt64: highOp = GtUInt32; lowOp = GeUInt32; break;
-      default: abort();
+      case LtUInt64:
+        highOp = LtUInt32;
+        lowOp = LtUInt32;
+        break;
+      case LeUInt64:
+        highOp = LtUInt32;
+        lowOp = LeUInt32;
+        break;
+      case GtUInt64:
+        highOp = GtUInt32;
+        lowOp = GtUInt32;
+        break;
+      case GeUInt64:
+        highOp = GtUInt32;
+        lowOp = GeUInt32;
+        break;
+      default:
+        abort();
     }
     Binary* compHigh = builder->makeBinary(
-      highOp,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(rightHigh, i32)
-    );
+      highOp, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32));
     Binary* eqHigh = builder->makeBinary(
-      EqInt32,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(rightHigh, i32)
-    );
+      EqInt32, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32));
     Binary* compLow = builder->makeBinary(
-      lowOp,
-      builder->makeGetLocal(leftLow, i32),
-      builder->makeGetLocal(rightLow, i32)
-    );
-    return builder->blockify(
-      result,
-      builder->makeBinary(
-        OrInt32,
-        compHigh,
-        builder->makeBinary(AndInt32, eqHigh, compLow)
-      )
-    );
+      lowOp, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32));
+    return builder->blockify(result,
+      builder->makeBinary(OrInt32, compHigh, builder->makeBinary(AndInt32, eqHigh, compLow)));
   }
 
-  Block* lowerSComp(BinaryOp op, Block* result, TempVar&& leftLow,
-		    TempVar&& leftHigh, TempVar&& rightLow,
-		    TempVar&& rightHigh) {
+  Block* lowerSComp(BinaryOp op, Block* result, TempVar&& leftLow, TempVar&& leftHigh,
+    TempVar&& rightLow, TempVar&& rightHigh) {
     BinaryOp highOp1, highOp2, lowOp;
     switch (op) {
-      case LtSInt64: highOp1 = LtSInt32; highOp2 = LeSInt32; lowOp = GeUInt32; break;
-      case LeSInt64: highOp1 = LtSInt32; highOp2 = LeSInt32; lowOp = GtUInt32; break;
-      case GtSInt64: highOp1 = GtSInt32; highOp2 = GeSInt32; lowOp = LeUInt32; break;
-      case GeSInt64: highOp1 = GtSInt32; highOp2 = GeSInt32; lowOp = LtUInt32; break;
-      default: abort();
+      case LtSInt64:
+        highOp1 = LtSInt32;
+        highOp2 = LeSInt32;
+        lowOp = GeUInt32;
+        break;
+      case LeSInt64:
+        highOp1 = LtSInt32;
+        highOp2 = LeSInt32;
+        lowOp = GtUInt32;
+        break;
+      case GtSInt64:
+        highOp1 = GtSInt32;
+        highOp2 = GeSInt32;
+        lowOp = LeUInt32;
+        break;
+      case GeSInt64:
+        highOp1 = GtSInt32;
+        highOp2 = GeSInt32;
+        lowOp = LtUInt32;
+        break;
+      default:
+        abort();
     }
     Binary* compHigh1 = builder->makeBinary(
-      highOp1,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(rightHigh, i32)
-    );
+      highOp1, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32));
     Binary* compHigh2 = builder->makeBinary(
-      highOp2,
-      builder->makeGetLocal(leftHigh, i32),
-      builder->makeGetLocal(rightHigh, i32)
-    );
+      highOp2, builder->makeGetLocal(leftHigh, i32), builder->makeGetLocal(rightHigh, i32));
     Binary* compLow = builder->makeBinary(
-      lowOp,
-      builder->makeGetLocal(leftLow, i32),
-      builder->makeGetLocal(rightLow, i32)
-    );
+      lowOp, builder->makeGetLocal(leftLow, i32), builder->makeGetLocal(rightLow, i32));
     If* lowIf = builder->makeIf(
-      compLow,
-      builder->makeConst(Literal(int32_t(0))),
-      builder->makeConst(Literal(int32_t(1)))
-    );
-    If* highIf2 = builder->makeIf(
-      compHigh2,
-      lowIf,
-      builder->makeConst(Literal(int32_t(0)))
-    );
-    If* highIf1 = builder->makeIf(
-      compHigh1,
-      builder->makeConst(Literal(int32_t(1))),
-      highIf2
-    );
+      compLow, builder->makeConst(Literal(int32_t(0))), builder->makeConst(Literal(int32_t(1))));
+    If* highIf2 = builder->makeIf(compHigh2, lowIf, builder->makeConst(Literal(int32_t(0))));
+    If* highIf1 = builder->makeIf(compHigh1, builder->makeConst(Literal(int32_t(1))), highIf2);
     return builder->blockify(result, highIf1);
   }
 
@@ -1130,13 +885,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case GtSInt64:
       case GtUInt64:
       case GeSInt64:
-      case GeUInt64: return true;
-      default: return false;
+      case GeUInt64:
+        return true;
+      default:
+        return false;
     }
   }
 
   void visitBinary(Binary* curr) {
-    if (!binaryNeedsLowering(curr->op)) return;
+    if (!binaryNeedsLowering(curr->op)) {
+      return;
+    }
     if (!hasOutParam(curr->left)) {
       // left unreachable, replace self with left
       replaceCurrent(curr->left);
@@ -1148,9 +907,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     }
     if (!hasOutParam(curr->right)) {
       // right unreachable, replace self with left then right
-      replaceCurrent(
-        builder->blockify(builder->makeDrop(curr->left), curr->right)
-      );
+      replaceCurrent(builder->blockify(builder->makeDrop(curr->left), curr->right));
       // free temp var
       fetchOutParam(curr->left);
       return;
@@ -1165,108 +922,94 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Block* result = builder->blockify(setLeft, setRight);
     switch (curr->op) {
       case AddInt64: {
-        replaceCurrent(
-          lowerAdd(result, std::move(leftLow), std::move(leftHigh),
-                   std::move(rightLow), std::move(rightHigh)));
+        replaceCurrent(lowerAdd(result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case SubInt64: {
-        replaceCurrent(
-          lowerSub(result, std::move(leftLow), std::move(leftHigh),
-                   std::move(rightLow), std::move(rightHigh)));
+        replaceCurrent(lowerSub(result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case MulInt64: {
-        replaceCurrent(
-          lowerMul(result, std::move(leftLow), std::move(leftHigh),
-                   std::move(rightLow), std::move(rightHigh))
-        );
+        replaceCurrent(lowerMul(result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case DivSInt64:
       case DivUInt64:
       case RemSInt64:
-      case RemUInt64: goto err;
+      case RemUInt64:
+        goto err;
       case AndInt64:
       case OrInt64:
       case XorInt64: {
-        replaceCurrent(
-          lowerBitwise(curr->op, result, std::move(leftLow),
-                       std::move(leftHigh), std::move(rightLow),
-                       std::move(rightHigh))
-        );
+        replaceCurrent(lowerBitwise(curr->op, result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case ShlInt64:
       case ShrUInt64: {
-        replaceCurrent(
-          lowerShU(curr->op, result, std::move(leftLow), std::move(leftHigh),
-                   std::move(rightLow), std::move(rightHigh))
-        );
+        replaceCurrent(lowerShU(curr->op, result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
       case ShrSInt64:
       case RotLInt64:
-      case RotRInt64: goto err;
+      case RotRInt64:
+        goto err;
       case EqInt64: {
-        replaceCurrent(
-          lowerEq(result, std::move(leftLow), std::move(leftHigh),
-                  std::move(rightLow), std::move(rightHigh))
-        );
+        replaceCurrent(lowerEq(result, std::move(leftLow), std::move(leftHigh), std::move(rightLow),
+          std::move(rightHigh)));
         break;
       }
       case NeInt64: {
-        replaceCurrent(
-          lowerNe(result, std::move(leftLow), std::move(leftHigh),
-                  std::move(rightLow), std::move(rightHigh))
-        );
+        replaceCurrent(lowerNe(result, std::move(leftLow), std::move(leftHigh), std::move(rightLow),
+          std::move(rightHigh)));
         break;
       }
       case LtSInt64:
       case LeSInt64:
       case GtSInt64:
       case GeSInt64:
-        replaceCurrent(
-          lowerSComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
-                     std::move(rightLow), std::move(rightHigh))
-        );
-	break;
+        replaceCurrent(lowerSComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
+        break;
       case LtUInt64:
       case LeUInt64:
       case GtUInt64:
       case GeUInt64: {
-        replaceCurrent(
-          lowerUComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
-                     std::move(rightLow), std::move(rightHigh))
-        );
+        replaceCurrent(lowerUComp(curr->op, result, std::move(leftLow), std::move(leftHigh),
+          std::move(rightLow), std::move(rightHigh)));
         break;
       }
-      err: default: {
+      err:
+      default: {
         std::cerr << "Unhandled binary op " << curr->op << std::endl;
         abort();
       }
     }
   }
 
-  void visitSelect(Select* curr) {
-    visitBranching<Select>(curr);
-  }
+  void visitSelect(Select* curr) { visitBranching<Select>(curr); }
 
   void visitDrop(Drop* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     // free temp var
     fetchOutParam(curr->value);
   }
 
   void visitReturn(Return* curr) {
-    if (!hasOutParam(curr->value)) return;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     TempVar lowBits = getTemp();
     TempVar highBits = fetchOutParam(curr->value);
     SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
-    SetGlobal* setHigh = builder->makeSetGlobal(
-      highBitsGlobal,
-      builder->makeGetLocal(highBits, i32)
-    );
+    SetGlobal* setHigh =
+      builder->makeSetGlobal(highBitsGlobal, builder->makeGetLocal(highBits, i32));
     curr->value = builder->makeGetLocal(lowBits, i32);
     Block* result = builder->blockify(setLow, setHigh, curr);
     replaceCurrent(result);
@@ -1291,13 +1034,9 @@ private:
     return TempVar(ret, *this);
   }
 
-  bool hasOutParam(Expression* e) {
-    return highBitVars.find(e) != highBitVars.end();
-  }
+  bool hasOutParam(Expression* e) { return highBitVars.find(e) != highBitVars.end(); }
 
-  void setOutParam(Expression* e, TempVar&& var) {
-    highBitVars.emplace(e, std::move(var));
-  }
+  void setOutParam(Expression* e, TempVar&& var) { highBitVars.emplace(e, std::move(var)); }
 
   TempVar fetchOutParam(Expression* e) {
     auto outParamIt = highBitVars.find(e);
@@ -1310,8 +1049,6 @@ private:
 
 Name I64ToI32Lowering::highBitsGlobal("i64toi32_i32$HIGH_BITS");
 
-Pass *createI64ToI32LoweringPass() {
-  return new I64ToI32Lowering();
-}
+Pass* createI64ToI32LoweringPass() { return new I64ToI32Lowering(); }
 
-}
+} // namespace wasm

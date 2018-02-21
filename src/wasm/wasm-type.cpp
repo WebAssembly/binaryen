@@ -16,55 +16,72 @@
 
 #include "wasm-type.h"
 
-#include <cstdlib>
 #include "compiler-support.h"
+#include <cstdlib>
 
 namespace wasm {
 
 const char* printType(Type type) {
   switch (type) {
-    case Type::none: return "none";
-    case Type::i32: return "i32";
-    case Type::i64: return "i64";
-    case Type::f32: return "f32";
-    case Type::f64: return "f64";
-    case Type::unreachable: return "unreachable";
-    default: WASM_UNREACHABLE();
+    case Type::none:
+      return "none";
+    case Type::i32:
+      return "i32";
+    case Type::i64:
+      return "i64";
+    case Type::f32:
+      return "f32";
+    case Type::f64:
+      return "f64";
+    case Type::unreachable:
+      return "unreachable";
+    default:
+      WASM_UNREACHABLE();
   }
 }
 
 unsigned getTypeSize(Type type) {
   switch (type) {
-    case Type::none: abort();
-    case Type::i32: return 4;
-    case Type::i64: return 8;
-    case Type::f32: return 4;
-    case Type::f64: return 8;
-    default: WASM_UNREACHABLE();
+    case Type::none:
+      abort();
+    case Type::i32:
+      return 4;
+    case Type::i64:
+      return 8;
+    case Type::f32:
+      return 4;
+    case Type::f64:
+      return 8;
+    default:
+      WASM_UNREACHABLE();
   }
 }
 
 bool isTypeFloat(Type type) {
   switch (type) {
     case f32:
-    case f64: return true;
-    default: return false;
+    case f64:
+      return true;
+    default:
+      return false;
   }
 }
 
 Type getType(unsigned size, bool float_) {
-  if (size < 4) return Type::i32;
-  if (size == 4) return float_ ? Type::f32 : Type::i32;
-  if (size == 8) return float_ ? Type::f64 : Type::i64;
+  if (size < 4) {
+    return Type::i32;
+  }
+  if (size == 4) {
+    return float_ ? Type::f32 : Type::i32;
+  }
+  if (size == 8) {
+    return float_ ? Type::f64 : Type::i64;
+  }
   abort();
 }
 
-Type getReachableType(Type a, Type b) {
-  return a != unreachable ? a : b;
-}
+Type getReachableType(Type a, Type b) { return a != unreachable ? a : b; }
 
-bool isConcreteType(Type type) {
-  return type != none && type != unreachable;
-}
+bool isConcreteType(Type type) { return type != none && type != unreachable; }
 
 } // namespace wasm

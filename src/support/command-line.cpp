@@ -37,7 +37,9 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
       }
       os << nextWord;
       space -= nextWord.size() + 1;
-      if (space > 0) os << ' ';
+      if (space > 0) {
+        os << ' ';
+      }
       nextWord.clear();
       if (content[i] == '\n') {
         os << '\n';
@@ -48,45 +50,45 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
 }
 
 Options::Options(const std::string& command, const std::string& description)
-    : debug(false), positional(Arguments::Zero) {
+  : debug(false), positional(Arguments::Zero) {
   add("--help", "-h", "Show this help message and exit", Arguments::Zero,
-      [this, command, description](Options* o, const std::string&) {
-        std::cerr << command;
-        if (positional != Arguments::Zero) std::cerr << ' ' << positionalName;
-        std::cerr << "\n\n";
-        printWrap(std::cerr, 0, description);
-        std::cerr << "\n\nOptions:\n";
-        size_t optionWidth = 0;
-        for (const auto& o : options) {
-          optionWidth =
-              std::max(optionWidth, o.longName.size() + o.shortName.size());
-        }
-        for (const auto& o : options) {
-          bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
-          size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
-          std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ')
-                    << o.shortName << std::string(pad, ' ');
-          printWrap(std::cerr, optionWidth + 4, o.description);
-          std::cerr << '\n';
-        }
+    [this, command, description](Options* o, const std::string&) {
+      std::cerr << command;
+      if (positional != Arguments::Zero) {
+        std::cerr << ' ' << positionalName;
+      }
+      std::cerr << "\n\n";
+      printWrap(std::cerr, 0, description);
+      std::cerr << "\n\nOptions:\n";
+      size_t optionWidth = 0;
+      for (const auto& o : options) {
+        optionWidth = std::max(optionWidth, o.longName.size() + o.shortName.size());
+      }
+      for (const auto& o : options) {
+        bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
+        size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
+        std::cerr << "  " << o.longName << (long_n_short ? ',' : ' ') << o.shortName
+                  << std::string(pad, ' ');
+        printWrap(std::cerr, optionWidth + 4, o.description);
         std::cerr << '\n';
-        exit(EXIT_SUCCESS);
-      });
+      }
+      std::cerr << '\n';
+      exit(EXIT_SUCCESS);
+    });
   add("--debug", "-d", "Print debug information to stderr", Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { debug = true; });
+    [&](Options* o, const std::string& arguments) { debug = true; });
 }
 
 Options::~Options() {}
 
 Options& Options::add(const std::string& longName, const std::string& shortName,
-                      const std::string& description, Arguments arguments,
-                      const Action& action) {
+  const std::string& description, Arguments arguments, const Action& action) {
   options.push_back({longName, shortName, description, arguments, action, 0});
   return *this;
 }
 
-Options& Options::add_positional(const std::string& name, Arguments arguments,
-                                 const Action& action) {
+Options& Options::add_positional(
+  const std::string& name, Arguments arguments, const Action& action) {
   positional = arguments;
   positionalName = name;
   positionalAction = action;
@@ -98,7 +100,9 @@ void Options::parse(int argc, const char* argv[]) {
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
     for (size_t i = 0;; ++i) {
-      if (s[i] != '-') return i;
+      if (s[i] != '-') {
+        return i;
+      }
     }
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
@@ -108,14 +112,13 @@ void Options::parse(int argc, const char* argv[]) {
       // Positional.
       switch (positional) {
         case Arguments::Zero:
-          std::cerr << "Unexpected positional argument '" << currentOption
-                    << "'\n";
+          std::cerr << "Unexpected positional argument '" << currentOption << "'\n";
           exit(EXIT_FAILURE);
         case Arguments::One:
         case Arguments::Optional:
           if (positionalsSeen) {
-            std::cerr << "Unexpected second positional argument '"
-                      << currentOption << "' for " << positionalName << '\n';
+            std::cerr << "Unexpected second positional argument '" << currentOption << "' for "
+                      << positionalName << '\n';
             exit(EXIT_FAILURE);
           }
         // Fallthrough.
@@ -135,9 +138,11 @@ void Options::parse(int argc, const char* argv[]) {
       currentOption = currentOption.substr(0, equal);
     }
     Option* option = nullptr;
-    for (auto& o : options)
-      if (o.longName == currentOption || o.shortName == currentOption)
+    for (auto& o : options) {
+      if (o.longName == currentOption || o.shortName == currentOption) {
         option = &o;
+      }
+    }
     if (!option) {
       std::cerr << "Unknown option '" << currentOption << "'\n";
       exit(EXIT_FAILURE);
@@ -145,23 +150,22 @@ void Options::parse(int argc, const char* argv[]) {
     switch (option->arguments) {
       case Arguments::Zero:
         if (argument.size()) {
-          std::cerr << "Unexpected argument '" << argument << "' for option '"
-                    << currentOption << "'\n";
+          std::cerr << "Unexpected argument '" << argument << "' for option '" << currentOption
+                    << "'\n";
           exit(EXIT_FAILURE);
         }
         break;
       case Arguments::One:
         if (option->seen) {
-          std::cerr << "Unexpected second argument '" << argument << "' for '"
-                    << currentOption << "'\n";
+          std::cerr << "Unexpected second argument '" << argument << "' for '" << currentOption
+                    << "'\n";
           exit(EXIT_FAILURE);
         }
       // Fallthrough.
       case Arguments::N:
         if (!argument.size()) {
           if (i + 1 == e) {
-            std::cerr << "Couldn't find expected argument for '"
-                      << currentOption << "'\n";
+            std::cerr << "Couldn't find expected argument for '" << currentOption << "'\n";
             exit(EXIT_FAILURE);
           }
           argument = argv[++i];
@@ -169,7 +173,9 @@ void Options::parse(int argc, const char* argv[]) {
         break;
       case Arguments::Optional:
         if (!argument.size()) {
-          if (i + 1 != e) argument = argv[++i];
+          if (i + 1 != e) {
+            argument = argv[++i];
+          }
         }
         break;
     }

@@ -18,19 +18,15 @@
 // Removeds memory segments, leaving only code in the module.
 //
 
-#include <wasm.h>
 #include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
 struct RemoveMemory : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    module->memory.segments.clear();
-  }
+  void run(PassRunner* runner, Module* module) override { module->memory.segments.clear(); }
 };
 
-Pass *createRemoveMemoryPass() {
-  return new RemoveMemory();
-}
+Pass* createRemoveMemoryPass() { return new RemoveMemory(); }
 
 } // namespace wasm

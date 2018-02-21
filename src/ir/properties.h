@@ -17,8 +17,8 @@
 #ifndef wasm_ir_properties_h
 #define wasm_ir_properties_h
 
-#include "wasm.h"
 #include "ir/bits.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -35,7 +35,7 @@ struct Properties {
   static bool isSymmetric(Binary* binary) {
     switch (binary->op) {
       case AddInt32:
-      case MulInt32: 
+      case MulInt32:
       case AndInt32:
       case OrInt32:
       case XorInt32:
@@ -43,14 +43,16 @@ struct Properties {
       case NeInt32:
 
       case AddInt64:
-      case MulInt64: 
+      case MulInt64:
       case AndInt64:
       case OrInt64:
       case XorInt64:
       case EqInt64:
-      case NeInt64: return true;
+      case NeInt64:
+        return true;
 
-      default: return false;
+      default:
+        return false;
     }
   }
 
@@ -93,7 +95,8 @@ struct Properties {
             if (auto* inner = outer->left->dynCast<Binary>()) {
               if (inner->op == ShlInt32) {
                 if (auto* innerConst = inner->right->dynCast<Const>()) {
-                  if (Bits::getEffectiveShifts(outerConst) <= Bits::getEffectiveShifts(innerConst)) {
+                  if (Bits::getEffectiveShifts(outerConst) <=
+                      Bits::getEffectiveShifts(innerConst)) {
                     return inner->left;
                   }
                 }
@@ -135,7 +138,6 @@ struct Properties {
   }
 };
 
-} // wasm
+} // namespace wasm
 
 #endif // wams_ir_properties_h
-

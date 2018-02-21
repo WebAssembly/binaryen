@@ -19,9 +19,9 @@
 
 #include <iostream>
 
+#include "compiler-support.h"
 #include "support/hash.h"
 #include "support/utilities.h"
-#include "compiler-support.h"
 #include "wasm-type.h"
 
 namespace wasm {
@@ -39,20 +39,17 @@ private:
   };
 
   // The RHS of shl/shru/shrs must be masked by bitwidth.
-  template <typename T>
-  static T shiftMask(T val) {
-    return val & (sizeof(T) * 8 - 1);
-  }
+  template <typename T> static T shiftMask(T val) { return val & (sizeof(T) * 8 - 1); }
 
 public:
   Literal() : type(Type::none), i64(0) {}
   explicit Literal(Type type) : type(type), i64(0) {}
-  explicit Literal(int32_t  init) : type(Type::i32), i32(init) {}
+  explicit Literal(int32_t init) : type(Type::i32), i32(init) {}
   explicit Literal(uint32_t init) : type(Type::i32), i32(init) {}
-  explicit Literal(int64_t  init) : type(Type::i64), i64(init) {}
+  explicit Literal(int64_t init) : type(Type::i64), i64(init) {}
   explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
-  explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
-  explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
+  explicit Literal(float init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
+  explicit Literal(double init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
 
   bool isConcrete() { return type != none; }
   bool isNull() { return type == none; }
@@ -62,17 +59,44 @@ public:
   Literal castToI32();
   Literal castToI64();
 
-  int32_t geti32() const { assert(type == Type::i32); return i32; }
-  int64_t geti64() const { assert(type == Type::i64); return i64; }
-  float   getf32() const { assert(type == Type::f32); return bit_cast<float>(i32); }
-  double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
+  int32_t geti32() const {
+    assert(type == Type::i32);
+    return i32;
+  }
+  int64_t geti64() const {
+    assert(type == Type::i64);
+    return i64;
+  }
+  float getf32() const {
+    assert(type == Type::f32);
+    return bit_cast<float>(i32);
+  }
+  double getf64() const {
+    assert(type == Type::f64);
+    return bit_cast<double>(i64);
+  }
 
-  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; } // careful!
+  int32_t* geti32Ptr() {
+    assert(type == Type::i32);
+    return &i32;
+  } // careful!
 
-  int32_t reinterpreti32() const { assert(type == Type::f32); return i32; }
-  int64_t reinterpreti64() const { assert(type == Type::f64); return i64; }
-  float   reinterpretf32() const { assert(type == Type::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() const { assert(type == Type::i64); return bit_cast<double>(i64); }
+  int32_t reinterpreti32() const {
+    assert(type == Type::f32);
+    return i32;
+  }
+  int64_t reinterpreti64() const {
+    assert(type == Type::f64);
+    return i64;
+  }
+  float reinterpretf32() const {
+    assert(type == Type::i32);
+    return bit_cast<float>(i32);
+  }
+  double reinterpretf64() const {
+    assert(type == Type::i64);
+    return bit_cast<double>(i64);
+  }
 
   int64_t getInteger() const;
   double getFloat() const;
@@ -86,7 +110,7 @@ public:
   static float setQuietNaN(float f);
   static double setQuietNaN(double f);
 
-  static void printFloat(std::ostream &o, float f);
+  static void printFloat(std::ostream& o, float f);
   static void printDouble(std::ostream& o, double d);
 
   friend std::ostream& operator<<(std::ostream& o, Literal literal);
@@ -155,21 +179,23 @@ public:
 } // namespace wasm
 
 namespace std {
-template<> struct hash<wasm::Literal> {
+template <> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
     return wasm::rehash(
-      uint64_t(hash<size_t>()(size_t(a.type))),
-      uint64_t(hash<int64_t>()(a.getBits()))
-    );
+      uint64_t(hash<size_t>()(size_t(a.type))), uint64_t(hash<int64_t>()(a.getBits())));
   }
 };
-template<> struct less<wasm::Literal> {
+template <> struct less<wasm::Literal> {
   bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) return true;
-    if (a.type > b.type) return false;
+    if (a.type < b.type) {
+      return true;
+    }
+    if (a.type > b.type) {
+      return false;
+    }
     return a.getBits() < b.getBits();
   }
 };
-}
+} // namespace std
 
 #endif // wasm_literal_h

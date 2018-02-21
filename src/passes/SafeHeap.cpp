@@ -20,19 +20,18 @@
 // top of sbrk()-addressible memory, and incorrect alignment notation.
 //
 
-#include "wasm.h"
-#include "pass.h"
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "wasm-builder.h"
 #include "ir/bits.h"
 #include "ir/import-utils.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
-const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"),
-           SEGFAULT_IMPORT("segfault"),
-           ALIGNFAULT_IMPORT("alignfault");
+const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR"), SEGFAULT_IMPORT("segfault"),
+  ALIGNFAULT_IMPORT("alignfault");
 
 static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
@@ -67,34 +66,27 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter* create() override { return new AccessInstrumenter; }
 
   void visitLoad(Load* curr) {
-    if (curr->type == unreachable) return;
+    if (curr->type == unreachable) {
+      return;
+    }
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeCall(
-        getLoadName(curr),
-        {
-          curr->ptr,
-          builder.makeConst(Literal(int32_t(curr->offset))),
-        },
-        curr->type
-      )
-    );
+    replaceCurrent(builder.makeCall(getLoadName(curr),
+      {
+        curr->ptr, builder.makeConst(Literal(int32_t(curr->offset))),
+      },
+      curr->type));
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == unreachable) return;
+    if (curr->type == unreachable) {
+      return;
+    }
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeCall(
-        getStoreName(curr),
-        {
-          curr->ptr,
-          builder.makeConst(Literal(int32_t(curr->offset))),
-          curr->value,
-        },
-        none
-      )
-    );
+    replaceCurrent(builder.makeCall(getStoreName(curr),
+      {
+        curr->ptr, builder.makeConst(Literal(int32_t(curr->offset))), curr->value,
+      },
+      none));
   }
 };
 
@@ -153,21 +145,31 @@ struct SafeHeap : public Pass {
   void addGlobals(Module* module) {
     // load funcs
     Load load;
-    for (auto type : { i32, i64, f32, f64 }) {
+    for (auto type : {i32, i64, f32, f64}) {
       load.type = type;
-      for (Index bytes : { 1, 2, 4, 8 }) {
+      for (Index bytes : {1, 2, 4, 8}) {
         load.bytes = bytes;
-        if (bytes > getTypeSize(type)) continue;
-        for (auto signed_ : { true, false }) {
+        if (bytes > getTypeSize(type)) {
+          continue;
+        }
+        for (auto signed_ : {true, false}) {
           load.signed_ = signed_;
-          if (isTypeFloat(type) && signed_) continue;
-          for (Index align : { 1, 2, 4, 8 }) {
+          if (isTypeFloat(type) && signed_) {
+            continue;
+          }
+          for (Index align : {1, 2, 4, 8}) {
             load.align = align;
-            if (align > bytes) continue;
-            for (auto isAtomic : { true, false }) {
+            if (align > bytes) {
+              continue;
+            }
+            for (auto isAtomic : {true, false}) {
               load.isAtomic = isAtomic;
-              if (isAtomic && align != bytes) continue;
-              if (isAtomic && !module->memory.shared) continue;
+              if (isAtomic && align != bytes) {
+                continue;
+              }
+              if (isAtomic && !module->memory.shared) {
+                continue;
+              }
               addLoadFunc(load, module);
             }
           }
@@ -176,19 +178,27 @@ struct SafeHeap : public Pass {
     }
     // store funcs
     Store store;
-    for (auto valueType : { i32, i64, f32, f64 }) {
+    for (auto valueType : {i32, i64, f32, f64}) {
       store.valueType = valueType;
       store.type = none;
-      for (Index bytes : { 1, 2, 4, 8 }) {
+      for (Index bytes : {1, 2, 4, 8}) {
         store.bytes = bytes;
-        if (bytes > getTypeSize(valueType)) continue;
-        for (Index align : { 1, 2, 4, 8 }) {
+        if (bytes > getTypeSize(valueType)) {
+          continue;
+        }
+        for (Index align : {1, 2, 4, 8}) {
           store.align = align;
-          if (align > bytes) continue;
-          for (auto isAtomic : { true, false }) {
+          if (align > bytes) {
+            continue;
+          }
+          for (auto isAtomic : {true, false}) {
             store.isAtomic = isAtomic;
-            if (isAtomic && align != bytes) continue;
-            if (isAtomic && !module->memory.shared) continue;
+            if (isAtomic && align != bytes) {
+              continue;
+            }
+            if (isAtomic && !module->memory.shared) {
+              continue;
+            }
             addStoreFunc(store, module);
           }
         }
@@ -202,29 +212,17 @@ struct SafeHeap : public Pass {
     func->name = getLoadName(&style);
     func->params.push_back(i32); // pointer
     func->params.push_back(i32); // offset
-    func->vars.push_back(i32); // pointer + offset
+    func->vars.push_back(i32);   // pointer + offset
     func->result = style.type;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(
-      builder.makeSetLocal(
-        2,
-        builder.makeBinary(
-          AddInt32,
-          builder.makeGetLocal(0, i32),
-          builder.makeGetLocal(1, i32)
-        )
-      )
-    );
+    block->list.push_back(builder.makeSetLocal(
+      2, builder.makeBinary(AddInt32, builder.makeGetLocal(0, i32), builder.makeGetLocal(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.type, builder, 2, style.bytes)
-    );
+    block->list.push_back(makeBoundsCheck(style.type, builder, 2, style.bytes));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(
-        makeAlignCheck(style.align, builder, 2)
-      );
+      block->list.push_back(makeAlignCheck(style.align, builder, 2));
     }
     // do the load
     auto* load = module->allocator.alloc<Load>();
@@ -246,32 +244,20 @@ struct SafeHeap : public Pass {
   void addStoreFunc(Store style, Module* module) {
     auto* func = new Function;
     func->name = getStoreName(&style);
-    func->params.push_back(i32); // pointer
-    func->params.push_back(i32); // offset
+    func->params.push_back(i32);             // pointer
+    func->params.push_back(i32);             // offset
     func->params.push_back(style.valueType); // value
-    func->vars.push_back(i32); // pointer + offset
+    func->vars.push_back(i32);               // pointer + offset
     func->result = none;
     Builder builder(*module);
     auto* block = builder.makeBlock();
-    block->list.push_back(
-      builder.makeSetLocal(
-        3,
-        builder.makeBinary(
-          AddInt32,
-          builder.makeGetLocal(0, i32),
-          builder.makeGetLocal(1, i32)
-        )
-      )
-    );
+    block->list.push_back(builder.makeSetLocal(
+      3, builder.makeBinary(AddInt32, builder.makeGetLocal(0, i32), builder.makeGetLocal(1, i32))));
     // check for reading past valid memory: if pointer + offset + bytes
-    block->list.push_back(
-      makeBoundsCheck(style.valueType, builder, 3, style.bytes)
-    );
+    block->list.push_back(makeBoundsCheck(style.valueType, builder, 3, style.bytes));
     // check proper alignment
     if (style.align > 1) {
-      block->list.push_back(
-        makeAlignCheck(style.align, builder, 3)
-      );
+      block->list.push_back(makeAlignCheck(style.align, builder, 3));
     }
     // do the store
     auto* store = module->allocator.alloc<Store>();
@@ -285,44 +271,24 @@ struct SafeHeap : public Pass {
   }
 
   Expression* makeAlignCheck(Address align, Builder& builder, Index local) {
-    return builder.makeIf(
-      builder.makeBinary(
-        AndInt32,
-        builder.makeGetLocal(local, i32),
-        builder.makeConst(Literal(int32_t(align - 1)))
-      ),
-      builder.makeCallImport(alignfault, {}, none)
-    );
+    return builder.makeIf(builder.makeBinary(AndInt32, builder.makeGetLocal(local, i32),
+                            builder.makeConst(Literal(int32_t(align - 1)))),
+      builder.makeCallImport(alignfault, {}, none));
   }
 
   Expression* makeBoundsCheck(Type type, Builder& builder, Index local, Index bytes) {
     return builder.makeIf(
-      builder.makeBinary(
-        OrInt32,
+      builder.makeBinary(OrInt32,
         builder.makeBinary(
-          EqInt32,
-          builder.makeGetLocal(local, i32),
-          builder.makeConst(Literal(int32_t(0)))
-        ),
-        builder.makeBinary(
-          GtUInt32,
+          EqInt32, builder.makeGetLocal(local, i32), builder.makeConst(Literal(int32_t(0)))),
+        builder.makeBinary(GtUInt32,
           builder.makeBinary(
-            AddInt32,
-            builder.makeGetLocal(local, i32),
-            builder.makeConst(Literal(int32_t(bytes)))
-          ),
-          builder.makeLoad(4, false, 0, 4,
-            builder.makeGetGlobal(dynamicTopPtr, i32), i32
-          )
-        )
-      ),
-      builder.makeCallImport(segfault, {}, none)
-    );
+            AddInt32, builder.makeGetLocal(local, i32), builder.makeConst(Literal(int32_t(bytes)))),
+          builder.makeLoad(4, false, 0, 4, builder.makeGetGlobal(dynamicTopPtr, i32), i32))),
+      builder.makeCallImport(segfault, {}, none));
   }
 };
 
-Pass *createSafeHeapPass() {
-  return new SafeHeap();
-}
+Pass* createSafeHeapPass() { return new SafeHeap(); }
 
 } // namespace wasm

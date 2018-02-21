@@ -35,13 +35,9 @@
 using namespace cashew;
 using namespace wasm;
 
-Name ASSERT_RETURN("assert_return"),
-     ASSERT_TRAP("assert_trap"),
-     ASSERT_INVALID("assert_invalid"),
-     ASSERT_MALFORMED("assert_malformed"),
-     ASSERT_UNLINKABLE("assert_unlinkable"),
-     INVOKE("invoke"),
-     GET("get");
+Name ASSERT_RETURN("assert_return"), ASSERT_TRAP("assert_trap"), ASSERT_INVALID("assert_invalid"),
+  ASSERT_MALFORMED("assert_malformed"), ASSERT_UNLINKABLE("assert_unlinkable"), INVOKE("invoke"),
+  GET("get");
 
 // Modules named in the file
 
@@ -60,7 +56,8 @@ struct Operation {
   Name name;
   LiteralList arguments;
 
-  Operation(Element& element, ModuleInstance* instanceInit, SExpressionWasmBuilder& builder) : instance(instanceInit) {
+  Operation(Element& element, ModuleInstance* instanceInit, SExpressionWasmBuilder& builder)
+    : instance(instanceInit) {
     operation = element[0]->str();
     Index i = 1;
     if (element.size() >= 3 && element[2]->isStr()) {
@@ -87,13 +84,12 @@ struct Operation {
   }
 };
 
-static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
-                        Element* root,
-                        SExpressionWasmBuilder* builder,
-                        Name entry) {
+static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm, Element* root,
+  SExpressionWasmBuilder* builder, Name entry) {
   ModuleInstance* instance = nullptr;
   if (wasm) {
-    auto tempInterface = wasm::make_unique<ShellExternalInterface>(); // prefix make_unique to work around visual studio bugs
+    auto tempInterface = wasm::make_unique<ShellExternalInterface>(); // prefix make_unique to work
+                                                                      // around visual studio bugs
     auto tempInstance = wasm::make_unique<ModuleInstance>(*wasm, tempInterface.get());
     interfaces[moduleName].swap(tempInterface);
     instances[moduleName].swap(tempInstance);
@@ -117,7 +113,9 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
   while (*i < root->size()) {
     Element& curr = *(*root)[*i];
     IString id = curr[0]->str();
-    if (id == MODULE) break;
+    if (id == MODULE) {
+      break;
+    }
     *checked = true;
     Colors::red(std::cerr);
     std::cerr << *i << '/' << (root->size() - 1);
@@ -134,9 +132,8 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       bool invalid = false;
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
-        builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1])
-        );
+        builder =
+          std::unique_ptr<SExpressionWasmBuilder>(new SExpressionWasmBuilder(wasm, *curr[1]));
       } catch (const ParseException&) {
         invalid = true;
       }
@@ -149,7 +146,8 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
         for (auto& import : wasm.imports) {
           if (import->module == SPECTEST && import->base == PRINT) {
             if (import->kind != ExternalKind::Function) {
-              std::cerr << "spectest.print should be a function, but is " << int32_t(import->kind) << '\n';
+              std::cerr << "spectest.print should be a function, but is " << int32_t(import->kind)
+                        << '\n';
               invalid = true;
               break;
             }
@@ -196,10 +194,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       if (id == ASSERT_RETURN) {
         assert(!trapped);
         if (curr.size() >= 3) {
-          Literal expected = builder
-                                 ->parseExpression(*curr[2])
-                                 ->dynCast<Const>()
-                                 ->value;
+          Literal expected = builder->parseExpression(*curr[2])->dynCast<Const>()->value;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
           if (!expected.bitwiseEqual(result)) {
             std::cout << "unexpected, should be identical\n";
@@ -214,7 +209,9 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
           }
         }
       }
-      if (id == ASSERT_TRAP) assert(trapped);
+      if (id == ASSERT_TRAP) {
+        assert(trapped);
+      }
     }
     *i += 1;
   }
@@ -230,37 +227,35 @@ int main(int argc, const char* argv[]) {
 
   Options options("wasm-shell", "Execute .wast files");
   options
-      .add(
-          "--entry", "-e", "call the entry point after parsing the module",
-          Options::Arguments::One,
-          [&entry](Options*, const std::string& argument) { entry = argument; })
-      .add(
-          "--skip", "-s", "skip input on certain lines (comma-separated-list)",
-          Options::Arguments::One,
-          [&skipped](Options*, const std::string& argument) {
-            size_t i = 0;
-            while (i < argument.size()) {
-              auto ending = argument.find(',', i);
-              if (ending == std::string::npos) {
-                ending = argument.size();
-              }
-              auto sub = argument.substr(i, ending - i);
-              skipped.insert(atoi(sub.c_str()));
-              i = ending + 1;
-            }
-          })
-      .add_positional("INFILE", Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
+    .add("--entry", "-e", "call the entry point after parsing the module", Options::Arguments::One,
+      [&entry](Options*, const std::string& argument) { entry = argument; })
+    .add("--skip", "-s", "skip input on certain lines (comma-separated-list)",
+      Options::Arguments::One,
+      [&skipped](Options*, const std::string& argument) {
+        size_t i = 0;
+        while (i < argument.size()) {
+          auto ending = argument.find(',', i);
+          if (ending == std::string::npos) {
+            ending = argument.size();
+          }
+          auto sub = argument.substr(i, ending - i);
+          skipped.insert(atoi(sub.c_str()));
+          i = ending + 1;
+        }
+      })
+    .add_positional("INFILE", Options::Arguments::One,
+      [](Options* o, const std::string& argument) { o->extra["infile"] = argument; });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
+  auto input(read_file<std::vector<char>>(
+    options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
 
   bool checked = false;
 
   try {
-    if (options.debug) std::cerr << "parsing text to s-expressions...\n";
+    if (options.debug) {
+      std::cerr << "parsing text to s-expressions...\n";
+    }
     SExpressionParser parser(input.data());
     Element& root = *parser.root;
 
@@ -277,7 +272,9 @@ int main(int argc, const char* argv[]) {
       }
       IString id = curr[0]->str();
       if (id == MODULE) {
-        if (options.debug) std::cerr << "parsing s-expressions to wasm...\n";
+        if (options.debug) {
+          std::cerr << "parsing s-expressions to wasm...\n";
+        }
         Colors::green(std::cerr);
         std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
@@ -292,7 +289,8 @@ int main(int argc, const char* argv[]) {
           WasmPrinter::printModule(modules[moduleName].get());
         }
         assert(valid);
-        run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root, builders[moduleName].get(), entry);
+        run_asserts(moduleName, &i, &checked, modules[moduleName].get(), &root,
+          builders[moduleName].get(), entry);
       } else {
         run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
       }

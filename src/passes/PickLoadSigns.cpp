@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <wasm.h>
-#include <pass.h>
 #include <ir/properties.h>
+#include <pass.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -53,9 +53,12 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
       auto& usage = usages[index];
       // if we can't optimize, give up
       if (usage.totalUsages == 0 || // no usages, so no idea
-          usage.signedUsages + usage.unsignedUsages != usage.totalUsages || // non-sign/unsigned usages, so cannot change
-          (usage.signedUsages   != 0 && usage.signedBits   != load->bytes * 8) || // sign usages exist but the wrong size
-          (usage.unsignedUsages != 0 && usage.unsignedBits != load->bytes * 8)) { // unsigned usages exist but the wrong size
+          usage.signedUsages + usage.unsignedUsages !=
+            usage.totalUsages || // non-sign/unsigned usages, so cannot change
+          (usage.signedUsages != 0 &&
+            usage.signedBits != load->bytes * 8) || // sign usages exist but the wrong size
+          (usage.unsignedUsages != 0 &&
+            usage.unsignedBits != load->bytes * 8)) { // unsigned usages exist but the wrong size
         continue;
       }
       // we can pick the optimal one. our hope is to remove 2 items per
@@ -104,8 +107,6 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   }
 };
 
-Pass *createPickLoadSignsPass() {
-  return new PickLoadSigns();
-}
+Pass* createPickLoadSignsPass() { return new PickLoadSigns(); }
 
 } // namespace wasm
