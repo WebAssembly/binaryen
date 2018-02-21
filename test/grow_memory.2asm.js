@@ -12,33 +12,33 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
- function $$0(var$0) {
+ function $0(var$0) {
   var$0 = var$0 | 0;
-  var $$1 = 0, $$2 = 0, wasm2asm_i32$0 = 0;
+  var $1 = 0, $2 = 0, wasm2asm_i32$0 = 0;
   return __wasm_grow_memory(var$0 | 0) | 0;
   return wasm2asm_i32$0 | 0;
  }
  
- function $$1() {
-  var $$0 = 0, wasm2asm_i32$0 = 0;
+ function $1() {
+  var $0 = 0, wasm2asm_i32$0 = 0;
   return __wasm_current_memory() | 0;
   return wasm2asm_i32$0 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $$1 = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0;
-  if ((x | 0) == (0 | 0)) $$9 = 32; else $$9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $$9 | 0;
+  var $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0;
+  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $9 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0;
+  var count = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0;
   count = 0;
   b : {
    l : do {
-    $$5 = count;
+    $5 = count;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -46,13 +46,13 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  return $$5 | 0;
+  return $5 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0, wasm2asm_i32$0 = 0;
   return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
   return wasm2asm_i32$0 | 0;
  }
@@ -60,7 +60,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $$2 = 0, $$3 = 0, $$4 = 0, $$5 = 0, $$6 = 0, $$7 = 0, $$8 = 0, $$9 = 0, $$10 = 0, $$11 = 0, $$12 = 0, $$13 = 0, $$14 = 0, $$15 = 0, $$16 = 0, $$17 = 0, $$18 = 0, $$19 = 0, $$20 = 0, wasm2asm_i32$0 = 0;
+  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0, wasm2asm_i32$0 = 0;
   return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
   return wasm2asm_i32$0 | 0;
  }
@@ -102,8 +102,8 @@ function asmFunc(global, env, buffer) {
     
    }
   }), 
-  grow: $$0, 
-  current: $$1
+  grow: $0, 
+  current: $1
  };
 }
 
