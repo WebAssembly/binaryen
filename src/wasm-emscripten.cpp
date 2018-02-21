@@ -333,7 +333,7 @@ const char* stringAtAddr(Module& wasm,
                          std::vector<Address> const& segmentOffsets,
                          Address address) {
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Memory::Segment &segment = wasm.memory.segments[i];
+    Memory::Segment& segment = wasm.memory.segments[i];
     Address offset = segmentOffsets[i];
     if (address >= offset && address < offset + segment.data.size()) {
       return &segment.data[address - offset];
@@ -352,8 +352,7 @@ std::string codeForConstAddr(Module& wasm,
     // omitted the segment and the address points to an empty string.
     return escape("");
   }
-  auto result = escape(str);
-  return result;
+  return escape(str);
 }
 
 struct AsmConstWalker : public PostWalker<AsmConstWalker> {
@@ -468,9 +467,19 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       return;
     }
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
-    Const* addrConst = curr->body->dynCast<Const>();
+    auto addrConst = curr->body->dynCast<Const>();
     if (addrConst == nullptr) {
-      addrConst = curr->body->cast<Block>()->list[0]->cast<Const>();
+      auto block = curr->body->dynCast<Block>();
+      Expression* first = nullptr;
+      if (block && block->list.size() > 0) {
+        first = block->list[0];
+      }
+      if (first) {
+        addrConst = first->dynCast<Const>();
+      }
+    }
+    if (addrConst == nullptr) {
+      Fatal() << "Unexpected generated __em_js__ function body: " << curr;
     }
     auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
     codeByName[funcName] = code;
