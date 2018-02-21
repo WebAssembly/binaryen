@@ -84,7 +84,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 == $$1) | 0;
+  return $$0 == $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -92,7 +92,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 != $$1) | 0;
+  return $$0 != $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -100,7 +100,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 >= $$1) | 0;
+  return $$0 >= $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -108,7 +108,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 > $$1) | 0;
+  return $$0 > $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -116,7 +116,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 <= $$1) | 0;
+  return $$0 <= $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
@@ -124,7 +124,7 @@ function asmFunc(global, env, buffer) {
   $$0 = Math_fround($$0);
   $$1 = Math_fround($$1);
   var $$2 = Math_fround(0), $$3 = Math_fround(0), $$4 = 0, wasm2asm_i32$0 = 0;
-  return Math_fround($$0 < $$1) | 0;
+  return $$0 < $$1 | 0;
   return wasm2asm_i32$0 | 0;
  }
  
