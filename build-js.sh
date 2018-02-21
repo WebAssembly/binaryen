@@ -126,6 +126,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/support/threads.cpp \
   $BINARYEN_SRC/wasm/literal.cpp \
   $BINARYEN_SRC/wasm/wasm-binary.cpp \
+  $BINARYEN_SRC/wasm/wasm-io.cpp \
   $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
   $BINARYEN_SRC/wasm/wasm-type.cpp \
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
