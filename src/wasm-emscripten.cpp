@@ -519,6 +519,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   for (const auto& import : wasm.imports) {
     if (import->kind == ExternalKind::Function &&
+        // TODO(jgravelle): uncomment when EM_JS is merged
         // !import->name.startsWith(EM_JS_PREFIX.str) &&
         !import->name.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->name.startsWith("invoke_") &&
