@@ -541,6 +541,31 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(curr->value);
   }
 
+  void lowerPopcnt64(Unary* curr) {
+    TempVar highBits = fetchOutParam(curr->value);
+    TempVar lowBits = getTemp();
+    TempVar highResult = getTemp();
+
+    SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
+    SetLocal* setHigh = builder->makeSetLocal(
+      highResult,
+      builder->makeConst(Literal(int32_t(0)))
+    );
+
+    Block* result = builder->blockify(
+      setLow,
+      setHigh,
+      builder->makeBinary(
+        AddInt32,
+        builder->makeUnary(PopcntInt32, builder->makeGetLocal(highBits, i32)),
+        builder->makeUnary(PopcntInt32, builder->makeGetLocal(lowBits, i32))
+      )
+    );
+
+    setOutParam(result, std::move(highResult));
+    replaceCurrent(result);
+  }
+
   bool unaryNeedsLowering(UnaryOp op) {
     switch (op) {
       case ClzInt64:
@@ -574,8 +599,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     assert(hasOutParam(curr->value) || curr->type == i64);
     switch (curr->op) {
       case ClzInt64:
-      case CtzInt64:
-      case PopcntInt64: goto err;
+      case CtzInt64: goto err;
+      case PopcntInt64:            lowerPopcnt64(curr);     break;
       case EqZInt64:               lowerEqZInt64(curr);     break;
       case ExtendSInt32: goto err;
       case ExtendUInt32:           lowerExtendUInt32(curr); break;
