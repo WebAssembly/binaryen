@@ -516,15 +516,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void lowerEqZInt64(Unary* curr) {
     TempVar highBits = fetchOutParam(curr->value);
-    TempVar lowBits = getTemp();
-    SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
 
-    Block* result = builder->blockify(
-      setLow,
+    auto* result = builder->makeUnary(
+      EqZInt32,
       builder->makeBinary(
-        AndInt32,
-        builder->makeUnary(EqZInt32, builder->makeGetLocal(highBits, i32)),
-        builder->makeUnary(EqZInt32, builder->makeGetLocal(lowBits, i32))
+        OrInt32,
+        curr->value,
+        builder->makeGetLocal(highBits, i32)
       )
     );
 
