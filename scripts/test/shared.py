@@ -155,7 +155,7 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
 NODEJS = which('nodejs') or which('node')
-MOZJS = which('mozjs')
+MOZJS = which('mozjs') or which('spidermonkey')
 EMCC = which('emcc')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)

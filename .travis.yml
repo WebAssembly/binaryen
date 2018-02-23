@@ -16,7 +16,7 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
-      node_js: 7
+      node_js: 9
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -25,6 +25,10 @@ jobs:
         - export ASAN_OPTIONS="symbolize=1"
       install:
         - pip install --user flake8==3.4.1
+        # get jsvu in order to get more js engines
+        - npm install jsvu -g
+        - export PATH="${HOME}/.jsvu:${PATH}"
+        - jsvu --os=linux64 --engines=spidermonkey
       before_script:
         # Check the style of a subset of Python code until the other code is updated.
         - flake8 ./scripts/
