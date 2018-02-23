@@ -12,6 +12,9 @@
 
   (func (export "check_extend_si32") (param $0 i32) (param $r i64) (result i32)
     (i64.eq (i64.extend_s/i32 (get_local $0)) (get_local $r)))
+
+  (func (export "check_eqz_i64") (param $0 i64) (result i32)
+    (i64.eqz (get_local $0)))
 )
 
 (assert_return (invoke "i32.popcnt" (i32.const 0)) (i32.const 0))
@@ -69,3 +72,10 @@
 (assert_return (invoke "check_extend_si32" (i32.const 0xffffffff)
                                            (i32.const 0xffffffff) (i32.const 0xffffffff))
                (i32.const 1))
+
+(assert_return (invoke "check_eqz_i64" (i32.const 0) (i32.const 0))
+               (i32.const 1))
+(assert_return (invoke "check_eqz_i64" (i32.const 1) (i32.const 0))
+               (i32.const 0))
+(assert_return (invoke "check_eqz_i64" (i32.const 0) (i32.const 1))
+               (i32.const 0))
