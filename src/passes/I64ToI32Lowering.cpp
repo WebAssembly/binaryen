@@ -535,6 +535,30 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
+  void lowerExtendSInt32(Unary* curr) {
+    TempVar highBits = getTemp();
+    TempVar lowBits = getTemp();
+
+    SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
+    SetLocal* setHigh = builder->makeSetLocal(
+      highBits,
+      builder->makeBinary(
+        ShrSInt32,
+        builder->makeGetLocal(lowBits, i32),
+        builder->makeConst(Literal(int32_t(31)))
+      )
+    );
+
+    Block* result = builder->blockify(
+      setLow,
+      setHigh,
+      builder->makeGetLocal(lowBits, i32)
+    );
+
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
+  }
+
   void lowerWrapInt64(Unary* curr) {
     // free the temp var
     fetchOutParam(curr->value);
@@ -602,7 +626,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case CtzInt64: goto err;
       case PopcntInt64:            lowerPopcnt64(curr);     break;
       case EqZInt64:               lowerEqZInt64(curr);     break;
-      case ExtendSInt32: goto err;
+      case ExtendSInt32:           lowerExtendSInt32(curr); break;
       case ExtendUInt32:           lowerExtendUInt32(curr); break;
       case WrapInt64:              lowerWrapInt64(curr);    break;
       case TruncSFloat32ToInt64:
