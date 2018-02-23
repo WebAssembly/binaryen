@@ -6,6 +6,10 @@
 
   (func (export "check_popcnt_i64") (param $0 i64) (param $r i64) (result i32)
     (i64.eq (i64.popcnt (get_local $0)) (get_local $r)))
+
+  (func (export "check_extend_ui32") (param $0 i32) (param $r i64) (result i32)
+    (i64.eq (i64.extend_u/i32 (get_local $0)) (get_local $r)))
+
 )
 
 (assert_return (invoke "i32.popcnt" (i32.const 0)) (i32.const 0))
@@ -33,4 +37,17 @@
                (i32.const 1))
 (assert_return (invoke "check_popcnt_i64" (i32.const 0xffffffff) (i32.const 0xffffffff)
                                           (i32.const 64) (i32.const 0))
+               (i32.const 1))
+
+(assert_return (invoke "check_extend_ui32" (i32.const 0)
+                                           (i32.const 0) (i32.const 0))
+               (i32.const 1))
+(assert_return (invoke "check_extend_ui32" (i32.const 1)
+                                           (i32.const 1) (i32.const 0))
+               (i32.const 1))
+(assert_return (invoke "check_extend_ui32" (i32.const 0x7fffffff)
+                                           (i32.const 0x7fffffff) (i32.const 0))
+               (i32.const 1))
+(assert_return (invoke "check_extend_ui32" (i32.const 0xffffffff)
+                                           (i32.const 0xffffffff) (i32.const 0))
                (i32.const 1))
