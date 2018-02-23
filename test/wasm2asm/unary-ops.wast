@@ -15,6 +15,12 @@
 
   (func (export "check_eqz_i64") (param $0 i64) (result i32)
     (i64.eqz (get_local $0)))
+
+  (func (export "i32.clz") (param $0 i32) (result i32)
+    (i32.clz (get_local $0)))
+
+  (func (export "i32.ctz") (param $0 i32) (result i32)
+    (i32.ctz (get_local $0)))
 )
 
 (assert_return (invoke "i32.popcnt" (i32.const 0)) (i32.const 0))
@@ -79,3 +85,13 @@
                (i32.const 0))
 (assert_return (invoke "check_eqz_i64" (i32.const 0) (i32.const 1))
                (i32.const 0))
+
+(assert_return (invoke "i32.clz" (i32.const 0)) (i32.const 32))
+(assert_return (invoke "i32.clz" (i32.const 1)) (i32.const 31))
+(assert_return (invoke "i32.clz" (i32.const 0x7fffffff)) (i32.const 1))
+(assert_return (invoke "i32.clz" (i32.const 0xffffffff)) (i32.const 0))
+
+(assert_return (invoke "i32.ctz" (i32.const 0)) (i32.const 32))
+(assert_return (invoke "i32.ctz" (i32.const 1)) (i32.const 0))
+(assert_return (invoke "i32.ctz" (i32.const 0xfffffffe)) (i32.const 1))
+(assert_return (invoke "i32.ctz" (i32.const 0x80000000)) (i32.const 31))

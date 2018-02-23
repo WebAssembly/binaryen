@@ -65,6 +65,20 @@ function asmFunc(global, env, buffer) {
   return wasm2asm_i32$0 | 0;
  }
  
+ function $6($0) {
+  $0 = $0 | 0;
+  var $1 = 0, $2 = 0, wasm2asm_i32$0 = 0;
+  return Math_clz32($0) | 0;
+  return wasm2asm_i32$0 | 0;
+ }
+ 
+ function $7($0) {
+  $0 = $0 | 0;
+  var $1 = 0, $2 = 0, wasm2asm_i32$0 = 0;
+  return __wasm_ctz_i32($0) | 0 | 0;
+  return wasm2asm_i32$0 | 0;
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0;
@@ -110,7 +124,9 @@ function asmFunc(global, env, buffer) {
   check_popcnt_i64: $2, 
   check_extend_ui32: $3, 
   check_extend_si32: $4, 
-  check_eqz_i64: $5
+  check_eqz_i64: $5, 
+  i32_clz: $6, 
+  i32_ctz: $7
  };
 }
 
