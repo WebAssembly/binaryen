@@ -465,7 +465,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions,
     unsigned numReservedFunctionPointers) {
   bool commaFirst;
-  auto maybeComma = [&commaFirst](){
+  auto maybeComma = [&commaFirst]() {
     if (commaFirst) {
       commaFirst = false;
       return "";
