@@ -136,4 +136,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["emscripten_longjmp"], "externs": [], "implementedFunctions": ["__Z5func1v","__Z5func2iii","__Z5func3fd","__Z5func4P8mystructS_","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_v","_dynCall_iiii","_dynCall_ffd","_dynCall_iii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_v","dynCall_iiii","dynCall_ffd","dynCall_iii"] }

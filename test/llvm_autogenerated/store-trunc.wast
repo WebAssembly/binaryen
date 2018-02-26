@@ -70,4 +70,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_trunc_i8_i32","_trunc_i16_i32","_trunc_i8_i64","_trunc_i16_i64","_trunc_i32_i64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["trunc_i8_i32","trunc_i16_i32","trunc_i8_i64","trunc_i16_i64","trunc_i32_i64","stackSave","stackAlloc","stackRestore"] }

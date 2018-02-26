@@ -464,32 +464,40 @@ void printSet(std::ostream& o, C& c) {
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions,
     unsigned numReservedFunctionPointers) {
+  bool commaFirst;
+  auto maybeComma = [&commaFirst]() {
+    if (commaFirst) {
+      commaFirst = false;
+      return "";
+    } else {
+      return ",";
+    }
+  };
+
   std::stringstream meta;
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
 
   // print
+  commaFirst = true;
   meta << "\"asmConsts\": {";
-  bool first = true;
   for (auto& pair : emAsmWalker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
-    if (first) first = false;
-    else meta << ",";
+    meta << maybeComma();
     meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
-  meta << "}";
-  meta << ",";
+  meta << "},";
+
   meta << "\"staticBump\": " << staticBump << ", ";
 
   meta << "\"initializers\": [";
-  first = true;
+  commaFirst = true;
   for (const auto& func : initializerFunctions) {
-    if (first) first = false;
-    else meta << ", ";
+    meta << maybeComma();
     meta << "\"" << func.c_str() << "\"";
   }
   meta << "]";
@@ -499,14 +507,50 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << ", ";
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
-    bool first = true;
+    commaFirst = true;
     for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
-      if (!first) meta << ", ";
-      first = false;
+      meta << maybeComma();
       meta << "\"" << sig << "\"";
     }
     meta << "]";
   }
+
+  meta << ", \"declares\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Function &&
+        // TODO(jgravelle): uncomment when EM_JS is merged
+        // !import->name.startsWith(EM_JS_PREFIX.str) &&
+        !import->name.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
+        !import->name.startsWith("invoke_") &&
+        !import->name.startsWith("jsCall_")) {
+      meta << maybeComma() << '"' << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
+  meta << ", \"externs\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Global) {
+      meta << maybeComma() << "\"_" << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
+  meta << ", \"implementedFunctions\": [";
+  commaFirst = true;
+  for (const auto& func : wasm.functions) {
+    meta << maybeComma() << "\"_" << func->name.str << '"';
+  }
+  meta << "]";
+
+  meta << ", \"exports\": [";
+  commaFirst = true;
+  for (const auto& ex : wasm.exports) {
+    meta << maybeComma() << '"' << ex->name.str << '"';
+  }
+  meta << "]";
 
   meta << " }\n";
 
