@@ -555,7 +555,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   if (emJsWalker.codeByName.size() > 0) {
     meta << "\"emJsFuncs\": {";
     commaFirst = true;
-    for (auto& pair : jsWalker.codeByName) {
+    for (auto& pair : emJsWalker.codeByName) {
       auto& name = pair.first;
       auto& code = pair.second;
       meta << maybeComma();
