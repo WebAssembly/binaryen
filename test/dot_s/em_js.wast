@@ -45,4 +45,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"emJsFuncs": {"foo": "(int x)<::>{ Module.print(\"got x=\" + x); }"},"staticBump": 59, "initializers": [], "declares": ["foo"], "externs": [], "implementedFunctions": ["_main","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"emJsFuncs": {"foo": "(int x)<::>{ Module.print(\"got x=\" + x); }"},"staticBump": 59, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_main","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","stackSave","stackAlloc","stackRestore"] }
