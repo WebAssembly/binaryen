@@ -132,10 +132,11 @@ int main(int argc, const char *argv[]) {
   //   writer.setSourceMapUrl(sourceMapUrl);
   // }
   writer.write(wasm, output);
-  if (!emitBinary) {
-    output << ";; METADATA: ";
+  if (emitBinary) {
+    std::cout << metadata;
+  } else {
+    output << ";; METADATA: " << metadata;
   }
-  output << metadata;
 
   return 0;
 }
