@@ -35,6 +35,8 @@
 namespace wasm {
 
 Name TEMP_RET_0("tempRet0");
+Name GET_TEMP_RET_0("getTempRet0");
+Name SET_TEMP_RET_0("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
   void run(PassRunner* runner, Module* module) override {
@@ -99,11 +101,17 @@ struct LegalizeJSInterface : public Pass {
       passRunner.add<FixImports>(&illegalToLegal);
       passRunner.run();
     }
+
+    if (needTempRet0Helpers) {
+      addTempRet0Helpers(module);
+    }
   }
 
 private:
   // map of illegal to legal names for imports
   std::map<Name, Name> illegalToLegal;
+
+  bool needTempRet0Helpers = false;
 
   template<typename T>
   bool isIllegal(T* t) {
@@ -233,6 +241,41 @@ private:
         LiteralUtils::makeZero(i32, *module),
         Builder::Mutable
       ));
+      needTempRet0Helpers = true;
+    }
+  }
+
+  void addTempRet0Helpers(Module* module) {
+    // We should also let JS access the tempRet0 global, which
+    // is necessary to send/receive 64-bit return values.
+    auto exportIt = [&](Function* func) {
+      auto* export_ = new Export;
+      export_->name = func->name;
+      export_->value = func->name;
+      export_->kind = ExternalKind::Function;
+      module->addExport(export_);
+    };
+    if (!module->getExportOrNull(GET_TEMP_RET_0)) {
+      Builder builder(*module);
+      auto* func = new Function();
+      func->name = GET_TEMP_RET_0;
+      func->result = i32;
+      func->body = builder.makeGetGlobal(TEMP_RET_0, i32);
+      module->addFunction(func);
+      exportIt(func);
+    }
+    if (!module->getExportOrNull(SET_TEMP_RET_0)) {
+      Builder builder(*module);
+      auto* func = new Function();
+      func->name = SET_TEMP_RET_0;
+      func->result = none;
+      func->params.push_back(i32);
+      func->body = builder.makeSetGlobal(
+        TEMP_RET_0,
+        builder.makeGetLocal(0, i32)
+      );
+      module->addFunction(func);
+      exportIt(func);
     }
   }
 };

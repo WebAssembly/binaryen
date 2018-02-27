@@ -29,6 +29,7 @@
 namespace wasm {
 
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
+cashew::IString EM_JS_PREFIX("__em_js__");
 
 static constexpr const char* dummyFunction = "__wasm_nullptr";
 
@@ -296,77 +297,17 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
       tableSegmentData.size();
 }
 
-struct AsmConstWalker : public PostWalker<AsmConstWalker> {
-  Module& wasm;
-  std::vector<Address> segmentOffsets; // segment index => address offset
-
-  std::map<std::string, std::set<std::string>> sigsForCode;
-  std::map<std::string, Address> ids;
-  std::set<std::string> allSigs;
-
-  AsmConstWalker(Module& _wasm) : wasm(_wasm) {
-    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-      Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
-      auto address = addrConst->value.geti32();
-      segmentOffsets.push_back(address);
-    }
-  }
-
-  void visitCallImport(CallImport* curr);
-
-private:
-  std::string codeForConstAddr(Const* addrConst);
-  const char* stringAtAddr(Address adddress);
-  Literal idLiteralForCode(std::string code);
-  std::string asmConstSig(std::string baseSig);
-  Name nameForImportWithSig(std::string sig);
-  void addImport(Name importName, std::string baseSig);
-  std::string escape(const char *input);
-};
-
-void AsmConstWalker::visitCallImport(CallImport* curr) {
-  Import* import = wasm.getImport(curr->target);
-  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
-    auto arg = curr->operands[0]->cast<Const>();
-    auto code = codeForConstAddr(arg);
-    arg->value = idLiteralForCode(code);
-    auto baseSig = getSig(curr);
-    auto sig = asmConstSig(baseSig);
-    sigsForCode[code].insert(sig);
-    auto importName = nameForImportWithSig(sig);
-    curr->target = importName;
-
-    if (allSigs.count(sig) == 0) {
-      allSigs.insert(sig);
-      addImport(importName, baseSig);
-    }
-  }
-}
-
-std::string AsmConstWalker::codeForConstAddr(Const* addrConst) {
-  auto address = addrConst->value.geti32();
-  const char* str = stringAtAddr(address);
-  if (!str) {
-    // If we can't find the segment corresponding with the address, then we
-    // omitted the segment and the address points to an empty string.
-    return escape("");
-  }
-  auto result = escape(str);
-  return result;
-}
-
-const char* AsmConstWalker::stringAtAddr(Address address) {
+std::vector<Address> getSegmentOffsets(Module& wasm) {
+  std::vector<Address> segmentOffsets;
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Memory::Segment &segment = wasm.memory.segments[i];
-    Address offset = segmentOffsets[i];
-    if (address >= offset && address < offset + segment.data.size()) {
-      return &segment.data[address - offset];
-    }
+    Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
+    auto address = addrConst->value.geti32();
+    segmentOffsets.push_back(address);
   }
-  return nullptr;
+  return segmentOffsets;
 }
 
-std::string AsmConstWalker::escape(const char *input) {
+std::string escape(const char *input) {
   std::string code = input;
   // replace newlines quotes with escaped newlines
   size_t curr = 0;
@@ -386,6 +327,72 @@ std::string AsmConstWalker::escape(const char *input) {
     }
   }
   return code;
+}
+
+const char* stringAtAddr(Module& wasm,
+                         std::vector<Address> const& segmentOffsets,
+                         Address address) {
+  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+    Memory::Segment& segment = wasm.memory.segments[i];
+    Address offset = segmentOffsets[i];
+    if (address >= offset && address < offset + segment.data.size()) {
+      return &segment.data[address - offset];
+    }
+  }
+  return nullptr;
+}
+
+std::string codeForConstAddr(Module& wasm,
+                             std::vector<Address> const& segmentOffsets,
+                             Const* addrConst) {
+  auto address = addrConst->value.geti32();
+  const char* str = stringAtAddr(wasm, segmentOffsets, address);
+  if (!str) {
+    // If we can't find the segment corresponding with the address, then we
+    // omitted the segment and the address points to an empty string.
+    return escape("");
+  }
+  return escape(str);
+}
+
+struct AsmConstWalker : public PostWalker<AsmConstWalker> {
+  Module& wasm;
+  std::vector<Address> segmentOffsets; // segment index => address offset
+
+  std::map<std::string, std::set<std::string>> sigsForCode;
+  std::map<std::string, Address> ids;
+  std::set<std::string> allSigs;
+
+  AsmConstWalker(Module& _wasm)
+    : wasm(_wasm),
+      segmentOffsets(getSegmentOffsets(wasm)) { }
+
+  void visitCallImport(CallImport* curr);
+
+private:
+  Literal idLiteralForCode(std::string code);
+  std::string asmConstSig(std::string baseSig);
+  Name nameForImportWithSig(std::string sig);
+  void addImport(Name importName, std::string baseSig);
+};
+
+void AsmConstWalker::visitCallImport(CallImport* curr) {
+  Import* import = wasm.getImport(curr->target);
+  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    auto arg = curr->operands[0]->cast<Const>();
+    auto code = codeForConstAddr(wasm, segmentOffsets, arg);
+    arg->value = idLiteralForCode(code);
+    auto baseSig = getSig(curr);
+    auto sig = asmConstSig(baseSig);
+    sigsForCode[code].insert(sig);
+    auto importName = nameForImportWithSig(sig);
+    curr->target = importName;
+
+    if (allSigs.count(sig) == 0) {
+      allSigs.insert(sig);
+      addImport(importName, baseSig);
+    }
+  }
 }
 
 Literal AsmConstWalker::idLiteralForCode(std::string code) {
@@ -445,8 +452,60 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   return walker;
 }
 
+struct EmJsWalker : public PostWalker<EmJsWalker> {
+  Module& wasm;
+  std::vector<Address> segmentOffsets; // segment index => address offset
+
+  std::map<std::string, std::string> codeByName;
+
+  EmJsWalker(Module& _wasm)
+    : wasm(_wasm),
+      segmentOffsets(getSegmentOffsets(wasm)) { }
+
+  void visitFunction(Function* curr) {
+    if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
+      return;
+    }
+    auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
+    auto addrConst = curr->body->dynCast<Const>();
+    if (addrConst == nullptr) {
+      auto block = curr->body->dynCast<Block>();
+      Expression* first = nullptr;
+      if (block && block->list.size() > 0) {
+        first = block->list[0];
+      }
+      if (first) {
+        addrConst = first->dynCast<Const>();
+      }
+    }
+    if (addrConst == nullptr) {
+      Fatal() << "Unexpected generated __em_js__ function body: " << curr;
+    }
+    auto code = codeForConstAddr(wasm, segmentOffsets, addrConst);
+    codeByName[funcName] = code;
+  }
+};
+
+EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
+  EmJsWalker walker(wasm);
+  walker.walkModule(&wasm);
+
+  std::vector<Name> toRemove;
+  for (auto& func : wasm.functions) {
+    if (func->name.startsWith(EM_JS_PREFIX.str)) {
+      toRemove.push_back(func->name);
+    }
+  }
+  for (auto funcName : toRemove) {
+    wasm.removeFunction(funcName);
+    wasm.removeExport(funcName);
+  }
+  return walker;
+}
+
 void EmscriptenGlueGenerator::fixEmAsmConsts() {
   fixEmAsmConstsAndReturnWalker(wasm);
+  fixEmJsFuncsAndReturnWalker(wasm);
 }
 
 template<class C>
@@ -464,32 +523,53 @@ void printSet(std::ostream& o, C& c) {
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions,
     unsigned numReservedFunctionPointers) {
+  bool commaFirst;
+  auto maybeComma = [&commaFirst]() {
+    if (commaFirst) {
+      commaFirst = false;
+      return "";
+    } else {
+      return ",";
+    }
+  };
+
   std::stringstream meta;
   meta << "{ ";
 
   AsmConstWalker emAsmWalker = fixEmAsmConstsAndReturnWalker(wasm);
 
   // print
+  commaFirst = true;
   meta << "\"asmConsts\": {";
-  bool first = true;
   for (auto& pair : emAsmWalker.sigsForCode) {
     auto& code = pair.first;
     auto& sigs = pair.second;
-    if (first) first = false;
-    else meta << ",";
+    meta << maybeComma();
     meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
     meta << "]";
   }
-  meta << "}";
-  meta << ",";
+  meta << "},";
+
+  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
+  if (emJsWalker.codeByName.size() > 0) {
+    meta << "\"emJsFuncs\": {";
+    commaFirst = true;
+    for (auto& pair : emJsWalker.codeByName) {
+      auto& name = pair.first;
+      auto& code = pair.second;
+      meta << maybeComma();
+      meta << '"' << name << "\": \"" << code << '"';
+    }
+    meta << "},";
+  }
+
   meta << "\"staticBump\": " << staticBump << ", ";
 
   meta << "\"initializers\": [";
-  first = true;
+  commaFirst = true;
   for (const auto& func : initializerFunctions) {
-    if (first) first = false;
-    else meta << ", ";
+    meta << maybeComma();
     meta << "\"" << func.c_str() << "\"";
   }
   meta << "]";
@@ -499,14 +579,49 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << ", ";
     meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ", ";
     meta << "\"jsCallFuncType\": [";
-    bool first = true;
+    commaFirst = true;
     for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
-      if (!first) meta << ", ";
-      first = false;
+      meta << maybeComma();
       meta << "\"" << sig << "\"";
     }
     meta << "]";
   }
+
+  meta << ", \"declares\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Function &&
+        (emJsWalker.codeByName.count(import->name.str) == 0) &&
+        !import->name.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
+        !import->name.startsWith("invoke_") &&
+        !import->name.startsWith("jsCall_")) {
+      meta << maybeComma() << '"' << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
+  meta << ", \"externs\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->kind == ExternalKind::Global) {
+      meta << maybeComma() << "\"_" << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
+  meta << ", \"implementedFunctions\": [";
+  commaFirst = true;
+  for (const auto& func : wasm.functions) {
+    meta << maybeComma() << "\"_" << func->name.str << '"';
+  }
+  meta << "]";
+
+  meta << ", \"exports\": [";
+  commaFirst = true;
+  for (const auto& ex : wasm.exports) {
+    meta << maybeComma() << '"' << ex->name.str << '"';
+  }
+  meta << "]";
 
   meta << " }\n";
 

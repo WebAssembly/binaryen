@@ -109,4 +109,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_test_traps","_f32-to-int","_f64-to-uint","_i32u-div","_stackSave","_stackAlloc","_stackRestore"], "exports": ["test_traps","stackSave","stackAlloc","stackRestore"] }

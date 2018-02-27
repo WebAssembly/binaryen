@@ -245,4 +245,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_ord_f64","_uno_f64","_oeq_f64","_une_f64","_olt_f64","_ole_f64","_ogt_f64","_oge_f64","_ueq_f64","_one_f64","_ult_f64","_ule_f64","_ugt_f64","_uge_f64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["ord_f64","uno_f64","oeq_f64","une_f64","olt_f64","ole_f64","ogt_f64","oge_f64","ueq_f64","one_f64","ult_f64","ule_f64","ugt_f64","uge_f64","stackSave","stackAlloc","stackRestore"] }

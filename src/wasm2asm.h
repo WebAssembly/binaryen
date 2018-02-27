@@ -26,6 +26,7 @@
 #include <numeric>
 
 #include "asmjs/shared-constants.h"
+#include "asmjs/asmangle.h"
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "emscripten-optimizer/optimizer.h"
@@ -156,27 +157,16 @@ public:
     frees[type].push_back(temp);
   }
 
-  static IString fromName(Name name) {
-    // TODO: more clever name fixing, including checking we do not collide
-    const char* str = name.str;
-    // check the various issues, and recurse so we check the others
-    if (strchr(str, '-')) {
-      char* mod = strdup(str);
-      str = mod;
-      while (*mod) {
-        if (*mod == '-') *mod = '_';
-        mod++;
-      }
-      IString result = fromName(IString(str, false));
-      free((void*)str);
-      return result;
+  IString fromName(Name name) {
+    // TODO: checking names do not collide after mangling
+    auto it = mangledNames.find(name.c_str());
+    if (it != mangledNames.end()) {
+      return it->second;
     }
-    if (isdigit(str[0]) || strcmp(str, "if") == 0) {
-      std::string prefixed = "$$";
-      prefixed += name.str;
-      return fromName(IString(prefixed.c_str(), false));
-    }
-    return name;
+    auto mangled = asmangle(std::string(name.c_str()));
+    IString ret(mangled.c_str(), false);
+    mangledNames[name.c_str()] = ret;
+    return ret;
   }
 
   void setStatement(Expression* curr) {
@@ -201,6 +191,10 @@ private:
 
   // Expressions that will be a statement.
   std::set<Expression*> willBeStatement;
+
+  // Mangled names cache by interned names.
+  // Utilizes the usually reused underlying cstring's pointer as the key.
+  std::unordered_map<const char*, IString> mangledNames;
 
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
