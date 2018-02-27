@@ -706,6 +706,16 @@ void Module::addFunction(Function* curr) {
   functionsMap[curr->name] = curr;
 }
 
+void Module::setFunctionName(Function* curr, Name name) {
+  if (curr->name.is()) {
+    assert(functionsMap.find(curr->name) != functionsMap.end());  
+    functionsMap.erase(curr->name);
+  }
+  assert(functionsMap.find(name) == functionsMap.end());
+  curr->name = name;
+  functionsMap[curr->name] = curr;
+}
+
 void Module::addGlobal(Global* curr) {
   assert(curr->name.is());
   globals.push_back(std::unique_ptr<Global>(curr));

@@ -779,6 +779,7 @@ public:
   void addImport(Import* curr);
   void addExport(Export* curr);
   void addFunction(Function* curr);
+  void setFunctionName(Function* curr, Name name);
   void addGlobal(Global* curr);
 
   void addStart(const Name& s);
