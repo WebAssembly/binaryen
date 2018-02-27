@@ -1651,7 +1651,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       // global var
-      assert(mappedGlobals.find(name) != mappedGlobals.end());
+      if (mappedGlobals.find(name) == mappedGlobals.end()) {
+        Fatal() << "error: access of a non-existent global var " << name.str;
+      }
       auto* ret = builder.makeSetGlobal(name, process(assign->value()));
       // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
       auto parent = astStackHelper.getParent();
