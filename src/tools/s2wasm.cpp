@@ -26,6 +26,7 @@
 #include "support/file.h"
 #include "s2wasm.h"
 #include "wasm-emscripten.h"
+#include "wasm-io.h"
 #include "wasm-linker.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
@@ -187,13 +188,13 @@ int main(int argc, const char *argv[]) {
   linker.layout();
 
   std::string metadata;
+  Module& wasm = linker.getOutput().wasm;
   if (generateEmscriptenGlue) {
-    Module& wasm = linker.getOutput().wasm;
     if (options.debug) {
       std::cerr << "Emscripten gluing..." << std::endl;
       WasmPrinter::printModule(&wasm, std::cerr);
     }
-    metadata = ";; METADATA: " + emscriptenGlue(
+    metadata = emscriptenGlue(
       wasm,
       allowMemoryGrowth,
       linker.getStackPointerAddress(),
@@ -204,18 +205,28 @@ int main(int argc, const char *argv[]) {
 
   if (options.extra["validate"] != "none") {
     if (options.debug) std::cerr << "Validating..." << std::endl;
-    Module* output = &linker.getOutput().wasm;
-    if (!wasm::WasmValidator().validate(*output,
+    if (!wasm::WasmValidator().validate(wasm,
          WasmValidator::Globally | (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
-      WasmPrinter::printModule(output);
+      WasmPrinter::printModule(&wasm);
       Fatal() << "Error: linked module is not valid.\n";
     }
   }
 
+  // TODO(jgravelle): flag for this
+  bool emitBinary = false;
+
   if (options.debug) std::cerr << "Printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
-  output << metadata;
+  auto outputDebugFlag = options.debug ? Flags::Debug : Flags::Release;
+  auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
+  Output output(options.extra["output"], outputBinaryFlag, outputDebugFlag);
+
+  ModuleWriter writer;
+  writer.setDebugInfo(true);
+  writer.setBinary(emitBinary);
+  writer.write(wasm, output);
+  if (generateEmscriptenGlue) {
+    output << ";; METADATA: " << metadata;
+  }
 
   if (options.debug) std::cerr << "Done." << std::endl;
   return 0;
