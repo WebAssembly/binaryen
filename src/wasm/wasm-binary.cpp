@@ -1635,7 +1635,7 @@ void WasmBinaryBuilder::readImports() {
     // due to the names section.
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->name = Name(std::string("fimport$") + std::to_string(i));
+        curr->name = Name(std::string("fimport$") + std::to_string(i) + std::string("$") + curr->module.str + std::string(".") + curr->base.str);
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
           throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
