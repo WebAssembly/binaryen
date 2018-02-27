@@ -41,6 +41,7 @@ EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
+# TODO: enable this (need nearbyint in emscripten tag) EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
 
@@ -123,10 +124,12 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/Vacuum.cpp \
   $BINARYEN_SRC/support/bits.cpp \
   $BINARYEN_SRC/support/colors.cpp \
+  $BINARYEN_SRC/support/file.cpp \
   $BINARYEN_SRC/support/safe_integer.cpp \
   $BINARYEN_SRC/support/threads.cpp \
   $BINARYEN_SRC/wasm/literal.cpp \
   $BINARYEN_SRC/wasm/wasm-binary.cpp \
+  $BINARYEN_SRC/wasm/wasm-io.cpp \
   $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
   $BINARYEN_SRC/wasm/wasm-type.cpp \
   $BINARYEN_SRC/wasm/wasm-validator.cpp \

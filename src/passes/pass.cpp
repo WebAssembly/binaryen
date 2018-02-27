@@ -21,6 +21,7 @@
 #include <passes/passes.h>
 #include <pass.h>
 #include <wasm-validator.h>
+#include <wasm-io.h>
 
 namespace wasm {
 
@@ -193,13 +194,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 
 static void dumpWast(Name name, Module* wasm) {
   // write out the wast
-  Colors::disable();
   static int counter = 0;
-  std::stringstream text;
-  WasmPrinter::printModule(wasm, text);
-  FILE* f = fopen((std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wast").c_str(), "w");
-  fputs(text.str().c_str(), f);
-  fclose(f);
+  auto fullName = std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wasm";
+  ModuleWriter writer;
+  writer.setBinary(false); // TODO: add an option for binary
+  writer.write(*wasm, fullName);
 }
 
 void PassRunner::run() {
