@@ -66,4 +66,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 28, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["___exit","___needs_exit","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_v"], "exports": ["__exit","__needs_exit","stackSave","stackAlloc","stackRestore","dynCall_v"] }
+;; METADATA: { "asmConsts": {},"staticBump": 28, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["___exit","___needs_exit","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_v"], "exports": ["__exit","__needs_exit","stackSave","stackAlloc","stackRestore","dynCall_v"], "invokeFuncs": [] }

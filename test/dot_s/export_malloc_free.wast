@@ -56,4 +56,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_main","_malloc","_free","_realloc","_memalign","_not_a_malloc","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","malloc","free","realloc","memalign","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_main","_malloc","_free","_realloc","_memalign","_not_a_malloc","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","malloc","free","realloc","memalign","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

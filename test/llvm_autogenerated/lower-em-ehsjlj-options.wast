@@ -149,4 +149,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [], "declares": ["__cxa_begin_catch","__cxa_end_catch","__cxa_find_matching_catch_3","longjmp","setjmp","foo"], "externs": [], "implementedFunctions": ["_exception","_setjmp_longjmp","_setThrew","_setTempRet0","___wasm_nullptr","___importThunk_foo","_stackSave","_stackAlloc","_stackRestore","_dynCall_v"], "exports": ["exception","setjmp_longjmp","setThrew","setTempRet0","stackSave","stackAlloc","stackRestore","dynCall_v"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1056, "initializers": [], "declares": ["__cxa_begin_catch","__cxa_end_catch","__cxa_find_matching_catch_3","longjmp","setjmp","foo"], "externs": [], "implementedFunctions": ["_exception","_setjmp_longjmp","_setThrew","_setTempRet0","___wasm_nullptr","___importThunk_foo","_stackSave","_stackAlloc","_stackRestore","_dynCall_v"], "exports": ["exception","setjmp_longjmp","setThrew","setTempRet0","stackSave","stackAlloc","stackRestore","dynCall_v"], "invokeFuncs": ["invoke_v"] }

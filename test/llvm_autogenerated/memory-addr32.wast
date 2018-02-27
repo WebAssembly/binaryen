@@ -50,4 +50,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_current_memory","_grow_memory","_stackSave","_stackAlloc","_stackRestore"], "exports": ["current_memory","grow_memory","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_current_memory","_grow_memory","_stackSave","_stackAlloc","_stackRestore"], "exports": ["current_memory","grow_memory","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

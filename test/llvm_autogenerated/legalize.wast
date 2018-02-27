@@ -2449,4 +2449,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["__ashlti3","__lshrti3"], "externs": [], "implementedFunctions": ["_shl_i3","_shl_i53","_sext_in_reg_i32_i64","_fpext_f32_f64","_fpconv_f64_f32","_bigshift","_stackSave","_stackAlloc","_stackRestore"], "exports": ["shl_i3","shl_i53","sext_in_reg_i32_i64","fpext_f32_f64","fpconv_f64_f32","bigshift","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["__ashlti3","__lshrti3"], "externs": [], "implementedFunctions": ["_shl_i3","_shl_i53","_sext_in_reg_i32_i64","_fpext_f32_f64","_fpconv_f64_f32","_bigshift","_stackSave","_stackAlloc","_stackRestore"], "exports": ["shl_i3","shl_i53","sext_in_reg_i32_i64","fpext_f32_f64","fpconv_f64_f32","bigshift","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

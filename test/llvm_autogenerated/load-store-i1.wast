@@ -101,4 +101,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_load_u_i1_i32","_load_s_i1_i32","_load_u_i1_i64","_load_s_i1_i64","_store_i32_i1","_store_i64_i1","_stackSave","_stackAlloc","_stackRestore"], "exports": ["load_u_i1_i32","load_s_i1_i32","load_u_i1_i64","load_s_i1_i64","store_i32_i1","store_i64_i1","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_load_u_i1_i32","_load_s_i1_i32","_load_u_i1_i64","_load_s_i1_i64","_store_i32_i1","_store_i64_i1","_stackSave","_stackAlloc","_stackRestore"], "exports": ["load_u_i1_i32","load_s_i1_i32","load_u_i1_i64","load_s_i1_i64","store_i32_i1","store_i64_i1","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }
