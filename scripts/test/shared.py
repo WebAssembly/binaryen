@@ -344,22 +344,27 @@ def fail_with_error(msg):
       raise
 
 
-def fail(actual, expected):
+def fail(actual, expected, fromfile='expected'):
   diff_lines = difflib.unified_diff(
       expected.split('\n'), actual.split('\n'),
-      fromfile='expected', tofile='actual')
+      fromfile=fromfile, tofile='actual')
   diff_str = ''.join([a.rstrip() + '\n' for a in diff_lines])[:]
   fail_with_error("incorrect output, diff:\n\n%s" % diff_str)
 
 
-def fail_if_not_identical(actual, expected):
+def fail_if_not_identical(actual, expected, fromfile='expected'):
   if expected != actual:
-    fail(actual, expected)
+    fail(actual, expected, fromfile=fromfile)
 
 
 def fail_if_not_contained(actual, expected):
   if expected not in actual:
     fail(actual, expected)
+
+
+def fail_if_not_identical_to_file(actual, expected_file):
+  with open(expected_file, 'rb') as f:
+    fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
 if len(requested) == 0:
@@ -401,10 +406,8 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
-    expected = open(wast + binary_suffix).read()
     actual = open('ab.wast').read()
-    if actual != expected:
-      fail(actual, expected)
+    fail_if_not_identical_to_file(actual, wast + binary_suffix)
 
   return 'ab.wast'
 

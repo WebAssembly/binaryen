@@ -17,8 +17,8 @@
 import os
 from support import run_command
 from shared import (
-    fail, fail_with_error, fail_if_not_contained,
-    options, S2WASM, WASM_SHELL
+    fail_with_error, fail_if_not_contained,
+    options, S2WASM, WASM_SHELL, fail_if_not_identical_to_file
 )
 
 
@@ -64,9 +64,7 @@ def test_s2wasm():
         if not expected_exists:
           print actual
           fail_with_error('output ' + expected_file + ' does not exist')
-        expected = open(expected_file, 'rb').read()
-        if actual != expected:
-          fail(actual, expected)
+        fail_if_not_identical_to_file(actual, expected_file)
 
         # verify with options
         cmd = S2WASM + [full, '--global-base=1024'] + stack_alloc
