@@ -248,3 +248,14 @@
   )
  )
 )
+(module
+)
+(module
+ (type $0 (func))
+ (start $starter)
+ (func $starter (; 0 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
+ )
+)
