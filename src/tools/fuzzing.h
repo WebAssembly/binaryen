@@ -175,7 +175,7 @@ private:
   static const bool DE_NAN = true;
 
   // Whether to emit atomics
-  static const bool ATOMICS = false;
+  static const bool ATOMICS = true;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
