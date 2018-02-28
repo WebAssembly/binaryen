@@ -278,4 +278,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi", "fffi", "iii", "v", "vi", "viii"] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"], "declares": ["atoi"], "externs": [], "implementedFunctions": ["__Z18address_taken_funciii","__Z19address_taken_func2iii","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_viii","_jsCall_ddi_0","_jsCall_ddi_1","_jsCall_ddi_2","_jsCall_fffi_0","_jsCall_fffi_1","_jsCall_fffi_2","_jsCall_iii_0","_jsCall_iii_1","_jsCall_iii_2","_jsCall_v_0","_jsCall_v_1","_jsCall_v_2","_jsCall_vi_0","_jsCall_vi_1","_jsCall_vi_2","_jsCall_viii_0","_jsCall_viii_1","_jsCall_viii_2"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_viii"] }

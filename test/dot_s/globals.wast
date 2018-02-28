@@ -110,4 +110,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 24, "initializers": [], "declares": [], "externs": ["_imported_global"], "implementedFunctions": ["_globals","_import_globals","_globals_offset","_import_globals_offset","_stackSave","_stackAlloc","_stackRestore"], "exports": ["globals","import_globals","globals_offset","import_globals_offset","stackSave","stackAlloc","stackRestore"] }

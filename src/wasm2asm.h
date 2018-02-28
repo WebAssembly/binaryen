@@ -26,6 +26,7 @@
 #include <numeric>
 
 #include "asmjs/shared-constants.h"
+#include "asmjs/asmangle.h"
 #include "wasm.h"
 #include "wasm-builder.h"
 #include "emscripten-optimizer/optimizer.h"
@@ -156,27 +157,16 @@ public:
     frees[type].push_back(temp);
   }
 
-  static IString fromName(Name name) {
-    // TODO: more clever name fixing, including checking we do not collide
-    const char* str = name.str;
-    // check the various issues, and recurse so we check the others
-    if (strchr(str, '-')) {
-      char* mod = strdup(str);
-      str = mod;
-      while (*mod) {
-        if (*mod == '-') *mod = '_';
-        mod++;
-      }
-      IString result = fromName(IString(str, false));
-      free((void*)str);
-      return result;
+  IString fromName(Name name) {
+    // TODO: checking names do not collide after mangling
+    auto it = mangledNames.find(name.c_str());
+    if (it != mangledNames.end()) {
+      return it->second;
     }
-    if (isdigit(str[0]) || strcmp(str, "if") == 0) {
-      std::string prefixed = "$$";
-      prefixed += name.str;
-      return fromName(IString(prefixed.c_str(), false));
-    }
-    return name;
+    auto mangled = asmangle(std::string(name.c_str()));
+    IString ret(mangled.c_str(), false);
+    mangledNames[name.c_str()] = ret;
+    return ret;
   }
 
   void setStatement(Expression* curr) {
@@ -202,6 +192,10 @@ private:
   // Expressions that will be a statement.
   std::set<Expression*> willBeStatement;
 
+  // Mangled names cache by interned names.
+  // Utilizes the usually reused underlying cstring's pointer as the key.
+  std::unordered_map<const char*, IString> mangledNames;
+
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
 
@@ -211,6 +205,7 @@ private:
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
+  void addGlobal(Ref ast, Global* global);
   void addWasmCompatibilityFuncs(Module* wasm);
   void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast);
@@ -418,6 +413,10 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
     pow2ed <<= 1;
   }
   tableSize = pow2ed;
+  // globals
+  for (auto& global : wasm->globals) {
+    addGlobal(asmFunc[3], global.get());
+  }
   // functions
   for (auto& func : wasm->functions) {
     asmFunc[3]->push_back(processFunction(func.get()));
@@ -576,6 +575,39 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
     addMemoryGrowthFuncs(ast);
   }
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
+}
+
+void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
+  if (auto* const_ = global->init->dynCast<Const>()) {
+    Ref theValue;
+    switch (const_->type) {
+      case Type::i32: {
+        theValue = ValueBuilder::makeInt(const_->value.geti32());
+        break;
+      }
+      case Type::f32: {
+        theValue = ValueBuilder::makeCall(MATH_FROUND,
+          makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf32()), ASM_DOUBLE)
+        );
+        break;
+      }
+      case Type::f64: {
+        theValue = makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE);
+        break;
+      }
+      default: {
+        assert(false && "Global const type not supported");
+      }
+    }
+    Ref theVar = ValueBuilder::makeVar();
+    ast->push_back(theVar);
+    ValueBuilder::appendToVar(theVar,
+      fromName(global->name),
+      theValue
+    );
+  } else {
+    assert(false && "Global init type not supported");
+  }
 }
 
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
@@ -1543,33 +1575,21 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
                                  ASM_SIGNED);
             case EqFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, EQ, right),
-                                     ASM_FLOAT);
             case EqFloat64:
               return ValueBuilder::makeBinary(left, EQ, right);
             case NeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, NE, right),
-                                     ASM_FLOAT);
             case NeFloat64:
               return ValueBuilder::makeBinary(left, NE, right);
             case GeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, GE, right),
-                                     ASM_FLOAT);
             case GeFloat64:
               return ValueBuilder::makeBinary(left, GE, right);
             case GtFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, GT, right),
-                                     ASM_FLOAT);
             case GtFloat64:
               return ValueBuilder::makeBinary(left, GT, right);
             case LeFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, LE, right),
-                                     ASM_FLOAT);
             case LeFloat64:
               return ValueBuilder::makeBinary(left, LE, right);
             case LtFloat32:
-              return makeAsmCoercion(ValueBuilder::makeBinary(left, LT, right),
-                                     ASM_FLOAT);
             case LtFloat64:
               return ValueBuilder::makeBinary(left, LT, right);
             default: {

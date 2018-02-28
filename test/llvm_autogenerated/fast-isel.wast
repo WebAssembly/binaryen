@@ -67,4 +67,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_immediate_f32","_immediate_f64","_bitcast_i32_f32","_bitcast_f32_i32","_bitcast_i64_f64","_bitcast_f64_i64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["immediate_f32","immediate_f64","bitcast_i32_f32","bitcast_f32_i32","bitcast_i64_f64","bitcast_f64_i64","stackSave","stackAlloc","stackRestore"] }

@@ -275,4 +275,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_ldi64_a1","_ldi64_a2","_ldi64_a4","_ldi64_a8","_ldi64","_ldi64_a16","_ldi8_a1","_ldi8_a2","_ldi16_a1","_ldi16_a2","_ldi16_a4","_ldi32_a1","_ldi32_a2","_ldi32_a4","_ldi32_a8","_sti64_a1","_sti64_a2","_sti64_a4","_sti64_a8","_sti64","_sti64_a16","_sti8_a1","_sti8_a2","_sti16_a1","_sti16_a2","_sti16_a4","_sti32_a1","_sti32_a2","_sti32_a4","_sti32_a8","_stackSave","_stackAlloc","_stackRestore"], "exports": ["ldi64_a1","ldi64_a2","ldi64_a4","ldi64_a8","ldi64","ldi64_a16","ldi8_a1","ldi8_a2","ldi16_a1","ldi16_a2","ldi16_a4","ldi32_a1","ldi32_a2","ldi32_a4","ldi32_a8","sti64_a1","sti64_a2","sti64_a4","sti64_a8","sti64","sti64_a16","sti8_a1","sti8_a2","sti16_a1","sti16_a2","sti16_a4","sti32_a1","sti32_a2","sti32_a4","sti32_a8","stackSave","stackAlloc","stackRestore"] }

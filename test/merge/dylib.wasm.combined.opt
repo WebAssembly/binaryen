@@ -2,18 +2,18 @@
  (type $1 (func (param i32) (result i32)))
  (type $2 (func (result i32)))
  (type $3 (func))
- (import "env" "memoryBase" (global $import$0 i32))
+ (import "env" "memoryBase" (global $gimport$0 i32))
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table 0 anyfunc))
- (import "env" "tableBase" (global $import$4 i32))
+ (import "env" "tableBase" (global $gimport$4 i32))
  (import "env" "_puts" (func $import$1 (param i32) (result i32)))
- (import "env" "memoryBase" (global $import$0$0 i32))
+ (import "env" "memoryBase" (global $gimport$0$0 i32))
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
  (global $global$2 i32 (i32.const 0))
  (global $global$0$0 (mut i32) (i32.const 0))
  (global $global$1$0 (mut i32) (i32.const 0))
- (data (get_global $import$0) "hello, world!")
+ (data (get_global $gimport$0) "hello, world!")
  (export "__post_instantiate" (func $__post_instantiate))
  (export "_main" (func $_main))
  (export "runPostSets" (func $runPostSets))
@@ -24,7 +24,7 @@
    (block $label$2 (result i32)
     (drop
      (call $import$1
-      (get_global $import$0)
+      (get_global $gimport$0)
      )
     )
     (i32.const 0)
@@ -40,7 +40,7 @@
    (block $label$2
     (set_global $global$0
      (i32.add
-      (get_global $import$0)
+      (get_global $gimport$0)
       (i32.const 16)
      )
     )
@@ -73,7 +73,7 @@
    (block $label$2
     (set_global $global$0$0
      (i32.add
-      (get_global $import$0$0)
+      (get_global $gimport$0$0)
       (i32.const 48)
      )
     )

@@ -99,68 +99,38 @@ struct SSAify : public Pass {
         continue;
       }
       // more than 1 set, need a phi: a new local written to at each of the sets
-      // if there is already a local with that property, reuse it
-      auto gatherIndexes = [](SetLocal* set) {
-        std::set<Index> ret;
-        while (set) {
-          ret.insert(set->index);
-          set = set->value->dynCast<SetLocal>();
-        }
-        return ret;
-      };
-      auto indexes = gatherIndexes(*sets.begin());
+      auto new_ = addLocal(get->type);
+      auto old = get->index;
+      get->index = new_;
+      Builder builder(*module);
+      // write to the local in each of our sets
       for (auto* set : sets) {
-        if (set == *sets.begin()) continue;
-        auto currIndexes = gatherIndexes(set);
-        std::vector<Index> intersection;
-        std::set_intersection(indexes.begin(), indexes.end(),
-                              currIndexes.begin(), currIndexes.end(),
-                              std::back_inserter(intersection));
-        indexes.clear();
-        if (intersection.empty()) break;
-        // TODO: or keep sorted vectors?
-        for (Index i : intersection) {
-          indexes.insert(i);
-        }
-      }
-      if (!indexes.empty()) {
-        // we found an index, use it
-        get->index = *indexes.begin();
-      } else {
-        // we need to create a local for this phi'ing
-        auto new_ = addLocal(get->type);
-        auto old = get->index;
-        get->index = new_;
-        Builder builder(*module);
-        // write to the local in each of our sets
-        for (auto* set : sets) {
-          if (set) {
-            // a set exists, just add a tee of its value
-            auto* value = set->value;
-            auto* tee = builder.makeTeeLocal(
+        if (set) {
+          // a set exists, just add a tee of its value
+          auto* value = set->value;
+          auto* tee = builder.makeTeeLocal(
+            new_,
+            value
+          );
+          set->value = tee;
+          // the value may have been something we tracked the location
+          // of. if so, update that, since we moved it into the tee
+          if (graph.locations.count(value) > 0) {
+            assert(graph.locations[value] == &set->value);
+            graph.locations[value] = &tee->value;
+          }
+        } else {
+          // this is a param or the zero init value.
+          if (func->isParam(old)) {
+            // we add a set with the proper
+            // param value at the beginning of the function
+            auto* set = builder.makeSetLocal(
               new_,
-              value
+              builder.makeGetLocal(old, func->getLocalType(old))
             );
-            set->value = tee;
-            // the value may have been something we tracked the location
-            // of. if so, update that, since we moved it into the tee
-            if (graph.locations.count(value) > 0) {
-              assert(graph.locations[value] == &set->value);
-              graph.locations[value] = &tee->value;
-            }
+            functionPrepends.push_back(set);
           } else {
-            // this is a param or the zero init value.
-            if (func->isParam(old)) {
-              // we add a set with the proper
-              // param value at the beginning of the function
-              auto* set = builder.makeSetLocal(
-                new_,
-                builder.makeGetLocal(old, func->getLocalType(old))
-              );
-              functionPrepends.push_back(set);
-            } else {
-              // this is a zero init, so we don't need to do anything actually
-            }
+            // this is a zero init, so we don't need to do anything actually
           }
         }
       }

@@ -245,4 +245,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_ord_f32","_uno_f32","_oeq_f32","_une_f32","_olt_f32","_ole_f32","_ogt_f32","_oge_f32","_ueq_f32","_one_f32","_ult_f32","_ule_f32","_ugt_f32","_uge_f32","_stackSave","_stackAlloc","_stackRestore"], "exports": ["ord_f32","uno_f32","oeq_f32","une_f32","olt_f32","ole_f32","ogt_f32","oge_f32","ueq_f32","one_f32","ult_f32","ule_f32","ugt_f32","uge_f32","stackSave","stackAlloc","stackRestore"] }

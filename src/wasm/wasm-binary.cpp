@@ -1627,12 +1627,15 @@ void WasmBinaryBuilder::readImports() {
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new Import;
-    curr->name = Name(std::string("import$") + std::to_string(i));
     curr->module = getInlineString();
     curr->base = getInlineString();
     curr->kind = (ExternalKind)getU32LEB();
+    // We set a unique prefix for the name based on the kind. This ensures no collisions
+    // between them, which can't occur here (due to the index i) but could occur later
+    // due to the names section.
     switch (curr->kind) {
       case ExternalKind::Function: {
+        curr->name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
           throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
@@ -1644,6 +1647,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Table: {
+        curr->name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
@@ -1655,12 +1659,14 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Memory: {
+        curr->name = Name(std::string("mimport$") + std::to_string(i));
         wasm.memory.exists = true;
         wasm.memory.imported = true;
         getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
       case ExternalKind::Global: {
+        curr->name = Name(std::string("gimport$") + std::to_string(i));
         curr->globalType = getType();
         auto globalMutable = getU32LEB();
         // TODO: actually use the globalMutable flag. Currently mutable global

@@ -55,14 +55,16 @@ def test_wasm2asm_output():
       fail_if_not_identical(out, '')
 
     if MOZJS:
-      # verify asm.js validates
-      # check only subset of err because mozjs emits timing info
-      out = run_command([MOZJS, '-w', 'a.2asm.js'],
-                        expected_err='Successfully compiled asm.js code',
-                        err_contains=True)
-      fail_if_not_identical(out, '')
-      out = run_command([MOZJS, 'a.2asm.asserts.js'], expected_err='')
-      fail_if_not_identical(out, '')
+      # verify asm.js validates, if this is asm.js code (we emit
+      # almost-asm instead when we need to)
+      if 'use asm' in open('a.2asm.js').read():
+        # check only subset of err because mozjs emits timing info
+        out = run_command([MOZJS, '-w', 'a.2asm.js'],
+                          expected_err='Successfully compiled asm.js code',
+                          err_contains=True)
+        fail_if_not_identical(out, '')
+        out = run_command([MOZJS, 'a.2asm.asserts.js'], expected_err='')
+        fail_if_not_identical(out, '')
 
 
 def test_asserts_output():
