@@ -39,6 +39,7 @@ int main(int argc, const char *argv[]) {
   bool generateEmscriptenGlue = false;
   bool allowMemoryGrowth = false;
   bool importMemory = false;
+  bool emitBinary = false;
   std::string startFunction;
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
@@ -131,6 +132,12 @@ int main(int argc, const char *argv[]) {
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
            })
+      .add("--emit-binary", "",
+           "Emit binary instead of text for the output file",
+           Options::Arguments::Zero,
+           [&emitBinary](Options *, const std::string &) {
+             emitBinary = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -212,20 +219,22 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  // TODO(jgravelle): flag for this
-  bool emitBinary = false;
-
   if (options.debug) std::cerr << "Printing..." << std::endl;
   auto outputDebugFlag = options.debug ? Flags::Debug : Flags::Release;
   auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
   Output output(options.extra["output"], outputBinaryFlag, outputDebugFlag);
 
   ModuleWriter writer;
+  writer.setDebug(options.debug);
   writer.setDebugInfo(true);
   writer.setBinary(emitBinary);
   writer.write(wasm, output);
   if (generateEmscriptenGlue) {
-    output << ";; METADATA: " << metadata;
+    if (emitBinary) {
+      std::cout << metadata;
+    } else {
+      output << ";; METADATA: " << metadata;
+    }
   }
 
   if (options.debug) std::cerr << "Done." << std::endl;
