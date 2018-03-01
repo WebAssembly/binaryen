@@ -651,11 +651,12 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     );
   };
   scanFunctionBody(func->body);
-  bool isBodyBlock = (func->body->_id == Expression::BlockId);
+  bool isBodyBlock = func->body->is<Block>();
   ExpressionList* stats = isBodyBlock ?
       &static_cast<Block*>(func->body)->list : nullptr;
   bool endsInReturn =
-      (isBodyBlock && ((*stats)[stats->size()-1]->_id == Expression::ReturnId));
+      (isBodyBlock && ((*stats)[stats->size()-1]->is<Return>())) ||
+    func->body->is<Return>();
   if (endsInReturn) {
     // return already taken care of
     flattenAppend(ret, processFunctionBody(func, NO_RESULT));
