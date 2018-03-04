@@ -414,8 +414,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       functionNames.push_back(func->name);
     }
     size_t skip = 1;
+    bool winning = false;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      if (!shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+      if (!winning && !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
@@ -429,8 +430,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         noteReduction(names.size());
         i += skip;
         skip = std::min(size_t(factor), 2 * skip);
+        winning = true;
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
+        winning = false;
       }
     }
     // try to remove exports
