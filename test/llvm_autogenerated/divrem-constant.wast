@@ -91,4 +91,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_test_udiv_2","_test_udiv_5","_test_sdiv_2","_test_sdiv_5","_test_urem_2","_test_urem_5","_test_srem_2","_test_srem_5","_stackSave","_stackAlloc","_stackRestore"], "exports": ["test_udiv_2","test_udiv_5","test_sdiv_2","test_sdiv_5","test_urem_2","test_urem_5","test_srem_2","test_srem_5","stackSave","stackAlloc","stackRestore"] }

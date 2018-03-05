@@ -206,4 +206,16 @@
     (nop)
   )
 )
+(module ;; empty start being removed
+  (start $starter)
+  (func $starter
+    (nop)
+  )
+)
+(module ;; non-empty start being kept
+  (start $starter)
+  (func $starter
+    (drop (i32.const 0))
+  )
+)
 

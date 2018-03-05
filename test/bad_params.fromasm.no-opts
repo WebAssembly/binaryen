@@ -1,0 +1,43 @@
+(module
+ (import "env" "memory" (memory $0 256 256))
+ (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
+ (export "ex" (func $ex))
+ (func $missing (; 0 ;) (param $x i32) (param $y f64)
+  (nop)
+ )
+ (func $extra (; 1 ;) (param $x i32) (param $y f64)
+  (nop)
+ )
+ (func $mix (; 2 ;) (param $a i32)
+  (nop)
+ )
+ (func $ex (; 3 ;)
+  (call $missing
+   (i32.const 0)
+   (f64.const 0)
+  )
+  (call $missing
+   (i32.const 1)
+   (f64.const 0)
+  )
+  (call $extra
+   (i32.const 1)
+   (f64.const 2)
+  )
+  (call $extra
+   (i32.const 1)
+   (f64.const 2)
+  )
+  (call $mix
+   (i32.const 0)
+  )
+  (call $mix
+   (i32.const 1)
+  )
+  (call $mix
+   (i32.const 1)
+  )
+ )
+)

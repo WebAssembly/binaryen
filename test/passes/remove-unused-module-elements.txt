@@ -228,7 +228,6 @@
  (export "one" (func $one))
  (export "three" (func $three))
  (export "exp_glob" (global $exp_glob))
- (start $starter)
  (func $one (; 1 ;) (type $1) (result i32)
   (call $two)
  )
@@ -248,7 +247,15 @@
    )
   )
  )
- (func $starter (; 5 ;) (type $2)
-  (nop)
+)
+(module
+)
+(module
+ (type $0 (func))
+ (start $starter)
+ (func $starter (; 0 ;) (type $0)
+  (drop
+   (i32.const 0)
+  )
  )
 )

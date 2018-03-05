@@ -1229,14 +1229,47 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       name = "finalize-calls";
     }
 
+    void notifyAboutWrongOperands(std::string why, Function* calledFunc) {
+      std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
+    }
+
     void visitCall(Call* curr) {
-      if (!getModule()->getFunctionOrNull(curr->target)) {
+      auto* calledFunc = getModule()->getFunctionOrNull(curr->target);
+      if (!calledFunc) {
         std::cerr << "invalid call target: " << curr->target << '\n';
         WASM_UNREACHABLE();
       }
-      auto result = getModule()->getFunction(curr->target)->result;
+      // The result type of the function being called is now known, and can be applied.
+      auto result = calledFunc->result;
       if (curr->type != result) {
         curr->type = result;
+      }
+      // Handle mismatched numbers of arguments. In clang, if a function is declared one way
+      // but called in another, it inserts bitcasts to make things work. Those end up
+      // working since it is "ok" to drop or add parameters in native platforms, even
+      // though it's undefined behavior. We warn about it here, but tolerate it, if there is
+      // a simple solution.
+      if (curr->operands.size() < calledFunc->params.size()) {
+        notifyAboutWrongOperands("warning: asm2wasm adding operands", calledFunc);
+        while (curr->operands.size() < calledFunc->params.size()) {
+          // Add params as necessary, with zeros.
+          curr->operands.push_back(
+            LiteralUtils::makeZero(calledFunc->params[curr->operands.size()], *getModule())
+          );
+        }
+      }
+      if (curr->operands.size() > calledFunc->params.size()) {
+        notifyAboutWrongOperands("warning: asm2wasm dropping operands", calledFunc);
+        curr->operands.resize(calledFunc->params.size());
+      }
+      // If the types are wrong, validation will fail later anyhow, but add a warning here,
+      // it may help people.
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        auto sent = curr->operands[i]->type;
+        auto expected = calledFunc->params[i];
+        if (sent != unreachable && sent != expected) {
+          notifyAboutWrongOperands("error: asm2wasm seeing an invalid argument type at index " + std::to_string(i) + " (this will not validate)", calledFunc);
+        }
       }
     }
 
@@ -1618,7 +1651,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       // global var
-      assert(mappedGlobals.find(name) != mappedGlobals.end());
+      if (mappedGlobals.find(name) == mappedGlobals.end()) {
+        Fatal() << "error: access of a non-existent global var " << name.str;
+      }
       auto* ret = builder.makeSetGlobal(name, process(assign->value()));
       // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
       auto parent = astStackHelper.getParent();

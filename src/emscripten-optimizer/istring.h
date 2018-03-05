@@ -137,13 +137,17 @@ struct IString {
   bool is() const     { return str != nullptr; }
   bool isNull() const { return str == nullptr; }
 
-  bool startsWith(const char *prefix) const {
+  const char* stripPrefix(const char *prefix) const {
     const char *ptr = str;
     while (true) {
-      if (*prefix == 0) return true;
-      if (*ptr == 0) return false;
-      if (*ptr++ != *prefix++) return false;
+      if (*prefix == 0) return ptr;
+      if (*ptr == 0) return nullptr;
+      if (*ptr++ != *prefix++) return nullptr;
     }
+  }
+
+  bool startsWith(const char *prefix) const {
+    return stripPrefix(prefix) != nullptr;
   }
 };
 
