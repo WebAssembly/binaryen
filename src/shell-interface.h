@@ -95,8 +95,10 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
-      assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
+      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
+      if (offset + segment.data.size() > wasm.memory.initial * wasm::Memory::kPageSize) {
+        trap("invalid offset when initializing memory");
+      }
       for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(offset + i, segment.data[i]);
       }
