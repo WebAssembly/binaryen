@@ -71,9 +71,9 @@ struct ExecutionResults {
   }
 
   bool operator==(ExecutionResults& other) {
-    for (auto& iter : results) {
+    for (auto& iter : other.results) {
       auto name = iter.first;
-      if (other.results.find(name) == other.results.end()) {
+      if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
         abort();
       }
