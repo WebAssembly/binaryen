@@ -165,6 +165,9 @@ struct PassRunner {
   //  1: run pass by pass, validating in between
   //  2: also save the last pass, so it breakage happens we can print the last one
   //  3: also dump out byn-* files for each pass
+  //
+  // BINARYEN_PASS_DEBUG also controls the verbosity of pass information:
+  // level 2 or above will print out timing information for each pass executed.
   static int getPassDebug();
 
 protected:
