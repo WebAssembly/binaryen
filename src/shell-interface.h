@@ -104,7 +104,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
 
     table.resize(wasm.table.initial);
     for (auto& segment : wasm.table.segments) {
-      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
+      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
       if (offset + segment.data.size() > wasm.table.initial) {
         trap("invalid offset when initializing table");
       }
