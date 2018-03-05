@@ -690,7 +690,7 @@ private:
 
   Literal getLiteral(Ref ast) {
     Literal ret = checkLiteral(ast);
-    if (ret.type == none) abort();
+    assert(ret.type != none);
     return ret;
   }
 
@@ -1786,7 +1786,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = NegFloat32;
           ret->type = Type::f32;
         } else {
-          abort();
+          WASM_UNREACHABLE();
         }
         return ret;
       } else if (ast[1] == B_NOT) {
@@ -1918,7 +1918,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->type = value->type;
             return ret;
           } else {
-            abort();
+            WASM_UNREACHABLE();
           }
         }
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
@@ -1933,7 +1933,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
             ret->type = value->type;
           } else {
-            abort();
+            Fatal() << "floor/sqrt/ceil only work on float/double in asm.js and wasm";
           }
           return ret;
         }
@@ -1948,7 +1948,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (ret->left->type == f64) {
             ret->op = name == Math_max ? MaxFloat64 : MinFloat64;
           } else {
-            abort();
+            Fatal() << "min/max only work on float/double in asm.js and wasm";
           }
           ret->type = ret->left->type;
           return ret;
