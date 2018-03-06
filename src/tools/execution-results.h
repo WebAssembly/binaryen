@@ -37,20 +37,24 @@ struct ExecutionResults {
       return;
     }
     ShellExternalInterface interface;
-    ModuleInstance instance(wasm, &interface);
-    // execute all exported methods (that are therefore preserved through opts)
-    for (auto& exp : wasm.exports) {
-      if (exp->kind != ExternalKind::Function) continue;
-      auto* func = wasm.getFunction(exp->value);
-      if (func->result != none) {
-        // this has a result
-        results[exp->name] = run(func, wasm, instance);
-        std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
-      } else {
-        // no result, run it anyhow (it might modify memory etc.)
-        run(func, wasm, instance);
-        std::cout << "[fuzz-exec] no result for void func: " << exp->name << '\n';
+    try {
+      ModuleInstance instance(wasm, &interface);
+      // execute all exported methods (that are therefore preserved through opts)
+      for (auto& exp : wasm.exports) {
+        if (exp->kind != ExternalKind::Function) continue;
+        auto* func = wasm.getFunction(exp->value);
+        if (func->result != none) {
+          // this has a result
+          results[exp->name] = run(func, wasm, instance);
+          std::cout << "[fuzz-exec] note result: " << exp->name << " => " << results[exp->name] << '\n';
+        } else {
+          // no result, run it anyhow (it might modify memory etc.)
+          run(func, wasm, instance);
+          std::cout << "[fuzz-exec] no result for void func: " << exp->name << '\n';
+        }
       }
+    } catch (const TrapException&) {
+      // may throw in instance creation (init of offsets)
     }
     std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
   }
@@ -67,9 +71,9 @@ struct ExecutionResults {
   }
 
   bool operator==(ExecutionResults& other) {
-    for (auto& iter : results) {
+    for (auto& iter : other.results) {
       auto name = iter.first;
-      if (other.results.find(name) == other.results.end()) {
+      if (results.find(name) == results.end()) {
         std::cout << "[fuzz-exec] missing " << name << '\n';
         abort();
       }
