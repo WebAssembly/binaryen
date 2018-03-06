@@ -215,7 +215,7 @@ public:
   static void scan(FunctionValidator* self, Expression** currp) {
     PostWalker<FunctionValidator>::scan(self, currp);
 
-    auto* curr =* currp;
+    auto* curr = *currp;
     if (curr->is<Block>()) self->pushTask(visitPreBlock, currp);
     if (curr->is<Loop>()) self->pushTask(visitPreLoop, currp);
   }
