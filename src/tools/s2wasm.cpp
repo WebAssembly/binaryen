@@ -40,7 +40,11 @@ int main(int argc, const char *argv[]) {
   bool allowMemoryGrowth = false;
   bool importMemory = false;
   bool emitBinary = false;
+  bool debugInfo = false;
   std::string startFunction;
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
+  std::string symbolMap;
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
   unsigned numReservedFunctionPointers = 0;
@@ -63,7 +67,7 @@ int main(int argc, const char *argv[]) {
            [&startFunction](Options *, const std::string& argument) {
              startFunction = argument.size() ? argument : "main";
            })
-      .add("--global-base", "-g", "Where to start to place globals",
+      .add("--global-base", "", "Where to start to place globals",
            Options::Arguments::One,
            [](Options *o, const std::string& argument) {
              o->extra["global-base"] = argument;
@@ -137,6 +141,30 @@ int main(int argc, const char *argv[]) {
            Options::Arguments::Zero,
            [&emitBinary](Options *, const std::string &) {
              emitBinary = true;
+           })
+      .add("--debuginfo", "-g",
+           "Emit names section in wasm binary (or full debuginfo in wast)",
+           Options::Arguments::Zero,
+           [&debugInfo](Options *, const std::string &) {
+             debugInfo = true;
+           })
+      .add("--source-map", "-sm",
+           "Emit source map (if using binary output) to the specified file",
+           Options::Arguments::One,
+           [&sourceMapFilename](Options *, const std::string& argument) {
+             sourceMapFilename = argument;
+           })
+      .add("--source-map-url", "-su",
+           "Use specified string as source map URL",
+           Options::Arguments::One,
+           [&sourceMapUrl](Options *, const std::string& argument) {
+             sourceMapUrl = argument;
+           })
+      .add("--symbolmap", "-s",
+           "Emit a symbol map (indexes => names)",
+           Options::Arguments::One,
+           [&symbolMap](Options *, const std::string& argument) {
+             symbolMap = argument;
            })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
@@ -226,9 +254,15 @@ int main(int argc, const char *argv[]) {
 
   ModuleWriter writer;
   writer.setDebug(options.debug);
-  writer.setDebugInfo(true);
+  writer.setDebugInfo(debugInfo);
+  writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
+  if (emitBinary) {
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
+  }
   writer.write(wasm, output);
+
   if (generateEmscriptenGlue) {
     if (emitBinary) {
       std::cout << metadata;
