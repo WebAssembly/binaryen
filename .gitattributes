@@ -1,1 +1,3 @@
-*.a -text
+*.a binary
+bin/wasm.js binary
+bin/binaryen.js binary
