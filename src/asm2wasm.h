@@ -1231,13 +1231,18 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
     void notifyAboutWrongOperands(std::string why, Function* calledFunc) {
       // in e.g. Python there can be thousands of such warnings; limit the output.
-      static const int MAX_SHOWN = 10;
+      static const int MAX_SHOWN = 20;
       static int numShown = 0;
       if (numShown >= MAX_SHOWN) return;
-      std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
-      numShown++;
-      if (numShown >= MAX_SHOWN) {
-        std::cerr << "(" << numShown << " such warnings shown; not showing any more)\n";
+      // use a mutex as this may be shown from multiple threads
+      {
+        static std::mutex mutex;
+        std::unique_lock<std::mutex> lock(mutex);
+        std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
+        numShown++;
+        if (numShown >= MAX_SHOWN) {
+          std::cerr << "(" << numShown << " such warnings shown; not showing any more)\n";
+        }
       }
     }
 
