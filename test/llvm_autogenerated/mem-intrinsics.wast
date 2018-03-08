@@ -214,4 +214,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["block_tail_dup","def","memcpy","memmove","memset"], "externs": [], "implementedFunctions": ["_copy_yes","_copy_no","_move_yes","_move_no","_set_yes","_set_no","_frame_index","_drop_result","_tail_dup_to_reuse_result","_stackSave","_stackAlloc","_stackRestore"], "exports": ["copy_yes","copy_no","move_yes","move_no","set_yes","set_no","frame_index","drop_result","tail_dup_to_reuse_result","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["block_tail_dup","def","memcpy","memmove","memset"], "externs": [], "implementedFunctions": ["_copy_yes","_copy_no","_move_yes","_move_no","_set_yes","_set_no","_frame_index","_drop_result","_tail_dup_to_reuse_result","_stackSave","_stackAlloc","_stackRestore"], "exports": ["copy_yes","copy_no","move_yes","move_no","set_yes","set_no","frame_index","drop_result","tail_dup_to_reuse_result","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }
