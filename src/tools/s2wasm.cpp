@@ -172,6 +172,11 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
+  if (options.extra["output"].size() == 0) {
+    // when no output file is specified, we emit text to stdout
+    emitBinary = false;
+  }
+
   if (allowMemoryGrowth && !generateEmscriptenGlue) {
     Fatal() << "Error: adding memory growth code without Emscripten glue. "
       "This doesn't do anything.\n";
