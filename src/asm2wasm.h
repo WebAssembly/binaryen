@@ -1230,7 +1230,21 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void notifyAboutWrongOperands(std::string why, Function* calledFunc) {
+      // use a mutex as this may be shown from multiple threads
+      static std::mutex mutex;
+      std::unique_lock<std::mutex> lock(mutex);
+      static const int MAX_SHOWN = 20;
+      static std::unique_ptr<std::atomic<int>> numShown;
+      if (!numShown) {
+        numShown = make_unique<std::atomic<int>>();
+        numShown->store(0);
+      }
+      if (numShown->load() >= MAX_SHOWN) return;
       std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
+      (*numShown)++;
+      if (numShown->load() >= MAX_SHOWN) {
+        std::cerr << "(" << numShown->load() << " such warnings shown; not showing any more)\n";
+      }
     }
 
     void visitCall(Call* curr) {
