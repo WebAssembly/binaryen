@@ -140,8 +140,12 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
       return builder.makeReturn(copy(curr->value));
     }
     Expression* visitHost(Host *curr) {
-      assert(curr->operands.size() == 0);
-      return builder.makeHost(curr->op, curr->nameOperand, {});
+      std::vector<Expression*> operands;
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        operands.push_back(copy(curr->operands[i]));
+      }
+      auto* ret = builder.makeHost(curr->op, curr->nameOperand, std::move(operands));
+      return ret;
     }
     Expression* visitNop(Nop *curr) {
       return builder.makeNop();
