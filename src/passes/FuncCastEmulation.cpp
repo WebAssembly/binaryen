@@ -40,6 +40,87 @@ namespace wasm {
 // can't just detect this automatically in the module we see.)
 static const int NUM_PARAMS = 10;
 
+// Converts a value to the ABI type of i64.
+static Expression* toABI(Expression* value, Module* module) {
+  Builder builder(*module);
+  switch (value->type) {
+    case i32: {
+      value = builder.makeUnary(ExtendUInt32, value);
+      break;
+    }
+    case i64: {
+      // already good
+      break;
+    }
+    case f32: {
+      value = builder.makeUnary(
+        ExtendUInt32,
+        builder.makeUnary(ReinterpretFloat32, value)
+      );
+      break;
+    }
+    case f64: {
+      value = builder.makeUnary(ReinterpretFloat64, value);
+      break;
+    }
+    case none: {
+      // the value is none, but we need a value here
+      value = builder.makeSequence(
+        value,
+        LiteralUtils::makeZero(i64, *module)
+      );
+      break;
+    }
+    case unreachable: {
+      // can leave it, the call isn't taken anyhow
+      break;
+    }
+    default: {
+      // SIMD may be interesting some day
+      WASM_UNREACHABLE();
+    }
+  }
+  return value;
+}
+
+// Converts a value from the ABI type of i64 to the expected type
+static Expression* fromABI(Expression* value, Type type, Module* module) {
+  Builder builder(*module);
+  switch (type) {
+    case i32: {
+      value = builder.makeUnary(WrapInt64, value);
+      break;
+    }
+    case i64: {
+      // already good
+      break;
+    }
+    case f32: {
+      value = builder.makeUnary(
+        ReinterpretInt32,
+        builder.makeUnary(WrapInt64, value)
+      );
+      break;
+    }
+    case f64: {
+      value = builder.makeUnary(ReinterpretInt64, value);
+      break;
+    }
+    case none: {
+      value = builder.makeDrop(value);
+    }
+    case unreachable: {
+      // can leave it, the call isn't taken anyhow
+      break;
+    }
+    default: {
+      // SIMD may be interesting some day
+      WASM_UNREACHABLE();
+    }
+  }
+  return value;
+}
+
 struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
@@ -53,7 +134,7 @@ struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCast
                  curr->operands.size();
     }
     for (Expression*& operand : curr->operands) {
-      operand = toABI(operand);
+      operand = toABI(operand, getModule());
     }
     // Add extra operands as needed.
     while (curr->operands.size() < NUM_PARAMS) {
@@ -64,127 +145,12 @@ struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCast
     curr->type = i64;
     curr->fullType = ABIType;
     // Fix up return value
-    replaceCurrent(fromABI(curr, oldType));
-  }
-
-  void visitTable(Table* curr) {
-    // Add a thunk for each function in the table, and do the call through it.
-    std::unordered_map<Name, Name> funcThunks;
-    for (auto& segment : curr->segments) {
-      for (auto& name : segment.data) {
-        auto iter = funcThunks.find(name);
-        if (iter == funcThunks.end()) {
-          auto thunk = makeThunk(name);
-          funcThunks[name] = thunk;
-          name = thunk;
-        } else {
-          name = iter->second;
-        }
-      }
-    }
+    replaceCurrent(fromABI(curr, oldType, getModule()));
   }
 
 private:
   // the name of a type for a call with the right params and return
   Name ABIType;
-
-  // Creates a thunk for a function, casting args and return value as needed.
-  Name makeThunk(Name name) {
-    Name thunk = std::string("byn$fpcast-emu$") + name.str;
-    if (getModule()->getFunctionOrNull(thunk)) {
-      Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
-    }
-    auto* func = getModule()->getFunction(name);
-    Builder builder(*getModule());
-    std::vector<Type> thunkParams;
-    std::vector<Expression*> callOperands;
-    for (Index i = 0; i < func->params.size(); i++) {
-      thunkParams.push_back(i64);
-      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), func->params[i]));
-    }
-    auto* call = builder.makeCall(name, callOperands, getModule()->getFunction(name)->result);
-    getModule()->addFunction(builder.makeFunction(
-      thunk,
-      std::move(thunkParams),
-      i64,
-      {}, // no vars
-      toABI(call)
-    ));
-    return thunk;
-  }
-
-  // Converts a value to the ABI type of i64.
-  Expression* toABI(Expression* value) {
-    Builder builder(*getModule());
-    switch (value->type) {
-      case i32: {
-        value = builder.makeUnary(ExtendUInt32, value);
-        break;
-      }
-      case i64: {
-        // already good
-        break;
-      }
-      case f32: {
-        value = builder.makeUnary(
-          ExtendUInt32,
-          builder.makeUnary(ReinterpretFloat32, value)
-        );
-        break;
-      }
-      case f64: {
-        value = builder.makeUnary(ReinterpretFloat64, value);
-        break;
-      }
-      case unreachable: {
-        // can leave it, the call isn't taken anyhow
-        break;
-      }
-      default: {
-        // SIMD may be interesting some day
-        WASM_UNREACHABLE();
-      }
-    }
-    return value;
-  }
-
-  // Converts a value from the ABI type of i64 to the expected type
-  Expression* fromABI(Expression* value, Type type) {
-    Builder builder(*getModule());
-    switch (type) {
-      case i32: {
-        value = builder.makeUnary(WrapInt64, value);
-        break;
-      }
-      case i64: {
-        // already good
-        break;
-      }
-      case f32: {
-        value = builder.makeUnary(
-          ReinterpretInt32,
-          builder.makeUnary(WrapInt64, value)
-        );
-        break;
-      }
-      case f64: {
-        value = builder.makeUnary(ReinterpretInt64, value);
-        break;
-      }
-      case none: {
-        value = builder.makeDrop(value);
-      }
-      case unreachable: {
-        // can leave it, the call isn't taken anyhow
-        break;
-      }
-      default: {
-        // SIMD may be interesting some day
-        WASM_UNREACHABLE();
-      }
-    }
-    return value;
-  }
 };
 
 struct FuncCastEmulation : public Pass {
@@ -194,12 +160,55 @@ struct FuncCastEmulation : public Pass {
     for (Index i = 0; i < NUM_PARAMS; i++) {
       sig += 'j';
     }
-    auto ABIType = ensureFunctionType(sig, module)->name;
-    // do the main work
+    ABIType = ensureFunctionType(sig, module)->name;
+    // Add a thunk for each function in the table, and do the call through it.
+    std::unordered_map<Name, Name> funcThunks;
+    for (auto& segment : module->table.segments) {
+      for (auto& name : segment.data) {
+        auto iter = funcThunks.find(name);
+        if (iter == funcThunks.end()) {
+          auto thunk = makeThunk(name, module);
+          funcThunks[name] = thunk;
+          name = thunk;
+        } else {
+          name = iter->second;
+        }
+      }
+    }
+    // update call_indirects
     PassRunner subRunner(module, runner->options);
     subRunner.setIsNested(true);
     subRunner.add<ParallelFuncCastEmulation>(ABIType);
     subRunner.run();
+  }
+
+private:
+  // the name of a type for a call with the right params and return
+  Name ABIType;
+
+  // Creates a thunk for a function, casting args and return value as needed.
+  Name makeThunk(Name name, Module* module) {
+    Name thunk = std::string("byn$fpcast-emu$") + name.str;
+    if (module->getFunctionOrNull(thunk)) {
+      Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
+    }
+    auto* func = module->getFunction(name);
+    Builder builder(*module);
+    std::vector<Type> thunkParams;
+    std::vector<Expression*> callOperands;
+    for (Index i = 0; i < func->params.size(); i++) {
+      thunkParams.push_back(i64);
+      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), func->params[i], module));
+    }
+    auto* call = builder.makeCall(name, callOperands, module->getFunction(name)->result);
+    module->addFunction(builder.makeFunction(
+      thunk,
+      std::move(thunkParams),
+      i64,
+      {}, // no vars
+      toABI(call, module)
+    ));
+    return thunk;
   }
 };
 

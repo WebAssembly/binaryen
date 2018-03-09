@@ -6,7 +6,7 @@
  (type $idd (func (param f64 f64) (result i32)))
  (type $FUNCSIG$jjjjjjjjjjj (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
  (table 10 10 anyfunc)
- (elem (i32.const 0) $a $b $c $d $e)
+ (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e)
  (func $a (; 0 ;) (type $vijfd) (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   (drop
    (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
@@ -113,6 +113,71 @@
     (i64.const 0)
     (i64.const 0)
     (i32.const 1337)
+   )
+  )
+ )
+ (func $byn$fpcast-emu$a (; 5 ;) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (result i64)
+  (call $a
+   (i32.wrap/i64
+    (get_local $0)
+   )
+   (get_local $1)
+   (f32.reinterpret/i32
+    (i32.wrap/i64
+     (get_local $2)
+    )
+   )
+   (f64.reinterpret/i64
+    (get_local $3)
+   )
+  )
+  (i64.const 0)
+ )
+ (func $byn$fpcast-emu$b (; 6 ;) (param $0 i64) (param $1 i64) (result i64)
+  (call $b
+   (i32.wrap/i64
+    (get_local $0)
+   )
+   (i32.wrap/i64
+    (get_local $1)
+   )
+  )
+ )
+ (func $byn$fpcast-emu$c (; 7 ;) (param $0 i64) (param $1 i64) (result i64)
+  (i64.extend_u/i32
+   (i32.reinterpret/f32
+    (call $c
+     (get_local $0)
+     (get_local $1)
+    )
+   )
+  )
+ )
+ (func $byn$fpcast-emu$d (; 8 ;) (param $0 i64) (param $1 i64) (result i64)
+  (i64.reinterpret/f64
+   (call $d
+    (f32.reinterpret/i32
+     (i32.wrap/i64
+      (get_local $0)
+     )
+    )
+    (f32.reinterpret/i32
+     (i32.wrap/i64
+      (get_local $1)
+     )
+    )
+   )
+  )
+ )
+ (func $byn$fpcast-emu$e (; 9 ;) (param $0 i64) (param $1 i64) (result i64)
+  (i64.extend_u/i32
+   (call $e
+    (f64.reinterpret/i64
+     (get_local $0)
+    )
+    (f64.reinterpret/i64
+     (get_local $1)
+    )
    )
   )
  )
