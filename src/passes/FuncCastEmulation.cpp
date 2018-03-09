@@ -64,14 +64,14 @@ struct FuncCastEmulation : public WalkerPass<PostWalker<FuncCastEmulation>> {
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
     for (auto& segment : curr->segments) {
-      for (auto& name : segment->data) {
+      for (auto& name : segment.data) {
         auto iter = funcThunks.find(name);
         if (iter == funcThunks.end()) {
           auto thunk = makeThunk(name);
           funcThunks[name] = thunk;
           name = thunk;
         } else {
-          name = iter.second;
+          name = iter->second;
         }
       }
     }
@@ -80,8 +80,8 @@ struct FuncCastEmulation : public WalkerPass<PostWalker<FuncCastEmulation>> {
 private:
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name) {
-    Name thunk = std::string("byn$fpcast-emu$") + name;
-    if (getModule()->getFuncOrNull(thunk)) {
+    Name thunk = std::string("byn$fpcast-emu$") + name.str;
+    if (getModule()->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
     }
     Builder builder(*getModule());
@@ -89,12 +89,12 @@ private:
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(i64);
-      callOperands.push_back(fromABI(builder.makeGetLocal(i)));
+      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64)));
     }
     auto* call = builder.makeCall(name, callOperands, getModule()->getFunction(name)->result);
     getModule()->addFunction(builder.makeFunction(
       thunk,
-      thunkParams,
+      std::move(thunkParams),
       i64,
       {}, // no vars
       toABI(call)

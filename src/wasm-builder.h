@@ -75,12 +75,8 @@ public:
     func->name = name;
     func->result = resultType;
     func->body = body;
-    for (auto& param : params) {
-      func->params.push_back(param);
-    }
-    for (auto& var : vars) {
-      func->vars.push_back(var);
-    }
+    func->params.swap(params);
+    func->vars.swap(vars);
     return func;
   }
 
