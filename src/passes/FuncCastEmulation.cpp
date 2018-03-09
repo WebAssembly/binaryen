@@ -201,13 +201,15 @@ private:
       callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), func->params[i], module));
     }
     auto* call = builder.makeCall(name, callOperands, module->getFunction(name)->result);
-    module->addFunction(builder.makeFunction(
+    auto* thunkFunc = builder.makeFunction(
       thunk,
       std::move(thunkParams),
       i64,
       {}, // no vars
       toABI(call, module)
-    ));
+    );
+    thunkFunc->type = ABIType;
+    module->addFunction(thunkFunc);
     return thunk;
   }
 };
