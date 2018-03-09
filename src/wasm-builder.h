@@ -56,11 +56,11 @@ public:
     return func;
   }
 
-  Function* makeFunctionWithNames(Name name,
-                                  std::vector<NameType>&& params,
-                                  Type resultType,
-                                  std::vector<NameType>&& vars,
-                                  Expression* body = nullptr) {
+  Function* makeFunction(Name name,
+                         std::vector<NameType>&& params,
+                         Type resultType,
+                         std::vector<NameType>&& vars,
+                         Expression* body = nullptr) {
     auto* func = new Function;
     func->name = name;
     func->result = resultType;

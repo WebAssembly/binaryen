@@ -29,6 +29,7 @@
 
 #include <wasm.h>
 #include <wasm-builder.h>
+#include <asm_v_wasm.h>
 #include <pass.h>
 #include <ir/literal-utils.h>
 
@@ -39,10 +40,12 @@ namespace wasm {
 // can't just detect this automatically in the module we see.)
 static const int NUM_PARAMS = 10;
 
-struct FuncCastEmulation : public WalkerPass<PostWalker<FuncCastEmulation>> {
+struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FuncCastEmulation(); }
+  Pass* create() override { return new ParallelFuncCastEmulation(ABIType); }
+
+  ParallelFuncCastEmulation(Name ABIType) : ABIType(ABIType) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->operands.size() > NUM_PARAMS) {
@@ -56,8 +59,12 @@ struct FuncCastEmulation : public WalkerPass<PostWalker<FuncCastEmulation>> {
     while (curr->operands.size() < NUM_PARAMS) {
       curr->operands.push_back(LiteralUtils::makeZero(i64, *getModule()));
     }
+    // Set the new types
+    auto oldType = curr->type;
+    curr->type = i64;
+    curr->fullType = ABIType;
     // Fix up return value
-    replaceCurrent(fromABI(curr));
+    replaceCurrent(fromABI(curr, oldType));
   }
 
   void visitTable(Table* curr) {
@@ -78,18 +85,22 @@ struct FuncCastEmulation : public WalkerPass<PostWalker<FuncCastEmulation>> {
   }
 
 private:
+  // the name of a type for a call with the right params and return
+  Name ABIType;
+
   // Creates a thunk for a function, casting args and return value as needed.
   Name makeThunk(Name name) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
     if (getModule()->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
     }
+    auto* func = getModule()->getFunction(name);
     Builder builder(*getModule());
     std::vector<Type> thunkParams;
     std::vector<Expression*> callOperands;
-    for (Index i = 0; i < NUM_PARAMS; i++) {
+    for (Index i = 0; i < func->params.size(); i++) {
       thunkParams.push_back(i64);
-      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64)));
+      callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), func->params[i]));
     }
     auto* call = builder.makeCall(name, callOperands, getModule()->getFunction(name)->result);
     getModule()->addFunction(builder.makeFunction(
@@ -137,10 +148,10 @@ private:
     return value;
   }
 
-  // Converts a value from the ABI type of i64.
-  Expression* fromABI(Expression* value) {
+  // Converts a value from the ABI type of i64 to the expected type
+  Expression* fromABI(Expression* value, Type type) {
     Builder builder(*getModule());
-    switch (value->type) {
+    switch (type) {
       case i32: {
         value = builder.makeUnary(WrapInt64, value);
         break;
@@ -173,6 +184,22 @@ private:
       }
     }
     return value;
+  }
+};
+
+struct FuncCastEmulation : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    // we just need the one ABI function type for all indirect calls
+    std::string sig = "j";
+    for (Index i = 0; i < NUM_PARAMS; i++) {
+      sig += 'j';
+    }
+    auto ABIType = ensureFunctionType(sig, module)->name;
+    // do the main work
+    PassRunner subRunner(module, runner->options);
+    subRunner.setIsNested(true);
+    subRunner.add<ParallelFuncCastEmulation>(ABIType);
+    subRunner.run();
   }
 };
 
