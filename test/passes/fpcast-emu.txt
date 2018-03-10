@@ -4,10 +4,12 @@
  (type $fjj (func (param i64 i64) (result f32)))
  (type $dff (func (param f32 f32) (result f64)))
  (type $idd (func (param f64 f64) (result i32)))
+ (type $FUNCSIG$fijfd (func (param i32 i64 f32 f64) (result f32)))
  (type $FUNCSIG$jjjjjjjjjjj (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+ (import "env" "imported_func" (func $imported-func (param i32 i64 f32 f64) (result f32)))
  (table 10 10 anyfunc)
- (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e)
- (func $a (; 0 ;) (type $vijfd) (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+ (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e $byn$fpcast-emu$imported-func)
+ (func $a (; 1 ;) (type $vijfd) (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   (drop
    (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
     (i64.extend_u/i32
@@ -32,7 +34,7 @@
    )
   )
  )
- (func $b (; 1 ;) (type $jii) (param $x i32) (param $y i32) (result i64)
+ (func $b (; 2 ;) (type $jii) (param $x i32) (param $y i32) (result i64)
   (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
    (i64.extend_u/i32
     (i32.const 1)
@@ -51,7 +53,7 @@
    (i32.const 1337)
   )
  )
- (func $c (; 2 ;) (type $fjj) (param $x i64) (param $y i64) (result f32)
+ (func $c (; 3 ;) (type $fjj) (param $x i64) (param $y i64) (result f32)
   (f32.reinterpret/i32
    (i32.wrap/i64
     (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
@@ -70,7 +72,7 @@
    )
   )
  )
- (func $d (; 3 ;) (type $dff) (param $x f32) (param $y f32) (result f64)
+ (func $d (; 4 ;) (type $dff) (param $x f32) (param $y f32) (result f64)
   (f64.reinterpret/i64
    (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
     (i64.extend_u/i32
@@ -95,7 +97,7 @@
    )
   )
  )
- (func $e (; 4 ;) (type $idd) (param $x f64) (param $y f64) (result i32)
+ (func $e (; 5 ;) (type $idd) (param $x f64) (param $y f64) (result i32)
   (i32.wrap/i64
    (call_indirect (type $FUNCSIG$jjjjjjjjjjj)
     (i64.reinterpret/f64
@@ -116,7 +118,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$a (; 5 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (result i64)
+ (func $byn$fpcast-emu$a (; 6 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (result i64)
   (call $a
    (i32.wrap/i64
     (get_local $0)
@@ -133,7 +135,7 @@
   )
   (i64.const 0)
  )
- (func $byn$fpcast-emu$b (; 6 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
+ (func $byn$fpcast-emu$b (; 7 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
   (call $b
    (i32.wrap/i64
     (get_local $0)
@@ -143,7 +145,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$c (; 7 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
+ (func $byn$fpcast-emu$c (; 8 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
   (i64.extend_u/i32
    (i32.reinterpret/f32
     (call $c
@@ -153,7 +155,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$d (; 8 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
+ (func $byn$fpcast-emu$d (; 9 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
   (i64.reinterpret/f64
    (call $d
     (f32.reinterpret/i32
@@ -169,7 +171,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$e (; 9 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
+ (func $byn$fpcast-emu$e (; 10 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (result i64)
   (i64.extend_u/i32
    (call $e
     (f64.reinterpret/i64
@@ -177,6 +179,26 @@
     )
     (f64.reinterpret/i64
      (get_local $1)
+    )
+   )
+  )
+ )
+ (func $byn$fpcast-emu$imported-func (; 11 ;) (type $FUNCSIG$jjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (result i64)
+  (i64.extend_u/i32
+   (i32.reinterpret/f32
+    (call $imported-func
+     (i32.wrap/i64
+      (get_local $0)
+     )
+     (get_local $1)
+     (f32.reinterpret/i32
+      (i32.wrap/i64
+       (get_local $2)
+      )
+     )
+     (f64.reinterpret/i64
+      (get_local $3)
+     )
     )
    )
   )
