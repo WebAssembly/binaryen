@@ -6,9 +6,16 @@
  (type $idd (func (param f64 f64) (result i32)))
  (type $FUNCSIG$fijfd (func (param i32 i64 f32 f64) (result f32)))
  (type $FUNCSIG$jjjjjjjjjjjjjjjj (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+ (type $FUNCSIG$vijfd (func (param i32 i64 f32 f64)))
+ (type $FUNCSIG$jii (func (param i32 i32) (result i64)))
+ (type $FUNCSIG$fjj (func (param i64 i64) (result f32)))
+ (type $FUNCSIG$dff (func (param f32 f32) (result f64)))
+ (type $FUNCSIG$idd (func (param f64 f64) (result i32)))
  (import "env" "imported_func" (func $imported-func (param i32 i64 f32 f64) (result f32)))
  (table 10 10 anyfunc)
  (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e $byn$fpcast-emu$imported-func)
+ (export "dynCall_dff" (func $dynCall_dff))
+ (export "dynCall_idd" (func $dynCall_idd))
  (func $a (; 1 ;) (type $vijfd) (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   (drop
    (call_indirect (type $FUNCSIG$jjjjjjjjjjjjjjjj)
@@ -143,7 +150,63 @@
    )
   )
  )
- (func $byn$fpcast-emu$a (; 6 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $dynCall_dff (; 6 ;) (param $fptr i32) (param $0 f32) (param $1 f32) (result f64)
+  (f64.reinterpret/i64
+   (call_indirect (type $FUNCSIG$jjjjjjjjjjjjjjjj)
+    (i64.extend_u/i32
+     (i32.reinterpret/f32
+      (get_local $0)
+     )
+    )
+    (i64.extend_u/i32
+     (i32.reinterpret/f32
+      (get_local $1)
+     )
+    )
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (get_local $fptr)
+   )
+  )
+ )
+ (func $dynCall_idd (; 7 ;) (param $fptr i32) (param $0 f64) (param $1 f64) (result i32)
+  (i32.wrap/i64
+   (call_indirect (type $FUNCSIG$jjjjjjjjjjjjjjjj)
+    (i64.reinterpret/f64
+     (get_local $0)
+    )
+    (i64.reinterpret/f64
+     (get_local $1)
+    )
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (i64.const 0)
+    (get_local $fptr)
+   )
+  )
+ )
+ (func $byn$fpcast-emu$a (; 8 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (call $a
    (i32.wrap/i64
     (get_local $0)
@@ -160,7 +223,7 @@
   )
   (i64.const 0)
  )
- (func $byn$fpcast-emu$b (; 7 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $byn$fpcast-emu$b (; 9 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (call $b
    (i32.wrap/i64
     (get_local $0)
@@ -170,7 +233,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$c (; 8 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $byn$fpcast-emu$c (; 10 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (i64.extend_u/i32
    (i32.reinterpret/f32
     (call $c
@@ -180,7 +243,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$d (; 9 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $byn$fpcast-emu$d (; 11 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (i64.reinterpret/f64
    (call $d
     (f32.reinterpret/i32
@@ -196,7 +259,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$e (; 10 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $byn$fpcast-emu$e (; 12 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (i64.extend_u/i32
    (call $e
     (f64.reinterpret/i64
@@ -208,7 +271,7 @@
    )
   )
  )
- (func $byn$fpcast-emu$imported-func (; 11 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
+ (func $byn$fpcast-emu$imported-func (; 13 ;) (type $FUNCSIG$jjjjjjjjjjjjjjjj) (param $0 i64) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (result i64)
   (i64.extend_u/i32
    (i32.reinterpret/f32
     (call $imported-func

@@ -172,7 +172,6 @@ INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAM
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
-  src/wasm-interpreter.cpp
 )
 ADD_EXECUTABLE(wasm-shell
                ${wasm-shell_SOURCES})
@@ -183,11 +182,10 @@ INSTALL(TARGETS wasm-shell DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm-opt_SOURCES
   src/tools/wasm-opt.cpp
-  src/wasm-interpreter.cpp
 )
 ADD_EXECUTABLE(wasm-opt
                ${wasm-opt_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support)
+TARGET_LINK_LIBRARIES(wasm-opt wasm asmjs emscripten-optimizer passes ir cfg support wasm)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-opt PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-opt DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -197,7 +195,7 @@ SET(wasm-merge_SOURCES
 )
 ADD_EXECUTABLE(wasm-merge
                ${wasm-merge_SOURCES})
-TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ir cfg support)
+TARGET_LINK_LIBRARIES(wasm-merge wasm asmjs emscripten-optimizer passes ir cfg support wasm)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm-merge PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm-merge DESTINATION bin)
@@ -214,7 +212,6 @@ INSTALL(TARGETS wasm-metadce DESTINATION bin)
 
 SET(asm2wasm_SOURCES
   src/tools/asm2wasm.cpp
-  src/wasm-emscripten.cpp
 )
 ADD_EXECUTABLE(asm2wasm
                ${asm2wasm_SOURCES})
@@ -235,7 +232,6 @@ INSTALL(TARGETS wasm2asm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(s2wasm_SOURCES
   src/tools/s2wasm.cpp
-  src/wasm-emscripten.cpp
   src/wasm-linker.cpp
 )
 ADD_EXECUTABLE(s2wasm
@@ -247,7 +243,6 @@ INSTALL(TARGETS s2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm-emscripten-finalize_SOURCES
   src/tools/wasm-emscripten-finalize.cpp
-  src/wasm-emscripten.cpp
 )
 ADD_EXECUTABLE(wasm-emscripten-finalize
                ${wasm-emscripten-finalize_SOURCES})
@@ -290,7 +285,6 @@ IF (UNIX) # TODO: port to windows
 
   SET(wasm-reduce_SOURCES
     src/tools/wasm-reduce.cpp
-    src/wasm-interpreter.cpp
   )
   ADD_EXECUTABLE(wasm-reduce
                  ${wasm-reduce_SOURCES})
