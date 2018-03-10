@@ -806,6 +806,12 @@ void FunctionValidator::visitFunction(Function* curr) {
   shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
+  // if function has a named type, it must match up with the function's params and result
+  if (info.validateGlobally && curr->type.is()) {
+    auto* ft = getModule()->getFunctionType(curr->type);
+    shouldBeTrue(ft->params == curr->params, curr->name, "function params must match its declared type");
+    shouldBeTrue(ft->result == curr->result, curr->name, "function result must match its declared type");
+  }
   // expressions must not be seen more than once
   struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
     std::unordered_set<Expression*>& seen;

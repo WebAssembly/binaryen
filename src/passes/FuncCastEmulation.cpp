@@ -199,14 +199,16 @@ private:
     std::vector<Type>& params = func ? func->params : module->getFunctionType(imp->functionType)->params;
     Type type = func ? func->result : module->getFunctionType(imp->functionType)->result;
     Builder builder(*module);
-    std::vector<Type> thunkParams;
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
-      thunkParams.push_back(i64);
       callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), params[i], module));
     }
     Expression* call = func ? (Expression*)builder.makeCall(name, callOperands, type)
                             : (Expression*)builder.makeCallImport(name, callOperands, type);
+    std::vector<Type> thunkParams;
+    for (Index i = 0; i < NUM_PARAMS; i++) {
+      thunkParams.push_back(i64);
+    }
     auto* thunkFunc = builder.makeFunction(
       thunk,
       std::move(thunkParams),
