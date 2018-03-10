@@ -6,7 +6,7 @@
  (type $idd (func (param f64 f64) (result i32)))
  (type $FUNCSIG$jjjjjjjjjjj (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
  (table 10 10 anyfunc)
- (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e)
+ (elem (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e)
  (func $a (; 0 ;) (type $vijfd) (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   (drop
    (call_indirect (type $FUNCSIG$jjjjjjjjjjj)

@@ -5,7 +5,7 @@
   (type $dff (func (param f32) (param f32) (result f64)))
   (type $idd (func (param f64) (param f64) (result i32)))
   (table 10 10 anyfunc)
-  (elem (i32.const 0) $a $b $c $d $e)
+  (elem (i32.const 0) $a $b $c $d $e $e)
   (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
     (call_indirect (type $vijfd)
       (i32.const 1)
