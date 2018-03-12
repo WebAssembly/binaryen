@@ -67,13 +67,15 @@ struct Liveness {
   LocalSet start, end; // live locals at the start and end
   std::vector<LivenessAction> actions; // actions occurring in this block
 
+#if LIVENESS_DEBUG
   void dump(Function* func) {
     if (actions.empty()) return;
     std::cout << "    actions:\n";
     for (auto& action : actions) {
-      std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
+      std::cout << "      " << (action.isGet() ? "get" : (action.isSet() ? "set" : "other")) << " " << func->getLocalName(action.index) << "\n";
     }
   }
+#endif // LIVENESS_DEBUG
 };
 
 template<typename SubType, typename VisitorType>
@@ -201,7 +203,7 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
       auto& action = actions[i];
       if (action.isGet()) {
         live.insert(action.index);
-      } else {
+      } else if (action.isSet()) {
         live.erase(action.index);
       }
     }
