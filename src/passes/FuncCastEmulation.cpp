@@ -186,16 +186,6 @@ struct FuncCastEmulation : public Pass {
     subRunner.setIsNested(true);
     subRunner.add<ParallelFuncCastEmulation>(ABIType);
     subRunner.run();
-    // Add a way for JS to call into the table (as our i64 ABI means an i64
-    // is returned when there is a return value, which JS engines will fail on).
-    // Only the return type needs to be specified here, so we can process the
-    // output properly, otherwise the arguments use the new i64 ABI anyhow.
-/*
-    addDynCall('v', none, module);
-    addDynCall('i', i32, module);
-    addDynCall('f', f32, module);
-    addDynCall('d', f64, module);
-*/
   }
 
 private:
@@ -235,45 +225,6 @@ private:
     thunkFunc->type = ABIType;
     module->addFunction(thunkFunc);
     return thunk;
-  }
-
-  void addDynCall(char sig, Type returnType, Module* module) {
-    Name name = std::string("dynCall_") + sig + "X";
-    if (module->getFunctionOrNull(name)) {
-      Fatal() << "FuncCastEmulation::makeThunk seems the dynCall name is already in use. Was the pass already run on this code?";
-    }
-    Builder builder(*module);
-    std::vector<Type> params;
-    std::vector<Expression*> args;
-    // first argument is the index, then the function args
-    params.push_back(i32);
-    for (Index i = 0; i < NUM_PARAMS; i++) {
-      params.push_back(i64);
-      args.push_back(builder.makeGetLocal(i + 1, i64));
-    }
-    // TODO: we return an f64 here, the best JS can get. but perhaps we should
-    //       use tempRet0 to return a full i64? Does anyone use that?
-    auto* func = builder.makeFunction(
-      name,
-      std::move(params),
-      returnType,
-      {}, // no vars
-      fromABI(
-        builder.makeCallIndirect(
-          module->getFunctionType(ABIType),
-          builder.makeGetLocal(0, i32),
-          args
-        ),
-        returnType,
-        module
-      )
-    );
-    module->addFunction(func);
-    auto* export_ = new Export;
-    export_->name = name;
-    export_->value = name;
-    export_->kind = ExternalKind::Function;
-    module->addExport(export_);
   }
 };
 
