@@ -149,7 +149,7 @@ private:
   static const int MAX_PARAMS = 10;
 
   // The maximum amount of vars in each function.
-  static const int MAX_VARS = 15;
+  static const int MAX_VARS = 20;
 
   // some things require luck, try them a few times
   static const int TRIES = 10;
@@ -158,7 +158,7 @@ private:
   static const int NESTING_LIMIT = 11;
 
   // the maximum size of a block
-  static const int BLOCK_FACTOR = 6;
+  static const int BLOCK_FACTOR = 5;
 
   // the memory that we use, a small portion so that we have a good chance of
   // looking at writes (we also look outside of this region with small probability)
@@ -175,7 +175,7 @@ private:
   static const bool DE_NAN = true;
 
   // Whether to emit atomics
-  static const bool ATOMICS = false;
+  static const bool ATOMICS = true;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
