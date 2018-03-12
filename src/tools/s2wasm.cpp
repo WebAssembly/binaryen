@@ -26,6 +26,7 @@
 #include "support/file.h"
 #include "s2wasm.h"
 #include "wasm-emscripten.h"
+#include "wasm-io.h"
 #include "wasm-linker.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
@@ -38,7 +39,12 @@ int main(int argc, const char *argv[]) {
   bool generateEmscriptenGlue = false;
   bool allowMemoryGrowth = false;
   bool importMemory = false;
+  bool emitBinary = false;
+  bool debugInfo = false;
   std::string startFunction;
+  std::string sourceMapFilename;
+  std::string sourceMapUrl;
+  std::string symbolMap;
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
   unsigned numReservedFunctionPointers = 0;
@@ -61,7 +67,7 @@ int main(int argc, const char *argv[]) {
            [&startFunction](Options *, const std::string& argument) {
              startFunction = argument.size() ? argument : "main";
            })
-      .add("--global-base", "-g", "Where to start to place globals",
+      .add("--global-base", "", "Where to start to place globals",
            Options::Arguments::One,
            [](Options *o, const std::string& argument) {
              o->extra["global-base"] = argument;
@@ -130,11 +136,46 @@ int main(int argc, const char *argv[]) {
                                           const std::string &argument) {
              numReservedFunctionPointers = std::stoi(argument);
            })
+      .add("--emit-binary", "",
+           "Emit binary instead of text for the output file",
+           Options::Arguments::Zero,
+           [&emitBinary](Options *, const std::string &) {
+             emitBinary = true;
+           })
+      .add("--debuginfo", "-g",
+           "Emit names section in wasm binary (or full debuginfo in wast)",
+           Options::Arguments::Zero,
+           [&debugInfo](Options *, const std::string &) {
+             debugInfo = true;
+           })
+      .add("--source-map", "-sm",
+           "Emit source map (if using binary output) to the specified file",
+           Options::Arguments::One,
+           [&sourceMapFilename](Options *, const std::string& argument) {
+             sourceMapFilename = argument;
+           })
+      .add("--source-map-url", "-su",
+           "Use specified string as source map URL",
+           Options::Arguments::One,
+           [&sourceMapUrl](Options *, const std::string& argument) {
+             sourceMapUrl = argument;
+           })
+      .add("--symbolmap", "-s",
+           "Emit a symbol map (indexes => names)",
+           Options::Arguments::One,
+           [&symbolMap](Options *, const std::string& argument) {
+             symbolMap = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
+
+  if (options.extra["output"].size() == 0) {
+    // when no output file is specified, we emit text to stdout
+    emitBinary = false;
+  }
 
   if (allowMemoryGrowth && !generateEmscriptenGlue) {
     Fatal() << "Error: adding memory growth code without Emscripten glue. "
@@ -187,13 +228,13 @@ int main(int argc, const char *argv[]) {
   linker.layout();
 
   std::string metadata;
+  Module& wasm = linker.getOutput().wasm;
   if (generateEmscriptenGlue) {
-    Module& wasm = linker.getOutput().wasm;
     if (options.debug) {
       std::cerr << "Emscripten gluing..." << std::endl;
       WasmPrinter::printModule(&wasm, std::cerr);
     }
-    metadata = ";; METADATA: " + emscriptenGlue(
+    metadata = emscriptenGlue(
       wasm,
       allowMemoryGrowth,
       linker.getStackPointerAddress(),
@@ -204,18 +245,36 @@ int main(int argc, const char *argv[]) {
 
   if (options.extra["validate"] != "none") {
     if (options.debug) std::cerr << "Validating..." << std::endl;
-    Module* output = &linker.getOutput().wasm;
-    if (!wasm::WasmValidator().validate(*output,
+    if (!wasm::WasmValidator().validate(wasm,
          WasmValidator::Globally | (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
-      WasmPrinter::printModule(output);
+      WasmPrinter::printModule(&wasm);
       Fatal() << "Error: linked module is not valid.\n";
     }
   }
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
-  Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&linker.getOutput().wasm, output.getStream());
-  output << metadata;
+  auto outputDebugFlag = options.debug ? Flags::Debug : Flags::Release;
+  auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
+  Output output(options.extra["output"], outputBinaryFlag, outputDebugFlag);
+
+  ModuleWriter writer;
+  writer.setDebug(options.debug);
+  writer.setDebugInfo(debugInfo);
+  writer.setSymbolMap(symbolMap);
+  writer.setBinary(emitBinary);
+  if (emitBinary) {
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
+  }
+  writer.write(wasm, output);
+
+  if (generateEmscriptenGlue) {
+    if (emitBinary) {
+      std::cout << metadata;
+    } else {
+      output << ";; METADATA: " << metadata;
+    }
+  }
 
   if (options.debug) std::cerr << "Done." << std::endl;
   return 0;

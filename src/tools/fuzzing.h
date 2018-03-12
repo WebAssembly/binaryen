@@ -145,6 +145,12 @@ private:
   size_t pos; // the position in the input
   bool finishedInput; // whether we already cycled through all the input (if so, we should try to finish things off)
 
+  // The maximum amount of params to each function.
+  static const int MAX_PARAMS = 10;
+
+  // The maximum amount of vars in each function.
+  static const int MAX_VARS = 20;
+
   // some things require luck, try them a few times
   static const int TRIES = 10;
 
@@ -359,13 +365,13 @@ private:
     func->name = std::string("func_") + std::to_string(num);
     func->result = getReachableType();
     assert(typeLocals.empty());
-    Index numParams = upToSquared(5);
+    Index numParams = upToSquared(MAX_PARAMS);
     for (Index i = 0; i < numParams; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size());
       func->params.push_back(type);
     }
-    Index numVars = upToSquared(10);
+    Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
       typeLocals[type].push_back(func->params.size() + func->vars.size());

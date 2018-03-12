@@ -428,12 +428,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       functionNames.push_back(func->name);
     }
     size_t skip = 1;
-    bool winning = false;
+    // If we just removed some functions in the previous iteration, keep trying to remove more
+    // as this is one of the most efficient ways to reduce.
+    bool justRemoved = false;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      break; // XXX
-      if (!winning &&
+      if (!justRemoved &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
-          !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+         !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
@@ -444,7 +445,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       }
       if (names.size() == 0) continue;
       std::cout << "|    try to remove " << names.size() << " functions (skip: " << skip << ")\n";
-      if (tryToRemoveFunctions(names)) {
+      justRemoved = tryToRemoveFunctions(names);
+      if (justRemoved) {
         noteReduction(names.size());
         i += skip;
         skip = std::min(size_t(factor), 2 * skip);

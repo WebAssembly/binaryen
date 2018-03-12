@@ -201,15 +201,15 @@ public:
     if (curr->name.is()) self->breakTargets[curr->name] = curr;
   }
 
-  void visitBlock(Block *curr);
+  void visitBlock(Block* curr);
 
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is()) self->breakTargets[curr->name] = curr;
   }
 
-  void visitLoop(Loop *curr);
-  void visitIf(If *curr);
+  void visitLoop(Loop* curr);
+  void visitIf(If* curr);
 
   // override scan to add a pre and a post check task to all nodes
   static void scan(FunctionValidator* self, Expression** currp) {
@@ -221,28 +221,28 @@ public:
   }
 
   void noteBreak(Name name, Expression* value, Expression* curr);
-  void visitBreak(Break *curr);
-  void visitSwitch(Switch *curr);
-  void visitCall(Call *curr);
-  void visitCallImport(CallImport *curr);
-  void visitCallIndirect(CallIndirect *curr);
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallImport(CallImport* curr);
+  void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
-  void visitSetLocal(SetLocal *curr);
+  void visitSetLocal(SetLocal* curr);
   void visitGetGlobal(GetGlobal* curr);
-  void visitSetGlobal(SetGlobal *curr);
-  void visitLoad(Load *curr);
-  void visitStore(Store *curr);
-  void visitAtomicRMW(AtomicRMW *curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
-  void visitAtomicWait(AtomicWait *curr);
-  void visitAtomicWake(AtomicWake *curr);
-  void visitBinary(Binary *curr);
-  void visitUnary(Unary *curr);
+  void visitSetGlobal(SetGlobal* curr);
+  void visitLoad(Load* curr);
+  void visitStore(Store* curr);
+  void visitAtomicRMW(AtomicRMW* curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
+  void visitAtomicWait(AtomicWait* curr);
+  void visitAtomicWake(AtomicWake* curr);
+  void visitBinary(Binary* curr);
+  void visitUnary(Unary* curr);
   void visitSelect(Select* curr);
   void visitDrop(Drop* curr);
   void visitReturn(Return* curr);
   void visitHost(Host* curr);
-  void visitFunction(Function *curr);
+  void visitFunction(Function* curr);
 
   // helpers
 private:
@@ -289,7 +289,7 @@ void FunctionValidator::noteLabelName(Name name) {
   labelNames.insert(name);
 }
 
-void FunctionValidator::visitBlock(Block *curr) {
+void FunctionValidator::visitBlock(Block* curr) {
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
     noteLabelName(curr->name);
@@ -344,7 +344,7 @@ void FunctionValidator::visitBlock(Block *curr) {
   }
 }
 
-void FunctionValidator::visitLoop(Loop *curr) {
+void FunctionValidator::visitLoop(Loop* curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
     breakTargets.erase(curr->name);
@@ -358,7 +358,7 @@ void FunctionValidator::visitLoop(Loop *curr) {
   }
 }
 
-void FunctionValidator::visitIf(If *curr) {
+void FunctionValidator::visitIf(If* curr) {
   shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "if condition must be valid");
   if (!curr->ifFalse) {
     shouldBeFalse(isConcreteType(curr->ifTrue->type), curr, "if without else must not return a value in body");
@@ -412,14 +412,14 @@ void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr
     }
   }
 }
-void FunctionValidator::visitBreak(Break *curr) {
+void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
   if (curr->condition) {
     shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "break condition must be i32");
   }
 }
 
-void FunctionValidator::visitSwitch(Switch *curr) {
+void FunctionValidator::visitSwitch(Switch* curr) {
   for (auto& target : curr->targets) {
     noteBreak(target, curr->value, curr);
   }
@@ -427,7 +427,7 @@ void FunctionValidator::visitSwitch(Switch *curr) {
   shouldBeTrue(curr->condition->type == unreachable || curr->condition->type == i32, curr, "br_table condition must be i32");
 }
 
-void FunctionValidator::visitCall(Call *curr) {
+void FunctionValidator::visitCall(Call* curr) {
   if (!info.validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
@@ -444,7 +444,7 @@ void FunctionValidator::visitCall(Call *curr) {
   }
 }
 
-void FunctionValidator::visitCallImport(CallImport *curr) {
+void FunctionValidator::visitCallImport(CallImport* curr) {
   if (!info.validateGlobally) return;
   auto* import = getModule()->getImportOrNull(curr->target);
   if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
@@ -458,7 +458,7 @@ void FunctionValidator::visitCallImport(CallImport *curr) {
   }
 }
 
-void FunctionValidator::visitCallIndirect(CallIndirect *curr) {
+void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (!info.validateGlobally) return;
   auto* type = getModule()->getFunctionTypeOrNull(curr->fullType);
   if (!shouldBeTrue(!!type, curr, "call_indirect type must exist")) return;
@@ -476,7 +476,7 @@ void FunctionValidator::visitGetLocal(GetLocal* curr) {
   shouldBeTrue(isConcreteType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
 }
 
-void FunctionValidator::visitSetLocal(SetLocal *curr) {
+void FunctionValidator::visitSetLocal(SetLocal* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "set_local index must be small enough");
   if (curr->value->type != unreachable) {
     if (curr->type != none) { // tee is ok anyhow
@@ -491,15 +491,16 @@ void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
   shouldBeTrue(getModule()->getGlobalOrNull(curr->name) || getModule()->getImportOrNull(curr->name), curr, "get_global name must be valid");
 }
 
-void FunctionValidator::visitSetGlobal(SetGlobal *curr) {
+void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)");
-  shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
-  shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
+  if (shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
+    shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
+    shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
+  }
 }
 
-void FunctionValidator::visitLoad(Load *curr) {
+void FunctionValidator::visitLoad(Load* curr) {
   if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
@@ -508,7 +509,7 @@ void FunctionValidator::visitLoad(Load *curr) {
   if (curr->isAtomic) shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
 }
 
-void FunctionValidator::visitStore(Store *curr) {
+void FunctionValidator::visitStore(Store* curr) {
   if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
@@ -575,7 +576,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* c
   }
 }
 
-void FunctionValidator::visitBinary(Binary *curr) {
+void FunctionValidator::visitBinary(Binary* curr) {
   if (curr->left->type != unreachable && curr->right->type != unreachable) {
     shouldBeEqual(curr->left->type, curr->right->type, curr, "binary child types must be equal");
   }
@@ -672,7 +673,7 @@ void FunctionValidator::visitBinary(Binary *curr) {
   }
 }
 
-void FunctionValidator::visitUnary(Unary *curr) {
+void FunctionValidator::visitUnary(Unary* curr) {
   shouldBeUnequal(curr->value->type, none, curr, "unaries must not receive a none as their input");
   if (curr->value->type == unreachable) return; // nothing to check
   switch (curr->op) {
@@ -793,7 +794,7 @@ void FunctionValidator::visitHost(Host* curr) {
   }
 }
 
-void FunctionValidator::visitFunction(Function *curr) {
+void FunctionValidator::visitFunction(Function* curr) {
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   if (curr->body->type != unreachable) {

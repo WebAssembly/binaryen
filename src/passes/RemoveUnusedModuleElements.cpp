@@ -162,7 +162,13 @@ struct RemoveUnusedModuleElements : public Pass {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
-      roots.emplace_back(ModuleElementKind::Function, module->start);
+      auto startFunction = module->getFunction(module->start);
+      // Can be skipped if the start function is empty.
+      if (startFunction->body->is<Nop>()) {
+        module->start.clear();
+      } else {
+        roots.emplace_back(ModuleElementKind::Function, module->start);
+      }
     }
     // Exports are roots.
     bool exportsMemory = false;

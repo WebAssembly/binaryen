@@ -78,4 +78,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_f0","_f1","_f2","_f3","_f4","_f5","_stackSave","_stackAlloc","_stackRestore"], "exports": ["f0","f1","f2","f3","f4","f5","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_f0","_f1","_f2","_f3","_f4","_f5","_stackSave","_stackAlloc","_stackRestore"], "exports": ["f0","f1","f2","f3","f4","f5","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

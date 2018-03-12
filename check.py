@@ -82,7 +82,10 @@ def run_wasm_opt_tests():
     if t.endswith(('.wast', '.wasm')):
       print '..', t
       binary = '.wasm' in t
-      passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+      base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+      passname = base
+      if passname.isdigit():
+        passname = open(os.path.join(options.binaryen_test, 'passes', passname + '.passes')).read().strip()
       opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
       t = os.path.join(options.binaryen_test, 'passes', t)
       actual = ''
@@ -108,7 +111,7 @@ def run_wasm_opt_tests():
             if 'BINARYEN_PASS_DEBUG' in os.environ:
               del os.environ['BINARYEN_PASS_DEBUG']
 
-      fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'passes', passname + ('.bin' if binary else '') + '.txt'), 'rb').read())
+      fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'passes', base + ('.bin' if binary else '') + '.txt'), 'rb').read())
 
       if 'emit-js-wrapper' in t:
         with open('a.js') as actual:

@@ -690,7 +690,7 @@ private:
 
   Literal getLiteral(Ref ast) {
     Literal ret = checkLiteral(ast);
-    if (ret.type == none) abort();
+    assert(ret.type != none);
     return ret;
   }
 
@@ -1230,7 +1230,21 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void notifyAboutWrongOperands(std::string why, Function* calledFunc) {
+      // use a mutex as this may be shown from multiple threads
+      static std::mutex mutex;
+      std::unique_lock<std::mutex> lock(mutex);
+      static const int MAX_SHOWN = 20;
+      static std::unique_ptr<std::atomic<int>> numShown;
+      if (!numShown) {
+        numShown = make_unique<std::atomic<int>>();
+        numShown->store(0);
+      }
+      if (numShown->load() >= MAX_SHOWN) return;
       std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
+      (*numShown)++;
+      if (numShown->load() >= MAX_SHOWN) {
+        std::cerr << "(" << numShown->load() << " such warnings shown; not showing any more)\n";
+      }
     }
 
     void visitCall(Call* curr) {
@@ -1786,7 +1800,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = NegFloat32;
           ret->type = Type::f32;
         } else {
-          abort();
+          WASM_UNREACHABLE();
         }
         return ret;
       } else if (ast[1] == B_NOT) {
@@ -1918,7 +1932,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->type = value->type;
             return ret;
           } else {
-            abort();
+            WASM_UNREACHABLE();
           }
         }
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
@@ -1933,7 +1947,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
             ret->type = value->type;
           } else {
-            abort();
+            Fatal() << "floor/sqrt/ceil only work on float/double in asm.js and wasm";
           }
           return ret;
         }
@@ -1948,7 +1962,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (ret->left->type == f64) {
             ret->op = name == Math_max ? MaxFloat64 : MinFloat64;
           } else {
-            abort();
+            Fatal() << "min/max only work on float/double in asm.js and wasm";
           }
           ret->type = ret->left->type;
           return ret;

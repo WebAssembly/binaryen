@@ -125,4 +125,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_eq_i32","_ne_i32","_slt_i32","_sle_i32","_ult_i32","_ule_i32","_sgt_i32","_sge_i32","_ugt_i32","_uge_i32","_stackSave","_stackAlloc","_stackRestore"], "exports": ["eq_i32","ne_i32","slt_i32","sle_i32","ult_i32","ule_i32","sgt_i32","sge_i32","ugt_i32","uge_i32","stackSave","stackAlloc","stackRestore"] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_eq_i32","_ne_i32","_slt_i32","_sle_i32","_ult_i32","_ule_i32","_sgt_i32","_sge_i32","_ugt_i32","_uge_i32","_stackSave","_stackAlloc","_stackRestore"], "exports": ["eq_i32","ne_i32","slt_i32","sle_i32","ult_i32","ule_i32","sgt_i32","sge_i32","ugt_i32","uge_i32","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

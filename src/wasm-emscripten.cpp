@@ -623,6 +623,15 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
   meta << "]";
 
+  meta << ", \"invokeFuncs\": [";
+  commaFirst = true;
+  for (const auto& import : wasm.imports) {
+    if (import->name.startsWith("invoke_")) {
+      meta << maybeComma() << '"' << import->name.str << '"';
+    }
+  }
+  meta << "]";
+
   meta << " }\n";
 
   return meta.str();
