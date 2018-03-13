@@ -134,7 +134,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/wasm/wasm-type.cpp \
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
-  $BINARYEN_SRC/wasm-emscripten.cpp \
+  $BINARYEN_SRC/wasm/wasm-emscripten.cpp \
   -I$BINARYEN_SRC \
   -o shared.bc
 

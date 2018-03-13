@@ -1730,11 +1730,11 @@ void WasmBinaryBuilder::readFunctions() {
       }
     }
     auto func = Builder(wasm).makeFunction(
-        Name::fromInt(i),
-        std::move(params),
-        type->result,
-        std::move(vars)
-                                           );
+      Name::fromInt(i),
+      std::move(params),
+      type->result,
+      std::move(vars)
+    );
     func->type = type->name;
     currFunction = func;
     {
