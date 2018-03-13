@@ -450,10 +450,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         noteReduction(names.size());
         i += skip;
         skip = std::min(size_t(factor), 2 * skip);
-        winning = true;
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
-        winning = false;
       }
     }
     // try to remove exports
