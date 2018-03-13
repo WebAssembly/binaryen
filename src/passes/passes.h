@@ -31,6 +31,7 @@ Pass* createDeadCodeEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();
 Pass* createFlattenPass();
+Pass* createFuncCastEmulationPass();
 Pass* createFullPrinterPass();
 Pass* createFunctionMetricsPass();
 Pass* createI64ToI32LoweringPass();

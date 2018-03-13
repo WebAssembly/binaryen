@@ -466,7 +466,7 @@
    (i32.const 19)
   )
  )
- (func $unreachable-block-ends-br_if (type $1) (result i32)
+ (func $unreachable-block-ends-br_if (result i32)
   (block $label$0 (result i32)
    (block $label$2
     (nop)
@@ -538,7 +538,7 @@
    )
   )
  )
- (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $1) (param $var$0 i32) (result i32)
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (block (result i32)
@@ -554,7 +554,7 @@
    )
   )
  )
- (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $1) (param $var$0 i32) (result i32)
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (br $label$0
     (block (result i32) ;; turns into unreachable when refinalized

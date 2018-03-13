@@ -322,7 +322,7 @@
    (unreachable)
   )
  )
- (func $unreachable-block-ends-br_if (; 11 ;) (type $1) (result i32)
+ (func $unreachable-block-ends-br_if (; 11 ;) (type $2) (result i32)
   (block $label$2
    (nop)
    (unreachable)
@@ -377,13 +377,13 @@
    )
   )
  )
- (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (type $1) (param $var$0 i32) (result i32)
+ (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (; 15 ;) (type $3) (param $var$0 i32) (result i32)
   (block $block
    (nop)
    (unreachable)
   )
  )
- (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (type $1) (param $var$0 i32) (result i32)
+ (func $br-with-unreachable-value-should-not-give-a-block-a-value (; 16 ;) (type $3) (param $var$0 i32) (result i32)
   (block $label$0 (result i32)
    (block $block
     (drop

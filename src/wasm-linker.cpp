@@ -382,7 +382,13 @@ void Linker::makeDummyFunction() {
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
   Expression *unreachable = wasmBuilder.makeUnreachable();
-  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, Type::none, {}, unreachable);
+  Function *dummy = wasmBuilder.makeFunction(
+    Name(dummyFunction),
+    std::vector<Type>{},
+    Type::none,
+    std::vector<Type>{},
+    unreachable
+  );
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
 }
