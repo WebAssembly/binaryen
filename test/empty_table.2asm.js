@@ -12,6 +12,8 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
+ var Math_min = global.Math.min;
+ var Math_max = global.Math.max;
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0;
