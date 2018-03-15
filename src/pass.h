@@ -56,7 +56,6 @@ private:
 };
 
 struct PassOptions {
-  bool debug = false; // run passes in debug mode, doing extra validation and timing checks
   bool validateGlobally = false; // when validating validate globally and not just locally
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
@@ -94,7 +93,6 @@ struct PassRunner {
   PassRunner& operator=(const PassRunner&) = delete;
 
   void setDebug(bool debug_) {
-    options.debug = debug_;
     options.validateGlobally = debug_; // validate everything by default if debugging
   }
   void setValidateGlobally(bool validate) {

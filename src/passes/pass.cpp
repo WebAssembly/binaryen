@@ -205,7 +205,7 @@ static void dumpWast(Name name, Module* wasm) {
 void PassRunner::run() {
   static const int passDebug = getPassDebug();
   static const bool printInfo = getPassDebug() >= 2;
-  if (!isNested && (options.debug || passDebug)) {
+  if (!isNested && passDebug) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -324,7 +324,7 @@ void PassRunner::run() {
 }
 
 void PassRunner::runOnFunction(Function* func) {
-  if (options.debug) {
+  if (getPassDebug() >= 2) {
     std::cerr << "[PassRunner] running passes on function " << func->name << std::endl;
   }
   for (auto* pass : passes) {
