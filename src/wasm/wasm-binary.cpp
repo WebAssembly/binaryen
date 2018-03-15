@@ -1682,6 +1682,17 @@ void WasmBinaryBuilder::readImports() {
   }
 }
 
+Name WasmBinaryBuilder::getNextLabel() {
+  requireFunctionContext("getting a label");
+  return Name("label$" + std::to_string(nextLabel++));
+}
+
+void WasmBinaryBuilder::requireFunctionContext(const char* error) {
+  if (!currFunction) {
+    throw ParseException(std::string("in a non-function context: ") + error);
+  }
+}
+
 void WasmBinaryBuilder::readFunctionSignatures() {
   if (debug) std::cerr << "== readFunctionSignatures" << std::endl;
   size_t num = getU32LEB();
@@ -2041,9 +2052,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     expressions.pop_back();
   }
   auto type = block->list[0]->type;
-  if (!currFunction) {
-    throw ParseException("popping void outside of function, where we need a new local");
-  }
+  requireFunctionContext("popping void where we need a new local");
   auto local = builder.addVar(currFunction, type);
   block->list[0] = builder.makeSetLocal(local, block->list[0]);
   block->list.push_back(builder.makeGetLocal(local, type));
@@ -2321,9 +2330,7 @@ void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end)
   expressionStack.resize(start);
   // if we have a consumable item and need it, use it
   if (consumable != NONE && curr->list.back()->type == none) {
-    if (!currFunction) {
-      throw ParseException("need an extra var in a non-function context, invalid wasm");
-    }
+    requireFunctionContext("need an extra var in a non-function context, invalid wasm");
     Builder builder(wasm);
     auto* item = curr->list[consumable]->cast<Drop>()->value;
     auto temp = builder.addVar(currFunction, item->type);
@@ -2534,9 +2541,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
-  if (!currFunction) {
-    throw ParseException("get_local outside of function");
-  }
+  requireFunctionContext("get_local");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
     throw ParseException("bad get_local index");
@@ -2547,9 +2552,7 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
-  if (!currFunction) {
-    throw ParseException("set_local outside of function");
-  }
+  requireFunctionContext("set_local outside of function");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
     throw ParseException("bad set_local index");
@@ -2946,9 +2949,7 @@ void WasmBinaryBuilder::visitSelect(Select *curr) {
 
 void WasmBinaryBuilder::visitReturn(Return *curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
-  if (!currFunction) {
-    throw ParseException("return outside of function");
-  }
+  requireFunctionContext("return");
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
   }
