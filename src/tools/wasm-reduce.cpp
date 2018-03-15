@@ -98,6 +98,11 @@ inline std::ostream& operator<<(std::ostream& o, ProgramResult& result) {
 
 ProgramResult expected;
 
+// Removing functions is extremely beneficial and efficient. We aggressively
+// try to remove functions, unless we've seen they can't be removed, in which
+// case we may try again but much later.
+static std::unordered_set<Name> functionsWeTriedToRemove;
+
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
   bool verbose, debugInfo;
@@ -366,19 +371,23 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
   template<typename T, typename U>
   void visitSegmented(T* curr, U zero, size_t bonus) {
-    // try to reduce to first function
-    // shrink segment elements
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool justShrank = false;
+    bool shrank = false;
     for (auto& segment : curr->segments) {
       auto& data = segment.data;
       size_t skip = 1; // when we succeed, try to shrink by more and more, similar to bisection
       for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!shouldTryToReduce(bonus)) continue;
+        if (!justShrank && !shouldTryToReduce(bonus)) continue;
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) data.pop_back();
         }
-        if (writeAndTestReduction()) {
+        auto justShrank = writeAndTestReduction();
+        if (justShrank) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
+          shrank = true;
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
@@ -401,6 +410,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         } else {
           item = save;
         }
+        if (shrank) {
+          // zeroing is fairly inefficient. if we are managing to shrink
+          // (which we do exponentially), just zero one per segment at most
+          break;
+        }
       }
     }
   }
@@ -418,12 +432,15 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // as this is one of the most efficient ways to reduce.
     bool justRemoved = false;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      if (!justRemoved && !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
+      if (!justRemoved &&
+          functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
+         !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) continue;
       std::vector<Name> names;
       for (size_t j = 0; names.size() < skip && i + j < functionNames.size(); j++) {
         auto name = functionNames[i + j];
         if (module->getFunctionOrNull(name)) {
           names.push_back(name);
+          functionsWeTriedToRemove.insert(name);
         }
       }
       if (names.size() == 0) continue;
