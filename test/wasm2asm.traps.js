@@ -12,6 +12,8 @@ function asmFunc(global, env, buffer) {
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
  var Math_clz32 = global.Math.clz32;
+ var Math_min = global.Math.min;
+ var Math_max = global.Math.max;
  function $0() {
   
  }
