@@ -98,7 +98,6 @@ void PassRegistry::registerPasses() {
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
-  registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
@@ -108,6 +107,7 @@ void PassRegistry::registerPasses() {
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
+  registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
