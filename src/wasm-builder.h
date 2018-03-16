@@ -43,6 +43,20 @@ public:
   // make* functions, create nodes
 
   Function* makeFunction(Name name,
+                         std::vector<Type>&& params,
+                         Type resultType,
+                         std::vector<Type>&& vars,
+                         Expression* body = nullptr) {
+    auto* func = new Function;
+    func->name = name;
+    func->result = resultType;
+    func->body = body;
+    func->params.swap(params);
+    func->vars.swap(vars);
+    return func;
+  }
+
+  Function* makeFunction(Name name,
                          std::vector<NameType>&& params,
                          Type resultType,
                          std::vector<NameType>&& vars,
@@ -51,7 +65,6 @@ public:
     func->name = name;
     func->result = resultType;
     func->body = body;
-
     for (auto& param : params) {
       func->params.push_back(param.type);
       Index index = func->localNames.size();
@@ -64,7 +77,6 @@ public:
       func->localIndices[var.name] = index;
       func->localNames[index] = var.name;
     }
-
     return func;
   }
 

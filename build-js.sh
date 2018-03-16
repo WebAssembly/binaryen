@@ -87,6 +87,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
   $BINARYEN_SRC/passes/ExtractFunction.cpp \
   $BINARYEN_SRC/passes/Flatten.cpp \
+  $BINARYEN_SRC/passes/FuncCastEmulation.cpp \
   $BINARYEN_SRC/passes/I64ToI32Lowering.cpp \
   $BINARYEN_SRC/passes/Inlining.cpp \
   $BINARYEN_SRC/passes/InstrumentLocals.cpp \
@@ -129,12 +130,13 @@ echo "building shared bitcode"
   $BINARYEN_SRC/support/threads.cpp \
   $BINARYEN_SRC/wasm/literal.cpp \
   $BINARYEN_SRC/wasm/wasm-binary.cpp \
+  $BINARYEN_SRC/wasm/wasm-emscripten.cpp \
+  $BINARYEN_SRC/wasm/wasm-interpreter.cpp \
   $BINARYEN_SRC/wasm/wasm-io.cpp \
   $BINARYEN_SRC/wasm/wasm-s-parser.cpp \
   $BINARYEN_SRC/wasm/wasm-type.cpp \
   $BINARYEN_SRC/wasm/wasm-validator.cpp \
   $BINARYEN_SRC/wasm/wasm.cpp \
-  $BINARYEN_SRC/wasm-emscripten.cpp \
   -I$BINARYEN_SRC \
   -o shared.bc
 

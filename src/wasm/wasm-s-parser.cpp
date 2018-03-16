@@ -1167,7 +1167,12 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
     const char *eq = strchr(str, '=');
     if (!eq) throw ParseException("missing = in memory attribute");
     eq++;
-    uint64_t value = atoll(eq);
+    if (*eq == 0) throw ParseException("missing value in memory attribute", s.line, s.col);
+    char* endptr;
+    uint64_t value = strtoll(eq, &endptr, 10);
+    if (*endptr != 0) {
+      throw ParseException("bad memory attribute immediate", s.line, s.col);
+    }
     if (str[0] == 'a') {
       if (value > std::numeric_limits<uint32_t>::max()) throw ParseException("bad align");
       *align = value;
@@ -1202,7 +1207,6 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtom
   ret->valueType = type;
   ret->bytes = parseMemBytes(&extra, getTypeSize(type));
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
-
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i+1]);
   ret->finalize();

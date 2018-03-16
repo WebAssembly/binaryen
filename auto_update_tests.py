@@ -110,6 +110,8 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
     print '..', t
     binary = '.wasm' in t
     passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+    if passname.isdigit():
+      passname = open(os.path.join('test', 'passes', passname + '.passes')).read().strip()
     opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
     t = os.path.join('test', 'passes', t)
     actual = ''

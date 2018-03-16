@@ -472,6 +472,8 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   addMath(MATH_FROUND, FROUND);
   addMath(MATH_ABS, ABS);
   addMath(MATH_CLZ32, CLZ32);
+  addMath(MATH_MIN, MIN);
+  addMath(MATH_MAX, MAX);
 }
 
 void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
