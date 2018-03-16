@@ -862,9 +862,7 @@ public:
   void readFunctionSignatures();
   size_t nextLabel;
 
-  Name getNextLabel() {
-    return cashew::IString(("label$" + std::to_string(nextLabel++)).c_str(), false);
-  }
+  Name getNextLabel();
 
   // We read functions before we know their names, so we need to backpatch the names later
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
@@ -873,6 +871,9 @@ public:
   std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
+
+  // Throws a parsing error if we are not in a function context
+  void requireFunctionContext(const char* error);
 
   void readFunctions();
 
