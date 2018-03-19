@@ -142,9 +142,10 @@ struct ParallelFuncCastEmulation : public WalkerPass<PostWalker<ParallelFuncCast
       curr->operands.push_back(LiteralUtils::makeZero(i64, *getModule()));
     }
     // Set the new types
+    curr->fullType = ABIType;
     auto oldType = curr->type;
     curr->type = i64;
-    curr->fullType = ABIType;
+    curr->finalize(); // may be unreachable
     // Fix up return value
     replaceCurrent(fromABI(curr, oldType, getModule()));
   }

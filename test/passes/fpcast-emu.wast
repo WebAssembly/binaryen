@@ -45,4 +45,26 @@
     )
   )
 )
+(module
+ (type $0 (func (param i64)))
+ (type $1 (func (param f32) (result i64)))
+ (global $global$0 (mut i32) (i32.const 10))
+ (table 42 42 anyfunc)
+ (export "func_106" (func $0))
+ (func $0 (; 0 ;) (type $1) (param $0 f32) (result i64)
+  (block $label$1 (result i64)
+   (loop $label$2
+    (set_global $global$0
+     (i32.const 0)
+    )
+    (call_indirect (type $0)
+     (br $label$1
+      (i64.const 4294967295)
+     )
+     (i32.const 18)
+    )
+   )
+  )
+ )
+)
 
