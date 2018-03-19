@@ -4,7 +4,8 @@ import os
 
 from support import run_command
 from shared import (
-    WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, options, tests
+    WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, options, tests,
+    fail_if_not_identical_to_file
 )
 
 # tests with i64s, invokes, etc.
@@ -33,8 +34,7 @@ def test_wasm2asm_output():
 
     cmd = WASM2ASM + [os.path.join(options.binaryen_test, wasm)]
     out = run_command(cmd)
-    expected = open(expected_file).read()
-    fail_if_not_identical(out, expected)
+    fail_if_not_identical_to_file(out, expected_file)
 
     if not NODEJS and not MOZJS:
       print 'No JS interpreters. Skipping spec tests.'
@@ -79,13 +79,11 @@ def test_asserts_output():
     wasm = os.path.join(options.binaryen_test, wasm)
     cmd = WASM2ASM + [wasm, '--allow-asserts']
     out = run_command(cmd)
-    expected = open(asserts_expected_file).read()
-    fail_if_not_identical(out, expected)
+    fail_if_not_identical_to_file(out, asserts_expected_file)
 
     cmd += ['--pedantic']
     out = run_command(cmd)
-    expected = open(traps_expected_file).read()
-    fail_if_not_identical(out, expected)
+    fail_if_not_identical_to_file(out, traps_expected_file)
 
 
 def test_wasm2asm():

@@ -27,7 +27,7 @@ from scripts.test.shared import (
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings, has_shell_timeout
+    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file
 )
 
 import scripts.test.asm2wasm as asm2wasm
@@ -64,7 +64,7 @@ def run_wasm_opt_tests():
   delete_from_orbit('a.wast')
   cmd = WASM_OPT + [wast, '-o', 'a.wast', '-S']
   run_command(cmd)
-  fail_if_not_identical(open('a.wast').read(), open(wast).read())
+  fail_if_not_identical_to_file(open('a.wast').read(), wast)
 
   print '\n[ checking wasm-opt binary reading/writing... ]\n'
 
@@ -111,16 +111,16 @@ def run_wasm_opt_tests():
             if 'BINARYEN_PASS_DEBUG' in os.environ:
               del os.environ['BINARYEN_PASS_DEBUG']
 
-      fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'passes', base + ('.bin' if binary else '') + '.txt'), 'rb').read())
+      expected_file = os.path.join(options.binaryen_test, 'passes',
+                                   base + ('.bin' if binary else '') + '.txt')
+      fail_if_not_identical_to_file(actual, expected_file)
 
       if 'emit-js-wrapper' in t:
         with open('a.js') as actual:
-          with open(t + '.js') as expected:
-            fail_if_not_identical(actual.read(), expected.read())
+          fail_if_not_identical_to_file(actual.read(), t + '.js')
       if 'emit-spec-wrapper' in t:
         with open('a.wat') as actual:
-          with open(t + '.wat') as expected:
-            fail_if_not_identical(actual.read(), expected.read())
+          fail_if_not_identical_to_file(actual.read(), t + '.wat')
 
   print '\n[ checking wasm-opt parsing & printing... ]\n'
 
@@ -131,7 +131,8 @@ def run_wasm_opt_tests():
       cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-      fail_if_not_identical(actual, open(os.path.join(options.binaryen_test, 'print', wasm + '.txt')).read())
+      expected_file = os.path.join(options.binaryen_test, 'print', wasm + '.txt')
+      fail_if_not_identical_to_file(actual, expected_file)
       cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
@@ -148,10 +149,7 @@ def run_wasm_opt_tests():
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
 
-      expected = open(f, 'rb').read()
-
-      if actual != expected:
-        fail(actual, expected)
+      fail_if_not_identical_to_file(actual, f)
 
       binary_format_check(t, wasm_as_args=['-g']) # test with debuginfo
       binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo') # test without debuginfo
@@ -170,10 +168,7 @@ def run_wasm_dis_tests():
 
       actual = run_command(cmd)
 
-      with open(t + '.fromBinary') as f:
-        expected = f.read()
-        if actual != expected:
-          fail(actual, expected)
+      fail_if_not_identical_to_file(actual, t + '.fromBinary')
 
 def run_wasm_merge_tests():
   print '\n[ checking wasm-merge... ]\n'
@@ -194,10 +189,8 @@ def run_wasm_merge_tests():
           out = t + '.combined'
           if finalize: out += '.finalized'
           if opt: out += '.opt'
-          with open(out) as f:
-            fail_if_not_identical(f.read(), actual)
-          with open(out + '.stdout') as f:
-            fail_if_not_identical(f.read(), stdout)
+          fail_if_not_identical_to_file(actual, out)
+          fail_if_not_identical_to_file(stdout, out + '.stdout')
 
 def run_crash_tests():
   print "\n[ checking we don't crash on tricky inputs... ]\n"
@@ -224,8 +217,7 @@ def run_ctor_eval_tests():
       stdout = run_command(cmd)
       actual = open('a.wast').read()
       out = t + '.out'
-      with open(out) as f:
-        fail_if_not_identical(f.read(), actual)
+      fail_if_not_identical_to_file(actual, out)
 
 def run_wasm_metadce_tests():
   print '\n[ checking wasm-metadce ]\n'
@@ -240,10 +232,8 @@ def run_wasm_metadce_tests():
       stdout = run_command(cmd)
       expected = t + '.dced'
       with open('a.wast') as seen:
-        with open(expected) as correct:
-          fail_if_not_identical(seen.read(), correct.read())
-      with open(expected + '.stdout') as correct:
-        fail_if_not_identical(stdout, correct.read())
+        fail_if_not_identical_to_file(seen.read(), expected)
+      fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
 def run_wasm_reduce_tests():
   print '\n[ checking wasm-reduce ]\n'
@@ -259,8 +249,7 @@ def run_wasm_reduce_tests():
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
-        with open(expected) as correct:
-          fail_if_not_identical(seen.read(), correct.read())
+        fail_if_not_identical_to_file(seen.read(), expected)
 
 def run_spec_tests():
   print '\n[ checking wasm-shell spec testcases... ]\n'
@@ -539,9 +528,7 @@ def run_gcc_torture_tests():
           # Also removes debug directory produced on Mac OS
           shutil.rmtree(output_file + '.dSYM')
 
-      expected = open(expected).read()
-      if actual != expected:
-        fail(actual, expected)
+      fail_if_not_identical_to_file(actual, expected)
 
 def run_emscripten_tests():
   print '\n[ checking wasm.js methods... ]\n'

@@ -17,8 +17,8 @@
 import os
 from support import run_command
 from shared import (
-    fail, fail_with_error, files_with_pattern, options,
-    WASM_EMSCRIPTEN_FINALIZE
+    fail_with_error, files_with_pattern, options,
+    WASM_EMSCRIPTEN_FINALIZE, fail_if_not_identical_to_file
 )
 
 
@@ -44,9 +44,7 @@ def test_wasm_emscripten_finalize():
       if not os.path.exists(expected_file):
         print actual
         fail_with_error('output ' + expected_file + ' does not exist')
-      expected = open(expected_file, 'rb').read()
-      if actual != expected:
-        fail(actual, expected)
+      fail_if_not_identical_to_file(actual, expected_file)
 
 
 if __name__ == '__main__':

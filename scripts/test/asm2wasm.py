@@ -20,7 +20,7 @@ import subprocess
 from support import run_command
 from shared import (
     ASM2WASM, WASM_OPT, binary_format_check, delete_from_orbit,
-    fail, fail_with_error, fail_if_not_identical, options, tests
+    fail_with_error, options, tests, fail_if_not_identical_to_file
 )
 
 
@@ -69,9 +69,7 @@ def test_asm2wasm():
           # verify output
           if not os.path.exists(wasm):
             fail_with_error('output .wast file %s does not exist' % wasm)
-          expected = open(wasm, 'rb').read()
-          if actual != expected:
-            fail(actual, expected)
+          fail_if_not_identical_to_file(actual, wasm)
 
           binary_format_check(wasm, verify_final_result=False)
 
@@ -128,9 +126,8 @@ def test_asm2wasm():
           run_command(cmd)
           if not os.path.isfile(jsmap):
             fail_with_error('Debug info map not created: %s' % jsmap)
-          with open(wasm + '.map', 'rb') as expected:
-            with open(jsmap, 'rb') as actual:
-              fail_if_not_identical(actual.read(), expected.read())
+          with open(jsmap, 'rb') as actual:
+            fail_if_not_identical_to_file(actual.read(), wasm + '.map')
           with open('a.wasm', 'rb') as binary:
             url_section_name = bytearray([16]) + bytearray('sourceMappingURL')
             url = 'http://example.org/' + jsmap
