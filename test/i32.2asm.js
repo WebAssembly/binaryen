@@ -14,6 +14,7 @@ function asmFunc(global, env, buffer) {
  var Math_clz32 = global.Math.clz32;
  var Math_min = global.Math.min;
  var Math_max = global.Math.max;
+ var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = x | 0;
   y = y | 0;

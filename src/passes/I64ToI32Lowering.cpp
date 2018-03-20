@@ -109,6 +109,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       high->name = makeHighName(curr->name);
       module->addGlobal(high);
     }
+
+    // For functions that return 64-bit values, we use this global variable
+    // to return the high 32 bits.
+    auto* highBits = new Global();
+    highBits->type = i32;
+    highBits->name = highBitsGlobal;
+    highBits->init = builder->makeConst(Literal(int32_t(0)));
+    highBits->mutable_ = true;
+    module->addGlobal(highBits);
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
   }
 
