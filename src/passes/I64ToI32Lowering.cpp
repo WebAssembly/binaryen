@@ -381,14 +381,19 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitGetLocal(GetLocal* curr) {
-    if (curr->type != i64) return;
-    curr->index = indexMap[curr->index];
+    const auto mappedIndex = indexMap[curr->index];
+    // Need to remap the local into the new naming scheme, regardless of
+    // the type of the local.
+    curr->index = mappedIndex;
+    if (curr->type != i64) {
+      return;
+    }
     curr->type = i32;
     TempVar highBits = getTemp();
     SetLocal *setHighBits = builder->makeSetLocal(
       highBits,
       builder->makeGetLocal(
-        curr->index + 1,
+        mappedIndex + 1,
         i32
       )
     );
@@ -400,7 +405,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void lowerTee(SetLocal* curr) {
     TempVar highBits = fetchOutParam(curr->value);
     TempVar tmp = getTemp();
-    curr->index = indexMap[curr->index];
     curr->type = i32;
     SetLocal* setLow = builder->makeSetLocal(tmp, curr);
     SetLocal* setHigh = builder->makeSetLocal(
@@ -414,15 +418,20 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitSetLocal(SetLocal* curr) {
-    if (!hasOutParam(curr->value)) return;
+    const auto mappedIndex = indexMap[curr->index];
+    // Need to remap the local into the new naming scheme, regardless of
+    // the type of the local.  Note that lowerTee depends on this happening.
+    curr->index = mappedIndex;
+    if (!hasOutParam(curr->value)) {
+      return;
+    }
     if (curr->isTee()) {
       lowerTee(curr);
       return;
     }
     TempVar highBits = fetchOutParam(curr->value);
-    curr->index = indexMap[curr->index];
     SetLocal* setHigh = builder->makeSetLocal(
-      curr->index + 1,
+      mappedIndex + 1,
       builder->makeGetLocal(highBits, i32)
     );
     Block* result = builder->blockify(curr, setHigh);
