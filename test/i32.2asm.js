@@ -18,216 +18,187 @@ function asmFunc(global, env, buffer) {
  function $0(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x + y | 0 | 0;
  }
  
  function $1(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x - y | 0 | 0;
  }
  
  function $2(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return Math_imul(x, y) | 0;
  }
  
  function $3(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
  function $4(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x >>> 0) / (y >>> 0) | 0 | 0;
  }
  
  function $5(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) % (y | 0) | 0 | 0;
  }
  
  function $6(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x >>> 0) % (y >>> 0) | 0 | 0;
  }
  
  function $7(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x & y | 0 | 0;
  }
  
  function $8(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x | y | 0 | 0;
  }
  
  function $9(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x ^ y | 0 | 0;
  }
  
  function $10(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x << y | 0 | 0;
  }
  
  function $11(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >> y | 0 | 0;
  }
  
  function $12(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >>> y | 0 | 0;
  }
  
  function $13(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return __wasm_rotl_i32(x, y) | 0 | 0;
  }
  
  function $14(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return __wasm_rotr_i32(x, y) | 0 | 0;
  }
  
  function $15(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0;
   return Math_clz32(x) | 0;
  }
  
  function $16(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0;
   return __wasm_ctz_i32(x) | 0 | 0;
  }
  
  function $17(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0;
   return __wasm_popcnt_i32(x) | 0 | 0;
  }
  
  function $18(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0;
   return (x | 0) == (0 | 0) | 0;
  }
  
  function $19(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) == (y | 0) | 0;
  }
  
  function $20(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) != (y | 0) | 0;
  }
  
  function $21(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) < (y | 0) | 0;
  }
  
  function $22(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >>> 0 < y >>> 0 | 0;
  }
  
  function $23(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) <= (y | 0) | 0;
  }
  
  function $24(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >>> 0 <= y >>> 0 | 0;
  }
  
  function $25(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) > (y | 0) | 0;
  }
  
  function $26(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >>> 0 > y >>> 0 | 0;
  }
  
  function $27(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return (x | 0) >= (y | 0) | 0;
  }
  
  function $28(x, y) {
   x = x | 0;
   y = y | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
   return x >>> 0 >= y >>> 0 | 0;
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0;
-  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $9 | 0;
+  var $1 = 0;
+  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $1 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0;
+  var count = 0, $2 = 0;
   count = 0;
   b : {
    l : do {
-    $5 = count;
+    $2 = count;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -235,20 +206,18 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  return $5 | 0;
+  return $2 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0;
   return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
  }
  
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0;
   return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
  }
  

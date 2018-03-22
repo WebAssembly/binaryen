@@ -22,197 +22,171 @@ function asmFunc(global, env, buffer) {
  function $1($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround($0 + $1));
  }
  
  function $2($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround($0 - $1));
  }
  
  function $3($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround($0 * $1));
  }
  
  function $4($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround($0 / $1));
  }
  
  function $5($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +($0 + $1);
  }
  
  function $6($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +($0 - $1);
  }
  
  function $7($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +($0 * $1);
  }
  
  function $8($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +($0 / $1);
  }
  
  function $9($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 == $1 | 0;
  }
  
  function $10($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 != $1 | 0;
  }
  
  function $11($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 >= $1 | 0;
  }
  
  function $12($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 > $1 | 0;
  }
  
  function $13($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 <= $1 | 0;
  }
  
  function $14($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = 0;
   return $0 < $1 | 0;
  }
  
  function $15($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 == $1 | 0;
  }
  
  function $16($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 != $1 | 0;
  }
  
  function $17($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 >= $1 | 0;
  }
  
  function $18($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 > $1 | 0;
  }
  
  function $19($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 <= $1 | 0;
  }
  
  function $20($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0;
   return $0 < $1 | 0;
  }
  
  function $21($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround(Math_min($0, $1)));
  }
  
  function $22($0, $1) {
   $0 = Math_fround($0);
   $1 = Math_fround($1);
-  var $2 = Math_fround(0), $3 = Math_fround(0), $4 = Math_fround(0);
   return Math_fround(Math_fround(Math_max($0, $1)));
  }
  
  function $23($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +Math_min($0, $1);
  }
  
  function $24($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var $2 = 0.0, $3 = 0.0, $4 = 0.0;
   return +Math_max($0, $1);
  }
  
  function $25($0) {
   $0 = Math_fround($0);
-  var $1 = Math_fround(0), $2 = 0.0;
   return +(+$0);
  }
  
  function $26($0) {
   $0 = +$0;
-  var $1 = 0.0, $2 = Math_fround(0);
   return Math_fround(Math_fround($0));
  }
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $1 = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0;
-  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $9 | 0;
+  var $1 = 0;
+  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $1 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0;
+  var count = 0, $2 = 0;
   count = 0;
   b : {
    l : do {
-    $5 = count;
+    $2 = count;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -220,20 +194,18 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  return $5 | 0;
+  return $2 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0;
   return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
  }
  
  function __wasm_rotr_i32(x, k) {
   x = x | 0;
   k = k | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0, $10 = 0, $11 = 0, $12 = 0, $13 = 0, $14 = 0, $15 = 0, $16 = 0, $17 = 0, $18 = 0, $19 = 0, $20 = 0;
   return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
  }
  
