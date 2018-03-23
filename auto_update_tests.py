@@ -109,7 +109,8 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
   if t.endswith(('.wast', '.wasm')):
     print '..', t
     binary = '.wasm' in t
-    passname = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+    base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
+    passname = base
     if passname.isdigit():
       passname = open(os.path.join('test', 'passes', passname + '.passes')).read().strip()
     opts = [('--' + p if not p.startswith('O') else '-' + p) for p in passname.split('_')]
@@ -120,7 +121,7 @@ for t in sorted(os.listdir(os.path.join('test', 'passes'))):
       with open('split.wast', 'w') as o: o.write(module)
       cmd = WASM_OPT + opts + ['split.wast', '--print']
       actual += run_command(cmd)
-    with open(os.path.join('test', 'passes', passname + ('.bin' if binary else '') + '.txt'), 'w') as o: o.write(actual)
+    with open(os.path.join('test', 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o: o.write(actual)
     if 'emit-js-wrapper' in t:
       with open('a.js') as i:
         with open(t + '.js', 'w') as o:
