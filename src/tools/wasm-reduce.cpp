@@ -36,7 +36,35 @@
 #include "wasm-builder.h"
 #include "ir/literal-utils.h"
 #include "wasm-validator.h"
-
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <Windows.h>
+// Create a string with last error message
+std::string GetLastErrorStdStr() {
+  DWORD error = GetLastError();
+  if (error) {
+    LPVOID lpMsgBuf;
+    DWORD bufLen = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        error,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR) &lpMsgBuf,
+        0, NULL );
+    if (bufLen) {
+      LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+      std::string result(lpMsgStr, lpMsgStr+bufLen);
+      LocalFree(lpMsgBuf);
+      return result;
+    }
+  }
+  return std::string();
+}
+#endif
 using namespace wasm;
 
 // a timeout on every execution of the command
@@ -52,6 +80,89 @@ struct ProgramResult {
     getFromExecution(command);
   }
 
+#ifdef _WIN32
+  void getFromExecution(std::string command) {
+    Timer timer;
+    timer.start();
+    SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+
+    HANDLE hChildStd_OUT_Rd;
+    HANDLE hChildStd_OUT_Wr;
+
+    if (
+      // Create a pipe for the child process's STDOUT.
+      !CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0) ||
+      // Ensure the read handle to the pipe for STDOUT is not inherited.
+      !SetHandleInformation(hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)
+    ) {
+      Fatal() << "CreatePipe \"" << command << "\" failed: " << GetLastErrorStdStr() << ".\n";
+    }
+
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    si.hStdError = hChildStd_OUT_Wr;
+    si.hStdOutput = hChildStd_OUT_Wr;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+    ZeroMemory(&pi, sizeof(pi));
+
+    // Start the child process.
+    if (!CreateProcess(NULL,   // No module name (use command line)
+      (LPSTR)command.c_str(),// Command line
+      NULL,           // Process handle not inheritable
+      NULL,           // Thread handle not inheritable
+      TRUE,           // Set handle inheritance to TRUE
+      0,              // No creation flags
+      NULL,           // Use parent's environment block
+      NULL,           // Use parent's starting directory
+      &si,            // Pointer to STARTUPINFO structure
+      &pi )           // Pointer to PROCESS_INFORMATION structure
+    ) {
+      Fatal() << "CreateProcess \"" << command << "\" failed: " << GetLastErrorStdStr() << ".\n";
+    }
+
+    // Wait until child process exits.
+    DWORD retVal = WaitForSingleObject(pi.hProcess, timeout * 1000);
+    if (retVal == WAIT_TIMEOUT) {
+      printf("Command timeout: %s", command.c_str());
+      TerminateProcess(pi.hProcess, -1);
+    }
+    DWORD dwordExitCode;
+    if (!GetExitCodeProcess(pi.hProcess, &dwordExitCode)) {
+      Fatal() << "GetExitCodeProcess failed: " << GetLastErrorStdStr() << ".\n";
+    }
+    code = (int)dwordExitCode;
+
+    // Close process and thread handles.
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // Read output from the child process's pipe for STDOUT
+    // Stop when there is no more data.
+    {
+      const int BUFSIZE = 4096;
+      DWORD dwRead, dwTotal, dwTotalRead = 0;
+      CHAR chBuf[BUFSIZE];
+      BOOL bSuccess = FALSE;
+
+      PeekNamedPipe(hChildStd_OUT_Rd, NULL, 0, NULL, &dwTotal, NULL);
+      while (dwTotalRead < dwTotal) {
+        bSuccess = ReadFile(hChildStd_OUT_Rd, chBuf, BUFSIZE - 1, &dwRead, NULL);
+        if (!bSuccess || dwRead == 0) break;
+        chBuf[dwRead] = 0;
+        dwTotalRead += dwRead;
+        output.append(chBuf);
+      }
+    }
+    timer.stop();
+    time = timer.getTotal();
+  }
+#else // POSIX
   // runs the command and notes the output
   // TODO: also stderr, not just stdout?
   void getFromExecution(std::string command) {
@@ -70,6 +181,7 @@ struct ProgramResult {
     timer.stop();
     time = timer.getTotal() / 2;
   }
+#endif // _WIN32
 
   bool operator==(ProgramResult& other) {
     return code == other.code && output == other.output;
@@ -104,12 +216,12 @@ ProgramResult expected;
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
-  std::string command, test, working;
+  std::string command, test, working, binaryenBinDir;
   bool verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo) : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo, std::string binaryenBinDir) : command(command), test(test), working(working), binaryenBinDir(binaryenBinDir), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -149,7 +261,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
       for (auto shrinking : { false, true }) {
         for (auto pass : passes) {
-          std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
+          std::string currCommand = binaryenBinDir + "wasm-opt" + " ";
           if (shrinking) currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
           if (debugInfo) currCommand += " -g ";
@@ -614,7 +726,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, test, working, command;
+  std::string input, test, working, command, binaryenBinDir = Path::getBinaryenBinDir();
   bool verbose = false,
        debugInfo = false,
        force = false;
@@ -637,6 +749,12 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              working = argument;
+           })
+      .add("--binaries", "-b", "binaryen binaries location",
+           Options::Arguments::One,
+           [&](Options* o, const std::string& argument) {
+             // Add separator just in case
+             binaryenBinDir = argument + Path::getPathSeparator();
            })
       .add("--verbose", "-v", "Verbose output mode",
            Options::Arguments::Zero,
@@ -706,7 +824,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    ProgramResult readWrite(Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test);
+    ProgramResult readWrite(binaryenBinDir + "wasm-opt" + " " + input + " -o " + test);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
     } else {
@@ -730,7 +848,7 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, verbose, debugInfo);
+    Reducer reducer(command, test, working, verbose, debugInfo, binaryenBinDir);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
