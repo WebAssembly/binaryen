@@ -4,6 +4,7 @@ SET(support_SOURCES
   colors.cpp
   command-line.cpp
   file.cpp
+  path.cpp
   safe_integer.cpp
   threads.cpp
 )

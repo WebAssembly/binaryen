@@ -216,12 +216,12 @@ ProgramResult expected;
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
-  std::string command, test, working, binaryenBinDir;
+  std::string command, test, working;
   bool verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo, std::string binaryenBinDir) : command(command), test(test), working(working), binaryenBinDir(binaryenBinDir), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo) : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -261,7 +261,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
       for (auto shrinking : { false, true }) {
         for (auto pass : passes) {
-          std::string currCommand = binaryenBinDir + "wasm-opt" + " ";
+          std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
           if (shrinking) currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
           if (debugInfo) currCommand += " -g ";
@@ -726,7 +726,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, test, working, command, binaryenBinDir = Path::getBinaryenBinDir();
+  std::string input, test, working, command;
   bool verbose = false,
        debugInfo = false,
        force = false;
@@ -750,11 +750,11 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              working = argument;
            })
-      .add("--binaries", "-b", "binaryen binaries location",
+      .add("--binaries", "-b", "binaryen binaries location (bin/ directory)",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              // Add separator just in case
-             binaryenBinDir = argument + Path::getPathSeparator();
+             Path::setBinaryenBinDir(argument + Path::getPathSeparator());
            })
       .add("--verbose", "-v", "Verbose output mode",
            Options::Arguments::Zero,
@@ -824,7 +824,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    ProgramResult readWrite(binaryenBinDir + "wasm-opt" + " " + input + " -o " + test);
+    ProgramResult readWrite(Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
     } else {
@@ -848,7 +848,7 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, verbose, debugInfo, binaryenBinDir);
+    Reducer reducer(command, test, working, verbose, debugInfo);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
