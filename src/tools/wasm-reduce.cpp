@@ -81,8 +81,7 @@ struct ProgramResult {
   }
 
 #ifdef _WIN32
-  void getFromExecution(std::string command)
-  {
+  void getFromExecution(std::string command) {
     Timer timer;
     timer.start();
     SECURITY_ATTRIBUTES saAttr;
@@ -163,7 +162,7 @@ struct ProgramResult {
     timer.stop();
     time = timer.getTotal();
   }
-#else
+#else // POSIX
   // runs the command and notes the output
   // TODO: also stderr, not just stdout?
   void getFromExecution(std::string command) {
@@ -182,7 +181,7 @@ struct ProgramResult {
     timer.stop();
     time = timer.getTotal() / 2;
   }
-#endif
+#endif // _WIN32
 
   bool operator==(ProgramResult& other) {
     return code == other.code && output == other.output;
@@ -217,12 +216,12 @@ ProgramResult expected;
 static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
-  std::string command, test, working, binaryenBins;
+  std::string command, test, working, binaryenBinDir;
   bool verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo, std::string binaryenBins) : command(command), test(test), working(working), binaryenBins(binaryenBins), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo, std::string binaryenBinDir) : command(command), test(test), working(working), binaryenBinDir(binaryenBinDir), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -262,7 +261,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
       for (auto shrinking : { false, true }) {
         for (auto pass : passes) {
-          std::string currCommand = binaryenBins + "wasm-opt" + " ";
+          std::string currCommand = binaryenBinDir + "wasm-opt" + " ";
           if (shrinking) currCommand += " --dce --vacuum ";
           currCommand += working + " -o " + test + " " + pass;
           if (debugInfo) currCommand += " -g ";
@@ -727,7 +726,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, test, working, command, binaryenBins = Path::getBinaryenBinariesRoot();
+  std::string input, test, working, command, binaryenBinDir = Path::getBinaryenBinDir();
   bool verbose = false,
        debugInfo = false,
        force = false;
@@ -755,7 +754,7 @@ int main(int argc, const char* argv[]) {
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              // Add separator just in case
-             binaryenBins = argument + Path::getPathSeparator();
+             binaryenBinDir = argument + Path::getPathSeparator();
            })
       .add("--verbose", "-v", "Verbose output mode",
            Options::Arguments::Zero,
@@ -825,7 +824,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    ProgramResult readWrite(binaryenBins + "wasm-opt" + " " + input + " -o " + test);
+    ProgramResult readWrite(binaryenBinDir + "wasm-opt" + " " + input + " -o " + test);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
     } else {
@@ -849,7 +848,7 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, verbose, debugInfo, binaryenBins);
+    Reducer reducer(command, test, working, verbose, debugInfo, binaryenBinDir);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed
