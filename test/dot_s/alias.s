@@ -31,7 +31,7 @@ __needs_exit:              # @__needs_exit
 	.weak	__exit_needed
 	.type	__exit_needed,@function
 	.hidden	__exit_needed
-__exit_needed = __exit@FUNCTION
+	.set	__exit_needed, __exit@FUNCTION
 
 	.type	.L__unnamed_1,@object
 	.p2align	4
@@ -42,10 +42,10 @@ __exit_needed = __exit@FUNCTION
 	.size	.L__unnamed_1, 12
 
 	.weak	.A
-._A = .L__unname_1
+	.set 	._A, .L__unname_1
 	.weak	._B
-_B = .L__unnamed_1
+	.set 	_B, .L__unnamed_1
 	.size	_B, 12
 	.weak	._C
-._C = _B+8
+	.set 	._C, _B+8
 	.size	._C, 4

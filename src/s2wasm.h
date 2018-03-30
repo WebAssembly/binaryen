@@ -444,14 +444,20 @@ class S2WasmBuilder {
         skipComma();
         if (!match("@function")) continue;
         if (match(".hidden")) mustMatch(name.str);
-        mustMatch(name.str);
-        if (match(":")) {
-          info->implementedFunctions.insert(name);
-        } else if (match("=")) {
+        if (match(".set")) { // function aliases
+          // syntax: .set alias, original@FUNCTION
+          Name name = getCommaSeparated();
+          skipComma();
           Name alias = getAtSeparated();
           mustMatch("@FUNCTION");
           auto ret = info->aliasedSymbols.insert({name, LinkerObject::SymbolAlias(alias, LinkerObject::Relocation::kFunction, 0)});
           if (!ret.second) std::cerr << "Unsupported data alias redefinition: " << name << ", skipping...\n";
+          continue;
+        }
+
+        mustMatch(name.str);
+        if (match(":")) {
+          info->implementedFunctions.insert(name);
         } else {
           abort_on("unknown directive");
         }
@@ -459,20 +465,10 @@ class S2WasmBuilder {
         Name name = getStr();
         info->importedObjects.insert(name);
         s = strchr(s, '\n');
-      } else {
-        // add data aliases
-        Name lhs = getStrToSep();
-        // When the current line contains only one word, e.g.".text"
-        if (match("\n"))
-          continue;
-        // When the current line contains more than one word
-        if (!skipEqual()){
-          s = strchr(s, '\n');
-          if (!s) break;
-          continue;
-        }
-
-        // get the original name
+      } else if (match(".set")) { // data aliases
+        // syntax: .set alias, original
+        Name lhs = getCommaSeparated();
+        skipComma();
         Name rhs = getStrToSep();
         assert(!isFunctionName(rhs));
         Offset offset = 0;
@@ -492,6 +488,10 @@ class S2WasmBuilder {
         auto ret = symbolInfo->aliasedSymbols.insert({lhs, LinkerObject::SymbolAlias(rhs,
           LinkerObject::Relocation::kData, offset)});
         if (!ret.second) std::cerr << "Unsupported function alias redefinition: " << lhs << ", skipping...\n";
+      } else {
+        s = strchr(s, '\n');
+        if (!s)
+          break;
       }
     }
   }
@@ -527,13 +527,11 @@ class S2WasmBuilder {
 
   void skipObjectAlias(bool prefix) {
     if (debug) dump("object_alias");
+    mustMatch("set");
 
-    // grab the dot that was consumed earlier
-    if (prefix) s--;
-    Name lhs = getStrToSep();
+    Name lhs = getCommaSeparated();
     WASM_UNUSED(lhs);
-    if (!skipEqual()) abort_on("object_alias");
-
+    skipComma();
     Name rhs = getStr();
     WASM_UNUSED(rhs);
     skipWhitespace();
@@ -650,13 +648,16 @@ class S2WasmBuilder {
 
   void parseFunction() {
     if (debug) dump("func");
-    Name name = getStrToSep();
-    if (match(" =")) {
-      /* alias = */ getAtSeparated();
+    if (match(".set")) { // alias
+      // syntax: .set alias, original@FUNCTION
+      getCommaSeparated();
+      skipComma();
+      getAtSeparated();
       mustMatch("@FUNCTION");
       return;
     }
 
+    Name name = getStrToSep();
     mustMatch(":");
 
     Function::DebugLocation debugLocation = { 0, 0, 0 };
