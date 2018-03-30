@@ -470,8 +470,6 @@ class S2WasmBuilder {
         Name lhs = getCommaSeparated();
         skipComma();
         Name rhs = getStrToSep();
-
-        // get the original name
         assert(!isFunctionName(rhs));
         Offset offset = 0;
         if (*s == '+') {
