@@ -63,6 +63,7 @@ BINARYEN_SRC="$(dirname $0)/src"
 
 # output binaries relative to current working directory
 BINARYEN_BIN="$PWD/bin"
+BINARYEN_LIB="$PWD/lib"
 
 echo "building shared bitcode"
 
@@ -147,7 +148,7 @@ echo "building wasm.js"
   $BINARYEN_SRC/wasm-js.cpp \
   shared.bc \
   -I$BINARYEN_SRC/ \
-  -o $BINARYEN_BIN/wasm${OUT_FILE_SUFFIX}.js \
+  -o $BINARYEN_LIB/wasm${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE=1 \
   -s 'EXTRA_EXPORTED_RUNTIME_METHODS=["writeAsciiToMemory"]' \
   -s 'EXPORT_NAME="WasmJS"'
@@ -600,7 +601,7 @@ export_function "_BinaryenSetAPITracing"
   shared.bc \
   -I$BINARYEN_SRC/ \
   -s EXPORTED_FUNCTIONS=[${EXPORTED_FUNCTIONS}] \
-  -o $BINARYEN_BIN/binaryen${OUT_FILE_SUFFIX}.js \
+  -o $BINARYEN_LIB/binaryen${OUT_FILE_SUFFIX}.js \
   -s MODULARIZE_INSTANCE=1 \
   -s 'EXPORT_NAME="Binaryen"' \
   --post-js $BINARYEN_SRC/js/binaryen.js-post.js

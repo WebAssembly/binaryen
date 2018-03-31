@@ -357,7 +357,7 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
-    binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
+    binaryen_js = open(os.path.join(options.binaryen_root, 'lib', 'binaryen.js')).read()
     f.write(binaryen_js)
     if NODEJS:
       f.write(node_test_glue())
