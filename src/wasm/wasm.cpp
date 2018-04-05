@@ -171,7 +171,7 @@ static Type mergeTypes(std::vector<Type>& types) {
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block) {
+static void handleUnreachable(Block* block, bool breakabilityKnown=false, bool hasBreak=false) {
   if (block->type == unreachable) return; // nothing to do
   if (block->list.size() == 0) return; // nothing to do
   // if we are concrete, stop - even an unreachable child
@@ -182,18 +182,14 @@ static void handleUnreachable(Block* block) {
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+      if (!breakabilityKnown) {
+        hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
+      }
+      if (!hasBreak) {
         block->type = unreachable;
       }
       return;
     }
-  }
-}
-
-void Block::finalize(Type type_) {
-  type = type_;
-  if (type == none && list.size() > 0) {
-    handleUnreachable(this);
   }
 }
 
@@ -229,6 +225,20 @@ void Block::finalize() {
   TypeSeeker seeker(this, this->name);
   type = mergeTypes(seeker.types);
   handleUnreachable(this);
+}
+
+void Block::finalize(Type type_) {
+  type = type_;
+  if (type == none && list.size() > 0) {
+    handleUnreachable(this);
+  }
+}
+
+void Block::finalize(Type type_, bool hasBreak) {
+  type = type_;
+  if (type == none && list.size() > 0) {
+    handleUnreachable(this, true, hasBreak);
+  }
 }
 
 void If::finalize(Type type_) {

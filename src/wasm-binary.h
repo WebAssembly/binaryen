@@ -890,6 +890,7 @@ public:
     BreakTarget(Name name, int arity) : name(name), arity(arity) {}
   };
   std::vector<BreakTarget> breakStack;
+  // the names that breaks target. this lets us know if a block has breaks to it or not.
   std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
