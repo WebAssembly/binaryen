@@ -204,7 +204,8 @@ static void dumpWast(Name name, Module* wasm) {
 
 void PassRunner::run() {
   static const int passDebug = getPassDebug();
-  if (!isNested && (options.debug || passDebug)) {
+  static const bool printInfo = getPassDebug() >= 2;
+  if (!isNested && passDebug) {
     // for debug logging purposes, run each pass in full before running the other
     auto totalTime = std::chrono::duration<double>(0);
     size_t padding = 0;
@@ -212,7 +213,9 @@ void PassRunner::run() {
     if (options.validateGlobally) {
       validationFlags = validationFlags | WasmValidator::Globally;
     }
-    std::cerr << "[PassRunner] running passes..." << std::endl;
+    if (printInfo) {
+      std::cerr << "[PassRunner] running passes..." << std::endl;
+    }
     for (auto pass : passes) {
       padding = std::max(padding, pass->name.size());
     }
@@ -226,9 +229,11 @@ void PassRunner::run() {
         WasmPrinter::printModule(wasm, moduleBefore);
       }
       // prepare to run
-      std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
-      for (size_t i = 0; i < padding - pass->name.size(); i++) {
-        std::cerr << ' ';
+      if (printInfo) {
+        std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
+        for (size_t i = 0; i < padding - pass->name.size(); i++) {
+          std::cerr << ' ';
+        }
       }
       auto before = std::chrono::steady_clock::now();
       if (pass->isFunctionParallel()) {
@@ -239,12 +244,14 @@ void PassRunner::run() {
       } else {
         pass->run(this, wasm);
       }
-      auto after = std::chrono::steady_clock::now();
-      std::chrono::duration<double> diff = after - before;
-      std::cerr << diff.count() << " seconds." << std::endl;
-      totalTime += diff;
+      if (printInfo) {
+        auto after = std::chrono::steady_clock::now();
+        std::chrono::duration<double> diff = after - before;
+        std::cerr << diff.count() << " seconds." << std::endl;
+        totalTime += diff;
+        std::cerr << "[PassRunner]   (validating)\n";
+      }
       // validate, ignoring the time
-      std::cerr << "[PassRunner]   (validating)\n";
       if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
         WasmPrinter::printModule(wasm);
         if (passDebug >= 2) {
@@ -258,9 +265,13 @@ void PassRunner::run() {
         dumpWast(pass->name, wasm);
       }
     }
-    std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
+    if (printInfo) {
+      std::cerr << "[PassRunner] passes took " << totalTime.count() << " seconds." << std::endl;
+    }
+    if (printInfo) {
+      std::cerr << "[PassRunner] (final validation)\n";
+    }
     // validate
-    std::cerr << "[PassRunner] (final validation)\n";
     if (!WasmValidator().validate(*wasm, options.features, validationFlags)) {
       WasmPrinter::printModule(wasm);
       std::cerr << "final module does not validate\n";
@@ -313,7 +324,7 @@ void PassRunner::run() {
 }
 
 void PassRunner::runOnFunction(Function* func) {
-  if (options.debug) {
+  if (getPassDebug() >= 2) {
     std::cerr << "[PassRunner] running passes on function " << func->name << std::endl;
   }
   for (auto* pass : passes) {

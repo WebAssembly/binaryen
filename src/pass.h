@@ -56,7 +56,6 @@ private:
 };
 
 struct PassOptions {
-  bool debug = false; // run passes in debug mode, doing extra validation and timing checks
   bool validateGlobally = false; // when validating validate globally and not just locally
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
@@ -94,7 +93,6 @@ struct PassRunner {
   PassRunner& operator=(const PassRunner&) = delete;
 
   void setDebug(bool debug_) {
-    options.debug = debug_;
     options.validateGlobally = debug_; // validate everything by default if debugging
   }
   void setValidateGlobally(bool validate) {
@@ -165,6 +163,9 @@ struct PassRunner {
   //  1: run pass by pass, validating in between
   //  2: also save the last pass, so it breakage happens we can print the last one
   //  3: also dump out byn-* files for each pass
+  //
+  // BINARYEN_PASS_DEBUG also controls the verbosity of pass information:
+  // level 2 or above will print out timing information for each pass executed.
   static int getPassDebug();
 
 protected:
