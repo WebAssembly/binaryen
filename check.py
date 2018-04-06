@@ -180,8 +180,7 @@ def run_wasm_dis_tests():
         cmd = WASM_OPT + [t]
         actual = run_command(cmd)
       with_pass_debug(check)
-run_wasm_dis_tests()
-1/0
+
 def run_wasm_merge_tests():
   print '\n[ checking wasm-merge... ]\n'
 

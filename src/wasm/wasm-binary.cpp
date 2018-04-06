@@ -2465,7 +2465,11 @@ WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset)
   }
   if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
   auto& ret = breakStack[index];
-  breakTargetNames.insert(ret.name);
+  // if the break is in literally unreachable code, then we will not emit it anyhow,
+  // so do not note that the target has breaks to it
+  if (!unreachableInTheLiteralSense) {
+    breakTargetNames.insert(ret.name);
+  }
   return ret;
 }
 
