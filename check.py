@@ -39,6 +39,19 @@ if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
   assert os.path.exists(options.interpreter), 'interpreter not found'
 
+# run a check with BINARYEN_PASS_DEBUG set, to do full validation
+def with_pass_debug(check):
+  old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
+  try:
+    os.environ['BINARYEN_PASS_DEBUG'] = '1'
+    check()
+  finally:
+    if old_pass_debug is not None:
+      os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
+    else:
+      if 'BINARYEN_PASS_DEBUG' in os.environ:
+        del os.environ['BINARYEN_PASS_DEBUG']
+
 # tests
 
 def run_help_tests():
@@ -99,17 +112,10 @@ def run_wasm_opt_tests():
         debugged = run_command(cmd + ['--debug'], stderr=subprocess.PIPE)
         fail_if_not_contained(actual, debugged)
         # also check pass-debug mode
-        old_pass_debug = os.environ.get('BINARYEN_PASS_DEBUG')
-        try:
-          os.environ['BINARYEN_PASS_DEBUG'] = '1'
+        def check():
           pass_debug = run_command(cmd)
           fail_if_not_identical(curr, pass_debug)
-        finally:
-          if old_pass_debug is not None:
-            os.environ['BINARYEN_PASS_DEBUG'] = old_pass_debug
-          else:
-            if 'BINARYEN_PASS_DEBUG' in os.environ:
-              del os.environ['BINARYEN_PASS_DEBUG']
+        with_pass_debug(check)
 
       expected_file = os.path.join(options.binaryen_test, 'passes',
                                    base + ('.bin' if binary else '') + '.txt')
@@ -167,8 +173,13 @@ def run_wasm_dis_tests():
       if os.path.isfile(t + '.map'): cmd += ['--source-map', t + '.map']
 
       actual = run_command(cmd)
-
       fail_if_not_identical_to_file(actual, t + '.fromBinary')
+
+      # also verify there are no validation errors
+      def check():
+        cmd = WASM_OPT + [t]
+        actual = run_command(cmd)
+      with_pass_debug(check)
 
 def run_wasm_merge_tests():
   print '\n[ checking wasm-merge... ]\n'

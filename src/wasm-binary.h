@@ -895,8 +895,22 @@ public:
 
   std::vector<Expression*> expressionStack;
 
-  bool definitelyUnreachable; // set when we know code is definitely unreachable. this helps parse
-                              // stacky wasm code, which can be unsuitable for our IR when unreachable
+  // set when we know code is unreachable in the sense of the wasm spec: we are in a block
+  // and after an unreachable element.
+  // this helps parse stacky wasm code, which can be unsuitable for our IR when unreachable.
+  bool unreachableInTheWasmSense;
+
+  // set when the current code being processed will not be emitted in the output, which is the
+  // case when it is literally unreachable, for example,
+  // (block $a
+  //   (unreachable)
+  //   (block $b
+  //     ;; code here is reachable in the wasm sense, even though $b as a whole is not
+  //     (unreachable)
+  //     ;; code here is unreachable in the wasm sense
+  //   )
+  // )
+  bool willBeIgnored;
 
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
