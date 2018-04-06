@@ -8,6 +8,7 @@
  (type $6 (func (param i32 i32) (result i32)))
  (type $7 (func (param i64) (result i64)))
  (type $8 (func (result i64)))
+ (type $9 (func (param i32 i64 f32 f64)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (type $0) (param $i1 i32) (param $i2 i64)
@@ -2415,6 +2416,126 @@
    )
   )
   (unreachable)
+ )
+ (func $abstract-additions (; 64 ;) (type $9) (param $x32 i32) (param $x64 i64) (param $y32 f32) (param $y64 f64)
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (f32.mul
+    (get_local $y32)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.mul
+    (get_local $y64)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $y32)
+  )
+  (drop
+   (get_local $y64)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.and
+    (unreachable)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i64.and
+    (unreachable)
+    (i64.const 0)
+   )
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $y32)
+  )
+  (drop
+   (get_local $y64)
+  )
+  (drop
+   (f32.div
+    (get_local $y32)
+    (f32.const 1.2000000476837158)
+   )
+  )
+  (drop
+   (i32.mul
+    (get_local $x32)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i64.mul
+    (get_local $x64)
+    (i64.const -1)
+   )
+  )
+  (drop
+   (f32.neg
+    (get_local $y32)
+   )
+  )
+  (drop
+   (f64.neg
+    (get_local $y64)
+   )
+  )
  )
 )
 (module

@@ -1102,7 +1102,8 @@ private:
   template<Type type>
   Expression* optimizeWithConstantOnRight(Binary* binary) {
     auto* right = binary->right->cast<Const>();
-    if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+    if (!isTypeFloat(type) &&
+        right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
       if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
           binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
           binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
@@ -1114,11 +1115,13 @@ private:
         return binary->right;
       }
     } else if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivS) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivU)) {
         return binary->left;
       }
-    } else if (right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
-      if (isTypeFloat(type) && binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+    } else if (isTypeFloat(type) && right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
         Builder builder(*getModule());
         return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), binary->left);
       }
