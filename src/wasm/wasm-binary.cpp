@@ -1957,7 +1957,7 @@ void WasmBinaryBuilder::readGlobals() {
 
 void WasmBinaryBuilder::processExpressions() {
   if (debug) std::cerr << "== processExpressions" << std::endl;
-  definitelyUnreachable = false;
+  unreachableInTheWasmSense = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
@@ -1996,19 +1996,24 @@ void WasmBinaryBuilder::skipUnreachableCode() {
   // unreachable, and we can ignore anything after it. things after it may pop,
   // we want to undo that
   auto savedStack = expressionStack;
+  // note we are entering unreachable code, and note what the state as before so
+  // we can restore it
+  auto before = unreachableInTheLiteralSense;
+  unreachableInTheLiteralSense = true;
   // clear the stack. nothing should be popped from there anyhow, just stuff
   // can be pushed and then popped. Popping past the top of the stack will
   // result in uneachables being returned
   expressionStack.clear();
   while (1) {
-    // set the definitelyUnreachable flag each time, as sub-blocks may set and unset it
-    definitelyUnreachable = true;
+    // set the unreachableInTheWasmSense flag each time, as sub-blocks may set and unset it
+    unreachableInTheWasmSense = true;
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
       if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
       lastSeparator = ret;
-      definitelyUnreachable = false;
+      unreachableInTheWasmSense = false;
+      unreachableInTheLiteralSense = before;
       expressionStack = savedStack;
       return;
     }
@@ -2019,7 +2024,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
 Expression* WasmBinaryBuilder::popExpression() {
   if (debug) std::cerr << "== popExpression" << std::endl;
   if (expressionStack.empty()) {
-    if (definitelyUnreachable) {
+    if (unreachableInTheWasmSense) {
       // in unreachable code, trying to pop past the polymorphic stack
       // area results in receiving unreachables
       if (debug) std::cerr << "== popping unreachable from polymorphic stack" << std::endl;
