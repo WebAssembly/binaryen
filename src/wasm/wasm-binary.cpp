@@ -1753,6 +1753,7 @@ void WasmBinaryBuilder::readFunctions() {
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
       useDebugLocation = false;
+      willBeIgnored = false;
       // process body
       assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
@@ -1998,8 +1999,8 @@ void WasmBinaryBuilder::skipUnreachableCode() {
   auto savedStack = expressionStack;
   // note we are entering unreachable code, and note what the state as before so
   // we can restore it
-  auto before = unreachableInTheLiteralSense;
-  unreachableInTheLiteralSense = true;
+  auto before = willBeIgnored;
+  willBeIgnored = true;
   // clear the stack. nothing should be popped from there anyhow, just stuff
   // can be pushed and then popped. Popping past the top of the stack will
   // result in uneachables being returned
@@ -2013,7 +2014,7 @@ void WasmBinaryBuilder::skipUnreachableCode() {
       if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
       lastSeparator = ret;
       unreachableInTheWasmSense = false;
-      unreachableInTheLiteralSense = before;
+      willBeIgnored = before;
       expressionStack = savedStack;
       return;
     }
@@ -2467,7 +2468,7 @@ WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset)
   auto& ret = breakStack[index];
   // if the break is in literally unreachable code, then we will not emit it anyhow,
   // so do not note that the target has breaks to it
-  if (!unreachableInTheLiteralSense) {
+  if (!willBeIgnored) {
     breakTargetNames.insert(ret.name);
   }
   return ret;

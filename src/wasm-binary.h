@@ -900,8 +900,8 @@ public:
   // this helps parse stacky wasm code, which can be unsuitable for our IR when unreachable.
   bool unreachableInTheWasmSense;
 
-  // nonzero when we know code is unreachable in the literal sense: code that is not actually
-  // reachable. For example,
+  // set when the current code being processed will not be emitted in the output, which is the
+  // case when it is literally unreachable, for example,
   // (block $a
   //   (unreachable)
   //   (block $b
@@ -910,7 +910,7 @@ public:
   //     ;; code here is unreachable in the wasm sense
   //   )
   // )
-  bool unreachableInTheLiteralSense;
+  bool willBeIgnored;
 
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
