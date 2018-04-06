@@ -24,6 +24,7 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
+#include <ir/abstract.h>
 #include <ir/utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
@@ -567,19 +568,16 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        // some math operations have trivial results TODO: many more
-        if (right->value == Literal(int32_t(0))) {
-          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 || binary->op == OrInt32) {
-            return binary->left;
-          } else if ((binary->op == MulInt32 || binary->op == AndInt32) &&
-                     !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
-            return binary->right;
-          }
-        } else if (right->value == Literal(int32_t(1))) {
-          if (binary->op == MulInt32) {
-            return binary->left;
-          }
+        // some math operations have trivial results
+        Expression* ret = nullptr;
+        switch (right->type) {
+          case i32: ret = optimizeWithConstantOnRight<i32>(binary); break;
+          case i64: ret = optimizeWithConstantOnRight<i64>(binary); break;
+          case f32: ret = optimizeWithConstantOnRight<f32>(binary); break;
+          case f64: ret = optimizeWithConstantOnRight<f64>(binary); break;
+          default: WASM_UNREACHABLE();
         }
+        if (ret) return ret;
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
@@ -1097,6 +1095,35 @@ private:
       return localInfo[get->index].signExtedBits == bits;
     }
     return false;
+  }
+
+  // optimize trivial math operations, given that the right side of a binary
+  // is a constant
+  template<Type type>
+  Expression* optimizeWithConstantOnRight(Binary* binary) {
+    auto* right = binary->right->cast<Const>();
+    if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+          binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+          binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
+          binary->op == Abstract::getBinary(type, Abstract::Or)) {
+        return binary->left;
+      } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+                  binary->op == Abstract::getBinary(type, Abstract::And)) &&
+                 !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+        return binary->right;
+      }
+    } else if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+        return binary->left;
+      }
+    } else if (right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
+      if (isTypeFloat(type) && binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+        Builder builder(*getModule());
+        return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), binary->left);
+      }
+    }
+    return nullptr;
   }
 };
 
