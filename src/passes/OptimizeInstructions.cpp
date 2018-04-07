@@ -1136,19 +1136,23 @@ private:
   //     x == 2
   // TODO: templatize on type?
   Expression* optimizeRelational(Binary* binary) {
+    // TODO: inequalities can also work, if the constants do not overflow
     auto type = binary->right->type;
-    if (isIntegerType(binary->left->type)) {
-      if (auto* left = binary->left->dynCast<Binary>()) {
-        if (left->op == Abstract::getBinary(type, Abstract::Add) ||
-            left->op == Abstract::getBinary(type, Abstract::Sub)) {
-          if (auto* leftConst = left->right->dynCast<Const>()) {
-            if (auto* rightConst = binary->right->dynCast<Const>()) {
-              return combineRelationalConstants(binary, left, leftConst, nullptr, rightConst);
-            } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
-              if (rightBinary->op == Abstract::getBinary(type, Abstract::Add) ||
-                  rightBinary->op == Abstract::getBinary(type, Abstract::Sub)) {
-                if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
-                  return combineRelationalConstants(binary, left, leftConst, rightBinary, rightConst);
+    if (binary->op ==Abstract::getBinary(type, Abstract::Eq) ||
+        binary->op ==Abstract::getBinary(type, Abstract::Ne)) {
+      if (isIntegerType(binary->left->type)) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
+              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            if (auto* leftConst = left->right->dynCast<Const>()) {
+              if (auto* rightConst = binary->right->dynCast<Const>()) {
+                return combineRelationalConstants(binary, left, leftConst, nullptr, rightConst);
+              } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+                if (rightBinary->op == Abstract::getBinary(type, Abstract::Add) ||
+                    rightBinary->op == Abstract::getBinary(type, Abstract::Sub)) {
+                  if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
+                    return combineRelationalConstants(binary, left, leftConst, rightBinary, rightConst);
+                  }
                 }
               }
             }

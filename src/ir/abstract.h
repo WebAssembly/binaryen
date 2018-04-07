@@ -29,9 +29,11 @@ enum Op {
   // Unary
   Neg,
   // Binary
-  Add, Sub, Mul, DivU, DivS, RemU, RemS,
+  Add, Sub, Mul, Div, DivU, DivS, Rem, RemU, RemS,
   Shl, ShrU, ShrS,
   And, Or, Xor,
+  // Relational
+  Eq, Ne,
 };
 
 // Provide a wasm type and an abstract op and get the concrete one. For example, you can
@@ -87,6 +89,8 @@ inline BinaryOp getBinary(Type type, Op op) {
         case And:  return AndInt32;
         case Or:   return OrInt32;
         case Xor:  return XorInt32;
+        case Eq:   return EqInt32;
+        case Ne:   return NeInt32;
         default:   return InvalidBinary;
       }
       break;
@@ -106,6 +110,8 @@ inline BinaryOp getBinary(Type type, Op op) {
         case And:  return AndInt64;
         case Or:   return OrInt64;
         case Xor:  return XorInt64;
+        case Eq:   return EqInt64;
+        case Ne:   return NeInt64;
         default:   return InvalidBinary;
       }
       break;
@@ -115,8 +121,11 @@ inline BinaryOp getBinary(Type type, Op op) {
         case Add:  return AddFloat32;
         case Sub:  return SubFloat32;
         case Mul:  return MulFloat32;
+        case Div:  return DivFloat32;
         case DivU: return DivFloat32;
         case DivS: return DivFloat32;
+        case Eq:   return EqFloat32;
+        case Ne:   return NeFloat32;
         default:   return InvalidBinary;
       }
       break;
@@ -126,8 +135,11 @@ inline BinaryOp getBinary(Type type, Op op) {
         case Add:  return AddFloat64;
         case Sub:  return SubFloat64;
         case Mul:  return MulFloat64;
+        case Div : return DivFloat64;
         case DivU: return DivFloat64;
         case DivS: return DivFloat64;
+        case Eq:   return EqFloat64;
+        case Ne:   return NeFloat64;
         default:   return InvalidBinary;
       }
       break;

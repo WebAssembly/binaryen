@@ -2544,8 +2544,11 @@
   )
   (drop
    (i32.le_u
-    (get_local $x32)
-    (i32.const 10)
+    (i32.add
+     (get_local $x32)
+     (i32.const 10)
+    )
+    (i32.const 20)
    )
   )
   (drop
@@ -2606,6 +2609,15 @@
      (get_local $x32)
      (i32.const 10)
     )
+   )
+  )
+  (drop
+   (i64.le_s
+    (i64.sub
+     (get_local $x64)
+     (i64.const 288230376151711744)
+    )
+    (i64.const 9223372036854775807)
    )
   )
  )
