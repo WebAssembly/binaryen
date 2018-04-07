@@ -29,7 +29,7 @@ namespace LoadUtils {
 inline bool isSignRelevant(Load* load) {
   auto type = load->type;
   if (load->type == unreachable) return false;
-  return !isTypeFloat(type) && load->bytes < getTypeSize(type);
+  return !isFloatType(type) && load->bytes < getTypeSize(type);
 }
 
 // check if a load can be signed (which some opts want to do)

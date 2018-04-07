@@ -1719,7 +1719,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->right = process(ast[3]);
       ret->op = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], ret->left, ret->right);
       ret->finalize();
-      if (ret->op == BinaryOp::RemSInt32 && isTypeFloat(ret->type)) {
+      if (ret->op == BinaryOp::RemSInt32 && isFloatType(ret->type)) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;

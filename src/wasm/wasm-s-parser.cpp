@@ -760,7 +760,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       case 'r': {
         if (op[1] == 'e') {
           if (op[2] == 'm') return makeBinary(s, op[4] == 'u' ? BINARY_INT(RemU) : BINARY_INT(RemS), type);
-          if (op[2] == 'i') return makeUnary(s, isTypeFloat(type) ? (type == f32 ? UnaryOp::ReinterpretInt32 : UnaryOp::ReinterpretInt64) : (type == i32 ? UnaryOp::ReinterpretFloat32 : UnaryOp::ReinterpretFloat64), type);
+          if (op[2] == 'i') return makeUnary(s, isFloatType(type) ? (type == f32 ? UnaryOp::ReinterpretInt32 : UnaryOp::ReinterpretInt64) : (type == i32 ? UnaryOp::ReinterpretFloat32 : UnaryOp::ReinterpretFloat64), type);
         }
         if (op[1] == 'o' && op[2] == 't') {
           return makeBinary(s, op[3] == 'l' ? BINARY_INT(RotL) : BINARY_INT(RotR), type);

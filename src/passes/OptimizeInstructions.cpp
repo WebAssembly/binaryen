@@ -417,6 +417,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           std::swap(binary->left, binary->right);
         }
       }
+      // canonicalize x - c => x + (-c)
+      if (isIntegerType(binary->right->type)) {
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (binary->op == SubInt32) {
+            binary->op = AddInt32;
+            c->value = c->value.neg();
+          } else if (binary->op == SubInt64) {
+            binary->op = AddInt64;
+            c->value = c->value.neg();
+          }
+        }
+      }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
@@ -569,14 +581,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
         // some math operations have trivial results
-        Expression* ret = nullptr;
-        switch (right->type) {
-          case i32: ret = optimizeWithConstantOnRight<i32>(binary); break;
-          case i64: ret = optimizeWithConstantOnRight<i64>(binary); break;
-          case f32: ret = optimizeWithConstantOnRight<f32>(binary); break;
-          case f64: ret = optimizeWithConstantOnRight<f64>(binary); break;
-          default: WASM_UNREACHABLE();
-        }
+        Expression* ret = optimizeWithConstantOnRight(binary);
         if (ret) return ret;
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
@@ -642,6 +647,10 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
         return conditionalizeExpensiveOnBitwise(binary);
+      }
+      // relation/comparisons allow for math optimizations
+      if (binary->isRelational()) {
+        return optimizeRelational(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -1099,31 +1108,68 @@ private:
 
   // optimize trivial math operations, given that the right side of a binary
   // is a constant
-  template<Type type>
+  // TODO: templatize on type?
   Expression* optimizeWithConstantOnRight(Binary* binary) {
+    auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
-    if (!isTypeFloat(type) &&
-        right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
-          binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
-          binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
-          binary->op == Abstract::getBinary(type, Abstract::Or)) {
-        return binary->left;
-      } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
-                  binary->op == Abstract::getBinary(type, Abstract::And)) &&
-                 !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
-        return binary->right;
+    if (!isFloatType(type)) {
+      // operations on zero
+      if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
+            binary->op == Abstract::getBinary(type, Abstract::Or)) {
+          return binary->left;
+        } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+                    binary->op == Abstract::getBinary(type, Abstract::And)) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
       }
-    } else if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
+    }
+    if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
       if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
           binary->op == Abstract::getBinary(type, Abstract::DivS) ||
           binary->op == Abstract::getBinary(type, Abstract::DivU)) {
         return binary->left;
       }
-    } else if (isTypeFloat(type) && right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
+    } else if (isFloatType(type) && right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
       if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
         Builder builder(*getModule());
         return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), binary->left);
+      }
+    }
+    return nullptr;
+  }
+
+  // integer math, even on 2s complement, allows stuff like
+  // x + 5 == 7
+  //   =>
+  //     x == 2
+  // TODO: templatize on type?
+  Expression* optimizeRelational(Binary* binary) {
+    auto type = binary->right->type;
+    if (isIntegerType(binary->left->type)) {
+      if (auto* left = binary->left->dynCast<Binary>()) {
+        if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (auto* leftRight = left->right->dynCast<Const>()) {
+            if (auto* rightConst = binary->right->dynCast<Const>()) {
+              // move all the constant to the right
+              rightConst->value = rightConst->value.sub(leftRight->value);
+              binary->left = left->left;
+              return binary;
+            } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+              if (rightBinary->op == Abstract::getBinary(type, Abstract::Add)) {
+                if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
+                  // move all the constant to the left
+                  rightConst->value = rightConst->value.sub(leftRight->value);
+                  binary->left = left->left;
+                  return binary;
+                }
+              }
+            }
+          }
+        }
       }
     }
     return nullptr;

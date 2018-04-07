@@ -38,7 +38,7 @@ static Name getLoadName(Load* curr) {
   std::string ret = "SAFE_HEAP_LOAD_";
   ret += printType(curr->type);
   ret += "_" + std::to_string(curr->bytes) + "_";
-  if (!isTypeFloat(curr->type) && !curr->signed_) {
+  if (!isFloatType(curr->type) && !curr->signed_) {
     ret += "U_";
   }
   if (curr->isAtomic) {
@@ -160,7 +160,7 @@ struct SafeHeap : public Pass {
         if (bytes > getTypeSize(type)) continue;
         for (auto signed_ : { true, false }) {
           load.signed_ = signed_;
-          if (isTypeFloat(type) && signed_) continue;
+          if (isFloatType(type) && signed_) continue;
           for (Index align : { 1, 2, 4, 8 }) {
             load.align = align;
             if (align > bytes) continue;
