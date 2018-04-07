@@ -609,6 +609,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
       }
+      // a bunch of operations on a constant left side can be simplified
+      if (binary->left->is<Const>()) {
+        Expression* ret = optimizeWithConstantOnLeft(binary);
+        if (ret) return ret;
+      }
       // bitwise operations
       if (binary->op == AndInt32) {
         // try de-morgan's AND law,
@@ -1150,6 +1155,27 @@ private:
       if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
         Builder builder(*getModule());
         return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), binary->left);
+      }
+    }
+    return nullptr;
+  }
+
+  // optimize trivial math operations, given that the left side of a binary
+  // is a constant. since we canonicalize constants to the right for symmetrical
+  // operations, we only need to handle asymmetrical ones here
+  // TODO: templatize on type?
+  Expression* optimizeWithConstantOnLeft(Binary* binary) {
+    auto type = binary->left->type;
+    auto* left = binary->left->cast<Const>();
+    if (isIntegerType(type)) {
+      // operations on zero
+      if (left->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
+            !EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
+          return binary->left;
+        }
       }
     }
     return nullptr;

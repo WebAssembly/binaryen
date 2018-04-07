@@ -3158,6 +3158,39 @@
 
     (drop (f32.add (get_local $z) (f32.const 0x40)))
   )
+
+  (func $shift-a-zero (param $x i32) (param $y i64) (param $z f32)
+    (drop
+      (i32.shl
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.const 0)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.const 0)
+        (unreachable)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
