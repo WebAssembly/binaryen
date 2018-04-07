@@ -2536,6 +2536,78 @@
     (get_local $y64)
    )
   )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.le_u
+    (get_local $x32)
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 30)
+   )
+  )
+  (drop
+   (i64.eq
+    (get_local $x64)
+    (i64.const 10)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.add
+     (get_local $x32)
+     (i32.const 10)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 30)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.sub
+     (get_local $x32)
+     (i32.const 30)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.add
+     (get_local $x32)
+     (i32.const 30)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.sub
+     (get_local $x32)
+     (i32.const 10)
+    )
+   )
+  )
  )
 )
 (module

@@ -1690,11 +1690,8 @@
      )
      (if (result i32)
       (i32.lt_u
-       (i32.add
-        (get_local $1)
-        (i32.const -65536)
-       )
-       (i32.const 1048576)
+       (get_local $1)
+       (i32.const 1114112)
       )
       (block (result i32)
        (i32.store8
@@ -3167,29 +3164,26 @@
        )
        (if
         (i32.lt_u
-         (i32.add
-          (tee_local $12
-           (i32.and
-            (tee_local $13
-             (i32.load8_s
+         (tee_local $12
+          (i32.and
+           (tee_local $13
+            (i32.load8_s
+             (i32.add
               (i32.add
-               (i32.add
-                (i32.mul
-                 (get_local $9)
-                 (i32.const 58)
-                )
-                (i32.const 3611)
+               (i32.mul
+                (get_local $9)
+                (i32.const 58)
                )
-               (get_local $12)
+               (i32.const 3611)
               )
+              (get_local $12)
              )
             )
-            (i32.const 255)
            )
+           (i32.const 255)
           )
-          (i32.const -1)
          )
-         (i32.const 8)
+         (i32.const 9)
         )
         (block
          (set_local $8

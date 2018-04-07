@@ -417,18 +417,6 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           std::swap(binary->left, binary->right);
         }
       }
-      // canonicalize x - c => x + (-c)
-      if (isIntegerType(binary->right->type)) {
-        if (auto* c = binary->right->dynCast<Const>()) {
-          if (binary->op == SubInt32) {
-            binary->op = AddInt32;
-            c->value = c->value.neg();
-          } else if (binary->op == SubInt64) {
-            binary->op = AddInt64;
-            c->value = c->value.neg();
-          }
-        }
-      }
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
@@ -1151,20 +1139,16 @@ private:
     auto type = binary->right->type;
     if (isIntegerType(binary->left->type)) {
       if (auto* left = binary->left->dynCast<Binary>()) {
-        if (left->op == Abstract::getBinary(type, Abstract::Add)) {
-          if (auto* leftRight = left->right->dynCast<Const>()) {
+        if (left->op == Abstract::getBinary(type, Abstract::Add) ||
+            left->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (auto* leftConst = left->right->dynCast<Const>()) {
             if (auto* rightConst = binary->right->dynCast<Const>()) {
-              // move all the constant to the right
-              rightConst->value = rightConst->value.sub(leftRight->value);
-              binary->left = left->left;
-              return binary;
+              return combineRelationalConstants(binary, left, leftConst, nullptr, rightConst);
             } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
-              if (rightBinary->op == Abstract::getBinary(type, Abstract::Add)) {
+              if (rightBinary->op == Abstract::getBinary(type, Abstract::Add) ||
+                  rightBinary->op == Abstract::getBinary(type, Abstract::Sub)) {
                 if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
-                  // move all the constant to the left
-                  rightConst->value = rightConst->value.sub(leftRight->value);
-                  binary->left = left->left;
-                  return binary;
+                  return combineRelationalConstants(binary, left, leftConst, rightBinary, rightConst);
                 }
               }
             }
@@ -1173,6 +1157,24 @@ private:
       }
     }
     return nullptr;
+  }
+
+  // given a relational binary with a const on both sides, combine the constants
+  // left is also a binary, and has a constant; right may be just a constant, in which
+  // case right is nullptr
+  Expression* combineRelationalConstants(Binary* binary, Binary* left, Const* leftConst, Binary* right, Const* rightConst) {
+    auto type = binary->right->type;
+    // we fold constants to the right
+    Literal extra = leftConst->value;
+    if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    if (right && right->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    rightConst->value = rightConst->value.sub(extra);
+    binary->left = left->left;
+    return binary;
   }
 };
 
