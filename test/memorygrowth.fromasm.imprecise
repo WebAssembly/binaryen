@@ -9573,8 +9573,8 @@
  )
  (func $Qa (; 31 ;) (result i32)
   (select
-   (i32.load offset=64
-    (i32.const 0)
+   (i32.load
+    (i32.const 64)
    )
    (i32.const 1204)
    (i32.load

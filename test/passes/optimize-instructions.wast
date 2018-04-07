@@ -3137,6 +3137,27 @@
       )
     )
   )
+  (func $negatives-are-sometimes-better (param $x i32) (param $y i64) (param $z f32)
+    (drop (i32.add (get_local $x) (i32.const 0x40)))
+    (drop (i32.sub (get_local $x) (i32.const 0x40)))
+    (drop (i32.add (get_local $x) (i32.const 0x2000)))
+    (drop (i32.add (get_local $x) (i32.const 0x100000)))
+    (drop (i32.add (get_local $x) (i32.const 0x8000000)))
+
+    (drop (i64.add (get_local $y) (i64.const 0x40)))
+    (drop (i64.sub (get_local $y) (i64.const 0x40)))
+    (drop (i64.add (get_local $y) (i64.const 0x2000)))
+    (drop (i64.add (get_local $y) (i64.const 0x100000)))
+    (drop (i64.add (get_local $y) (i64.const 0x8000000)))
+
+    (drop (i64.add (get_local $y) (i64.const 0x400000000)))
+    (drop (i64.add (get_local $y) (i64.const 0x20000000000)))
+    (drop (i64.add (get_local $y) (i64.const 0x1000000000000)))
+    (drop (i64.add (get_local $y) (i64.const 0x80000000000000)))
+    (drop (i64.add (get_local $y) (i64.const 0x4000000000000000)))
+
+    (drop (f32.add (get_local $z) (f32.const 0x40)))
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

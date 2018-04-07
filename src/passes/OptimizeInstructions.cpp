@@ -542,9 +542,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       } else if (binary->op == SubInt32) {
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -1100,7 +1102,7 @@ private:
   Expression* optimizeWithConstantOnRight(Binary* binary) {
     auto type = binary->right->type;
     auto* right = binary->right->cast<Const>();
-    if (!isFloatType(type)) {
+    if (isIntegerType(type)) {
       // operations on zero
       if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
@@ -1112,6 +1114,29 @@ private:
                     binary->op == Abstract::getBinary(type, Abstract::And)) &&
                    !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
           return binary->right;
+        }
+      }
+      // wasm binary encoding uses signed LEBs, which slightly favor negative
+      // numbers: -64 is more efficient than +64 etc. we therefore prefer
+      // x - -64 over x + 64
+      if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
+          binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+        auto value = right->value.getInteger();
+        if (value == 0x40 ||
+            value == 0x2000 ||
+            value == 0x100000 ||
+            value == 0x8000000 ||
+            value == 0x400000000LL ||
+            value == 0x20000000000LL ||
+            value == 0x1000000000000LL ||
+            value == 0x80000000000000LL ||
+            value == 0x4000000000000000LL) {
+          right->value = right->value.neg();
+          if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+            binary->op = Abstract::getBinary(type, Abstract::Sub);
+          } else {
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+          }
         }
       }
     }

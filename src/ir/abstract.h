@@ -29,7 +29,7 @@ enum Op {
   // Unary
   Neg,
   // Binary
-  Add, Sub, Mul, Div, DivU, DivS, Rem, RemU, RemS,
+  Add, Sub, Mul, DivU, DivS, Rem, RemU, RemS,
   Shl, ShrU, ShrS,
   And, Or, Xor,
   // Relational
@@ -121,7 +121,6 @@ inline BinaryOp getBinary(Type type, Op op) {
         case Add:  return AddFloat32;
         case Sub:  return SubFloat32;
         case Mul:  return MulFloat32;
-        case Div:  return DivFloat32;
         case DivU: return DivFloat32;
         case DivS: return DivFloat32;
         case Eq:   return EqFloat32;
@@ -135,7 +134,6 @@ inline BinaryOp getBinary(Type type, Op op) {
         case Add:  return AddFloat64;
         case Sub:  return SubFloat64;
         case Mul:  return MulFloat64;
-        case Div : return DivFloat64;
         case DivU: return DivFloat64;
         case DivS: return DivFloat64;
         case Eq:   return EqFloat64;
