@@ -3307,6 +3307,84 @@
         (get_local $x)
       )
     )
+    (drop
+      (i64.xor
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ne
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.lt_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.lt_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.gt_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.gt_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.and
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.or
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.eq
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.le_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.le_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ge_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ge_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
   )
 )
 (module
