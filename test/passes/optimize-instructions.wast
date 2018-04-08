@@ -3216,6 +3216,97 @@
         (get_local $xx)
       )
     )
+    (drop
+      (i32.sub
+        (unreachable)
+        (unreachable)
+      )
+    )
+    (drop
+      (i32.add
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    ;; more ops
+    (drop
+      (i32.xor
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ne
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.or
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.eq
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.le_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.le_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
   )
 )
 (module
