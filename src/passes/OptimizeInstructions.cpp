@@ -1129,8 +1129,11 @@ private:
         }
       }
       // wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc. we therefore prefer
-      // x - -64 over x + 64
+      // numbers: -64 is more efficient than +64 etc., as well as other powers
+      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64.
+      // in theory we could just prefer negative numbers over positive, but
+      // that can have bad effects on gzip compression (as it would mean more
+      // subtractions than the more common additions).
       if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
           binary->op == Abstract::getBinary(type, Abstract::Sub)) {
         auto value = right->value.getInteger();
