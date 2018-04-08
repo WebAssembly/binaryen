@@ -795,6 +795,12 @@ void FunctionValidator::visitHost(Host* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
+  for (auto type : curr->params) {
+    shouldBeTrue(isConcreteType(type), curr, "params must be concretely typed");
+  }
+  for (auto type : curr->vars) {
+    shouldBeTrue(isConcreteType(type), curr, "vars must be concretely typed");
+  }
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   if (curr->body->type != unreachable) {

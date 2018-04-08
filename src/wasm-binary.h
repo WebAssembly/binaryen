@@ -840,6 +840,7 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   Type getType();
+  Type getConcreteType();
   Name getString();
   Name getInlineString();
   void verifyInt8(int8_t x);
