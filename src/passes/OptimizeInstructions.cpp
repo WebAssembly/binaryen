@@ -1120,11 +1120,22 @@ private:
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
-            binary->op == Abstract::getBinary(type, Abstract::Or)) {
+            binary->op == Abstract::getBinary(type, Abstract::Or) ||
+            binary->op == Abstract::getBinary(type, Abstract::Xor)) {
           return binary->left;
         } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
                     binary->op == Abstract::getBinary(type, Abstract::And)) &&
                    !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
+      }
+      // operations on all 1s
+      // TODO: shortcut method to create an all-ones?
+      if (right->value == Literal(int32_t(-1)) ||
+          right->value == Literal(int64_t(-1))) {
+        if (binary->op == Abstract::getBinary(type, Abstract::And)) {
+          return binary->left;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Or)) {
           return binary->right;
         }
       }

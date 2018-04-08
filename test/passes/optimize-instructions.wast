@@ -3386,6 +3386,40 @@
       )
     )
   )
+  (func $all_ones (param $x i32) (param $y i64)
+    (drop
+      (i32.and
+        (get_local $x)
+        (i32.const -1)
+      )
+    )
+    (drop
+      (i32.or
+        (get_local $x)
+        (i32.const -1)
+      )
+    )
+    (drop
+      (i64.and
+        (get_local $y)
+        (i64.const -1)
+      )
+    )
+    (drop
+      (i64.or
+        (get_local $y)
+        (i64.const -1)
+      )
+    )
+  )
+  (func $xor (param $x i32) (param $y i64)
+    (drop
+      (i32.xor
+        (get_local $x)
+        (i32.const 0)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
