@@ -1493,8 +1493,8 @@ Type WasmBinaryBuilder::getType() {
 
 Type WasmBinaryBuilder::getConcreteType() {
   auto type = getType();
-  if (type == none) {
-    throw ParseException("none type in invalid context");
+  if (!isConcreteType(type)) {
+    throw ParseException("non-concrete type when one expected");
   }
   return type;
 }
