@@ -2067,7 +2067,7 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
   }
   requireFunctionContext("popping void where we need a new local");
   auto type = block->list[0]->type;
-  if (isConcreteWasmType(type)) {
+  if (isConcreteType(type)) {
     auto local = builder.addVar(currFunction, type);
     block->list[0] = builder.makeSetLocal(local, block->list[0]);
     block->list.push_back(builder.makeGetLocal(local, type));
