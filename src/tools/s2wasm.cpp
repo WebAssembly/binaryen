@@ -45,6 +45,7 @@ int main(int argc, const char *argv[]) {
   std::string sourceMapFilename;
   std::string sourceMapUrl;
   std::string symbolMap;
+  std::string importFuncFrom (ENV.c_str());
   std::vector<std::string> archiveLibraries;
   TrapMode trapMode = TrapMode::Allow;
   unsigned numReservedFunctionPointers = 0;
@@ -166,6 +167,12 @@ int main(int argc, const char *argv[]) {
            [&symbolMap](Options *, const std::string& argument) {
              symbolMap = argument;
            })
+      .add("--import-func-from", "",
+           "Specific module name for func import",
+           Options::Arguments::One,
+           [&importFuncFrom](Options *, const std::string& argument) {
+             importFuncFrom = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -205,7 +212,7 @@ int main(int argc, const char *argv[]) {
 
   Linker linker(globalBase, stackAllocation, initialMem, maxMem,
                 importMemory || generateEmscriptenGlue, ignoreUnknownSymbols, startFunction,
-                options.debug);
+                options.debug, importFuncFrom);
 
   S2WasmBuilder mainbuilder(input.c_str(), options.debug);
   linker.linkObject(mainbuilder);

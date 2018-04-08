@@ -217,7 +217,7 @@ class Linker {
  public:
   Linker(Address globalBase, Address stackAllocation, Address userInitialMemory,
          Address userMaxMemory, bool importMemory, bool ignoreUnknownSymbols,
-         Name startFunction, bool debug)
+         Name startFunction, bool debug, std::string importFuncFrom)
       : ignoreUnknownSymbols(ignoreUnknownSymbols),
         startFunction(startFunction),
         globalBase(globalBase),
@@ -226,7 +226,8 @@ class Linker {
         userMaxMemory(userMaxMemory),
         importMemory(importMemory),
         stackAllocation(stackAllocation),
-        debug(debug) {
+        debug(debug),
+        importFuncFrom(importFuncFrom) {
     if (userMaxMemory && userMaxMemory < userInitialMemory) {
       Fatal() << "Specified max memory " << userMaxMemory <<
           " is < specified initial memory " << userInitialMemory;
@@ -330,6 +331,8 @@ class Linker {
                       // defined.
   Address stackAllocation;
   bool debug;
+
+  std::string importFuncFrom;
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index
