@@ -1152,6 +1152,7 @@ private:
           } else {
             binary->op = Abstract::getBinary(type, Abstract::Add);
           }
+          return binary;
         }
       }
     }
