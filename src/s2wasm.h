@@ -461,9 +461,22 @@ class S2WasmBuilder {
         } else {
           abort_on("unknown directive");
         }
-      } else if (match(".import_global")) {
+      } else if (match(".import_module")) {
+        Name module = getCommaSeparated();
+        skipComma();
         Name name = getStr();
-        info->importedObjects.insert(name);
+
+        info->importedObjects.push_back(LinkerObject::ExportWithModule(module, name));
+
+        s = strchr(s, '\n');
+      } else if (match(".import_global")) {
+        /* Name module = getCommaSeparated(); */
+        /* skipComma(); */
+        Name name = getStr();
+
+        Name module = "env";
+
+        info->importedObjects.push_back(LinkerObject::ExportWithModule(module, name));
         s = strchr(s, '\n');
       } else if (match(".set")) { // data aliases
         // syntax: .set alias, original
@@ -512,6 +525,10 @@ class S2WasmBuilder {
       else if (match("section")) parseToplevelSection();
       else if (match("file")) parseFile();
       else if (match("align") || match("p2align")) skipToEOL();
+      else if (match("import_module")) {
+        skipToEOL();
+        skipWhitespace();
+      }
       else if (match("import_global")) {
         skipToEOL();
         skipWhitespace();

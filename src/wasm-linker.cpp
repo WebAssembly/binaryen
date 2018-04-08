@@ -60,13 +60,18 @@ void Linker::ensureFunctionImport(Name target, std::string signature) {
   }
 }
 
-void Linker::ensureObjectImport(Name target) {
-  if (!out.wasm.getImportOrNull(target)) {
+void Linker::ensureObjectImport(Name module, Name name) {
+  if (!out.wasm.getImportOrNull(name)) {
     auto import = new Import;
-    import->name = import->base = target;
-    import->module = ENV;
+    import->base = name;
+    import->module = module;
+
+    // FIXME(sven): concat module . name here
+    import->name = name;
+
     import->kind = ExternalKind::Global;
     import->globalType = i32;
+
     out.wasm.addImport(import);
   }
 }
@@ -144,7 +149,7 @@ void Linker::layout() {
 
   // Add imports for any imported objects
   for (const auto& obj : out.symbolInfo.importedObjects) {
-    ensureObjectImport(obj);
+    ensureObjectImport(obj.module, obj.name);
   }
 
   // XXX For now, export all functions marked .globl.
