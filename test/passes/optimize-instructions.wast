@@ -3191,6 +3191,32 @@
       )
     )
   )
+  (func $identical-siblings (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
+    (drop
+      (i32.sub
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i64.sub
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (f64.sub
+        (get_local $z)
+        (get_local $z)
+      )
+    )
+    (drop
+      (i32.sub
+        (get_local $x)
+        (get_local $xx)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
