@@ -1334,5 +1334,37 @@
     )
     (unreachable)
   )
+  (func $tiny-switch
+    (block $x
+      (block $y
+        (br_table $x $y
+          (i32.const 0)
+        )
+      )
+    )
+    (block $z
+      (br_table $z
+        (i32.const 0)
+      )
+    )
+  )
+  (func $trim-switch
+    (block $x
+      (block $y
+        (br_table $y $y $x $y $y $y
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $same-target-br_if-and-br
+    (block $x
+      (br_if $x
+        (i32.const 0)
+      )
+      (br $x)
+      (unreachable)
+    )
+  )
 )
 
