@@ -137,6 +137,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->stopValueFlow();
     } else if (curr->is<Loop>()) {
       // do nothing - it's ok for values to flow out
+    } else if (auto* sw = curr->dynCast<Switch>()) {
+      self->stopFlow();
+      self->optimizeSwitch(sw);
     } else {
       // anything else stops the flow
       self->stopFlow();
@@ -169,6 +172,33 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void visitLoop(Loop* curr) {
     loops.push_back(curr);
+  }
+
+  void optimizeSwitch(Switch* curr) {
+    // if the final element is the default, we don't need it
+    while (!curr->targets.empty() && curr->targets.back() == curr->default_) {
+      curr->targets.pop_back();
+    }
+    if (!curr->value) {
+      // when there isn't a value, we can do some trivial optimizations without worrying about
+      // the value being executed before the condition
+      if (curr->targets.size() == 0) {
+        // a switch with just a default always goes there
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->condition),
+          builder.makeBreak(curr->default_)
+        ));
+      } else if (curr->targets.size() == 1) {
+        // a switch with two options is basically an if
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeIf(
+          curr->condition,
+          builder.makeBreak(curr->targets[0]),
+          builder.makeBreak(curr->default_)
+        ));
+      }
+    }
   }
 
   void visitIf(If* curr) {
@@ -482,18 +512,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
         }
         if (list.size() >= 2) {
-          // Join adjacent br_ifs to the same target, making one br_if with
-          // a "selectified" condition that executes both.
-          if (shrink) {
-            for (Index i = 0; i < list.size() - 1; i++) {
-              auto* br1 = list[i]->dynCast<Break>();
-              // avoid unreachable brs, as they are dead code anyhow, and after merging
-              // them the outer scope could need type changes
-              if (!br1 || !br1->condition || br1->type == unreachable) continue;
-              auto* br2 = list[i + 1]->dynCast<Break>();
-              if (!br2 || !br2->condition || br2->type == unreachable) continue;
-              if (br1->name == br2->name) {
-                assert(!br1->value && !br2->value);
+          // combine/optimize adjacent br_ifs + a br (maybe _if) right after it
+          for (Index i = 0; i < list.size() - 1; i++) {
+            auto* br1 = list[i]->dynCast<Break>();
+            // avoid unreachable brs, as they are dead code anyhow, and after merging
+            // them the outer scope could need type changes
+            if (!br1 || !br1->condition || br1->type == unreachable) continue;
+            assert(!br1->value);
+            auto* br2 = list[i + 1]->dynCast<Break>();
+            if (!br2 || br1->name != br2->name) continue;
+            assert(!br2->value); // same target as previous, which has no value
+            // a br_if and then a br[_if] with the same target right after it
+            if (br2->condition) {
+              if (shrink && br2->type != unreachable) {
+                // Join adjacent br_ifs to the same target, making one br_if with
+                // a "selectified" condition that executes both.
                 if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
@@ -501,6 +534,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   ExpressionManipulator::nop(br2);
                 }
               }
+            } else {
+              // merge, we go there anyhow
+              Builder builder(*getModule());
+              list[i] = builder.makeDrop(br1->condition);
             }
           }
           // combine adjacent br_ifs that test the same value into a br_table,
