@@ -68,8 +68,9 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    default: InvalidUnary;
+    default: return InvalidUnary;
   }
+  WASM_UNREACHABLE();
 }
 
 inline BinaryOp getBinary(Type type, Op op) {
@@ -142,8 +143,9 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    default: InvalidBinary;
+    default: return InvalidBinary;
   }
+  WASM_UNREACHABLE();
 }
 
 } // namespace Abstract
