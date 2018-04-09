@@ -68,7 +68,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    default: InvalidUnary();
+    default: InvalidUnary;
   }
 }
 
@@ -142,7 +142,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    default: InvalidBinary();
+    default: InvalidBinary;
   }
 }
 
