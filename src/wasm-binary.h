@@ -992,6 +992,8 @@ public:
   void visitNop(Nop *curr);
   void visitUnreachable(Unreachable *curr);
   void visitDrop(Drop *curr);
+
+  void throwError(std::string text);
 };
 
 } // namespace wasm

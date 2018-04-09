@@ -127,6 +127,7 @@ int main(int argc, const char* argv[]) {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
       p.dump(std::cerr);
+      std::cerr << '\n';
       Fatal() << "error in parsing input";
     } catch (std::bad_alloc& b) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
