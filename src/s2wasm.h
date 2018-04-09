@@ -470,11 +470,8 @@ class S2WasmBuilder {
 
         s = strchr(s, '\n');
       } else if (match(".import_global")) {
-        /* Name module = getCommaSeparated(); */
-        /* skipComma(); */
         Name name = getStr();
-
-        Name module = "env";
+        Name module = ENV;
 
         info->importedObjects.push_back(LinkerObject::ExportWithModule(module, name));
         s = strchr(s, '\n');
@@ -651,6 +648,7 @@ class S2WasmBuilder {
       ty = decl.release();
       wasm->addFunctionType(ty);
     }
+
     linkerObj->addExternType(name, ty);
   }
 

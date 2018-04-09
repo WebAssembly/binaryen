@@ -123,7 +123,12 @@ class LinkerObject {
 
   // An object is considered implemented if it is not imported
   bool isObjectImplemented(Name name) {
-    /* return symbolInfo.importedObjects.count(name) == 0; */
+    for (const auto& obj : symbolInfo.importedObjects) {
+      if (obj.name == name) {
+        return true;
+      }
+    }
+
     return false;
   }
 
