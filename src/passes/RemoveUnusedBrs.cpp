@@ -194,8 +194,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         replaceCurrent(builder.makeIf(
           curr->condition,
-          builder.makeBreak(curr->targets[0]),
-          builder.makeBreak(curr->default_)
+          builder.makeBreak(curr->default_),
+          builder.makeBreak(curr->targets[0])
         ));
       }
     }

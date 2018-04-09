@@ -677,7 +677,7 @@
   )
   (loop $in85
    (block $out86
-    (br_if $in85
+    (drop
      (i32.const 0)
     )
     (br $in85)
@@ -714,7 +714,7 @@
  (func $br_if_in_block (; 26 ;) (type $2) (result i32)
   (block $outval (result i32)
    (block $in
-    (br_if $in
+    (drop
      (i32.const 1)
     )
     (br $in)
@@ -1657,5 +1657,41 @@
    (unreachable)
   )
   (unreachable)
+ )
+ (func $tiny-switch (; 65 ;) (type $1)
+  (block $x
+   (block $y
+    (drop
+     (i32.const 0)
+    )
+    (br $x)
+   )
+  )
+  (block $z
+   (block
+    (drop
+     (i32.const 0)
+    )
+    (br $z)
+   )
+  )
+ )
+ (func $trim-switch (; 66 ;) (type $1)
+  (block $x
+   (block $y
+    (br_table $y $y $x $y
+     (i32.const 0)
+    )
+   )
+  )
+ )
+ (func $same-target-br_if-and-br (; 67 ;) (type $1)
+  (block $x
+   (drop
+    (i32.const 0)
+   )
+   (br $x)
+   (unreachable)
+  )
  )
 )
