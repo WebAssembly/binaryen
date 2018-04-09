@@ -179,23 +179,76 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     while (!curr->targets.empty() && curr->targets.back() == curr->default_) {
       curr->targets.pop_back();
     }
-    if (!curr->value) {
-      // when there isn't a value, we can do some trivial optimizations without worrying about
-      // the value being executed before the condition
-      if (curr->targets.size() == 0) {
-        // a switch with just a default always goes there
+    // if the first element is the default, we can remove it by shifting everything (which
+    // does add a subtraction of a constant, but often that is worth it as the constant can
+    // be folded away and/or we remove multiple elements here)
+    Index removable = 0;
+    while (removable < curr->targets.size() && curr->targets[removable] == curr->default_) {
+      removable++;
+    }
+    if (removable > 0) {
+      for (Index i = removable; i < curr->targets.size(); i++) {
+        curr->targets[i - removable] = curr->targets[i];
+      }
+      curr->targets.resize(curr->targets.size() - removable);
+      Builder builder(*getModule());
+      curr->condition = builder.makeBinary(SubInt32,
+        curr->condition,
+        builder.makeConst(Literal(int32_t(removable)))
+      );
+    }
+    // when there isn't a value, we can do some trivial optimizations without worrying about
+    // the value being executed before the condition
+    if (curr->value) return;
+    if (curr->targets.size() == 0) {
+      // a switch with just a default always goes there
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->condition),
+        builder.makeBreak(curr->default_)
+      ));
+    } else if (curr->targets.size() == 1) {
+      // a switch with two options is basically an if
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeIf(
+        curr->condition,
+        builder.makeBreak(curr->default_),
+        builder.makeBreak(curr->targets.front())
+      ));
+    } else {
+      // there are also some other cases where we want to convert a switch into ifs,
+      // especially if the switch is large and we are focusing on size.
+      // an especially egregious case is a switch like this:
+      // [a b b [..] b b c] with default b
+      // (which may be arrived at after we trim away excess default values on both
+      // sides). in this case, we really have 3 values in a simple form, so it is the
+      // next logical case after handling 1 and 2 values right above here.
+      // to optimize this, we must add a local + a bunch of nodes (if*2, tee, eq,
+      // get, const, break*3), so the table must be big enough for it to make sense
+      // (or, ridiculously big so it likely is worth it for cache reasons alone)
+      auto shrink = getPassRunner()->options.shrinkLevel > 0;
+      if ((curr->targets.size() >= 13 && shrink) ||
+           curr->targets.size() >= 1024) {
+        for (Index i = 1; i < curr->targets.size() - 1; i++) {
+          if (curr->targets[i] != curr->default_) {
+            return;
+          }
+        }
+        // great, we are in that case, optimize
         Builder builder(*getModule());
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr->condition),
-          builder.makeBreak(curr->default_)
-        ));
-      } else if (curr->targets.size() == 1) {
-        // a switch with two options is basically an if
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeIf(
-          curr->condition,
-          builder.makeBreak(curr->default_),
-          builder.makeBreak(curr->targets[0])
+        auto temp = builder.addVar(getFunction(), i32);
+        Expression* z;
+        replaceCurrent(z = builder.makeIf(
+          builder.makeTeeLocal(temp, curr->condition),
+          builder.makeIf(
+            builder.makeBinary(EqInt32,
+              builder.makeGetLocal(temp, i32),
+              builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))
+            ),
+            builder.makeBreak(curr->targets.back()),
+            builder.makeBreak(curr->default_)
+          ),
+          builder.makeBreak(curr->targets.front())
         ));
       }
     }
