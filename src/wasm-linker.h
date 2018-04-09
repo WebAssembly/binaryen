@@ -228,7 +228,7 @@ class Linker {
  public:
   Linker(Address globalBase, Address stackAllocation, Address userInitialMemory,
          Address userMaxMemory, bool importMemory, bool ignoreUnknownSymbols,
-         Name startFunction, bool debug, std::string importFuncFrom)
+         Name startFunction, bool debug)
       : ignoreUnknownSymbols(ignoreUnknownSymbols),
         startFunction(startFunction),
         globalBase(globalBase),
@@ -237,8 +237,7 @@ class Linker {
         userMaxMemory(userMaxMemory),
         importMemory(importMemory),
         stackAllocation(stackAllocation),
-        debug(debug),
-        importFuncFrom(importFuncFrom) {
+        debug(debug) {
     if (userMaxMemory && userMaxMemory < userInitialMemory) {
       Fatal() << "Specified max memory " << userMaxMemory <<
           " is < specified initial memory " << userInitialMemory;
@@ -302,7 +301,7 @@ class Linker {
   // relocation for it to point to the top of the stack.
   void placeStackPointer(Address stackAllocation);
 
-  void ensureFunctionImport(Name target, std::string signature);
+  void ensureFunctionImport(Name module, Name target, std::string signature);
   void ensureObjectImport(Name module, Name name);
 
   // Makes sure the table has a single segment, with offset 0,
@@ -342,8 +341,6 @@ class Linker {
                       // defined.
   Address stackAllocation;
   bool debug;
-
-  std::string importFuncFrom;
 
   std::unordered_map<cashew::IString, int32_t> staticAddresses; // name => address
   std::unordered_map<Address, Address> segmentsByAddress; // address => segment index

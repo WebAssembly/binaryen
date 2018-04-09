@@ -49,11 +49,15 @@ void Linker::placeStackPointer(Address stackAllocation) {
   }
 }
 
-void Linker::ensureFunctionImport(Name target, std::string signature) {
-  if (!out.wasm.getImportOrNull(target)) {
+void Linker::ensureFunctionImport(Name module, Name name, std::string signature) {
+  if (!out.wasm.getImportOrNull(name)) {
     auto import = new Import;
-    import->name = import->base = target;
-    import->module = importFuncFrom;
+    import->base = name;
+    import->module = module;
+
+    // FIXME(sven): concat module . base here
+    import->name = name;
+
     import->functionType = ensureFunctionType(signature, &out.wasm)->name;
     import->kind = ExternalKind::Function;
     out.wasm.addImport(import);
@@ -66,7 +70,7 @@ void Linker::ensureObjectImport(Name module, Name name) {
     import->base = name;
     import->module = module;
 
-    // FIXME(sven): concat module . name here
+    // FIXME(sven): concat module . base here
     import->name = name;
 
     import->kind = ExternalKind::Global;
@@ -82,7 +86,7 @@ void Linker::layout() {
     Name target = f.first;
     if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
-    ensureFunctionImport(target, getSig(*f.second.begin()));
+    ensureFunctionImport(ENV, target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
@@ -401,7 +405,7 @@ void Linker::makeDummyFunction() {
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
   if (Function* thunk = out.wasm.getFunctionOrNull(thunkName)) return thunk;
-  ensureFunctionImport(name, getSig(funcType));
+  ensureFunctionImport(ENV, name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;
