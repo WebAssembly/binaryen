@@ -68,7 +68,7 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    default: WASM_UNREACHABLE();
+    default: InvalidUnary();
   }
 }
 
@@ -142,7 +142,7 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    default: WASM_UNREACHABLE();
+    default: InvalidBinary();
   }
 }
 
