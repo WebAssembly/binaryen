@@ -225,10 +225,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // next logical case after handling 1 and 2 values right above here.
       // to optimize this, we must add a local + a bunch of nodes (if*2, tee, eq,
       // get, const, break*3), so the table must be big enough for it to make sense
-      // (or, ridiculously big so it likely is worth it for cache reasons alone)
+
+      // How many targets we need when shrinking. This is literally the size at which
+      // the transformation begins to be smaller.
+      const uint32_t MIN_SHRINK = 13;
+      // How many targets we need when not shrinking, in which case, 2 ifs may be slower,
+      // so we do this when the table is ridiculously large for one with just 3 values
+      // in it.
+      const uint32_t MIN_GENERAL = 128;
+
       auto shrink = getPassRunner()->options.shrinkLevel > 0;
-      if ((curr->targets.size() >= 13 && shrink) ||
-           curr->targets.size() >= 1024) {
+      if ((curr->targets.size() >= MIN_SHRINK  &&  shrink) ||
+          (curr->targets.size() >= MIN_GENERAL && !shrink)) {
         for (Index i = 1; i < curr->targets.size() - 1; i++) {
           if (curr->targets[i] != curr->default_) {
             return;
