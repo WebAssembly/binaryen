@@ -654,10 +654,6 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           ExpressionAnalyzer::equal(binary->left, binary->right)) {
         return optimizeBinaryWithEqualEffectlessChildren(binary);
       }
-      // relation/comparisons allow for math optimizations
-      if (binary->isRelational()) {
-        return optimizeRelational(binary);
-      }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
       if (unary->op == EqZInt32) {
