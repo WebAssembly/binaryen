@@ -10,6 +10,7 @@
  (type $8 (func (result i64)))
  (type $9 (func (param i32 i64 f32 f64)))
  (type $10 (func (param i32 i64 f32)))
+ (type $11 (func (param i32 i64 f64 i32)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (type $0) (param $i1 i32) (param $i2 i64)
@@ -813,10 +814,7 @@
    )
   )
   (drop
-   (i32.ne
-    (i32.const -1)
-    (i32.const -1)
-   )
+   (i32.const 0)
   )
   (drop
    (f32.le
@@ -2720,6 +2718,136 @@
     (get_local $z)
     (f32.const 64)
    )
+  )
+ )
+ (func $shift-a-zero (; 66 ;) (type $10) (param $x i32) (param $y i64) (param $z f32)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.shl
+    (i32.const 0)
+    (unreachable)
+   )
+  )
+ )
+ (func $identical-siblings (; 67 ;) (type $11) (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (f64.sub
+    (get_local $z)
+    (get_local $z)
+   )
+  )
+  (drop
+   (i32.sub
+    (get_local $x)
+    (get_local $xx)
+   )
+  )
+  (drop
+   (i32.sub
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (drop
+   (i32.add
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
   )
  )
 )

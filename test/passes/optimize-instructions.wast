@@ -3158,6 +3158,233 @@
 
     (drop (f32.add (get_local $z) (f32.const 0x40)))
   )
+  (func $shift-a-zero (param $x i32) (param $y i64) (param $z f32)
+    (drop
+      (i32.shl
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.shr_u
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.shr_s
+        (i32.const 0)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i64.shl
+        (i64.const 0)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i32.shl
+        (i32.const 0)
+        (unreachable)
+      )
+    )
+  )
+  (func $identical-siblings (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
+    (drop
+      (i32.sub
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i64.sub
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (f64.sub
+        (get_local $z)
+        (get_local $z)
+      )
+    )
+    (drop
+      (i32.sub
+        (get_local $x)
+        (get_local $xx)
+      )
+    )
+    (drop
+      (i32.sub
+        (unreachable)
+        (unreachable)
+      )
+    )
+    (drop
+      (i32.add
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    ;; more ops
+    (drop
+      (i32.xor
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ne
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.lt_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.lt_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.gt_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.gt_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.and
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.or
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.eq
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.le_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.le_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ge_s
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i32.ge_u
+        (get_local $x)
+        (get_local $x)
+      )
+    )
+    (drop
+      (i64.xor
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ne
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.lt_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.lt_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.gt_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.gt_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.and
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.or
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.eq
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.le_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.le_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ge_s
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+    (drop
+      (i64.ge_u
+        (get_local $y)
+        (get_local $y)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

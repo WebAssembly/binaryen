@@ -609,6 +609,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
       }
+      // a bunch of operations on a constant left side can be simplified
+      if (binary->left->is<Const>()) {
+        Expression* ret = optimizeWithConstantOnLeft(binary);
+        if (ret) return ret;
+      }
       // bitwise operations
       if (binary->op == AndInt32) {
         // try de-morgan's AND law,
@@ -636,11 +641,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
-        return conditionalizeExpensiveOnBitwise(binary);
+        auto* ret = conditionalizeExpensiveOnBitwise(binary);
+        if (ret) return ret;
       }
       // relation/comparisons allow for math optimizations
       if (binary->isRelational()) {
-        return optimizeRelational(binary);
+        auto* ret = optimizeRelational(binary);
+        if (ret) return ret;
+      }
+      // finally, try more expensive operations on the binary
+      if (!EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects() &&
+          ExpressionAnalyzer::equal(binary->left, binary->right)) {
+        return optimizeBinaryWithEqualEffectlessChildren(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -1154,6 +1166,27 @@ private:
     return nullptr;
   }
 
+  // optimize trivial math operations, given that the left side of a binary
+  // is a constant. since we canonicalize constants to the right for symmetrical
+  // operations, we only need to handle asymmetrical ones here
+  // TODO: templatize on type?
+  Expression* optimizeWithConstantOnLeft(Binary* binary) {
+    auto type = binary->left->type;
+    auto* left = binary->left->cast<Const>();
+    if (isIntegerType(type)) {
+      // operations on zero
+      if (left->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
+            !EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
+          return binary->left;
+        }
+      }
+    }
+    return nullptr;
+  }
+
   // integer math, even on 2s complement, allows stuff like
   // x + 5 == 7
   //   =>
@@ -1203,6 +1236,43 @@ private:
     rightConst->value = rightConst->value.sub(extra);
     binary->left = left->left;
     return binary;
+  }
+
+  // given a binary expression with equal children and no side effects in either,
+  // we can fold various things
+  Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
+    // TODO add: perhaps worth doing 2*x if x is quite large?
+    switch (binary->op) {
+      case SubInt32:
+      case XorInt32:
+      case SubInt64:
+      case XorInt64: return LiteralUtils::makeZero(binary->left->type, *getModule());
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case GtSInt64:
+      case GtUInt64:
+      case NeInt32:
+      case LtSInt32:
+      case LtUInt32:
+      case GtSInt32:
+      case GtUInt32: return LiteralUtils::makeZero(i32, *getModule());
+      case AndInt32:
+      case OrInt32:
+      case AndInt64:
+      case OrInt64:  return binary->left;
+      case EqInt32:
+      case LeSInt32:
+      case LeUInt32:
+      case GeSInt32:
+      case GeUInt32:
+      case EqInt64:
+      case LeSInt64:
+      case LeUInt64:
+      case GeSInt64:
+      case GeUInt64: return LiteralUtils::makeFromInt32(1, i32, *getModule());
+      default: return nullptr;
+    }
   }
 };
 

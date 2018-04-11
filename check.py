@@ -369,6 +369,10 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
+    # avoid stdout/stderr ordering issues in some js shells - use just stdout
+    f.write('''
+      console.warn = function(x) { console.log(x) };
+    ''')
     binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
     f.write(binaryen_js)
     if NODEJS:
