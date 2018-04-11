@@ -1495,14 +1495,6 @@ Type WasmBinaryBuilder::getType() {
 Type WasmBinaryBuilder::getConcreteType() {
   auto type = getType();
   if (!isConcreteType(type)) {
-    throwError("non-concrete type when one expected");
-  }
-  return type;
-}
-
-Type WasmBinaryBuilder::getConcreteType() {
-  auto type = getType();
-  if (!isConcreteType(type)) {
     throw ParseException("non-concrete type when one expected");
   }
   return type;
