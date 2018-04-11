@@ -2303,6 +2303,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitAtomicWait(curr, code)) break;
       if (maybeVisitAtomicWake(curr, code)) break;
       throwError("invalid code after atomic prefix: " + std::to_string(code));
+      break;
     }
     default: {
       // otherwise, the code is a subcode TODO: optimize
@@ -2313,6 +2314,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitHost(curr, code)) break;
       throwError("bad node code " + std::to_string(code));
+      break;
     }
   }
   if (useDebugLocation && curr) {
