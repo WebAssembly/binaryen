@@ -1135,7 +1135,8 @@ private:
           right->value == Literal(int64_t(-1))) {
         if (binary->op == Abstract::getBinary(type, Abstract::And)) {
           return binary->left;
-        } else if (binary->op == Abstract::getBinary(type, Abstract::Or)) {
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
           return binary->right;
         }
       }
