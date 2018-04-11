@@ -57,6 +57,7 @@ private:
 
 struct PassOptions {
   bool debug = false; // run passes in debug mode, doing extra validation and timing checks
+  bool validate = true; // whether to run the validator to check for errors
   bool validateGlobally = false; // when validating validate globally and not just locally
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz

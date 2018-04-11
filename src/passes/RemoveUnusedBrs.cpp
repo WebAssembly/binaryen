@@ -137,6 +137,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->stopValueFlow();
     } else if (curr->is<Loop>()) {
       // do nothing - it's ok for values to flow out
+    } else if (auto* sw = curr->dynCast<Switch>()) {
+      self->stopFlow();
+      self->optimizeSwitch(sw);
     } else {
       // anything else stops the flow
       self->stopFlow();
@@ -169,6 +172,94 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void visitLoop(Loop* curr) {
     loops.push_back(curr);
+  }
+
+  void optimizeSwitch(Switch* curr) {
+    // if the final element is the default, we don't need it
+    while (!curr->targets.empty() && curr->targets.back() == curr->default_) {
+      curr->targets.pop_back();
+    }
+    // if the first element is the default, we can remove it by shifting everything (which
+    // does add a subtraction of a constant, but often that is worth it as the constant can
+    // be folded away and/or we remove multiple elements here)
+    Index removable = 0;
+    while (removable < curr->targets.size() && curr->targets[removable] == curr->default_) {
+      removable++;
+    }
+    if (removable > 0) {
+      for (Index i = removable; i < curr->targets.size(); i++) {
+        curr->targets[i - removable] = curr->targets[i];
+      }
+      curr->targets.resize(curr->targets.size() - removable);
+      Builder builder(*getModule());
+      curr->condition = builder.makeBinary(SubInt32,
+        curr->condition,
+        builder.makeConst(Literal(int32_t(removable)))
+      );
+    }
+    // when there isn't a value, we can do some trivial optimizations without worrying about
+    // the value being executed before the condition
+    if (curr->value) return;
+    if (curr->targets.size() == 0) {
+      // a switch with just a default always goes there
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->condition),
+        builder.makeBreak(curr->default_)
+      ));
+    } else if (curr->targets.size() == 1) {
+      // a switch with two options is basically an if
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeIf(
+        curr->condition,
+        builder.makeBreak(curr->default_),
+        builder.makeBreak(curr->targets.front())
+      ));
+    } else {
+      // there are also some other cases where we want to convert a switch into ifs,
+      // especially if the switch is large and we are focusing on size.
+      // an especially egregious case is a switch like this:
+      // [a b b [..] b b c] with default b
+      // (which may be arrived at after we trim away excess default values on both
+      // sides). in this case, we really have 3 values in a simple form, so it is the
+      // next logical case after handling 1 and 2 values right above here.
+      // to optimize this, we must add a local + a bunch of nodes (if*2, tee, eq,
+      // get, const, break*3), so the table must be big enough for it to make sense
+
+      // How many targets we need when shrinking. This is literally the size at which
+      // the transformation begins to be smaller.
+      const uint32_t MIN_SHRINK = 13;
+      // How many targets we need when not shrinking, in which case, 2 ifs may be slower,
+      // so we do this when the table is ridiculously large for one with just 3 values
+      // in it.
+      const uint32_t MIN_GENERAL = 128;
+
+      auto shrink = getPassRunner()->options.shrinkLevel > 0;
+      if ((curr->targets.size() >= MIN_SHRINK  &&  shrink) ||
+          (curr->targets.size() >= MIN_GENERAL && !shrink)) {
+        for (Index i = 1; i < curr->targets.size() - 1; i++) {
+          if (curr->targets[i] != curr->default_) {
+            return;
+          }
+        }
+        // great, we are in that case, optimize
+        Builder builder(*getModule());
+        auto temp = builder.addVar(getFunction(), i32);
+        Expression* z;
+        replaceCurrent(z = builder.makeIf(
+          builder.makeTeeLocal(temp, curr->condition),
+          builder.makeIf(
+            builder.makeBinary(EqInt32,
+              builder.makeGetLocal(temp, i32),
+              builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))
+            ),
+            builder.makeBreak(curr->targets.back()),
+            builder.makeBreak(curr->default_)
+          ),
+          builder.makeBreak(curr->targets.front())
+        ));
+      }
+    }
   }
 
   void visitIf(If* curr) {
@@ -482,18 +573,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
         }
         if (list.size() >= 2) {
-          // Join adjacent br_ifs to the same target, making one br_if with
-          // a "selectified" condition that executes both.
-          if (shrink) {
-            for (Index i = 0; i < list.size() - 1; i++) {
-              auto* br1 = list[i]->dynCast<Break>();
-              // avoid unreachable brs, as they are dead code anyhow, and after merging
-              // them the outer scope could need type changes
-              if (!br1 || !br1->condition || br1->type == unreachable) continue;
-              auto* br2 = list[i + 1]->dynCast<Break>();
-              if (!br2 || !br2->condition || br2->type == unreachable) continue;
-              if (br1->name == br2->name) {
-                assert(!br1->value && !br2->value);
+          // combine/optimize adjacent br_ifs + a br (maybe _if) right after it
+          for (Index i = 0; i < list.size() - 1; i++) {
+            auto* br1 = list[i]->dynCast<Break>();
+            // avoid unreachable brs, as they are dead code anyhow, and after merging
+            // them the outer scope could need type changes
+            if (!br1 || !br1->condition || br1->type == unreachable) continue;
+            assert(!br1->value);
+            auto* br2 = list[i + 1]->dynCast<Break>();
+            if (!br2 || br1->name != br2->name) continue;
+            assert(!br2->value); // same target as previous, which has no value
+            // a br_if and then a br[_if] with the same target right after it
+            if (br2->condition) {
+              if (shrink && br2->type != unreachable) {
+                // Join adjacent br_ifs to the same target, making one br_if with
+                // a "selectified" condition that executes both.
                 if (!EffectAnalyzer(passOptions, br2->condition).hasSideEffects()) {
                   // it's ok to execute them both, do it
                   Builder builder(*getModule());
@@ -501,6 +595,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   ExpressionManipulator::nop(br2);
                 }
               }
+            } else {
+              // merge, we go there anyhow
+              Builder builder(*getModule());
+              list[i] = builder.makeDrop(br1->condition);
             }
           }
           // combine adjacent br_ifs that test the same value into a br_table,

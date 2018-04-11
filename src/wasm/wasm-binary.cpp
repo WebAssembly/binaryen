@@ -1500,6 +1500,14 @@ Type WasmBinaryBuilder::getConcreteType() {
   return type;
 }
 
+Type WasmBinaryBuilder::getConcreteType() {
+  auto type = getType();
+  if (!isConcreteType(type)) {
+    throw ParseException("non-concrete type when one expected");
+  }
+  return type;
+}
+
 Name WasmBinaryBuilder::getString() {
   if (debug) std::cerr << "<==" << std::endl;
   size_t offset = getInt32();
