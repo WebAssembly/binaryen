@@ -3400,6 +3400,14 @@
       )
     )
     (drop
+      (i32.or
+        (tee_local $x
+          (i32.const 1337)
+        )
+        (i32.const -1)
+      )
+    )
+    (drop
       (i64.and
         (get_local $y)
         (i64.const -1)

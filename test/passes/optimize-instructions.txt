@@ -2858,6 +2858,14 @@
    (i32.const -1)
   )
   (drop
+   (i32.or
+    (tee_local $x
+     (i32.const 1337)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
    (get_local $y)
   )
   (drop
