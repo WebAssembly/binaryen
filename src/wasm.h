@@ -109,6 +109,8 @@ enum UnaryOp {
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
   // because the input integer is in an i64 value insetad of an i32 value.
   ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
+
+  InvalidUnary
 };
 
 enum BinaryOp {
@@ -135,6 +137,8 @@ enum BinaryOp {
   // relational ops
   EqFloat64, NeFloat64, // int or float
   LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+
+  InvalidBinary
 };
 
 enum HostOp {

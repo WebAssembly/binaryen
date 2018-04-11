@@ -80,7 +80,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
   const char *str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
-  if (isTypeFloat(type)) {
+  if (isFloatType(type)) {
     if (s == _INFINITY) {
       switch (type) {
         case f32: ret->value = Literal(std::numeric_limits<float>::infinity()); break;

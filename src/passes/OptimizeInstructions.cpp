@@ -24,6 +24,7 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
+#include <ir/abstract.h>
 #include <ir/utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
@@ -541,9 +542,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       } else if (binary->op == SubInt32) {
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -567,19 +570,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        // some math operations have trivial results TODO: many more
-        if (right->value == Literal(int32_t(0))) {
-          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 || binary->op == OrInt32) {
-            return binary->left;
-          } else if ((binary->op == MulInt32 || binary->op == AndInt32) &&
-                     !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
-            return binary->right;
-          }
-        } else if (right->value == Literal(int32_t(1))) {
-          if (binary->op == MulInt32) {
-            return binary->left;
-          }
-        }
+        // some math operations have trivial results
+        Expression* ret = optimizeWithConstantOnRight(binary);
+        if (ret) return ret;
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
@@ -644,6 +637,10 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
         return conditionalizeExpensiveOnBitwise(binary);
+      }
+      // relation/comparisons allow for math optimizations
+      if (binary->isRelational()) {
+        return optimizeRelational(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -1097,6 +1094,115 @@ private:
       return localInfo[get->index].signExtedBits == bits;
     }
     return false;
+  }
+
+  // optimize trivial math operations, given that the right side of a binary
+  // is a constant
+  // TODO: templatize on type?
+  Expression* optimizeWithConstantOnRight(Binary* binary) {
+    auto type = binary->right->type;
+    auto* right = binary->right->cast<Const>();
+    if (isIntegerType(type)) {
+      // operations on zero
+      if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
+            binary->op == Abstract::getBinary(type, Abstract::Or)) {
+          return binary->left;
+        } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+                    binary->op == Abstract::getBinary(type, Abstract::And)) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
+      }
+      // wasm binary encoding uses signed LEBs, which slightly favor negative
+      // numbers: -64 is more efficient than +64 etc. we therefore prefer
+      // x - -64 over x + 64
+      if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
+          binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+        auto value = right->value.getInteger();
+        if (value == 0x40 ||
+            value == 0x2000 ||
+            value == 0x100000 ||
+            value == 0x8000000 ||
+            value == 0x400000000LL ||
+            value == 0x20000000000LL ||
+            value == 0x1000000000000LL ||
+            value == 0x80000000000000LL ||
+            value == 0x4000000000000000LL) {
+          right->value = right->value.neg();
+          if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+            binary->op = Abstract::getBinary(type, Abstract::Sub);
+          } else {
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+          }
+        }
+      }
+    }
+    // note that this is correct even on floats with a NaN on the left,
+    // as a NaN would skip the computation and just return the NaN,
+    // and that is precisely what we do here. but, the same with -1
+    // (change to a negation) would be incorrect for that reason.
+    if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivS) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+        return binary->left;
+      }
+    }
+    return nullptr;
+  }
+
+  // integer math, even on 2s complement, allows stuff like
+  // x + 5 == 7
+  //   =>
+  //     x == 2
+  // TODO: templatize on type?
+  Expression* optimizeRelational(Binary* binary) {
+    // TODO: inequalities can also work, if the constants do not overflow
+    auto type = binary->right->type;
+    if (binary->op ==Abstract::getBinary(type, Abstract::Eq) ||
+        binary->op ==Abstract::getBinary(type, Abstract::Ne)) {
+      if (isIntegerType(binary->left->type)) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
+              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            if (auto* leftConst = left->right->dynCast<Const>()) {
+              if (auto* rightConst = binary->right->dynCast<Const>()) {
+                return combineRelationalConstants(binary, left, leftConst, nullptr, rightConst);
+              } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+                if (rightBinary->op == Abstract::getBinary(type, Abstract::Add) ||
+                    rightBinary->op == Abstract::getBinary(type, Abstract::Sub)) {
+                  if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
+                    return combineRelationalConstants(binary, left, leftConst, rightBinary, rightConst);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // given a relational binary with a const on both sides, combine the constants
+  // left is also a binary, and has a constant; right may be just a constant, in which
+  // case right is nullptr
+  Expression* combineRelationalConstants(Binary* binary, Binary* left, Const* leftConst, Binary* right, Const* rightConst) {
+    auto type = binary->right->type;
+    // we fold constants to the right
+    Literal extra = leftConst->value;
+    if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    if (right && right->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    rightConst->value = rightConst->value.sub(extra);
+    binary->left = left->left;
+    return binary;
   }
 };
 

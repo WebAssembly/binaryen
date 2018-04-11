@@ -249,8 +249,8 @@ Literal Literal::convertUToF64() const {
 
 Literal Literal::neg() const {
   switch (type) {
-    case Type::i32: return Literal(i32 ^ 0x80000000);
-    case Type::i64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL));
+    case Type::i32: return Literal(-uint32_t(i32));
+    case Type::i64: return Literal(-uint64_t(i64));
     case Type::f32: return Literal(i32 ^ 0x80000000).castToF32();
     case Type::f64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
     default: WASM_UNREACHABLE();
