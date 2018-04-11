@@ -1140,16 +1140,15 @@ private:
         }
       }
     }
+    // note that this is correct even on floats with a NaN on the left,
+    // as a NaN would skip the computation and just return the NaN,
+    // and that is precisely what we do here. but, the same with -1
+    // (change to a negation) would be incorrect for that reason.
     if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
       if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
           binary->op == Abstract::getBinary(type, Abstract::DivS) ||
           binary->op == Abstract::getBinary(type, Abstract::DivU)) {
         return binary->left;
-      }
-    } else if (isFloatType(type) && right->value == LiteralUtils::makeLiteralFromInt32(-1, type)) {
-      if (binary->op == Abstract::getBinary(type, Abstract::Mul)) {
-        Builder builder(*getModule());
-        return builder.makeUnary(Abstract::getUnary(type, Abstract::Neg), binary->left);
       }
     }
     return nullptr;

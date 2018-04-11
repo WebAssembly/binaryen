@@ -2528,13 +2528,15 @@
    )
   )
   (drop
-   (f32.neg
+   (f32.mul
     (get_local $y32)
+    (f32.const -1)
    )
   )
   (drop
-   (f64.neg
+   (f64.mul
     (get_local $y64)
+    (f64.const -1)
    )
   )
   (drop
