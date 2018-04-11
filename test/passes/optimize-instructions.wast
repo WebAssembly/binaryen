@@ -3158,7 +3158,6 @@
 
     (drop (f32.add (get_local $z) (f32.const 0x40)))
   )
-
   (func $shift-a-zero (param $x i32) (param $y i64) (param $z f32)
     (drop
       (i32.shl

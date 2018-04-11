@@ -1491,6 +1491,14 @@ Type WasmBinaryBuilder::getType() {
   }
 }
 
+Type WasmBinaryBuilder::getConcreteType() {
+  auto type = getType();
+  if (!isConcreteType(type)) {
+    throw ParseException("non-concrete type when one expected");
+  }
+  return type;
+}
+
 Name WasmBinaryBuilder::getString() {
   if (debug) std::cerr << "<==" << std::endl;
   size_t offset = getInt32();
@@ -1579,7 +1587,7 @@ void WasmBinaryBuilder::readSignatures() {
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
-      curr->params.push_back(getType());
+      curr->params.push_back(getConcreteType());
     }
     auto numResults = getU32LEB();
     if (numResults == 0) {
@@ -1667,7 +1675,7 @@ void WasmBinaryBuilder::readImports() {
       }
       case ExternalKind::Global: {
         curr->name = Name(std::string("gimport$") + std::to_string(i));
-        curr->globalType = getType();
+        curr->globalType = getConcreteType();
         auto globalMutable = getU32LEB();
         // TODO: actually use the globalMutable flag. Currently mutable global
         // imports is a future feature, to be implemented with thread support.
@@ -1734,7 +1742,7 @@ void WasmBinaryBuilder::readFunctions() {
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
-      auto type = getType();
+      auto type = getConcreteType();
       while (num > 0) {
         vars.emplace_back(addVar(), type);
         num--;
@@ -1943,7 +1951,7 @@ void WasmBinaryBuilder::readGlobals() {
   if (debug) std::cerr << "num: " << num << std::endl;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto type = getType();
+    auto type = getConcreteType();
     auto mutable_ = getU32LEB();
     if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
     auto* init = readExpression();
@@ -2057,11 +2065,16 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     block->list.push_back(expressions.back());
     expressions.pop_back();
   }
-  auto type = block->list[0]->type;
   requireFunctionContext("popping void where we need a new local");
-  auto local = builder.addVar(currFunction, type);
-  block->list[0] = builder.makeSetLocal(local, block->list[0]);
-  block->list.push_back(builder.makeGetLocal(local, type));
+  auto type = block->list[0]->type;
+  if (isConcreteType(type)) {
+    auto local = builder.addVar(currFunction, type);
+    block->list[0] = builder.makeSetLocal(local, block->list[0]);
+    block->list.push_back(builder.makeGetLocal(local, type));
+  } else {
+    assert(type == unreachable);
+    // nothing to do here - unreachable anyhow
+  }
   block->finalize();
   return block;
 }

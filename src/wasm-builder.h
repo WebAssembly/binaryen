@@ -375,6 +375,7 @@ public:
 
   static Index addVar(Function* func, Name name, Type type) {
     // always ok to add a var, it does not affect other indices
+    assert(isConcreteType(type));
     Index index = func->getNumLocals();
     if (name.is()) {
       func->localIndices[name] = index;
