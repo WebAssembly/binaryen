@@ -215,9 +215,11 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (!WasmValidator().validate(wasm, options.passOptions.features)) {
-    WasmPrinter::printModule(&wasm);
-    Fatal() << "error in validating output";
+  if (options.passOptions.validate) {
+    if (!WasmValidator().validate(wasm, options.passOptions.features)) {
+      WasmPrinter::printModule(&wasm);
+      Fatal() << "error in validating output";
+    }
   }
 
   if (options.debug) std::cerr << "emitting..." << std::endl;

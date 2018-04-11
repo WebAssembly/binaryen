@@ -132,9 +132,11 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
-    if (!WasmValidator().validate(wasm, features)) {
-      WasmPrinter::printModule(&wasm);
-      Fatal() << "error in validating input";
+    if (options.passOptions.validate) {
+      if (!WasmValidator().validate(wasm, features)) {
+        WasmPrinter::printModule(&wasm);
+        Fatal() << "error in validating input";
+      }
     }
   } else {
     // translate-to-fuzz
@@ -143,10 +145,12 @@ int main(int argc, const char* argv[]) {
       reader.pickPasses(options);
     }
     reader.build();
-    if (!WasmValidator().validate(wasm, features)) {
-      WasmPrinter::printModule(&wasm);
-      std::cerr << "translate-to-fuzz must always generate a valid module";
-      abort();
+    if (options.passOptions.validate) {
+      if (!WasmValidator().validate(wasm, features)) {
+        WasmPrinter::printModule(&wasm);
+        std::cerr << "translate-to-fuzz must always generate a valid module";
+        abort();
+      }
     }
   }
 
@@ -194,22 +198,26 @@ int main(int argc, const char* argv[]) {
     auto input = buffer.getAsChars();
     WasmBinaryBuilder parser(other, input, false);
     parser.read();
-    bool valid = WasmValidator().validate(other, features);
-    if (!valid) {
-      WasmPrinter::printModule(&other);
+    if (options.passOptions.validate) {
+      bool valid = WasmValidator().validate(other, features);
+      if (!valid) {
+        WasmPrinter::printModule(&other);
+      }
+      assert(valid);
     }
-    assert(valid);
     curr = &other;
   }
 
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
     options.runPasses(*curr);
-    bool valid = WasmValidator().validate(*curr, features);
-    if (!valid) {
-      WasmPrinter::printModule(&*curr);
+    if (options.passOptions.validate) {
+      bool valid = WasmValidator().validate(*curr, features);
+      if (!valid) {
+        WasmPrinter::printModule(&*curr);
+      }
+      assert(valid);
     }
-    assert(valid);
   }
 
   if (fuzzExec) {

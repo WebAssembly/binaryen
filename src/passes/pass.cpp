@@ -197,6 +197,7 @@ static void dumpWast(Name name, Module* wasm) {
   // write out the wast
   static int counter = 0;
   auto fullName = std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wasm";
+  Colors::disable();
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
   writer.write(*wasm, fullName);

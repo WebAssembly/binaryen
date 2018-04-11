@@ -1,0 +1,344 @@
+(module
+ (type $0 (func (param i32) (result f32)))
+ (type $1 (func))
+ (type $2 (func (param i64) (result f64)))
+ (type $3 (func (param f32 i32 i32 i64 i64 i32 i32) (result f64)))
+ (type $4 (func (param f32 f32) (result i64)))
+ (type $5 (func (result i64)))
+ (type $6 (func (param i32 i32)))
+ (type $7 (func (param f32) (result f32)))
+ (type $8 (func (param f64) (result f64)))
+ (global $global$0 (mut i32) (i32.const 255))
+ (global $global$1 (mut i32) (i32.const -7045592))
+ (global $global$2 (mut i64) (i64.const -9223372036854775808))
+ (global $global$3 (mut f32) (f32.const -268435456))
+ (global $global$4 (mut f64) (f64.const -2251799813685248))
+ (global $global$5 (mut i32) (i32.const 10))
+ (table 2 anyfunc)
+ (elem (i32.const 0) $1 $5)
+ (memory $0 (shared 1 1))
+ (data (i32.const 0) "\00\00\00\00\00\00\00\00X\00\00\00U\00\00\0b\00\00\00\00\00\00\00k\00\00")
+ (export "func_0" (func $0))
+ (export "func_2_invoker" (func $3))
+ (export "hangLimitInitializer" (func $7))
+ (func $0 (; 0 ;) (type $0) (param $var$0 i32) (result f32)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return
+     (f32.const -nan:0x1d717c)
+    )
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (block $label$3 (result f32)
+   (nop)
+   (return
+    (f32.const 137438953472)
+   )
+  )
+ )
+ (func $1 (; 1 ;) (type $2) (param $var$0 i64) (result f64)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return
+     (f64.const 128)
+    )
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (block $label$3 (result f64)
+   (nop)
+   (return
+    (f64.const 1)
+   )
+  )
+ )
+ (func $2 (; 2 ;) (type $3) (param $var$0 f32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i64) (param $var$4 i64) (param $var$5 i32) (param $var$6 i32) (result f64)
+  (local $var$7 i32)
+  (local $var$8 i32)
+  (local $var$9 i64)
+  (local $var$10 f32)
+  (local $var$11 f32)
+  (local $var$12 f32)
+  (local $var$13 f64)
+  (local $var$14 f64)
+  (local $var$15 f64)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return
+     (get_local $var$13)
+    )
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (f64.const 65489)
+ )
+ (func $3 (; 3 ;) (type $1)
+  (drop
+   (call $2
+    (f32.const 2199023255552)
+    (i32.const 50)
+    (i32.const 0)
+    (i64.const 32767)
+    (i64.const -65535)
+    (i32.const -2147483648)
+    (i32.const -84)
+   )
+  )
+  (drop
+   (f32.const 70368744177664)
+  )
+  (drop
+   (i32.const -53)
+  )
+  (drop
+   (i32.const -46)
+  )
+  (drop
+   (i64.const -12216)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (unreachable)
+ )
+ (func $4 (; 4 ;) (type $4) (param $var$0 f32) (param $var$1 f32) (result i64)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (local $var$5 i32)
+  (local $var$6 i32)
+  (local $var$7 i64)
+  (local $var$8 i64)
+  (local $var$9 f32)
+  (local $var$10 f32)
+  (local $var$11 f32)
+  (local $var$12 f64)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return
+     (get_local $var$8)
+    )
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (unreachable)
+ )
+ (func $5 (; 5 ;) (type $5) (result i64)
+  (local $0 i64)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return
+     (block (result i64)
+      (set_local $0
+       (i64.const 0)
+      )
+      (nop)
+      (get_local $0)
+     )
+    )
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (i64.const 3832563226)
+ )
+ (func $6 (; 6 ;) (type $6) (param $var$0 i32) (param $var$1 i32)
+  (local $var$2 i64)
+  (block $label$1
+   (if
+    (i32.eqz
+     (get_global $global$5)
+    )
+    (return)
+   )
+   (set_global $global$5
+    (i32.sub
+     (get_global $global$5)
+     (i32.const 1)
+    )
+   )
+  )
+  (block $label$3
+   (br_if $label$3
+    (get_local $var$1)
+   )
+   (if
+    (i32.eqz
+     (get_local $var$1)
+    )
+    (block $label$5
+     (nop)
+     (br_if $label$3
+      (tee_local $var$1
+       (tee_local $var$1
+        (tee_local $var$1
+         (if (result i32)
+          (i32.eqz
+           (get_local $var$1)
+          )
+          (block $label$7 (result i32)
+           (set_local $var$2
+            (block $label$8 (result i64)
+             (loop $label$9
+              (block $label$10
+               (if
+                (i32.eqz
+                 (get_global $global$5)
+                )
+                (return)
+               )
+               (set_global $global$5
+                (i32.sub
+                 (get_global $global$5)
+                 (i32.const 1)
+                )
+               )
+              )
+              (block $label$12
+               (block $label$13
+                (set_local $var$1
+                 (br_if $label$7
+                  (get_local $var$0)
+                  (i32.eqz
+                   (get_local $var$1)
+                  )
+                 )
+                )
+                (if
+                 (i32.eqz
+                  (get_local $var$1)
+                 )
+                 (br_if $label$5
+                  (i32.eqz
+                   (br_if $label$7
+                    (i32.const -125)
+                    (loop $label$15 (result i32)
+                     (block $label$16
+                      (if
+                       (i32.eqz
+                        (get_global $global$5)
+                       )
+                       (return)
+                      )
+                      (set_global $global$5
+                       (i32.sub
+                        (get_global $global$5)
+                        (i32.const 1)
+                       )
+                      )
+                     )
+                     (block $label$18 (result i32)
+                      (nop)
+                      (br_if $label$15
+                       (i32.eqz
+                        (tee_local $var$1
+                         (i32.const 32767)
+                        )
+                       )
+                      )
+                      (i32.const -2147483648)
+                     )
+                    )
+                   )
+                  )
+                 )
+                 (block
+                  (drop
+                   (i64.add
+                    (get_local $var$2)
+                    (get_local $var$2)
+                   )
+                  )
+                  (nop)
+                 )
+                )
+               )
+               (br_if $label$9
+                (get_local $var$1)
+               )
+               (nop)
+              )
+             )
+             (get_local $var$2)
+            )
+           )
+           (get_local $var$1)
+          )
+          (i32.const -7059178)
+         )
+        )
+       )
+      )
+     )
+    )
+    (nop)
+   )
+  )
+ )
+ (func $7 (; 7 ;) (type $1)
+  (set_global $global$5
+   (i32.const 10)
+  )
+ )
+ (func $8 (; 8 ;) (type $7) (param $var$0 f32) (result f32)
+  (if (result f32)
+   (f32.eq
+    (get_local $var$0)
+    (get_local $var$0)
+   )
+   (get_local $var$0)
+   (f32.const 0)
+  )
+ )
+ (func $9 (; 9 ;) (type $8) (param $var$0 f64) (result f64)
+  (if (result f64)
+   (f64.eq
+    (get_local $var$0)
+    (get_local $var$0)
+   )
+   (get_local $var$0)
+   (f64.const 0)
+  )
+ )
+)
+

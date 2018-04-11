@@ -234,10 +234,10 @@
   )
   (block $switch-case9
    (block $switch-case4
-    (br_table $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case4 $switch-case9
-     (i32.sub
+    (br_table $switch-case4 $switch-case9 $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case4 $switch-case9
+     (i32.add
       (get_local $0)
-      (i32.const 2)
+      (i32.const -5)
      )
     )
    )
