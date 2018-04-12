@@ -237,92 +237,63 @@ public:
     if (flow.breaking()) return flow;
     Literal value = flow.value;
     NOTE_EVAL1(value);
-    if (value.type == i32) {
-      switch (curr->op) {
-        case ClzInt32:               return value.countLeadingZeroes();
-        case CtzInt32:               return value.countTrailingZeroes();
-        case PopcntInt32:            return value.popCount();
-        case EqZInt32:               return Literal(int32_t(value == Literal(int32_t(0))));
-        case ReinterpretInt32:       return value.castToF32();
-        case ExtendSInt32:           return value.extendToSI64();
-        case ExtendUInt32:           return value.extendToUI64();
-        case ConvertUInt32ToFloat32: return value.convertUToF32();
-        case ConvertUInt32ToFloat64: return value.convertUToF64();
-        case ConvertSInt32ToFloat32: return value.convertSToF32();
-        case ConvertSInt32ToFloat64: return value.convertSToF64();
-        case ExtendS8Int32:          return Literal(int32_t(int8_t(value.geti32() & 0xFF)));
-        case ExtendS16Int32:         return Literal(int32_t(int16_t(value.geti32() & 0xFFFF)));
-        default: WASM_UNREACHABLE();
-      }
+    switch (curr->op) {
+      case ClzInt32:
+      case ClzInt64:               return value.countLeadingZeroes();
+      case CtzInt32:
+      case CtzInt64:               return value.countTrailingZeroes();
+      case PopcntInt32:
+      case PopcntInt64:            return value.popCount();
+      case EqZInt32:
+      case EqZInt64:               return value.eqz();
+      case ReinterpretInt32:       return value.castToF32();
+      case ReinterpretInt64:       return value.castToF64();
+      case ExtendSInt32:           return value.extendToSI64();
+      case ExtendUInt32:           return value.extendToUI64();
+      case WrapInt64:              return value.truncateToI32();
+      case ConvertUInt32ToFloat32:
+      case ConvertUInt64ToFloat32: return value.convertUToF32();
+      case ConvertUInt32ToFloat64:
+      case ConvertUInt64ToFloat64: return value.convertUToF64();
+      case ConvertSInt32ToFloat32:
+      case ConvertSInt64ToFloat32: return value.convertSToF32();
+      case ConvertSInt32ToFloat64:
+      case ConvertSInt64ToFloat64: return value.convertSToF64();
+      case ExtendS8Int32:
+      case ExtendS8Int64:          return value.extendS8();
+      case ExtendS16Int32:
+      case ExtendS16Int64:         return value.extendS16();
+      case ExtendS32Int64:         return value.extendS32();
+
+      case NegFloat32:
+      case NegFloat64:           return value.neg();
+      case AbsFloat32:
+      case AbsFloat64:           return value.abs();
+      case CeilFloat32:
+      case CeilFloat64:          return value.ceil();
+      case FloorFloat32:
+      case FloorFloat64:         return value.floor();
+      case TruncFloat32:
+      case TruncFloat64:         return value.trunc();
+      case NearestFloat32:
+      case NearestFloat64:       return value.nearbyint();
+      case SqrtFloat32:
+      case SqrtFloat64:          return value.sqrt();
+      case TruncSFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncSFloat64ToInt64: return truncSFloat(curr, value);
+      case TruncUFloat32ToInt32:
+      case TruncUFloat64ToInt32:
+      case TruncUFloat32ToInt64:
+      case TruncUFloat64ToInt64: return truncUFloat(curr, value);
+      case ReinterpretFloat32:   return value.castToI32();
+      case PromoteFloat32:       return value.extendToF64();
+      case ReinterpretFloat64:   return value.castToI64();
+      case DemoteFloat64:        return value.demote();
+
+      default: WASM_UNREACHABLE();
     }
-    if (value.type == i64) {
-      switch (curr->op) {
-        case ClzInt64:               return value.countLeadingZeroes();
-        case CtzInt64:               return value.countTrailingZeroes();
-        case PopcntInt64:            return value.popCount();
-        case EqZInt64:               return Literal(int32_t(value == Literal(int64_t(0))));
-        case WrapInt64:              return value.truncateToI32();
-        case ReinterpretInt64:       return value.castToF64();
-        case ConvertUInt64ToFloat32: return value.convertUToF32();
-        case ConvertUInt64ToFloat64: return value.convertUToF64();
-        case ConvertSInt64ToFloat32: return value.convertSToF32();
-        case ConvertSInt64ToFloat64: return value.convertSToF64();
-        case ExtendS8Int64:          return Literal(int64_t(int8_t(value.geti64() & 0xFF)));
-        case ExtendS16Int64:         return Literal(int64_t(int16_t(value.geti64() & 0xFFFF)));
-        case ExtendS32Int64:         return Literal(int64_t(int32_t(value.geti64() & 0xFFFFFFFF)));
-        default: WASM_UNREACHABLE();
-      }
-    }
-    if (value.type == f32) {
-      switch (curr->op) {
-        case NegFloat32:              return value.neg();
-        case AbsFloat32:              return value.abs();
-        case CeilFloat32:             return value.ceil();
-        case FloorFloat32:            return value.floor();
-        case TruncFloat32:            return value.trunc();
-        case NearestFloat32:          return value.nearbyint();
-        case SqrtFloat32:             return value.sqrt();
-        case TruncSFloat32ToInt32:
-        case TruncSFloat32ToInt64: return truncSFloat(curr, value);
-        case TruncUFloat32ToInt32:
-        case TruncUFloat32ToInt64: return truncUFloat(curr, value);
-        case ReinterpretFloat32: return value.castToI32();
-        case PromoteFloat32:   return value.extendToF64();
-        default: WASM_UNREACHABLE();
-      }
-    }
-    if (value.type == f64) {
-      switch (curr->op) {
-        case NegFloat64:              return value.neg();
-        case AbsFloat64:              return value.abs();
-        case CeilFloat64:             return value.ceil();
-        case FloorFloat64:            return value.floor();
-        case TruncFloat64:            return value.trunc();
-        case NearestFloat64:          return value.nearbyint();
-        case SqrtFloat64:             return value.sqrt();
-        case TruncSFloat64ToInt32:
-        case TruncSFloat64ToInt64: return truncSFloat(curr, value);
-        case TruncUFloat64ToInt32:
-        case TruncUFloat64ToInt64: return truncUFloat(curr, value);
-        case ReinterpretFloat64: return value.castToI64();
-        case DemoteFloat64: {
-          double val = value.getFloat();
-          if (std::isnan(val)) return Literal(float(val));
-          if (std::isinf(val)) return Literal(float(val));
-          // when close to the limit, but still truncatable to a valid value, do that
-          // see https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
-          uint64_t bits = value.reinterpreti64();
-          if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) return Literal(std::numeric_limits<float>::max());
-          if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) return Literal(-std::numeric_limits<float>::max());
-          // when we must convert to infinity, do that
-          if (val < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
-          if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
-          return value.truncateToF32();
-        }
-        default: WASM_UNREACHABLE();
-      }
-    }
-    WASM_UNREACHABLE();
   }
   Flow visitBinary(Binary *curr) {
     NOTE_ENTER("Binary");

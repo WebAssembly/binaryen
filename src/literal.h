@@ -98,6 +98,9 @@ public:
   Literal extendToSI64() const;
   Literal extendToUI64() const;
   Literal extendToF64() const;
+  Literal extendS8() const;
+  Literal extendS16() const;
+  Literal extendS32() const;
   Literal truncateToI32() const;
   Literal truncateToF32() const;
 
@@ -106,6 +109,7 @@ public:
   Literal convertSToF64() const;
   Literal convertUToF64() const;
 
+  Literal eqz() const;
   Literal neg() const;
   Literal abs() const;
   Literal ceil() const;
@@ -113,6 +117,7 @@ public:
   Literal trunc() const;
   Literal nearbyint() const;
   Literal sqrt() const;
+  Literal demote() const;
 
   Literal add(const Literal& other) const;
   Literal sub(const Literal& other) const;
