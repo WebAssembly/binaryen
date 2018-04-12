@@ -22,6 +22,8 @@
 #include "emscripten-optimizer/simple_ast.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "ir/bits.h"
+
 
 namespace wasm {
 
@@ -483,24 +485,24 @@ Literal Literal::xor_(const Literal& other) const {
 
 Literal Literal::shl(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(uint32_t(i32) << shiftMask(other.i32));
-    case Type::i64: return Literal(uint64_t(i64) << shiftMask(other.i64));
+    case Type::i32: return Literal(uint32_t(i32) << Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(uint64_t(i64) << Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }
 
 Literal Literal::shrS(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(i32 >> shiftMask(other.i32));
-    case Type::i64: return Literal(i64 >> shiftMask(other.i64));
+    case Type::i32: return Literal(i32 >> Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(i64 >> Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }
 
 Literal Literal::shrU(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(uint32_t(i32) >> shiftMask(other.i32));
-    case Type::i64: return Literal(uint64_t(i64) >> shiftMask(other.i64));
+    case Type::i32: return Literal(uint32_t(i32) >> Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(uint64_t(i64) >> Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }

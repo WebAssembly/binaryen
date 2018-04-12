@@ -38,12 +38,6 @@ private:
     int64_t i64;
   };
 
-  // The RHS of shl/shru/shrs must be masked by bitwidth.
-  template <typename T>
-  static T shiftMask(T val) {
-    return val & (sizeof(T) * 8 - 1);
-  }
-
 public:
   Literal() : type(Type::none), i64(0) {}
   explicit Literal(Type type) : type(type), i64(0) {}
