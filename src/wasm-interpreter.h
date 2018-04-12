@@ -754,7 +754,7 @@ public:
       }
     };
 
-    // Executes expresions with concrete runtime info, the function and module at runtime
+    // Executes expressions with concrete runtime info, the function and module at runtime
     class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
       ModuleInstanceBase& instance;
       FunctionScope& scope;
