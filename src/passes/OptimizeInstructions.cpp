@@ -1120,7 +1120,8 @@ private:
         if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
             binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
-            binary->op == Abstract::getBinary(type, Abstract::Or)) {
+            binary->op == Abstract::getBinary(type, Abstract::Or) ||
+            binary->op == Abstract::getBinary(type, Abstract::Xor)) {
           return binary->left;
         } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
                     binary->op == Abstract::getBinary(type, Abstract::And)) &&
@@ -1128,9 +1129,23 @@ private:
           return binary->right;
         }
       }
+      // operations on all 1s
+      // TODO: shortcut method to create an all-ones?
+      if (right->value == Literal(int32_t(-1)) ||
+          right->value == Literal(int64_t(-1))) {
+        if (binary->op == Abstract::getBinary(type, Abstract::And)) {
+          return binary->left;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
+      }
       // wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc. we therefore prefer
-      // x - -64 over x + 64
+      // numbers: -64 is more efficient than +64 etc., as well as other powers
+      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64.
+      // in theory we could just prefer negative numbers over positive, but
+      // that can have bad effects on gzip compression (as it would mean more
+      // subtractions than the more common additions).
       if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
           binary->op == Abstract::getBinary(type, Abstract::Sub)) {
         auto value = right->value.getInteger();
@@ -1149,6 +1164,7 @@ private:
           } else {
             binary->op = Abstract::getBinary(type, Abstract::Add);
           }
+          return binary;
         }
       }
     }
@@ -1240,6 +1256,7 @@ private:
 
   // given a binary expression with equal children and no side effects in either,
   // we can fold various things
+  // TODO: trinaries, things like (x & (y & x)) ?
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
     // TODO add: perhaps worth doing 2*x if x is quite large?
     switch (binary->op) {

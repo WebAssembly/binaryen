@@ -2850,6 +2850,33 @@
    (i32.const 1)
   )
  )
+ (func $all_ones (; 68 ;) (type $0) (param $x i32) (param $y i64)
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const -1)
+  )
+  (drop
+   (i32.or
+    (tee_local $x
+     (i32.const 1337)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (i64.const -1)
+  )
+ )
+ (func $xor (; 69 ;) (type $0) (param $x i32) (param $y i64)
+  (drop
+   (get_local $x)
+  )
+ )
 )
 (module
  (type $0 (func))
