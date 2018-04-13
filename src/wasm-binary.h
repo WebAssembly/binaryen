@@ -58,7 +58,7 @@ struct LEB {
 
   bool hasMore(T temp, MiniT byte) {
     // for signed, we must ensure the last bit has the right sign, as it will zero extend
-    return std::is_signed<T>::value ? (temp != 0 && temp != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
+    return std::is_signed<T>::value ? (temp != 0 && temp != T(-1)) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
   }
 
   void write(std::vector<uint8_t>* out) {
@@ -992,6 +992,8 @@ public:
   void visitNop(Nop *curr);
   void visitUnreachable(Unreachable *curr);
   void visitDrop(Drop *curr);
+
+  void throwError(std::string text);
 };
 
 } // namespace wasm

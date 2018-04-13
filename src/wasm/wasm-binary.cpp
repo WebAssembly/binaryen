@@ -1325,7 +1325,7 @@ void WasmBinaryBuilder::read() {
   while (more()) {
     uint32_t sectionCode = getU32LEB();
     uint32_t payloadLen = getU32LEB();
-    if (pos + payloadLen > input.size()) throw ParseException("Section extends beyond end of input");
+    if (pos + payloadLen > input.size()) throwError("Section extends beyond end of input");
 
     auto oldPos = pos;
 
@@ -1333,7 +1333,7 @@ void WasmBinaryBuilder::read() {
     // and verify those that shouldn't do not.
     if (sectionCode != BinaryConsts::Section::User && sectionCode != BinaryConsts::Section::Code) {
       if (!seenSections.insert(BinaryConsts::Section(sectionCode)).second) {
-        throw ParseException("section seen more than once: " + std::to_string(sectionCode));
+        throwError("section seen more than once: " + std::to_string(sectionCode));
       }
     }
 
@@ -1359,7 +1359,7 @@ void WasmBinaryBuilder::read() {
       default: {
         readUserSection(payloadLen);
         if (pos > oldPos + payloadLen) {
-          throw ParseException("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+          throwError("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
         }
         pos = oldPos + payloadLen;
       }
@@ -1367,7 +1367,7 @@ void WasmBinaryBuilder::read() {
 
     // make sure we advanced exactly past this section
     if (pos != oldPos + payloadLen) {
-      throw ParseException("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+      throwError("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
     }
   }
 
@@ -1393,7 +1393,7 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
-  if (!more()) throw ParseException("unexpected end of input");
+  if (!more()) throwError("unexpected end of input");
   if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
   return input[pos++];
 }
@@ -1487,8 +1487,9 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::i64: return i64;
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
-    default: throw ParseException("invalid wasm type: " + std::to_string(type));
+    default: throwError("invalid wasm type: " + std::to_string(type));
   }
+  WASM_UNREACHABLE();
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1514,7 +1515,7 @@ Name WasmBinaryBuilder::getInlineString() {
   for (size_t i = 0; i < len; i++) {
     auto curr = char(getInt8());
     if (curr == 0) {
-      throw ParseException("inline string contains NULL (0). that is technically valid in wasm, but you shouldn't do it, and it's not supported in binaryen");
+      throwError("inline string contains NULL (0). that is technically valid in wasm, but you shouldn't do it, and it's not supported in binaryen");
     }
     str = str + curr;
   }
@@ -1524,22 +1525,22 @@ Name WasmBinaryBuilder::getInlineString() {
 
 void WasmBinaryBuilder::verifyInt8(int8_t x) {
   int8_t y = getInt8();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt16(int16_t x) {
   int16_t y = getInt16();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt32(int32_t x) {
   int32_t y = getInt32();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt64(int64_t x) {
   int64_t y = getInt64();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::ungetInt8() {
@@ -1564,10 +1565,10 @@ void WasmBinaryBuilder::readMemory() {
   auto numMemories = getU32LEB();
   if (!numMemories) return;
   if (numMemories != 1) {
-    throw ParseException("Must be exactly 1 memory");
+    throwError("Must be exactly 1 memory");
   }
   if (wasm.memory.exists) {
-    throw ParseException("Memory cannot be both imported and defined");
+    throwError("Memory cannot be both imported and defined");
   }
   wasm.memory.exists = true;
   getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
@@ -1582,7 +1583,7 @@ void WasmBinaryBuilder::readSignatures() {
     auto curr = new FunctionType;
     auto form = getS32LEB();
     if (form != BinaryConsts::EncodedType::Func) {
-      throw ParseException("bad signature form " + std::to_string(form));
+      throwError("bad signature form " + std::to_string(form));
     }
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
@@ -1594,7 +1595,7 @@ void WasmBinaryBuilder::readSignatures() {
       curr->result = none;
     } else {
       if (numResults != 1) {
-        throw ParseException("signature must have 1 result");
+        throwError("signature must have 1 result");
       }
       curr->result = getType();
     }
@@ -1611,7 +1612,7 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
   } else {
     i -= functionImports.size();
     if (i >= wasm.functions.size()) {
-      throw ParseException("bad function index");
+      throwError("bad function index");
     }
     return wasm.functions[i]->name;
   }
@@ -1622,7 +1623,7 @@ void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool 
   initial = getU32LEB();
   bool hasMax = flags & BinaryConsts::HasMaximum;
   bool isShared = flags & BinaryConsts::IsShared;
-  if (isShared && !hasMax) throw ParseException("shared memory must have max size");
+  if (isShared && !hasMax) throwError("shared memory must have max size");
   shared = isShared;
   if (hasMax) max = getU32LEB();
   else max = defaultIfNoMax;
@@ -1646,7 +1647,7 @@ void WasmBinaryBuilder::readImports() {
         curr->name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
-          throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
+          throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
         }
         curr->functionType = wasm.functionTypes[index]->name;
         assert(curr->functionType.is());
@@ -1658,12 +1659,12 @@ void WasmBinaryBuilder::readImports() {
         curr->name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
+        if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
         wasm.table.exists = true;
         wasm.table.imported = true;
         bool is_shared;
         getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
-        if (is_shared) throw ParseException("Tables may not be shared");
+        if (is_shared) throwError("Tables may not be shared");
         break;
       }
       case ExternalKind::Memory: {
@@ -1683,7 +1684,7 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       default: {
-        throw ParseException("bad import kind");
+        throwError("bad import kind");
       }
     }
     wasm.addImport(curr);
@@ -1697,7 +1698,7 @@ Name WasmBinaryBuilder::getNextLabel() {
 
 void WasmBinaryBuilder::requireFunctionContext(const char* error) {
   if (!currFunction) {
-    throw ParseException(std::string("in a non-function context: ") + error);
+    throwError(std::string("in a non-function context: ") + error);
   }
 }
 
@@ -1709,7 +1710,7 @@ void WasmBinaryBuilder::readFunctionSignatures() {
     if (debug) std::cerr << "read one" << std::endl;
     auto index = getU32LEB();
     if (index >= wasm.functionTypes.size()) {
-      throw ParseException("invalid function type index for function");
+      throwError("invalid function type index for function");
     }
     functionTypes.push_back(wasm.functionTypes[index].get());
   }
@@ -1719,13 +1720,13 @@ void WasmBinaryBuilder::readFunctions() {
   if (debug) std::cerr << "== readFunctions" << std::endl;
   size_t total = getU32LEB();
   if (total != functionTypes.size()) {
-    throw ParseException("invalid function section size, must equal types");
+    throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
     if (size == 0) {
-      throw ParseException("empty function size");
+      throwError("empty function size");
     }
     endOfFunction = pos + size;
     auto type = functionTypes[i];
@@ -1772,10 +1773,10 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.size() == 0);
       assert(breakTargetNames.size() == 0);
       if (!expressionStack.empty()) {
-        throw ParseException("stack not empty on function exit");
+        throwError("stack not empty on function exit");
       }
       if (pos != endOfFunction) {
-        throw ParseException("binary offset at function exit not at expected location");
+        throwError("binary offset at function exit not at expected location");
       }
     }
     currFunction = nullptr;
@@ -1794,7 +1795,7 @@ void WasmBinaryBuilder::readExports() {
     auto curr = new Export;
     curr->name = getInlineString();
     if (names.count(curr->name) > 0) {
-      throw ParseException("duplicate export name");
+      throwError("duplicate export name");
     }
     names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
@@ -1938,7 +1939,7 @@ Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
   if (expressionStack.size() != 1) {
-    throw ParseException("expected to read a single expression");
+    throwError("expected to read a single expression");
   }
   auto* ret = popExpression();
   assert(depth == 0);
@@ -1953,7 +1954,7 @@ void WasmBinaryBuilder::readGlobals() {
     if (debug) std::cerr << "read one" << std::endl;
     auto type = getConcreteType();
     auto mutable_ = getU32LEB();
-    if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
+    if (bool(mutable_) != mutable_) throwError("Global mutability must be 0 or 1");
     auto* init = readExpression();
     wasm.addGlobal(Builder::makeGlobal(
       "global$" + std::to_string(wasm.globals.size()),
@@ -1983,7 +1984,7 @@ void WasmBinaryBuilder::processExpressions() {
       // if there is nothing else here, just stop. otherwise, go into unreachable
       // mode. peek to see what to do
       if (pos == endOfFunction) {
-        throw ParseException("Reached function end without seeing End opcode");
+        throwError("Reached function end without seeing End opcode");
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
@@ -2039,7 +2040,7 @@ Expression* WasmBinaryBuilder::popExpression() {
       if (debug) std::cerr << "== popping unreachable from polymorphic stack" << std::endl;
       return allocator.alloc<Unreachable>();
     }
-    throw ParseException("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
+    throwError("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
   // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
@@ -2094,7 +2095,7 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {
-    throw ParseException("bad global index");
+    throwError("bad global index");
   }
   return mappedGlobals[index];
 }
@@ -2112,7 +2113,7 @@ void WasmBinaryBuilder::processFunctions() {
   // we assume this later down in fact, when we read wasm.functions[index],
   // as index was validated vs functionTypes.size()
   if (wasm.functions.size() != functionTypes.size()) {
-    throw ParseException("did not see the right number of functions");
+    throwError("did not see the right number of functions");
   }
 
   // now that we have names for each function, apply things
@@ -2131,7 +2132,7 @@ void WasmBinaryBuilder::processFunctions() {
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
       case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
       case ExternalKind::Global: curr->value = getGlobalName(index); break;
-      default: throw ParseException("bad export kind");
+      default: throwError("bad export kind");
     }
     wasm.addExport(curr);
   }
@@ -2168,7 +2169,7 @@ void WasmBinaryBuilder::readDataSegments() {
     auto memoryIndex = getU32LEB();
     WASM_UNUSED(memoryIndex);
     if (memoryIndex != 0) {
-      throw ParseException("bad memory index, must be 0");
+      throwError("bad memory index, must be 0");
     }
     Memory::Segment curr;
     auto offset = readExpression();
@@ -2185,23 +2186,23 @@ void WasmBinaryBuilder::readDataSegments() {
 void WasmBinaryBuilder::readFunctionTableDeclaration() {
   if (debug) std::cerr << "== readFunctionTableDeclaration" << std::endl;
   auto numTables = getU32LEB();
-  if (numTables != 1) throw ParseException("Only 1 table definition allowed in MVP");
-  if (wasm.table.exists) throw ParseException("Table cannot be both imported and defined");
+  if (numTables != 1) throwError("Only 1 table definition allowed in MVP");
+  if (wasm.table.exists) throwError("Table cannot be both imported and defined");
   wasm.table.exists = true;
   auto elemType = getS32LEB();
-  if (elemType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
+  if (elemType != BinaryConsts::EncodedType::AnyFunc) throwError("ElementType must be AnyFunc in MVP");
   bool is_shared;
   getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
-  if (is_shared) throw ParseException("Tables may not be shared");
+  if (is_shared) throwError("Tables may not be shared");
 }
 
 void WasmBinaryBuilder::readTableElements() {
   if (debug) std::cerr << "== readTableElements" << std::endl;
   auto numSegments = getU32LEB();
-  if (numSegments >= Table::kMaxSize) throw ParseException("Too many segments");
+  if (numSegments >= Table::kMaxSize) throwError("Too many segments");
   for (size_t i = 0; i < numSegments; i++) {
     auto tableIndex = getU32LEB();
-    if (tableIndex != 0) throw ParseException("Table elements must refer to table 0 in MVP");
+    if (tableIndex != 0) throwError("Table elements must refer to table 0 in MVP");
     wasm.table.segments.emplace_back(readExpression());
 
     auto& indexSegment = functionTable[i];
@@ -2243,21 +2244,21 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       } else if (index - numFunctionImports < functions.size()) {
         functions[index - numFunctionImports]->name = name;
       } else {
-        throw ParseException("index out of bounds: " + std::string(name.str));
+        throwError("index out of bounds: " + std::string(name.str));
       }
     }
     if (pos != subsectionPos + subsectionSize) {
-      throw ParseException("bad names subsection position change");
+      throwError("bad names subsection position change");
     }
   }
   if (pos != sectionPos + payloadLen) {
-    throw ParseException("bad names section position change");
+    throwError("bad names section position change");
   }
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {
-    throw ParseException("Reached function end without seeing End opcode");
+    throwError("Reached function end without seeing End opcode");
   }
   if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
   if (nextDebugLocation.first) {
@@ -2301,7 +2302,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitAtomicCmpxchg(curr, code)) break;
       if (maybeVisitAtomicWait(curr, code)) break;
       if (maybeVisitAtomicWake(curr, code)) break;
-      throw ParseException("invalid code after atomic prefix: " + std::to_string(code));
+      throwError("invalid code after atomic prefix: " + std::to_string(code));
+      break;
     }
     default: {
       // otherwise, the code is a subcode TODO: optimize
@@ -2311,7 +2313,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitStore(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitHost(curr, code)) break;
-      throw ParseException("bad node code " + std::to_string(code));
+      throwError("bad node code " + std::to_string(code));
+      break;
     }
   }
   if (useDebugLocation && curr) {
@@ -2391,7 +2394,7 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     processExpressions();
     size_t end = expressionStack.size();
     if (end < start) {
-      throw ParseException("block cannot pop from outside");
+      throwError("block cannot pop from outside");
     }
     pushBlockElements(curr, start, end);
     curr->finalize(curr->type, breakTargetNames.find(curr->name) != breakTargetNames.end() /* hasBreak */);
@@ -2407,7 +2410,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   processExpressions();
   size_t end = expressionStack.size();
   if (end < start) {
-    throw ParseException("block cannot pop from outside");
+    throwError("block cannot pop from outside");
   }
   breakStack.pop_back();
   auto* block = allocator.alloc<Block>();
@@ -2435,7 +2438,7 @@ void WasmBinaryBuilder::visitIf(If *curr) {
   }
   curr->finalize(curr->type);
   if (lastSeparator != BinaryConsts::End) {
-    throw ParseException("if should end with End");
+    throwError("if should end with End");
   }
 }
 
@@ -2456,7 +2459,7 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
     curr->body = popExpression();
   } else {
     if (start > end) {
-      throw ParseException("block cannot pop from outside");
+      throwError("block cannot pop from outside");
     }
     auto* block = allocator.alloc<Block>();
     pushBlockElements(block, start, end);
@@ -2471,11 +2474,11 @@ void WasmBinaryBuilder::visitLoop(Loop *curr) {
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
   if (breakStack.size() < 1 + size_t(offset)) {
-    throw ParseException("bad breakindex (low)");
+    throwError("bad breakindex (low)");
   }
   size_t index = breakStack.size() - 1 - offset;
   if (index >= breakStack.size()) {
-    throw ParseException("bad breakindex (high)");
+    throwError("bad breakindex (high)");
   }
   if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
   auto& ret = breakStack[index];
@@ -2531,7 +2534,7 @@ Expression* WasmBinaryBuilder::visitCall() {
     auto* call = allocator.alloc<Call>();
     auto adjustedIndex = index - functionImports.size();
     if (adjustedIndex >= functionTypes.size()) {
-      throw ParseException("bad call index");
+      throwError("bad call index");
     }
     type = functionTypes[adjustedIndex];
     fillCall(call, type);
@@ -2546,11 +2549,11 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   auto index = getU32LEB();
   if (index >= wasm.functionTypes.size()) {
-    throw ParseException("bad call_indirect function index");
+    throwError("bad call_indirect function index");
   }
   auto* fullType = wasm.functionTypes[index].get();
   auto reserved = getU32LEB();
-  if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
+  if (reserved != 0) throwError("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
   auto num = fullType->params.size();
   curr->operands.resize(num);
@@ -2567,7 +2570,7 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   requireFunctionContext("get_local");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throw ParseException("bad get_local index");
+    throwError("bad get_local index");
   }
   curr->type = currFunction->getLocalType(curr->index);
   curr->finalize();
@@ -2578,7 +2581,7 @@ void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   requireFunctionContext("set_local outside of function");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throw ParseException("bad set_local index");
+    throwError("bad set_local index");
   }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
@@ -2600,7 +2603,7 @@ void WasmBinaryBuilder::visitGetGlobal(GetGlobal *curr) {
     curr->type = import->globalType;
     return;
   }
-  throw ParseException("bad get_global");
+  throwError("bad get_global");
 }
 
 void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
@@ -2613,7 +2616,7 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
 
 void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
   auto rawAlignment = getU32LEB();
-  if (rawAlignment > 4) throw ParseException("Alignment must be of a reasonable size");
+  if (rawAlignment > 4) throwError("Alignment must be of a reasonable size");
   alignment = Pow2(rawAlignment);
   offset = getU32LEB();
 }
@@ -2736,7 +2739,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != curr->bytes) throw ParseException("Align of AtomicRMW must match size");
+  if (readAlign != curr->bytes) throwError("Align of AtomicRMW must match size");
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
@@ -2767,7 +2770,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) 
   if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != curr->bytes) throw ParseException("Align of AtomicCpxchg must match size");
+  if (readAlign != curr->bytes) throwError("Align of AtomicCpxchg must match size");
   curr->replacement = popNonVoidExpression();
   curr->expected = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -2792,7 +2795,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->expectedType)) throw ParseException("Align of AtomicWait must match size");
+  if (readAlign != getTypeSize(curr->expectedType)) throwError("Align of AtomicWait must match size");
   curr->finalize();
   out = curr;
   return true;
@@ -2808,7 +2811,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   readMemoryAccess(readAlign, curr->offset);
-  if (readAlign != getTypeSize(curr->type)) throw ParseException("Align of AtomicWake must match size");
+  if (readAlign != getTypeSize(curr->type)) throwError("Align of AtomicWake must match size");
   curr->finalize();
   out = curr;
   return true;
@@ -2999,7 +3002,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   }
   if (debug) std::cerr << "zz node: Host" << std::endl;
   auto reserved = getU32LEB();
-  if (reserved != 0) throw ParseException("Invalid reserved field on grow_memory/current_memory");
+  if (reserved != 0) throwError("Invalid reserved field on grow_memory/current_memory");
   curr->finalize();
   out = curr;
   return true;
@@ -3017,6 +3020,10 @@ void WasmBinaryBuilder::visitDrop(Drop *curr) {
   if (debug) std::cerr << "zz node: Drop" << std::endl;
   curr->value = popNonVoidExpression();
   curr->finalize();
+}
+
+void WasmBinaryBuilder::throwError(std::string text) {
+  throw ParseException(text, 0, pos);
 }
 
 } // namespace wasm
