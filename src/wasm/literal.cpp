@@ -22,6 +22,8 @@
 #include "emscripten-optimizer/simple_ast.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "ir/bits.h"
+
 
 namespace wasm {
 
@@ -213,6 +215,23 @@ Literal Literal::extendToF64() const {
   return Literal(double(getf32()));
 }
 
+Literal Literal::extendS8() const {
+  if (type == Type::i32) return Literal(int32_t(int8_t(geti32() & 0xFF)));
+  if (type == Type::i64) return Literal(int64_t(int8_t(geti64() & 0xFF)));
+  WASM_UNREACHABLE();
+}
+
+Literal Literal::extendS16() const {
+  if (type == Type::i32) return Literal(int32_t(int16_t(geti32() & 0xFFFF)));
+  if (type == Type::i64) return Literal(int64_t(int16_t(geti64() & 0xFFFF)));
+  WASM_UNREACHABLE();
+}
+
+Literal Literal::extendS32() const {
+  if (type == Type::i64) return Literal(int64_t(int32_t(geti64() & 0xFFFFFFFF)));
+  WASM_UNREACHABLE();
+}
+
 Literal Literal::truncateToI32() const {
   assert(type == Type::i64);
   return Literal((int32_t)i64);
@@ -245,6 +264,16 @@ Literal Literal::convertUToF64() const {
   if (type == Type::i32) return Literal(double(uint32_t(i32)));
   if (type == Type::i64) return Literal(double(uint64_t(i64)));
   WASM_UNREACHABLE();
+}
+
+Literal Literal::eqz() const {
+  switch (type) {
+    case Type::i32: return eq(Literal(int32_t(0)));
+    case Type::i64: return eq(Literal(int64_t(0)));
+    case Type::f32: return eq(Literal(float(0)));
+    case Type::f64: return eq(Literal(double(0)));
+    default: WASM_UNREACHABLE();
+  }
 }
 
 Literal Literal::neg() const {
@@ -305,6 +334,21 @@ Literal Literal::sqrt() const {
     case Type::f64: return Literal(std::sqrt(getf64()));
     default: WASM_UNREACHABLE();
   }
+}
+
+Literal Literal::demote() const {
+  auto f64 = getf64();
+  if (std::isnan(f64)) return Literal(float(f64));
+  if (std::isinf(f64)) return Literal(float(f64));
+  // when close to the limit, but still truncatable to a valid value, do that
+  // see https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
+  uint64_t bits = reinterpreti64();
+  if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) return Literal(std::numeric_limits<float>::max());
+  if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) return Literal(-std::numeric_limits<float>::max());
+  // when we must convert to infinity, do that
+  if (f64 < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
+  if (f64 > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
+  return truncateToF32();
 }
 
 Literal Literal::add(const Literal& other) const {
@@ -441,24 +485,24 @@ Literal Literal::xor_(const Literal& other) const {
 
 Literal Literal::shl(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(uint32_t(i32) << shiftMask(other.i32));
-    case Type::i64: return Literal(uint64_t(i64) << shiftMask(other.i64));
+    case Type::i32: return Literal(uint32_t(i32) << Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(uint64_t(i64) << Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }
 
 Literal Literal::shrS(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(i32 >> shiftMask(other.i32));
-    case Type::i64: return Literal(i64 >> shiftMask(other.i64));
+    case Type::i32: return Literal(i32 >> Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(i64 >> Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }
 
 Literal Literal::shrU(const Literal& other) const {
   switch (type) {
-    case Type::i32: return Literal(uint32_t(i32) >> shiftMask(other.i32));
-    case Type::i64: return Literal(uint64_t(i64) >> shiftMask(other.i64));
+    case Type::i32: return Literal(uint32_t(i32) >> Bits::getEffectiveShifts(other.i32, Type::i32));
+    case Type::i64: return Literal(uint64_t(i64) >> Bits::getEffectiveShifts(other.i64, Type::i64));
     default: WASM_UNREACHABLE();
   }
 }

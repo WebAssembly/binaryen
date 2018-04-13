@@ -38,12 +38,6 @@ private:
     int64_t i64;
   };
 
-  // The RHS of shl/shru/shrs must be masked by bitwidth.
-  template <typename T>
-  static T shiftMask(T val) {
-    return val & (sizeof(T) * 8 - 1);
-  }
-
 public:
   Literal() : type(Type::none), i64(0) {}
   explicit Literal(Type type) : type(type), i64(0) {}
@@ -98,6 +92,9 @@ public:
   Literal extendToSI64() const;
   Literal extendToUI64() const;
   Literal extendToF64() const;
+  Literal extendS8() const;
+  Literal extendS16() const;
+  Literal extendS32() const;
   Literal truncateToI32() const;
   Literal truncateToF32() const;
 
@@ -106,6 +103,7 @@ public:
   Literal convertSToF64() const;
   Literal convertUToF64() const;
 
+  Literal eqz() const;
   Literal neg() const;
   Literal abs() const;
   Literal ceil() const;
@@ -113,6 +111,7 @@ public:
   Literal trunc() const;
   Literal nearbyint() const;
   Literal sqrt() const;
+  Literal demote() const;
 
   Literal add(const Literal& other) const;
   Literal sub(const Literal& other) const;
