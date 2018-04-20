@@ -160,14 +160,8 @@ struct SouperifyFunction : public WalkerPass<PostWalker<SouperifyFunction>> {
   void doWalkFunction(Function* func) {
     std::cout << "; function: " << func->name << '\n';
     // Print out locals, first
-    for (Index i = 0; i < func->getNumLocals(); i++) {
-      std::cout << func->getLocalNameOrGeneric(i) << " = ";
-      if (func->isParam(i)) {
-        std::cout << "var";
-      } else {
-        std::cout << "0:" << printType(func->getLocalType(i));
-      }
-      std::cout << '\n';
+    for (Index i = 0; i < func->getNumParams(); i++) {
+      std::cout << func->getLocalNameOrGeneric(i) << " = var\n";
     }
     SouperifyExpression(func).visit(func->body);
     std::cout << '\n';
@@ -179,7 +173,7 @@ struct Souperify : public Pass {
     // We flatten the IR, then convert
     PassRunner inner(module, runner->options);
     inner.setIsNested(true);
-    inner.add("flatten");
+    //inner.add("flatten");
     inner.add<SouperifyFunction>();
     inner.run();
   }

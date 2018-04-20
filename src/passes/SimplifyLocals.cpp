@@ -32,13 +32,18 @@
 // can get rid of those (the operation is trivial there after it sorts by use
 // frequency).
 //
-// This pass has two main options:
+// This pass has options:
 //
 //   * Tee: allow teeing, i.e., sinking a local with more than one use,
 //          and so after sinking we have a tee for the first use.
 //   * Structure: create block and if return values, by merging the
 //                internal set_locals into one on the outside,
 //                that can itself then be sunk further.
+//
+// There is also an option to disallow nesting entirely, which disallows
+// Tee and Structure from those 2 options, and also disallows any sinking
+// operation that would create nesting. This keeps the IR flat while
+// removing redundant locals.
 //
 
 #include <wasm.h>
@@ -73,11 +78,11 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover> {
 
 // Main class
 
-template<bool allowTee, bool allowStructure>
-struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure>>> {
+template<bool allowTee = true, bool allowStructure = true, bool allowNesting = true>
+struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new SimplifyLocals<allowTee, allowStructure>(); }
+  Pass* create() override { return new SimplifyLocals<allowTee, allowStructure, allowNesting>(); }
 
   // information for a set_local we can sink
   struct SinkableInfo {
@@ -124,7 +129,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   // local => # of get_locals for it
   GetLocalCounter getCounter;
 
-  static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     auto* curr = *currp;
     if (curr->is<Break>()) {
       auto* br = curr->cast<Break>();
@@ -149,20 +154,20 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     self->sinkables.clear();
   }
 
-  static void doNoteIfElseCondition(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void doNoteIfElseCondition(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     // we processed the condition of this if-else, and now control flow branches
     // into either the true or the false sides
     assert((*currp)->cast<If>()->ifFalse);
     self->sinkables.clear();
   }
 
-  static void doNoteIfElseTrue(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void doNoteIfElseTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     // we processed the ifTrue side of this if-else, save it on the stack
     assert((*currp)->cast<If>()->ifFalse);
     self->ifStack.push_back(std::move(self->sinkables));
   }
 
-  static void doNoteIfElseFalse(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void doNoteIfElseFalse(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     // we processed the ifFalse side of this if-else, we can now try to
     // mere with the ifTrue side and optimize a return value, if possible
     auto* iff = (*currp)->cast<If>();
@@ -199,6 +204,15 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
+      if (!allowNesting) {
+        // nesting is not allowed, check if the sink would cause such a thing
+        assert(expressionStack.size() >= 2);
+        assert(expressionStack[expressionStack.size() - 1] == curr);
+        auto* parent = expressionStack[expressionStack.size() - 2];
+        if (!parent->template is<SetLocal>()) {
+          return;
+        }
+      }
       // sink it, and nop the origin
       auto* set = (*found->second.item)->template cast<SetLocal>();
       if (firstCycle || getCounter.num[curr->index] == 1) {
@@ -239,9 +253,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
+  // a full expression stack is used when !allowNesting, so that we can check if
+  // a sink would cause nesting
   std::vector<Expression*> expressionStack;
 
-  static void visitPre(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void visitPre(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     Expression* curr = *currp;
 
     EffectAnalyzer effects(self->getPassOptions());
@@ -249,10 +265,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       self->checkInvalidations(effects);
     }
 
-    self->expressionStack.push_back(curr);
+    if (!allowNesting) {
+      self->expressionStack.push_back(curr);
+    }
   }
 
-  static void visitPost(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void visitPost(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     // perform main SetLocal processing here, since we may be the result of
     // replaceCurrent, i.e., the visitor was not called.
     auto* set = (*currp)->dynCast<SetLocal>();
@@ -284,7 +302,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       self->sinkables.emplace(std::make_pair(index, SinkableInfo(currp, self->getPassOptions())));
     }
 
-    self->expressionStack.pop_back();
+    if (!allowNesting) {
+      self->expressionStack.pop_back();
+    }
   }
 
   bool canSink(SetLocal* set) {
@@ -461,21 +481,21 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   }
 
   // override scan to add a pre and a post check task to all nodes
-  static void scan(SimplifyLocals<allowTee, allowStructure>* self, Expression** currp) {
+  static void scan(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
     self->pushTask(visitPost, currp);
 
     auto* curr = *currp;
 
     if (curr->is<If>() && curr->cast<If>()->ifFalse) {
       // handle if-elses in a special manner, using the ifStack
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::doNoteIfElseFalse, currp);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::scan, &curr->cast<If>()->ifFalse);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::doNoteIfElseTrue, currp);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::scan, &curr->cast<If>()->ifTrue);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::doNoteIfElseCondition, currp);
-      self->pushTask(SimplifyLocals<allowTee, allowStructure>::scan, &curr->cast<If>()->condition);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfElseFalse, currp);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &curr->cast<If>()->ifFalse);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfElseTrue, currp);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &curr->cast<If>()->ifTrue);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::doNoteIfElseCondition, currp);
+      self->pushTask(SimplifyLocals<allowTee, allowStructure, allowNesting>::scan, &curr->cast<If>()->condition);
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure>>>::scan(self, currp);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::scan(self, currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -497,7 +517,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     do {
       anotherCycle = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure>>>::doWalkFunction(func);
+      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {
@@ -558,6 +578,10 @@ Pass *createSimplifyLocalsNoStructurePass() {
 
 Pass *createSimplifyLocalsNoTeeNoStructurePass() {
   return new SimplifyLocals<false, false>();
+}
+
+Pass *createSimplifyLocalsNoNestingPass() {
+  return new SimplifyLocals<false, false, false>();
 }
 
 } // namespace wasm
