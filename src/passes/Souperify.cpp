@@ -25,17 +25,6 @@
 
 namespace wasm {
 
-/*
-Comparison instructions return a single bit, and the first
-argument to a
-select
-instruction—LLVM’s version of
-the ternary
-?:
-operator in C and C++—must be one bit
-wide
-*/
-
 struct SouperifyExpression : public Visitor<SouperifyExpression> {
   Function* func;
 
@@ -159,7 +148,7 @@ struct SouperifyExpression : public Visitor<SouperifyExpression> {
     }
   }
   void visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  void visitNop(Nop* curr) { WASM_UNREACHABLE(); }
+  void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {
     std::cout << "; unreachable";
   }
