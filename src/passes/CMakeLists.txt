@@ -40,6 +40,7 @@ SET(passes_SOURCES
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyLocals.cpp
+  Souperify.cpp
   SpillPointers.cpp
   SSAify.cpp
   Untee.cpp
