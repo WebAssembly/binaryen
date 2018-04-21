@@ -25,38 +25,138 @@
 
 namespace wasm {
 
-struct SouperifyExpression : public Visitor<SouperifyExpression> {
+struct SouperifyFunction : public Visitor<SouperifyFunction> {
+  // Tracks the state of locals in a control flow path:
+  //   localState[i] = the SSA local for that i
+  // A special value means the zero init.
+  typedef std::vector<Index> LocalState;
+
+  const static Index ZeroInit = Index(-1);
+
+  // The current local state in the control flow path being emitted.
+  LocalState localState;
+
+  // The next index for a new SSA variable.
+  Index nextIndex;
+
+  // The function being processed.
   Function* func;
 
-  SouperifyExpression(Function* func) : func(func) {}
+  // Main entry: emits Souper IR for a function
+  void emit(Function* func) {
+    std::cout << "; function: " << func->name << '\n';
+    // Print out params, which are ironically of value 'var' in
+    // Souper IR despite not being of type 'var' in ours...
+    for (Index i = 0; i < func->getNumParams(); i++) {
+      std::cout << func->getLocalNameOrGeneric(i) << " = var\n";
+    }
+    // Set up current state
+    localState.resize(func->getNumLocals());
+    for (Index i = 0; i < func->getNumParams(); i++) {
+      if (func->isParam(i)) {
+        localState[i] = i;
+      } else {
+        localState[i] = ZeroInit;
+      }
+    }
+    nextIndex = func->getNumLocals();
+    // Emit the function body.
+    visit(func->body);
+    std::cout << '\n';
+    // TODO: handle value flowing out
+  }
+
+  // Local emitting.
+  void emitLocal(Index index) {
+    auto currSSAIndex = localState[index];
+    if (currSSAIndex < func->getNumLocals()) {
+      std::cout << func->getLocalNameOrGeneric(currSSAIndex);
+    } else if (currSSAIndex == ZeroInit) {
+      std::cout << "0:" << printType(func->getLocalType(index));
+    } else {
+      std::cout << "%" << currSSAIndex;
+    }
+  }
+
+  // Merge local state for two control flow paths
+  LocalState merge(const LocalState& aState, const LocalState& bState, Index blockIndex) {
+    LocalState merged;
+    merged.resize(func->getNumLocals());
+    for (Index i = 0; i < func->getNumLocals(); i++) {
+      auto a = aState[i];
+      auto b = bState[i];
+      if (a == b) {
+        merged[i] = a;
+      } else {
+        // We need to actually merge some stuff.
+        auto phi = nextIndex++;
+        merged[i] = phi;
+        std::cout << "%" << phi << " = phi %" << blockIndex << ", ";
+        emitLocal(a);
+        std::cout << ", ";
+        emitLocal(b);
+      }
+    }
+    return merged;
+  }
+
+  // Visitors.
 
   void visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
+    // TODO: handle breaks to here
     for (auto* child : curr->list) {
       visit(child);
       std::cout << '\n';
     }
   }
   void visitIf(If* curr) {
-    // emit a path condition for the if-then, if it's a local
+    // TODO: emit a path condition for the if-then, if it's a local
     // (otherwise, it's a constant, and not interesting)
-    if (auto* get = curr->condition->dynCast<GetLocal>()) {
-      std::cout << "pc " << func->getLocalNameOrGeneric(get->index) << " 1\n";
-    }
+    //if (auto* get = curr->condition->dynCast<GetLocal>()) {
+    //  std::cout << "pc " << emitLocal(get->index) << " 1\n";
+    //}
+    // TODO: don't generate a blockIndex if we don't need one?
+    // FIXME: is the blockIndex related to the condition..? How exactly
+    //        do Souper blocks work..?
+    auto blockIndex = nextIndex++;
+    std::cout << "%" << blockIndex << " = block 2\n";
+    auto initialState = localState;
     visit(curr->ifTrue);
-    // TODO: what to do with the if-else?
+    auto afterIfTrueState = localState;
+    if (curr->ifFalse) {
+      localState = initialState;
+      visit(curr->ifFalse);
+      auto afterIfFalseState = localState; // TODO: optimize
+      localState = merge(afterIfTrueState, afterIfFalseState, blockIndex);
+    } else {
+      localState = merge(initialState, afterIfTrueState, blockIndex);
+    }
   }
-  void visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
+  void visitLoop(Loop* curr) {
+    // No loops in Souper.
+    WASM_UNREACHABLE();
+  }
   void visitBreak(Break* curr) { WASM_UNREACHABLE(); }
   void visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
   void visitCall(Call* curr) { WASM_UNREACHABLE(); }
   void visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
   void visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   void visitGetLocal(GetLocal* curr) {
-    std::cout << func->getLocalNameOrGeneric(curr->index);
+    emitLocal(curr->index);
   }
   void visitSetLocal(SetLocal* curr) {
-    std::cout << func->getLocalNameOrGeneric(curr->index) << " = ";
+    Index currSSAIndex;
+    if (localState[curr->index] == ZeroInit) {
+      // First assignment: it is ok to use the current index and name here.
+      currSSAIndex = curr->index;
+    } else {
+      // Time for a new SSA index.
+      currSSAIndex = nextIndex++;
+    }
+    localState[curr->index] = currSSAIndex;
+    std::cout << func->getLocalNameOrGeneric(currSSAIndex);
+    std::cout << " = ";
     visit(curr->value);
   }
   void visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
@@ -154,17 +254,11 @@ struct SouperifyExpression : public Visitor<SouperifyExpression> {
   }
 };
 
-struct SouperifyFunction : public WalkerPass<PostWalker<SouperifyFunction>> {
+struct SouperifyImpl : public WalkerPass<PostWalker<SouperifyImpl>> {
   // Not parallel, for now - could parallelize and combine outputs at the end
 
   void doWalkFunction(Function* func) {
-    std::cout << "; function: " << func->name << '\n';
-    // Print out locals, first
-    for (Index i = 0; i < func->getNumParams(); i++) {
-      std::cout << func->getLocalNameOrGeneric(i) << " = var\n";
-    }
-    SouperifyExpression(func).visit(func->body);
-    std::cout << '\n';
+    SouperifyFunction().emit(func);
   }
 };
 
@@ -174,7 +268,7 @@ struct Souperify : public Pass {
     PassRunner inner(module, runner->options);
     inner.setIsNested(true);
     //inner.add("flatten");
-    inner.add<SouperifyFunction>();
+    inner.add<SouperifyImpl>();
     inner.run();
   }
 };
