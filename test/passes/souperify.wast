@@ -22,7 +22,7 @@
         (get_local $j)
       )
     )
-    (return (get_local $r)) ;; a returned value is what we will try to infer
+    (return (get_local $r))
   )
 )
 (module
@@ -57,7 +57,7 @@
         )
         (return (get_local $r))
       )
-      (unreachable) ;; this means "we don't care about this path"
+      (unreachable)
     )
   )
 )

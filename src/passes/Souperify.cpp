@@ -28,109 +28,99 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ir/find_all.h"
+#include "ir/literal-utils.h"
 
 namespace wasm {
 
-struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
-  // Tracks the state of locals in a control flow path:
-  //   localState[i] = the SSA local for that i
-  // A special value means the zero init.
-  typedef std::vector<Index> LocalState;
+// Simple IR for data flow computation for Souper.
+// TODO: loops
+// TODO: generalize for other things?
 
-  const static Index ZeroInit = Index(-1);
+namespace DataFlow {
 
-  // The current local state in the control flow path being emitted.
-  LocalState localState;
+struct Node {
+  enum Type {
+    Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
+    Set,   // a register, defined by a SetLocal
+    Const, // a constant value
+    Phi,   // a phi from converging control flow
+    Block, // a source of phis
+    Bad    // something we can't handle and should ignore
+  } type;
 
-  // The next index for a new SSA variable.
-  Index nextIndex;
+  Node(Type type) : type(type) {}
 
-  // The function being processed.
-  Function* func;
+  template<Type expected>
+  bool is() { return type == expected; }
 
-  // Check if a function is relevant for us.
-  static bool check(Function* func) {
-    // TODO handle loops. for now, just ignore the entire function
-    if (!FindAll<Loop>(func->body).list.empty()) {
-      return false;
-    }
-    return true;
+  union {
+    // For Var
+    Index varIndex;
+    // For Set
+    SetLocal* set;
+    // For Const
+    Literal value;
+    // For Phi
+    struct {
+      Node* block;
+      std::vector<Node*> values;
+    } phi;
+    // For Block
+    Index blockSize;
+  };
+
+  // Constructors
+  static Node* makeVar(Index varIndex) {
+    Node* ret = new Node(Var);
+    ret->varIndex = varIndex;
+    return ret;
   }
-
-  // Main entry: processes a function
-  void process(Function* funcInit) {
-    func = funcInit;
-    std::cout << "; function: " << func->name << '\n';
-    // Print out params, which are ironically of value 'var' in
-    // Souper IR despite not being of type 'var' in ours...
-    for (Index i = 0; i < func->getNumParams(); i++) {
-      std::cout << func->getLocalNameOrGeneric(i) << " = var\n";
-    }
-    // Set up current state
-    localState.resize(func->getNumLocals());
-    for (Index i = 0; i < func->getNumParams(); i++) {
-      if (func->isParam(i)) {
-        localState[i] = i;
-      } else {
-        localState[i] = ZeroInit;
-      }
-    }
-    nextIndex = func->getNumLocals();
-    // Emit the function body.
-    std::cout << visit(func->body) << '\n';
-    // TODO: handle value flowing out
+  static Node* makeSet(SetLocal* set) {
+    Node* ret = new Node(Set);
+    ret->set = set;
+    return ret;
   }
-
-  // Local emitting.
-  std::string emitLocal(Index SSAIndex, Type type) {
-    if (SSAIndex < func->getNumLocals()) {
-      return func->getLocalNameOrGeneric(SSAIndex).str;
-    } else if (SSAIndex == ZeroInit) {
-      return std::string("0:") + printType(type);
-    } else {
-      return std::string("%") + std::to_string(SSAIndex);
-    }
+  static Node* makeConst(Literal value) {
+    Node* ret = new Node(Const);
+    ret->value = value;
+    return ret;
   }
-
-  // Merge local state for two control flow paths
-  // TODO: more than 2
-  std::string merge(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
-    assert(out.size() == func->getNumLocals());
-    std::string ret;
-    for (Index i = 0; i < func->getNumLocals(); i++) {
-      auto a = aState[i];
-      auto b = bState[i];
-      if (a == b) {
-        out[i] = a;
-      } else {
-        // We need to actually merge some stuff.
-        auto phi = nextIndex++;
-        out[i] = phi;
-        ret += "%" + std::to_string(phi) + " = phi %" + std::to_string(blockIndex) + ", ";
-        auto type = func->getLocalType(i);
-        emitLocal(a, type);
-        ret += ", ";
-        emitLocal(b, type);
-      }
-    }
+  static Node* makePhi(Node* block) {
+    Node* ret = new Node(Phi);
+    ret->phi.block = block;
+    return ret;
+  }
+  static Node* makeBlock(Index blockSize) {
+    Node* ret = new Node(Block);
+    ret->blockSize = blockSize;
+    return ret;
+  }
+  static Node* makeBad() {
+    Node* ret = new Node(Bad);
     return ret;
   }
 
-  // Visitors.
+  // helpers
+  void addPhiValue(Node* value) {
+    assert(type == Phi);
+    phi.values.push_back(value);
+  }
+};
 
-  std::string visitBlock(Block* curr) {
+/*
+// A printable trace of IR.
+struct Trace : public Visitor<Trace> {
+  // Each Node in a trace has an index, from 0.
+  std::unordered_map<Node, Index> indexing;
+
+  void visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     // TODO: handle breaks to here
-    std::string ret;
     for (auto* child : curr->list) {
-      auto str = visit(child);
-      if (!str.empty()) {
-        ret += str + '\n';
-      }
+      visit(child);
     }
-    return ret;
   }
-  std::string visitIf(If* curr) {
+  void visitIf(If* curr) {
     // TODO: emit a path condition for the if-then, if it's a local
     // (otherwise, it's a constant, and not interesting)
     //if (auto* get = curr->condition->dynCast<GetLocal>()) {
@@ -153,47 +143,11 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
     }
     return ret;
   }
-  std::string visitLoop(Loop* curr) {
-    // No loops in Souper.
-    WASM_UNREACHABLE();
+  void visitGetLocal(GetLocal* curr) {
   }
-  std::string visitBreak(Break* curr) { WASM_UNREACHABLE(); }
-  std::string visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
-  std::string visitCall(Call* curr) { WASM_UNREACHABLE(); }
-  std::string visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
-  std::string visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
-  std::string visitGetLocal(GetLocal* curr) {
-    return emitLocal(localState[curr->index], func->getLocalType(curr->index));
+  void visitSetLocal(SetLocal* curr) {
   }
-  std::string visitSetLocal(SetLocal* curr) {
-    // If we are doing a copy, just do the copy.
-    if (auto* get = curr->value->dynCast<GetLocal>()) {
-      localState[curr->index] = localState[get->index];
-      return "";
-    }
-    Index currSSAIndex;
-    if (localState[curr->index] == ZeroInit) {
-      // First assignment: it is ok to use the current index and name here.
-      currSSAIndex = curr->index;
-    } else {
-      // Time for a new SSA index.
-      currSSAIndex = nextIndex++;
-    }
-    localState[curr->index] = currSSAIndex;
-    auto ret = emitLocal(currSSAIndex, func->getLocalType(curr->index));
-    ret += " = ";
-    ret += visit(curr->value);
-    return ret;
-  }
-  std::string visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
-  std::string visitSetGlobal(SetGlobal* curr) { WASM_UNREACHABLE(); }
-  std::string visitLoad(Load* curr) { WASM_UNREACHABLE(); }
-  std::string visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  std::string visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE(); }
-  std::string visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE(); }
-  std::string visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE(); }
-  std::string visitAtomicWake(AtomicWake* curr) { WASM_UNREACHABLE(); }
-  std::string visitConst(Const* curr) {
+  void visitConst(Const* curr) {
     std::string ret;
     if (isIntegerType(curr->type)) {
       ret = curr->value.getInteger();
@@ -203,8 +157,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
     ret += std::string(":") + printType(curr->type);
     return ret;
   }
-  std::string visitUnary(Unary* curr) { WASM_UNREACHABLE(); }
-  std::string visitBinary(Binary *curr) {
+  void visitBinary(Binary *curr) {
     std::string ret;
     switch (curr->op) {
       case AddInt32:
@@ -266,18 +219,231 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
     ret += visit(curr->right);
     return ret;
   }
-  std::string visitSelect(Select* curr) { WASM_UNREACHABLE(); }
-  std::string visitDrop(Drop* curr) { WASM_UNREACHABLE(); }
-  std::string visitReturn(Return* curr) {
+  void visitReturn(Return* curr) {
     // TODO something here?
     return "; return";
   }
-  std::string visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  std::string visitNop(Nop* curr) {
+  void visitNop(Nop* curr) {
     return "";
   }
-  std::string visitUnreachable(Unreachable* curr) {
+  void visitUnreachable(Unreachable* curr) {
     return "; unreachable";
+  }
+
+  std::string printPhi(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
+    assert(out.size() == func->getNumLocals());
+    std::string ret;
+    for (Index i = 0; i < func->getNumLocals(); i++) {
+      auto a = aState[i];
+      auto b = bState[i];
+      if (a == b) {
+        out[i] = a;
+      } else {
+        // We need to actually merge some stuff.
+        auto phi = nextIndex++;
+        out[i] = phi;
+        ret += "%" + std::to_string(phi) + " = phi %" + std::to_string(blockIndex) + ", ";
+        auto type = func->getLocalType(i);
+        emitLocal(a, type);
+        ret += ", ";
+        emitLocal(b, type);
+      }
+    }
+    return ret;
+  }
+};
+*/
+
+} // namespace DataFlow
+
+// Main logic to generate IR for a function. This is implemented as a
+// visitor on the wasm, where visitors return a bool whether the node is
+// supported (false === bad).
+struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
+  // Tracks the state of locals in a control flow path:
+  //   localState[i] = the node whose value it contains
+  typedef std::vector<DataFlow::Node*> LocalState;
+
+  // The current local state in the control flow path being emitted.
+  LocalState localState;
+
+  // Connects a specific get to the data flowing into it.
+  std::unordered_map<GetLocal*, DataFlow::Node*> getNodes;
+
+  // The function being processed.
+  Function* func;
+
+  // All of our nodes
+  std::vector<std::unique_ptr<DataFlow::Node>> nodes;
+
+  // Check if a function is relevant for us.
+  static bool check(Function* func) {
+    // TODO handle loops. for now, just ignore the entire function
+    if (!FindAll<Loop>(func->body).list.empty()) {
+      return false;
+    }
+    return true;
+  }
+
+  // Main entry: processes a function
+  void process(Function* funcInit) {
+    func = funcInit;
+    std::cout << "; function: " << func->name << '\n';
+    // Generate the data-flow IR nodes first.
+    // Set up initial local state IR.
+    localState.resize(func->getNumLocals());
+    for (Index i = 0; i < func->getNumLocals(); i++) {
+      DataFlow::Node* node;
+      if (func->isParam(i)) {
+        node = DataFlow::Node::makeVar(i);
+      } else {
+        node = DataFlow::Node::makeConst(LiteralUtils::makeZero(func->getLocalType(i))));
+      }
+      addNode(node, index);
+    }
+    // Process the function body, generating the rest of the IR.
+    visit(func->body);
+    // TODO: handle value flowing out of body
+  }
+
+  // Add a new node to our list of owned nodes.
+  DataFlow::Node* addNode(DataFlow::Node* node) {
+    nodes.push_back(node);
+    return node;
+  }
+
+  // Add a new node, for a specific local index.
+  DataFlow::Node* addNode(DataFlow::Node* node, Index index) {
+    localState[index] = node;
+    return addNode(node);
+  }
+
+  // Merge local state for multiple control flow paths
+  // TODO: more than 2
+  void merge(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
+    assert(out.size() == func->getNumLocals());
+    // create a block only if necessary
+    DataFlow::Node* block = nullptr;
+    for (Index i = 0; i < func->getNumLocals(); i++) {
+      auto a = aState[i];
+      auto b = bState[i];
+      if (a == b) {
+        out[i] = a;
+      } else {
+        // We need to actually merge some stuff.
+        if (!block) {
+          block = addNode(DataFlow::Node::makeBlock(2));
+        }
+        auto* phi = addNode(DataFlow::Node::makePhi(block));
+        phi->addPhiValue(a);
+        phi->addPhiValue(b);
+        out[i] = phi;
+      }
+    }
+  }
+
+  // Visitors.
+
+  bool visitBlock(Block* curr) {
+    // TODO: handle super-deep nesting
+    // TODO: handle breaks to here
+    for (auto* child : curr->list) {
+      visit(child);
+    }
+    return true;
+  }
+  bool visitIf(If* curr) {
+    // TODO: blockpc
+    auto initialState = localState;
+    visit(curr->ifTrue);
+    auto afterIfTrueState = localState;
+    if (curr->ifFalse) {
+      localState = initialState;
+      visit(curr->ifFalse);
+      auto afterIfFalseState = localState; // TODO: optimize
+      merge(afterIfTrueState, afterIfFalseState, blockIndex, localState);
+    } else {
+      merge(initialState, afterIfTrueState, blockIndex, localState);
+    }
+    return true;
+  }
+  bool visitLoop(Loop* curr) { return false; }
+  bool visitBreak(Break* curr) { return false; }
+  bool visitSwitch(Switch* curr) { return false; }
+  bool visitCall(Call* curr) { return false; }
+  bool visitCallImport(CallImport* curr) { return false; }
+  bool visitCallIndirect(CallIndirect* curr) { return false; }
+  bool visitGetLocal(GetLocal* curr) {
+    // We now know which IR node this get refers to
+    auto* node = localState[curr->index]
+    getNodes[curr] = node;
+    return !node->is<Bad>();
+  }
+  bool visitSetLocal(SetLocal* curr) {
+    // If we are doing a copy, just do the copy.
+    if (auto* get = curr->value->dynCast<GetLocal>()) {
+      localState[curr->index] = localState[get->index];
+    }
+    // Make a new IR node for the new value here.
+    if (visit(curr->value)) {
+      addNode(DataFlow::Node::makeSet(curr), curr->index);
+      return true;
+    } else {
+      addNode(DataFlow::Node::makeBad(), curr->index);
+      return false;
+    }
+  }
+  bool visitGetGlobal(GetGlobal* curr) {
+    return false;
+  }
+  bool visitSetGlobal(SetGlobal* curr) {
+    return false;
+  }
+  bool visitLoad(Load* curr) {
+    return false;
+  }
+  bool visitStore(Store* curr) {
+    return false;
+  }
+  bool visitAtomicRMW(AtomicRMW* curr) {
+    return false;
+  }
+  bool visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return false;
+  }
+  bool visitAtomicWait(AtomicWait* curr) {
+    return false;
+  }
+  bool visitAtomicWake(AtomicWake* curr) {
+    return false;
+  }
+  bool visitConst(Const* curr) {
+    return true;
+  }
+  bool visitUnary(Unary* curr) {
+    return false;
+  }
+  bool visitBinary(Binary *curr) {
+    return visit(curr->left) && visit(curr->right);
+  }
+  bool visitSelect(Select* curr) {
+    return false;
+  }
+  bool visitDrop(Drop* curr) {
+    return false;
+  }
+  bool visitReturn(Return* curr) {
+    // note we don't need the value (it's a const or a get as we are flattened)
+    return true;
+  }
+  bool visitHost(Host* curr) {
+    return false;
+  }
+  bool visitNop(Nop* curr) {
+    return true;
+  }
+  bool visitUnreachable(Unreachable* curr) {
+    return false;
   }
 };
 
