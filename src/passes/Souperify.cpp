@@ -17,15 +17,20 @@
 //
 // Souperify - convert to Souper IR in text form.
 //
+// This needs 'flatten' to be run before it, as it assumes the IR is in
+// flat form.
+//
 // See https://github.com/google/souper/issues/323
 //
+
+#include <string>
 
 #include <wasm.h>
 #include <pass.h>
 
 namespace wasm {
 
-struct SouperifyFunction : public Visitor<SouperifyFunction> {
+struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
   // Tracks the state of locals in a control flow path:
   //   localState[i] = the SSA local for that i
   // A special value means the zero init.
@@ -62,95 +67,99 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
     }
     nextIndex = func->getNumLocals();
     // Emit the function body.
-    visit(func->body);
-    std::cout << '\n';
+    std::cout << visit(func->body) << '\n';
     // TODO: handle value flowing out
   }
 
   // Local emitting.
-  void emitLocal(Index SSAIndex, Type type) {
+  std::string emitLocal(Index SSAIndex, Type type) {
     if (SSAIndex < func->getNumLocals()) {
-      std::cout << func->getLocalNameOrGeneric(SSAIndex);
+      return func->getLocalNameOrGeneric(SSAIndex).str;
     } else if (SSAIndex == ZeroInit) {
-      std::cout << "0:" << printType(type);
+      return std::string("0:") + printType(type);
     } else {
-      std::cout << "%" << SSAIndex;
+      return std::string("%") + std::to_string(SSAIndex);
     }
   }
 
   // Merge local state for two control flow paths
-  LocalState merge(const LocalState& aState, const LocalState& bState, Index blockIndex) {
-    LocalState merged;
-    merged.resize(func->getNumLocals());
+  // TODO: more than 2
+  std::string merge(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
+    assert(out.size() == func->getNumLocals());
+    std::string ret;
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto a = aState[i];
       auto b = bState[i];
       if (a == b) {
-        merged[i] = a;
+        out[i] = a;
       } else {
         // We need to actually merge some stuff.
         auto phi = nextIndex++;
-        merged[i] = phi;
-        std::cout << "%" << phi << " = phi %" << blockIndex << ", ";
+        out[i] = phi;
+        ret += "%" + std::to_string(phi) + " = phi %" + std::to_string(blockIndex) + ", ";
         auto type = func->getLocalType(i);
         emitLocal(a, type);
-        std::cout << ", ";
+        ret += ", ";
         emitLocal(b, type);
       }
     }
-    return merged;
+    return ret;
   }
 
   // Visitors.
 
-  void visitBlock(Block* curr) {
+  std::string visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     // TODO: handle breaks to here
+    std::string ret;
     for (auto* child : curr->list) {
-      visit(child);
-      std::cout << '\n';
+      auto str = visit(child);
+      if (!str.empty()) {
+        ret += str + '\n';
+      }
     }
+    return ret;
   }
-  void visitIf(If* curr) {
+  std::string visitIf(If* curr) {
     // TODO: emit a path condition for the if-then, if it's a local
     // (otherwise, it's a constant, and not interesting)
     //if (auto* get = curr->condition->dynCast<GetLocal>()) {
     //  std::cout << "pc " << emitLocal(get->index) << " 1\n";
     //}
     // TODO: don't generate a blockIndex if we don't need one?
-    // FIXME: is the blockIndex related to the condition..? How exactly
-    //        do Souper blocks work..?
+    // TODO: blockpc
     auto blockIndex = nextIndex++;
-    std::cout << "%" << blockIndex << " = block 2\n";
+    std::string ret = "%" + std::to_string(blockIndex) + " = block 2\n";
     auto initialState = localState;
-    visit(curr->ifTrue);
+    ret += visit(curr->ifTrue);
     auto afterIfTrueState = localState;
     if (curr->ifFalse) {
       localState = initialState;
-      visit(curr->ifFalse);
+      ret += visit(curr->ifFalse);
       auto afterIfFalseState = localState; // TODO: optimize
-      localState = merge(afterIfTrueState, afterIfFalseState, blockIndex);
+      ret += merge(afterIfTrueState, afterIfFalseState, blockIndex, localState);
     } else {
-      localState = merge(initialState, afterIfTrueState, blockIndex);
+      ret += merge(initialState, afterIfTrueState, blockIndex, localState);
     }
+    return ret;
   }
-  void visitLoop(Loop* curr) {
+  std::string visitLoop(Loop* curr) {
     // No loops in Souper.
     WASM_UNREACHABLE();
   }
-  void visitBreak(Break* curr) { WASM_UNREACHABLE(); }
-  void visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
-  void visitCall(Call* curr) { WASM_UNREACHABLE(); }
-  void visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
-  void visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
-  void visitGetLocal(GetLocal* curr) {
-    emitLocal(localState[curr->index], func->getLocalType(curr->index));
+  std::string visitBreak(Break* curr) { WASM_UNREACHABLE(); }
+  std::string visitSwitch(Switch* curr) { WASM_UNREACHABLE(); }
+  std::string visitCall(Call* curr) { WASM_UNREACHABLE(); }
+  std::string visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
+  std::string visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
+  std::string visitGetLocal(GetLocal* curr) {
+    return emitLocal(localState[curr->index], func->getLocalType(curr->index));
   }
-  void visitSetLocal(SetLocal* curr) {
+  std::string visitSetLocal(SetLocal* curr) {
     // If we are doing a copy, just do the copy.
     if (auto* get = curr->value->dynCast<GetLocal>()) {
       localState[curr->index] = localState[get->index];
-      return;
+      return "";
     }
     Index currSSAIndex;
     if (localState[curr->index] == ZeroInit) {
@@ -161,121 +170,112 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
       currSSAIndex = nextIndex++;
     }
     localState[curr->index] = currSSAIndex;
-    emitLocal(currSSAIndex, func->getLocalType(curr->index));
-    std::cout << " = ";
-    visit(curr->value);
+    auto ret = emitLocal(currSSAIndex, func->getLocalType(curr->index));
+    ret += " = ";
+    ret += visit(curr->value);
+    return ret;
   }
-  void visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
-  void visitSetGlobal(SetGlobal* curr) { WASM_UNREACHABLE(); }
-  void visitLoad(Load* curr) { WASM_UNREACHABLE(); }
-  void visitStore(Store* curr) { WASM_UNREACHABLE(); }
-  void visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE(); }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE(); }
-  void visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE(); }
-  void visitAtomicWake(AtomicWake* curr) { WASM_UNREACHABLE(); }
-  void visitConst(Const* curr) {
+  std::string visitGetGlobal(GetGlobal* curr) { WASM_UNREACHABLE(); }
+  std::string visitSetGlobal(SetGlobal* curr) { WASM_UNREACHABLE(); }
+  std::string visitLoad(Load* curr) { WASM_UNREACHABLE(); }
+  std::string visitStore(Store* curr) { WASM_UNREACHABLE(); }
+  std::string visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE(); }
+  std::string visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE(); }
+  std::string visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE(); }
+  std::string visitAtomicWake(AtomicWake* curr) { WASM_UNREACHABLE(); }
+  std::string visitConst(Const* curr) {
+    std::string ret;
     if (isIntegerType(curr->type)) {
-      std::cout << curr->value.getInteger();
+      ret = curr->value.getInteger();
     } else {
-      std::cout << curr->value.getFloat();
+      ret = curr->value.getFloat();
     }
-    std::cout << ":" << printType(curr->type);
+    ret += std::string(":") + printType(curr->type);
+    return ret;
   }
-  void visitUnary(Unary* curr) { WASM_UNREACHABLE(); }
-  void visitBinary(Binary *curr) {
+  std::string visitUnary(Unary* curr) { WASM_UNREACHABLE(); }
+  std::string visitBinary(Binary *curr) {
+    std::string ret;
     switch (curr->op) {
       case AddInt32:
-      case AddInt64:  std::cout << "add";  break;
+      case AddInt64:  ret = "add";  break;
       case SubInt32:
-      case SubInt64:  std::cout << "sub";  break;
+      case SubInt64:  ret = "sub";  break;
       case MulInt32:
-      case MulInt64:  std::cout << "mul";  break;
+      case MulInt64:  ret = "mul";  break;
       case DivSInt32:
-      case DivSInt64: std::cout << "sdiv"; break;
+      case DivSInt64: ret = "sdiv"; break;
       case DivUInt32:
-      case DivUInt64: std::cout << "udiv"; break;
+      case DivUInt64: ret = "udiv"; break;
       case RemSInt32:
-      case RemSInt64: std::cout << "srem"; break;
+      case RemSInt64: ret = "srem"; break;
       case RemUInt32:
-      case RemUInt64: std::cout << "urem"; break;
+      case RemUInt64: ret = "urem"; break;
       case AndInt32:
-      case AndInt64:  std::cout << "and";  break;
+      case AndInt64:  ret = "and";  break;
       case OrInt32:
-      case OrInt64:   std::cout << "or";   break;
+      case OrInt64:   ret = "or";   break;
       case XorInt32:
-      case XorInt64:  std::cout << "xor";  break;
+      case XorInt64:  ret = "xor";  break;
       case ShlInt32:
-      case ShlInt64:  std::cout << "shl";  break;
+      case ShlInt64:  ret = "shl";  break;
       case ShrUInt32:
-      case ShrUInt64: std::cout << "ushr"; break;
+      case ShrUInt64: ret = "ushr"; break;
       case ShrSInt32:
-      case ShrSInt64: std::cout << "sshr"; break;
+      case ShrSInt64: ret = "sshr"; break;
       case RotLInt32:
-      case RotLInt64: std::cout << "rotl"; break;
+      case RotLInt64: ret = "rotl"; break;
       case RotRInt32:
-      case RotRInt64: std::cout << "rotr"; break;
+      case RotRInt64: ret = "rotr"; break;
       case EqInt32:
-      case EqInt64:   std::cout << "eq";   break;
+      case EqInt64:   ret = "eq";   break;
       case NeInt32:
-      case NeInt64:   std::cout << "ne";   break;
+      case NeInt64:   ret = "ne";   break;
       case LtSInt32:
-      case LtSInt64:  std::cout << "slt";  break;
+      case LtSInt64:  ret = "slt";  break;
       case LtUInt32:
-      case LtUInt64:  std::cout << "ult";  break;
+      case LtUInt64:  ret = "ult";  break;
       case LeSInt32:
-      case LeSInt64:  std::cout << "sle";  break;
+      case LeSInt64:  ret = "sle";  break;
       case LeUInt32:
-      case LeUInt64:  std::cout << "ule";  break;
+      case LeUInt64:  ret = "ule";  break;
       case GtSInt32:
-      case GtSInt64:  std::cout << "sgt";  break;
+      case GtSInt64:  ret = "sgt";  break;
       case GtUInt32:
-      case GtUInt64:  std::cout << "ugt";  break;
+      case GtUInt64:  ret = "ugt";  break;
       case GeSInt32:
-      case GeSInt64:  std::cout << "sge";  break;
+      case GeSInt64:  ret = "sge";  break;
       case GeUInt32:
-      case GeUInt64:  std::cout << "uge";  break;
+      case GeUInt64:  ret = "uge";  break;
 
       default: WASM_UNREACHABLE();
     }
-    std::cout << ' ';
-    visit(curr->left);
-    std::cout << ", ";
-    visit(curr->right);
+    ret += ' ';
+    ret += visit(curr->left);
+    ret += ", ";
+    ret += visit(curr->right);
+    return ret;
   }
-  void visitSelect(Select* curr) { WASM_UNREACHABLE(); }
-  void visitDrop(Drop* curr) { WASM_UNREACHABLE(); }
-  void visitReturn(Return* curr) {
-    if (curr->value) {
-      // a returned value is something we want to infer
-      std::cout << "infer ";
-      visit(curr->value);
-    } else {
-      std::cout << "; return";
-    }
+  std::string visitSelect(Select* curr) { WASM_UNREACHABLE(); }
+  std::string visitDrop(Drop* curr) { WASM_UNREACHABLE(); }
+  std::string visitReturn(Return* curr) {
+    // TODO something here?
+    return "; return";
   }
-  void visitHost(Host* curr) { WASM_UNREACHABLE(); }
-  void visitNop(Nop* curr) {}
-  void visitUnreachable(Unreachable* curr) {
-    std::cout << "; unreachable";
+  std::string visitHost(Host* curr) { WASM_UNREACHABLE(); }
+  std::string visitNop(Nop* curr) {
+    return "";
+  }
+  std::string visitUnreachable(Unreachable* curr) {
+    return "; unreachable";
   }
 };
 
-struct SouperifyImpl : public WalkerPass<PostWalker<SouperifyImpl>> {
+struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   // Not parallel, for now - could parallelize and combine outputs at the end
 
   void doWalkFunction(Function* func) {
     SouperifyFunction().emit(func);
-  }
-};
-
-struct Souperify : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    // We flatten the IR, then convert
-    PassRunner inner(module, runner->options);
-    inner.setIsNested(true);
-    //inner.add("flatten");
-    inner.add<SouperifyImpl>();
-    inner.run();
   }
 };
 
