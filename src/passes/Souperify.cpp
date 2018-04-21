@@ -25,8 +25,9 @@
 
 #include <string>
 
-#include <wasm.h>
-#include <pass.h>
+#include "wasm.h"
+#include "pass.h"
+#include "ir/find_all.h"
 
 namespace wasm {
 
@@ -47,8 +48,17 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
   // The function being processed.
   Function* func;
 
-  // Main entry: emits Souper IR for a function
-  void emit(Function* funcInit) {
+  // Check if a function is relevant for us.
+  static bool check(Function* func) {
+    // TODO handle loops. for now, just ignore the entire function
+    if (!FindAll<Loop>(func->body).list.empty()) {
+      return false;
+    }
+    return true;
+  }
+
+  // Main entry: processes a function
+  void process(Function* funcInit) {
     func = funcInit;
     std::cout << "; function: " << func->name << '\n';
     // Print out params, which are ironically of value 'var' in
@@ -272,10 +282,13 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, std::string> {
 };
 
 struct Souperify : public WalkerPass<PostWalker<Souperify>> {
-  // Not parallel, for now - could parallelize and combine outputs at the end
+  // Not parallel, for now - could parallelize and combine outputs at the end.
+  // If Souper is thread-safe, we could also run it in parallel.
 
   void doWalkFunction(Function* func) {
-    SouperifyFunction().emit(func);
+    if (SouperifyFunction::check(func)) {
+      SouperifyFunction().process(func);
+    }
   }
 };
 
