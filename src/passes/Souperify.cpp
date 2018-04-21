@@ -68,14 +68,13 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
   }
 
   // Local emitting.
-  void emitLocal(Index index) {
-    auto currSSAIndex = localState[index];
-    if (currSSAIndex < func->getNumLocals()) {
-      std::cout << func->getLocalNameOrGeneric(currSSAIndex);
-    } else if (currSSAIndex == ZeroInit) {
-      std::cout << "0:" << printType(func->getLocalType(index));
+  void emitLocal(Index SSAIndex, Type type) {
+    if (SSAIndex < func->getNumLocals()) {
+      std::cout << func->getLocalNameOrGeneric(SSAIndex);
+    } else if (SSAIndex == ZeroInit) {
+      std::cout << "0:" << printType(type);
     } else {
-      std::cout << "%" << currSSAIndex;
+      std::cout << "%" << SSAIndex;
     }
   }
 
@@ -93,9 +92,10 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
         auto phi = nextIndex++;
         merged[i] = phi;
         std::cout << "%" << phi << " = phi %" << blockIndex << ", ";
-        emitLocal(a);
+        auto type = func->getLocalType(i);
+        emitLocal(a, type);
         std::cout << ", ";
-        emitLocal(b);
+        emitLocal(b, type);
       }
     }
     return merged;
@@ -144,7 +144,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
   void visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
   void visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   void visitGetLocal(GetLocal* curr) {
-    emitLocal(curr->index);
+    emitLocal(localState[curr->index], func->getLocalType(curr->index));
   }
   void visitSetLocal(SetLocal* curr) {
     // If we are doing a copy, just do the copy.
@@ -161,7 +161,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
       currSSAIndex = nextIndex++;
     }
     localState[curr->index] = currSSAIndex;
-    emitLocal(currSSAIndex);
+    emitLocal(currSSAIndex, func->getLocalType(curr->index));
     std::cout << " = ";
     visit(curr->value);
   }
