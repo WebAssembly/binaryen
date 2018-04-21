@@ -43,7 +43,8 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
   Function* func;
 
   // Main entry: emits Souper IR for a function
-  void emit(Function* func) {
+  void emit(Function* funcInit) {
+    func = funcInit;
     std::cout << "; function: " << func->name << '\n';
     // Print out params, which are ironically of value 'var' in
     // Souper IR despite not being of type 'var' in ours...
@@ -146,6 +147,11 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
     emitLocal(curr->index);
   }
   void visitSetLocal(SetLocal* curr) {
+    // If we are doing a copy, just do the copy.
+    if (auto* get = curr->value->dynCast<GetLocal>()) {
+      localState[curr->index] = localState[get->index];
+      return;
+    }
     Index currSSAIndex;
     if (localState[curr->index] == ZeroInit) {
       // First assignment: it is ok to use the current index and name here.
@@ -155,7 +161,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction> {
       currSSAIndex = nextIndex++;
     }
     localState[curr->index] = currSSAIndex;
-    std::cout << func->getLocalNameOrGeneric(currSSAIndex);
+    emitLocal(currSSAIndex);
     std::cout << " = ";
     visit(curr->value);
   }
