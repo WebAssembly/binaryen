@@ -61,13 +61,13 @@ struct Node {
     // For Const
     Literal value;
     // For Phi
-    struct {
-      Node* block;
-      std::vector<Node*> values;
-    } phi;
+    Node* block;
     // For Block
     Index blockSize;
   };
+
+  // For Phi (can't be in the union)
+  std::unique_ptr<std::vector<Node*>> values;
 
   // Constructors
   static Node* makeVar(Index varIndex) {
@@ -87,7 +87,8 @@ struct Node {
   }
   static Node* makePhi(Node* block) {
     Node* ret = new Node(Phi);
-    ret->phi.block = block;
+    ret->block = block;
+    ret->values = make_unique<std::vector<Node*>>();
     return ret;
   }
   static Node* makeBlock(Index blockSize) {
@@ -100,10 +101,15 @@ struct Node {
     return ret;
   }
 
-  // helpers
+  // Helpers
+
   void addPhiValue(Node* value) {
     assert(type == Phi);
-    phi.values.push_back(value);
+    (*values).push_back(value);
+  }
+  void getPhiValue(Index i) {
+    assert(type == Phi);
+    (*values)[i];
   }
 };
 
@@ -297,9 +303,9 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
       if (func->isParam(i)) {
         node = DataFlow::Node::makeVar(i);
       } else {
-        node = DataFlow::Node::makeConst(LiteralUtils::makeZero(func->getLocalType(i))));
+        node = DataFlow::Node::makeConst(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
       }
-      addNode(node, index);
+      addNode(node, i);
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
@@ -308,7 +314,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
 
   // Add a new node to our list of owned nodes.
   DataFlow::Node* addNode(DataFlow::Node* node) {
-    nodes.push_back(node);
+    nodes.push_back(std::unique_ptr<DataFlow::Node>(node));
     return node;
   }
 
@@ -320,7 +326,7 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
 
   // Merge local state for multiple control flow paths
   // TODO: more than 2
-  void merge(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
+  void merge(const LocalState& aState, const LocalState& bState, LocalState& out) {
     assert(out.size() == func->getNumLocals());
     // create a block only if necessary
     DataFlow::Node* block = nullptr;
@@ -361,9 +367,9 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
       localState = initialState;
       visit(curr->ifFalse);
       auto afterIfFalseState = localState; // TODO: optimize
-      merge(afterIfTrueState, afterIfFalseState, blockIndex, localState);
+      merge(afterIfTrueState, afterIfFalseState, localState);
     } else {
-      merge(initialState, afterIfTrueState, blockIndex, localState);
+      merge(initialState, afterIfTrueState, localState);
     }
     return true;
   }
@@ -375,9 +381,9 @@ struct SouperifyFunction : public Visitor<SouperifyFunction, bool> {
   bool visitCallIndirect(CallIndirect* curr) { return false; }
   bool visitGetLocal(GetLocal* curr) {
     // We now know which IR node this get refers to
-    auto* node = localState[curr->index]
+    auto* node = localState[curr->index];
     getNodes[curr] = node;
-    return !node->is<Bad>();
+    return !node->is<DataFlow::Node::Type::Bad>();
   }
   bool visitSetLocal(SetLocal* curr) {
     // If we are doing a copy, just do the copy.
