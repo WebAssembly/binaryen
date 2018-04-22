@@ -244,7 +244,8 @@ struct Builder : public Visitor<Builder, bool> {
     sets.push_back(curr);
     // If we are doing a copy, just do the copy.
     if (auto* get = curr->value->dynCast<GetLocal>()) {
-      localState[curr->index] = localState[get->index];
+      setNodeMap[curr] = localState[curr->index] = localState[get->index];
+      return true;
     }
     // Make a new IR node for the new value here.
     if (visit(curr->value)) {
@@ -317,6 +318,7 @@ struct Trace : public Visitor<Trace> {
 
   bool bad = false;
   std::vector<Node*> nodes;
+  std::unordered_set<Node*> addedNodes;
 
   Trace(Builder& builder, SetLocal* set) : builder(builder), set(set) {
     auto* node = builder.setNodeMap[set];
@@ -360,7 +362,10 @@ struct Trace : public Visitor<Trace> {
       }
       default: WASM_UNREACHABLE();
     }
-    nodes.push_back(node);
+    if (addedNodes.count(node) == 0) {
+      addedNodes.insert(node);
+      nodes.push_back(node);
+    }
     return node;
   }
 
