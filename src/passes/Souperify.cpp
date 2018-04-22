@@ -109,12 +109,12 @@ struct Node {
     ret->cond.index = index;
     ret->cond.node = node;
     ret->cond.value = value;
-    ret->values = make_unique<std::vector<Node*>>();
     return ret;
   }
   static Node* makeBlock(Index blockSize) {
     Node* ret = new Node(Block);
     ret->blockSize = blockSize;
+    ret->values = make_unique<std::vector<Node*>>();
     return ret;
   }
   static Node* makeBad() {
