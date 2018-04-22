@@ -150,7 +150,7 @@ struct Builder : public Visitor<Builder, bool> {
 
   Builder(Function* funcInit) {
     func = funcInit;
-    std::cout << "; function: " << func->name << '\n';
+    std::cout << "\n; function: " << func->name << '\n';
     // Set up initial local state IR.
     localState.resize(func->getNumLocals());
     for (Index i = 0; i < func->getNumLocals(); i++) {

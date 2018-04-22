@@ -24,8 +24,6 @@
     )
     (return (get_local $r))
   )
-)
-(module
   ;; Figure 1b, with a potential path condition
   (func $figure-1b (param $a i64) (param $x i64) (param $y i64) (result i32)
     (local $i i32)
