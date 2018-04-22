@@ -76,7 +76,9 @@ struct Node {
     Index blockSize;
   };
 
-  // For Phi (can't be in the union)
+  // Extra list of related nodes. (can't be in the union anyhow due to C++)
+  // For Phi, this is the list of values to pick from.
+  // For Block, this is the list of Conds.
   std::unique_ptr<std::vector<Node*>> values;
 
   // Constructors
@@ -121,12 +123,12 @@ struct Node {
 
   // Helpers
 
-  void addPhiValue(Node* value) {
-    assert(type == Phi);
+  void addValue(Node* value) {
+    assert(type == Phi || type == Block);
     (*values).push_back(value);
   }
-  Node* getPhiValue(Index i) {
-    assert(type == Phi);
+  Node* getValue(Index i) {
+    assert(type == Phi || type == Block);
     return (*values)[i];
   }
 };
@@ -214,15 +216,15 @@ struct Builder : public Visitor<Builder, bool> {
           block = addNode(Node::makeBlock(2));
         }
         auto* phi = addNode(Node::makePhi(block));
-        phi->addPhiValue(a);
-        phi->addPhiValue(b);
+        phi->addValue(a);
+        phi->addValue(b);
         out[i] = phi;
       }
     }
     if (block) {
       // We have phis, so it make sense to create the Conds for the branches.
-      addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1))));
-      addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0))));
+      block->addValue(addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1)))));
+      block->addValue(addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0)))));
     }
   }
 
@@ -381,7 +383,7 @@ struct Trace : public Visitor<Trace> {
       case Node::Type::Phi: {
         auto* block = add(node->block);
         for (Index i = 0; i < block->blockSize; i++) {
-          add(node->getPhiValue(i));
+          add(node->getValue(i));
         }
         break;
       }
@@ -402,6 +404,12 @@ struct Trace : public Visitor<Trace> {
     if (addedNodes.count(node) == 0) {
       addedNodes.insert(node);
       nodes.push_back(node);
+      // Add things which must be *after* the node.
+      if (node->type == Node::Type::Block) {
+        // TODO: the size is hardcoded here!!!!1 FIXME
+        add(node->getValue(0)); // XXX
+        add(node->getValue(1)); // XXX
+      }
     }
     return node;
   }
@@ -465,7 +473,7 @@ struct Printer : public Visitor<Printer> {
         auto* block = node->block;
         std::cout << "%" << indexing[node] << " = phi %" << indexing[block];
         for (Index i = 0; i < block->blockSize; i++) {
-          std::cout << ", %" << indexing[node->getPhiValue(i)];
+          std::cout << ", %" << indexing[node->getValue(i)];
         }
         break;
       }
