@@ -42,8 +42,9 @@ struct Node {
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Set,   // a register, defined by a SetLocal
-    Const, // a constant value TODO: should this be just Zero?
+    Const, // a constant value
     Phi,   // a phi from converging control flow
+    Cond,  // a condition on a block path (blockpc)
     Block, // a source of phis
     Bad    // something we can't handle and should ignore
   } type;
@@ -62,6 +63,13 @@ struct Node {
     Literal value;
     // For Phi
     Node* block;
+    // For Cond
+    struct { // TODO: move out?
+      Node* block;
+      Index index;
+      Node* node;
+      Literal value;
+    } cond;
     // For Block
     Index blockSize;
   };
@@ -89,6 +97,14 @@ struct Node {
     Node* ret = new Node(Phi);
     ret->block = block;
     ret->values = make_unique<std::vector<Node*>>();
+    return ret;
+  }
+  static Node* makeCond(Node* block, Index index, Node* node, Literal value) {
+    Node* ret = new Node(Cond);
+    ret->cond.block = block;
+    ret->cond.index = index;
+    ret->cond.node = node;
+    ret->cond.value = value;
     return ret;
   }
   static Node* makeBlock(Index blockSize) {
@@ -181,7 +197,7 @@ struct Builder : public Visitor<Builder, bool> {
 
   // Merge local state for multiple control flow paths
   // TODO: more than 2
-  void merge(const LocalState& aState, const LocalState& bState, LocalState& out) {
+  void merge(const LocalState& aState, const LocalState& bState, Node* condition, LocalState& out) {
     assert(out.size() == func->getNumLocals());
     // create a block only if necessary
     Node* block = nullptr;
@@ -201,6 +217,11 @@ struct Builder : public Visitor<Builder, bool> {
         out[i] = phi;
       }
     }
+    if (block) {
+      // We have phis, so it make sense to create the Conds for the branches.
+      addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1))));
+      addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0))));
+    }
   }
 
   // Visitors.
@@ -214,7 +235,16 @@ struct Builder : public Visitor<Builder, bool> {
     return true;
   }
   bool visitIf(If* curr) {
-    // TODO: blockpc
+    // Set up the condition.
+    // TODO: move this const-or-get logic to a helper, we'll need it elsewhere I am quite sure
+    Node* condition;
+    if (auto* get = curr->condition->dynCast<GetLocal>()) {
+      condition = getNodeMap[get];
+    } else {
+      auto* c = curr->condition->cast<wasm::Const>();
+      condition = addNode(Node::makeConst(c->value));
+    }
+    // Handle the contents.
     auto initialState = localState;
     visit(curr->ifTrue);
     auto afterIfTrueState = localState;
@@ -222,9 +252,9 @@ struct Builder : public Visitor<Builder, bool> {
       localState = initialState;
       visit(curr->ifFalse);
       auto afterIfFalseState = localState; // TODO: optimize
-      merge(afterIfTrueState, afterIfFalseState, localState);
+      merge(afterIfTrueState, afterIfFalseState, condition, localState);
     } else {
-      merge(initialState, afterIfTrueState, localState);
+      merge(initialState, afterIfTrueState, condition, localState);
     }
     return true;
   }
@@ -353,6 +383,11 @@ struct Trace : public Visitor<Trace> {
         }
         break;
       }
+      case Node::Type::Cond: {
+        add(node->cond.block);
+        add(node->cond.node);
+        break;
+      }
       case Node::Type::Block: {
         break; // nothing more to add
       }
@@ -430,6 +465,11 @@ struct Printer : public Visitor<Printer> {
         for (Index i = 0; i < block->blockSize; i++) {
           std::cout << ", %" << indexing[node->getPhiValue(i)];
         }
+        break;
+      }
+      case Node::Type::Cond: {
+        std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index << " %" << indexing[node->cond.node] << ' ';
+        print(node->cond.value);
         break;
       }
       case Node::Type::Block: {
