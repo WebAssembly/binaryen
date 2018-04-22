@@ -41,6 +41,9 @@ namespace wasm {
 namespace DataFlow {
 
 struct Node {
+  // A node is either a Set, which represents a wasm IR operation, or something
+  // new in the Souper IR.
+  // TODO: add more nodes for the differences between the two IRs, like i1.
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Set,   // a register, defined by a SetLocal
@@ -78,8 +81,10 @@ struct Node {
 
   // Extra list of related nodes. (can't be in the union anyhow due to C++)
   // For Phi, this is the list of values to pick from.
-  // For Block, this is the list of Conds.
-  std::unique_ptr<std::vector<Node*>> values;
+  // For Block, this is the list of Conds. Note that that block does not
+  // depend on them - the Phis do, but we store them in the block so that
+  // we can avoid duplication.
+  std::vector<Node*> values;
 
   // Constructors
   static Node* makeVar(Index varIndex) {
@@ -100,7 +105,6 @@ struct Node {
   static Node* makePhi(Node* block) {
     Node* ret = new Node(Phi);
     ret->block = block;
-    ret->values = make_unique<std::vector<Node*>>();
     return ret;
   }
   static Node* makeCond(Node* block, Index index, Node* node, Literal value) {
@@ -114,7 +118,6 @@ struct Node {
   static Node* makeBlock(Index blockSize) {
     Node* ret = new Node(Block);
     ret->blockSize = blockSize;
-    ret->values = make_unique<std::vector<Node*>>();
     return ret;
   }
   static Node* makeBad() {
@@ -126,11 +129,11 @@ struct Node {
 
   void addValue(Node* value) {
     assert(type == Phi || type == Block);
-    (*values).push_back(value);
+    values.push_back(value);
   }
   Node* getValue(Index i) {
     assert(type == Phi || type == Block);
-    return (*values)[i];
+    return values.at(i);
   }
 };
 
@@ -224,6 +227,7 @@ struct Builder : public Visitor<Builder, bool> {
     }
     if (block) {
       // We have phis, so it make sense to create the Conds for the branches.
+      // FIXME: we need eqz neqz here
       block->addValue(addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1)))));
       block->addValue(addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0)))));
     }
@@ -244,11 +248,13 @@ struct Builder : public Visitor<Builder, bool> {
     // TODO: move this const-or-get logic to a helper, we'll need it elsewhere I am quite sure
     Node* condition;
     if (auto* get = curr->condition->dynCast<GetLocal>()) {
+      visit(curr->condition);
       condition = getNodeMap[get];
     } else {
       auto* c = curr->condition->cast<wasm::Const>();
       condition = addNode(Node::makeConst(c->value));
     }
+    assert(condition);
     // Handle the contents.
     auto initialState = localState;
     visit(curr->ifTrue);
@@ -383,6 +389,11 @@ struct Trace : public Visitor<Trace> {
       }
       case Node::Type::Phi: {
         auto* block = add(node->block);
+        // First, add the conditions for the block
+        for (Index i = 0; i < block->blockSize; i++) {
+          add(block->getValue(i));
+        }
+        // Then, add the phi values
         for (Index i = 0; i < block->blockSize; i++) {
           add(node->getValue(i));
         }
@@ -405,12 +416,6 @@ struct Trace : public Visitor<Trace> {
     if (addedNodes.count(node) == 0) {
       addedNodes.insert(node);
       nodes.push_back(node);
-      // Add things which must be *after* the node.
-      if (node->type == Node::Type::Block) {
-        // TODO: the size is hardcoded here!!!!1 FIXME
-        add(node->getValue(0)); // XXX
-        add(node->getValue(1)); // XXX
-      }
     }
     return node;
   }
