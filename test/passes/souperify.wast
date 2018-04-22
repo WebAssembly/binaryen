@@ -58,4 +58,31 @@
       (unreachable)
     )
   )
+  ;; Figure 3, simplified to an if
+  (func $figure-3-if (param $x i32) (result i32)
+    (if
+      (i32.and
+        (get_local $x)
+        (i32.const 1)
+      )
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 2)
+        )
+      )
+    )
+    (return
+      (i32.and
+        (get_local $x)
+        (i32.const 1)
+      )
+    )
+  )
 )

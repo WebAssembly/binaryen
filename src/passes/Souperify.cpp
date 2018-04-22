@@ -18,7 +18,9 @@
 // Souperify - convert to Souper IR in text form.
 //
 // This needs 'flatten' to be run before it, as it assumes the IR is in
-// flat form.
+// flat form. You may also want to optimize a little, e.g.
+//    --flatten --simplify-locals-nonesting
+// (as otherwise flattening introduces many copies).
 //
 // See https://github.com/google/souper/issues/323
 //
@@ -473,7 +475,7 @@ struct Printer : public Visitor<Printer> {
         break;
       }
       case Node::Type::Block: {
-        std::cout << "%" << indexing[node] << ' ' << node->blockSize;
+        std::cout << "%" << indexing[node] << " = block " << node->blockSize;
         break;
       }
       case Node::Type::Bad: {
