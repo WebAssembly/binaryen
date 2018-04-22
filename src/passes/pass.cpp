@@ -110,7 +110,7 @@ void PassRegistry::registerPasses() {
   registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
-  registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all)", createSimplifyLocalsNoNestingPass);
+  registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all; preserves flatness)", createSimplifyLocalsNoNestingPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations (no tees)", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations (no structure)", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations (no tees or structure)", createSimplifyLocalsNoTeeNoStructurePass);
