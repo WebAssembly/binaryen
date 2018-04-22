@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 WebAssembly Community Group participants
+ * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@
 // This needs 'flatten' to be run before it, as it assumes the IR is in
 // flat form. You may also want to optimize a little, e.g.
 //    --flatten --simplify-locals-nonesting
-// (as otherwise flattening introduces many copies).
+// (as otherwise flattening introduces many copies; we do ignore boring
+// copies here, but they end up as identical LHSes).
 //
 // See https://github.com/google/souper/issues/323
 //
-
-#include <string>
 
 #include "wasm.h"
 #include "pass.h"
