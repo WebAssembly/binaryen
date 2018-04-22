@@ -315,8 +315,6 @@ struct Trace : public Visitor<Trace> {
   Builder& builder;
   SetLocal* set;
 
-  // Each Node in a trace has an index, from 0.
-  std::unordered_map<Node*, Index> indexing;
   bool bad = false;
   std::vector<Node*> nodes;
 
@@ -324,6 +322,13 @@ struct Trace : public Visitor<Trace> {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
+    // If nothing bad showed up, still mark it as bad if it's trivial
+    // and worthless.
+    if (!bad) {
+      if (nodes.size() <= 1) {
+        bad = true;
+      }
+    }
   }
 
   Node* add(Node* node) {
@@ -334,6 +339,7 @@ struct Trace : public Visitor<Trace> {
       case Node::Type::Set: {
         // Add the dependencies.
         visit(node->set->value);
+        break;
       }
       case Node::Type::Const: {
         break; // nothing more to add
@@ -352,6 +358,7 @@ struct Trace : public Visitor<Trace> {
         bad = true;
         return nullptr;
       }
+      default: WASM_UNREACHABLE();
     }
     nodes.push_back(node);
     return node;
@@ -374,147 +381,138 @@ struct Trace : public Visitor<Trace> {
   }
 };
 
-/*
-  void visitBlock(Block* curr) {
-    // TODO: handle super-deep nesting
-    // TODO: handle breaks to here
-    for (auto* child : curr->list) {
-      visit(child);
+// Emits a trace, which is basically a Souper LHS.
+struct Printer : public Visitor<Printer> {
+  Builder& builder;
+  Trace& trace;
+
+  // Each Node in a trace has an index, from 0.
+  std::unordered_map<Node*, Index> indexing;
+
+  Printer(Builder& builder, Trace& trace) : builder(builder), trace(trace) {
+    std::cout << "; start LHS\n";
+    // Index the nodes.
+    for (auto* node : trace.nodes) {
+      auto index = indexing.size();
+      indexing[node] = index;
     }
-  }
-  void visitIf(If* curr) {
-    // TODO: emit a path condition for the if-then, if it's a local
-    // (otherwise, it's a constant, and not interesting)
-    //if (auto* get = curr->condition->dynCast<GetLocal>()) {
-    //  std::cout << "pc " << emitLocal(get->index) << " 1\n";
-    //}
-    // TODO: don't generate a blockIndex if we don't need one?
-    // TODO: blockpc
-    auto blockIndex = nextIndex++;
-    std::string ret = "%" + std::to_string(blockIndex) + " = block 2\n";
-    auto initialState = localState;
-    ret += visit(curr->ifTrue);
-    auto afterIfTrueState = localState;
-    if (curr->ifFalse) {
-      localState = initialState;
-      ret += visit(curr->ifFalse);
-      auto afterIfFalseState = localState; // TODO: optimize
-      ret += merge(afterIfTrueState, afterIfFalseState, blockIndex, localState);
-    } else {
-      ret += merge(initialState, afterIfTrueState, blockIndex, localState);
+    // Print them out.
+    for (auto* node : trace.nodes) {
+      print(node);
     }
-    return ret;
+    // Finish up
+    std::cout << "infer..\n";
   }
+
+  void print(Node* node) {
+    switch (node->type) {
+      case Node::Type::Var: {
+        std::cout << "%" << indexing[node] << " = var";
+        break; // nothing more to add
+      }
+      case Node::Type::Set: {
+        std::cout << "%" << indexing[node] << " = ";
+        visit(node->set->value);
+        break;
+      }
+      case Node::Type::Const: {
+        print(node->value);
+        break;
+      }
+      case Node::Type::Phi: {
+        auto* block = node->block;
+        std::cout << "%" << indexing[node] << " = phi %" << indexing[block];
+        for (Index i = 0; i < block->blockSize; i++) {
+          std::cout << ", %" << indexing[node->getPhiValue(i)];
+        }
+        break;
+      }
+      case Node::Type::Block: {
+        std::cout << "%" << indexing[node] << ' ' << node->blockSize;
+        break;
+      }
+      case Node::Type::Bad: {
+        std::cout << "!!!BAD!!!";
+        WASM_UNREACHABLE();
+      }
+      default: WASM_UNREACHABLE();
+    }
+    std::cout << '\n';
+  }
+
+  void print(Literal value) {
+    std::cout << value.getInteger() << ':' << printType(value.type);
+  }
+
+  // Visitors for possible set_local values
+
   void visitGetLocal(GetLocal* curr) {
-  }
-  void visitSetLocal(SetLocal* curr) {
+    std::cout << "%" << indexing[builder.getNodeMap[curr]];
   }
   void visitConst(Const* curr) {
-    std::string ret;
-    if (isIntegerType(curr->type)) {
-      ret = curr->value.getInteger();
-    } else {
-      ret = curr->value.getFloat();
-    }
-    ret += std::string(":") + printType(curr->type);
-    return ret;
+    print(curr->value);
   }
   void visitBinary(Binary *curr) {
-    std::string ret;
     switch (curr->op) {
       case AddInt32:
-      case AddInt64:  ret = "add";  break;
+      case AddInt64:  std::cout << "add";  break;
       case SubInt32:
-      case SubInt64:  ret = "sub";  break;
+      case SubInt64:  std::cout << "sub";  break;
       case MulInt32:
-      case MulInt64:  ret = "mul";  break;
+      case MulInt64:  std::cout << "mul";  break;
       case DivSInt32:
-      case DivSInt64: ret = "sdiv"; break;
+      case DivSInt64: std::cout << "sdiv"; break;
       case DivUInt32:
-      case DivUInt64: ret = "udiv"; break;
+      case DivUInt64: std::cout << "udiv"; break;
       case RemSInt32:
-      case RemSInt64: ret = "srem"; break;
+      case RemSInt64: std::cout << "srem"; break;
       case RemUInt32:
-      case RemUInt64: ret = "urem"; break;
+      case RemUInt64: std::cout << "urem"; break;
       case AndInt32:
-      case AndInt64:  ret = "and";  break;
+      case AndInt64:  std::cout << "and";  break;
       case OrInt32:
-      case OrInt64:   ret = "or";   break;
+      case OrInt64:   std::cout << "or";   break;
       case XorInt32:
-      case XorInt64:  ret = "xor";  break;
+      case XorInt64:  std::cout << "xor";  break;
       case ShlInt32:
-      case ShlInt64:  ret = "shl";  break;
+      case ShlInt64:  std::cout << "shl";  break;
       case ShrUInt32:
-      case ShrUInt64: ret = "ushr"; break;
+      case ShrUInt64: std::cout << "ushr"; break;
       case ShrSInt32:
-      case ShrSInt64: ret = "sshr"; break;
+      case ShrSInt64: std::cout << "sshr"; break;
       case RotLInt32:
-      case RotLInt64: ret = "rotl"; break;
+      case RotLInt64: std::cout << "rotl"; break;
       case RotRInt32:
-      case RotRInt64: ret = "rotr"; break;
+      case RotRInt64: std::cout << "rotr"; break;
       case EqInt32:
-      case EqInt64:   ret = "eq";   break;
+      case EqInt64:   std::cout << "eq";   break;
       case NeInt32:
-      case NeInt64:   ret = "ne";   break;
+      case NeInt64:   std::cout << "ne";   break;
       case LtSInt32:
-      case LtSInt64:  ret = "slt";  break;
+      case LtSInt64:  std::cout << "slt";  break;
       case LtUInt32:
-      case LtUInt64:  ret = "ult";  break;
+      case LtUInt64:  std::cout << "ult";  break;
       case LeSInt32:
-      case LeSInt64:  ret = "sle";  break;
+      case LeSInt64:  std::cout << "sle";  break;
       case LeUInt32:
-      case LeUInt64:  ret = "ule";  break;
+      case LeUInt64:  std::cout << "ule";  break;
       case GtSInt32:
-      case GtSInt64:  ret = "sgt";  break;
+      case GtSInt64:  std::cout << "sgt";  break;
       case GtUInt32:
-      case GtUInt64:  ret = "ugt";  break;
+      case GtUInt64:  std::cout << "ugt";  break;
       case GeSInt32:
-      case GeSInt64:  ret = "sge";  break;
+      case GeSInt64:  std::cout << "sge";  break;
       case GeUInt32:
-      case GeUInt64:  ret = "uge";  break;
+      case GeUInt64:  std::cout << "uge";  break;
 
       default: WASM_UNREACHABLE();
     }
-    ret += ' ';
-    ret += visit(curr->left);
-    ret += ", ";
-    ret += visit(curr->right);
-    return ret;
-  }
-  void visitReturn(Return* curr) {
-    // TODO something here?
-    return "; return";
-  }
-  void visitNop(Nop* curr) {
-    return "";
-  }
-  void visitUnreachable(Unreachable* curr) {
-    return "; unreachable";
-  }
-
-  std::string printPhi(const LocalState& aState, const LocalState& bState, Index blockIndex, LocalState& out) {
-    assert(out.size() == func->getNumLocals());
-    std::string ret;
-    for (Index i = 0; i < func->getNumLocals(); i++) {
-      auto a = aState[i];
-      auto b = bState[i];
-      if (a == b) {
-        out[i] = a;
-      } else {
-        // We need to actually merge some stuff.
-        auto phi = nextIndex++;
-        out[i] = phi;
-        ret += "%" + std::to_string(phi) + " = phi %" + std::to_string(blockIndex) + ", ";
-        auto type = func->getLocalType(i);
-        emitLocal(a, type);
-        ret += ", ";
-        emitLocal(b, type);
-      }
-    }
-    return ret;
+    std::cout << ' ';
+    visit(curr->left);
+    std::cout << ", ";
+    visit(curr->right);
   }
 };
-*/
 
 } // namespace DataFlow
 
@@ -530,7 +528,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
       for (auto* set : builder.sets) {
         DataFlow::Trace trace(builder, set);
         if (!trace.isBad()) {
-          //DataFlow::Printer(builder, trace);
+          DataFlow::Printer(builder, trace);
         }
       }
     }
