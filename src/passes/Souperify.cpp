@@ -395,7 +395,7 @@ struct Printer : public Visitor<Printer> {
   std::unordered_map<Node*, Index> indexing;
 
   Printer(Builder& builder, Trace& trace) : builder(builder), trace(trace) {
-    std::cout << "; start LHS\n";
+    std::cout << "\n; start LHS\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
       auto index = indexing.size();
@@ -406,7 +406,7 @@ struct Printer : public Visitor<Printer> {
       print(node);
     }
     // Finish up
-    std::cout << "infer..\n";
+    std::cout << "infer %" << indexing[trace.nodes.back()] << '\n';
   }
 
   void print(Node* node) {
