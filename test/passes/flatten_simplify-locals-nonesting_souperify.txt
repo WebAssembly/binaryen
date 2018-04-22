@@ -7,11 +7,13 @@
 %2 = eq %0, %1
 infer %2
 
+
 ; start LHS
 %0 = var
 %1 = var
 %2 = ne %0, %1
 infer %2
+
 
 ; start LHS
 %0 = var
@@ -21,6 +23,7 @@ infer %2
 %4 = ne %0, %3
 %5 = and %2, %4
 infer %5
+
 
 ; function: $figure-1b
 
@@ -30,17 +33,20 @@ infer %5
 %2 = slt %0, %1
 infer %2
 
+
 ; start LHS
 %0 = var
 %1 = var
 %2 = eq %0, %1
 infer %2
 
+
 ; start LHS
 %0 = var
 %1 = var
 %2 = ne %0, %1
 infer %2
+
 
 ; start LHS
 %0 = var
@@ -51,6 +57,7 @@ infer %2
 %5 = and %2, %4
 infer %5
 
+
 ; function: $figure-3-if
 
 ; start LHS
@@ -58,15 +65,18 @@ infer %5
 %1 = and %0, 1:i32
 infer %1
 
+
 ; start LHS
 %0 = var
 %1 = add %0, 1:i32
 infer %1
 
+
 ; start LHS
 %0 = var
 %1 = add %0, 2:i32
 infer %1
+
 
 ; start LHS
 %0 = block 2
@@ -79,6 +89,7 @@ infer %1
 %7 = phi %0, %5, %6
 infer %7
 
+
 ; start LHS
 %0 = block 2
 %1 = var
@@ -90,6 +101,7 @@ infer %7
 %7 = phi %0, %5, %6
 %8 = and %7, 1:i32
 infer %8
+
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))

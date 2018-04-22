@@ -512,7 +512,7 @@ struct Printer : public Visitor<Printer> {
       print(node);
     }
     // Finish up
-    std::cout << "infer %" << indexing[trace.nodes.back()] << '\n';
+    std::cout << "infer %" << indexing[trace.nodes.back()] << "\n\n";
   }
 
   void print(Node* node) {
