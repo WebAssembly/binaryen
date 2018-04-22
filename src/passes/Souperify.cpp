@@ -328,6 +328,62 @@ struct Builder : public Visitor<Builder, bool> {
     return false;
   }
   bool visitBinary(Binary *curr) {
+    // First, check if we support this op.
+    switch (curr->op) {
+      case AddInt32:
+      case AddInt64:
+      case SubInt32:
+      case SubInt64:
+      case MulInt32:
+      case MulInt64:
+      case DivSInt32:
+      case DivSInt64:
+      case DivUInt32:
+      case DivUInt64:
+      case RemSInt32:
+      case RemSInt64:
+      case RemUInt32:
+      case RemUInt64:
+      case AndInt32:
+      case AndInt64:
+      case OrInt32:
+      case OrInt64:
+      case XorInt32:
+      case XorInt64:
+      case ShlInt32:
+      case ShlInt64:
+      case ShrUInt32:
+      case ShrUInt64:
+      case ShrSInt32:
+      case ShrSInt64:
+      case RotLInt32:
+      case RotLInt64:
+      case RotRInt32:
+      case RotRInt64:
+      case EqInt32:
+      case EqInt64:
+      case NeInt32:
+      case NeInt64:
+      case LtSInt32:
+      case LtSInt64:
+      case LtUInt32:
+      case LtUInt64:
+      case LeSInt32:
+      case LeSInt64:
+      case LeUInt32:
+      case LeUInt64:
+      case GtSInt32:
+      case GtSInt64:
+      case GtUInt32:
+      case GtUInt64:
+      case GeSInt32:
+      case GeSInt64:
+      case GeUInt32:
+      case GeUInt64: break; // these are ok
+
+      default: return false; // anything else is bad
+    }
+    // Then, check if our children are supported.
     return visit(curr->left) && visit(curr->right);
   }
   bool visitSelect(Select* curr) {
