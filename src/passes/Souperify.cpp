@@ -429,15 +429,12 @@ struct Trace : public Visitor<Trace> {
   bool bad = false;
   std::vector<Node*> nodes;
   std::unordered_set<Node*> addedNodes;
+  std::unordered_set<Node*> pathConditions; // which conditions were added as path conditions
 
   Trace(Builder& builder, SetLocal* set) : builder(builder), set(set) {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
-    // Also pull in conditions based on the location of this node: e.g.
-    // if it is inside an if's true branch, we can add a path-condition
-    // for that.
-    addPath(set);
     // If nothing bad showed up, still mark it as bad if it's trivial
     // and worthless.
     if (!bad) {
@@ -445,6 +442,10 @@ struct Trace : public Visitor<Trace> {
         bad = true;
       }
     }
+    // Also pull in conditions based on the location of this node: e.g.
+    // if it is inside an if's true branch, we can add a path-condition
+    // for that.
+    addPath(set);
   }
 
   Node* add(Node* node) {
@@ -473,7 +474,9 @@ struct Trace : public Visitor<Trace> {
         break;
       }
       case Node::Type::Cond: {
-        add(node->cond.block);
+        if (!isPathCondition(node)) {
+          add(node->cond.block);
+        }
         add(node->cond.node);
         break;
       }
@@ -501,7 +504,7 @@ struct Trace : public Visitor<Trace> {
       auto iter = builder.expressionBlockMap.find(parent);
       if (iter != builder.expressionBlockMap.end()) {
         // Given the block, add a proper path-condition
-        Node* node = iter.second;
+        Node* node = iter->second;
         addPathTo(parent, curr, node);
       }
       curr = parent;
@@ -513,17 +516,24 @@ struct Trace : public Visitor<Trace> {
   // give as 'node'. Add a path condition for reaching the child.
   void addPathTo(Expression* parent, Expression* curr, Node* node) {
     if (auto* iff = parent->dynCast<If>()) {
+      Index index;
       if (curr == iff->ifTrue) {
-..
-need to mark the Condition as pc and not a blockpc
+        index = 0;
       } else if (curr == iff->ifFalse) {
-..
+        index = 1;
       } else {
         WASM_UNREACHABLE();
       }
+      auto* condition = node->getValue(index);
+      pathConditions.insert(condition);
+      add(condition);
     } else {
       WASM_UNREACHABLE();
     }
+  }
+
+  bool isPathCondition(Node* node) {
+    return pathConditions.count(node) == 1;
   }
 
   bool isBad() {
@@ -555,15 +565,17 @@ struct Printer : public Visitor<Printer> {
     std::cout << "\n; start LHS\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
-      auto index = indexing.size();
-      indexing[node] = index;
+      if (!trace.isPathCondition(node)) { // pcs do not need to be indexed
+        auto index = indexing.size();
+        indexing[node] = index;
+      }
     }
     // Print them out.
     for (auto* node : trace.nodes) {
       print(node);
     }
     // Finish up
-    std::cout << "infer %" << indexing[trace.nodes.back()] << "\n\n";
+    std::cout << "infer %" << indexing[builder.setNodeMap[trace.set]] << "\n\n";
   }
 
   void print(Node* node) {
@@ -590,7 +602,14 @@ struct Printer : public Visitor<Printer> {
         break;
       }
       case Node::Type::Cond: {
-        std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index << " %" << indexing[node->cond.node] << ' ';
+        if (!trace.isPathCondition(node)) {
+          // blockpc
+          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index;;
+        } else {
+          // pc
+          std::cout << "pc";
+        }
+        std::cout << " %" << indexing[node->cond.node] << ' ';
         print(node->cond.value);
         break;
       }
