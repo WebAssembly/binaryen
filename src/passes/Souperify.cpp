@@ -581,7 +581,7 @@ struct Printer : public Visitor<Printer> {
   void print(Node* node) {
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << " = var";
+        std::cout << "%" << indexing[node] << ":" << printType(builder.func->getLocalType(node->varIndex)) << " = var";
         break; // nothing more to add
       }
       case Node::Type::Set: {
