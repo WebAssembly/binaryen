@@ -450,19 +450,14 @@ struct Builder : public Visitor<Builder, Node*> {
       case LeUInt64: {
         // These are ok as-is.
         // Check if our children are supported.
-        auto* left = visit(curr->left);
+        auto* left = expandFromi1(visit(curr->left));
         if (left->isBad()) return left;
-        auto* right = visit(curr->right);
+        auto* right = expandFromi1(visit(curr->right));
         if (right->isBad()) return right;
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr));
         ret->addValue(left);
         ret->addValue(right);
-        if (curr->isRelational()) {
-          // Relational ops in Souper return an i1; we must immediately
-          // expand it to an i32.
-          // TODO FIXME XXX
-        }
         return ret;
       }
       case GtSInt32:
@@ -510,6 +505,24 @@ struct Builder : public Visitor<Builder, Node*> {
   }
   Node* visitUnreachable(Unreachable* curr) {
     return &CanonicalBad;
+  }
+
+  // Helpers.
+
+  // If the node returns an i1, then we are called from a context that needs
+  // to use it normally as in wasm - extend it
+  Node* expandFromi1(Node* node) {
+/* TODO
+    if (returnsI1(node)) {
+      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
+      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+      auto* check = addNode(Node::makeExpr(expr));
+      check->addValue(condition);
+      check->addValue(zero);
+      ifTrue = check;
+    }
+*/
+    return node;
   }
 };
 
