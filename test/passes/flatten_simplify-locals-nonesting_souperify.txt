@@ -82,7 +82,7 @@ infer %1
 %0:i32 = var
 %1 = add %0, 1:i32
 %2 = and %0, 1:i32
-%3 = eq %2, 0:i32
+%3 = ne %2, 0:i32
 pc %3 1:i1
 infer %1
 
@@ -91,7 +91,7 @@ infer %1
 %0:i32 = var
 %1 = add %0, 2:i32
 %2 = and %0, 1:i32
-%3 = ne %2, 0:i32
+%3 = eq %2, 0:i32
 pc %3 1:i1
 infer %1
 
@@ -100,9 +100,9 @@ infer %1
 %0 = block 2
 %1:i32 = var
 %2 = and %1, 1:i32
-%3 = eq %2, 0:i32
+%3 = ne %2, 0:i32
 %4 = blockpc %0 0 %3 1:i1
-%5 = ne %2, 0:i32
+%5 = eq %2, 0:i32
 %6 = blockpc %0 1 %5 1:i1
 %7 = add %1, 1:i32
 %8 = add %1, 2:i32
@@ -145,43 +145,35 @@ infer %4
 infer %6
 
 
-; function: $various-conditions
+; function: $various-conditions-1
 
 ; start LHS
 %0:i32 = var
 %1 = add %0, 1:i32
-%2 = eq %0, 0:i32
+%2 = ne %0, 0:i32
 pc %2 1:i1
 infer %1
 
 
+; function: $various-conditions-2
+
 ; start LHS
-%0 = block 2
-%1:i32 = var
-%2 = eq %1, 0:i32
-%3 = blockpc %0 0 %2 1:i1
-%4 = ne %1, 0:i32
-%5 = blockpc %0 1 %4 1:i1
-%6 = add %1, 1:i32
-%7 = phi %0, %1, %6
-%8 = slt %7, 1:i32
-infer %8
+%0:i32 = var
+%1 = slt %0, 0:i32
+infer %1
 
 
 ; start LHS
-%0 = block 2
-%1:i32 = var
-%2 = eq %1, 0:i32
-%3 = blockpc %0 0 %2 1:i1
-%4 = ne %1, 0:i32
-%5 = blockpc %0 1 %4 1:i1
-%6 = add %1, 1:i32
-%7 = phi %0, %1, %6
-%8 = add %7, 1:i32
-%9 = slt %7, 1:i32
-pc %9 1:i1
-infer %8
+%0:i32 = var
+%1 = sub %0, 2:i32
+%2 = slt %0, 0:i32
+pc %2 1:i1
+infer %1
 
+
+; function: $various-conditions-3
+
+; function: $various-conditions-4
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
@@ -384,88 +376,91 @@ infer %8
   )
   (nop)
  )
- (func $various-conditions (; 4 ;) (type $3) (param $x i32)
+ (func $various-conditions-1 (; 4 ;) (type $3) (param $x i32)
+  (local $1 i32)
+  (if
+   (get_local $x)
+   (block
+    (nop)
+    (set_local $x
+     (i32.add
+      (get_local $x)
+      (i32.const 1)
+     )
+    )
+    (nop)
+   )
+  )
+  (nop)
+ )
+ (func $various-conditions-2 (; 5 ;) (type $3) (param $x i32)
   (local $1 i32)
   (local $2 i32)
-  (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
-  (local $6 i32)
   (block
+   (set_local $1
+    (i32.lt_s
+     (get_local $x)
+     (i32.const 0)
+    )
+   )
    (if
-    (get_local $x)
+    (get_local $1)
+    (block
+     (nop)
+     (set_local $x
+      (i32.sub
+       (get_local $x)
+       (i32.const 2)
+      )
+     )
+     (nop)
+    )
+   )
+  )
+  (nop)
+ )
+ (func $various-conditions-3 (; 6 ;) (type $3) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block
+   (set_local $1
+    (i32.eqz
+     (i32.const 0)
+    )
+   )
+   (if
+    (get_local $1)
+    (block
+     (nop)
+     (set_local $x
+      (i32.sub
+       (get_local $x)
+       (i32.const 4)
+      )
+     )
+     (nop)
+    )
+   )
+  )
+  (nop)
+ )
+ (func $various-conditions-4 (; 7 ;) (type $3) (param $x i32)
+  (local $1 i32)
+  (block
+   (unreachable)
+   (if
+    (unreachable)
     (block
      (nop)
      (set_local $x
       (i32.add
        (get_local $x)
-       (i32.const 1)
+       (i32.const 3)
       )
      )
      (nop)
     )
    )
-   (nop)
-   (block
-    (set_local $2
-     (i32.lt_s
-      (get_local $x)
-      (i32.const 1)
-     )
-    )
-    (if
-     (get_local $2)
-     (block
-      (nop)
-      (set_local $x
-       (i32.add
-        (get_local $x)
-        (i32.const 1)
-       )
-      )
-      (nop)
-     )
-    )
-   )
-   (nop)
-   (block
-    (unreachable)
-    (if
-     (unreachable)
-     (block
-      (nop)
-      (set_local $x
-       (i32.add
-        (get_local $x)
-        (i32.const 1)
-       )
-      )
-      (nop)
-     )
-    )
-   )
-   (unreachable)
-   (block
-    (set_local $5
-     (i32.eqz
-      (i32.const 1)
-     )
-    )
-    (if
-     (get_local $5)
-     (block
-      (nop)
-      (set_local $x
-       (i32.add
-        (get_local $x)
-        (i32.const 1)
-       )
-      )
-      (nop)
-     )
-    )
-   )
-   (nop)
   )
   (unreachable)
  )

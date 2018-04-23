@@ -280,7 +280,7 @@ struct Builder : public Visitor<Builder, Node*> {
     auto type = ifTrue->getWasmType();
     if (!returnsI1(ifTrue)) {
       // Convert it to an i1
-      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
+      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
       auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
       auto* check = addNode(Node::makeExpr(expr));
       check->addValue(condition);
@@ -289,7 +289,7 @@ struct Builder : public Visitor<Builder, Node*> {
     }
     Node* ifFalse;
     {
-      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
+      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
       auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
       auto* check = addNode(Node::makeExpr(expr));
       check->addValue(condition);

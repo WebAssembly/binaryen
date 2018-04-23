@@ -94,7 +94,7 @@
     (set_local $x (i32.gt_s (get_local $x) (get_local $y)))
     (set_local $x (i32.gt_u (get_local $x) (get_local $y)))
   )
-  (func $various-conditions (param $x i32)
+  (func $various-conditions-1 (param $x i32)
     (if
       (get_local $x)
       (set_local $x
@@ -104,33 +104,39 @@
         )
       )
     )
+  )
+  (func $various-conditions-2 (param $x i32)
     (if
       (i32.lt_s
         (get_local $x)
-        (i32.const 1)
+        (i32.const 0)
       )
       (set_local $x
-        (i32.add
+        (i32.sub
           (get_local $x)
-          (i32.const 1)
+          (i32.const 2)
         )
       )
     )
+  )
+  (func $various-conditions-3 (param $x i32)
+    (if
+      (i32.eqz (i32.const 0))
+      (set_local $x
+        (i32.sub
+          (get_local $x)
+          (i32.const 4)
+        )
+      )
+    )
+  )
+  (func $various-conditions-4 (param $x i32)
     (if
       (unreachable)
       (set_local $x
         (i32.add
           (get_local $x)
-          (i32.const 1)
-        )
-      )
-    )
-    (if
-      (i32.eqz (i32.const 1))
-      (set_local $x
-        (i32.add
-          (get_local $x)
-          (i32.const 1)
+          (i32.const 3)
         )
       )
     )
