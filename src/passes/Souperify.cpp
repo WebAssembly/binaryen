@@ -68,6 +68,9 @@ struct Node {
            // making the condition either true or false, and this is the only place
            // we actually use an i1
     Block, // a source of phis
+    Zext,  // zero-extend an i1 (from an op where Souper returns i1 but wasm does not,
+           // and so we need a special way to get back to an i32/i64 if we operate
+           // on that value instead of just passing it straight to Souper).
     Bad    // something we can't handle and should ignore
   } type;
 
@@ -85,26 +88,18 @@ struct Node {
     Expression* expr;
     // For Const
     Literal value;
-    // A related node
-    // For Phi, this is the Block.
-    Node* relative;
     // For Cond
-    struct { // TODO: move out?
-      Node* block;
-      Index index;
-      Node* node;
-    } cond;
-    // For Block
-    Index blockSize;
+    Index index;
   };
 
   // Extra list of related nodes.
   // For Expr, these are the Nodes for the inputs to the expression (e.g.
   // a binary would have 2 in this vector here).
-  // For Phi, this is the list of values to pick from.
+  // For Phi, this is the block and then the list of values to pick from.
   // For Block, this is the list of Conds. Note that that block does not
   // depend on them - the Phis do, but we store them in the block so that
   // we can avoid duplication.
+  // For Cond, this is the block and node.
   std::vector<Node*> values;
 
   // Constructors
@@ -123,21 +118,20 @@ struct Node {
     ret->value = value;
     return ret;
   }
-  static Node* makePhi(Node* relative) {
+  static Node* makePhi(Node* block) {
     Node* ret = new Node(Phi);
-    ret->relative = relative;
+    ret->addValue(block);
     return ret;
   }
   static Node* makeCond(Node* block, Index index, Node* node) {
     Node* ret = new Node(Cond);
-    ret->cond.block = block;
-    ret->cond.index = index;
-    ret->cond.node = node;
+    ret->addValue(block);
+    ret->index = index;
+    ret->addValue(node);
     return ret;
   }
-  static Node* makeBlock(Index blockSize) {
+  static Node* makeBlock() {
     Node* ret = new Node(Block);
-    ret->blockSize = blockSize;
     return ret;
   }
   static Node* makeBad() {
@@ -148,11 +142,9 @@ struct Node {
   // Helpers
 
   void addValue(Node* value) {
-    assert(type == Expr || type == Phi || type == Block);
     values.push_back(value);
   }
   Node* getValue(Index i) {
-    assert(type == Expr || type == Phi || type == Block);
     return values.at(i);
   }
 
@@ -273,7 +265,7 @@ struct Builder : public Visitor<Builder, Node*> {
   // TODO: more than 2
   void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
-    auto* block = addNode(Node::makeBlock(2));
+    auto* block = addNode(Node::makeBlock());
     // Generate boolean conditions for the two branches.
     wasm::Builder builder(extra);
     auto* ifTrue = condition;
@@ -570,22 +562,23 @@ struct Trace {
         return node; // nothing more to add
       }
       case Node::Type::Phi: {
-        auto* block = add(node->relative);
+        auto* block = add(node->getValue(0));
+        auto size = block->values.size();
         // First, add the conditions for the block
-        for (Index i = 0; i < block->blockSize; i++) {
+        for (Index i = 0; i < size; i++) {
           add(block->getValue(i));
         }
         // Then, add the phi values
-        for (Index i = 0; i < block->blockSize; i++) {
+        for (Index i = 1; i < size + 1; i++) {
           add(node->getValue(i));
         }
         break;
       }
       case Node::Type::Cond: {
         if (!isPathCondition(node)) {
-          add(node->cond.block);
+          add(node->getValue(0)); // add the block
         }
-        add(node->cond.node);
+        add(node->getValue(1)); // add the node
         break;
       }
       case Node::Type::Block: {
@@ -692,9 +685,10 @@ struct Printer {
         break;
       }
       case Node::Type::Phi: {
-        auto* block = node->relative;
+        auto* block = node->getValue(0);
+        auto size = block->values.size();
         std::cout << "%" << indexing[node] << " = phi %" << indexing[block];
-        for (Index i = 0; i < block->blockSize; i++) {
+        for (Index i = 1; i < size + 1; i++) {
           std::cout << ", %" << indexing[node->getValue(i)];
         }
         break;
@@ -702,16 +696,16 @@ struct Printer {
       case Node::Type::Cond: {
         if (!trace.isPathCondition(node)) {
           // blockpc
-          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index;
+          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->getValue(0)] << ' ' << node->index;
         } else {
           // pc
           std::cout << "pc";
         }
-        std::cout << " %" << indexing[node->cond.node] << " 1:i1";
+        std::cout << " %" << indexing[node->getValue(1)] << " 1:i1";
         break;
       }
       case Node::Type::Block: {
-        std::cout << "%" << indexing[node] << " = block " << node->blockSize;
+        std::cout << "%" << indexing[node] << " = block " << node->values.size();
         break;
       }
       case Node::Type::Bad: {
