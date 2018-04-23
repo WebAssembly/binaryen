@@ -153,6 +153,17 @@ struct Builder : public Visitor<Builder, bool> {
   // Connects a specific set to the data in its value.
   std::unordered_map<SetLocal*, Node*> setNodeMap;
 
+  // Maps a control-flo expression to the DataFlow Block for it. E.g.
+  // for an if that is the block for the if condition.
+  std::unordered_map<Expression*, Node*> expressionBlockMap;
+
+  // Maps each expression to its control-flow parent (or null if
+  // there is none). We only map expressions we need to know about,
+  // which are sets and control-flow constructs.
+  std::unordered_map<Expression*, Expression*> parentMap;
+
+  Expression* parent = nullptr;
+
   // All the sets, in order of appearance.
   std::vector<SetLocal*> sets;
 
@@ -204,10 +215,13 @@ struct Builder : public Visitor<Builder, bool> {
 
   // Merge local state for multiple control flow paths
   // TODO: more than 2
-  void merge(const LocalState& aState, const LocalState& bState, Node* condition, LocalState& out) {
+  void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
-    // create a block only if necessary
-    Node* block = nullptr;
+    auto* block = addNode(Node::makeBlock(2));
+    // FIXME: we need eqz neqz here
+    block->addValue(addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1)))));
+    block->addValue(addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0)))));
+    expressionBlockMap[expr] = block;
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto a = aState[i];
       auto b = bState[i];
@@ -215,20 +229,11 @@ struct Builder : public Visitor<Builder, bool> {
         out[i] = a;
       } else {
         // We need to actually merge some stuff.
-        if (!block) {
-          block = addNode(Node::makeBlock(2));
-        }
         auto* phi = addNode(Node::makePhi(block));
         phi->addValue(a);
         phi->addValue(b);
         out[i] = phi;
       }
-    }
-    if (block) {
-      // We have phis, so it make sense to create the Conds for the branches.
-      // FIXME: we need eqz neqz here
-      block->addValue(addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1)))));
-      block->addValue(addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0)))));
     }
   }
 
@@ -237,12 +242,19 @@ struct Builder : public Visitor<Builder, bool> {
   bool visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     // TODO: handle breaks to here
+    auto* oldParent = parent;
+    parentMap[curr] = oldParent;
+    parent = curr;
     for (auto* child : curr->list) {
       visit(child);
     }
+    parent = oldParent;
     return true;
   }
   bool visitIf(If* curr) {
+    auto* oldParent = parent;
+    parentMap[curr] = oldParent;
+    parent = curr;
     // Set up the condition.
     // TODO: move this const-or-get logic to a helper, we'll need it elsewhere I am quite sure
     Node* condition;
@@ -262,10 +274,11 @@ struct Builder : public Visitor<Builder, bool> {
       localState = initialState;
       visit(curr->ifFalse);
       auto afterIfFalseState = localState; // TODO: optimize
-      merge(afterIfTrueState, afterIfFalseState, condition, localState);
+      merge(afterIfTrueState, afterIfFalseState, condition, curr, localState);
     } else {
-      merge(initialState, afterIfTrueState, condition, localState);
+      merge(initialState, afterIfTrueState, condition, curr, localState);
     }
+    parent = oldParent;
     return true;
   }
   bool visitLoop(Loop* curr) { return false; }
@@ -282,6 +295,7 @@ struct Builder : public Visitor<Builder, bool> {
   }
   bool visitSetLocal(SetLocal* curr) {
     sets.push_back(curr);
+    parentMap[curr] = parent;
     // If we are doing a copy, just do the copy.
     if (auto* get = curr->value->dynCast<GetLocal>()) {
       setNodeMap[curr] = localState[curr->index] = localState[get->index];
@@ -407,7 +421,7 @@ struct Builder : public Visitor<Builder, bool> {
 };
 
 // Generates a trace: all the information to generate a Souper LHS
-// for a specific set whose value we want to infer.
+// for a specific set_local whose value we want to infer.
 struct Trace : public Visitor<Trace> {
   Builder& builder;
   SetLocal* set;
