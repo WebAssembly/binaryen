@@ -455,13 +455,12 @@ struct Trace {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
-    // If nothing bad showed up, still mark it as bad if it's trivial
-    // and worthless.
-    if (!bad) {
-      if (nodes.size() <= 1) {
-        bad = true;
-      }
-    }
+    // TODO: mark as bad if e.g. nodes.size() <= 1, which is boring?
+    //if (!bad) {
+    //  if ( {
+    //    bad = true;
+    //  }
+    //}
     // Also pull in conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.

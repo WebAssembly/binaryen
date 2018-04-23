@@ -85,10 +85,13 @@
       )
     )
   )
-  (func $flips (result i32)
-    (return (i32.ge_s (i32.const 1) (i32.const 2)))
-    (return (i32.ge_u (i32.const 1) (i32.const 2)))
-    (return (i32.gt_s (i32.const 1) (i32.const 2)))
-    (return (i32.gt_u (i32.const 1) (i32.const 2)))
+  ;; flipping of greater than/or equals ops, which are not in Souper IR
+  (func $flips
+    (local $x i32)
+    (local $y i32)
+    (set_local $x (i32.ge_s (get_local $x) (get_local $y)))
+    (set_local $x (i32.ge_u (get_local $x) (get_local $y)))
+    (set_local $x (i32.gt_s (get_local $x) (get_local $y)))
+    (set_local $x (i32.gt_u (get_local $x) (get_local $y)))
   )
 )
