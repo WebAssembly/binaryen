@@ -49722,7 +49722,7 @@ function asmFunc(global, env, buffer) {
  function $34($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
+  var $2 = 0;
   block : {
    $2 = 5;
    switch (0 | 0) {
@@ -49736,16 +49736,15 @@ function asmFunc(global, env, buffer) {
  function $35($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
-  var $2 = 0, $3 = 0, $4 = 0;
+  var $2 = 0;
   block : {
-   $2 = $0;
-   $3 = 6;
+   $2 = 6;
    switch (1 | 0) {
    default:
     break block;
    };
   };
-  return $3 | 0;
+  return $2 | 0;
  }
  
  function $36() {

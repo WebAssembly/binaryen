@@ -2,8 +2,7 @@
  (type $0 (func (result f64)))
  (func $0 (; 0 ;) (type $0) (result f64)
   (local $0 f64)
-  (local $1 f64)
-  (local $2 i32)
+  (local $1 i32)
   (block $block$2$break
    (block
    )
@@ -16,11 +15,8 @@
       (set_local $0
        (f64.const -nan:0xfffffd63e4e5a)
       )
-      (set_local $1
-       (get_local $0)
-      )
       (return
-       (get_local $1)
+       (get_local $0)
       )
      )
     )
@@ -47,7 +43,6 @@
  (func $0 (; 0 ;) (type $0) (result i32)
   (local $0 i32)
   (local $1 i32)
-  (local $2 i32)
   (block
    (block
    )
@@ -105,11 +100,8 @@
           (set_local $0
            (i32.const 2)
           )
-          (set_local $1
-           (get_local $0)
-          )
           (return
-           (get_local $1)
+           (get_local $0)
           )
          )
         )

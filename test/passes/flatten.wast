@@ -1016,4 +1016,7 @@
     (drop (tee_local $x (unreachable)))
     (drop (tee_local $y (tee_local $x (i32.const 2))))
   )
+  (func $return (param $x i32) (result i32)
+    (return (i32.sub (i32.const 1) (i32.const 2)))
+  )
 )
