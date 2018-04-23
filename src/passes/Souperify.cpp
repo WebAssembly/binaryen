@@ -29,6 +29,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "ir/abstract.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 
@@ -40,19 +41,32 @@ namespace wasm {
 
 namespace DataFlow {
 
+//
+// We reuse the Binaryen IR as much as possible: when things are identical between
+// the two IRs, we just create an Expr node, which stores the opcode and other
+// details, and we can emit them to Souper by reading the Binaryen Expression.
+// Other node types here are special things from Souper IR that we can't
+// represent that way.
+//
+// * Souper comparisons return an i1. We extend them immediately if they are
+//   going to be used as i32s or i64s.
+// * When we use an Expression node, we just use its immediate fields, like the
+//   op in a binary, alignment etc. in a load, etc. We don't look into the
+//   pointers to child nodes. Instead, the DataFlow IR has its own pointers
+//   directly to DataFlow children. In particular, this means that it's easy
+//   to create an Expression with the info you need and not care about linking
+//   it up to other Expressions.
+//
+
 struct Node {
-  // We reuse the Binaryen IR as much as possible: when things are identical between
-  // the two IRs, we just create an Expr node, which stores the opcode and other
-  // details, and we can emit them to Souper by reading the Binaryen Expression.
-  // Other node types here are special things from Souper IR that we can't
-  // represent that way.
-  // TODO: add more nodes for the differences between the two IRs, like i1.
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Expr,  // a value represented by a Binaryen Expression
     Const, // a constant value
     Phi,   // a phi from converging control flow
-    Cond,  // a condition on a block path (pc or blockpc)
+    Cond,  // a condition on a block path (pc or blockpc). these always use an i1,
+           // making the condition either true or false, and this is the only place
+           // we actually use an i1
     Block, // a source of phis
     Bad    // something we can't handle and should ignore
   } type;
@@ -71,14 +85,14 @@ struct Node {
     Expression* expr;
     // For Const
     Literal value;
-    // For Phi
-    Node* block;
+    // A related node
+    // For Phi, this is the Block.
+    Node* relative;
     // For Cond
     struct { // TODO: move out?
       Node* block;
       Index index;
       Node* node;
-      Literal value;
     } cond;
     // For Block
     Index blockSize;
@@ -109,17 +123,16 @@ struct Node {
     ret->value = value;
     return ret;
   }
-  static Node* makePhi(Node* block) {
+  static Node* makePhi(Node* relative) {
     Node* ret = new Node(Phi);
-    ret->block = block;
+    ret->relative = relative;
     return ret;
   }
-  static Node* makeCond(Node* block, Index index, Node* node, Literal value) {
+  static Node* makeCond(Node* block, Index index, Node* node) {
     Node* ret = new Node(Cond);
     ret->cond.block = block;
     ret->cond.index = index;
     ret->cond.node = node;
-    ret->cond.value = value;
     return ret;
   }
   static Node* makeBlock(Index blockSize) {
@@ -142,10 +155,44 @@ struct Node {
     assert(type == Expr || type == Phi || type == Block);
     return values.at(i);
   }
+
+  wasm::Type getWasmType() {
+    if (type == Expr) {
+      return expr->type;
+    } else if (type == Const) {
+      return value.type;
+    } else {
+      WASM_UNREACHABLE();
+    }
+  }
 };
+
+// As mentioned above, comparisons return i1. This checks
+// if an operation is of that sort.
+static bool returnsI1InDataFlow(Expression* curr) {
+  if (auto* binary = curr->dynCast<Binary>()) {
+    return binary->isRelational();
+  } else if (auto* unary = curr->dynCast<Unary>()) {
+    return unary->isRelational();
+  }
+  return false;
+}
+
+// As mentioned above, comparisons return i1. This checks
+// if an operation is of that sort.
+static bool returnsI1(Node* node) {
+  if (node->isExpr()) {
+    return returnsI1InDataFlow(node->expr);
+  }
+  return false;
+}
 
 // We only need one canonical bad node. It is never modified.
 static Node CanonicalBad(Node::Type::Bad);
+
+// We only need one placeholder for an unused item in an expression
+// (where the pointer doesn't really matter).
+static wasm::Unreachable CanonicalUnused;
 
 // Main logic to generate IR for a function. This is implemented as a
 // visitor on the wasm, where visitors return a Node* that either
@@ -227,9 +274,30 @@ struct Builder : public Visitor<Builder, Node*> {
   void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
     auto* block = addNode(Node::makeBlock(2));
-    // FIXME: we need eqz neqz here
-    block->addValue(addNode(Node::makeCond(block, 0, condition, Literal(int32_t(1)))));
-    block->addValue(addNode(Node::makeCond(block, 1, condition, Literal(int32_t(0)))));
+    // Generate boolean conditions for the two branches.
+    wasm::Builder builder(extra);
+    auto* ifTrue = condition;
+    auto type = ifTrue->getWasmType();
+    if (!returnsI1(ifTrue)) {
+      // Convert it to an i1
+      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
+      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+      auto* check = addNode(Node::makeExpr(expr));
+      check->addValue(condition);
+      check->addValue(zero);
+      ifTrue = check;
+    }
+    Node* ifFalse;
+    {
+      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
+      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+      auto* check = addNode(Node::makeExpr(expr));
+      check->addValue(condition);
+      check->addValue(zero);
+      ifFalse = check;
+    }
+    block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
+    block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
     expressionBlockMap[expr] = block;
     for (Index i = 0; i < func->getNumLocals(); i++) {
       auto a = aState[i];
@@ -390,6 +458,11 @@ struct Builder : public Visitor<Builder, Node*> {
         auto* ret = addNode(Node::makeExpr(curr));
         ret->addValue(left);
         ret->addValue(right);
+        if (curr->isRelational()) {
+          // Relational ops in Souper return an i1; we must immediately
+          // expand it to an i32.
+          // TODO FIXME XXX
+        }
         return ret;
       }
       case GtSInt32:
@@ -484,7 +557,7 @@ struct Trace {
         return node; // nothing more to add
       }
       case Node::Type::Phi: {
-        auto* block = add(node->block);
+        auto* block = add(node->relative);
         // First, add the conditions for the block
         for (Index i = 0; i < block->blockSize; i++) {
           add(block->getValue(i));
@@ -606,7 +679,7 @@ struct Printer {
         break;
       }
       case Node::Type::Phi: {
-        auto* block = node->block;
+        auto* block = node->relative;
         std::cout << "%" << indexing[node] << " = phi %" << indexing[block];
         for (Index i = 0; i < block->blockSize; i++) {
           std::cout << ", %" << indexing[node->getValue(i)];
@@ -616,13 +689,12 @@ struct Printer {
       case Node::Type::Cond: {
         if (!trace.isPathCondition(node)) {
           // blockpc
-          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index;;
+          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->cond.block] << ' ' << node->cond.index;
         } else {
           // pc
           std::cout << "pc";
         }
-        std::cout << " %" << indexing[node->cond.node] << ' ';
-        print(node->cond.value);
+        std::cout << " %" << indexing[node->cond.node] << " 1:i1";
         break;
       }
       case Node::Type::Block: {
