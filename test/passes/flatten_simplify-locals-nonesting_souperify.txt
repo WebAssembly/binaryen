@@ -19,10 +19,12 @@ infer %2
 %0:i64 = var
 %1:i64 = var
 %2 = eq %0, %1
-%3:i64 = var
-%4 = ne %0, %3
-%5 = and %2, %4
-infer %5
+%3:i32 = zext %2
+%4:i64 = var
+%5 = ne %0, %4
+%6:i32 = zext %5
+%7 = and %3, %6
+infer %7
 
 
 ; function: $figure-1b
@@ -58,12 +60,14 @@ infer %2
 %0:i64 = var
 %1:i64 = var
 %2 = eq %0, %1
-%3:i64 = var
-%4 = ne %0, %3
-%5 = and %2, %4
-%6 = slt %1, %3
-pc %6 1:i1
-infer %5
+%3:i32 = zext %2
+%4:i64 = var
+%5 = ne %0, %4
+%6:i32 = zext %5
+%7 = and %3, %6
+%8 = slt %1, %4
+pc %8 1:i1
+infer %7
 
 
 ; function: $figure-3-if
@@ -116,23 +120,29 @@ infer %0
 
 ; start LHS
 %0 = slt 0:i32, 0:i32
-%1 = ult 0:i32, %0
-infer %1
-
-
-; start LHS
-%0 = slt 0:i32, 0:i32
-%1 = ult 0:i32, %0
-%2 = sle 0:i32, %1
+%1:i32 = zext %0
+%2 = ult 0:i32, %1
 infer %2
 
 
 ; start LHS
 %0 = slt 0:i32, 0:i32
-%1 = ult 0:i32, %0
-%2 = sle 0:i32, %1
-%3 = ule 0:i32, %2
-infer %3
+%1:i32 = zext %0
+%2 = ult 0:i32, %1
+%3:i32 = zext %2
+%4 = sle 0:i32, %3
+infer %4
+
+
+; start LHS
+%0 = slt 0:i32, 0:i32
+%1:i32 = zext %0
+%2 = ult 0:i32, %1
+%3:i32 = zext %2
+%4 = sle 0:i32, %3
+%5:i32 = zext %4
+%6 = ule 0:i32, %5
+infer %6
 
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))

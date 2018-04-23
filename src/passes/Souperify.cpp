@@ -96,10 +96,11 @@ struct Node {
   // For Expr, these are the Nodes for the inputs to the expression (e.g.
   // a binary would have 2 in this vector here).
   // For Phi, this is the block and then the list of values to pick from.
+  // For Cond, this is the block and node.
   // For Block, this is the list of Conds. Note that that block does not
   // depend on them - the Phis do, but we store them in the block so that
   // we can avoid duplication.
-  // For Cond, this is the block and node.
+  // For Zext, this is the value we extend.
   std::vector<Node*> values;
 
   // Constructors
@@ -132,6 +133,11 @@ struct Node {
   }
   static Node* makeBlock() {
     Node* ret = new Node(Block);
+    return ret;
+  }
+  static Node* makeZext(Node* child) {
+    Node* ret = new Node(Zext);
+    ret->addValue(child);
     return ret;
   }
   static Node* makeBad() {
@@ -504,16 +510,9 @@ struct Builder : public Visitor<Builder, Node*> {
   // If the node returns an i1, then we are called from a context that needs
   // to use it normally as in wasm - extend it
   Node* expandFromi1(Node* node) {
-/* TODO
     if (returnsI1(node)) {
-      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
-      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
-      auto* check = addNode(Node::makeExpr(expr));
-      check->addValue(condition);
-      check->addValue(zero);
-      ifTrue = check;
+      node = addNode(Node::makeZext(node));
     }
-*/
     return node;
   }
 };
@@ -583,6 +582,10 @@ struct Trace {
       }
       case Node::Type::Block: {
         break; // nothing more to add
+      }
+      case Node::Type::Zext: {
+        add(node->getValue(0));
+        break;
       }
       case Node::Type::Bad: {
         bad = true;
@@ -706,6 +709,13 @@ struct Printer {
       }
       case Node::Type::Block: {
         std::cout << "%" << indexing[node] << " = block " << node->values.size();
+        break;
+      }
+      case Node::Type::Zext: {
+        auto* child = node->getValue(0);
+        std::cout << "%" << indexing[node] << ':' << printType(child->getWasmType());
+        std::cout << " = zext ";
+        printInternal(child);
         break;
       }
       case Node::Type::Bad: {
