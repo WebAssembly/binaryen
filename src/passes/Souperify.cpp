@@ -28,6 +28,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "wasm-builder.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 
@@ -182,6 +183,9 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // All of our nodes
   std::vector<std::unique_ptr<Node>> nodes;
+
+  // We need to create some extra expression nodes in some case.
+  MixedArena extra;
 
   // Check if a function is relevant for us.
   static bool check(Function* func) {
@@ -375,28 +379,45 @@ struct Builder : public Visitor<Builder, Node*> {
       case LeSInt32:
       case LeSInt64:
       case LeUInt32:
-      case LeUInt64:
+      case LeUInt64: {
+        // These are ok as-is.
+        // Check if our children are supported.
+        auto* left = visit(curr->left);
+        if (left->isBad()) return left;
+        auto* right = visit(curr->right);
+        if (right->isBad()) return right;
+        // Great, we are supported!
+        auto* ret = addNode(Node::makeExpr(curr));
+        ret->addValue(left);
+        ret->addValue(right);
+        return ret;
+      }
       case GtSInt32:
       case GtSInt64:
-      case GtUInt32:
-      case GtUInt64:
       case GeSInt32:
       case GeSInt64:
+      case GtUInt32:
+      case GtUInt64:
       case GeUInt32:
-      case GeUInt64: break; // these are ok
-
+      case GeUInt64: {
+        // These need to be flipped as Souper does not support redundant ops.
+        wasm::Builder builder(extra);
+        BinaryOp opposite;
+        switch (curr->op) {
+          case GtSInt32: opposite = LeSInt32; break;
+          case GtSInt64: opposite = LeSInt64; break;
+          case GeSInt32: opposite = LtSInt32; break;
+          case GeSInt64: opposite = LtSInt64; break;
+          case GtUInt32: opposite = LeUInt32; break;
+          case GtUInt64: opposite = LeUInt64; break;
+          case GeUInt32: opposite = LtUInt32; break;
+          case GeUInt64: opposite = LtUInt64; break;
+          default: WASM_UNREACHABLE();
+        }
+        return visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
+      }
       default: return &CanonicalBad; // anything else is bad
     }
-    // Then, check if our children are supported.
-    auto* left = visit(curr->left);
-    if (left->isBad()) return left;
-    auto* right = visit(curr->right);
-    if (right->isBad()) return right;
-    // Great, we are supported!
-    auto* ret = addNode(Node::makeExpr(curr));
-    ret->addValue(left);
-    ret->addValue(right);
-    return ret;
   }
   Node* visitSelect(Select* curr) {
     return &CanonicalBad;
@@ -683,14 +704,6 @@ struct Printer {
         case LeSInt64:  std::cout << "sle";  break;
         case LeUInt32:
         case LeUInt64:  std::cout << "ule";  break;
-        case GtSInt32:
-        case GtSInt64:  std::cout << "sgt";  break;
-        case GtUInt32:
-        case GtUInt64:  std::cout << "ugt";  break;
-        case GeSInt32:
-        case GeSInt64:  std::cout << "sge";  break;
-        case GeUInt32:
-        case GeUInt64:  std::cout << "uge";  break;
 
         default: WASM_UNREACHABLE();
       }
