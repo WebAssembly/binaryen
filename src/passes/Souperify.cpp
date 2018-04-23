@@ -40,12 +40,14 @@ namespace wasm {
 namespace DataFlow {
 
 struct Node {
-  // A node is either a Set, which represents a wasm IR operation, or something
-  // new in the Souper IR.
+  // We reuse the Binaryen IR as much as possible: when things are identical between
+  // the two IRs, we just create and Expr node and refer to the Binaryen Expression.
+  // Other node types here are special things from Souper IR that we can't
+  // represent that way.
   // TODO: add more nodes for the differences between the two IRs, like i1.
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
-    Set,   // a register, defined by a SetLocal
+    Expr,  // a value represented by a Binaryen Expression
     Const, // a constant value
     Phi,   // a phi from converging control flow
     Cond,  // a condition on a block path (pc or blockpc)
@@ -55,14 +57,14 @@ struct Node {
 
   Node(Type type) : type(type) {}
 
-  template<Type expected>
-  bool is() { return type == expected; }
+  // TODO: the others, if we need them
+  bool isBad() { return type == Bad; }
 
   union {
     // For Var
     Index varIndex;
-    // For Set
-    SetLocal* set;
+    // For Expr
+    Expression* expr;
     // For Const
     Literal value;
     // For Phi
@@ -91,9 +93,9 @@ struct Node {
     ret->varIndex = varIndex;
     return ret;
   }
-  static Node* makeSet(SetLocal* set) {
-    Node* ret = new Node(Set);
-    ret->set = set;
+  static Node* makeExpr(Expression* expr) {
+    Node* ret = new Node(Expr);
+    ret->expr = expr;
     return ret;
   }
   static Node* makeConst(Literal value) {
@@ -136,10 +138,16 @@ struct Node {
   }
 };
 
+// We only need one canonical bad node. It is never modified.
+static Node CanonicalBad(Node::Type::Bad);
+
 // Main logic to generate IR for a function. This is implemented as a
-// visitor on the wasm, where visitors return a bool whether the node is
-// supported (false === bad).
-struct Builder : public Visitor<Builder, bool> {
+// visitor on the wasm, where visitors return a Node* that either
+// contains the DataFlow IR for that expression, which can be a
+// Bad node if not supported, or nullptr if not relevant (we only
+// use the return value for internal expressions, that is, the
+// value of a set_local or the condition of an if etc).
+struct Builder : public Visitor<Builder, Node*> {
   // Tracks the state of locals in a control flow path:
   //   localState[i] = the node whose value it contains
   typedef std::vector<Node*> LocalState;
@@ -194,7 +202,8 @@ struct Builder : public Visitor<Builder, bool> {
       } else {
         node = Node::makeConst(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
       }
-      addNode(node, i);
+      addNode(node);
+      localState[i] = node;
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
@@ -205,12 +214,6 @@ struct Builder : public Visitor<Builder, bool> {
   Node* addNode(Node* node) {
     nodes.push_back(std::unique_ptr<Node>(node));
     return node;
-  }
-
-  // Add a new node, for a specific local index.
-  Node* addNode(Node* node, Index index) {
-    localState[index] = node;
-    return addNode(node);
   }
 
   // Merge local state for multiple control flow paths
@@ -239,7 +242,7 @@ struct Builder : public Visitor<Builder, bool> {
 
   // Visitors.
 
-  bool visitBlock(Block* curr) {
+  Node* visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     // TODO: handle breaks to here
     auto* oldParent = parent;
@@ -249,22 +252,14 @@ struct Builder : public Visitor<Builder, bool> {
       visit(child);
     }
     parent = oldParent;
-    return true;
+    return nullptr;
   }
-  bool visitIf(If* curr) {
+  Node* visitIf(If* curr) {
     auto* oldParent = parent;
     parentMap[curr] = oldParent;
     parent = curr;
     // Set up the condition.
-    // TODO: move this const-or-get logic to a helper, we'll need it elsewhere I am quite sure
-    Node* condition;
-    if (auto* get = curr->condition->dynCast<GetLocal>()) {
-      visit(curr->condition);
-      condition = getNodeMap[get];
-    } else {
-      auto* c = curr->condition->cast<wasm::Const>();
-      condition = addNode(Node::makeConst(c->value));
-    }
+    Node* condition = visit(curr->condition);
     assert(condition);
     // Handle the contents.
     auto initialState = localState;
@@ -279,68 +274,64 @@ struct Builder : public Visitor<Builder, bool> {
       merge(initialState, afterIfTrueState, condition, curr, localState);
     }
     parent = oldParent;
-    return true;
+    return nullptr;
   }
-  bool visitLoop(Loop* curr) { return false; }
-  bool visitBreak(Break* curr) { return false; }
-  bool visitSwitch(Switch* curr) { return false; }
-  bool visitCall(Call* curr) { return false; }
-  bool visitCallImport(CallImport* curr) { return false; }
-  bool visitCallIndirect(CallIndirect* curr) { return false; }
-  bool visitGetLocal(GetLocal* curr) {
+  Node* visitLoop(Loop* curr) { return &CanonicalBad; }
+  Node* visitBreak(Break* curr) { return &CanonicalBad; }
+  Node* visitSwitch(Switch* curr) { return &CanonicalBad; }
+  Node* visitCall(Call* curr) { return &CanonicalBad; }
+  Node* visitCallImport(CallImport* curr) { return &CanonicalBad; }
+  Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
+  Node* visitGetLocal(GetLocal* curr) {
     // We now know which IR node this get refers to
     auto* node = localState[curr->index];
     getNodeMap[curr] = node;
-    return !node->is<Node::Type::Bad>();
+    return node;
   }
-  bool visitSetLocal(SetLocal* curr) {
+  Node* visitSetLocal(SetLocal* curr) {
     sets.push_back(curr);
     parentMap[curr] = parent;
     // If we are doing a copy, just do the copy.
     if (auto* get = curr->value->dynCast<GetLocal>()) {
       setNodeMap[curr] = localState[curr->index] = localState[get->index];
-      return true;
+      return nullptr;
     }
     // Make a new IR node for the new value here.
-    if (visit(curr->value)) {
-      setNodeMap[curr] = addNode(Node::makeSet(curr), curr->index);
-      return true;
-    } else {
-      setNodeMap[curr] = addNode(Node::makeBad(), curr->index);
-      return false;
-    }
+    auto* node = setNodeMap[curr] = visit(curr->value);
+    localState[curr->index] = node;
+    return nullptr;
   }
-  bool visitGetGlobal(GetGlobal* curr) {
-    return false;
+  Node* visitGetGlobal(GetGlobal* curr) {
+    return &CanonicalBad;
   }
-  bool visitSetGlobal(SetGlobal* curr) {
-    return false;
+  Node* visitSetGlobal(SetGlobal* curr) {
+    return &CanonicalBad;
   }
-  bool visitLoad(Load* curr) {
-    return false;
+  Node* visitLoad(Load* curr) {
+    return &CanonicalBad;
   }
-  bool visitStore(Store* curr) {
-    return false;
+  Node* visitStore(Store* curr) {
+    return &CanonicalBad;
   }
-  bool visitAtomicRMW(AtomicRMW* curr) {
-    return false;
+  Node* visitAtomicRMW(AtomicRMW* curr) {
+    return &CanonicalBad;
   }
-  bool visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return false;
+  Node* visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return &CanonicalBad;
   }
-  bool visitAtomicWait(AtomicWait* curr) {
-    return false;
+  Node* visitAtomicWait(AtomicWait* curr) {
+    return &CanonicalBad;
   }
-  bool visitAtomicWake(AtomicWake* curr) {
-    return false;
+  Node* visitAtomicWake(AtomicWake* curr) {
+    return &CanonicalBad;
   }
-  bool visitConst(Const* curr) {
-    return true;
+  Node* visitConst(Const* curr) {
+    return addNode(Node::makeConst(curr->value));
   }
-  bool visitUnary(Unary* curr) {
-    return false;
+  Node* visitUnary(Unary* curr) {
+    return &CanonicalBad;
   }
-  bool visitBinary(Binary *curr) {
+  Node* visitBinary(Binary *curr) {
     // First, check if we support this op.
     switch (curr->op) {
       case AddInt32:
@@ -394,29 +385,35 @@ struct Builder : public Visitor<Builder, bool> {
       case GeUInt32:
       case GeUInt64: break; // these are ok
 
-      default: return false; // anything else is bad
+      default: return &CanonicalBad; // anything else is bad
     }
     // Then, check if our children are supported.
-    return visit(curr->left) && visit(curr->right);
+    // XXX we drop the return values here. For a Const, we created a node
+    //     that we no longer need.
+    if (!visit(curr->left)->isBad() && !visit(curr->right)->isBad()) {
+      return addNode(Node::makeExpr(curr));
+    } else {
+      return &CanonicalBad;
+    }
   }
-  bool visitSelect(Select* curr) {
-    return false;
+  Node* visitSelect(Select* curr) {
+    return &CanonicalBad;
   }
-  bool visitDrop(Drop* curr) {
-    return false;
+  Node* visitDrop(Drop* curr) {
+    return &CanonicalBad;
   }
-  bool visitReturn(Return* curr) {
+  Node* visitReturn(Return* curr) {
     // note we don't need the value (it's a const or a get as we are flattened)
-    return true;
+    return nullptr;
   }
-  bool visitHost(Host* curr) {
-    return false;
+  Node* visitHost(Host* curr) {
+    return &CanonicalBad;
   }
-  bool visitNop(Nop* curr) {
-    return true;
+  Node* visitNop(Nop* curr) {
+    return nullptr;
   }
-  bool visitUnreachable(Unreachable* curr) {
-    return false;
+  Node* visitUnreachable(Unreachable* curr) {
+    return &CanonicalBad;
   }
 };
 
@@ -453,9 +450,9 @@ struct Trace : public Visitor<Trace> {
       case Node::Type::Var: {
         break; // nothing more to add
       }
-      case Node::Type::Set: {
+      case Node::Type::Expr: {
         // Add the dependencies.
-        visit(node->set->value);
+        visit(node->expr);
         break;
       }
       case Node::Type::Const: {
@@ -584,9 +581,9 @@ struct Printer : public Visitor<Printer> {
         std::cout << "%" << indexing[node] << ":" << printType(builder.func->getLocalType(node->varIndex)) << " = var";
         break; // nothing more to add
       }
-      case Node::Type::Set: {
+      case Node::Type::Expr: {
         std::cout << "%" << indexing[node] << " = ";
-        visit(node->set->value);
+        visit(node->expr);
         break;
       }
       case Node::Type::Const: {
