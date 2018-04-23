@@ -83,7 +83,7 @@ struct Node {
 
   union {
     // For Var
-    Index varIndex;
+    wasm::Type wasmType;
     // For Expr
     Expression* expr;
     // For Const
@@ -104,9 +104,9 @@ struct Node {
   std::vector<Node*> values;
 
   // Constructors
-  static Node* makeVar(Index varIndex) {
+  static Node* makeVar(wasm::Type wasmType) {
     Node* ret = new Node(Var);
-    ret->varIndex = varIndex;
+    ret->wasmType = wasmType;
     return ret;
   }
   static Node* makeExpr(Expression* expr) {
@@ -155,12 +155,13 @@ struct Node {
   }
 
   wasm::Type getWasmType() {
-    if (type == Expr) {
-      return expr->type;
-    } else if (type == Const) {
-      return value.type;
-    } else {
-      WASM_UNREACHABLE();
+    switch (type) {
+      case Var:   return wasmType;
+      case Expr:  return expr->type;
+      case Const: return value.type;
+      case Phi:   return getValue(1)->getWasmType();
+      case Zext:  return getValue(0)->getWasmType();
+      default:    WASM_UNREACHABLE();
     }
   }
 };
@@ -248,10 +249,11 @@ struct Builder : public Visitor<Builder, Node*> {
     localState.resize(func->getNumLocals());
     for (Index i = 0; i < func->getNumLocals(); i++) {
       Node* node;
+      auto type = func->getLocalType(i);
       if (func->isParam(i)) {
-        node = Node::makeVar(i);
+        node = Node::makeVar(type);
       } else {
-        node = Node::makeConst(LiteralUtils::makeLiteralZero(func->getLocalType(i)));
+        node = Node::makeConst(LiteralUtils::makeLiteralZero(type));
       }
       addNode(node);
       localState[i] = node;
@@ -332,6 +334,9 @@ struct Builder : public Visitor<Builder, Node*> {
     parent = curr;
     // Set up the condition.
     Node* condition = visit(curr->condition);
+    if (condition->isBad()) {
+      return nullptr; // give up
+    }
     assert(condition);
     // Handle the contents.
     auto initialState = localState;
@@ -674,7 +679,7 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(builder.func->getLocalType(node->varIndex)) << " = var";
+        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
