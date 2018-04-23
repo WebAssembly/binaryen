@@ -461,7 +461,7 @@ struct Trace {
         break;
       }
       case Node::Type::Const: {
-        break; // nothing more to add
+        return node; // nothing more to add
       }
       case Node::Type::Phi: {
         auto* block = add(node->block);
