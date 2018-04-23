@@ -41,7 +41,8 @@ namespace DataFlow {
 
 struct Node {
   // We reuse the Binaryen IR as much as possible: when things are identical between
-  // the two IRs, we just create and Expr node and refer to the Binaryen Expression.
+  // the two IRs, we just create an Expr node, which stores the opcode and other
+  // details, and we can emit them to Souper by reading the Binaryen Expression.
   // Other node types here are special things from Souper IR that we can't
   // represent that way.
   // TODO: add more nodes for the differences between the two IRs, like i1.
@@ -58,6 +59,8 @@ struct Node {
   Node(Type type) : type(type) {}
 
   // TODO: the others, if we need them
+  bool isExpr() { return type == Expr; }
+  bool isConst() { return type == Const; }
   bool isBad() { return type == Bad; }
 
   union {
@@ -80,7 +83,9 @@ struct Node {
     Index blockSize;
   };
 
-  // Extra list of related nodes. (can't be in the union anyhow due to C++)
+  // Extra list of related nodes.
+  // For Expr, these are the Nodes for the inputs to the expression (e.g.
+  // a binary would have 2 in this vector here).
   // For Phi, this is the list of values to pick from.
   // For Block, this is the list of Conds. Note that that block does not
   // depend on them - the Phis do, but we store them in the block so that
@@ -129,11 +134,11 @@ struct Node {
   // Helpers
 
   void addValue(Node* value) {
-    assert(type == Phi || type == Block);
+    assert(type == Expr || type == Phi || type == Block);
     values.push_back(value);
   }
   Node* getValue(Index i) {
-    assert(type == Phi || type == Block);
+    assert(type == Expr || type == Phi || type == Block);
     return values.at(i);
   }
 };
@@ -154,9 +159,6 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // The current local state in the control flow path being emitted.
   LocalState localState;
-
-  // Connects a specific get to the data flowing into it.
-  std::unordered_map<GetLocal*, Node*> getNodeMap;
 
   // Connects a specific set to the data in its value.
   std::unordered_map<SetLocal*, Node*> setNodeMap;
@@ -284,9 +286,7 @@ struct Builder : public Visitor<Builder, Node*> {
   Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
   Node* visitGetLocal(GetLocal* curr) {
     // We now know which IR node this get refers to
-    auto* node = localState[curr->index];
-    getNodeMap[curr] = node;
-    return node;
+    return localState[curr->index];
   }
   Node* visitSetLocal(SetLocal* curr) {
     sets.push_back(curr);
@@ -388,13 +388,15 @@ struct Builder : public Visitor<Builder, Node*> {
       default: return &CanonicalBad; // anything else is bad
     }
     // Then, check if our children are supported.
-    // XXX we drop the return values here. For a Const, we created a node
-    //     that we no longer need.
-    if (!visit(curr->left)->isBad() && !visit(curr->right)->isBad()) {
-      return addNode(Node::makeExpr(curr));
-    } else {
-      return &CanonicalBad;
-    }
+    auto* left = visit(curr->left);
+    if (left->isBad()) return left;
+    auto* right = visit(curr->right);
+    if (right->isBad()) return right;
+    // Great, we are supported!
+    auto* ret = addNode(Node::makeExpr(curr));
+    ret->addValue(left);
+    ret->addValue(right);
+    return ret;
   }
   Node* visitSelect(Select* curr) {
     return &CanonicalBad;
@@ -419,7 +421,7 @@ struct Builder : public Visitor<Builder, Node*> {
 
 // Generates a trace: all the information to generate a Souper LHS
 // for a specific set_local whose value we want to infer.
-struct Trace : public Visitor<Trace> {
+struct Trace {
   Builder& builder;
   SetLocal* set;
 
@@ -452,7 +454,10 @@ struct Trace : public Visitor<Trace> {
       }
       case Node::Type::Expr: {
         // Add the dependencies.
-        visit(node->expr);
+        assert(!node->expr->is<GetLocal>());
+        for (Index i = 0; i < node->values.size(); i++) {
+          add(node->getValue(i));
+        }
         break;
       }
       case Node::Type::Const: {
@@ -536,22 +541,10 @@ struct Trace : public Visitor<Trace> {
   bool isBad() {
     return bad;
   }
-
-  // Visitors for possible set_local values
-
-  void visitGetLocal(GetLocal* curr) {
-    add(builder.getNodeMap[curr]);
-  }
-  void visitConst(Const* curr) {
-  }
-  void visitBinary(Binary *curr) {
-    visit(curr->left);
-    visit(curr->right);
-  }
 };
 
 // Emits a trace, which is basically a Souper LHS.
-struct Printer : public Visitor<Printer> {
+struct Printer {
   Builder& builder;
   Trace& trace;
 
@@ -576,6 +569,7 @@ struct Printer : public Visitor<Printer> {
   }
 
   void print(Node* node) {
+    assert(node);
     switch (node->type) {
       case Node::Type::Var: {
         std::cout << "%" << indexing[node] << ":" << printType(builder.func->getLocalType(node->varIndex)) << " = var";
@@ -583,10 +577,11 @@ struct Printer : public Visitor<Printer> {
       }
       case Node::Type::Expr: {
         std::cout << "%" << indexing[node] << " = ";
-        visit(node->expr);
+        printExpression(node);
         break;
       }
       case Node::Type::Const: {
+        std::cout << "%" << indexing[node] << " = ";
         print(node->value);
         break;
       }
@@ -627,73 +622,87 @@ struct Printer : public Visitor<Printer> {
     std::cout << value.getInteger() << ':' << printType(value.type);
   }
 
-  // Visitors for possible set_local values
-
-  void visitGetLocal(GetLocal* curr) {
-    std::cout << "%" << indexing[builder.getNodeMap[curr]];
-  }
-  void visitConst(Const* curr) {
-    print(curr->value);
-  }
-  void visitBinary(Binary *curr) {
-    switch (curr->op) {
-      case AddInt32:
-      case AddInt64:  std::cout << "add";  break;
-      case SubInt32:
-      case SubInt64:  std::cout << "sub";  break;
-      case MulInt32:
-      case MulInt64:  std::cout << "mul";  break;
-      case DivSInt32:
-      case DivSInt64: std::cout << "sdiv"; break;
-      case DivUInt32:
-      case DivUInt64: std::cout << "udiv"; break;
-      case RemSInt32:
-      case RemSInt64: std::cout << "srem"; break;
-      case RemUInt32:
-      case RemUInt64: std::cout << "urem"; break;
-      case AndInt32:
-      case AndInt64:  std::cout << "and";  break;
-      case OrInt32:
-      case OrInt64:   std::cout << "or";   break;
-      case XorInt32:
-      case XorInt64:  std::cout << "xor";  break;
-      case ShlInt32:
-      case ShlInt64:  std::cout << "shl";  break;
-      case ShrUInt32:
-      case ShrUInt64: std::cout << "ushr"; break;
-      case ShrSInt32:
-      case ShrSInt64: std::cout << "sshr"; break;
-      case RotLInt32:
-      case RotLInt64: std::cout << "rotl"; break;
-      case RotRInt32:
-      case RotRInt64: std::cout << "rotr"; break;
-      case EqInt32:
-      case EqInt64:   std::cout << "eq";   break;
-      case NeInt32:
-      case NeInt64:   std::cout << "ne";   break;
-      case LtSInt32:
-      case LtSInt64:  std::cout << "slt";  break;
-      case LtUInt32:
-      case LtUInt64:  std::cout << "ult";  break;
-      case LeSInt32:
-      case LeSInt64:  std::cout << "sle";  break;
-      case LeUInt32:
-      case LeUInt64:  std::cout << "ule";  break;
-      case GtSInt32:
-      case GtSInt64:  std::cout << "sgt";  break;
-      case GtUInt32:
-      case GtUInt64:  std::cout << "ugt";  break;
-      case GeSInt32:
-      case GeSInt64:  std::cout << "sge";  break;
-      case GeUInt32:
-      case GeUInt64:  std::cout << "uge";  break;
-
-      default: WASM_UNREACHABLE();
+  void printInternal(Node* node) {
+    assert(node);
+    if (node->isConst()) {
+      print(node->value);
+    } else {
+      std::cout << "%" << indexing[node];
     }
-    std::cout << ' ';
-    visit(curr->left);
-    std::cout << ", ";
-    visit(curr->right);
+  }
+
+  // Emit an expression
+
+  void printExpression(Node* node) {
+    assert(node->isExpr());
+    // TODO use a Visitor here?
+    auto* curr = node->expr;
+    if (auto* c = curr->dynCast<Const>()) {
+      print(c->value);
+    } else if (auto* binary = curr->dynCast<Binary>()) {
+      switch (binary->op) {
+        case AddInt32:
+        case AddInt64:  std::cout << "add";  break;
+        case SubInt32:
+        case SubInt64:  std::cout << "sub";  break;
+        case MulInt32:
+        case MulInt64:  std::cout << "mul";  break;
+        case DivSInt32:
+        case DivSInt64: std::cout << "sdiv"; break;
+        case DivUInt32:
+        case DivUInt64: std::cout << "udiv"; break;
+        case RemSInt32:
+        case RemSInt64: std::cout << "srem"; break;
+        case RemUInt32:
+        case RemUInt64: std::cout << "urem"; break;
+        case AndInt32:
+        case AndInt64:  std::cout << "and";  break;
+        case OrInt32:
+        case OrInt64:   std::cout << "or";   break;
+        case XorInt32:
+        case XorInt64:  std::cout << "xor";  break;
+        case ShlInt32:
+        case ShlInt64:  std::cout << "shl";  break;
+        case ShrUInt32:
+        case ShrUInt64: std::cout << "ushr"; break;
+        case ShrSInt32:
+        case ShrSInt64: std::cout << "sshr"; break;
+        case RotLInt32:
+        case RotLInt64: std::cout << "rotl"; break;
+        case RotRInt32:
+        case RotRInt64: std::cout << "rotr"; break;
+        case EqInt32:
+        case EqInt64:   std::cout << "eq";   break;
+        case NeInt32:
+        case NeInt64:   std::cout << "ne";   break;
+        case LtSInt32:
+        case LtSInt64:  std::cout << "slt";  break;
+        case LtUInt32:
+        case LtUInt64:  std::cout << "ult";  break;
+        case LeSInt32:
+        case LeSInt64:  std::cout << "sle";  break;
+        case LeUInt32:
+        case LeUInt64:  std::cout << "ule";  break;
+        case GtSInt32:
+        case GtSInt64:  std::cout << "sgt";  break;
+        case GtUInt32:
+        case GtUInt64:  std::cout << "ugt";  break;
+        case GeSInt32:
+        case GeSInt64:  std::cout << "sge";  break;
+        case GeUInt32:
+        case GeUInt64:  std::cout << "uge";  break;
+
+        default: WASM_UNREACHABLE();
+      }
+      std::cout << ' ';
+      auto* left = node->getValue(0);
+      printInternal(left);
+      std::cout << ", ";
+      auto* right = node->getValue(0);
+      printInternal(right);
+    } else {
+      WASM_UNREACHABLE();
+    }
   }
 };
 
