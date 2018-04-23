@@ -698,7 +698,7 @@ struct Printer {
       auto* left = node->getValue(0);
       printInternal(left);
       std::cout << ", ";
-      auto* right = node->getValue(0);
+      auto* right = node->getValue(1);
       printInternal(right);
     } else {
       WASM_UNREACHABLE();
