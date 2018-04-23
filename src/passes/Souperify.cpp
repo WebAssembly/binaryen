@@ -48,7 +48,7 @@ struct Node {
     Set,   // a register, defined by a SetLocal
     Const, // a constant value
     Phi,   // a phi from converging control flow
-    Cond,  // a condition on a block path (blockpc)
+    Cond,  // a condition on a block path (pc or blockpc)
     Block, // a source of phis
     Bad    // something we can't handle and should ignore
   } type;
@@ -434,6 +434,10 @@ struct Trace : public Visitor<Trace> {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
+    // Also pull in conditions based on the location of this node: e.g.
+    // if it is inside an if's true branch, we can add a path-condition
+    // for that.
+    addPath(set);
     // If nothing bad showed up, still mark it as bad if it's trivial
     // and worthless.
     if (!bad) {
@@ -487,6 +491,39 @@ struct Trace : public Visitor<Trace> {
       nodes.push_back(node);
     }
     return node;
+  }
+
+  void addPath(Expression* curr) {
+    // We track curr and parent, which are always in the state of parent
+    // being the parent of curr.
+    auto* parent = builder.parentMap.at(set);
+    while (parent) {
+      auto iter = builder.expressionBlockMap.find(parent);
+      if (iter != builder.expressionBlockMap.end()) {
+        // Given the block, add a proper path-condition
+        Node* node = iter.second;
+        addPathTo(parent, curr, node);
+      }
+      curr = parent;
+      parent = builder.parentMap.at(parent);
+    }
+  }
+
+  // curr is a child of parent, and parent has a Block which we are
+  // give as 'node'. Add a path condition for reaching the child.
+  void addPathTo(Expression* parent, Expression* curr, Node* node) {
+    if (auto* iff = parent->dynCast<If>()) {
+      if (curr == iff->ifTrue) {
+..
+need to mark the Condition as pc and not a blockpc
+      } else if (curr == iff->ifFalse) {
+..
+      } else {
+        WASM_UNREACHABLE();
+      }
+    } else {
+      WASM_UNREACHABLE();
+    }
   }
 
   bool isBad() {
