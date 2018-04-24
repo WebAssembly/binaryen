@@ -141,4 +141,26 @@
       )
     )
   )
+  (func $unaries (param $x i32) (param $y i32)
+    (if
+      (i32.eqz
+        (get_local $x)
+      )
+      (set_local $x
+        (i32.add
+          (i32.ctz
+            (get_local $y)
+          )
+          (i32.sub
+            (i32.clz
+              (get_local $x)
+            )
+            (i32.popcnt
+              (get_local $y)
+            )
+          )
+        )
+      )
+    )
+  )
 )

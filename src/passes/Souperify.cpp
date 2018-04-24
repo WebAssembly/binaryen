@@ -189,10 +189,6 @@ static bool returnsI1(Node* node) {
 // We only need one canonical bad node. It is never modified.
 static Node CanonicalBad(Node::Type::Bad);
 
-// We only need one placeholder for an unused item in an expression
-// (where the pointer doesn't really matter).
-static wasm::Unreachable CanonicalUnused;
-
 // Main logic to generate IR for a function. This is implemented as a
 // visitor on the wasm, where visitors return a Node* that either
 // contains the DataFlow IR for that expression, which can be a
@@ -301,12 +297,21 @@ struct Builder : public Visitor<Builder, Node*> {
   Node* makeZeroComp(Node* node, bool equal) {
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
-    auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
+    auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(node);
     check->addValue(zero);
     return check;
+  }
+
+  Expression* getUnused(wasm::Type type) {
+    wasm::Builder builder(extra);
+    switch(type) {
+      case i32: return builder.makeConst(Literal(int32_t(0)));
+      case i64: return builder.makeConst(Literal(int64_t(0)));
+      default: WASM_UNREACHABLE();
+    }
   }
 
   // Visitors.
@@ -786,6 +791,9 @@ struct Printer {
         case PopcntInt64: std::cout << "ctpop"; break;
         default: WASM_UNREACHABLE();
       }
+      std::cout << ' ';
+      auto* value = node->getValue(0);
+      printInternal(value);
     } else if (auto* binary = curr->dynCast<Binary>()) {
       switch (binary->op) {
         case AddInt32:
