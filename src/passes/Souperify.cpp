@@ -289,18 +289,24 @@ struct Builder : public Visitor<Builder, Node*> {
 
   Node* visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
-    // TODO: handle breaks to here
     auto* oldParent = parent;
     parentMap[curr] = oldParent;
     parent = curr;
     for (auto* child : curr->list) {
       visit(child);
     }
-/*
-    if (auto iter = breakStates.find(curr->name)) {
-      mergeBlock(curr->name, breakStates
+    // Merge the outputs
+    // TODO handle conditions on these breaks
+    if (curr->name.is()) {
+      auto iter = breakStates.find(curr->name);
+      if (iter != breakStates.end()) {
+        auto& states = iter->second;
+        // Add the state flowing out
+        states.push_back(localState);
+        mergeBlock(states, localState);
+        breakStates.erase(curr->name);
+      }
     }
-*/
     parent = oldParent;
     return nullptr;
   }
@@ -525,8 +531,7 @@ struct Builder : public Visitor<Builder, Node*> {
   // Helpers.
 
   // Merge local state for an if, also creating a block and conditions.
-  void mergeIf(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
-    assert(out.size() == func->getNumLocals());
+  void mergeIf(LocalState& aState, LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     // Create a block for this if.
     // But if the if's condition is bad, we can't do that.
     Node* block = addNode(Node::makeBlock());
@@ -543,24 +548,39 @@ struct Builder : public Visitor<Builder, Node*> {
       block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
       expressionBlockMap[expr] = block;
     }
+    // Finally, merge the state with that block. TODO optimize
+    std::vector<LocalState> states;
+    states.push_back(aState);
+    states.push_back(bState);
+    merge(states, out, block);
+  }
+
+  // Merge local state for a block
+  void mergeBlock(const std::vector<LocalState>& states, LocalState& out) {
+    Node* block = addNode(Node::makeBlock());
+    // No conditions, so just add Bad ones
+    for (Index i = 0; i < states.size(); i++) {
+      block->addValue(&CanonicalBad);
+    }
     // Finally, merge the state with that block.
-    merge({ &aState, &bState }, out, block);
+    merge(states, out, block);
   }
 
   // Merge local state for multiple control flow paths, creating phis as needed.
-  void merge(const std::vector<const LocalState*>& states, LocalState& out, Node* block) {
+  void merge(const std::vector<LocalState>& states, LocalState& out, Node* block) {
+    assert(out.size() == func->getNumLocals());
     Index numLocals = func->getNumLocals();
     Index numStates = states.size();
     assert(numStates > 0);
     if (numStates == 1) {
-      out = *(states[0]);
+      out = states[0];
       return;
     }
     for (Index i = 0; i < numLocals; i++) {
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
       for (Index s = 0; s < numStates; s++) {
-        auto* node = (*states[s])[i];
+        auto* node = states[s][i];
         if (node->isBad()) {
           bad = true;
           out[i] = node;
@@ -569,13 +589,13 @@ struct Builder : public Visitor<Builder, Node*> {
       }
       if (bad) continue;
       // Nothing is bad, proceed.
-      auto first = out[i] = (*states[0])[i];
+      auto first = out[i] = states[0][i];
       for (Index s = 1; s < numStates; s++) {
-        if ((*states[s])[i] != first) {
+        if (states[s][i] != first) {
           // We need to actually merge some stuff.
           auto* phi = addNode(Node::makePhi(block));
           for (Index t = 0; t < numStates; t++) {
-            phi->addValue((*states[t])[i]);
+            phi->addValue(states[t][i]);
           }
           out[i] = phi;
           break;
