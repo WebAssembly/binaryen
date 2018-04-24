@@ -208,7 +208,19 @@ infer %1
 
 ; function: $various-conditions-3
 
+; start LHS
+%0:i32 = var
+%1 = sub %0, 4:i32
+infer %1
+
+
 ; function: $various-conditions-4
+
+; start LHS
+%0:i32 = var
+%1 = add %0, 3:i32
+infer %1
+
 
 ; function: $unaries
 
@@ -389,7 +401,19 @@ infer %0
 
 ; function: $bad-phi-value
 
+; start LHS
+%0 = block 2
+%1 = phi %0, %0, %0
+infer %1
+
+
 ; function: $bad-phi-value-2
+
+; start LHS
+%0 = block 2
+%1 = phi %0, %0, %0
+infer %1
+
 
 ; function: $select
 

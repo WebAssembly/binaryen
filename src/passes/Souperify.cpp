@@ -296,6 +296,11 @@ struct Builder : public Visitor<Builder, Node*> {
     for (auto* child : curr->list) {
       visit(child);
     }
+/*
+    if (auto iter = breakStates.find(curr->name)) {
+      mergeBlock(curr->name, breakStates
+    }
+*/
     parent = oldParent;
     return nullptr;
   }
@@ -305,9 +310,6 @@ struct Builder : public Visitor<Builder, Node*> {
     parent = curr;
     // Set up the condition.
     Node* condition = visit(curr->condition);
-    if (condition->isBad()) {
-      return nullptr; // give up
-    }
     assert(condition);
     // Handle the contents.
     auto initialState = localState;
