@@ -78,6 +78,7 @@ struct Node {
   // TODO: the others, if we need them
   bool isVar() { return type == Var; }
   bool isExpr() { return type == Expr; }
+  bool isCond() { return type == Cond; }
   bool isBad() { return type == Bad; }
 
   union {
@@ -788,7 +789,7 @@ struct Printer {
     std::cout << "\n; start LHS\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
-      if (!trace.isPathCondition(node)) { // pcs do not need to be indexed
+      if (!node->isCond()) { // pcs and blockpcs are not instructions and do not need to be indexed
         auto index = indexing.size();
         indexing[node] = index;
       }
@@ -825,7 +826,7 @@ struct Printer {
       case Node::Type::Cond: {
         if (!trace.isPathCondition(node)) {
           // blockpc
-          std::cout << "%" << indexing[node] << " = blockpc %" << indexing[node->getValue(0)] << ' ' << node->index;
+          std::cout << "blockpc %" << indexing[node->getValue(0)] << ' ' << node->index;
         } else {
           // pc
           std::cout << "pc";
@@ -912,9 +913,9 @@ struct Printer {
         case ShlInt32:
         case ShlInt64:  std::cout << "shl";  break;
         case ShrUInt32:
-        case ShrUInt64: std::cout << "ushr"; break;
+        case ShrUInt64: std::cout << "lshr"; break;
         case ShrSInt32:
-        case ShrSInt64: std::cout << "sshr"; break;
+        case ShrSInt64: std::cout << "ashr"; break;
         case RotLInt32:
         case RotLInt64: std::cout << "rotl"; break;
         case RotRInt32:

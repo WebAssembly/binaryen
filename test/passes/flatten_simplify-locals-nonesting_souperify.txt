@@ -101,13 +101,13 @@ infer %1
 %1:i32 = var
 %2 = and %1, 1:i32
 %3 = ne %2, 0:i32
-%4 = blockpc %0 0 %3 1:i1
-%5 = eq %2, 0:i32
-%6 = blockpc %0 1 %5 1:i1
-%7 = add %1, 1:i32
-%8 = add %1, 2:i32
-%9 = phi %0, %7, %8
-infer %9
+blockpc %0 0 %3 1:i1
+%4 = eq %2, 0:i32
+blockpc %0 1 %4 1:i1
+%5 = add %1, 1:i32
+%6 = add %1, 2:i32
+%7 = phi %0, %5, %6
+infer %7
 
 
 ; start LHS
@@ -115,14 +115,14 @@ infer %9
 %1:i32 = var
 %2 = and %1, 1:i32
 %3 = ne %2, 0:i32
-%4 = blockpc %0 0 %3 1:i1
-%5 = eq %2, 0:i32
-%6 = blockpc %0 1 %5 1:i1
-%7 = add %1, 1:i32
-%8 = add %1, 2:i32
-%9 = phi %0, %7, %8
-%10 = and %9, 1:i32
-infer %10
+blockpc %0 0 %3 1:i1
+%4 = eq %2, 0:i32
+blockpc %0 1 %4 1:i1
+%5 = add %1, 1:i32
+%6 = add %1, 2:i32
+%7 = phi %0, %5, %6
+%8 = and %7, 1:i32
+infer %8
 
 
 ; function: $flips
@@ -363,29 +363,29 @@ infer %1
 %0 = block 2
 %1:i32 = var
 %2 = slt %1, 1:i32
-%3 = blockpc %0 0 %2 1:i1
-%4:i32 = zext %2
-%5 = eq %4, 0:i32
-%6 = blockpc %0 1 %5 1:i1
-%7 = add %1, 1:i32
-%8 = add %1, 2:i32
-%9 = phi %0, %7, %8
-infer %9
+blockpc %0 0 %2 1:i1
+%3:i32 = zext %2
+%4 = eq %3, 0:i32
+blockpc %0 1 %4 1:i1
+%5 = add %1, 1:i32
+%6 = add %1, 2:i32
+%7 = phi %0, %5, %6
+infer %7
 
 
 ; start LHS
 %0 = block 2
 %1:i32 = var
 %2 = slt %1, 1:i32
-%3 = blockpc %0 0 %2 1:i1
-%4:i32 = zext %2
-%5 = eq %4, 0:i32
-%6 = blockpc %0 1 %5 1:i1
-%7 = add %1, 1:i32
-%8 = add %1, 2:i32
-%9 = phi %0, %7, %8
-%10 = and %9, 1:i32
-infer %10
+blockpc %0 0 %2 1:i1
+%3:i32 = zext %2
+%4 = eq %3, 0:i32
+blockpc %0 1 %4 1:i1
+%5 = add %1, 1:i32
+%6 = add %1, 2:i32
+%7 = phi %0, %5, %6
+%8 = and %7, 1:i32
+infer %8
 
 
 ; function: $trivial-ret
