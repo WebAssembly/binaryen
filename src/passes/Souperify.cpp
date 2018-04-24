@@ -187,13 +187,6 @@ static Node CanonicalBad(Node::Type::Bad);
 // use the return value for internal expressions, that is, the
 // value of a set_local or the condition of an if etc).
 struct Builder : public Visitor<Builder, Node*> {
-  // Tracks the state of locals in a control flow path:
-  //   localState[i] = the node whose value it contains
-  typedef std::vector<Node*> LocalState;
-
-  // The current local state in the control flow path being emitted.
-  LocalState localState;
-
   // Connects a specific set to the data in its value.
   std::unordered_map<SetLocal*, Node*> setNodeMap;
 
@@ -206,8 +199,6 @@ struct Builder : public Visitor<Builder, Node*> {
   // which are sets and control-flow constructs.
   std::unordered_map<Expression*, Expression*> parentMap;
 
-  Expression* parent = nullptr;
-
   // All the sets, in order of appearance.
   std::vector<SetLocal*> sets;
 
@@ -219,6 +210,23 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // We need to create some extra expression nodes in some case.
   MixedArena extra;
+
+  // Tracking state during building
+
+  // We need to track the parents of control flow nodes.
+  Expression* parent = nullptr;
+
+  // Tracks the state of locals in a control flow path:
+  //   localState[i] = the node whose value it contains
+  typedef std::vector<Node*> LocalState;
+
+  // The current local state in the control flow path being emitted.
+  LocalState localState;
+
+  // The local states on branches to a specific target.
+  std::unordered_map<Name, std::vector<LocalState>> breakStates;
+
+  // API
 
   // Check if a function is relevant for us.
   static bool check(Function* func) {
@@ -257,15 +265,17 @@ struct Builder : public Visitor<Builder, Node*> {
     return node;
   }
 
-  // Merge local state for multiple control flow paths
-  // TODO: more than 2
-  void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
+  // Merge local state for an if, also creating a block and conditions.
+  void mergeIf(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
     // Create a block for this if.
     // But if the if's condition is bad, we can't do that.
-    Node* block = nullptr;
-    if (!condition->isBad()) {
-      block = addNode(Node::makeBlock());
+    Node* block = addNode(Node::makeBlock());
+    if (condition->isBad()) {
+      // Add Bad conditions.
+      block->addValue(condition);
+      block->addValue(condition);
+    } else {
       // Generate boolean (i1 returning) conditions for the two branches.
       auto* ifTrue = ensureI1(condition);
       // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
@@ -274,31 +284,42 @@ struct Builder : public Visitor<Builder, Node*> {
       block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
       expressionBlockMap[expr] = block;
     }
-    for (Index i = 0; i < func->getNumLocals(); i++) {
-      // Process the inputs. If one is bad, the phi is bad.
-      auto a = aState[i];
-      if (a->isBad()) {
-        out[i] = a;
-        continue;
+    // Finally, merge the state with that block.
+    merge({ &aState, &bState }, out, block);
+  }
+
+  // Merge local state for multiple control flow paths, creating phis as needed.
+  void merge(const std::vector<const LocalState*>& states, LocalState& out, Node* block) {
+    Index numLocals = func->getNumLocals();
+    Index numStates = states.size();
+    assert(numStates > 0);
+    if (numStates == 1) {
+      out = *(states[0]);
+      return;
+    }
+    for (Index i = 0; i < numLocals; i++) {
+      // Process the inputs. If any is bad, the phi is bad.
+      bool bad = false;
+      for (Index s = 0; s < numStates; s++) {
+        auto* node = (*states[s])[i];
+        if (node->isBad()) {
+          bad = true;
+          out[i] = node;
+          break;
+        }
       }
-      auto b = bState[i];
-      if (b->isBad()) {
-        out[i] = b;
-        continue;
-      }
-      if (a == b) {
-        out[i] = a;
-      } else {
-        // We need to actually merge some stuff.
-        if (!condition->isBad()) {
-          assert(block);
+      if (bad) continue;
+      // Nothing is bad, proceed.
+      auto first = out[i] = (*states[0])[i];
+      for (Index s = 1; s < numStates; s++) {
+        if ((*states[s])[i] != first) {
+          // We need to actually merge some stuff.
           auto* phi = addNode(Node::makePhi(block));
-          phi->addValue(a);
-          phi->addValue(b);
+          for (Index t = 0; t < numStates; t++) {
+            phi->addValue((*states[t])[i]);
+          }
           out[i] = phi;
-        } else {
-          // The condition is bad, instead of a phi put a bad value.
-          out[i] = condition;
+          break;
         }
       }
     }
@@ -356,9 +377,9 @@ struct Builder : public Visitor<Builder, Node*> {
       localState = initialState;
       visit(curr->ifFalse);
       auto afterIfFalseState = localState; // TODO: optimize
-      merge(afterIfTrueState, afterIfFalseState, condition, curr, localState);
+      mergeIf(afterIfTrueState, afterIfFalseState, condition, curr, localState);
     } else {
-      merge(initialState, afterIfTrueState, condition, curr, localState);
+      mergeIf(initialState, afterIfTrueState, condition, curr, localState);
     }
     parent = oldParent;
     return nullptr;
@@ -635,7 +656,12 @@ struct Trace {
         auto size = block->values.size();
         // First, add the conditions for the block
         for (Index i = 0; i < size; i++) {
-          add(block->getValue(i));
+          // a condition may be bad, but conditions are not necessary -
+          // we can proceed without the extra condition information
+          auto* condition = block->getValue(i);
+          if (!condition->isBad()) {
+            add(condition);
+          }
         }
         // Then, add the phi values
         for (Index i = 1; i < size + 1; i++) {
