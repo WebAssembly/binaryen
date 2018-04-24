@@ -121,7 +121,7 @@
   )
   (func $various-conditions-3 (param $x i32)
     (if
-      (i32.eqz (i32.const 0))
+      (i32.reinterpret/f32 (f32.const 0))
       (set_local $x
         (i32.sub
           (get_local $x)

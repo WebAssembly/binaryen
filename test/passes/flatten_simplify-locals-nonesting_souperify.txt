@@ -424,8 +424,8 @@ infer %1
   (local $2 i32)
   (block
    (set_local $1
-    (i32.eqz
-     (i32.const 0)
+    (i32.reinterpret/f32
+     (f32.const 0)
     )
    )
    (if

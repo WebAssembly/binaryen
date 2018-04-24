@@ -399,7 +399,6 @@ struct Builder : public Visitor<Builder, Node*> {
     return addNode(Node::makeConst(curr->value));
   }
   Node* visitUnary(Unary* curr) {
-/*
     // First, check if we support this op.
     switch (curr->op) {
       case ClzInt32:
@@ -411,7 +410,7 @@ struct Builder : public Visitor<Builder, Node*> {
         // These are ok as-is.
         // Check if our child is supported.
         auto* value = visit(curr->value);
-        if (value->isBad()) return left;
+        if (value->isBad()) return value;
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr));
         ret->addValue(value);
@@ -420,13 +419,14 @@ struct Builder : public Visitor<Builder, Node*> {
       case EqZInt32:
       case EqZInt64: {
         // These can be implemented using a binary.
+        // Check if our child is supported.
+        auto* value = visit(curr->value);
+        if (value->isBad()) return value;
+        // Great, we are supported!
+        return makeZeroComp(value, true);
       }
       default: return &CanonicalBad; // anything else is bad
     }
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-*/
     return &CanonicalBad; // anything else is bad
   }
   Node* visitBinary(Binary *curr) {
@@ -776,6 +776,16 @@ struct Printer {
     auto* curr = node->expr;
     if (auto* c = curr->dynCast<Const>()) {
       print(c->value);
+    } else if (auto* unary = curr->dynCast<Unary>()) {
+      switch (unary->op) {
+        case ClzInt32:
+        case ClzInt64:    std::cout << "ctlz";  break;
+        case CtzInt32:
+        case CtzInt64:    std::cout << "cttz";  break;
+        case PopcntInt32:
+        case PopcntInt64: std::cout << "ctpop"; break;
+        default: WASM_UNREACHABLE();
+      }
     } else if (auto* binary = curr->dynCast<Binary>()) {
       switch (binary->op) {
         case AddInt32:
@@ -820,7 +830,6 @@ struct Printer {
         case LeSInt64:  std::cout << "sle";  break;
         case LeUInt32:
         case LeUInt64:  std::cout << "ule";  break;
-
         default: WASM_UNREACHABLE();
       }
       std::cout << ' ';
