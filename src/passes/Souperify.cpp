@@ -29,6 +29,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "wasm-printing.h"
 #include "ir/abstract.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
@@ -810,6 +811,9 @@ struct Printer {
         break; // nothing more to add
       }
       case Node::Type::Expr: {
+        if (getenv("BINARYEN_DEBUG_SOUPERIFY")) {
+          std::cout << node->expr << '\n';
+        }
         std::cout << "%" << indexing[node] << " = ";
         printExpression(node);
         break;
