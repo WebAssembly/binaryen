@@ -326,12 +326,24 @@ infer %1
 %10 = and %9, 1:i32
 infer %10
 
+
+; function: $trivial-ret
+
+; start LHS
+%0 = add 0:i32, 1:i32
+infer %0
+
+
+; function: $trivial-const
+
+; function: $trivial-const-block
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
  (type $2 (func))
  (type $3 (func (param i32)))
  (type $4 (func (param i32 i32)))
+ (type $5 (func (result i32)))
  (func $figure-1a (; 0 ;) (type $0) (param $a i64) (param $x i64) (param $y i64) (result i32)
   (local $i i32)
   (local $j i32)
@@ -783,6 +795,35 @@ infer %10
   )
   (return
    (get_local $5)
+  )
+ )
+ (func $trivial-ret (; 12 ;) (type $5) (result i32)
+  (local $0 i32)
+  (set_local $0
+   (i32.add
+    (i32.const 0)
+    (i32.const 1)
+   )
+  )
+  (return
+   (get_local $0)
+  )
+ )
+ (func $trivial-const (; 13 ;) (type $5) (result i32)
+  (return
+   (i32.const 0)
+  )
+ )
+ (func $trivial-const-block (; 14 ;) (type $5) (result i32)
+  (local $0 i32)
+  (block
+   (nop)
+   (set_local $0
+    (i32.const 0)
+   )
+  )
+  (return
+   (get_local $0)
   )
  )
 )
