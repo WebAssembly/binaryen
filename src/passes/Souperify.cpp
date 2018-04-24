@@ -62,7 +62,7 @@ struct Node {
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Expr,  // a value represented by a Binaryen Expression
-    Const, // a constant value
+    Const, // a constant value TODO remove this, use an expr
     Phi,   // a phi from converging control flow
     Cond,  // a condition on a block path (pc or blockpc). these always use an i1,
            // making the condition either true or false, and this is the only place
@@ -269,28 +269,48 @@ struct Builder : public Visitor<Builder, Node*> {
   // TODO: more than 2
   void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
-    auto* block = addNode(Node::makeBlock());
-    // Generate boolean (i1 returning) conditions for the two branches.
-    auto* ifTrue = condition;
-    if (!returnsI1(ifTrue)) {
-      ifTrue = makeZeroComp(ifTrue, false);
+    // Create a block for this if.
+    // But if the if's condition is bad, we can't do that.
+    Node* block = nullptr;
+    if (!condition->isBad()) {
+      block = addNode(Node::makeBlock());
+      // Generate boolean (i1 returning) conditions for the two branches.
+      auto* ifTrue = condition;
+      if (!returnsI1(ifTrue)) {
+        ifTrue = makeZeroComp(ifTrue, false);
+      }
+      // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
+      Node* ifFalse = makeZeroComp(condition, true);
+      block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
+      block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
+      expressionBlockMap[expr] = block;
     }
-    // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
-    Node* ifFalse = makeZeroComp(condition, true);
-    block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
-    block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
-    expressionBlockMap[expr] = block;
     for (Index i = 0; i < func->getNumLocals(); i++) {
+      // Process the inputs. If one is bad, the phi is bad.
       auto a = aState[i];
+      if (a->isBad()) {
+        out[i] = a;
+        continue;
+      }
       auto b = bState[i];
+      if (b->isBad()) {
+        out[i] = b;
+        continue;
+      }
       if (a == b) {
         out[i] = a;
       } else {
         // We need to actually merge some stuff.
-        auto* phi = addNode(Node::makePhi(block));
-        phi->addValue(a);
-        phi->addValue(b);
-        out[i] = phi;
+        if (!condition->isBad()) {
+          assert(block);
+          auto* phi = addNode(Node::makePhi(block));
+          phi->addValue(a);
+          phi->addValue(b);
+          out[i] = phi;
+        } else {
+          // The condition is bad, instead of a phi put a bad value.
+          out[i] = condition;
+        }
       }
     }
   }
