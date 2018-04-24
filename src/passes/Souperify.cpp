@@ -265,66 +265,6 @@ struct Builder : public Visitor<Builder, Node*> {
     return node;
   }
 
-  // Merge local state for an if, also creating a block and conditions.
-  void mergeIf(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
-    assert(out.size() == func->getNumLocals());
-    // Create a block for this if.
-    // But if the if's condition is bad, we can't do that.
-    Node* block = addNode(Node::makeBlock());
-    if (condition->isBad()) {
-      // Add Bad conditions.
-      block->addValue(condition);
-      block->addValue(condition);
-    } else {
-      // Generate boolean (i1 returning) conditions for the two branches.
-      auto* ifTrue = ensureI1(condition);
-      // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
-      Node* ifFalse = makeZeroComp(condition, true);
-      block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
-      block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
-      expressionBlockMap[expr] = block;
-    }
-    // Finally, merge the state with that block.
-    merge({ &aState, &bState }, out, block);
-  }
-
-  // Merge local state for multiple control flow paths, creating phis as needed.
-  void merge(const std::vector<const LocalState*>& states, LocalState& out, Node* block) {
-    Index numLocals = func->getNumLocals();
-    Index numStates = states.size();
-    assert(numStates > 0);
-    if (numStates == 1) {
-      out = *(states[0]);
-      return;
-    }
-    for (Index i = 0; i < numLocals; i++) {
-      // Process the inputs. If any is bad, the phi is bad.
-      bool bad = false;
-      for (Index s = 0; s < numStates; s++) {
-        auto* node = (*states[s])[i];
-        if (node->isBad()) {
-          bad = true;
-          out[i] = node;
-          break;
-        }
-      }
-      if (bad) continue;
-      // Nothing is bad, proceed.
-      auto first = out[i] = (*states[0])[i];
-      for (Index s = 1; s < numStates; s++) {
-        if ((*states[s])[i] != first) {
-          // We need to actually merge some stuff.
-          auto* phi = addNode(Node::makePhi(block));
-          for (Index t = 0; t < numStates; t++) {
-            phi->addValue((*states[t])[i]);
-          }
-          out[i] = phi;
-          break;
-        }
-      }
-    }
-  }
-
   Node* makeZeroComp(Node* node, bool equal) {
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
@@ -581,6 +521,66 @@ struct Builder : public Visitor<Builder, Node*> {
   }
 
   // Helpers.
+
+  // Merge local state for an if, also creating a block and conditions.
+  void mergeIf(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
+    assert(out.size() == func->getNumLocals());
+    // Create a block for this if.
+    // But if the if's condition is bad, we can't do that.
+    Node* block = addNode(Node::makeBlock());
+    if (condition->isBad()) {
+      // Add Bad conditions.
+      block->addValue(condition);
+      block->addValue(condition);
+    } else {
+      // Generate boolean (i1 returning) conditions for the two branches.
+      auto* ifTrue = ensureI1(condition);
+      // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
+      Node* ifFalse = makeZeroComp(condition, true);
+      block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
+      block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
+      expressionBlockMap[expr] = block;
+    }
+    // Finally, merge the state with that block.
+    merge({ &aState, &bState }, out, block);
+  }
+
+  // Merge local state for multiple control flow paths, creating phis as needed.
+  void merge(const std::vector<const LocalState*>& states, LocalState& out, Node* block) {
+    Index numLocals = func->getNumLocals();
+    Index numStates = states.size();
+    assert(numStates > 0);
+    if (numStates == 1) {
+      out = *(states[0]);
+      return;
+    }
+    for (Index i = 0; i < numLocals; i++) {
+      // Process the inputs. If any is bad, the phi is bad.
+      bool bad = false;
+      for (Index s = 0; s < numStates; s++) {
+        auto* node = (*states[s])[i];
+        if (node->isBad()) {
+          bad = true;
+          out[i] = node;
+          break;
+        }
+      }
+      if (bad) continue;
+      // Nothing is bad, proceed.
+      auto first = out[i] = (*states[0])[i];
+      for (Index s = 1; s < numStates; s++) {
+        if ((*states[s])[i] != first) {
+          // We need to actually merge some stuff.
+          auto* phi = addNode(Node::makePhi(block));
+          for (Index t = 0; t < numStates; t++) {
+            phi->addValue((*states[t])[i]);
+          }
+          out[i] = phi;
+          break;
+        }
+      }
+    }
+  }
 
   // If the node returns an i1, then we are called from a context that needs
   // to use it normally as in wasm - extend it
