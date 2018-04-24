@@ -62,7 +62,6 @@ struct Node {
   enum Type {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Expr,  // a value represented by a Binaryen Expression
-    Const, // a constant value TODO remove this, use an expr
     Phi,   // a phi from converging control flow
     Cond,  // a condition on a block path (pc or blockpc). these always use an i1,
            // making the condition either true or false, and this is the only place
@@ -78,7 +77,6 @@ struct Node {
 
   // TODO: the others, if we need them
   bool isExpr() { return type == Expr; }
-  bool isConst() { return type == Const; }
   bool isBad() { return type == Bad; }
 
   union {
@@ -86,8 +84,6 @@ struct Node {
     wasm::Type wasmType;
     // For Expr
     Expression* expr;
-    // For Const
-    Literal value;
     // For Cond
     Index index;
   };
@@ -112,11 +108,6 @@ struct Node {
   static Node* makeExpr(Expression* expr) {
     Node* ret = new Node(Expr);
     ret->expr = expr;
-    return ret;
-  }
-  static Node* makeConst(Literal value) {
-    Node* ret = new Node(Const);
-    ret->value = value;
     return ret;
   }
   static Node* makePhi(Node* block) {
@@ -158,7 +149,6 @@ struct Node {
     switch (type) {
       case Var:   return wasmType;
       case Expr:  return expr->type;
-      case Const: return value.type;
       case Phi:   return getValue(1)->getWasmType();
       case Zext:  return getValue(0)->getWasmType();
       default:    WASM_UNREACHABLE();
@@ -249,7 +239,8 @@ struct Builder : public Visitor<Builder, Node*> {
       if (func->isParam(i)) {
         node = Node::makeVar(type);
       } else {
-        node = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+        wasm::Builder builder(extra);
+        node = Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type)));
       }
       addNode(node);
       localState[i] = node;
@@ -319,7 +310,7 @@ struct Builder : public Visitor<Builder, Node*> {
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
-    auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+    auto* zero = Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type)));
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(expandFromi1(node));
     check->addValue(zero);
@@ -422,7 +413,7 @@ struct Builder : public Visitor<Builder, Node*> {
     return &CanonicalBad;
   }
   Node* visitConst(Const* curr) {
-    return addNode(Node::makeConst(curr->value));
+    return addNode(Node::makeExpr(curr));
   }
   Node* visitUnary(Unary* curr) {
     // First, check if we support this op.
@@ -606,15 +597,17 @@ struct Trace {
         break; // nothing more to add
       }
       case Node::Type::Expr: {
+        // If this is a Const, it's not an instruction - nothing to add,
+        // it's just a value.
+        if (node->expr->is<Const>()) {
+          return node;
+        }
         // Add the dependencies.
         assert(!node->expr->is<GetLocal>());
         for (Index i = 0; i < node->values.size(); i++) {
           add(node->getValue(i));
         }
         break;
-      }
-      case Node::Type::Const: {
-        return node; // nothing more to add
       }
       case Node::Type::Phi: {
         auto* block = add(node->getValue(0));
@@ -738,11 +731,6 @@ struct Printer {
         printExpression(node);
         break;
       }
-      case Node::Type::Const: {
-        std::cout << "%" << indexing[node] << " = ";
-        print(node->value);
-        break;
-      }
       case Node::Type::Phi: {
         auto* block = node->getValue(0);
         auto size = block->values.size();
@@ -789,8 +777,8 @@ struct Printer {
 
   void printInternal(Node* node) {
     assert(node);
-    if (node->isConst()) {
-      print(node->value);
+    if (node->isExpr() && node->expr->is<Const>()) {
+      print(node->expr->cast<Const>()->value);
     } else {
       std::cout << "%" << indexing[node];
     }
