@@ -163,4 +163,36 @@
       )
     )
   )
+  (func $unary-condition (param $x i32)
+    (if
+      (i32.ctz
+        (i32.gt_u
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 2)
+        )
+      )
+    )
+  )
+  (func $unary-condition-2 (param $x i32)
+    (if
+      (i32.eqz
+        (i32.gt_u
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 2)
+        )
+      )
+    )
+  )
 )

@@ -275,6 +275,7 @@ struct Builder : public Visitor<Builder, Node*> {
     if (!returnsI1(ifTrue)) {
       ifTrue = makeZeroComp(ifTrue, false);
     }
+    // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
     Node* ifFalse = makeZeroComp(condition, true);
     block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
     block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
@@ -300,7 +301,7 @@ struct Builder : public Visitor<Builder, Node*> {
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
     auto* check = addNode(Node::makeExpr(expr));
-    check->addValue(node);
+    check->addValue(expandFromi1(node));
     check->addValue(zero);
     return check;
   }
@@ -414,7 +415,7 @@ struct Builder : public Visitor<Builder, Node*> {
       case PopcntInt64: {
         // These are ok as-is.
         // Check if our child is supported.
-        auto* value = visit(curr->value);
+        auto* value = expandFromi1(visit(curr->value));
         if (value->isBad()) return value;
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr));
@@ -425,7 +426,7 @@ struct Builder : public Visitor<Builder, Node*> {
       case EqZInt64: {
         // These can be implemented using a binary.
         // Check if our child is supported.
-        auto* value = visit(curr->value);
+        auto* value = expandFromi1(visit(curr->value));
         if (value->isBad()) return value;
         // Great, we are supported!
         return makeZeroComp(value, true);
