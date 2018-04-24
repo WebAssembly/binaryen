@@ -76,6 +76,7 @@ struct Node {
   Node(Type type) : type(type) {}
 
   // TODO: the others, if we need them
+  bool isVar() { return type == Var; }
   bool isExpr() { return type == Expr; }
   bool isBad() { return type == Bad; }
 
@@ -577,10 +578,15 @@ struct Trace {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
-    // mark as bad if it's trivially small
-    // TODO are things of size 1 trivial?
+    // Mark as bad if it's trivially uninteresting
     if (!bad) {
+      // No input is uninteresting
       if (nodes.empty()) {
+        bad = true;
+        return;
+      }
+      // Just a var is uninteresting. TODO: others too?
+      if (nodes.size() == 1 && nodes[0]->isVar()) {
         bad = true;
         return;
       }

@@ -258,8 +258,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     // we have changed children
     ReFinalizeNode().visit(curr);
     // move everything to the prelude, if we need to: anything but constants
-    // and gets
-    if (!(curr->is<Const>() || curr->is<GetLocal>())) {
+    if (!curr->is<Const>()) {
       if (curr->type == unreachable) {
         ourPreludes.push_back(curr);
         replaceCurrent(builder.makeUnreachable());
