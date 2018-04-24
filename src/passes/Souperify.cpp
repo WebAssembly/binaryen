@@ -333,8 +333,21 @@ struct Builder : public Visitor<Builder, Node*> {
     return nullptr;
   }
   Node* visitLoop(Loop* curr) { return &CanonicalBad; }
-  Node* visitBreak(Break* curr) { return &CanonicalBad; }
-  Node* visitSwitch(Switch* curr) { return &CanonicalBad; }
+  Node* visitBreak(Break* curr) {
+    breakStates[curr->name].push_back(localState);
+    return &CanonicalBad;
+  }
+  Node* visitSwitch(Switch* curr) {
+    std::unordered_set<Name> targets;
+    for (auto target : curr->targets) {
+      targets.insert(target);
+    }
+    targets.insert(curr->default_);
+    for (auto target : targets) {
+      breakStates[target].push_back(localState);
+    }
+    return &CanonicalBad;
+  }
   Node* visitCall(Call* curr) { return &CanonicalBad; }
   Node* visitCallImport(CallImport* curr) { return &CanonicalBad; }
   Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
