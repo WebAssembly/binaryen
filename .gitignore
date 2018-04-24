@@ -32,6 +32,10 @@ test/wasm-torture-s-*.tbz2
 test/wasm-install/
 test/validator/*.wasm
 
+# CLion and build dir
+/.idea
+/build
+
 *.pyc
 CMakeFiles/
 CMakeCache.txt
