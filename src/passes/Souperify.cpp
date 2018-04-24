@@ -274,28 +274,12 @@ struct Builder : public Visitor<Builder, Node*> {
   void merge(const LocalState& aState, const LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     assert(out.size() == func->getNumLocals());
     auto* block = addNode(Node::makeBlock());
-    // Generate boolean conditions for the two branches.
-    wasm::Builder builder(extra);
+    // Generate boolean (i1 returning) conditions for the two branches.
     auto* ifTrue = condition;
-    auto type = ifTrue->getWasmType();
     if (!returnsI1(ifTrue)) {
-      // Convert it to an i1
-      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
-      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
-      auto* check = addNode(Node::makeExpr(expr));
-      check->addValue(condition);
-      check->addValue(zero);
-      ifTrue = check;
+      ifTrue = makeZeroComp(ifTrue, false);
     }
-    Node* ifFalse;
-    {
-      auto* expr = builder.makeBinary(Abstract::getBinary(type, Abstract::Eq), &CanonicalUnused, &CanonicalUnused);
-      auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
-      auto* check = addNode(Node::makeExpr(expr));
-      check->addValue(condition);
-      check->addValue(zero);
-      ifFalse = check;
-    }
+    Node* ifFalse = makeZeroComp(condition, true);
     block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
     block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
     expressionBlockMap[expr] = block;
@@ -312,6 +296,17 @@ struct Builder : public Visitor<Builder, Node*> {
         out[i] = phi;
       }
     }
+  }
+
+  Node* makeZeroComp(Node* node, bool equal) {
+    wasm::Builder builder(extra);
+    auto type = node->getWasmType();
+    auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), &CanonicalUnused, &CanonicalUnused);
+    auto* zero = Node::makeConst(LiteralUtils::makeLiteralZero(type));
+    auto* check = addNode(Node::makeExpr(expr));
+    check->addValue(node);
+    check->addValue(zero);
+    return check;
   }
 
   // Visitors.
@@ -404,7 +399,35 @@ struct Builder : public Visitor<Builder, Node*> {
     return addNode(Node::makeConst(curr->value));
   }
   Node* visitUnary(Unary* curr) {
-    return &CanonicalBad;
+/*
+    // First, check if we support this op.
+    switch (curr->op) {
+      case ClzInt32:
+      case ClzInt64:
+      case CtzInt32:
+      case CtzInt64:
+      case PopcntInt32:
+      case PopcntInt64: {
+        // These are ok as-is.
+        // Check if our child is supported.
+        auto* value = visit(curr->value);
+        if (value->isBad()) return left;
+        // Great, we are supported!
+        auto* ret = addNode(Node::makeExpr(curr));
+        ret->addValue(value);
+        return ret;
+      }
+      case EqZInt32:
+      case EqZInt64: {
+        // These can be implemented using a binary.
+      }
+      default: return &CanonicalBad; // anything else is bad
+    }
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+*/
+    return &CanonicalBad; // anything else is bad
   }
   Node* visitBinary(Binary *curr) {
     // First, check if we support this op.
