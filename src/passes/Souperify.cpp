@@ -267,10 +267,7 @@ struct Builder : public Visitor<Builder, Node*> {
     if (!condition->isBad()) {
       block = addNode(Node::makeBlock());
       // Generate boolean (i1 returning) conditions for the two branches.
-      auto* ifTrue = condition;
-      if (!returnsI1(ifTrue)) {
-        ifTrue = makeZeroComp(ifTrue, false);
-      }
+      auto* ifTrue = ensureI1(condition);
       // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
       Node* ifFalse = makeZeroComp(condition, true);
       block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
@@ -313,7 +310,7 @@ struct Builder : public Visitor<Builder, Node*> {
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     auto* zero = Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type)));
     auto* check = addNode(Node::makeExpr(expr));
-    check->addValue(expandFromi1(node));
+    check->addValue(expandFromI1(node));
     check->addValue(zero);
     return check;
   }
@@ -427,7 +424,7 @@ struct Builder : public Visitor<Builder, Node*> {
       case PopcntInt64: {
         // These are ok as-is.
         // Check if our child is supported.
-        auto* value = expandFromi1(visit(curr->value));
+        auto* value = expandFromI1(visit(curr->value));
         if (value->isBad()) return value;
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr));
@@ -438,7 +435,7 @@ struct Builder : public Visitor<Builder, Node*> {
       case EqZInt64: {
         // These can be implemented using a binary.
         // Check if our child is supported.
-        auto* value = expandFromi1(visit(curr->value));
+        auto* value = expandFromI1(visit(curr->value));
         if (value->isBad()) return value;
         // Great, we are supported!
         return makeZeroComp(value, true);
@@ -494,9 +491,9 @@ struct Builder : public Visitor<Builder, Node*> {
       case LeUInt64: {
         // These are ok as-is.
         // Check if our children are supported.
-        auto* left = expandFromi1(visit(curr->left));
+        auto* left = expandFromI1(visit(curr->left));
         if (left->isBad()) return left;
-        auto* right = expandFromi1(visit(curr->right));
+        auto* right = expandFromI1(visit(curr->right));
         if (right->isBad()) return right;
         // Great, we are supported!
         auto* ret = addNode(Node::makeExpr(curr));
@@ -532,7 +529,18 @@ struct Builder : public Visitor<Builder, Node*> {
     }
   }
   Node* visitSelect(Select* curr) {
-    return &CanonicalBad;
+    auto* ifTrue = expandFromI1(visit(curr->ifTrue));
+    if (ifTrue->isBad()) return ifTrue;
+    auto* ifFalse = expandFromI1(visit(curr->ifFalse));
+    if (ifFalse->isBad()) return ifFalse;
+    auto* condition = ensureI1(visit(curr->condition));
+    if (condition->isBad()) return condition;
+    // Great, we are supported!
+    auto* ret = addNode(Node::makeExpr(curr));
+    ret->addValue(condition);
+    ret->addValue(ifTrue);
+    ret->addValue(ifFalse);
+    return ret;
   }
   Node* visitDrop(Drop* curr) {
     return &CanonicalBad;
@@ -555,9 +563,16 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // If the node returns an i1, then we are called from a context that needs
   // to use it normally as in wasm - extend it
-  Node* expandFromi1(Node* node) {
-    if (returnsI1(node)) {
+  Node* expandFromI1(Node* node) {
+    if (!node->isBad() && returnsI1(node)) {
       node = addNode(Node::makeZext(node));
+    }
+    return node;
+  }
+
+  Node* ensureI1(Node* node) {
+    if (!node->isBad() && !returnsI1(node)) {
+      node = makeZeroComp(node, false);
     }
     return node;
   }
@@ -863,6 +878,13 @@ struct Printer {
       std::cout << ", ";
       auto* right = node->getValue(1);
       printInternal(right);
+    } else if (curr->is<Select>()) {
+      std::cout << "select ";
+      printInternal(node->getValue(0));
+      std::cout << ", ";
+      printInternal(node->getValue(1));
+      std::cout << ", ";
+      printInternal(node->getValue(2));
     } else {
       WASM_UNREACHABLE();
     }

@@ -261,4 +261,31 @@
     )
     (get_local $x)
   )
+  (func $select (param $x i32) (result i32)
+    (return
+      (select
+        (i32.const 1)
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+  )
+  (func $select-2 (param $x i32) (param $y i32) (result i32)
+    (return
+      (select
+        (i32.add
+          (get_local $x)
+          (get_local $y)
+        )
+        (i32.add
+          (get_local $x)
+          (i32.const 1)
+        )
+        (i32.add
+          (i32.const 2)
+          (get_local $y)
+        )
+      )
+    )
+  )
 )
