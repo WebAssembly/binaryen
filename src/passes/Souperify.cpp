@@ -539,13 +539,13 @@ struct Builder : public Visitor<Builder, Node*> {
   }
   Node* visitReturn(Return* curr) {
     // note we don't need the value (it's a const or a get as we are flattened)
-    return nullptr;
+    return &CanonicalBad;
   }
   Node* visitHost(Host* curr) {
     return &CanonicalBad;
   }
   Node* visitNop(Nop* curr) {
-    return nullptr;
+    return &CanonicalBad;
   }
   Node* visitUnreachable(Unreachable* curr) {
     return &CanonicalBad;
