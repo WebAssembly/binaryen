@@ -379,5 +379,47 @@
       )
     )
   )
+  (func $in-unreachable (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+   (block $label$1
+    (block $label$2
+     (block $label$3
+      (if
+       (get_local $2)
+       (if
+        (get_local $0)
+        (block
+         (set_local $1
+          (i32.const -8531)
+         )
+         (br $label$3)
+        )
+        (block
+         (set_local $1
+          (i32.const -8531)
+         )
+         (br $label$1)
+        )
+       )
+      )
+      (br $label$2)
+     )
+     (drop
+      (i32.load
+       (i32.const 0)
+      )
+     )
+     (br $label$1)
+    )
+    (i32.store16
+     (i32.const 1)
+     (get_local $1)
+    )
+    (unreachable)
+   )
+   (i32.store16
+    (i32.const 0)
+    (i32.const -8531)
+   )
+  )
 )
 
