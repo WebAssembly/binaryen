@@ -840,7 +840,7 @@ struct Printer {
   std::unordered_map<Node*, Index> indexing;
 
   Printer(Builder& builder, Trace& trace) : builder(builder), trace(trace) {
-    std::cout << "\n; start LHS\n";
+    std::cout << "\n; start LHS (in " << builder.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
       if (!node->isCond()) { // pcs and blockpcs are not instructions and do not need to be indexed
