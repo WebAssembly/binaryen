@@ -817,7 +817,9 @@ struct Printer {
       }
       case Node::Type::Expr: {
         if (getenv("BINARYEN_DEBUG_SOUPERIFY")) {
-          std::cout << node->expr << '\n';
+          std::cout << "; ";
+          WasmPrinter::printExpression(node->expr, std::cout, true);
+          std::cout << '\n';
         }
         std::cout << "%" << indexing[node] << " = ";
         printExpression(node);
