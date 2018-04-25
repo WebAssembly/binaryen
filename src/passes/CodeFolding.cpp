@@ -15,7 +15,8 @@
  */
 
 //
-// Folds duplicate code together, saving space.
+// Folds duplicate code together, saving space (and possibly phis in
+// the wasm VM, which can save time).
 //
 // We fold tails of code where they merge and moving the code
 // to the merge point is helpful. There are two cases here: (1) expressions,
