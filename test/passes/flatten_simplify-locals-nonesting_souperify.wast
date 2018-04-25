@@ -379,7 +379,114 @@
       )
     )
   )
-  (func $in-unreachable (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+  (func $in-unreachable-1 (param $x i32) (param $y i32) (result i32)
+    (if
+      (get_local $x)
+      (block
+        (set_local $x
+          (i32.const 1)
+        )
+        (return (get_local $x))
+      )
+      (set_local $x
+        (i32.const 2)
+      )
+    )
+    ;; no phi here!
+    (return
+      (get_local $x)
+    )
+  )
+  (func $in-unreachable-2 (param $x i32) (param $y i32) (result i32)
+    (if
+      (get_local $x)
+      (block
+        (set_local $x
+          (i32.const 1)
+        )
+        (unreachable)
+      )
+      (set_local $x
+        (i32.const 2)
+      )
+    )
+    ;; no phi here!
+    (return
+      (get_local $x)
+    )
+  )
+  (func $in-unreachable-3 (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (if
+        (get_local $x)
+        (block
+          (set_local $x
+            (i32.const 1)
+          )
+          (br $out)
+        )
+        (set_local $x
+          (i32.const 2)
+        )
+      )
+      ;; no phi here!
+      (return
+        (get_local $x)
+      )
+    )
+    (return
+      (get_local $x)
+    )
+  )
+  (func $in-unreachable-4 (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (if
+        (get_local $x)
+        (block
+          (set_local $x
+            (i32.const 1)
+          )
+          (br_table $out $out $out (i32.const 1))
+        )
+        (set_local $x
+          (i32.const 2)
+        )
+      )
+      ;; no phi here!
+      (return
+        (get_local $x)
+      )
+    )
+    (return
+      (get_local $x)
+    )
+  )
+  (func $in-unreachable-br_if (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (if
+        (get_local $x)
+        (block
+          (set_local $x
+            (i32.const 1)
+          )
+          (br_if $out
+            (get_local $x)
+          )
+        )
+        (set_local $x
+          (i32.const 2)
+        )
+      )
+      ;; there *IS* a phi here since it was a br_if
+      (return
+        (get_local $x)
+      )
+    )
+    (return
+      (get_local $x)
+    )
+  )
+  (func $in-unreachable-big (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
    (block $label$1
     (block $label$2
      (block $label$3

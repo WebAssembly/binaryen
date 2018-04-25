@@ -227,6 +227,9 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Tracks the state of locals in a control flow path:
   //   localState[i] = the node whose value it contains
+  // When we are in unreachable code (i.e., a path that does not
+  // need to be merged in anywhere), we set the length of this
+  // vector to 0 to indicate that.
   typedef std::vector<Node*> LocalState;
 
   // The current local state in the control flow path being emitted.
@@ -249,9 +252,11 @@ struct Builder : public Visitor<Builder, Node*> {
   Builder(Function* funcInit) {
     func = funcInit;
     std::cout << "\n; function: " << func->name << '\n';
+    auto numLocals = func->getNumLocals();
+    if (numLocals == 0) return; // nothing to do
     // Set up initial local state IR.
-    localState.resize(func->getNumLocals());
-    for (Index i = 0; i < func->getNumLocals(); i++) {
+    localState.resize(numLocals);
+    for (Index i = 0; i < numLocals; i++) {
       Node* node;
       auto type = func->getLocalType(i);
       if (func->isParam(i)) {
@@ -311,6 +316,22 @@ struct Builder : public Visitor<Builder, Node*> {
     }
   }
 
+  void setInUnreachable() {
+    localState.clear();
+  }
+
+  void setInReachable() {
+    localState.resize(func->getNumLocals());
+  }
+
+  bool isInUnreachable() {
+    return isInUnreachable(localState);
+  }
+
+  bool isInUnreachable(const LocalState& state) {
+    return state.empty();
+  }
+
   // Visitors.
 
   Node* visitBlock(Block* curr) {
@@ -362,6 +383,9 @@ struct Builder : public Visitor<Builder, Node*> {
   }
   Node* visitBreak(Break* curr) {
     breakStates[curr->name].push_back(localState);
+    if (!curr->condition) {
+      setInUnreachable();
+    }
     return &CanonicalBad;
   }
   Node* visitSwitch(Switch* curr) {
@@ -373,6 +397,7 @@ struct Builder : public Visitor<Builder, Node*> {
     for (auto target : targets) {
       breakStates[target].push_back(localState);
     }
+    setInUnreachable();
     return &CanonicalBad;
   }
   Node* visitCall(Call* curr) {
@@ -573,6 +598,7 @@ struct Builder : public Visitor<Builder, Node*> {
   }
   Node* visitReturn(Return* curr) {
     // note we don't need the value (it's a const or a get as we are flattened)
+    setInUnreachable();
     return &CanonicalBad;
   }
   Node* visitHost(Host* curr) {
@@ -582,6 +608,7 @@ struct Builder : public Visitor<Builder, Node*> {
     return &CanonicalBad;
   }
   Node* visitUnreachable(Unreachable* curr) {
+    setInUnreachable();
     return &CanonicalBad;
   }
 
@@ -621,7 +648,7 @@ struct Builder : public Visitor<Builder, Node*> {
   }
 
   // Merge local state for a block
-  void mergeBlock(const std::vector<LocalState>& states, LocalState& out) {
+  void mergeBlock(std::vector<LocalState>& states, LocalState& out) {
     Node* block = addNode(Node::makeBlock());
     // No conditions, so just add Bad ones
     for (Index i = 0; i < states.size(); i++) {
@@ -632,11 +659,21 @@ struct Builder : public Visitor<Builder, Node*> {
   }
 
   // Merge local state for multiple control flow paths, creating phis as needed.
-  void merge(const std::vector<LocalState>& states, LocalState& out, Node* block) {
-    assert(out.size() == func->getNumLocals());
+  void merge(std::vector<LocalState>& states, LocalState& out, Node* block) {
     Index numLocals = func->getNumLocals();
+    // Ignore unreachable states; we don't need to merge them.
+    states.erase(std::remove_if(states.begin(), states.end(), [&](const LocalState& curr) {
+      return isInUnreachable(curr);
+    }), states.end());
     Index numStates = states.size();
-    assert(numStates > 0);
+    if (numStates == 0) {
+      // We were unreachable, and still are.
+      assert(isInUnreachable());
+      return;
+    }
+    // We may have become reachable now, mark that.
+    setInReachable();
+    // Just one thing to merge is trivial.
     if (numStates == 1) {
       out = states[0];
       return;
