@@ -2,6 +2,7 @@
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
  (type $2 (func (result i32)))
+ (type $3 (func (param i32) (result i32)))
  (func $ifs (; 0 ;) (type $0)
   (if
    (i32.const 0)
@@ -1675,6 +1676,36 @@
   )
   (drop
    (i32.const 3)
+  )
+ )
+ (func $if-suffix (; 35 ;) (type $3) (param $x i32) (result i32)
+  (block
+   (if
+    (get_local $x)
+    (block
+    )
+    (drop
+     (call $if-suffix
+      (i32.const -1)
+     )
+    )
+   )
+   (set_local $x
+    (i32.const 1)
+   )
+  )
+  (block (result i32)
+   (if
+    (get_local $x)
+    (block
+    )
+    (drop
+     (call $if-suffix
+      (i32.const -2)
+     )
+    )
+   )
+   (i32.const 2)
   )
  )
 )
