@@ -553,9 +553,10 @@ blockpc %0 0 %3 1:i1
 %5 = eq %4, 0:i32
 blockpc %0 1 %5 1:i1
 %6 = eq %1, %2
-%7 = add %1, %2
-%8 = phi %0, %6, %7
-infer %8
+%7:i32 = zext %6
+%8 = add %1, %2
+%9 = phi %0, %7, %8
+infer %9
 
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))

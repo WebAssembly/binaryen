@@ -625,7 +625,7 @@ struct Builder : public Visitor<Builder, Node*> {
           // We need to actually merge some stuff.
           auto* phi = addNode(Node::makePhi(block));
           for (Index t = 0; t < numStates; t++) {
-            phi->addValue(states[t][i]);
+            phi->addValue(expandFromI1(states[t][i]));
           }
           out[i] = phi;
           break;
