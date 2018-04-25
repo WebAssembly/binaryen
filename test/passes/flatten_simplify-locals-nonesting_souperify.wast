@@ -365,4 +365,19 @@
     )
     (get_local $i)
   )
+  (func $call (result i32)
+    (return
+      (i32.mul
+        (i32.add
+          (call $call)
+          (call $call)
+        )
+        (i32.add
+          (i32.const 10)
+          (call $call)
+        )
+      )
+    )
+  )
 )
+

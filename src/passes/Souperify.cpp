@@ -356,7 +356,9 @@ struct Builder : public Visitor<Builder, Node*> {
     parent = oldParent;
     return nullptr;
   }
-  Node* visitLoop(Loop* curr) { return &CanonicalBad; }
+  Node* visitLoop(Loop* curr) {
+    return &CanonicalBad;
+  }
   Node* visitBreak(Break* curr) {
     breakStates[curr->name].push_back(localState);
     return &CanonicalBad;
@@ -372,10 +374,15 @@ struct Builder : public Visitor<Builder, Node*> {
     }
     return &CanonicalBad;
   }
-  Node* visitCall(Call* curr) { return &CanonicalBad; }
-  // TODO    return makeVar(curr->type);
-  Node* visitCallImport(CallImport* curr) { return &CanonicalBad; }
-  Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
+  Node* visitCall(Call* curr) {
+    return makeVar(curr->type);
+  }
+  Node* visitCallImport(CallImport* curr) {
+    return makeVar(curr->type);
+  }
+  Node* visitCallIndirect(CallIndirect* curr) {
+    return makeVar(curr->type);
+  }
   Node* visitGetLocal(GetLocal* curr) {
     if (!isRelevantLocal(curr->index)) {
       return &CanonicalBad;
@@ -392,21 +399,21 @@ struct Builder : public Visitor<Builder, Node*> {
     // If we are doing a copy, just do the copy.
     if (auto* get = curr->value->dynCast<GetLocal>()) {
       setNodeMap[curr] = localState[curr->index] = localState[get->index];
-      return nullptr;
+      return &CanonicalBad;
     }
     // Make a new IR node for the new value here.
     auto* node = setNodeMap[curr] = visit(curr->value);
     localState[curr->index] = node;
-    return nullptr;
+    return &CanonicalBad;
   }
   Node* visitGetGlobal(GetGlobal* curr) {
-    return &CanonicalBad;
+    return makeVar(curr->type);
   }
   Node* visitSetGlobal(SetGlobal* curr) {
     return &CanonicalBad;
   }
   Node* visitLoad(Load* curr) {
-    return &CanonicalBad;
+    return makeVar(curr->type);
   }
   Node* visitStore(Store* curr) {
     return &CanonicalBad;
@@ -453,9 +460,11 @@ struct Builder : public Visitor<Builder, Node*> {
         // Great, we are supported!
         return makeZeroComp(value, true);
       }
-      default: return &CanonicalBad; // anything else is bad
+      default: {
+        // Anything else is an unknown value.
+        return makeVar(curr->type);
+      }
     }
-    return &CanonicalBad; // anything else is bad
   }
   Node* visitBinary(Binary *curr) {
     // First, check if we support this op.
@@ -538,7 +547,10 @@ struct Builder : public Visitor<Builder, Node*> {
         }
         return visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
       }
-      default: return &CanonicalBad; // anything else is bad
+      default: {
+        // Anything else is an unknown value.
+        return makeVar(curr->type);
+      }
     }
   }
   Node* visitSelect(Select* curr) {
