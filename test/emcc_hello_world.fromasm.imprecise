@@ -576,16 +576,13 @@
        (get_local $0)
       )
      )
-     (set_local $0
-      (if (result i32)
-       (tee_local $2
-        (i32.eqz
-         (i32.const 0)
-        )
-       )
-       (get_local $1)
-       (get_local $1)
+     (set_local $2
+      (i32.eqz
+       (i32.const 0)
       )
+     )
+     (set_local $0
+      (get_local $1)
      )
     )
     (block
