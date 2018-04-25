@@ -311,7 +311,6 @@ struct Builder : public Visitor<Builder, Node*> {
         // Add the state flowing out
         states.push_back(localState);
         mergeBlock(states, localState);
-        breakStates.erase(curr->name);
       }
     }
     parent = oldParent;
@@ -830,7 +829,8 @@ struct Printer {
         auto size = block->values.size();
         std::cout << "%" << indexing[node] << " = phi %" << indexing[block];
         for (Index i = 1; i < size + 1; i++) {
-          std::cout << ", %" << indexing[node->getValue(i)];
+          std::cout << ", ";
+          printInternal(node->getValue(i));
         }
         break;
       }
@@ -842,7 +842,9 @@ struct Printer {
           // pc
           std::cout << "pc";
         }
-        std::cout << " %" << indexing[node->getValue(1)] << " 1:i1";
+        std::cout << " ";
+        printInternal(node->getValue(1));
+        std::cout << " 1:i1";
         break;
       }
       case Node::Type::Block: {

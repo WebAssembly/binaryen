@@ -288,4 +288,40 @@
       )
     )
   )
+  (func $block-phi-1 (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 1)
+        )
+      )
+      (br_if $out (get_local $y))
+      (set_local $x
+        (i32.add
+          (get_local $x)
+          (i32.const 2)
+        )
+      )
+    )
+    (i32.add
+      (get_local $x)
+      (i32.const 3)
+    )
+  )
+  (func $block-phi-2 (param $x i32) (param $y i32) (result i32)
+    (block $out
+      (set_local $x
+        (i32.const 1)
+      )
+      (br_if $out (get_local $y))
+      (set_local $x
+        (i32.const 2)
+      )
+    )
+    (i32.add
+      (get_local $x)
+      (i32.const 3)
+    )
+  )
 )
