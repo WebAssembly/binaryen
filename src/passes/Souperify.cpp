@@ -39,6 +39,7 @@
 #include "ir/abstract.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
+#include "ir/utils.h"
 
 namespace wasm {
 
@@ -839,7 +840,11 @@ struct Printer {
   // Each Node in a trace has an index, from 0.
   std::unordered_map<Node*, Index> indexing;
 
+  bool debug;
+
   Printer(Builder& builder, Trace& trace) : builder(builder), trace(trace) {
+    debug = getenv("BINARYEN_DEBUG_SOUPERIFY") != nullptr;
+
     std::cout << "\n; start LHS (in " << builder.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
@@ -864,7 +869,7 @@ struct Printer {
         break; // nothing more to add
       }
       case Node::Type::Expr: {
-        if (getenv("BINARYEN_DEBUG_SOUPERIFY")) {
+        if (debug) {
           std::cout << "; ";
           WasmPrinter::printExpression(node->expr, std::cout, true);
           std::cout << '\n';
@@ -881,6 +886,7 @@ struct Printer {
           std::cout << ", ";
           printInternal(node->getValue(i));
         }
+        if (debug) warnOnSuspiciousValues(node, 1, size);
         break;
       }
       case Node::Type::Cond: {
@@ -1002,6 +1008,7 @@ struct Printer {
       std::cout << ", ";
       auto* right = node->getValue(1);
       printInternal(right);
+      if (debug) warnOnSuspiciousValues(node, 0, 1);
     } else if (curr->is<Select>()) {
       std::cout << "select ";
       printInternal(node->getValue(0));
@@ -1009,9 +1016,26 @@ struct Printer {
       printInternal(node->getValue(1));
       std::cout << ", ";
       printInternal(node->getValue(2));
+      if (debug) warnOnSuspiciousValues(node, 1, 2);
     } else {
       WASM_UNREACHABLE();
     }
+  }
+
+  // Checks if a range [inclusiveStart, inclusiveEnd] of values looks suspicious,
+  // like an obvious missing optimization.
+  void warnOnSuspiciousValues(Node* node, Index inclusiveStart, Index inclusiveEnd) {
+    assert(debug);
+    auto* first = node->getValue(inclusiveStart);
+    if (!first->isExpr() || !first->expr->is<Const>()) return;
+    // Check if any of the others are not equal
+    for (Index i = inclusiveStart + 1; i <= inclusiveEnd; i++) {
+      auto* curr = node->getValue(i);
+      if (!curr->isExpr() || !curr->expr->is<Const>()) return;
+      if (!ExpressionAnalyzer::equal(first->expr, curr->expr)) return;
+    }
+    // They were all equal
+    std::cout << "^^ suspicious values! missing optimization? ^^\n";
   }
 };
 
