@@ -78,11 +78,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     maybeNewLine = minify ? "" : "\n";
   }
 
+  void setCommented() {
+    maybeNewLine = "\n;";
+  }
+
   void setFull(bool full_) { full = full_; }
 
   void incIndent() {
     if (minify) return;
-    o << '\n';
+    o << maybeNewLine;
     indent++;
   }
   void decIndent() {
@@ -591,6 +595,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitSelect(Select *curr) {
     o << '(';
     prepareColor(o) << "select";
+    restoreNormalColor(o);
     incIndent();
     printFullLine(curr->ifTrue);
     printFullLine(curr->ifFalse);
@@ -904,13 +909,17 @@ Pass *createFullPrinterPass() {
 
 // Print individual expressions
 
-std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
+std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full, bool commented) {
   if (!expression) {
     o << "(null expression)";
     return o;
   }
   PrintSExpression print(o);
   print.setMinify(minify);
+  if (commented) {
+    o << ';';
+    print.setCommented();
+  }
   if (full || isFullForced()) {
     print.setFull(true);
     o << "[" << printType(expression->type) << "] ";
