@@ -324,4 +324,14 @@
       (i32.const 3)
     )
   )
+  (func $zero_init-phi-bad_type (result f64)
+    (local $x f64)
+    (if
+      (i32.const 0)
+      (set_local $x
+        (f64.const 1)
+      )
+    )
+    (get_local $x)
+  )
 )

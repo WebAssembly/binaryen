@@ -247,13 +247,14 @@ struct Builder : public Visitor<Builder, Node*> {
     for (Index i = 0; i < func->getNumLocals(); i++) {
       Node* node;
       auto type = func->getLocalType(i);
-      if (func->isParam(i)) {
-        node = Node::makeVar(type);
+      if (!isIntegerType(type)) {
+        node = &CanonicalBad;
+      } else if (func->isParam(i)) {
+        node = addNode(Node::makeVar(type));
       } else {
         wasm::Builder builder(extra);
-        node = Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type)));
+        node = addNode(Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type))));
       }
-      addNode(node);
       localState[i] = node;
     }
     // Process the function body, generating the rest of the IR.
