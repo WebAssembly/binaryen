@@ -720,6 +720,10 @@ struct Trace {
   }
 
   Node* add(Node* node) {
+    // If already added, nothing more to do.
+    if (addedNodes.find(node) != addedNodes.end()) {
+      return node;
+    }
     switch (node->type) {
       case Node::Type::Var: {
         break; // nothing more to add
@@ -775,10 +779,10 @@ struct Trace {
       }
       default: WASM_UNREACHABLE();
     }
-    if (addedNodes.count(node) == 0) {
-      addedNodes.insert(node);
-      nodes.push_back(node);
-    }
+    // Assert on no cycles
+    assert(addedNodes.find(node) == addedNodes.end());
+    nodes.push_back(node);
+    addedNodes.insert(node);
     return node;
   }
 
