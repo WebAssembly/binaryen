@@ -343,4 +343,26 @@
       )
     )
   )
+  (func $phi-one-side-i1 (param $x i32) (param $y i32) (result i32)
+    (local $i i32)
+    (if
+      (i32.le_s
+        (get_local $x)
+        (get_local $y)
+      )
+      (set_local $i
+        (i32.eq
+          (get_local $x)
+          (get_local $y)
+        )
+      )
+      (set_local $i
+        (i32.add
+          (get_local $x)
+          (get_local $y)
+        )
+      )
+    )
+    (get_local $i)
+  )
 )
