@@ -25,6 +25,12 @@
 //
 // See https://github.com/google/souper/issues/323
 //
+// TODO: ideas:
+//  * Automatic conversion of Binaryen IR opts to run on the DataFlow IR.
+//    This would subsume precompute-propagate, for example. Using DFIR we
+//    can "expand" the BIR into expressions that BIR opts can handle
+//    directly, without the need for *-propagate techniques.
+//
 
 #include "wasm.h"
 #include "pass.h"
@@ -247,19 +253,30 @@ struct Builder : public Visitor<Builder, Node*> {
     for (Index i = 0; i < func->getNumLocals(); i++) {
       Node* node;
       auto type = func->getLocalType(i);
-      if (!isIntegerType(type)) {
-        node = &CanonicalBad;
-      } else if (func->isParam(i)) {
-        node = addNode(Node::makeVar(type));
+      if (func->isParam(i)) {
+        node = makeVar(type);
       } else {
-        wasm::Builder builder(extra);
-        node = addNode(Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type))));
+        node = makeZero(type);
       }
       localState[i] = node;
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
     // TODO: handle value flowing out of body
+  }
+
+  // Makes a Var node, representing a value that could be anything.
+  Node* makeVar(wasm::Type type) {
+    if (isRelevantType(type)) {
+      return addNode(Node::makeVar(type));
+    } else {
+      return &CanonicalBad;
+    }
+  }
+
+  Node* makeZero(wasm::Type type) {
+    wasm::Builder builder(extra);
+    return addNode(Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type))));
   }
 
   // Add a new node to our list of owned nodes.
@@ -275,7 +292,7 @@ struct Builder : public Visitor<Builder, Node*> {
     // The unused child nodes are unreachable, but we don't need this to be a fully useful node,
     // just force the type to what we know is correct.
     expr->type = type;
-    auto* zero = Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type)));
+    auto* zero = makeZero(type);
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(expandFromI1(node));
     check->addValue(zero);
@@ -356,6 +373,7 @@ struct Builder : public Visitor<Builder, Node*> {
     return &CanonicalBad;
   }
   Node* visitCall(Call* curr) { return &CanonicalBad; }
+  // TODO    return makeVar(curr->type);
   Node* visitCallImport(CallImport* curr) { return &CanonicalBad; }
   Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
   Node* visitGetLocal(GetLocal* curr) {
@@ -556,8 +574,12 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Helpers.
 
+  bool isRelevantType(wasm::Type type) {
+    return isIntegerType(type);
+  }
+
   bool isRelevantLocal(Index index) {
-    return isIntegerType(func->getLocalType(index));
+    return isRelevantType(func->getLocalType(index));
   }
 
   // Merge local state for an if, also creating a block and conditions.
