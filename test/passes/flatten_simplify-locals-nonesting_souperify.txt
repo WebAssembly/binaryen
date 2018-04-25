@@ -219,12 +219,6 @@ infer %1
 
 ; function: $various-conditions-4
 
-; start LHS (in $various-conditions-4)
-%0:i32 = var
-%1 = add %0, 3:i32
-infer %1
-
-
 ; function: $unaries
 
 ; start LHS (in $unaries)
@@ -653,6 +647,8 @@ infer %4
 
 
 ; function: $in-unreachable-big
+
+; function: $in-unreachable-operations
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
@@ -2126,5 +2122,42 @@ infer %4
    (nop)
   )
   (nop)
+ )
+ (func $in-unreachable-operations (; 31 ;) (type $6) (param $x i32) (param $y i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (block $block
+   (unreachable)
+   (unreachable)
+   (block
+    (set_local $2
+     (get_local $x)
+    )
+    (if
+     (get_local $2)
+     (block
+      (set_local $x
+       (i32.const 1)
+      )
+      (nop)
+     )
+     (block
+      (set_local $x
+       (i32.const 2)
+      )
+      (nop)
+     )
+    )
+   )
+   (nop)
+   (set_local $3
+    (get_local $x)
+   )
+   (return
+    (get_local $3)
+   )
+   (unreachable)
+  )
+  (unreachable)
  )
 )

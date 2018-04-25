@@ -528,5 +528,22 @@
     (i32.const -8531)
    )
   )
+  (func $in-unreachable-operations (param $x i32) (param $y i32) (result i32)
+    (block
+      (unreachable)
+      (if
+        (get_local $x)
+        (set_local $x
+          (i32.const 1)
+        )
+        (set_local $x
+          (i32.const 2)
+        )
+      )
+      (return
+        (get_local $x)
+      )
+    )
+  )
 )
 

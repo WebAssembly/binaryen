@@ -255,7 +255,7 @@ struct Builder : public Visitor<Builder, Node*> {
     auto numLocals = func->getNumLocals();
     if (numLocals == 0) return; // nothing to do
     // Set up initial local state IR.
-    localState.resize(numLocals);
+    setInReachable();
     for (Index i = 0; i < numLocals; i++) {
       Node* node;
       auto type = func->getLocalType(i);
@@ -410,14 +410,14 @@ struct Builder : public Visitor<Builder, Node*> {
     return makeVar(curr->type);
   }
   Node* visitGetLocal(GetLocal* curr) {
-    if (!isRelevantLocal(curr->index)) {
+    if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &CanonicalBad;
     }
     // We now know which IR node this get refers to
     return localState[curr->index];
   }
   Node* visitSetLocal(SetLocal* curr) {
-    if (!isRelevantLocal(curr->index)) {
+    if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &CanonicalBad;
     }
     sets.push_back(curr);
@@ -665,6 +665,9 @@ struct Builder : public Visitor<Builder, Node*> {
     states.erase(std::remove_if(states.begin(), states.end(), [&](const LocalState& curr) {
       return isInUnreachable(curr);
     }), states.end());
+    for (auto& state : states) {
+      assert(!isInUnreachable(state));
+    }
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
