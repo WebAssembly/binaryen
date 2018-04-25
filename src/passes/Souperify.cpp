@@ -865,7 +865,7 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var";
+        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var\n";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
@@ -886,6 +886,7 @@ struct Printer {
           std::cout << ", ";
           printInternal(node->getValue(i));
         }
+        std::cout << '\n';
         if (debug) warnOnSuspiciousValues(node, 1, size);
         break;
       }
@@ -899,11 +900,11 @@ struct Printer {
         }
         std::cout << " ";
         printInternal(node->getValue(1));
-        std::cout << " 1:i1";
+        std::cout << " 1:i1\n";
         break;
       }
       case Node::Type::Block: {
-        std::cout << "%" << indexing[node] << " = block " << node->values.size();
+        std::cout << "%" << indexing[node] << " = block " << node->values.size() << '\n';
         break;
       }
       case Node::Type::Zext: {
@@ -911,6 +912,7 @@ struct Printer {
         std::cout << "%" << indexing[node] << ':' << printType(child->getWasmType());
         std::cout << " = zext ";
         printInternal(child);
+        std::cout << '\n';
         break;
       }
       case Node::Type::Bad: {
@@ -919,7 +921,6 @@ struct Printer {
       }
       default: WASM_UNREACHABLE();
     }
-    std::cout << '\n';
   }
 
   void print(Literal value) {
@@ -943,6 +944,7 @@ struct Printer {
     auto* curr = node->expr;
     if (auto* c = curr->dynCast<Const>()) {
       print(c->value);
+      std::cout << '\n';
     } else if (auto* unary = curr->dynCast<Unary>()) {
       switch (unary->op) {
         case ClzInt32:
@@ -956,6 +958,7 @@ struct Printer {
       std::cout << ' ';
       auto* value = node->getValue(0);
       printInternal(value);
+      std::cout << '\n';
     } else if (auto* binary = curr->dynCast<Binary>()) {
       switch (binary->op) {
         case AddInt32:
@@ -1008,6 +1011,7 @@ struct Printer {
       std::cout << ", ";
       auto* right = node->getValue(1);
       printInternal(right);
+      std::cout << '\n';
       if (debug) warnOnSuspiciousValues(node, 0, 1);
     } else if (curr->is<Select>()) {
       std::cout << "select ";
@@ -1016,6 +1020,7 @@ struct Printer {
       printInternal(node->getValue(1));
       std::cout << ", ";
       printInternal(node->getValue(2));
+      std::cout << '\n';
       if (debug) warnOnSuspiciousValues(node, 1, 2);
     } else {
       WASM_UNREACHABLE();
