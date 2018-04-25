@@ -130,7 +130,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
-    Flow flow = precomputeFlow(curr);
+    Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
       if (flow.breakTo == NONSTANDALONE_FLOW) return;
       if (flow.breakTo == RETURN_FLOW) {
@@ -194,7 +194,9 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
 private:
-  Flow precomputeFlow(Expression* curr) {
+  // Precompute an expression, returning a flow, which may be a constant
+  // that we can replace the expression with.
+  Flow precomputeExpression(Expression* curr) {
     try {
       return StandaloneExpressionRunner(getValues).visit(curr);
     } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
@@ -202,9 +204,23 @@ private:
     }
   }
 
+  // Precomputes the value of an expression, as opposed to the expression
+  // itself. This differs from precomputeExpression in that we care about
+  // the value the expression will have, which we cannot necessary replace
+  // the expression with. For example,
+  //  (tee_local (i32.const 1))
+  // will have value 1 which we can optimize here, but in precomputeExpression
+  // we could not do anything.
   Literal precomputeValue(Expression* curr) {
-    Flow flow = precomputeFlow(curr);
+    Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
+      // In addition to what precomputeExpression does, we can handle some more things.
+      if (isConcreteType(curr->type)) {
+        if (auto* set = curr->dynCast<SetLocal>()) {
+          assert(set->isTee());
+          return precomputeValue(set->value);
+        }
+      }
       return Literal();
     }
     return flow.value;
