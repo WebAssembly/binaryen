@@ -359,10 +359,16 @@ struct Builder : public Visitor<Builder, Node*> {
   Node* visitCallImport(CallImport* curr) { return &CanonicalBad; }
   Node* visitCallIndirect(CallIndirect* curr) { return &CanonicalBad; }
   Node* visitGetLocal(GetLocal* curr) {
+    if (!isRelevantLocal(curr->index)) {
+      return &CanonicalBad;
+    }
     // We now know which IR node this get refers to
     return localState[curr->index];
   }
   Node* visitSetLocal(SetLocal* curr) {
+    if (!isRelevantLocal(curr->index)) {
+      return &CanonicalBad;
+    }
     sets.push_back(curr);
     parentMap[curr] = parent;
     // If we are doing a copy, just do the copy.
@@ -549,6 +555,10 @@ struct Builder : public Visitor<Builder, Node*> {
   }
 
   // Helpers.
+
+  bool isRelevantLocal(Index index) {
+    return isIntegerType(func->getLocalType(index));
+  }
 
   // Merge local state for an if, also creating a block and conditions.
   void mergeIf(LocalState& aState, LocalState& bState, Node* condition, Expression* expr, LocalState& out) {

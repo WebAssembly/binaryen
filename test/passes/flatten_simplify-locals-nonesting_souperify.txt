@@ -511,6 +511,8 @@ infer %2
 
 
 ; function: $zero_init-phi-bad_type
+
+; function: $phi-bad-type
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
@@ -1470,6 +1472,31 @@ infer %2
   )
   (set_local $3
    (get_local $x)
+  )
+  (return
+   (get_local $3)
+  )
+ )
+ (func $phi-bad-type (; 22 ;) (type $7) (result f64)
+  (local $0 f64)
+  (local $1 f64)
+  (local $2 f64)
+  (local $3 f64)
+  (block $label$1
+   (if
+    (i32.const 0)
+    (set_local $0
+     (f64.const 0)
+    )
+    (set_local $0
+     (f64.const 1)
+    )
+   )
+   (nop)
+   (nop)
+  )
+  (set_local $3
+   (get_local $0)
   )
   (return
    (get_local $3)
