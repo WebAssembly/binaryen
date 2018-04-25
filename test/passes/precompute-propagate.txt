@@ -221,4 +221,16 @@
    (i32.const 14)
   )
  )
+ (func $through-tee-more (; 14 ;) (type $2) (param $x i32) (param $y i32) (result i32)
+  (set_local $x
+   (i32.eqz
+    (tee_local $y
+     (i32.const 7)
+    )
+   )
+  )
+  (return
+   (i32.const 7)
+  )
+ )
 )
