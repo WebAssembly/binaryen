@@ -231,10 +231,19 @@ struct Builder : public Visitor<Builder, Node*> {
   typedef std::vector<Node*> LocalState;
 
   // The current local state in the control flow path being emitted.
+  // TODO: rename these to `locals`
   LocalState localState;
 
   // The local states on branches to a specific target.
   std::unordered_map<Name, std::vector<LocalState>> breakStates;
+
+  // The local state in a control flow path, including a possible
+  // condition as well.
+  struct FlowState {
+    LocalState locals; // TODO: avoid copies here
+    Node* condition;
+    FlowState(LocalState locals, Node* condition) : locals(locals), condition(condition) {}
+  };
 
   // API
 
@@ -328,6 +337,10 @@ struct Builder : public Visitor<Builder, Node*> {
 
   bool isInUnreachable(const LocalState& state) {
     return state.empty();
+  }
+
+  bool isInUnreachable(const FlowState& state) {
+    return isInUnreachable(state.locals);
   }
 
   // Visitors.
@@ -623,35 +636,42 @@ struct Builder : public Visitor<Builder, Node*> {
   // Merge local state for an if, also creating a block and conditions.
   void mergeIf(LocalState& aState, LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
     // Create the conditions (if we can).
+    Node* ifTrue;
+    Node* ifFalse;
     if (!condition->isBad()) {
       // Generate boolean (i1 returning) conditions for the two branches.
       auto& conditions = expressionConditionMap[expr];
-      // ifTrue
-      conditions.push_back(ensureI1(condition));
-      // ifFalse
-      conditions.push_back(makeZeroComp(condition, true));
+      ifTrue = ensureI1(condition);
+      conditions.push_back(ifTrue);
+      ifFalse = makeZeroComp(condition, true);
+      conditions.push_back(ifFalse);
+    } else {
+      ifTrue = ifFalse = &CanonicalBad;
     }
     // Finally, merge the state with that block. TODO optimize
-    std::vector<LocalState> states;
-    states.push_back(aState);
-    states.push_back(bState);
+    std::vector<FlowState> states;
+    states.emplace_back(aState, ifTrue);
+    states.emplace_back(bState, ifFalse);
     merge(states, out);
   }
 
   // Merge local state for a block
-  void mergeBlock(std::vector<LocalState>& states, LocalState& out) {
+  void mergeBlock(std::vector<LocalState>& localses, LocalState& out) {
     // TODO: conditions
+    std::vector<FlowState> states;
+    for (auto& locals : localses) {
+      states.emplace_back(locals, &CanonicalBad);
+    }
     merge(states, out);
   }
 
   // Merge local state for multiple control flow paths, creating phis as needed.
-  void merge(std::vector<LocalState>& states, LocalState& out) {
+  void merge(std::vector<FlowState>& states, LocalState& out) {
     Index numLocals = func->getNumLocals();
     // Ignore unreachable states; we don't need to merge them.
-    states.erase(std::remove_if(states.begin(), states.end(), [&](const LocalState& curr) {
-      return isInUnreachable(curr);
+    states.erase(std::remove_if(states.begin(), states.end(), [&](const FlowState& curr) {
+      return isInUnreachable(curr.locals);
     }), states.end());
-// XXX filter the conditions as well
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
@@ -662,14 +682,14 @@ struct Builder : public Visitor<Builder, Node*> {
     setInReachable();
     // Just one thing to merge is trivial.
     if (numStates == 1) {
-      out = states[0];
+      out = states[0].locals;
       return;
     }
     for (Index i = 0; i < numLocals; i++) {
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
       for (auto& state : states) {
-        auto* node = state[i];
+        auto* node = state.locals[i];
         if (node->isBad()) {
           bad = true;
           out[i] = node;
@@ -683,13 +703,13 @@ struct Builder : public Visitor<Builder, Node*> {
       Node* block = nullptr;
       for (auto& state : states) {
         if (!first) {
-          first = out[i] = state[i];
-        } else if (state[i] != first) {
+          first = out[i] = state.locals[i];
+        } else if (state.locals[i] != first) {
           // We need to actually merge some stuff.
           if (!block) {
             block = addNode(Node::makeBlock());
-            for (auto* condition : conditions) {
-              block->addValue(condition);
+            for (auto& state : states) {
+              block->addValue(state.condition);
             }
           }
           auto* phi = addNode(Node::makePhi(block));
@@ -698,7 +718,7 @@ struct Builder : public Visitor<Builder, Node*> {
             if (isInUnreachable(phiState)) {
               phiValue = &CanonicalBad;
             } else {
-              phiValue = expandFromI1(phiState[i]);
+              phiValue = expandFromI1(phiState.locals[i]);
             }
             phi->addValue(phiValue);
           }
