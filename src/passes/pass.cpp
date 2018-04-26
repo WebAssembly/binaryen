@@ -154,7 +154,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
-  if (options.shrinkLevel >= 1) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("code-folding");
   }
   add("merge-blocks"); // makes remove-unused-brs more effective
