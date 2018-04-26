@@ -26,7 +26,10 @@
 // See https://github.com/google/souper/issues/323
 //
 // TODO:
+//  * Loops
+//  * pcs and blockpcs for things other than ifs
 //  * Investigate 'inlining', adding in nodes through calls
+//  * Consider generalizing DataFlow IR for internal Binaryen use.
 //  * Automatic conversion of Binaryen IR opts to run on the DataFlow IR.
 //    This would subsume precompute-propagate, for example. Using DFIR we
 //    can "expand" the BIR into expressions that BIR opts can handle
@@ -45,8 +48,6 @@
 namespace wasm {
 
 // Simple IR for data flow computation for Souper.
-// TODO: loops
-// TODO: generalize for other things?
 
 namespace DataFlow {
 
