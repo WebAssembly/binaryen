@@ -561,7 +561,6 @@ WasmType Function::getLocalType(Index index) {
 }
 
 FunctionType* Module::getFunctionType(Name name) {
-   std::cout << "FUNCTION : " << name << std::endl;
   assert(functionTypesMap.count(name));
   return functionTypesMap[name];
 }
