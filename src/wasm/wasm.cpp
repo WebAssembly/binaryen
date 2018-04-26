@@ -16,7 +16,7 @@
 
 #include "wasm.h"
 #include "wasm-traversal.h"
-#include "ast_utils.h"
+#include "ir/branch-utils.h"
 
 namespace wasm {
 
@@ -107,7 +107,8 @@ const char* getExpressionName(Expression* curr) {
 struct TypeSeeker : public PostWalker<TypeSeeker> {
   Expression* target; // look for this one
   Name targetName;
-  std::vector<WasmType> types;
+  std::vector<Type> types;
+
 
   TypeSeeker(Expression* target, Name targetName) : target(target), targetName(targetName) {
     Expression* temp = target;
@@ -148,8 +149,8 @@ struct TypeSeeker : public PostWalker<TypeSeeker> {
   }
 };
 
-static WasmType mergeTypes(std::vector<WasmType>& types) {
-  WasmType type = unreachable;
+static Type mergeTypes(std::vector<Type>& types) {
+  Type type = unreachable;
   for (auto other : types) {
     // once none, stop. it then indicates a poison value, that must not be consumed
     // and ignore unreachable
@@ -170,46 +171,51 @@ static WasmType mergeTypes(std::vector<WasmType>& types) {
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block) {
+static void handleUnreachable(Block* block, bool breakabilityKnown=false, bool hasBreak=false) {
   if (block->type == unreachable) return; // nothing to do
+  if (block->list.size() == 0) return; // nothing to do
+  // if we are concrete, stop - even an unreachable child
+  // won't change that (since we have a break with a value,
+  // or the final child flows out a value)
+  if (isConcreteType(block->type)) return;
+  // look for an unreachable child
   for (auto* child : block->list) {
     if (child->type == unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a break
-      BreakSeeker seeker(block->name);
-      Expression* expr = block;
-      seeker.walk(expr);
-      if (!seeker.found) {
+      if (!breakabilityKnown) {
+        hasBreak = BranchUtils::BranchSeeker::hasNamed(block, block->name);
+      }
+      if (!hasBreak) {
         block->type = unreachable;
-      } else {
-        block->type = seeker.valueType;
       }
       return;
     }
   }
 }
 
-void Block::finalize(WasmType type_) {
-  type = type_;
-  if (type == none && list.size() > 0) {
-    handleUnreachable(this);
-  }
-}
-
 void Block::finalize() {
   if (!name.is()) {
-    // nothing branches here, so this is easy
     if (list.size() > 0) {
-      // if we have an unreachable child, we are unreachable
-      // (we don't need to recurse into children, they can't
-      // break to us)
+      // nothing branches here, so this is easy
+      // normally the type is the type of the final child
+      type = list.back()->type;
+      // and even if we have an unreachable child somewhere,
+      // we still mark ourselves as having that type,
+      // (block (result i32)
+      //  (return)
+      //  (i32.const 10)
+      // )
+      if (isConcreteType(type)) return;
+      // if we are unreachable, we are done
+      if (type == unreachable) return;
+      // we may still be unreachable if we have an unreachable
+      // child
       for (auto* child : list) {
         if (child->type == unreachable) {
           type = unreachable;
           return;
         }
       }
-      // children are reachable, so last element determines type
-      type = list.back()->type;
     } else {
       type = none;
     }
@@ -221,7 +227,21 @@ void Block::finalize() {
   handleUnreachable(this);
 }
 
-void If::finalize(WasmType type_) {
+void Block::finalize(Type type_) {
+  type = type_;
+  if (type == none && list.size() > 0) {
+    handleUnreachable(this);
+  }
+}
+
+void Block::finalize(Type type_, bool hasBreak) {
+  type = type_;
+  if (type == none && list.size() > 0) {
+    handleUnreachable(this, true, hasBreak);
+  }
+}
+
+void If::finalize(Type type_) {
   type = type_;
   if (type == none && (condition->type == unreachable || (ifFalse && ifTrue->type == unreachable && ifFalse->type == unreachable))) {
     type = unreachable;
@@ -229,14 +249,12 @@ void If::finalize(WasmType type_) {
 }
 
 void If::finalize() {
-  if (condition->type == unreachable) {
-    type = unreachable;
-  } else if (ifFalse) {
+  if (ifFalse) {
     if (ifTrue->type == ifFalse->type) {
       type = ifTrue->type;
-    } else if (isConcreteWasmType(ifTrue->type) && ifFalse->type == unreachable) {
+    } else if (isConcreteType(ifTrue->type) && ifFalse->type == unreachable) {
       type = ifTrue->type;
-    } else if (isConcreteWasmType(ifFalse->type) && ifTrue->type == unreachable) {
+    } else if (isConcreteType(ifFalse->type) && ifTrue->type == unreachable) {
       type = ifFalse->type;
     } else {
       type = none;
@@ -244,9 +262,20 @@ void If::finalize() {
   } else {
     type = none; // if without else
   }
+  // if the arms return a value, leave it even if the condition
+  // is unreachable, we still mark ourselves as having that type, e.g.
+  // (if (result i32)
+  //  (unreachable)
+  //  (i32.const 10)
+  //  (i32.const 20
+  // )
+  // otherwise, if the condition is unreachable, so is the if
+  if (type == none && condition->type == unreachable) {
+    type = unreachable;
+  }
 }
 
-void Loop::finalize(WasmType type_) {
+void Loop::finalize(Type type_) {
   type = type_;
   if (type == none && body->type == unreachable) {
     type = unreachable;
@@ -324,11 +353,16 @@ bool SetLocal::isTee() {
 void SetLocal::setTee(bool is) {
   if (is) type = value->type;
   else type = none;
+  finalize(); // type may need to be unreachable
 }
 
 void SetLocal::finalize() {
   if (value->type == unreachable) {
     type = unreachable;
+  } else if (isTee()) {
+    type = value->type;
+  } else {
+    type = none;
   }
 }
 
@@ -353,10 +387,40 @@ void Store::finalize() {
   }
 }
 
+void AtomicRMW::finalize() {
+  if (ptr->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicCmpxchg::finalize() {
+  if (ptr->type == unreachable || expected->type == unreachable || replacement->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicWait::finalize() {
+  type = i32;
+  if (ptr->type == unreachable || expected->type == unreachable || timeout->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void AtomicWake::finalize() {
+  type = i32;
+  if (ptr->type == unreachable || wakeCount->type == unreachable) {
+    type = unreachable;
+  }
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
   return this;
+}
+
+void Const::finalize() {
+  type = value.type;
 }
 
 bool Unary::isRelational() {
@@ -391,7 +455,8 @@ void Unary::finalize() {
     case SqrtFloat64: type = value->type; break;
     case EqZInt32:
     case EqZInt64: type = i32; break;
-    case ExtendSInt32: case ExtendUInt32: type = i64; break;
+    case ExtendS8Int32: case ExtendS16Int32: type = i32; break;
+    case ExtendSInt32: case ExtendUInt32: case ExtendS8Int64: case ExtendS16Int64: case ExtendS32Int64: type = i64; break;
     case WrapInt64: type = i32; break;
     case PromoteFloat32: type = f64; break;
     case DemoteFloat64: type = f32; break;
@@ -525,20 +590,28 @@ bool Function::isVar(Index index) {
 }
 
 bool Function::hasLocalName(Index index) const {
-  return index < localNames.size() && localNames[index].is();
+  return localNames.find(index) != localNames.end();
 }
 
 Name Function::getLocalName(Index index) {
-  assert(hasLocalName(index));
-  return localNames[index];
+  return localNames.at(index);
 }
 
 Name Function::getLocalNameOrDefault(Index index) {
-  if (hasLocalName(index)) {
-    return localNames[index];
+  auto nameIt = localNames.find(index);
+  if (nameIt != localNames.end()) {
+    return nameIt->second;
   }
   // this is an unnamed local
   return Name();
+}
+
+Name Function::getLocalNameOrGeneric(Index index) {
+  auto nameIt = localNames.find(index);
+  if (nameIt != localNames.end()) {
+    return nameIt->second;
+  }
+  return Name::fromInt(index);
 }
 
 Index Function::getLocalIndex(Name name) {
@@ -550,7 +623,7 @@ Index Function::getVarIndexBase() {
   return params.size();
 }
 
-WasmType Function::getLocalType(Index index) {
+Type Function::getLocalType(Index index) {
   if (isParam(index)) {
     return params[index];
   } else if (isVar(index)) {
@@ -674,7 +747,27 @@ void Module::removeExport(Name name) {
   exportsMap.erase(name);
 }
 
-  // TODO: remove* for other elements
+void Module::removeFunction(Name name) {
+  for (size_t i = 0; i < functions.size(); i++) {
+    if (functions[i]->name == name) {
+      functions.erase(functions.begin() + i);
+      break;
+    }
+  }
+  functionsMap.erase(name);
+}
+
+void Module::removeFunctionType(Name name) {
+  for (size_t i = 0; i < functionTypes.size(); i++) {
+    if (functionTypes[i]->name == name) {
+      functionTypes.erase(functionTypes.begin() + i);
+      break;
+    }
+  }
+  functionTypesMap.erase(name);
+}
+
+// TODO: remove* for other elements
 
 void Module::updateMaps() {
   functionsMap.clear();

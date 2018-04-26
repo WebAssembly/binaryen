@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/cmpdi-1.c"
+	.file	"cmpdi-1.c"
 	.section	.text.feq,"ax",@progbits
-	.hidden	feq
+	.hidden	feq                     # -- Begin function feq
 	.globl	feq
 	.type	feq,@function
 feq:                                    # @feq
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
 	i64.eq  	$push0=, $0, $1
@@ -16,15 +16,15 @@ feq:                                    # @feq
 	.endfunc
 .Lfunc_end0:
 	.size	feq, .Lfunc_end0-feq
-
+                                        # -- End function
 	.section	.text.fne,"ax",@progbits
-	.hidden	fne
+	.hidden	fne                     # -- Begin function fne
 	.globl	fne
 	.type	fne,@function
 fne:                                    # @fne
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 140
 	i32.const	$push1=, 13
 	i64.eq  	$push0=, $0, $1
@@ -33,15 +33,15 @@ fne:                                    # @fne
 	.endfunc
 .Lfunc_end1:
 	.size	fne, .Lfunc_end1-fne
-
+                                        # -- End function
 	.section	.text.flt,"ax",@progbits
-	.hidden	flt
+	.hidden	flt                     # -- Begin function flt
 	.globl	flt
 	.type	flt,@function
 flt:                                    # @flt
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
 	i64.lt_s	$push0=, $0, $1
@@ -50,15 +50,15 @@ flt:                                    # @flt
 	.endfunc
 .Lfunc_end2:
 	.size	flt, .Lfunc_end2-flt
-
+                                        # -- End function
 	.section	.text.fge,"ax",@progbits
-	.hidden	fge
+	.hidden	fge                     # -- Begin function fge
 	.globl	fge
 	.type	fge,@function
 fge:                                    # @fge
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 140
 	i32.const	$push1=, 13
 	i64.lt_s	$push0=, $0, $1
@@ -67,15 +67,15 @@ fge:                                    # @fge
 	.endfunc
 .Lfunc_end3:
 	.size	fge, .Lfunc_end3-fge
-
+                                        # -- End function
 	.section	.text.fgt,"ax",@progbits
-	.hidden	fgt
+	.hidden	fgt                     # -- Begin function fgt
 	.globl	fgt
 	.type	fgt,@function
 fgt:                                    # @fgt
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
 	i64.gt_s	$push0=, $0, $1
@@ -84,15 +84,15 @@ fgt:                                    # @fgt
 	.endfunc
 .Lfunc_end4:
 	.size	fgt, .Lfunc_end4-fgt
-
+                                        # -- End function
 	.section	.text.fle,"ax",@progbits
-	.hidden	fle
+	.hidden	fle                     # -- Begin function fle
 	.globl	fle
 	.type	fle,@function
 fle:                                    # @fle
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 140
 	i32.const	$push1=, 13
 	i64.gt_s	$push0=, $0, $1
@@ -101,15 +101,15 @@ fle:                                    # @fle
 	.endfunc
 .Lfunc_end5:
 	.size	fle, .Lfunc_end5-fle
-
+                                        # -- End function
 	.section	.text.fltu,"ax",@progbits
-	.hidden	fltu
+	.hidden	fltu                    # -- Begin function fltu
 	.globl	fltu
 	.type	fltu,@function
 fltu:                                   # @fltu
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
 	i64.lt_u	$push0=, $0, $1
@@ -118,15 +118,15 @@ fltu:                                   # @fltu
 	.endfunc
 .Lfunc_end6:
 	.size	fltu, .Lfunc_end6-fltu
-
+                                        # -- End function
 	.section	.text.fgeu,"ax",@progbits
-	.hidden	fgeu
+	.hidden	fgeu                    # -- Begin function fgeu
 	.globl	fgeu
 	.type	fgeu,@function
 fgeu:                                   # @fgeu
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 140
 	i32.const	$push1=, 13
 	i64.lt_u	$push0=, $0, $1
@@ -135,15 +135,15 @@ fgeu:                                   # @fgeu
 	.endfunc
 .Lfunc_end7:
 	.size	fgeu, .Lfunc_end7-fgeu
-
+                                        # -- End function
 	.section	.text.fgtu,"ax",@progbits
-	.hidden	fgtu
+	.hidden	fgtu                    # -- Begin function fgtu
 	.globl	fgtu
 	.type	fgtu,@function
 fgtu:                                   # @fgtu
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 13
 	i32.const	$push1=, 140
 	i64.gt_u	$push0=, $0, $1
@@ -152,15 +152,15 @@ fgtu:                                   # @fgtu
 	.endfunc
 .Lfunc_end8:
 	.size	fgtu, .Lfunc_end8-fgtu
-
+                                        # -- End function
 	.section	.text.fleu,"ax",@progbits
-	.hidden	fleu
+	.hidden	fleu                    # -- Begin function fleu
 	.globl	fleu
 	.type	fleu,@function
 fleu:                                   # @fleu
 	.param  	i64, i64
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 140
 	i32.const	$push1=, 13
 	i64.gt_u	$push0=, $0, $1
@@ -169,15 +169,15 @@ fleu:                                   # @fleu
 	.endfunc
 .Lfunc_end9:
 	.size	fleu, .Lfunc_end9-fleu
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i64, i32, i32, i32, i64, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$4=, correct_results
 	i32.const	$0=, 0
 .LBB10_1:                               # %for.body
@@ -196,148 +196,140 @@ main:                                   # @main
                                         #   Parent Loop BB10_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
 	loop    	                # label2:
-	i32.const	$push51=, 13
-	i32.const	$push50=, 140
-	i64.load	$push49=, 0($2)
-	tee_local	$push48=, $5=, $pop49
-	i64.eq  	$push47=, $1, $pop48
-	tee_local	$push46=, $6=, $pop47
-	i32.select	$push2=, $pop51, $pop50, $pop46
+	i64.load	$5=, 0($2)
+	i64.eq  	$6=, $1, $5
+	i32.const	$push47=, 13
+	i32.const	$push46=, 140
+	i32.select	$push2=, $pop47, $pop46, $6
 	i32.load	$push3=, 0($4)
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	2, $pop4        # 2: down to label0
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push54=, 140
-	i32.const	$push53=, 13
-	i32.select	$push5=, $pop54, $pop53, $6
-	i32.const	$push52=, 4
-	i32.add 	$push6=, $4, $pop52
+	i32.const	$push50=, 140
+	i32.const	$push49=, 13
+	i32.select	$push5=, $pop50, $pop49, $6
+	i32.const	$push48=, 4
+	i32.add 	$push6=, $4, $pop48
 	i32.load	$push7=, 0($pop6)
 	i32.ne  	$push8=, $pop5, $pop7
 	br_if   	2, $pop8        # 2: down to label0
-# BB#4:                                 # %if.end10
+# %bb.4:                                # %if.end10
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push59=, 13
-	i32.const	$push58=, 140
-	i64.lt_s	$push57=, $1, $5
-	tee_local	$push56=, $6=, $pop57
-	i32.select	$push9=, $pop59, $pop58, $pop56
-	i32.const	$push55=, 8
-	i32.add 	$push10=, $4, $pop55
+	i64.lt_s	$6=, $1, $5
+	i32.const	$push53=, 13
+	i32.const	$push52=, 140
+	i32.select	$push9=, $pop53, $pop52, $6
+	i32.const	$push51=, 8
+	i32.add 	$push10=, $4, $pop51
 	i32.load	$push11=, 0($pop10)
 	i32.ne  	$push12=, $pop9, $pop11
 	br_if   	2, $pop12       # 2: down to label0
-# BB#5:                                 # %if.end15
+# %bb.5:                                # %if.end15
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push62=, 140
-	i32.const	$push61=, 13
-	i32.select	$push13=, $pop62, $pop61, $6
-	i32.const	$push60=, 12
-	i32.add 	$push14=, $4, $pop60
+	i32.const	$push56=, 140
+	i32.const	$push55=, 13
+	i32.select	$push13=, $pop56, $pop55, $6
+	i32.const	$push54=, 12
+	i32.add 	$push14=, $4, $pop54
 	i32.load	$push15=, 0($pop14)
 	i32.ne  	$push16=, $pop13, $pop15
 	br_if   	2, $pop16       # 2: down to label0
-# BB#6:                                 # %if.end20
+# %bb.6:                                # %if.end20
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push67=, 13
-	i32.const	$push66=, 140
-	i64.gt_s	$push65=, $1, $5
-	tee_local	$push64=, $6=, $pop65
-	i32.select	$push17=, $pop67, $pop66, $pop64
-	i32.const	$push63=, 16
-	i32.add 	$push18=, $4, $pop63
+	i64.gt_s	$6=, $1, $5
+	i32.const	$push59=, 13
+	i32.const	$push58=, 140
+	i32.select	$push17=, $pop59, $pop58, $6
+	i32.const	$push57=, 16
+	i32.add 	$push18=, $4, $pop57
 	i32.load	$push19=, 0($pop18)
 	i32.ne  	$push20=, $pop17, $pop19
 	br_if   	2, $pop20       # 2: down to label0
-# BB#7:                                 # %if.end25
+# %bb.7:                                # %if.end25
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push70=, 140
-	i32.const	$push69=, 13
-	i32.select	$push21=, $pop70, $pop69, $6
-	i32.const	$push68=, 20
-	i32.add 	$push22=, $4, $pop68
+	i32.const	$push62=, 140
+	i32.const	$push61=, 13
+	i32.select	$push21=, $pop62, $pop61, $6
+	i32.const	$push60=, 20
+	i32.add 	$push22=, $4, $pop60
 	i32.load	$push23=, 0($pop22)
 	i32.ne  	$push24=, $pop21, $pop23
 	br_if   	2, $pop24       # 2: down to label0
-# BB#8:                                 # %if.end30
+# %bb.8:                                # %if.end30
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push75=, 13
-	i32.const	$push74=, 140
-	i64.lt_u	$push73=, $1, $5
-	tee_local	$push72=, $6=, $pop73
-	i32.select	$push25=, $pop75, $pop74, $pop72
-	i32.const	$push71=, 24
-	i32.add 	$push26=, $4, $pop71
+	i64.lt_u	$6=, $1, $5
+	i32.const	$push65=, 13
+	i32.const	$push64=, 140
+	i32.select	$push25=, $pop65, $pop64, $6
+	i32.const	$push63=, 24
+	i32.add 	$push26=, $4, $pop63
 	i32.load	$push27=, 0($pop26)
 	i32.ne  	$push28=, $pop25, $pop27
 	br_if   	2, $pop28       # 2: down to label0
-# BB#9:                                 # %if.end35
+# %bb.9:                                # %if.end35
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push78=, 140
-	i32.const	$push77=, 13
-	i32.select	$push29=, $pop78, $pop77, $6
-	i32.const	$push76=, 28
-	i32.add 	$push30=, $4, $pop76
+	i32.const	$push68=, 140
+	i32.const	$push67=, 13
+	i32.select	$push29=, $pop68, $pop67, $6
+	i32.const	$push66=, 28
+	i32.add 	$push30=, $4, $pop66
 	i32.load	$push31=, 0($pop30)
 	i32.ne  	$push32=, $pop29, $pop31
 	br_if   	2, $pop32       # 2: down to label0
-# BB#10:                                # %if.end40
+# %bb.10:                               # %if.end40
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push83=, 13
-	i32.const	$push82=, 140
-	i64.gt_u	$push81=, $1, $5
-	tee_local	$push80=, $6=, $pop81
-	i32.select	$push33=, $pop83, $pop82, $pop80
-	i32.const	$push79=, 32
-	i32.add 	$push34=, $4, $pop79
+	i64.gt_u	$6=, $1, $5
+	i32.const	$push71=, 13
+	i32.const	$push70=, 140
+	i32.select	$push33=, $pop71, $pop70, $6
+	i32.const	$push69=, 32
+	i32.add 	$push34=, $4, $pop69
 	i32.load	$push35=, 0($pop34)
 	i32.ne  	$push36=, $pop33, $pop35
 	br_if   	2, $pop36       # 2: down to label0
-# BB#11:                                # %if.end45
+# %bb.11:                               # %if.end45
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push86=, 140
-	i32.const	$push85=, 13
-	i32.select	$push37=, $pop86, $pop85, $6
-	i32.const	$push84=, 36
-	i32.add 	$push38=, $4, $pop84
+	i32.const	$push74=, 140
+	i32.const	$push73=, 13
+	i32.select	$push37=, $pop74, $pop73, $6
+	i32.const	$push72=, 36
+	i32.add 	$push38=, $4, $pop72
 	i32.load	$push39=, 0($pop38)
 	i32.ne  	$push40=, $pop37, $pop39
 	br_if   	2, $pop40       # 2: down to label0
-# BB#12:                                # %if.end50
+# %bb.12:                               # %if.end50
                                         #   in Loop: Header=BB10_2 Depth=2
-	i32.const	$push92=, 40
-	i32.add 	$4=, $4, $pop92
-	i32.const	$push91=, 8
-	i32.add 	$2=, $2, $pop91
-	i32.const	$push90=, 1
-	i32.add 	$push89=, $3, $pop90
-	tee_local	$push88=, $3=, $pop89
-	i32.const	$push87=, 8
-	i32.lt_s	$push41=, $pop88, $pop87
+	i32.const	$push78=, 40
+	i32.add 	$4=, $4, $pop78
+	i32.const	$push77=, 8
+	i32.add 	$2=, $2, $pop77
+	i32.const	$push76=, 1
+	i32.add 	$3=, $3, $pop76
+	i32.const	$push75=, 8
+	i32.lt_u	$push41=, $3, $pop75
 	br_if   	0, $pop41       # 0: up to label2
-# BB#13:                                # %for.end
+# %bb.13:                               # %for.end
                                         #   in Loop: Header=BB10_1 Depth=1
 	end_loop
-	i32.const	$push96=, 1
-	i32.add 	$push95=, $0, $pop96
-	tee_local	$push94=, $0=, $pop95
-	i32.const	$push93=, 8
-	i32.lt_s	$push42=, $pop94, $pop93
+	i32.const	$push80=, 1
+	i32.add 	$0=, $0, $pop80
+	i32.const	$push79=, 8
+	i32.lt_u	$push42=, $0, $pop79
 	br_if   	0, $pop42       # 0: up to label1
-# BB#14:                                # %for.end53
+# %bb.14:                               # %for.end53
 	end_loop
 	i32.const	$push43=, 0
 	call    	exit@FUNCTION, $pop43
 	unreachable
-.LBB10_15:                              # %if.then49
+.LBB10_15:                              # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end10:
 	.size	main, .Lfunc_end10-main
-
+                                        # -- End function
 	.hidden	args                    # @args
 	.type	args,@object
 	.section	.data.args,"aw",@progbits
@@ -1003,6 +995,6 @@ correct_results:
 	.size	correct_results, 2560
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

@@ -95,8 +95,10 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     // apply memory segments
     for (auto& segment : wasm.memory.segments) {
-      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
-      assert(offset + segment.data.size() <= wasm.memory.initial * wasm::Memory::kPageSize);
+      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
+      if (offset + segment.data.size() > wasm.memory.initial * wasm::Memory::kPageSize) {
+        trap("invalid offset when initializing memory");
+      }
       for (size_t i = 0; i != segment.data.size(); ++i) {
         memory.set(offset + i, segment.data[i]);
       }
@@ -104,8 +106,10 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
 
     table.resize(wasm.table.initial);
     for (auto& segment : wasm.table.segments) {
-      Address offset = ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
-      assert(offset + segment.data.size() <= wasm.table.initial);
+      Address offset = (uint32_t)ConstantExpressionRunner<TrivialGlobalManager>(instance.globals).visit(segment.offset).value.geti32();
+      if (offset + segment.data.size() > wasm.table.initial) {
+        trap("invalid offset when initializing table");
+      }
       for (size_t i = 0; i != segment.data.size(); ++i) {
         table[offset + i] = segment.data[i];
       }
@@ -146,7 +150,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literal callTable(Index index, LiteralList& arguments, WasmType result, ModuleInstance& instance) override {
+  Literal callTable(Index index, LiteralList& arguments, Type result, ModuleInstance& instance) override {
     if (index >= table.size()) trap("callTable overflow");
     auto* func = instance.wasm.getFunctionOrNull(table[index]);
     if (!func) trap("uninitialized table element");

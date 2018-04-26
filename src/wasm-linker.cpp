@@ -16,7 +16,7 @@
 
 #include "wasm-linker.h"
 #include "asm_v_wasm.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "s2wasm.h"
 #include "support/utilities.h"
 #include "wasm-builder.h"
@@ -148,8 +148,8 @@ void Linker::layout() {
   }
 
   // XXX For now, export all functions marked .globl.
-  for (Name name : out.globls) exportFunction(name, false);
-  for (Name name : out.initializerFunctions) exportFunction(name, true);
+  for (Name name : out.globls) exportFunction(out.wasm, name, false);
+  for (Name name : out.initializerFunctions) exportFunction(out.wasm, name, true);
 
   // Pad the indirect function table with a dummy function
   makeDummyFunction();
@@ -212,6 +212,8 @@ void Linker::layout() {
       }
     }
   }
+  out.relocations.clear();
+
   if (!!startFunction) {
     if (out.symbolInfo.implementedFunctions.count(startFunction) == 0) {
       Fatal() << "Unknown start function: `" << startFunction << "`\n";
@@ -224,7 +226,6 @@ void Linker::layout() {
     auto* func = new Function;
     func->name = start;
     out.wasm.addFunction(func);
-    exportFunction(start, true);
     out.wasm.addStart(start);
     Builder builder(out.wasm);
     auto* block = builder.makeBlock();
@@ -234,7 +235,7 @@ void Linker::layout() {
       // TODO allow calling with non-default values.
       std::vector<Expression*> args;
       Index paramNum = 0;
-      for (WasmType type : target->params) {
+      for (Type type : target->params) {
         Name name = Name::fromInt(paramNum++);
         Builder::addVar(func, name, type);
         auto* param = builder.makeGetLocal(func->getLocalIndex(name), type);
@@ -264,7 +265,7 @@ void Linker::layout() {
   // argument from emcc.py and export all of them.
   for (auto function : {"malloc", "free", "realloc", "memalign"}) {
     if (out.symbolInfo.implementedFunctions.count(function)) {
-      exportFunction(function, true);
+      exportFunction(out.wasm, function, true);
     }
   }
 
@@ -332,20 +333,8 @@ bool Linker::linkArchive(Archive& archive) {
   return true;
 }
 
-void Linker::emscriptenGlue(std::ostream& o) {
-  if (debug) {
-    WasmPrinter::printModule(&out.wasm, std::cerr);
-  }
-
-  auto functionsToThunk = getTableData();
-  auto removeIt = std::remove(functionsToThunk.begin(), functionsToThunk.end(), dummyFunction);
-  functionsToThunk.erase(removeIt, functionsToThunk.end());
-  for (auto f : emscripten::makeDynCallThunks(out.wasm, functionsToThunk)) {
-    exportFunction(f->name, true);
-  }
-
-  auto staticBump = nextStatic - globalBase;
-  emscripten::generateEmscriptenMetadata(o, out.wasm, segmentsByAddress, staticBump, out.initializerFunctions);
+Address Linker::getStaticBump() const {
+  return nextStatic - globalBase;
 }
 
 void Linker::ensureTableSegment() {
@@ -393,7 +382,13 @@ void Linker::makeDummyFunction() {
   if (!create) return;
   wasm::Builder wasmBuilder(out.wasm);
   Expression *unreachable = wasmBuilder.makeUnreachable();
-  Function *dummy = wasmBuilder.makeFunction(Name(dummyFunction), {}, WasmType::none, {}, unreachable);
+  Function *dummy = wasmBuilder.makeFunction(
+    Name(dummyFunction),
+    std::vector<Type>{},
+    Type::none,
+    std::vector<Type>{},
+    unreachable
+  );
   out.wasm.addFunction(dummy);
   getFunctionIndex(dummy->name);
 }
@@ -415,4 +410,8 @@ Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   f->body = call;
   out.wasm.addFunction(f);
   return f;
+}
+
+Address Linker::getStackPointerAddress() const {
+  return Address(staticAddresses.at(stackPointer));
 }

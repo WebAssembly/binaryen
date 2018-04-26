@@ -22,7 +22,7 @@
 #include <limits>
 
 template <typename T>
-T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
+T wasm::read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
@@ -40,16 +40,22 @@ T wasm::read_file(const std::string &filename, Flags::BinaryOption binary, Flags
     exit(EXIT_FAILURE);
   }
   T input(size_t(insize) + (binary == Flags::Binary ? 0 : 1), '\0');
+  if (size_t(insize) == 0) return input;
   infile.seekg(0);
   infile.read(&input[0], insize);
+  if (binary == Flags::Text) {
+    size_t chars = size_t(infile.gcount());
+    input.resize(chars+1); // Truncate size to the number of ASCII characters actually read in text mode (which is generally less than the number of bytes on Windows, if \r\n line endings are present)
+    input[chars] = '\0';
+  }
   return input;
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
-template std::vector<char> wasm::read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
+template std::string wasm::read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
+template std::vector<char> wasm::read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
 
-wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug)
+wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug)
     : outfile(), out([this, filename, binary, debug]() {
         std::streambuf *buffer;
         if (filename.size()) {
@@ -67,3 +73,15 @@ wasm::Output::Output(const std::string &filename, Flags::BinaryOption binary, Fl
         }
         return buffer;
       }()) {}
+
+void wasm::copy_file(std::string input, std::string output) {
+  std::ifstream src(input, std::ios::binary);
+  std::ofstream dst(output, std::ios::binary);
+  dst << src.rdbuf();
+}
+
+size_t wasm::file_size(std::string filename) {
+  std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
+  return infile.tellg();
+}
+

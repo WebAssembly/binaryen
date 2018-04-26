@@ -118,7 +118,16 @@ template<typename SubType>
 class ExpressionRunner : public Visitor<SubType, Flow> {
 public:
   Flow visit(Expression *curr) {
-    return Visitor<SubType, Flow>::visit(curr);
+    auto ret = Visitor<SubType, Flow>::visit(curr);
+    if (!ret.breaking() && (isConcreteType(curr->type) || isConcreteType(ret.value.type))) {
+#if 1 // def WASM_INTERPRETER_DEBUG
+      if (ret.value.type != curr->type) {
+        std::cerr << "expected " << printType(curr->type) << ", seeing " << printType(ret.value.type) << " from\n" << curr << '\n';
+      }
+#endif
+      assert(ret.value.type == curr->type);
+    }
+    return ret;
   }
 
   Flow visitBlock(Block *curr) {
@@ -221,93 +230,73 @@ public:
     NOTE_EVAL1(curr->value);
     return Flow(curr->value); // heh
   }
+
+  // Unary and Binary nodes, the core math computations. We mostly just
+  // delegate to the Literal::* methods, except we handle traps here.
+
   Flow visitUnary(Unary *curr) {
     NOTE_ENTER("Unary");
     Flow flow = visit(curr->value);
     if (flow.breaking()) return flow;
     Literal value = flow.value;
     NOTE_EVAL1(value);
-    if (value.type == i32) {
-      switch (curr->op) {
-        case ClzInt32:            return value.countLeadingZeroes();
-        case CtzInt32:            return value.countTrailingZeroes();
-        case PopcntInt32:         return value.popCount();
-        case EqZInt32:            return Literal(int32_t(value == Literal(int32_t(0))));
-        case ReinterpretInt32: return value.castToF32();
-        case ExtendSInt32:   return value.extendToSI64();
-        case ExtendUInt32:   return value.extendToUI64();
-        case ConvertUInt32ToFloat32: return value.convertUToF32();
-        case ConvertUInt32ToFloat64: return value.convertUToF64();
-        case ConvertSInt32ToFloat32: return value.convertSToF32();
-        case ConvertSInt32ToFloat64: return value.convertSToF64();
-        default: WASM_UNREACHABLE();
-      }
+    switch (curr->op) {
+      case ClzInt32:
+      case ClzInt64:               return value.countLeadingZeroes();
+      case CtzInt32:
+      case CtzInt64:               return value.countTrailingZeroes();
+      case PopcntInt32:
+      case PopcntInt64:            return value.popCount();
+      case EqZInt32:
+      case EqZInt64:               return value.eqz();
+      case ReinterpretInt32:       return value.castToF32();
+      case ReinterpretInt64:       return value.castToF64();
+      case ExtendSInt32:           return value.extendToSI64();
+      case ExtendUInt32:           return value.extendToUI64();
+      case WrapInt64:              return value.truncateToI32();
+      case ConvertUInt32ToFloat32:
+      case ConvertUInt64ToFloat32: return value.convertUToF32();
+      case ConvertUInt32ToFloat64:
+      case ConvertUInt64ToFloat64: return value.convertUToF64();
+      case ConvertSInt32ToFloat32:
+      case ConvertSInt64ToFloat32: return value.convertSToF32();
+      case ConvertSInt32ToFloat64:
+      case ConvertSInt64ToFloat64: return value.convertSToF64();
+      case ExtendS8Int32:
+      case ExtendS8Int64:          return value.extendS8();
+      case ExtendS16Int32:
+      case ExtendS16Int64:         return value.extendS16();
+      case ExtendS32Int64:         return value.extendS32();
+
+      case NegFloat32:
+      case NegFloat64:           return value.neg();
+      case AbsFloat32:
+      case AbsFloat64:           return value.abs();
+      case CeilFloat32:
+      case CeilFloat64:          return value.ceil();
+      case FloorFloat32:
+      case FloorFloat64:         return value.floor();
+      case TruncFloat32:
+      case TruncFloat64:         return value.trunc();
+      case NearestFloat32:
+      case NearestFloat64:       return value.nearbyint();
+      case SqrtFloat32:
+      case SqrtFloat64:          return value.sqrt();
+      case TruncSFloat32ToInt32:
+      case TruncSFloat64ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncSFloat64ToInt64: return truncSFloat(curr, value);
+      case TruncUFloat32ToInt32:
+      case TruncUFloat64ToInt32:
+      case TruncUFloat32ToInt64:
+      case TruncUFloat64ToInt64: return truncUFloat(curr, value);
+      case ReinterpretFloat32:   return value.castToI32();
+      case PromoteFloat32:       return value.extendToF64();
+      case ReinterpretFloat64:   return value.castToI64();
+      case DemoteFloat64:        return value.demote();
+
+      default: WASM_UNREACHABLE();
     }
-    if (value.type == i64) {
-      switch (curr->op) {
-        case ClzInt64:            return value.countLeadingZeroes();
-        case CtzInt64:            return value.countTrailingZeroes();
-        case PopcntInt64:         return value.popCount();
-        case EqZInt64:            return Literal(int32_t(value == Literal(int64_t(0))));
-        case WrapInt64:      return value.truncateToI32();
-        case ReinterpretInt64: return value.castToF64();
-        case ConvertUInt64ToFloat32: return value.convertUToF32();
-        case ConvertUInt64ToFloat64: return value.convertUToF64();
-        case ConvertSInt64ToFloat32: return value.convertSToF32();
-        case ConvertSInt64ToFloat64: return value.convertSToF64();
-        default: WASM_UNREACHABLE();
-      }
-    }
-    if (value.type == f32) {
-      switch (curr->op) {
-        case NegFloat32:              return value.neg();
-        case AbsFloat32:              return value.abs();
-        case CeilFloat32:             return value.ceil();
-        case FloorFloat32:            return value.floor();
-        case TruncFloat32:            return value.trunc();
-        case NearestFloat32:          return value.nearbyint();
-        case SqrtFloat32:             return value.sqrt();
-        case TruncSFloat32ToInt32:
-        case TruncSFloat32ToInt64: return truncSFloat(curr, value);
-        case TruncUFloat32ToInt32:
-        case TruncUFloat32ToInt64: return truncUFloat(curr, value);
-        case ReinterpretFloat32: return value.castToI32();
-        case PromoteFloat32:   return value.extendToF64();
-        default: WASM_UNREACHABLE();
-      }
-    }
-    if (value.type == f64) {
-      switch (curr->op) {
-        case NegFloat64:              return value.neg();
-        case AbsFloat64:              return value.abs();
-        case CeilFloat64:             return value.ceil();
-        case FloorFloat64:            return value.floor();
-        case TruncFloat64:            return value.trunc();
-        case NearestFloat64:          return value.nearbyint();
-        case SqrtFloat64:             return value.sqrt();
-        case TruncSFloat64ToInt32:
-        case TruncSFloat64ToInt64: return truncSFloat(curr, value);
-        case TruncUFloat64ToInt32:
-        case TruncUFloat64ToInt64: return truncUFloat(curr, value);
-        case ReinterpretFloat64: return value.castToI64();
-        case DemoteFloat64: {
-          double val = value.getFloat();
-          if (std::isnan(val)) return Literal(float(val));
-          if (std::isinf(val)) return Literal(float(val));
-          // when close to the limit, but still truncatable to a valid value, do that
-          // see https://github.com/WebAssembly/sexpr-wasm-prototype/blob/2d375e8d502327e814d62a08f22da9d9b6b675dc/src/wasm-interpreter.c#L247
-          uint64_t bits = value.reinterpreti64();
-          if (bits > 0x47efffffe0000000ULL && bits < 0x47effffff0000000ULL) return Literal(std::numeric_limits<float>::max());
-          if (bits > 0xc7efffffe0000000ULL && bits < 0xc7effffff0000000ULL) return Literal(-std::numeric_limits<float>::max());
-          // when we must convert to infinity, do that
-          if (val < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
-          if (val > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
-          return value.truncateToF32();
-        }
-        default: WASM_UNREACHABLE();
-      }
-    }
-    WASM_UNREACHABLE();
   }
   Flow visitBinary(Binary *curr) {
     NOTE_ENTER("Binary");
@@ -318,113 +307,117 @@ public:
     if (flow.breaking()) return flow;
     Literal right = flow.value;
     NOTE_EVAL2(left, right);
-    assert(isConcreteWasmType(curr->left->type) ? left.type == curr->left->type : true);
-    assert(isConcreteWasmType(curr->right->type) ? right.type == curr->right->type : true);
-    if (left.type == i32) {
-      switch (curr->op) {
-        case AddInt32:      return left.add(right);
-        case SubInt32:      return left.sub(right);
-        case MulInt32:      return left.mul(right);
-        case DivSInt32: {
-          if (right.getInteger() == 0) trap("i32.div_s by 0");
-          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
-          return left.divS(right);
-        }
-        case DivUInt32: {
-          if (right.getInteger() == 0) trap("i32.div_u by 0");
-          return left.divU(right);
-        }
-        case RemSInt32: {
-          if (right.getInteger() == 0) trap("i32.rem_s by 0");
-          if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) return Literal(int32_t(0));
-          return left.remS(right);
-        }
-        case RemUInt32: {
-          if (right.getInteger() == 0) trap("i32.rem_u by 0");
-          return left.remU(right);
-        }
-        case AndInt32:  return left.and_(right);
-        case OrInt32:   return left.or_(right);
-        case XorInt32:  return left.xor_(right);
-        case ShlInt32:  return left.shl(right.and_(Literal(int32_t(31))));
-        case ShrUInt32: return left.shrU(right.and_(Literal(int32_t(31))));
-        case ShrSInt32: return left.shrS(right.and_(Literal(int32_t(31))));
-        case RotLInt32: return left.rotL(right);
-        case RotRInt32: return left.rotR(right);
-        case EqInt32:   return left.eq(right);
-        case NeInt32:   return left.ne(right);
-        case LtSInt32:  return left.ltS(right);
-        case LtUInt32:  return left.ltU(right);
-        case LeSInt32:  return left.leS(right);
-        case LeUInt32:  return left.leU(right);
-        case GtSInt32:  return left.gtS(right);
-        case GtUInt32:  return left.gtU(right);
-        case GeSInt32:  return left.geS(right);
-        case GeUInt32:  return left.geU(right);
-        default: WASM_UNREACHABLE();
+    assert(isConcreteType(curr->left->type) ? left.type == curr->left->type : true);
+    assert(isConcreteType(curr->right->type) ? right.type == curr->right->type : true);
+    switch (curr->op) {
+      case AddInt32:
+      case AddInt64:
+      case AddFloat32:
+      case AddFloat64: return left.add(right);
+      case SubInt32:
+      case SubInt64:
+      case SubFloat32:
+      case SubFloat64: return left.sub(right);
+      case MulInt32:
+      case MulInt64:
+      case MulFloat32:
+      case MulFloat64: return left.mul(right);
+      case DivSInt32: {
+        if (right.getInteger() == 0) trap("i32.div_s by 0");
+        if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) trap("i32.div_s overflow"); // signed division overflow
+        return left.divS(right);
       }
-    } else if (left.type == i64) {
-      switch (curr->op) {
-        case AddInt64:      return left.add(right);
-        case SubInt64:      return left.sub(right);
-        case MulInt64:      return left.mul(right);
-        case DivSInt64: {
-          if (right.getInteger() == 0) trap("i64.div_s by 0");
-          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) trap("i64.div_s overflow"); // signed division overflow
-          return left.divS(right);
-        }
-        case DivUInt64: {
-          if (right.getInteger() == 0) trap("i64.div_u by 0");
-          return left.divU(right);
-        }
-        case RemSInt64: {
-          if (right.getInteger() == 0) trap("i64.rem_s by 0");
-          if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) return Literal(int64_t(0));
-          return left.remS(right);
-        }
-        case RemUInt64: {
-          if (right.getInteger() == 0) trap("i64.rem_u by 0");
-          return left.remU(right);
-        }
-        case AndInt64:  return left.and_(right);
-        case OrInt64:   return left.or_(right);
-        case XorInt64:  return left.xor_(right);
-        case ShlInt64:  return left.shl(right.and_(Literal(int64_t(63))));
-        case ShrUInt64: return left.shrU(right.and_(Literal(int64_t(63))));
-        case ShrSInt64: return left.shrS(right.and_(Literal(int64_t(63))));
-        case RotLInt64: return left.rotL(right);
-        case RotRInt64: return left.rotR(right);
-        case EqInt64:   return left.eq(right);
-        case NeInt64:   return left.ne(right);
-        case LtSInt64:  return left.ltS(right);
-        case LtUInt64:  return left.ltU(right);
-        case LeSInt64:  return left.leS(right);
-        case LeUInt64:  return left.leU(right);
-        case GtSInt64:  return left.gtS(right);
-        case GtUInt64:  return left.gtU(right);
-        case GeSInt64:  return left.geS(right);
-        case GeUInt64:  return left.geU(right);
-        default: WASM_UNREACHABLE();
+      case DivUInt32: {
+        if (right.getInteger() == 0) trap("i32.div_u by 0");
+        return left.divU(right);
       }
-    } else if (left.type == f32 || left.type == f64) {
-      switch (curr->op) {
-        case AddFloat32:      case AddFloat64:      return left.add(right);
-        case SubFloat32:      case SubFloat64:      return left.sub(right);
-        case MulFloat32:      case MulFloat64:      return left.mul(right);
-        case DivFloat32:      case DivFloat64:      return left.div(right);
-        case CopySignFloat32: case CopySignFloat64: return left.copysign(right);
-        case MinFloat32:      case MinFloat64:      return left.min(right);
-        case MaxFloat32:      case MaxFloat64:      return left.max(right);
-        case EqFloat32:       case EqFloat64:       return left.eq(right);
-        case NeFloat32:       case NeFloat64:       return left.ne(right);
-        case LtFloat32:       case LtFloat64:       return left.lt(right);
-        case LeFloat32:       case LeFloat64:       return left.le(right);
-        case GtFloat32:       case GtFloat64:       return left.gt(right);
-        case GeFloat32:       case GeFloat64:       return left.ge(right);
-        default: WASM_UNREACHABLE();
+      case RemSInt32: {
+        if (right.getInteger() == 0) trap("i32.rem_s by 0");
+        if (left.getInteger() == std::numeric_limits<int32_t>::min() && right.getInteger() == -1) return Literal(int32_t(0));
+        return left.remS(right);
       }
+      case RemUInt32: {
+        if (right.getInteger() == 0) trap("i32.rem_u by 0");
+        return left.remU(right);
+      }
+      case DivSInt64: {
+        if (right.getInteger() == 0) trap("i64.div_s by 0");
+        if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) trap("i64.div_s overflow"); // signed division overflow
+        return left.divS(right);
+      }
+      case DivUInt64: {
+        if (right.getInteger() == 0) trap("i64.div_u by 0");
+        return left.divU(right);
+      }
+      case RemSInt64: {
+        if (right.getInteger() == 0) trap("i64.rem_s by 0");
+        if (left.getInteger() == LLONG_MIN && right.getInteger() == -1LL) return Literal(int64_t(0));
+        return left.remS(right);
+      }
+      case RemUInt64: {
+        if (right.getInteger() == 0) trap("i64.rem_u by 0");
+        return left.remU(right);
+      }
+      case DivFloat32:
+      case DivFloat64: return left.div(right);
+      case AndInt32:
+      case AndInt64:   return left.and_(right);
+      case OrInt32:
+      case OrInt64:    return left.or_(right);
+      case XorInt32:
+      case XorInt64:   return left.xor_(right);
+      case ShlInt32:
+      case ShlInt64:   return left.shl(right);
+      case ShrUInt32:
+      case ShrUInt64:  return left.shrU(right);
+      case ShrSInt32:
+      case ShrSInt64:  return left.shrS(right);
+      case RotLInt32:
+      case RotLInt64:  return left.rotL(right);
+      case RotRInt32:
+      case RotRInt64:  return left.rotR(right);
+
+      case EqInt32:
+      case EqInt64:
+      case EqFloat32:
+      case EqFloat64: return left.eq(right);
+      case NeInt32:
+      case NeInt64:
+      case NeFloat32:
+      case NeFloat64: return left.ne(right);
+      case LtSInt32:
+      case LtSInt64:  return left.ltS(right);
+      case LtUInt32:
+      case LtUInt64:  return left.ltU(right);
+      case LeSInt32:
+      case LeSInt64:  return left.leS(right);
+      case LeUInt32:
+      case LeUInt64:  return left.leU(right);
+      case GtSInt32:
+      case GtSInt64:  return left.gtS(right);
+      case GtUInt32:
+      case GtUInt64:  return left.gtU(right);
+      case GeSInt32:
+      case GeSInt64:  return left.geS(right);
+      case GeUInt32:
+      case GeUInt64:  return left.geU(right);
+      case LtFloat32:
+      case LtFloat64: return left.lt(right);
+      case LeFloat32:
+      case LeFloat64: return left.le(right);
+      case GtFloat32:
+      case GtFloat64: return left.gt(right);
+      case GeFloat32:
+      case GeFloat64: return left.ge(right);
+
+      case CopySignFloat32:
+      case CopySignFloat64: return left.copysign(right);
+      case MinFloat32:
+      case MinFloat64:      return left.min(right);
+      case MaxFloat32:
+      case MaxFloat64:      return left.max(right);
+      default: WASM_UNREACHABLE();
     }
-    WASM_UNREACHABLE();
   }
   Flow visitSelect(Select *curr) {
     NOTE_ENTER("Select");
@@ -461,7 +454,7 @@ public:
   Flow visitUnreachable(Unreachable *curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");
-    return Flow();
+    WASM_UNREACHABLE();
   }
 
   Literal truncSFloat(Unary* curr, Literal value) {
@@ -522,7 +515,9 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
-  Flow visitGetGlobal(GetGlobal *curr) { return Flow(globals[curr->name]); }
+  Flow visitGetGlobal(GetGlobal *curr) {
+    return Flow(globals[curr->name]);
+  }
   Flow visitSetGlobal(SetGlobal *curr) { WASM_UNREACHABLE(); }
   Flow visitLoad(Load *curr) { WASM_UNREACHABLE(); }
   Flow visitStore(Store *curr) { WASM_UNREACHABLE(); }
@@ -551,7 +546,7 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
-    virtual Literal callTable(Index index, LiteralList& arguments, WasmType result, SubType& instance) = 0;
+    virtual Literal callTable(Index index, LiteralList& arguments, Type result, SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
 
@@ -563,7 +558,7 @@ public:
           switch (load->bytes) {
             case 1: return load->signed_ ? Literal((int32_t)load8s(addr)) : Literal((int32_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int32_t)load16s(addr)) : Literal((int32_t)load16u(addr));
-            case 4: return load->signed_ ? Literal((int32_t)load32s(addr)) : Literal((int32_t)load32u(addr));
+            case 4: return Literal((int32_t)load32s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
@@ -573,7 +568,7 @@ public:
             case 1: return load->signed_ ? Literal((int64_t)load8s(addr)) : Literal((int64_t)load8u(addr));
             case 2: return load->signed_ ? Literal((int64_t)load16s(addr)) : Literal((int64_t)load16u(addr));
             case 4: return load->signed_ ? Literal((int64_t)load32s(addr)) : Literal((int64_t)load32u(addr));
-            case 8: return load->signed_ ? Literal((int64_t)load64s(addr)) : Literal((int64_t)load64u(addr));
+            case 8: return Literal((int64_t)load64s(addr));
             default: WASM_UNREACHABLE();
           }
           break;
@@ -723,9 +718,9 @@ public:
             assert(function->isParam(i));
             if (function->params[i] != arguments[i].type) {
               std::cerr << "Function `" << function->name << "` expects type "
-                        << printWasmType(function->params[i])
+                        << printType(function->params[i])
                         << " for parameter " << i << ", got "
-                        << printWasmType(arguments[i].type) << "." << std::endl;
+                        << printType(arguments[i].type) << "." << std::endl;
               WASM_UNREACHABLE();
             }
             locals[i] = arguments[i];
@@ -737,7 +732,7 @@ public:
       }
     };
 
-    // Executes expresions with concrete runtime info, the function and module at runtime
+    // Executes expressions with concrete runtime info, the function and module at runtime
     class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
       ModuleInstanceBase& instance;
       FunctionScope& scope;
@@ -830,8 +825,8 @@ public:
         NOTE_ENTER("GetGlobal");
         auto name = curr->name;
         NOTE_EVAL1(name);
-        NOTE_EVAL1(instance.globals[name]);
         assert(instance.globals.find(name) != instance.globals.end());
+        NOTE_EVAL1(instance.globals[name]);
         return instance.globals[name];
       }
       Flow visitSetGlobal(SetGlobal *curr) {
@@ -867,6 +862,85 @@ public:
         NOTE_EVAL1(value);
         instance.externalInterface->store(curr, addr, value.value);
         return Flow();
+      }
+
+      Flow visitAtomicRMW(AtomicRMW *curr) {
+        NOTE_ENTER("AtomicRMW");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        auto value = this->visit(curr->value);
+        if (value.breaking()) return value;
+        NOTE_EVAL1(ptr);
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(value);
+        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+        NOTE_EVAL1(loaded);
+        auto computed = value.value;
+        switch (curr->op) {
+          case Add:  computed = computed.add(value.value); break;
+          case Sub:  computed = computed.sub(value.value); break;
+          case And:  computed = computed.and_(value.value); break;
+          case Or:   computed = computed.or_(value.value);  break;
+          case Xor:  computed = computed.xor_(value.value); break;
+          case Xchg: computed = value.value;               break;
+          default: WASM_UNREACHABLE();
+        }
+        instance.doAtomicStore(addr, curr->bytes, computed);
+        return loaded;
+      }
+      Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+        NOTE_ENTER("AtomicCmpxchg");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto expected = this->visit(curr->expected);
+        if (expected.breaking()) return expected;
+        auto replacement = this->visit(curr->replacement);
+        if (replacement.breaking()) return replacement;
+        auto addr = instance.getFinalAddress(curr, ptr.value);
+        NOTE_EVAL1(addr);
+        NOTE_EVAL1(expected);
+        NOTE_EVAL1(replacement);
+        auto loaded = instance.doAtomicLoad(addr, curr->bytes, curr->type);
+        NOTE_EVAL1(loaded);
+        if (loaded == expected.value) {
+          instance.doAtomicStore(addr, curr->bytes, replacement.value);
+        }
+        return loaded;
+      }
+      Flow visitAtomicWait(AtomicWait *curr) {
+        NOTE_ENTER("AtomicWait");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto expected = this->visit(curr->expected);
+        NOTE_EVAL1(expected);
+        if (expected.breaking()) return expected;
+        auto timeout = this->visit(curr->timeout);
+        NOTE_EVAL1(timeout);
+        if (timeout.breaking()) return timeout;
+        auto bytes = getTypeSize(curr->expectedType);
+        auto addr = instance.getFinalAddress(ptr.value, bytes);
+        auto loaded = instance.doAtomicLoad(addr, bytes, curr->expectedType);
+        NOTE_EVAL1(loaded);
+        if (loaded != expected.value) {
+          return Literal(int32_t(1)); // not equal
+        }
+        // TODO: add threads support!
+        //       for now, just assume we are woken up
+        return Literal(int32_t(0)); // woken up
+      }
+      Flow visitAtomicWake(AtomicWake *curr) {
+        NOTE_ENTER("AtomicWake");
+        Flow ptr = this->visit(curr->ptr);
+        if (ptr.breaking()) return ptr;
+        NOTE_EVAL1(ptr);
+        auto count = this->visit(curr->wakeCount);
+        NOTE_EVAL1(count);
+        if (count.breaking()) return count;
+        // TODO: add threads support!
+        return Literal(int32_t(0)); // none woken up
       }
 
       Flow visitHost(Host *curr) {
@@ -949,23 +1023,68 @@ protected:
 
   Address memorySize; // in pages
 
+  void trapIfGt(uint64_t lhs, uint64_t rhs, const char* msg) {
+    if (lhs > rhs) {
+      std::stringstream ss;
+      ss << msg << ": " << lhs << " > " << rhs;
+      externalInterface->trap(ss.str().c_str());
+    }
+  }
+
   template <class LS>
   Address getFinalAddress(LS* curr, Literal ptr) {
-    auto trapIfGt = [this](uint64_t lhs, uint64_t rhs, const char* msg) {
-      if (lhs > rhs) {
-        std::stringstream ss;
-        ss << msg << ": " << lhs << " > " << rhs;
-        externalInterface->trap(ss.str().c_str());
-      }
-    };
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
     trapIfGt(curr->offset, memorySizeBytes, "offset > memory");
     trapIfGt(addr, memorySizeBytes - curr->offset, "final > memory");
     addr += curr->offset;
     trapIfGt(curr->bytes, memorySizeBytes, "bytes > memory");
-    trapIfGt(addr, memorySizeBytes - curr->bytes, "highest > memory");
+    checkLoadAddress(addr, curr->bytes);
     return addr;
+  }
+
+  Address getFinalAddress(Literal ptr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+    return addr;
+  }
+
+  void checkLoadAddress(Address addr, Index bytes) {
+    Address memorySizeBytes = memorySize * Memory::kPageSize;
+    trapIfGt(addr, memorySizeBytes - bytes, "highest > memory");
+  }
+
+  Literal doAtomicLoad(Address addr, Index bytes, Type type) {
+    checkLoadAddress(addr, bytes);
+    Const ptr;
+    ptr.value = Literal(int32_t(addr));
+    ptr.type = i32;
+    Load load;
+    load.bytes = bytes;
+    load.signed_ = true;
+    load.align = bytes;
+    load.isAtomic = true; // understatement
+    load.ptr = &ptr;
+    load.type = type;
+    return externalInterface->load(&load, addr);
+  }
+
+  void doAtomicStore(Address addr, Index bytes, Literal toStore) {
+    Const ptr;
+    ptr.value = Literal(int32_t(addr));
+    ptr.type = i32;
+    Const value;
+    value.value = toStore;
+    value.type = toStore.type;
+    Store store;
+    store.bytes = bytes;
+    store.align = bytes;
+    store.isAtomic = true; // understatement
+    store.ptr = &ptr;
+    store.value = &value;
+    store.valueType = value.type;
+    return externalInterface->store(&store, addr, toStore);
   }
 
   ExternalInterface* externalInterface;

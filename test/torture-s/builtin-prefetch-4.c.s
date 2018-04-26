@@ -1,88 +1,80 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-4.c"
+	.file	"builtin-prefetch-4.c"
 	.section	.text.assign_arg_ptr,"ax",@progbits
-	.hidden	assign_arg_ptr
+	.hidden	assign_arg_ptr          # -- Begin function assign_arg_ptr
 	.globl	assign_arg_ptr
 	.type	assign_arg_ptr,@function
 assign_arg_ptr:                         # @assign_arg_ptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	assign_arg_ptr, .Lfunc_end0-assign_arg_ptr
-
+                                        # -- End function
 	.section	.text.assign_glob_ptr,"ax",@progbits
-	.hidden	assign_glob_ptr
+	.hidden	assign_glob_ptr         # -- Begin function assign_glob_ptr
 	.globl	assign_glob_ptr
 	.type	assign_glob_ptr,@function
 assign_glob_ptr:                        # @assign_glob_ptr
 	.result 	i32
-	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push3=, ptr($pop0)
-	tee_local	$push2=, $0=, $pop3
-	i32.eq  	$push1=, $pop2, $0
-                                        # fallthrough-return: $pop1
+# %bb.0:                                # %entry
+	i32.const	$push0=, 1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	assign_glob_ptr, .Lfunc_end1-assign_glob_ptr
-
+                                        # -- End function
 	.section	.text.assign_arg_idx,"ax",@progbits
-	.hidden	assign_arg_idx
+	.hidden	assign_arg_idx          # -- Begin function assign_arg_idx
 	.globl	assign_arg_idx
 	.type	assign_arg_idx,@function
 assign_arg_idx:                         # @assign_arg_idx
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	assign_arg_idx, .Lfunc_end2-assign_arg_idx
-
+                                        # -- End function
 	.section	.text.assign_glob_idx,"ax",@progbits
-	.hidden	assign_glob_idx
+	.hidden	assign_glob_idx         # -- Begin function assign_glob_idx
 	.globl	assign_glob_idx
 	.type	assign_glob_idx,@function
 assign_glob_idx:                        # @assign_glob_idx
 	.result 	i32
-	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push0=, 0
-	i32.load	$push3=, arrindex($pop0)
-	tee_local	$push2=, $0=, $pop3
-	i32.eq  	$push1=, $pop2, $0
-                                        # fallthrough-return: $pop1
+# %bb.0:                                # %entry
+	i32.const	$push0=, 1
+                                        # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	assign_glob_idx, .Lfunc_end3-assign_glob_idx
-
+                                        # -- End function
 	.section	.text.preinc_arg_ptr,"ax",@progbits
-	.hidden	preinc_arg_ptr
+	.hidden	preinc_arg_ptr          # -- Begin function preinc_arg_ptr
 	.globl	preinc_arg_ptr
 	.type	preinc_arg_ptr,@function
 preinc_arg_ptr:                         # @preinc_arg_ptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	preinc_arg_ptr, .Lfunc_end4-preinc_arg_ptr
-
+                                        # -- End function
 	.section	.text.preinc_glob_ptr,"ax",@progbits
-	.hidden	preinc_glob_ptr
+	.hidden	preinc_glob_ptr         # -- Begin function preinc_glob_ptr
 	.globl	preinc_glob_ptr
 	.type	preinc_glob_ptr,@function
 preinc_glob_ptr:                        # @preinc_glob_ptr
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, ptr($pop5)
@@ -94,28 +86,28 @@ preinc_glob_ptr:                        # @preinc_glob_ptr
 	.endfunc
 .Lfunc_end5:
 	.size	preinc_glob_ptr, .Lfunc_end5-preinc_glob_ptr
-
+                                        # -- End function
 	.section	.text.postinc_arg_ptr,"ax",@progbits
-	.hidden	postinc_arg_ptr
+	.hidden	postinc_arg_ptr         # -- Begin function postinc_arg_ptr
 	.globl	postinc_arg_ptr
 	.type	postinc_arg_ptr,@function
 postinc_arg_ptr:                        # @postinc_arg_ptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end6:
 	.size	postinc_arg_ptr, .Lfunc_end6-postinc_arg_ptr
-
+                                        # -- End function
 	.section	.text.postinc_glob_ptr,"ax",@progbits
-	.hidden	postinc_glob_ptr
+	.hidden	postinc_glob_ptr        # -- Begin function postinc_glob_ptr
 	.globl	postinc_glob_ptr
 	.type	postinc_glob_ptr,@function
 postinc_glob_ptr:                       # @postinc_glob_ptr
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, ptr($pop5)
@@ -127,28 +119,28 @@ postinc_glob_ptr:                       # @postinc_glob_ptr
 	.endfunc
 .Lfunc_end7:
 	.size	postinc_glob_ptr, .Lfunc_end7-postinc_glob_ptr
-
+                                        # -- End function
 	.section	.text.predec_arg_ptr,"ax",@progbits
-	.hidden	predec_arg_ptr
+	.hidden	predec_arg_ptr          # -- Begin function predec_arg_ptr
 	.globl	predec_arg_ptr
 	.type	predec_arg_ptr,@function
 predec_arg_ptr:                         # @predec_arg_ptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end8:
 	.size	predec_arg_ptr, .Lfunc_end8-predec_arg_ptr
-
+                                        # -- End function
 	.section	.text.predec_glob_ptr,"ax",@progbits
-	.hidden	predec_glob_ptr
+	.hidden	predec_glob_ptr         # -- Begin function predec_glob_ptr
 	.globl	predec_glob_ptr
 	.type	predec_glob_ptr,@function
 predec_glob_ptr:                        # @predec_glob_ptr
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, ptr($pop5)
@@ -160,28 +152,28 @@ predec_glob_ptr:                        # @predec_glob_ptr
 	.endfunc
 .Lfunc_end9:
 	.size	predec_glob_ptr, .Lfunc_end9-predec_glob_ptr
-
+                                        # -- End function
 	.section	.text.postdec_arg_ptr,"ax",@progbits
-	.hidden	postdec_arg_ptr
+	.hidden	postdec_arg_ptr         # -- Begin function postdec_arg_ptr
 	.globl	postdec_arg_ptr
 	.type	postdec_arg_ptr,@function
 postdec_arg_ptr:                        # @postdec_arg_ptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end10:
 	.size	postdec_arg_ptr, .Lfunc_end10-postdec_arg_ptr
-
+                                        # -- End function
 	.section	.text.postdec_glob_ptr,"ax",@progbits
-	.hidden	postdec_glob_ptr
+	.hidden	postdec_glob_ptr        # -- Begin function postdec_glob_ptr
 	.globl	postdec_glob_ptr
 	.type	postdec_glob_ptr,@function
 postdec_glob_ptr:                       # @postdec_glob_ptr
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, ptr($pop5)
@@ -193,28 +185,28 @@ postdec_glob_ptr:                       # @postdec_glob_ptr
 	.endfunc
 .Lfunc_end11:
 	.size	postdec_glob_ptr, .Lfunc_end11-postdec_glob_ptr
-
+                                        # -- End function
 	.section	.text.preinc_arg_idx,"ax",@progbits
-	.hidden	preinc_arg_idx
+	.hidden	preinc_arg_idx          # -- Begin function preinc_arg_idx
 	.globl	preinc_arg_idx
 	.type	preinc_arg_idx,@function
 preinc_arg_idx:                         # @preinc_arg_idx
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end12:
 	.size	preinc_arg_idx, .Lfunc_end12-preinc_arg_idx
-
+                                        # -- End function
 	.section	.text.preinc_glob_idx,"ax",@progbits
-	.hidden	preinc_glob_idx
+	.hidden	preinc_glob_idx         # -- Begin function preinc_glob_idx
 	.globl	preinc_glob_idx
 	.type	preinc_glob_idx,@function
 preinc_glob_idx:                        # @preinc_glob_idx
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, arrindex($pop5)
@@ -226,28 +218,28 @@ preinc_glob_idx:                        # @preinc_glob_idx
 	.endfunc
 .Lfunc_end13:
 	.size	preinc_glob_idx, .Lfunc_end13-preinc_glob_idx
-
+                                        # -- End function
 	.section	.text.postinc_arg_idx,"ax",@progbits
-	.hidden	postinc_arg_idx
+	.hidden	postinc_arg_idx         # -- Begin function postinc_arg_idx
 	.globl	postinc_arg_idx
 	.type	postinc_arg_idx,@function
 postinc_arg_idx:                        # @postinc_arg_idx
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end14:
 	.size	postinc_arg_idx, .Lfunc_end14-postinc_arg_idx
-
+                                        # -- End function
 	.section	.text.postinc_glob_idx,"ax",@progbits
-	.hidden	postinc_glob_idx
+	.hidden	postinc_glob_idx        # -- Begin function postinc_glob_idx
 	.globl	postinc_glob_idx
 	.type	postinc_glob_idx,@function
 postinc_glob_idx:                       # @postinc_glob_idx
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, arrindex($pop5)
@@ -259,28 +251,28 @@ postinc_glob_idx:                       # @postinc_glob_idx
 	.endfunc
 .Lfunc_end15:
 	.size	postinc_glob_idx, .Lfunc_end15-postinc_glob_idx
-
+                                        # -- End function
 	.section	.text.predec_arg_idx,"ax",@progbits
-	.hidden	predec_arg_idx
+	.hidden	predec_arg_idx          # -- Begin function predec_arg_idx
 	.globl	predec_arg_idx
 	.type	predec_arg_idx,@function
 predec_arg_idx:                         # @predec_arg_idx
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end16:
 	.size	predec_arg_idx, .Lfunc_end16-predec_arg_idx
-
+                                        # -- End function
 	.section	.text.predec_glob_idx,"ax",@progbits
-	.hidden	predec_glob_idx
+	.hidden	predec_glob_idx         # -- Begin function predec_glob_idx
 	.globl	predec_glob_idx
 	.type	predec_glob_idx,@function
 predec_glob_idx:                        # @predec_glob_idx
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, arrindex($pop5)
@@ -292,28 +284,28 @@ predec_glob_idx:                        # @predec_glob_idx
 	.endfunc
 .Lfunc_end17:
 	.size	predec_glob_idx, .Lfunc_end17-predec_glob_idx
-
+                                        # -- End function
 	.section	.text.postdec_arg_idx,"ax",@progbits
-	.hidden	postdec_arg_idx
+	.hidden	postdec_arg_idx         # -- Begin function postdec_arg_idx
 	.globl	postdec_arg_idx
 	.type	postdec_arg_idx,@function
 postdec_arg_idx:                        # @postdec_arg_idx
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end18:
 	.size	postdec_arg_idx, .Lfunc_end18-postdec_arg_idx
-
+                                        # -- End function
 	.section	.text.postdec_glob_idx,"ax",@progbits
-	.hidden	postdec_glob_idx
+	.hidden	postdec_glob_idx        # -- Begin function postdec_glob_idx
 	.globl	postdec_glob_idx
 	.type	postdec_glob_idx,@function
 postdec_glob_idx:                       # @postdec_glob_idx
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push5=, 0
 	i32.load	$push1=, arrindex($pop5)
@@ -325,15 +317,15 @@ postdec_glob_idx:                       # @postdec_glob_idx
 	.endfunc
 .Lfunc_end19:
 	.size	postdec_glob_idx, .Lfunc_end19-postdec_glob_idx
-
+                                        # -- End function
 	.section	.text.getptr,"ax",@progbits
-	.hidden	getptr
+	.hidden	getptr                  # -- Begin function getptr
 	.globl	getptr
 	.type	getptr,@function
 getptr:                                 # @getptr
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, getptrcnt($pop6)
@@ -346,37 +338,36 @@ getptr:                                 # @getptr
 	.endfunc
 .Lfunc_end20:
 	.size	getptr, .Lfunc_end20-getptr
-
+                                        # -- End function
 	.section	.text.funccall_arg_ptr,"ax",@progbits
-	.hidden	funccall_arg_ptr
+	.hidden	funccall_arg_ptr        # -- Begin function funccall_arg_ptr
 	.globl	funccall_arg_ptr
 	.type	funccall_arg_ptr,@function
 funccall_arg_ptr:                       # @funccall_arg_ptr
 	.param  	i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push6=, 0
-	i32.load	$push5=, getptrcnt($pop6)
-	tee_local	$push4=, $1=, $pop5
+	i32.load	$1=, getptrcnt($pop0)
+	i32.const	$push4=, 0
 	i32.const	$push1=, 1
-	i32.add 	$push2=, $pop4, $pop1
-	i32.store	getptrcnt($pop0), $pop2
+	i32.add 	$push2=, $1, $pop1
+	i32.store	getptrcnt($pop4), $pop2
 	i32.eqz 	$push3=, $1
                                         # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end21:
 	.size	funccall_arg_ptr, .Lfunc_end21-funccall_arg_ptr
-
+                                        # -- End function
 	.section	.text.getint,"ax",@progbits
-	.hidden	getint
+	.hidden	getint                  # -- Begin function getint
 	.globl	getint
 	.type	getint,@function
 getint:                                 # @getint
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push6=, 0
 	i32.load	$push1=, getintcnt($pop6)
@@ -389,109 +380,64 @@ getint:                                 # @getint
 	.endfunc
 .Lfunc_end22:
 	.size	getint, .Lfunc_end22-getint
-
+                                        # -- End function
 	.section	.text.funccall_arg_idx,"ax",@progbits
-	.hidden	funccall_arg_idx
+	.hidden	funccall_arg_idx        # -- Begin function funccall_arg_idx
 	.globl	funccall_arg_idx
 	.type	funccall_arg_idx,@function
 funccall_arg_idx:                       # @funccall_arg_idx
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push7=, 0
-	i32.load	$push1=, getintcnt($pop7)
-	i32.const	$push2=, 1
-	i32.add 	$push6=, $pop1, $pop2
-	tee_local	$push5=, $2=, $pop6
-	i32.store	getintcnt($pop0), $pop5
-	i32.const	$push4=, 1
-	i32.eq  	$push3=, $2, $pop4
+	i32.load	$2=, getintcnt($pop0)
+	i32.const	$push4=, 0
+	i32.const	$push1=, 1
+	i32.add 	$push2=, $2, $pop1
+	i32.store	getintcnt($pop4), $pop2
+	i32.eqz 	$push3=, $2
                                         # fallthrough-return: $pop3
 	.endfunc
 .Lfunc_end23:
 	.size	funccall_arg_idx, .Lfunc_end23-funccall_arg_idx
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-	.local  	i32, i32
-# BB#0:                                 # %entry
+	.local  	i32
+# %bb.0:                                # %if.end76
+	i32.const	$push5=, 0
+	i32.load	$0=, getptrcnt($pop5)
+	i32.const	$push4=, 0
+	i32.const	$push3=, 1
+	i32.add 	$push0=, $0, $pop3
+	i32.store	getptrcnt($pop4), $pop0
 	block   	
-	i32.const	$push9=, 0
-	i32.load	$push8=, ptr($pop9)
-	tee_local	$push7=, $0=, $pop8
-	i32.ne  	$push0=, $pop7, $0
-	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.end4
-	i32.const	$push12=, 0
-	i32.load	$push11=, arrindex($pop12)
-	tee_local	$push10=, $0=, $pop11
-	i32.ne  	$push1=, $pop10, $0
-	br_if   	0, $pop1        # 0: down to label0
-# BB#2:                                 # %if.end44
-	i32.const	$push17=, 0
-	i32.const	$push16=, 1
-	i32.add 	$push15=, $0, $pop16
-	tee_local	$push14=, $1=, $pop15
-	i32.store	arrindex($pop17), $pop14
-	i32.const	$push13=, 1
-	i32.eqz 	$push34=, $pop13
-	br_if   	0, $pop34       # 0: down to label0
-# BB#3:                                 # %if.end52
-	i32.const	$push19=, 0
-	i32.const	$push2=, 2
-	i32.add 	$push3=, $0, $pop2
-	i32.store	arrindex($pop19), $pop3
-	i32.const	$push18=, 1
-	i32.eqz 	$push35=, $pop18
-	br_if   	0, $pop35       # 0: down to label0
-# BB#4:                                 # %if.end64
-	i32.const	$push21=, 0
-	i32.store	arrindex($pop21), $1
-	i32.const	$push20=, 1
-	i32.eqz 	$push36=, $pop20
-	br_if   	0, $pop36       # 0: down to label0
-# BB#5:                                 # %if.end72
-	i32.const	$push23=, 0
-	i32.store	arrindex($pop23), $0
-	i32.const	$push22=, 1
-	i32.eqz 	$push37=, $pop22
-	br_if   	0, $pop37       # 0: down to label0
-# BB#6:                                 # %if.end76
-	i32.const	$push28=, 0
-	i32.const	$push27=, 0
-	i32.load	$push26=, getptrcnt($pop27)
-	tee_local	$push25=, $0=, $pop26
-	i32.const	$push24=, 1
-	i32.add 	$push4=, $pop25, $pop24
-	i32.store	getptrcnt($pop28), $pop4
 	br_if   	0, $0           # 0: down to label0
-# BB#7:                                 # %if.end80
-	i32.const	$push33=, 0
-	i32.const	$push32=, 0
-	i32.load	$push31=, getintcnt($pop32)
-	tee_local	$push30=, $0=, $pop31
-	i32.const	$push29=, 1
-	i32.add 	$push5=, $pop30, $pop29
-	i32.store	getintcnt($pop33), $pop5
+# %bb.1:                                # %if.end80
+	i32.const	$push8=, 0
+	i32.load	$0=, getintcnt($pop8)
+	i32.const	$push7=, 0
+	i32.const	$push6=, 1
+	i32.add 	$push1=, $0, $pop6
+	i32.store	getintcnt($pop7), $pop1
 	br_if   	0, $0           # 0: down to label0
-# BB#8:                                 # %if.end84
-	i32.const	$push6=, 0
-	call    	exit@FUNCTION, $pop6
+# %bb.2:                                # %if.end84
+	i32.const	$push2=, 0
+	call    	exit@FUNCTION, $pop2
 	unreachable
-.LBB24_9:                               # %if.then83
+.LBB24_3:                               # %if.then79
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end24:
 	.size	main, .Lfunc_end24-main
-
+                                        # -- End function
 	.hidden	arr                     # @arr
 	.type	arr,@object
 	.section	.bss.arr,"aw",@nobits
@@ -538,6 +484,6 @@ getintcnt:
 	.size	getintcnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

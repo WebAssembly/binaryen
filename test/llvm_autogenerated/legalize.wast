@@ -5,16 +5,16 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "shl_i3" (func $shl_i3))
  (export "shl_i53" (func $shl_i53))
  (export "sext_in_reg_i32_i64" (func $sext_in_reg_i32_i64))
  (export "fpext_f32_f64" (func $fpext_f32_f64))
  (export "fpconv_f64_f32" (func $fpconv_f64_f32))
  (export "bigshift" (func $bigshift))
- (func $shl_i3 (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $shl_i3 (; 2 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (i32.shl
     (get_local $0)
@@ -25,7 +25,7 @@
    )
   )
  )
- (func $shl_i53 (param $0 i64) (param $1 i64) (param $2 i32) (result i64)
+ (func $shl_i53 (; 3 ;) (param $0 i64) (param $1 i64) (param $2 i32) (result i64)
   (return
    (i64.shl
     (get_local $0)
@@ -36,7 +36,7 @@
    )
   )
  )
- (func $sext_in_reg_i32_i64 (param $0 i64) (result i64)
+ (func $sext_in_reg_i32_i64 (; 4 ;) (param $0 i64) (result i64)
   (return
    (i64.shr_s
     (i64.shl
@@ -47,7 +47,7 @@
    )
   )
  )
- (func $fpext_f32_f64 (param $0 i32) (result f64)
+ (func $fpext_f32_f64 (; 5 ;) (param $0 i32) (result f64)
   (return
    (f64.promote/f32
     (f32.load
@@ -56,7 +56,7 @@
    )
   )
  )
- (func $fpconv_f64_f32 (param $0 i32) (result f32)
+ (func $fpconv_f64_f32 (; 6 ;) (param $0 i32) (result f32)
   (return
    (f32.demote/f64
     (f64.load
@@ -65,7 +65,7 @@
    )
   )
  )
- (func $bigshift (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (param $15 i64) (param $16 i64) (param $17 i64) (param $18 i64) (param $19 i64) (param $20 i64) (param $21 i64) (param $22 i64) (param $23 i64) (param $24 i64) (param $25 i64) (param $26 i64) (param $27 i64) (param $28 i64) (param $29 i64) (param $30 i64) (param $31 i64) (param $32 i64)
+ (func $bigshift (; 7 ;) (param $0 i32) (param $1 i64) (param $2 i64) (param $3 i64) (param $4 i64) (param $5 i64) (param $6 i64) (param $7 i64) (param $8 i64) (param $9 i64) (param $10 i64) (param $11 i64) (param $12 i64) (param $13 i64) (param $14 i64) (param $15 i64) (param $16 i64) (param $17 i64) (param $18 i64) (param $19 i64) (param $20 i64) (param $21 i64) (param $22 i64) (param $23 i64) (param $24 i64) (param $25 i64) (param $26 i64) (param $27 i64) (param $28 i64) (param $29 i64) (param $30 i64) (param $31 i64) (param $32 i64)
   (local $33 i32)
   (local $34 i32)
   (local $35 i32)
@@ -2419,38 +2419,34 @@
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 8 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 9 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 10 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["__ashlti3","__lshrti3"], "externs": [], "implementedFunctions": ["_shl_i3","_shl_i53","_sext_in_reg_i32_i64","_fpext_f32_f64","_fpconv_f64_f32","_bigshift","_stackSave","_stackAlloc","_stackRestore"], "exports": ["shl_i3","shl_i53","sext_in_reg_i32_i64","fpext_f32_f64","fpconv_f64_f32","bigshift","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

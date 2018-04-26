@@ -34,18 +34,18 @@ namespace wasm {
 
 class Options {
  public:
-  typedef std::function<void(Options *, const std::string &)> Action;
+  typedef std::function<void(Options *, const std::string& )> Action;
   enum class Arguments { Zero, One, N, Optional };
 
   bool debug;
   std::map<std::string, std::string> extra;
 
-  Options(const std::string &command, const std::string &description);
+  Options(const std::string& command, const std::string& description);
   ~Options();
-  Options &add(const std::string &longName, const std::string &shortName,
-               const std::string &description, Arguments arguments,
+  Options &add(const std::string& longName, const std::string& shortName,
+               const std::string& description, Arguments arguments,
                const Action &action);
-  Options &add_positional(const std::string &name, Arguments arguments,
+  Options &add_positional(const std::string& name, Arguments arguments,
                           const Action &action);
   void parse(int argc, const char *argv[]);
 

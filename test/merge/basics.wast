@@ -19,7 +19,7 @@
     (call $only-a)
     (call_import $some-func)
     (call_import $some-collide)
-    (call_indirect $ii
+    (call_indirect (type $ii)
       (i32.const 123)
       (i32.const 456)
       (i32.const 789)

@@ -1,32 +1,29 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020402-2.c"
+	.file	"20020402-2.c"
 	.section	.text.InitCache,"ax",@progbits
-	.hidden	InitCache
+	.hidden	InitCache               # -- Begin function InitCache
 	.globl	InitCache
 	.type	InitCache,@function
 InitCache:                              # @InitCache
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	MyPte+4($pop0), $0
-	i32.const	$push76=, 0
-	i32.const	$push1=, 5
-	i32.store	MyPte+12($pop76), $pop1
-	i32.const	$push75=, 0
-	i32.const	$push2=, MyPte+16
-	i32.store	Local1($pop75), $pop2
 	i32.const	$push74=, 0
-	i32.const	$push3=, MyPte+20
-	i32.store	Local2($pop74), $pop3
+	i64.const	$push1=, 21474836480
+	i64.store	MyPte+8($pop74):p2align=2, $pop1
 	i32.const	$push73=, 0
-	i32.const	$push4=, MyPte+24
-	i32.store	Local3($pop73), $pop4
+	i32.const	$push2=, MyPte+16
+	i32.store	Local1($pop73), $pop2
 	i32.const	$push72=, 0
-	i32.const	$push5=, MyPte+28
-	i32.store	RDbf1($pop72), $pop5
+	i32.const	$push3=, MyPte+20
+	i32.store	Local2($pop72), $pop3
 	i32.const	$push71=, 0
+	i32.const	$push4=, MyPte+24
+	i32.store	Local3($pop71), $pop4
 	i32.const	$push70=, 0
-	i32.store	MyPte+8($pop71), $pop70
+	i32.const	$push5=, MyPte+28
+	i32.store	RDbf1($pop70), $pop5
 	i32.const	$push69=, 0
 	i32.const	$push6=, MyPte+32
 	i32.store	RDbf2($pop69), $pop6
@@ -64,11 +61,11 @@ InitCache:                              # @InitCache
 	i32.const	$push17=, MyPte+188
 	i32.store	Workspace+8($pop58), $pop17
 	i32.const	$push57=, 0
-	i32.const	$push18=, MyPte+192
-	i32.store	Workspace+12($pop57), $pop18
+	i32.const	$push18=, MyPte+196
+	i32.store	Workspace+16($pop57), $pop18
 	i32.const	$push56=, 0
-	i32.const	$push19=, MyPte+196
-	i32.store	Workspace+16($pop56), $pop19
+	i32.const	$push19=, MyPte+192
+	i32.store	Workspace+12($pop56), $pop19
 	i32.const	$push55=, 0
 	i32.const	$push20=, MyPte+200
 	i32.store	Workspace+20($pop55), $pop20
@@ -127,15 +124,15 @@ InitCache:                              # @InitCache
 	.endfunc
 .Lfunc_end0:
 	.size	InitCache, .Lfunc_end0-InitCache
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 5
 	i32.store	MyPte+12($pop1), $pop0
@@ -191,11 +188,11 @@ main:                                   # @main
 	i32.const	$push18=, MyPte+188
 	i32.store	Workspace+8($pop60), $pop18
 	i32.const	$push59=, 0
-	i32.const	$push19=, MyPte+192
-	i32.store	Workspace+12($pop59), $pop19
+	i32.const	$push19=, MyPte+196
+	i32.store	Workspace+16($pop59), $pop19
 	i32.const	$push58=, 0
-	i32.const	$push20=, MyPte+196
-	i32.store	Workspace+16($pop58), $pop20
+	i32.const	$push20=, MyPte+192
+	i32.store	Workspace+12($pop58), $pop20
 	i32.const	$push57=, 0
 	i32.const	$push21=, MyPte+200
 	i32.store	Workspace+20($pop57), $pop21
@@ -255,7 +252,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	Local1                  # @Local1
 	.type	Local1,@object
 	.section	.bss.Local1,"aw",@nobits
@@ -491,4 +488,4 @@ MyPte:
 	.size	MyPte, 392
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

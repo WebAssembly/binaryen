@@ -7,12 +7,12 @@ int main() {
   BinaryenModuleRef module = BinaryenModuleCreate();
 
   // Create a function type for  i32 (i32, i32)
-  BinaryenType params[2] = { BinaryenInt32(), BinaryenInt32() };
-  BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenInt32(), params, 2);
+  BinaryenType params[2] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
+  BinaryenFunctionTypeRef iii = BinaryenAddFunctionType(module, "iii", BinaryenTypeInt32(), params, 2);
 
   // Get the 0 and 1 arguments, and add them
-  BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenInt32()),
-                        y = BinaryenGetLocal(module, 1, BinaryenInt32());
+  BinaryenExpressionRef x = BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
+                        y = BinaryenGetLocal(module, 1, BinaryenTypeInt32());
   BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
 
   // Create the add function

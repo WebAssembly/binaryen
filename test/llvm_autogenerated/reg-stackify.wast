@@ -21,9 +21,6 @@
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
  (data (i32.const 12) "\00\00\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "no0" (func $no0))
  (export "no1" (func $no1))
  (export "yes0" (func $yes0))
@@ -49,7 +46,10 @@
  (export "stackify_indvar" (func $stackify_indvar))
  (export "stackpointer_dependency" (func $stackpointer_dependency))
  (export "call_indirect_stackify" (func $call_indirect_stackify))
- (func $no0 (param $0 i32) (param $1 i32) (result i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $no0 (; 12 ;) (param $0 i32) (param $1 i32) (result i32)
   (set_local $1
    (i32.load
     (get_local $1)
@@ -63,7 +63,7 @@
    (get_local $1)
   )
  )
- (func $no1 (param $0 i32) (param $1 i32) (result i32)
+ (func $no1 (; 13 ;) (param $0 i32) (param $1 i32) (result i32)
   (set_local $1
    (i32.load
     (get_local $1)
@@ -77,7 +77,7 @@
    (get_local $1)
   )
  )
- (func $yes0 (param $0 i32) (param $1 i32) (result i32)
+ (func $yes0 (; 14 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.store
    (get_local $0)
    (i32.const 0)
@@ -88,14 +88,14 @@
    )
   )
  )
- (func $yes1 (param $0 i32) (result i32)
+ (func $yes1 (; 15 ;) (param $0 i32) (result i32)
   (return
    (i32.load
     (get_local $0)
    )
   )
  )
- (func $sink_trap (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $sink_trap (; 16 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $2)
    (i32.const 0)
@@ -107,7 +107,7 @@
    )
   )
  )
- (func $sink_readnone_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $sink_readnone_call (; 17 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $2)
    (i32.const 0)
@@ -116,7 +116,7 @@
    (call $readnone_callee)
   )
  )
- (func $no_sink_readonly_call (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $no_sink_readonly_call (; 18 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (set_local $3
    (call $readonly_callee)
@@ -129,7 +129,7 @@
    (get_local $3)
   )
  )
- (func $stack_uses (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $stack_uses (; 19 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (block $label$0
    (br_if $label$0
     (i32.ne
@@ -166,7 +166,7 @@
    (i32.const 1)
   )
  )
- (func $multiple_uses (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $multiple_uses (; 20 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (block $label$0
    (br_if $label$0
@@ -192,7 +192,7 @@
   )
   (return)
  )
- (func $stackify_store_across_side_effects (param $0 i32)
+ (func $stackify_store_across_side_effects (; 21 ;) (param $0 i32)
   (i64.store
    (get_local $0)
    (i64.const 4611686018427387904)
@@ -205,7 +205,7 @@
   (call $evoke_side_effects)
   (return)
  )
- (func $div_tree (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (result i32)
+ (func $div_tree (; 22 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (result i32)
   (return
    (i32.div_s
     (i32.div_s
@@ -255,7 +255,7 @@
    )
   )
  )
- (func $simple_multiple_use (param $0 i32) (param $1 i32)
+ (func $simple_multiple_use (; 23 ;) (param $0 i32) (param $1 i32)
   (call $use_a
    (tee_local $1
     (i32.mul
@@ -269,7 +269,7 @@
   )
   (return)
  )
- (func $multiple_uses_in_same_insn (param $0 i32) (param $1 i32)
+ (func $multiple_uses_in_same_insn (; 24 ;) (param $0 i32) (param $1 i32)
   (call $use_2
    (tee_local $1
     (i32.mul
@@ -281,7 +281,7 @@
   )
   (return)
  )
- (func $commute (result i32)
+ (func $commute (; 25 ;) (result i32)
   (return
    (i32.add
     (i32.add
@@ -292,7 +292,7 @@
    )
   )
  )
- (func $no_stackify_past_use (param $0 i32) (result i32)
+ (func $no_stackify_past_use (; 26 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (call $callee
@@ -314,7 +314,7 @@
    )
   )
  )
- (func $commute_to_fix_ordering (param $0 i32) (result i32)
+ (func $commute_to_fix_ordering (; 27 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (return
    (i32.mul
@@ -335,7 +335,7 @@
    )
   )
  )
- (func $multiple_defs (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+ (func $multiple_defs (; 28 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
   (local $5 f64)
   (local $6 f64)
   (local $7 f64)
@@ -438,7 +438,7 @@
    (br $label$0)
   )
  )
- (func $no_stackify_call_past_load (result i32)
+ (func $no_stackify_call_past_load (; 29 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (set_local $0
@@ -458,7 +458,7 @@
    (get_local $1)
   )
  )
- (func $no_stackify_store_past_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $no_stackify_store_past_load (; 30 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $1)
    (get_local $0)
@@ -477,7 +477,7 @@
    (get_local $2)
   )
  )
- (func $store_past_invar_load (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $store_past_invar_load (; 31 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (i32.store
    (get_local $1)
    (get_local $0)
@@ -493,10 +493,10 @@
    )
   )
  )
- (func $ignore_dbg_value
+ (func $ignore_dbg_value (; 32 ;)
   (unreachable)
  )
- (func $no_stackify_past_epilogue (result i32)
+ (func $no_stackify_past_epilogue (; 33 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
   (i32.store offset=4
@@ -529,7 +529,7 @@
    (get_local $0)
   )
  )
- (func $stackify_indvar (param $0 i32) (param $1 i32)
+ (func $stackify_indvar (; 34 ;) (param $0 i32) (param $1 i32)
   (local $2 i32)
   (set_local $2
    (i32.const 0)
@@ -558,7 +558,7 @@
   )
   (return)
  )
- (func $stackpointer_dependency (param $0 i32) (result i32)
+ (func $stackpointer_dependency (; 35 ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $0
    (call $stackpointer_callee
@@ -578,9 +578,9 @@
    (get_local $0)
   )
  )
- (func $call_indirect_stackify (param $0 i32) (param $1 i32) (result i32)
+ (func $call_indirect_stackify (; 36 ;) (param $0 i32) (param $1 i32) (result i32)
   (return
-   (call_indirect $FUNCSIG$iii
+   (call_indirect (type $FUNCSIG$iii)
     (tee_local $0
      (i32.load
       (get_local $0)
@@ -595,38 +595,34 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 37 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 38 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 39 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["blue","callee","evoke_side_effects","green","readnone_callee","readonly_callee","red","stackpointer_callee","use_2","use_a","use_b","use_memory"], "externs": [], "implementedFunctions": ["_no0","_no1","_yes0","_yes1","_sink_trap","_sink_readnone_call","_no_sink_readonly_call","_stack_uses","_multiple_uses","_stackify_store_across_side_effects","_div_tree","_simple_multiple_use","_multiple_uses_in_same_insn","_commute","_no_stackify_past_use","_commute_to_fix_ordering","_multiple_defs","_no_stackify_call_past_load","_no_stackify_store_past_load","_store_past_invar_load","_ignore_dbg_value","_no_stackify_past_epilogue","_stackify_indvar","_stackpointer_dependency","_call_indirect_stackify","_stackSave","_stackAlloc","_stackRestore"], "exports": ["no0","no1","yes0","yes1","sink_trap","sink_readnone_call","no_sink_readonly_call","stack_uses","multiple_uses","stackify_store_across_side_effects","div_tree","simple_multiple_use","multiple_uses_in_same_insn","commute","no_stackify_past_use","commute_to_fix_ordering","multiple_defs","no_stackify_call_past_load","no_stackify_store_past_load","store_past_invar_load","ignore_dbg_value","no_stackify_past_epilogue","stackify_indvar","stackpointer_dependency","call_indirect_stackify","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

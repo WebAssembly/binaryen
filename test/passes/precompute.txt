@@ -2,8 +2,10 @@
  (type $0 (func (param i32)))
  (type $1 (func (result i32)))
  (type $2 (func))
+ (type $3 (func (result f64)))
+ (global $global$0 (mut i32) (i32.const 0))
  (memory $0 0)
- (func $x (type $0) (param $x i32)
+ (func $x (; 0 ;) (type $0) (param $x i32)
   (call $x
    (i32.const 2300)
   )
@@ -84,7 +86,7 @@
    (i32.const 0)
   )
  )
- (func $ret (type $1) (result i32)
+ (func $ret (; 1 ;) (type $1) (result i32)
   (if
    (call $ret)
    (return
@@ -99,13 +101,13 @@
   )
   (i32.const 1)
  )
- (func $noret (type $2)
+ (func $noret (; 2 ;) (type $2)
   (if
    (call $ret)
    (return)
   )
  )
- (func $refinalize-br-condition-unreachable (type $2)
+ (func $refinalize-br-condition-unreachable (; 3 ;) (type $2)
   (block $label$1
    (drop
     (br_if $label$1
@@ -114,9 +116,9 @@
    )
   )
  )
- (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (type $2)
+ (func $br_if-condition-is-block-i32-but-unreachable-so-refinalize-tricky (; 4 ;) (type $2)
   (drop
-   (block $label$1
+   (block $label$1 (result i32)
     (drop
      (br_if $label$1
       (i32.const 100)
@@ -125,6 +127,63 @@
       )
      )
     )
+    (i32.const 0)
+   )
+  )
+ )
+ (func $reuse-br-value (; 5 ;) (type $3) (result f64)
+  (block $label$0 (result f64)
+   (i32.store8
+    (i32.const 1919623207)
+    (if (result i32)
+     (i32.const 1)
+     (block $label$2
+      (drop
+       (i64.and
+        (i64.trunc_u/f32
+         (f32.const 70847791997969805621592064)
+        )
+        (i64.const 729618461987467893)
+       )
+      )
+      (br $label$0
+       (f64.const 6.134856208230095e-154)
+      )
+     )
+     (i32.load offset=3 align=2
+      (i32.const 169901344)
+     )
+    )
+   )
+   (f64.const 4776014875438170098655851e156)
+  )
+ )
+ (func $refinalize-two-breaks-one-unreachable (; 6 ;) (type $2)
+  (drop
+   (block $label$0 (result i64)
+    (br_if $label$0
+     (select
+      (i64.const 1)
+      (block $block
+       (set_global $global$0
+        (i32.const 1)
+       )
+       (br $label$0
+        (i64.const -22)
+       )
+      )
+      (i32.const 0)
+     )
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $one-break-value-and-it-is-unreachable (; 7 ;) (type $3) (result f64)
+  (local $var$0 i32)
+  (block $label$6 (result f64)
+   (br_if $label$6
+    (unreachable)
     (i32.const 0)
    )
   )

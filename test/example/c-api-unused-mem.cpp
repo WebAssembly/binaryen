@@ -22,7 +22,7 @@ int main() {
   the_relooper = RelooperCreate();
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenUndefined());
+    expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[1]);
   expressions[2] = BinaryenGetLocal(the_module, 0, 1);
@@ -31,7 +31,7 @@ int main() {
   expressions[5] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[4], expressions[5] };
-    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenUndefined());
+    expressions[6] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[6]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
@@ -49,7 +49,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "main", functionTypes[0], varTypes, 3, expressions[10]);
   }
-  BinaryenAddExport(the_module, "main", "main");
+  BinaryenAddFunctionExport(the_module, "main", "main");
   {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[1] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
@@ -69,9 +69,9 @@ int main() {
   }
   {
     BinaryenExpressionRef children[] = { expressions[13], expressions[14] };
-    expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
+    expressions[15] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeAuto());
   }
-  BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
+  BinaryenAddFunctionExport(the_module, "__wasm_start", "rust_entry");
   {
     BinaryenType varTypes[] = { 0 };
     functions[1] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[1], varTypes, 0, expressions[15]);
@@ -81,6 +81,7 @@ int main() {
   // check that binary read-write works
   {
     char buffer[1024];
+    BinaryenSetDebugInfo(1);
     size_t size = BinaryenModuleWrite(the_module, buffer, 1024);
     printf("%d\n", size);
     BinaryenModuleRef copy = BinaryenModuleRead(buffer, size);

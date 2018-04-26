@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080719-1.c"
+	.file	"20080719-1.c"
 	.section	.text.xxx,"ax",@progbits
-	.hidden	xxx
+	.hidden	xxx                     # -- Begin function xxx
 	.globl	xxx
 	.type	xxx,@function
 xxx:                                    # @xxx
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push7=, cfb_tab8_be
 	i32.const	$push3=, cfb_tab16_be
 	i32.const	$push2=, cfb_tab32
@@ -21,20 +21,20 @@ xxx:                                    # @xxx
 	.endfunc
 .Lfunc_end0:
 	.size	xxx, .Lfunc_end0-xxx
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	cfb_tab8_be,@object     # @cfb_tab8_be
 	.section	.rodata.cfb_tab8_be,"a",@progbits
 	.p2align	4
@@ -76,4 +76,4 @@ cfb_tab32:
 	.size	cfb_tab32, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

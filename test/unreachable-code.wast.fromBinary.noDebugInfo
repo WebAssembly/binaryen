@@ -1,0 +1,83 @@
+(module
+ (type $0 (func))
+ (func $0 (; 0 ;) (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $1 (; 1 ;) (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $2 (; 2 ;) (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $3 (; 3 ;) (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $4 (; 4 ;) (type $0)
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (nop)
+ )
+ (func $5 (; 5 ;) (type $0)
+  (nop)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $6 (; 6 ;) (type $0)
+  (nop)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (unreachable)
+   )
+  )
+  (nop)
+ )
+ (func $7 (; 7 ;) (type $0)
+  (nop)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
+ (func $8 (; 8 ;) (type $0)
+  (nop)
+  (block $label$1
+   (nop)
+   (br $label$1)
+  )
+  (nop)
+ )
+ (func $9 (; 9 ;) (type $0)
+  (block $label$1
+   (nop)
+   (block $label$2
+    (nop)
+    (br $label$1)
+   )
+  )
+ )
+)
+

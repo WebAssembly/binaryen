@@ -1,20 +1,19 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57131.c"
+	.file	"pr57131.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i64, i64, i64, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push14=, 0
-	i32.const	$push11=, 0
-	i32.load	$push12=, __stack_pointer($pop11)
+# %bb.0:                                # %entry
+	i32.const	$push12=, 0
+	i32.load	$push11=, __stack_pointer($pop12)
 	i32.const	$push13=, 48
-	i32.sub 	$push23=, $pop12, $pop13
-	tee_local	$push22=, $5=, $pop23
-	i32.store	__stack_pointer($pop14), $pop22
+	i32.sub 	$5=, $pop11, $pop13
+	i32.const	$push14=, 0
+	i32.store	__stack_pointer($pop14), $5
 	i32.const	$push21=, 0
 	i32.store	44($5), $pop21
 	i64.const	$push0=, 0
@@ -43,13 +42,13 @@ main:                                   # @main
 	i64.const	$push18=, 1
 	i64.ne  	$push10=, $pop9, $pop18
 	br_if   	0, $pop10       # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push17=, 0
 	i32.const	$push15=, 48
 	i32.add 	$push16=, $5, $pop15
 	i32.store	__stack_pointer($pop17), $pop16
-	i32.const	$push24=, 0
-	return  	$pop24
+	i32.const	$push22=, 0
+	return  	$pop22
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
@@ -57,7 +56,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

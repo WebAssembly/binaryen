@@ -1,43 +1,43 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr37924.c"
+	.file	"pr37924.c"
 	.section	.text.test1,"ax",@progbits
-	.hidden	test1
+	.hidden	test1                   # -- Begin function test1
 	.globl	test1
 	.type	test1,@function
 test1:                                  # @test1
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load8_s	$push1=, a($pop0)
-	i32.const	$push2=, 9
-	i32.shr_u	$push3=, $pop1, $pop2
-	i32.const	$push4=, 8388607
-	i32.xor 	$push5=, $pop3, $pop4
+	i32.const	$push2=, -1
+	i32.xor 	$push3=, $pop1, $pop2
+	i32.const	$push4=, 9
+	i32.shr_u	$push5=, $pop3, $pop4
                                         # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	test1, .Lfunc_end0-test1
-
+                                        # -- End function
 	.section	.text.test2,"ax",@progbits
-	.hidden	test2
+	.hidden	test2                   # -- Begin function test2
 	.globl	test2
 	.type	test2,@function
 test2:                                  # @test2
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8388607
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	test2, .Lfunc_end1-test2
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end21
+# %bb.0:                                # %if.end21
 	i32.const	$push1=, 0
 	i32.const	$push0=, 255
 	i32.store8	b($pop1), $pop0
@@ -49,7 +49,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -67,4 +67,4 @@ b:
 	.size	b, 1
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

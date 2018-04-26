@@ -77,5 +77,101 @@
       (br_if $out8 (call $b14)) ;; side effect
     )
   )
+  (func $join-and-it-becomes-unreachable
+   (block $label$1
+    (block
+     (br_if $label$1
+      (i32.load8_u
+       (i32.const -93487262)
+      )
+     )
+     (br_if $label$1
+      (loop $label$5 ;; this is unreachable (infinite loop, no exit)
+       (br $label$5)
+      )
+     )
+    )
+   )
+  )
+  (func $br-if-unreachable-pair
+   (block $label$14
+    (br_if $label$14
+     (unreachable)
+    )
+    (br_if $label$14
+     (i32.const 0)
+    )
+   )
+  )
+  (func $br-if-unreachable-pair2
+   (block $label$14
+    (br_if $label$14
+     (i32.const 0)
+    )
+    (br_if $label$14
+     (unreachable)
+    )
+   )
+  )
+  (func $simple-switch (result i32)
+    (block $A
+      (block $B
+        (block $y
+          (br_table $A $y $y $y $y $y $A $y $y $y $y $A $y
+            (i32.const 0)
+          )
+          (return (i32.const 0))
+        )
+        (return (i32.const 1))
+      )
+      (return (i32.const 2))
+    )
+    (return (i32.const 3))
+  )
+  (func $simple-switch-2 (result i32)
+    (block $A
+      (block $B
+        (block $y
+          (br_table $A $y $y $y $y $y $y $y $y $y $y $y $A $y
+            (i32.const 0)
+          )
+          (return (i32.const 0))
+        )
+        (return (i32.const 1))
+      )
+      (return (i32.const 2))
+    )
+    (return (i32.const 3))
+  )
+  (func $simple-switch-3 (result i32)
+    (block $A
+      (block $B
+        (block $y
+          (br_table $A $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $y $B $y
+            (i32.const 0)
+          )
+          (return (i32.const 0))
+        )
+        (return (i32.const 1))
+      )
+      (return (i32.const 2))
+    )
+    (return (i32.const 3))
+  )
+  (func $simple-switch-4 (result i32)
+    (block $A
+      (block $B
+        (block $y
+          (br_table $A $y $y $y $y $y $A $y $y $y $y $y $A $y
+            (i32.const 0)
+          )
+          (return (i32.const 0))
+        )
+        (return (i32.const 1))
+      )
+      (return (i32.const 2))
+    )
+    (return (i32.const 3))
+  )
 )
 

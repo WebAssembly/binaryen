@@ -55,23 +55,114 @@
     (call $remove3)
   )
   (func $other1 (param i32) (type $1)
-    (call_indirect $0 (i32.const 0))
-    (call_indirect $0 (i32.const 0))
-    (call_indirect $0-dupe (i32.const 0))
-    (call_indirect $0-dupe (i32.const 0))
-    (call_indirect $1 (i32.const 0) (i32.const 0))
-    (call_indirect $1-dupe (i32.const 0) (i32.const 0))
-    (drop (call_indirect $2 (i32.const 0) (i32.const 0)))
-    (drop (call_indirect $2-dupe (i32.const 0) (i32.const 0)))
-    (drop (call_indirect $2-thrupe (i32.const 0) (i32.const 0)))
+    (call_indirect (type $0) (i32.const 0))
+    (call_indirect (type $0) (i32.const 0))
+    (call_indirect (type $0-dupe) (i32.const 0))
+    (call_indirect (type $0-dupe) (i32.const 0))
+    (call_indirect (type $1) (i32.const 0) (i32.const 0))
+    (call_indirect (type $1-dupe) (i32.const 0) (i32.const 0))
+    (drop (call_indirect (type $2) (i32.const 0) (i32.const 0)))
+    (drop (call_indirect (type $2-dupe) (i32.const 0) (i32.const 0)))
+    (drop (call_indirect (type $2-thrupe) (i32.const 0) (i32.const 0)))
   )
   (func $other2 (param i32) (type $1-dupe)
     (unreachable)
   )
 )
-(module ;; leave the table and memory alone
+(module ;; remove the table and memory
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 anyfunc))
+)
+(module ;; also when not imported
+  (memory 256)
+  (table 1 anyfunc)
+)
+(module ;; but not when exported
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 1 anyfunc))
+  (export "mem" (memory 0))
+  (export "tab" (table 0))
+)
+(module ;; and not when there are segments
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 1 anyfunc))
+  (data (i32.const 1) "hello, world!")
+  (elem (i32.const 0) $waka)
+  (func $waka)
+)
+(module ;; and not when used
+  (type $0 (func))
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 anyfunc))
+  (export "user" $user)
+  (func $user
+    (drop (i32.load (i32.const 0)))
+    (call_indirect (type $0) (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 (shared 23 256))
+  (export "user" $user)
+  (func $user
+    (i32.store (i32.const 0) (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 (shared 23 256))
+  (export "user" $user)
+  (func $user (result i32)
+    (i32.atomic.rmw.add (i32.const 0) (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 (shared 23 256))
+  (export "user" $user)
+  (func $user (result i32)
+    (i32.atomic.rmw8_u.cmpxchg (i32.const 0) (i32.const 0) (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 (shared 23 256))
+  (export "user" $user)
+  (func $user
+    (local $0 i32)
+    (local $1 i64)
+    (drop
+     (i32.wait
+      (get_local $0)
+      (get_local $0)
+      (get_local $1)
+     )
+    )
+  )
+)
+(module ;; more use checks
+  (memory $0 (shared 23 256))
+  (export "user" $user)
+  (func $user (result i32)
+    (wake (i32.const 0) (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 23 256)
+  (export "user" $user)
+  (func $user (result i32)
+    (grow_memory (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (import "env" "memory" (memory $0 256))
+  (export "user" $user)
+  (func $user (result i32)
+    (grow_memory (i32.const 0))
+  )
+)
+(module ;; more use checks
+  (memory $0 23 256)
+  (export "user" $user)
+  (func $user (result i32)
+    (current_memory)
+  )
 )
 (module
   (import "env" "memory" (memory $0 256))
@@ -113,6 +204,18 @@
   )
   (func $starter
     (nop)
+  )
+)
+(module ;; empty start being removed
+  (start $starter)
+  (func $starter
+    (nop)
+  )
+)
+(module ;; non-empty start being kept
+  (start $starter)
+  (func $starter
+    (drop (i32.const 0))
   )
 )
 

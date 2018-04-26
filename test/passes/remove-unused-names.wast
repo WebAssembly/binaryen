@@ -77,4 +77,20 @@
       )
     )
   )
+  (func $merge-typed-with-unreachable-child (result i32)
+   (local $0 f32)
+   (block $label$0 (result i32)
+    (block $label$1 (result i32)
+     (br_if $label$1
+      (i32.const 1)
+      (br_if $label$0
+       (i32.const 0)
+       (br $label$0
+        (i32.const 0)
+       )
+      )
+     )
+    )
+   )
+  )
 )

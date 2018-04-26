@@ -1,25 +1,25 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-3.c"
+	.file	"930603-3.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$2=, 1
 	block   	
 	block   	
 	i32.const	$push0=, 100
 	i32.eq  	$push1=, $1, $pop0
 	br_if   	0, $pop1        # 0: down to label1
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push2=, 107
 	i32.ne  	$push3=, $1, $pop2
 	br_if   	1, $pop3        # 1: down to label0
-# BB#2:                                 # %sw.bb3
+# %bb.2:                                # %sw.bb3
 	i32.const	$push4=, 3
 	i32.add 	$0=, $0, $pop4
 	i32.const	$2=, 4
@@ -35,22 +35,22 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

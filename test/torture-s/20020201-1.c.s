@@ -1,108 +1,95 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020201-1.c"
+	.file	"20020201-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i64
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load8_u	$push43=, cx($pop0)
-	tee_local	$push42=, $0=, $pop43
+	i32.load8_u	$0=, cx($pop0)
+	block   	
 	i32.const	$push1=, -6
-	i32.add 	$push2=, $pop42, $pop1
-	i32.const	$push41=, 255
-	i32.and 	$push3=, $pop2, $pop41
-	i32.const	$push40=, 6
-	i32.ge_u	$push4=, $pop3, $pop40
-	br_if   	0, $pop4        # 0: down to label0
-# BB#1:                                 # %if.end
-	i32.const	$push45=, 255
-	i32.and 	$push5=, $0, $pop45
-	i32.const	$push44=, 6
-	i32.rem_u	$push6=, $pop5, $pop44
-	i32.const	$push7=, 1
-	i32.ne  	$push8=, $pop6, $pop7
-	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end10
-	i32.const	$push9=, 0
-	i32.load16_u	$push49=, sx($pop9)
-	tee_local	$push48=, $0=, $pop49
-	i32.const	$push10=, -12
-	i32.add 	$push11=, $pop48, $pop10
-	i32.const	$push47=, 65535
-	i32.and 	$push12=, $pop11, $pop47
-	i32.const	$push46=, 6
-	i32.ge_u	$push13=, $pop12, $pop46
+	i32.add 	$push2=, $0, $pop1
+	i32.const	$push36=, 6
+	i32.ge_u	$push3=, $pop2, $pop36
+	br_if   	0, $pop3        # 0: down to label0
+# %bb.1:                                # %if.end
+	i32.const	$push37=, 6
+	i32.rem_u	$push4=, $0, $pop37
+	i32.const	$push5=, 1
+	i32.ne  	$push6=, $pop4, $pop5
+	br_if   	0, $pop6        # 0: down to label0
+# %bb.2:                                # %if.end10
+	i32.const	$push7=, 0
+	i32.load16_u	$0=, sx($pop7)
+	i32.const	$push8=, -12
+	i32.add 	$push9=, $0, $pop8
+	i32.const	$push38=, 6
+	i32.ge_u	$push10=, $pop9, $pop38
+	br_if   	0, $pop10       # 0: down to label0
+# %bb.3:                                # %if.end18
+	i32.const	$push39=, 6
+	i32.rem_u	$push11=, $0, $pop39
+	i32.const	$push12=, 2
+	i32.ne  	$push13=, $pop11, $pop12
 	br_if   	0, $pop13       # 0: down to label0
-# BB#3:                                 # %if.end18
-	i32.const	$push51=, 65535
-	i32.and 	$push14=, $0, $pop51
-	i32.const	$push50=, 6
-	i32.rem_u	$push15=, $pop14, $pop50
-	i32.const	$push16=, 2
-	i32.ne  	$push17=, $pop15, $pop16
+# %bb.4:                                # %if.end26
+	i32.const	$push14=, 0
+	i32.load	$0=, ix($pop14)
+	i32.const	$push15=, -18
+	i32.add 	$push16=, $0, $pop15
+	i32.const	$push40=, 6
+	i32.ge_u	$push17=, $pop16, $pop40
 	br_if   	0, $pop17       # 0: down to label0
-# BB#4:                                 # %if.end26
-	i32.const	$push18=, 0
-	i32.load	$push54=, ix($pop18)
-	tee_local	$push53=, $0=, $pop54
-	i32.const	$push19=, -18
-	i32.add 	$push20=, $pop53, $pop19
-	i32.const	$push52=, 6
-	i32.ge_u	$push21=, $pop20, $pop52
-	br_if   	0, $pop21       # 0: down to label0
-# BB#5:                                 # %if.end31
-	i32.const	$push55=, 6
-	i32.rem_u	$push22=, $0, $pop55
-	i32.const	$push23=, 3
-	i32.ne  	$push24=, $pop22, $pop23
+# %bb.5:                                # %if.end31
+	i32.const	$push41=, 6
+	i32.rem_u	$push18=, $0, $pop41
+	i32.const	$push19=, 3
+	i32.ne  	$push20=, $pop18, $pop19
+	br_if   	0, $pop20       # 0: down to label0
+# %bb.6:                                # %if.end36
+	i32.const	$push21=, 0
+	i32.load	$0=, lx($pop21)
+	i32.const	$push22=, -24
+	i32.add 	$push23=, $0, $pop22
+	i32.const	$push42=, 6
+	i32.ge_u	$push24=, $pop23, $pop42
 	br_if   	0, $pop24       # 0: down to label0
-# BB#6:                                 # %if.end36
-	i32.const	$push25=, 0
-	i32.load	$push58=, lx($pop25)
-	tee_local	$push57=, $0=, $pop58
-	i32.const	$push26=, -24
-	i32.add 	$push27=, $pop57, $pop26
-	i32.const	$push56=, 6
-	i32.ge_u	$push28=, $pop27, $pop56
-	br_if   	0, $pop28       # 0: down to label0
-# BB#7:                                 # %if.end41
-	i32.const	$push59=, 6
-	i32.rem_u	$push29=, $0, $pop59
-	i32.const	$push30=, 4
-	i32.ne  	$push31=, $pop29, $pop30
+# %bb.7:                                # %if.end41
+	i32.const	$push43=, 6
+	i32.rem_u	$push25=, $0, $pop43
+	i32.const	$push26=, 4
+	i32.ne  	$push27=, $pop25, $pop26
+	br_if   	0, $pop27       # 0: down to label0
+# %bb.8:                                # %if.end46
+	i32.const	$push28=, 0
+	i64.load	$1=, Lx($pop28)
+	i64.const	$push29=, -30
+	i64.add 	$push30=, $1, $pop29
+	i64.const	$push44=, 6
+	i64.ge_u	$push31=, $pop30, $pop44
 	br_if   	0, $pop31       # 0: down to label0
-# BB#8:                                 # %if.end46
-	i32.const	$push32=, 0
-	i64.load	$push62=, Lx($pop32)
-	tee_local	$push61=, $1=, $pop62
-	i64.const	$push33=, -30
-	i64.add 	$push34=, $pop61, $pop33
-	i64.const	$push60=, 6
-	i64.ge_u	$push35=, $pop34, $pop60
-	br_if   	0, $pop35       # 0: down to label0
-# BB#9:                                 # %if.end51
-	i64.const	$push63=, 6
-	i64.rem_u	$push36=, $1, $pop63
-	i64.const	$push37=, 5
-	i64.ne  	$push38=, $pop36, $pop37
-	br_if   	0, $pop38       # 0: down to label0
-# BB#10:                                # %if.end56
-	i32.const	$push39=, 0
-	call    	exit@FUNCTION, $pop39
+# %bb.9:                                # %if.end51
+	i64.const	$push45=, 6
+	i64.rem_u	$push32=, $1, $pop45
+	i64.const	$push33=, 5
+	i64.ne  	$push34=, $pop32, $pop33
+	br_if   	0, $pop34       # 0: down to label0
+# %bb.10:                               # %if.end56
+	i32.const	$push35=, 0
+	call    	exit@FUNCTION, $pop35
 	unreachable
-.LBB0_11:                               # %if.then55
+.LBB0_11:                               # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	cx                      # @cx
 	.type	cx,@object
 	.section	.data.cx,"aw",@progbits
@@ -148,6 +135,6 @@ Lx:
 	.size	Lx, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

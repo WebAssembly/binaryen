@@ -57,7 +57,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   void visitBlock(Block *curr) {
     if (curr->name.is() && curr->list.size() == 1) {
       auto* child = curr->list[0]->dynCast<Block>();
-      if (child && child->name.is()) {
+      if (child && child->name.is() && child->type == curr->type) {
         // we have just one child, this block, so breaking out of it goes to the same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {

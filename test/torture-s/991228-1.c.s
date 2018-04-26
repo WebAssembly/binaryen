@@ -1,20 +1,19 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/991228-1.c"
+	.file	"991228-1.c"
 	.section	.text.signbit,"ax",@progbits
-	.hidden	signbit
+	.hidden	signbit                 # -- Begin function signbit
 	.globl	signbit
 	.type	signbit,@function
 signbit:                                # @signbit
 	.param  	f64
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.load	$push9=, __stack_pointer($pop8)
+# %bb.0:                                # %entry
+	i32.const	$push9=, 0
+	i32.load	$push8=, __stack_pointer($pop9)
 	i32.const	$push10=, 16
-	i32.sub 	$push14=, $pop9, $pop10
-	tee_local	$push13=, $1=, $pop14
-	f64.store	8($pop13), $0
+	i32.sub 	$1=, $pop8, $pop10
+	f64.store	8($1), $0
 	i32.const	$push11=, 8
 	i32.add 	$push12=, $1, $pop11
 	i32.const	$push0=, 0
@@ -29,37 +28,35 @@ signbit:                                # @signbit
 	.endfunc
 .Lfunc_end0:
 	.size	signbit, .Lfunc_end0-signbit
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push14=, 0
-	i32.const	$push11=, 0
-	i32.load	$push12=, __stack_pointer($pop11)
+# %bb.0:                                # %entry
+	i32.const	$push12=, 0
+	i32.load	$push11=, __stack_pointer($pop12)
 	i32.const	$push13=, 16
-	i32.sub 	$push22=, $pop12, $pop13
-	tee_local	$push21=, $1=, $pop22
-	i32.store	__stack_pointer($pop14), $pop21
-	block   	
-	i32.const	$push20=, 0
-	i32.load	$push0=, endianness_test($pop20)
+	i32.sub 	$1=, $pop11, $pop13
+	i32.const	$push14=, 0
+	i32.store	__stack_pointer($pop14), $1
+	i32.const	$push18=, 0
+	i32.load	$push0=, endianness_test($pop18)
 	i32.const	$push1=, 2
-	i32.shl 	$push19=, $pop0, $pop1
-	tee_local	$push18=, $0=, $pop19
+	i32.shl 	$0=, $pop0, $pop1
+	block   	
 	i32.const	$push2=, u
-	i32.add 	$push3=, $pop18, $pop2
+	i32.add 	$push3=, $0, $pop2
 	i32.load	$push4=, 0($pop3)
 	i32.const	$push17=, 0
 	i32.lt_s	$push5=, $pop4, $pop17
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %if.then
-	i32.const	$push23=, 0
-	call    	exit@FUNCTION, $pop23
+# %bb.1:                                # %if.then
+	i32.const	$push19=, 0
+	call    	exit@FUNCTION, $pop19
 	unreachable
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
@@ -70,10 +67,10 @@ main:                                   # @main
 	i32.add 	$push16=, $1, $pop15
 	i32.add 	$push7=, $pop16, $0
 	i32.load	$push8=, 0($pop7)
-	i32.const	$push24=, 0
-	i32.lt_s	$push9=, $pop8, $pop24
+	i32.const	$push20=, 0
+	i32.lt_s	$push9=, $pop8, $pop20
 	br_if   	0, $pop9        # 0: down to label1
-# BB#3:                                 # %if.then1
+# %bb.3:                                # %if.then1
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_4:                                # %if.end2
@@ -84,7 +81,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	u                       # @u
 	.type	u,@object
 	.section	.data.u,"aw",@progbits
@@ -104,6 +101,6 @@ endianness_test:
 	.size	endianness_test, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
 	.functype	abort, void

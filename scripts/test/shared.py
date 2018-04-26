@@ -1,5 +1,6 @@
 import argparse
 import difflib
+import glob
 import os
 import shutil
 import subprocess
@@ -25,9 +26,9 @@ parser.add_argument(
     help='If enabled, only fetches the waterfall build. Default: false.')
 parser.add_argument(
     '--test-waterfall', dest='test_waterfall', action='store_true',
-    default=True,
+    default=False,
     help=('If enabled, fetches and tests the LLVM waterfall builds.'
-          ' Default: true.'))
+          ' Default: false.'))
 parser.add_argument(
     '--no-test-waterfall', dest='test_waterfall', action='store_false',
     help='Disables downloading and testing of the LLVM waterfall builds.')
@@ -102,9 +103,15 @@ if not options.binaryen_bin:
   else:
     options.binaryen_bin = 'bin'
 
+# ensure BINARYEN_ROOT is set up
+os.environ['BINARYEN_ROOT'] = os.path.dirname(os.path.abspath(
+    options.binaryen_bin))
+
+options.binaryen_bin = os.path.normpath(options.binaryen_bin)
+
 wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
-if all(map(lambda f: not os.path.isfile(os.path.join(options.binaryen_bin, f)),
-           wasm_dis_filenames)):
+if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
+           for f in wasm_dis_filenames):
   warn('Binaryen not found (or has not been successfully built to bin/ ?')
 
 # Locate Binaryen source directory if not specified.
@@ -148,17 +155,23 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
 NODEJS = which('nodejs') or which('node')
-MOZJS = which('mozjs')
+MOZJS = which('mozjs') or which('spidermonkey')
 EMCC = which('emcc')
 
+BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
 WASM_AS = [os.path.join(options.binaryen_bin, 'wasm-as')]
 WASM_DIS = [os.path.join(options.binaryen_bin, 'wasm-dis')]
 ASM2WASM = [os.path.join(options.binaryen_bin, 'asm2wasm')]
+WASM2ASM = [os.path.join(options.binaryen_bin, 'wasm2asm')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
 S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
+WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
+WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
+WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
+                                         'wasm-emscripten-finalize')]
 
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]
@@ -184,19 +197,26 @@ if options.valgrind:
 os.environ['BINARYEN'] = os.getcwd()
 
 
+def get_platform():
+  return {'linux2': 'linux',
+          'darwin': 'mac',
+          'win32': 'windows',
+          'cygwin': 'windows'}[sys.platform]
+
+
+def has_shell_timeout():
+  return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
+
+
 def fetch_waterfall():
   rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
-  buildername = {'linux2': 'linux',
-                 'darwin': 'mac',
-                 'win32': 'windows',
-                 'cygwin': 'windows'}[sys.platform]
-  try:
-    local_rev_path = os.path.join(options.binaryen_test, 'local-revision')
-    local_rev = open(local_rev_path).read().strip()
-  except:
-    local_rev = None
-  if local_rev == rev:
-    return
+  buildername = get_platform()
+  local_rev_path = os.path.join(WATERFALL_BUILD_DIR, 'local-revision')
+  if os.path.exists(local_rev_path):
+    with open(local_rev_path) as f:
+      local_rev = f.read().strip()
+    if local_rev == rev:
+      return
   # fetch it
   basename = 'wasm-binaries-' + rev + '.tbz2'
   url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds',
@@ -212,8 +232,8 @@ def fetch_waterfall():
   subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)],
                         cwd=WATERFALL_BUILD_DIR)
   print '(noting local revision)'
-  with open(os.path.join(options.binaryen_test, 'local-revision'), 'w') as o:
-    o.write(rev)
+  with open(local_rev_path, 'w') as o:
+    o.write(rev + '\n')
 
 
 has_vanilla_llvm = False
@@ -228,7 +248,7 @@ def setup_waterfall():
     subprocess.check_call([CLANG, '-v'])
     has_vanilla_llvm = True
     print '...success'
-  except Exception, e:
+  except (OSError, subprocess.CalledProcessError) as e:
     warn('could not run vanilla LLVM from waterfall: ' + str(e) +
          ', looked for clang at ' + CLANG)
 
@@ -244,25 +264,31 @@ if options.only_prepare:
 # external tools
 
 try:
-  subprocess.check_call(
-      [NODEJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if NODEJS is not None:
+    subprocess.check_call(
+        [NODEJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except (OSError, subprocess.CalledProcessError):
   NODEJS = None
+if NODEJS is None:
   warn('no node found (did not check proper js form)')
 
 try:
-  subprocess.check_call(
-      [MOZJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if MOZJS is not None:
+    subprocess.check_call(
+        [MOZJS, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except (OSError, subprocess.CalledProcessError):
   MOZJS = None
+if MOZJS is None:
   warn('no mozjs found (did not check native wasm support nor asm.js'
        ' validation)')
 
 try:
-  subprocess.check_call(
-      [EMCC, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-except:
+  if EMCC is not None:
+    subprocess.check_call(
+        [EMCC, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+except (OSError, subprocess.CalledProcessError):
   EMCC = None
+if EMCC is None:
   warn('no emcc found (did not check non-vanilla emscripten/binaryen'
        ' integration)')
 
@@ -272,7 +298,7 @@ try:
       [os.path.join(options.binaryen_test, 'emscripten', 'emcc'), '--version'],
       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   has_vanilla_emcc = True
-except:
+except (OSError, subprocess.CalledProcessError):
   pass
 
 
@@ -282,13 +308,13 @@ except:
 def delete_from_orbit(filename):
   try:
     os.unlink(filename)
-  except:
+  except OSError:
     pass
   if not os.path.exists(filename):
     return
   try:
     shutil.rmtree(filename, ignore_errors=True)
-  except:
+  except OSError:
     pass
   if not os.path.exists(filename):
     return
@@ -303,7 +329,7 @@ def delete_from_orbit(filename):
       else:
         raise
     shutil.rmtree(filename, onerror=remove_readonly_and_try_again)
-  except:
+  except OSError:
     pass
 
 
@@ -318,22 +344,27 @@ def fail_with_error(msg):
       raise
 
 
-def fail(actual, expected):
+def fail(actual, expected, fromfile='expected'):
   diff_lines = difflib.unified_diff(
       expected.split('\n'), actual.split('\n'),
-      fromfile='expected', tofile='actual')
+      fromfile=fromfile, tofile='actual')
   diff_str = ''.join([a.rstrip() + '\n' for a in diff_lines])[:]
   fail_with_error("incorrect output, diff:\n\n%s" % diff_str)
 
 
-def fail_if_not_identical(actual, expected):
+def fail_if_not_identical(actual, expected, fromfile='expected'):
   if expected != actual:
-    fail(actual, expected)
+    fail(actual, expected, fromfile=fromfile)
 
 
 def fail_if_not_contained(actual, expected):
   if expected not in actual:
     fail(actual, expected)
+
+
+def fail_if_not_identical_to_file(actual, expected_file):
+  with open(expected_file, 'rb') as f:
+    fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
 if len(requested) == 0:
@@ -375,10 +406,8 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
   if verify_final_result:
-    expected = open(wast + binary_suffix).read()
     actual = open('ab.wast').read()
-    if actual != expected:
-      fail(actual, expected)
+    fail_if_not_identical_to_file(actual, wast + binary_suffix)
 
   return 'ab.wast'
 
@@ -406,3 +435,7 @@ def minify_check(wast, verify_final_result=True):
     os.unlink('a.wast')
   if os.path.exists('b.wast'):
     os.unlink('b.wast')
+
+
+def files_with_pattern(*path_pattern):
+  return sorted(glob.glob(os.path.join(*path_pattern)))

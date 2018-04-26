@@ -25,7 +25,7 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "asm_v_wasm.h"
 
 namespace wasm {
@@ -43,6 +43,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
+  bool usesMemory = false;
+  bool usesTable = false;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots) : module(module) {
     queue = roots;
@@ -86,6 +88,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.emplace_back(ModuleElementKind::Function, curr->target);
     }
   }
+  void visitCallIndirect(CallIndirect* curr) {
+    usesTable = true;
+  }
 
   void visitGetGlobal(GetGlobal* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0) {
@@ -95,6 +100,30 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitSetGlobal(SetGlobal* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0) {
       queue.emplace_back(ModuleElementKind::Global, curr->name);
+    }
+  }
+
+  void visitLoad(Load* curr) {
+    usesMemory = true;
+  }
+  void visitStore(Store* curr) {
+    usesMemory = true;
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    usesMemory = true;
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    usesMemory = true;
+  }
+  void visitAtomicWait(AtomicWait* curr) {
+    usesMemory = true;
+  }
+  void visitAtomicWake(AtomicWake* curr) {
+    usesMemory = true;
+  }
+  void visitHost(Host* curr) {
+    if (curr->op == CurrentMemory || curr->op == GrowMemory) {
+      usesMemory = true;
     }
   }
 };
@@ -133,14 +162,26 @@ struct RemoveUnusedModuleElements : public Pass {
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
-      roots.emplace_back(ModuleElementKind::Function, module->start);
+      auto startFunction = module->getFunction(module->start);
+      // Can be skipped if the start function is empty.
+      if (startFunction->body->is<Nop>()) {
+        module->start.clear();
+      } else {
+        roots.emplace_back(ModuleElementKind::Function, module->start);
+      }
     }
     // Exports are roots.
+    bool exportsMemory = false;
+    bool exportsTable = false;
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
       } else if (curr->kind == ExternalKind::Global) {
         roots.emplace_back(ModuleElementKind::Global, curr->value);
+      } else if (curr->kind == ExternalKind::Memory) {
+        exportsMemory = true;
+      } else if (curr->kind == ExternalKind::Table) {
+        exportsTable = true;
       }
     }
     // For now, all functions that can be called indirectly are marked as roots.
@@ -176,6 +217,28 @@ struct RemoveUnusedModuleElements : public Pass {
       }), v.end());
     }
     module->updateMaps();
+    // Handle the memory and table
+    if (!exportsMemory && !analyzer.usesMemory && module->memory.segments.empty()) {
+      module->memory.exists = false;
+      module->memory.imported = false;
+      module->memory.initial = 0;
+      module->memory.max = 0;
+      removeImport(ExternalKind::Memory, module);
+    }
+    if (!exportsTable && !analyzer.usesTable && module->table.segments.empty()) {
+      module->table.exists = false;
+      module->table.imported = false;
+      module->table.initial = 0;
+      module->table.max = 0;
+      removeImport(ExternalKind::Table, module);
+    }
+  }
+
+  void removeImport(ExternalKind kind, Module* module) {
+    auto& v = module->imports;
+    v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Import>& curr) {
+      return curr->kind == kind;
+    }), v.end());
   }
 
   void optimizeFunctionTypes(Module* module) {
@@ -185,6 +248,7 @@ struct RemoveUnusedModuleElements : public Pass {
     std::unordered_map<std::string, FunctionType*> canonicals;
     std::unordered_set<FunctionType*> needed;
     auto canonicalize = [&](Name name) {
+      if (!name.is()) return name;
       FunctionType* type = module->getFunctionType(name);
       auto sig = getSig(type);
       auto iter = canonicals.find(sig);
@@ -210,6 +274,7 @@ struct RemoveUnusedModuleElements : public Pass {
     module->functionTypes.erase(std::remove_if(module->functionTypes.begin(), module->functionTypes.end(), [&needed](std::unique_ptr<FunctionType>& type) {
       return needed.count(type.get()) == 0;
     }), module->functionTypes.end());
+    module->updateMaps();
   }
 };
 

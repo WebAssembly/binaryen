@@ -76,4 +76,102 @@
     (drop (get_local $z))
   )
 )
+(module
+  (func $child (param i32) (result i32)
+    (i32.const 1234)
+  )
+  (func $parent (result i32)
+    (call $child
+      (unreachable) ;; call is not performed, no sense to inline
+    )
+  )
+)
+(module
+ (global $hangLimit (mut i32) (i32.const 25))
+ (memory $0 1 1)
+ (export "hangLimitInitializer" (func $hangLimitInitializer))
+ (func $func_3 (result i32)
+  (local $0 i32)
+  (select
+   (get_local $0) ;; we depend on the zero-init value here, so it must be set when inlining!
+   (tee_local $0
+    (i32.const -1)
+   )
+   (i32.const 1)
+  )
+ )
+ (func $func_4 (param $0 f32) (param $1 i32) (result i32)
+  (local $2 i64)
+  (local $3 f64)
+  (local $4 f32)
+  (local $5 i32)
+  (local $6 i32)
+  (local $7 f64)
+  (loop $label$0 (result i32)
+   (block
+    (if
+     (i32.eqz
+      (get_global $hangLimit)
+     )
+     (return
+      (i32.const 54)
+     )
+    )
+    (set_global $hangLimit
+     (i32.sub
+      (get_global $hangLimit)
+      (i32.const 1)
+     )
+    )
+   )
+   (i32.eqz
+    (if (result i32)
+     (i32.const 1)
+     (if (result i32)
+      (i32.eqz
+       (call $func_3)
+      )
+      (br $label$0)
+      (i32.const 0)
+     )
+     (unreachable)
+    )
+   )
+  )
+ )
+ (func $hangLimitInitializer
+  (set_global $hangLimit
+   (i32.const 25)
+  )
+ )
+)
+(module
+ (type $T (func (param i32)))
+ (table 10 anyfunc)
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (call_indirect (type $T)
+   (if (result i32) ;; if copy must preserve the forced type
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
+   )
+   (i32.const 1)
+  )
+ )
+)
+(module
+ (func $0
+  (block $label$1 ;; copy this name
+   (br_table $label$1 $label$1
+    (i32.const 0)
+   )
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
 

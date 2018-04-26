@@ -26,6 +26,7 @@ function asm(global, env, buffer) {
 
   var _fabsf = env._fabsf;
   var do_i64 = env.do_i64;
+  var abort = env.abort;
 
   function loads() {
     var i = 0, f = fround(0), d = +0;
@@ -416,21 +417,57 @@ function asm(global, env, buffer) {
    return ($cond|0);
   }
 
+  function switch64_big_condition1($x) {
+    $x = i64($x);
+    switch (i64($x)) {
+      case i64_const(0,2146435072):  {
+        abort();
+        break;
+      }
+      default: {
+        return;
+      }
+    }
+  }
+  function switch64_big_condition2($x) {
+    $x = i64($x);
+    switch (i64($x)) {
+      case i64_const(0,2146435072):  {
+        abort();
+        break;
+      }
+    }
+  }
+
   function keepAlive() {
     loads();
+    loads();
+    stores();
     stores();
     test();
+    test();
+    i64(imports());
     i64(imports());
     arg(i64(0));
+    arg(i64(0));
+    i64(call1(i64(0)));
     i64(call1(i64(0)));
     i64(call2(i64(0)));
+    i64(call2(i64(0)));
+    i64(returnCastConst());
     i64(returnCastConst());
     i64(ifValue64(i64(0), i64(0)));
+    i64(ifValue64(i64(0), i64(0)));
+    ifValue32(0, 0) | 0;
     ifValue32(0, 0) | 0;
     switch64(i64(0)) | 0;
+    switch64(i64(0)) | 0;
+    unreachable_leftovers(0, 0, 0);
     unreachable_leftovers(0, 0, 0);
     _memchr(0, 0, 0) | 0;
     switch64TOOMUCH(i64(0)) | 0;
+    switch64_big_condition1(i64(0));
+    switch64_big_condition2(i64(0));
   }
 
   function __emscripten_dceable_type_decls() { // dce-able, but this defines the type of fabsf which has no other use

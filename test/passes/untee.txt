@@ -1,7 +1,6 @@
 (module
  (type $0 (func))
- (memory $0 0)
- (func $tee (type $0)
+ (func $tee (; 0 ;) (type $0)
   (local $x i32)
   (local $y f64)
   (drop

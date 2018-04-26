@@ -1,5 +1,5 @@
 (module
-  (memory 256 256)
+  (memory (shared 256 256))
   (type $i (func (param i32)))
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
@@ -819,7 +819,7 @@
         (i32.const 50)
       )
     )
-    (call_indirect $ii
+    (call_indirect (type $ii)
       (block $block18 (result i32)
         (drop
           (i32.const 10)
@@ -839,7 +839,7 @@
         (i32.const 60)
       )
     )
-    (call_indirect $ii
+    (call_indirect (type $ii)
       (unreachable)
       (block $block21 (result i32)
         (drop
@@ -852,6 +852,85 @@
           (i32.const 50)
         )
         (i32.const 60)
+      )
+    )
+    (call_indirect (type $ii)
+      (block $block21 (result i32)
+        (drop
+          (i32.const 31)
+        )
+        (i32.const 41)
+      )
+      (unreachable)
+      (block $block22 (result i32)
+        (drop
+          (i32.const 51)
+        )
+        (i32.const 61)
+      )
+    )
+    (call_indirect (type $ii)
+      (block $block21 (result i32)
+        (drop
+          (i32.const 32)
+        )
+        (i32.const 42)
+      )
+      (block $block22 (result i32)
+        (drop
+          (i32.const 52)
+        )
+        (i32.const 62)
+      )
+      (unreachable)
+    )
+  )
+  (func $atomics (type $3)
+    (drop
+      (i32.atomic.rmw.cmpxchg ;; mergeblock logic should be same as select
+        (block $block0 (result i32)
+          (drop
+            (i32.const 10)
+          )
+          (i32.const 20)
+        )
+        (block $block1 (result i32)
+          (drop
+            (i32.const 30)
+          )
+          (i32.const 40)
+        )
+        (block $block2 (result i32)
+          (drop
+            (i32.const 50)
+          )
+          (i32.const 60)
+        )
+      )
+    )
+    (drop
+      (i32.atomic.rmw.add ;; atomicrmw is like a binary
+        (block $block1 (result i32)
+          (drop
+            (i32.const 10)
+          )
+          (i32.const 20)
+        )
+        (i32.const 30)
+      )
+    )
+  )
+  (func $mix-select (param $x i32)
+    (drop
+      (select
+        (get_local $x)
+        (get_local $x)
+        (block (result i32)
+          (set_local $x ;; cannot be moved before the gets
+            (i32.const 1)
+          )
+          (i32.const 2)
+        )
       )
     )
   )
@@ -926,4 +1005,95 @@
    (unreachable)
   )
  )
+ (func $concrete_finale_in_unreachable (result f64)
+  (block $label$0 (result f64)
+   (drop
+    (block (result f64)
+     (unreachable)
+     (f64.const 6.322092475576799e-96)
+    )
+   )
+   (f64.const -1)
+  )
+ )
+ (func $dont-move-unreachable
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (br $label$0)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $dont-move-unreachable-last
+  (loop $label$0
+   (drop
+    (block $label$3 (result i32)
+     (call $dont-move-unreachable-last)
+     (br $label$0)
+    )
+   )
+  )
+ )
+ (func $move-around-unreachable-in-middle
+  (loop $label$0
+   (drop
+    (block $label$2 (result i32)
+     (block $block2
+      (nop)
+     )
+     (block $label$3 (result i32)
+      (drop
+       (br_if $label$3
+        (br $label$0)
+        (i32.const 0)
+       )
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $drop-unreachable-block-with-concrete-final
+  (drop
+   (block (result i32)
+    (drop
+     (block
+      (drop
+       (return)
+      )
+     )
+    )
+    (i32.const -452)
+   )
+  )
+ )
+ (func $merging-with-unreachable-in-middle (result i32)
+  (block $label$1 (result i32)
+   (block (result i32)
+    (return
+     (i32.const 21536)
+    )
+    (block $label$15
+     (br $label$15)
+    )
+    (i32.const 19299)
+   )
+  )
+ )
+ (func $remove-br-after-unreachable
+  (block $label$9
+   (drop
+    (block
+     (block
+      (return)
+      (br $label$9) ;; removing this leads to the block becoming unreachable
+     )
+    )
+   )
+  )
+ )
 )
+

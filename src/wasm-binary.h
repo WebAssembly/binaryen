@@ -30,11 +30,22 @@
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
 #include "wasm-builder.h"
-#include "ast_utils.h"
 #include "parsing.h"
 #include "wasm-validator.h"
 
 namespace wasm {
+
+enum {
+  // the maximum amount of bytes we emit per LEB
+  MaxLEB32Bytes = 5,
+};
+
+// wasm VMs on the web have decided to impose some limits on what they
+// accept
+enum WebLimitations {
+  MaxDataSegments = 100 * 1000,
+  MaxFunctionBodySize = 128 * 1024
+};
 
 template<typename T, typename MiniT>
 struct LEB {
@@ -47,7 +58,7 @@ struct LEB {
 
   bool hasMore(T temp, MiniT byte) {
     // for signed, we must ensure the last bit has the right sign, as it will zero extend
-    return std::is_signed<T>::value ? (temp != 0 && temp != -1) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
+    return std::is_signed<T>::value ? (temp != 0 && temp != T(-1)) || (value >= 0 && (byte & 64)) || (value < 0 && !(byte & 64)) : (temp != 0);
   }
 
   void write(std::vector<uint8_t>* out) {
@@ -64,7 +75,9 @@ struct LEB {
     } while (more);
   }
 
-  void writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
+  // @minimum: a minimum number of bytes to write, padding as necessary
+  // returns the number of bytes written
+  size_t writeAt(std::vector<uint8_t>* out, size_t at, size_t minimum = 0) {
     T temp = value;
     size_t offset = 0;
     bool more;
@@ -78,6 +91,7 @@ struct LEB {
       (*out)[at + offset] = byte;
       offset++;
     } while (more);
+    return offset;
   }
 
   void read(std::function<MiniT()> get) {
@@ -135,7 +149,7 @@ class BufferWithRandomAccess : public std::vector<uint8_t> {
   bool debug;
 
 public:
-  BufferWithRandomAccess(bool debug) : debug(debug) {}
+  BufferWithRandomAccess(bool debug = false) : debug(debug) {}
 
   BufferWithRandomAccess& operator<<(int8_t x) {
     if (debug) std::cerr << "writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")" << std::endl;
@@ -259,14 +273,30 @@ public:
     (*this)[i+2] = x & 0xff; x >>= 8;
     (*this)[i+3] = x & 0xff;
   }
-  void writeAt(size_t i, U32LEB x) {
+
+  // writes out an LEB to an arbitrary location. this writes the LEB as a full
+  // 5 bytes, the fixed amount that can easily be set aside ahead of time
+  void writeAtFullFixedSize(size_t i, U32LEB x) {
     if (debug) std::cerr << "backpatchU32LEB: " << x.value << " (at " << i << ")" << std::endl;
-    x.writeAt(this, i, 5); // fill all 5 bytes, we have to do this when backpatching
+    x.writeAt(this, i, MaxLEB32Bytes); // fill all 5 bytes, we have to do this when backpatching
+  }
+  // writes out an LEB of normal size
+  // returns how many bytes were written
+  size_t writeAt(size_t i, U32LEB x) {
+    if (debug) std::cerr << "writeAtU32LEB: " << x.value << " (at " << i << ")" << std::endl;
+    return x.writeAt(this, i);
   }
 
   template <typename T>
   void writeTo(T& o) {
     for (auto c : *this) o << c;
+  }
+
+  std::vector<char> getAsChars() {
+    std::vector<char> ret;
+    ret.resize(size());
+    std::copy(begin(), end(), ret.begin());
+    return ret;
   }
 };
 
@@ -506,8 +536,93 @@ enum ASTNodes {
   I32ReinterpretF32 = 0xbc,
   I64ReinterpretF64 = 0xbd,
   F32ReinterpretI32 = 0xbe,
-  F64ReinterpretI64 = 0xbf
+  F64ReinterpretI64 = 0xbf,
+
+  I32ExtendS8 = 0xc0,
+  I32ExtendS16 = 0xc1,
+  I64ExtendS8 = 0xc2,
+  I64ExtendS16 = 0xc3,
+  I64ExtendS32 = 0xc4,
+
+  AtomicPrefix = 0xfe
 };
+
+enum AtomicOpcodes {
+  AtomicWake = 0x00,
+  I32AtomicWait = 0x01,
+  I64AtomicWait = 0x02,
+
+  I32AtomicLoad = 0x10,
+  I64AtomicLoad = 0x11,
+  I32AtomicLoad8U = 0x12,
+  I32AtomicLoad16U = 0x13,
+  I64AtomicLoad8U = 0x14,
+  I64AtomicLoad16U = 0x15,
+  I64AtomicLoad32U = 0x16,
+  I32AtomicStore = 0x17,
+  I64AtomicStore = 0x18,
+  I32AtomicStore8 = 0x19,
+  I32AtomicStore16 = 0x1a,
+  I64AtomicStore8 = 0x1b,
+  I64AtomicStore16 = 0x1c,
+  I64AtomicStore32 = 0x1d,
+
+  AtomicRMWOps_Begin = 0x1e,
+  I32AtomicRMWAdd = 0x1e,
+  I64AtomicRMWAdd = 0x1f,
+  I32AtomicRMWAdd8U = 0x20,
+  I32AtomicRMWAdd16U = 0x21,
+  I64AtomicRMWAdd8U = 0x22,
+  I64AtomicRMWAdd16U = 0x23,
+  I64AtomicRMWAdd32U = 0x24,
+  I32AtomicRMWSub = 0x25,
+  I64AtomicRMWSub = 0x26,
+  I32AtomicRMWSub8U = 0x27,
+  I32AtomicRMWSub16U = 0x28,
+  I64AtomicRMWSub8U = 0x29,
+  I64AtomicRMWSub16U = 0x2a,
+  I64AtomicRMWSub32U = 0x2b,
+  I32AtomicRMWAnd = 0x2c,
+  I64AtomicRMWAnd = 0x2d,
+  I32AtomicRMWAnd8U = 0x2e,
+  I32AtomicRMWAnd16U = 0x2f,
+  I64AtomicRMWAnd8U = 0x30,
+  I64AtomicRMWAnd16U = 0x31,
+  I64AtomicRMWAnd32U = 0x32,
+  I32AtomicRMWOr = 0x33,
+  I64AtomicRMWOr = 0x34,
+  I32AtomicRMWOr8U = 0x35,
+  I32AtomicRMWOr16U = 0x36,
+  I64AtomicRMWOr8U = 0x37,
+  I64AtomicRMWOr16U = 0x38,
+  I64AtomicRMWOr32U = 0x39,
+  I32AtomicRMWXor = 0x3a,
+  I64AtomicRMWXor = 0x3b,
+  I32AtomicRMWXor8U = 0x3c,
+  I32AtomicRMWXor16U = 0x3d,
+  I64AtomicRMWXor8U = 0x3e,
+  I64AtomicRMWXor16U = 0x3f,
+  I64AtomicRMWXor32U = 0x40,
+  I32AtomicRMWXchg = 0x41,
+  I64AtomicRMWXchg = 0x42,
+  I32AtomicRMWXchg8U = 0x43,
+  I32AtomicRMWXchg16U = 0x44,
+  I64AtomicRMWXchg8U = 0x45,
+  I64AtomicRMWXchg16U = 0x46,
+  I64AtomicRMWXchg32U = 0x47,
+  AtomicRMWOps_End = 0x47,
+
+  AtomicCmpxchgOps_Begin = 0x48,
+  I32AtomicCmpxchg = 0x48,
+  I64AtomicCmpxchg = 0x49,
+  I32AtomicCmpxchg8U = 0x4a,
+  I32AtomicCmpxchg16U = 0x4b,
+  I64AtomicCmpxchg8U = 0x4c,
+  I64AtomicCmpxchg16U = 0x4d,
+  I64AtomicCmpxchg32U = 0x4e,
+  AtomicCmpxchgOps_End = 0x4e
+};
+
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
@@ -515,10 +630,15 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
+enum MemoryFlags {
+  HasMaximum = 1 << 0,
+  IsShared = 1 << 1
+};
+
 } // namespace BinaryConsts
 
 
-inline S32LEB binaryWasmType(WasmType type) {
+inline S32LEB binaryType(Type type) {
   int ret;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
@@ -546,9 +666,20 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
 
   void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
     prepare();
   }
+
+  // locations in the output binary for the various parts of the module
+  struct TableOfContents {
+    struct Entry {
+      Name name;
+      size_t offset; // where the entry starts
+      size_t size; // the size of the entry
+      Entry(Name name, size_t offset, size_t size) : name(name), offset(offset), size(size) {}
+    };
+    std::vector<Entry> functionBodies;
+  } tableOfContents;
 
   void setNamesSection(bool set) { debugInfo = set; }
   void setSourceMap(std::ostream* set, std::string url) {
@@ -560,8 +691,9 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum);
-  int32_t startSection(BinaryConsts::Section code);
+  void writeResizableLimits(Address initial, Address maximum, bool hasMaximum, bool shared);
+  template<typename T>
+  int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
   void finishSubsection(int32_t start);
@@ -572,7 +704,7 @@ public:
   void writeImports();
 
   std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<WasmType, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
   void mapLocals(Function* function);
   void writeFunctionSignatures();
@@ -582,8 +714,8 @@ public:
   void writeExports();
   void writeDataSegments();
 
-  std::map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
-  std::map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
+  std::unordered_map<Name, Index> mappedFunctions; // name of the Function => index. first imports, then internals
+  std::unordered_map<Name, uint32_t> mappedGlobals; // name of the Global => index. first imported globals, then internal globals
   uint32_t getFunctionIndex(Name name);
   uint32_t getGlobalIndex(Name name);
 
@@ -592,6 +724,7 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
+  void writeUserSections();
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
@@ -652,6 +785,10 @@ public:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
   void visitLoad(Load *curr);
   void visitStore(Store *curr);
+  void visitAtomicRMW(AtomicRMW *curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
+  void visitAtomicWait(AtomicWait *curr);
+  void visitAtomicWake(AtomicWake *curr);
   void visitConst(Const *curr);
   void visitUnary(Unary *curr);
   void visitBinary(Binary *curr);
@@ -666,7 +803,7 @@ public:
 class WasmBinaryBuilder {
   Module& wasm;
   MixedArena& allocator;
-  std::vector<char>& input;
+  const std::vector<char>& input;
   bool debug;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
@@ -678,7 +815,14 @@ class WasmBinaryBuilder {
   std::set<BinaryConsts::Section> seenSections;
 
 public:
-  WasmBinaryBuilder(Module& wasm, std::vector<char>& input, bool debug) : wasm(wasm), allocator(wasm.allocator), input(input), debug(debug), sourceMap(nullptr), nextDebugLocation(0, { 0, 0, 0 }), useDebugLocation(false) {}
+  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input, bool debug)
+    : wasm(wasm),
+      allocator(wasm.allocator),
+      input(input),
+      debug(debug),
+      sourceMap(nullptr),
+      nextDebugLocation(0, { 0, 0, 0 }),
+      useDebugLocation(false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -695,7 +839,8 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
-  WasmType getWasmType();
+  Type getType();
+  Type getConcreteType();
   Name getString();
   Name getInlineString();
   void verifyInt8(int8_t x);
@@ -708,11 +853,9 @@ public:
   void readMemory();
   void readSignatures();
 
-  std::vector<Name> functionImportIndexes; // index in function index space => name of function import
-
   // gets a name in the combined function import+defined function space
   Name getFunctionIndexName(Index i);
-  void getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax);
+  void getResizableLimits(Address& initial, Address& max, bool& shared, Address defaultIfNoMax);
   void readImports();
 
   std::vector<FunctionType*> functionTypes; // types of defined functions
@@ -720,15 +863,18 @@ public:
   void readFunctionSignatures();
   size_t nextLabel;
 
-  Name getNextLabel() {
-    return cashew::IString(("label$" + std::to_string(nextLabel++)).c_str(), false);
-  }
+  Name getNextLabel();
 
   // We read functions before we know their names, so we need to backpatch the names later
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
+  std::vector<Import*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
   std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the defined function i
+  std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
+
+  // Throws a parsing error if we are not in a function context
+  void requireFunctionContext(const char* error);
 
   void readFunctions();
 
@@ -745,13 +891,34 @@ public:
     BreakTarget(Name name, int arity) : name(name), arity(arity) {}
   };
   std::vector<BreakTarget> breakStack;
-  bool breaksToReturn; // whether a break is done to the function scope, which is in effect a return
+  // the names that breaks target. this lets us know if a block has breaks to it or not.
+  std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
 
+  // set when we know code is unreachable in the sense of the wasm spec: we are in a block
+  // and after an unreachable element.
+  // this helps parse stacky wasm code, which can be unsuitable for our IR when unreachable.
+  bool unreachableInTheWasmSense;
+
+  // set when the current code being processed will not be emitted in the output, which is the
+  // case when it is literally unreachable, for example,
+  // (block $a
+  //   (unreachable)
+  //   (block $b
+  //     ;; code here is reachable in the wasm sense, even though $b as a whole is not
+  //     (unreachable)
+  //     ;; code here is unreachable in the wasm sense
+  //   )
+  // )
+  bool willBeIgnored;
+
   BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
 
+  // process a block-type scope, until an end or else marker, or the end of the function
   void processExpressions();
+  void skipUnreachableCode();
+
   Expression* popExpression();
   Expression* popNonVoidExpression();
 
@@ -780,9 +947,12 @@ public:
   int depth = 0; // only for debugging
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
+  void pushBlockElements(Block* curr, size_t start, size_t end);
   void visitBlock(Block *curr);
-  Expression* getMaybeBlock(WasmType type);
-  Expression* getBlock(WasmType type);
+
+  // Gets a block of expressions. If it's just one, return that singleton.
+  Expression* getBlockOrSingleton(Type type);
+
   void visitIf(If *curr);
   void visitLoop(Loop *curr);
   BreakTarget getBreakTarget(int32_t offset);
@@ -806,9 +976,13 @@ public:
   void visitSetLocal(SetLocal *curr, uint8_t code);
   void visitGetGlobal(GetGlobal *curr);
   void visitSetGlobal(SetGlobal *curr);
-  void readMemoryAccess(Address& alignment, size_t bytes, Address& offset);
-  bool maybeVisitLoad(Expression*& out, uint8_t code);
-  bool maybeVisitStore(Expression*& out, uint8_t code);
+  void readMemoryAccess(Address& alignment, Address& offset);
+  bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
+  bool maybeVisitAtomicWake(Expression*& out, uint8_t code);
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
@@ -818,6 +992,8 @@ public:
   void visitNop(Nop *curr);
   void visitUnreachable(Unreachable *curr);
   void visitDrop(Drop *curr);
+
+  void throwError(std::string text);
 };
 
 } // namespace wasm

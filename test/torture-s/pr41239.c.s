@@ -1,43 +1,41 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr41239.c"
+	.file	"pr41239.c"
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
 	.param  	i32
 	.result 	i32
 	.local  	i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push14=, 0
-	i32.const	$push11=, 0
-	i32.load	$push12=, __stack_pointer($pop11)
+# %bb.0:                                # %entry
+	i32.const	$push12=, 0
+	i32.load	$push11=, __stack_pointer($pop12)
 	i32.const	$push13=, 16
-	i32.sub 	$push21=, $pop12, $pop13
-	tee_local	$push20=, $3=, $pop21
-	i32.store	__stack_pointer($pop14), $pop20
-	i32.load	$1=, 4($0)
-	block   	
+	i32.sub 	$3=, $pop11, $pop13
+	i32.const	$push14=, 0
+	i32.store	__stack_pointer($pop14), $3
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
-	i32.load	$push19=, 0($pop1)
-	tee_local	$push18=, $0=, $pop19
-	br_if   	0, $pop18       # 0: down to label0
-# BB#1:                                 # %if.then
+	i32.load	$1=, 0($pop1)
+	i32.load	$0=, 4($0)
+	block   	
+	br_if   	0, $1           # 0: down to label0
+# %bb.1:                                # %if.then
 	i32.const	$push5=, 20
 	i32.const	$push4=, .L.str
 	i32.const	$push3=, 924
 	i32.const	$push2=, .L__func__.test
-	i32.const	$push22=, 0
-	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop4, $pop3, $pop2, $pop22
-	i32.eqz 	$push24=, $pop6
-	br_if   	0, $pop24       # 0: down to label0
-# BB#2:                                 # %cond.true
+	i32.const	$push18=, 0
+	i32.call	$push6=, fn1@FUNCTION, $pop5, $pop4, $pop3, $pop2, $pop18
+	i32.eqz 	$push20=, $pop6
+	br_if   	0, $pop20       # 0: down to label0
+# %bb.2:                                # %cond.true
 	i32.const	$push7=, 33816706
 	i32.call	$2=, fn3@FUNCTION, $pop7
 	i32.const	$push8=, .L.str.1
-	i32.const	$push23=, 0
-	i32.call	$push9=, fn4@FUNCTION, $pop8, $pop23
+	i32.const	$push19=, 0
+	i32.call	$push9=, fn4@FUNCTION, $pop8, $pop19
 	i32.store	0($3), $pop9
 	call    	fn2@FUNCTION, $2, $3
 .LBB0_3:                                # %if.end
@@ -46,20 +44,20 @@ test:                                   # @test
 	i32.const	$push15=, 16
 	i32.add 	$push16=, $3, $pop15
 	i32.store	__stack_pointer($pop17), $pop16
-	i32.div_s	$push10=, $1, $0
+	i32.div_s	$push10=, $0, $1
                                         # fallthrough-return: $pop10
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
-
+                                        # -- End function
 	.section	.text.fn1,"ax",@progbits
-	.hidden	fn1
+	.hidden	fn1                     # -- Begin function fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	#APP
@@ -72,19 +70,19 @@ fn1:                                    # @fn1
 	.endfunc
 .Lfunc_end1:
 	.size	fn1, .Lfunc_end1-fn1
-
+                                        # -- End function
 	.section	.text.fn2,"ax",@progbits
-	.hidden	fn2
+	.hidden	fn2                     # -- Begin function fn2
 	.globl	fn2
 	.type	fn2,@function
 fn2:                                    # @fn2
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	block   	
 	br_if   	0, $0           # 0: down to label1
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	return
 .LBB2_2:                                # %if.then
 	end_block                       # label1:
@@ -94,15 +92,15 @@ fn2:                                    # @fn2
 	.endfunc
 .Lfunc_end2:
 	.size	fn2, .Lfunc_end2-fn2
-
+                                        # -- End function
 	.section	.text.fn3,"ax",@progbits
-	.hidden	fn3
+	.hidden	fn3                     # -- Begin function fn3
 	.globl	fn3
 	.type	fn3,@function
 fn3:                                    # @fn3
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	copy_local	$push0=, $0
@@ -110,15 +108,15 @@ fn3:                                    # @fn3
 	.endfunc
 .Lfunc_end3:
 	.size	fn3, .Lfunc_end3-fn3
-
+                                        # -- End function
 	.section	.text.fn4,"ax",@progbits
-	.hidden	fn4
+	.hidden	fn4                     # -- Begin function fn4
 	.globl	fn4
 	.type	fn4,@function
 fn4:                                    # @fn4
 	.param  	i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	#APP
 	#NO_APP
 	i32.load8_s	$push0=, 0($0)
@@ -126,22 +124,21 @@ fn4:                                    # @fn4
 	.endfunc
 .Lfunc_end4:
 	.size	fn4, .Lfunc_end4-fn4
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push8=, 0
-	i32.const	$push5=, 0
-	i32.load	$push6=, __stack_pointer($pop5)
+# %bb.0:                                # %entry
+	i32.const	$push6=, 0
+	i32.load	$push5=, __stack_pointer($pop6)
 	i32.const	$push7=, 16
-	i32.sub 	$push11=, $pop6, $pop7
-	tee_local	$push10=, $0=, $pop11
-	i32.store	__stack_pointer($pop8), $pop10
+	i32.sub 	$0=, $pop5, $pop7
+	i32.const	$push8=, 0
+	i32.store	__stack_pointer($pop8), $0
 	i32.const	$push2=, 8
 	i32.add 	$push3=, $0, $pop2
 	i32.const	$push0=, 0
@@ -156,7 +153,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end5:
 	.size	main, .Lfunc_end5-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -184,6 +181,6 @@ main:                                   # @main
 	.size	.Lmain.s, 12
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

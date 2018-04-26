@@ -379,7 +379,7 @@
           (get_local $x)
         )
       )
-      (call_indirect $FUNCSIG$vf
+      (call_indirect (type $FUNCSIG$vf)
         (get_local $x)
         (i32.add
           (i32.and
@@ -392,7 +392,7 @@
     )
   )
   (func $cneg (type $FUNCSIG$vf) (param $x f32)
-    (call_indirect $FUNCSIG$vf
+    (call_indirect (type $FUNCSIG$vf)
       (get_local $x)
       (i32.add
         (i32.and
@@ -536,5 +536,19 @@
     (if (i32.const 1) (unreachable) (nop))
     (if (i32.const 1) (nop) (unreachable))
     (if (i32.const 1) (unreachable) (unreachable))
+  )
+  (func $unreachable-if-arm
+    (if
+      (i32.const 1)
+      (block
+        (nop)
+      )
+      (block
+        (unreachable)
+        (drop
+          (i32.const 1)
+        )
+      )
+    )
   )
 )

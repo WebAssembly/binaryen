@@ -1,25 +1,24 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20031201-1.c"
+	.file	"20031201-1.c"
 	.section	.text.f1,"ax",@progbits
-	.hidden	f1
+	.hidden	f1                      # -- Begin function f1
 	.globl	f1
 	.type	f1,@function
 f1:                                     # @f1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.store	i($pop0), $0
 	i32.const	$push1=, 32
 	i32.store	4($0), $pop1
-	i32.const	$push7=, 32
-	i32.store	0($0), $pop7
+	i32.const	$push5=, 32
+	i32.store	0($0), $pop5
 	call    	f0@FUNCTION
-	i32.const	$push6=, 0
-	i32.load	$push5=, i($pop6)
-	tee_local	$push4=, $0=, $pop5
+	i32.const	$push4=, 0
+	i32.load	$0=, i($pop4)
 	i32.const	$push2=, 8
-	i32.store	4($pop4), $pop2
+	i32.store	4($0), $pop2
 	i32.const	$push3=, 8
 	i32.store	0($0), $pop3
 	call    	test@FUNCTION
@@ -27,37 +26,35 @@ f1:                                     # @f1
 	.endfunc
 .Lfunc_end0:
 	.size	f1, .Lfunc_end0-f1
-
+                                        # -- End function
 	.section	.text.f0,"ax",@progbits
-	.hidden	f0
+	.hidden	f0                      # -- Begin function f0
 	.globl	f0
 	.type	f0,@function
 f0:                                     # @f0
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push9=, 0
-	i32.const	$push8=, 0
-	i32.load	$push7=, f0.washere($pop8)
-	tee_local	$push6=, $0=, $pop7
+# %bb.0:                                # %entry
+	i32.const	$push7=, 0
+	i32.load	$0=, f0.washere($pop7)
+	i32.const	$push6=, 0
 	i32.const	$push0=, 1
-	i32.add 	$push1=, $pop6, $pop0
-	i32.store	f0.washere($pop9), $pop1
+	i32.add 	$push1=, $0, $pop0
+	i32.store	f0.washere($pop6), $pop1
 	block   	
 	br_if   	0, $0           # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
-	i32.const	$push13=, 0
-	i32.load	$push12=, i($pop13)
-	tee_local	$push11=, $0=, $pop12
-	i32.load16_u	$push2=, 0($pop11)
-	i32.const	$push10=, 32
-	i32.ne  	$push3=, $pop2, $pop10
+# %bb.1:                                # %lor.lhs.false
+	i32.const	$push9=, 0
+	i32.load	$0=, i($pop9)
+	i32.load16_u	$push2=, 0($0)
+	i32.const	$push8=, 32
+	i32.ne  	$push3=, $pop2, $pop8
 	br_if   	0, $pop3        # 0: down to label0
-# BB#2:                                 # %lor.lhs.false1
+# %bb.2:                                # %lor.lhs.false1
 	i32.load16_u	$push4=, 4($0)
-	i32.const	$push14=, 32
-	i32.ne  	$push5=, $pop4, $pop14
+	i32.const	$push10=, 32
+	i32.ne  	$push5=, $pop4, $pop10
 	br_if   	0, $pop5        # 0: down to label0
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
 	return
 .LBB1_4:                                # %if.then
 	end_block                       # label0:
@@ -66,28 +63,27 @@ f0:                                     # @f0
 	.endfunc
 .Lfunc_end1:
 	.size	f0, .Lfunc_end1-f0
-
+                                        # -- End function
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
 	.local  	i32
-# BB#0:                                 # %entry
-	block   	
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.load	$push8=, i($pop0)
-	tee_local	$push7=, $0=, $pop8
-	i32.load16_u	$push1=, 0($pop7)
+	i32.load	$0=, i($pop0)
+	block   	
+	i32.load16_u	$push1=, 0($0)
 	i32.const	$push6=, 8
 	i32.ne  	$push2=, $pop1, $pop6
 	br_if   	0, $pop2        # 0: down to label1
-# BB#1:                                 # %lor.lhs.false
+# %bb.1:                                # %lor.lhs.false
 	i32.load16_u	$push3=, 4($0)
-	i32.const	$push9=, 8
-	i32.ne  	$push4=, $pop3, $pop9
+	i32.const	$push7=, 8
+	i32.ne  	$push4=, $pop3, $pop7
 	br_if   	0, $pop4        # 0: down to label1
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.const	$push5=, 0
 	call    	exit@FUNCTION, $pop5
 	unreachable
@@ -98,22 +94,21 @@ test:                                   # @test
 	.endfunc
 .Lfunc_end2:
 	.size	test, .Lfunc_end2-test
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push3=, 0
-	i32.const	$push0=, 0
-	i32.load	$push1=, __stack_pointer($pop0)
+# %bb.0:                                # %entry
+	i32.const	$push1=, 0
+	i32.load	$push0=, __stack_pointer($pop1)
 	i32.const	$push2=, 16
-	i32.sub 	$push7=, $pop1, $pop2
-	tee_local	$push6=, $0=, $pop7
-	i32.store	__stack_pointer($pop3), $pop6
+	i32.sub 	$0=, $pop0, $pop2
+	i32.const	$push3=, 0
+	i32.store	__stack_pointer($pop3), $0
 	i32.const	$push4=, 8
 	i32.add 	$push5=, $0, $pop4
 	i32.call	$drop=, f1@FUNCTION, $pop5
@@ -121,7 +116,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	i,@object               # @i
 	.section	.bss.i,"aw",@nobits
 	.p2align	2
@@ -137,6 +132,6 @@ f0.washere:
 	.size	f0.washere, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

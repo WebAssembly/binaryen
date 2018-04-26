@@ -45,9 +45,10 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ast_utils.h>
-#include <ast/count.h>
-#include <ast/manipulation.h>
+#include <ir/count.h>
+#include <ir/effects.h>
+#include <ir/find_all.h>
+#include <ir/manipulation.h>
 
 namespace wasm {
 
@@ -64,6 +65,7 @@ struct SetLocalRemover : public PostWalker<SetLocalRemover> {
       } else {
         Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
         drop->value = value;
+        drop->finalize();
       }
     }
   }
@@ -268,6 +270,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
         auto* previousValue = previous->value;
         Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(previous);
         drop->value = previousValue;
+        drop->finalize();
         self->sinkables.erase(found);
         self->anotherCycle = true;
       }
@@ -325,6 +328,51 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       }
     }
     if (!found) return;
+    // If one of our brs is a br_if, then we will give it a value. since
+    // the value executes before the condition, it is dangerous if we are
+    // moving code out of the condition,
+    //  (br_if
+    //   (block
+    //    ..use $x..
+    //    (set_local $x ..)
+    //   )
+    //  )
+    // =>
+    //  (br_if
+    //   (tee_local $x ..) ;; this now affects the use!
+    //   (block
+    //    ..use $x..
+    //   )
+    //  )
+    // so we must check for that.
+    for (size_t j = 0; j < breaks.size(); j++) {
+      // move break set_local's value to the break
+      auto* breakSetLocalPointer = breaks[j].sinkables.at(sharedIndex).item;
+      auto* brp = breaks[j].brp;
+      auto* br = (*brp)->cast<Break>();
+      auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
+      if (br->condition) {
+        // TODO: optimize
+        FindAll<SetLocal> findAll(br->condition);
+        for (auto* otherSet : findAll.list) {
+          if (otherSet == set) {
+            // the set is indeed in the condition, so we can't just move it
+            // but maybe there are no effects? see if, ignoring the set
+            // itself, there is any risk
+            Nop nop;
+            *breakSetLocalPointer = &nop;
+            EffectAnalyzer condition(getPassOptions(), br->condition);
+            EffectAnalyzer value(getPassOptions(), set);
+            *breakSetLocalPointer = set;
+            if (condition.invalidates(value)) {
+              // indeed, we can't do this, stop
+              return;
+            }
+            break; // we found set in the list, can stop now
+          }
+        }
+      }
+    }
     // Great, this local is set in them all, we can optimize!
     if (block->list.size() == 0 || !block->list.back()->is<Nop>()) {
       // We can't do this here, since we can't push to the block -
@@ -346,7 +394,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       auto* brp = breaks[j].brp;
       auto* br = (*brp)->cast<Break>();
       assert(!br->value);
-      // if the break is conditional, then we must set the value here - if the break is not taken, we must still have the new value in the local
+      // if the break is conditional, then we must set the value here - if the break is not reached, we must still have the new value in the local
       auto* set = (*breakSetLocalPointer)->cast<SetLocal>();
       if (br->condition) {
         br->value = set;
@@ -370,8 +418,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
   // optimize set_locals from both sides of an if into a return value
   void optimizeIfReturn(If* iff, Expression** currp, Sinkables& ifTrue) {
     assert(iff->ifFalse);
-    // if this if already has a result, we can't do anything
-    if (isConcreteWasmType(iff->type)) return;
+    // if this if already has a result, or is unreachable code, we have
+    // nothing to do
+    if (iff->type != none) return;
     // We now have the sinkables from both sides of the if.
     Sinkables& ifFalse = sinkables;
     Index sharedIndex = -1;
@@ -429,7 +478,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
       self->pushTask(SimplifyLocals::doNoteIfElseCondition, currp);
       self->pushTask(SimplifyLocals::scan, &curr->cast<If>()->condition);
     } else {
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::scan(self, currp);
+      super::scan(self, currp);
     }
 
     self->pushTask(visitPre, currp);
@@ -451,7 +500,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals>>
     do {
       anotherCycle = false;
       // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals>>::doWalkFunction(func);
+      super::doWalkFunction(func);
       // enlarge blocks that were marked, for the next round
       if (blocksToEnlarge.size() > 0) {
         for (auto* block : blocksToEnlarge) {

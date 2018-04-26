@@ -1,0 +1,104 @@
+(module
+ (type $i (func (param i32) (result i32)))
+ (memory $0 1 100)
+ (export "sieve" (func $sieve))
+ (func $sieve (; 0 ;) (type $i) (param $0 i32) (result i32)
+  (local $1 i32)
+  (if
+   (i32.lt_u
+    (i32.mul
+     (current_memory)
+     (i32.const 65536)
+    )
+    (get_local $0)
+   )
+   (grow_memory
+    (i32.sub
+     (i32.div_u
+      (i32.add
+       (get_local $0)
+       (i32.const 65535)
+      )
+      (i32.const 65536)
+     )
+     (current_memory)
+    )
+   )
+  )
+  (set_local $1
+   (i32.const 0)
+  )
+  (loop $clear
+   (i32.store8
+    (get_local $1)
+    (i32.const 0)
+   )
+   (set_local $1
+    (i32.add
+     (get_local $1)
+     (i32.const 1)
+    )
+   )
+   (br_if $clear
+    (i32.eq
+     (get_local $1)
+     (get_local $0)
+    )
+   )
+  )
+  (return
+   (get_local $0)
+  )
+ )
+)
+
+optimized:
+
+(module
+ (type $i (func (param i32) (result i32)))
+ (memory $0 1 100)
+ (export "sieve" (func $sieve))
+ (func $sieve (; 0 ;) (type $i) (param $0 i32) (result i32)
+  (local $1 i32)
+  (if
+   (i32.lt_u
+    (i32.shl
+     (current_memory)
+     (i32.const 16)
+    )
+    (get_local $0)
+   )
+   (grow_memory
+    (i32.sub
+     (i32.div_u
+      (i32.add
+       (get_local $0)
+       (i32.const 65535)
+      )
+      (i32.const 65536)
+     )
+     (current_memory)
+    )
+   )
+  )
+  (loop $clear
+   (i32.store8
+    (get_local $1)
+    (i32.const 0)
+   )
+   (br_if $clear
+    (i32.eq
+     (tee_local $1
+      (i32.add
+       (get_local $1)
+       (i32.const 1)
+      )
+     )
+     (get_local $0)
+    )
+   )
+  )
+  (get_local $0)
+ )
+)
+

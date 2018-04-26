@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "support/command-line.h"
+
 //
 // Shared optimization options for commandline tools
 //
@@ -25,13 +27,13 @@ struct OptimizationOptions : public Options {
 
   std::vector<std::string> passes;
   PassOptions passOptions;
+  FeatureSet features = Feature::Atomics;
 
-  OptimizationOptions(const std::string &command, const std::string &description) : Options(command, description) {
+  OptimizationOptions(const std::string& command, const std::string& description) : Options(command, description) {
     (*this).add("", "-O", "execute default optimization passes",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
-                  passOptions.optimizeLevel = 2;
-                  passOptions.shrinkLevel = 1;
+                  passOptions.setDefaultOptimizationOptions();
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
            .add("", "-O0", "execute no optimization passes",
@@ -85,6 +87,11 @@ struct OptimizationOptions : public Options {
                 [this](Options* o, const std::string& argument) {
                   passOptions.shrinkLevel = atoi(argument.c_str());
                 })
+           .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
+                Options::Arguments::Zero,
+                [this](Options* o, const std::string& argument) {
+                  passOptions.validate = false;
+                })
            .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
@@ -115,9 +122,10 @@ struct OptimizationOptions : public Options {
     return passes.size() > 0;
   }
 
-  PassRunner getPassRunner(Module& wasm) {
+  void runPasses(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
     if (debug) passRunner.setDebug(true);
+    passRunner.setFeatures(features);
     for (auto& pass : passes) {
       if (pass == DEFAULT_OPT_PASSES) {
         passRunner.addDefaultOptimizationPasses();
@@ -125,9 +133,8 @@ struct OptimizationOptions : public Options {
         passRunner.add(pass);
       }
     }
-    return passRunner;
+    passRunner.run();
   }
 };
 
 } // namespace wasm
-

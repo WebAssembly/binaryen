@@ -28,7 +28,7 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
   std::string nextWord;
   std::string pad(leftPad, ' ');
   for (int i = 0; i <= len; ++i) {
-    if (i != len && content[i] != ' ') {
+    if (i != len && content[i] != ' ' && content[i] != '\n') {
       nextWord += content[i];
     } else {
       if (static_cast<int>(nextWord.size()) > space) {
@@ -39,6 +39,10 @@ void printWrap(std::ostream& os, int leftPad, const std::string& content) {
       space -= nextWord.size() + 1;
       if (space > 0) os << ' ';
       nextWord.clear();
+      if (content[i] == '\n') {
+        os << '\n';
+        space = SCREEN_WIDTH - leftPad;
+      }
     }
   }
 }

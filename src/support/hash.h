@@ -17,6 +17,7 @@
 #ifndef wasm_support_hash_h
 #define wasm_support_hash_h
 
+#include <functional>
 #include <stdint.h>
 
 namespace wasm {
@@ -32,6 +33,10 @@ inline uint32_t rehash(uint32_t x, uint32_t y) { // see http://www.cse.yorku.ca/
     y >>= 8;
   }
   return hash;
+}
+
+inline uint64_t rehash(uint64_t x, uint64_t y) { // see boost and https://stackoverflow.com/a/2595226/1176841
+  return x ^ (y + 0x9e3779b9 + (x << 6) + (x >> 2));
 }
 
 } // namespace wasm

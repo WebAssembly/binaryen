@@ -40,15 +40,15 @@ namespace Flags {
 }
 
 template <typename T>
-T read_file(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug);
+T read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
 // Declare the valid explicit specializations.
-extern template std::string read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
-extern template std::vector<char> read_file<>(const std::string &, Flags::BinaryOption, Flags::DebugOption);
+extern template std::string read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
+extern template std::vector<char> read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
 
 class Output {
  public:
   // An empty filename will open stdout instead.
-  Output(const std::string &filename, Flags::BinaryOption binary, Flags::DebugOption debug);
+  Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
   ~Output() = default;
   template <typename T>
   std::ostream &operator<<(const T &v) {
@@ -66,6 +66,13 @@ class Output {
   std::ofstream outfile;
   std::ostream out;
 };
-}
+
+// Copies a file to another file
+void copy_file(std::string input, std::string output);
+
+// Retusn the size of a file
+size_t file_size(std::string filename);
+
+} // namespace wasm
 
 #endif  // wasm_support_file_h

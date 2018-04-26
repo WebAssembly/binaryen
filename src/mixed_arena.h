@@ -163,6 +163,8 @@ protected:
   }
 
 public:
+  struct Iterator;
+
   T& operator[](size_t index) const {
     assert(index < usedElements);
     return data[index];
@@ -170,6 +172,10 @@ public:
 
   size_t size() const {
     return usedElements;
+  }
+
+  bool empty() const {
+    return size() == 0;
   }
 
   void resize(size_t size) {
@@ -200,6 +206,21 @@ public:
     }
     data[usedElements] = item;
     usedElements++;
+  }
+
+  T& front() const {
+    assert(usedElements > 0);
+    return data[0];
+  }
+
+  void erase(Iterator start_it, Iterator end_it) {
+    assert(start_it.parent == end_it.parent && start_it.parent == this);
+    assert(start_it.index <= end_it.index && end_it.index <= usedElements);
+    size_t size = end_it.index - start_it.index;
+    for (size_t cur = start_it.index; cur + size < usedElements; ++cur) {
+      data[cur] = data[cur + size];
+    }
+    usedElements -= size;
   }
 
   void clear() {
@@ -251,6 +272,15 @@ public:
 
     void operator++() {
       index++;
+    }
+
+    Iterator& operator+=(int off) {
+      index += off;
+      return *this;
+    }
+
+    const Iterator operator+(int off) const {
+      return Iterator(*this) += off;
     }
 
     T& operator*() {

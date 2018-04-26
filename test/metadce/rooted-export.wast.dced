@@ -1,0 +1,7 @@
+(module
+ (type $0 (func))
+ (export "wasm_func_b" (func $b_wasm_func))
+ (func $b_wasm_func (; 0 ;) (type $0)
+  (unreachable)
+ )
+)

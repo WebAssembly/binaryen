@@ -1,81 +1,74 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/990222-1.c"
+	.file	"990222-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push27=, 0
-	i32.const	$push26=, 0
-	i32.load8_u	$push0=, line+2($pop26)
-	i32.const	$push25=, 1
-	i32.add 	$push24=, $pop0, $pop25
-	tee_local	$push23=, $1=, $pop24
-	i32.store8	line+2($pop27), $pop23
+# %bb.0:                                # %entry
+	i32.const	$push21=, 0
+	i32.load8_u	$push0=, line+2($pop21)
+	i32.const	$push20=, 1
+	i32.add 	$1=, $pop0, $pop20
+	i32.const	$push19=, 0
+	i32.store8	line+2($pop19), $1
 	block   	
-	i32.const	$push22=, 24
-	i32.shl 	$push1=, $1, $pop22
-	i32.const	$push21=, 24
-	i32.shr_s	$push20=, $pop1, $pop21
-	tee_local	$push19=, $1=, $pop20
-	i32.const	$push2=, 58
-	i32.lt_s	$push3=, $pop19, $pop2
+	i32.const	$push18=, 24
+	i32.shl 	$push1=, $1, $pop18
+	i32.const	$push2=, 956301313
+	i32.lt_s	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %while.body.preheader
+# %bb.1:                                # %while.body.preheader
 	i32.const	$1=, line+1
 .LBB0_2:                                # %while.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push36=, 1
-	i32.add 	$push4=, $1, $pop36
-	i32.const	$push35=, 48
-	i32.store8	0($pop4), $pop35
+	i32.const	$push27=, 1
+	i32.add 	$push4=, $1, $pop27
+	i32.const	$push26=, 48
+	i32.store8	0($pop4), $pop26
 	i32.load8_u	$push5=, 0($1)
-	i32.const	$push34=, 1
-	i32.add 	$push33=, $pop5, $pop34
-	tee_local	$push32=, $0=, $pop33
-	i32.store8	0($1), $pop32
-	i32.const	$push31=, -1
-	i32.add 	$1=, $1, $pop31
-	i32.const	$push30=, 24
-	i32.shl 	$push6=, $0, $pop30
-	i32.const	$push29=, 24
-	i32.shr_s	$push7=, $pop6, $pop29
-	i32.const	$push28=, 57
-	i32.gt_s	$push8=, $pop7, $pop28
-	br_if   	0, $pop8        # 0: up to label1
-# BB#3:                                 # %while.end.loopexit
+	i32.const	$push25=, 1
+	i32.add 	$0=, $pop5, $pop25
+	i32.store8	0($1), $0
+	i32.const	$push24=, -1
+	i32.add 	$1=, $1, $pop24
+	i32.const	$push23=, 24
+	i32.shl 	$push6=, $0, $pop23
+	i32.const	$push22=, 956301312
+	i32.gt_s	$push7=, $pop6, $pop22
+	br_if   	0, $pop7        # 0: up to label1
+# %bb.3:                                # %while.end.loopexit
 	end_loop
-	i32.const	$push9=, 0
-	i32.load8_u	$1=, line+2($pop9)
+	i32.const	$push8=, 0
+	i32.load8_u	$1=, line+2($pop8)
 .LBB0_4:                                # %while.end
 	end_block                       # label0:
 	block   	
-	i32.const	$push37=, 0
-	i32.load8_u	$push11=, line($pop37)
-	i32.const	$push12=, 50
-	i32.ne  	$push13=, $pop11, $pop12
-	br_if   	0, $pop13       # 0: down to label2
-# BB#5:                                 # %while.end
-	i32.const	$push40=, 0
-	i32.load8_u	$push10=, line+1($pop40)
-	i32.const	$push39=, 255
-	i32.and 	$push14=, $pop10, $pop39
-	i32.const	$push38=, 48
-	i32.ne  	$push15=, $pop14, $pop38
-	br_if   	0, $pop15       # 0: down to label2
-# BB#6:                                 # %while.end
-	i32.const	$push42=, 255
-	i32.and 	$push16=, $1, $pop42
-	i32.const	$push41=, 48
-	i32.ne  	$push17=, $pop16, $pop41
-	br_if   	0, $pop17       # 0: down to label2
-# BB#7:                                 # %if.end
-	i32.const	$push18=, 0
-	return  	$pop18
+	i32.const	$push28=, 0
+	i32.load8_u	$push10=, line($pop28)
+	i32.const	$push11=, 50
+	i32.ne  	$push12=, $pop10, $pop11
+	br_if   	0, $pop12       # 0: down to label2
+# %bb.5:                                # %while.end
+	i32.const	$push31=, 0
+	i32.load8_u	$push9=, line+1($pop31)
+	i32.const	$push30=, 255
+	i32.and 	$push13=, $pop9, $pop30
+	i32.const	$push29=, 48
+	i32.ne  	$push14=, $pop13, $pop29
+	br_if   	0, $pop14       # 0: down to label2
+# %bb.6:                                # %while.end
+	i32.const	$push33=, 255
+	i32.and 	$push15=, $1, $pop33
+	i32.const	$push32=, 48
+	i32.ne  	$push16=, $pop15, $pop32
+	br_if   	0, $pop16       # 0: down to label2
+# %bb.7:                                # %if.end
+	i32.const	$push17=, 0
+	return  	$pop17
 .LBB0_8:                                # %if.then
 	end_block                       # label2:
 	call    	abort@FUNCTION
@@ -83,7 +76,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	line                    # @line
 	.type	line,@object
 	.section	.data.line,"aw",@progbits
@@ -93,5 +86,5 @@ line:
 	.size	line, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

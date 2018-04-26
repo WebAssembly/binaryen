@@ -1,0 +1,33 @@
+(module
+ (type $0 (func))
+ (func $signext (; 0 ;) (type $0)
+  (local $var$0 i32)
+  (local $var$1 i64)
+  (drop
+   (i32.extend8_s
+    (get_local $var$0)
+   )
+  )
+  (drop
+   (i32.extend16_s
+    (get_local $var$0)
+   )
+  )
+  (drop
+   (i64.extend8_s
+    (get_local $var$1)
+   )
+  )
+  (drop
+   (i64.extend16_s
+    (get_local $var$1)
+   )
+  )
+  (drop
+   (i64.extend32_s
+    (get_local $var$1)
+   )
+  )
+ )
+)
+

@@ -18,7 +18,7 @@
 // Convert the AST to a CFG, and optimize+convert it back to the AST
 // using the relooper.
 //
-// This pass depends on flatten-control-flow being run before it.
+// This pass depends on flatten being run before it.
 //
 
 #include <memory>
@@ -28,7 +28,11 @@
 #include "wasm-traversal.h"
 #include "pass.h"
 #include "cfg/Relooper.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
+
+#ifdef RERELOOP_DEBUG
+#include <wasm-printing.h>
+#endif
 
 namespace wasm {
 
@@ -292,7 +296,7 @@ struct ReReloop final : public Pass {
     // TODO: optimize with this?
   }
 
-  void runFunction(PassRunner* runner, Module* module, Function* function) override {
+  void runOnFunction(PassRunner* runner, Module* module, Function* function) override {
     // since control flow is flattened, this is pretty simple
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow
@@ -307,6 +311,33 @@ struct ReReloop final : public Pass {
     }
     // finish the current block
     finishBlock();
+    // blocks that do not have any exits are dead ends in the relooper. we need
+    // to make sure that are in fact dead ends, and do not flow control anywhere.
+    // add a return as needed
+    for (auto* cfgBlock : relooper.Blocks) {
+      auto* block = cfgBlock->Code->cast<Block>();
+      if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
+        block->list.push_back(
+          function->result == none ? (Expression*)builder->makeReturn()
+                                   : (Expression*)builder->makeUnreachable()
+        );
+        block->finalize();
+      }
+    }
+#ifdef RERELOOP_DEBUG
+    std::cout << "rerelooping " << function->name << '\n';
+    for (auto* block : relooper.Blocks) {
+      std::cout << block << " block:\n" << block->Code << '\n';
+      for (auto& pair : block->BranchesOut) {
+        auto* target = pair.first;
+        auto* branch = pair.second;
+        std::cout << "branch to " << target << "\n";
+        if (branch->Condition) {
+          std::cout << "  with condition\n" << branch->Condition << '\n';
+        }
+      }
+    }
+#endif
     // run the relooper to recreate control flow
     relooper.Calculate(entry);
     // render
@@ -314,6 +345,18 @@ struct ReReloop final : public Pass {
       auto temp = builder->addVar(function, i32);
       CFG::RelooperBuilder builder(*module, temp);
       function->body = relooper.Render(builder);
+      // if the function has a result, and the relooper emitted
+      // something that seems like it flows out without a value
+      // (but that path is never reached; it just has a br to it
+      // because of the relooper's boilerplate switch-handling
+      // code, for example, which could be optimized out later
+      // but isn't yet), then make sure it has a proper type
+      if (function->result != none && function->body->type == none) {
+        function->body = builder.makeSequence(
+          function->body,
+          builder.makeUnreachable()
+        );
+      }
     }
     // TODO: should this be in the relooper itself?
     ReFinalize().walk(function->body);

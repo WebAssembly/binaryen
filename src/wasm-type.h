@@ -19,7 +19,7 @@
 
 namespace wasm {
 
-enum WasmType {
+enum Type {
   none,
   i32,
   i64,
@@ -30,12 +30,13 @@ enum WasmType {
               // type checking across branches
 };
 
-const char* printWasmType(WasmType type);
-unsigned getWasmTypeSize(WasmType type);
-bool isWasmTypeFloat(WasmType type);
-WasmType getWasmType(unsigned size, bool float_);
-WasmType getReachableWasmType(WasmType a, WasmType b);
-bool isConcreteWasmType(WasmType type);
+const char* printType(Type type);
+unsigned getTypeSize(Type type);
+Type getType(unsigned size, bool float_);
+Type getReachableType(Type a, Type b);
+bool isConcreteType(Type type);
+bool isFloatType(Type type);
+bool isIntegerType(Type type);
 
 } // namespace wasm
 

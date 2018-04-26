@@ -29,8 +29,8 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
-#include <ast_utils.h>
-#include <ast/hashed.h>
+#include <ir/effects.h>
+#include <ir/hashed.h>
 
 namespace wasm {
 
@@ -109,7 +109,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   static void scan(LocalCSE* self, Expression** currp) {
     self->pushTask(visitPost, currp);
 
-    WalkerPass<LinearExecutionWalker<LocalCSE>>::scan(self, currp);
+    super::scan(self, currp);
 
     self->pushTask(visitPre, currp);
   }
@@ -118,7 +118,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     if (curr->is<GetLocal>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteWasmType(curr->type)) {
+    if (!isConcreteType(curr->type)) {
       return false; // don't bother with unreachable etc.
     }
     if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {

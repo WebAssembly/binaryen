@@ -30,7 +30,7 @@
 #ifdef BINARYEN_THREAD_DEBUG
 static std::mutex debug;
 #define DEBUG_THREAD(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[THREAD " << std::this_thread::get_id() << "] " << x; }
-#define DEBUG_POOL(x) { std::lock_guard<std::mutex> lock(debug); std::cerr << "[POOL] " << x; }
+#define DEBUG_POOL(x)   { std::lock_guard<std::mutex> lock(debug); std::cerr << "[POOL "   << std::this_thread::get_id() << "] " << x; }
 #else
 #define DEBUG_THREAD(x)
 #define DEBUG_POOL(x)
@@ -39,20 +39,14 @@ static std::mutex debug;
 
 namespace wasm {
 
-// Global thread information
-
-static std::unique_ptr<ThreadPool> pool;
-
-
 // Thread
 
-Thread::Thread() {
-  assert(!ThreadPool::get()->isRunning());
+Thread::Thread(ThreadPool* parent) : parent(parent) {
+  assert(!parent->isRunning());
   thread = make_unique<std::thread>(mainLoop, this);
 }
 
 Thread::~Thread() {
-  assert(!ThreadPool::get()->isRunning());
   {
     std::lock_guard<std::mutex> lock(mutex);
     // notify the thread that it can exit
@@ -90,7 +84,7 @@ void Thread::mainLoop(void *self_) {
         return;
       }
     }
-    ThreadPool::get()->notifyThreadIsReady();
+    self->parent->notifyThreadIsReady();
     {
       std::unique_lock<std::mutex> lock(self->mutex);
       if (!self->done && !self->doWork) {
@@ -101,17 +95,32 @@ void Thread::mainLoop(void *self_) {
   }
 }
 
-
 // ThreadPool
+
+// Global threadPool state. We have a singleton pool, which can only be
+// used from one place at a time.
+
+static std::unique_ptr<ThreadPool> pool;
+
+std::mutex ThreadPool::creationMutex;
+std::mutex ThreadPool::workMutex;
+std::mutex ThreadPool::threadMutex;
 
 void ThreadPool::initialize(size_t num) {
   if (num == 1) return; // no multiple cores, don't create threads
   DEBUG_POOL("initialize()\n");
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(threadMutex);
   ready.store(threads.size()); // initial state before first resetThreadsAreReady()
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
-    threads.emplace_back(make_unique<Thread>());
+    try {
+      threads.emplace_back(make_unique<Thread>(this));
+    } catch (std::system_error&) {
+      // failed to create a thread - don't use multithreading, as if num cores == 1
+      DEBUG_POOL("could not create thread\n");
+      threads.clear();
+      return;
+    }
   }
   DEBUG_POOL("initialize() waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
@@ -131,9 +140,16 @@ size_t ThreadPool::getNumCores() {
 }
 
 ThreadPool* ThreadPool::get() {
+  DEBUG_POOL("::get()\n");
+  // lock on the creation
+  std::lock_guard<std::mutex> poolLock(creationMutex);
   if (!pool) {
-    pool = make_unique<ThreadPool>();
-    pool->initialize(getNumCores());
+    DEBUG_POOL("::get() creating\n");
+    std::unique_ptr<ThreadPool> temp = make_unique<ThreadPool>();
+    temp->initialize(getNumCores());
+    // assign it to the global location now that it is all ready
+    pool.swap(temp);
+    DEBUG_POOL("::get() created\n");
   }
   return pool.get();
 }
@@ -151,10 +167,14 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   // run in parallel on threads
   // TODO: fancy work stealing
   DEBUG_POOL("work() on threads\n");
+  // lock globally on doing work in the pool - the threadPool can only be used
+  // from one thread at a time, all others must wait patiently
+  std::lock_guard<std::mutex> poolLock(workMutex);
   assert(doWorkers.size() == num);
   assert(!running);
+  DEBUG_POOL("running = true\n");
   running = true;
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(threadMutex);
   resetThreadsAreReady();
   for (size_t i = 0; i < num; i++) {
     threads[i]->work(doWorkers[i]);
@@ -162,6 +182,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   DEBUG_POOL("main thread waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
   DEBUG_POOL("main thread waiting\n");
+  DEBUG_POOL("running = false\n");
   running = false;
   DEBUG_POOL("work() is done\n");
 }
@@ -171,12 +192,13 @@ size_t ThreadPool::size() {
 }
 
 bool ThreadPool::isRunning() {
-  return pool && pool->running;
+  DEBUG_POOL("check if running\n");
+  return running;
 }
 
 void ThreadPool::notifyThreadIsReady() {
   DEBUG_POOL("notify thread is ready\n";)
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::mutex> lock(threadMutex);
   ready.fetch_add(1);
   condition.notify_one();
 }

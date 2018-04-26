@@ -1,34 +1,32 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20080424-1.c"
+	.file	"20080424-1.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32, i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	block   	
-	i32.const	$push13=, 0
-	i32.load	$push12=, bar.i($pop13)
-	tee_local	$push11=, $2=, $pop12
+# %bb.0:                                # %entry
+	i32.const	$push9=, 0
+	i32.load	$2=, bar.i($pop9)
 	i32.const	$push0=, 36
-	i32.mul 	$push10=, $pop11, $pop0
-	tee_local	$push9=, $3=, $pop10
+	i32.mul 	$3=, $2, $pop0
+	block   	
 	i32.const	$push1=, g+288
-	i32.add 	$push2=, $pop9, $pop1
+	i32.add 	$push2=, $3, $pop1
 	i32.ne  	$push3=, $pop2, $0
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %lor.lhs.false
-	i32.const	$push14=, 0
+# %bb.1:                                # %lor.lhs.false
+	i32.const	$push10=, 0
 	i32.const	$push4=, 1
 	i32.add 	$push5=, $2, $pop4
-	i32.store	bar.i($pop14), $pop5
+	i32.store	bar.i($pop10), $pop5
 	i32.const	$push6=, g
 	i32.add 	$push7=, $3, $pop6
 	i32.ne  	$push8=, $pop7, $1
 	br_if   	0, $pop8        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	return
 .LBB0_3:                                # %if.then
 	end_block                       # label0:
@@ -37,14 +35,14 @@ bar:                                    # @bar
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, g+288
 	i32.const	$push0=, g
 	call    	bar@FUNCTION, $pop1, $pop0
@@ -74,7 +72,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	bar.i,@object           # @bar.i
 	.section	.bss.bar.i,"aw",@nobits
 	.p2align	2
@@ -92,5 +90,5 @@ g:
 	.size	g, 1728
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

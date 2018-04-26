@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20000910-2.c"
+	.file	"20000910-2.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.const	$push7=, 0
@@ -15,14 +15,14 @@ main:                                   # @main
 	i32.call	$push1=, strchr@FUNCTION, $pop0, $pop6
 	i32.eqz 	$push10=, $pop1
 	br_if   	0, $pop10       # 0: down to label1
-# BB#1:                                 # %if.then.i
+# %bb.1:                                # %if.then.i
 	i32.const	$push9=, 0
 	i32.load	$push2=, list+4($pop9)
 	i32.const	$push8=, 42
 	i32.call	$push3=, strchr@FUNCTION, $pop2, $pop8
 	i32.eqz 	$push11=, $pop3
 	br_if   	1, $pop11       # 1: down to label0
-# BB#2:                                 # %foo.exit
+# %bb.2:                                # %foo.exit
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB0_3:                                # %if.then2.i
@@ -37,7 +37,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -60,7 +60,7 @@ list:
 	.size	list, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32
 	.functype	strchr, i32, i32, i32

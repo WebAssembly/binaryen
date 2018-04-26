@@ -1,11 +1,11 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/960311-2.c"
+	.file	"960311-2.c"
 	.section	.text.a1,"ax",@progbits
-	.hidden	a1
+	.hidden	a1                      # -- Begin function a1
 	.globl	a1
 	.type	a1,@function
 a1:                                     # @a1
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push4=, 0
 	i32.load	$push1=, count($pop4)
@@ -16,20 +16,20 @@ a1:                                     # @a1
 	.endfunc
 .Lfunc_end0:
 	.size	a1, .Lfunc_end0-a1
-
+                                        # -- End function
 	.section	.text.b,"ax",@progbits
-	.hidden	b
+	.hidden	b                       # -- Begin function b
 	.globl	b
 	.type	b,@function
 b:                                      # @b
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 32768
 	i32.and 	$push1=, $0, $pop0
 	i32.eqz 	$push21=, $pop1
 	br_if   	0, $pop21       # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push2=, 0
 	i32.const	$push18=, 0
 	i32.load	$push3=, count($pop18)
@@ -43,7 +43,7 @@ b:                                      # @b
 	i32.and 	$push7=, $0, $pop6
 	i32.eqz 	$push22=, $pop7
 	br_if   	0, $pop22       # 0: down to label1
-# BB#3:                                 # %if.then6
+# %bb.3:                                # %if.then6
 	i32.const	$push8=, 0
 	i32.const	$push19=, 0
 	i32.load	$push9=, count($pop19)
@@ -57,7 +57,7 @@ b:                                      # @b
 	i32.and 	$push13=, $0, $pop12
 	i32.eqz 	$push23=, $pop13
 	br_if   	0, $pop23       # 0: down to label2
-# BB#5:                                 # %if.then14
+# %bb.5:                                # %if.then14
 	i32.const	$push14=, 0
 	i32.const	$push20=, 0
 	i32.load	$push15=, count($pop20)
@@ -70,14 +70,14 @@ b:                                      # @b
 	.endfunc
 .Lfunc_end1:
 	.size	b, .Lfunc_end1-b
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end21
+# %bb.0:                                # %if.end21
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3
 	i32.store	count($pop1), $pop0
@@ -87,7 +87,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	count                   # @count
 	.type	count,@object
 	.section	.bss.count,"aw",@nobits
@@ -98,5 +98,5 @@ count:
 	.size	count, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

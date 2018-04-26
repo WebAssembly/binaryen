@@ -9,37 +9,35 @@
  (type $7 (func (param f64) (result f64)))
  (type $8 (func (result i64)))
  (type $9 (func (param i32 i64)))
- (import "env" "_emscripten_asm_const_vi" (func $import$0))
- (import "asm2wasm" "f64-to-int" (func $import$1 (param f64) (result i32)))
- (import "asm2wasm" "f64-rem" (func $import$2 (param f64 f64) (result f64)))
+ (import "env" "_emscripten_asm_const_vi" (func $_emscripten_asm_const_vi))
+ (import "asm2wasm" "f64-to-int" (func $f64-to-int (param f64) (result i32)))
+ (import "asm2wasm" "f64-rem" (func $f64-rem (param f64 f64) (result f64)))
  (table 10 anyfunc)
  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
  (export "big_negative" (func $big_negative))
- (func $big_negative (type $1)
+ (func $big_negative (; 3 ;) (type $1)
   (local $var$0 f64)
-  (block $label$0
-   (set_local $var$0
-    (f64.const -2147483648)
-   )
-   (set_local $var$0
-    (f64.const -2147483648)
-   )
-   (set_local $var$0
-    (f64.const -21474836480)
-   )
-   (set_local $var$0
-    (f64.const 0.039625)
-   )
-   (set_local $var$0
-    (f64.const -0.039625)
-   )
+  (set_local $var$0
+   (f64.const -2147483648)
+  )
+  (set_local $var$0
+   (f64.const -2147483648)
+  )
+  (set_local $var$0
+   (f64.const -21474836480)
+  )
+  (set_local $var$0
+   (f64.const 0.039625)
+  )
+  (set_local $var$0
+   (f64.const -0.039625)
   )
  )
- (func $importedDoubles (type $4) (result f64)
+ (func $importedDoubles (; 4 ;) (type $4) (result f64)
   (local $var$0 f64)
-  (block $label$0 (result f64)
+  (block $label$1 (result f64)
    (set_local $var$0
     (f64.add
      (f64.add
@@ -71,10 +69,8 @@
      )
      (i32.const 0)
     )
-    (block $label$1
-     (br $label$0
-      (f64.const -3.4)
-     )
+    (br $label$1
+     (f64.const -3.4)
     )
    )
    (if
@@ -84,29 +80,25 @@
      )
      (f64.const 0)
     )
-    (block $label$2
-     (br $label$0
-      (f64.const 5.6)
-     )
+    (br $label$1
+     (f64.const 5.6)
     )
    )
    (f64.const 1.2)
   )
  )
- (func $doubleCompares (type $3) (param $var$0 f64) (param $var$1 f64) (result f64)
+ (func $doubleCompares (; 5 ;) (type $3) (param $var$0 f64) (param $var$1 f64) (result f64)
   (local $var$2 i32)
   (local $var$3 f64)
   (local $var$4 f64)
-  (block $label$0 (result f64)
+  (block $label$1 (result f64)
    (if
     (f64.gt
      (get_local $var$0)
      (f64.const 0)
     )
-    (block $label$1
-     (br $label$0
-      (f64.const 1.2)
-     )
+    (br $label$1
+     (f64.const 1.2)
     )
    )
    (if
@@ -114,10 +106,8 @@
      (get_local $var$4)
      (f64.const 0)
     )
-    (block $label$2
-     (br $label$0
-      (f64.const -3.4)
-     )
+    (br $label$1
+     (f64.const -3.4)
     )
    )
    (if
@@ -125,10 +115,8 @@
      (get_local $var$2)
      (i32.const 0)
     )
-    (block $label$3
-     (br $label$0
-      (f64.const 5.6)
-     )
+    (br $label$1
+     (f64.const 5.6)
     )
    )
    (if
@@ -136,23 +124,21 @@
      (get_local $var$0)
      (get_local $var$1)
     )
-    (block $label$4
-     (br $label$0
-      (get_local $var$0)
-     )
+    (br $label$1
+     (get_local $var$0)
     )
    )
    (get_local $var$1)
   )
  )
- (func $intOps (type $5) (result i32)
+ (func $intOps (; 6 ;) (type $5) (result i32)
   (local $var$0 i32)
   (i32.eq
    (get_local $var$0)
    (i32.const 0)
   )
  )
- (func $hexLiterals (type $1)
+ (func $hexLiterals (; 7 ;) (type $1)
   (drop
    (i32.add
     (i32.add
@@ -163,41 +149,39 @@
    )
   )
  )
- (func $conversions (type $1)
+ (func $conversions (; 8 ;) (type $1)
   (local $var$0 i32)
   (local $var$1 f64)
-  (block $label$0
-   (set_local $var$0
-    (call $import$1
-     (get_local $var$1)
-    )
+  (set_local $var$0
+   (call $f64-to-int
+    (get_local $var$1)
    )
-   (set_local $var$1
-    (f64.convert_s/i32
+  )
+  (set_local $var$1
+   (f64.convert_s/i32
+    (get_local $var$0)
+   )
+  )
+  (set_local $var$1
+   (f64.convert_u/i32
+    (i32.shr_u
      (get_local $var$0)
-    )
-   )
-   (set_local $var$1
-    (f64.convert_u/i32
-     (i32.shr_u
-      (get_local $var$0)
-      (i32.const 0)
-     )
+     (i32.const 0)
     )
    )
   )
  )
- (func $seq (type $1)
+ (func $seq (; 9 ;) (type $1)
   (local $var$0 f64)
   (set_local $var$0
    (f64.sub
-    (block $label$0 (result f64)
+    (block $label$1 (result f64)
      (drop
       (f64.const 0.1)
      )
      (f64.const 5.1)
     )
-    (block $label$1 (result f64)
+    (block $label$2 (result f64)
      (drop
       (f64.const 3.2)
      )
@@ -206,205 +190,177 @@
    )
   )
  )
- (func $switcher (type $6) (param $var$0 i32) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
-    (block $label$2
-     (block $label$3
-      (block $label$4
-       (br_table $label$4 $label$3 $label$2
+ (func $switcher (; 10 ;) (type $6) (param $var$0 i32) (result i32)
+  (block $label$1 (result i32)
+   (block $label$2
+    (block $label$3
+     (block $label$4
+      (block $label$5
+       (br_table $label$5 $label$4 $label$3
         (i32.sub
          (get_local $var$0)
          (i32.const 1)
         )
        )
       )
-      (br $label$0
+      (br $label$1
        (i32.const 1)
       )
      )
-     (br $label$0
+     (br $label$1
       (i32.const 2)
      )
     )
     (nop)
    )
-   (block $label$5
-    (block $label$6
-     (block $label$7
-      (block $label$8
-       (br_table $label$7 $label$6 $label$6 $label$6 $label$6 $label$6 $label$6 $label$8 $label$6
+   (block $label$6
+    (block $label$7
+     (block $label$8
+      (block $label$9
+       (br_table $label$8 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$9 $label$7
         (i32.sub
          (get_local $var$0)
          (i32.const 5)
         )
        )
       )
-      (br $label$0
+      (br $label$1
        (i32.const 121)
       )
      )
-     (br $label$0
+     (br $label$1
       (i32.const 51)
      )
     )
     (nop)
    )
-   (block $label$9
-    (block $label$10
-     (block $label$11
-      (block $label$12
-       (block $label$13
-        (block $label$14
-         (br_table $label$11 $label$10 $label$10 $label$12 $label$10 $label$10 $label$10 $label$10 $label$13 $label$10 $label$14 $label$10
+   (block $label$10
+    (block $label$11
+     (block $label$12
+      (block $label$13
+       (block $label$14
+        (block $label$15
+         (br_table $label$12 $label$11 $label$11 $label$13 $label$11 $label$11 $label$11 $label$11 $label$14 $label$11 $label$15 $label$11
           (i32.sub
            (get_local $var$0)
            (i32.const 2)
           )
          )
         )
-        (br $label$9)
+        (br $label$10)
        )
-       (br $label$9)
+       (br $label$10)
       )
-      (block $label$15
-       (loop $label$16
-        (br $label$15)
+      (block $label$16
+       (loop $label$17
         (br $label$16)
        )
-       (unreachable)
-       (br $label$9)
       )
      )
-     (block $label$17
-      (loop $label$18
-       (br $label$9)
-       (br $label$18)
+     (block $label$18
+      (loop $label$19
+       (br $label$10)
       )
-      (unreachable)
-      (br $label$9)
-      (unreachable)
      )
-     (unreachable)
     )
     (nop)
    )
    (i32.const 0)
   )
  )
- (func $blocker (type $1)
-  (block $label$0
-   (br $label$0)
+ (func $blocker (; 11 ;) (type $1)
+  (block $label$1
+   (br $label$1)
   )
  )
- (func $frem (type $4) (result f64)
-  (call $import$2
+ (func $frem (; 12 ;) (type $4) (result f64)
+  (call $f64-rem
    (f64.const 5.5)
    (f64.const 1.2)
   )
  )
- (func $big_uint_div_u (type $5) (result i32)
+ (func $big_uint_div_u (; 13 ;) (type $5) (result i32)
   (local $var$0 i32)
-  (block $label$0 (result i32)
-   (set_local $var$0
-    (i32.and
-     (i32.div_u
-      (i32.const -1)
-      (i32.const 2)
-     )
+  (set_local $var$0
+   (i32.and
+    (i32.div_u
      (i32.const -1)
+     (i32.const 2)
     )
+    (i32.const -1)
    )
-   (get_local $var$0)
   )
+  (get_local $var$0)
  )
- (func $fr (type $0) (param $var$0 f32)
+ (func $fr (; 14 ;) (type $0) (param $var$0 f32)
   (local $var$1 f32)
   (local $var$2 f64)
-  (block $label$0
-   (drop
-    (f32.demote/f64
-     (get_local $var$2)
-    )
-   )
-   (drop
-    (get_local $var$1)
-   )
-   (drop
-    (f32.const 5)
-   )
-   (drop
-    (f32.const 0)
-   )
-   (drop
-    (f32.const 5)
-   )
-   (drop
-    (f32.const 0)
+  (drop
+   (f32.demote/f64
+    (get_local $var$2)
    )
   )
+  (drop
+   (get_local $var$1)
+  )
+  (drop
+   (f32.const 5)
+  )
+  (drop
+   (f32.const 0)
+  )
+  (drop
+   (f32.const 5)
+  )
+  (drop
+   (f32.const 0)
+  )
  )
- (func $negZero (type $4) (result f64)
+ (func $negZero (; 15 ;) (type $4) (result f64)
   (f64.const -0)
  )
- (func $abs (type $1)
+ (func $abs (; 16 ;) (type $1)
   (local $var$0 i32)
   (local $var$1 i32)
   (local $var$2 f32)
   (local $var$3 f64)
-  (block $label$0
-   (set_local $var$0
-    (block $label$1 (result i32)
-     (set_local $var$1
+  (set_local $var$0
+   (block $label$1 (result i32)
+    (set_local $var$1
+     (i32.const 0)
+    )
+    (select
+     (i32.sub
+      (i32.const 0)
+      (get_local $var$1)
+     )
+     (get_local $var$1)
+     (i32.lt_s
+      (get_local $var$1)
       (i32.const 0)
      )
-     (select
-      (i32.sub
-       (i32.const 0)
-       (get_local $var$1)
-      )
-      (get_local $var$1)
-      (i32.lt_s
-       (get_local $var$1)
-       (i32.const 0)
-      )
-     )
-    )
-   )
-   (set_local $var$3
-    (f64.abs
-     (f64.const 0)
-    )
-   )
-   (set_local $var$2
-    (f32.abs
-     (f32.const 0)
     )
    )
   )
+  (set_local $var$3
+   (f64.abs
+    (f64.const 0)
+   )
+  )
+  (set_local $var$2
+   (f32.abs
+    (f32.const 0)
+   )
+  )
  )
- (func $neg (type $1)
+ (func $neg (; 17 ;) (type $1)
   (local $var$0 f32)
-  (block $label$0
-   (set_local $var$0
-    (f32.neg
-     (get_local $var$0)
-    )
-   )
-   (call_indirect $0
+  (set_local $var$0
+   (f32.neg
     (get_local $var$0)
-    (i32.add
-     (i32.and
-      (i32.const 1)
-      (i32.const 7)
-     )
-     (i32.const 8)
-    )
    )
   )
- )
- (func $cneg (type $0) (param $var$0 f32)
-  (call_indirect $0
+  (call_indirect (type $0)
    (get_local $var$0)
    (i32.add
     (i32.and
@@ -415,7 +371,19 @@
    )
   )
  )
- (func $___syscall_ret (type $1)
+ (func $cneg (; 18 ;) (type $0) (param $var$0 f32)
+  (call_indirect (type $0)
+   (get_local $var$0)
+   (i32.add
+    (i32.and
+     (i32.const 1)
+     (i32.const 7)
+    )
+    (i32.const 8)
+   )
+  )
+ )
+ (func $___syscall_ret (; 19 ;) (type $1)
   (local $var$0 i32)
   (drop
    (i32.gt_u
@@ -427,219 +395,143 @@
    )
   )
  )
- (func $z (type $1)
+ (func $z (; 20 ;) (type $1)
   (nop)
  )
- (func $w (type $1)
+ (func $w (; 21 ;) (type $1)
   (nop)
  )
- (func $block_and_after (type $5) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
-    (drop
-     (i32.const 1)
-    )
-    (br $label$1)
+ (func $block_and_after (; 22 ;) (type $5) (result i32)
+  (block $label$1
+   (drop
+    (i32.const 1)
    )
-   (i32.const 0)
+   (br $label$1)
   )
+  (i32.const 0)
  )
- (func $loop-roundtrip (type $7) (param $var$0 f64) (result f64)
-  (loop $label$0 (result f64)
+ (func $loop-roundtrip (; 23 ;) (type $7) (param $var$0 f64) (result f64)
+  (loop $label$1 (result f64)
    (drop
     (get_local $var$0)
    )
    (get_local $var$0)
   )
  )
- (func $big-i64 (type $8) (result i64)
+ (func $big-i64 (; 24 ;) (type $8) (result i64)
   (i64.const -9218868437227405313)
  )
- (func $i64-store32 (type $9) (param $var$0 i32) (param $var$1 i64)
+ (func $i64-store32 (; 25 ;) (type $9) (param $var$0 i32) (param $var$1 i64)
   (i64.store32
    (get_local $var$0)
    (get_local $var$1)
   )
  )
- (func $return-unreachable (type $5) (result i32)
+ (func $return-unreachable (; 26 ;) (type $5) (result i32)
   (return
    (i32.const 1)
   )
  )
- (func $unreachable-block (type $5) (result i32)
-  (block $label$0
+ (func $unreachable-block (; 27 ;) (type $5) (result i32)
+  (block $label$1
    (drop
     (i32.const 1)
    )
    (return
     (i32.const 2)
    )
-   (unreachable)
-  )
-  (f64.abs
-   (unreachable)
   )
  )
- (func $unreachable-block-toplevel (type $5) (result i32)
-  (block $label$0
-   (drop
-    (i32.const 1)
-   )
-   (return
-    (i32.const 2)
-   )
-   (unreachable)
-  )
-  (unreachable)
- )
- (func $unreachable-block0 (type $5) (result i32)
-  (block $label$0
-   (return
-    (i32.const 2)
-   )
-   (unreachable)
-  )
-  (f64.abs
-   (unreachable)
-  )
- )
- (func $unreachable-block0-toplevel (type $5) (result i32)
-  (block $label$0
-   (return
-    (i32.const 2)
-   )
-   (unreachable)
-  )
-  (unreachable)
- )
- (func $unreachable-block-with-br (type $5) (result i32)
-  (block $label$0 (result i32)
-   (block $label$1
-    (drop
-     (i32.const 1)
-    )
-    (br $label$1)
-   )
+ (func $unreachable-block-toplevel (; 28 ;) (type $5) (result i32)
+  (drop
    (i32.const 1)
   )
+  (return
+   (i32.const 2)
+  )
  )
- (func $unreachable-if (type $5) (result i32)
+ (func $unreachable-block0 (; 29 ;) (type $5) (result i32)
+  (block $label$1
+   (return
+    (i32.const 2)
+   )
+  )
+ )
+ (func $unreachable-block0-toplevel (; 30 ;) (type $5) (result i32)
+  (return
+   (i32.const 2)
+  )
+ )
+ (func $unreachable-block-with-br (; 31 ;) (type $5) (result i32)
+  (block $label$1
+   (drop
+    (i32.const 1)
+   )
+   (br $label$1)
+  )
+  (i32.const 1)
+ )
+ (func $unreachable-if (; 32 ;) (type $5) (result i32)
   (if
    (i32.const 3)
-   (block $label$0
-    (return
-     (i32.const 2)
-    )
+   (return
+    (i32.const 2)
    )
-   (block $label$1
-    (return
-     (i32.const 1)
-    )
+   (return
+    (i32.const 1)
    )
-  )
-  (f64.abs
-   (unreachable)
   )
  )
- (func $unreachable-if-toplevel (type $5) (result i32)
+ (func $unreachable-if-toplevel (; 33 ;) (type $5) (result i32)
   (if
    (i32.const 3)
-   (block $label$0
-    (return
-     (i32.const 2)
-    )
+   (return
+    (i32.const 2)
    )
-   (block $label$1
-    (return
-     (i32.const 1)
-    )
+   (return
+    (i32.const 1)
    )
   )
-  (unreachable)
  )
- (func $unreachable-loop (type $5) (result i32)
-  (loop $label$0
+ (func $unreachable-loop (; 34 ;) (type $5) (result i32)
+  (loop $label$1
    (nop)
    (return
     (i32.const 1)
    )
   )
-  (f64.abs
-   (unreachable)
-  )
  )
- (func $unreachable-loop0 (type $5) (result i32)
-  (loop $label$0
+ (func $unreachable-loop0 (; 35 ;) (type $5) (result i32)
+  (loop $label$1
    (return
     (i32.const 1)
    )
   )
-  (f64.abs
-   (unreachable)
-  )
  )
- (func $unreachable-loop-toplevel (type $5) (result i32)
-  (loop $label$0
+ (func $unreachable-loop-toplevel (; 36 ;) (type $5) (result i32)
+  (loop $label$1
    (nop)
    (return
     (i32.const 1)
    )
   )
-  (unreachable)
  )
- (func $unreachable-loop0-toplevel (type $5) (result i32)
-  (loop $label$0
+ (func $unreachable-loop0-toplevel (; 37 ;) (type $5) (result i32)
+  (loop $label$1
    (return
     (i32.const 1)
    )
   )
+ )
+ (func $unreachable-ifs (; 38 ;) (type $1)
   (unreachable)
  )
- (func $unreachable-ifs (type $1)
-  (block $label$0
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (unreachable)
-   (if
-    (i32.const 1)
-    (block $label$1
-     (unreachable)
-    )
-    (block $label$2
-     (nop)
-    )
-   )
-   (if
-    (i32.const 1)
-    (block $label$3
-     (nop)
-    )
-    (block $label$4
-     (unreachable)
-    )
-   )
-   (if
-    (i32.const 1)
-    (block $label$5
-     (unreachable)
-    )
-    (block $label$6
-     (unreachable)
-    )
-   )
-   (unreachable)
+ (func $unreachable-if-arm (; 39 ;) (type $1)
+  (if
+   (i32.const 1)
+   (nop)
    (unreachable)
   )
-  (unreachable)
  )
 )
 

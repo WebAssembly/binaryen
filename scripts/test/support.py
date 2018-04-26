@@ -26,7 +26,7 @@ def _open_archive(tarfile, tmp_dir):
   with tempfile.TemporaryFile(mode='w+') as f:
     try:
       subprocess.check_call(['tar', '-xvf', tarfile], cwd=tmp_dir, stdout=f)
-    except:
+    except Exception:
       f.seek(0)
       sys.stderr.write(f.read())
       raise
@@ -147,7 +147,8 @@ def split_wast(wast):
   return ret
 
 
-def run_command(cmd, expected_status=0, stderr=None, expected_err=None):
+def run_command(cmd, expected_status=0, stderr=None,
+                expected_err=None, err_contains=False):
   if expected_err is not None:
     assert stderr == subprocess.PIPE or stderr is None,\
         "Can't redirect stderr if using expected_err"
@@ -155,9 +156,26 @@ def run_command(cmd, expected_status=0, stderr=None, expected_err=None):
   print 'executing: ', ' '.join(cmd)
   proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
   out, err = proc.communicate()
-  if proc.returncode != expected_status:
-    raise Exception(('run_command failed', err))
-  if expected_err is not None and err != expected_err:
+  code = proc.returncode
+  if code != expected_status:
+    raise Exception(('run_command failed (%s)' % code, out + str(err or '')))
+  err_correct = expected_err is None or \
+      (expected_err in err if err_contains else expected_err == err)
+  if not err_correct:
     raise Exception(('run_command unexpected stderr',
                      "expected '%s', actual '%s'" % (expected_err, err)))
   return out
+
+
+def node_has_webassembly(cmd):
+  cmd = [cmd, '-e', 'process.stdout.write(typeof WebAssembly)']
+  return run_command(cmd) == 'object'
+
+
+def node_test_glue():
+  # running concatenated files (a.js) in node interferes with module loading
+  # because the concatenated file expects a 'var Binaryen' but binaryen.js
+  # assigned to module.exports. this is correct behavior but tests then need
+  # a workaround:
+  return ('if (typeof module === "object" && typeof exports === "object")\n'
+          '  Binaryen = module.exports;\n')

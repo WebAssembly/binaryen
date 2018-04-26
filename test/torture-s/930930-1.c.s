@@ -1,47 +1,44 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930930-1.c"
+	.file	"930930-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32, i32, i32, i32
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.lt_u	$push0=, $3, $4
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:                                 # %if.end.preheader
+# %bb.1:                                # %if.end.preheader
 	copy_local	$6=, $0
 .LBB0_2:                                # %if.end
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label2:
+	i32.load	$5=, 0($3)
 	block   	
-	i32.load	$push6=, 0($3)
-	tee_local	$push5=, $5=, $pop6
-	i32.ge_u	$push1=, $pop5, $2
+	i32.ge_u	$push1=, $5, $2
 	br_if   	0, $pop1        # 0: down to label3
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
                                         #   in Loop: Header=BB0_2 Depth=1
 	i32.lt_u	$push2=, $5, $1
 	br_if   	0, $pop2        # 0: down to label3
-# BB#4:                                 # %if.then3
+# %bb.4:                                # %if.then3
                                         #   in Loop: Header=BB0_2 Depth=1
-	i32.const	$push9=, -4
-	i32.add 	$push8=, $6, $pop9
-	tee_local	$push7=, $6=, $pop8
-	i32.store	0($pop7), $5
+	i32.const	$push5=, -4
+	i32.add 	$6=, $6, $pop5
+	i32.store	0($6), $5
 .LBB0_5:                                # %if.end4
                                         #   in Loop: Header=BB0_2 Depth=1
 	end_block                       # label3:
-	i32.const	$push12=, -4
-	i32.add 	$push11=, $3, $pop12
-	tee_local	$push10=, $3=, $pop11
-	i32.ge_u	$push3=, $pop10, $4
+	i32.const	$push6=, -4
+	i32.add 	$3=, $3, $pop6
+	i32.ge_u	$push3=, $3, $4
 	br_if   	0, $pop3        # 0: up to label2
-# BB#6:                                 # %out
+# %bb.6:                                # %out
 	end_loop
 	i32.ne  	$push4=, $6, $0
 	br_if   	1, $pop4        # 1: down to label0
@@ -55,14 +52,14 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, mem
 	i32.store	mem+396($pop1), $pop0
@@ -78,7 +75,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	mem                     # @mem
 	.type	mem,@object
 	.section	.bss.mem,"aw",@nobits
@@ -116,6 +113,6 @@ wm_SPB:
 	.size	wm_SPB, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

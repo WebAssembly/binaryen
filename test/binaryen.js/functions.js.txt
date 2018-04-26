@@ -1,0 +1,11 @@
+GetFunction is equal: true
+getFunctionTypeInfo={"params":[],"result":1}
+getFunctionInfo={"params":[],"result":1,"vars":[]}
+getExpressionInfo(body)={"id":15,"value":3}
+(i32.const 3)
+
+(module
+ (type $i (func (result i32)))
+ (global $a-global i32 (i32.const 3))
+)
+

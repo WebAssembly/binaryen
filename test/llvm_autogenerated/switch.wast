@@ -9,12 +9,12 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
+ (export "bar32" (func $bar32))
+ (export "bar64" (func $bar64))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "bar32" (func $bar32))
- (export "bar64" (func $bar64))
- (func $bar32 (param $0 i32)
+ (func $bar32 (; 6 ;) (param $0 i32)
   (block $label$0
    (br_if $label$0
     (i32.gt_u
@@ -51,7 +51,7 @@
   )
   (return)
  )
- (func $bar64 (param $0 i64)
+ (func $bar64 (; 7 ;) (param $0 i64)
   (block $label$0
    (br_if $label$0
     (i64.gt_u
@@ -90,38 +90,34 @@
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 8 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 9 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 10 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["foo0","foo1","foo2","foo3","foo4","foo5"], "externs": [], "implementedFunctions": ["_bar32","_bar64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["bar32","bar64","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

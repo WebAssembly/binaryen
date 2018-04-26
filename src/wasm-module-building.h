@@ -35,9 +35,9 @@ static std::mutex debug;
 // Helps build wasm modules efficiently. If you build a module by
 // adding function by function, and you want to optimize them, this class
 // starts optimizing using worker threads *while you are still adding*.
-// It runs function optimization passes at that time, and then at the end
-// it runs global module-level optimization passes. The result is a fully
-// optimized module, optimized while being generated.
+// It runs function optimization passes at that time. This does not
+// run global optimization after that by default, but you can do that
+// to by calling optimizeGlobally().
 //
 // This might also be faster than normal module optimization since it
 // runs all passes on each function, then goes on to the next function
@@ -90,8 +90,12 @@ class OptimizingIncrementalModuleBuilder {
 public:
   // numFunctions must be equal to the number of functions allocated, or higher. Knowing
   // this bounds helps avoid locking.
-  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions, std::function<void (PassRunner&)> addPrePasses, bool debug, bool validateGlobally)
-      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions), addPrePasses(addPrePasses), endMarker(nullptr), list(nullptr), nextFunction(0),
+  OptimizingIncrementalModuleBuilder(Module* wasm, Index numFunctions, PassOptions passOptions,
+      std::function<void (PassRunner&)> addPrePasses,
+      bool debug, bool validateGlobally)
+      : wasm(wasm), numFunctions(numFunctions), passOptions(passOptions),
+        addPrePasses(addPrePasses),
+        endMarker(nullptr), list(nullptr), nextFunction(0),
         numWorkers(0), liveWorkers(0), activeWorkers(0), availableFuncs(0), finishedFuncs(0),
         finishing(false), debug(debug), validateGlobally(validateGlobally) {
 
@@ -165,15 +169,13 @@ public:
       }
       addPrePasses(passRunner);
       passRunner.addDefaultFunctionOptimizationPasses();
-      passRunner.addDefaultGlobalOptimizationPasses();
       passRunner.run();
-      return;
+    } else {
+      DEBUG_THREAD("finish()ing");
+      assert(nextFunction == numFunctions);
+      wakeAllWorkers();
+      waitUntilAllFinished();
     }
-    DEBUG_THREAD("finish()ing");
-    assert(nextFunction == numFunctions);
-    wakeAllWorkers();
-    waitUntilAllFinished();
-    optimizeGlobally();
     // TODO: clear side thread allocators from module allocator, as these threads were transient
   }
 
@@ -226,7 +228,7 @@ private:
 
   void optimizeGlobally() {
     PassRunner passRunner(wasm, passOptions);
-    passRunner.addDefaultGlobalOptimizationPasses();
+    passRunner.addDefaultGlobalOptimizationPostPasses();
     passRunner.run();
   }
 
@@ -236,7 +238,7 @@ private:
     PassRunner passRunner(wasm, passOptions);
     addPrePasses(passRunner);
     passRunner.addDefaultFunctionOptimizationPasses();
-    passRunner.runFunction(func);
+    passRunner.runOnFunction(func);
   }
 
   static void workerMain(OptimizingIncrementalModuleBuilder* self) {

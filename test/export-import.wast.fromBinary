@@ -1,0 +1,9 @@
+(module
+ (type $0 (func))
+ (type $1 (func))
+ (import "env" "test2" (global $gimport$1 i32))
+ (import "env" "test1" (func $test1))
+ (export "test1" (func $test1))
+ (export "test2" (global $gimport$1))
+)
+

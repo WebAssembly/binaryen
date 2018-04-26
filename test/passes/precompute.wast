@@ -1,6 +1,7 @@
 (module
   (memory 0)
   (type $0 (func (param i32)))
+  (global $global$0 (mut i32) (i32.const 0))
   (func $x (type $0) (param $x i32)
     (call $x
       (i32.add
@@ -206,6 +207,76 @@
        )
       )
      )
+     (i32.const 0)
+    )
+   )
+  )
+  (func $reuse-br-value (result f64)
+   (block $label$0 (result f64)
+    (i32.store8
+     (i32.const 1919623207)
+     (if (result i32)
+      (i32.const 1)
+      (block $label$2 (result i32)
+       (drop
+        (i64.and
+         (i64.trunc_u/f32
+          (f32.const 70847791997969805621592064)
+         )
+         (i64.const 729618461987467893)
+        )
+       )
+       (br_if $label$2
+        (i32.const 2049535349)
+        (f32.eq
+         (f32.demote/f64
+          (f64.mul
+           (br_if $label$0 ;; this br is optimized, and br *and* values reused
+            (f64.const 6.134856208230095e-154)
+            (i32.const 690910817)
+           )
+           (f64.const 1.515470884183969e-152)
+          )
+         )
+         (f32.const 66524025679377434935296)
+        )
+       )
+      )
+      (i32.load offset=3 align=2
+        (i32.const 169901344)
+      )
+     )
+    )
+    (f64.const 4776014875438170098655851e156)
+   )
+  )
+  (func $refinalize-two-breaks-one-unreachable
+   (drop
+    (block $label$0 (result i64)
+     (br_if $label$0
+      (select
+       (i64.const 1)
+       (block (result i64)
+        (set_global $global$0
+         (i32.const 1)
+        )
+        (br_if $label$0
+         (i64.const -22)
+         (i32.const -1)
+        )
+       )
+       (i32.const 0)
+      )
+      (i32.const 1)
+     )
+    )
+   )
+  )
+  (func $one-break-value-and-it-is-unreachable (result f64)
+   (local $var$0 i32)
+   (block $label$6 (result f64)
+    (br_if $label$6
+     (unreachable)
      (i32.const 0)
     )
    )

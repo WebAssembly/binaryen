@@ -860,4 +860,131 @@
     )
     (get_local $label)
   )
+  (func $drop-tee-unreachable
+    (local $x i32)
+    (drop
+      (tee_local $x
+        (unreachable)
+      )
+    )
+    (drop
+      (get_local $x)
+    )
+  )
+  (func $if-return-but-unreachable (param $var$0 i64)
+   (if
+    (unreachable)
+    (set_local $var$0
+     (get_local $var$0)
+    )
+    (set_local $var$0
+     (i64.const 1)
+    )
+   )
+  )
+)
+(module
+  (memory (shared 256 256))
+  (type $FUNCSIG$v (func))
+  (type $FUNCSIG$i (func (result i32)))
+  (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
+  (type $FUNCSIG$iiiiii (func (param i32 i32 i32 i32 i32) (result i32)))
+  (type $4 (func (param i32)))
+  (type $5 (func (param i32) (result i32)))
+  (type $6 (func (param i32 i32 i32 i32 i32 i32)))
+  (func $nonatomics (result i32) ;; loads are reordered
+    (local $x i32)
+    (set_local $x (i32.load (i32.const 1024)))
+    (drop (i32.load (i32.const 1028)))
+    (get_local $x)
+  )
+  (func $nonatomic-growmem (result i32) ;; grow_memory is modeled as modifying memory
+    (local $x i32)
+    (set_local $x (i32.load (grow_memory (i32.const 1))))
+    (drop (i32.load (i32.const 1028)))
+    (get_local $x)
+  )
+  (func $atomics ;; atomic loads don't pass each other
+    (local $x i32)
+    (set_local $x (i32.atomic.load (i32.const 1024)))
+    (drop (i32.atomic.load (i32.const 1028)))
+    (drop (get_local $x))
+  )
+  (func $one-atomic ;; atomic loads don't pass other loads
+    (local $x i32)
+    (set_local $x (i32.load (i32.const 1024)))
+    (drop (i32.atomic.load (i32.const 1028)))
+    (drop (get_local $x))
+  )
+  (func $other-atomic ;; atomic loads don't pass other loads
+    (local $x i32)
+    (set_local $x (i32.atomic.load (i32.const 1024)))
+    (drop (i32.load (i32.const 1028)))
+    (drop (get_local $x))
+  )
+  (func $atomic-growmem (result i32) ;; grow_memory is modeled as modifying memory
+    (local $x i32)
+    (set_local $x (i32.load (grow_memory (i32.const 1))))
+    (drop (i32.atomic.load (i32.const 1028)))
+    (get_local $x)
+  )
+  (func $atomicrmw ;; atomic rmw don't pass loads
+    (local $x i32)
+    (set_local $x (i32.atomic.rmw.add (i32.const 1024) (i32.const 1)))
+    (drop (i32.atomic.load (i32.const 1028)))
+    (drop (get_local $x))
+  )
+  (func $atomic-cmpxchg ;; cmpxchg don't pass loads
+    (local $x i32)
+    (set_local $x (i32.atomic.rmw.cmpxchg (i32.const 1024) (i32.const 1) (i32.const 2)))
+    (drop (i32.atomic.load (i32.const 1028)))
+    (drop (get_local $x))
+  )
+  (func $br-value-reordering (result i32)
+   (local $temp i32)
+   (block $outside
+    (loop $loop ;; we should exit this loop, hit the unreachable outside
+     ;; loop logic
+     (br_if $outside ;; we should not create a block value that adds a value to a br, if the value&condition of the br cannot be reordered,
+                     ;; as the value comes first
+      (block (result i32)
+       (br_if $loop
+        (get_local $temp) ;; false, don't loop
+       )
+       (unreachable) ;; the end
+       (set_local $temp
+        (i32.const -1)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (set_local $temp
+     (i32.const -1)
+    )
+   )
+   (unreachable)
+  )
+  (func $br-value-reordering-safe (result i32)
+   (local $temp i32)
+   (block $outside
+    (loop $loop ;; we should exit this loop, hit the unreachable outside
+     ;; loop logic
+     (drop (get_local $temp)) ;; different from above - add a use here
+     (br_if $outside ;; we should not create a block value that adds a value to a br, if the value&condition of the br cannot be reordered,
+                     ;; as the value comes first
+      (block (result i32)
+       (set_local $temp ;; the use *is* in the condition, but it's ok, no conflicts
+        (i32.const -1)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (set_local $temp
+     (i32.const -1)
+    )
+   )
+   (unreachable)
+  )
 )

@@ -1,11 +1,11 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr36034-2.c"
+	.file	"pr36034-2.c"
 	.section	.text.test,"ax",@progbits
-	.hidden	test
+	.hidden	test                    # -- Begin function test
 	.globl	test
 	.type	test,@function
 test:                                   # @test
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.const	$push89=, 0
 	i64.load	$push1=, x($pop89)
@@ -130,14 +130,14 @@ test:                                   # @test
 	.endfunc
 .Lfunc_end0:
 	.size	test, .Lfunc_end0-test
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	test@FUNCTION
 	block   	
 	i32.const	$push62=, 0
@@ -145,181 +145,181 @@ main:                                   # @main
 	f64.const	$push61=, -0x1p0
 	f64.eq  	$push30=, $pop29, $pop61
 	br_if   	0, $pop30       # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push64=, 0
 	f64.load	$push0=, tmp+8($pop64)
 	f64.const	$push63=, -0x1p0
 	f64.eq  	$push31=, $pop0, $pop63
 	br_if   	0, $pop31       # 0: down to label0
-# BB#2:                                 # %entry
+# %bb.2:                                # %entry
 	i32.const	$push66=, 0
 	f64.load	$push1=, tmp+16($pop66)
 	f64.const	$push65=, -0x1p0
 	f64.eq  	$push32=, $pop1, $pop65
 	br_if   	0, $pop32       # 0: down to label0
-# BB#3:                                 # %entry
+# %bb.3:                                # %entry
 	i32.const	$push68=, 0
 	f64.load	$push2=, tmp+24($pop68)
 	f64.const	$push67=, -0x1p0
 	f64.eq  	$push33=, $pop2, $pop67
 	br_if   	0, $pop33       # 0: down to label0
-# BB#4:                                 # %entry
+# %bb.4:                                # %entry
 	i32.const	$push70=, 0
 	f64.load	$push3=, tmp+32($pop70)
 	f64.const	$push69=, -0x1p0
 	f64.eq  	$push34=, $pop3, $pop69
 	br_if   	0, $pop34       # 0: down to label0
-# BB#5:                                 # %entry
+# %bb.5:                                # %entry
 	i32.const	$push72=, 0
 	f64.load	$push4=, tmp+40($pop72)
 	f64.const	$push71=, -0x1p0
 	f64.eq  	$push35=, $pop4, $pop71
 	br_if   	0, $pop35       # 0: down to label0
-# BB#6:                                 # %entry
+# %bb.6:                                # %entry
 	i32.const	$push74=, 0
 	f64.load	$push5=, tmp+48($pop74)
 	f64.const	$push73=, -0x1p0
 	f64.eq  	$push36=, $pop5, $pop73
 	br_if   	0, $pop36       # 0: down to label0
-# BB#7:                                 # %entry
+# %bb.7:                                # %entry
 	i32.const	$push76=, 0
 	f64.load	$push6=, tmp+56($pop76)
 	f64.const	$push75=, -0x1p0
 	f64.eq  	$push37=, $pop6, $pop75
 	br_if   	0, $pop37       # 0: down to label0
-# BB#8:                                 # %entry
+# %bb.8:                                # %entry
 	i32.const	$push78=, 0
 	f64.load	$push7=, tmp+64($pop78)
 	f64.const	$push77=, -0x1p0
 	f64.eq  	$push38=, $pop7, $pop77
 	br_if   	0, $pop38       # 0: down to label0
-# BB#9:                                 # %entry
+# %bb.9:                                # %entry
 	i32.const	$push80=, 0
 	f64.load	$push8=, tmp+72($pop80)
 	f64.const	$push79=, -0x1p0
 	f64.eq  	$push39=, $pop8, $pop79
 	br_if   	0, $pop39       # 0: down to label0
-# BB#10:                                # %entry
+# %bb.10:                               # %entry
 	i32.const	$push82=, 0
 	f64.load	$push9=, tmp+80($pop82)
 	f64.const	$push81=, -0x1p0
 	f64.eq  	$push40=, $pop9, $pop81
 	br_if   	0, $pop40       # 0: down to label0
-# BB#11:                                # %entry
+# %bb.11:                               # %entry
 	i32.const	$push84=, 0
 	f64.load	$push10=, tmp+88($pop84)
 	f64.const	$push83=, -0x1p0
 	f64.eq  	$push41=, $pop10, $pop83
 	br_if   	0, $pop41       # 0: down to label0
-# BB#12:                                # %entry
+# %bb.12:                               # %entry
 	i32.const	$push86=, 0
 	f64.load	$push11=, tmp+96($pop86)
 	f64.const	$push85=, -0x1p0
 	f64.eq  	$push42=, $pop11, $pop85
 	br_if   	0, $pop42       # 0: down to label0
-# BB#13:                                # %entry
+# %bb.13:                               # %entry
 	i32.const	$push88=, 0
 	f64.load	$push12=, tmp+104($pop88)
 	f64.const	$push87=, -0x1p0
 	f64.eq  	$push43=, $pop12, $pop87
 	br_if   	0, $pop43       # 0: down to label0
-# BB#14:                                # %entry
+# %bb.14:                               # %entry
 	i32.const	$push90=, 0
 	f64.load	$push13=, tmp+112($pop90)
 	f64.const	$push89=, -0x1p0
 	f64.eq  	$push44=, $pop13, $pop89
 	br_if   	0, $pop44       # 0: down to label0
-# BB#15:                                # %entry
+# %bb.15:                               # %entry
 	i32.const	$push92=, 0
 	f64.load	$push14=, tmp+120($pop92)
 	f64.const	$push91=, -0x1p0
 	f64.eq  	$push45=, $pop14, $pop91
 	br_if   	0, $pop45       # 0: down to label0
-# BB#16:                                # %entry
+# %bb.16:                               # %entry
 	i32.const	$push94=, 0
 	f64.load	$push15=, tmp+128($pop94)
 	f64.const	$push93=, -0x1p0
 	f64.eq  	$push46=, $pop15, $pop93
 	br_if   	0, $pop46       # 0: down to label0
-# BB#17:                                # %entry
+# %bb.17:                               # %entry
 	i32.const	$push96=, 0
 	f64.load	$push16=, tmp+136($pop96)
 	f64.const	$push95=, -0x1p0
 	f64.eq  	$push47=, $pop16, $pop95
 	br_if   	0, $pop47       # 0: down to label0
-# BB#18:                                # %entry
+# %bb.18:                               # %entry
 	i32.const	$push98=, 0
 	f64.load	$push17=, tmp+144($pop98)
 	f64.const	$push97=, -0x1p0
 	f64.eq  	$push48=, $pop17, $pop97
 	br_if   	0, $pop48       # 0: down to label0
-# BB#19:                                # %entry
+# %bb.19:                               # %entry
 	i32.const	$push100=, 0
 	f64.load	$push18=, tmp+152($pop100)
 	f64.const	$push99=, -0x1p0
 	f64.eq  	$push49=, $pop18, $pop99
 	br_if   	0, $pop49       # 0: down to label0
-# BB#20:                                # %entry
+# %bb.20:                               # %entry
 	i32.const	$push102=, 0
 	f64.load	$push19=, tmp+160($pop102)
 	f64.const	$push101=, -0x1p0
 	f64.eq  	$push50=, $pop19, $pop101
 	br_if   	0, $pop50       # 0: down to label0
-# BB#21:                                # %entry
+# %bb.21:                               # %entry
 	i32.const	$push104=, 0
 	f64.load	$push20=, tmp+168($pop104)
 	f64.const	$push103=, -0x1p0
 	f64.eq  	$push51=, $pop20, $pop103
 	br_if   	0, $pop51       # 0: down to label0
-# BB#22:                                # %entry
+# %bb.22:                               # %entry
 	i32.const	$push106=, 0
 	f64.load	$push21=, tmp+176($pop106)
 	f64.const	$push105=, -0x1p0
 	f64.eq  	$push52=, $pop21, $pop105
 	br_if   	0, $pop52       # 0: down to label0
-# BB#23:                                # %entry
+# %bb.23:                               # %entry
 	i32.const	$push108=, 0
 	f64.load	$push22=, tmp+184($pop108)
 	f64.const	$push107=, -0x1p0
 	f64.eq  	$push53=, $pop22, $pop107
 	br_if   	0, $pop53       # 0: down to label0
-# BB#24:                                # %entry
+# %bb.24:                               # %entry
 	i32.const	$push110=, 0
 	f64.load	$push23=, tmp+192($pop110)
 	f64.const	$push109=, -0x1p0
 	f64.eq  	$push54=, $pop23, $pop109
 	br_if   	0, $pop54       # 0: down to label0
-# BB#25:                                # %entry
+# %bb.25:                               # %entry
 	i32.const	$push112=, 0
 	f64.load	$push24=, tmp+200($pop112)
 	f64.const	$push111=, -0x1p0
 	f64.eq  	$push55=, $pop24, $pop111
 	br_if   	0, $pop55       # 0: down to label0
-# BB#26:                                # %entry
+# %bb.26:                               # %entry
 	i32.const	$push114=, 0
 	f64.load	$push25=, tmp+208($pop114)
 	f64.const	$push113=, -0x1p0
 	f64.eq  	$push56=, $pop25, $pop113
 	br_if   	0, $pop56       # 0: down to label0
-# BB#27:                                # %entry
+# %bb.27:                               # %entry
 	i32.const	$push116=, 0
 	f64.load	$push26=, tmp+216($pop116)
 	f64.const	$push115=, -0x1p0
 	f64.eq  	$push57=, $pop26, $pop115
 	br_if   	0, $pop57       # 0: down to label0
-# BB#28:                                # %entry
+# %bb.28:                               # %entry
 	i32.const	$push118=, 0
 	f64.load	$push27=, tmp+224($pop118)
 	f64.const	$push117=, -0x1p0
 	f64.eq  	$push58=, $pop27, $pop117
 	br_if   	0, $pop58       # 0: down to label0
-# BB#29:                                # %entry
+# %bb.29:                               # %entry
 	i32.const	$push120=, 0
 	f64.load	$push28=, tmp+232($pop120)
 	f64.const	$push119=, -0x1p0
 	f64.eq  	$push59=, $pop28, $pop119
 	br_if   	0, $pop59       # 0: down to label0
-# BB#30:                                # %for.cond1.5.4
+# %bb.30:                               # %for.cond1.5.4
 	i32.const	$push60=, 0
 	return  	$pop60
 .LBB1_31:                               # %if.then
@@ -329,7 +329,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
@@ -398,5 +398,5 @@ tmp:
 	.size	tmp, 240
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

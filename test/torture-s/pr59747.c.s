@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59747.c"
+	.file	"pr59747.c"
 	.section	.text.fn1,"ax",@progbits
-	.hidden	fn1
+	.hidden	fn1                     # -- Begin function fn1
 	.globl	fn1
 	.type	fn1,@function
 fn1:                                    # @fn1
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2
 	i32.shl 	$push1=, $0, $pop0
 	i32.const	$push2=, a
@@ -17,15 +17,15 @@ fn1:                                    # @fn1
 	.endfunc
 .Lfunc_end0:
 	.size	fn1, .Lfunc_end0-fn1
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push16=, 0
 	i32.const	$push0=, 1
 	i32.store	a($pop16), $pop0
@@ -34,22 +34,21 @@ main:                                   # @main
 	block   	
 	i32.const	$push14=, 0
 	i32.load	$push1=, c($pop14)
-	i32.eqz 	$push22=, $pop1
-	br_if   	0, $pop22       # 0: down to label0
-# BB#1:                                 # %if.then
-	i32.const	$push19=, 0
+	i32.eqz 	$push20=, $pop1
+	br_if   	0, $pop20       # 0: down to label0
+# %bb.1:                                # %if.then
 	i32.const	$push2=, -1
-	i32.add 	$push18=, $0, $pop2
-	tee_local	$push17=, $0=, $pop18
-	i32.store16	e($pop19), $pop17
+	i32.add 	$0=, $0, $pop2
+	i32.const	$push17=, 0
+	i32.store16	e($pop17), $0
 .LBB1_2:                                # %if.end
 	end_block                       # label0:
-	i32.const	$push21=, 0
+	i32.const	$push19=, 0
 	i32.const	$push3=, 16
 	i32.shl 	$push4=, $0, $pop3
-	i32.const	$push20=, 16
-	i32.shr_s	$push5=, $pop4, $pop20
-	i32.store	d($pop21), $pop5
+	i32.const	$push18=, 16
+	i32.shr_s	$push5=, $pop4, $pop18
+	i32.store	d($pop19), $pop5
 	block   	
 	i64.extend_u/i32	$push6=, $0
 	i64.const	$push7=, 48
@@ -59,7 +58,7 @@ main:                                   # @main
 	i32.wrap/i64	$push11=, $pop10
 	i32.call	$push12=, fn1@FUNCTION, $pop11
 	br_if   	0, $pop12       # 0: down to label1
-# BB#3:                                 # %if.end5
+# %bb.3:                                # %if.end5
 	i32.const	$push13=, 0
 	call    	exit@FUNCTION, $pop13
 	unreachable
@@ -70,7 +69,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	c                       # @c
 	.type	c,@object
 	.section	.data.c,"aw",@progbits
@@ -108,6 +107,6 @@ d:
 	.size	d, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

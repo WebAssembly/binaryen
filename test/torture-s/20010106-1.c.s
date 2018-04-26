@@ -1,24 +1,23 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20010106-1.c"
+	.file	"20010106-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i32.const	$push6=, 2
+	i32.add 	$0=, $0, $pop6
 	block   	
-	i32.const	$push8=, 2
-	i32.add 	$push7=, $0, $pop8
-	tee_local	$push6=, $0=, $pop7
 	i32.const	$push0=, 7
-	i32.ge_u	$push1=, $pop6, $pop0
+	i32.ge_u	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %switch.lookup
-	i32.const	$push9=, 2
-	i32.shl 	$push2=, $0, $pop9
-	i32.const	$push3=, .Lswitch.table
+# %bb.1:                                # %switch.lookup
+	i32.const	$push7=, 2
+	i32.shl 	$push2=, $0, $pop7
+	i32.const	$push3=, .Lswitch.table.f
 	i32.add 	$push4=, $pop2, $pop3
 	i32.load	$push5=, 0($pop4)
 	return  	$pop5
@@ -29,25 +28,25 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
-	.type	.Lswitch.table,@object  # @switch.table
-	.section	.rodata..Lswitch.table,"a",@progbits
+                                        # -- End function
+	.type	.Lswitch.table.f,@object # @switch.table.f
+	.section	.rodata..Lswitch.table.f,"a",@progbits
 	.p2align	4
-.Lswitch.table:
+.Lswitch.table.f:
 	.int32	33                      # 0x21
 	.int32	0                       # 0x0
 	.int32	7                       # 0x7
@@ -55,9 +54,9 @@ main:                                   # @main
 	.int32	3                       # 0x3
 	.int32	15                      # 0xf
 	.int32	9                       # 0x9
-	.size	.Lswitch.table, 28
+	.size	.Lswitch.table.f, 28
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

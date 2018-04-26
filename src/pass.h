@@ -57,11 +57,25 @@ private:
 
 struct PassOptions {
   bool debug = false; // run passes in debug mode, doing extra validation and timing checks
+  bool validate = true; // whether to run the validator to check for errors
   bool validateGlobally = false; // when validating validate globally and not just locally
   int optimizeLevel = 0; // 0, 1, 2 correspond to -O0, -O1, -O2, etc.
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
   bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
+  FeatureSet features = Feature::MVP; // Which wasm features to accept, and be allowed to use
+
+  void setDefaultOptimizationOptions() {
+    // -Os is our default
+    optimizeLevel = 2;
+    shrinkLevel = 1;
+  }
+
+  static PassOptions getWithDefaultOptimizationOptions() {
+    PassOptions ret;
+    ret.setDefaultOptimizationOptions();
+    return ret;
+  }
 };
 
 //
@@ -76,12 +90,19 @@ struct PassRunner {
   PassRunner(Module* wasm) : wasm(wasm), allocator(&wasm->allocator) {}
   PassRunner(Module* wasm, PassOptions options) : wasm(wasm), allocator(&wasm->allocator), options(options) {}
 
+  // no copying, we control |passes|
+  PassRunner(const PassRunner&) = delete;
+  PassRunner& operator=(const PassRunner&) = delete;
+
   void setDebug(bool debug_) {
     options.debug = debug_;
     options.validateGlobally = debug_; // validate everything by default if debugging
   }
   void setValidateGlobally(bool validate) {
     options.validateGlobally = validate;
+  }
+  void setFeatures(FeatureSet features) {
+    options.features = features;
   }
 
   void add(std::string passName) {
@@ -109,14 +130,20 @@ struct PassRunner {
   void addDefaultFunctionOptimizationPasses();
 
   // Adds the default optimization passes that work on
-  // entire modules as a whole.
-  void addDefaultGlobalOptimizationPasses();
+  // entire modules as a whole, and make sense to
+  // run before function passes.
+  void addDefaultGlobalOptimizationPrePasses();
+
+  // Adds the default optimization passes that work on
+  // entire modules as a whole, and make sense to
+  // run after function passes.
+  void addDefaultGlobalOptimizationPostPasses();
 
   // Run the passes on the module
   void run();
 
   // Run the passes on a specific function
-  void runFunction(Function* func);
+  void runOnFunction(Function* func);
 
   // Get the last pass that was already executed of a certain type.
   template<class P>
@@ -168,7 +195,7 @@ public:
 
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
-  virtual void runFunction(PassRunner* runner, Module* module, Function* function) {
+  virtual void runOnFunction(PassRunner* runner, Module* module, Function* function) {
     WASM_UNREACHABLE();
   }
 
@@ -207,6 +234,9 @@ template <typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
   PassRunner *runner;
 
+protected:
+  typedef WalkerPass<WalkerType> super;
+
 public:
   void run(PassRunner* runner, Module* module) override {
     setPassRunner(runner);
@@ -214,7 +244,7 @@ public:
     WalkerType::walkModule(module);
   }
 
-  void runFunction(PassRunner* runner, Module* module, Function* func) override {
+  void runOnFunction(PassRunner* runner, Module* module, Function* func) override {
     setPassRunner(runner);
     WalkerType::setModule(module);
     WalkerType::walkFunction(func);
@@ -236,29 +266,6 @@ public:
 // Standard passes. All passes in /passes/ are runnable from the shell,
 // but registering them here in addition allows them to communicate
 // e.g. through PassRunner::getLast
-
-// Handles names in a module, in particular adding names without duplicates
-class NameManager : public WalkerPass<PostWalker<NameManager>> {
- public:
-  Name getUnique(std::string prefix);
-  // TODO: getUniqueInFunction
-
-  // visitors
-  void visitBlock(Block* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
-  void visitFunctionType(FunctionType* curr);
-  void visitFunction(Function* curr);
-  void visitImport(Import* curr);
-  void visitExport(Export* curr);
-
-private:
-  std::set<Name> names;
-  size_t counter = 0;
-};
 
 // Prints out a module
 class Printer : public Pass {

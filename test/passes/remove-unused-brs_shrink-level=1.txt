@@ -3,7 +3,7 @@
  (type $1 (func))
  (type $2 (func (result i32)))
  (memory $0 256 256)
- (func $b14 (type $2) (result i32)
+ (func $b14 (; 0 ;) (type $2) (result i32)
   (drop
    (select
     (block $block1 (result i32)
@@ -45,7 +45,7 @@
   )
   (i32.const 0)
  )
- (func $join-br_ifs (type $1)
+ (func $join-br_ifs (; 1 ;) (type $1)
   (block $out
    (br_if $out
     (i32.or
@@ -122,5 +122,150 @@
     (call $b14)
    )
   )
+ )
+ (func $join-and-it-becomes-unreachable (; 2 ;) (type $1)
+  (block $label$1
+   (block $block
+    (br_if $label$1
+     (i32.load8_u
+      (i32.const -93487262)
+     )
+    )
+    (br_if $label$1
+     (loop $label$5
+      (br $label$5)
+     )
+    )
+   )
+  )
+ )
+ (func $br-if-unreachable-pair (; 3 ;) (type $1)
+  (block $label$14
+   (br_if $label$14
+    (unreachable)
+   )
+   (br_if $label$14
+    (i32.const 0)
+   )
+  )
+ )
+ (func $br-if-unreachable-pair2 (; 4 ;) (type $1)
+  (block $label$14
+   (br_if $label$14
+    (i32.const 0)
+   )
+   (br_if $label$14
+    (unreachable)
+   )
+  )
+ )
+ (func $simple-switch (; 5 ;) (type $2) (result i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_table $A $y $y $y $y $y $A $y $y $y $y $A $y
+      (i32.const 0)
+     )
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-2 (; 6 ;) (type $2) (result i32)
+  (local $0 i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_if $A
+      (i32.or
+       (i32.eqz
+        (tee_local $0
+         (i32.const 0)
+        )
+       )
+       (i32.eq
+        (get_local $0)
+        (i32.const 12)
+       )
+      )
+     )
+     (nop)
+     (br $y)
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-3 (; 7 ;) (type $2) (result i32)
+  (local $0 i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_if $A
+      (i32.eqz
+       (tee_local $0
+        (i32.const 0)
+       )
+      )
+     )
+     (br_if $B
+      (i32.eq
+       (get_local $0)
+       (i32.const 1025)
+      )
+     )
+     (br $y)
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-4 (; 8 ;) (type $2) (result i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_table $A $y $y $y $y $y $A $y $y $y $y $y $A $y
+      (i32.const 0)
+     )
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
  )
 )

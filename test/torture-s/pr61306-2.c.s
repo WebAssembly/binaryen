@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr61306-2.c"
+	.file	"pr61306-2.c"
 	.section	.text.fake_bswap32,"ax",@progbits
-	.hidden	fake_bswap32
+	.hidden	fake_bswap32            # -- Begin function fake_bswap32
 	.globl	fake_bswap32
 	.type	fake_bswap32,@function
 fake_bswap32:                           # @fake_bswap32
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 24
 	i32.shr_u	$push2=, $0, $pop0
 	i32.const	$push16=, 24
@@ -29,21 +29,21 @@ fake_bswap32:                           # @fake_bswap32
 	.endfunc
 .Lfunc_end0:
 	.size	fake_bswap32, .Lfunc_end0-fake_bswap32
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, -2122153084
 	i32.call	$push1=, fake_bswap32@FUNCTION, $pop0
 	i32.const	$push2=, -8158591
 	i32.ne  	$push3=, $pop1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
@@ -53,7 +53,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

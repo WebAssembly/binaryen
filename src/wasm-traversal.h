@@ -32,41 +32,47 @@
 
 namespace wasm {
 
+// A generic visitor, defaulting to doing nothing on each visit
+
 template<typename SubType, typename ReturnType = void>
 struct Visitor {
   // Expression visitors
-  ReturnType visitBlock(Block* curr) {}
-  ReturnType visitIf(If* curr) {}
-  ReturnType visitLoop(Loop* curr) {}
-  ReturnType visitBreak(Break* curr) {}
-  ReturnType visitSwitch(Switch* curr) {}
-  ReturnType visitCall(Call* curr) {}
-  ReturnType visitCallImport(CallImport* curr) {}
-  ReturnType visitCallIndirect(CallIndirect* curr) {}
-  ReturnType visitGetLocal(GetLocal* curr) {}
-  ReturnType visitSetLocal(SetLocal* curr) {}
-  ReturnType visitGetGlobal(GetGlobal* curr) {}
-  ReturnType visitSetGlobal(SetGlobal* curr) {}
-  ReturnType visitLoad(Load* curr) {}
-  ReturnType visitStore(Store* curr) {}
-  ReturnType visitConst(Const* curr) {}
-  ReturnType visitUnary(Unary* curr) {}
-  ReturnType visitBinary(Binary* curr) {}
-  ReturnType visitSelect(Select* curr) {}
-  ReturnType visitDrop(Drop* curr) {}
-  ReturnType visitReturn(Return* curr) {}
-  ReturnType visitHost(Host* curr) {}
-  ReturnType visitNop(Nop* curr) {}
-  ReturnType visitUnreachable(Unreachable* curr) {}
+  ReturnType visitBlock(Block* curr) { return ReturnType(); }
+  ReturnType visitIf(If* curr) { return ReturnType(); }
+  ReturnType visitLoop(Loop* curr) { return ReturnType(); }
+  ReturnType visitBreak(Break* curr) { return ReturnType(); }
+  ReturnType visitSwitch(Switch* curr) { return ReturnType(); }
+  ReturnType visitCall(Call* curr) { return ReturnType(); }
+  ReturnType visitCallImport(CallImport* curr) { return ReturnType(); }
+  ReturnType visitCallIndirect(CallIndirect* curr) { return ReturnType(); }
+  ReturnType visitGetLocal(GetLocal* curr) { return ReturnType(); }
+  ReturnType visitSetLocal(SetLocal* curr) { return ReturnType(); }
+  ReturnType visitGetGlobal(GetGlobal* curr) { return ReturnType(); }
+  ReturnType visitSetGlobal(SetGlobal* curr) { return ReturnType(); }
+  ReturnType visitLoad(Load* curr) { return ReturnType(); }
+  ReturnType visitStore(Store* curr) { return ReturnType(); }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) { return ReturnType(); }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return ReturnType(); }
+  ReturnType visitAtomicWait(AtomicWait* curr) { return ReturnType(); }
+  ReturnType visitAtomicWake(AtomicWake* curr) { return ReturnType(); }
+  ReturnType visitConst(Const* curr) { return ReturnType(); }
+  ReturnType visitUnary(Unary* curr) { return ReturnType(); }
+  ReturnType visitBinary(Binary* curr) { return ReturnType(); }
+  ReturnType visitSelect(Select* curr) { return ReturnType(); }
+  ReturnType visitDrop(Drop* curr) { return ReturnType(); }
+  ReturnType visitReturn(Return* curr) { return ReturnType(); }
+  ReturnType visitHost(Host* curr) { return ReturnType(); }
+  ReturnType visitNop(Nop* curr) { return ReturnType(); }
+  ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
   // Module-level visitors
-  ReturnType visitFunctionType(FunctionType* curr) {}
-  ReturnType visitImport(Import* curr) {}
-  ReturnType visitExport(Export* curr) {}
-  ReturnType visitGlobal(Global* curr) {}
-  ReturnType visitFunction(Function* curr) {}
-  ReturnType visitTable(Table* curr) {}
-  ReturnType visitMemory(Memory* curr) {}
-  ReturnType visitModule(Module* curr) {}
+  ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
+  ReturnType visitImport(Import* curr) { return ReturnType(); }
+  ReturnType visitExport(Export* curr) { return ReturnType(); }
+  ReturnType visitGlobal(Global* curr) { return ReturnType(); }
+  ReturnType visitFunction(Function* curr) { return ReturnType(); }
+  ReturnType visitTable(Table* curr) { return ReturnType(); }
+  ReturnType visitMemory(Memory* curr) { return ReturnType(); }
+  ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
     assert(curr);
@@ -90,6 +96,102 @@ struct Visitor {
       case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
       case Expression::Id::LoadId: DELEGATE(Load);
       case Expression::Id::StoreId: DELEGATE(Store);
+      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
+      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
+      case Expression::Id::ConstId: DELEGATE(Const);
+      case Expression::Id::UnaryId: DELEGATE(Unary);
+      case Expression::Id::BinaryId: DELEGATE(Binary);
+      case Expression::Id::SelectId: DELEGATE(Select);
+      case Expression::Id::DropId: DELEGATE(Drop);
+      case Expression::Id::ReturnId: DELEGATE(Return);
+      case Expression::Id::HostId: DELEGATE(Host);
+      case Expression::Id::NopId: DELEGATE(Nop);
+      case Expression::Id::UnreachableId: DELEGATE(Unreachable);
+      case Expression::Id::InvalidId:
+      default: WASM_UNREACHABLE();
+    }
+
+    #undef DELEGATE
+  }
+};
+
+// A visitor which must be overridden for each visitor that is reached.
+
+template<typename SubType, typename ReturnType = void>
+struct OverriddenVisitor {
+  // Expression visitors, which must be overridden
+  #define UNIMPLEMENTED(CLASS_TO_VISIT) \
+    ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { \
+      static_assert(&SubType::visit##CLASS_TO_VISIT != &OverriddenVisitor<SubType, ReturnType>::visit##CLASS_TO_VISIT, "Derived class must implement visit" #CLASS_TO_VISIT); \
+      WASM_UNREACHABLE(); \
+    }
+
+  UNIMPLEMENTED(Block);
+  UNIMPLEMENTED(If);
+  UNIMPLEMENTED(Loop);
+  UNIMPLEMENTED(Break);
+  UNIMPLEMENTED(Switch);
+  UNIMPLEMENTED(Call);
+  UNIMPLEMENTED(CallImport);
+  UNIMPLEMENTED(CallIndirect);
+  UNIMPLEMENTED(GetLocal);
+  UNIMPLEMENTED(SetLocal);
+  UNIMPLEMENTED(GetGlobal);
+  UNIMPLEMENTED(SetGlobal);
+  UNIMPLEMENTED(Load);
+  UNIMPLEMENTED(Store);
+  UNIMPLEMENTED(AtomicRMW);
+  UNIMPLEMENTED(AtomicCmpxchg);
+  UNIMPLEMENTED(AtomicWait);
+  UNIMPLEMENTED(AtomicWake);
+  UNIMPLEMENTED(Const);
+  UNIMPLEMENTED(Unary);
+  UNIMPLEMENTED(Binary);
+  UNIMPLEMENTED(Select);
+  UNIMPLEMENTED(Drop);
+  UNIMPLEMENTED(Return);
+  UNIMPLEMENTED(Host);
+  UNIMPLEMENTED(Nop);
+  UNIMPLEMENTED(Unreachable);
+  UNIMPLEMENTED(FunctionType);
+  UNIMPLEMENTED(Import);
+  UNIMPLEMENTED(Export);
+  UNIMPLEMENTED(Global);
+  UNIMPLEMENTED(Function);
+  UNIMPLEMENTED(Table);
+  UNIMPLEMENTED(Memory);
+  UNIMPLEMENTED(Module);
+
+  #undef UNIMPLEMENTED
+
+  ReturnType visit(Expression* curr) {
+    assert(curr);
+
+    #define DELEGATE(CLASS_TO_VISIT) \
+      return static_cast<SubType*>(this)-> \
+          visit##CLASS_TO_VISIT(static_cast<CLASS_TO_VISIT*>(curr))
+
+    switch (curr->_id) {
+      case Expression::Id::BlockId: DELEGATE(Block);
+      case Expression::Id::IfId: DELEGATE(If);
+      case Expression::Id::LoopId: DELEGATE(Loop);
+      case Expression::Id::BreakId: DELEGATE(Break);
+      case Expression::Id::SwitchId: DELEGATE(Switch);
+      case Expression::Id::CallId: DELEGATE(Call);
+      case Expression::Id::CallImportId: DELEGATE(CallImport);
+      case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
+      case Expression::Id::GetLocalId: DELEGATE(GetLocal);
+      case Expression::Id::SetLocalId: DELEGATE(SetLocal);
+      case Expression::Id::GetGlobalId: DELEGATE(GetGlobal);
+      case Expression::Id::SetGlobalId: DELEGATE(SetGlobal);
+      case Expression::Id::LoadId: DELEGATE(Load);
+      case Expression::Id::StoreId: DELEGATE(Store);
+      case Expression::Id::AtomicRMWId: DELEGATE(AtomicRMW);
+      case Expression::Id::AtomicCmpxchgId: DELEGATE(AtomicCmpxchg);
+      case Expression::Id::AtomicWaitId: DELEGATE(AtomicWait);
+      case Expression::Id::AtomicWakeId: DELEGATE(AtomicWake);
       case Expression::Id::ConstId: DELEGATE(Const);
       case Expression::Id::UnaryId: DELEGATE(Unary);
       case Expression::Id::BinaryId: DELEGATE(Binary);
@@ -113,7 +215,7 @@ struct Visitor {
 template<typename SubType, typename ReturnType = void>
 struct UnifiedExpressionVisitor : public Visitor<SubType> {
   // called on each node
-  ReturnType visitExpression(Expression* curr) {}
+  ReturnType visitExpression(Expression* curr) { return ReturnType(); }
 
   // redirects
   ReturnType visitBlock(Block* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -130,6 +232,10 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
   ReturnType visitSetGlobal(SetGlobal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitLoad(Load* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitStore(Store* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicRMW(AtomicRMW* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicCmpxchg(AtomicCmpxchg* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicWait(AtomicWait* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
+  ReturnType visitAtomicWake(AtomicWake* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitConst(Const* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitUnary(Unary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitBinary(Binary* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -263,6 +369,7 @@ struct Walker : public VisitorType {
   };
 
   void pushTask(TaskFunc func, Expression** currp) {
+    assert(*currp);
     stack.emplace_back(func, currp);
   }
   void maybePushTask(TaskFunc func, Expression** currp) {
@@ -306,6 +413,10 @@ struct Walker : public VisitorType {
   static void doVisitSetGlobal(SubType* self, Expression** currp)    { self->visitSetGlobal((*currp)->cast<SetGlobal>()); }
   static void doVisitLoad(SubType* self, Expression** currp)         { self->visitLoad((*currp)->cast<Load>()); }
   static void doVisitStore(SubType* self, Expression** currp)        { self->visitStore((*currp)->cast<Store>()); }
+  static void doVisitAtomicRMW(SubType* self, Expression** currp)    { self->visitAtomicRMW((*currp)->cast<AtomicRMW>()); }
+  static void doVisitAtomicCmpxchg(SubType* self, Expression** currp){ self->visitAtomicCmpxchg((*currp)->cast<AtomicCmpxchg>()); }
+  static void doVisitAtomicWait(SubType* self, Expression** currp)   { self->visitAtomicWait((*currp)->cast<AtomicWait>()); }
+  static void doVisitAtomicWake(SubType* self, Expression** currp)   { self->visitAtomicWake((*currp)->cast<AtomicWake>()); }
   static void doVisitConst(SubType* self, Expression** currp)        { self->visitConst((*currp)->cast<Const>()); }
   static void doVisitUnary(SubType* self, Expression** currp)        { self->visitUnary((*currp)->cast<Unary>()); }
   static void doVisitBinary(SubType* self, Expression** currp)       { self->visitBinary((*currp)->cast<Binary>()); }
@@ -428,6 +539,32 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::scan, &curr->cast<Store>()->ptr);
         break;
       }
+      case Expression::Id::AtomicRMWId: {
+        self->pushTask(SubType::doVisitAtomicRMW, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->value);
+        self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicCmpxchgId: {
+        self->pushTask(SubType::doVisitAtomicCmpxchg, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->replacement);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->expected);
+        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicWaitId: {
+        self->pushTask(SubType::doVisitAtomicWait, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->timeout);
+        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->expected);
+        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->ptr);
+        break;
+      }
+      case Expression::Id::AtomicWakeId: {
+        self->pushTask(SubType::doVisitAtomicWake, currp);
+        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->wakeCount);
+        self->pushTask(SubType::scan, &curr->cast<AtomicWake>()->ptr);
+        break;
+      }
       case Expression::Id::ConstId: {
         self->pushTask(SubType::doVisitConst, currp);
         break;
@@ -513,7 +650,7 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
   }
 
   static void doPostVisitControlFlow(SubType* self, Expression** currp) {
-    assert(self->controlFlowStack.back() == *currp);
+    // note that we might be popping something else, as we may have been replaced
     self->controlFlowStack.pop_back();
   }
 
@@ -568,6 +705,12 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
       if (i == 0) return nullptr;
       i--;
     }
+  }
+
+  Expression* getParent() {
+    if (expressionStack.size() == 1) return nullptr;
+    assert(expressionStack.size() >= 2);
+    return expressionStack[expressionStack.size() - 2];
   }
 
   static void doPreVisit(SubType* self, Expression** currp) {

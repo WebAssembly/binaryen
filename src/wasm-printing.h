@@ -27,6 +27,7 @@ namespace wasm {
 struct WasmPrinter {
   static std::ostream& printModule(Module* module, std::ostream& o) {
     PassRunner passRunner(module);
+    passRunner.setFeatures(Feature::All);
     passRunner.setIsNested(true);
     passRunner.add<Printer>(&o);
     passRunner.run();

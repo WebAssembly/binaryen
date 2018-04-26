@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/floatunsisf-1.c"
+	.file	"floatunsisf-1.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push10=, 0
 	i32.const	$push9=, 0
 	i32.load	$push0=, u($pop9)
@@ -22,7 +22,7 @@ main:                                   # @main
 	f32.load	$push4=, f2($pop6)
 	f32.eq  	$push5=, $pop3, $pop4
 	br_if   	0, $pop5        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB0_2:                                # %if.end
@@ -33,7 +33,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	u                       # @u
 	.type	u,@object
 	.section	.data.u,"aw",@progbits
@@ -62,6 +62,6 @@ f2:
 	.size	f2, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

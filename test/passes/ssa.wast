@@ -1,4 +1,5 @@
 (module
+  (global $global$0 (mut i32) (i32.const 1))
   (func $basics (param $x i32)
     (local $y i32)
     (local $z f32)
@@ -310,6 +311,77 @@
       )
     )
     (drop (get_local $x)) ;; can receive from either set, or input param
+  )
+  (func $func_6 (result i32)
+   (local $result i32)
+   (local $zero i32)
+   (loop $label$1
+    (if
+     (i32.eqz
+      (get_global $global$0)
+     )
+     (return
+      (get_local $result) ;; we eventually reach here
+     )
+    )
+    (set_global $global$0
+     (i32.const 0) ;; tell next iteration to return
+    )
+    (set_local $result
+     (i32.const 1) ;; set the return value to 1, temporarily
+    )
+    (br_if $label$1
+     (i32.const 0) ;; don't do anything here
+    )
+    (set_local $result
+     (get_local $zero) ;; set it to zero instead
+    )
+    (br $label$1) ;; back to the top, where we will return the zero
+   )
+  )
+  (func $ssa-merge-tricky (result i32)
+   (local $var$0 i32)
+   (local $var$1 i32)
+   (set_local $var$1
+    (tee_local $var$0
+     (i32.const 0) ;; both vars start out identical
+    )
+   )
+   (loop $label$1
+    (if
+     (i32.eqz
+      (get_global $global$0)
+     )
+     (return
+      (i32.const 12345)
+     )
+    )
+    (set_global $global$0
+     (i32.const 0)
+    )
+    (if
+     (i32.eqz
+      (get_local $var$0) ;; check $0 here. this will get a phi var
+     )
+     (br_if $label$1
+      (i32.eqz
+       (tee_local $var$0 ;; set $0 to 1. here the two diverge. for the phi, we'll get a set here and above
+        (i32.const 1)
+       )
+      )
+     )
+    )
+    (br_if $label$1
+     (i32.eqz ;; indeed equal, enter loop again, and then hang prevention kicks in
+      (tee_local $var$1 ;; set them all to 0
+       (tee_local $var$0
+        (get_local $var$1) ;; this must get $1, not the phis, as even though the sets appear in both sources, we only execute 1.
+       )
+      )
+     )
+    )
+   )
+   (i32.const -54)
   )
 )
 

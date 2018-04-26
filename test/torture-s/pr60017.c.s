@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr60017.c"
+	.file	"pr60017.c"
 	.section	.text.func,"ax",@progbits
-	.hidden	func
+	.hidden	func                    # -- Begin function func
 	.globl	func
 	.type	func,@function
 func:                                   # @func
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 8
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 0
@@ -19,21 +19,21 @@ func:                                   # @func
 	.endfunc
 .Lfunc_end0:
 	.size	func, .Lfunc_end0-func
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push3=, 0
 	i32.load16_u	$push0=, x+12($pop3)
 	i32.const	$push1=, 9
 	i32.ne  	$push2=, $pop0, $pop1
 	br_if   	0, $pop2        # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push4=, 0
 	return  	$pop4
 .LBB1_2:                                # %if.then
@@ -43,7 +43,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	x                       # @x
 	.type	x,@object
 	.section	.data.x,"aw",@progbits
@@ -62,5 +62,5 @@ x:
 	.size	x, 16
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

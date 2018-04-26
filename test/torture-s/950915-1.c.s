@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/950915-1.c"
+	.file	"950915-1.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i64.load32_s	$push2=, b($pop0)
 	i32.const	$push7=, 0
@@ -19,14 +19,14 @@ f:                                      # @f
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push9=, 0
 	i64.load32_s	$push1=, b($pop9)
@@ -39,7 +39,7 @@ main:                                   # @main
 	i32.const	$push6=, -1
 	i32.gt_s	$push7=, $pop5, $pop6
 	br_if   	0, $pop7        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	call    	abort@FUNCTION
 	unreachable
 .LBB1_2:                                # %if.end
@@ -50,7 +50,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.data.a,"aw",@progbits
@@ -70,6 +70,6 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void
 	.functype	exit, void, i32

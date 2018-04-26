@@ -12,9 +12,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "byval_arg" (func $byval_arg))
  (export "byval_arg_align8" (func $byval_arg_align8))
  (export "byval_arg_double" (func $byval_arg_double))
@@ -22,7 +19,10 @@
  (export "byval_empty_caller" (func $byval_empty_caller))
  (export "byval_empty_callee" (func $byval_empty_callee))
  (export "big_byval" (func $big_byval))
- (func $byval_arg (param $0 i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $byval_arg (; 8 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -56,7 +56,7 @@
   )
   (return)
  )
- (func $byval_arg_align8 (param $0 i32)
+ (func $byval_arg_align8 (; 9 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -90,7 +90,7 @@
   )
   (return)
  )
- (func $byval_arg_double (param $0 i32)
+ (func $byval_arg_double (; 10 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -133,25 +133,25 @@
   )
   (return)
  )
- (func $byval_param (param $0 i32)
+ (func $byval_param (; 11 ;) (param $0 i32)
   (call $ext_func
    (get_local $0)
   )
   (return)
  )
- (func $byval_empty_caller (param $0 i32)
+ (func $byval_empty_caller (; 12 ;) (param $0 i32)
   (call $ext_byval_func_empty
    (get_local $0)
   )
   (return)
  )
- (func $byval_empty_callee (param $0 i32)
+ (func $byval_empty_callee (; 13 ;) (param $0 i32)
   (call $ext_func_empty
    (get_local $0)
   )
   (return)
  )
- (func $big_byval (param $0 i32)
+ (func $big_byval (; 14 ;) (param $0 i32)
   (local $1 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -182,38 +182,34 @@
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 15 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 16 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 17 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["big_byval_callee","ext_byval_func","ext_byval_func_align8","ext_byval_func_alignedstruct","ext_byval_func_empty","ext_func","ext_func_empty","memcpy"], "externs": [], "implementedFunctions": ["_byval_arg","_byval_arg_align8","_byval_arg_double","_byval_param","_byval_empty_caller","_byval_empty_callee","_big_byval","_stackSave","_stackAlloc","_stackRestore"], "exports": ["byval_arg","byval_arg_align8","byval_arg_double","byval_param","byval_empty_caller","byval_empty_callee","big_byval","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

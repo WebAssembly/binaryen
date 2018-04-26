@@ -21,50 +21,58 @@
 
 namespace wasm {
 
-const char* printWasmType(WasmType type) {
+const char* printType(Type type) {
   switch (type) {
-    case WasmType::none: return "none";
-    case WasmType::i32: return "i32";
-    case WasmType::i64: return "i64";
-    case WasmType::f32: return "f32";
-    case WasmType::f64: return "f64";
-    case WasmType::unreachable: return "unreachable";
+    case Type::none: return "none";
+    case Type::i32: return "i32";
+    case Type::i64: return "i64";
+    case Type::f32: return "f32";
+    case Type::f64: return "f64";
+    case Type::unreachable: return "unreachable";
     default: WASM_UNREACHABLE();
   }
 }
 
-unsigned getWasmTypeSize(WasmType type) {
+unsigned getTypeSize(Type type) {
   switch (type) {
-    case WasmType::none: abort();
-    case WasmType::i32: return 4;
-    case WasmType::i64: return 8;
-    case WasmType::f32: return 4;
-    case WasmType::f64: return 8;
+    case Type::none: abort();
+    case Type::i32: return 4;
+    case Type::i64: return 8;
+    case Type::f32: return 4;
+    case Type::f64: return 8;
     default: WASM_UNREACHABLE();
   }
 }
 
-bool isWasmTypeFloat(WasmType type) {
+Type getType(unsigned size, bool float_) {
+  if (size < 4) return Type::i32;
+  if (size == 4) return float_ ? Type::f32 : Type::i32;
+  if (size == 8) return float_ ? Type::f64 : Type::i64;
+  abort();
+}
+
+Type getReachableType(Type a, Type b) {
+  return a != unreachable ? a : b;
+}
+
+bool isConcreteType(Type type) {
+  return type != none && type != unreachable;
+}
+
+bool isIntegerType(Type type) {
+  switch (type) {
+    case i32:
+    case i64: return true;
+    default: return false;
+  }
+}
+
+bool isFloatType(Type type) {
   switch (type) {
     case f32:
     case f64: return true;
     default: return false;
   }
-}
-
-WasmType getWasmType(unsigned size, bool float_) {
-  if (size < 4) return WasmType::i32;
-  if (size == 4) return float_ ? WasmType::f32 : WasmType::i32;
-  if (size == 8) return float_ ? WasmType::f64 : WasmType::i64;
-  abort();
-}
-
-WasmType getReachableWasmType(WasmType a, WasmType b) {
-  return a != unreachable ? a : b;
-}
-
-bool isConcreteWasmType(WasmType type) {
-  return type != none && type != unreachable;
 }
 
 } // namespace wasm

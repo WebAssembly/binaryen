@@ -1,41 +1,38 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/921029-1.c"
+	.file	"921029-1.c"
 	.section	.text.build,"ax",@progbits
-	.hidden	build
+	.hidden	build                   # -- Begin function build
 	.globl	build
 	.type	build,@function
 build:                                  # @build
 	.param  	i32, i32
 	.result 	i64
 	.local  	i64, i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
+	i64.extend_u/i32	$2=, $1
 	i32.const	$push0=, 0
-	i64.extend_u/i32	$push10=, $1
-	tee_local	$push9=, $2=, $pop10
-	i64.store	lpart($pop0), $pop9
-	i32.const	$push8=, 0
+	i64.store	lpart($pop0), $2
 	i64.extend_u/i32	$push1=, $0
 	i64.const	$push2=, 32
-	i64.shl 	$push7=, $pop1, $pop2
-	tee_local	$push6=, $3=, $pop7
-	i64.store	hpart($pop8), $pop6
-	i32.const	$push5=, 0
-	i64.or  	$push4=, $3, $2
-	tee_local	$push3=, $2=, $pop4
-	i64.store	back($pop5), $pop3
-	copy_local	$push11=, $2
-                                        # fallthrough-return: $pop11
+	i64.shl 	$3=, $pop1, $pop2
+	i32.const	$push4=, 0
+	i64.store	hpart($pop4), $3
+	i64.or  	$2=, $3, $2
+	i32.const	$push3=, 0
+	i64.store	back($pop3), $2
+	copy_local	$push5=, $2
+                                        # fallthrough-return: $pop5
 	.endfunc
 .Lfunc_end0:
 	.size	build, .Lfunc_end0-build
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end44
+# %bb.0:                                # %if.end44
 	i32.const	$push1=, 0
 	i64.const	$push0=, 4294967294
 	i64.store	lpart($pop1), $pop0
@@ -51,7 +48,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	hpart                   # @hpart
 	.type	hpart,@object
 	.section	.bss.hpart,"aw",@nobits
@@ -80,5 +77,5 @@ back:
 	.size	back, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

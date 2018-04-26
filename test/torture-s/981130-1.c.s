@@ -1,16 +1,16 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/981130-1.c"
+	.file	"981130-1.c"
 	.section	.text.check,"ax",@progbits
-	.hidden	check
+	.hidden	check                   # -- Begin function check
 	.globl	check
 	.type	check,@function
 check:                                  # @check
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.ne  	$push0=, $0, $1
 	br_if   	0, $pop0        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push1=, 0
 	call    	exit@FUNCTION, $pop1
 	unreachable
@@ -21,20 +21,19 @@ check:                                  # @check
 	.endfunc
 .Lfunc_end0:
 	.size	check, .Lfunc_end0-check
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i64
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push5=, 0
-	i64.load	$push4=, s2($pop5)
-	tee_local	$push3=, $0=, $pop4
-	i64.store	s1($pop0), $pop3
+	i64.load	$0=, s2($pop0)
+	i32.const	$push3=, 0
+	i64.store	s1($pop3), $0
 	i32.wrap/i64	$push1=, $0
 	i32.const	$push2=, 1
 	call    	check@FUNCTION, $pop1, $pop2
@@ -42,7 +41,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	s2                      # @s2
 	.type	s2,@object
 	.section	.data.s2,"aw",@progbits
@@ -63,6 +62,6 @@ s1:
 	.size	s1, 8
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
 	.functype	abort, void

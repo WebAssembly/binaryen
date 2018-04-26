@@ -1,63 +1,59 @@
 (module
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "main" (func $main))
  (export "malloc" (func $malloc))
  (export "free" (func $free))
  (export "realloc" (func $realloc))
  (export "memalign" (func $memalign))
- (func $main (result i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $main (; 0 ;) (result i32)
   (i32.const 0)
  )
- (func $malloc (param $0 i32) (result i32)
+ (func $malloc (; 1 ;) (param $0 i32) (result i32)
   (i32.const 0)
  )
- (func $free (param $0 i32)
+ (func $free (; 2 ;) (param $0 i32)
  )
- (func $realloc (param $0 i32) (param $1 i32) (result i32)
+ (func $realloc (; 3 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $memalign (param $0 i32) (param $1 i32) (result i32)
+ (func $memalign (; 4 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $not_a_malloc (param $0 i32) (param $1 i32) (result i32)
+ (func $not_a_malloc (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 6 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 7 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 8 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_main","_malloc","_free","_realloc","_memalign","_not_a_malloc","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","malloc","free","realloc","memalign","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

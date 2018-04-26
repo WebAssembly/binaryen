@@ -1,17 +1,17 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/980526-2.c"
+	.file	"980526-2.c"
 	.section	.text.do_mknod,"ax",@progbits
-	.hidden	do_mknod
+	.hidden	do_mknod                # -- Begin function do_mknod
 	.globl	do_mknod
 	.type	do_mknod,@function
 do_mknod:                               # @do_mknod
 	.param  	i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 360710264
 	i32.ne  	$push1=, $2, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %if.then
+# %bb.1:                                # %if.then
 	i32.const	$push2=, 0
 	call    	exit@FUNCTION, $pop2
 	unreachable
@@ -22,15 +22,15 @@ do_mknod:                               # @do_mknod
 	.endfunc
 .Lfunc_end0:
 	.size	do_mknod, .Lfunc_end0-do_mknod
-
+                                        # -- End function
 	.section	.text.getname,"ax",@progbits
-	.hidden	getname
+	.hidden	getname                 # -- Begin function getname
 	.globl	getname
 	.type	getname,@function
 getname:                                # @getname
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push17=, 13
 	i32.mul 	$push18=, $0, $pop17
 	i32.const	$push13=, 7
@@ -79,15 +79,15 @@ getname:                                # @getname
 	.endfunc
 .Lfunc_end1:
 	.size	getname, .Lfunc_end1-getname
-
+                                        # -- End function
 	.section	.text.sys_mknod,"ax",@progbits
-	.hidden	sys_mknod
+	.hidden	sys_mknod               # -- Begin function sys_mknod
 	.globl	sys_mknod
 	.type	sys_mknod,@function
 sys_mknod:                              # @sys_mknod
 	.param  	i32, i32, i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push2=, 14
 	i32.shl 	$push3=, $2, $pop2
 	i32.const	$push4=, -4194304
@@ -100,15 +100,15 @@ sys_mknod:                              # @sys_mknod
 	.endfunc
 .Lfunc_end2:
 	.size	sys_mknod, .Lfunc_end2-sys_mknod
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, .L.str
 	i32.const	$push0=, 305419896
 	i32.call	$drop=, sys_mknod@FUNCTION, $pop1, $0, $pop0
@@ -116,7 +116,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -124,6 +124,6 @@ main:                                   # @main
 	.size	.L.str, 5
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32
 	.functype	abort, void

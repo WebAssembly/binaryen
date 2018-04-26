@@ -31,10 +31,13 @@
 #include "passes/passes.h"
 #include "pass.h"
 #include "parsing.h"
-#include "ast_utils.h"
+#include "ir/bits.h"
+#include "ir/branch-utils.h"
+#include "ir/literal-utils.h"
+#include "ir/trapping.h"
+#include "ir/utils.h"
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
-#include "wasm-printing.h"
 #include "wasm-module-building.h"
 
 namespace wasm {
@@ -88,10 +91,6 @@ Name I32_CTTZ("i32_cttz"),
      I64_CTTZ("i64_cttz"),
      I64_CTLZ("i64_ctlz"),
      I64_CTPOP("i64_ctpop"),
-     I64S_REM("i64s-rem"),
-     I64U_REM("i64u-rem"),
-     I64S_DIV("i64s-div"),
-     I64U_DIV("i64u-div"),
      F32_COPYSIGN("f32_copysign"),
      F64_COPYSIGN("f64_copysign"),
      LOAD1("load1"),
@@ -110,6 +109,25 @@ Name I32_CTTZ("i32_cttz"),
      MFTCALL("mftCall_"),
      MAX_("max"),
      MIN_("min"),
+     ATOMICS("Atomics"),
+     ATOMICS_LOAD("load"),
+     ATOMICS_STORE("store"),
+     ATOMICS_EXCHANGE("exchange"),
+     ATOMICS_COMPARE_EXCHANGE("compareExchange"),
+     ATOMICS_ADD("add"),
+     ATOMICS_SUB("sub"),
+     ATOMICS_AND("and"),
+     ATOMICS_OR("or"),
+     ATOMICS_XOR("xor"),
+     I64_ATOMICS_LOAD("i64_atomics_load"),
+     I64_ATOMICS_STORE("i64_atomics_store"),
+     I64_ATOMICS_AND("i64_atomics_and"),
+     I64_ATOMICS_OR("i64_atomics_or"),
+     I64_ATOMICS_XOR("i64_atomics_xor"),
+     I64_ATOMICS_ADD("i64_atomics_add"),
+     I64_ATOMICS_SUB("i64_atomics_sub"),
+     I64_ATOMICS_EXCHANGE("i64_atomics_exchange"),
+     I64_ATOMICS_COMPAREEXCHANGE("i64_atomics_compareExchange"),
      EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities
@@ -244,6 +262,7 @@ struct Asm2WasmPreProcessor {
       char* out = copy;
       std::string DEBUGINFO_INTRINSIC = EMSCRIPTEN_DEBUGINFO.str;
       auto DEBUGINFO_INTRINSIC_SIZE = DEBUGINFO_INTRINSIC.size();
+      const char* UNKNOWN_FILE = "(unknown)";
       bool seenUseAsm = false;
       while (input[0]) {
         if (out + ADD_FACTOR >= end) {
@@ -251,13 +270,35 @@ struct Asm2WasmPreProcessor {
         }
         if (startsWith(input, "//@line")) {
           char* linePos = input + 8;
-          char* lineEnd = strchr(input + 8, ' ');
-          char* filePos = strchr(lineEnd, '"') + 1;
-          char* fileEnd = strchr(filePos, '"');
-          input = fileEnd + 1;
+          char* lineEnd = strpbrk(input + 8, " \n");
+          if (!lineEnd) {
+            // comment goes to end of input
+            break;
+          }
+          input = lineEnd + 1;
+          std::string file;
+          if (*lineEnd == ' ') {
+            // we have a file
+            char* filePos = strpbrk(input, "\"\n");
+            if (!filePos) {
+              // goes to end of input
+              break;
+            }
+            if (*filePos == '"') {
+              char* fileEnd = strpbrk(filePos + 1, "\"\n");
+              input = fileEnd + 1;
+              *fileEnd = 0;
+              file = filePos + 1;
+            } else {
+              file = UNKNOWN_FILE;
+              input = filePos + 1;
+            }
+          } else {
+            // no file, we found \n
+            file = UNKNOWN_FILE;
+          }
           *lineEnd = 0;
-          *fileEnd = 0;
-          std::string line = linePos, file = filePos;
+          std::string line = linePos;
           auto iter = debugInfoFileIndices.find(file);
           if (iter == debugInfoFileIndices.end()) {
             Index index = debugInfoFileNames.size();
@@ -346,12 +387,6 @@ struct AdjustDebugInfo : public WalkerPass<PostWalker<AdjustDebugInfo, Visitor<A
 
 class Asm2WasmBuilder {
 public:
-  enum class TrapMode {
-    Allow,
-    Clamp,
-    JS
-  };
-
   Module& wasm;
 
   MixedArena &allocator;
@@ -363,12 +398,12 @@ public:
   // globals
 
   struct MappedGlobal {
-    WasmType type;
+    Type type;
     bool import; // if true, this is an import - we should read the value, not just set a zero
     IString module, base;
     MappedGlobal() : type(none), import(false) {}
-    MappedGlobal(WasmType type) : type(type), import(false) {}
-    MappedGlobal(WasmType type, bool import, IString module, IString base) : type(type), import(import), module(module), base(base) {}
+    MappedGlobal(Type type) : type(type), import(false) {}
+    MappedGlobal(Type type, bool import, IString module, IString base) : type(type), import(import), module(module), base(base) {}
   };
 
   // function table
@@ -376,8 +411,8 @@ public:
 
   Asm2WasmPreProcessor& preprocessor;
   bool debug;
-    
   TrapMode trapMode;
+  TrappingFunctionContainer trappingFunctions;
   PassOptions passOptions;
   bool legalizeJavaScriptFFI;
   bool runOptimizationPasses;
@@ -387,20 +422,15 @@ public:
   std::map<IString, MappedGlobal> mappedGlobals;
 
 private:
-  void allocateGlobal(IString name, WasmType type) {
+  void allocateGlobal(IString name, Type type) {
     assert(mappedGlobals.find(name) == mappedGlobals.end());
     mappedGlobals.emplace(name, MappedGlobal(type));
-    auto global = new Global();
-    global->name = name;
-    global->type = type;
-    Literal value;
-    if (type == i32) value = Literal(uint32_t(0));
-    else if (type == f32) value = Literal(float(0));
-    else if (type == f64) value = Literal(double(0));
-    else WASM_UNREACHABLE();
-    global->init = wasm.allocator.alloc<Const>()->set(value);
-    global->mutable_ = true;
-    wasm.addGlobal(global);
+    wasm.addGlobal(builder.makeGlobal(
+      name,
+      type,
+      LiteralUtils::makeZero(type, wasm),
+      Builder::Mutable
+    ));
   }
 
   struct View {
@@ -424,6 +454,17 @@ private:
   IString Math_max;
   IString Math_min;
 
+  // Imported names of Atomics.*
+  IString Atomics_load;
+  IString Atomics_store;
+  IString Atomics_exchange;
+  IString Atomics_compareExchange;
+  IString Atomics_add;
+  IString Atomics_sub;
+  IString Atomics_and;
+  IString Atomics_or;
+  IString Atomics_xor;
+
   IString llvm_cttz_i32;
 
   IString tempDoublePtr; // imported name of tempDoublePtr
@@ -437,7 +478,7 @@ private:
 
   std::map<IString, std::unique_ptr<FunctionType>> importedFunctionTypes;
 
-  void noteImportedFunctionCall(Ref ast, WasmType resultType, CallImport* call) {
+  void noteImportedFunctionCall(Ref ast, Type resultType, CallImport* call) {
     assert(ast[0] == CALL && ast[1]->isString());
     IString importName = ast[1]->getIString();
     auto type = make_unique<FunctionType>();
@@ -476,15 +517,20 @@ private:
     }
   }
 
-  FunctionType* getFunctionType(Ref parent, ExpressionList& operands) {
-    WasmType result = none;
+  Type getResultTypeOfCallUsingParent(Ref parent, AsmData* data) {
+    auto result = none;
     if (!!parent) {
       // if the parent is a seq, we cannot be the last element in it (we would have a coercion, which would be
       // the parent), so we must be (us, somethingElse), and so our return is void
       if (parent[0] != SEQ) {
-        result = detectWasmType(parent, nullptr);
+        result = detectWasmType(parent, data);
       }
     }
+    return result;
+  }
+
+  FunctionType* getFunctionType(Ref parent, ExpressionList& operands, AsmData* data) {
+    Type result = getResultTypeOfCallUsingParent(parent, data);
     return ensureFunctionType(getSig(result, operands), &wasm);
   }
 
@@ -496,6 +542,7 @@ public:
        preprocessor(preprocessor),
        debug(debug),
        trapMode(trapMode),
+       trappingFunctions(trapMode, wasm, /* immediate = */ true),
        passOptions(passOptions),
        legalizeJavaScriptFFI(legalizeJavaScriptFFI),
        runOptimizationPasses(runOptimizationPasses),
@@ -522,7 +569,7 @@ private:
     return detectType(ast, data, false, Math_fround, wasmOnly);
   }
 
-  WasmType detectWasmType(Ref ast, AsmData *data) {
+  Type detectWasmType(Ref ast, AsmData *data) {
     return asmToWasmType(detectAsmType(ast, data));
   }
 
@@ -539,8 +586,8 @@ private:
   }
 
   BinaryOp parseAsmBinaryOp(IString op, Ref left, Ref right, Expression* leftWasm, Expression* rightWasm) {
-    WasmType leftType = leftWasm->type;
-    bool isInteger = leftType == WasmType::i32;
+    Type leftType = leftWasm->type;
+    bool isInteger = leftType == Type::i32;
 
     if (op == PLUS) return isInteger ? BinaryOp::AddInt32 : (leftType == f32 ? BinaryOp::AddFloat32 : BinaryOp::AddFloat64);
     if (op == MINUS) return isInteger ? BinaryOp::SubInt32 : (leftType == f32 ? BinaryOp::SubFloat32 : BinaryOp::SubFloat64);
@@ -643,11 +690,11 @@ private:
 
   Literal getLiteral(Ref ast) {
     Literal ret = checkLiteral(ast);
-    if (ret.type == none) abort();
+    assert(ret.type != none);
     return ret;
   }
 
-  void fixCallType(Expression* call, WasmType type) {
+  void fixCallType(Expression* call, Type type) {
     if (call->is<Call>()) call->cast<Call>()->type = type;
     if (call->is<CallImport>()) call->cast<CallImport>()->type = type;
     else if (call->is<CallIndirect>()) call->cast<CallIndirect>()->type = type;
@@ -657,7 +704,7 @@ private:
     if (module == GLOBAL_MATH) {
       if (base == ABS) {
         assert(operands && operands->size() == 1);
-        WasmType type = (*operands)[0]->type;
+        Type type = (*operands)[0]->type;
         if (type == i32) return ensureFunctionType("ii", &wasm);
         if (type == f32) return ensureFunctionType("ff", &wasm);
         if (type == f64) return ensureFunctionType("dd", &wasm);
@@ -675,208 +722,8 @@ private:
     return ret;
   }
 
-  // Some binary opts might trap, so emit them safely if necessary
-  Expression* makeTrappingI32Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
-    // the wasm operation might trap if done over 0, so generate a safe call
-    auto *call = allocator.alloc<Call>();
-    switch (op) {
-      case BinaryOp::RemSInt32: call->target = I32S_REM; break;
-      case BinaryOp::RemUInt32: call->target = I32U_REM; break;
-      case BinaryOp::DivSInt32: call->target = I32S_DIV; break;
-      case BinaryOp::DivUInt32: call->target = I32U_DIV; break;
-      default: WASM_UNREACHABLE();
-    }
-    call->operands.push_back(left);
-    call->operands.push_back(right);
-    call->type = i32;
-    static std::set<Name> addedFunctions;
-    if (addedFunctions.count(call->target) == 0) {
-      Expression* result = builder.makeBinary(op,
-        builder.makeGetLocal(0, i32),
-        builder.makeGetLocal(1, i32)
-      );
-      if (op == DivSInt32) {
-        // guard against signed division overflow
-        result = builder.makeIf(
-          builder.makeBinary(AndInt32,
-            builder.makeBinary(EqInt32,
-              builder.makeGetLocal(0, i32),
-              builder.makeConst(Literal(std::numeric_limits<int32_t>::min()))
-            ),
-            builder.makeBinary(EqInt32,
-              builder.makeGetLocal(1, i32),
-              builder.makeConst(Literal(int32_t(-1)))
-            )
-          ),
-          builder.makeConst(Literal(int32_t(0))),
-          result
-        );
-      }
-      addedFunctions.insert(call->target);
-      auto func = new Function;
-      func->name = call->target;
-      func->params.push_back(i32);
-      func->params.push_back(i32);
-      func->result = i32;
-      func->body = builder.makeIf(
-        builder.makeUnary(EqZInt32,
-          builder.makeGetLocal(1, i32)
-        ),
-        builder.makeConst(Literal(int32_t(0))),
-        result
-      );
-      wasm.addFunction(func);
-    }
-    return call;
-  }
-
-  // Some binary opts might trap, so emit them safely if necessary
-  Expression* makeTrappingI64Binary(BinaryOp op, Expression* left, Expression* right) {
-    if (trapMode == TrapMode::Allow) return builder.makeBinary(op, left, right);
-    // wasm operation might trap if done over 0, so generate a safe call
-    auto *call = allocator.alloc<Call>();
-    switch (op) {
-      case BinaryOp::RemSInt64: call->target = I64S_REM; break;
-      case BinaryOp::RemUInt64: call->target = I64U_REM; break;
-      case BinaryOp::DivSInt64: call->target = I64S_DIV; break;
-      case BinaryOp::DivUInt64: call->target = I64U_DIV; break;
-      default: WASM_UNREACHABLE();
-    }
-    call->operands.push_back(left);
-    call->operands.push_back(right);
-    call->type = i64;
-    static std::set<Name> addedFunctions;
-    if (addedFunctions.count(call->target) == 0) {
-      Expression* result = builder.makeBinary(op,
-        builder.makeGetLocal(0, i64),
-        builder.makeGetLocal(1, i64)
-      );
-      if (op == DivSInt64) {
-        // guard against signed division overflow
-        result = builder.makeIf(
-          builder.makeBinary(AndInt32,
-            builder.makeBinary(EqInt64,
-              builder.makeGetLocal(0, i64),
-              builder.makeConst(Literal(std::numeric_limits<int64_t>::min()))
-            ),
-            builder.makeBinary(EqInt64,
-              builder.makeGetLocal(1, i64),
-              builder.makeConst(Literal(int64_t(-1)))
-            )
-          ),
-          builder.makeConst(Literal(int64_t(0))),
-          result
-        );
-      }
-      addedFunctions.insert(call->target);
-      auto func = new Function;
-      func->name = call->target;
-      func->params.push_back(i64);
-      func->params.push_back(i64);
-      func->result = i64;
-      func->body = builder.makeIf(
-        builder.makeUnary(EqZInt64,
-          builder.makeGetLocal(1, i64)
-        ),
-        builder.makeConst(Literal(int64_t(0))),
-        result
-      );
-      wasm.addFunction(func);
-    }
-    return call;
-  }
-
-  // Some conversions might trap, so emit them safely if necessary
-  Expression* makeTrappingFloatToInt(bool signed_, Expression* value) {
-    if (trapMode == TrapMode::Allow) {
-      auto ret = allocator.alloc<Unary>();
-      ret->value = value;
-      bool isF64 = ret->value->type == f64;
-      if (signed_) {
-        ret->op = isF64 ? TruncSFloat64ToInt32 : TruncSFloat32ToInt32;
-      } else {
-        ret->op = isF64 ? TruncUFloat64ToInt32 : TruncUFloat32ToInt32;
-      }
-      ret->type = WasmType::i32;
-      return ret;
-    }
-    // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must do something
-    // First, normalize input to f64
-    auto input = value;
-    if (input->type == f32) {
-      auto conv = allocator.alloc<Unary>();
-      conv->op = PromoteFloat32;
-      conv->value = input;
-      conv->type = WasmType::f64;
-      input = conv;
-    }
-    // We can handle this in one of two ways: clamping, which is fast, or JS, which
-    // is precisely like JS but in order to do that we do a slow ffi
-    if (trapMode == TrapMode::JS) {
-      // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
-      CallImport *ret = allocator.alloc<CallImport>();
-      ret->target = F64_TO_INT;
-      ret->operands.push_back(input);
-      ret->type = i32;
-      static bool addedImport = false;
-      if (!addedImport) {
-        addedImport = true;
-        auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
-        import->name = F64_TO_INT;
-        import->module = ASM2WASM;
-        import->base = F64_TO_INT;
-        import->functionType = ensureFunctionType("id", &wasm)->name;
-        import->kind = ExternalKind::Function;
-        wasm.addImport(import);
-      }
-      return ret;
-    }
-    assert(trapMode == TrapMode::Clamp);
-    Call *ret = allocator.alloc<Call>();
-    ret->target = F64_TO_INT;
-    ret->operands.push_back(input);
-    ret->type = i32;
-    static bool added = false;
-    if (!added) {
-      added = true;
-      auto func = new Function;
-      func->name = ret->target;
-      func->params.push_back(f64);
-      func->result = i32;
-      func->body = builder.makeUnary(TruncSFloat64ToInt32,
-        builder.makeGetLocal(0, f64)
-      );
-      // too small XXX this is different than asm.js, which does frem. here we clamp, which is much simpler/faster, and similar to native builds
-      func->body = builder.makeIf(
-        builder.makeBinary(LeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::min()) - 1))
-        ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))),
-        func->body
-      );
-      // too big XXX see above
-      func->body = builder.makeIf(
-        builder.makeBinary(GeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeConst(Literal(double(std::numeric_limits<int32_t>::max()) + 1))
-        ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything out of range => to the min
-        func->body
-      );
-      // nan
-      func->body = builder.makeIf(
-        builder.makeBinary(NeFloat64,
-          builder.makeGetLocal(0, f64),
-          builder.makeGetLocal(0, f64)
-        ),
-        builder.makeConst(Literal(int32_t(std::numeric_limits<int32_t>::min()))), // NB: min here as well. anything invalid => to the min
-        func->body
-      );
-      wasm.addFunction(func);
-    }
-    return ret;
+  Expression* ensureDouble(Expression* expr) {
+    return wasm::ensureDouble(expr, allocator);
   }
 
   Expression* truncateToInt32(Expression* value) {
@@ -895,7 +742,65 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   Ref body = asmFunction[3];
   assert(body[0][0] == STRING && (body[0][1]->getIString() == IString("use asm") || body[0][1]->getIString() == IString("almost asm")));
 
-  auto addImport = [&](IString name, Ref imported, WasmType type) {
+  // extra functions that we add, that are not from the compiled code. we need
+  // to make sure to optimize them normally (OptimizingIncrementalModuleBuilder
+  // does that on the fly for compiled code)
+  std::vector<Function*> extraSupportFunctions;
+
+  // first, add the memory elements. we do this before the main compile+optimize
+  // since the optimizer should see the memory
+
+  // apply memory growth, if relevant
+  if (preprocessor.memoryGrowth) {
+    EmscriptenGlueGenerator generator(wasm);
+    auto* func = generator.generateMemoryGrowthFunction();
+    extraSupportFunctions.push_back(func);
+    wasm.memory.max = Memory::kMaxSize;
+  }
+
+  // import memory
+  auto memoryImport = make_unique<Import>();
+  memoryImport->name = MEMORY;
+  memoryImport->module = ENV;
+  memoryImport->base = MEMORY;
+  memoryImport->kind = ExternalKind::Memory;
+  wasm.memory.exists = true;
+  wasm.memory.imported = true;
+  wasm.addImport(memoryImport.release());
+
+  // import table
+  auto tableImport = make_unique<Import>();
+  tableImport->name = TABLE;
+  tableImport->module = ENV;
+  tableImport->base = TABLE;
+  tableImport->kind = ExternalKind::Table;
+  wasm.addImport(tableImport.release());
+  wasm.table.exists = true;
+  wasm.table.imported = true;
+
+  // Import memory offset, if not already there
+  {
+    auto* import = new Import;
+    import->name = Name("memoryBase");
+    import->module = Name("env");
+    import->base = Name("memoryBase");
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
+  // Import table offset, if not already there
+  {
+    auto* import = new Import;
+    import->name = Name("tableBase");
+    import->module = Name("env");
+    import->base = Name("tableBase");
+    import->kind = ExternalKind::Global;
+    import->globalType = i32;
+    wasm.addImport(import);
+  }
+
+  auto addImport = [&](IString name, Ref imported, Type type) {
     assert(imported[0] == DOT);
     Ref module = imported[1];
     IString moduleName;
@@ -940,6 +845,44 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           Math_min = name;
           return;
         }
+      } else if (module[2] == ATOMICS) {
+        if (imported[2] == ATOMICS_LOAD) {
+          assert(Atomics_load.isNull());
+          Atomics_load = name;
+          return;
+        } else if (imported[2] == ATOMICS_STORE) {
+          assert(Atomics_store.isNull());
+          Atomics_store = name;
+          return;
+        } else if (imported[2] == ATOMICS_EXCHANGE) {
+          assert(Atomics_exchange.isNull());
+          Atomics_exchange = name;
+          return;
+        } else if (imported[2] == ATOMICS_COMPARE_EXCHANGE) {
+          assert(Atomics_compareExchange.isNull());
+          Atomics_compareExchange = name;
+          return;
+        } else if (imported[2] == ATOMICS_ADD) {
+          assert(Atomics_add.isNull());
+          Atomics_add = name;
+          return;
+        } else if (imported[2] == ATOMICS_SUB) {
+          assert(Atomics_sub.isNull());
+          Atomics_sub = name;
+          return;
+        } else if (imported[2] == ATOMICS_AND) {
+          assert(Atomics_and.isNull());
+          Atomics_and = name;
+          return;
+        } else if (imported[2] == ATOMICS_OR) {
+          assert(Atomics_or.isNull());
+          Atomics_or = name;
+          return;
+        } else if (imported[2] == ATOMICS_XOR) {
+          assert(Atomics_xor.isNull());
+          Atomics_xor = name;
+          return;
+        }
       }
       std::string fullName = module[1]->getCString();
       fullName += '.';
@@ -961,15 +904,15 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = new Import();
+    auto import = make_unique<Import>();
     import->name = name;
     import->module = moduleName;
     import->base = imported[2]->getIString();
     // special-case some asm builtins
     if (import->module == GLOBAL && (import->base == NAN_ || import->base == INFINITY_)) {
-      type = WasmType::f64;
+      type = Type::f64;
     }
-    if (type != WasmType::none) {
+    if (type != Type::none) {
       // this is a global
       import->kind = ExternalKind::Global;
       import->globalType = type;
@@ -981,18 +924,23 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         // import an immutable and create a mutable global initialized to its value
         import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
         {
-          auto global = new Global();
-          global->name = name;
-          global->type = type;
-          global->init = builder.makeGetGlobal(import->name, type);
-          global->mutable_ = true;
-          wasm.addGlobal(global);
+          wasm.addGlobal(builder.makeGlobal(
+            name,
+            type,
+            builder.makeGetGlobal(import->name, type),
+            Builder::Mutable
+          ));
         }
       }
     } else {
       import->kind = ExternalKind::Function;
     }
-    wasm.addImport(import);
+    // we may have already created an import for this manually
+    if ((name == "tableBase" || name == "memoryBase") &&
+        (wasm.getImportOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
+      return;
+    }
+    wasm.addImport(import.release());
   };
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
@@ -1005,6 +953,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       if (body[i][0] == DEFUN) numFunctions++;
     }
     optimizingBuilder = make_unique<OptimizingIncrementalModuleBuilder>(&wasm, numFunctions, passOptions, [&](PassRunner& passRunner) {
+      // addPrePasses
       if (debug) {
         passRunner.setDebug(true);
         passRunner.setValidateGlobally(false);
@@ -1037,12 +986,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         if (value->isNumber()) {
           // global int
           assert(value->getNumber() == 0);
-          allocateGlobal(name, WasmType::i32);
+          allocateGlobal(name, Type::i32);
         } else if (value[0] == BINARY) {
           // int import
           assert(value[1] == OR && value[3]->isNumber() && value[3]->getNumber() == 0);
           Ref import = value[2]; // env.what
-          addImport(name, import, WasmType::i32);
+          addImport(name, import, Type::i32);
         } else if (value[0] == UNARY_PREFIX) {
           // double import or global
           assert(value[1] == PLUS);
@@ -1050,14 +999,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           if (import->isNumber()) {
             // global
             assert(import->getNumber() == 0);
-            allocateGlobal(name, WasmType::f64);
+            allocateGlobal(name, Type::f64);
           } else {
             // import
-            addImport(name, import, WasmType::f64);
+            addImport(name, import, Type::f64);
           }
         } else if (value[0] == CALL) {
           assert(value[1]->isString() && value[1] == Math_fround && value[2][0]->isNumber() && value[2][0]->getNumber() == 0);
-          allocateGlobal(name, WasmType::f32);
+          allocateGlobal(name, Type::f32);
         } else if (value[0] == DOT) {
           // simple module.base import. can be a view, or a function.
           if (value[1]->isString()) {
@@ -1084,7 +1033,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             }
           }
           // function import
-          addImport(name, value, WasmType::none);
+          addImport(name, value, Type::none);
         } else if (value[0] == NEW) {
           // ignore imports of typed arrays, but note the names of the arrays
           value = value[1];
@@ -1206,11 +1155,12 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           assert(pair[1]->isNumber());
           assert(exported.count(key) == 0);
           auto value = pair[1]->getInteger();
-          auto global = new Global();
-          global->name = key;
-          global->type = i32;
-          global->init = builder.makeConst(Literal(int32_t(value)));
-          global->mutable_ = false;
+          auto* global = builder.makeGlobal(
+            key,
+            i32,
+            builder.makeConst(Literal(int32_t(value))),
+            Builder::Immutable
+          );
           wasm.addGlobal(global);
           auto* export_ = new Export;
           export_->name = key;
@@ -1225,6 +1175,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
+    // if we added any helper functions (like non-trapping i32-div, etc.), then those
+    // have not been optimized (the optimizing builder has just been fed the asm.js
+    // functions). Optimize those now. Typically there are very few, just do it
+    // sequentially.
+    PassRunner passRunner(&wasm, passOptions);
+    passRunner.addDefaultFunctionOptimizationPasses();
+    for (auto& pair : trappingFunctions.getFunctions()) {
+      auto* func = pair.second;
+      passRunner.runOnFunction(func);
+    }
+    for (auto* func : extraSupportFunctions) {
+      passRunner.runOnFunction(func);
+    }
   }
   wasm.debugInfoFileNames = std::move(preprocessor.debugInfoFileNames);
 
@@ -1266,14 +1229,61 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       name = "finalize-calls";
     }
 
+    void notifyAboutWrongOperands(std::string why, Function* calledFunc) {
+      // use a mutex as this may be shown from multiple threads
+      static std::mutex mutex;
+      std::unique_lock<std::mutex> lock(mutex);
+      static const int MAX_SHOWN = 20;
+      static std::unique_ptr<std::atomic<int>> numShown;
+      if (!numShown) {
+        numShown = make_unique<std::atomic<int>>();
+        numShown->store(0);
+      }
+      if (numShown->load() >= MAX_SHOWN) return;
+      std::cerr << why << " in call from " << getFunction()->name << " to " << calledFunc->name << " (this is likely due to undefined behavior in C, like defining a function one way and calling it in another, which is important to fix)\n";
+      (*numShown)++;
+      if (numShown->load() >= MAX_SHOWN) {
+        std::cerr << "(" << numShown->load() << " such warnings shown; not showing any more)\n";
+      }
+    }
+
     void visitCall(Call* curr) {
-      if (!getModule()->getFunctionOrNull(curr->target)) {
+      auto* calledFunc = getModule()->getFunctionOrNull(curr->target);
+      if (!calledFunc) {
         std::cerr << "invalid call target: " << curr->target << '\n';
         WASM_UNREACHABLE();
       }
-      auto result = getModule()->getFunction(curr->target)->result;
+      // The result type of the function being called is now known, and can be applied.
+      auto result = calledFunc->result;
       if (curr->type != result) {
         curr->type = result;
+      }
+      // Handle mismatched numbers of arguments. In clang, if a function is declared one way
+      // but called in another, it inserts bitcasts to make things work. Those end up
+      // working since it is "ok" to drop or add parameters in native platforms, even
+      // though it's undefined behavior. We warn about it here, but tolerate it, if there is
+      // a simple solution.
+      if (curr->operands.size() < calledFunc->params.size()) {
+        notifyAboutWrongOperands("warning: asm2wasm adding operands", calledFunc);
+        while (curr->operands.size() < calledFunc->params.size()) {
+          // Add params as necessary, with zeros.
+          curr->operands.push_back(
+            LiteralUtils::makeZero(calledFunc->params[curr->operands.size()], *getModule())
+          );
+        }
+      }
+      if (curr->operands.size() > calledFunc->params.size()) {
+        notifyAboutWrongOperands("warning: asm2wasm dropping operands", calledFunc);
+        curr->operands.resize(calledFunc->params.size());
+      }
+      // If the types are wrong, validation will fail later anyhow, but add a warning here,
+      // it may help people.
+      for (Index i = 0; i < curr->operands.size(); i++) {
+        auto sent = curr->operands[i]->type;
+        auto expected = calledFunc->params[i];
+        if (sent != unreachable && sent != expected) {
+          notifyAboutWrongOperands("error: asm2wasm seeing an invalid argument type at index " + std::to_string(i) + " (this will not validate)", calledFunc);
+        }
       }
     }
 
@@ -1300,13 +1310,23 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           }
         }
       }
-      auto importResult = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
+      Module* wasm = getModule();
+      auto importResult = wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
       if (curr->type != importResult) {
+        auto old = curr->type;
+        curr->type = importResult;
         if (importResult == f64) {
           // we use a JS f64 value which is the most general, and convert to it
-          switch (curr->type) {
-            case i32: replaceCurrent(parent->builder.makeUnary(TruncSFloat64ToInt32, curr)); break;
-            case f32: replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr)); break;
+          switch (old) {
+            case i32:  {
+              Unary* trunc = parent->builder.makeUnary(TruncSFloat64ToInt32, curr);
+              replaceCurrent(makeTrappingUnary(trunc, parent->trappingFunctions));
+              break;
+            }
+            case f32: {
+              replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr));
+              break;
+            }
             case none: {
               // this function returns a value, but we are not using it, so it must be dropped.
               // autodrop will do that for us.
@@ -1315,18 +1335,29 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
             default: WASM_UNREACHABLE();
           }
         } else {
-          assert(curr->type == none);
+          assert(old == none);
           // we don't want a return value here, but the import does provide one
           // autodrop will do that for us.
         }
-        curr->type = importResult;
       }
     }
 
     void visitCallIndirect(CallIndirect* curr) {
       // we already call into target = something + offset, where offset is a callImport with the name of the table. replace that with the table offset
       // note that for an ftCall or mftCall, we have no asm.js mask, so have nothing to do here
-      auto* add = curr->target->dynCast<Binary>();
+      auto* target = curr->target;
+      // might be a block with a fallthrough
+      if (auto* block = target->dynCast<Block>()) {
+        target = block->list.back();
+      }
+      // the something might have been optimized out, leaving only the call
+      if (auto* call = target->dynCast<CallImport>()) {
+        auto tableName = call->target;
+        if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
+        curr->target = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        return;
+      }
+      auto* add = target->dynCast<Binary>();
       if (!add) return;
       if (add->right->is<CallImport>()) {
         auto* offset = add->right->cast<CallImport>();
@@ -1403,7 +1434,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   };
 
-  PassRunner passRunner(&wasm);
+  PassRunner passRunner(&wasm, passOptions);
+  passRunner.setFeatures(passOptions.features);
   if (debug) {
     passRunner.setDebug(true);
     passRunner.setValidateGlobally(false);
@@ -1431,70 +1463,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     passRunner.add<ApplyDebugInfo>();
     passRunner.add("vacuum"); // FIXME maybe just remove the nops that were debuginfo nodes, if not optimizing?
   }
+  if (runOptimizationPasses) {
+    // do final global optimizations after all function work is done
+    // (e.g. duplicate funcs may appear thanks to that work)
+    passRunner.addDefaultGlobalOptimizationPostPasses();
+  }
   passRunner.run();
 
   // remove the debug info intrinsic
   if (preprocessor.debugInfo) {
     wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
   }
-
-  // apply memory growth, if relevant
-  if (preprocessor.memoryGrowth) {
-    emscripten::generateMemoryGrowthFunction(wasm);
-    wasm.memory.max = Memory::kMaxSize;
-  }
-
-#if 0
-  // export memory
-  auto memoryExport = make_unique<Export>();
-  memoryExport->name = MEMORY;
-  memoryExport->value = Name::fromInt(0);
-  memoryExport->kind = ExternalKind::Memory;
-  wasm.addExport(memoryExport.release());
-#else
-  // import memory
-  auto memoryImport = make_unique<Import>();
-  memoryImport->name = MEMORY;
-  memoryImport->module = ENV;
-  memoryImport->base = MEMORY;
-  memoryImport->kind = ExternalKind::Memory;
-  wasm.memory.exists = true;
-  wasm.memory.imported = true;
-  wasm.addImport(memoryImport.release());
-
-  // import table
-  auto tableImport = make_unique<Import>();
-  tableImport->name = TABLE;
-  tableImport->module = ENV;
-  tableImport->base = TABLE;
-  tableImport->kind = ExternalKind::Table;
-  wasm.addImport(tableImport.release());
-  wasm.table.exists = true;
-  wasm.table.imported = true;
-
-  // Import memory offset, if not already there
-  if (!wasm.getImportOrNull("memoryBase") && !wasm.getGlobalOrNull("memoryBase")) {
-    auto* import = new Import;
-    import->name = Name("memoryBase");
-    import->module = Name("env");
-    import->base = Name("memoryBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
-    wasm.addImport(import);
-  }
-
-  // Import table offset, if not already there
-  if (!wasm.getImportOrNull("tableBase") && !wasm.getGlobalOrNull("tableBase")) {
-    auto* import = new Import;
-    import->name = Name("tableBase");
-    import->module = Name("env");
-    import->base = Name("tableBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
-    wasm.addImport(import);
-  }
-
-#endif
 
   if (udivmoddi4.is() && getTempRet0.is()) {
     // generate a wasm-optimized __udivmoddi4 method, which we can do much more efficiently in wasm
@@ -1686,7 +1665,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       // global var
-      assert(mappedGlobals.find(name) != mappedGlobals.end());
+      if (mappedGlobals.find(name) == mappedGlobals.end()) {
+        Fatal() << "error: access of a non-existent global var " << name.str;
+      }
       auto* ret = builder.makeSetGlobal(name, process(assign->value()));
       // set_global does not return; if our value is trivially not used, don't emit a load (if nontrivially not used, opts get it later)
       auto parent = astStackHelper.getParent();
@@ -1702,6 +1683,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       assert(views.find(heap) != views.end());
       View& view = views[heap];
       auto ret = allocator.alloc<Store>();
+      ret->isAtomic = false;
       ret->bytes = view.bytes;
       ret->offset = 0;
       ret->align = view.bytes;
@@ -1715,14 +1697,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto conv = allocator.alloc<Unary>();
           conv->op = DemoteFloat64;
           conv->value = ret->value;
-          conv->type = WasmType::f32;
+          conv->type = Type::f32;
           ret->value = conv;
         } else if (ret->valueType == f64 && ret->value->type == f32) {
-          auto conv = allocator.alloc<Unary>();
-          conv->op = PromoteFloat32;
-          conv->value = ret->value;
-          conv->type = WasmType::f64;
-          ret->value = conv;
+          ret->value = ensureDouble(ret->value);
         } else {
           abort_on("bad sub[] types", ast);
         }
@@ -1741,12 +1719,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->right = process(ast[3]);
       ret->op = parseAsmBinaryOp(ast[1]->getIString(), ast[2], ast[3], ret->left, ret->right);
       ret->finalize();
-      if (ret->op == BinaryOp::RemSInt32 && isWasmTypeFloat(ret->type)) {
+      if (ret->op == BinaryOp::RemSInt32 && isFloatType(ret->type)) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
         CallImport *call = allocator.alloc<CallImport>();
         call->target = F64_REM;
-        call->operands.push_back(ret->left);
-        call->operands.push_back(ret->right);
+        call->operands.push_back(ensureDouble(ret->left));
+        call->operands.push_back(ensureDouble(ret->right));
         call->type = f64;
         static bool addedImport = false;
         if (!addedImport) {
@@ -1760,12 +1738,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           wasm.addImport(import);
         }
         return call;
-      } else if (trapMode != TrapMode::Allow &&
-                 (ret->op == BinaryOp::RemSInt32 || ret->op == BinaryOp::RemUInt32 ||
-                  ret->op == BinaryOp::DivSInt32 || ret->op == BinaryOp::DivUInt32)) {
-        return makeTrappingI32Binary(ret->op, ret->left, ret->right);
       }
-      return ret;
+      return makeTrappingBinary(ret, trappingFunctions);
     } else if (what == SUB) {
       Ref target = ast[1];
       assert(target->isString());
@@ -1773,12 +1747,13 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       assert(views.find(heap) != views.end());
       View& view = views[heap];
       auto ret = allocator.alloc<Load>();
+      ret->isAtomic = false;
       ret->bytes = view.bytes;
       ret->signed_ = view.signed_;
       ret->offset = 0;
       ret->align = view.bytes;
       ret->ptr = processUnshifted(ast[2], view.bytes);
-      ret->type = getWasmType(view.bytes, !view.integer);
+      ret->type = getType(view.bytes, !view.integer);
       return ret;
     } else if (what == UNARY_PREFIX) {
       if (ast[1] == PLUS) {
@@ -1791,15 +1766,11 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto conv = allocator.alloc<Unary>();
           conv->op = isUnsignedCoercion(ast[2]) ? ConvertUInt32ToFloat64 : ConvertSInt32ToFloat64;
           conv->value = ret;
-          conv->type = WasmType::f64;
+          conv->type = Type::f64;
           return conv;
         }
         if (ret->type == f32) {
-          auto conv = allocator.alloc<Unary>();
-          conv->op = PromoteFloat32;
-          conv->value = ret;
-          conv->type = WasmType::f64;
-          return conv;
+          return ensureDouble(ret);
         }
         fixCallType(ret, f64);
         return ret;
@@ -1817,33 +1788,46 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = SubInt32;
           ret->left = builder.makeConst(Literal((int32_t)0));
           ret->right = process(ast[2]);
-          ret->type = WasmType::i32;
+          ret->type = Type::i32;
           return ret;
         }
         auto ret = allocator.alloc<Unary>();
         ret->value = process(ast[2]);
         if (asmType == ASM_DOUBLE) {
           ret->op = NegFloat64;
-          ret->type = WasmType::f64;
+          ret->type = Type::f64;
         } else if (asmType == ASM_FLOAT) {
           ret->op = NegFloat32;
-          ret->type = WasmType::f32;
+          ret->type = Type::f32;
         } else {
-          abort();
+          WASM_UNREACHABLE();
         }
         return ret;
       } else if (ast[1] == B_NOT) {
         // ~, might be ~~ as a coercion or just a not
         if (ast[2]->isArray(UNARY_PREFIX) && ast[2][1] == B_NOT) {
           // if we have an unsigned coercion on us, it is an unsigned op
-          return makeTrappingFloatToInt(!isParentUnsignedCoercion(astStackHelper.getParent()), process(ast[2][2]));
+          Expression* expr = process(ast[2][2]);
+          bool isSigned = !isParentUnsignedCoercion(astStackHelper.getParent());
+          bool isF64 = expr->type == f64;
+          UnaryOp op;
+          if (isSigned && isF64) {
+            op = UnaryOp::TruncSFloat64ToInt32;
+          } else if (isSigned && !isF64) {
+            op = UnaryOp::TruncSFloat32ToInt32;
+          } else if (!isSigned && isF64) {
+            op = UnaryOp::TruncUFloat64ToInt32;
+          } else { // !isSigned && !isF64
+            op = UnaryOp::TruncUFloat32ToInt32;
+          }
+          return makeTrappingUnary(builder.makeUnary(op, expr), trappingFunctions);
         }
         // no bitwise unary not, so do xor with -1
         auto ret = allocator.alloc<Binary>();
         ret->op = XorInt32;
         ret->left = process(ast[2]);
         ret->right = builder.makeConst(Literal(int32_t(-1)));
-        ret->type = WasmType::i32;
+        ret->type = Type::i32;
         return ret;
       } else if (ast[1] == L_NOT) {
         auto ret = allocator.alloc<Unary>();
@@ -1866,7 +1850,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           ret->op = MulInt32;
           ret->left = process(ast[2][0]);
           ret->right = process(ast[2][1]);
-          ret->type = WasmType::i32;
+          ret->type = Type::i32;
           return ret;
         }
         if (name == Math_clz32 || name == llvm_cttz_i32) {
@@ -1874,7 +1858,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           auto ret = allocator.alloc<Unary>();
           ret->op = name == Math_clz32 ? ClzInt32 : CtzInt32;
           ret->value = process(ast[2][0]);
-          ret->type = WasmType::i32;
+          ret->type = Type::i32;
           return ret;
         }
         if (name == Math_fround) {
@@ -1911,9 +1895,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             // No wasm support, so use a temp local
             ensureI32Temp();
             auto set = allocator.alloc<SetLocal>();
-            set->setTee(false);
             set->index = function->getLocalIndex(I32_TEMP);
             set->value = value;
+            set->setTee(false);
             set->finalize();
             auto get = [&]() {
               auto ret = allocator.alloc<GetLocal>();
@@ -1948,7 +1932,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->type = value->type;
             return ret;
           } else {
-            abort();
+            WASM_UNREACHABLE();
           }
         }
         if (name == Math_floor || name == Math_sqrt || name == Math_ceil) {
@@ -1963,7 +1947,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
             ret->op = name == Math_floor ? FloorFloat64 : name == Math_ceil ? CeilFloat64 : SqrtFloat64;
             ret->type = value->type;
           } else {
-            abort();
+            Fatal() << "floor/sqrt/ceil only work on float/double in asm.js and wasm";
           }
           return ret;
         }
@@ -1978,10 +1962,60 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (ret->left->type == f64) {
             ret->op = name == Math_max ? MaxFloat64 : MinFloat64;
           } else {
-            abort();
+            Fatal() << "min/max only work on float/double in asm.js and wasm";
           }
           ret->type = ret->left->type;
           return ret;
+        }
+        if (name == Atomics_load ||
+            name == Atomics_store ||
+            name == Atomics_exchange ||
+            name == Atomics_compareExchange ||
+            name == Atomics_add ||
+            name == Atomics_sub ||
+            name == Atomics_and ||
+            name == Atomics_or ||
+            name == Atomics_xor) {
+          // atomic operation
+          Ref target = ast[2][0];
+          assert(target->isString());
+          IString heap = target->getIString();
+          assert(views.find(heap) != views.end());
+          View& view = views[heap];
+          wasm.memory.shared = true;
+          if (name == Atomics_load) {
+            Expression* ret = builder.makeAtomicLoad(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), asmToWasmType(view.type));
+            if (view.signed_) {
+              // atomic loads are unsigned; add a signing
+              ret = Bits::makeSignExt(ret, view.bytes, wasm);
+            }
+            return ret;
+          } else if (name == Atomics_store) {
+            // asm.js stores return the value, wasm does not
+            auto type = asmToWasmType(view.type);
+            auto temp = Builder::addVar(function, type);
+            return builder.makeSequence(
+              builder.makeAtomicStore(view.bytes, 0, processUnshifted(ast[2][1], view.bytes),
+                                      builder.makeTeeLocal(temp, process(ast[2][2])),
+                                      type),
+              builder.makeGetLocal(temp, type)
+            );
+          } else if (name == Atomics_exchange) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_compareExchange) {
+            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
+          } else if (name == Atomics_add) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_sub) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Sub, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_and) {
+            return builder.makeAtomicRMW(AtomicRMWOp::And, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_or) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Or, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          } else if (name == Atomics_xor) {
+            return builder.makeAtomicRMW(AtomicRMWOp::Xor, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
+          }
+          WASM_UNREACHABLE();
         }
         bool tableCall = false;
         if (wasmOnly) {
@@ -2038,15 +2072,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_S2D) return builder.makeUnary(UnaryOp::ConvertSInt64ToFloat64, value);
                 if (name == I64_U2F) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat32, value);
                 if (name == I64_U2D) return builder.makeUnary(UnaryOp::ConvertUInt64ToFloat64, value);
-                if (name == I64_F2S) return builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
-                if (name == I64_D2S) return builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
-                if (name == I64_F2U) return builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
-                if (name == I64_D2U) return builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+                if (name == I64_F2S) {
+                  Unary* conv = builder.makeUnary(UnaryOp::TruncSFloat32ToInt64, value);
+                  return makeTrappingUnary(conv, trappingFunctions);
+                }
+                if (name == I64_D2S) {
+                  Unary* conv = builder.makeUnary(UnaryOp::TruncSFloat64ToInt64, value);
+                  return makeTrappingUnary(conv, trappingFunctions);
+                }
+                if (name == I64_F2U) {
+                  Unary* conv = builder.makeUnary(UnaryOp::TruncUFloat32ToInt64, value);
+                  return makeTrappingUnary(conv, trappingFunctions);
+                }
+                if (name == I64_D2U) {
+                  Unary* conv = builder.makeUnary(UnaryOp::TruncUFloat64ToInt64, value);
+                  return makeTrappingUnary(conv, trappingFunctions);
+                }
                 if (name == I64_BC2D) return builder.makeUnary(UnaryOp::ReinterpretInt64, value);
                 if (name == I64_BC2I) return builder.makeUnary(UnaryOp::ReinterpretFloat64, value);
                 if (name == I64_CTTZ) return builder.makeUnary(UnaryOp::CtzInt64, value);
                 if (name == I64_CTLZ) return builder.makeUnary(UnaryOp::ClzInt64, value);
                 if (name == I64_CTPOP) return builder.makeUnary(UnaryOp::PopcntInt64, value);
+                if (name == I64_ATOMICS_LOAD) return builder.makeAtomicLoad(8, 0, value, i64);
               } else if (num == 2) { // 2 params,binary
                 if (name == I64_CONST) return builder.makeConst(getLiteral(ast));
                 auto* left = process(ast[2][0]);
@@ -2055,10 +2102,22 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_ADD) return builder.makeBinary(BinaryOp::AddInt64, left, right);
                 if (name == I64_SUB) return builder.makeBinary(BinaryOp::SubInt64, left, right);
                 if (name == I64_MUL) return builder.makeBinary(BinaryOp::MulInt64, left, right);
-                if (name == I64_UDIV) return makeTrappingI64Binary(BinaryOp::DivUInt64, left, right);
-                if (name == I64_SDIV) return makeTrappingI64Binary(BinaryOp::DivSInt64, left, right);
-                if (name == I64_UREM) return makeTrappingI64Binary(BinaryOp::RemUInt64, left, right);
-                if (name == I64_SREM) return makeTrappingI64Binary(BinaryOp::RemSInt64, left, right);
+                if (name == I64_UDIV) {
+                  Binary* div = builder.makeBinary(BinaryOp::DivUInt64, left, right);
+                  return makeTrappingBinary(div, trappingFunctions);
+                }
+                if (name == I64_SDIV) {
+                  Binary* div = builder.makeBinary(BinaryOp::DivSInt64, left, right);
+                  return makeTrappingBinary(div, trappingFunctions);
+                }
+                if (name == I64_UREM) {
+                  Binary* rem = builder.makeBinary(BinaryOp::RemUInt64, left, right);
+                  return makeTrappingBinary(rem, trappingFunctions);
+                }
+                if (name == I64_SREM) {
+                  Binary* rem = builder.makeBinary(BinaryOp::RemSInt64, left, right);
+                  return makeTrappingBinary(rem, trappingFunctions);
+                }
                 if (name == I64_AND) return builder.makeBinary(BinaryOp::AndInt64, left, right);
                 if (name == I64_OR) return builder.makeBinary(BinaryOp::OrInt64, left, right);
                 if (name == I64_XOR) return builder.makeBinary(BinaryOp::XorInt64, left, right);
@@ -2076,6 +2135,40 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                 if (name == I64_SLT) return builder.makeBinary(BinaryOp::LtSInt64, left, right);
                 if (name == I64_UGT) return builder.makeBinary(BinaryOp::GtUInt64, left, right);
                 if (name == I64_SGT) return builder.makeBinary(BinaryOp::GtSInt64, left, right);
+                // atomics
+                if (name == I64_ATOMICS_STORE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicStore(8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_ADD) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Add, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_SUB) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Sub, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_AND) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::And, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_OR) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Or, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_XOR) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Xor, 8, 0, left, right, i64);
+                }
+                if (name == I64_ATOMICS_EXCHANGE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicRMW(AtomicRMWOp::Xchg, 8, 0, left, right, i64);
+                }
+              } else if (num == 3) {
+                if (name == I64_ATOMICS_COMPAREEXCHANGE) {
+                  wasm.memory.shared = true;
+                  return builder.makeAtomicCmpxchg(8, 0, process(ast[2][0]), process(ast[2][1]), process(ast[2][2]), i64);
+                }
               }
               break;
             }
@@ -2122,7 +2215,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         if (tableCall) {
           auto specific = ret->dynCast<CallIndirect>();
           // note that we could also get the type from the suffix of the name, e.g., mftCall_vi
-          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands);
+          auto* fullType = getFunctionType(astStackHelper.getParent(), specific->operands, &asmData);
           specific->fullType = fullType->name;
           specific->type = fullType->result;
         }
@@ -2135,8 +2228,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // this is important as we run the optimizer on functions before we get
           // to finalizeCalls (which we can only do once we've read all the functions,
           // and we optimize in parallel starting earlier).
-          Ref parent = astStackHelper.getParent();
-          callImport->type = !!parent ? detectWasmType(parent, &asmData) : none;
+          callImport->type = getResultTypeOfCallUsingParent(astStackHelper.getParent(), &asmData);
           noteImportedFunctionCall(ast, callImport->type, callImport);
         }
         return ret;
@@ -2150,14 +2242,14 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       for (unsigned i = 0; i < args->size(); i++) {
         ret->operands.push_back(process(args[i]));
       }
-      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands);
+      auto* fullType = getFunctionType(astStackHelper.getParent(), ret->operands, &asmData);
       ret->fullType = fullType->name;
       ret->type = fullType->result;
       // we don't know the table offset yet. emit target = target + callImport(tableName), which we fix up later when we know how asm function tables are layed out inside the wasm table.
       ret->target = builder.makeBinary(BinaryOp::AddInt32, ret->target, builder.makeCallImport(target[1]->getIString(), {}, i32));
       return ret;
     } else if (what == RETURN) {
-      WasmType type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;
+      Type type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;
       if (seenReturn) {
         assert(function->result == type);
       } else {
@@ -2265,12 +2357,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         nameMapper.popLabelName(more);
         nameMapper.popLabelName(stop);
         // if we never continued, we don't need a loop
-        BreakSeeker breakSeeker(more);
-        breakSeeker.walk(child);
-        if (breakSeeker.found == 0) {
+        BranchUtils::BranchSeeker seeker(more);
+        seeker.walk(child);
+        if (seeker.found == 0) {
           auto block = allocator.alloc<Block>();
           block->list.push_back(child);
-          if (isConcreteWasmType(child->type)) {
+          if (isConcreteType(child->type)) {
             block->list.push_back(builder.makeNop()); // ensure a nop at the end, so the block has guaranteed none type and no values fall through
           }
           block->name = stop;
@@ -2407,13 +2499,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                   auto conv = allocator.alloc<Unary>();
                   conv->op = ReinterpretInt32;
                   conv->value = process(writtenValue);
-                  conv->type = WasmType::f32;
+                  conv->type = Type::f32;
                   if (readType == ASM_DOUBLE) {
-                    auto promote = allocator.alloc<Unary>();
-                    promote->op = PromoteFloat32;
-                    promote->value = conv;
-                    promote->type = WasmType::f64;
-                    return promote;
+                    return ensureDouble(conv);
                   }
                   return conv;
                 } else if (writeType == ASM_FLOAT && readType == ASM_INT) {
@@ -2424,7 +2512,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
                     // this has an implicit f64->f32 in the write to memory
                     conv->value = builder.makeUnary(DemoteFloat64, conv->value);
                   }
-                  conv->type = WasmType::i32;
+                  conv->type = Type::i32;
                   return conv;
                 }
               }
@@ -2476,6 +2564,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
 
       auto top = allocator.alloc<Block>();
       if (canSwitch) {
+
+        // we may need a break for the case where the condition doesn't match
+        // any of the cases. it should go to the default, if we have one, or
+        // outside if not
+        Break* breakWhenNotMatching = nullptr;
+
         if (br->condition->type == i32) {
           Binary* offsetor = allocator.alloc<Binary>();
           offsetor->op = BinaryOp::SubInt32;
@@ -2491,7 +2585,28 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           offsetor->left = br->condition;
           offsetor->right = builder.makeConst(Literal(int64_t(min)));
           offsetor->type = i64;
-          br->condition = builder.makeUnary(UnaryOp::WrapInt64, offsetor); // TODO: check this fits in 32 bits
+          // the switch itself can be 32-bit, as the range is in a reasonable range. so after
+          // offsetting, we need to make sure there are no high bits, then we can just look
+          // at the lower 32 bits
+          auto temp = Builder::addVar(function, i64);
+          auto* block = builder.makeBlock();
+          block->list.push_back(builder.makeSetLocal(temp, offsetor));
+          // if high bits, we can break to the default (we'll fill in the name later)
+          breakWhenNotMatching = builder.makeBreak(Name(), nullptr,
+            builder.makeUnary(
+              UnaryOp::WrapInt64,
+              builder.makeBinary(BinaryOp::ShrUInt64,
+                builder.makeGetLocal(temp, i64),
+                builder.makeConst(Literal(int64_t(32)))
+              )
+            )
+          );
+          block->list.push_back(breakWhenNotMatching);
+          block->list.push_back(
+            builder.makeGetLocal(temp, i64)
+          );
+          block->finalize();
+          br->condition = builder.makeUnary(UnaryOp::WrapInt64, block);
         }
 
         top->list.push_back(br);
@@ -2531,6 +2646,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         // ensure a default
         if (br->default_.isNull()) {
           br->default_ = top->name;
+        }
+        if (breakWhenNotMatching) {
+          breakWhenNotMatching->name = br->default_;
         }
         for (size_t i = 0; i < br->targets.size(); i++) {
           if (br->targets[i].isNull()) br->targets[i] = br->default_;

@@ -47,6 +47,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "compiler-support.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -66,15 +68,64 @@ typedef uint32_t BinaryenIndex;
 
 typedef uint32_t BinaryenType;
 
-BinaryenType BinaryenNone(void);
-BinaryenType BinaryenInt32(void);
-BinaryenType BinaryenInt64(void);
-BinaryenType BinaryenFloat32(void);
-BinaryenType BinaryenFloat64(void);
-
+BinaryenType BinaryenTypeNone(void);
+BinaryenType BinaryenTypeInt32(void);
+BinaryenType BinaryenTypeInt64(void);
+BinaryenType BinaryenTypeFloat32(void);
+BinaryenType BinaryenTypeFloat64(void);
+BinaryenType BinaryenTypeUnreachable(void);
 // Not a real type. Used as the last parameter to BinaryenBlock to let
 // the API figure out the type instead of providing one.
-BinaryenType BinaryenUndefined(void);
+BinaryenType BinaryenTypeAuto(void);
+
+WASM_DEPRECATED BinaryenType BinaryenNone(void);
+WASM_DEPRECATED BinaryenType BinaryenInt32(void);
+WASM_DEPRECATED BinaryenType BinaryenInt64(void);
+WASM_DEPRECATED BinaryenType BinaryenFloat32(void);
+WASM_DEPRECATED BinaryenType BinaryenFloat64(void);
+WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
+
+// Expression ids (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExpressionId;
+
+BinaryenExpressionId BinaryenInvalidId(void);
+BinaryenExpressionId BinaryenBlockId(void);
+BinaryenExpressionId BinaryenIfId(void);
+BinaryenExpressionId BinaryenLoopId(void);
+BinaryenExpressionId BinaryenBreakId(void);
+BinaryenExpressionId BinaryenSwitchId(void);
+BinaryenExpressionId BinaryenCallId(void);
+BinaryenExpressionId BinaryenCallImportId(void);
+BinaryenExpressionId BinaryenCallIndirectId(void);
+BinaryenExpressionId BinaryenGetLocalId(void);
+BinaryenExpressionId BinaryenSetLocalId(void);
+BinaryenExpressionId BinaryenGetGlobalId(void);
+BinaryenExpressionId BinaryenSetGlobalId(void);
+BinaryenExpressionId BinaryenLoadId(void);
+BinaryenExpressionId BinaryenStoreId(void);
+BinaryenExpressionId BinaryenConstId(void);
+BinaryenExpressionId BinaryenUnaryId(void);
+BinaryenExpressionId BinaryenBinaryId(void);
+BinaryenExpressionId BinaryenSelectId(void);
+BinaryenExpressionId BinaryenDropId(void);
+BinaryenExpressionId BinaryenReturnId(void);
+BinaryenExpressionId BinaryenHostId(void);
+BinaryenExpressionId BinaryenNopId(void);
+BinaryenExpressionId BinaryenUnreachableId(void);
+BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
+BinaryenExpressionId BinaryenAtomicRMWId(void);
+BinaryenExpressionId BinaryenAtomicWaitId(void);
+BinaryenExpressionId BinaryenAtomicWakeId(void);
+
+// External kinds (call to get the value of each; you can cache them)
+
+typedef uint32_t BinaryenExternalKind;
+
+BinaryenExternalKind BinaryenExternalFunction(void);
+BinaryenExternalKind BinaryenExternalTable(void);
+BinaryenExternalKind BinaryenExternalMemory(void);
+BinaryenExternalKind BinaryenExternalGlobal(void);
 
 // Modules
 //
@@ -262,6 +313,12 @@ BinaryenOp BinaryenPageSize(void);
 BinaryenOp BinaryenCurrentMemory(void);
 BinaryenOp BinaryenGrowMemory(void);
 BinaryenOp BinaryenHasFeature(void);
+BinaryenOp BinaryenAtomicRMWAdd(void);
+BinaryenOp BinaryenAtomicRMWSub(void);
+BinaryenOp BinaryenAtomicRMWAnd(void);
+BinaryenOp BinaryenAtomicRMWOr(void);
+BinaryenOp BinaryenAtomicRMWXor(void);
+BinaryenOp BinaryenAtomicRMWXchg(void);
 
 typedef void* BinaryenExpressionRef;
 
@@ -281,6 +338,9 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
 //                   type returned by the function being called, as that
 //                   function might not have been created yet, so we don't
 //                   know what it is.
+//                   Also note that WebAssembly does not differentiate
+//                   between Call and CallImport, but Binaryen does, so you
+//                   must use CallImport if calling an import, and vice versa.
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type);
@@ -301,6 +361,8 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type);
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *name, BinaryenType type);
+BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char *name, BinaryenExpressionRef value);
 // Load: align can be 0, in which case it will be the natural alignment (equal to bytes)
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr);
 // Store: align can be 0, in which case it will be the natural alignment (equal to bytes)
@@ -316,9 +378,204 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
 BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, const char* name, BinaryenExpressionRef* operands, BinaryenIndex numOperands);
 BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module);
 BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module);
+BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenType type, BinaryenExpressionRef ptr);
+BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t bytes, uint32_t offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef value, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIndex bytes, BinaryenIndex offset, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef replacement, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef expected, BinaryenExpressionRef timeout, BinaryenType type);
+BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
 
-// Print an expression to stdout. Useful for debugging.
+// Gets the id (kind) of the specified expression.
+BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr);
+// Gets the type of the specified expression.
+BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr);
+// Prints an expression to stdout. Useful for debugging.
 void BinaryenExpressionPrint(BinaryenExpressionRef expr);
+
+// Gets the name of the specified `Block` expression. May be `NULL`.
+const char* BinaryenBlockGetName(BinaryenExpressionRef expr);
+// Gets the number of nested child expressions within the specified `Block` expression.
+BinaryenIndex BinaryenBlockGetNumChildren(BinaryenExpressionRef expr);
+// Gets the nested child expression at the specified index within the specified `Block` expression.
+BinaryenExpressionRef BinaryenBlockGetChild(BinaryenExpressionRef expr, BinaryenIndex index);
+
+// Gets the nested condition expression within the specified `If` expression.
+BinaryenExpressionRef BinaryenIfGetCondition(BinaryenExpressionRef expr);
+// Gets the nested ifTrue expression within the specified `If` expression.
+BinaryenExpressionRef BinaryenIfGetIfTrue(BinaryenExpressionRef expr);
+// Gets the nested ifFalse expression within the specified `If` expression.
+BinaryenExpressionRef BinaryenIfGetIfFalse(BinaryenExpressionRef expr);
+
+// Gets the name of the specified `Loop` expression. May be `NULL`.
+const char* BinaryenLoopGetName(BinaryenExpressionRef expr);
+// Gets the nested body expression within the specified `Loop` expression.
+BinaryenExpressionRef BinaryenLoopGetBody(BinaryenExpressionRef expr);
+
+// Gets the name of the specified `Break` expression. May be `NULL`.
+const char* BinaryenBreakGetName(BinaryenExpressionRef expr);
+// Gets the nested condition expression within the specified `Break` expression. Returns `NULL` if this is a `br` and not a `br_if`.
+BinaryenExpressionRef BinaryenBreakGetCondition(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `Break` expression. May be `NULL`.
+BinaryenExpressionRef BinaryenBreakGetValue(BinaryenExpressionRef expr);
+
+// Gets the number of names within the specified `Switch` expression.
+BinaryenIndex BinaryenSwitchGetNumNames(BinaryenExpressionRef expr);
+// Gets the name at the specified index within the specified `Switch` expression.
+const char* BinaryenSwitchGetName(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets the default name of the specified `Switch` expression.
+const char* BinaryenSwitchGetDefaultName(BinaryenExpressionRef expr);
+// Gets the nested condition expression within the specified `Switch` expression.
+BinaryenExpressionRef BinaryenSwitchGetCondition(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specifiedd `Switch` expression. May be `NULL`.
+BinaryenExpressionRef BinaryenSwitchGetValue(BinaryenExpressionRef expr);
+
+// Gets the name of the target of the specified `Call` expression.
+const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
+// Gets the number of nested operand expressions within the specified `Call` expression.
+BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
+// Gets the nested operand expression at the specified index within the specified `Call` expression.
+BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+// Gets the name of the target of the specified `CallImport` expression.
+const char* BinaryenCallImportGetTarget(BinaryenExpressionRef expr);
+// Gets the number of nested operand expressions within the specified `CallImport` expression.
+BinaryenIndex BinaryenCallImportGetNumOperands(BinaryenExpressionRef expr);
+// Gets the nested operand expression at the specified index within the specified `CallImport` expression.
+BinaryenExpressionRef BinaryenCallImportGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+// Gets the nested target expression of the specified `CallIndirect` expression.
+BinaryenExpressionRef BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
+// Gets the number of nested operand expressions within the specified `CallIndirect` expression.
+BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
+// Gets the nested operand expression at the specified index within the specified `CallIndirect` expression.
+BinaryenExpressionRef BinaryenCallIndirectGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+// Gets the index of the specified `GetLocal` expression.
+BinaryenIndex BinaryenGetLocalGetIndex(BinaryenExpressionRef expr);
+
+// Tests if the specified `SetLocal` expression performs a `tee_local` instead of a `set_local`.
+int BinaryenSetLocalIsTee(BinaryenExpressionRef expr);
+// Gets the index of the specified `SetLocal` expression.
+BinaryenIndex BinaryenSetLocalGetIndex(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `SetLocal` expression.
+BinaryenExpressionRef BinaryenSetLocalGetValue(BinaryenExpressionRef expr);
+
+// Gets the name of the specified `GetGlobal` expression.
+const char* BinaryenGetGlobalGetName(BinaryenExpressionRef expr);
+
+// Gets the name of the specified `SetGlobal` expression.
+const char* BinaryenSetGlobalGetName(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `SetLocal` expression.
+BinaryenExpressionRef BinaryenSetGlobalGetValue(BinaryenExpressionRef expr);
+
+// Gets the operator of the specified `Host` expression.
+BinaryenOp BinaryenHostGetOp(BinaryenExpressionRef expr);
+// Gets the name operand of the specified `Host` expression. May be `NULL`.
+const char* BinaryenHostGetNameOperand(BinaryenExpressionRef expr);
+// Gets the number of nested operand expressions within the specified `Host` expression.
+BinaryenIndex BinaryenHostGetNumOperands(BinaryenExpressionRef expr);
+// Gets the nested operand expression at the specified index within the specified `Host` expression.
+BinaryenExpressionRef BinaryenHostGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
+
+// Tests if the specified `Load` expression is atomic.
+int BinaryenLoadIsAtomic(BinaryenExpressionRef expr);
+// Tests if the specified `Load` expression is signed.
+int BinaryenLoadIsSigned(BinaryenExpressionRef expr);
+// Gets the offset of the specified `Load` expression.
+uint32_t BinaryenLoadGetOffset(BinaryenExpressionRef expr);
+// Gets the byte size of the specified `Load` expression.
+uint32_t BinaryenLoadGetBytes(BinaryenExpressionRef expr);
+// Gets the alignment of the specified `Load` expression.
+uint32_t BinaryenLoadGetAlign(BinaryenExpressionRef expr);
+// Gets the nested pointer expression within the specified `Load` expression.
+BinaryenExpressionRef BinaryenLoadGetPtr(BinaryenExpressionRef expr);
+
+// Tests if the specified `Store` expression is atomic.
+int BinaryenStoreIsAtomic(BinaryenExpressionRef expr);
+// Gets the byte size of the specified `Store` expression.
+uint32_t BinaryenStoreGetBytes(BinaryenExpressionRef expr);
+// Gets the offset of the specified store expression.
+uint32_t BinaryenStoreGetOffset(BinaryenExpressionRef expr);
+// Gets the alignment of the specified `Store` expression.
+uint32_t BinaryenStoreGetAlign(BinaryenExpressionRef expr);
+// Gets the nested pointer expression within the specified `Store` expression.
+BinaryenExpressionRef BinaryenStoreGetPtr(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `Store` expression.
+BinaryenExpressionRef BinaryenStoreGetValue(BinaryenExpressionRef expr);
+
+// Gets the 32-bit integer value of the specified `Const` expression.
+int32_t BinaryenConstGetValueI32(BinaryenExpressionRef expr);
+// Gets the 64-bit integer value of the specified `Const` expression.
+int64_t BinaryenConstGetValueI64(BinaryenExpressionRef expr);
+// Gets the low 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
+int32_t BinaryenConstGetValueI64Low(BinaryenExpressionRef expr);
+// Gets the high 32-bits of a 64-bit integer value of the specified `Const` expression. Useful where I64 returning exports are illegal, i.e. binaryen.js.
+int32_t BinaryenConstGetValueI64High(BinaryenExpressionRef expr);
+// Gets the 32-bit float value of the specified `Const` expression.
+float BinaryenConstGetValueF32(BinaryenExpressionRef expr);
+// Gets the 64-bit float value of the specified `Const` expression.
+double BinaryenConstGetValueF64(BinaryenExpressionRef expr);
+
+// Gets the operator of the specified `Unary` expression.
+BinaryenOp BinaryenUnaryGetOp(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `Unary` expression.
+BinaryenExpressionRef BinaryenUnaryGetValue(BinaryenExpressionRef expr);
+
+// Gets the operator of the specified `Binary` expression.
+BinaryenOp BinaryenBinaryGetOp(BinaryenExpressionRef expr);
+// Gets the nested left expression within the specified `Binary` expression.
+BinaryenExpressionRef BinaryenBinaryGetLeft(BinaryenExpressionRef expr);
+// Gets the nested right expression within the specified `Binary` expression.
+BinaryenExpressionRef BinaryenBinaryGetRight(BinaryenExpressionRef expr);
+
+// Gets the nested ifTrue expression within the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetIfTrue(BinaryenExpressionRef expr);
+// Gets the nested ifFalse expression within the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetIfFalse(BinaryenExpressionRef expr);
+// Gets the nested condition expression within the specified `Select` expression.
+BinaryenExpressionRef BinaryenSelectGetCondition(BinaryenExpressionRef expr);
+
+// Gets the nested value expression within the specified `Drop` expression.
+BinaryenExpressionRef BinaryenDropGetValue(BinaryenExpressionRef expr);
+
+// Gets the nested value expression within the specified `Return` expression.
+BinaryenExpressionRef BinaryenReturnGetValue(BinaryenExpressionRef expr);
+
+// Gets the operator of the specified `AtomicRMW` expression.
+BinaryenOp BinaryenAtomicRMWGetOp(BinaryenExpressionRef expr);
+// Gets the byte size of the specified `AtomicRMW` expression.
+uint32_t BinaryenAtomicRMWGetBytes(BinaryenExpressionRef expr);
+// Gets the offset of the specified `AtomicRMW` expression.
+uint32_t BinaryenAtomicRMWGetOffset(BinaryenExpressionRef expr);
+// Gets the nested pointer expression within the specified `AtomicRMW` expression.
+BinaryenExpressionRef BinaryenAtomicRMWGetPtr(BinaryenExpressionRef expr);
+// Gets the nested value expression within the specified `AtomicRMW` expression.
+BinaryenExpressionRef BinaryenAtomicRMWGetValue(BinaryenExpressionRef expr);
+
+// Gets the byte size of the specified `AtomicCmpxchg` expression.
+uint32_t BinaryenAtomicCmpxchgGetBytes(BinaryenExpressionRef expr);
+// Gets the offset of the specified `AtomicCmpxchg` expression.
+uint32_t BinaryenAtomicCmpxchgGetOffset(BinaryenExpressionRef expr);
+// Gets the nested pointer expression within the specified `AtomicCmpxchg` expression.
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetPtr(BinaryenExpressionRef expr);
+// Gets the nested expected value expression within the specified `AtomicCmpxchg` expression.
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetExpected(BinaryenExpressionRef expr);
+// Gets the nested replacement value expression within the specified `AtomicCmpxchg` expression.
+BinaryenExpressionRef BinaryenAtomicCmpxchgGetReplacement(BinaryenExpressionRef expr);
+
+// Gets the nested pointer expression within the specified `AtomicWait` expression.
+BinaryenExpressionRef BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr);
+// Gets the nested expected value expression within the specified `AtomicWait` expression.
+BinaryenExpressionRef BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr);
+// Gets the nested timeout expression within the specified `AtomicWait` expression.
+BinaryenExpressionRef BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr);
+// Gets the expected type of the specified `AtomicWait` expression.
+BinaryenType BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
+
+// Gets the nested pointer expression within the specified `AtomicWake` expression.
+BinaryenExpressionRef BinaryenAtomicWakeGetPtr(BinaryenExpressionRef expr);
+// Gets the nested wake count expression within the specified `AtomicWake` expression.
+BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr);
 
 // Functions
 
@@ -334,19 +591,39 @@ typedef void* BinaryenFunctionRef;
 //            at indexes 1 and 2, etc., that is, they share an index space.
 BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module, const char* name, BinaryenFunctionTypeRef type, BinaryenType* varTypes, BinaryenIndex numVarTypes, BinaryenExpressionRef body);
 
+// Gets a function reference by name.
+BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module, const char* name);
+
+// Removes a function by name.
+void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
+
 // Imports
 
 typedef void* BinaryenImportRef;
 
-BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
+WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
+BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef functionType);
+BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
+BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
+BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenType globalType);
 void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
 
 // Exports
 
 typedef void* BinaryenExportRef;
 
-BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddFunctionExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddMemoryExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
+BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module, const char* internalName, const char* externalName);
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName);
+
+// Globals
+
+typedef void* BinaryenGlobalRef;
+
+BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, BinaryenType type, int8_t mutable_, BinaryenExpressionRef init);
 
 // Function table. One per module
 
@@ -369,24 +646,80 @@ void BinaryenSetStart(BinaryenModuleRef module, BinaryenFunctionRef start);
 // Parse a module in s-expression text format
 BinaryenModuleRef BinaryenModuleParse(const char* text);
 
-// Print a module to stdout. Useful for debugging.
+// Print a module to stdout in s-expression text format. Useful for debugging.
 void BinaryenModulePrint(BinaryenModuleRef module);
+
+// Print a module to stdout in asm.js syntax.
+void BinaryenModulePrintAsmjs(BinaryenModuleRef module);
 
 // Validate a module, showing errors on problems.
 //  @return 0 if an error occurred, 1 if validated succesfully
 int BinaryenModuleValidate(BinaryenModuleRef module);
 
-// Run the standard optimization passes on the module.
+// Runs the standard optimization passes on the module. Uses the currently set
+// global optimize and shrink level.
 void BinaryenModuleOptimize(BinaryenModuleRef module);
+
+// Gets the currently set optimize level. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
+int BinaryenGetOptimizeLevel();
+
+// Sets the optimization level to use. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
+void BinaryenSetOptimizeLevel(int level);
+
+// Gets the currently set shrink level. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -Os (default), -Oz.
+int BinaryenGetShrinkLevel();
+
+// Sets the shrink level to use. Applies to all modules, globally.
+// 0, 1, 2 correspond to -O0, -Os (default), -Oz.
+void BinaryenSetShrinkLevel(int level);
+
+// Gets whether generating debug information is currently enabled or not.
+// Applies to all modules, globally.
+int BinaryenGetDebugInfo();
+
+// Enables or disables debug information in emitted binaries.
+// Applies to all modules, globally.
+void BinaryenSetDebugInfo(int on);
+
+// Runs the specified passes on the module. Uses the currently set global
+// optimize and shrink level.
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
 
 // Auto-generate drop() operations where needed. This lets you generate code without
 // worrying about where they are needed. (It is more efficient to do it yourself,
 // but simpler to use autodrop).
 void BinaryenModuleAutoDrop(BinaryenModuleRef module);
 
-// Serialize a module into binary form.
+// Serialize a module into binary form. Uses the currently set global debugInfo option.
 // @return how many bytes were written. This will be less than or equal to outputSize
 size_t BinaryenModuleWrite(BinaryenModuleRef module, char* output, size_t outputSize);
+
+typedef struct BinaryenBufferSizes {
+  size_t outputBytes;
+  size_t sourceMapBytes;
+} BinaryenBufferSizes;
+
+// Serialize a module into binary form including its source map. Uses the currently set
+// global debugInfo option.
+// @returns how many bytes were written. This will be less than or equal to outputSize
+BinaryenBufferSizes BinaryenModuleWriteWithSourceMap(BinaryenModuleRef module, const char* url, char* output, size_t outputSize, char* sourceMap, size_t sourceMapSize);
+
+// Result structure of BinaryenModuleAllocateAndWrite. Contained buffers have been allocated
+// using malloc() and the user is expected to free() them manually once not needed anymore.
+typedef struct BinaryenModuleAllocateAndWriteResult {
+  void* binary;
+  size_t binaryBytes;
+  char* sourceMap;
+} BinaryenModuleAllocateAndWriteResult;
+
+// Serializes a module into binary form, optionally including its source map if
+// sourceMapUrl has been specified. Uses the currently set global debugInfo option.
+// Differs from BinaryenModuleWrite in that it implicitly allocates appropriate buffers
+// using malloc(), and expects the user to free() them manually once not needed anymore.
+BinaryenModuleAllocateAndWriteResult BinaryenModuleAllocateAndWrite(BinaryenModuleRef module, const char* sourceMapUrl);
 
 // Deserialize a module from binary form.
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
@@ -395,6 +728,86 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize);
 // the module, run it in the interpreter - which means running the start method -
 // and then destroying the instance.
 void BinaryenModuleInterpret(BinaryenModuleRef module);
+
+// Adds a debug info file name to the module and returns its index.
+BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module, const char* filename);
+
+// Gets the name of the debug info file at the specified index. Returns `NULL` if it
+// does not exist.
+const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module, BinaryenIndex index);
+
+//
+// ======== FunctionType Operations ========
+//
+
+// Gets the name of the specified `FunctionType`.
+const char* BinaryenFunctionTypeGetName(BinaryenFunctionTypeRef ftype);
+// Gets the number of parameters of the specified `FunctionType`.
+BinaryenIndex BinaryenFunctionTypeGetNumParams(BinaryenFunctionTypeRef ftype);
+// Gets the type of the parameter at the specified index of the specified `FunctionType`.
+BinaryenType BinaryenFunctionTypeGetParam(BinaryenFunctionTypeRef ftype, BinaryenIndex index);
+// Gets the result type of the specified `FunctionType`.
+BinaryenType BinaryenFunctionTypeGetResult(BinaryenFunctionTypeRef ftype);
+
+//
+// ========== Function Operations ==========
+//
+
+// Gets the name of the specified `Function`.
+const char* BinaryenFunctionGetName(BinaryenFunctionRef func);
+// Gets the name of the `FunctionType` associated with the specified `Function`. May be `NULL` if the signature is implicit.
+const char* BinaryenFunctionGetType(BinaryenFunctionRef func);
+// Gets the number of parameters of the specified `Function`.
+BinaryenIndex BinaryenFunctionGetNumParams(BinaryenFunctionRef func);
+// Gets the type of the parameter at the specified index of the specified `Function`.
+BinaryenType BinaryenFunctionGetParam(BinaryenFunctionRef func, BinaryenIndex index);
+// Gets the result type of the specified `Function`.
+BinaryenType BinaryenFunctionGetResult(BinaryenFunctionRef func);
+// Gets the number of additional locals within the specified `Function`.
+BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
+// Gets the type of the additional local at the specified index within the specified `Function`.
+BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func, BinaryenIndex index);
+// Gets the body of the specified `Function`.
+BinaryenExpressionRef BinaryenFunctionGetBody(BinaryenFunctionRef func);
+
+// Runs the standard optimization passes on the function. Uses the currently set
+// global optimize and shrink level.
+void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module);
+
+// Runs the specified passes on the function. Uses the currently set global
+// optimize and shrink level.
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+
+// Sets the debug location of the specified `Expression` within the specified `Function`.
+void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressionRef expr, BinaryenIndex fileIndex, BinaryenIndex lineNumber, BinaryenIndex columnNumber);
+
+//
+// ========== Import Operations ==========
+//
+
+// Gets the external kind of the specified import.
+BinaryenExternalKind BinaryenImportGetKind(BinaryenImportRef import);
+// Gets the external module name of the specified import.
+const char* BinaryenImportGetModule(BinaryenImportRef import);
+// Gets the external base name of the specified import.
+const char* BinaryenImportGetBase(BinaryenImportRef import);
+// Gets the internal name of the specified import.
+const char* BinaryenImportGetName(BinaryenImportRef import);
+// Gets the type of the imported global, if referencing a `Global`.
+BinaryenType BinaryenImportGetGlobalType(BinaryenImportRef import);
+// Gets the name of the function type of the imported function, if referencing a `Function`.
+const char* BinaryenImportGetFunctionType(BinaryenImportRef import);
+
+//
+// ========== Export Operations ==========
+//
+
+// Gets the external kind of the specified export.
+BinaryenExternalKind BinaryenExportGetKind(BinaryenExportRef export_);
+// Gets the external name of the specified export.
+const char* BinaryenExportGetName(BinaryenExportRef export_);
+// Gets the internal name of the specified export.
+const char* BinaryenExportGetValue(BinaryenExportRef export_);
 
 //
 // ========== CFG / Relooper ==========

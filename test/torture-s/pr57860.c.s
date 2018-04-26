@@ -1,14 +1,14 @@
 	.text
-	.file	"/usr/local/google/home/jgravelle/code/wasm/waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr57860.c"
+	.file	"pr57860.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32
 	.result 	i32
 	.local  	i64, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push14=, 0
 	i32.load	$4=, f($pop14)
 	i32.const	$push13=, 0
@@ -21,7 +21,7 @@ foo:                                    # @foo
 	i32.const	$push11=, 0
 	i32.load	$push0=, c($pop11)
 	br_if   	0, $pop0        # 0: down to label1
-# BB#1:
+# %bb.1:
 	i32.const	$5=, 1
 	br      	1               # 1: down to label0
 .LBB0_2:
@@ -49,44 +49,42 @@ foo:                                    # @foo
 	i32.store	g($pop17), $pop10
 	i32.const	$push15=, 0
 	i32.load	$push1=, c($pop15)
-	i32.eqz 	$push29=, $pop1
-	br_if   	3, $pop29       # 3: down to label4
-# BB#5:                                 #   in Loop: Header=BB0_3 Depth=1
+	i32.eqz 	$push25=, $pop1
+	br_if   	3, $pop25       # 3: down to label4
+# %bb.5:                                #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$5=, 0
 	br      	5               # 5: up to label2
-.LBB0_6:                                # %for.inc.preheader
+.LBB0_6:                                # %for.inc.lr.ph
                                         #   in Loop: Header=BB0_3 Depth=1
 	end_block                       # label7:
 	i32.const	$push19=, 0
 	i32.const	$push18=, 0
 	i32.store	c($pop19), $pop18
-# BB#7:                                 #   in Loop: Header=BB0_3 Depth=1
+# %bb.7:                                #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$5=, 1
 	br      	4               # 4: up to label2
 .LBB0_8:                                # %for.end
                                         #   in Loop: Header=BB0_3 Depth=1
 	end_block                       # label6:
-	i64.load32_s	$push4=, 0($2)
-	i32.const	$push28=, 0
-	i64.load32_s	$push2=, a($pop28)
-	i64.const	$push27=, 8589934591
-	i64.xor 	$push3=, $pop2, $pop27
-	i64.and 	$push5=, $pop4, $pop3
-	i64.gt_s	$push26=, $1, $pop5
-	tee_local	$push25=, $0=, $pop26
-	i32.store	0($3), $pop25
-	i32.store	0($4), $0
 	i32.const	$push24=, 0
-	i32.load	$push23=, g($pop24)
-	tee_local	$push22=, $0=, $pop23
+	i64.load32_s	$push2=, a($pop24)
+	i64.const	$push23=, 8589934591
+	i64.xor 	$push3=, $pop2, $pop23
+	i64.load32_s	$push4=, 0($2)
+	i64.and 	$push5=, $pop3, $pop4
+	i64.lt_s	$0=, $pop5, $1
+	i32.store	0($3), $0
+	i32.store	0($4), $0
+	i32.const	$push22=, 0
+	i32.load	$0=, g($pop22)
 	i32.const	$push21=, 2
-	i32.shl 	$push6=, $pop22, $pop21
+	i32.shl 	$push6=, $0, $pop21
 	i32.const	$push20=, k
 	i32.add 	$push7=, $pop6, $pop20
 	i32.load	$push8=, 0($pop7)
-	i32.eqz 	$push30=, $pop8
-	br_if   	2, $pop30       # 2: down to label3
-# BB#9:                                 #   in Loop: Header=BB0_3 Depth=1
+	i32.eqz 	$push26=, $pop8
+	br_if   	2, $pop26       # 2: down to label3
+# %bb.9:                                #   in Loop: Header=BB0_3 Depth=1
 	i32.const	$5=, 2
 	br      	3               # 3: up to label2
 .LBB0_10:                               # %if.then
@@ -106,15 +104,15 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push16=, 0
 	i32.load	$2=, f($pop16)
 	i32.const	$push15=, 0
@@ -126,7 +124,7 @@ main:                                   # @main
 	i32.const	$push13=, 0
 	i32.load	$push0=, c($pop13)
 	br_if   	0, $pop0        # 0: down to label10
-# BB#1:
+# %bb.1:
 	i32.const	$4=, 1
 	br      	1               # 1: down to label9
 .LBB1_2:
@@ -159,62 +157,60 @@ main:                                   # @main
 	i32.store	g($pop19), $pop12
 	i32.const	$push17=, 0
 	i32.load	$push1=, c($pop17)
-	i32.eqz 	$push34=, $pop1
-	br_if   	5, $pop34       # 5: down to label14
-# BB#5:                                 #   in Loop: Header=BB1_3 Depth=1
+	i32.eqz 	$push30=, $pop1
+	br_if   	5, $pop30       # 5: down to label14
+# %bb.5:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$4=, 0
 	br      	8               # 8: up to label11
-.LBB1_6:                                # %for.inc.preheader.i
+.LBB1_6:                                # %for.inc.lr.ph.i
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label19:
 	i32.const	$push21=, 0
 	i32.const	$push20=, 0
 	i32.store	c($pop21), $pop20
-# BB#7:                                 #   in Loop: Header=BB1_3 Depth=1
+# %bb.7:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$4=, 1
 	br      	7               # 7: up to label11
 .LBB1_8:                                # %for.end.i
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label18:
+	i32.const	$push27=, 0
+	i64.load32_s	$push2=, a($pop27)
+	i64.const	$push26=, 8589934591
+	i64.xor 	$push3=, $pop2, $pop26
 	i64.load32_s	$push4=, 0($0)
-	i32.const	$push31=, 0
-	i64.load32_s	$push2=, a($pop31)
-	i64.const	$push30=, 8589934591
-	i64.xor 	$push3=, $pop2, $pop30
-	i64.and 	$push5=, $pop4, $pop3
-	i64.const	$push29=, 1
-	i64.lt_s	$push28=, $pop5, $pop29
-	tee_local	$push27=, $3=, $pop28
-	i32.store	0($1), $pop27
+	i64.and 	$push5=, $pop3, $pop4
+	i64.const	$push25=, 1
+	i64.lt_s	$3=, $pop5, $pop25
+	i32.store	0($1), $3
 	i32.store	0($2), $3
-	i32.const	$push26=, 0
-	i32.load	$push25=, g($pop26)
-	tee_local	$push24=, $3=, $pop25
+	i32.const	$push24=, 0
+	i32.load	$3=, g($pop24)
 	i32.const	$push23=, 2
-	i32.shl 	$push6=, $pop24, $pop23
+	i32.shl 	$push6=, $3, $pop23
 	i32.const	$push22=, k
 	i32.add 	$push7=, $pop6, $pop22
 	i32.load	$push8=, 0($pop7)
-	i32.eqz 	$push35=, $pop8
-	br_if   	4, $pop35       # 4: down to label13
-# BB#9:                                 #   in Loop: Header=BB1_3 Depth=1
+	i32.eqz 	$push31=, $pop8
+	br_if   	4, $pop31       # 4: down to label13
+# %bb.9:                                #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$4=, 2
 	br      	6               # 6: up to label11
 .LBB1_10:                               # %foo.exit
                                         #   in Loop: Header=BB1_3 Depth=1
 	end_block                       # label17:
-	i32.const	$push32=, 0
-	i32.load	$push9=, d($pop32)
+	i32.const	$push28=, 0
+	i32.load	$push9=, d($pop28)
 	i32.const	$push10=, 1
 	i32.ne  	$push11=, $pop9, $pop10
 	br_if   	4, $pop11       # 4: down to label12
-# BB#11:                                #   in Loop: Header=BB1_3 Depth=1
+# %bb.11:                               #   in Loop: Header=BB1_3 Depth=1
 	i32.const	$4=, 4
 	br      	5               # 5: up to label11
 .LBB1_12:                               # %if.end
 	end_block                       # label16:
-	i32.const	$push33=, 0
-	return  	$pop33
+	i32.const	$push29=, 0
+	return  	$pop29
 .LBB1_13:                               # %if.then
 	end_block                       # label15:
 	call    	abort@FUNCTION
@@ -236,7 +232,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -319,5 +315,5 @@ g:
 	.size	g, 4
 
 
-	.ident	"clang version 4.0.0 "
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -1,13 +1,13 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/930603-1.c"
+	.file	"930603-1.c"
 	.section	.text.fx,"ax",@progbits
-	.hidden	fx
+	.hidden	fx                      # -- Begin function fx
 	.globl	fx
 	.type	fx,@function
 fx:                                     # @fx
 	.param  	f64
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f64.const	$push4=, 0x1.8p1
 	f32.demote/f64	$push0=, $0
 	f64.promote/f32	$push1=, $pop0
@@ -21,61 +21,61 @@ fx:                                     # @fx
 	.endfunc
 .Lfunc_end0:
 	.size	fx, .Lfunc_end0-fx
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.section	.text.inita,"ax",@progbits
-	.hidden	inita
+	.hidden	inita                   # -- Begin function inita
 	.globl	inita
 	.type	inita,@function
 inita:                                  # @inita
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.const	$push0=, 0x1.8p1
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end2:
 	.size	inita, .Lfunc_end2-inita
-
+                                        # -- End function
 	.section	.text.initc,"ax",@progbits
-	.hidden	initc
+	.hidden	initc                   # -- Begin function initc
 	.globl	initc
 	.type	initc,@function
 initc:                                  # @initc
 	.result 	f32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	f32.const	$push0=, 0x1p2
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end3:
 	.size	initc, .Lfunc_end3-initc
-
+                                        # -- End function
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	copy_local	$push0=, $0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end4:
 	.size	f, .Lfunc_end4-f
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

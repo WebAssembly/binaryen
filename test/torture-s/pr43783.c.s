@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr43783.c"
+	.file	"pr43783.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %if.end
+# %bb.0:                                # %if.end
 	i32.const	$push1=, 0
 	i64.const	$push0=, 1
 	i64.store	bid_Kx192+32($pop1), $pop0
@@ -66,10 +66,10 @@ main:                                   # @main
 	i64.store	bid_Kx192+440($pop31), $pop30
 	i32.const	$push29=, 0
 	i64.const	$push28=, 0
-	i64.store	bid_Kx192+464($pop29), $pop28
+	i64.store	bid_Kx192+488($pop29), $pop28
 	i32.const	$push27=, 0
 	i64.const	$push26=, 0
-	i64.store	bid_Kx192+488($pop27), $pop26
+	i64.store	bid_Kx192+464($pop27), $pop26
 	i32.const	$push25=, 0
 	i64.const	$push24=, 0
 	i64.store	bid_Kx192+512($pop25), $pop24
@@ -108,7 +108,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	bid_Kx192               # @bid_Kx192
 	.type	bid_Kx192,@object
 	.section	.bss.bid_Kx192,"aw",@nobits
@@ -119,4 +119,4 @@ bid_Kx192:
 	.size	bid_Kx192, 768
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

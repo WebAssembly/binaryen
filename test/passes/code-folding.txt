@@ -1,0 +1,142 @@
+(module
+ (type $13 (func (param f32)))
+ (type $1 (func))
+ (type $2 (func (result f32)))
+ (table 282 282 anyfunc)
+ (memory $0 1 1)
+ (func $0 (; 0 ;) (type $1)
+  (block $label$1
+   (if
+    (i32.const 1)
+    (block
+     (block $label$3
+      (call_indirect (type $13)
+       (block $label$4
+        (br $label$3)
+       )
+       (i32.const 105)
+      )
+     )
+     (nop)
+    )
+   )
+  )
+ )
+ (func $negative-zero (; 1 ;) (type $2) (result f32)
+  (if (result f32)
+   (i32.const 0)
+   (block $label$0 (result f32)
+    (f32.const 0)
+   )
+   (block $label$1 (result f32)
+    (f32.const -0)
+   )
+  )
+ )
+ (func $negative-zero-b (; 2 ;) (type $2) (result f32)
+  (drop
+   (i32.const 0)
+  )
+  (block $label$0 (result f32)
+   (f32.const -0)
+  )
+ )
+ (func $negative-zero-c (; 3 ;) (type $2) (result f32)
+  (drop
+   (i32.const 0)
+  )
+  (block $label$0 (result f32)
+   (f32.const 0)
+  )
+ )
+ (func $break-target-outside-of-return-merged-code (; 4 ;) (type $1)
+  (block $label$A
+   (if
+    (unreachable)
+    (block $block
+     (block $block0
+      (block $label$B
+       (if
+        (unreachable)
+        (br_table $label$A $label$B
+         (unreachable)
+        )
+       )
+      )
+      (return)
+     )
+    )
+    (block $block2
+     (block $label$C
+      (if
+       (unreachable)
+       (br_table $label$A $label$C
+        (unreachable)
+       )
+      )
+     )
+     (return)
+    )
+   )
+  )
+ )
+ (func $break-target-inside-all-good (; 5 ;) (type $1)
+  (block $folding-inner0
+   (block $label$A
+    (if
+     (unreachable)
+     (block $block
+      (block $block4
+       (br $folding-inner0)
+      )
+     )
+     (block $block6
+      (br $folding-inner0)
+     )
+    )
+   )
+  )
+  (block $label$B
+   (if
+    (unreachable)
+    (br_table $label$B $label$B
+     (unreachable)
+    )
+   )
+  )
+  (return)
+ )
+ (func $leave-inner-block-type (; 6 ;) (type $1)
+  (block $label$1
+   (drop
+    (block $label$2 (result i32)
+     (br_if $label$2
+      (unreachable)
+      (unreachable)
+     )
+     (br $label$1)
+    )
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+)
+(module
+ (type $0 (func (result i32)))
+ (memory $0 (shared 1 1))
+ (export "func_2224" (func $0))
+ (func $0 (; 0 ;) (type $0) (result i32)
+  (local $var$0 i32)
+  (if (result i32)
+   (i32.const 0)
+   (i32.load offset=22
+    (get_local $var$0)
+   )
+   (i32.atomic.load offset=22
+    (get_local $var$0)
+   )
+  )
+ )
+)

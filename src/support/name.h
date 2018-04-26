@@ -40,8 +40,11 @@ struct Name : public cashew::IString {
   Name(const std::string& str) : cashew::IString(str.c_str(), false) {}
 
   friend std::ostream& operator<<(std::ostream& o, Name name) {
-    assert(name.str);
-    return o << '$' << name.str; // reference interpreter requires we prefix all names
+    if (name.str) {
+      return o << '$' << name.str; // reference interpreter requires we prefix all names
+    } else {
+      return o << "(null Name)";
+    }
   }
 
   static Name fromInt(size_t i) {
@@ -54,5 +57,12 @@ struct Name : public cashew::IString {
 };
 
 } // namespace wasm
+
+namespace std {
+
+template <> struct hash<wasm::Name> : hash<cashew::IString> {};
+
+} // namespace std
+
 
 #endif // wasm_support_string_h

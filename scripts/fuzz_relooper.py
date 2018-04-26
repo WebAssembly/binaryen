@@ -56,7 +56,7 @@ while True:
                'fuzz.c']:
     try:
       os.unlink(temp)
-    except:
+    except OSError:
       pass
 
   # parts

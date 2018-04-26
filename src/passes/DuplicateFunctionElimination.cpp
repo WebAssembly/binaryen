@@ -22,7 +22,7 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ast_utils.h"
+#include "ir/utils.h"
 #include "support/hash.h"
 
 namespace wasm {
@@ -56,7 +56,7 @@ private:
     digest = rehash(digest, hash);
   }
   void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, hash >> 32), uint32_t(hash));
+    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
   };
 };
 
@@ -102,23 +102,22 @@ struct DuplicateFunctionElimination : public Pass {
       std::set<Name> duplicates;
       for (auto& pair : hashGroups) {
         auto& group = pair.second;
-        if (group.size() == 1) continue;
-        // pick a base for each group, and try to replace everyone else to it. TODO: multiple bases per hash group, for collisions
-#if 0
-        // for comparison purposes, pick in a deterministic way based on the names
-        Function* base = nullptr;
-        for (auto* func : group) {
-          if (!base || strcmp(func->name.str, base->name.str) < 0) {
-            base = func;
-          }
-        }
-#else
-        Function* base = group[0];
-#endif
-        for (auto* func : group) {
-          if (func != base && equal(func, base)) {
-            replacements[func->name] = base->name;
-            duplicates.insert(func->name);
+        Index size = group.size();
+        if (size == 1) continue;
+        // The groups should be fairly small, and even if a group is large we should
+        // have almost all of them identical, so we should not hit actual O(N^2)
+        // here unless the hash is quite poor.
+        for (Index i = 0; i < size - 1; i++) {
+          auto* first = group[i];
+          if (duplicates.count(first->name)) continue;
+          for (Index j = i + 1; j < size; j++) {
+            auto* second = group[j];
+            if (duplicates.count(second->name)) continue;
+            if (equal(first, second)) {
+              // great, we can replace the second with the first!
+              replacements[second->name] = first->name;
+              duplicates.insert(second->name);
+            }
           }
         }
       }

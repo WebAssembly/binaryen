@@ -15,7 +15,7 @@
  */
 
 //
-// Removeds imports, and replaces them with nops. This is useful
+// Removes function imports, and replaces them with nops. This is useful
 // for running a module through the reference interpreter, which
 // does not validate imports for a JS environment (by removing
 // imports, we can at least get the reference interpreter to
@@ -29,7 +29,7 @@ namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
   void visitCallImport(CallImport *curr) {
-    WasmType type = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
+    Type type = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
     if (type == none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
@@ -42,7 +42,9 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
   void visitModule(Module *curr) {
     std::vector<Name> names;
     for (auto& import : curr->imports) {
-      names.push_back(import->name);
+      if (import->kind == ExternalKind::Function) {
+        names.push_back(import->name);
+      }
     }
     for (auto& name : names) {
       curr->removeImport(name);

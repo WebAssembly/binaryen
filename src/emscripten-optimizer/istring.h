@@ -136,6 +136,19 @@ struct IString {
 
   bool is() const     { return str != nullptr; }
   bool isNull() const { return str == nullptr; }
+
+  const char* stripPrefix(const char *prefix) const {
+    const char *ptr = str;
+    while (true) {
+      if (*prefix == 0) return ptr;
+      if (*ptr == 0) return nullptr;
+      if (*ptr++ != *prefix++) return nullptr;
+    }
+  }
+
+  bool startsWith(const char *prefix) const {
+    return stripPrefix(prefix) != nullptr;
+  }
 };
 
 } // namespace cashew

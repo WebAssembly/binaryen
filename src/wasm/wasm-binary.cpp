@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#include "wasm-binary.h"
-
+#include <algorithm>
 #include <fstream>
+
 #include "support/bits.h"
+#include "wasm-binary.h"
+#include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -29,6 +32,9 @@ void WasmBinaryWriter::prepare() {
     }
     // TODO: depending on upstream flux https://github.com/WebAssembly/spec/pull/301 might want this: assert(!func->type.isNull());
   }
+  ModuleUtils::BinaryIndexes indexes(*wasm);
+  mappedFunctions = std::move(indexes.functionIndexes);
+  mappedGlobals = std::move(indexes.globalIndexes);
 }
 
 void WasmBinaryWriter::write() {
@@ -49,12 +55,15 @@ void WasmBinaryWriter::write() {
   writeFunctions();
   writeDataSegments();
   if (debugInfo) writeNames();
-  if (sourceMap) writeSourceMapUrl();
+  if (sourceMap && !sourceMapUrl.empty()) writeSourceMapUrl();
   if (symbolMap.size() > 0) writeSymbolMap();
 
   if (sourceMap) {
     writeSourceMapEpilog();
   }
+
+  writeUserSections();
+
   finishUp();
 }
 
@@ -71,8 +80,11 @@ int32_t WasmBinaryWriter::writeU32LEBPlaceholder() {
   return ret;
 }
 
-void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum, bool hasMaximum) {
-  uint32_t flags = hasMaximum ? 1 : 0;
+void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
+                                            bool hasMaximum, bool shared) {
+  uint32_t flags =
+      (hasMaximum ? (uint32_t) BinaryConsts::HasMaximum : 0U) |
+      (shared ? (uint32_t) BinaryConsts::IsShared : 0U);
   o << U32LEB(flags);
   o << U32LEB(initial);
   if (hasMaximum) {
@@ -80,24 +92,29 @@ void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum, bo
   }
 }
 
-int32_t WasmBinaryWriter::startSection(BinaryConsts::Section code) {
+template<typename T>
+int32_t WasmBinaryWriter::startSection(T code) {
   o << U32LEB(code);
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
 void WasmBinaryWriter::finishSection(int32_t start) {
-  int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-  o.writeAt(start, U32LEB(size));
+  int32_t size = o.size() - start - MaxLEB32Bytes; // section size does not include the reserved bytes of the size field itself
+  auto sizeFieldSize = o.writeAt(start, U32LEB(size));
+  if (sizeFieldSize != MaxLEB32Bytes) {
+    // we can save some room, nice
+    assert(sizeFieldSize < MaxLEB32Bytes);
+    std::move(&o[start] + MaxLEB32Bytes, &o[start] + MaxLEB32Bytes + size, &o[start] + sizeFieldSize);
+    o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+  }
 }
 
 int32_t WasmBinaryWriter::startSubsection(BinaryConsts::UserSections::Subsection code) {
-  o << U32LEB(code);
-  return writeU32LEBPlaceholder(); // section size to be filled in later
+  return startSection(code);
 }
 
 void WasmBinaryWriter::finishSubsection(int32_t start) {
-  int32_t size = o.size() - start - 5; // section size does not include the 5 bytes of the size field itself
-  o.writeAt(start, U32LEB(size));
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeStart() {
@@ -113,7 +130,8 @@ void WasmBinaryWriter::writeMemory() {
   if (debug) std::cerr << "== writeMemory" << std::endl;
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
-  writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
+  writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                       wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
   finishSection(start);
 }
 
@@ -127,13 +145,13 @@ void WasmBinaryWriter::writeTypes() {
     o << S32LEB(BinaryConsts::EncodedType::Func);
     o << U32LEB(type->params.size());
     for (auto param : type->params) {
-      o << binaryWasmType(param);
+      o << binaryType(param);
     }
     if (type->result == none) {
       o << U32LEB(0);
     } else {
       o << U32LEB(1);
-      o << binaryWasmType(type->result);
+      o << binaryType(type->result);
     }
   }
   finishSection(start);
@@ -161,15 +179,16 @@ void WasmBinaryWriter::writeImports() {
       case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
       case ExternalKind::Table: {
         o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
+        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
         break;
       }
       case ExternalKind::Memory: {
-        writeResizableLimits(wasm->memory.initial, wasm->memory.max, wasm->memory.max != Memory::kMaxSize);
+        writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                             wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
         break;
       }
       case ExternalKind::Global:
-        o << binaryWasmType(import->globalType);
+        o << binaryType(import->globalType);
         o << U32LEB(0); // Mutable global's can't be imported for now.
         break;
       default: WASM_UNREACHABLE();
@@ -186,10 +205,10 @@ void WasmBinaryWriter::mapLocals(Function* function) {
   for (auto type : function->vars) {
     numLocalsByType[type]++;
   }
-  std::map<WasmType, size_t> currLocalsByType;
+  std::map<Type, size_t> currLocalsByType;
   for (Index i = function->getVarIndexBase(); i < function->getNumLocals(); i++) {
     size_t index = function->getVarIndexBase();
-    WasmType type = function->getLocalType(i);
+    Type type = function->getLocalType(i);
     currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
     if (type == i32) {
       mappedLocals[i] = index + currLocalsByType[i32] - 1;
@@ -254,17 +273,24 @@ void WasmBinaryWriter::writeFunctions() {
         (numLocalsByType[f32] ? 1 : 0) +
         (numLocalsByType[f64] ? 1 : 0)
                 );
-    if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryWasmType(i32);
-    if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryWasmType(i64);
-    if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryWasmType(f32);
-    if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryWasmType(f64);
+    if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
+    if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryType(i64);
+    if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryType(f32);
+    if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
 
-    writeExpression(function->body);
+    recursePossibleBlockContents(function->body);
     o << int8_t(BinaryConsts::End);
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
     if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
-    o.writeAt(sizePos, U32LEB(size));
+    auto sizeFieldSize = o.writeAt(sizePos, U32LEB(size));
+    if (sizeFieldSize != MaxLEB32Bytes) {
+      // we can save some room, nice
+      assert(sizeFieldSize < MaxLEB32Bytes);
+      std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
+      o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+    }
+    tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
   }
   currFunction = nullptr;
   finishSection(start);
@@ -277,7 +303,7 @@ void WasmBinaryWriter::writeGlobals() {
   o << U32LEB(wasm->globals.size());
   for (auto& curr : wasm->globals) {
     if (debug) std::cerr << "write one" << std::endl;
-    o << binaryWasmType(curr->type);
+    o << binaryType(curr->type);
     o << U32LEB(curr->mutable_);
     writeExpression(curr->init);
     o << int8_t(BinaryConsts::End);
@@ -306,58 +332,104 @@ void WasmBinaryWriter::writeExports() {
   finishSection(start);
 }
 
+static bool isEmpty(Memory::Segment& segment) {
+  return segment.data.size() == 0;
+}
+
+static bool isConstantOffset(Memory::Segment& segment) {
+  return segment.offset->is<Const>();
+}
+
 void WasmBinaryWriter::writeDataSegments() {
   if (wasm->memory.segments.size() == 0) return;
-  uint32_t num = 0;
+  Index numConstant = 0,
+        numDynamic = 0;
   for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() > 0) num++;
+    if (!isEmpty(segment)) {
+      if (isConstantOffset(segment)) {
+        numConstant++;
+      } else {
+        numDynamic++;
+      }
+    }
+  }
+  // check if we have too many dynamic data segments, which we can do nothing about
+  auto num = numConstant + numDynamic;
+  if (numDynamic + 1 >= WebLimitations::MaxDataSegments) {
+    std::cerr << "too many non-constant-offset data segments, wasm VMs may not accept this binary" << std::endl;
+  }
+  // we'll merge constant segments if we must
+  if (numConstant + numDynamic >= WebLimitations::MaxDataSegments) {
+    numConstant = WebLimitations::MaxDataSegments - numDynamic - 1;
+    num = numConstant + numDynamic;
+    assert(num == WebLimitations::MaxDataSegments - 1);
   }
   auto start = startSection(BinaryConsts::Section::Data);
   o << U32LEB(num);
-  for (auto& segment : wasm->memory.segments) {
-    if (segment.data.size() == 0) continue;
+  // first, emit all non-constant-offset segments; then emit the constants,
+  // which we may merge if forced to
+  Index emitted = 0;
+  auto emit = [&](Memory::Segment& segment) {
     o << U32LEB(0); // Linear memory 0 in the MVP
     writeExpression(segment.offset);
     o << int8_t(BinaryConsts::End);
     writeInlineBuffer(&segment.data[0], segment.data.size());
+    emitted++;
+  };
+  auto& segments = wasm->memory.segments;
+  for (auto& segment : segments) {
+    if (isEmpty(segment)) continue;
+    if (isConstantOffset(segment)) continue;
+    emit(segment);
+  }
+  // from here on, we concern ourselves with non-empty constant-offset
+  // segments, the ones which we may need to merge
+  auto isRelevant = [](Memory::Segment& segment) {
+    return !isEmpty(segment) && isConstantOffset(segment);
+  };
+  for (Index i = 0; i < segments.size(); i++) {
+    auto& segment = segments[i];
+    if (!isRelevant(segment)) continue;
+    if (emitted + 2 < WebLimitations::MaxDataSegments) {
+      emit(segment);
+    } else {
+      // we can emit only one more segment! merge everything into one
+      // start the combined segment at the bottom of them all
+      auto start = segment.offset->cast<Const>()->value.getInteger();
+      for (Index j = i + 1; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (!isRelevant(segment)) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        start = std::min(start, offset);
+      }
+      // create the segment and add in all the data
+      Const c;
+      c.value = Literal(int32_t(start));
+      c.type = i32;
+      Memory::Segment combined(&c);
+      for (Index j = i; j < segments.size(); j++) {
+        auto& segment = segments[j];
+        if (!isRelevant(segment)) continue;
+        auto offset = segment.offset->cast<Const>()->value.getInteger();
+        auto needed = offset + segment.data.size() - start;
+        if (combined.data.size() < needed) {
+          combined.data.resize(needed);
+        }
+        std::copy(segment.data.begin(), segment.data.end(), combined.data.begin() + offset - start);
+      }
+      emit(combined);
+      break;
+    }
   }
   finishSection(start);
 }
 
 uint32_t WasmBinaryWriter::getFunctionIndex(Name name) {
-  if (!mappedFunctions.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Function) continue;
-      assert(mappedFunctions.count(import->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->functions.size(); i++) {
-      assert(mappedFunctions.count(wasm->functions[i]->name) == 0);
-      auto index = mappedFunctions.size();
-      mappedFunctions[wasm->functions[i]->name] = index;
-    }
-  }
   assert(mappedFunctions.count(name));
   return mappedFunctions[name];
 }
 
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
-  if (!mappedGlobals.size()) {
-    // Create name => index mapping.
-    for (auto& import : wasm->imports) {
-      if (import->kind != ExternalKind::Global) continue;
-      assert(mappedGlobals.count(import->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[import->name] = index;
-    }
-    for (size_t i = 0; i < wasm->globals.size(); i++) {
-      assert(mappedGlobals.count(wasm->globals[i]->name) == 0);
-      auto index = mappedGlobals.size();
-      mappedGlobals[wasm->globals[i]->name] = index;
-    }
-  }
   assert(mappedGlobals.count(name));
   return mappedGlobals[name];
 }
@@ -368,7 +440,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize);
+  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
   finishSection(start);
 }
 
@@ -482,6 +554,17 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
   }
 }
 
+void WasmBinaryWriter::writeUserSections() {
+  for (auto& section : wasm->userSections) {
+    auto start = startSection(0);
+    writeInlineString(section.name.c_str());
+    for (size_t i = 0; i < section.data.size(); i++) {
+      o << uint8_t(section.data[i]);
+    }
+    finishSection(start);
+  }
+}
+
 void WasmBinaryWriter::writeDebugLocation(size_t offset, const Function::DebugLocation& loc) {
   if (lastBytecodeOffset > 0) {
     *sourceMap << ",";
@@ -539,13 +622,13 @@ void WasmBinaryWriter::recurse(Expression*& curr) {
 }
 
 static bool brokenTo(Block* block) {
-  return block->name.is() && BreakSeeker::has(block, block->name);
+  return block->name.is() && BranchUtils::BranchSeeker::hasNamed(block, block->name);
 }
 
 void WasmBinaryWriter::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   o << int8_t(BinaryConsts::Block);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
   Index i = 0;
   for (auto* child : curr->list) {
@@ -577,6 +660,11 @@ void WasmBinaryWriter::recursePossibleBlockContents(Expression* curr) {
   for (auto* child : block->list) {
     recurse(child);
   }
+  if (block->type == unreachable && block->list.back()->type != unreachable) {
+    // similar to in visitBlock, here we could skip emitting the block itself,
+    // but must still end the 'block' (the contents, really) with an unreachable
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitIf(If *curr) {
@@ -590,7 +678,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
   }
   recurse(curr->condition);
   o << int8_t(BinaryConsts::If);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
   recursePossibleBlockContents(curr->ifTrue); // TODO: emit block contents directly, if possible
   breakStack.pop_back();
@@ -613,7 +701,7 @@ void WasmBinaryWriter::visitIf(If *curr) {
 void WasmBinaryWriter::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   o << int8_t(BinaryConsts::Loop);
-  o << binaryWasmType(curr->type != unreachable ? curr->type : none);
+  o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(curr->name);
   recursePossibleBlockContents(curr->body);
   breakStack.pop_back();
@@ -630,7 +718,7 @@ int32_t WasmBinaryWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  std::cerr << "bad break: " << name << std::endl;
+  std::cerr << "bad break: " << name << " in " << currFunction->name << std::endl;
   abort();
 }
 
@@ -642,6 +730,16 @@ void WasmBinaryWriter::visitBreak(Break *curr) {
   if (curr->condition) recurse(curr->condition);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+  if (curr->condition && curr->type == unreachable) {
+    // a br_if is normally none or emits a value. if it is unreachable,
+    // then either the condition or the value is unreachable, which is
+    // extremely rare, and may require us to make the stack polymorphic
+    // (if the block we branch to has a value, we may lack one as we
+    // are not a reachable branch; the wasm spec on the other hand does
+    // presume the br_if emits a value of the right type, even if it
+    // popped unreachable)
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitSwitch(Switch *curr) {
@@ -650,6 +748,13 @@ void WasmBinaryWriter::visitSwitch(Switch *curr) {
     recurse(curr->value);
   }
   recurse(curr->condition);
+  if (!BranchUtils::isBranchReachable(curr)) {
+    // if the branch is not reachable, then it's dangerous to emit it, as
+    // wasm type checking rules are different, especially in unreachable
+    // code. so just don't emit that unreachable code.
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
   o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
   for (auto target : curr->targets) {
     o << U32LEB(getBreakIndex(target));
@@ -663,6 +768,9 @@ void WasmBinaryWriter::visitCall(Call *curr) {
     recurse(operand);
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(getFunctionIndex(curr->target));
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitCallImport(CallImport *curr) {
@@ -683,6 +791,9 @@ void WasmBinaryWriter::visitCallIndirect(CallIndirect *curr) {
   o << int8_t(BinaryConsts::CallIndirect)
     << U32LEB(getFunctionTypeIndex(curr->fullType))
     << U32LEB(0); // Reserved flags field
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetLocal(GetLocal *curr) {
@@ -694,6 +805,9 @@ void WasmBinaryWriter::visitSetLocal(SetLocal *curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   recurse(curr->value);
   o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitGetGlobal(GetGlobal *curr) {
@@ -715,30 +829,62 @@ void WasmBinaryWriter::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t
 void WasmBinaryWriter::visitLoad(Load *curr) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
   recurse(curr->ptr);
-  switch (curr->type) {
-    case i32: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S : BinaryConsts::I32LoadMem8U); break;
-        case 2: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem16S : BinaryConsts::I32LoadMem16U); break;
-        case 4: o << int8_t(BinaryConsts::I32LoadMem); break;
-        default: abort();
+  if (!curr->isAtomic) {
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem8S : BinaryConsts::I32LoadMem8U); break;
+          case 2: o << int8_t(curr->signed_ ? BinaryConsts::I32LoadMem16S : BinaryConsts::I32LoadMem16U); break;
+          case 4: o << int8_t(BinaryConsts::I32LoadMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
-    }
-    case i64: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S : BinaryConsts::I64LoadMem8U); break;
-        case 2: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem16S : BinaryConsts::I64LoadMem16U); break;
-        case 4: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem32S : BinaryConsts::I64LoadMem32U); break;
-        case 8: o << int8_t(BinaryConsts::I64LoadMem); break;
-        default: abort();
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem8S : BinaryConsts::I64LoadMem8U); break;
+          case 2: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem16S : BinaryConsts::I64LoadMem16U); break;
+          case 4: o << int8_t(curr->signed_ ? BinaryConsts::I64LoadMem32S : BinaryConsts::I64LoadMem32U); break;
+          case 8: o << int8_t(BinaryConsts::I64LoadMem); break;
+          default: abort();
+        }
+        break;
       }
-      break;
+      case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
+      case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
+      case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
+      default: WASM_UNREACHABLE();
     }
-    case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
-    case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
-    case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
-    default: WASM_UNREACHABLE();
+  } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
+    o << int8_t(BinaryConsts::AtomicPrefix);
+    switch (curr->type) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32AtomicLoad8U); break;
+          case 2: o << int8_t(BinaryConsts::I32AtomicLoad16U); break;
+          case 4: o << int8_t(BinaryConsts::I32AtomicLoad); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64AtomicLoad8U); break;
+          case 2: o << int8_t(BinaryConsts::I64AtomicLoad16U); break;
+          case 4: o << int8_t(BinaryConsts::I64AtomicLoad32U); break;
+          case 8: o << int8_t(BinaryConsts::I64AtomicLoad); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case unreachable: return;
+      default: WASM_UNREACHABLE();
+    }
   }
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
@@ -747,31 +893,194 @@ void WasmBinaryWriter::visitStore(Store *curr) {
   if (debug) std::cerr << "zz node: Store" << std::endl;
   recurse(curr->ptr);
   recurse(curr->value);
-  switch (curr->valueType) {
-    case i32: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(BinaryConsts::I32StoreMem8); break;
-        case 2: o << int8_t(BinaryConsts::I32StoreMem16); break;
-        case 4: o << int8_t(BinaryConsts::I32StoreMem); break;
-        default: abort();
+  if (!curr->isAtomic) {
+    switch (curr->valueType) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32StoreMem8); break;
+          case 2: o << int8_t(BinaryConsts::I32StoreMem16); break;
+          case 4: o << int8_t(BinaryConsts::I32StoreMem); break;
+          default: abort();
+        }
+        break;
       }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64StoreMem8); break;
+          case 2: o << int8_t(BinaryConsts::I64StoreMem16); break;
+          case 4: o << int8_t(BinaryConsts::I64StoreMem32); break;
+          case 8: o << int8_t(BinaryConsts::I64StoreMem); break;
+          default: abort();
+        }
+        break;
+      }
+      case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
+      case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
+      default: abort();
+    }
+  } else {
+    if (curr->type == unreachable) {
+      // don't even emit it; we don't know the right type
+      o << int8_t(BinaryConsts::Unreachable);
+      return;
+    }
+    o << int8_t(BinaryConsts::AtomicPrefix);
+    switch (curr->valueType) {
+      case i32: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I32AtomicStore8); break;
+          case 2: o << int8_t(BinaryConsts::I32AtomicStore16); break;
+          case 4: o << int8_t(BinaryConsts::I32AtomicStore); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      case i64: {
+        switch (curr->bytes) {
+          case 1: o << int8_t(BinaryConsts::I64AtomicStore8); break;
+          case 2: o << int8_t(BinaryConsts::I64AtomicStore16); break;
+          case 4: o << int8_t(BinaryConsts::I64AtomicStore32); break;
+          case 8: o << int8_t(BinaryConsts::I64AtomicStore); break;
+          default: WASM_UNREACHABLE();
+        }
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+  }
+  emitMemoryAccess(curr->align, curr->bytes, curr->offset);
+}
+
+void WasmBinaryWriter::visitAtomicRMW(AtomicRMW *curr) {
+  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
+  recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
+  recurse(curr->value);
+  if (curr->value->type == unreachable) return;
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+
+#define CASE_FOR_OP(Op) \
+  case Op: \
+    switch (curr->type) {                                               \
+      case i32:                                                         \
+        switch (curr->bytes) {                                          \
+          case 1: o << int8_t(BinaryConsts::I32AtomicRMW##Op##8U); break; \
+          case 2: o << int8_t(BinaryConsts::I32AtomicRMW##Op##16U); break; \
+          case 4: o << int8_t(BinaryConsts::I32AtomicRMW##Op); break;   \
+          default: WASM_UNREACHABLE();                                  \
+        }                                                               \
+        break;                                                          \
+      case i64:                                                         \
+        switch (curr->bytes) {                                          \
+          case 1: o << int8_t(BinaryConsts::I64AtomicRMW##Op##8U); break; \
+          case 2: o << int8_t(BinaryConsts::I64AtomicRMW##Op##16U); break; \
+          case 4: o << int8_t(BinaryConsts::I64AtomicRMW##Op##32U); break; \
+          case 8: o << int8_t(BinaryConsts::I64AtomicRMW##Op); break;   \
+          default: WASM_UNREACHABLE();                                  \
+        }                                                               \
+        break;                                                          \
+      default: WASM_UNREACHABLE();                                      \
+    }                                                                   \
+    break
+
+  switch(curr->op) {
+    CASE_FOR_OP(Add);
+    CASE_FOR_OP(Sub);
+    CASE_FOR_OP(And);
+    CASE_FOR_OP(Or);
+    CASE_FOR_OP(Xor);
+    CASE_FOR_OP(Xchg);
+    default: WASM_UNREACHABLE();
+  }
+#undef CASE_FOR_OP
+
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+}
+
+void WasmBinaryWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
+  recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
+  recurse(curr->expected);
+  if (curr->expected->type == unreachable) return;
+  recurse(curr->replacement);
+  if (curr->replacement->type == unreachable) return;
+
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    o << int8_t(BinaryConsts::Unreachable);
+    return;
+  }
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->type) {
+    case i32:
+      switch (curr->bytes) {
+        case 1: o << int8_t(BinaryConsts::I32AtomicCmpxchg8U); break;
+        case 2: o << int8_t(BinaryConsts::I32AtomicCmpxchg16U); break;
+        case 4: o << int8_t(BinaryConsts::I32AtomicCmpxchg); break;
+        default: WASM_UNREACHABLE();
+      }
+      break;
+    case i64:
+      switch (curr->bytes) {
+        case 1: o << int8_t(BinaryConsts::I64AtomicCmpxchg8U); break;
+        case 2: o << int8_t(BinaryConsts::I64AtomicCmpxchg16U); break;
+        case 4: o << int8_t(BinaryConsts::I64AtomicCmpxchg32U); break;
+        case 8: o << int8_t(BinaryConsts::I64AtomicCmpxchg); break;
+        default: WASM_UNREACHABLE();
+      }
+      break;
+    default: WASM_UNREACHABLE();
+  }
+  emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
+}
+
+void WasmBinaryWriter::visitAtomicWait(AtomicWait *curr) {
+  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
+  recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
+  recurse(curr->expected);
+  if (curr->expected->type == unreachable) return;
+  recurse(curr->timeout);
+  if (curr->timeout->type == unreachable) return;
+
+  o << int8_t(BinaryConsts::AtomicPrefix);
+  switch (curr->expectedType) {
+    case i32: {
+      o << int8_t(BinaryConsts::I32AtomicWait);
+      emitMemoryAccess(4, 4, 0);
       break;
     }
     case i64: {
-      switch (curr->bytes) {
-        case 1: o << int8_t(BinaryConsts::I64StoreMem8); break;
-        case 2: o << int8_t(BinaryConsts::I64StoreMem16); break;
-        case 4: o << int8_t(BinaryConsts::I64StoreMem32); break;
-        case 8: o << int8_t(BinaryConsts::I64StoreMem); break;
-        default: abort();
-      }
+      o << int8_t(BinaryConsts::I64AtomicWait);
+      emitMemoryAccess(8, 8, 0);
       break;
     }
-    case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
-    case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
-    default: abort();
+    default: WASM_UNREACHABLE();
   }
-  emitMemoryAccess(curr->align, curr->bytes, curr->offset);
+}
+
+void WasmBinaryWriter::visitAtomicWake(AtomicWake *curr) {
+  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
+  recurse(curr->ptr);
+  // stop if the rest isn't reachable anyhow
+  if (curr->ptr->type == unreachable) return;
+  recurse(curr->wakeCount);
+  if (curr->wakeCount->type == unreachable) return;
+
+  o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
+  emitMemoryAccess(4, 4, 0);
 }
 
 void WasmBinaryWriter::visitConst(Const *curr) {
@@ -849,7 +1158,15 @@ void WasmBinaryWriter::visitUnary(Unary *curr) {
     case ReinterpretFloat64: o << int8_t(BinaryConsts::I64ReinterpretF64); break;
     case ReinterpretInt32: o << int8_t(BinaryConsts::F32ReinterpretI32); break;
     case ReinterpretInt64: o << int8_t(BinaryConsts::F64ReinterpretI64); break;
+    case ExtendS8Int32: o << int8_t(BinaryConsts::I32ExtendS8); break;
+    case ExtendS16Int32: o << int8_t(BinaryConsts::I32ExtendS16); break;
+    case ExtendS8Int64: o << int8_t(BinaryConsts::I64ExtendS8); break;
+    case ExtendS16Int64: o << int8_t(BinaryConsts::I64ExtendS16); break;
+    case ExtendS32Int64: o << int8_t(BinaryConsts::I64ExtendS32); break;
     default: abort();
+  }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
@@ -940,6 +1257,9 @@ void WasmBinaryWriter::visitBinary(Binary *curr) {
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge);      break;
     default: abort();
   }
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitSelect(Select *curr) {
@@ -948,6 +1268,9 @@ void WasmBinaryWriter::visitSelect(Select *curr) {
   recurse(curr->ifFalse);
   recurse(curr->condition);
   o << int8_t(BinaryConsts::Select);
+  if (curr->type == unreachable) {
+    o << int8_t(BinaryConsts::Unreachable);
+  }
 }
 
 void WasmBinaryWriter::visitReturn(Return *curr) {
@@ -993,8 +1316,6 @@ void WasmBinaryWriter::visitDrop(Drop *curr) {
 
 // reader
 
-static Name RETURN_BREAK("binaryen|break-to-return");
-
 void WasmBinaryBuilder::read() {
 
   readHeader();
@@ -1004,7 +1325,7 @@ void WasmBinaryBuilder::read() {
   while (more()) {
     uint32_t sectionCode = getU32LEB();
     uint32_t payloadLen = getU32LEB();
-    if (pos + payloadLen > input.size()) throw ParseException("Section extends beyond end of input");
+    if (pos + payloadLen > input.size()) throwError("Section extends beyond end of input");
 
     auto oldPos = pos;
 
@@ -1012,7 +1333,7 @@ void WasmBinaryBuilder::read() {
     // and verify those that shouldn't do not.
     if (sectionCode != BinaryConsts::Section::User && sectionCode != BinaryConsts::Section::Code) {
       if (!seenSections.insert(BinaryConsts::Section(sectionCode)).second) {
-        throw ParseException("section seen more than once: " + std::to_string(sectionCode));
+        throwError("section seen more than once: " + std::to_string(sectionCode));
       }
     }
 
@@ -1038,7 +1359,7 @@ void WasmBinaryBuilder::read() {
       default: {
         readUserSection(payloadLen);
         if (pos > oldPos + payloadLen) {
-          throw ParseException("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+          throwError("bad user section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
         }
         pos = oldPos + payloadLen;
       }
@@ -1046,7 +1367,7 @@ void WasmBinaryBuilder::read() {
 
     // make sure we advanced exactly past this section
     if (pos != oldPos + payloadLen) {
-      throw ParseException("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
+      throwError("bad section size, started at " + std::to_string(oldPos) + " plus payload " + std::to_string(payloadLen) + " not being equal to new position " + std::to_string(pos));
     }
   }
 
@@ -1072,7 +1393,7 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
-  if (!more()) throw ParseException("unexpected end of input");
+  if (!more()) throwError("unexpected end of input");
   if (debug) std::cerr << "getInt8: " << (int)(uint8_t)input[pos] << " (at " << pos << ")" << std::endl;
   return input[pos++];
 }
@@ -1157,7 +1478,7 @@ int64_t WasmBinaryBuilder::getS64LEB() {
   return ret.value;
 }
 
-WasmType WasmBinaryBuilder::getWasmType() {
+Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
@@ -1166,8 +1487,17 @@ WasmType WasmBinaryBuilder::getWasmType() {
     case BinaryConsts::EncodedType::i64: return i64;
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
-    default: throw ParseException("invalid wasm type: " + std::to_string(type));
+    default: throwError("invalid wasm type: " + std::to_string(type));
   }
+  WASM_UNREACHABLE();
+}
+
+Type WasmBinaryBuilder::getConcreteType() {
+  auto type = getType();
+  if (!isConcreteType(type)) {
+    throw ParseException("non-concrete type when one expected");
+  }
+  return type;
 }
 
 Name WasmBinaryBuilder::getString() {
@@ -1183,7 +1513,11 @@ Name WasmBinaryBuilder::getInlineString() {
   auto len = getU32LEB();
   std::string str;
   for (size_t i = 0; i < len; i++) {
-    str = str + char(getInt8());
+    auto curr = char(getInt8());
+    if (curr == 0) {
+      throwError("inline string contains NULL (0). that is technically valid in wasm, but you shouldn't do it, and it's not supported in binaryen");
+    }
+    str = str + curr;
   }
   if (debug) std::cerr << "getInlineString: " << str << " ==>" << std::endl;
   return Name(str);
@@ -1191,22 +1525,22 @@ Name WasmBinaryBuilder::getInlineString() {
 
 void WasmBinaryBuilder::verifyInt8(int8_t x) {
   int8_t y = getInt8();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt16(int16_t x) {
   int16_t y = getInt16();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt32(int32_t x) {
   int32_t y = getInt32();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::verifyInt64(int64_t x) {
   int64_t y = getInt64();
-  if (x != y) throw ParseException("surprising value", 0, pos);
+  if (x != y) throwError("surprising value");
 }
 
 void WasmBinaryBuilder::ungetInt8() {
@@ -1231,13 +1565,13 @@ void WasmBinaryBuilder::readMemory() {
   auto numMemories = getU32LEB();
   if (!numMemories) return;
   if (numMemories != 1) {
-    throw ParseException("Must be exactly 1 memory");
+    throwError("Must be exactly 1 memory");
   }
   if (wasm.memory.exists) {
-    throw ParseException("Memory cannot be both imported and defined");
+    throwError("Memory cannot be both imported and defined");
   }
   wasm.memory.exists = true;
-  getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
+  getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
 }
 
 void WasmBinaryBuilder::readSignatures() {
@@ -1249,21 +1583,21 @@ void WasmBinaryBuilder::readSignatures() {
     auto curr = new FunctionType;
     auto form = getS32LEB();
     if (form != BinaryConsts::EncodedType::Func) {
-      throw ParseException("bad signature form " + std::to_string(form));
+      throwError("bad signature form " + std::to_string(form));
     }
     size_t numParams = getU32LEB();
     if (debug) std::cerr << "num params: " << numParams << std::endl;
     for (size_t j = 0; j < numParams; j++) {
-      curr->params.push_back(getWasmType());
+      curr->params.push_back(getConcreteType());
     }
     auto numResults = getU32LEB();
     if (numResults == 0) {
       curr->result = none;
     } else {
       if (numResults != 1) {
-        throw ParseException("signature must have 1 result");
+        throwError("signature must have 1 result");
       }
-      curr->result = getWasmType();
+      curr->result = getType();
     }
     curr->name = Name::fromInt(wasm.functionTypes.size());
     wasm.addFunctionType(curr);
@@ -1271,23 +1605,26 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i < functionImportIndexes.size()) {
-    auto* import = wasm.getImport(functionImportIndexes[i]);
+  if (i < functionImports.size()) {
+    auto* import = functionImports[i];
     assert(import->kind == ExternalKind::Function);
     return import->name;
   } else {
-    i -= functionImportIndexes.size();
+    i -= functionImports.size();
     if (i >= wasm.functions.size()) {
-      throw ParseException("bad function index");
+      throwError("bad function index");
     }
     return wasm.functions[i]->name;
   }
 }
 
-void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, Address defaultIfNoMax) {
+void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
-  bool hasMax = flags & 0x1;
+  bool hasMax = flags & BinaryConsts::HasMaximum;
+  bool isShared = flags & BinaryConsts::IsShared;
+  if (isShared && !hasMax) throwError("shared memory must have max size");
+  shared = isShared;
   if (hasMax) max = getU32LEB();
   else max = defaultIfNoMax;
 }
@@ -1299,49 +1636,69 @@ void WasmBinaryBuilder::readImports() {
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto curr = new Import;
-    curr->name = Name(std::string("import$") + std::to_string(i));
     curr->module = getInlineString();
     curr->base = getInlineString();
     curr->kind = (ExternalKind)getU32LEB();
+    // We set a unique prefix for the name based on the kind. This ensures no collisions
+    // between them, which can't occur here (due to the index i) but could occur later
+    // due to the names section.
     switch (curr->kind) {
       case ExternalKind::Function: {
+        curr->name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
-          throw ParseException("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
+          throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
         }
         curr->functionType = wasm.functionTypes[index]->name;
         assert(curr->functionType.is());
-        functionImportIndexes.push_back(curr->name);
+        functionImports.push_back(curr);
+        continue; // don't add the import yet, we add them later after we know their names
         break;
       }
       case ExternalKind::Table: {
+        curr->name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("Imported table type is not AnyFunc");
+        if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
         wasm.table.exists = true;
         wasm.table.imported = true;
-        getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
+        bool is_shared;
+        getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+        if (is_shared) throwError("Tables may not be shared");
         break;
       }
       case ExternalKind::Memory: {
+        curr->name = Name(std::string("mimport$") + std::to_string(i));
         wasm.memory.exists = true;
         wasm.memory.imported = true;
-        getResizableLimits(wasm.memory.initial, wasm.memory.max, Memory::kMaxSize);
+        getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
       case ExternalKind::Global: {
-        curr->globalType = getWasmType();
+        curr->name = Name(std::string("gimport$") + std::to_string(i));
+        curr->globalType = getConcreteType();
         auto globalMutable = getU32LEB();
-        if (globalMutable) {
-          throw ParseException("imported globals cannot be mutable");
-        }
+        // TODO: actually use the globalMutable flag. Currently mutable global
+        // imports is a future feature, to be implemented with thread support.
+        (void)globalMutable;
         break;
       }
       default: {
-        throw ParseException("bad import kind");
+        throwError("bad import kind");
       }
     }
     wasm.addImport(curr);
+  }
+}
+
+Name WasmBinaryBuilder::getNextLabel() {
+  requireFunctionContext("getting a label");
+  return Name("label$" + std::to_string(nextLabel++));
+}
+
+void WasmBinaryBuilder::requireFunctionContext(const char* error) {
+  if (!currFunction) {
+    throwError(std::string("in a non-function context: ") + error);
   }
 }
 
@@ -1353,7 +1710,7 @@ void WasmBinaryBuilder::readFunctionSignatures() {
     if (debug) std::cerr << "read one" << std::endl;
     auto index = getU32LEB();
     if (index >= wasm.functionTypes.size()) {
-      throw ParseException("invalid function type index for function");
+      throwError("invalid function type index for function");
     }
     functionTypes.push_back(wasm.functionTypes[index].get());
   }
@@ -1363,13 +1720,13 @@ void WasmBinaryBuilder::readFunctions() {
   if (debug) std::cerr << "== readFunctions" << std::endl;
   size_t total = getU32LEB();
   if (total != functionTypes.size()) {
-    throw ParseException("invalid function section size, must equal types");
+    throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
     if (size == 0) {
-      throw ParseException("empty function size");
+      throwError("empty function size");
     }
     endOfFunction = pos + size;
     auto type = functionTypes[i];
@@ -1386,18 +1743,18 @@ void WasmBinaryBuilder::readFunctions() {
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
-      auto type = getWasmType();
+      auto type = getConcreteType();
       while (num > 0) {
         vars.emplace_back(addVar(), type);
         num--;
       }
     }
     auto func = Builder(wasm).makeFunction(
-        Name::fromInt(i),
-        std::move(params),
-        type->result,
-        std::move(vars)
-                                           );
+      Name::fromInt(i),
+      std::move(params),
+      type->result,
+      std::move(vars)
+    );
     func->type = type->name;
     currFunction = func;
     {
@@ -1405,25 +1762,21 @@ void WasmBinaryBuilder::readFunctions() {
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
       useDebugLocation = false;
-      breaksToReturn = false;
+      willBeIgnored = false;
       // process body
+      assert(breakTargetNames.size() == 0);
       assert(breakStack.empty());
-      breakStack.emplace_back(RETURN_BREAK, func->result != none); // the break target for the function scope
       assert(expressionStack.empty());
       assert(depth == 0);
-      func->body = getMaybeBlock(func->result);
+      func->body = getBlockOrSingleton(func->result);
       assert(depth == 0);
-      assert(breakStack.size() == 1);
-      breakStack.pop_back();
+      assert(breakStack.size() == 0);
+      assert(breakTargetNames.size() == 0);
       if (!expressionStack.empty()) {
-        throw ParseException("stack not empty on function exit");
+        throwError("stack not empty on function exit");
       }
       if (pos != endOfFunction) {
-        throw ParseException("binary offset at function exit not at expected location");
-      }
-      if (breaksToReturn) {
-        // we broke to return, so we need an outer block to break to
-        func->body = Builder(wasm).blockifyWithName(func->body, RETURN_BREAK);
+        throwError("binary offset at function exit not at expected location");
       }
     }
     currFunction = nullptr;
@@ -1442,7 +1795,7 @@ void WasmBinaryBuilder::readExports() {
     auto curr = new Export;
     curr->name = getInlineString();
     if (names.count(curr->name) > 0) {
-      throw ParseException("duplicate export name");
+      throwError("duplicate export name");
     }
     names.insert(curr->name);
     curr->kind = (ExternalKind)getU32LEB();
@@ -1456,7 +1809,7 @@ static int32_t readBase64VLQ(std::istream& in) {
   uint32_t value = 0;
   uint32_t shift = 0;
   while (1) {
-    char ch = in.get();
+    auto ch = in.get();
     if (ch == EOF)
       throw MapParseException("unexpected EOF in the middle of VLQ");
     if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch < 'g')) {
@@ -1586,7 +1939,7 @@ Expression* WasmBinaryBuilder::readExpression() {
   assert(depth == 0);
   processExpressions();
   if (expressionStack.size() != 1) {
-    throw ParseException("expected to read a single expression");
+    throwError("expected to read a single expression");
   }
   auto* ret = popExpression();
   assert(depth == 0);
@@ -1599,23 +1952,79 @@ void WasmBinaryBuilder::readGlobals() {
   if (debug) std::cerr << "num: " << num << std::endl;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto curr = new Global;
-    curr->type = getWasmType();
+    auto type = getConcreteType();
     auto mutable_ = getU32LEB();
-    if (bool(mutable_) != mutable_) throw ParseException("Global mutability must be 0 or 1");
-    curr->mutable_ = mutable_;
-    curr->init = readExpression();
-    curr->name = Name("global$" + std::to_string(wasm.globals.size()));
-    wasm.addGlobal(curr);
+    if (bool(mutable_) != mutable_) throwError("Global mutability must be 0 or 1");
+    auto* init = readExpression();
+    wasm.addGlobal(Builder::makeGlobal(
+      "global$" + std::to_string(wasm.globals.size()),
+      type,
+      init,
+      mutable_ ? Builder::Mutable : Builder::Immutable
+    ));
   }
 }
 
-void WasmBinaryBuilder::processExpressions() { // until an end or else marker, or the end of the function
+void WasmBinaryBuilder::processExpressions() {
+  if (debug) std::cerr << "== processExpressions" << std::endl;
+  unreachableInTheWasmSense = false;
   while (1) {
     Expression* curr;
     auto ret = readExpression(curr);
     if (!curr) {
       lastSeparator = ret;
+      if (debug) std::cerr << "== processExpressions finished" << std::endl;
+      return;
+    }
+    expressionStack.push_back(curr);
+    if (curr->type == unreachable) {
+      // once we see something unreachable, we don't want to add anything else
+      // to the stack, as it could be stacky code that is non-representable in
+      // our AST. but we do need to skip it
+      // if there is nothing else here, just stop. otherwise, go into unreachable
+      // mode. peek to see what to do
+      if (pos == endOfFunction) {
+        throwError("Reached function end without seeing End opcode");
+      }
+      auto peek = input[pos];
+      if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
+        if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
+        lastSeparator = BinaryConsts::ASTNodes(peek);
+        pos++;
+        return;
+      } else {
+        skipUnreachableCode();
+        return;
+      }
+    }
+  }
+}
+
+void WasmBinaryBuilder::skipUnreachableCode() {
+  if (debug) std::cerr << "== skipUnreachableCode" << std::endl;
+  // preserve the stack, and restore it. it contains the instruction that made us
+  // unreachable, and we can ignore anything after it. things after it may pop,
+  // we want to undo that
+  auto savedStack = expressionStack;
+  // note we are entering unreachable code, and note what the state as before so
+  // we can restore it
+  auto before = willBeIgnored;
+  willBeIgnored = true;
+  // clear the stack. nothing should be popped from there anyhow, just stuff
+  // can be pushed and then popped. Popping past the top of the stack will
+  // result in uneachables being returned
+  expressionStack.clear();
+  while (1) {
+    // set the unreachableInTheWasmSense flag each time, as sub-blocks may set and unset it
+    unreachableInTheWasmSense = true;
+    Expression* curr;
+    auto ret = readExpression(curr);
+    if (!curr) {
+      if (debug) std::cerr << "== skipUnreachableCode finished" << std::endl;
+      lastSeparator = ret;
+      unreachableInTheWasmSense = false;
+      willBeIgnored = before;
+      expressionStack = savedStack;
       return;
     }
     expressionStack.push_back(curr);
@@ -1623,9 +2032,17 @@ void WasmBinaryBuilder::processExpressions() { // until an end or else marker, o
 }
 
 Expression* WasmBinaryBuilder::popExpression() {
+  if (debug) std::cerr << "== popExpression" << std::endl;
   if (expressionStack.empty()) {
-    throw ParseException("attempted pop from empty stack");
+    if (unreachableInTheWasmSense) {
+      // in unreachable code, trying to pop past the polymorphic stack
+      // area results in receiving unreachables
+      if (debug) std::cerr << "== popping unreachable from polymorphic stack" << std::endl;
+      return allocator.alloc<Unreachable>();
+    }
+    throwError("attempted pop from empty stack / beyond block start boundary at " + std::to_string(pos));
   }
+  // the stack is not empty, and we would not be going out of the current block
   auto ret = expressionStack.back();
   expressionStack.pop_back();
   return ret;
@@ -1649,13 +2066,16 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
     block->list.push_back(expressions.back());
     expressions.pop_back();
   }
+  requireFunctionContext("popping void where we need a new local");
   auto type = block->list[0]->type;
-  if (!currFunction) {
-    throw ParseException("popping void outside of function, where we need a new local");
+  if (isConcreteType(type)) {
+    auto local = builder.addVar(currFunction, type);
+    block->list[0] = builder.makeSetLocal(local, block->list[0]);
+    block->list.push_back(builder.makeGetLocal(local, type));
+  } else {
+    assert(type == unreachable);
+    // nothing to do here - unreachable anyhow
   }
-  auto local = builder.addVar(currFunction, type);
-  block->list[0] = builder.makeSetLocal(local, block->list[0]);
-  block->list.push_back(builder.makeGetLocal(local, type));
   block->finalize();
   return block;
 }
@@ -1675,21 +2095,25 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {
-    throw ParseException("bad global index");
+    throwError("bad global index");
   }
   return mappedGlobals[index];
 }
 
 void WasmBinaryBuilder::processFunctions() {
-  for (auto& func : functions) {
+  for (auto* func : functions) {
     wasm.addFunction(func);
+  }
+
+  for (auto* import : functionImports) {
+    wasm.addImport(import);
   }
 
   // we should have seen all the functions
   // we assume this later down in fact, when we read wasm.functions[index],
   // as index was validated vs functionTypes.size()
   if (wasm.functions.size() != functionTypes.size()) {
-    throw ParseException("did not see the right number of functions");
+    throwError("did not see the right number of functions");
   }
 
   // now that we have names for each function, apply things
@@ -1708,7 +2132,7 @@ void WasmBinaryBuilder::processFunctions() {
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
       case ExternalKind::Memory: curr->value = Name::fromInt(0); break;
       case ExternalKind::Global: curr->value = getGlobalName(index); break;
-      default: throw ParseException("bad export kind");
+      default: throwError("bad export kind");
     }
     wasm.addExport(curr);
   }
@@ -1718,6 +2142,14 @@ void WasmBinaryBuilder::processFunctions() {
     auto& calls = iter.second;
     for (auto* call : calls) {
       call->target = wasm.functions[index]->name;
+    }
+  }
+
+  for (auto& iter : functionImportCalls) {
+    size_t index = iter.first;
+    auto& calls = iter.second;
+    for (auto* call : calls) {
+      call->target = functionImports[index]->name;
     }
   }
 
@@ -1737,7 +2169,7 @@ void WasmBinaryBuilder::readDataSegments() {
     auto memoryIndex = getU32LEB();
     WASM_UNUSED(memoryIndex);
     if (memoryIndex != 0) {
-      throw ParseException("bad memory index, must be 0");
+      throwError("bad memory index, must be 0");
     }
     Memory::Segment curr;
     auto offset = readExpression();
@@ -1754,21 +2186,23 @@ void WasmBinaryBuilder::readDataSegments() {
 void WasmBinaryBuilder::readFunctionTableDeclaration() {
   if (debug) std::cerr << "== readFunctionTableDeclaration" << std::endl;
   auto numTables = getU32LEB();
-  if (numTables != 1) throw ParseException("Only 1 table definition allowed in MVP");
-  if (wasm.table.exists) throw ParseException("Table cannot be both imported and defined");
+  if (numTables != 1) throwError("Only 1 table definition allowed in MVP");
+  if (wasm.table.exists) throwError("Table cannot be both imported and defined");
   wasm.table.exists = true;
   auto elemType = getS32LEB();
-  if (elemType != BinaryConsts::EncodedType::AnyFunc) throw ParseException("ElementType must be AnyFunc in MVP");
-  getResizableLimits(wasm.table.initial, wasm.table.max, Table::kMaxSize);
+  if (elemType != BinaryConsts::EncodedType::AnyFunc) throwError("ElementType must be AnyFunc in MVP");
+  bool is_shared;
+  getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+  if (is_shared) throwError("Tables may not be shared");
 }
 
 void WasmBinaryBuilder::readTableElements() {
   if (debug) std::cerr << "== readTableElements" << std::endl;
   auto numSegments = getU32LEB();
-  if (numSegments >= Table::kMaxSize) throw ParseException("Too many segments");
+  if (numSegments >= Table::kMaxSize) throwError("Too many segments");
   for (size_t i = 0; i < numSegments; i++) {
     auto tableIndex = getU32LEB();
-    if (tableIndex != 0) throw ParseException("Table elements must refer to table 0 in MVP");
+    if (tableIndex != 0) throwError("Table elements must refer to table 0 in MVP");
     wasm.table.segments.emplace_back(readExpression());
 
     auto& indexSegment = functionTable[i];
@@ -1793,39 +2227,38 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       continue;
     }
     auto num = getU32LEB();
-    uint32_t importedFunctions = 0;
-    for (auto& import : wasm.imports) {
-      if (import->kind != ExternalKind::Function) continue;
-      importedFunctions++;
-    }
+    std::set<Name> usedNames;
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
-      if (index < importedFunctions) {
-        getInlineString(); // TODO: use this
-      } else if (index - importedFunctions < functions.size()) {
-        auto name = getInlineString();
-        functions[index - importedFunctions]->name = name;
+      auto rawName = getInlineString();
+      auto name = rawName;
+      // De-duplicate names by appending .1, .2, etc.
+      for (int i = 1; !usedNames.insert(name).second; ++i) {
+        name = rawName.str + std::string(".") + std::to_string(i);
       }
-    }
-    // disallow duplicate names
-    std::set<Name> functionNames;
-    for (auto* func : functions) {
-      if (!functionNames.insert(func->name).second) {
-        throw ParseException("duplicate function name: " + std::string(func->name.str));
+      // note: we silently ignore errors here, as name section errors
+      //       are not fatal. should we warn?
+      auto numFunctionImports = functionImports.size();
+      if (index < numFunctionImports) {
+        functionImports[index]->name = name;
+      } else if (index - numFunctionImports < functions.size()) {
+        functions[index - numFunctionImports]->name = name;
+      } else {
+        throwError("index out of bounds: " + std::string(name.str));
       }
     }
     if (pos != subsectionPos + subsectionSize) {
-      throw ParseException("bad names subsection position change");
+      throwError("bad names subsection position change");
     }
   }
   if (pos != sectionPos + payloadLen) {
-    throw ParseException("bad names section position change");
+    throwError("bad names section position change");
   }
 }
 
 BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   if (pos == endOfFunction) {
-    throw ParseException("Reached function end without seeing End opcode");
+    throwError("Reached function end without seeing End opcode");
   }
   if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
   if (nextDebugLocation.first) {
@@ -1861,15 +2294,27 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Drop:         visitDrop((curr = allocator.alloc<Drop>())->cast<Drop>()); break;
     case BinaryConsts::End:
     case BinaryConsts::Else:         curr = nullptr; break;
+    case BinaryConsts::AtomicPrefix: {
+      code = getInt8();
+      if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) break;
+      if (maybeVisitStore(curr, code, /*isAtomic=*/true)) break;
+      if (maybeVisitAtomicRMW(curr, code)) break;
+      if (maybeVisitAtomicCmpxchg(curr, code)) break;
+      if (maybeVisitAtomicWait(curr, code)) break;
+      if (maybeVisitAtomicWake(curr, code)) break;
+      throwError("invalid code after atomic prefix: " + std::to_string(code));
+      break;
+    }
     default: {
       // otherwise, the code is a subcode TODO: optimize
       if (maybeVisitBinary(curr, code)) break;
       if (maybeVisitUnary(curr, code)) break;
       if (maybeVisitConst(curr, code)) break;
-      if (maybeVisitLoad(curr, code)) break;
-      if (maybeVisitStore(curr, code)) break;
+      if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) break;
+      if (maybeVisitStore(curr, code, /*isAtomic=*/false)) break;
       if (maybeVisitHost(curr, code)) break;
-      throw ParseException("bad node code " + std::to_string(code));
+      throwError("bad node code " + std::to_string(code));
+      break;
     }
   }
   if (useDebugLocation && curr) {
@@ -1879,13 +2324,50 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   return BinaryConsts::ASTNodes(code);
 }
 
+void WasmBinaryBuilder::pushBlockElements(Block* curr, size_t start, size_t end) {
+  assert(start <= expressionStack.size());
+  assert(start <= end);
+  assert(end <= expressionStack.size());
+  // the first dropped element may be consumed by code later - it was on the stack first,
+  // and is the only thing left on the stack. there must be just one thing on the stack
+  // since we are at the end of a block context. note that we may need to drop more than
+  // one thing, since a bunch of concrete values may be all "consumed" by an unreachable
+  // (in which case, the first value can't be consumed anyhow, so it doesn't matter)
+  const Index NONE = -1;
+  Index consumable = NONE;
+  for (size_t i = start; i < end; i++) {
+    auto* item = expressionStack[i];
+    curr->list.push_back(item);
+    if (i < end - 1) {
+      // stacky&unreachable code may introduce elements that need to be dropped in non-final positions
+      if (isConcreteType(item->type)) {
+        curr->list.back() = Builder(wasm).makeDrop(item);
+        if (consumable == NONE) {
+          // this is the first, and hence consumable value. note the location
+          consumable = curr->list.size() - 1;
+        }
+      }
+    }
+  }
+  expressionStack.resize(start);
+  // if we have a consumable item and need it, use it
+  if (consumable != NONE && curr->list.back()->type == none) {
+    requireFunctionContext("need an extra var in a non-function context, invalid wasm");
+    Builder builder(wasm);
+    auto* item = curr->list[consumable]->cast<Drop>()->value;
+    auto temp = builder.addVar(currFunction, item->type);
+    curr->list[consumable] = builder.makeSetLocal(temp, item);
+    curr->list.push_back(builder.makeGetLocal(temp, item->type));
+  }
+}
+
 void WasmBinaryBuilder::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   // special-case Block and de-recurse nested blocks in their first position, as that is
   // a common pattern that can be very highly nested.
   std::vector<Block*> stack;
   while (1) {
-    curr->type = getWasmType();
+    curr->type = getType();
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type != none});
     stack.push_back(curr);
@@ -1912,84 +2394,100 @@ void WasmBinaryBuilder::visitBlock(Block *curr) {
     processExpressions();
     size_t end = expressionStack.size();
     if (end < start) {
-      throw ParseException("block cannot pop from outside");
+      throwError("block cannot pop from outside");
     }
-    for (size_t i = start; i < end; i++) {
-      if (debug) std::cerr << "  " << size_t(expressionStack[i]) << "\n zz Block element " << curr->list.size() << std::endl;
-      curr->list.push_back(expressionStack[i]);
-    }
-    expressionStack.resize(start);
-    curr->finalize(curr->type);
+    pushBlockElements(curr, start, end);
+    curr->finalize(curr->type, breakTargetNames.find(curr->name) != breakTargetNames.end() /* hasBreak */);
     breakStack.pop_back();
+    breakTargetNames.erase(curr->name);
   }
 }
 
-Expression* WasmBinaryBuilder::getMaybeBlock(WasmType type) {
+Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
+  Name label = getNextLabel();
+  breakStack.push_back({label, type != none && type != unreachable});
   auto start = expressionStack.size();
   processExpressions();
   size_t end = expressionStack.size();
-  if (start - end == 1) {
-    return popExpression();
+  if (end < start) {
+    throwError("block cannot pop from outside");
   }
-  if (start > end) {
-    throw ParseException("block cannot pop from outside");
-  }
-  auto* block = allocator.alloc<Block>();
-  for (size_t i = start; i < end; i++) {
-    block->list.push_back(expressionStack[i]);
-  }
-  block->finalize(type);
-  expressionStack.resize(start);
-  return block;
-}
-
-Expression* WasmBinaryBuilder::getBlock(WasmType type) {
-  Name label = getNextLabel();
-  breakStack.push_back({label, type != none && type != unreachable});
-  auto* block = Builder(wasm).blockify(getMaybeBlock(type));
   breakStack.pop_back();
-  block->cast<Block>()->name = label;
+  auto* block = allocator.alloc<Block>();
+  pushBlockElements(block, start, end);
+  block->name = label;
+  block->finalize(type);
+  // maybe we don't need a block here?
+  if (breakTargetNames.find(block->name) == breakTargetNames.end()) {
+    block->name = Name();
+    if (block->list.size() == 1) {
+      return block->list[0];
+    }
+  }
+  breakTargetNames.erase(block->name);
   return block;
 }
 
 void WasmBinaryBuilder::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
-  curr->type = getWasmType();
+  curr->type = getType();
   curr->condition = popNonVoidExpression();
-  curr->ifTrue = getBlock(curr->type);
+  curr->ifTrue = getBlockOrSingleton(curr->type);
   if (lastSeparator == BinaryConsts::Else) {
-    curr->ifFalse = getBlock(curr->type);
+    curr->ifFalse = getBlockOrSingleton(curr->type);
   }
   curr->finalize(curr->type);
   if (lastSeparator != BinaryConsts::End) {
-    throw ParseException("if should end with End");
+    throwError("if should end with End");
   }
 }
 
 void WasmBinaryBuilder::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
-  curr->type = getWasmType();
+  curr->type = getType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, 0});
-  curr->body = getMaybeBlock(curr->type);
+  // find the expressions in the block, and create the body
+  // a loop may have a list of instructions in wasm, much like
+  // a block, but it only has a label at the top of the loop,
+  // so even if we need a block (if there is more than 1
+  // expression) we never need a label on the block.
+  auto start = expressionStack.size();
+  processExpressions();
+  size_t end = expressionStack.size();
+  if (end - start == 1) {
+    curr->body = popExpression();
+  } else {
+    if (start > end) {
+      throwError("block cannot pop from outside");
+    }
+    auto* block = allocator.alloc<Block>();
+    pushBlockElements(block, start, end);
+    block->finalize(curr->type);
+    curr->body = block;
+  }
   breakStack.pop_back();
+  breakTargetNames.erase(curr->name);
   curr->finalize(curr->type);
 }
 
 WasmBinaryBuilder::BreakTarget WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   if (debug) std::cerr << "getBreakTarget " << offset << std::endl;
+  if (breakStack.size() < 1 + size_t(offset)) {
+    throwError("bad breakindex (low)");
+  }
   size_t index = breakStack.size() - 1 - offset;
   if (index >= breakStack.size()) {
-    throw ParseException("bad breakindex");
-  }
-  if (index == 0) {
-    // trying to access the topmost element means we break out
-    // to the function scope, doing in effect a return, we'll
-    // need to create a block for that.
-    breaksToReturn = true;
+    throwError("bad breakindex (high)");
   }
   if (debug) std::cerr << "breaktarget "<< breakStack[index].name << " arity " << breakStack[index].arity <<  std::endl;
-  return breakStack[index];
+  auto& ret = breakStack[index];
+  // if the break is in literally unreachable code, then we will not emit it anyhow,
+  // so do not note that the target has breaks to it
+  if (!willBeIgnored) {
+    breakTargetNames.insert(ret.name);
+  }
+  return ret;
 }
 
 void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
@@ -2004,7 +2502,6 @@ void WasmBinaryBuilder::visitBreak(Break *curr, uint8_t code) {
 void WasmBinaryBuilder::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "zz node: Switch" << std::endl;
   curr->condition = popNonVoidExpression();
-
   auto numTargets = getU32LEB();
   if (debug) std::cerr << "targets: "<< numTargets<<std::endl;
   for (size_t i = 0; i < numTargets; i++) {
@@ -2022,21 +2519,22 @@ Expression* WasmBinaryBuilder::visitCall() {
   auto index = getU32LEB();
   FunctionType* type;
   Expression* ret;
-  if (index < functionImportIndexes.size()) {
+  if (index < functionImports.size()) {
     // this is a call of an imported function
     auto* call = allocator.alloc<CallImport>();
-    auto* import = wasm.getImport(functionImportIndexes[index]);
-    call->target = import->name;
+    auto* import = functionImports[index];
     type = wasm.getFunctionType(import->functionType);
+    functionImportCalls[index].push_back(call);
+    call->target = import->name; // name section may modify it
     fillCall(call, type);
     call->finalize();
     ret = call;
   } else {
     // this is a call of a defined function
     auto* call = allocator.alloc<Call>();
-    auto adjustedIndex = index - functionImportIndexes.size();
+    auto adjustedIndex = index - functionImports.size();
     if (adjustedIndex >= functionTypes.size()) {
-      throw ParseException("bad call index");
+      throwError("bad call index");
     }
     type = functionTypes[adjustedIndex];
     fillCall(call, type);
@@ -2051,11 +2549,11 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   auto index = getU32LEB();
   if (index >= wasm.functionTypes.size()) {
-    throw ParseException("bad call_indirect function index");
+    throwError("bad call_indirect function index");
   }
   auto* fullType = wasm.functionTypes[index].get();
   auto reserved = getU32LEB();
-  if (reserved != 0) throw ParseException("Invalid flags field in call_indirect");
+  if (reserved != 0) throwError("Invalid flags field in call_indirect");
   curr->fullType = fullType->name;
   auto num = fullType->params.size();
   curr->operands.resize(num);
@@ -2069,12 +2567,10 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect *curr) {
 
 void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << pos << std::endl;
-  if (!currFunction) {
-    throw ParseException("get_local outside of function");
-  }
+  requireFunctionContext("get_local");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throw ParseException("bad get_local index");
+    throwError("bad get_local index");
   }
   curr->type = currFunction->getLocalType(curr->index);
   curr->finalize();
@@ -2082,12 +2578,10 @@ void WasmBinaryBuilder::visitGetLocal(GetLocal *curr) {
 
 void WasmBinaryBuilder::visitSetLocal(SetLocal *curr, uint8_t code) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
-  if (!currFunction) {
-    throw ParseException("set_local outside of function");
-  }
+  requireFunctionContext("set_local outside of function");
   curr->index = getU32LEB();
   if (curr->index >= currFunction->getNumLocals()) {
-    throw ParseException("bad set_local index");
+    throwError("bad set_local index");
   }
   curr->value = popNonVoidExpression();
   curr->type = curr->value->type;
@@ -2109,7 +2603,7 @@ void WasmBinaryBuilder::visitGetGlobal(GetGlobal *curr) {
     curr->type = import->globalType;
     return;
   }
-  throw ParseException("bad get_global");
+  throwError("bad get_global");
 }
 
 void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
@@ -2120,56 +2614,204 @@ void WasmBinaryBuilder::visitSetGlobal(SetGlobal *curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::readMemoryAccess(Address& alignment, size_t bytes, Address& offset) {
-  alignment = Pow2(getU32LEB());
+void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
+  auto rawAlignment = getU32LEB();
+  if (rawAlignment > 4) throwError("Alignment must be of a reasonable size");
+  alignment = Pow2(rawAlignment);
   offset = getU32LEB();
 }
 
-bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code) {
+bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic) {
   Load* curr;
-  switch (code) {
-    case BinaryConsts::I32LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
-    case BinaryConsts::I32LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
-    case BinaryConsts::I32LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = true; break;
-    case BinaryConsts::I32LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = false; break;
-    case BinaryConsts::I32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
-    case BinaryConsts::I64LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem32S: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = true; break;
-    case BinaryConsts::I64LoadMem32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = false; break;
-    case BinaryConsts::I64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
-    case BinaryConsts::F32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = f32; break;
-    case BinaryConsts::F64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = f64; break;
-    default: return false;
+  if (!isAtomic) {
+    switch (code) {
+      case BinaryConsts::I32LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = true; break;
+      case BinaryConsts::I32LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; curr->signed_ = false; break;
+      case BinaryConsts::I32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64LoadMem8S:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem16S: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem32S: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = true; break;
+      case BinaryConsts::I64LoadMem32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; curr->signed_ = false; break;
+      case BinaryConsts::I64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
+      case BinaryConsts::F32LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = f32; break;
+      case BinaryConsts::F64LoadMem:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = f64; break;
+      default: return false;
+    }
+    if (debug) std::cerr << "zz node: Load" << std::endl;
+  } else {
+    switch (code) {
+      case BinaryConsts::I32AtomicLoad8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i32; break;
+      case BinaryConsts::I32AtomicLoad16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i32; break;
+      case BinaryConsts::I32AtomicLoad:    curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i32; break;
+      case BinaryConsts::I64AtomicLoad8U:  curr = allocator.alloc<Load>(); curr->bytes = 1; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad16U: curr = allocator.alloc<Load>(); curr->bytes = 2; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad32U: curr = allocator.alloc<Load>(); curr->bytes = 4; curr->type = i64; break;
+      case BinaryConsts::I64AtomicLoad:    curr = allocator.alloc<Load>(); curr->bytes = 8; curr->type = i64; break;
+      default: return false;
+    }
+    curr->signed_ = false;
+    if (debug) std::cerr << "zz node: AtomicLoad" << std::endl;
   }
-  if (debug) std::cerr << "zz node: Load" << std::endl;
-  readMemoryAccess(curr->align, curr->bytes, curr->offset);
+
+  curr->isAtomic = isAtomic;
+  readMemoryAccess(curr->align, curr->offset);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code) {
+bool WasmBinaryBuilder::maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic) {
   Store* curr;
-  switch (code) {
-    case BinaryConsts::I32StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
-    case BinaryConsts::I32StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
-    case BinaryConsts::I32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
-    case BinaryConsts::I64StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
-    case BinaryConsts::I64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
-    case BinaryConsts::F32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = f32; break;
-    case BinaryConsts::F64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = f64; break;
-    default: return false;
+  if (!isAtomic) {
+    switch (code) {
+      case BinaryConsts::I32StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
+      case BinaryConsts::I32StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
+      case BinaryConsts::I32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
+      case BinaryConsts::I64StoreMem8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
+      case BinaryConsts::I64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
+      case BinaryConsts::F32StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = f32; break;
+      case BinaryConsts::F64StoreMem:   curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = f64; break;
+      default: return false;
+    }
+  } else {
+    switch (code) {
+      case BinaryConsts::I32AtomicStore8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i32; break;
+      case BinaryConsts::I32AtomicStore16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i32; break;
+      case BinaryConsts::I32AtomicStore:   curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i32; break;
+      case BinaryConsts::I64AtomicStore8:  curr = allocator.alloc<Store>(); curr->bytes = 1; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore16: curr = allocator.alloc<Store>(); curr->bytes = 2; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore32: curr = allocator.alloc<Store>(); curr->bytes = 4; curr->valueType = i64; break;
+      case BinaryConsts::I64AtomicStore:  curr = allocator.alloc<Store>(); curr->bytes = 8; curr->valueType = i64; break;
+      default: return false;
+    }
   }
+
+  curr->isAtomic = isAtomic;
   if (debug) std::cerr << "zz node: Store" << std::endl;
-  readMemoryAccess(curr->align, curr->bytes, curr->offset);
+  readMemoryAccess(curr->align, curr->offset);
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+
+bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::AtomicRMWOps_Begin || code > BinaryConsts::AtomicRMWOps_End) return false;
+  auto* curr = allocator.alloc<AtomicRMW>();
+
+  // Set curr to the given opcode, type and size.
+#define SET(opcode, optype, size) \
+  curr->op = opcode;              \
+  curr->type = optype;            \
+  curr->bytes = size
+
+  // Handle the cases for all the valid types for a particular opcode
+#define SET_FOR_OP(Op) \
+    case BinaryConsts::I32AtomicRMW##Op: SET(Op, i32, 4); break;      \
+    case BinaryConsts::I32AtomicRMW##Op##8U: SET(Op, i32, 1); break;  \
+    case BinaryConsts::I32AtomicRMW##Op##16U: SET(Op, i32, 2); break; \
+    case BinaryConsts::I64AtomicRMW##Op: SET(Op, i64, 8); break;      \
+    case BinaryConsts::I64AtomicRMW##Op##8U: SET(Op, i64, 1); break;  \
+    case BinaryConsts::I64AtomicRMW##Op##16U: SET(Op, i64, 2); break; \
+    case BinaryConsts::I64AtomicRMW##Op##32U: SET(Op, i64, 4); break;
+
+  switch(code) {
+    SET_FOR_OP(Add);
+    SET_FOR_OP(Sub);
+    SET_FOR_OP(And);
+    SET_FOR_OP(Or);
+    SET_FOR_OP(Xor);
+    SET_FOR_OP(Xchg);
+    default: WASM_UNREACHABLE();
+  }
+#undef SET_FOR_OP
+#undef SET
+
+  if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (readAlign != curr->bytes) throwError("Align of AtomicRMW must match size");
+  curr->value = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::AtomicCmpxchgOps_Begin || code > BinaryConsts::AtomicCmpxchgOps_End) return false;
+  auto* curr = allocator.alloc<AtomicCmpxchg>();
+
+  // Set curr to the given type and size.
+#define SET(optype, size)         \
+  curr->type = optype;            \
+  curr->bytes = size
+
+  switch (code) {
+    case BinaryConsts::I32AtomicCmpxchg: SET(i32, 4); break;
+    case BinaryConsts::I64AtomicCmpxchg: SET(i64, 8); break;
+    case BinaryConsts::I32AtomicCmpxchg8U: SET(i32, 1); break;
+    case BinaryConsts::I32AtomicCmpxchg16U: SET(i32, 2); break;
+    case BinaryConsts::I64AtomicCmpxchg8U: SET(i64, 1); break;
+    case BinaryConsts::I64AtomicCmpxchg16U: SET(i64, 2); break;
+    case BinaryConsts::I64AtomicCmpxchg32U: SET(i64, 4); break;
+    default: WASM_UNREACHABLE();
+  }
+
+  if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (readAlign != curr->bytes) throwError("Align of AtomicCpxchg must match size");
+  curr->replacement = popNonVoidExpression();
+  curr->expected = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
+  if (code < BinaryConsts::I32AtomicWait || code > BinaryConsts::I64AtomicWait) return false;
+  auto* curr = allocator.alloc<AtomicWait>();
+
+  switch (code) {
+    case BinaryConsts::I32AtomicWait: curr->expectedType = i32; break;
+    case BinaryConsts::I64AtomicWait: curr->expectedType = i64; break;
+    default: WASM_UNREACHABLE();
+  }
+  curr->type = i32;
+  if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
+  curr->timeout = popNonVoidExpression();
+  curr->expected = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (readAlign != getTypeSize(curr->expectedType)) throwError("Align of AtomicWait must match size");
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitAtomicWake(Expression*& out, uint8_t code) {
+  if (code != BinaryConsts::AtomicWake) return false;
+  auto* curr = allocator.alloc<AtomicWake>();
+  if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
+
+  curr->type = i32;
+  curr->wakeCount = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  Address readAlign;
+  readMemoryAccess(readAlign, curr->offset);
+  if (readAlign != getTypeSize(curr->type)) throwError("Align of AtomicWake must match size");
   curr->finalize();
   out = curr;
   return true;
@@ -2245,6 +2887,12 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
     case BinaryConsts::I64ReinterpretF64: curr = allocator.alloc<Unary>(); curr->op = ReinterpretFloat64;  curr->type = i64; break;
     case BinaryConsts::F32ReinterpretI32: curr = allocator.alloc<Unary>(); curr->op = ReinterpretInt32;    curr->type = f32; break;
     case BinaryConsts::F64ReinterpretI64: curr = allocator.alloc<Unary>(); curr->op = ReinterpretInt64;    curr->type = f64; break;
+
+    case BinaryConsts::I32ExtendS8:  curr = allocator.alloc<Unary>(); curr->op = ExtendS8Int32; curr->type = i32; break;
+    case BinaryConsts::I32ExtendS16: curr = allocator.alloc<Unary>(); curr->op = ExtendS16Int32; curr->type = i32; break;
+    case BinaryConsts::I64ExtendS8:  curr = allocator.alloc<Unary>(); curr->op = ExtendS8Int64; curr->type = i64; break;
+    case BinaryConsts::I64ExtendS16: curr = allocator.alloc<Unary>(); curr->op = ExtendS16Int64; curr->type = i64; break;
+    case BinaryConsts::I64ExtendS32: curr = allocator.alloc<Unary>(); curr->op = ExtendS32Int64; curr->type = i64; break;
 
     default: return false;
   }
@@ -2327,9 +2975,7 @@ void WasmBinaryBuilder::visitSelect(Select *curr) {
 
 void WasmBinaryBuilder::visitReturn(Return *curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
-  if (!currFunction) {
-    throw ParseException("return outside of function");
-  }
+  requireFunctionContext("return");
   if (currFunction->result != none) {
     curr->value = popNonVoidExpression();
   }
@@ -2356,7 +3002,7 @@ bool WasmBinaryBuilder::maybeVisitHost(Expression*& out, uint8_t code) {
   }
   if (debug) std::cerr << "zz node: Host" << std::endl;
   auto reserved = getU32LEB();
-  if (reserved != 0) throw ParseException("Invalid reserved field on grow_memory/current_memory");
+  if (reserved != 0) throwError("Invalid reserved field on grow_memory/current_memory");
   curr->finalize();
   out = curr;
   return true;
@@ -2374,6 +3020,10 @@ void WasmBinaryBuilder::visitDrop(Drop *curr) {
   if (debug) std::cerr << "zz node: Drop" << std::endl;
   curr->value = popNonVoidExpression();
   curr->finalize();
+}
+
+void WasmBinaryBuilder::throwError(std::string text) {
+  throw ParseException(text, 0, pos);
 }
 
 } // namespace wasm

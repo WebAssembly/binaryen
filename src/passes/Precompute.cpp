@@ -22,16 +22,32 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
-#include <ast_utils.h>
-#include "ast/manipulation.h"
+#include <ir/utils.h>
+#include <ir/literal-utils.h>
+#include <ir/local-graph.h>
+#include <ir/manipulation.h>
 
 namespace wasm {
 
 static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
 
+typedef std::unordered_map<GetLocal*, Literal> GetValues;
+
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
+  // map gets to constant values, if they are known to be constant
+  GetValues& getValues;
+
+  // Whether we are trying to precompute down to an expression (which we can do on
+  // say 5 + 6) or to a value (which we can't do on a tee_local that flows a 7
+  // through it). When we want to replace the expression, we can only do so
+  // when it has no side effects. When we don't care about replacing the expression,
+  // we just want to know if it will contain a known constant.
+  bool replaceExpression;
+
 public:
+  StandaloneExpressionRunner(GetValues& getValues, bool replaceExpression) : getValues(getValues), replaceExpression(replaceExpression) {}
+
   struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
 
   Flow visitLoop(Loop* curr) {
@@ -50,9 +66,24 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetLocal(GetLocal *curr) {
+    auto iter = getValues.find(curr);
+    if (iter != getValues.end()) {
+      auto value = iter->second;
+      if (value.isConcrete()) {
+        return Flow(value);
+      }
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetLocal(SetLocal *curr) {
+    // If we don't need to replace the whole expression, see if there
+    // is a value flowing through a tee.
+    if (!replaceExpression) {
+      if (isConcreteType(curr->type)) {
+        assert(curr->isTee());
+        return visit(curr->value);
+      }
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
@@ -67,6 +98,18 @@ public:
   Flow visitStore(Store *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
+  Flow visitAtomicRMW(AtomicRMW *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicWait(AtomicWait *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
+  Flow visitAtomicWake(AtomicWake *curr) {
+    return Flow(NONSTANDALONE_FLOW);
+  }
   Flow visitHost(Host *curr) {
     return Flow(NONSTANDALONE_FLOW);
   }
@@ -79,17 +122,30 @@ public:
 struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVisitor<Precompute>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Precompute; }
+  Pass* create() override { return new Precompute(propagate); }
+
+  bool propagate = false;
+
+  Precompute(bool propagate) : propagate(propagate) {}
+
+  GetValues getValues;
+
+  void doWalkFunction(Function* func) {
+    // with extra effort, we can utilize the get-set graph to precompute
+    // things that use locals that are known to be constant. otherwise,
+    // we just look at what is immediately before us
+    if (propagate) {
+      optimizeLocals(func);
+    }
+    // do the main and final walk over everything
+    super::doWalkFunction(func);
+  }
 
   void visitExpression(Expression* curr) {
+    // TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
-    Flow flow;
-    try {
-      flow = StandaloneExpressionRunner().visit(curr);
-    } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
-      return;
-    }
+    Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
       if (flow.breakTo == NONSTANDALONE_FLOW) return;
       if (flow.breakTo == RETURN_FLOW) {
@@ -100,6 +156,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
             if (ret->value) {
               if (auto* value = ret->value->dynCast<Const>()) {
                 value->value = flow.value;
+                value->finalize();
                 return;
               }
             }
@@ -117,12 +174,13 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        br->finalize(); // if we removed a condition, the type may change
         if (flow.value.type != none) {
           // reuse a const value if there is one
           if (br->value) {
             if (auto* value = br->value->dynCast<Const>()) {
               value->value = flow.value;
+              value->finalize();
+              br->finalize();
               return;
             }
           }
@@ -130,6 +188,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
         } else {
           br->value = nullptr;
         }
+        br->finalize();
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(flow.breakTo, flow.value.type != none ? builder.makeConst(flow.value) : nullptr));
@@ -137,7 +196,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
       return;
     }
     // this was precomputed
-    if (isConcreteWasmType(flow.value.type)) {
+    if (isConcreteType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
     } else {
       ExpressionManipulator::nop(curr);
@@ -148,10 +207,122 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // removing breaks can alter types
     ReFinalize().walkFunctionInModule(curr, getModule());
   }
+
+private:
+  // Precompute an expression, returning a flow, which may be a constant
+  // (that we can replace the expression with if replaceExpression is set).
+  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+    try {
+      return StandaloneExpressionRunner(getValues, replaceExpression).visit(curr);
+    } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
+      return Flow(NONSTANDALONE_FLOW);
+    }
+  }
+
+  // Precomputes the value of an expression, as opposed to the expression
+  // itself. This differs from precomputeExpression in that we care about
+  // the value the expression will have, which we cannot necessary replace
+  // the expression with. For example,
+  //  (tee_local (i32.const 1))
+  // will have value 1 which we can optimize here, but in precomputeExpression
+  // we could not do anything.
+  Literal precomputeValue(Expression* curr) {
+    // Note that we set replaceExpression to false, as we just care about
+    // the value here.
+    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
+    if (flow.breaking()) {
+      return Literal();
+    }
+    return flow.value;
+  }
+
+  void optimizeLocals(Function* func) {
+    // using the graph of get-set interactions, do a constant-propagation type
+    // operation: note which sets are assigned locals, then see if that lets us
+    // compute other sets as locals (since some of the gets they read may be
+    // constant).
+    // compute all dependencies
+    LocalGraph localGraph(func);
+    localGraph.computeInfluences();
+    // prepare the work list. we add things here that might change to a constant
+    // initially, that means everything
+    std::unordered_set<Expression*> work;
+    for (auto& pair : localGraph.locations) {
+      auto* curr = pair.first;
+      work.insert(curr);
+    }
+    std::unordered_map<SetLocal*, Literal> setValues; // the constant value, or none if not a constant
+    // propagate constant values
+    while (!work.empty()) {
+      auto iter = work.begin();
+      auto* curr = *iter;
+      work.erase(iter);
+      // see if this set or get is actually a constant value, and if so,
+      // mark it as such and add everything it influences to the work list,
+      // as they may be constant too.
+      if (auto* set = curr->dynCast<SetLocal>()) {
+        if (setValues[set].isConcrete()) continue; // already known constant
+        auto value = setValues[set] = precomputeValue(set->value);
+        if (value.isConcrete()) {
+          for (auto* get : localGraph.setInfluences[set]) {
+            work.insert(get);
+          }
+        }
+      } else {
+        auto* get = curr->cast<GetLocal>();
+        if (getValues[get].isConcrete()) continue; // already known constant
+        // for this get to have constant value, all sets must agree
+        Literal value;
+        bool first = true;
+        for (auto* set : localGraph.getSetses[get]) {
+          Literal curr;
+          if (set == nullptr) {
+            if (getFunction()->isVar(get->index)) {
+              curr = LiteralUtils::makeLiteralZero(getFunction()->getLocalType(get->index));
+            } else {
+              // it's a param, so it's hopeless
+              value = Literal();
+              break;
+            }
+          } else {
+            curr = setValues[set];
+          }
+          if (curr.isNull()) {
+            // not a constant, give up
+            value = Literal();
+            break;
+          }
+          // we found a concrete value. compare with the current one
+          if (first) {
+            value = curr; // this is the first
+            first = false;
+          } else {
+            if (!value.bitwiseEqual(curr)) {
+              // not the same, give up
+              value = Literal();
+              break;
+            }
+          }
+        }
+        // we may have found a value
+        if (value.isConcrete()) {
+          // we did!
+          getValues[get] = value;
+          for (auto* set : localGraph.getInfluences[get]) {
+            work.insert(set);
+          }
+        }
+      }
+    }
+  }
 };
 
 Pass *createPrecomputePass() {
-  return new Precompute();
+  return new Precompute(false);
+}
+
+Pass *createPrecomputePropagatePass() {
+  return new Precompute(true);
 }
 
 } // namespace wasm

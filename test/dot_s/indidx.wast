@@ -6,24 +6,24 @@
  (table 5 5 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $c $b $d $a)
  (data (i32.const 16) "\04\00\00\00\02\00\00\00\01\00\00\00\03\00\00\00")
+ (export "main" (func $main))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
- (export "main" (func $main))
  (export "dynCall_i" (func $dynCall_i))
- (func $a (type $FUNCSIG$i) (result i32)
+ (func $a (; 1 ;) (type $FUNCSIG$i) (result i32)
   (i32.const 0)
  )
- (func $b (type $FUNCSIG$i) (result i32)
+ (func $b (; 2 ;) (type $FUNCSIG$i) (result i32)
   (i32.const 1)
  )
- (func $c (type $FUNCSIG$i) (result i32)
+ (func $c (; 3 ;) (type $FUNCSIG$i) (result i32)
   (i32.const 2)
  )
- (func $d (type $FUNCSIG$i) (result i32)
+ (func $d (; 4 ;) (type $FUNCSIG$i) (result i32)
   (i32.const 3)
  )
- (func $main (param $0 i32) (param $1 i32) (result i32)
+ (func $main (; 5 ;) (param $0 i32) (param $1 i32) (result i32)
   (local $2 i32)
   (block $label$0
    (br_if $label$0
@@ -43,7 +43,7 @@
     )
    )
    (return
-    (call_indirect $FUNCSIG$i
+    (call_indirect (type $FUNCSIG$i)
      (get_local $2)
     )
    )
@@ -51,46 +51,42 @@
   (unreachable)
   (unreachable)
  )
- (func $stackSave (result i32)
+ (func $__wasm_nullptr (; 6 ;) (type $FUNCSIG$v)
+  (unreachable)
+ )
+ (func $stackSave (; 7 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 8 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 9 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $__wasm_nullptr (type $FUNCSIG$v)
-  (unreachable)
- )
- (func $dynCall_i (param $fptr i32) (result i32)
-  (call_indirect $FUNCSIG$i
+ (func $dynCall_i (; 10 ;) (param $fptr i32) (result i32)
+  (call_indirect (type $FUNCSIG$i)
    (get_local $fptr)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 32, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 32, "initializers": [], "declares": ["getchar"], "externs": [], "implementedFunctions": ["_a","_b","_c","_d","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_i"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_i"], "invokeFuncs": [] }

@@ -1,22 +1,22 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr49039.c"
+	.file	"pr49039.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $0, $pop0
 	br_if   	0, $pop1        # 0: down to label0
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push2=, -2
 	i32.eq  	$push3=, $1, $pop2
 	br_if   	0, $pop3        # 0: down to label0
-# BB#2:                                 # %if.end
+# %bb.2:                                # %if.end
 	i32.gt_u	$push4=, $0, $1
 	i32.select	$2=, $0, $1, $pop4
 	block   	
@@ -25,7 +25,7 @@ foo:                                    # @foo
 	i32.const	$push17=, 1
 	i32.ne  	$push7=, $pop6, $pop17
 	br_if   	0, $pop7        # 0: down to label1
-# BB#3:                                 # %if.then9
+# %bb.3:                                # %if.then9
 	i32.const	$push8=, 0
 	i32.const	$push19=, 0
 	i32.load	$push9=, cnt($pop19)
@@ -37,7 +37,7 @@ foo:                                    # @foo
 	i32.const	$push11=, -2
 	i32.ne  	$push12=, $2, $pop11
 	br_if   	0, $pop12       # 0: down to label0
-# BB#5:                                 # %if.then12
+# %bb.5:                                # %if.then12
 	i32.const	$push13=, 0
 	i32.const	$push20=, 0
 	i32.load	$push14=, cnt($pop20)
@@ -50,14 +50,14 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, -2
 	i32.const	$push0=, 1
 	call    	foo@FUNCTION, $pop1, $pop0
@@ -67,7 +67,7 @@ main:                                   # @main
 	i32.const	$push3=, 2
 	i32.ne  	$push4=, $pop2, $pop3
 	br_if   	0, $pop4        # 0: down to label2
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push6=, 0
 	return  	$pop6
 .LBB1_2:                                # %if.then
@@ -77,7 +77,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	cnt                     # @cnt
 	.type	cnt,@object
 	.section	.bss.cnt,"aw",@nobits
@@ -88,5 +88,5 @@ cnt:
 	.size	cnt, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

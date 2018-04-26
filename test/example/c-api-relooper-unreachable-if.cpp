@@ -25,7 +25,7 @@ int main() {
   expressions[4] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[3], expressions[4] };
-    expressions[5] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenUndefined());
+    expressions[5] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[5]);
   {
@@ -42,7 +42,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "tinycore::eh_personality", functionTypes[0], varTypes, 3, expressions[9]);
   }
-  BinaryenAddExport(the_module, "tinycore::eh_personality", "tinycore::eh_personality");
+  BinaryenAddFunctionExport(the_module, "tinycore::eh_personality", "tinycore::eh_personality");
   the_relooper = RelooperCreate();
   expressions[10] = BinaryenGetLocal(the_module, 0, 1);
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -50,7 +50,7 @@ int main() {
   expressions[13] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[12], expressions[13] };
-    expressions[14] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenUndefined());
+    expressions[14] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[14]);
   expressions[15] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -63,16 +63,16 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[1] = BinaryenAddFunction(the_module, "tinycore::eh_unwind_resume", functionTypes[0], varTypes, 3, expressions[18]);
   }
-  BinaryenAddExport(the_module, "tinycore::eh_unwind_resume", "tinycore::eh_unwind_resume");
+  BinaryenAddFunctionExport(the_module, "tinycore::eh_unwind_resume", "tinycore::eh_unwind_resume");
   the_relooper = RelooperCreate();
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[19] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenUndefined());
+    expressions[19] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[19]);
   {
     BinaryenExpressionRef children[] = { 0 };
-    expressions[20] = BinaryenBlock(the_module, "bb1", children, 0, BinaryenUndefined());
+    expressions[20] = BinaryenBlock(the_module, "bb1", children, 0, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[20]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
@@ -91,7 +91,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[2] = BinaryenAddFunction(the_module, "tinycore::panic_fmt", functionTypes[1], varTypes, 3, expressions[24]);
   }
-  BinaryenAddExport(the_module, "tinycore::panic_fmt", "tinycore::panic_fmt");
+  BinaryenAddFunctionExport(the_module, "tinycore::panic_fmt", "tinycore::panic_fmt");
   the_relooper = RelooperCreate();
   expressions[25] = BinaryenGetLocal(the_module, 0, 1);
   expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -99,7 +99,7 @@ int main() {
   expressions[28] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[27], expressions[28] };
-    expressions[29] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenUndefined());
+    expressions[29] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[29]);
   expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -112,7 +112,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[3] = BinaryenAddFunction(the_module, "tinycore::rust_eh_register_frames", functionTypes[0], varTypes, 3, expressions[33]);
   }
-  BinaryenAddExport(the_module, "tinycore::rust_eh_register_frames", "tinycore::rust_eh_register_frames");
+  BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_register_frames", "tinycore::rust_eh_register_frames");
   the_relooper = RelooperCreate();
   expressions[34] = BinaryenGetLocal(the_module, 0, 1);
   expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -120,7 +120,7 @@ int main() {
   expressions[37] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[36], expressions[37] };
-    expressions[38] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenUndefined());
+    expressions[38] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[38]);
   expressions[39] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
@@ -133,7 +133,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[4] = BinaryenAddFunction(the_module, "tinycore::rust_eh_unregister_frames", functionTypes[0], varTypes, 3, expressions[42]);
   }
-  BinaryenAddExport(the_module, "tinycore::rust_eh_unregister_frames", "tinycore::rust_eh_unregister_frames");
+  BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_unregister_frames", "tinycore::rust_eh_unregister_frames");
   the_relooper = RelooperCreate();
   expressions[43] = BinaryenGetLocal(the_module, 0, 1);
   expressions[44] = BinaryenSetLocal(the_module, 1, expressions[43]);
@@ -143,7 +143,7 @@ int main() {
     BinaryenType paramTypes[] = { 1 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "print_i32", 0, paramTypes, 1);
   }
-  BinaryenAddImport(the_module, "print_i32", "spectest", "print", functionTypes[2]);
+  BinaryenAddFunctionImport(the_module, "print_i32", "spectest", "print", functionTypes[2]);
   expressions[47] = BinaryenGetLocal(the_module, 2, 1);
   {
     BinaryenExpressionRef operands[] = { expressions[47] };
@@ -151,7 +151,7 @@ int main() {
   }
   {
     BinaryenExpressionRef children[] = { expressions[44], expressions[46], expressions[48] };
-    expressions[49] = BinaryenBlock(the_module, "bb0", children, 3, BinaryenUndefined());
+    expressions[49] = BinaryenBlock(the_module, "bb0", children, 3, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[49]);
   expressions[50] = BinaryenGetLocal(the_module, 3, 1);
@@ -160,7 +160,7 @@ int main() {
   expressions[53] = BinaryenReturn(the_module, expressions[0]);
   {
     BinaryenExpressionRef children[] = { expressions[52], expressions[53] };
-    expressions[54] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenUndefined());
+    expressions[54] = BinaryenBlock(the_module, "bb1", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[54]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
@@ -178,7 +178,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 2 };
     functions[5] = BinaryenAddFunction(the_module, "wasm::print_i32", functionTypes[3], varTypes, 5, expressions[58]);
   }
-  BinaryenAddExport(the_module, "wasm::print_i32", "wasm::print_i32");
+  BinaryenAddFunctionExport(the_module, "wasm::print_i32", "wasm::print_i32");
   the_relooper = RelooperCreate();
   expressions[59] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[60] = BinaryenSetLocal(the_module, 0, expressions[59]);
@@ -207,7 +207,7 @@ int main() {
   expressions[83] = BinaryenStore(the_module, 4, 4, 0, expressions[81], expressions[74], 1);
   {
     BinaryenExpressionRef children[] = { expressions[60], expressions[62], expressions[68], expressions[80], expressions[82], expressions[83] };
-    expressions[84] = BinaryenBlock(the_module, "bb0", children, 6, BinaryenUndefined());
+    expressions[84] = BinaryenBlock(the_module, "bb0", children, 6, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[84]);
   expressions[85] = BinaryenGetLocal(the_module, 3, 1);
@@ -224,7 +224,7 @@ int main() {
   expressions[96] = BinaryenReturn(the_module, expressions[95]);
   {
     BinaryenExpressionRef children[] = { expressions[87], expressions[89], expressions[91], expressions[94], expressions[96] };
-    expressions[97] = BinaryenBlock(the_module, "bb1", children, 5, BinaryenUndefined());
+    expressions[97] = BinaryenBlock(the_module, "bb1", children, 5, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[97]);
   expressions[98] = BinaryenGetLocal(the_module, 3, 1);
@@ -247,7 +247,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[6] = BinaryenAddFunction(the_module, "real_main", functionTypes[4], varTypes, 9, expressions[104]);
   }
-  BinaryenAddExport(the_module, "real_main", "real_main");
+  BinaryenAddFunctionExport(the_module, "real_main", "real_main");
   the_relooper = RelooperCreate();
   expressions[105] = BinaryenGetLocal(the_module, 0, 1);
   expressions[106] = BinaryenSetLocal(the_module, 2, expressions[105]);
@@ -258,7 +258,7 @@ int main() {
   expressions[108] = BinaryenSetLocal(the_module, 4, expressions[107]);
   {
     BinaryenExpressionRef children[] = { expressions[106], expressions[108] };
-    expressions[109] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenUndefined());
+    expressions[109] = BinaryenBlock(the_module, "bb0", children, 2, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[109]);
   expressions[110] = BinaryenGetLocal(the_module, 4, 1);
@@ -284,7 +284,7 @@ int main() {
   expressions[130] = BinaryenStore(the_module, 4, 4, 0, expressions[128], expressions[121], 1);
   {
     BinaryenExpressionRef children[] = { expressions[115], expressions[127], expressions[129], expressions[130] };
-    expressions[131] = BinaryenBlock(the_module, "bb1", children, 4, BinaryenUndefined());
+    expressions[131] = BinaryenBlock(the_module, "bb1", children, 4, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[131]);
   expressions[132] = BinaryenGetLocal(the_module, 5, 1);
@@ -299,7 +299,7 @@ int main() {
   }
   {
     BinaryenExpressionRef children[] = { expressions[134], expressions[136], expressions[138] };
-    expressions[139] = BinaryenBlock(the_module, "bb2", children, 3, BinaryenUndefined());
+    expressions[139] = BinaryenBlock(the_module, "bb2", children, 3, BinaryenTypeAuto());
   }
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[139]);
   expressions[140] = BinaryenGetLocal(the_module, 3, 1);
@@ -313,7 +313,7 @@ int main() {
   expressions[148] = BinaryenReturn(the_module, expressions[147]);
   {
     BinaryenExpressionRef children[] = { expressions[141], expressions[143], expressions[146], expressions[148] };
-    expressions[149] = BinaryenBlock(the_module, "bb3", children, 4, BinaryenUndefined());
+    expressions[149] = BinaryenBlock(the_module, "bb3", children, 4, BinaryenTypeAuto());
   }
   relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[149]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
@@ -338,7 +338,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[7] = BinaryenAddFunction(the_module, "main", functionTypes[5], varTypes, 10, expressions[156]);
   }
-  BinaryenAddExport(the_module, "main", "main");
+  BinaryenAddFunctionExport(the_module, "main", "main");
   {
     BinaryenType paramTypes[] = { 0 };
     functionTypes[6] = BinaryenAddFunctionType(the_module, "__wasm_start", 0, paramTypes, 0);
@@ -361,9 +361,9 @@ int main() {
   expressions[163] = BinaryenDrop(the_module, expressions[162]);
   {
     BinaryenExpressionRef children[] = { expressions[159], expressions[163] };
-    expressions[164] = BinaryenBlock(the_module, NULL, children, 2, BinaryenUndefined());
+    expressions[164] = BinaryenBlock(the_module, NULL, children, 2, BinaryenTypeAuto());
   }
-  BinaryenAddExport(the_module, "__wasm_start", "rust_entry");
+  BinaryenAddFunctionExport(the_module, "__wasm_start", "rust_entry");
   {
     BinaryenType varTypes[] = { 0 };
     functions[8] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[6], varTypes, 0, expressions[164]);
@@ -401,7 +401,7 @@ int main() {
   expressions[193] = BinaryenStore(the_module, 4, 4, 0, expressions[191], expressions[184], 1);
   {
     BinaryenExpressionRef children[] = { expressions[166], expressions[168], expressions[170], expressions[172], expressions[178], expressions[190], expressions[192], expressions[193] };
-    expressions[194] = BinaryenBlock(the_module, "bb0", children, 8, BinaryenUndefined());
+    expressions[194] = BinaryenBlock(the_module, "bb0", children, 8, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[194]);
   expressions[195] = BinaryenGetLocal(the_module, 6, 1);
@@ -414,7 +414,7 @@ int main() {
   expressions[202] = BinaryenReturn(the_module, expressions[201]);
   {
     BinaryenExpressionRef children[] = { expressions[197], expressions[200], expressions[202] };
-    expressions[203] = BinaryenBlock(the_module, "bb1", children, 3, BinaryenUndefined());
+    expressions[203] = BinaryenBlock(the_module, "bb1", children, 3, BinaryenTypeAuto());
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[203]);
   expressions[204] = BinaryenGetLocal(the_module, 6, 1);
@@ -437,7 +437,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[9] = BinaryenAddFunction(the_module, "_isize_as_tinycore::Add_::add", functionTypes[7], varTypes, 9, expressions[210]);
   }
-  BinaryenAddExport(the_module, "_isize_as_tinycore::Add_::add", "_isize_as_tinycore::Add_::add");
+  BinaryenAddFunctionExport(the_module, "_isize_as_tinycore::Add_::add", "_isize_as_tinycore::Add_::add");
   the_relooper = RelooperCreate();
   expressions[211] = BinaryenGetLocal(the_module, 0, 1);
   expressions[212] = BinaryenSetLocal(the_module, 1, expressions[211]);
@@ -453,7 +453,7 @@ int main() {
   expressions[222] = BinaryenReturn(the_module, expressions[221]);
   {
     BinaryenExpressionRef children[] = { expressions[212], expressions[214], expressions[217], expressions[220], expressions[222] };
-    expressions[223] = BinaryenBlock(the_module, "bb0", children, 5, BinaryenUndefined());
+    expressions[223] = BinaryenBlock(the_module, "bb0", children, 5, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[223]);
   {
@@ -470,7 +470,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 2 };
     functions[10] = BinaryenAddFunction(the_module, "_bool_as_tinycore::Not_::not", functionTypes[8], varTypes, 6, expressions[227]);
   }
-  BinaryenAddExport(the_module, "_bool_as_tinycore::Not_::not", "_bool_as_tinycore::Not_::not");
+  BinaryenAddFunctionExport(the_module, "_bool_as_tinycore::Not_::not", "_bool_as_tinycore::Not_::not");
   the_relooper = RelooperCreate();
   expressions[228] = BinaryenGetLocal(the_module, 0, 1);
   expressions[229] = BinaryenSetLocal(the_module, 2, expressions[228]);
@@ -491,7 +491,7 @@ int main() {
   expressions[244] = BinaryenReturn(the_module, expressions[243]);
   {
     BinaryenExpressionRef children[] = { expressions[229], expressions[231], expressions[233], expressions[235], expressions[239], expressions[242], expressions[244] };
-    expressions[245] = BinaryenBlock(the_module, "bb0", children, 7, BinaryenUndefined());
+    expressions[245] = BinaryenBlock(the_module, "bb0", children, 7, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[245]);
   {
@@ -508,7 +508,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[11] = BinaryenAddFunction(the_module, "_i16_as_tinycore::PartialEq_::eq", functionTypes[9], varTypes, 8, expressions[249]);
   }
-  BinaryenAddExport(the_module, "_i16_as_tinycore::PartialEq_::eq", "_i16_as_tinycore::PartialEq_::eq");
+  BinaryenAddFunctionExport(the_module, "_i16_as_tinycore::PartialEq_::eq", "_i16_as_tinycore::PartialEq_::eq");
   the_relooper = RelooperCreate();
   expressions[250] = BinaryenGetLocal(the_module, 0, 1);
   expressions[251] = BinaryenSetLocal(the_module, 2, expressions[250]);
@@ -529,7 +529,7 @@ int main() {
   expressions[266] = BinaryenReturn(the_module, expressions[265]);
   {
     BinaryenExpressionRef children[] = { expressions[251], expressions[253], expressions[255], expressions[257], expressions[261], expressions[264], expressions[266] };
-    expressions[267] = BinaryenBlock(the_module, "bb0", children, 7, BinaryenUndefined());
+    expressions[267] = BinaryenBlock(the_module, "bb0", children, 7, BinaryenTypeAuto());
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[267]);
   {
@@ -546,7 +546,7 @@ int main() {
     BinaryenType varTypes[] = { 1, 1, 2, 2, 1, 1, 1, 2 };
     functions[12] = BinaryenAddFunction(the_module, "_i64_as_tinycore::PartialEq_::eq", functionTypes[10], varTypes, 8, expressions[271]);
   }
-  BinaryenAddExport(the_module, "_i64_as_tinycore::PartialEq_::eq", "_i64_as_tinycore::PartialEq_::eq");
+  BinaryenAddFunctionExport(the_module, "_i64_as_tinycore::PartialEq_::eq", "_i64_as_tinycore::PartialEq_::eq");
   BinaryenModuleValidate(the_module);
   BinaryenModuleDispose(the_module);
   functionTypes.clear();

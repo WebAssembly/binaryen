@@ -2,9 +2,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "ldi64_a1" (func $ldi64_a1))
  (export "ldi64_a2" (func $ldi64_a2))
  (export "ldi64_a4" (func $ldi64_a4))
@@ -35,248 +32,247 @@
  (export "sti32_a2" (func $sti32_a2))
  (export "sti32_a4" (func $sti32_a4))
  (export "sti32_a8" (func $sti32_a8))
- (func $ldi64_a1 (param $0 i32) (result i64)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $ldi64_a1 (; 0 ;) (param $0 i32) (result i64)
   (return
    (i64.load align=1
     (get_local $0)
    )
   )
  )
- (func $ldi64_a2 (param $0 i32) (result i64)
+ (func $ldi64_a2 (; 1 ;) (param $0 i32) (result i64)
   (return
    (i64.load align=2
     (get_local $0)
    )
   )
  )
- (func $ldi64_a4 (param $0 i32) (result i64)
+ (func $ldi64_a4 (; 2 ;) (param $0 i32) (result i64)
   (return
    (i64.load align=4
     (get_local $0)
    )
   )
  )
- (func $ldi64_a8 (param $0 i32) (result i64)
+ (func $ldi64_a8 (; 3 ;) (param $0 i32) (result i64)
   (return
    (i64.load
     (get_local $0)
    )
   )
  )
- (func $ldi64 (param $0 i32) (result i64)
+ (func $ldi64 (; 4 ;) (param $0 i32) (result i64)
   (return
    (i64.load
     (get_local $0)
    )
   )
  )
- (func $ldi64_a16 (param $0 i32) (result i64)
+ (func $ldi64_a16 (; 5 ;) (param $0 i32) (result i64)
   (return
    (i64.load
     (get_local $0)
    )
   )
  )
- (func $ldi8_a1 (param $0 i32) (result i64)
+ (func $ldi8_a1 (; 6 ;) (param $0 i32) (result i64)
   (return
    (i64.load8_u
     (get_local $0)
    )
   )
  )
- (func $ldi8_a2 (param $0 i32) (result i64)
+ (func $ldi8_a2 (; 7 ;) (param $0 i32) (result i64)
   (return
    (i64.load8_u
     (get_local $0)
    )
   )
  )
- (func $ldi16_a1 (param $0 i32) (result i64)
+ (func $ldi16_a1 (; 8 ;) (param $0 i32) (result i64)
   (return
    (i64.load16_u align=1
     (get_local $0)
    )
   )
  )
- (func $ldi16_a2 (param $0 i32) (result i64)
+ (func $ldi16_a2 (; 9 ;) (param $0 i32) (result i64)
   (return
    (i64.load16_u
     (get_local $0)
    )
   )
  )
- (func $ldi16_a4 (param $0 i32) (result i64)
+ (func $ldi16_a4 (; 10 ;) (param $0 i32) (result i64)
   (return
    (i64.load16_u
     (get_local $0)
    )
   )
  )
- (func $ldi32_a1 (param $0 i32) (result i64)
+ (func $ldi32_a1 (; 11 ;) (param $0 i32) (result i64)
   (return
    (i64.load32_u align=1
     (get_local $0)
    )
   )
  )
- (func $ldi32_a2 (param $0 i32) (result i64)
+ (func $ldi32_a2 (; 12 ;) (param $0 i32) (result i64)
   (return
    (i64.load32_u align=2
     (get_local $0)
    )
   )
  )
- (func $ldi32_a4 (param $0 i32) (result i64)
+ (func $ldi32_a4 (; 13 ;) (param $0 i32) (result i64)
   (return
    (i64.load32_u
     (get_local $0)
    )
   )
  )
- (func $ldi32_a8 (param $0 i32) (result i64)
+ (func $ldi32_a8 (; 14 ;) (param $0 i32) (result i64)
   (return
    (i64.load32_u
     (get_local $0)
    )
   )
  )
- (func $sti64_a1 (param $0 i32) (param $1 i64)
+ (func $sti64_a1 (; 15 ;) (param $0 i32) (param $1 i64)
   (i64.store align=1
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64_a2 (param $0 i32) (param $1 i64)
+ (func $sti64_a2 (; 16 ;) (param $0 i32) (param $1 i64)
   (i64.store align=2
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64_a4 (param $0 i32) (param $1 i64)
+ (func $sti64_a4 (; 17 ;) (param $0 i32) (param $1 i64)
   (i64.store align=4
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64_a8 (param $0 i32) (param $1 i64)
+ (func $sti64_a8 (; 18 ;) (param $0 i32) (param $1 i64)
   (i64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64 (param $0 i32) (param $1 i64)
+ (func $sti64 (; 19 ;) (param $0 i32) (param $1 i64)
   (i64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64_a16 (param $0 i32) (param $1 i64)
+ (func $sti64_a16 (; 20 ;) (param $0 i32) (param $1 i64)
   (i64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti8_a1 (param $0 i32) (param $1 i64)
+ (func $sti8_a1 (; 21 ;) (param $0 i32) (param $1 i64)
   (i64.store8
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti8_a2 (param $0 i32) (param $1 i64)
+ (func $sti8_a2 (; 22 ;) (param $0 i32) (param $1 i64)
   (i64.store8
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti16_a1 (param $0 i32) (param $1 i64)
+ (func $sti16_a1 (; 23 ;) (param $0 i32) (param $1 i64)
   (i64.store16 align=1
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti16_a2 (param $0 i32) (param $1 i64)
+ (func $sti16_a2 (; 24 ;) (param $0 i32) (param $1 i64)
   (i64.store16
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti16_a4 (param $0 i32) (param $1 i64)
+ (func $sti16_a4 (; 25 ;) (param $0 i32) (param $1 i64)
   (i64.store16
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti32_a1 (param $0 i32) (param $1 i64)
+ (func $sti32_a1 (; 26 ;) (param $0 i32) (param $1 i64)
   (i64.store32 align=1
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti32_a2 (param $0 i32) (param $1 i64)
+ (func $sti32_a2 (; 27 ;) (param $0 i32) (param $1 i64)
   (i64.store32 align=2
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti32_a4 (param $0 i32) (param $1 i64)
+ (func $sti32_a4 (; 28 ;) (param $0 i32) (param $1 i64)
   (i64.store32
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti32_a8 (param $0 i32) (param $1 i64)
+ (func $sti32_a8 (; 29 ;) (param $0 i32) (param $1 i64)
   (i64.store32
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 30 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 31 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 32 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_ldi64_a1","_ldi64_a2","_ldi64_a4","_ldi64_a8","_ldi64","_ldi64_a16","_ldi8_a1","_ldi8_a2","_ldi16_a1","_ldi16_a2","_ldi16_a4","_ldi32_a1","_ldi32_a2","_ldi32_a4","_ldi32_a8","_sti64_a1","_sti64_a2","_sti64_a4","_sti64_a8","_sti64","_sti64_a16","_sti8_a1","_sti8_a2","_sti16_a1","_sti16_a2","_sti16_a4","_sti32_a1","_sti32_a2","_sti32_a4","_sti32_a8","_stackSave","_stackAlloc","_stackRestore"], "exports": ["ldi64_a1","ldi64_a2","ldi64_a4","ldi64_a8","ldi64","ldi64_a16","ldi8_a1","ldi8_a2","ldi16_a1","ldi16_a2","ldi16_a4","ldi32_a1","ldi32_a2","ldi32_a4","ldi32_a8","sti64_a1","sti64_a2","sti64_a4","sti64_a8","sti64","sti64_a16","sti8_a1","sti8_a2","sti16_a1","sti16_a2","sti16_a4","sti32_a1","sti32_a2","sti32_a4","sti32_a8","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

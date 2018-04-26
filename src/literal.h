@@ -18,6 +18,8 @@
 #define wasm_literal_h
 
 #include <iostream>
+
+#include "support/hash.h"
 #include "support/utilities.h"
 #include "compiler-support.h"
 #include "wasm-type.h"
@@ -26,7 +28,7 @@ namespace wasm {
 
 class Literal {
 public:
-  WasmType type;
+  Type type;
 
 private:
   // store only integers, whose bits are deterministic. floats
@@ -36,44 +38,42 @@ private:
     int64_t i64;
   };
 
-  // The RHS of shl/shru/shrs must be masked by bitwidth.
-  template <typename T>
-  static T shiftMask(T val) {
-    return val & (sizeof(T) * 8 - 1);
-  }
+public:
+  Literal() : type(Type::none), i64(0) {}
+  explicit Literal(Type type) : type(type), i64(0) {}
+  explicit Literal(int32_t  init) : type(Type::i32), i32(init) {}
+  explicit Literal(uint32_t init) : type(Type::i32), i32(init) {}
+  explicit Literal(int64_t  init) : type(Type::i64), i64(init) {}
+  explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
+  explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
+  explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
 
- public:
-  Literal() : type(WasmType::none), i64(0) {}
-  explicit Literal(WasmType type) : type(type), i64(0) {}
-  explicit Literal(int32_t  init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(uint32_t init) : type(WasmType::i32), i32(init) {}
-  explicit Literal(int64_t  init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(uint64_t init) : type(WasmType::i64), i64(init) {}
-  explicit Literal(float    init) : type(WasmType::f32), i32(bit_cast<int32_t>(init)) {}
-  explicit Literal(double   init) : type(WasmType::f64), i64(bit_cast<int64_t>(init)) {}
+  bool isConcrete() { return type != none; }
+  bool isNull() { return type == none; }
 
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
   Literal castToI64();
 
-  int32_t geti32() const { assert(type == WasmType::i32); return i32; }
-  int64_t geti64() const { assert(type == WasmType::i64); return i64; }
-  float   getf32() const { assert(type == WasmType::f32); return bit_cast<float>(i32); }
-  double  getf64() const { assert(type == WasmType::f64); return bit_cast<double>(i64); }
+  int32_t geti32() const { assert(type == Type::i32); return i32; }
+  int64_t geti64() const { assert(type == Type::i64); return i64; }
+  float   getf32() const { assert(type == Type::f32); return bit_cast<float>(i32); }
+  double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
 
-  int32_t* geti32Ptr() { assert(type == WasmType::i32); return &i32; } // careful!
+  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; } // careful!
 
-  int32_t reinterpreti32() const { assert(type == WasmType::f32); return i32; }
-  int64_t reinterpreti64() const { assert(type == WasmType::f64); return i64; }
-  float   reinterpretf32() const { assert(type == WasmType::i32); return bit_cast<float>(i32); }
-  double  reinterpretf64() const { assert(type == WasmType::i64); return bit_cast<double>(i64); }
+  int32_t reinterpreti32() const { assert(type == Type::f32); return i32; }
+  int64_t reinterpreti64() const { assert(type == Type::f64); return i64; }
+  float   reinterpretf32() const { assert(type == Type::i32); return bit_cast<float>(i32); }
+  double  reinterpretf64() const { assert(type == Type::i64); return bit_cast<double>(i64); }
 
-  int64_t getInteger();
-  double getFloat();
-  int64_t getBits();
+  int64_t getInteger() const;
+  double getFloat() const;
+  int64_t getBits() const;
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
+  bool bitwiseEqual(const Literal& other) const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
@@ -92,6 +92,9 @@ private:
   Literal extendToSI64() const;
   Literal extendToUI64() const;
   Literal extendToF64() const;
+  Literal extendS8() const;
+  Literal extendS16() const;
+  Literal extendS32() const;
   Literal truncateToI32() const;
   Literal truncateToF32() const;
 
@@ -100,6 +103,7 @@ private:
   Literal convertSToF64() const;
   Literal convertUToF64() const;
 
+  Literal eqz() const;
   Literal neg() const;
   Literal abs() const;
   Literal ceil() const;
@@ -107,6 +111,7 @@ private:
   Literal trunc() const;
   Literal nearbyint() const;
   Literal sqrt() const;
+  Literal demote() const;
 
   Literal add(const Literal& other) const;
   Literal sub(const Literal& other) const;
@@ -147,5 +152,23 @@ private:
 };
 
 } // namespace wasm
+
+namespace std {
+template<> struct hash<wasm::Literal> {
+  size_t operator()(const wasm::Literal& a) const {
+    return wasm::rehash(
+      uint64_t(hash<size_t>()(size_t(a.type))),
+      uint64_t(hash<int64_t>()(a.getBits()))
+    );
+  }
+};
+template<> struct less<wasm::Literal> {
+  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
+    if (a.type < b.type) return true;
+    if (a.type > b.type) return false;
+    return a.getBits() < b.getBits();
+  }
+};
+}
 
 #endif // wasm_literal_h

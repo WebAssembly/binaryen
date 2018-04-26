@@ -2,73 +2,69 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "sti32" (func $sti32))
  (export "sti64" (func $sti64))
  (export "stf32" (func $stf32))
  (export "stf64" (func $stf64))
- (func $sti32 (param $0 i32) (param $1 i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $sti32 (; 0 ;) (param $0 i32) (param $1 i32)
   (i32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $sti64 (param $0 i32) (param $1 i64)
+ (func $sti64 (; 1 ;) (param $0 i32) (param $1 i64)
   (i64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stf32 (param $0 i32) (param $1 f32)
+ (func $stf32 (; 2 ;) (param $0 i32) (param $1 f32)
   (f32.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stf64 (param $0 i32) (param $1 f64)
+ (func $stf64 (; 3 ;) (param $0 i32) (param $1 f64)
   (f64.store
    (get_local $0)
    (get_local $1)
   )
   (return)
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 4 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 6 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_sti32","_sti64","_stf32","_stf64","_stackSave","_stackAlloc","_stackRestore"], "exports": ["sti32","sti64","stf32","stf64","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

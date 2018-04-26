@@ -1,113 +1,84 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/920501-8.c"
+	.file	"920501-8.c"
 	.section	.text.va,"ax",@progbits
-	.hidden	va
+	.hidden	va                      # -- Begin function va
 	.globl	va
 	.type	va,@function
 va:                                     # @va
 	.param  	i32, f64, i32, i32
 	.result 	i32
-	.local  	i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32
-# BB#0:                                 # %entry
-	i32.const	$push37=, 0
-	i32.const	$push34=, 0
-	i32.load	$push35=, __stack_pointer($pop34)
-	i32.const	$push36=, 80
-	i32.sub 	$push43=, $pop35, $pop36
-	tee_local	$push42=, $16=, $pop43
-	i32.store	__stack_pointer($pop37), $pop42
-	i32.store	76($16), $3
-	i32.const	$push0=, 4
-	i32.add 	$push1=, $3, $pop0
-	i32.store	76($16), $pop1
-	i32.load	$4=, 0($3)
-	i32.load	$5=, 4($3)
-	i32.load	$6=, 8($3)
-	i32.load	$7=, 12($3)
-	i32.load	$8=, 16($3)
-	i32.load	$9=, 20($3)
-	i32.load	$10=, 24($3)
-	i32.load	$11=, 28($3)
-	i32.load	$12=, 32($3)
-	i32.load	$13=, 36($3)
-	i32.load	$14=, 40($3)
-	i32.load	$15=, 44($3)
-	i32.const	$push2=, 52
-	i32.add 	$push3=, $3, $pop2
-	i32.store	76($16), $pop3
-	i32.const	$push4=, 68
-	i32.add 	$push5=, $16, $pop4
-	i32.load	$push6=, 48($3)
-	i32.store	0($pop5), $pop6
-	i32.const	$push7=, 64
-	i32.add 	$push8=, $16, $pop7
-	i32.store	0($pop8), $15
-	i32.const	$push9=, 60
-	i32.add 	$push10=, $16, $pop9
-	i32.store	0($pop10), $14
-	i32.const	$push11=, 56
-	i32.add 	$push12=, $16, $pop11
-	i32.store	0($pop12), $13
-	i32.const	$push41=, 52
-	i32.add 	$push13=, $16, $pop41
-	i32.store	0($pop13), $12
-	i32.const	$push14=, 48
-	i32.add 	$push15=, $16, $pop14
-	i32.store	0($pop15), $11
-	i32.const	$push16=, 44
-	i32.add 	$push17=, $16, $pop16
-	i32.store	0($pop17), $10
-	i32.const	$push18=, 40
-	i32.add 	$push19=, $16, $pop18
-	i32.store	0($pop19), $9
-	i32.const	$push20=, 36
-	i32.add 	$push21=, $16, $pop20
-	i32.store	0($pop21), $8
-	i32.const	$push22=, 32
-	i32.add 	$push23=, $16, $pop22
-	i32.store	0($pop23), $7
-	i32.const	$push24=, 28
-	i32.add 	$push25=, $16, $pop24
-	i32.store	0($pop25), $6
-	i32.const	$push26=, 24
-	i32.add 	$push27=, $16, $pop26
-	i32.store	0($pop27), $5
-	i32.const	$push28=, 20
-	i32.add 	$push29=, $16, $pop28
-	i32.store	0($pop29), $4
-	i32.const	$push30=, 16
-	i32.add 	$push31=, $16, $pop30
-	i32.store	0($pop31), $2
-	f64.store	8($16), $1
-	i32.store	0($16), $0
-	i32.const	$push33=, buf
-	i32.const	$push32=, .L.str
-	i32.call	$drop=, sprintf@FUNCTION, $pop33, $pop32, $16
-	i32.const	$push40=, 0
-	i32.const	$push38=, 80
-	i32.add 	$push39=, $16, $pop38
-	i32.store	__stack_pointer($pop40), $pop39
-	copy_local	$push44=, $16
-                                        # fallthrough-return: $pop44
+	.local  	i32, i64, i64, i64, i64, i64, i32
+# %bb.0:                                # %entry
+	i32.const	$push21=, 0
+	i32.load	$push20=, __stack_pointer($pop21)
+	i32.const	$push22=, 80
+	i32.sub 	$10=, $pop20, $pop22
+	i32.const	$push23=, 0
+	i32.store	__stack_pointer($pop23), $10
+	i32.store	76($10), $3
+	i32.load	$4=, 48($3)
+	i64.load	$5=, 8($3):p2align=2
+	i64.load	$6=, 16($3):p2align=2
+	i64.load	$7=, 24($3):p2align=2
+	i64.load	$8=, 32($3):p2align=2
+	i64.load	$9=, 40($3):p2align=2
+	i32.const	$push1=, 20
+	i32.add 	$push2=, $10, $pop1
+	i64.load	$push0=, 0($3):p2align=2
+	i64.store	0($pop2):p2align=2, $pop0
+	i32.const	$push3=, 60
+	i32.add 	$push4=, $10, $pop3
+	i64.store	0($pop4):p2align=2, $9
+	i32.const	$push5=, 52
+	i32.add 	$push6=, $10, $pop5
+	i64.store	0($pop6):p2align=2, $8
+	i32.const	$push7=, 44
+	i32.add 	$push8=, $10, $pop7
+	i64.store	0($pop8):p2align=2, $7
+	i32.const	$push9=, 36
+	i32.add 	$push10=, $10, $pop9
+	i64.store	0($pop10):p2align=2, $6
+	i32.const	$push11=, 28
+	i32.add 	$push12=, $10, $pop11
+	i64.store	0($pop12):p2align=2, $5
+	i32.const	$push13=, 16
+	i32.add 	$push14=, $10, $pop13
+	i32.store	0($pop14), $2
+	i32.const	$push15=, 68
+	i32.add 	$push16=, $10, $pop15
+	i32.store	0($pop16), $4
+	f64.store	8($10), $1
+	i32.store	0($10), $0
+	i32.const	$push27=, 52
+	i32.add 	$push17=, $3, $pop27
+	i32.store	76($10), $pop17
+	i32.const	$push19=, buf
+	i32.const	$push18=, .L.str
+	i32.call	$drop=, sprintf@FUNCTION, $pop19, $pop18, $10
+	i32.const	$push26=, 0
+	i32.const	$push24=, 80
+	i32.add 	$push25=, $10, $pop24
+	i32.store	__stack_pointer($pop26), $pop25
+	copy_local	$push28=, $10
+                                        # fallthrough-return: $pop28
 	.endfunc
 .Lfunc_end0:
 	.size	va, .Lfunc_end0-va
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
-	i32.const	$push27=, 0
-	i32.const	$push24=, 0
-	i32.load	$push25=, __stack_pointer($pop24)
+# %bb.0:                                # %entry
+	i32.const	$push25=, 0
+	i32.load	$push24=, __stack_pointer($pop25)
 	i32.const	$push26=, 64
-	i32.sub 	$push29=, $pop25, $pop26
-	tee_local	$push28=, $0=, $pop29
-	i32.store	__stack_pointer($pop27), $pop28
+	i32.sub 	$0=, $pop24, $pop26
+	i32.const	$push27=, 0
+	i32.store	__stack_pointer($pop27), $0
 	i32.const	$push0=, 48
 	i32.add 	$push1=, $0, $pop0
 	i32.const	$push2=, 15
@@ -141,7 +112,7 @@ main:                                   # @main
 	i32.const	$push20=, buf
 	i32.call	$push22=, strcmp@FUNCTION, $pop21, $pop20
 	br_if   	0, $pop22       # 0: down to label0
-# BB#1:                                 # %if.end
+# %bb.1:                                # %if.end
 	i32.const	$push23=, 0
 	call    	exit@FUNCTION, $pop23
 	unreachable
@@ -152,7 +123,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.hidden	buf                     # @buf
 	.type	buf,@object
 	.section	.bss.buf,"aw",@nobits
@@ -174,7 +145,7 @@ buf:
 	.size	.L.str.1, 45
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	sprintf, i32, i32, i32
 	.functype	strcmp, i32, i32, i32
 	.functype	abort, void

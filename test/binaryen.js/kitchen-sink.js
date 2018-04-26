@@ -1,6 +1,16 @@
 
 // kitchen sink, tests the full API
 
+function cleanInfo(info) {
+  var ret = {};
+  for (var x in info) {
+    if (x !== 'value') {
+      ret[x] = info[x];
+    }
+  }
+  return ret;
+}
+
 var module;
 
 // helpers
@@ -36,11 +46,44 @@ function makeDroppedInt32(x) {
 // tests
 
 function test_types() {
-  console.log("BinaryenNone: " + Binaryen.none);
-  console.log("BinaryenInt32: " + Binaryen.i32);
-  console.log("BinaryenInt64: " + Binaryen.i64);
-  console.log("BinaryenFloat32: " + Binaryen.f32);
-  console.log("BinaryenFloat64: " + Binaryen.f64);
+  console.log("BinaryenTypeNone: " + Binaryen.none);
+  console.log("BinaryenTypeInt32: " + Binaryen.i32);
+  console.log("BinaryenTypeInt64: " + Binaryen.i64);
+  console.log("BinaryenTypeFloat32: " + Binaryen.f32);
+  console.log("BinaryenTypeFloat64: " + Binaryen.f64);
+  console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
+  console.log("BinaryenTypeAuto: " + Binaryen.auto);
+}
+
+function test_ids() {
+  console.log("BinaryenInvalidId: " + Binaryen.InvalidId);
+  console.log("BinaryenBlockId: " + Binaryen.BlockId);
+  console.log("BinaryenIfId: " + Binaryen.IfId);
+  console.log("BinaryenLoopId: " + Binaryen.LoopId);
+  console.log("BinaryenBreakId: " + Binaryen.BreakId);
+  console.log("BinaryenSwitchId: " + Binaryen.SwitchId);
+  console.log("BinaryenCallId: " + Binaryen.CallId);
+  console.log("BinaryenCallImportId: " + Binaryen.CallImportId);
+  console.log("BinaryenCallIndirectId: " + Binaryen.CallIndirectId);
+  console.log("BinaryenGetLocalId: " + Binaryen.GetLocalId);
+  console.log("BinaryenSetLocalId: " + Binaryen.SetLocalId);
+  console.log("BinaryenGetGlobalId: " + Binaryen.GetGlobalId);
+  console.log("BinaryenSetGlobalId: " + Binaryen.SetGlobalId);
+  console.log("BinaryenLoadId: " + Binaryen.LoadId);
+  console.log("BinaryenStoreId: " + Binaryen.StoreId);
+  console.log("BinaryenConstId: " + Binaryen.ConstId);
+  console.log("BinaryenUnaryId: " + Binaryen.UnaryId);
+  console.log("BinaryenBinaryId: " + Binaryen.BinaryId);
+  console.log("BinaryenSelectId: " + Binaryen.SelectId);
+  console.log("BinaryenDropId: " + Binaryen.DropId);
+  console.log("BinaryenReturnId: " + Binaryen.ReturnId);
+  console.log("BinaryenHostId: " + Binaryen.HostId);
+  console.log("BinaryenNopId: " + Binaryen.NopId);
+  console.log("BinaryenUnreachableId: " + Binaryen.UnreachableId);
+  console.log("BinaryenAtomicCmpxchgId: " + Binaryen.AtomicCmpxchgId);
+  console.log("BinaryenAtomicRMWId: " + Binaryen.AtomicRMWId);
+  console.log("BinaryenAtomicWaitId: " + Binaryen.AtomicWaitId);
+  console.log("BinaryenAtomicWakeId: " + Binaryen.AtomicWakeId);
 }
 
 function test_core() {
@@ -178,7 +221,14 @@ function test_core() {
     module.unreachable(),
   ];
 
+  // Test expression utility
+  console.log("getExpressionInfo=" + JSON.stringify(cleanInfo(Binaryen.getExpressionInfo(valueList[3]))));
   console.log(Binaryen.emitText(valueList[3])); // test printing a standalone expression
+
+  console.log("getExpressionInfo(i32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i32.const(5))));
+  console.log("getExpressionInfo(i64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.i64.const(6, 7))));
+  console.log("getExpressionInfo(f32.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f32.const(8.5))));
+  console.log("getExpressionInfo(f64.const)=" + JSON.stringify(Binaryen.getExpressionInfo(module.f64.const(9.5))));
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);
@@ -192,11 +242,11 @@ function test_core() {
   // Imports
 
   var fiF = module.addFunctionType("fiF", Binaryen.f32, [ Binaryen.i32, Binaryen.f64 ]);
-  module.addImport("an-imported", "module", "base", fiF);
+  module.addFunctionImport("an-imported", "module", "base", fiF);
 
   // Exports
 
-  module.addExport("kitchen()sinker", "kitchen_sinker");
+  module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
 
@@ -243,7 +293,7 @@ function test_relooper() {
 
   {
     var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-    module.addImport("check", "module", "check", vi);
+    module.addFunctionImport("check", "module", "check", vi);
   }
 
   { // trivial: just one block
@@ -416,6 +466,10 @@ function test_relooper() {
 
   assert(module.validate());
 
+  module.runPasses(["precompute"]);
+
+  assert(module.validate());
+
   module.optimize();
 
   assert(module.validate());
@@ -436,7 +490,9 @@ function test_binaries() {
         y = module.getLocal(1, Binaryen.i32);
     var add = module.i32.add(x, y);
     var adder = module.addFunction("adder", iii, [], add);
+    Binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
+    Binaryen.setDebugInfo(false);
     size = buffer.length; // write out the module
     module.dispose();
   }
@@ -459,7 +515,7 @@ function test_interpret() {
   module = new Binaryen.Module();
 
   var vi = module.addFunctionType("vi", Binaryen.None, [ Binaryen.i32 ]);
-  module.addImport("print-i32", "spectest", "print", vi);
+  module.addFunctionImport("print-i32", "spectest", "print", vi);
 
   var v = module.addFunctionType("v", Binaryen.None, []);
   call = module.callImport("print-i32", [ makeInt32(1234) ], Binaryen.None);
@@ -507,7 +563,7 @@ function test_parsing() {
   text = module.emitText();
   module.dispose();
   module = null;
-  print('test_parsing text:\n' + text);
+  console.log('test_parsing text:\n' + text);
 
   text = text.replace('adder', 'ADD_ER');
 
@@ -520,6 +576,7 @@ function test_parsing() {
 
 function main() {
   test_types();
+  test_ids();
   test_core();
   test_relooper();
   test_binaries();

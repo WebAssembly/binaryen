@@ -29,64 +29,32 @@
 #include "wasm-validator.h"
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
+#include "wasm-binary.h"
 #include "shell-interface.h"
 #include "optimization-options.h"
+#include "execution-results.h"
+#include "fuzzing.h"
+#include "js-wrapper.h"
+#include "spec-wrapper.h"
 
 using namespace wasm;
 
-// gets execution results from a wasm module. this is useful for fuzzing
-//
-// we can only get results when there are no imports. we then call each method
-// that has a result, with some values
-struct ExecutionResults {
-  std::map<Name, Literal> results;
-
-  void get(Module& wasm) {
-    if (wasm.imports.size() > 0) {
-      std::cout << "[fuzz-exec] imports, so quitting\n";
-      return;
-    }
-    for (auto& func : wasm.functions) {
-      if (func->result != none) {
-        // this is good
-        results[func->name] = run(func.get(), wasm);
-      }
-    }
-    std::cout << "[fuzz-exec] " << results.size() << " results noted\n";
+// runs a command and returns its output TODO: portability, return code checking
+std::string runCommand(std::string command) {
+#ifdef __linux__
+  std::string output;
+  const int MAX_BUFFER = 1024;
+  char buffer[MAX_BUFFER];
+  FILE *stream = popen(command.c_str(), "r");
+  while (fgets(buffer, MAX_BUFFER, stream) != NULL) {
+    output.append(buffer);
   }
-
-  bool operator==(ExecutionResults& other) {
-    for (auto& iter : results) {
-      auto name = iter.first;
-      if (other.results.find(name) != other.results.end()) {
-        if (results[name] != other.results[name]) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  bool operator!=(ExecutionResults& other) {
-    return !((*this) == other);
-  }
-
-  Literal run(Function* func, Module& wasm) {
-    ShellExternalInterface interface;
-    try {
-      ModuleInstance instance(wasm, &interface);
-      LiteralList arguments;
-      for (WasmType param : func->params) {
-        // zeros in arguments TODO: more?
-        arguments.push_back(Literal(param));
-      }
-      return instance.callFunction(func->name, arguments);
-    } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets) or call itself
-      return Literal();
-    }
-  }
-};
+  pclose(stream);
+  return output;
+#else
+  Fatal() << "TODO: portability for wasm-opt runCommand";
+#endif
+}
 
 //
 // main
@@ -94,12 +62,17 @@ struct ExecutionResults {
 
 int main(int argc, const char* argv[]) {
   Name entry;
-  std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
   bool fuzzExec = false;
+  bool fuzzBinary = false;
+  std::string extraFuzzCommand;
+  bool translateToFuzz = false;
+  bool fuzzPasses = false;
+  std::string emitJSWrapper;
+  std::string emitSpecWrapper;
 
-  OptimizationOptions options("wasm-opt", "Optimize .wast files");
+  OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -109,40 +82,77 @@ int main(int argc, const char* argv[]) {
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &argument) { emitBinary = false; })
+           [&](Options *o, const std::string& argument) { emitBinary = false; })
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { debugInfo = true; })
+           [&](Options *o, const std::string& arguments) { debugInfo = true; })
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
-           [&](Options *o, const std::string &arguments) { fuzzExec = true; })
+           [&](Options *o, const std::string& arguments) { fuzzExec = true; })
+      .add("--fuzz-binary", "-fb", "Convert to binary and back after optimizations and before fuzz-exec, helping fuzzing find binary format bugs",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzBinary = true; })
+      .add("--extra-fuzz-command", "-efc", "An extra command to run on the output before and after optimizing. The output is compared between the two, and an error occurs if they are not equal",
+           Options::Arguments::One,
+           [&](Options *o, const std::string& arguments) { extraFuzzCommand = arguments; })
+      .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { translateToFuzz = true; })
+      .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
+      .add("--emit-js-wrapper", "-ejw", "Emit a JavaScript wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string& arguments) { emitJSWrapper = arguments; })
+      .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
+           Options::Arguments::One,
+           [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
-
   Module wasm;
+  // It should be safe to just always enable atomics in wasm-opt, because we
+  // don't expect any passes to accidentally generate atomic ops
+  FeatureSet features = Feature::Atomics;
 
-  {
-    if (options.debug) std::cerr << "reading...\n";
+  if (options.debug) std::cerr << "reading...\n";
+
+  if (!translateToFuzz) {
     ModuleReader reader;
     reader.setDebug(options.debug);
-
     try {
       reader.read(options.extra["infile"], wasm);
     } catch (ParseException& p) {
       p.dump(std::cerr);
+      std::cerr << '\n';
       Fatal() << "error in parsing input";
     } catch (std::bad_alloc& b) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
-  }
 
-  if (!WasmValidator().validate(wasm)) {
-    Fatal() << "error in validating input";
+    if (options.passOptions.validate) {
+      if (!WasmValidator().validate(wasm, features)) {
+        WasmPrinter::printModule(&wasm);
+        Fatal() << "error in validating input";
+      }
+    }
+  } else {
+    // translate-to-fuzz
+    TranslateToFuzzReader reader(wasm, options.extra["infile"]);
+    if (fuzzPasses) {
+      reader.pickPasses(options);
+    }
+    reader.build();
+    if (options.passOptions.validate) {
+      if (!WasmValidator().validate(wasm, features)) {
+        WasmPrinter::printModule(&wasm);
+        std::cerr << "translate-to-fuzz must always generate a valid module";
+        abort();
+      }
+    }
   }
 
   ExecutionResults results;
@@ -150,20 +160,69 @@ int main(int argc, const char* argv[]) {
     results.get(wasm);
   }
 
+  if (emitJSWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitJSWrapper, std::ofstream::out);
+    outfile << generateJSWrapper(wasm);
+    outfile.close();
+  }
+
+  if (emitSpecWrapper.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(emitSpecWrapper, std::ofstream::out);
+    outfile << generateSpecWrapper(wasm);
+    outfile.close();
+  }
+
+  std::string firstOutput;
+
+  if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
+    if (options.debug) std::cerr << "writing binary before opts, for extra fuzz command..." << std::endl;
+    ModuleWriter writer;
+    writer.setDebug(options.debug);
+    writer.setBinary(emitBinary);
+    writer.setDebugInfo(debugInfo);
+    writer.write(wasm, options.extra["output"]);
+    firstOutput = runCommand(extraFuzzCommand);
+    std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
+  }
+
+  Module* curr = &wasm;
+  Module other;
+
+  if (fuzzExec && fuzzBinary) {
+    BufferWithRandomAccess buffer(false);
+    // write the binary
+    WasmBinaryWriter writer(&wasm, buffer, false);
+    writer.write();
+    // read the binary
+    auto input = buffer.getAsChars();
+    WasmBinaryBuilder parser(other, input, false);
+    parser.read();
+    if (options.passOptions.validate) {
+      bool valid = WasmValidator().validate(other, features);
+      if (!valid) {
+        WasmPrinter::printModule(&other);
+      }
+      assert(valid);
+    }
+    curr = &other;
+  }
+
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    PassRunner passRunner = options.getPassRunner(wasm);
-    passRunner.run();
-    assert(WasmValidator().validate(wasm));
+    options.runPasses(*curr);
+    if (options.passOptions.validate) {
+      bool valid = WasmValidator().validate(*curr, features);
+      if (!valid) {
+        WasmPrinter::printModule(&*curr);
+      }
+      assert(valid);
+    }
   }
 
   if (fuzzExec) {
-    ExecutionResults optimizedResults;
-    optimizedResults.get(wasm);
-    if (optimizedResults != results) {
-      Fatal() << "[fuzz-exec] optimization passes changed execution results";
-    }
-    std::cout << "[fuzz-exec] results match\n";
+    results.check(*curr);
   }
 
   if (options.extra.count("output") > 0) {
@@ -172,6 +231,15 @@ int main(int argc, const char* argv[]) {
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
-    writer.write(wasm, options.extra["output"]);
+    writer.write(*curr, options.extra["output"]);
+
+    if (extraFuzzCommand.size() > 0) {
+      auto secondOutput = runCommand(extraFuzzCommand);
+      std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
+      if (firstOutput != secondOutput) {
+        std::cerr << "extra fuzz command output differs\n";
+        abort();
+      }
+    }
   }
 }

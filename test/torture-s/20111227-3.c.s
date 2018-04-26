@@ -1,18 +1,18 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20111227-3.c"
+	.file	"20111227-3.c"
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	block   	
 	i32.const	$push1=, 2
 	i32.ne  	$push2=, $0, $pop1
 	br_if   	0, $pop2        # 0: down to label1
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push16=, 0
 	i32.load16_u	$push0=, s($pop16)
 	i32.const	$push3=, 65535
@@ -26,7 +26,7 @@ bar:                                    # @bar
 	i32.const	$push7=, 1
 	i32.ne  	$push8=, $0, $pop7
 	br_if   	0, $pop8        # 0: down to label2
-# BB#3:                                 # %if.end
+# %bb.3:                                # %if.end
 	i32.const	$push17=, 0
 	i32.load	$push6=, i($pop17)
 	i32.const	$push9=, -1
@@ -36,7 +36,7 @@ bar:                                    # @bar
 	end_block                       # label2:
 	block   	
 	br_if   	0, $0           # 0: down to label3
-# BB#5:                                 # %if.end9
+# %bb.5:                                # %if.end9
 	i32.const	$push12=, 0
 	i32.load	$push11=, l($pop12)
 	i32.const	$push13=, -1
@@ -45,22 +45,22 @@ bar:                                    # @bar
 .LBB0_6:                                # %if.end16
 	end_block                       # label3:
 	return
-.LBB0_7:                                # %if.then15
+.LBB0_7:                                # %if.then
 	end_block                       # label0:
 	call    	abort@FUNCTION
 	unreachable
 	.endfunc
 .Lfunc_end0:
 	.size	bar, .Lfunc_end0-bar
-
+                                        # -- End function
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
 	.param  	i32, i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push6=, 0
 	i32.load8_s	$2=, v($pop6)
 	block   	
@@ -68,15 +68,15 @@ foo:                                    # @foo
 	block   	
 	i32.eqz 	$push8=, $1
 	br_if   	0, $pop8        # 0: down to label6
-# BB#1:                                 # %entry
+# %bb.1:                                # %entry
 	i32.const	$push0=, 1
 	i32.eq  	$push1=, $1, $pop0
 	br_if   	2, $pop1        # 2: down to label4
-# BB#2:                                 # %entry
+# %bb.2:                                # %entry
 	i32.const	$push2=, 2
 	i32.ne  	$push3=, $1, $pop2
 	br_if   	1, $pop3        # 1: down to label5
-# BB#3:                                 # %if.then
+# %bb.3:                                # %if.then
 	i32.const	$push5=, 0
 	i32.store16	s($pop5), $2
 	call    	bar@FUNCTION, $1
@@ -98,15 +98,15 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end1:
 	.size	foo, .Lfunc_end1-foo
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	foo@FUNCTION, $0, $pop0
 	i32.const	$push1=, 1
@@ -118,7 +118,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	v                       # @v
 	.type	v,@object
 	.section	.data.v,"aw",@progbits
@@ -155,5 +155,5 @@ l:
 	.size	l, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

@@ -1,47 +1,47 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/970923-1.c"
+	.file	"970923-1.c"
 	.section	.text.ts,"ax",@progbits
-	.hidden	ts
+	.hidden	ts                      # -- Begin function ts
 	.globl	ts
 	.type	ts,@function
 ts:                                     # @ts
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end0:
 	.size	ts, .Lfunc_end0-ts
-
+                                        # -- End function
 	.section	.text.tu,"ax",@progbits
-	.hidden	tu
+	.hidden	tu                      # -- Begin function tu
 	.globl	tu
 	.type	tu,@function
 tu:                                     # @tu
 	.param  	i32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	tu, .Lfunc_end1-tu
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

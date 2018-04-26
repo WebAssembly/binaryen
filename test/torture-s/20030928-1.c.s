@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20030928-1.c"
+	.file	"20030928-1.c"
 	.section	.text.get_addrs,"ax",@progbits
-	.hidden	get_addrs
+	.hidden	get_addrs               # -- Begin function get_addrs
 	.globl	get_addrs
 	.type	get_addrs,@function
 get_addrs:                              # @get_addrs
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.load	$push0=, 0($1)
 	i32.const	$push1=, 1
 	i32.shl 	$push2=, $pop0, $pop1
@@ -59,21 +59,21 @@ get_addrs:                              # @get_addrs
 	.endfunc
 .Lfunc_end0:
 	.size	get_addrs, .Lfunc_end0-get_addrs
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %for.cond2.7
+# %bb.0:                                # %for.cond2.7
 	i32.const	$push0=, 0
 	call    	exit@FUNCTION, $pop0
 	unreachable
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
-
+                                        # -- End function
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
@@ -116,5 +116,5 @@ main:                                   # @main
 	.size	.L.str.7, 6
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

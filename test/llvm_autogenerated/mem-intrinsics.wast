@@ -10,9 +10,6 @@
  (import "env" "memory" (memory $0 1))
  (table 0 anyfunc)
  (data (i32.const 4) "\10\04\00\00")
- (export "stackSave" (func $stackSave))
- (export "stackAlloc" (func $stackAlloc))
- (export "stackRestore" (func $stackRestore))
  (export "copy_yes" (func $copy_yes))
  (export "copy_no" (func $copy_no))
  (export "move_yes" (func $move_yes))
@@ -22,7 +19,10 @@
  (export "frame_index" (func $frame_index))
  (export "drop_result" (func $drop_result))
  (export "tail_dup_to_reuse_result" (func $tail_dup_to_reuse_result))
- (func $copy_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (export "stackSave" (func $stackSave))
+ (export "stackAlloc" (func $stackAlloc))
+ (export "stackRestore" (func $stackRestore))
+ (func $copy_yes (; 5 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memcpy
     (get_local $0)
@@ -31,7 +31,7 @@
    )
   )
  )
- (func $copy_no (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $copy_no (; 6 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memcpy
     (get_local $0)
@@ -41,7 +41,7 @@
   )
   (return)
  )
- (func $move_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $move_yes (; 7 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memmove
     (get_local $0)
@@ -50,7 +50,7 @@
    )
   )
  )
- (func $move_no (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $move_no (; 8 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memmove
     (get_local $0)
@@ -60,7 +60,7 @@
   )
   (return)
  )
- (func $set_yes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $set_yes (; 9 ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (return
    (call $memset
     (get_local $0)
@@ -69,7 +69,7 @@
    )
   )
  )
- (func $set_no (param $0 i32) (param $1 i32) (param $2 i32)
+ (func $set_no (; 10 ;) (param $0 i32) (param $1 i32) (param $2 i32)
   (drop
    (call $memset
     (get_local $0)
@@ -79,7 +79,7 @@
   )
   (return)
  )
- (func $frame_index
+ (func $frame_index (; 11 ;)
   (local $0 i32)
   (i32.store offset=4
    (i32.const 0)
@@ -115,7 +115,7 @@
   )
   (return)
  )
- (func $drop_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
+ (func $drop_result (; 12 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
   (block $label$0
    (block $label$1
     (block $label$2
@@ -152,7 +152,7 @@
    (get_local $0)
   )
  )
- (func $tail_dup_to_reuse_result (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
+ (func $tail_dup_to_reuse_result (; 13 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
   (block $label$0
    (block $label$1
     (block $label$2
@@ -184,38 +184,34 @@
    )
   )
  )
- (func $stackSave (result i32)
+ (func $stackSave (; 14 ;) (result i32)
   (i32.load offset=4
    (i32.const 0)
   )
  )
- (func $stackAlloc (param $0 i32) (result i32)
+ (func $stackAlloc (; 15 ;) (param $0 i32) (result i32)
   (local $1 i32)
-  (set_local $1
-   (i32.load offset=4
-    (i32.const 0)
-   )
-  )
   (i32.store offset=4
    (i32.const 0)
-   (i32.and
-    (i32.add
-     (i32.add
-      (get_local $1)
+   (tee_local $1
+    (i32.and
+     (i32.sub
+      (i32.load offset=4
+       (i32.const 0)
+      )
       (get_local $0)
      )
-     (i32.const 15)
+     (i32.const -16)
     )
-    (i32.const -16)
    )
   )
   (get_local $1)
  )
- (func $stackRestore (param $0 i32)
+ (func $stackRestore (; 16 ;) (param $0 i32)
   (i32.store offset=4
    (i32.const 0)
    (get_local $0)
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 1040, "initializers": [], "declares": ["block_tail_dup","def","memcpy","memmove","memset"], "externs": [], "implementedFunctions": ["_copy_yes","_copy_no","_move_yes","_move_no","_set_yes","_set_no","_frame_index","_drop_result","_tail_dup_to_reuse_result","_stackSave","_stackAlloc","_stackRestore"], "exports": ["copy_yes","copy_no","move_yes","move_no","set_yes","set_no","frame_index","drop_result","tail_dup_to_reuse_result","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

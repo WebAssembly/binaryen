@@ -428,6 +428,11 @@ struct Value {
     return arr->back();
   }
 
+  void splice(int x, int num) {
+    assert(isArray());
+    arr->erase(arr->begin() + x, arr->begin() + x + num);
+  }
+
   int indexOf(Ref other) {
     assert(isArray());
     for (size_t i = 0; i < arr->size(); i++) {
@@ -537,6 +542,299 @@ void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
 // JS printing support
 
 struct JSPrinter {
+  bool pretty, finalize;
+
+  char *buffer;
+  size_t size, used;
+
+  int indent;
+  bool possibleSpace; // add a space to separate identifiers
+
+  Ref ast;
+
+  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
+
+  ~JSPrinter() {
+    free(buffer);
+  }
+
+  void printAst() {
+    print(ast);
+    buffer[used] = 0;
+  }
+
+  // Utils
+
+  void ensure(int safety=100) {
+    if (size >= used + safety) {
+      return;
+    }
+    size = std::max((size_t)1024, size * 2) + safety;
+    if (!buffer) {
+      buffer = (char*)malloc(size);
+      if (!buffer) {
+        errv("Out of memory allocating %zd bytes for output buffer!", size);
+        abort();
+      }
+    } else {
+      char *buf = (char*)realloc(buffer, size);
+      if (!buf) {
+        free(buffer);
+        errv("Out of memory allocating %zd bytes for output buffer!", size);
+        abort();
+      }
+      buffer = buf;
+    }
+  }
+
+  void emit(char c) {
+    maybeSpace(c);
+    if (!pretty && c == '}' && buffer[used-1] == ';') used--; // optimize ;} into }, the ; is not separating anything
+    ensure(1);
+    buffer[used++] = c;
+  }
+
+  void emit(const char *s) {
+    maybeSpace(*s);
+    int len = strlen(s);
+    ensure(len+1);
+    strncpy(buffer + used, s, len+1);
+    used += len;
+  }
+
+  void newline() {
+    if (!pretty) return;
+    emit('\n');
+    for (int i = 0; i < indent; i++) emit(' ');
+  }
+
+  void space() {
+    if (pretty) emit(' ');
+  }
+
+  void safeSpace() {
+    if (pretty) emit(' ');
+    else possibleSpace = true;
+  }
+
+  void maybeSpace(char s) {
+    if (possibleSpace) {
+      possibleSpace = false;
+      if (isIdentPart(s)) emit(' ');
+    }
+  }
+
+  bool isNothing(Ref node) {
+    return node->isArray() && node[0] == TOPLEVEL && node[1]->size() == 0;
+  }
+
+  bool isDefun(Ref node) {
+    return node->isArray() && node[0] == DEFUN;
+  }
+
+  bool isBlock(Ref node) {
+    return node->isArray() && node[0] == BLOCK;
+  }
+
+  bool isIf(Ref node) {
+    return node->isArray() && node[0] == IF;
+  }
+
+  void print(Ref node) {
+    ensure();
+    if (node->isString()) {
+      printName(node);
+      return;
+    }
+    if (node->isNumber()) {
+      printNum(node);
+      return;
+    }
+    if (node->isAssignName()) {
+      printAssignName(node);
+      return;
+    }
+    if (node->isAssign()) {
+      printAssign(node);
+      return;
+    }
+    IString type = node[0]->getIString();
+    switch (type.str[0]) {
+      case 'a': {
+        if (type == ARRAY) printArray(node);
+        else abort();
+        break;
+      }
+      case 'b': {
+        if (type == BINARY) printBinary(node);
+        else if (type == BLOCK) printBlock(node);
+        else if (type == BREAK) printBreak(node);
+        else abort();
+        break;
+      }
+      case 'c': {
+        if (type == CALL) printCall(node);
+        else if (type == CONDITIONAL) printConditional(node);
+        else if (type == CONTINUE) printContinue(node);
+        else abort();
+        break;
+      }
+      case 'd': {
+        if (type == DEFUN) printDefun(node);
+        else if (type == DO) printDo(node);
+        else if (type == DOT) printDot(node);
+        else abort();
+        break;
+      }
+      case 'i': {
+        if (type == IF) printIf(node);
+        else abort();
+        break;
+      }
+      case 'l': {
+        if (type == LABEL) printLabel(node);
+        else abort();
+        break;
+      }
+      case 'n': {
+        if (type == NEW) printNew(node);
+        else abort();
+        break;
+      }
+      case 'o': {
+        if (type == OBJECT) printObject(node);
+        break;
+      }
+      case 'r': {
+        if (type == RETURN) printReturn(node);
+        else abort();
+        break;
+      }
+      case 's': {
+        if (type == SUB) printSub(node);
+        else if (type == SEQ) printSeq(node);
+        else if (type == SWITCH) printSwitch(node);
+        else if (type == STRING) printString(node);
+        else abort();
+        break;
+      }
+      case 't': {
+        if (type == TOPLEVEL) printToplevel(node);
+        else if (type == TRY) printTry(node);
+        else abort();
+        break;
+      }
+      case 'u': {
+        if (type == UNARY_PREFIX) printUnaryPrefix(node);
+        else abort();
+        break;
+      }
+      case 'v': {
+        if (type == VAR) printVar(node);
+        else abort();
+        break;
+      }
+      case 'w': {
+        if (type == WHILE) printWhile(node);
+        else abort();
+        break;
+      }
+      default: {
+        errv("cannot yet print %s\n", type.str);
+        abort();
+      }
+    }
+  }
+
+  // print a node, and if nothing is emitted, emit something instead
+  void print(Ref node, const char *otherwise) {
+    auto last = used;
+    print(node);
+    if (used == last) emit(otherwise);
+  }
+
+  void printStats(Ref stats) {
+    bool first = true;
+    for (size_t i = 0; i < stats->size(); i++) {
+      Ref curr = stats[i];
+      if (!isNothing(curr)) {
+        if (first) first = false;
+        else newline();
+        print(curr);
+        if (!isDefun(curr) && !isBlock(curr) && !isIf(curr)) {
+          emit(';');
+        }
+      }
+    }
+  }
+
+  void printToplevel(Ref node) {
+    if (node[1]->size() > 0) {
+      printStats(node[1]);
+    }
+  }
+
+  void printBlock(Ref node) {
+    if (node->size() == 1 || node[1]->size() == 0) {
+      emit("{}");
+      return;
+    }
+    emit('{');
+    indent++;
+    newline();
+    printStats(node[1]);
+    indent--;
+    newline();
+    emit('}');
+  }
+
+  void printDefun(Ref node) {
+    emit("function ");
+    emit(node[1]->getCString());
+    emit('(');
+    Ref args = node[2];
+    for (size_t i = 0; i < args->size(); i++) {
+      if (i > 0) (pretty ? emit(", ") : emit(','));
+      emit(args[i]->getCString());
+    }
+    emit(')');
+    space();
+    if (node->size() == 3 || node[3]->size() == 0) {
+      emit("{}");
+      return;
+    }
+    emit('{');
+    indent++;
+    newline();
+    printStats(node[3]);
+    indent--;
+    newline();
+    emit('}');
+    newline();
+  }
+
+  void printAssign(Ref node) {
+    auto* assign = node->asAssign();
+    printChild(assign->target(), node, -1);
+    space();
+    emit('=');
+    space();
+    printChild(assign->value(), node, 1);
+  }
+
+  void printAssignName(Ref node) {
+    auto *assign = node->asAssignName();
+    emit(assign->target().c_str());
+    space();
+    emit('=');
+    space();
+    printChild(assign->value(), node, 1);
+  }
+
+  void printName(Ref node) {
+    emit(node->getCString());
+  }
+
   static char* numToString(double d, bool finalize=true) {
     bool neg = d < 0;
     if (neg) d = -d;
@@ -658,7 +956,376 @@ struct JSPrinter {
     }
     return ret;
   }
+
+  void printNum(Ref node) {
+    emit(numToString(node->getNumber(), finalize));
+  }
+
+  void printString(Ref node) {
+    emit('"');
+    emit(node[1]->getCString());
+    emit('"');
+  }
+
+  // Parens optimizing
+
+  bool capturesOperators(Ref node) {
+    Ref type = node[0];
+    return type == CALL || type == ARRAY || type == OBJECT || type == SEQ;
+  }
+
+  int getPrecedence(Ref node, bool parent) {
+    if (node->isAssign() || node->isAssignName()) {
+      return OperatorClass::getPrecedence(OperatorClass::Binary, SET);
+    }
+    if (!node->isArray()) {
+      // node is a value
+      return -1;
+    }
+    Ref type = node[0];
+    if (type == BINARY || type == UNARY_PREFIX) {
+      return OperatorClass::getPrecedence(type == BINARY ? OperatorClass::Binary : OperatorClass::Prefix, node[1]->getIString());
+    } else if (type == SEQ) {
+      return OperatorClass::getPrecedence(OperatorClass::Binary, COMMA);
+    } else if (type == CALL) {
+      return parent ? OperatorClass::getPrecedence(OperatorClass::Binary, COMMA) : -1; // call arguments are split by commas, but call itself is safe
+    } else if (type == CONDITIONAL) {
+      return OperatorClass::getPrecedence(OperatorClass::Tertiary, QUESTION);
+    }
+    // otherwise, this is something that fixes precedence explicitly, and we can ignore
+    return -1; // XXX
+  }
+
+  // check whether we need parens for the child, when rendered in the parent
+  // @param childPosition -1 means it is printed to the left of parent, 0 means "anywhere", 1 means right
+  bool needParens(Ref parent, Ref child, int childPosition) {
+    int parentPrecedence = getPrecedence(parent, true);
+    int childPrecedence = getPrecedence(child, false);
+
+    if (childPrecedence > parentPrecedence) return true;  // child is definitely a danger
+    if (childPrecedence < parentPrecedence) return false; //          definitely cool
+    // equal precedence, so associativity (rtl/ltr) is what matters
+    // (except for some exceptions, where multiple operators can combine into confusion)
+    if (parent->isArray() && parent[0] == UNARY_PREFIX) {
+      assert(child[0] == UNARY_PREFIX);
+      if ((parent[1] == PLUS || parent[1] == MINUS) && child[1] == parent[1]) {
+        // cannot emit ++x when we mean +(+x)
+        return true;
+      }
+    }
+    if (childPosition == 0) return true; // child could be anywhere, so always paren
+    if (childPrecedence < 0) return false; // both precedences are safe
+    // check if child is on the dangerous side
+    if (OperatorClass::getRtl(parentPrecedence)) return childPosition < 0;
+    else return childPosition > 0;
+  }
+
+  void printChild(Ref child, Ref parent, int childPosition=0) {
+    bool parens = needParens(parent, child, childPosition);
+    if (parens) emit('(');
+    print(child);
+    if (parens) emit(')');
+  }
+
+  void printBinary(Ref node) {
+    printChild(node[2], node, -1);
+    space();
+    emit(node[1]->getCString());
+    space();
+    printChild(node[3], node, 1);
+  }
+
+  void printUnaryPrefix(Ref node) {
+    if (finalize && node[1] == PLUS &&
+        (node[2]->isNumber() ||
+         (node[2]->isArray() && node[2][0] == UNARY_PREFIX &&
+          node[2][1] == MINUS && node[2][2]->isNumber()))) {
+      // emit a finalized number
+      int last = used;
+      print(node[2]);
+      ensure(1); // we temporarily append a 0
+      char *curr = buffer + last; // ensure might invalidate
+      buffer[used] = 0;
+      if (strchr(curr, '.')) return; // already a decimal point, all good
+      char *e = strchr(curr, 'e');
+      if (!e) {
+        emit(".0");
+        return;
+      }
+      ensure(3);
+      curr = buffer + last; // ensure might invalidate
+      char *end = strchr(curr, 0);
+      while (end >= e) {
+        end[2] = end[0];
+        end--;
+      }
+      e[0] = '.';
+      e[1] = '0';
+      used += 2;
+      return;
+    }
+    if ((buffer[used-1] == '-' && node[1] == MINUS) ||
+        (buffer[used-1] == '+' && node[1] == PLUS)) {
+      emit(' '); // cannot join - and - to --, looks like the -- operator
+    }
+    emit(node[1]->getCString());
+    printChild(node[2], node, 1);
+  }
+
+  void printConditional(Ref node) {
+    printChild(node[1], node, -1);
+    space();
+    emit('?');
+    space();
+    printChild(node[2], node, 0);
+    space();
+    emit(':');
+    space();
+    printChild(node[3], node, 1);
+  }
+
+  void printCall(Ref node) {
+    printChild(node[1], node, 0);
+    emit('(');
+    Ref args = node[2];
+    for (size_t i = 0; i < args->size(); i++) {
+      if (i > 0) (pretty ? emit(", ") : emit(','));
+      printChild(args[i], node, 0);
+    }
+    emit(')');
+  }
+
+  void printSeq(Ref node) {
+    printChild(node[1], node, -1);
+    emit(',');
+    space();
+    printChild(node[2], node, 1);
+  }
+
+  void printDot(Ref node) {
+    print(node[1]);
+    emit('.');
+    emit(node[2]->getCString());
+  }
+
+  void printSwitch(Ref node) {
+    emit("switch");
+    space();
+    emit('(');
+    print(node[1]);
+    emit(')');
+    space();
+    emit('{');
+    newline();
+    Ref cases = node[2];
+    for (size_t i = 0; i < cases->size(); i++) {
+      Ref c = cases[i];
+      if (!c[0]) {
+        emit("default:");
+      } else {
+        emit("case ");
+        print(c[0]);
+        emit(':');
+      }
+      if (c[1]->size() > 0) {
+        indent++;
+        newline();
+        auto curr = used;
+        printStats(c[1]);
+        indent--;
+        if (curr != used) newline();
+        else used--; // avoid the extra indentation we added tentatively
+      } else {
+        newline();
+      }
+    }
+    emit('}');
+  }
+
+  void printTry(Ref node) {
+    emit("try ");
+    printBlock(node[1]);
+    emit(" catch (");
+    printName(node[2]);
+    emit(") ");
+    printBlock(node[3]);
+  }
+
+  void printSub(Ref node) {
+    printChild(node[1], node, -1);
+    emit('[');
+    print(node[2]);
+    emit(']');
+  }
+
+  void printVar(Ref node) {
+    emit("var ");
+    Ref args = node[1];
+    for (size_t i = 0; i < args->size(); i++) {
+      if (i > 0) (pretty ? emit(", ") : emit(','));
+      emit(args[i][0]->getCString());
+      if (args[i]->size() > 1) {
+        space();
+        emit('=');
+        space();
+        print(args[i][1]);
+      }
+    }
+  }
+
+  static bool ifHasElse(Ref node) {
+    assert(node->isArray() && node[0] == IF);
+    return node->size() >= 4 && !!node[3];
+  }
+
+  void printIf(Ref node) {
+    emit("if");
+    safeSpace();
+    emit('(');
+    print(node[1]);
+    emit(')');
+    space();
+    // special case: we need braces to save us from ambiguity, if () { if () } else. otherwise else binds to inner if
+    // also need to recurse for                                if () { if () { } else { if () } else
+    // (note that this is only a problem if the if body has a single element in it, not a block or such, as then
+    // the block would be braced)
+    // this analysis is a little conservative - it assumes any child if could be confused with us, which implies
+    // all other braces vanished (the worst case for us, we are not saved by other braces).
+    bool needBraces = false;
+    bool hasElse = ifHasElse(node);
+    if (hasElse) {
+      Ref child = node[2];
+      while (child->isArray() && child[0] == IF) {
+        if (!ifHasElse(child)) {
+          needBraces = true;
+          break;
+        }
+        child = child[3]; // continue into the else
+      }
+    }
+    if (needBraces) {
+      emit('{');
+      indent++;
+      newline();
+      print(node[2]);
+      indent--;
+      newline();
+      emit('}');
+    } else {
+      print(node[2], "{}");
+      if (!isBlock(node[2])) emit(';');
+    }
+    if (hasElse) {
+      space();
+      emit("else");
+      safeSpace();
+      print(node[3], "{}");
+      if (!isBlock(node[3])) emit(';');
+    }
+  }
+
+  void printDo(Ref node) {
+    emit("do");
+    safeSpace();
+    print(node[2], "{}");
+    space();
+    emit("while");
+    space();
+    emit('(');
+    print(node[1]);
+    emit(')');
+  }
+
+  void printWhile(Ref node) {
+    emit("while");
+    space();
+    emit('(');
+    print(node[1]);
+    emit(')');
+    space();
+    print(node[2], "{}");
+  }
+
+  void printLabel(Ref node) {
+    emit(node[1]->getCString());
+    space();
+    emit(':');
+    space();
+    print(node[2]);
+  }
+
+  void printReturn(Ref node) {
+    emit("return");
+    if (!!node[1]) {
+      emit(' ');
+      print(node[1]);
+    }
+  }
+
+  void printBreak(Ref node) {
+    emit("break");
+    if (!!node[1]) {
+      emit(' ');
+      emit(node[1]->getCString());
+    }
+  }
+
+  void printContinue(Ref node) {
+    emit("continue");
+    if (!!node[1]) {
+      emit(' ');
+      emit(node[1]->getCString());
+    }
+  }
+
+  void printNew(Ref node) {
+    emit("new ");
+    print(node[1]);
+  }
+
+  void printArray(Ref node) {
+    emit('[');
+    Ref args = node[1];
+    for (size_t i = 0; i < args->size(); i++) {
+      if (i > 0) (pretty ? emit(", ") : emit(','));
+      print(args[i]);
+    }
+    emit(']');
+  }
+
+  void printObject(Ref node) {
+    emit('{');
+    indent++;
+    newline();
+    Ref args = node[1];
+    for (size_t i = 0; i < args->size(); i++) {
+      if (i > 0) {
+        pretty ? emit(", ") : emit(',');
+        newline();
+      }
+      const char *str = args[i][0]->getCString();
+      const char *check = str;
+      bool needQuote = false;
+      while (*check) {
+        if (!isalnum(*check) && *check != '_' && *check != '$') {
+          needQuote = true;
+          break;
+        }
+        check++;
+      }
+      if (needQuote) emit('"');
+      emit(str);
+      if (needQuote) emit('"');
+      emit(":");
+      space();
+      print(args[i][1]);
+    }
+    indent--;
+    newline();
+    emit('}');
+  }
 };
+
 
 // cashew builder
 
@@ -726,66 +1393,18 @@ public:
                                .push_back(makeRawArray());
     return ret;
   }
-  static Ref makeCall(IString target, Ref arg) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(1));
-    ret[2]->push_back(arg);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(2));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(4));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(8));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    ret[2]->push_back(arg5);
-    ret[2]->push_back(arg6);
-    ret[2]->push_back(arg7);
-    ret[2]->push_back(arg8);
-    return ret;
-  }
-  static Ref makeCall(IString target, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5, Ref arg6, Ref arg7, Ref arg8, Ref arg9, Ref arg10, Ref arg11, Ref arg12, Ref arg13, Ref arg14, Ref arg15, Ref arg16) {
-    Ref ret = &makeRawArray(3)->push_back(makeRawString(CALL))
-                               .push_back(makeName(target))
-                               .push_back(makeRawArray(16));
-    ret[2]->push_back(arg1);
-    ret[2]->push_back(arg2);
-    ret[2]->push_back(arg3);
-    ret[2]->push_back(arg4);
-    ret[2]->push_back(arg5);
-    ret[2]->push_back(arg6);
-    ret[2]->push_back(arg7);
-    ret[2]->push_back(arg8);
-    ret[2]->push_back(arg9);
-    ret[2]->push_back(arg10);
-    ret[2]->push_back(arg11);
-    ret[2]->push_back(arg12);
-    ret[2]->push_back(arg13);
-    ret[2]->push_back(arg14);
-    ret[2]->push_back(arg15);
-    ret[2]->push_back(arg16);
-    return ret;
+
+  template<typename ...Ts>
+  static Ref makeCall(IString target, Ts... args) {
+    size_t nArgs = sizeof...(Ts);
+    Ref callArgs = makeRawArray(nArgs);
+    Ref argArray[] = {args...};
+    for (size_t i = 0; i < nArgs; ++i) {
+      callArgs->push_back(argArray[i]);
+    }
+    return &makeRawArray(3)->push_back(makeRawString(CALL))
+        .push_back(makeName(target))
+        .push_back(callArgs);
   }
 
   static void appendToCall(Ref call, Ref element) {
@@ -959,10 +1578,24 @@ public:
     }
   }
 
+  static Ref makeTry(Ref try_, Ref arg, Ref catch_) {
+    assert(try_[0] == BLOCK);
+    assert(catch_[0] == BLOCK);
+    return &makeRawArray(3)->push_back(makeRawString(TRY))
+                            .push_back(try_)
+                            .push_back(arg)
+                            .push_back(catch_);
+  }
+
   static Ref makeDot(Ref obj, IString key) {
     return &makeRawArray(3)->push_back(makeRawString(DOT))
                             .push_back(obj)
                             .push_back(makeRawString(key));
+  }
+
+  template<typename ...Ts>
+  static Ref makeDot(Ref obj, Ref key, Ts... args) {
+    return makeDot(makeDot(obj, key), args...);
   }
 
   static Ref makeDot(Ref obj, Ref key) {

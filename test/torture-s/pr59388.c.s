@@ -1,26 +1,25 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr59388.c"
+	.file	"pr59388.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push5=, 0
-	i32.load8_u	$push1=, b($pop5)
+	i32.load8_u	$push1=, b($pop0)
 	i32.const	$push2=, 1
-	i32.and 	$push4=, $pop1, $pop2
-	tee_local	$push3=, $0=, $pop4
-	i32.store	a($pop0), $pop3
-	copy_local	$push6=, $0
-                                        # fallthrough-return: $pop6
+	i32.and 	$0=, $pop1, $pop2
+	i32.const	$push3=, 0
+	i32.store	a($pop3), $0
+	copy_local	$push4=, $0
+                                        # fallthrough-return: $pop4
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.hidden	b                       # @b
 	.type	b,@object
 	.section	.bss.b,"aw",@nobits
@@ -40,4 +39,4 @@ a:
 	.size	a, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

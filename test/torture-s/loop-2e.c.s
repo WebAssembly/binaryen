@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-2e.c"
+	.file	"loop-2e.c"
 	.section	.text.f,"ax",@progbits
-	.hidden	f
+	.hidden	f                       # -- Begin function f
 	.globl	f
 	.type	f,@function
 f:                                      # @f
 	.param  	i32, i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.store	0($1), $0
 	i32.const	$push0=, 4
 	i32.add 	$push1=, $0, $pop0
@@ -62,12 +62,12 @@ f:                                      # @f
 	i32.const	$push34=, 72
 	i32.add 	$push35=, $0, $pop34
 	i32.store	72($1), $pop35
-	i32.const	$push36=, 76
+	i32.const	$push36=, 80
 	i32.add 	$push37=, $0, $pop36
-	i32.store	76($1), $pop37
-	i32.const	$push38=, 80
+	i32.store	80($1), $pop37
+	i32.const	$push38=, 76
 	i32.add 	$push39=, $0, $pop38
-	i32.store	80($1), $pop39
+	i32.store	76($1), $pop39
 	i32.const	$push40=, 84
 	i32.add 	$push41=, $0, $pop40
 	i32.store	84($1), $pop41
@@ -119,29 +119,29 @@ f:                                      # @f
 	i32.const	$push72=, 148
 	i32.add 	$push73=, $0, $pop72
 	i32.store	148($1), $pop73
-	i32.const	$push74=, 152
+	i32.const	$push74=, 156
 	i32.add 	$push75=, $0, $pop74
-	i32.store	152($1), $pop75
-	i32.const	$push76=, 156
+	i32.store	156($1), $pop75
+	i32.const	$push76=, 152
 	i32.add 	$push77=, $0, $pop76
-	i32.store	156($1), $pop77
+	i32.store	152($1), $pop77
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end0:
 	.size	f, .Lfunc_end0-f
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %if.end
 	i32.const	$push0=, 0
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
+                                        # -- End function
 
-
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

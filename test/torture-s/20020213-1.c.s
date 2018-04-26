@@ -1,28 +1,27 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/20020213-1.c"
+	.file	"20020213-1.c"
 	.section	.text.foo,"ax",@progbits
-	.hidden	foo
+	.hidden	foo                     # -- Begin function foo
 	.globl	foo
 	.type	foo,@function
 foo:                                    # @foo
-	.local  	i32
-# BB#0:                                 # %entry
+	.local  	i32, i32
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
-	i32.const	$push3=, 2241
-	i32.const	$push10=, 0
-	i32.load	$push1=, b($pop10)
-	i32.const	$push2=, -1
-	i32.add 	$push9=, $pop1, $pop2
-	tee_local	$push8=, $0=, $pop9
+	i32.load	$0=, b($pop0)
+	i32.const	$push1=, -1
+	i32.add 	$1=, $0, $pop1
+	i32.const	$push8=, 0
+	i32.const	$push2=, 2241
 	i32.const	$push7=, 2241
-	i32.gt_s	$push6=, $0, $pop7
-	tee_local	$push5=, $0=, $pop6
-	i32.select	$push4=, $pop3, $pop8, $pop5
-	i32.store	a+4($pop0), $pop4
+	i32.lt_s	$push3=, $1, $pop7
+	i32.select	$push4=, $1, $pop2, $pop3
+	i32.store	a+4($pop8), $pop4
 	block   	
-	i32.eqz 	$push11=, $0
-	br_if   	0, $pop11       # 0: down to label0
-# BB#1:                                 # %if.end
+	i32.const	$push5=, 2242
+	i32.le_s	$push6=, $0, $pop5
+	br_if   	0, $pop6        # 0: down to label0
+# %bb.1:                                # %if.end
 	return
 .LBB0_2:                                # %if.then
 	end_block                       # label0:
@@ -31,28 +30,28 @@ foo:                                    # @foo
 	.endfunc
 .Lfunc_end0:
 	.size	foo, .Lfunc_end0-foo
-
+                                        # -- End function
 	.section	.text.bar,"ax",@progbits
-	.hidden	bar
+	.hidden	bar                     # -- Begin function bar
 	.globl	bar
 	.type	bar,@function
 bar:                                    # @bar
 	.param  	f32
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 2241
                                         # fallthrough-return: $pop0
 	.endfunc
 .Lfunc_end1:
 	.size	bar, .Lfunc_end1-bar
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %foo.exit
+# %bb.0:                                # %foo.exit
 	i32.const	$push1=, 0
 	i32.const	$push0=, 3384
 	i32.store	b($pop1), $pop0
@@ -64,7 +63,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
-
+                                        # -- End function
 	.hidden	a                       # @a
 	.type	a,@object
 	.section	.bss.a,"aw",@nobits
@@ -84,5 +83,5 @@ b:
 	.size	b, 4
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

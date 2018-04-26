@@ -1,11 +1,11 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/builtin-prefetch-3.c"
+	.file	"builtin-prefetch-3.c"
 	.section	.text.simple_vol_global,"ax",@progbits
-	.hidden	simple_vol_global
+	.hidden	simple_vol_global       # -- Begin function simple_vol_global
 	.globl	simple_vol_global
 	.type	simple_vol_global,@function
 simple_vol_global:                      # @simple_vol_global
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, glob_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
@@ -14,13 +14,13 @@ simple_vol_global:                      # @simple_vol_global
 	.endfunc
 .Lfunc_end0:
 	.size	simple_vol_global, .Lfunc_end0-simple_vol_global
-
+                                        # -- End function
 	.section	.text.simple_vol_file,"ax",@progbits
-	.hidden	simple_vol_file
+	.hidden	simple_vol_file         # -- Begin function simple_vol_file
 	.globl	simple_vol_file
 	.type	simple_vol_file,@function
 simple_vol_file:                        # @simple_vol_file
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, stat_vol_ptr_int($pop0)
 	i32.const	$push1=, 0
@@ -29,81 +29,80 @@ simple_vol_file:                        # @simple_vol_file
 	.endfunc
 .Lfunc_end1:
 	.size	simple_vol_file, .Lfunc_end1-simple_vol_file
-
+                                        # -- End function
 	.section	.text.expr_vol_global,"ax",@progbits
-	.hidden	expr_vol_global
+	.hidden	expr_vol_global         # -- Begin function expr_vol_global
 	.globl	expr_vol_global
 	.type	expr_vol_global,@function
 expr_vol_global:                        # @expr_vol_global
-# BB#0:                                 # %entry
+	.local  	i32
+# %bb.0:                                # %entry
 	i32.const	$push0=, 0
 	i32.load	$drop=, vol_ptr_str($pop0)
-	i32.const	$push29=, 0
-	i32.load	$drop=, vol_ptr_vol_str($pop29)
-	i32.const	$push28=, 0
-	i32.load	$drop=, vol_ptr_str($pop28)
-	i32.const	$push27=, 0
-	i32.load	$drop=, vol_ptr_vol_str($pop27)
 	i32.const	$push26=, 0
-	i32.load	$drop=, vol_ptr_str($pop26)
+	i32.load	$drop=, vol_ptr_vol_str($pop26)
 	i32.const	$push25=, 0
-	i32.load	$drop=, vol_ptr_vol_str($pop25)
+	i32.load	$drop=, vol_ptr_str($pop25)
 	i32.const	$push24=, 0
-	i32.load	$drop=, vol_str+16($pop24)
+	i32.load	$drop=, vol_ptr_vol_str($pop24)
 	i32.const	$push23=, 0
 	i32.load	$drop=, vol_ptr_str($pop23)
 	i32.const	$push22=, 0
-	i32.load	$push1=, ptr_vol_str($pop22)
-	i32.load	$drop=, 16($pop1)
+	i32.load	$drop=, vol_ptr_vol_str($pop22)
 	i32.const	$push21=, 0
-	i32.load	$push2=, vol_ptr_vol_str($pop21)
-	i32.load	$drop=, 16($pop2)
+	i32.load	$drop=, vol_str+16($pop21)
 	i32.const	$push20=, 0
-	i32.load	$drop=, vol_str+16($pop20)
+	i32.load	$drop=, vol_ptr_str($pop20)
 	i32.const	$push19=, 0
-	i32.load	$drop=, vol_ptr_str($pop19)
+	i32.load	$0=, ptr_vol_str($pop19)
+	i32.load	$drop=, 16($0)
 	i32.const	$push18=, 0
-	i32.load	$push3=, ptr_vol_str($pop18)
-	i32.load	$drop=, 16($pop3)
+	i32.load	$push1=, vol_ptr_vol_str($pop18)
+	i32.load	$drop=, 16($pop1)
 	i32.const	$push17=, 0
-	i32.load	$push4=, vol_ptr_vol_str($pop17)
-	i32.load	$drop=, 16($pop4)
+	i32.load	$drop=, vol_str+16($pop17)
 	i32.const	$push16=, 0
-	i32.load	$drop=, glob_vol_ptr_int($pop16)
+	i32.load	$drop=, vol_ptr_str($pop16)
+	i32.load	$drop=, 16($0)
 	i32.const	$push15=, 0
-	i32.load	$drop=, glob_vol_ptr_vol_int($pop15)
+	i32.load	$push2=, vol_ptr_vol_str($pop15)
+	i32.load	$drop=, 16($pop2)
 	i32.const	$push14=, 0
 	i32.load	$drop=, glob_vol_ptr_int($pop14)
 	i32.const	$push13=, 0
 	i32.load	$drop=, glob_vol_ptr_vol_int($pop13)
 	i32.const	$push12=, 0
-	i32.load	$drop=, glob_vol_int($pop12)
+	i32.load	$drop=, glob_vol_ptr_int($pop12)
 	i32.const	$push11=, 0
-	i32.load	$drop=, glob_vol_ptr_int($pop11)
+	i32.load	$drop=, glob_vol_ptr_vol_int($pop11)
 	i32.const	$push10=, 0
-	i32.load	$drop=, glob_vol_ptr_vol_int($pop10)
+	i32.load	$drop=, glob_vol_int($pop10)
 	i32.const	$push9=, 0
 	i32.load	$drop=, glob_vol_ptr_int($pop9)
 	i32.const	$push8=, 0
-	i32.load	$drop=, glob_vol_int($pop8)
+	i32.load	$drop=, glob_vol_ptr_vol_int($pop8)
 	i32.const	$push7=, 0
-	i32.load	$drop=, glob_vol_int($pop7)
+	i32.load	$drop=, glob_vol_ptr_int($pop7)
 	i32.const	$push6=, 0
-	i32.load	$drop=, glob_vol_ptr_vol_int($pop6)
+	i32.load	$drop=, glob_vol_int($pop6)
 	i32.const	$push5=, 0
 	i32.load	$drop=, glob_vol_int($pop5)
+	i32.const	$push4=, 0
+	i32.load	$drop=, glob_vol_ptr_vol_int($pop4)
+	i32.const	$push3=, 0
+	i32.load	$drop=, glob_vol_int($pop3)
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	expr_vol_global, .Lfunc_end2-expr_vol_global
-
+                                        # -- End function
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	simple_vol_global@FUNCTION
 	call    	simple_vol_file@FUNCTION
 	i32.const	$push1=, 0
@@ -119,7 +118,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main
-
+                                        # -- End function
 	.hidden	glob_int                # @glob_int
 	.type	glob_int,@object
 	.section	.data.glob_int,"aw",@progbits
@@ -264,5 +263,5 @@ stat_int_arr:
 	.size	stat_int_arr, 400
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	exit, void, i32

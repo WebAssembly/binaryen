@@ -81,6 +81,9 @@ function () {
    switch_reach($p) | 0;
    return ($rc$0|0); //@line 59950 "/tmp/emscripten_test_binaryen2_28hnAe/src.c"
   }
-  return { add: add, ret: ret, opts: opts, fib: fib, switch_reach: switch_reach };
+  function nofile() {
+    nofile(); //@line 1337
+  }
+  return { add: add, ret: ret, opts: opts, fib: fib, switch_reach: switch_reach, nofile: nofile };
 }
 

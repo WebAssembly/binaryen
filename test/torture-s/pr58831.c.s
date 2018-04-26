@@ -1,12 +1,12 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/pr58831.c"
+	.file	"pr58831.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	call    	fn2@FUNCTION
 	i32.const	$push1=, 0
 	i32.const	$push0=, r
@@ -19,11 +19,11 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.section	.text.fn2,"ax",@progbits
-	.type	fn2,@function
+	.type	fn2,@function           # -- Begin function fn2
 fn2:                                    # @fn2
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	i32.const	$push1=, 0
 	i32.const	$push0=, 42
 	i32.store	f($pop1), $pop0
@@ -34,46 +34,45 @@ fn2:                                    # @fn2
 	.endfunc
 .Lfunc_end1:
 	.size	fn2, .Lfunc_end1-fn2
-
+                                        # -- End function
 	.section	.text.fn1,"ax",@progbits
-	.type	fn1,@function
+	.type	fn1,@function           # -- Begin function fn1
 fn1:                                    # @fn1
 	.param  	i32
 	.local  	i32
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	block   	
 	i32.const	$push3=, 0
 	i32.load	$push0=, p($pop3)
-	i32.eqz 	$push13=, $pop0
-	br_if   	0, $pop13       # 0: down to label0
-# BB#1:                                 # %for.body.preheader
+	i32.eqz 	$push11=, $pop0
+	br_if   	0, $pop11       # 0: down to label0
+# %bb.1:                                # %for.body.preheader
 .LBB2_2:                                # %for.body
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label1:
-	i32.const	$push9=, 1
-	i32.store	0($0), $pop9
-	i32.const	$push8=, 0
-	i32.const	$push7=, 0
-	i32.load	$push1=, p($pop7)
-	i32.const	$push6=, 1
-	i32.add 	$push5=, $pop1, $pop6
-	tee_local	$push4=, $1=, $pop5
-	i32.store	p($pop8), $pop4
+	i32.const	$push7=, 1
+	i32.store	0($0), $pop7
+	i32.const	$push6=, 0
+	i32.load	$push1=, p($pop6)
+	i32.const	$push5=, 1
+	i32.add 	$1=, $pop1, $pop5
+	i32.const	$push4=, 0
+	i32.store	p($pop4), $1
 	br_if   	0, $1           # 0: up to label1
 .LBB2_3:                                # %for.end
 	end_loop
 	end_block                       # label0:
-	i32.const	$push12=, 0
+	i32.const	$push10=, 0
 	i32.const	$push2=, d
-	i32.store	b($pop12), $pop2
-	i32.const	$push11=, 0
-	i32.const	$push10=, d
-	i32.store	r($pop11), $pop10
+	i32.store	b($pop10), $pop2
+	i32.const	$push9=, 0
+	i32.const	$push8=, d
+	i32.store	r($pop9), $pop8
                                         # fallthrough-return
 	.endfunc
 .Lfunc_end2:
 	.size	fn1, .Lfunc_end2-fn1
-
+                                        # -- End function
 	.hidden	i                       # @i
 	.type	i,@object
 	.section	.bss.i,"aw",@nobits
@@ -174,4 +173,4 @@ j:
 	.size	j, 2
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"

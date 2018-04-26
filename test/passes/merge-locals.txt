@@ -1,0 +1,459 @@
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (type $1 (func (param i32 i32)))
+ (type $2 (func (param i32 f32 f32) (result i64)))
+ (type $3 (func (param i32 i32 i32)))
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $test (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $x)
+ )
+ (func $test2 (; 1 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $x)
+ )
+ (func $test-multiple (; 2 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (get_local $x)
+ )
+ (func $test-just-some (; 3 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (set_local $y
+   (i32.const 200)
+  )
+  (get_local $y)
+ )
+ (func $test-just-some2 (; 4 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (if
+   (i32.const 300)
+   (set_local $y
+    (i32.const 400)
+   )
+   (drop
+    (get_local $x)
+   )
+  )
+  (i32.const 500)
+ )
+ (func $test-just-some3 (; 5 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 200)
+   )
+  )
+  (if
+   (i32.const 300)
+   (set_local $y
+    (i32.const 400)
+   )
+   (drop
+    (get_local $y)
+   )
+  )
+  (get_local $y)
+ )
+ (func $silly-self (; 6 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $x)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $y)
+ )
+ (func $silly-multi (; 7 ;) (type $0) (param $x i32) (param $y i32) (result i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (tee_local $y
+      (get_local $x)
+     )
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (get_local $y)
+ )
+ (func $undo-1 (; 8 ;) (type $1) (param $var$1 i32) (param $var$2 i32)
+  (local $var$5 i32)
+  (set_local $var$2
+   (get_local $var$1)
+  )
+  (set_local $var$2
+   (i32.const 1)
+  )
+  (drop
+   (get_local $var$1)
+  )
+ )
+ (func $undo-2 (; 9 ;) (type $1) (param $var$1 i32) (param $var$2 i32)
+  (local $var$5 i32)
+  (set_local $var$2
+   (get_local $var$1)
+  )
+  (if
+   (get_local $var$1)
+   (set_local $var$2
+    (i32.const 1)
+   )
+  )
+  (drop
+   (get_local $var$1)
+  )
+ )
+ (func $reverse (; 10 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $y)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-end (; 11 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+ )
+ (func $reverse-lone-end-2 (; 12 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (set_local $y
+   (i32.const 200)
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo (; 13 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $y)
+   )
+  )
+  (set_local $x
+   (i32.const 300)
+  )
+  (drop
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo2 (; 14 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (set_local $x
+   (i32.const 300)
+  )
+  (drop
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo3-conditional (; 15 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 300)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo3-conditional-b (; 16 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (get_local $x)
+   )
+  )
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 300)
+   )
+  )
+  (drop
+   (get_local $x)
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $reverse-undo3-conditional-c (; 17 ;) (type $1) (param $x i32) (param $y i32)
+  (drop
+   (if (result i32)
+    (tee_local $x
+     (get_local $y)
+    )
+    (i32.const 100)
+    (i32.const 150)
+   )
+  )
+  (if
+   (i32.const 1)
+   (drop
+    (get_local $x)
+   )
+   (block $block
+    (if
+     (i32.const 1)
+     (set_local $x
+      (i32.const 300)
+     )
+    )
+    (drop
+     (get_local $x)
+    )
+   )
+  )
+  (if
+   (i32.const 1)
+   (set_local $y
+    (i32.const 200)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+ )
+ (func $fuzz (; 18 ;) (type $2) (param $var$0 i32) (param $var$1 f32) (param $var$2 f32) (result i64)
+  (local $var$3 i32)
+  (set_global $global$0
+   (i32.sub
+    (get_global $global$0)
+    (i32.const 1)
+   )
+  )
+  (loop $label$1 (result i64)
+   (set_global $global$0
+    (i32.sub
+     (get_global $global$0)
+     (i32.const 1)
+    )
+   )
+   (br_if $label$1
+    (block $label$2 (result i32)
+     (drop
+      (if (result i32)
+       (block $label$3 (result i32)
+        (set_global $global$0
+         (i32.sub
+          (get_global $global$0)
+          (i32.const 3)
+         )
+        )
+        (set_local $var$3
+         (i32.const 1)
+        )
+        (tee_local $var$3
+         (get_local $var$0)
+        )
+       )
+       (i32.const 0)
+       (block $block (result i32)
+        (set_local $var$3
+         (if (result i32)
+          (i32.const 0)
+          (block $block13 (result i32)
+           (block $label$7
+            (block $label$8
+             (set_local $var$0
+              (i32.const 34738786)
+             )
+            )
+           )
+           (get_local $var$3)
+          )
+          (block $block14 (result i32)
+           (if
+            (i32.eqz
+             (get_global $global$0)
+            )
+            (return
+             (i64.const 137438953472)
+            )
+           )
+           (set_global $global$0
+            (i32.sub
+             (get_global $global$0)
+             (i32.const 1)
+            )
+           )
+           (br_if $label$1
+            (i32.eqz
+             (get_local $var$3)
+            )
+           )
+           (return
+            (i64.const 44125)
+           )
+          )
+         )
+        )
+        (i32.const -129)
+       )
+      )
+     )
+     (i32.const 0)
+    )
+   )
+   (i64.const -36028797018963968)
+  )
+ )
+ (func $trivial-confusion (; 19 ;) (type $3) (param $unused i32) (param $param i32) (param $result i32)
+  (loop $label$1
+   (if
+    (i32.const 1)
+    (drop
+     (get_local $result)
+    )
+   )
+   (set_local $result
+    (get_local $param)
+   )
+   (br_if $label$1
+    (tee_local $unused
+     (get_local $param)
+    )
+   )
+  )
+ )
+)

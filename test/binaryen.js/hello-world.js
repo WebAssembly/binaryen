@@ -22,7 +22,7 @@ module.addFunction('adder', iii, [], ret);
 
 // Export the function, so we can call it later (for simplicity we
 // export it as the same name as it has internally)
-module.addExport('adder', 'adder');
+module.addFunctionExport('adder', 'adder');
 
 // Print out the text
 console.log(module.emitText());
@@ -45,7 +45,7 @@ module.dispose();
 
 // Compile the binary and create an instance
 var wasm = new WebAssembly.Instance(new WebAssembly.Module(binary), {})
-console.log(wasm); // prints something like "[object WebAssembly.Instance]"
+console.log("exports: " + Object.keys(wasm.exports).sort().join(","));
 console.log();
 
 // Call the code!

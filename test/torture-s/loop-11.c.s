@@ -1,28 +1,27 @@
 	.text
-	.file	"/usr/local/google/home/dschuff/s/wasm-waterfall/src/work/gcc/gcc/testsuite/gcc.c-torture/execute/loop-11.c"
+	.file	"loop-11.c"
 	.section	.text.main,"ax",@progbits
-	.hidden	main
+	.hidden	main                    # -- Begin function main
 	.globl	main
 	.type	main,@function
 main:                                   # @main
 	.result 	i32
 	.local  	i32, i32
-# BB#0:                                 # %entry
-	i32.const	$1=, 199
+# %bb.0:                                # %entry
+	i32.const	$1=, 198
 	i32.const	$0=, a+792
 .LBB0_1:                                # %for.body.i
                                         # =>This Inner Loop Header: Depth=1
 	loop    	                # label0:
-	i32.const	$push9=, -1
-	i32.add 	$push8=, $1, $pop9
-	tee_local	$push7=, $1=, $pop8
-	i32.store	0($0), $pop7
-	i32.const	$push6=, -4
-	i32.add 	$0=, $0, $pop6
-	i32.const	$push5=, 0
-	i32.gt_s	$push0=, $1, $pop5
+	i32.store	0($0), $1
+	i32.const	$push7=, -4
+	i32.add 	$0=, $0, $pop7
+	i32.const	$push6=, -1
+	i32.add 	$1=, $1, $pop6
+	i32.const	$push5=, -1
+	i32.ne  	$push0=, $1, $pop5
 	br_if   	0, $pop0        # 0: up to label0
-# BB#2:                                 # %for.body.preheader
+# %bb.2:                                # %for.body.preheader
 	end_loop
 	i32.const	$1=, 0
 	i32.const	$0=, a
@@ -33,17 +32,16 @@ main:                                   # @main
 	i32.load	$push1=, 0($0)
 	i32.ne  	$push2=, $1, $pop1
 	br_if   	1, $pop2        # 1: down to label1
-# BB#4:                                 # %for.cond
+# %bb.4:                                # %for.cond
                                         #   in Loop: Header=BB0_3 Depth=1
-	i32.const	$push14=, 4
-	i32.add 	$0=, $0, $pop14
-	i32.const	$push13=, 1
-	i32.add 	$push12=, $1, $pop13
-	tee_local	$push11=, $1=, $pop12
-	i32.const	$push10=, 198
-	i32.le_s	$push3=, $pop11, $pop10
+	i32.const	$push10=, 1
+	i32.add 	$1=, $1, $pop10
+	i32.const	$push9=, 4
+	i32.add 	$0=, $0, $pop9
+	i32.const	$push8=, 198
+	i32.le_u	$push3=, $1, $pop8
 	br_if   	0, $pop3        # 0: up to label2
-# BB#5:                                 # %for.end
+# %bb.5:                                # %for.end
 	end_loop
 	i32.const	$push4=, 0
 	return  	$pop4
@@ -54,7 +52,7 @@ main:                                   # @main
 	.endfunc
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main
-
+                                        # -- End function
 	.type	a,@object               # @a
 	.section	.bss.a,"aw",@nobits
 	.p2align	4
@@ -63,5 +61,5 @@ a:
 	.size	a, 796
 
 
-	.ident	"clang version 4.0.0 (trunk 283460) (llvm/trunk 283507)"
+	.ident	"clang version 7.0.0 (https://llvm.googlesource.com/clang.git 1f874ca3c3f27c2149b6b33ca4a5966b3577280d) (https://llvm.googlesource.com/llvm.git 2e4bd2aa729dd2c33cdca2b39c971c675e914001)"
 	.functype	abort, void

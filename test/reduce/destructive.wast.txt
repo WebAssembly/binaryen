@@ -1,0 +1,8 @@
+(module
+ (type $0 (func (param i32) (result i32)))
+ (export "x" (func $0))
+ (func $0 (; 0 ;) (type $0) (param $var$0 i32) (result i32)
+  (i32.const 100)
+ )
+)
+

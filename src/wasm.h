@@ -56,6 +56,13 @@
 
 namespace wasm {
 
+enum Feature : uint32_t {
+  MVP = 0,
+  Atomics = 1 << 0,
+  All = 0xffffffff,
+};
+typedef uint32_t FeatureSet;
+
 // An index in a wasm module
 typedef uint32_t Index;
 
@@ -98,6 +105,12 @@ enum UnaryOp {
   PromoteFloat32, // f32 to f64
   DemoteFloat64, // f64 to f32
   ReinterpretInt32, ReinterpretInt64, // reinterpret bits to float
+  // The following sign-extention operators go along with wasm atomics support.
+  // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
+  // because the input integer is in an i64 value insetad of an i32 value.
+  ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
+
+  InvalidUnary
 };
 
 enum BinaryOp {
@@ -124,10 +137,16 @@ enum BinaryOp {
   // relational ops
   EqFloat64, NeFloat64, // int or float
   LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+
+  InvalidBinary
 };
 
 enum HostOp {
   PageSize, CurrentMemory, GrowMemory, HasFeature
+};
+
+enum AtomicRMWOp {
+  Add, Sub, And, Or, Xor, Xchg
 };
 
 //
@@ -177,11 +196,15 @@ public:
     HostId,
     NopId,
     UnreachableId,
+    AtomicCmpxchgId,
+    AtomicRMWId,
+    AtomicWaitId,
+    AtomicWakeId,
     NumExpressionIds
   };
   Id _id;
 
-  WasmType type; // the type of the expression: its *output*, not necessarily its input(s)
+  Type type; // the type of the expression: its *output*, not necessarily its input(s)
 
   Expression(Id id) : _id(id), type(none) {}
 
@@ -231,13 +254,20 @@ public:
   Name name;
   ExpressionList list;
 
+  // set the type purely based on its contents. this scans the block, so it is not fast.
+  void finalize();
+
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
-  // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  // this does is to set the type to unreachable in the cases that is needed
+  // (which may require scanning the block)
+  void finalize(Type type_);
 
-  // set the type purely based on its contents. this scans the block, so it is not fast
-  void finalize();
+  // set the type given you know its type, and you know if there is a break to this
+  // block. this avoids the need to scan the contents of the block in the case that
+  // it might be unreachable, so it is recommended if you already know the type
+  // and breakability anyhow.
+  void finalize(Type type_, bool hasBreak);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -252,7 +282,7 @@ public:
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
   // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -269,7 +299,7 @@ public:
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional work
   // this does is to set the type to unreachable in the cases that is needed.
-  void finalize(WasmType type_);
+  void finalize(Type type_);
 
   // set the type purely based on its contents.
   void finalize();
@@ -326,8 +356,8 @@ public:
 class FunctionType {
 public:
   Name name;
-  WasmType result;
-  std::vector<WasmType> params;
+  Type result;
+  std::vector<Type> params;
 
   FunctionType() : result(none) {}
 
@@ -398,6 +428,7 @@ public:
   bool signed_;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
 
   // type must be set during creation, cannot be inferred
@@ -413,9 +444,64 @@ public:
   uint8_t bytes;
   Address offset;
   Address align;
+  bool isAtomic;
   Expression* ptr;
   Expression* value;
-  WasmType valueType; // the store never returns a value
+  Type valueType; // the store never returns a value
+
+  void finalize();
+};
+
+class AtomicRMW : public SpecificExpression<Expression::AtomicRMWId> {
+ public:
+  AtomicRMW() = default;
+  AtomicRMW(MixedArena& allocator) : AtomicRMW() {}
+
+  AtomicRMWOp op;
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* value;
+
+  void finalize();
+};
+
+class AtomicCmpxchg : public SpecificExpression<Expression::AtomicCmpxchgId> {
+ public:
+  AtomicCmpxchg() = default;
+  AtomicCmpxchg(MixedArena& allocator) : AtomicCmpxchg() {}
+
+  uint8_t bytes;
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* replacement;
+
+  void finalize();
+};
+
+class AtomicWait : public SpecificExpression<Expression::AtomicWaitId> {
+ public:
+  AtomicWait() = default;
+  AtomicWait(MixedArena& allocator) : AtomicWait() {}
+
+  Address offset;
+  Expression* ptr;
+  Expression* expected;
+  Expression* timeout;
+  Type expectedType;
+
+  void finalize();
+};
+
+class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
+ public:
+  AtomicWake() = default;
+  AtomicWake(MixedArena& allocator) : AtomicWake() {}
+
+  Address offset;
+  Expression* ptr;
+  Expression* wakeCount;
 
   void finalize();
 };
@@ -428,6 +514,8 @@ public:
   Literal value;
 
   Const* set(Literal value_);
+
+  void finalize();
 };
 
 class Unary : public SpecificExpression<Expression::UnaryId> {
@@ -516,14 +604,14 @@ public:
 class Function {
 public:
   Name name;
-  WasmType result;
-  std::vector<WasmType> params; // function locals are
-  std::vector<WasmType> vars;   // params plus vars
+  Type result;
+  std::vector<Type> params; // function locals are
+  std::vector<Type> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
   Expression* body;
 
   // local names. these are optional.
-  std::vector<Name> localNames;
+  std::map<Index, Name> localNames;
   std::map<Name, Index> localIndices;
 
   struct DebugLocation {
@@ -545,11 +633,11 @@ public:
   Name getLocalName(Index index);
   Index getLocalIndex(Name name);
   Index getVarIndexBase();
-  WasmType getLocalType(Index index);
+  Type getLocalType(Index index);
 
   Name getLocalNameOrDefault(Index index);
+  Name getLocalNameOrGeneric(Index index);
 
-private:
   bool hasLocalName(Index index) const;
 };
 
@@ -567,7 +655,7 @@ public:
   Name name, module, base; // name = module.base
   ExternalKind kind;
   Name functionType; // for Function imports
-  WasmType globalType; // for Global imports
+  Type globalType; // for Global imports
 };
 
 class Export {
@@ -586,8 +674,7 @@ public:
     Expression* offset;
     std::vector<Name> data;
     Segment() {}
-    Segment(Expression* offset) : offset(offset) {
-    }
+    Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
       data.swap(init);
     }
@@ -604,6 +691,7 @@ public:
   Table() : exists(false), imported(false), initial(0), max(kMaxSize) {
     name = Name::fromInt(0);
   }
+  bool hasMax() { return max != kMaxSize; }
 };
 
 class Memory {
@@ -616,6 +704,7 @@ public:
     Expression* offset;
     std::vector<char> data; // TODO: optimize
     Segment() {}
+    Segment(Expression* offset) : offset(offset) {}
     Segment(Expression* offset, const char* init, Address size) : offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
@@ -632,16 +721,18 @@ public:
   // See comment in Table.
   bool exists;
   bool imported;
+  bool shared;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), imported(false) {
+  Memory() : initial(0), max(kMaxSize), exists(false), imported(false), shared(false) {
     name = Name::fromInt(0);
   }
+  bool hasMax() { return max != kMaxSize; }
 };
 
 class Global {
 public:
   Name name;
-  WasmType type;
+  Type type;
   Expression* init;
   bool mutable_;
 };
@@ -705,6 +796,8 @@ public:
 
   void removeImport(Name name);
   void removeExport(Name name);
+  void removeFunction(Name name);
+  void removeFunctionType(Name name);
   // TODO: remove* for other elements
 
   void updateMaps();

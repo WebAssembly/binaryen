@@ -18,27 +18,60 @@
 #define wasm_wasm_emscripten_h
 
 #include "wasm.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
-class LinkerObject;
+// Class which modifies a wasm module for use with emscripten. Generates
+// runtime functions and emits metadata.
+class EmscriptenGlueGenerator {
+public:
+  EmscriptenGlueGenerator(Module& wasm, Address stackPointerOffset = Address(0))
+    : wasm(wasm),
+      builder(wasm),
+      stackPointerOffset(stackPointerOffset),
+      useStackPointerGlobal(stackPointerOffset == 0) { }
 
-namespace emscripten {
+  void generateRuntimeFunctions();
+  Function* generateMemoryGrowthFunction();
 
-void generateRuntimeFunctions(LinkerObject& linker);
-void generateMemoryGrowthFunction(Module&);
+  // Create thunks for use with emscripten Runtime.dynCall. Creates one for each
+  // signature in the indirect function table.
+  void generateDynCallThunks();
 
-// Create thunks for use with emscripten Runtime.dynCall. Creates one for each
-// signature in the indirect function table.
-std::vector<Function*> makeDynCallThunks(Module& wasm, std::vector<Name> const& tableSegmentData);
+  // Create thunks to support emscripten's addFunction functionality. Creates (#
+  // of reserved function pointers) thunks for each indirectly called function
+  // signature.
+  void generateJSCallThunks(unsigned numReservedFunctionPointers);
 
-void generateEmscriptenMetadata(std::ostream& o,
-                                Module& wasm,
-                                std::unordered_map<Address, Address> segmentsByAddress,
-                                Address staticBump,
-                                std::vector<Name> const& initializerFunctions);
+  std::string generateEmscriptenMetadata(
+      Address staticBump, std::vector<Name> const& initializerFunctions,
+      unsigned numReservedFunctionPointers);
 
-} // namespace emscripten
+  // Replace placeholder emscripten_asm_const functions with *_signature versions.
+  void fixEmAsmConsts();
+
+private:
+  Module& wasm;
+  Builder builder;
+  Address stackPointerOffset;
+  bool useStackPointerGlobal;
+
+  Global* getStackPointerGlobal();
+  Expression* generateLoadStackPointer();
+  Expression* generateStoreStackPointer(Expression* value);
+  void generateStackSaveFunction();
+  void generateStackAllocFunction();
+  void generateStackRestoreFunction();
+};
+
+std::string emscriptenGlue(
+    Module& wasm,
+    bool allowMemoryGrowth,
+    Address stackPointer,
+    Address staticBump,
+    std::vector<Name> const& initializerFunctions,
+    unsigned numReservedFunctionPointers);
 
 } // namespace wasm
 

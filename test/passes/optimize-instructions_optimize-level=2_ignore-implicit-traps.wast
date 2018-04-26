@@ -259,5 +259,107 @@
       (get_local $5)
     )
   )
+  (func $invalidate-conditionalizeExpensiveOnBitwise (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $1) ;; conflict with tee
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
+  )
+  (func $invalidate-conditionalizeExpensiveOnBitwise-ok (param $0 i32) (param $1 i32) (result i32)
+   (if
+    (i32.eqz
+     (i32.and
+      (i32.lt_s
+       (i32.and
+        (i32.shr_s
+         (i32.shl
+          (i32.add
+           (get_local $0) ;; no conflict
+           (i32.const -1)
+          )
+          (i32.const 24)
+         )
+         (i32.const 24)
+        )
+        (i32.const 255)
+       )
+       (i32.const 3)
+      )
+      (i32.ne
+       (tee_local $1
+        (i32.const 0)
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (return (get_local $0))
+   )
+   (return (get_local $1))
+  )
+
+ (func $conditionalize-if-type-change (result f64)
+  (local $0 i32)
+  (drop
+   (loop $label$1 (result f32)
+    (block $label$2 (result f32)
+     (drop
+      (block $label$3 (result f32)
+       (br_if $label$1
+        (i32.or ;; this turns into an if, but then the if might not be unreachable
+         (f32.gt
+          (br_if $label$3
+           (f32.const 1)
+           (get_local $0)
+          )
+          (br $label$2
+           (f32.const 71)
+          )
+         )
+         (i64.eqz
+          (select
+           (i64.const 58)
+           (i64.const -982757)
+           (i64.eqz
+            (i64.const 0)
+           )
+          )
+         )
+        )
+       )
+      )
+     )
+     (f32.const 1)
+    )
+   )
+  )
+  (f64.const -nan:0xfffffffffffff)
+ )
 )
 
