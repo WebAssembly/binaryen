@@ -87,6 +87,7 @@ struct Node {
   // TODO: the others, if we need them
   bool isVar() { return type == Var; }
   bool isExpr() { return type == Expr; }
+  bool isPhi() { return type == Phi; }
   bool isCond() { return type == Cond; }
   bool isBad() { return type == Bad; }
 
@@ -1072,7 +1073,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
       std::cout << '\n';
-      if (debug) warnOnSuspiciousValues(node, 1, 2);
+      if (debug) warnOnSuspiciousValues(node, 0, 2);
     } else {
       WASM_UNREACHABLE();
     }
@@ -1088,16 +1089,28 @@ struct Printer {
   // like an obvious missing optimization.
   void warnOnSuspiciousValues(Node* node, Index inclusiveStart, Index inclusiveEnd) {
     assert(debug);
+    // First, check if they are all constants.
+    for (Index i = inclusiveStart; i <= inclusiveEnd; i++) {
+      auto* curr = node->getValue(i);
+      if (!curr->isExpr() || !curr->expr->is<Const>()) return;
+    }
     auto* first = node->getValue(inclusiveStart);
-    if (!first->isExpr() || !first->expr->is<Const>()) return;
+    bool allIdentical = true;
     // Check if any of the others are not equal
     for (Index i = inclusiveStart + 1; i <= inclusiveEnd; i++) {
       auto* curr = node->getValue(i);
-      if (!curr->isExpr() || !curr->expr->is<Const>()) return;
-      if (!ExpressionAnalyzer::equal(first->expr, curr->expr)) return;
+      if (!ExpressionAnalyzer::equal(first->expr, curr->expr)) {
+        allIdentical = false;
+        break;
+      }
     }
-    // They were all equal
-    std::cout << "^^ suspicious values! missing optimization? ^^\n";
+    if (allIdentical) {
+      std::cout << "^^ suspicious identical inputs! missing optimization? ^^\n";
+    } else {
+      if (!node->isPhi()) {
+        std::cout << "^^ suspicious constant inputs to a non-phi! missing optimization? ^^\n";
+      }
+    }
   }
 };
 
