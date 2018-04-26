@@ -517,7 +517,39 @@ infer %1
 infer %2
 
 
+; start LHS (in $block-phi-1)
+%0 = block 2
+%1:i32 = var
+%2 = add %1, 1:i32
+%3 = add %2, 2:i32
+%4 = phi %0, %2, %3
+infer %4
+
+
+; start LHS (in $block-phi-1)
+%0 = block 2
+%1:i32 = var
+%2 = add %1, 1:i32
+%3 = add %2, 2:i32
+%4 = phi %0, %2, %3
+%5 = add %4, 3:i32
+infer %5
+
+
 ; function: $block-phi-2
+
+; start LHS (in $block-phi-2)
+%0 = block 2
+%1 = phi %0, 1:i32, 2:i32
+infer %1
+
+
+; start LHS (in $block-phi-2)
+%0 = block 2
+%1 = phi %0, 1:i32, 2:i32
+%2 = add %1, 3:i32
+infer %2
+
 
 ; function: $zero_init-phi-bad_type
 
@@ -619,6 +651,13 @@ infer %4
 ; function: $in-unreachable-operations
 
 ; function: $merge-with-one-less
+
+; start LHS (in $merge-with-one-less)
+%0 = block 2
+%1:i32 = var
+%2 = phi %0, %1, 8:i32
+infer %2
+
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))

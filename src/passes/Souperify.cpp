@@ -19,7 +19,7 @@
 //
 // This needs 'flatten' to be run before it, as it assumes the IR is in
 // flat form. You may also want to optimize a little, e.g.
-//    --flatten --simplify-locals-nonesting
+//    --flatten --simplify-locals-nonesting --reorder-locals
 // (as otherwise flattening introduces many copies; we do ignore boring
 // copies here, but they end up as identical LHSes).
 //
@@ -434,14 +434,8 @@ struct Builder : public Visitor<Builder, Node*> {
     }
     sets.push_back(curr);
     parentMap[curr] = parent;
-    // If we are doing a copy, just do the copy.
-    if (auto* get = curr->value->dynCast<GetLocal>()) {
-      setNodeMap[curr] = localState[curr->index] = localState[get->index];
-      return &CanonicalBad;
-    }
-    // Make a new IR node for the new value here.
-    auto* node = setNodeMap[curr] = visit(curr->value);
-    localState[curr->index] = node;
+    // Set the current node in the local state.
+    localState[curr->index] = setNodeMap[curr] = visit(curr->value);
     return &CanonicalBad;
   }
   Node* visitGetGlobal(GetGlobal* curr) {
@@ -686,6 +680,8 @@ struct Builder : public Visitor<Builder, Node*> {
       out = states[0].locals;
       return;
     }
+    // We create a block if we need one.
+    Node* block = nullptr;
     for (Index i = 0; i < numLocals; i++) {
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
@@ -700,8 +696,6 @@ struct Builder : public Visitor<Builder, Node*> {
       if (bad) continue;
       // Nothing is bad, proceed.
       Node* first = nullptr;
-      // We create a block if we need one.
-      Node* block = nullptr;
       for (auto& state : states) {
         if (!first) {
           first = out[i] = state.locals[i];
@@ -710,7 +704,10 @@ struct Builder : public Visitor<Builder, Node*> {
           if (!block) {
             block = addNode(Node::makeBlock());
             for (Index index = 0; index < numStates; index++) {
-              auto* condition = addNode(Node::makeCond(block, index, states[index].condition));
+              auto* condition = states[index].condition;
+              if (!condition->isBad()) {
+                condition = addNode(Node::makeCond(block, index, condition));
+              }
               block->addValue(condition);
             }
           }
@@ -757,15 +754,17 @@ struct Trace {
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
     add(node);
-    // Mark as bad if it's trivially uninteresting
+    // If we are trivial before adding pcs, we are still trivial, and
+    // can ignore this.
+    auto sizeBeforePathConditions = nodes.size();
     if (!bad) {
       // No input is uninteresting
-      if (nodes.empty()) {
+      if (sizeBeforePathConditions == 0) {
         bad = true;
         return;
       }
       // Just a var is uninteresting. TODO: others too?
-      if (nodes.size() == 1 && nodes[0]->isVar()) {
+      if (sizeBeforePathConditions == 1 && nodes[0]->isVar()) {
         bad = true;
         return;
       }
