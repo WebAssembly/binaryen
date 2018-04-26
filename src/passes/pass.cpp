@@ -140,7 +140,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("pick-load-signs");
   }
-  add("precompute");
+  // if we are willing to work hard, also propagate. first, do it while the code is still fairly flat
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("precompute-propagate");
+  } else {
+    add("precompute");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
@@ -163,7 +168,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  // if we are willing to work hard, also propagate
+  // further propagation may be possible now
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
     // altering get_locals may open up simplification opportunities - sets may
