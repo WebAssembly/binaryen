@@ -713,14 +713,10 @@ struct Builder : public Visitor<Builder, Node*> {
             }
           }
           auto* phi = addNode(Node::makePhi(block));
-          for (auto& phiState : states) {
-            Node* phiValue;
-            if (isInUnreachable(phiState)) {
-              phiValue = &CanonicalBad;
-            } else {
-              phiValue = expandFromI1(phiState.locals[i]);
-            }
-            phi->addValue(phiValue);
+          for (Index index = 0; index < numStates; index++) {
+            phi->addValue(addNode(
+              Node::makeCond(block, index, expandFromI1(states[index].locals[i]))
+            ));
           }
           out[i] = phi;
           break;
