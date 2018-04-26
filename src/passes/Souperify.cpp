@@ -1105,10 +1105,10 @@ struct Printer {
       }
     }
     if (allIdentical) {
-      std::cout << "^^ suspicious identical inputs! missing optimization? ^^\n";
+      std::cout << "^^ suspicious identical inputs! missing optimization in " << builder.func->name << "? ^^\n";
     } else {
       if (!node->isPhi()) {
-        std::cout << "^^ suspicious constant inputs to a non-phi! missing optimization? ^^\n";
+        std::cout << "^^ suspicious constant inputs! missing optimization in " << builder.func->name << "? ^^\n";
       }
     }
   }
