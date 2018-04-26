@@ -748,15 +748,28 @@ struct Trace {
   Builder& builder;
   SetLocal* set;
 
+  // A limit on how deep we go - we don't want to create arbitrarily
+  // large traces.
+  size_t depthLimit = 10;
+
   bool bad = false;
   std::vector<Node*> nodes;
   std::unordered_set<Node*> addedNodes;
   std::vector<Node*> pathConditions;
+  // When we need to (like when the depth is too deep), we replace
+  // expressions with other expressions, and track them here.
+  std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
 
   Trace(Builder& builder, SetLocal* set) : builder(builder), set(set) {
+    // Check if there is a depth limit override
+    auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
+    if (depthLimitStr) {
+      depthLimit = atoi(depthLimitStr);
+    }
+    // Get the node for this set.
     auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
-    add(node);
+    add(node, 0);
     // If we are trivial before adding pcs, we are still trivial, and
     // can ignore this.
     auto sizeBeforePathConditions = nodes.size();
@@ -778,7 +791,8 @@ struct Trace {
     addPath(set);
   }
 
-  Node* add(Node* node) {
+  Node* add(Node* node, size_t depth) {
+    depth++;
     // If already added, nothing more to do.
     if (addedNodes.find(node) != addedNodes.end()) {
       return node;
@@ -793,15 +807,21 @@ struct Trace {
         if (node->expr->is<Const>()) {
           return node;
         }
+        // If we've gone too deep, emit a var instead.
+        if (depth >= depthLimit) {
+          auto* var = Node::makeVar(node->getWasmType());
+          replacements[node] = std::unique_ptr<Node>(var);
+          return var;
+        }
         // Add the dependencies.
         assert(!node->expr->is<GetLocal>());
         for (Index i = 0; i < node->values.size(); i++) {
-          add(node->getValue(i));
+          add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Phi: {
-        auto* block = add(node->getValue(0));
+        auto* block = add(node->getValue(0), depth);
         auto size = block->values.size();
         // First, add the conditions for the block
         for (Index i = 0; i < size; i++) {
@@ -809,25 +829,25 @@ struct Trace {
           // we can proceed without the extra condition information
           auto* condition = block->getValue(i);
           if (!condition->isBad()) {
-            add(condition);
+            add(condition, depth);
           }
         }
         // Then, add the phi values
         for (Index i = 1; i < size + 1; i++) {
-          add(node->getValue(i));
+          add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Cond: {
-        add(node->getValue(0)); // add the block
-        add(node->getValue(1)); // add the node
+        add(node->getValue(0), depth); // add the block
+        add(node->getValue(1), depth); // add the node
         break;
       }
       case Node::Type::Block: {
         break; // nothing more to add
       }
       case Node::Type::Zext: {
-        add(node->getValue(0));
+        add(node->getValue(0), depth);
         break;
       }
       case Node::Type::Bad: {
@@ -873,7 +893,7 @@ struct Trace {
       auto* condition = conditions[index];
       // Add the condition itself as an instruction in the trace -
       // the pc uses it as its input.
-      add(condition);
+      add(condition, 0);
       // Add it as a pc, which we will emit directly.
       pathConditions.push_back(condition);
     } else {
@@ -922,6 +942,13 @@ struct Printer {
 
   void print(Node* node) {
     assert(node);
+    // The node may have been replaced during trace building, if so then
+    // print the proper replacement.
+    auto iter = trace.replacements.find(node);
+    if (iter != trace.replacements.end()) {
+      print(iter->second.get());
+      return;
+    }
     switch (node->type) {
       case Node::Type::Var: {
         std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var\n";
