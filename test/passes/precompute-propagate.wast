@@ -109,5 +109,33 @@
       (br $loop)
     )
   )
+  (func $through-tee (param $x i32) (param $y i32) (result i32)
+    (set_local $x
+      (tee_local $y
+        (i32.const 7)
+      )
+    )
+    (return
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
+  (func $through-tee-more (param $x i32) (param $y i32) (result i32)
+    (set_local $x
+      (i32.eqz
+        (tee_local $y
+          (i32.const 7)
+        )
+      )
+    )
+    (return
+      (i32.add
+        (get_local $x)
+        (get_local $y)
+      )
+    )
+  )
 )
 

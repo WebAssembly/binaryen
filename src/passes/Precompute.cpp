@@ -38,8 +38,15 @@ class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionR
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
+  // Whether we are trying to precompute down to an expression (which we can do on
+  // say 5 + 6) or to a value (which we can't do on a tee_local that flows a 7
+  // through it). When we want to replace the expression, we can only do so
+  // when it has no side effects. When we don't care about replacing the expression,
+  // we just want to know if it will contain a known constant.
+  bool replaceExpression;
+
 public:
-  StandaloneExpressionRunner(GetValues& getValues) : getValues(getValues) {}
+  StandaloneExpressionRunner(GetValues& getValues, bool replaceExpression) : getValues(getValues), replaceExpression(replaceExpression) {}
 
   struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
 
@@ -69,6 +76,14 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetLocal(SetLocal *curr) {
+    // If we don't need to replace the whole expression, see if there
+    // is a value flowing through a tee.
+    if (!replaceExpression) {
+      if (isConcreteType(curr->type)) {
+        assert(curr->isTee());
+        return visit(curr->value);
+      }
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
@@ -130,7 +145,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // TODO: if get_local, only replace with a constant if we don't care about size...?
     if (curr->is<Const>() || curr->is<Nop>()) return;
     // try to evaluate this into a const
-    Flow flow = precomputeFlow(curr);
+    Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
       if (flow.breakTo == NONSTANDALONE_FLOW) return;
       if (flow.breakTo == RETURN_FLOW) {
@@ -194,16 +209,27 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
   }
 
 private:
-  Flow precomputeFlow(Expression* curr) {
+  // Precompute an expression, returning a flow, which may be a constant
+  // (that we can replace the expression with if replaceExpression is set).
+  Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      return StandaloneExpressionRunner(getValues).visit(curr);
+      return StandaloneExpressionRunner(getValues, replaceExpression).visit(curr);
     } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
       return Flow(NONSTANDALONE_FLOW);
     }
   }
 
+  // Precomputes the value of an expression, as opposed to the expression
+  // itself. This differs from precomputeExpression in that we care about
+  // the value the expression will have, which we cannot necessary replace
+  // the expression with. For example,
+  //  (tee_local (i32.const 1))
+  // will have value 1 which we can optimize here, but in precomputeExpression
+  // we could not do anything.
   Literal precomputeValue(Expression* curr) {
-    Flow flow = precomputeFlow(curr);
+    // Note that we set replaceExpression to false, as we just care about
+    // the value here.
+    Flow flow = precomputeExpression(curr, false /* replaceExpression */);
     if (flow.breaking()) {
       return Literal();
     }
