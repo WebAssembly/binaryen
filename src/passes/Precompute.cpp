@@ -38,7 +38,7 @@ class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionR
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
-  // Whether we trying to precompute down to an expression (which we can do on
+  // Whether we are trying to precompute down to an expression (which we can do on
   // say 5 + 6) or to a value (which we can't do on a tee_local that flows a 7
   // through it). When we want to replace the expression, we can only do so
   // when it has no side effects. When we don't care about replacing the expression,
