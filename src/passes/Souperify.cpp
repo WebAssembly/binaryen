@@ -71,9 +71,7 @@ struct Node {
     Var,   // an unknown variable number (not to be confused with var/param/local in wasm)
     Expr,  // a value represented by a Binaryen Expression
     Phi,   // a phi from converging control flow
-    Cond,  // a condition on a block path (pc or blockpc). these always use an i1,
-           // making the condition either true or false, and this is the only place
-           // we actually use an i1
+    Cond,  // a blockpc, representing one of the branchs for a Block
     Block, // a source of phis
     Zext,  // zero-extend an i1 (from an op where Souper returns i1 but wasm does not,
            // and so we need a special way to get back to an i32/i64 if we operate
@@ -199,9 +197,9 @@ struct Builder : public Visitor<Builder, Node*> {
   // Connects a specific set to the data in its value.
   std::unordered_map<SetLocal*, Node*> setNodeMap;
 
-  // Maps a control-flo expression to the DataFlow Block for it. E.g.
-  // for an if that is the block for the if condition.
-  std::unordered_map<Expression*, Node*> expressionBlockMap;
+  // Maps a control-flow expression to the conditions for it. Currently,
+  // this maps an if to the conditions for its arms
+  std::unordered_map<Expression*, std::vector<Node*>> expressionConditionMap;
 
   // Maps each expression to its control-flow parent (or null if
   // there is none). We only map expressions we need to know about,
@@ -624,62 +622,44 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Merge local state for an if, also creating a block and conditions.
   void mergeIf(LocalState& aState, LocalState& bState, Node* condition, Expression* expr, LocalState& out) {
-    // Create a block for this if.
-    // But if the if's condition is bad, we can't do that.
-    Node* block = addNode(Node::makeBlock());
-    if (condition->isBad()) {
-      // Add Bad conditions.
-      block->addValue(condition);
-      block->addValue(condition);
-    } else {
+    // Create the conditions (if we can).
+    if (!condition->isBad()) {
       // Generate boolean (i1 returning) conditions for the two branches.
-      auto* ifTrue = ensureI1(condition);
-      Node* ifFalse = makeZeroComp(condition, true);
-      block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
-      block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
-      expressionBlockMap[expr] = block;
+      auto& conditions = expressionConditionMap[expr];
+      // ifTrue
+      conditions.push_back(ensureI1(condition));
+      // ifFalse
+      conditions.push_back(makeZeroComp(condition, true));
     }
     // Finally, merge the state with that block. TODO optimize
     std::vector<LocalState> states;
     states.push_back(aState);
     states.push_back(bState);
-    merge(states, out, block);
+    merge(states, out);
   }
 
   // Merge local state for a block
   void mergeBlock(std::vector<LocalState>& states, LocalState& out) {
-    Node* block = addNode(Node::makeBlock());
-    // No conditions, so just add Bad ones
-    for (Index i = 0; i < states.size(); i++) {
-      block->addValue(&CanonicalBad);
-    }
-    // Finally, merge the state with that block.
-    merge(states, out, block);
+    // TODO: conditions
+    merge(states, out);
   }
 
   // Merge local state for multiple control flow paths, creating phis as needed.
-  void merge(std::vector<LocalState>& states, LocalState& out, Node* block) {
+  void merge(std::vector<LocalState>& states, LocalState& out) {
     Index numLocals = func->getNumLocals();
+    // Ignore unreachable states; we don't need to merge them.
+    states.erase(std::remove_if(states.begin(), states.end(), [&](const LocalState& curr) {
+      return isInUnreachable(curr);
+    }), states.end());
+// XXX filter the conditions as well
     Index numStates = states.size();
-    assert(numStates > 0);
-    // We may have become reachable now, mark that.
-    bool hasReachableState = false;
-    for (auto& state : states) {
-      if (isInReachable(state)) {
-        hasReachableState = true;
-        break;
-      }
-    }
-    if (hasReachableState) {
-      // Note that this will set `out` (as currently we only use this method
-      // to write to the current state).
-      setInReachable();
-    } else {
-      // Nothing to do here, no incoming states are reachable; we remain
-      // unreachable and do not need phis as there is no local state.
+    if (numStates == 0) {
+      // We were unreachable, and still are.
       assert(isInUnreachable());
       return;
     }
+    // We may have just become reachable, if we were not before.
+    setInReachable();
     // Just one thing to merge is trivial.
     if (numStates == 1) {
       out = states[0];
@@ -689,7 +669,6 @@ struct Builder : public Visitor<Builder, Node*> {
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
       for (auto& state : states) {
-        if (isInUnreachable(state)) continue; // ignore unreachable
         auto* node = state[i];
         if (node->isBad()) {
           bad = true;
@@ -698,14 +677,21 @@ struct Builder : public Visitor<Builder, Node*> {
         }
       }
       if (bad) continue;
-      // Nothing (reachable) is bad, proceed.
+      // Nothing is bad, proceed.
       Node* first = nullptr;
+      // We create a block if we need one.
+      Node* block = nullptr;
       for (auto& state : states) {
-        if (isInUnreachable(state)) continue; // ignore unreachable
         if (!first) {
           first = out[i] = state[i];
         } else if (state[i] != first) {
           // We need to actually merge some stuff.
+          if (!block) {
+            block = addNode(Node::makeBlock());
+            for (auto* condition : conditions) {
+              block->addValue(condition);
+            }
+          }
           auto* phi = addNode(Node::makePhi(block));
           for (auto& phiState : states) {
             Node* phiValue;
@@ -749,7 +735,7 @@ struct Trace {
   bool bad = false;
   std::vector<Node*> nodes;
   std::unordered_set<Node*> addedNodes;
-  std::unordered_set<Node*> pathConditions; // which conditions were added as path conditions
+  std::vector<Node*> pathConditions;
 
   Trace(Builder& builder, SetLocal* set) : builder(builder), set(set) {
     auto* node = builder.setNodeMap[set];
@@ -815,9 +801,7 @@ struct Trace {
         break;
       }
       case Node::Type::Cond: {
-        if (!isPathCondition(node)) {
-          add(node->getValue(0)); // add the block
-        }
+        add(node->getValue(0)); // add the block
         add(node->getValue(1)); // add the node
         break;
       }
@@ -846,11 +830,10 @@ struct Trace {
     // being the parent of curr.
     auto* parent = builder.parentMap.at(set);
     while (parent) {
-      auto iter = builder.expressionBlockMap.find(parent);
-      if (iter != builder.expressionBlockMap.end()) {
+      auto iter = builder.expressionConditionMap.find(parent);
+      if (iter != builder.expressionConditionMap.end()) {
         // Given the block, add a proper path-condition
-        Node* node = iter->second;
-        addPathTo(parent, curr, node);
+        addPathTo(parent, curr, iter->second);
       }
       curr = parent;
       parent = builder.parentMap.at(parent);
@@ -859,7 +842,7 @@ struct Trace {
 
   // curr is a child of parent, and parent has a Block which we are
   // give as 'node'. Add a path condition for reaching the child.
-  void addPathTo(Expression* parent, Expression* curr, Node* node) {
+  void addPathTo(Expression* parent, Expression* curr, std::vector<Node*> conditions) {
     if (auto* iff = parent->dynCast<If>()) {
       Index index;
       if (curr == iff->ifTrue) {
@@ -869,16 +852,15 @@ struct Trace {
       } else {
         WASM_UNREACHABLE();
       }
-      auto* condition = node->getValue(index);
-      pathConditions.insert(condition);
+      auto* condition = conditions[index];
+      // Add the condition itself as an instruction in the trace -
+      // the pc uses it as its input.
       add(condition);
+      // Add it as a pc, which we will emit directly.
+      pathConditions.push_back(condition);
     } else {
       WASM_UNREACHABLE();
     }
-  }
-
-  bool isPathCondition(Node* node) {
-    return pathConditions.count(node) == 1;
   }
 
   bool isBad() {
@@ -911,6 +893,11 @@ struct Printer {
     for (auto* node : trace.nodes) {
       print(node);
     }
+    // Print out pcs.
+    for (auto* condition : trace.pathConditions) {
+      printPathCondition(condition);
+    }
+
     // Finish up
     std::cout << "infer %" << indexing[builder.setNodeMap[trace.set]] << "\n\n";
   }
@@ -945,14 +932,7 @@ struct Printer {
         break;
       }
       case Node::Type::Cond: {
-        if (!trace.isPathCondition(node)) {
-          // blockpc
-          std::cout << "blockpc %" << indexing[node->getValue(0)] << ' ' << node->index;
-        } else {
-          // pc
-          std::cout << "pc";
-        }
-        std::cout << " ";
+        std::cout << "blockpc %" << indexing[node->getValue(0)] << ' ' << node->index << ' ';
         printInternal(node->getValue(1));
         std::cout << " 1:i1\n";
         break;
@@ -1079,6 +1059,12 @@ struct Printer {
     } else {
       WASM_UNREACHABLE();
     }
+  }
+
+  void printPathCondition(Node* condition) {
+    std::cout << "pc ";
+    printInternal(condition);
+    std::cout << " 1:i1\n";
   }
 
   // Checks if a range [inclusiveStart, inclusiveEnd] of values looks suspicious,
