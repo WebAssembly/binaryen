@@ -579,5 +579,6 @@
    )
    (i32.const 1)
   )
+;; TODO: test with two nested ifs, show two pcs
 )
 

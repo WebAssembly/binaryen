@@ -299,6 +299,7 @@ struct Builder : public Visitor<Builder, Node*> {
   }
 
   Node* makeZeroComp(Node* node, bool equal) {
+    assert(!node->isBad());
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
@@ -708,15 +709,14 @@ struct Builder : public Visitor<Builder, Node*> {
           // We need to actually merge some stuff.
           if (!block) {
             block = addNode(Node::makeBlock());
-            for (auto& state : states) {
-              block->addValue(state.condition);
+            for (Index index = 0; index < numStates; index++) {
+              auto* condition = addNode(Node::makeCond(block, index, states[index].condition));
+              block->addValue(condition);
             }
           }
           auto* phi = addNode(Node::makePhi(block));
-          for (Index index = 0; index < numStates; index++) {
-            phi->addValue(addNode(
-              Node::makeCond(block, index, expandFromI1(states[index].locals[i]))
-            ));
+          for (auto& state : states) {
+            phi->addValue(expandFromI1(state.locals[i]));
           }
           out[i] = phi;
           break;
