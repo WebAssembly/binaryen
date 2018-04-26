@@ -25,7 +25,10 @@
 //
 // See https://github.com/google/souper/issues/323
 //
-// TODO: ideas:
+// TODO: depth limit
+// TODO: investigate 'inlining', adding in nodes through calls
+//
+// Future ideas:
 //  * Automatic conversion of Binaryen IR opts to run on the DataFlow IR.
 //    This would subsume precompute-propagate, for example. Using DFIR we
 //    can "expand" the BIR into expressions that BIR opts can handle

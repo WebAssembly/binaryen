@@ -219,11 +219,7 @@
    )
   )
   (drop
-   (select
-    (i32.const 0)
-    (i32.const 1)
-    (i32.const 2)
-   )
+   (i32.const 0)
   )
  )
  (func $load-store (; 1 ;) (type $1)
@@ -2036,16 +2032,12 @@
   )
  )
  (func $sign-ext-1-and-ne (; 36 ;) (type $2) (result i32)
-  (select
-   (i32.ne
-    (i32.and
-     (call $sign-ext-1-and-ne)
-     (i32.const 2147483647)
-    )
-    (i32.const -2147483648)
+  (i32.ne
+   (i32.and
+    (call $sign-ext-1-and-ne)
+    (i32.const 2147483647)
    )
-   (i32.const 2)
-   (i32.const 1)
+   (i32.const -2147483648)
   )
  )
  (func $neg-shifts-and-255 (; 37 ;) (type $2) (result i32)

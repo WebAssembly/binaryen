@@ -37,8 +37,11 @@ struct ExtractFunction : public Pass {
       if (func->name != LEAVE) {
         // wipe out the body
         func->body = module->allocator.alloc<Unreachable>();
+// wipe out the vars
       }
     }
+// wipe out all exports
+// add an export for just this
   }
 };
 
