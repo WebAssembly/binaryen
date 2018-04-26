@@ -741,10 +741,10 @@ public:
     class RuntimeExpressionRunner : public ExpressionRunner<RuntimeExpressionRunner> {
       ModuleInstanceBase& instance;
       FunctionScope& scope;
-
     public:
       RuntimeExpressionRunner(ModuleInstanceBase& instance, FunctionScope& scope) : instance(instance), scope(scope) {}
 
+      Flow last_call;
       Flow generateArguments(const ExpressionList& operands, LiteralList& arguments) {
         NOTE_ENTER_("generateArguments");
         arguments.reserve(operands.size());
@@ -757,7 +757,7 @@ public:
         return Flow();
       }
 
-      Flow visitCall(Call *curr) {
+      Flow _visitCall(Call *curr) {
         NOTE_ENTER("Call");
         NOTE_NAME(curr->target);
         LiteralList arguments;
@@ -769,14 +769,28 @@ public:
 #endif
         return ret;
       }
-      Flow visitCallImport(CallImport *curr) {
+
+      Flow visitCall(Call *curr) {
+         Flow ret = _visitCall(curr);
+         last_call = ret;
+         return ret;
+      }
+
+      Flow _visitCallImport(CallImport *curr) {
         NOTE_ENTER("CallImport");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
         return instance.externalInterface->callImport(instance.wasm.getImport(curr->target), arguments);
       }
-      Flow visitCallIndirect(CallIndirect *curr) {
+
+      Flow visitCallImport(CallImport *curr) {
+         Flow ret = _visitCallImport(curr);
+         last_call = ret;
+         return ret;
+      }
+
+      Flow _visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
@@ -785,6 +799,12 @@ public:
         if (target.breaking()) return target;
         Index index = target.value.geti32();
         return instance.externalInterface->callTable(index, arguments, curr->type, *instance.self());
+      }
+
+      Flow visitCallIndirect(CallIndirect *curr) {
+         Flow ret = _visitCallIndirect(curr);
+         last_call = ret;
+         return ret;
       }
 
       Flow visitGetLocal(GetLocal *curr) {
@@ -899,14 +919,21 @@ public:
       std::cout << "    $" << i << ": " << arguments[i] << '\n';
     }
 #endif
-
-    Flow flow = RuntimeExpressionRunner(*this, scope).visit(function->body);
+    RuntimeExpressionRunner rer(*this, scope);
+    Flow flow = rer.visit(function->body);
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW); // cannot still be breaking, it means we missed our stop
     Literal ret = flow.value;
+#if 1
     if (function->result != ret.type) {
-      std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
-      WASM_UNREACHABLE();
+       if (rer.last_call.value.type == function->result && ret.type == 0) {
+          ret = rer.last_call.value;
+       }
+       else {
+         std::cerr << "calling " << function->name << " resulted in " << ret << " but the function type is " << function->result << '\n';
+         WASM_UNREACHABLE();
+       }
     }
+#endif
     callDepth = previousCallDepth; // may decrease more than one, if we jumped up the stack
     // if we jumped up the stack, we also need to pop higher frames
     while (functionStack.size() > previousFunctionStackSize) {
