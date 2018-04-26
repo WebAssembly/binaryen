@@ -545,5 +545,40 @@
       )
     )
   )
+  (func $merge-with-one-less (param $var$0 i32) (result i32)
+   (block $label$1
+    (block $label$2
+     (block $label$3
+      (block $label$4
+       (block $label$5
+        (br_table $label$5 $label$4 $label$3 $label$2
+         (i32.load
+          (i32.const 1)
+         )
+        )
+       )
+       (unreachable)
+      )
+      (br $label$1)
+     )
+     (f64.store
+      (i32.load
+       (tee_local $var$0
+        (i32.const 8)
+       )
+      )
+      (f64.const 0)
+     )
+     (br $label$1)
+    )
+    (unreachable)
+   )
+   (i32.store
+    (get_local $var$0)
+    (i32.const 16)
+   )
+   (i32.const 1)
+  )
+ )
 )
 

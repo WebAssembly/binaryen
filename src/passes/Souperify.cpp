@@ -634,7 +634,6 @@ struct Builder : public Visitor<Builder, Node*> {
     } else {
       // Generate boolean (i1 returning) conditions for the two branches.
       auto* ifTrue = ensureI1(condition);
-      // what if the input is already returning a 1? then we need to compare to a bool i1, not an i32/i64 0.
       Node* ifFalse = makeZeroComp(condition, true);
       block->addValue(addNode(Node::makeCond(block, 0, ifTrue)));
       block->addValue(addNode(Node::makeCond(block, 1, ifFalse)));
@@ -661,21 +660,26 @@ struct Builder : public Visitor<Builder, Node*> {
   // Merge local state for multiple control flow paths, creating phis as needed.
   void merge(std::vector<LocalState>& states, LocalState& out, Node* block) {
     Index numLocals = func->getNumLocals();
-    // Ignore unreachable states; we don't need to merge them.
-    states.erase(std::remove_if(states.begin(), states.end(), [&](const LocalState& curr) {
-      return isInUnreachable(curr);
-    }), states.end());
-    for (auto& state : states) {
-      assert(!isInUnreachable(state));
-    }
     Index numStates = states.size();
-    if (numStates == 0) {
-      // We were unreachable, and still are.
+    assert(numStates > 0);
+    // We may have become reachable now, mark that.
+    bool hasReachableState = false;
+    for (auto& state : states) {
+      if (isInReachable(state)) {
+        hasReachableState = true;
+        break;
+      }
+    }
+    if (hasReachableState) {
+      // Note that this will set `out` (as currently we only use this method
+      // to write to the current state).
+      setInReachable();
+    } else {
+      // Nothing to do here, no incoming states are reachable; we remain
+      // unreachable and do not need phis as there is no local state.
       assert(isInUnreachable());
       return;
     }
-    // We may have become reachable now, mark that.
-    setInReachable();
     // Just one thing to merge is trivial.
     if (numStates == 1) {
       out = states[0];
@@ -684,8 +688,9 @@ struct Builder : public Visitor<Builder, Node*> {
     for (Index i = 0; i < numLocals; i++) {
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
-      for (Index s = 0; s < numStates; s++) {
-        auto* node = states[s][i];
+      for (auto& state : states) {
+        if (isInUnreachable(state)) continue; // ignore unreachable
+        auto* node = state[i];
         if (node->isBad()) {
           bad = true;
           out[i] = node;
@@ -693,14 +698,23 @@ struct Builder : public Visitor<Builder, Node*> {
         }
       }
       if (bad) continue;
-      // Nothing is bad, proceed.
-      auto first = out[i] = states[0][i];
-      for (Index s = 1; s < numStates; s++) {
-        if (states[s][i] != first) {
+      // Nothing (reachable) is bad, proceed.
+      Node* first = nullptr;
+      for (auto& state : states) {
+        if (isInUnreachable(state)) continue; // ignore unreachable
+        if (!first) {
+          first = out[i] = state[i];
+        } else if (state[i] != first) {
           // We need to actually merge some stuff.
           auto* phi = addNode(Node::makePhi(block));
-          for (Index t = 0; t < numStates; t++) {
-            phi->addValue(expandFromI1(states[t][i]));
+          for (auto& phiState : states) {
+            Node* phiValue;
+            if (isInUnreachable(phiState)) {
+              phiValue = &CanonicalBad;
+            } else {
+              phiValue = expandFromI1(phiState[i]);
+            }
+            phi->addValue(phiValue);
           }
           out[i] = phi;
           break;
