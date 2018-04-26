@@ -120,7 +120,8 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build() {
+  void build(bool generateAtomics = true) {
+    ATOMICS = generateAtomics;
     setupMemory();
     setupTable();
     setupGlobals();
@@ -175,7 +176,7 @@ private:
   static const bool DE_NAN = true;
 
   // Whether to emit atomics
-  static const bool ATOMICS = true;
+  bool ATOMICS = true;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
