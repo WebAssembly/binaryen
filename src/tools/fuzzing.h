@@ -120,8 +120,8 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build(bool buildEmitAtomics = true) {
-    emitAtomics = buildEmitAtomics;
+  void build(bool initEmitAtomics = true) {
+    emitAtomics = initEmitAtomics;
     setupMemory();
     setupTable();
     setupGlobals();
