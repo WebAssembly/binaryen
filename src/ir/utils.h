@@ -58,9 +58,23 @@ struct ExpressionAnalyzer {
   using ExprComparer = std::function<bool(Expression*, Expression*)>;
   static bool flexibleEqual(Expression* left, Expression* right, ExprComparer comparer);
 
+  // Compares two expressions for equivalence.
   static bool equal(Expression* left, Expression* right) {
     auto comparer = [](Expression* left, Expression* right) {
       return false;
+    };
+    return flexibleEqual(left, right, comparer);
+  }
+
+  // A shallow comparison, ignoring child nodes.
+  static bool shallowEqual(Expression* left, Expression* right) {
+    auto comparer = [left, right](Expression* currLeft, Expression* currRight) {
+      if (currLeft == left && currRight == right) {
+        // these are the ones we want to compare
+        return false;
+      }
+      // otherwise, don't do the comparison, we don't care
+      return true;
     };
     return flexibleEqual(left, right, comparer);
   }
