@@ -608,6 +608,49 @@
     (set_local $x (i32.mul (get_local $x) (i32.const 1234)))
     (get_local $x)
   )
-;; TODO: test with two nested ifs, show two pcs
+  (func $two-pcs (param $x i64) (param $y i64) (result i64)
+    (param $t i64)
+    (if
+      (i64.lt_s
+        (get_local $x)
+        (get_local $y)
+      )
+      (if
+        (i64.eqz
+          (get_local $x)
+        )
+        (set_local $t
+          (i64.add
+            (get_local $x)
+            (get_local $y)
+          )
+        )
+        (set_local $t
+          (i64.sub
+            (get_local $x)
+            (get_local $y)
+          )
+        )
+      )
+      (if
+        (i64.eqz
+          (get_local $y)
+        )
+        (set_local $t
+          (i64.mul
+            (get_local $x)
+            (get_local $y)
+          )
+        )
+        (set_local $t
+          (i64.div_s
+            (get_local $x)
+            (get_local $y)
+          )
+        )
+      )
+    )
+    (return (get_local $t))
+  )
 )
 
