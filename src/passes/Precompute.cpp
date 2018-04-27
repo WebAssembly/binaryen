@@ -130,15 +130,24 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
 
   GetValues getValues;
 
+  bool worked;
+
   void doWalkFunction(Function* func) {
-    // with extra effort, we can utilize the get-set graph to precompute
-    // things that use locals that are known to be constant. otherwise,
-    // we just look at what is immediately before us
-    if (propagate) {
-      optimizeLocals(func);
-    }
-    // do the main and final walk over everything
-    super::doWalkFunction(func);
+    // if propagating, we may need multiple rounds: each propagation can
+    // lead to the main walk removing code, which might open up more
+    // propagation opportunities
+    do {
+      getValues.clear();
+      // with extra effort, we can utilize the get-set graph to precompute
+      // things that use locals that are known to be constant. otherwise,
+      // we just look at what is immediately before us
+      if (propagate) {
+        optimizeLocals(func);
+      }
+      // do the main walk over everything
+      worked = false;
+      super::doWalkFunction(func);
+    } while (propagate && worked);
   }
 
   void visitExpression(Expression* curr) {
@@ -198,6 +207,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // this was precomputed
     if (isConcreteType(flow.value.type)) {
       replaceCurrent(Builder(*getModule()).makeConst(flow.value));
+      worked = true;
     } else {
       ExpressionManipulator::nop(curr);
     }
@@ -236,6 +246,7 @@ private:
     return flow.value;
   }
 
+  // Propagates values around. Returns whether we propagated.
   void optimizeLocals(Function* func) {
     // using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
