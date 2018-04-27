@@ -169,7 +169,12 @@ struct Node {
     switch (type) {
       case Var:
       case Block: return this == &other;
-      case Expr:  if (!ExpressionAnalyzer::equal(expr, other.expr)) return false;
+      case Expr: {
+        if (!ExpressionAnalyzer::shallowEqual(expr, other.expr)) {
+          return false;
+        }
+        break;
+      }
       case Cond:  if (index != other.index) return false;
       default: {}
     }
@@ -467,13 +472,17 @@ struct Builder : public Visitor<Builder, Node*> {
 //std::cout << "chak " << i << '\n';
       bool needPhi = false;
       // We replaced the proper value with a Var. If it's still that
-      // Var on all incoming paths, then a phi is not needed.
+      // Var - or it's the original proper value, which can happen with
+      // constants - on all incoming paths, then a phi is not needed.
       auto* var = vars[i];
+      auto* proper = previous[i];
       for (auto& other : breaks) {
 //std::cout << "  in break, compare\n";
+//var->dump(std::cout);
 //proper->dump(std::cout);
-//other[i]->dump(std::cout);
-        if (*other[i] != *var) {
+        auto& curr = *(other[i]);
+//curr.dump(std::cout);
+        if (curr != *var && curr != *proper) {
 //std::cout << "    different\n";
           // A phi would be necessary here.
           needPhi = true;
@@ -487,7 +496,6 @@ struct Builder : public Visitor<Builder, Node*> {
         // Undo the Var for this local: In every new node added for
         // the loop body, replace references to the Var with the
         // previous value (the value that is all we need instead of a phi).
-        auto* proper = previous[i];
         for (auto j = firstNodeFromLoop; j < nodes.size(); j++) {
           for (auto*& value : nodes[j].get()->values) {
             if (value == var) {
@@ -861,6 +869,7 @@ struct Trace {
   // A limit on how deep we go - we don't want to create arbitrarily
   // large traces.
   size_t depthLimit = 10;
+  size_t totalLimit = 30;
 
   bool bad = false;
   std::vector<Node*> nodes;
@@ -875,6 +884,10 @@ struct Trace {
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
       depthLimit = atoi(depthLimitStr);
+    }
+    auto* totalLimitStr = getenv("BINARYEN_SOUPERIFY_TOTAL_LIMIT");
+    if (totalLimitStr) {
+      totalLimit = atoi(totalLimitStr);
     }
     // Get the node for this set.
     auto* node = builder.setNodeMap[set];
@@ -918,7 +931,7 @@ struct Trace {
           return node;
         }
         // If we've gone too deep, emit a var instead.
-        if (depth >= depthLimit) {
+        if (depth >= depthLimit || nodes.size() >= totalLimit) {
           auto* var = Node::makeVar(node->getWasmType());
           replacements[node] = std::unique_ptr<Node>(var);
           return var;

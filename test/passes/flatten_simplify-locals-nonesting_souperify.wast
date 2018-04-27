@@ -724,5 +724,34 @@
     ;; y changed but we don't need a phi for it
     (return (i32.add (get_local $x) (get_local $y)))
   )
+  (func $loop-8 (param $x i32) (param $y i32) (result i32)
+    (local $z i32)
+    (local $w i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $z (get_local $x))
+      (set_local $w (get_local $y))
+      (set_local $x (i32.const 1)) ;; same!
+      (set_local $y (i32.const 4)) ;; different!
+      (br_if $loopy (get_local $y))
+    )
+    ;; x is always 3, and y needs a phi.
+    ;; each is also copied to another local, which we need
+    ;; to handle properly
+    (return
+      (i32.mul
+        (i32.add
+          (get_local $x)
+          (get_local $y)
+        )
+        (i32.sub
+          (get_local $z)
+          (get_local $w)
+        )
+      )
+    )
+  )
+;; test wsith a swap
 )
 
