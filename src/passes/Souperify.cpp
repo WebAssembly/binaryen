@@ -183,6 +183,29 @@ struct Node {
   bool operator!=(const Node& other) {
     return !(*this == other);
   }
+
+  std::ostream& dump(std::ostream& o, size_t indent = 0) {
+    for (size_t i = 0; i < indent; i++) o << ' ';
+    o << '[';
+    switch (type) {
+      case Var:   o << "var " << printType(wasmType) << ' ' << this; break;
+      case Expr:  o << "expr "; WasmPrinter::printExpression(expr, o, true); break;
+      case Phi:   o << "phi"; break;
+      case Cond:  o << "cond" << index; break;
+      case Block: o << "block"; break;
+      case Zext:  o << "zext"; break;
+      case Bad:   o << "bad"; break;
+      default: WASM_UNREACHABLE();
+    }
+    if (!values.empty()) {
+      o << '\n';
+      for (auto* value : values) {
+        value->dump(o, indent + 1);
+      }
+    }
+    o << "]\n";
+    return o;
+  }
 };
 
 // As mentioned above, comparisons return i1. This checks
@@ -441,12 +464,20 @@ struct Builder : public Visitor<Builder, Node*> {
     auto& breaks = breakStates[curr->name];
     // Phis are possible, check for them.
     for (Index i = 0; i < numLocals; i++) {
+//std::cout << "chak " << i << '\n';
       bool needPhi = false;
-      auto proper = previous[i];
+      // We replaced the proper value with a Var. If it's still that
+      // Var on all incoming paths, then a phi is not needed.
+      auto* var = vars[i];
       for (auto& other : breaks) {
-        if (*other[i] != *proper) {
+//std::cout << "  in break, compare\n";
+//proper->dump(std::cout);
+//other[i]->dump(std::cout);
+        if (*other[i] != *var) {
+//std::cout << "    different\n";
           // A phi would be necessary here.
           needPhi = true;
+          break;
         }
       }
       if (needPhi) {
@@ -456,7 +487,7 @@ struct Builder : public Visitor<Builder, Node*> {
         // Undo the Var for this local: In every new node added for
         // the loop body, replace references to the Var with the
         // previous value (the value that is all we need instead of a phi).
-        auto* var = vars[i];
+        auto* proper = previous[i];
         for (auto j = firstNodeFromLoop; j < nodes.size(); j++) {
           for (auto*& value : nodes[j].get()->values) {
             if (value == var) {

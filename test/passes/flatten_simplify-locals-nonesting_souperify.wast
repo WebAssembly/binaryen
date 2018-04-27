@@ -681,5 +681,48 @@
     ;; both needed
     (return (i32.add (get_local $x) (get_local $y)))
   )
+  (func $loop-4 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (br_if $loopy (get_local $y))
+    )
+    ;; only x needed a phi
+    (return (i32.add (get_local $x) (get_local $y)))
+  )
+  (func $loop-5 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (set_local $y (i32.const 2)) ;; same value
+      (br_if $loopy (get_local $y))
+    )
+    ;; only x needed a phi
+    (return (i32.add (get_local $x) (get_local $y)))
+  )
+  (func $loop-6 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (set_local $y (get_local $y)) ;; same value
+      (br_if $loopy (get_local $y))
+    )
+    ;; only x needed a phi
+    (return (i32.add (get_local $x) (get_local $y)))
+  )
+  (func $loop-7 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (set_local $y (i32.const 5)) ;; different!
+      (br_if $loopy (get_local $y))
+    )
+    ;; y changed but we don't need a phi for it
+    (return (i32.add (get_local $x) (get_local $y)))
+  )
 )
 
