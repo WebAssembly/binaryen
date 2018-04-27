@@ -756,6 +756,26 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           std::swap(select->ifTrue, select->ifFalse);
         }
       }
+      if (auto* c = select->condition->dynCast<Const>()) {
+        // constant condition, we can just pick the right side (barring side effects)
+        if (c->value.getInteger()) {
+          if (!EffectAnalyzer(getPassOptions(), select->ifFalse).hasSideEffects()) {
+            return select->ifTrue;
+          } else {
+            // don't bother - we would need to reverse the order using a temp local, which is bad
+          }
+        } else {
+          if (!EffectAnalyzer(getPassOptions(), select->ifTrue).hasSideEffects()) {
+            return select->ifFalse;
+          } else {
+            Builder builder(*getModule());
+            return builder.makeSequence(
+              builder.makeDrop(select->ifTrue),
+              select->ifFalse
+            );
+          }
+        }
+      }
       if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
         // sides are identical, fold
         EffectAnalyzer value(getPassOptions(), select->ifTrue);
