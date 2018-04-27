@@ -26,7 +26,6 @@
 // See https://github.com/google/souper/issues/323
 //
 // TODO:
-//  * Loops
 //  * pcs and blockpcs for things other than ifs
 //  * Investigate 'inlining', adding in nodes through calls
 //  * Consider generalizing DataFlow IR for internal Binaryen use.
@@ -41,7 +40,6 @@
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "ir/abstract.h"
-#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
 
@@ -165,6 +163,26 @@ struct Node {
       default:    WASM_UNREACHABLE();
     }
   }
+
+  bool operator==(const Node& other) {
+    if (type != other.type) return false;
+    switch (type) {
+      case Var:
+      case Block: return this == &other;
+      case Expr:  if (!ExpressionAnalyzer::equal(expr, other.expr)) return false;
+      case Cond:  if (index != other.index) return false;
+      default: {}
+    }
+    if (values.size() != other.values.size()) return false;
+    for (Index i = 0; i < values.size(); i++) {
+      if (*(values[i]) != *(other.values[i])) return false;
+    }
+    return true;
+  }
+
+  bool operator!=(const Node& other) {
+    return !(*this == other);
+  }
 };
 
 // As mentioned above, comparisons return i1. This checks
@@ -251,10 +269,6 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Check if a function is relevant for us.
   static bool check(Function* func) {
-    // TODO handle loops. for now, just ignore the entire function
-    if (!FindAll<Loop>(func->body).list.empty()) {
-      return false;
-    }
     return true;
   }
 
@@ -367,7 +381,7 @@ struct Builder : public Visitor<Builder, Node*> {
       }
     }
     parent = oldParent;
-    return nullptr;
+    return &CanonicalBad;
   }
   Node* visitIf(If* curr) {
     auto* oldParent = parent;
@@ -389,9 +403,50 @@ struct Builder : public Visitor<Builder, Node*> {
       mergeIf(initialState, afterIfTrueState, condition, curr, locals);
     }
     parent = oldParent;
-    return nullptr;
+    return &CanonicalBad;
   }
   Node* visitLoop(Loop* curr) {
+/*
+    // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
+    // our traces to represent a value that differs across loop iterations.
+    // For example,
+    //   %b = block
+    //   %x = phi %b, 1, %y
+    //   %y = phi %b, 2, %x
+    //   %z = eq %x %y
+    //   infer %z
+    // Here %y refers to the previous iteration's %x.
+    // To do this, we set all locals to a Var at the loop entry, then process
+    // the inside of the loop. When that is done, we can see if a phi was
+    // actually needed for each local. If it was, we leave the Var (it
+    // represents an unknown value; analysis stops there), and if not, we
+    // can replace the Var with the fixed value.
+    // TODO: perhaps some more general uses of DataFlow will want loop phis?
+    // TODO: optimize stuff here
+    if (!curr->name.is()) {
+      return &CanonicalBad; // no phis are possible
+    }
+    auto previous = locals;
+    auto numLocals = func->getNumLocals();
+    for (Index i = 0; i < numLocals; i++) {
+      local = makeVar(func->getLocalType(i));
+    }
+    visit(curr->body);
+    auto iter = breakStates.find(curr->name);
+    if (iter == breakStates.end()) {
+      return &CanonicalBad; // no phis are possible
+    }
+    auto& breaks = iter->second;
+    // Phis are possible, check for them.
+    for (Index i = 0; i < numLocals; i++) {
+      auto proper = previous[i];
+      for (auto& other : breaks) {
+        if (other[i] != proper)
+      }
+    }
+
+
+*/
     return &CanonicalBad;
   }
   Node* visitBreak(Break* curr) {
@@ -1114,25 +1169,31 @@ struct Printer {
   // like an obvious missing optimization.
   void warnOnSuspiciousValues(Node* node, Index inclusiveStart, Index inclusiveEnd) {
     assert(debug);
-    // First, check if they are all constants.
-    for (Index i = inclusiveStart; i <= inclusiveEnd; i++) {
-      auto* curr = node->getValue(i);
-      if (!curr->isExpr() || !curr->expr->is<Const>()) return;
-    }
     auto* first = node->getValue(inclusiveStart);
     bool allIdentical = true;
     // Check if any of the others are not equal
     for (Index i = inclusiveStart + 1; i <= inclusiveEnd; i++) {
       auto* curr = node->getValue(i);
-      if (!ExpressionAnalyzer::equal(first->expr, curr->expr)) {
+      if (*first != *curr) {
         allIdentical = false;
         break;
       }
     }
     if (allIdentical) {
       std::cout << "^^ suspicious identical inputs! missing optimization in " << builder.func->name << "? ^^\n";
-    } else {
-      if (!node->isPhi()) {
+      return;
+    }
+    // If not all identical, warn on all-constant inputs to a non-phi, that's odd too.
+    if (!node->isPhi()) {
+      bool allConstant = true;
+      for (Index i = inclusiveStart; i <= inclusiveEnd; i++) {
+        auto* curr = node->getValue(i);
+        if (!curr->isExpr() || !curr->expr->is<Const>()) {
+          allConstant = false;
+          break;
+        }
+      }
+      if (allConstant) {
         std::cout << "^^ suspicious constant inputs! missing optimization in " << builder.func->name << "? ^^\n";
       }
     }

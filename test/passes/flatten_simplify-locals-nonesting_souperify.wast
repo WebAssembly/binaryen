@@ -652,5 +652,7 @@
     )
     (return (get_local $t))
   )
+;;loop tests
+;;loop test with a value flowing *out*
 )
 
