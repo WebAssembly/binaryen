@@ -659,13 +659,13 @@
     )
     (return (get_local $x))
   )
-;;  (func $loop-2 (param $x i32) (param $y i32) (result i32)
-;;    (set_local $x (i32.add (get_local $x) (i32.const 1)))
-;;    (loop $loopy
-;;      (set_local $x (i32.add (get_local $x) (i32.const 2)))
-;;    )
-;;    (return (get_local $x))
-;;  )
+  (func $loop-2 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.add (get_local $x) (i32.const 1)))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 2)))
+    )
+    (return (get_local $x))
+  )
 ;;  (func $loop-3 (param $x i32) (param $y i32) (result i32)
 ;;    (set_local $x (i32.add (get_local $x) (i32.const 1)))
 ;;    (loop $loopy
