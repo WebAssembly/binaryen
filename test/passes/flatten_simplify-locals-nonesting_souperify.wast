@@ -653,26 +653,33 @@
     (return (get_local $t))
   )
   (func $loop-1 (param $x i32) (param $y i32) (result i32)
-    (set_local $x (i32.add (get_local $x) (i32.const 1)))
-    (loop
-      (set_local $x (i32.add (get_local $x) (i32.const 2)))
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
     )
-    (return (get_local $x))
+    ;; neither needed a phi
+    (return (i32.add (get_local $x) (get_local $y)))
   )
   (func $loop-2 (param $x i32) (param $y i32) (result i32)
-    (set_local $x (i32.add (get_local $x) (i32.const 1)))
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
     (loop $loopy
-      (set_local $x (i32.add (get_local $x) (i32.const 2)))
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (set_local $y (i32.add (get_local $y) (i32.const 4)))
     )
-    (return (get_local $x))
+    ;; neither needed a phi
+    (return (i32.add (get_local $x) (get_local $y)))
   )
-;;  (func $loop-3 (param $x i32) (param $y i32) (result i32)
-;;    (set_local $x (i32.add (get_local $x) (i32.const 1)))
-;;    (loop $loopy
-;;      (set_local $x (i32.add (get_local $x) (i32.const 2)))
-;;      (br_if $loopy (get_local $y))
-;;    )
-;;    (return (get_local $x))
-;;  )
+  (func $loop-3 (param $x i32) (param $y i32) (result i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (loop $loopy
+      (set_local $x (i32.add (get_local $x) (i32.const 3)))
+      (set_local $y (i32.add (get_local $y) (i32.const 4)))
+      (br_if $loopy (get_local $y))
+    )
+    ;; both needed
+    (return (i32.add (get_local $x) (get_local $y)))
+  )
 )
 
