@@ -464,6 +464,13 @@ struct Builder : public Visitor<Builder, Node*> {
             }
           }
         }
+        // Also undo in the current local state, which is flowing out
+        // of the loop.
+        for (auto*& node : locals) {
+          if (node == var) {
+            node = proper;
+          }
+        }
       }
     }
     return &CanonicalBad;
