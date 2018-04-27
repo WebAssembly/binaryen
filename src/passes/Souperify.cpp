@@ -40,6 +40,7 @@
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "ir/abstract.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
 

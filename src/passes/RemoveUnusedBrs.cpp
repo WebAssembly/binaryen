@@ -24,7 +24,6 @@
 #include <ir/utils.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
-#include "ir/find_all.h"
 #include <wasm-builder.h>
 
 namespace wasm {
