@@ -1394,6 +1394,28 @@ blockpc %13 1 %16 1:i1
 %20 = phi %0, %12, %19
 infer %20
 
+
+; function: $loop-1
+
+; start LHS (in $loop-1)
+%0:i32 = var
+%1 = add %0, 1:i32
+infer %1
+
+
+; start LHS (in $loop-1)
+%0:i32 = var
+%1 = add %0, 1:i32
+%2 = add %1, 2:i32
+infer %2
+
+
+; start LHS (in $loop-1)
+%0:i32 = var
+%1 = add %0, 1:i32
+%2 = add %1, 2:i32
+infer %2
+
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
@@ -3483,6 +3505,55 @@ infer %20
   )
   (return
    (get_local $24)
+  )
+ )
+ (func $loop-1 (; 35 ;) (type $6) (param $x i32) (param $y i32) (result i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (local $6 i32)
+  (local $7 i32)
+  (local $8 i32)
+  (block
+   (set_local $2
+    (get_local $x)
+   )
+   (nop)
+   (set_local $x
+    (i32.add
+     (get_local $2)
+     (i32.const 1)
+    )
+   )
+   (nop)
+   (loop $loop-in
+    (set_local $4
+     (get_local $x)
+    )
+    (nop)
+    (set_local $x
+     (i32.add
+      (get_local $4)
+      (i32.const 2)
+     )
+    )
+    (nop)
+   )
+   (nop)
+   (set_local $6
+    (get_local $x)
+   )
+   (return
+    (get_local $6)
+   )
+   (unreachable)
+  )
+  (set_local $8
+   (get_local $7)
+  )
+  (return
+   (get_local $8)
   )
  )
 )

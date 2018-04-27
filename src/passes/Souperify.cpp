@@ -40,7 +40,6 @@
 #include "wasm-builder.h"
 #include "wasm-printing.h"
 #include "ir/abstract.h"
-#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
 
@@ -270,10 +269,6 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Check if a function is relevant for us.
   static bool check(Function* func) {
-    // TODO handle loops. for now, just ignore the entire function
-    if (!FindAll<Loop>(func->body).list.empty()) {
-      return false;
-    }
     return true;
   }
 
@@ -411,7 +406,6 @@ struct Builder : public Visitor<Builder, Node*> {
     return &CanonicalBad;
   }
   Node* visitLoop(Loop* curr) {
-/*
     // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
     // our traces to represent a value that differs across loop iterations.
     // For example,
@@ -429,29 +423,49 @@ struct Builder : public Visitor<Builder, Node*> {
     // TODO: perhaps some more general uses of DataFlow will want loop phis?
     // TODO: optimize stuff here
     if (!curr->name.is()) {
+      visit(curr->body);
       return &CanonicalBad; // no phis are possible
     }
     auto previous = locals;
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
-      local = makeVar(func->getLocalType(i));
+      locals[i] = makeVar(func->getLocalType(i));
     }
+    auto vars = locals; // all the Vars we just created
+    // We may need to replace values later - only new nodes added from
+    // here are relevant.
+    auto firstNodeFromLoop = nodes.size();
+    // Process the loop body.
     visit(curr->body);
-    auto iter = breakStates.find(curr->name);
-    if (iter == breakStates.end()) {
-      return &CanonicalBad; // no phis are possible
-    }
-    auto& breaks = iter->second;
+    // Find all incoming paths.
+    auto& breaks = breakStates[curr->name];
     // Phis are possible, check for them.
     for (Index i = 0; i < numLocals; i++) {
+      bool needPhi = false;
       auto proper = previous[i];
       for (auto& other : breaks) {
-        if (other[i] != proper)
+        if (*other[i] != *proper) {
+          // A phi would be necessary here.
+          needPhi = true;
+        }
+      }
+      if (needPhi) {
+        // Nothing to do - leave the Vars, the loop phis are
+        // unknown values to us.
+      } else {
+        // Undo the Var for this local: In every new node added for
+        // the loop body, replace references to the Var with the
+        // previous value (the value that is all we need instead of a phi).
+        auto* var = vars[i];
+        for (auto j = firstNodeFromLoop; j < nodes.size(); j++) {
+          for (auto*& value : nodes[j].get()->values) {
+            if (value == var) {
+              value = proper;
+            }
+          }
+        }
       }
     }
-
-
-*/
     return &CanonicalBad;
   }
   Node* visitBreak(Break* curr) {
