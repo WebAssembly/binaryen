@@ -806,5 +806,22 @@
     )
     (return (select (get_local $x) (get_local $y) (get_local $z)))
   )
+  (func $loop-block-1 (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (local $t i32)
+    (set_local $x (i32.const 1))
+    (set_local $y (i32.const 2))
+    (set_local $z (i32.const 3))
+    (loop $loopy
+      (block $out
+        (set_local $x (i32.add (get_local $x) (i32.const 4)))
+        (br_if $out (get_local $t))
+        (set_local $y (i32.add (get_local $y) (i32.const 5)))
+        (br_if $out (get_local $t))
+        (set_local $z (i32.add (get_local $z) (i32.const 6)))
+        (br $loopy)
+      )
+    )
+    (return (select (get_local $x) (get_local $y) (get_local $z)))
+  )
 )
 
