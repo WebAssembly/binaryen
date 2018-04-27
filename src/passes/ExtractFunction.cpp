@@ -26,19 +26,37 @@ namespace wasm {
 
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    auto* leave = getenv("BYN_LEAVE");
+    auto* leave = getenv("BINARYEN_EXTRACT");
     if (!leave) {
-      std::cerr << "usage: set BYN_LEAVE in the env\n";
+      std::cerr << "usage: set BINARYEN_EXTRACT in the env\n";
       abort();
     }
     Name LEAVE(leave);
-    std::cerr << "keeping " << LEAVE << "\n";
+    std::cerr << "extracting " << LEAVE << "\n";
+    bool found = false;
     for (auto& func : module->functions) {
       if (func->name != LEAVE) {
-        // wipe out the body
+        // wipe out all the contents
+        func->vars.clear();
         func->body = module->allocator.alloc<Unreachable>();
+      } else {
+        found = true;
       }
     }
+    if (!found) {
+      std::cerr << "could not find the function to extract\n";
+      abort();
+    }
+    // clear data
+    module->memory.segments.clear();
+    module->table.segments.clear();
+    // leave just an export for the thing we want
+    module->exports.clear();
+    auto* export_ = new Export;
+    export_->name = LEAVE;
+    export_->value = LEAVE;
+    export_->kind = ExternalKind::Function;
+    module->addExport(export_);
   }
 };
 
