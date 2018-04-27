@@ -269,6 +269,10 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Check if a function is relevant for us.
   static bool check(Function* func) {
+    // TODO handle loops. for now, just ignore the entire function
+    if (!FindAll<Loop>(func->body).list.empty()) {
+      return false;
+    }
     return true;
   }
 
