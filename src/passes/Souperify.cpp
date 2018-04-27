@@ -277,7 +277,6 @@ struct Builder : public Visitor<Builder, Node*> {
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
-    // TODO: handle value flowing out of body
   }
 
   // Makes a Var node, representing a value that could be anything.
