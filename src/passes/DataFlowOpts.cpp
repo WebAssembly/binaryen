@@ -42,23 +42,86 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
     DataFlow::Builder builder(func);
-    // Optimize: Look for nodes that we can easily convert into
-    // something simpler.
-    // TODO: we can expressionify and run full normal opts on that,
-    //       then copy the result if it's smaller.
-    for (auto* set : builder.sets) {
-      auto* node = builder.setNodeMap[set];
-      if (DataFlow::allInputsIdentical(node)) {
-        if (node->isExpr()) {
-          auto* expr = node->expr;
-          if (auto* binary = expr->dynCast<Binary>()) {
-            // Note we don't need to check for effects here, as in flattened IR
-            // expression children are get_locals or consts.
-            binary->right = ExpressionManipulator::copy(binary->left, *getModule());
+    // Generate the influences between the nodes.
+    // influences[x] = vector of nodes it influences, i.e.,
+    //                 that use it, so that if x changes,
+    //                 so might they
+    std::unordered_map<DataFlow::Node*, std::vector<DataFlow::Node*>> influences;
+    for (auto& node : builder.nodes) {
+      for (auto* value : node->values) {
+        influences[value].push_back(node.get());
+      }
+    }
+    // Propagate optimizations through the graph.
+    std::unordered_set<DataFlow::Node*> optimized; // which nodes we optimized
+    std::unordered_set<DataFlow::Node*> work; // the work left to do
+    for (auto& node : builder.nodes) {
+      work.insert(node.get()); // we should try to optimize each node
+    }
+    while (!work.empty()) {
+      auto iter = work.begin();
+      auto* node = *iter;
+      work.erase(iter);
+      // Try to optimize it. If we succeeded, add the things it influences.
+      if (optimize(node)) {
+        optimized.insert(node);
+        auto iter = influences.find(node);
+        if (iter != influences.end()) {
+          auto& toAdd = iter->second;
+          for (auto* add : toAdd) {
+            work.insert(add);
           }
         }
       }
     }
+    // After updating the DataFlow IR, we can update the sets in
+    // the wasm.
+    for (auto* set : builder.sets) {
+      auto* node = builder.setNodeMap[set];
+      auto iter = optimized.find(node);
+      if (iter != optimized.end()) {
+        // Simply apply the optimized expression from the node.
+        assert(node->isExpr()); // we optimize to an expression
+        set->value = node->expr;
+      }
+    }
+  }
+
+  bool optimize(DataFlow::Node* node) {
+    // Optimize: Look for nodes that we can easily convert into
+    // something simpler.
+    // TODO: we can expressionify and run full normal opts on that,
+    //       then copy the result if it's smaller.
+    if (DataFlow::allInputsIdentical(node)) {
+      if (node->isExpr()) {
+//        auto* expr = node->expr;
+//        if (auto* binary = expr->dynCast<Binary>()) {
+          // Note we don't need to check for effects here, as in flattened IR
+          // expression children are get_locals or consts.
+//          binary->right = ExpressionManipulator::copy(binary->left, *getModule());
+  //        return true;
+//        }
+      } else if (node->isPhi()) {
+std::cout << "phi opt!\n";
+        return replaceWithValue(node, node->getValue(1));
+      }
+    }
+    return false;
+  }
+
+  // Replaces a node with the value from another node. Returns true if
+  // we succeeded.
+  // This replaces the node itself in-place.
+  bool replaceWithValue(DataFlow::Node* node, DataFlow::Node* with) {
+    if (with->isConst()) {
+      auto* copy = ExpressionManipulator::copy(with->expr, *getModule());
+      *node = DataFlow::Node(DataFlow::Node::Type::Expr);
+      node->expr = copy;
+      return true;
+    }
+    // TODO: if it's an expression, it's assigned to a local, and we can
+    //       get_local it.
+    return false;
   }
 };
 
