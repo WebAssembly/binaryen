@@ -4,6 +4,7 @@ SET(passes_SOURCES
   CodePushing.cpp
   CodeFolding.cpp
   ConstHoisting.cpp
+  DataFlowOpts.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp

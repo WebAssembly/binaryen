@@ -72,6 +72,8 @@ struct Node {
   bool isCond() { return type == Cond; }
   bool isBad() { return type == Bad; }
 
+  bool isConst() { return type == Expr && expr->is<Const>(); }
+
   union {
     // For Var
     wasm::Type wasmType;
@@ -171,29 +173,6 @@ struct Node {
 
   bool operator!=(const Node& other) {
     return !(*this == other);
-  }
-
-  std::ostream& dump(std::ostream& o, size_t indent = 0) {
-    for (size_t i = 0; i < indent; i++) o << ' ';
-    o << '[';
-    switch (type) {
-      case Var:   o << "var " << printType(wasmType) << ' ' << this; break;
-      case Expr:  o << "expr "; WasmPrinter::printExpression(expr, o, true); break;
-      case Phi:   o << "phi"; break;
-      case Cond:  o << "cond" << index; break;
-      case Block: o << "block"; break;
-      case Zext:  o << "zext"; break;
-      case Bad:   o << "bad"; break;
-      default: WASM_UNREACHABLE();
-    }
-    if (!values.empty()) {
-      o << '\n';
-      for (auto* value : values) {
-        value->dump(o, indent + 1);
-      }
-    }
-    o << "]\n";
-    return o;
   }
 
   // As mentioned above, comparisons return i1. This checks

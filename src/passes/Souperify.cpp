@@ -38,12 +38,10 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
-#include "ir/abstract.h"
-#include "ir/literal-utils.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/builder.h"
+#include "dataflow/utils.h"
 
 namespace wasm {
 
@@ -285,7 +283,7 @@ struct Printer {
           printInternal(node->getValue(i));
         }
         std::cout << '\n';
-        if (debug) warnOnSuspiciousValues(node, 1, size);
+        if (debug) warnOnSuspiciousValues(node);
         break;
       }
       case Node::Type::Cond: {
@@ -403,7 +401,7 @@ struct Printer {
       auto* right = node->getValue(1);
       printInternal(right);
       std::cout << '\n';
-      if (debug) warnOnSuspiciousValues(node, 0, 1);
+      if (debug) warnOnSuspiciousValues(node);
     } else if (curr->is<Select>()) {
       std::cout << "select ";
       printInternal(node->getValue(0));
@@ -412,7 +410,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
       std::cout << '\n';
-      if (debug) warnOnSuspiciousValues(node, 0, 2);
+      if (debug) warnOnSuspiciousValues(node);
     } else {
       WASM_UNREACHABLE();
     }
@@ -424,37 +422,16 @@ struct Printer {
     std::cout << " 1:i1\n";
   }
 
-  // Checks if a range [inclusiveStart, inclusiveEnd] of values looks suspicious,
-  // like an obvious missing optimization.
-  void warnOnSuspiciousValues(Node* node, Index inclusiveStart, Index inclusiveEnd) {
+  // Checks if a value looks suspiciously optimizable.
+  void warnOnSuspiciousValues(Node* node) {
     assert(debug);
-    auto* first = node->getValue(inclusiveStart);
-    bool allIdentical = true;
-    // Check if any of the others are not equal
-    for (Index i = inclusiveStart + 1; i <= inclusiveEnd; i++) {
-      auto* curr = node->getValue(i);
-      if (*first != *curr) {
-        allIdentical = false;
-        break;
-      }
-    }
-    if (allIdentical) {
+    if (allInputsIdentical(node)) {
       std::cout << "^^ suspicious identical inputs! missing optimization in " << builder.func->name << "? ^^\n";
       return;
     }
-    // If not all identical, warn on all-constant inputs to a non-phi, that's odd too.
-    if (!node->isPhi()) {
-      bool allConstant = true;
-      for (Index i = inclusiveStart; i <= inclusiveEnd; i++) {
-        auto* curr = node->getValue(i);
-        if (!curr->isExpr() || !curr->expr->is<Const>()) {
-          allConstant = false;
-          break;
-        }
-      }
-      if (allConstant) {
-        std::cout << "^^ suspicious constant inputs! missing optimization in " << builder.func->name << "? ^^\n";
-      }
+    if (allInputsConstant(node)) {
+      std::cout << "^^ suspicious constant inputs! missing optimization in " << builder.func->name << "? ^^\n";
+      return;
     }
   }
 };
@@ -466,15 +443,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   // If Souper is thread-safe, we could also run it in parallel.
 
   void doWalkFunction(Function* func) {
-    if (DataFlow::Builder::check(func)) {
-      // Build the data-flow IR.
-      DataFlow::Builder builder(func);
-      // Emit possible traces.
-      for (auto* set : builder.sets) {
-        DataFlow::Trace trace(builder, set);
-        if (!trace.isBad()) {
-          DataFlow::Printer(builder, trace);
-        }
+    // Build the data-flow IR.
+    DataFlow::Builder builder(func);
+    // Emit possible traces.
+    for (auto* set : builder.sets) {
+      DataFlow::Trace trace(builder, set);
+      if (!trace.isBad()) {
+        DataFlow::Printer(builder, trace);
       }
     }
   }

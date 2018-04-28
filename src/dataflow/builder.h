@@ -26,6 +26,8 @@
 #define wasm_dataflow_builder_h
 
 #include "wasm.h"
+#include "ir/abstract.h"
+#include "ir/literal-utils.h"
 #include "dataflow/node.h"
 
 namespace wasm {
@@ -93,11 +95,6 @@ struct Builder : public Visitor<Builder, Node*> {
   };
 
   // API
-
-  // Check if a function is relevant for us.
-  static bool check(Function* func) {
-    return true;
-  }
 
   Builder(Function* funcInit) {
     func = funcInit;
