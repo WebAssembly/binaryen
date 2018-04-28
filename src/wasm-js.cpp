@@ -369,8 +369,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
           return ret;
-        }, (uint32_t)addr, load->bytes, isTypeFloat(load->type), load->signed_, &out64);
-        if (!isTypeFloat(load->type)) {
+        }, (uint32_t)addr, load->bytes, isFloatType(load->type), load->signed_, &out64);
+        if (!isFloatType(load->type)) {
           if (load->type == i64) {
             if (load->bytes == 8) {
               return Literal(out64);
@@ -391,7 +391,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         abort();
       }
       // nicely aligned
-      if (!isTypeFloat(load->type)) {
+      if (!isFloatType(load->type)) {
         int64_t ret;
         if (load->bytes == 1) {
           if (load->signed_) {
@@ -463,11 +463,11 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
             Module["info"].parent["HEAPU8"][addr + i] = HEAPU8[i];
           }
           HEAP32[0] = save0; HEAP32[1] = save1;
-        }, (uint32_t)addr, store_->bytes, isTypeFloat(store_->valueType), isTypeFloat(store_->valueType) ? value.getFloat() : (double)value.getInteger());
+        }, (uint32_t)addr, store_->bytes, isFloatType(store_->valueType), isFloatType(store_->valueType) ? value.getFloat() : (double)value.getInteger());
         return;
       }
       // nicely aligned
-      if (!isTypeFloat(store_->valueType)) {
+      if (!isFloatType(store_->valueType)) {
         if (store_->bytes == 1) {
           EM_ASM_INT({ Module['info'].parent['HEAP8'][$0] = $1 }, addr, (uint32_t)value.getInteger());
         } else if (store_->bytes == 2) {

@@ -73,11 +73,12 @@ def run_help_tests():
 def run_wasm_opt_tests():
   print '\n[ checking wasm-opt -o notation... ]\n'
 
-  wast = os.path.join(options.binaryen_test, 'hello_world.wast')
-  delete_from_orbit('a.wast')
-  cmd = WASM_OPT + [wast, '-o', 'a.wast', '-S']
-  run_command(cmd)
-  fail_if_not_identical_to_file(open('a.wast').read(), wast)
+  for extra_args in [[], ['--no-validation']]:
+    wast = os.path.join(options.binaryen_test, 'hello_world.wast')
+    delete_from_orbit('a.wast')
+    cmd = WASM_OPT + [wast, '-o', 'a.wast', '-S'] + extra_args
+    run_command(cmd)
+    fail_if_not_identical_to_file(open('a.wast').read(), wast)
 
   print '\n[ checking wasm-opt binary reading/writing... ]\n'
 
@@ -368,6 +369,10 @@ def run_binaryen_js_tests():
     if not s.endswith('.js'): continue
     print s
     f = open('a.js', 'w')
+    # avoid stdout/stderr ordering issues in some js shells - use just stdout
+    f.write('''
+      console.warn = function(x) { console.log(x) };
+    ''')
     binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
     f.write(binaryen_js)
     if NODEJS:

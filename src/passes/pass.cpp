@@ -154,7 +154,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("simplify-locals");
   add("vacuum"); // previous pass creates garbage
   add("reorder-locals");
-  if (options.shrinkLevel >= 1) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("code-folding");
   }
   add("merge-blocks"); // makes remove-unused-brs more effective
@@ -197,6 +197,7 @@ static void dumpWast(Name name, Module* wasm) {
   // write out the wast
   static int counter = 0;
   auto fullName = std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wasm";
+  Colors::disable();
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
   writer.write(*wasm, fullName);

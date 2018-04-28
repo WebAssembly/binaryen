@@ -208,6 +208,11 @@ public:
     usedElements++;
   }
 
+  T& front() const {
+    assert(usedElements > 0);
+    return data[0];
+  }
+
   void erase(Iterator start_it, Iterator end_it) {
     assert(start_it.parent == end_it.parent && start_it.parent == this);
     assert(start_it.index <= end_it.index && end_it.index <= usedElements);

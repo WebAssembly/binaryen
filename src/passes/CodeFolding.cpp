@@ -15,7 +15,8 @@
  */
 
 //
-// Folds duplicate code together, saving space.
+// Folds duplicate code together, saving space (and possibly phis in
+// the wasm VM, which can save time).
 //
 // We fold tails of code where they merge and moving the code
 // to the merge point is helpful. There are two cases here: (1) expressions,
@@ -198,8 +199,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
   void visitIf(If* curr) {
     if (!curr->ifFalse) return;
     // if both sides are identical, this is easy to fold
-    // (except if the condition is unreachable and we return a value, then we can't just replace
-    // outselves with a drop
     if (ExpressionAnalyzer::equal(curr->ifTrue, curr->ifFalse)) {
       Builder builder(*getModule());
       // remove if (4 bytes), remove one arm, add drop (1), add block (3),
@@ -216,6 +215,26 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // if both are blocks, look for a tail we can merge
       auto* left = curr->ifTrue->dynCast<Block>();
       auto* right = curr->ifFalse->dynCast<Block>();
+      // If one is a block and the other isn't, and the non-block is a tail
+      // of the other, we can fold that - for our convenience, we just add
+      // a block and run the rest of the optimization mormally.
+      auto maybeAddBlock = [this](Block* block, Expression*& other) -> Block* {
+        // if other is a suffix of the block, wrap it in a block
+        if (block->list.empty() ||
+            !ExpressionAnalyzer::equal(other, block->list.back())) {
+          return nullptr;
+        }
+        // do it, assign to the out param `other`, and return the block
+        Builder builder(*getModule());
+        auto* ret = builder.makeBlock(other);
+        other = ret;
+        return ret;
+      };
+      if (left && !right) {
+        right = maybeAddBlock(left, curr->ifFalse);
+      } else if (!left && right) {
+        left = maybeAddBlock(right, curr->ifTrue);
+      }
       // we need nameless blocks, as if there is a name, someone might branch
       // to the end, skipping the code we want to merge
       if (left && right &&

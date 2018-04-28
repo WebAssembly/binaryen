@@ -8,6 +8,9 @@
  (type $6 (func (param i32 i32) (result i32)))
  (type $7 (func (param i64) (result i64)))
  (type $8 (func (result i64)))
+ (type $9 (func (param i32 i64 f32 f64)))
+ (type $10 (func (param i32 i64 f32)))
+ (type $11 (func (param i32 i64 f64 i32)))
  (memory $0 0)
  (export "load-off-2" (func $load-off-2))
  (func $f (; 0 ;) (type $0) (param $i1 i32) (param $i2 i64)
@@ -216,11 +219,7 @@
    )
   )
   (drop
-   (select
-    (i32.const 0)
-    (i32.const 1)
-    (i32.const 2)
-   )
+   (i32.const 0)
   )
  )
  (func $load-store (; 1 ;) (type $1)
@@ -811,10 +810,7 @@
    )
   )
   (drop
-   (i32.ne
-    (i32.const -1)
-    (i32.const -1)
-   )
+   (i32.const 0)
   )
   (drop
    (f32.le
@@ -2036,16 +2032,12 @@
   )
  )
  (func $sign-ext-1-and-ne (; 36 ;) (type $2) (result i32)
-  (select
-   (i32.ne
-    (i32.and
-     (call $sign-ext-1-and-ne)
-     (i32.const 2147483647)
-    )
-    (i32.const -2147483648)
+  (i32.ne
+   (i32.and
+    (call $sign-ext-1-and-ne)
+    (i32.const 2147483647)
    )
-   (i32.const 2)
-   (i32.const 1)
+   (i32.const -2147483648)
   )
  )
  (func $neg-shifts-and-255 (; 37 ;) (type $2) (result i32)
@@ -2415,6 +2407,504 @@
    )
   )
   (unreachable)
+ )
+ (func $abstract-additions (; 64 ;) (type $9) (param $x32 i32) (param $x64 i64) (param $y32 f32) (param $y64 f64)
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (f32.mul
+    (get_local $y32)
+    (f32.const 0)
+   )
+  )
+  (drop
+   (f64.mul
+    (get_local $y64)
+    (f64.const 0)
+   )
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $y32)
+  )
+  (drop
+   (get_local $y64)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.and
+    (unreachable)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i64.and
+    (unreachable)
+    (i64.const 0)
+   )
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x32)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $x64)
+  )
+  (drop
+   (get_local $y32)
+  )
+  (drop
+   (get_local $y64)
+  )
+  (drop
+   (f32.div
+    (get_local $y32)
+    (f32.const 1.2000000476837158)
+   )
+  )
+  (drop
+   (i32.mul
+    (get_local $x32)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i64.mul
+    (get_local $x64)
+    (i64.const -1)
+   )
+  )
+  (drop
+   (f32.mul
+    (get_local $y32)
+    (f32.const -1)
+   )
+  )
+  (drop
+   (f64.mul
+    (get_local $y64)
+    (f64.const -1)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.le_u
+    (i32.add
+     (get_local $x32)
+     (i32.const 10)
+    )
+    (i32.const 20)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 30)
+   )
+  )
+  (drop
+   (i64.eq
+    (get_local $x64)
+    (i64.const 10)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.add
+     (get_local $x32)
+     (i32.const 10)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.const 30)
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.sub
+     (get_local $x32)
+     (i32.const 30)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.add
+     (get_local $x32)
+     (i32.const 30)
+    )
+   )
+  )
+  (drop
+   (i32.eq
+    (get_local $x32)
+    (i32.sub
+     (get_local $x32)
+     (i32.const 10)
+    )
+   )
+  )
+  (drop
+   (i64.le_s
+    (i64.sub
+     (get_local $x64)
+     (i64.const 288230376151711744)
+    )
+    (i64.const 9223372036854775807)
+   )
+  )
+ )
+ (func $negatives-are-sometimes-better (; 65 ;) (type $10) (param $x i32) (param $y i64) (param $z f32)
+  (drop
+   (i32.sub
+    (get_local $x)
+    (i32.const -64)
+   )
+  )
+  (drop
+   (i32.add
+    (get_local $x)
+    (i32.const -64)
+   )
+  )
+  (drop
+   (i32.sub
+    (get_local $x)
+    (i32.const -8192)
+   )
+  )
+  (drop
+   (i32.sub
+    (get_local $x)
+    (i32.const -1048576)
+   )
+  )
+  (drop
+   (i32.sub
+    (get_local $x)
+    (i32.const -134217728)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -64)
+   )
+  )
+  (drop
+   (i64.add
+    (get_local $y)
+    (i64.const -64)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -8192)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -1048576)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -134217728)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -17179869184)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -2199023255552)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -281474976710656)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -36028797018963968)
+   )
+  )
+  (drop
+   (i64.sub
+    (get_local $y)
+    (i64.const -4611686018427387904)
+   )
+  )
+  (drop
+   (f32.add
+    (get_local $z)
+    (f32.const 64)
+   )
+  )
+ )
+ (func $shift-a-zero (; 66 ;) (type $10) (param $x i32) (param $y i64) (param $z f32)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.shl
+    (i32.const 0)
+    (unreachable)
+   )
+  )
+ )
+ (func $identical-siblings (; 67 ;) (type $11) (param $x i32) (param $y i64) (param $z f64) (param $xx i32)
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (f64.sub
+    (get_local $z)
+    (get_local $z)
+   )
+  )
+  (drop
+   (i32.sub
+    (get_local $x)
+    (get_local $xx)
+   )
+  )
+  (drop
+   (i32.sub
+    (unreachable)
+    (unreachable)
+   )
+  )
+  (drop
+   (i32.add
+    (get_local $x)
+    (get_local $x)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i64.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 1)
+  )
+ )
+ (func $all_ones (; 68 ;) (type $0) (param $x i32) (param $y i64)
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const -1)
+  )
+  (drop
+   (i32.or
+    (tee_local $x
+     (i32.const 1337)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (get_local $y)
+  )
+  (drop
+   (i64.const -1)
+  )
+ )
+ (func $xor (; 69 ;) (type $0) (param $x i32) (param $y i64)
+  (drop
+   (get_local $x)
+  )
+ )
+ (func $select-on-const (; 70 ;) (type $4) (param $x i32) (param $y i32)
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const 3)
+  )
+  (drop
+   (tee_local $x
+    (i32.const 5)
+   )
+  )
+  (drop
+   (block (result i32)
+    (drop
+     (tee_local $x
+      (i32.const 6)
+     )
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (select
+    (i32.const 4)
+    (tee_local $x
+     (i32.const 5)
+    )
+    (i32.const 1)
+   )
+  )
+  (drop
+   (tee_local $x
+    (i32.const 6)
+   )
+  )
  )
 )
 (module

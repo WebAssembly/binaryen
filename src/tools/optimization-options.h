@@ -87,6 +87,11 @@ struct OptimizationOptions : public Options {
                 [this](Options* o, const std::string& argument) {
                   passOptions.shrinkLevel = atoi(argument.c_str());
                 })
+           .add("--no-validation", "-n", "Disables validation, assumes inputs are correct",
+                Options::Arguments::Zero,
+                [this](Options* o, const std::string& argument) {
+                  passOptions.validate = false;
+                })
            .add("--ignore-implicit-traps", "-iit", "Optimize under the helpful assumption that no surprising traps occur (from load, div/mod, etc.)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {

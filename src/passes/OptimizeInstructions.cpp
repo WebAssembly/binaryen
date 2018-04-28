@@ -24,6 +24,7 @@
 #include <pass.h>
 #include <wasm-s-parser.h>
 #include <support/threads.h>
+#include <ir/abstract.h>
 #include <ir/utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
@@ -541,9 +542,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       } else if (binary->op == SubInt32) {
-        return optimizeAddedConstants(binary);
+        auto* ret = optimizeAddedConstants(binary);
+        if (ret) return ret;
       }
       // a bunch of operations on a constant right side can be simplified
       if (auto* right = binary->right->dynCast<Const>()) {
@@ -567,19 +570,9 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
-        // some math operations have trivial results TODO: many more
-        if (right->value == Literal(int32_t(0))) {
-          if (binary->op == ShlInt32 || binary->op == ShrUInt32 || binary->op == ShrSInt32 || binary->op == OrInt32) {
-            return binary->left;
-          } else if ((binary->op == MulInt32 || binary->op == AndInt32) &&
-                     !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
-            return binary->right;
-          }
-        } else if (right->value == Literal(int32_t(1))) {
-          if (binary->op == MulInt32) {
-            return binary->left;
-          }
-        }
+        // some math operations have trivial results
+        Expression* ret = optimizeWithConstantOnRight(binary);
+        if (ret) return ret;
         // the square of some operations can be merged
         if (auto* left = binary->left->dynCast<Binary>()) {
           if (left->op == binary->op) {
@@ -616,6 +609,11 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           }
         }
       }
+      // a bunch of operations on a constant left side can be simplified
+      if (binary->left->is<Const>()) {
+        Expression* ret = optimizeWithConstantOnLeft(binary);
+        if (ret) return ret;
+      }
       // bitwise operations
       if (binary->op == AndInt32) {
         // try de-morgan's AND law,
@@ -643,7 +641,18 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
       }
       // for and and or, we can potentially conditionalize
       if (binary->op == AndInt32 || binary->op == OrInt32) {
-        return conditionalizeExpensiveOnBitwise(binary);
+        auto* ret = conditionalizeExpensiveOnBitwise(binary);
+        if (ret) return ret;
+      }
+      // relation/comparisons allow for math optimizations
+      if (binary->isRelational()) {
+        auto* ret = optimizeRelational(binary);
+        if (ret) return ret;
+      }
+      // finally, try more expensive operations on the binary
+      if (!EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects() &&
+          ExpressionAnalyzer::equal(binary->left, binary->right)) {
+        return optimizeBinaryWithEqualEffectlessChildren(binary);
       }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       // de-morgan's laws
@@ -745,6 +754,26 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         if (!ifTrue.invalidates(ifFalse)) {
           select->condition = condition->value;
           std::swap(select->ifTrue, select->ifFalse);
+        }
+      }
+      if (auto* c = select->condition->dynCast<Const>()) {
+        // constant condition, we can just pick the right side (barring side effects)
+        if (c->value.getInteger()) {
+          if (!EffectAnalyzer(getPassOptions(), select->ifFalse).hasSideEffects()) {
+            return select->ifTrue;
+          } else {
+            // don't bother - we would need to reverse the order using a temp local, which is bad
+          }
+        } else {
+          if (!EffectAnalyzer(getPassOptions(), select->ifTrue).hasSideEffects()) {
+            return select->ifFalse;
+          } else {
+            Builder builder(*getModule());
+            return builder.makeSequence(
+              builder.makeDrop(select->ifTrue),
+              select->ifFalse
+            );
+          }
         }
       }
       if (ExpressionAnalyzer::equal(select->ifTrue, select->ifFalse)) {
@@ -1097,6 +1126,190 @@ private:
       return localInfo[get->index].signExtedBits == bits;
     }
     return false;
+  }
+
+  // optimize trivial math operations, given that the right side of a binary
+  // is a constant
+  // TODO: templatize on type?
+  Expression* optimizeWithConstantOnRight(Binary* binary) {
+    auto type = binary->right->type;
+    auto* right = binary->right->cast<Const>();
+    if (isIntegerType(type)) {
+      // operations on zero
+      if (right->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if (binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+            binary->op == Abstract::getBinary(type, Abstract::ShrS) ||
+            binary->op == Abstract::getBinary(type, Abstract::Or) ||
+            binary->op == Abstract::getBinary(type, Abstract::Xor)) {
+          return binary->left;
+        } else if ((binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+                    binary->op == Abstract::getBinary(type, Abstract::And)) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
+      }
+      // operations on all 1s
+      // TODO: shortcut method to create an all-ones?
+      if (right->value == Literal(int32_t(-1)) ||
+          right->value == Literal(int64_t(-1))) {
+        if (binary->op == Abstract::getBinary(type, Abstract::And)) {
+          return binary->left;
+        } else if (binary->op == Abstract::getBinary(type, Abstract::Or) &&
+                   !EffectAnalyzer(getPassOptions(), binary->left).hasSideEffects()) {
+          return binary->right;
+        }
+      }
+      // wasm binary encoding uses signed LEBs, which slightly favor negative
+      // numbers: -64 is more efficient than +64 etc., as well as other powers
+      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64.
+      // in theory we could just prefer negative numbers over positive, but
+      // that can have bad effects on gzip compression (as it would mean more
+      // subtractions than the more common additions).
+      if (binary->op == Abstract::getBinary(type, Abstract::Add) ||
+          binary->op == Abstract::getBinary(type, Abstract::Sub)) {
+        auto value = right->value.getInteger();
+        if (value == 0x40 ||
+            value == 0x2000 ||
+            value == 0x100000 ||
+            value == 0x8000000 ||
+            value == 0x400000000LL ||
+            value == 0x20000000000LL ||
+            value == 0x1000000000000LL ||
+            value == 0x80000000000000LL ||
+            value == 0x4000000000000000LL) {
+          right->value = right->value.neg();
+          if (binary->op == Abstract::getBinary(type, Abstract::Add)) {
+            binary->op = Abstract::getBinary(type, Abstract::Sub);
+          } else {
+            binary->op = Abstract::getBinary(type, Abstract::Add);
+          }
+          return binary;
+        }
+      }
+    }
+    // note that this is correct even on floats with a NaN on the left,
+    // as a NaN would skip the computation and just return the NaN,
+    // and that is precisely what we do here. but, the same with -1
+    // (change to a negation) would be incorrect for that reason.
+    if (right->value == LiteralUtils::makeLiteralFromInt32(1, type)) {
+      if (binary->op == Abstract::getBinary(type, Abstract::Mul) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivS) ||
+          binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+        return binary->left;
+      }
+    }
+    return nullptr;
+  }
+
+  // optimize trivial math operations, given that the left side of a binary
+  // is a constant. since we canonicalize constants to the right for symmetrical
+  // operations, we only need to handle asymmetrical ones here
+  // TODO: templatize on type?
+  Expression* optimizeWithConstantOnLeft(Binary* binary) {
+    auto type = binary->left->type;
+    auto* left = binary->left->cast<Const>();
+    if (isIntegerType(type)) {
+      // operations on zero
+      if (left->value == LiteralUtils::makeLiteralFromInt32(0, type)) {
+        if ((binary->op == Abstract::getBinary(type, Abstract::Shl) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrU) ||
+             binary->op == Abstract::getBinary(type, Abstract::ShrS)) &&
+            !EffectAnalyzer(getPassOptions(), binary->right).hasSideEffects()) {
+          return binary->left;
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // integer math, even on 2s complement, allows stuff like
+  // x + 5 == 7
+  //   =>
+  //     x == 2
+  // TODO: templatize on type?
+  Expression* optimizeRelational(Binary* binary) {
+    // TODO: inequalities can also work, if the constants do not overflow
+    auto type = binary->right->type;
+    if (binary->op ==Abstract::getBinary(type, Abstract::Eq) ||
+        binary->op ==Abstract::getBinary(type, Abstract::Ne)) {
+      if (isIntegerType(binary->left->type)) {
+        if (auto* left = binary->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
+              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+            if (auto* leftConst = left->right->dynCast<Const>()) {
+              if (auto* rightConst = binary->right->dynCast<Const>()) {
+                return combineRelationalConstants(binary, left, leftConst, nullptr, rightConst);
+              } else if (auto* rightBinary = binary->right->dynCast<Binary>()) {
+                if (rightBinary->op == Abstract::getBinary(type, Abstract::Add) ||
+                    rightBinary->op == Abstract::getBinary(type, Abstract::Sub)) {
+                  if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
+                    return combineRelationalConstants(binary, left, leftConst, rightBinary, rightConst);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  // given a relational binary with a const on both sides, combine the constants
+  // left is also a binary, and has a constant; right may be just a constant, in which
+  // case right is nullptr
+  Expression* combineRelationalConstants(Binary* binary, Binary* left, Const* leftConst, Binary* right, Const* rightConst) {
+    auto type = binary->right->type;
+    // we fold constants to the right
+    Literal extra = leftConst->value;
+    if (left->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    if (right && right->op == Abstract::getBinary(type, Abstract::Sub)) {
+      extra = extra.neg();
+    }
+    rightConst->value = rightConst->value.sub(extra);
+    binary->left = left->left;
+    return binary;
+  }
+
+  // given a binary expression with equal children and no side effects in either,
+  // we can fold various things
+  // TODO: trinaries, things like (x & (y & x)) ?
+  Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
+    // TODO add: perhaps worth doing 2*x if x is quite large?
+    switch (binary->op) {
+      case SubInt32:
+      case XorInt32:
+      case SubInt64:
+      case XorInt64: return LiteralUtils::makeZero(binary->left->type, *getModule());
+      case NeInt64:
+      case LtSInt64:
+      case LtUInt64:
+      case GtSInt64:
+      case GtUInt64:
+      case NeInt32:
+      case LtSInt32:
+      case LtUInt32:
+      case GtSInt32:
+      case GtUInt32: return LiteralUtils::makeZero(i32, *getModule());
+      case AndInt32:
+      case OrInt32:
+      case AndInt64:
+      case OrInt64:  return binary->left;
+      case EqInt32:
+      case LeSInt32:
+      case LeUInt32:
+      case GeSInt32:
+      case GeUInt32:
+      case EqInt64:
+      case LeSInt64:
+      case LeUInt64:
+      case GeSInt64:
+      case GeUInt64: return LiteralUtils::makeFromInt32(1, i32, *getModule());
+      default: return nullptr;
+    }
   }
 };
 

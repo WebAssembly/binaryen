@@ -159,4 +159,113 @@
    )
   )
  )
+ (func $simple-switch (; 5 ;) (type $2) (result i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_table $A $y $y $y $y $y $A $y $y $y $y $A $y
+      (i32.const 0)
+     )
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-2 (; 6 ;) (type $2) (result i32)
+  (local $0 i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_if $A
+      (i32.or
+       (i32.eqz
+        (tee_local $0
+         (i32.const 0)
+        )
+       )
+       (i32.eq
+        (get_local $0)
+        (i32.const 12)
+       )
+      )
+     )
+     (nop)
+     (br $y)
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-3 (; 7 ;) (type $2) (result i32)
+  (local $0 i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_if $A
+      (i32.eqz
+       (tee_local $0
+        (i32.const 0)
+       )
+      )
+     )
+     (br_if $B
+      (i32.eq
+       (get_local $0)
+       (i32.const 1025)
+      )
+     )
+     (br $y)
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
+ (func $simple-switch-4 (; 8 ;) (type $2) (result i32)
+  (block $A
+   (block $B
+    (block $y
+     (br_table $A $y $y $y $y $y $A $y $y $y $y $y $A $y
+      (i32.const 0)
+     )
+     (return
+      (i32.const 0)
+     )
+    )
+    (return
+     (i32.const 1)
+    )
+   )
+   (return
+    (i32.const 2)
+   )
+  )
+  (i32.const 3)
+ )
 )

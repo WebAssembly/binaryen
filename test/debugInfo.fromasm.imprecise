@@ -125,30 +125,24 @@
         (i32.const 1369188723)
        )
        (block $switch (result i32)
-        (block $switch-default
-         (block $switch-case
-          (br_table $switch-case $switch-default
-           (i32.sub
-            (get_local $1)
-            (i32.const -1108210269)
-           )
+        (br_if $__rjti$0
+         (i32.eqz
+          (i32.sub
+           (get_local $1)
+           (i32.const -1108210269)
           )
          )
-         (br $__rjti$0)
         )
         (i32.const 0)
        )
        (block $switch0 (result i32)
-        (block $switch-default2
-         (block $switch-case1
-          (br_table $switch-case1 $switch-default2
-           (i32.sub
-            (get_local $1)
-            (i32.const 1369188723)
-           )
+        (br_if $__rjti$0
+         (i32.eqz
+          (i32.sub
+           (get_local $1)
+           (i32.const 1369188723)
           )
          )
-         (br $__rjti$0)
         )
         (i32.const 0)
        )

@@ -44,14 +44,6 @@ unsigned getTypeSize(Type type) {
   }
 }
 
-bool isTypeFloat(Type type) {
-  switch (type) {
-    case f32:
-    case f64: return true;
-    default: return false;
-  }
-}
-
 Type getType(unsigned size, bool float_) {
   if (size < 4) return Type::i32;
   if (size == 4) return float_ ? Type::f32 : Type::i32;
@@ -65,6 +57,22 @@ Type getReachableType(Type a, Type b) {
 
 bool isConcreteType(Type type) {
   return type != none && type != unreachable;
+}
+
+bool isIntegerType(Type type) {
+  switch (type) {
+    case i32:
+    case i64: return true;
+    default: return false;
+  }
+}
+
+bool isFloatType(Type type) {
+  switch (type) {
+    case f32:
+    case f64: return true;
+    default: return false;
+  }
 }
 
 } // namespace wasm
