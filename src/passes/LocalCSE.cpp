@@ -34,7 +34,7 @@
 
 namespace wasm {
 
-const Index UNUSED = -1;
+static const Index UNUSED = -1;
 
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
