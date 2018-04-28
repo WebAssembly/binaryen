@@ -98,7 +98,6 @@ struct Builder : public Visitor<Builder, Node*> {
 
   Builder(Function* funcInit) {
     func = funcInit;
-    std::cout << "\n; function: " << func->name << '\n';
     auto numLocals = func->getNumLocals();
     if (numLocals == 0) return; // nothing to do
     // Set up initial local state IR.

@@ -443,6 +443,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   // If Souper is thread-safe, we could also run it in parallel.
 
   void doWalkFunction(Function* func) {
+    std::cout << "\n; function: " << func->name << '\n';
     // Build the data-flow IR.
     DataFlow::Builder builder(func);
     // Emit possible traces.

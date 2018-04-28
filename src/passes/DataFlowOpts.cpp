@@ -45,15 +45,17 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Optimize: Look for nodes that we can easily convert into
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
-    //       then ExpressionManipulator::copy(from->body, *module);
-    //       the result if it's smaller.
+    //       then copy the result if it's smaller.
     for (auto* set : builder.sets) {
       auto* node = builder.setNodeMap[set];
-      if (node->isPhi()) {
-        auto* firstValue = node->getValue(1);
-        if (firstValue->isConst() &&
-            DataFlow::allInputsIdentical(node)) {
-          // Do it!
+      if (DataFlow::allInputsIdentical(node)) {
+        if (node->isExpr()) {
+          auto* expr = node->expr;
+          if (auto* binary = expr->dynCast<Binary>()) {
+            // Note we don't need to check for effects here, as in flattened IR
+            // expression children are get_locals or consts.
+            binary->right = ExpressionManipulator::copy(binary->left, *getModule());
+          }
         }
       }
     }

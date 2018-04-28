@@ -41,8 +41,7 @@ inline bool allInputsIdentical(Node* node) {
       if (node->expr->is<Binary>()) {
         return *(node->getValue(0)) == *(node->getValue(1));
       } else if (node->expr->is<Select>()) {
-        return *(node->getValue(0)) == *(node->getValue(1)) &&
-               *(node->getValue(0)) == *(node->getValue(2));
+        return *(node->getValue(1)) == *(node->getValue(2));
       }
       break;
     }
