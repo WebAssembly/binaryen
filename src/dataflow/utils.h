@@ -49,7 +49,7 @@ inline bool allInputsIdentical(Node* node) {
     case Node::Type::Phi: {
       auto* first = node->getValue(1);
       // Check if any of the others are not equal
-      for (Index i = 2; i <= node->values.size(); i++) {
+      for (Index i = 2; i < node->values.size(); i++) {
         auto* curr = node->getValue(i);
         if (*first != *curr) {
           return false;
@@ -81,7 +81,7 @@ inline bool allInputsConstant(Node* node) {
     }
     case Node::Type::Phi: {
       // Check if any of the others are not equal
-      for (Index i = 1; i <= node->values.size(); i++) {
+      for (Index i = 1; i < node->values.size(); i++) {
         if (!node->getValue(i)->isConst()) {
           return false;
         }
