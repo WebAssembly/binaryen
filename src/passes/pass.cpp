@@ -138,16 +138,16 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("pick-load-signs");
   }
   // if we are willing to work hard, also propagate. first, do it while the code is still fairly flat
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("precompute-propagate");
   } else {
     add("precompute");
   }
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("code-pushing");
   }
   add("simplify-locals-nostructure"); // don't create if/block return values yet, as coalesce can remove copies that that could inhibit
@@ -155,7 +155,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("reorder-locals");
   add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
   // if we are willing to work hard, also optimize copies before coalescing
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("merge-locals"); // very slow on e.g. sqlite
   }
   add("coalesce-locals");
@@ -170,7 +170,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
   // further propagation may be possible now
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("precompute-propagate");
     // altering get_locals may open up simplification opportunities - sets may
     // no longer be needed
