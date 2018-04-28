@@ -11,8 +11,10 @@
  (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
-   (get_local $1)
-   (get_local $1)
+   (tee_local $0
+    (get_local $1)
+   )
+   (get_local $0)
   )
  )
  (func $ret (; 1 ;) (param $0 i32) (result i32)
@@ -74,52 +76,47 @@
     (get_local $0)
     (i32.const 0)
    )
-   (set_local $3
+   (set_local $2
     (i32.const 1)
    )
-   (block
-    (set_local $1
-     (i32.const 1)
-    )
-    ;;@ fib.c:8:0
-    (return
-     (get_local $1)
-    )
+   ;;@ fib.c:8:0
+   (return
+    (i32.const 1)
    )
   )
   (loop $while-in
    ;;@ fib.c:4:0
-   (set_local $1
+   (set_local $4
     (i32.add
+     (get_local $2)
      (get_local $3)
-     (get_local $4)
     )
    )
    ;;@ fib.c:3:0
-   (set_local $2
+   (set_local $1
     (i32.add
-     (get_local $2)
+     (get_local $1)
      (i32.const 1)
     )
    )
    (if
     (i32.ne
-     (get_local $2)
+     (get_local $1)
      (get_local $0)
     )
     (block
-     (set_local $4
-      (get_local $3)
-     )
      (set_local $3
-      (get_local $1)
+      (get_local $2)
+     )
+     (set_local $2
+      (get_local $4)
      )
      (br $while-in)
     )
    )
   )
   ;;@ fib.c:8:0
-  (get_local $1)
+  (get_local $4)
  )
  (func $switch_reach (; 5 ;) (param $0 i32) (result i32)
   (local $1 i32)
@@ -137,7 +134,7 @@
         )
         (i32.const 1369188723)
        )
-       (block $switch (result i32)
+       (block (result i32)
         (br_if $__rjti$0
          (i32.eqz
           (i32.sub
@@ -148,7 +145,7 @@
         )
         (i32.const 0)
        )
-       (block $switch0 (result i32)
+       (block (result i32)
         (br_if $__rjti$0
          (i32.eqz
           (i32.sub

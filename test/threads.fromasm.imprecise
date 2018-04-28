@@ -2,7 +2,6 @@
  (import "env" "memory" (memory $0 (shared 256 256)))
  (export "test" (func $test))
  (func $test (; 0 ;)
-  (local $0 i32)
   (drop
    (i32.atomic.load
     (i32.const 4916)
@@ -23,7 +22,7 @@
            (i32.const 0)
           )
           (i32.atomic.rmw.xchg
-           (get_local $0)
+           (i32.const 0)
            (i32.const 1)
           )
          )

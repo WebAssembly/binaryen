@@ -1,38 +1,21 @@
 (module
- (func "div16_internal" (param $0 i32) (param $1 i32) (result i32)
-  (i32.add
-   (i32.div_s
-    (i32.shr_s
-     (i32.shl
-      (get_local $0)
-      (i32.const 16)
+ (func "one"
+  (loop $label$2
+   (br_if $label$2
+    (block $label$3 (result i32)
+     (drop
+      (br_if $label$3
+       (i32.const 0)
+       (i32.load
+        (i32.const 3060)
+       )
+      )
      )
-     (i32.const 16)
-    )
-    (i32.shr_s
-     (i32.shl
-      (get_local $1)
-      (i32.const 16)
-     )
-     (i32.const 16)
-    )
-   )
-   (i32.div_s
-    (i32.shr_s
-     (i32.shl
-      (get_local $0)
-      (i32.const 16)
-     )
-     (i32.const 16)
-    )
-    (i32.shr_s
-     (i32.shl
-      (get_local $1)
-      (i32.const 16)
-     )
-     (i32.const 16)
+     (i32.const 0)
     )
    )
   )
- ))
+  (unreachable)
+ )
+)
 
