@@ -167,7 +167,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   } else {
     add("precompute");
   }
-  add("precompute");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
