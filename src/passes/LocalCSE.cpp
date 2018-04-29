@@ -28,6 +28,7 @@
 //
 
 #include <algorithm>
+#include <memory>
 
 #include <wasm.h>
 #include <wasm-builder.h>
@@ -64,8 +65,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   //  f(z) => turns into f(x)
   // This lets expression comparison work well without teaching it about
   // which locals are equal.
-  // copiedLocals[an index] = a better index for us to use
-  std::unordered_map<Index, Index> copiedLocals;
+  // localEquivalences[an index] = the set of indexes the index is equal to
+  std::unordered_map<Index, std::shared_ptr<std::unordered_set<Index>>> localEquivalences;
 
   bool anotherPass;
 
@@ -80,7 +81,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
     self->usables.clear();
-    self->copiedLocals.clear();
+    self->localEquivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
@@ -137,6 +138,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   void handle(Expression* curr) {
     if (auto* set = curr->dynCast<SetLocal>()) {
+      // we are assigning to a local, so existing equivalences are moot
+      resetLocal(set->index);
+      // consider the value
       auto* value = set->value;
       if (isRelevant(value)) {
         HashedExpression hashed(value);
@@ -151,37 +155,47 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
           usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
         }
       } else if (auto* get = value->dynCast<GetLocal>()) {
-        copiedLocals[set->index] = getCanonicalIndex(get->index);
+        // this is a copy of one local to another
+        addEquivalence(set->index, get->index);
       }
     } else if (auto* get = curr->dynCast<GetLocal>()) {
       // Perhaps we can canonicalize this get, if it is a copy of another.
-      get->index = getCanonicalIndex(get->index);
+      get->index = getCanonical(get->index);
     }
   }
 
-  Index getCanonicalIndex(Index index, bool processingCycle = false) {
-    // Look through multiple copies. There may be a cycle!
-    std::unordered_set<Index> seen;
-    seen.insert(index);
-    while (1) {
-      auto iter = copiedLocals.find(index);
-      if (iter != copiedLocals.end()) {
-        index = iter->second;
-        if (seen.count(index) > 0) {
-          // We found a cycle.
-          if (processingCycle) {
-            // Everything in `seen` is part of the cycle. Pick the lowest.
-            return *std::min_element(seen.begin(), seen.end());
-          } else {
-            // Process the cycle
-            return getCanonicalIndex(index, true /* processingCycle */);
-          }
-        }
-        seen.insert(index);
-      } else {
-        return index;
-      }
+  void resetLocal(Index index) {
+    auto iter = localEquivalences.find(index);
+    if (iter != localEquivalences.end()) {
+      auto& others = iter->second;
+      others->erase(index);
+      localEquivalences.erase(iter);
     }
+  }
+
+  void addEquivalence(Index justReset, Index other) {
+    auto iter = localEquivalences.find(other);
+    if (iter != localEquivalences.end()) {
+      auto& others = iter->second;
+      others->insert(justReset);
+      localEquivalences[justReset] = others;
+    } else {
+      auto both = std::make_shared<std::unordered_set<Index>>();
+      both->insert(justReset);
+      both->insert(other);
+      localEquivalences[justReset] = both;
+      localEquivalences[other] = both;
+    }
+  }
+
+  Index getCanonical(Index index) {
+    auto iter = localEquivalences.find(index);
+    if (iter != localEquivalences.end()) {
+      auto& all = iter->second;
+      // canonicalize to the smallest index
+      return *std::min_element(all->begin(), all->end());
+    }
+    return index;
   }
 
   // A relevant value is a non-trivial one, something we may want to reuse
