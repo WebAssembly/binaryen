@@ -51,7 +51,7 @@ namespace DataFlow {
 // for a specific set_local whose value we want to infer.
 struct Trace {
   Builder& builder;
-  SetLocal* set;
+  Node* toInfer;
 
   // A limit on how deep we go - we don't want to create arbitrarily
   // large traces.
@@ -66,7 +66,7 @@ struct Trace {
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
 
-  Trace(Builder& builder, SetLocal* set) : builder(builder), set(set) {
+  Trace(Builder& builder, Node* toInfer) : builder(builder), toInfer(toInfer) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -76,10 +76,8 @@ struct Trace {
     if (totalLimitStr) {
       totalLimit = atoi(totalLimitStr);
     }
-    // Get the node for this set.
-    auto* node = builder.setNodeMap[set];
     // Pull in all the dependencies, starting from the value itself.
-    add(node, 0);
+    add(toInfer, 0);
     // If we are trivial before adding pcs, we are still trivial, and
     // can ignore this.
     auto sizeBeforePathConditions = nodes.size();
@@ -98,7 +96,10 @@ struct Trace {
     // Also pull in conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
-    addPath(set);
+    auto iter = builder.nodeParentMap.find(node);
+    if (iter != builder.nodeParentMap.end()) {
+      addPath(iter->second);
+    }
   }
 
   Node* add(Node* node, size_t depth) {
@@ -176,7 +177,7 @@ struct Trace {
   void addPath(Expression* curr) {
     // We track curr and parent, which are always in the state of parent
     // being the parent of curr.
-    auto* parent = builder.parentMap.at(set);
+    auto* parent = builder.expressionParentMap.at(set);
     while (parent) {
       auto iter = builder.expressionConditionMap.find(parent);
       if (iter != builder.expressionConditionMap.end()) {
@@ -184,7 +185,7 @@ struct Trace {
         addPathTo(parent, curr, iter->second);
       }
       curr = parent;
-      parent = builder.parentMap.at(parent);
+      parent = builder.expressionParentMap.at(parent);
     }
   }
 
@@ -447,8 +448,8 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // Build the data-flow IR.
     DataFlow::Builder builder(func);
     // Emit possible traces.
-    for (auto* set : builder.sets) {
-      DataFlow::Trace trace(builder, set);
+    for (auto& node : builder.nodes) {
+      DataFlow::Trace trace(builder, node.get());
       if (!trace.isBad()) {
         DataFlow::Printer(builder, trace);
       }

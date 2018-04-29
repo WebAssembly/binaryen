@@ -54,7 +54,14 @@ struct Builder : public Visitor<Builder, Node*> {
   // Maps each expression to its control-flow parent (or null if
   // there is none). We only map expressions we need to know about,
   // which are sets and control-flow constructs.
-  std::unordered_map<Expression*, Expression*> parentMap;
+  std::unordered_map<Expression*, Expression*> expressionParentMap;
+
+  // The same, for nodes. Note that we currently don't know the parents
+  // of nodes like phis that don't exist in wasm - we need to add more
+  // stuff to handle that. But we will know the parent of anything using
+  // that phi and storing to a local, which is probably enough anyhow
+  // for pc generation.
+  std::unordered_map<Node*, Expression*> nodeParentMap;
 
   // All the sets, in order of appearance.
   std::vector<SetLocal*> sets;
@@ -187,7 +194,7 @@ struct Builder : public Visitor<Builder, Node*> {
   Node* visitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     auto* oldParent = parent;
-    parentMap[curr] = oldParent;
+    expressionParentMap[curr] = oldParent;
     parent = curr;
     for (auto* child : curr->list) {
       visit(child);
@@ -208,7 +215,7 @@ struct Builder : public Visitor<Builder, Node*> {
   }
   Node* visitIf(If* curr) {
     auto* oldParent = parent;
-    parentMap[curr] = oldParent;
+    expressionParentMap[curr] = oldParent;
     parent = curr;
     // Set up the condition.
     Node* condition = visit(curr->condition);
@@ -343,9 +350,11 @@ struct Builder : public Visitor<Builder, Node*> {
       return &bad;
     }
     sets.push_back(curr);
-    parentMap[curr] = parent;
+    expressionParentMap[curr] = parent;
     // Set the current node in the local state.
-    locals[curr->index] = setNodeMap[curr] = visit(curr->value);
+    auto* node = visit(curr->value);
+    locals[curr->index] = setNodeMap[curr] = node;
+    nodeParentMap[node] = curr;
     return &bad;
   }
   Node* visitGetGlobal(GetGlobal* curr) {
