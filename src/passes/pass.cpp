@@ -167,10 +167,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   } else {
     add("precompute");
   }
-  if (options.shrinkLevel >= 2) {
-    add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
-    add("coalesce-locals"); // just for localCSE
-  }
+  add("precompute");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
