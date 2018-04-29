@@ -158,14 +158,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   }
 
   Index getCanonicalIndex(Index index) {
-    // look through multiple copies
-    while (1) {
-      auto iter = copiedLocals.find(index);
-      if (iter != copiedLocals.end()) {
-        index = iter->second;
-      } else {
-        return index;
-      }
+    auto iter = copiedLocals.find(index);
+    if (iter != copiedLocals.end()) {
+      return iter->second;
+    } else {
+      return index;
     }
   }
 
