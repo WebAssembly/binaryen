@@ -22,19 +22,21 @@
 #include <wasm-binary.h>
 #include <ir/module-utils.h>
 
+using namespace std;
+
 namespace wasm {
 
-using namespace std;
+typedef map<const char *, int> Counts;
+
+static Counts lastCounts;
 
 // Prints metrics between optimization passes.
 struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<Metrics>>> {
   bool byFunction;
 
+  Counts counts;
+
   Metrics(bool byFunction) : byFunction(byFunction) {}
-
-  static Metrics *lastMetricsPass;
-
-  map<const char *, int> counts;
 
   void visitExpression(Expression* curr) {
     auto name = getExpressionName(curr);
@@ -130,7 +132,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
         printCounts(std::string("start: ") + module->start.str);
       }
       // can't compare detailed info between passes yet
-      lastMetricsPass = nullptr;
+      lastCounts.clear();
     } else {
       // add function info
       size_t vars = 0;
@@ -142,7 +144,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       // print
       printCounts("total");
       // compare to next time
-      lastMetricsPass = this;
+      lastCounts = counts;
     }
   }
 
@@ -170,20 +172,18 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       if (value == 0) continue;
       o << " " << left << setw(15) << key << ": " << setw(8)
         << value;
-      if (lastMetricsPass) {
-        if (lastMetricsPass->counts.count(key)) {
-          int before = lastMetricsPass->counts[key];
-          int after = value;
-          if (after - before) {
-            if (after > before) {
-              Colors::red(o);
-            } else {
-              Colors::green(o);
-            }
-            o << right << setw(8);
-            o << showpos << after - before << noshowpos;
-            Colors::normal(o);
+      if (lastCounts.count(key)) {
+        int before = lastCounts[key];
+        int after = value;
+        if (after - before) {
+          if (after > before) {
+            Colors::red(o);
+          } else {
+            Colors::green(o);
           }
+          o << right << setw(8);
+          o << showpos << after - before << noshowpos;
+          Colors::normal(o);
         }
       }
       o << "\n";
@@ -198,7 +198,5 @@ Pass *createMetricsPass() {
 Pass *createFunctionMetricsPass() {
   return new Metrics(true);
 }
-
-Metrics *Metrics::lastMetricsPass;
 
 } // namespace wasm
