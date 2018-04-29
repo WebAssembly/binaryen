@@ -27,6 +27,8 @@
 // TODO: global, inter-block gvn etc.
 //
 
+#include <algorithm>
+
 #include <wasm.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -157,12 +159,28 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     }
   }
 
-  Index getCanonicalIndex(Index index) {
-    auto iter = copiedLocals.find(index);
-    if (iter != copiedLocals.end()) {
-      return iter->second;
-    } else {
-      return index;
+  Index getCanonicalIndex(Index index, bool processingCycle = false) {
+    // Look through multiple copies. There may be a cycle!
+    std::unordered_set<Index> seen;
+    seen.insert(index);
+    while (1) {
+      auto iter = copiedLocals.find(index);
+      if (iter != copiedLocals.end()) {
+        index = iter->second;
+        if (seen.count(index) > 0) {
+          // We found a cycle.
+          if (processingCycle) {
+            // Everything in `seen` is part of the cycle. Pick the lowest.
+            return *std::min_element(seen.begin(), seen.end());
+          } else {
+            // Process the cycle
+            return getCanonicalIndex(index, true /* processingCycle */);
+          }
+        }
+        seen.insert(index);
+      } else {
+        return index;
+      }
     }
   }
 
