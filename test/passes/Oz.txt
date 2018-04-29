@@ -29,7 +29,9 @@
      (get_local $2)
     )
     (i32.xor
-     (i32.const 74)
+     (tee_local $2
+      (i32.const 74)
+     )
      (i32.const -1)
     )
    )
