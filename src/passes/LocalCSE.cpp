@@ -66,7 +66,12 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // This lets expression comparison work well without teaching it about
   // which locals are equal.
   // localEquivalences[an index] = the set of indexes the index is equal to
-  std::unordered_map<Index, std::shared_ptr<std::unordered_set<Index>>> localEquivalences;
+  struct EquivalentSet {
+    std::unordered_set<Index> set; // the set of indexes that are equivalent
+    Index preferred; // the preferred one - copy all to this
+    EquivalentSet(Index preferred) : preferred(preferred) {}
+  };
+  std::unordered_map<Index, std::shared_ptr<EquivalentSet>> localEquivalences;
 
   bool anotherPass;
 
@@ -167,33 +172,51 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void resetLocal(Index index) {
     auto iter = localEquivalences.find(index);
     if (iter != localEquivalences.end()) {
-      auto& others = iter->second;
-      others->erase(index);
+      auto& eqSet = iter->second;
+      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
+      if (eqSet->set.size() > 1) {
+        // We are not the last item, fix things up
+        eqSet->set.erase(index);
+        if (!eqSet->set.empty()) {
+          if (eqSet->preferred == index) {
+            // We need to pick a new preferred index. Pick the lowest.
+            eqSet->preferred = *std::min_element(eqSet->set.begin(), eqSet->set.end());
+          }
+        }
+      } else {
+        // We are the last item, just let it all go away.
+        assert(*(eqSet->set.begin()) == eqSet->preferred); // if one item, it is us
+      }
       localEquivalences.erase(iter);
     }
   }
 
-  void addEquivalence(Index justReset, Index other) {
-    auto iter = localEquivalences.find(other);
+  void addEquivalence(Index justReset, Index copied) {
+    auto iter = localEquivalences.find(copied);
     if (iter != localEquivalences.end()) {
-      auto& others = iter->second;
-      others->insert(justReset);
-      localEquivalences[justReset] = others;
+      auto& eqSet = iter->second;
+      if (eqSet->set.empty()) {
+        eqSet->preferred = justReset;
+      }
+      eqSet->set.insert(justReset);
+      localEquivalences[justReset] = eqSet;
     } else {
-      auto both = std::make_shared<std::unordered_set<Index>>();
-      both->insert(justReset);
-      both->insert(other);
-      localEquivalences[justReset] = both;
-      localEquivalences[other] = both;
+      // Note how we set the preferred index to the copied one.
+      auto eqSet = std::make_shared<EquivalentSet>(copied);
+      eqSet->set.insert(justReset);
+      eqSet->set.insert(copied);
+      localEquivalences[justReset] = eqSet;
+      localEquivalences[copied] = eqSet;
     }
   }
 
   Index getCanonical(Index index) {
     auto iter = localEquivalences.find(index);
     if (iter != localEquivalences.end()) {
-      auto& all = iter->second;
-      // canonicalize to the smallest index
-      return *std::min_element(all->begin(), all->end());
+      auto& eqSet = iter->second;
+      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
+      assert(eqSet->set.size() == 1 ? *(eqSet->set.begin()) == eqSet->preferred : true); // if one item, it is us
+      return eqSet->preferred;
     }
     return index;
   }
