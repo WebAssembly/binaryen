@@ -1,4 +1,3 @@
-phi opt!
 (module
  (type $0 (func))
  (export "one" (func $0))

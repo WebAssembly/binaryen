@@ -96,9 +96,9 @@ struct Trace {
     // Also pull in conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
-    auto iter = builder.nodeParentMap.find(node);
+    auto iter = builder.nodeParentMap.find(toInfer);
     if (iter != builder.nodeParentMap.end()) {
-      addPath(iter->second);
+      addPath(toInfer, iter->second);
     }
   }
 
@@ -174,10 +174,10 @@ struct Trace {
     return node;
   }
 
-  void addPath(Expression* curr) {
+  void addPath(Node* node, Expression* curr) {
     // We track curr and parent, which are always in the state of parent
     // being the parent of curr.
-    auto* parent = builder.expressionParentMap.at(set);
+    auto* parent = builder.expressionParentMap.at(curr);
     while (parent) {
       auto iter = builder.expressionConditionMap.find(parent);
       if (iter != builder.expressionConditionMap.end()) {
@@ -248,7 +248,7 @@ struct Printer {
     }
 
     // Finish up
-    std::cout << "infer %" << indexing[builder.setNodeMap[trace.set]] << "\n\n";
+    std::cout << "infer %" << indexing[trace.toInfer] << "\n\n";
   }
 
   void print(Node* node) {
