@@ -204,18 +204,36 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
+      auto* set = (*found->second.item)->template cast<SetLocal>(); // the set we may be sinking
+      bool oneUse = firstCycle || getCounter.num[curr->index] == 1;
+      auto* get = set->value->template dynCast<GetLocal>(); // the set's value may be a get (i.e., the set is a copy)
+      // if nesting is not allowed, and this might cause nesting, check if the sink would cause such a thing
       if (!allowNesting) {
-        // nesting is not allowed, check if the sink would cause such a thing
-        assert(expressionStack.size() >= 2);
-        assert(expressionStack[expressionStack.size() - 1] == curr);
-        auto* parent = expressionStack[expressionStack.size() - 2];
-        if (!parent->template is<SetLocal>()) {
-          return;
+        // a get is always ok to sink
+        if (!get) {
+          assert(expressionStack.size() >= 2);
+          assert(expressionStack[expressionStack.size() - 1] == curr);
+          auto* parent = expressionStack[expressionStack.size() - 2];
+          bool parentIsSet = parent->template is<SetLocal>();
+          // if the parent of this get is a set, we can sink into the set's value,
+          // it would not be nested.
+          if (!parentIsSet) {
+            return;
+          }
         }
       }
+      // we can optimize here
+      if (!allowNesting && get && !oneUse) {
+        // if we can't nest 's a copy with multiple uses, then we can't create
+        // a tee, and we can't nop the origin, but we can at least switch to
+        // the copied index, which may make the origin unneeded eventually.
+        curr->index = get->index;
+        anotherCycle = true;
+        return;
+      }
       // sink it, and nop the origin
-      auto* set = (*found->second.item)->template cast<SetLocal>();
-      if (firstCycle || getCounter.num[curr->index] == 1) {
+      if (oneUse) {
+        // with just one use, we can sink just the value
         this->replaceCurrent(set->value);
       } else {
         this->replaceCurrent(set);

@@ -93,16 +93,16 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // TODO: we can expressionify and run full normal opts on that,
     //       then copy the result if it's smaller.
     if (DataFlow::allInputsIdentical(node)) {
+      // Note we don't need to check for effects when replacing, as in
+      // flattened IR expression children are get_locals or consts.
       if (node->isExpr()) {
 //        auto* expr = node->expr;
 //        if (auto* binary = expr->dynCast<Binary>()) {
-          // Note we don't need to check for effects here, as in flattened IR
-          // expression children are get_locals or consts.
-//          binary->right = ExpressionManipulator::copy(binary->left, *getModule());
-  //        return true;
+//          binary->right = make a another use of left
+// ExpressionManipulator::binary->left
+//          return true;
 //        }
       } else if (node->isPhi()) {
-std::cout << "phi opt!\n";
         return replaceWithValue(node, node->getValue(1));
       }
     }
