@@ -274,14 +274,14 @@
     (get_local $5)
    )
    (set_local $6
-    (get_local $var$2)
+    (get_local $5)
    )
    (set_local $7
-    (get_local $var$2)
+    (get_local $5)
    )
    (set_local $8
     (i32.load
-     (get_local $var$2)
+     (get_local $5)
     )
    )
    (set_local $var$2
@@ -317,14 +317,14 @@
     (get_local $5)
    )
    (set_local $14
-    (get_local $var$1)
+    (get_local $5)
    )
    (set_local $15
-    (get_local $var$1)
+    (get_local $5)
    )
    (set_local $16
     (i32.load
-     (get_local $var$1)
+     (get_local $5)
     )
    )
    (set_local $17
@@ -343,7 +343,7 @@
     )
    )
    (i32.store
-    (get_local $var$1)
+    (get_local $5)
     (get_local $19)
    )
    (nop)
@@ -375,31 +375,31 @@
    )
    (nop)
    (set_local $3
-    (get_local $x)
+    (get_local $y)
    )
    (set_local $y
-    (get_local $x)
+    (get_local $y)
    )
    (nop)
    (set_local $4
-    (get_local $x)
+    (get_local $y)
    )
    (set_local $x
-    (get_local $x)
+    (get_local $y)
    )
    (nop)
    (set_local $5
-    (get_local $x)
+    (get_local $y)
    )
    (set_local $y
-    (get_local $x)
+    (get_local $y)
    )
    (nop)
    (set_local $6
-    (get_local $x)
+    (get_local $y)
    )
    (return
-    (get_local $x)
+    (get_local $y)
    )
    (unreachable)
   )
@@ -503,24 +503,24 @@
    )
    (nop)
    (set_local $5
-    (get_local $y)
+    (get_local $z)
    )
    (set_local $z
-    (get_local $y)
+    (get_local $z)
    )
    (nop)
    (set_local $6
-    (get_local $y)
+    (get_local $z)
    )
    (set_local $y
-    (get_local $y)
+    (get_local $z)
    )
    (nop)
    (set_local $7
-    (get_local $y)
+    (get_local $z)
    )
    (set_local $z
-    (get_local $y)
+    (get_local $z)
    )
    (nop)
    (set_local $8
