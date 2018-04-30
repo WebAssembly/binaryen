@@ -987,4 +987,95 @@
    )
    (unreachable)
   )
+  (func $if-one-side-unreachable
+   (local $x i32)
+   (block $out
+    (if
+     (i32.const 1)
+     (br $out)
+     (set_local $x
+      (i32.const 2)
+     )
+    )
+    (if
+     (i32.const 3)
+     (set_local $x
+      (i32.const 4)
+     )
+     (br $out)
+    )
+    (if
+     (i32.const 5)
+     (br $out)
+     (br $out)
+    )
+   )
+  )
+  (func $if-one-side-unreachable-blocks
+   (local $x i32)
+   (local $y i32)
+   (block $out
+    (if
+     (i32.const 1)
+     (block
+      (set_local $x
+       (i32.const 2)
+      )
+      (set_local $y
+       (i32.const 3)
+      )
+      (br $out)
+     )
+     (block
+      (set_local $x
+       (i32.const 4)
+      )
+      (set_local $y
+       (i32.const 5)
+      )
+     )
+    )
+    (if
+     (i32.const 6)
+     (block
+      (set_local $x
+       (i32.const 7)
+      )
+      (set_local $y
+       (i32.const 8)
+      )
+     )
+     (block
+      (set_local $x
+       (i32.const 9)
+      )
+      (set_local $y
+       (i32.const 10)
+      )
+      (br $out)
+     )
+    )
+    (if
+     (i32.const 11)
+     (block
+      (set_local $x
+       (i32.const 12)
+      )
+      (set_local $y
+       (i32.const 13)
+      )
+      (br $out)
+     )
+     (block
+      (set_local $x
+       (i32.const 14)
+      )
+      (set_local $y
+       (i32.const 15)
+      )
+      (br $out)
+     )
+    )
+   )
+  )
 )
