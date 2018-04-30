@@ -2,15 +2,15 @@ total
  [funcs]        : 9       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 145     
+ [total]        : 137     
  [vars]         : 5       
- binary         : 14      
+ binary         : 12      
  block          : 9       
  break          : 3       
  call           : 3       
  call_import    : 1       
  call_indirect  : 4       
- const          : 50      
+ const          : 48      
  drop           : 3       
  get_global     : 1       
  get_local      : 20      
@@ -18,7 +18,7 @@ total
  load           : 16      
  loop           : 1       
  set_global     : 1       
- set_local      : 11      
+ set_local      : 7       
  store          : 5       
 (module
  (type $0 (func (param i32 i32) (result i32)))
@@ -141,17 +141,7 @@ total
   )
   (block $label$2
    (if
-    (tee_local $0
-     (i32.sub
-      (tee_local $0
-       (i32.add
-        (get_local $0)
-        (i32.const 10888)
-       )
-      )
-      (i32.const 10888)
-     )
-    )
+    (get_local $0)
     (br_if $label$2
      (call_indirect (type $1)
       (get_local $1)
@@ -227,12 +217,10 @@ total
     (i32.const 1)
     (i32.add
      (i32.load offset=36
-      (tee_local $0
-       (i32.load
-        (i32.add
-         (get_local $0)
-         (i32.const 32)
-        )
+      (i32.load
+       (i32.add
+        (get_local $0)
+        (i32.const 32)
        )
       )
      )
@@ -250,10 +238,8 @@ total
     (get_local $2)
     (i32.add
      (i32.load offset=36
-      (tee_local $0
-       (i32.load offset=32
-        (get_local $0)
-       )
+      (i32.load offset=32
+       (get_local $0)
       )
      )
      (i32.const 8)
@@ -267,15 +253,15 @@ total
  [funcs]        : 9       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 136           -9
+ [total]        : 136           -1
  [vars]         : 4             -1
- binary         : 12            -2
+ binary         : 12      
  block          : 9       
  break          : 3       
  call           : 3       
  call_import    : 1       
  call_indirect  : 4       
- const          : 48            -2
+ const          : 48      
  drop           : 3       
  get_global     : 1       
  get_local      : 20      
@@ -283,7 +269,7 @@ total
  load           : 16      
  loop           : 1       
  set_global     : 1       
- set_local      : 6             -5
+ set_local      : 6             -1
  store          : 5       
 (module
  (type $0 (func (param i32 i32) (result i32)))
