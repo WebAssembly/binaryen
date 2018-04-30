@@ -140,4 +140,41 @@
   (call $one)
  )
 )
-
+;; make sure to dce, as we may be combining unreachable code with others
+(module
+ (type $0 (func))
+ (type $1 (func (param i32 i32) (result i32)))
+ (table 89 89 anyfunc)
+ (memory $0 17)
+ (start $1)
+ (func $0 (; 0 ;) (type $1) (param $0 i32) (param $1 i32) (result i32)
+  (i32.store
+   (i32.const 4)
+   (tee_local $0
+    (i32.const 0)
+   )
+  )
+  (i32.store
+   (i32.add
+    (get_local $0)
+    (i32.const 56)
+   )
+   (i32.const 0)
+  )
+  (i64.store
+   (i32.const 49)
+   (i64.load
+    (i32.const 24)
+   )
+  )
+  (unreachable)
+ )
+ (func $1 (; 1 ;) (type $0)
+  (drop
+   (call $0
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+)
