@@ -239,7 +239,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
-      "--local-cse --vacuum",
       "--memory-packing",
       "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
