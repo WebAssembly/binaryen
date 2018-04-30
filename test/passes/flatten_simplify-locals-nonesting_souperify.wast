@@ -864,5 +864,47 @@
     )
    )
   )
+  (func $loop-unreachable
+   (local $var$0 i32)
+   (local $var$1 f64)
+   (loop $label$1
+    (set_local $var$1
+     (block $label$2 (result f64)
+      (block $label$3
+       (set_local $var$0
+        (block $label$4 (result i32)
+         (if
+          (i32.const 1337)
+          (unreachable)
+         )
+         (get_local $var$0)
+        )
+       )
+       (loop $label$6
+        (br_if $label$6
+         (block $label$7 (result i32)
+          (drop
+           (br_if $label$7
+            (get_local $var$0)
+            (i32.const 65535)
+           )
+          )
+          (drop
+           (br_if $label$7
+            (get_local $var$0)
+            (i32.const 0)
+           )
+          )
+          (unreachable)
+         )
+        )
+       )
+      )
+      (get_local $var$1)
+     )
+    )
+    (br $label$1)
+   )
+  )
 )
 

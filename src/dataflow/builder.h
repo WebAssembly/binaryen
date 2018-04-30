@@ -110,6 +110,7 @@ struct Builder : public Visitor<Builder, Node*> {
     // Set up initial local state IR.
     setInReachable();
     for (Index i = 0; i < numLocals; i++) {
+      if (!isRelevantType(func->getLocalType(i))) continue;
       Node* node;
       auto type = func->getLocalType(i);
       if (func->isParam(i)) {
@@ -206,7 +207,9 @@ struct Builder : public Visitor<Builder, Node*> {
       if (iter != breakStates.end()) {
         auto& states = iter->second;
         // Add the state flowing out
-        states.push_back(locals);
+        if (!isInUnreachable()) {
+          states.push_back(locals);
+        }
         mergeBlock(states, locals);
       }
     }
@@ -252,6 +255,9 @@ struct Builder : public Visitor<Builder, Node*> {
     // can replace the Var with the fixed value.
     // TODO: perhaps some more general uses of DataFlow will want loop phis?
     // TODO: optimize stuff here
+    if (isInUnreachable()) {
+      return &bad; // none of this matters
+    }
     if (!curr->name.is()) {
       visit(curr->body);
       return &bad; // no phis are possible
@@ -271,6 +277,7 @@ struct Builder : public Visitor<Builder, Node*> {
     auto& breaks = breakStates[curr->name];
     // Phis are possible, check for them.
     for (Index i = 0; i < numLocals; i++) {
+      if (!isRelevantType(func->getLocalType(i))) continue;
       bool needPhi = false;
       // We replaced the proper value with a Var. If it's still that
       // Var - or it's the original proper value, which can happen with
@@ -278,6 +285,7 @@ struct Builder : public Visitor<Builder, Node*> {
       auto* var = vars[i];
       auto* proper = previous[i];
       for (auto& other : breaks) {
+        assert(!isInUnreachable(other));
         auto& curr = *(other[i]);
         if (curr != *var && curr != *proper) {
           // A phi would be necessary here.
@@ -311,20 +319,24 @@ struct Builder : public Visitor<Builder, Node*> {
     return &bad;
   }
   Node* visitBreak(Break* curr) {
-    breakStates[curr->name].push_back(locals);
+    if (!isInUnreachable()) {
+      breakStates[curr->name].push_back(locals);
+    }
     if (!curr->condition) {
       setInUnreachable();
     }
     return &bad;
   }
   Node* visitSwitch(Switch* curr) {
-    std::unordered_set<Name> targets;
-    for (auto target : curr->targets) {
-      targets.insert(target);
-    }
-    targets.insert(curr->default_);
-    for (auto target : targets) {
-      breakStates[target].push_back(locals);
+    if (!isInUnreachable()) {
+      std::unordered_set<Name> targets;
+      for (auto target : curr->targets) {
+        targets.insert(target);
+      }
+      targets.insert(curr->default_);
+      for (auto target : targets) {
+        breakStates[target].push_back(locals);
+      }
     }
     setInUnreachable();
     return &bad;
@@ -564,8 +576,12 @@ struct Builder : public Visitor<Builder, Node*> {
     }
     // Finally, merge the state with that block. TODO optimize
     std::vector<FlowState> states;
-    states.emplace_back(aState, ifTrue);
-    states.emplace_back(bState, ifFalse);
+    if (!isInUnreachable(aState)) {
+      states.emplace_back(aState, ifTrue);
+    }
+    if (!isInUnreachable(bState)) {
+      states.emplace_back(bState, ifFalse);
+    }
     merge(states, out);
   }
 
@@ -581,11 +597,10 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // Merge local state for multiple control flow paths, creating phis as needed.
   void merge(std::vector<FlowState>& states, Locals& out) {
-    Index numLocals = func->getNumLocals();
-    // Ignore unreachable states; we don't need to merge them.
-    states.erase(std::remove_if(states.begin(), states.end(), [&](const FlowState& curr) {
-      return isInUnreachable(curr.locals);
-    }), states.end());
+    // We should only receive reachable states.
+    for (auto& state : states) {
+      assert(!isInUnreachable(state.locals));
+    }
     Index numStates = states.size();
     if (numStates == 0) {
       // We were unreachable, and still are.
@@ -600,6 +615,7 @@ struct Builder : public Visitor<Builder, Node*> {
       return;
     }
     // We create a block if we need one.
+    Index numLocals = func->getNumLocals();
     Node* block = nullptr;
     for (Index i = 0; i < numLocals; i++) {
       if (!isRelevantType(func->getLocalType(i))) continue;
