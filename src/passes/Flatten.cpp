@@ -257,14 +257,8 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
     curr = getCurrent(); // we may have replaced it
     // we have changed children
     ReFinalizeNode().visit(curr);
-    // handle side effects and control flow, things we need to be
-    // in the prelude. note that we must handle anything here, not just
-    // side effects, as a sibling after us may have side effect for us,
-    // and thus we need to move in anticipation of that (e.g., we are
-    // a get, and a later sibling is a tee - if just the tee moves,
-    // that is bade) TODO optimize
-    if (isControlFlowStructure(curr) || EffectAnalyzer(getPassOptions(), curr).hasAnything()) {
-      // we need to move the side effects to the prelude
+    // move everything to the prelude, if we need to: anything but constants
+    if (!curr->is<Const>()) {
       if (curr->type == unreachable) {
         ourPreludes.push_back(curr);
         replaceCurrent(builder.makeUnreachable());
