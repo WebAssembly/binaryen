@@ -602,6 +602,7 @@ struct Builder : public Visitor<Builder, Node*> {
     // We create a block if we need one.
     Node* block = nullptr;
     for (Index i = 0; i < numLocals; i++) {
+      if (!isRelevantType(func->getLocalType(i))) continue;
       // Process the inputs. If any is bad, the phi is bad.
       bool bad = false;
       for (auto& state : states) {

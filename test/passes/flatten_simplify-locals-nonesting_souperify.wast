@@ -840,5 +840,29 @@
     )
     (return (select (get_local $x) (get_local $y) (get_local $z)))
   )
+  (func $bad-phi-type (param $var$0 i64) (param $var$1 i64) (param $var$2 i32) (param $var$3 f32)
+   (if
+    (get_local $var$2)
+    (drop
+     (loop $label$2 (result f64)
+      (if
+       (block $label$3 (result i32)
+        (if
+         (i32.const 0)
+         (unreachable)
+        )
+        (nop)
+        (i32.const 0)
+       )
+       (unreachable)
+      )
+      (br_if $label$2
+       (get_local $var$2)
+      )
+      (f64.const 0)
+     )
+    )
+   )
+  )
 )
 
