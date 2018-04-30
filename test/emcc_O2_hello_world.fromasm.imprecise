@@ -8384,27 +8384,24 @@
         (br $label$break$L1)
        )
       )
-      (set_local $1
-       (if (result i32)
-        (i32.and
-         (tee_local $4
-          (tee_local $0
-           (i32.add
-            (get_local $0)
-            (i32.const 1)
-           )
+      (br_if $while-in
+       (i32.and
+        (tee_local $4
+         (tee_local $0
+          (i32.add
+           (get_local $0)
+           (i32.const 1)
           )
          )
-         (i32.const 3)
         )
-        (br $while-in)
-        (block (result i32)
-         (set_local $2
-          (i32.const 4)
-         )
-         (get_local $0)
-        )
+        (i32.const 3)
        )
+      )
+      (set_local $2
+       (i32.const 4)
+      )
+      (set_local $1
+       (get_local $0)
       )
      )
     )

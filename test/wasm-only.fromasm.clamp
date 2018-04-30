@@ -749,10 +749,11 @@
       )
      )
     )
-    (set_local $0
-     (if (result i32)
+    (block
+     (br_if $__rjti$2
       (get_local $0)
-      (br $__rjti$2)
+     )
+     (set_local $0
       (i32.const 0)
      )
     )
@@ -866,17 +867,16 @@
         (i32.const 1)
        )
       )
-      (set_local $0
-       (if (result i32)
-        (tee_local $0
-         (i32.add
-          (get_local $0)
-          (i32.const -1)
-         )
+      (br_if $while-in5
+       (tee_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const -1)
         )
-        (br $while-in5)
-        (i32.const 0)
        )
+      )
+      (set_local $0
+       (i32.const 0)
       )
      )
     )
