@@ -694,6 +694,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 if (flipCondition) {
                   br->condition = builder.makeUnary(EqZInt32, br->condition);
                 }
+                br->finalize();
                 curr->value = two;
                 replaceCurrent(
                   builder.makeSequence(
