@@ -1441,5 +1441,32 @@
     )
     (return (i32.const 3))
   )
+  (func $undo-if-return (param $p i32) (result i32)
+    (local $x i32)
+    (block $out
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (br $out)
+          (i32.const 1)
+        )
+      )
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (i32.const 2)
+          (br $out)
+        )
+      )
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (br $out)
+          (br $out)
+        )
+      )
+    )
+    (get_local $p)
+  )
 )
 

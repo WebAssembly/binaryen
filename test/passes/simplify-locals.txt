@@ -1073,4 +1073,111 @@
   )
   (unreachable)
  )
+ (func $if-one-side-unreachable (; 10 ;) (type $FUNCSIG$v)
+  (local $x i32)
+  (block $out
+   (drop
+    (if (result i32)
+     (i32.const 1)
+     (block
+      (br $out)
+      (nop)
+     )
+     (block (result i32)
+      (nop)
+      (i32.const 2)
+     )
+    )
+   )
+   (drop
+    (if (result i32)
+     (i32.const 3)
+     (block (result i32)
+      (nop)
+      (i32.const 4)
+     )
+     (block
+      (br $out)
+      (nop)
+     )
+    )
+   )
+   (if
+    (i32.const 5)
+    (br $out)
+    (br $out)
+   )
+  )
+ )
+ (func $if-one-side-unreachable-blocks (; 11 ;) (type $FUNCSIG$v)
+  (local $x i32)
+  (local $y i32)
+  (block $out
+   (drop
+    (if (result i32)
+     (i32.const 1)
+     (block $block
+      (drop
+       (i32.const 2)
+      )
+      (drop
+       (i32.const 3)
+      )
+      (br $out)
+      (nop)
+     )
+     (block $block2 (result i32)
+      (nop)
+      (drop
+       (i32.const 5)
+      )
+      (i32.const 4)
+     )
+    )
+   )
+   (drop
+    (if (result i32)
+     (i32.const 6)
+     (block $block4 (result i32)
+      (nop)
+      (drop
+       (i32.const 8)
+      )
+      (i32.const 7)
+     )
+     (block $block5
+      (drop
+       (i32.const 9)
+      )
+      (drop
+       (i32.const 10)
+      )
+      (br $out)
+      (nop)
+     )
+    )
+   )
+   (if
+    (i32.const 11)
+    (block $block7
+     (drop
+      (i32.const 12)
+     )
+     (drop
+      (i32.const 13)
+     )
+     (br $out)
+    )
+    (block $block8
+     (drop
+      (i32.const 14)
+     )
+     (drop
+      (i32.const 15)
+     )
+     (br $out)
+    )
+   )
+  )
+ )
 )
