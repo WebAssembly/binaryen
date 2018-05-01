@@ -1097,4 +1097,17 @@
     )
     (get_local $x)
   )
+  (func $loop-modified-during-main-pass-be-careful-fuzz (result i32)
+   (local $0 i32)
+   (if
+    (i32.const 0)
+    (set_local $0
+     (i32.const 0)
+    )
+    (loop $label$4
+     (br $label$4)
+    )
+   )
+   (get_local $0)
+  )
 )
