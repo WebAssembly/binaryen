@@ -201,6 +201,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
+  void visitLoop(Loop* curr) {
+    if (allowStructure) {
+      loops.push_back(this->getCurrentPointer());
+    }
+  }
+
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
@@ -335,6 +341,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   std::vector<Block*> blocksToEnlarge;
   std::vector<If*> ifsToEnlarge;
+  std::vector<Expression**> loops;
 
   void optimizeBlockReturn(Block* block) {
     if (!block->name.is() || unoptimizableBlocks.count(block->name) > 0) {
@@ -602,6 +609,25 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         ifsToEnlarge.clear();
         anotherCycle = true;
       }
+      // handle loops (we can't modify set_locals in the main pass, as they are
+      // being tracked)
+      for (auto* currp : loops) {
+        auto* curr = (*currp)->cast<Loop>();
+        break;
+        // Optimizing a loop return value is trivial: just see if it contains
+        // a set_local, and pull that out.
+        if (auto* set = curr->body->template dynCast<SetLocal>()) {
+          if (isConcreteType(set->value->type)) {
+            Builder builder(*this->getModule());
+            curr->body = set->value;
+            set->value = curr;
+            curr->finalize(curr->body->type);
+            this->replaceCurrent(set);
+            anotherCycle = true;
+          }
+        }
+      }
+      loops.clear();
       // clean up
       sinkables.clear();
       blockBreaks.clear();
