@@ -192,7 +192,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
 static void dumpWast(Name name, Module* wasm) {
   // write out the wast
   static int counter = 0;
-  auto fullName = std::string("byn-") + std::to_string(counter++) + "-" + name.str + ".wasm";
+  std::string numstr = std::to_string(counter++);
+  while (numstr.size() < 3) {
+    numstr = '0' + numstr;
+  }
+  auto fullName = std::string("byn-") + numstr + "-" + name.str + ".wasm";
   Colors::disable();
   ModuleWriter writer;
   writer.setBinary(false); // TODO: add an option for binary
