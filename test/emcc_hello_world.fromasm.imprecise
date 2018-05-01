@@ -5242,8 +5242,8 @@
                      (get_local $13)
                     )
                    )
-                   (loop $while-in90
-                    (set_local $9
+                   (set_local $9
+                    (loop $while-in90 (result i32)
                      (block $while-out89 (result i32)
                       (if
                        (i32.le_u

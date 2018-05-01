@@ -753,8 +753,9 @@
   )
  )
  (func $no-out-of-label (; 13 ;) (type $8) (param $x i32) (param $y i32)
-  (loop $moar
-   (set_local $x
+  (nop)
+  (set_local $x
+   (loop $moar (result i32)
     (block $block (result i32)
      (br_if $moar
       (get_local $x)
@@ -762,9 +763,6 @@
      (i32.const 0)
     )
    )
-  )
-  (drop
-   (get_local $x)
   )
   (block $moar18
    (set_local $y
@@ -782,8 +780,9 @@
  )
  (func $freetype-cd (; 14 ;) (type $5) (param $a i32) (result i32)
   (local $e i32)
-  (loop $while-in$1
-   (set_local $a
+  (nop)
+  (tee_local $a
+   (loop $while-in$1 (result i32)
     (block $while-out$0 (result i32)
      (set_local $e
       (get_local $a)
@@ -805,7 +804,6 @@
     )
    )
   )
-  (get_local $a)
  )
  (func $drop-if-value (; 15 ;) (type $9) (param $x i32) (param $y i32) (param $z i32) (result i32)
   (local $temp i32)
@@ -1176,6 +1174,25 @@
       (i32.const 15)
      )
      (br $out)
+    )
+   )
+  )
+ )
+ (func $loop-value (; 12 ;) (type $5) (param $x i32) (result i32)
+  (loop $loopy
+   (unreachable)
+  )
+  (nop)
+  (loop $loopy9 (result i32)
+   (i32.const 1)
+  )
+ )
+ (func $loop-loop-loopy-value (; 13 ;) (type $5) (param $x i32) (result i32)
+  (nop)
+  (loop $loopy1 (result i32)
+   (loop $loopy2 (result i32)
+    (loop $loopy3 (result i32)
+     (i32.const 1)
     )
    )
   )
