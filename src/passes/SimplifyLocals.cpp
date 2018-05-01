@@ -618,14 +618,13 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       if (!anotherCycle) {
         for (auto* currp : loops) {
           auto* curr = (*currp)->template cast<Loop>();
-          if (canUseLoopReturnValue(curr)) {
-            auto* set = curr->body->template cast<SetLocal>();
-            curr->body = set->value;
-            set->value = curr;
-            curr->finalize(curr->body->type);
-            *currp = set;
-            anotherCycle = true;
-          }
+          assert(canUseLoopReturnValue(curr));
+          auto* set = curr->body->template cast<SetLocal>();
+          curr->body = set->value;
+          set->value = curr;
+          curr->finalize(curr->body->type);
+          *currp = set;
+          anotherCycle = true;
         }
         loops.clear();
       }
