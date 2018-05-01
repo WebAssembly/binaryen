@@ -612,13 +612,12 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       // handle loops (we can't modify set_locals in the main pass, as they are
       // being tracked)
       for (auto* currp : loops) {
-        auto* curr = (*currp)->cast<Loop>();
+        auto* curr = (*currp)->template cast<Loop>();
         break;
         // Optimizing a loop return value is trivial: just see if it contains
         // a set_local, and pull that out.
         if (auto* set = curr->body->template dynCast<SetLocal>()) {
           if (isConcreteType(set->value->type)) {
-            Builder builder(*this->getModule());
             curr->body = set->value;
             set->value = curr;
             curr->finalize(curr->body->type);
