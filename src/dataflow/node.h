@@ -79,7 +79,8 @@ struct Node {
     wasm::Type wasmType;
     // For Expr
     Expression* expr;
-    // For Cond
+    // For Phi and Cond (the local index for phi, the block
+    // index for cond)
     Index index;
   };
 
@@ -105,9 +106,10 @@ struct Node {
     ret->expr = expr;
     return ret;
   }
-  static Node* makePhi(Node* block) {
+  static Node* makePhi(Node* block, Index index) {
     Node* ret = new Node(Phi);
     ret->addValue(block);
+    ret->index = index;
     return ret;
   }
   static Node* makeCond(Node* block, Index index, Node* node) {

@@ -647,7 +647,7 @@ struct Builder : public Visitor<Builder, Node*> {
               block->addValue(condition);
             }
           }
-          auto* phi = addNode(Node::makePhi(block));
+          auto* phi = addNode(Node::makePhi(block, i));
           for (auto& state : states) {
             phi->addValue(expandFromI1(state.locals[i]));
           }
