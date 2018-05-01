@@ -3427,6 +3427,58 @@
       )
     )
   )
+  (func $select-on-const (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 2)
+        (get_local $x)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (select
+        (i32.const 3)
+        (get_local $x)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (select
+        (i32.const 4)
+        (tee_local $x
+          (i32.const 5)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (select
+        (tee_local $x
+          (i32.const 6)
+        )
+        (i32.const 7)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (select
+        (i32.const 4)
+        (tee_local $x
+          (i32.const 5)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (select
+        (tee_local $x
+          (i32.const 6)
+        )
+        (i32.const 7)
+        (i32.const 1)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

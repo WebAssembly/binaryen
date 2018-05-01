@@ -2869,6 +2869,43 @@
    (get_local $x)
   )
  )
+ (func $select-on-const (; 70 ;) (type $4) (param $x i32) (param $y i32)
+  (drop
+   (get_local $x)
+  )
+  (drop
+   (i32.const 3)
+  )
+  (drop
+   (tee_local $x
+    (i32.const 5)
+   )
+  )
+  (drop
+   (block (result i32)
+    (drop
+     (tee_local $x
+      (i32.const 6)
+     )
+    )
+    (i32.const 7)
+   )
+  )
+  (drop
+   (select
+    (i32.const 4)
+    (tee_local $x
+     (i32.const 5)
+    )
+    (i32.const 1)
+   )
+  )
+  (drop
+   (tee_local $x
+    (i32.const 6)
+   )
+  )
+ )
 )
 (module
  (type $0 (func))
