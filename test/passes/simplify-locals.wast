@@ -1110,138 +1110,23 @@
    )
    (get_local $0)
   )
-
-
-
-/Dev/3-binaryen$ bin/wasm-dis w.wasm
-(module
- (type $0 (func (param i32 i32 i32) (result i32)))
- (type $1 (func (param i32) (result i32)))
- (type $2 (func (param i32)))
- (type $3 (func))
- (type $4 (func (result i32)))
- (type $5 (func (param i32 i32) (result i32)))
- (type $6 (func (param i32 i32)))
- (type $7 (func (param f64 i32) (result f64)))
- (type $8 (func (param f64) (result i32)))
- (type $9 (func (param i32 i32 i32 i32 i32) (result i32)))
- (type $10 (func (param i32 i32 i32)))
- (type $11 (func (param i32 i32 i32 i32 i32)))
- (type $12 (func (param i32 i32 i32 i32) (result i32)))
- (import "env" "STACKTOP" (global $gimport$0 i32))
- (import "env" "STACK_MAX" (global $gimport$1 i32))
- (import "env" "tempDoublePtr" (global $gimport$2 i32))
- (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table 18 18 anyfunc))
- (import "env" "tableBase" (global $gimport$5 i32))
- (global $global$0 (mut i32) (i32.const 0))
- (global $global$1 (mut i32) (i32.const 0))
- (global $global$2 (mut i32) (i32.const 1))
- (global $global$3 (mut i32) (i32.const 0))
- (global $global$4 (mut i32) (i32.const 0))
- (global $global$5 (mut i32) (i32.const 0))
- (func $0 (; 0 ;) (type $9) (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
-  (local $var$5 i32)
-  (local $var$6 i32)
-  (local $var$7 i32)
-  (set_local $var$6
-   (i32.const 0)
-  )
-  (nop)
-  (nop)
-  (nop)
-  (set_local $var$2
-   (i32.const 1)
-  )
-  (nop)
-  (nop)
-  (block $label$1
-   (loop $label$2
-    (block $label$3
-     (nop)
-     (set_local $var$4
-      (i32.const 0)
-     )
-     (block $label$4
-      (block $label$5
-       (loop $label$6
-        (block $label$7
-         (block $label$8
-          (block $label$9
-           (br_table $label$8 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$9 $label$7
-            (get_local $var$3)
-           )
-          )
-          (set_local $var$3
-           (get_local $var$4)
-          )
-          (br $label$5)
-         )
-         (unreachable)
-        )
-        (set_local $var$3
-         (i32.load8_s
-          (i32.const 0)
-         )
-        )
-        (unreachable)
-       )
-      )
-      (nop)
-     )
-     (nop)
-     (nop)
-     (nop)
+  (func $loop-later (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
+   (loop $label$1
+    (block $label$2
      (if
-      (i32.gt_u
-       (i32.add
-        (i32.load8_s
-         (get_local $var$4)
-        )
-        (i32.const -65)
-       )
-       (i32.const 57)
-      )
+      (i32.const 0)
       (block
-       (set_local $var$5
+       (set_local $var$0
         (i32.const -1)
        )
-       (br $label$3)
-      )
-     )
-     (set_local $var$4
-      (i32.const 0)
-     )
-     (if
-      (i32.const 1)
-      (block
-       (set_local $var$5
-        (i32.const -1)
-       )
-       (nop)
-      )
-      (block
-       (nop)
-       (nop)
-       (set_local $var$2
-        (get_local $var$4)
-       )
-       (nop)
        (br $label$2)
       )
      )
+     (set_local $var$0
+      (i32.const -1)
+     )
     )
    )
+   (i32.const 0)
   )
-  (set_global $global$0
-   (get_local $var$6)
-  )
-  (get_local $var$5)
- )
-)
-
-
-
-
-
 )

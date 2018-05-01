@@ -626,8 +626,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           *currp = set;
           anotherCycle = true;
         }
-        loops.clear();
       }
+      loops.clear();
       // clean up
       sinkables.clear();
       blockBreaks.clear();
