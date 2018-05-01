@@ -203,7 +203,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   void visitLoop(Loop* curr) {
     if (allowStructure) {
-      loops.push_back(this->getCurrentPointer());
+      if (canUseLoopReturnValue(curr)) {
+        loops.push_back(this->getCurrentPointer());
+      }
     }
   }
 
@@ -609,20 +611,20 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         ifsToEnlarge.clear();
         anotherCycle = true;
       }
-      // handle loops (we can't modify set_locals in the main pass, as they are
-      // being tracked)
-      for (auto* currp : loops) {
-        auto* curr = (*currp)->template cast<Loop>();
-        // Optimizing a loop return value is trivial: just see if it contains
-        // a set_local, and pull that out.
-        if (auto* set = curr->body->template dynCast<SetLocal>()) {
-          if (isConcreteType(set->value->type)) {
-            curr->body = set->value;
-            set->value = curr;
-            curr->finalize(curr->body->type);
-            *currp = set;
-            anotherCycle = true;
-          }
+      // handle loops. note that a lot happens in this pass, and we can't just modify
+      // set_locals when we see a loop - it might be tracked - and we can't also just
+      // assume our loop didn't move either (might be in a block now). So we do this
+      // when all other work is done - as loop return values are rare, that is fine.
+      if (!anotherCycle) {
+        for (auto* currp : loops) {
+          auto* curr = (*currp)->template cast<Loop>();
+          assert(canUseLoopReturnValue(curr));
+          auto* set = curr->body->template cast<SetLocal>();
+          curr->body = set->value;
+          set->value = curr;
+          curr->finalize(curr->body->type);
+          *currp = set;
+          anotherCycle = true;
         }
       }
       loops.clear();
@@ -644,6 +646,17 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     SetLocalRemover remover;
     remover.numGetLocals = &getCounter.num;
     remover.walkFunction(func);
+  }
+
+  bool canUseLoopReturnValue(Loop* curr) {
+    // Optimizing a loop return value is trivial: just see if it contains
+    // a set_local, and pull that out.
+    if (auto* set = curr->body->template dynCast<SetLocal>()) {
+      if (isConcreteType(set->value->type)) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 
