@@ -683,7 +683,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // TODO: handle a condition in the br? need to watch for side effects
         auto* iff = curr->value->dynCast<If>();
         if (!iff) return;
-        if (!isConcreteType(iff->type)) return;
+        if (!isConcreteType(iff->type) || !isConcreteType(iff->condition->type)) return;
         auto tryToOptimize = [&](Expression* one, Expression* two, bool flipCondition) {
           if (one->type == unreachable && two->type != unreachable) {
             if (auto* br = one->dynCast<Break>()) {
