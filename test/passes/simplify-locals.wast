@@ -1087,4 +1087,14 @@
     )
     (get_local $x)
   )
+  (func $loop-loop-loopy-value (param $x i32) (result i32)
+    (loop $loopy1
+      (loop $loopy2
+        (loop $loopy3
+          (set_local $x (i32.const 1))
+        )
+      )
+    )
+    (get_local $x)
+  )
 )

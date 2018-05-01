@@ -613,7 +613,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       // being tracked)
       for (auto* currp : loops) {
         auto* curr = (*currp)->template cast<Loop>();
-        break;
         // Optimizing a loop return value is trivial: just see if it contains
         // a set_local, and pull that out.
         if (auto* set = curr->body->template dynCast<SetLocal>()) {
@@ -621,7 +620,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             curr->body = set->value;
             set->value = curr;
             curr->finalize(curr->body->type);
-            this->replaceCurrent(set);
+            *currp = set;
             anotherCycle = true;
           }
         }
