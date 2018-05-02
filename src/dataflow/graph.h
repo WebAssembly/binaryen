@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -380,7 +381,12 @@ struct Graph : public Visitor<Graph, Node*> {
     // Set the current node in the local state.
     auto* node = visit(curr->value);
     locals[curr->index] = setNodeMap[curr] = node;
-    nodeParentMap[node] = curr;
+    // If we created a new node (and not just did a get of a set, which
+    // passes around an existing node), mark it's parent.
+    if (nodeParentMap.find(node) == nodeParentMap.end()) {
+      nodeParentMap[node] = curr;
+std::cout << "created a node " << node << " for this set: " << curr << '\n';
+    }
     return &bad;
   }
   Node* visitGetGlobal(GetGlobal* curr) {
@@ -693,6 +699,7 @@ struct Graph : public Visitor<Graph, Node*> {
   SetLocal* getSet(Node* node) {
     auto iter = nodeParentMap.find(node);
     if (iter == nodeParentMap.end()) return nullptr;
+std::cout << "this node " << node << " is for this set " << iter->second << '\n';
     return iter->second->dynCast<SetLocal>();
   }
 };
