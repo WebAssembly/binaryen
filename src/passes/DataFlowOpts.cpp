@@ -96,7 +96,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       // Note we don't need to check for effects when replacing, as in
       // flattened IR expression children are get_locals or consts.
       if (node->isPhi()) {
-        replaceAllUsesWith(node, node->getValue(1));
+        auto* value = node->getValue(1);
+        if (!value->isVar() && !value->isBad()) {
+          replaceAllUsesWith(node, value);
+        }
         return true;
       }
     }
@@ -138,6 +141,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
               } else if (index == 1) {
                 binary->right = makeUse(with);
               } else {
+std::cout << "p1\n";
                 WASM_UNREACHABLE();
               }
             }
@@ -150,10 +154,12 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
               } else if (index == 2) {
                 select->ifFalse = makeUse(with);
               } else {
+std::cout << "p2\n";
                 WASM_UNREACHABLE();
               }
             }
           } else {
+std::cout << "p3\n";
             WASM_UNREACHABLE();
           }
           break;
@@ -163,7 +169,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           // FIXME: don't we need to forward?
           break;
         }
-        default: WASM_UNREACHABLE();
+        default:
+std::cout << "p4\n";
+ WASM_UNREACHABLE();
       }
     }
     // No one is a user of this node after we replaced all the uses.
@@ -190,6 +198,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       auto index = set->index;
       return builder.makeGetLocal(index, getFunction()->getLocalType(index));
     } else {
+std::cout << "p5\n";
+dump(node, std::cout);
       WASM_UNREACHABLE(); // TODO
     }
   }

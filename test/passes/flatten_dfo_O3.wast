@@ -64,5 +64,57 @@
   (nop)
   (i32.const 0)
  )
+ (func "use-var" (param $var$0 i64) (param $var$1 i32) (result f64)
+  (local $var$2 i32)
+  (block $label$1
+   (br_table $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1
+    (i32.wrap/i64
+     (if (result i64)
+      (i32.const 0)
+      (i64.const 1)
+      (if (result i64)
+       (if (result i32)
+        (i32.const 0)
+        (unreachable)
+        (block $label$6 (result i32)
+         (block $label$7
+          (loop $label$8
+           (br_if $label$8
+            (br_if $label$6
+             (tee_local $var$2
+              (block $label$9 (result i32)
+               (get_local $var$1)
+              )
+             )
+             (i32.const 0)
+            )
+           )
+           (loop $label$10
+            (if
+             (i32.const 0)
+             (set_local $var$2
+              (get_local $var$1)
+             )
+            )
+           )
+           (drop
+            (i32.eqz
+             (get_local $var$2)
+            )
+           )
+          )
+         )
+         (unreachable)
+        )
+       )
+       (unreachable)
+       (i64.const 1)
+      )
+     )
+    )
+   )
+  )
+  (unreachable)
+ )
 )
 
