@@ -113,6 +113,11 @@ dump(graph, std::cout);
   // updates the underlying Binaryen IR as well.
   // After this change, the original node has no users.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
+    if (node->isPhi()) {
+      // When replacing a phi with one of its uses, the other paths are
+      // not actually valid... XXX
+std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n";
+    }
     if (with == node) {
       return; // nothing to do
     }

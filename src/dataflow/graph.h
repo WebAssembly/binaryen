@@ -699,7 +699,6 @@ std::cout << "created a node " << node << " for this set: " << curr << '\n';
   SetLocal* getSet(Node* node) {
     auto iter = nodeParentMap.find(node);
     if (iter == nodeParentMap.end()) return nullptr;
-std::cout << "this node " << node << " is for this set " << iter->second << '\n';
     return iter->second->dynCast<SetLocal>();
   }
 };
