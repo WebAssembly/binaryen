@@ -95,15 +95,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     if (DataFlow::allInputsIdentical(node)) {
       // Note we don't need to check for effects when replacing, as in
       // flattened IR expression children are get_locals or consts.
-      if (node->isExpr()) {
-//        auto* expr = node->expr;
-//        if (auto* binary = expr->dynCast<Binary>()) {
-//          binary->right = make a another use of left
-// ExpressionManipulator::binary->left
-//          return true;
-//        }
-      } else if (node->isPhi()) {
-        return replaceWithValue(node, node->getValue(1));
+      if (node->isPhi()) {
+        return replaceAllUsesWith(node, node->getValue(1));
       }
     }
     return false;
@@ -112,15 +105,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   // Replaces a node with the value from another node. Returns true if
   // we succeeded.
   // This replaces the node itself in-place.
-  bool replaceWithValue(DataFlow::Node* node, DataFlow::Node* with) {
-    if (with->isConst()) {
-      auto* copy = ExpressionManipulator::copy(with->expr, *getModule());
-      *node = DataFlow::Node(DataFlow::Node::Type::Expr);
-      node->expr = copy;
-      return true;
-    }
-    // TODO: if it's an expression, it's assigned to a local, and we can
-    //       get_local it.
+  bool replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
+    // TODO
     return false;
   }
 };
