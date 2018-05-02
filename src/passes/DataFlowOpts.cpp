@@ -41,7 +41,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
 
   // nodeUsers[x] = vector of nodes that use it, i.e., refer to it,
   //                so that if x changes, so might they
-  std::unordered_map<DataFlow::Node*, std::vector<DataFlow::Node*>> nodeUsers;
+  std::unordered_map<DataFlow::Node*, std::unordered_set<DataFlow::Node*>> nodeUsers;
 
   DataFlow::Builder dataFlow;
 
@@ -51,7 +51,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Generate the uses between the nodes.
     for (auto& node : dataFlow.nodes) {
       for (auto* value : node->values) {
-        nodeUsers[value].push_back(node.get());
+        nodeUsers[value].insert(node.get());
       }
     }
     // Propagate optimizations through the graph.
@@ -82,9 +82,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       auto* node = dataFlow.setNodeMap[set];
       auto iter = optimized.find(node);
       if (iter != optimized.end()) {
-        // Simply apply the optimized expression from the node.
-        assert(node->isExpr()); // we optimize to an expression
-        set->value = node->expr;
+        set->value = regenerate(node);
       }
     }
   }
@@ -109,7 +107,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   // the DataFlow IR to make the other users point to this one, and
   // updates the underlying Binaryen IR as well
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
-std::cout << "opt!\n";
+    if (with == node) {
+      return; // nothing to do
+    }
+std::cout << "rAUW opt!\n";
     auto& users = nodeUsers[node];
     for (auto* user : users) {
 std::cout << "  user!\n";
@@ -122,10 +123,9 @@ std::cout << "  user!\n";
           indexes.push_back(i);
         }
       }
-// TODO: update the 
-uses, this value now has more and the other lost some
-//
       assert(!indexes.empty());
+      // `with` now has another user.
+      nodeUsers[with].insert(user);
       // Replacing in the Binaryen IR requires more care
       switch (user->type) {
         case DataFlow::Node::Type::Expr: {
@@ -168,6 +168,8 @@ uses, this value now has more and the other lost some
         default: WASM_UNREACHABLE();
       }
     }
+    // No one is a user of this node after we replaced all the uses.
+    users.clear();
   }
 
   // Creates an expression that uses a node. Generally, a node represents
@@ -192,6 +194,17 @@ uses, this value now has more and the other lost some
     } else {
       WASM_UNREACHABLE(); // TODO
     }
+  }
+
+  // Given a node, regenerate an expression for it that can fit in a
+  // the set_local for that node.
+  Expression* regenerate(DataFlow::Node* node) {
+    if (node->isExpr()) {
+      // TODO: do we need to look deeply?
+      return node->expr;
+    }
+    // This is not an expression, so we just need to use it.
+    return makeUse(node);
   }
 };
 
