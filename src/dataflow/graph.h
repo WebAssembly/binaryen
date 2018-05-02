@@ -408,7 +408,7 @@ struct Graph : public Visitor<Graph, Node*> {
     return &bad;
   }
   Node* visitConst(Const* curr) {
-    return addNode(Node::makeExpr(curr));
+    return makeConst(curr->value);
   }
   Node* visitUnary(Unary* curr) {
     // First, check if we support this op.
