@@ -29,7 +29,7 @@
 #include "wasm-builder.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
-#include "dataflow/builder.h"
+#include "dataflow/graph.h"
 #include "dataflow/utils.h"
 
 namespace wasm {
@@ -39,17 +39,18 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
 
   Pass* create() override { return new DataFlowOpts; }
 
-  // nodeUsers[x] = vector of nodes that use it, i.e., refer to it,
-  //                so that if x changes, so might they
+  // nodeUsers[x] = { y, z, .. }
+  // where y, z etc. are nodes that use x, that is, x is in their
+  // values vector.
   std::unordered_map<DataFlow::Node*, std::unordered_set<DataFlow::Node*>> nodeUsers;
 
-  DataFlow::Builder dataFlow;
+  DataFlow::Graph graph;
 
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
-    dataFlow.build(func);
+    graph.build(func);
     // Generate the uses between the nodes.
-    for (auto& node : dataFlow.nodes) {
+    for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
         nodeUsers[value].insert(node.get());
       }
@@ -57,7 +58,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Propagate optimizations through the graph.
     std::unordered_set<DataFlow::Node*> optimized; // which nodes we optimized
     std::unordered_set<DataFlow::Node*> work; // the work left to do
-    for (auto& node : dataFlow.nodes) {
+    for (auto& node : graph.nodes) {
       work.insert(node.get()); // we should try to optimize each node
     }
     while (!work.empty()) {
@@ -78,8 +79,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
     // After updating the DataFlow IR, we can update the sets in
     // the wasm.
-    for (auto* set : dataFlow.sets) {
-      auto* node = dataFlow.setNodeMap[set];
+    for (auto* set : graph.sets) {
+      auto* node = graph.setNodeMap[set];
       auto iter = optimized.find(node);
       if (iter != optimized.end()) {
         set->value = regenerate(node);
@@ -98,7 +99,14 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       if (node->isPhi()) {
         auto* value = node->getValue(1);
         if (!value->isVar() && !value->isBad()) {
+std::cout << "will rep\n";
+dump(node, std::cout);
+dump(value, std::cout);
+std::cout << "state:\n";
+dump(graph, std::cout);
           replaceAllUsesWith(node, value);
+std::cout << "after rep all\n";
+dump(graph, std::cout);
         }
         return true;
       }
@@ -108,7 +116,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
 
   // Replaces all uses of a node with another value. This both modifies
   // the DataFlow IR to make the other users point to this one, and
-  // updates the underlying Binaryen IR as well
+  // updates the underlying Binaryen IR as well.
+  // After this change, the original node has no users.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
     if (with == node) {
       return; // nothing to do
@@ -191,8 +200,8 @@ std::cout << "p4\n";
       return builder.makeConst(node->expr->cast<Const>()->value);
     } else if (node->isExpr()) {
       // Find the set we are a value of.
-      auto iter = dataFlow.nodeParentMap.find(node);
-      assert(iter != dataFlow.nodeParentMap.end());
+      auto iter = graph.nodeParentMap.find(node);
+      assert(iter != graph.nodeParentMap.end());
       auto* set = iter->second->dynCast<SetLocal>();
       assert(set);
       auto index = set->index;

@@ -93,14 +93,25 @@ inline bool allInputsConstant(Node* node) {
 }
 
 inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
-  for (size_t i = 0; i < indent; i++) o << ' ';
+  auto doIndent = [&]() {
+    for (size_t i = 0; i < indent; i++) o << ' ';
+  };
+  doIndent();
   o << '[';
   switch (node->type) {
     case Node::Type::Var:   o << "var " << printType(node->wasmType) << ' ' << node; break;
-    case Node::Type::Expr:  o << "expr "; WasmPrinter::printExpression(node->expr, o, true); break;
+    case Node::Type::Expr:  {
+      o << "expr ";
+      WasmPrinter::printExpression(node->expr, o, true);
+      break;
+    }
     case Node::Type::Phi:   o << "phi"; break;
     case Node::Type::Cond:  o << "cond" << node->index; break;
-    case Node::Type::Block: o << "block"; break;
+    case Node::Type::Block: {
+      // don't print the conds - they would recurse
+      o << "block (" << node->values.size() << " conds)]\n";
+      return o;
+    }
     case Node::Type::Zext:  o << "zext"; break;
     case Node::Type::Bad:   o << "bad"; break;
     default: WASM_UNREACHABLE();
@@ -110,8 +121,17 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
     for (auto* value : node->values) {
       dump(value, o, indent + 1);
     }
+    doIndent();
   }
   o << "]\n";
+  return o;
+}
+
+inline std::ostream& dump(Graph& graph, std::ostream& o) {
+  for (auto& node : graph.nodes) {
+    o << "NODE " << node.get() << ": ";
+    dump(node.get(), o);
+  }
   return o;
 }
 

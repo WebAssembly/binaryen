@@ -40,7 +40,7 @@
 #include "wasm-builder.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
-#include "dataflow/builder.h"
+#include "dataflow/graph.h"
 #include "dataflow/utils.h"
 
 namespace wasm {
@@ -50,7 +50,7 @@ namespace DataFlow {
 // Generates a trace: all the information to generate a Souper LHS
 // for a specific set_local whose value we want to infer.
 struct Trace {
-  Builder& builder;
+  Graph& graph;
   Node* toInfer;
 
   // A limit on how deep we go - we don't want to create arbitrarily
@@ -66,7 +66,7 @@ struct Trace {
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
 
-  Trace(Builder& builder, Node* toInfer) : builder(builder), toInfer(toInfer) {
+  Trace(Graph& graph, Node* toInfer) : graph(graph), toInfer(toInfer) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -96,8 +96,8 @@ struct Trace {
     // Also pull in conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
-    auto iter = builder.nodeParentMap.find(toInfer);
-    if (iter != builder.nodeParentMap.end()) {
+    auto iter = graph.nodeParentMap.find(toInfer);
+    if (iter != graph.nodeParentMap.end()) {
       addPath(toInfer, iter->second);
     }
   }
@@ -177,15 +177,15 @@ struct Trace {
   void addPath(Node* node, Expression* curr) {
     // We track curr and parent, which are always in the state of parent
     // being the parent of curr.
-    auto* parent = builder.expressionParentMap.at(curr);
+    auto* parent = graph.expressionParentMap.at(curr);
     while (parent) {
-      auto iter = builder.expressionConditionMap.find(parent);
-      if (iter != builder.expressionConditionMap.end()) {
+      auto iter = graph.expressionConditionMap.find(parent);
+      if (iter != graph.expressionConditionMap.end()) {
         // Given the block, add a proper path-condition
         addPathTo(parent, curr, iter->second);
       }
       curr = parent;
-      parent = builder.expressionParentMap.at(parent);
+      parent = graph.expressionParentMap.at(parent);
     }
   }
 
@@ -219,7 +219,7 @@ struct Trace {
 
 // Emits a trace, which is basically a Souper LHS.
 struct Printer {
-  Builder& builder;
+  Graph& graph;
   Trace& trace;
 
   // Each Node in a trace has an index, from 0.
@@ -227,10 +227,10 @@ struct Printer {
 
   bool debug;
 
-  Printer(Builder& builder, Trace& trace) : builder(builder), trace(trace) {
+  Printer(Graph& graph, Trace& trace) : graph(graph), trace(trace) {
     debug = getenv("BINARYEN_DEBUG_SOUPERIFY") != nullptr;
 
-    std::cout << "\n; start LHS (in " << builder.func->name << ")\n";
+    std::cout << "\n; start LHS (in " << graph.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
       if (!node->isCond()) { // pcs and blockpcs are not instructions and do not need to be indexed
@@ -427,11 +427,11 @@ struct Printer {
   void warnOnSuspiciousValues(Node* node) {
     assert(debug);
     if (allInputsIdentical(node)) {
-      std::cout << "^^ suspicious identical inputs! missing optimization in " << builder.func->name << "? ^^\n";
+      std::cout << "^^ suspicious identical inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
     if (allInputsConstant(node)) {
-      std::cout << "^^ suspicious constant inputs! missing optimization in " << builder.func->name << "? ^^\n";
+      std::cout << "^^ suspicious constant inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
   }
@@ -446,13 +446,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   void doWalkFunction(Function* func) {
     std::cout << "\n; function: " << func->name << '\n';
     // Build the data-flow IR.
-    DataFlow::Builder dataFlow;
-    dataFlow.build(func);
+    DataFlow::Graph graph;
+    graph.build(func);
     // Emit possible traces.
-    for (auto& node : dataFlow.nodes) {
-      DataFlow::Trace trace(dataFlow, node.get());
+    for (auto& node : graph.nodes) {
+      DataFlow::Trace trace(graph, node.get());
       if (!trace.isBad()) {
-        DataFlow::Printer(dataFlow, trace);
+        DataFlow::Printer(graph, trace);
       }
     }
   }

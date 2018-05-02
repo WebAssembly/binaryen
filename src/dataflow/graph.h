@@ -22,8 +22,8 @@
 // Souper IR, and the design favors that.
 //
 
-#ifndef wasm_dataflow_builder_h
-#define wasm_dataflow_builder_h
+#ifndef wasm_dataflow_graph_h
+#define wasm_dataflow_graph_h
 
 #include "wasm.h"
 #include "ir/abstract.h"
@@ -40,7 +40,7 @@ namespace DataFlow {
 // Bad node if not supported, or nullptr if not relevant (we only
 // use the return value for internal expressions, that is, the
 // value of a set_local or the condition of an if etc).
-struct Builder : public Visitor<Builder, Node*> {
+struct Graph : public Visitor<Graph, Node*> {
   // We only need one canonical bad node. It is never modified.
   Node bad = Node(Node::Type::Bad);
 
@@ -679,4 +679,4 @@ struct Builder : public Visitor<Builder, Node*> {
 
 } // namespace wasm
 
-#endif // wasm_dataflow_builder
+#endif // wasm_dataflow_graph_h
