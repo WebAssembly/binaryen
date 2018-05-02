@@ -116,5 +116,47 @@
   )
   (unreachable)
  )
+ (func "bad1"
+  (local $var$2 i32)
+  (local $var$4 i32)
+  (block $label$1
+   (loop $label$2
+    (set_local $var$4
+     (if (result i32)
+      (i32.const 0)
+      (block (result i32)
+       (set_local $var$4
+        (tee_local $var$2
+         (i32.xor
+          (i32.const 0)
+          (i32.const -1)
+         )
+        )
+       )
+       (i32.const 0)
+      )
+      (block (result i32)
+       (set_local $var$4
+        (tee_local $var$2
+         (i32.xor
+          (i32.const 0)
+          (i32.const -1)
+         )
+        )
+       )
+       (i32.const 0)
+      )
+     )
+    )
+    (i32.store
+     (i32.const 1)
+     (i32.shl
+      (get_local $var$2)
+      (i32.const 14)
+     )
+    )
+   )
+  )
+ )
 )
 
