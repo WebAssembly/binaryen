@@ -446,12 +446,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   void doWalkFunction(Function* func) {
     std::cout << "\n; function: " << func->name << '\n';
     // Build the data-flow IR.
-    DataFlow::Builder builder(func);
+    DataFlow::Builder dataFlow;
+    dataFlow.build(func);
     // Emit possible traces.
-    for (auto& node : builder.nodes) {
-      DataFlow::Trace trace(builder, node.get());
+    for (auto& node : dataFlow.nodes) {
+      DataFlow::Trace trace(dataFlow, node.get());
       if (!trace.isBad()) {
-        DataFlow::Printer(builder, trace);
+        DataFlow::Printer(dataFlow, trace);
       }
     }
   }

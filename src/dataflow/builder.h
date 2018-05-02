@@ -103,7 +103,7 @@ struct Builder : public Visitor<Builder, Node*> {
 
   // API
 
-  Builder(Function* funcInit) {
+  void build(Function* funcInit) {
     func = funcInit;
     auto numLocals = func->getNumLocals();
     if (numLocals == 0) return; // nothing to do
