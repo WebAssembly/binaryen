@@ -109,8 +109,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   // the DataFlow IR to make the other users point to this one, and
   // updates the underlying Binaryen IR as well
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
+std::cout << "opt!\n";
     auto& users = nodeUsers[node];
     for (auto* user : users) {
+std::cout << "  user!\n";
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;
@@ -120,6 +122,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           indexes.push_back(i);
         }
       }
+// TODO: update the 
+uses, this value now has more and the other lost some
+//
       assert(!indexes.empty());
       // Replacing in the Binaryen IR requires more care
       switch (user->type) {
