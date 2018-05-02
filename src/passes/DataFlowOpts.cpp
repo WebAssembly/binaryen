@@ -44,6 +44,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   // values vector.
   std::unordered_map<DataFlow::Node*, std::unordered_set<DataFlow::Node*>> nodeUsers;
 
+  // The optimization work left to do: nodes that we need to look at.
+  std::unordered_set<DataFlow::Node*> workLeft;
+
   DataFlow::Graph graph;
 
   void doWalkFunction(Function* func) {
@@ -57,25 +60,14 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
     // Propagate optimizations through the graph.
     std::unordered_set<DataFlow::Node*> optimized; // which nodes we optimized
-    std::unordered_set<DataFlow::Node*> work; // the work left to do
     for (auto& node : graph.nodes) {
-      work.insert(node.get()); // we should try to optimize each node
+      workLeft.insert(node.get()); // we should try to optimize each node
     }
-    while (!work.empty()) {
-      auto iter = work.begin();
+    while (!workLeft.empty()) {
+      auto iter = workLeft.begin();
       auto* node = *iter;
-      work.erase(iter);
-      // Try to optimize it. If we succeeded, add the things it influences.
-      if (optimize(node)) {
-        optimized.insert(node);
-        auto iter = nodeUsers.find(node);
-        if (iter != nodeUsers.end()) {
-          auto& toAdd = iter->second;
-          for (auto* add : toAdd) {
-            work.insert(add);
-          }
-        }
-      }
+      workLeft.erase(iter);
+      workOn(node);
     }
     // After updating the DataFlow IR, we can update the sets in
     // the wasm.
@@ -88,7 +80,11 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
   }
 
-  bool optimize(DataFlow::Node* node) {
+  void workOn(DataFlow::Node* node) {
+    // If there are no uses, there is no point to work.
+    auto iter = nodeUsers.find(node);
+    if (iter == nodeUsers.end()) return;
+    if (iter->second.empty()) return;
     // Optimize: Look for nodes that we can easily convert into
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
@@ -99,7 +95,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       if (node->isPhi()) {
         auto* value = node->getValue(1);
         if (!value->isVar() && !value->isBad()) {
-std::cout << "will rep\n";
+std::cout << "will rep a thing with " << nodeUsers[node].size() << " users\n";
 dump(node, std::cout);
 dump(value, std::cout);
 std::cout << "state:\n";
@@ -108,10 +104,8 @@ dump(graph, std::cout);
 std::cout << "after rep all\n";
 dump(graph, std::cout);
         }
-        return true;
       }
     }
-    return false;
   }
 
   // Replaces all uses of a node with another value. This both modifies
@@ -124,6 +118,8 @@ dump(graph, std::cout);
     }
     auto& users = nodeUsers[node];
     for (auto* user : users) {
+      // Add the user to the work left to do, as we are modifying it.
+      workLeft.insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;
