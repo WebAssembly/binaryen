@@ -105,8 +105,8 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
       WasmPrinter::printExpression(node->expr, o, true);
       break;
     }
-    case Node::Type::Phi:   o << "phi"; break;
-    case Node::Type::Cond:  o << "cond" << node->index; break;
+    case Node::Type::Phi:   o << "phi " << node->index; break;
+    case Node::Type::Cond:  o << "cond " << node->index; break;
     case Node::Type::Block: {
       // don't print the conds - they would recurse
       o << "block (" << node->values.size() << " conds)]\n";
@@ -131,6 +131,9 @@ inline std::ostream& dump(Graph& graph, std::ostream& o) {
   for (auto& node : graph.nodes) {
     o << "NODE " << node.get() << ": ";
     dump(node.get(), o);
+    if (auto* set = graph.getSet(node.get())) {
+      o << "  and that is set to local " << set->index << '\n';
+    }
   }
   return o;
 }

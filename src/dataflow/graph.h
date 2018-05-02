@@ -96,7 +96,7 @@ struct Graph : public Visitor<Graph, Node*> {
   // The local state in a control flow path, including a possible
   // condition as well.
   struct FlowState {
-    Locals locals; // TODO: avoid copies here
+    Locals locals;
     Node* condition;
     FlowState(Locals locals, Node* condition) : locals(locals), condition(condition) {}
   };
@@ -686,6 +686,14 @@ struct Graph : public Visitor<Graph, Node*> {
       node = makeZeroComp(node, false);
     }
     return node;
+  }
+
+  // Given a node representing something that is set_local'd, return
+  // the set.
+  SetLocal* getSet(Node* node) {
+    auto iter = nodeParentMap.find(node);
+    if (iter == nodeParentMap.end()) return nullptr;
+    return iter->second->dynCast<SetLocal>();
   }
 };
 

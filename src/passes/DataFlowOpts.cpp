@@ -186,6 +186,8 @@ std::cout << "p4\n";
   // Creates an expression that uses a node. Generally, a node represents
   // a value in a local, so we create a get_local for it.
   Expression* makeUse(DataFlow::Node* node) {
+std::cout << "make a use of ";
+dump(node, std::cout);
     Builder builder(*getModule());
     if (node->isPhi()) {
       // The index is the wasm local that we assign to when implementing
@@ -196,11 +198,8 @@ std::cout << "p4\n";
       return builder.makeConst(node->expr->cast<Const>()->value);
     } else if (node->isExpr()) {
       // Find the set we are a value of.
-      auto iter = graph.nodeParentMap.find(node);
-      assert(iter != graph.nodeParentMap.end());
-      auto* set = iter->second->dynCast<SetLocal>();
-      assert(set);
-      auto index = set->index;
+      auto index = graph.getSet(node)->index;
+std::cout << "making a use of an expression which was set to local " << index << '\n';
       return builder.makeGetLocal(index, getFunction()->getLocalType(index));
     } else {
 std::cout << "p5\n";
