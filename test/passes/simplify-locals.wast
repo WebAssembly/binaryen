@@ -1078,4 +1078,55 @@
     )
    )
   )
+  (func $loop-value (param $x i32) (result i32)
+    (loop $loopy
+      (set_local $x (unreachable))
+    )
+    (loop $loopy
+      (set_local $x (i32.const 1))
+    )
+    (get_local $x)
+  )
+  (func $loop-loop-loopy-value (param $x i32) (result i32)
+    (loop $loopy1
+      (loop $loopy2
+        (loop $loopy3
+          (set_local $x (i32.const 1))
+        )
+      )
+    )
+    (get_local $x)
+  )
+  (func $loop-modified-during-main-pass-be-careful-fuzz (result i32)
+   (local $0 i32)
+   (if
+    (i32.const 0)
+    (set_local $0
+     (i32.const 0)
+    )
+    (loop $label$4
+     (br $label$4)
+    )
+   )
+   (get_local $0)
+  )
+  (func $loop-later (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
+   (loop $label$1
+    (block $label$2
+     (if
+      (i32.const 0)
+      (block
+       (set_local $var$0
+        (i32.const -1)
+       )
+       (br $label$2)
+      )
+     )
+     (set_local $var$0
+      (i32.const -1)
+     )
+    )
+   )
+   (i32.const 0)
+  )
 )

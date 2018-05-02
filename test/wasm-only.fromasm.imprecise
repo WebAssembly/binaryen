@@ -449,13 +449,11 @@
       )
      )
     )
-    (block
-     (br_if $__rjti$2
-      (get_local $0)
-     )
-     (set_local $0
-      (i32.const 0)
-     )
+    (br_if $__rjti$2
+     (get_local $0)
+    )
+    (set_local $0
+     (i32.const 0)
     )
     (br $label$break$L8)
    )
