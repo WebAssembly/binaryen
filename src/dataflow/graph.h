@@ -133,9 +133,23 @@ struct Graph : public Visitor<Graph, Node*> {
     }
   }
 
-  Node* makeZero(wasm::Type type) {
+  // We create one node per constant value
+  std::unordered_map<Literal, Node*> constantNodes;
+
+  Node* makeConst(Literal value) {
+    auto iter = constantNodes.find(value);
+    if (iter!= constantNodes.end()) {
+      return iter->second;
+    }
+    // Create one for this literal.
     wasm::Builder builder(extra);
-    return addNode(Node::makeExpr(builder.makeConst(LiteralUtils::makeLiteralZero(type))));
+    auto* ret = addNode(Node::makeExpr(builder.makeConst(value)));
+    constantNodes[value] = ret;
+    return ret;
+  }
+
+  Node* makeZero(wasm::Type type) {
+    return makeConst(LiteralUtils::makeLiteralZero(type));
   }
 
   // Add a new node to our list of owned nodes.
