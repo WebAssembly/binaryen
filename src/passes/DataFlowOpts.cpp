@@ -110,10 +110,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     if (with == node) {
       return; // nothing to do
     }
-std::cout << "rAUW opt!\n";
     auto& users = nodeUsers[node];
     for (auto* user : users) {
-std::cout << "  user!\n";
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;
