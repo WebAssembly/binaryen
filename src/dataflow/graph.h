@@ -70,11 +70,11 @@ struct Graph : public Visitor<Graph, Node*> {
   // The function being processed.
   Function* func;
 
+  // The module we are working in.
+  Module* module;
+
   // All of our nodes
   std::vector<std::unique_ptr<Node>> nodes;
-
-  // We need to create some extra expression nodes in some case.
-  MixedArena extra;
 
   // Tracking state during building
 
@@ -104,8 +104,10 @@ struct Graph : public Visitor<Graph, Node*> {
 
   // API
 
-  void build(Function* funcInit) {
+  void build(Function* funcInit, Module* moduleInit) {
     func = funcInit;
+    module = moduleInit;
+
     auto numLocals = func->getNumLocals();
     if (numLocals == 0) return; // nothing to do
     // Set up initial local state IR.
@@ -143,7 +145,7 @@ struct Graph : public Visitor<Graph, Node*> {
       return iter->second;
     }
     // Create one for this literal.
-    Builder builder(extra);
+    Builder builder(*module);
     auto* ret = addNode(Node::makeExpr(builder.makeConst(value)));
     constantNodes[value] = ret;
     return ret;
@@ -161,7 +163,7 @@ struct Graph : public Visitor<Graph, Node*> {
 
   Node* makeZeroComp(Node* node, bool equal) {
     assert(!node->isBad());
-    Builder builder(extra);
+    Builder builder(*module);
     auto type = node->getWasmType();
     if (!isConcreteType(type)) return &bad;
     auto* zero = makeZero(type);
@@ -505,7 +507,7 @@ struct Graph : public Visitor<Graph, Node*> {
       case GeUInt32:
       case GeUInt64: {
         // These need to be flipped as Souper does not support redundant ops.
-        Builder builder(extra);
+        Builder builder(*module);
         BinaryOp opposite;
         switch (curr->op) {
           case GtSInt32: opposite = LeSInt32; break;
@@ -694,10 +696,8 @@ struct Graph : public Visitor<Graph, Node*> {
 
   // Creates an expression that uses a node. Generally, a node represents
   // a value in a local, so we create a get_local for it.
-  // XXX this creates TEMPORARY allocations. They only remain alive while
-  //     the Graph is alive FIXME?
   Expression* makeUse(Node* node) {
-    Builder builder(extra);
+    Builder builder(*module);
     if (node->isPhi()) {
       // The index is the wasm local that we assign to when implementing
       // the phi; get from there.
@@ -715,7 +715,7 @@ struct Graph : public Visitor<Graph, Node*> {
     } else if (node->isVar()) {
       // Nothing valid for us to read here.
       // FIXME should we have a local index to get?
-      return Builder(extra).makeConst(LiteralUtils::makeLiteralZero(node->wasmType));
+      return Builder(*module).makeConst(LiteralUtils::makeLiteralZero(node->wasmType));
     } else {
 std::cout << node->type << " p5\n";
       WASM_UNREACHABLE(); // TODO

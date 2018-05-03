@@ -447,7 +447,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     std::cout << "\n; function: " << func->name << '\n';
     // Build the data-flow IR.
     DataFlow::Graph graph;
-    graph.build(func);
+    graph.build(func, getModule());
     // Emit possible traces.
     for (auto& node : graph.nodes) {
       DataFlow::Trace trace(graph, node.get());

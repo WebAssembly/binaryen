@@ -52,7 +52,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
 
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
-    graph.build(func);
+    graph.build(func, getModule());
     // Generate the uses between the nodes.
     for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
