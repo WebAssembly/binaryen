@@ -1,15 +1,465 @@
-before
+aic?
+will optimize an Expr of all constant inputs. before
+[aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5cd00098f0 expr 140037006069904 expr ((i32.eqi32.xor(i32(.const i32.const 00))((i32i32.const .const 0xffffffff0))))
+
+  [[0x7f5cd00090500x7f5ce8009030  expr expr ((i32i32.const .const 00))]
+]
+  [[0x7f5ce80090300x7f5cd0009230  expr expr (i32.const (0i32).const ]
+0xffffffff]
+)(]
+i32.eq]
+
+ ((i32.xori32
+.const  0()i32
+.const  0(i32.const )0
+) 
+()i32
+.const 0xffffffffmid
+)[
+0x7f5ce8009090) 
+expr mid
+[(0x7f5cd00098f0i32.eq (expr i32.const 0aic?
+)(i32.const 0))
+ [0x7f5ce8009030 expr (i32.const 0)]
+ [0x7f5ce8009030 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+will optimize an Expr of all constant inputs. before
+[0x7f5ce0009a90 expr (i32.eq(i32.const 0)(i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const 0)]
+ [0x7f5ce00013e0 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+mid
+([0x7f5ce0009a90 expr i32.xor((i32.eq(i32.const 0)(i32.const i320.const ))
+ [00x7f5ce00013e0 )after
+expr [((0x7f5ce8009090 i32i32expr .const .const 0xffffffff(i32.const 0x1)]
+(i32.const 0x1)
+raUW1
+[0x7f5ce8009090 expr (i32.const 0x1)]
+raUW2
+a user:
+[0x7f5ce8000bc0 cond 0x1
+ [0x7f5ce8000b90 block (0x2 conds)]
+ [0x7f5ce8009090 expr (i32.const 0x1)]
+]
+update user
+index: )0x1
+)
+ [0x7f5cd0009050 expr aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5ce800a060 expr ((i32i32.eq(.const i320.const )0]
+) ([i320x7f5cd0009230.const  0expr )()i32
+ .const [0x7f5ce80090300xffffffff )expr ]
+]
+(i32.const 0)(]
+i32.xor 0
+ (i32.const 0)
+ (i32.const 0xffffffff)
+)
+)]
+ [0x7f5ce00013e0 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+[0x7f5ce8009030 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0after
+)
+ [(i320x7f5cd00098f0.const  0expr )
+)(i32.const 0xffffffff
+)mid
+]
+[0x7f5ce800a060( i32.const expr 0xffffffff)(
+i32.eqraUW1
+([i320x7f5cd00098f0.const  0expr )after
+([i32(.const i320.const 0xffffffff0x7f5ce0009a90)]
+raUW2
+a user:
+[0x7f5cd000a3f0 phi 0x7
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+]
+ expr update user
+(index: i320x2.const )0x1
+)a user:
+[)0x7f5cd000a390
+ phi 0x6]
+ 
+[ 0x7f5ce8009030[( expr (i32.const 0)]
+ [0x7f5ce8009030 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+i32.const 0x1)
+raUW1
+[0x7f5ce0009a90 expr (i32.const 0x1)]
+raUW2
+a user:
+0x7f5cd0009ec0[ 0x7f5ce000b0e0block ( 0x2cond  conds)]
+0x1 
+[ 0x7f5cd0009050[ 0x7f5ce000af30expr  block (0x2 conds)]
+after
+ [(0x7f5ce800a060i32 .const [00x7f5ce0009a90)expr  ]
+expr  [((i32i320x7f5cd00098f0.const 0x1)]
+]
+update user
+index: 0x1
+aic?
+ will optimize an Expr of all constant inputs. beforeexpr 
+[0x7f5ce000a880 .const (expr i320x1.const )(0xffffffffi32.ne]
+)(]
+i32.const 0)(i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const 0)]
+ [0x7f5ce00013e0 ]
+expr (i32.const update user
+0)]
+(]
+(i32.ne
+ (i32.const 0)
+ (i32.const 0)
+)
+mid
+[0x7f5ce000a880 expr (i32.ne(i32.const 0)(i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const i320.const 0x1))
+]
+raUW1
+[index: 0x2
+a user:
+[0x7f5cd000a1b0 phi 0x1
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.xor(i32.const 0)(i32.const 0xffffffff))
+  [0x7f5cd0009050 expr (0x7f5ce800a060i32 .const expr 0) (]
+[  [0x7f5cd0009230 expr (i32.const 0xffffffff)]
+ ]
+ [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+]
+update user
+index: 0x2
+a user:
+[0x7f5cd000a130 phi 0
+ [0x7f5cd0009ec0 i32block (.const 0x20x1 conds)]
+ )[]
+0x7f5cd0009200raUW2
+0x7f5ce00013e0a user:
+ expr  [expr 0x7f5ce800a1a0( i32(cond .const i32.xor0x10()i32.const 
+]
+0]
+) (i32[(.const 0x7f5ce800a0d0i32.ne
+0xffffffff  block ((i32)0x2 conds)]
+.const  0))[0x7f5ce800a060 expr (i32.const 0x1)]
+]
+update user
+index: 0x1
+
+  [0x7f5cd0009050 expr (i32.const 0)]
+  [
+0x7f5cd0009230 ( expr i32.const (0aic?
+)
+will optimize an Expr of all constant inputs. before)
+[0x7f5ce8009cd0
+i32 expr .const 0xffffffff)(]
+i32.ne (]
+i32 .const [00x7f5cd00098f0) (i32.const 0))
+ [0x7f5ce8009030 expr (i32.const 0)]
+ [0x7f5ce8009030 expr (i32expr .const 0)]
+]
+(i32.const (0xffffffff)i32.neafter
+]
+]
+
+[ update user
+(i32.const 0)
+ (i32.const 0)
+)
+mid
+[0x7f5ce8009cd0 expr index: 0x2
+aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5cd0009200 expr (i32.xor(i32.const 0)(i32.const 0xffffffff))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009230 expr (i32.const 0xffffffff)]
+]
 (i32.xor
  (i32.const 0)
- (i32.const -1)
+ (i32.const 0xffffffff)
 )
-(i32.const -1)
-before
+mid
+[0x7f5cd0009200 expr (i32.xor(i32.const 0)(i32.const 0xffffffff))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009230 expr (i32.const 0xffffffff)]
+]
 (i32.xor
  (i32.const 0)
- (i32.const -1)
+ (i32.const 0xffffffff)
 )
-(i32.const -1)
+after
+[0x7f5cd0009200 expr (i32.const 0xffffffff)]
+(i32.const 0xffffffff)
+raUW1
+[0x7f5cd0009200 expr (i32.const 0xffffffff)]
+raUW2
+a user:
+[0x7f5cd000a210 phi 0x2
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+update user
+index: 0x1
+a user:
+[0x7f5cd000a1b0 phi 0x1
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+ [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+]
+update user
+index: 0x1
+a user:
+[0x7f5cd000a270 phi 0x3
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+update user
+index: 0x1
+a user:
+[0x7f5cd000a130 phi 0
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+ [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+]
+update user
+index: 0x1
+raUW1
+[0x7f5cd000a130 phi 0
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+ [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+]
+raUW2
+a user:
+[0x7f5cd00095e0 expr (i32.shl(get_local $12)(i32.const 0xe))
+ [0x7f5cd000a130 phi 0
+  [0x7f5cd0009ec0 block (0x2 conds)]
+  [0x7f5cd0009200 expr (i32.const 0xffffffff)]
+  [0x7f5cd00098f0 expr (i32.const 0xffffffff)]
+ ]
+ [0x7f5cd0009580 expr (i32.const 0xe)]
+]
+update user
+index: 0
+after (i32.shl
+ (i32.const 0xffffffff)
+ (i32.const 0xe)
+)
+aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5cd0009de0 expr (i32.ne(i32.const 0)(i32.const 0))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+(i32.ne
+ (i32.const 0)
+ (i32.const 0)
+)
+mid
+[0x7f5cd0009de0 expr (i32.ne(i32.const 0)(i32.const 0))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+(i32.ne
+ (i32.const 0)
+ (i32.const 0)
+)
+after
+[0x7f5cd0009de0 expr (i32.const 0)]
+(i32.const 0)
+raUW1
+[0x7f5cd0009de0 expr (i32.const 0)]
+raUW2
+a user:
+[0x7f5cd000a070 cond 0
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009de0 expr (i32.const 0)]
+]
+update user
+index: 0x1
+aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5cd0009e50 expr (i32.eq(i32.const 0)(i32.const 0))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+mid
+[0x7f5cd0009e50 expr (i32.eq(i32.const 0)(i32.const 0))
+ [0x7f5cd0009050 expr (i32.const 0)]
+ [0x7f5cd0009050 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+after
+[0x7f5cd0009e50 expr (i32.const 0x1)]
+(i32.const 0x1)
+raUW1
+[0x7f5cd0009e50 expr (i32.const 0x1)]
+raUW2
+a user:
+[0x7f5cd000a0c0 cond 0x1
+ [0x7f5cd0009ec0 block (0x2 conds)]
+ [0x7f5cd0009e50 expr (i32.const 0x1)]
+]
+update user
+index: 0x1
+0x7f5ce000a880 expr (i32.const 0)]
+(i32.const 0)
+raUW1
+[(0x7f5ce000a880 expr (i32.const i32.ne0)(]
+raUW2
+a user:
+[i320x7f5ce000afb0 .const cond 0
+0 )[0x7f5ce000af30 (block (i320x2.const  conds)]
+0 )[)0x7f5ce000a880 
+expr  [0x7f5ce8009030( i32expr .const 0)]
+]
+(i32update user
+.const index: 00x1)
+]
+ [0x7f5ce8009030 expr (i32.const 0)]
+]
+(i32.ne
+ aic?
+(i32will optimize an Expr of all constant inputs. before.const 
+0[)0x7f5ce000aa60 expr 
+ ((i32.eqi32(.const i320.const )0
+))(
+i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const 0)]
+ [0x7f5ce00013e0 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+mid
+[0x7f5ce000aa60 expr (i32.eq(i32.const 0)(i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const 0)]
+ [0x7f5ce00013e0 expr (i32.const 0)]
+]
+(i32.eq
+ (i32.const 0)
+ (i32.const 0)
+)
+after
+[0x7f5ce8009cd0 expr (i32.const 0)]
+(i32.const 0)
+raUW1
+[0x7f5ce8009cd0 expr (i32.const 0)]
+after
+raUW2
+[a user:
+0x7f5ce000aa60[ 0x7f5ce800a150 cond 0
+ [0x7f5ce800a0d0 block (0x2 conds)]
+ [0x7f5ce8009cd0 expr (i32.const 0)]
+]
+update user
+index: 0x1
+expr aic?
+will optimize an Expr of all constant inputs. before
+[0x7f5ce8000b10 expr (i32.ne(i32.const 0)(i32.const 0))
+ ([i32.const 0x7f5ce8009030 expr (0x1i32).const 0)]
+ []
+0x7f5ce8009030 expr ((i32i32.const .const 0x10))
+]
+raUW1
+]
+[(0x7f5ce000aa60i32.ne 
+expr  (i32(.const 0i32).const 
+0x1 )(]
+i32raUW2
+.const a user:
+0[)0x7f5ce000ab50 cond 
+0x1)
+
+ mid
+[[0x7f5ce000aad00x7f5ce8000b10  block (expr 0x2 conds)]
+ ([i32.ne(i320x7f5ce000aa60.const  expr 0()i32.const (0x1i32).const 0]
+)]
+)
+ [0x7f5ce8009030 expr update user
+(i32index: .const 0x1
+0)]
+ [0x7f5ce8009030 expr (i32.const 0)]
+]
+(i32.ne
+ (i32.const 0)
+ (i32.const 0)
+)
+after
+aic?
+[will optimize an Expr of all constant inputs. before0x7f5ce8000b10
+ [expr 0x7f5ce000a9f0 expr (i32(.const i32.ne0()i32]
+.const 0)((i32.const 0i32).const 
+0raUW1
+)[)0x7f5ce8000b10 expr 
+( i32.const [00x7f5ce00013e0) ]
+expr raUW2
+a user:
+([i32.const 0x7f5ce8000b400 cond )0]
+
+  [[0x7f5ce8000b900x7f5ce00013e0  expr block (0x2 conds)]
+( i32[.const 0x7f5ce8000b100 )expr ]
+]
+(i32(.const i32.ne0
+) ]
+(]
+i32.const 0update user
+)index: 
+0x1 
+(i32.const 0)
+)
+mid
+[0x7f5ce000a9f0 expr (i32.ne(i32.const 0)(i32.const 0))
+ [0x7f5ce00013e0 expr (i32.const 0)]
+ [0x7f5ce00013e0 expr (i32.const 0)]
+]
+(i32.ne
+ (i32.const 0)
+ (i32.const 0)
+)
+after
+[0x7f5ce000a9f0 expr (i32.const 0)]
+(i32.const 0)
+raUW1
+[0x7f5ce000a9f0 expr (i32.const 0)]
+raUW2
+a user:
+[0x7f5ce000ab00 cond 0
+ [0x7f5ce000aad0 block (0x2 conds)]
+ [0x7f5ce000a9f0 expr (i32.const 0)]
+]
+update user
+index: 0x1
 (module
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
@@ -22,16 +472,16 @@ before
   (block $label$3
    (br_if $label$3
     (i32.load
-     (i32.const 3060)
+     (i32.const 0xbf4)
     )
    )
   )
   (unreachable)
  )
- (func $1 (; 1 ;) (type $1) (param $0 i32) (param $1 i32) (result i32)
+ (func $1 (; 0x1 ;) (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.const 0)
  )
- (func $2 (; 2 ;) (type $2) (param $0 i64) (param $1 i32) (result f64)
+ (func $2 (; 0x2 ;) (type $2) (param $0 i64) (param $1 i32) (result f64)
   (loop $label$8
    (br_if $label$8
     (get_local $1)
@@ -39,10 +489,10 @@ before
   )
   (unreachable)
  )
- (func $3 (; 3 ;) (type $0)
+ (func $3 (; 0x3 ;) (type $0)
   (i32.store
-   (i32.const 1)
-   (i32.const -16384)
+   (i32.const 0x1)
+   (i32.const 0xffffc000)
   )
  )
 )
