@@ -33,65 +33,6 @@ namespace wasm {
 
 namespace DataFlow {
 
-// Checks if the inputs are all identical - something we could
-// probably optimize. Returns false if irrelevant.
-inline bool allInputsIdentical(Node* node) {
-  switch (node->type) {
-    case Node::Type::Expr: {
-      if (node->expr->is<Binary>()) {
-        return *(node->getValue(0)) == *(node->getValue(1));
-      } else if (node->expr->is<Select>()) {
-        return *(node->getValue(1)) == *(node->getValue(2));
-      }
-      break;
-    }
-    case Node::Type::Phi: {
-      auto* first = node->getValue(1);
-      // Check if any of the others are not equal
-      for (Index i = 2; i < node->values.size(); i++) {
-        auto* curr = node->getValue(i);
-        if (*first != *curr) {
-          return false;
-        }
-      }
-      return true;
-    }
-    default: {}
-  }
-  return false;
-}
-
-// Checks if the inputs are all constant - something we could
-// probably optimize. Returns false if irrelevant.
-inline bool allInputsConstant(Node* node) {
-  switch (node->type) {
-    case Node::Type::Expr: {
-      if (node->expr->is<Unary>()) {
-        return node->getValue(0)->isConst();
-      } else if (node->expr->is<Binary>()) {
-        return node->getValue(0)->isConst() &&
-               node->getValue(1)->isConst();
-      } else if (node->expr->is<Select>()) {
-        return node->getValue(0)->isConst() &&
-               node->getValue(1)->isConst() &&
-               node->getValue(2)->isConst();
-      }
-      break;
-    }
-    case Node::Type::Phi: {
-      // Check if any of the others are not equal
-      for (Index i = 1; i < node->values.size(); i++) {
-        if (!node->getValue(i)->isConst()) {
-          return false;
-        }
-      }
-      return true;
-    }
-    default: {}
-  }
-  return false;
-}
-
 inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
   auto doIndent = [&]() {
     for (size_t i = 0; i < indent; i++) o << ' ';
@@ -136,6 +77,71 @@ inline std::ostream& dump(Graph& graph, std::ostream& o) {
     }
   }
   return o;
+}
+
+// Checks if the inputs are all identical - something we could
+// probably optimize. Returns false if irrelevant.
+inline bool allInputsIdentical(Node* node) {
+  switch (node->type) {
+    case Node::Type::Expr: {
+      if (node->expr->is<Binary>()) {
+        return *(node->getValue(0)) == *(node->getValue(1));
+      } else if (node->expr->is<Select>()) {
+        return *(node->getValue(1)) == *(node->getValue(2));
+      }
+      break;
+    }
+    case Node::Type::Phi: {
+      auto* first = node->getValue(1);
+      // Check if any of the others are not equal
+      for (Index i = 2; i < node->values.size(); i++) {
+        auto* curr = node->getValue(i);
+        if (*first != *curr) {
+          return false;
+        }
+      }
+      return true;
+    }
+    default: {}
+  }
+  return false;
+}
+
+// Checks if the inputs are all constant - something we could
+// probably optimize. Returns false if irrelevant.
+inline bool allInputsConstant(Node* node) {
+std::cout << "aic?\n";
+  switch (node->type) {
+    case Node::Type::Expr: {
+      if (node->expr->is<Unary>()) {
+        return node->getValue(0)->isConst();
+      } else if (node->expr->is<Binary>()) {
+        return node->getValue(0)->isConst() &&
+               node->getValue(1)->isConst();
+      } else if (node->expr->is<Select>()) {
+std::cout << "aic: " << node->getValue(0)->isConst() << " : " <<
+                        node->getValue(1)->isConst() << " : " <<
+                        node->getValue(2)->isConst() << '\n';
+dump(node, std::cout) << '\n';
+dump(node->getValue(0), std::cout) << '\n';
+        return node->getValue(0)->isConst() &&
+               node->getValue(1)->isConst() &&
+               node->getValue(2)->isConst();
+      }
+      break;
+    }
+    case Node::Type::Phi: {
+      // Check if any of the others are not equal
+      for (Index i = 1; i < node->values.size(); i++) {
+        if (!node->getValue(i)->isConst()) {
+          return false;
+        }
+      }
+      return true;
+    }
+    default: {}
+  }
+  return false;
 }
 
 } // namespace DataFlow

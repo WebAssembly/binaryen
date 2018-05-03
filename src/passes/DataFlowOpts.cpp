@@ -106,6 +106,9 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         // This can be precomputed.
         // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
         Module temp;
+std::cout << "before" << '\n';
+
+std::cout << node->expr << '\n';
         Builder builder(temp);
         auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, node->expr);
         PassRunner runner(&temp);
@@ -113,12 +116,15 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         runner.add("precompute");
         runner.runOnFunction(func);
         node->expr = func->body;
+std::cout << node->expr << '\n';
         assert(node->isConst());
         // Finish up.
         planWorkOnUsers(node);
         for (auto* value : node->values) {
           nodeUsers[value].erase(node);
         }
+// need replaceAllUsesWith()!
+XXX
         node->values.clear();
       }
     }
@@ -135,6 +141,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   // updates the underlying Binaryen IR as well.
   // After this change, the original node has no users.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
+std::cout << "raUW1\n";
     if (with == node) {
       return; // nothing to do
     }
@@ -144,15 +151,18 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // All the users should be worked on later, as we will update them.
     planWorkOnUsers(node);
     auto& users = nodeUsers[node];
+std::cout << "raUW2\n";
     for (auto* user : users) {
       // Add the user to the work left to do, as we are modifying it.
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
+std::cout << "update user\n";
       std::vector<Index> indexes;
       for (Index i = 0; i < user->values.size(); i++) {
         if (user->values[i] == node) {
           user->values[i] = with;
           indexes.push_back(i);
+std::cout << "index: " << i << "\n";
         }
       }
       assert(!indexes.empty());
@@ -177,9 +187,11 @@ std::cout << "p1\n";
               }
             }
           } else if (auto* select = expr->dynCast<Select>()) {
+std::cout << "update select\n";
             for (auto index : indexes) {
               if (index == 0) {
                 select->condition = makeUse(with);
+std::cout << "YESS\n";
               } else if (index == 1) {
                 select->ifTrue = makeUse(with);
               } else if (index == 2) {
@@ -193,6 +205,7 @@ std::cout << "p2\n";
 std::cout << "p3\n";
             WASM_UNREACHABLE();
           }
+std::cout << "after " << node->expr << '\n';
           break;
         }
         case DataFlow::Node::Type::Phi: {
