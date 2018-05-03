@@ -385,7 +385,6 @@ struct Graph : public Visitor<Graph, Node*> {
     // passes around an existing node), mark it's parent.
     if (nodeParentMap.find(node) == nodeParentMap.end()) {
       nodeParentMap[node] = curr;
-std::cout << "created a node " << node << " for this set: " << curr << '\n';
     }
     return &bad;
   }
