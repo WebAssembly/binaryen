@@ -482,6 +482,20 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       if (shouldTryToReduce() && !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
+    } else if (auto* rmw = curr->dynCast<AtomicRMW>()) {
+      if (tryToReplaceCurrent(rmw->ptr)) return;
+      if (tryToReplaceCurrent(rmw->value)) return;
+    } else if (auto* cmpx = curr->dynCast<AtomicCmpxchg>()) {
+      if (tryToReplaceCurrent(cmpx->ptr)) return;
+      if (tryToReplaceCurrent(cmpx->expected)) return;
+      if (tryToReplaceCurrent(cmpx->replacement)) return;
+    } else if (auto* wait = curr->dynCast<AtomicWait>()) {
+      if (tryToReplaceCurrent(wait->ptr)) return;
+      if (tryToReplaceCurrent(wait->expected)) return;
+      if (tryToReplaceCurrent(wait->timeout)) return;
+    } else if (auto* wake = curr->dynCast<AtomicWake>()) {
+      if (tryToReplaceCurrent(wake->ptr)) return;
+      if (tryToReplaceCurrent(wake->wakeCount)) return;
     }
   }
 
