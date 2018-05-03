@@ -143,7 +143,7 @@ struct Graph : public Visitor<Graph, Node*> {
       return iter->second;
     }
     // Create one for this literal.
-    wasm::Builder builder(extra);
+    Builder builder(extra);
     auto* ret = addNode(Node::makeExpr(builder.makeConst(value)));
     constantNodes[value] = ret;
     return ret;
@@ -161,20 +161,19 @@ struct Graph : public Visitor<Graph, Node*> {
 
   Node* makeZeroComp(Node* node, bool equal) {
     assert(!node->isBad());
-    wasm::Builder builder(extra);
+    Builder builder(extra);
     auto type = node->getWasmType();
     if (!isConcreteType(type)) return &bad;
-    auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     auto* zero = makeZero(type);
+    auto* expr = builder.makeBinary(
+      Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne),
+      makeUse(node),
+      makeUse(zero)
+    );
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(expandFromI1(node));
     check->addValue(zero);
     return check;
-  }
-
-  Expression* getUnused(wasm::Type type) {
-    wasm::Builder builder(extra);
-    return builder.makeConst(LiteralUtils::makeLiteralZero(type));
   }
 
   void setInUnreachable() {
@@ -506,7 +505,7 @@ struct Graph : public Visitor<Graph, Node*> {
       case GeUInt32:
       case GeUInt64: {
         // These need to be flipped as Souper does not support redundant ops.
-        wasm::Builder builder(extra);
+        Builder builder(extra);
         BinaryOp opposite;
         switch (curr->op) {
           case GtSInt32: opposite = LeSInt32; break;
@@ -710,8 +709,12 @@ struct Graph : public Visitor<Graph, Node*> {
       // Find the set we are a value of.
       auto index = getSet(node)->index;
       return builder.makeGetLocal(index, func->getLocalType(index));
+    } else if (node->isVar()) {
+      // Nothing valid for us to read here.
+      // FIXME should we have a local index to get?
+      return Builder(extra).makeConst(LiteralUtils::makeLiteralZero(node->wasmType));
     } else {
-std::cout << "p5\n";
+std::cout << node->type << " p5\n";
       WASM_UNREACHABLE(); // TODO
     }
   }
