@@ -65,11 +65,11 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       workLeft.insert(node.get()); // we should try to optimize each node
     }
     while (!workLeft.empty()) {
-std::cout << "\n\ndump before work iter\n";
-dump(graph, std::cout);
+//std::cout << "\n\ndump before work iter\n";
+//dump(graph, std::cout);
       auto iter = workLeft.begin();
       auto* node = *iter;
-std::cout << "  do the work iter noww, on " << node << "\n";
+//std::cout << "  do the work iter noww, on " << node << "\n";
       workLeft.erase(iter);
       workOn(node);
     }
