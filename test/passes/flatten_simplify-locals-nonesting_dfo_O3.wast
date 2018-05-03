@@ -14,5 +14,14 @@
    )
   )
  )
+ (func $unreachable-body-update-zext (result f64)
+  (if
+   (i32.eqz
+    (i32.const 0)
+   )
+   (unreachable)
+  )
+  (f64.const -9223372036854775808)
+ )
 )
 

@@ -215,6 +215,13 @@ std::cout << "after " << node->expr << '\n';
           // should look into TODO
           break;
         }
+        case DataFlow::Node::Type::Zext: {
+          // Nothing to do: a cond is not in the Binaryen IR.
+          // If the cond input is a constant, that might indicate
+          // useful optimizations are possible, which perhaps we
+          // should look into TODO
+          break;
+        }
         default:
 std::cout << "p4\n";
  WASM_UNREACHABLE();
