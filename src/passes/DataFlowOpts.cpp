@@ -118,42 +118,33 @@ std::cout << node->expr << '\n';
         node->expr = func->body;
 std::cout << node->expr << '\n';
         assert(node->isConst());
-        // Finish up.
-        planWorkOnUsers(node);
+        // We no longer have values, and so do not use anything.
         for (auto* value : node->values) {
           nodeUsers[value].erase(node);
         }
-// need replaceAllUsesWith()!
-XXX
         node->values.clear();
+        // Our contents changed, update our users.
+        replaceAllUsesWith(node, node);
       }
     }
   }
 
-  void planWorkOnUsers(DataFlow::Node* node) {
-    auto& users = nodeUsers[node];
-    for (auto* user : users) {
-      workLeft.insert(user);
-    }
-  }
   // Replaces all uses of a node with another value. This both modifies
   // the DataFlow IR to make the other users point to this one, and
   // updates the underlying Binaryen IR as well.
-  // After this change, the original node has no users.
+  // This can be used to "replace" a node with itself, which makes sense
+  // when the node contents have changed and so the users must be updated.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
 std::cout << "raUW1\n";
-    if (with == node) {
-      return; // nothing to do
-    }
     // Const nodes are trivial to replace, but other stuff is trickier -
     // in particular phis.
     assert(with->isConst()); // TODO
     // All the users should be worked on later, as we will update them.
-    planWorkOnUsers(node);
     auto& users = nodeUsers[node];
 std::cout << "raUW2\n";
     for (auto* user : users) {
       // Add the user to the work left to do, as we are modifying it.
+      workLeft.insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
 std::cout << "update user\n";
