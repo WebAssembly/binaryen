@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -81,6 +82,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 
   void workOn(DataFlow::Node* node) {
+    if (node->isConst()) return;
     // If there are no uses, there is no point to work.
     auto iter = nodeUsers.find(node);
     if (iter == nodeUsers.end()) return;
@@ -89,18 +91,49 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
     //       then copy the result if it's smaller.
-    if (DataFlow::allInputsIdentical(node)) {
+    if (node->isPhi() && DataFlow::allInputsIdentical(node)) {
       // Note we don't need to check for effects when replacing, as in
       // flattened IR expression children are get_locals or consts.
-      if (node->isPhi()) {
-        auto* value = node->getValue(1);
-        if (value->isConst()) {
-          replaceAllUsesWith(node, value);
+      auto* value = node->getValue(1);
+      if (value->isConst()) {
+        replaceAllUsesWith(node, value);
+      }
+    } else if (node->isExpr() && DataFlow::allInputsConstant(node)) {
+      assert(!node->isConst());
+      // If this is a concrete value (not e.g. an eqz of unreachable),
+      // it can definitely be precomputed into a constant.
+      if (isConcreteType(node->expr->type)) {
+        // This can be precomputed.
+        // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
+        Module temp;
+std::cout << "before" << '\n';
+
+std::cout << node->expr << '\n';
+        Builder builder(temp);
+        auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, node->expr);
+        PassRunner runner(&temp);
+        runner.setIsNested(true);
+        runner.add("precompute");
+        runner.runOnFunction(func);
+        node->expr = func->body;
+std::cout << node->expr << '\n';
+        assert(node->isConst());
+        // Finish up.
+        planWorkOnUsers(node);
+        for (auto* value : node->values) {
+          nodeUsers[value].erase(node);
         }
+        node->values.clear();
       }
     }
   }
 
+  void planWorkOnUsers(DataFlow::Node* node) {
+    auto& users = nodeUsers[node];
+    for (auto* user : users) {
+      workLeft.insert(user);
+    }
+  }
   // Replaces all uses of a node with another value. This both modifies
   // the DataFlow IR to make the other users point to this one, and
   // updates the underlying Binaryen IR as well.
@@ -112,11 +145,11 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // Const nodes are trivial to replace, but other stuff is trickier -
     // in particular phis.
     assert(with->isConst()); // TODO
-    assert(!node->isPhi()); // TODO
+    // All the users should be worked on later, as we will update them.
+    planWorkOnUsers(node);
     auto& users = nodeUsers[node];
     for (auto* user : users) {
       // Add the user to the work left to do, as we are modifying it.
-      workLeft.insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;
@@ -167,8 +200,9 @@ std::cout << "p3\n";
           break;
         }
         case DataFlow::Node::Type::Phi: {
-          // Nothing to do: a phi is not in the Binaryen IR
-          // FIXME: don't we need to forward?
+          // Nothing to do: a phi is not in the Binaryen IR.
+          // If the entire phi can become a constant, that will be
+          // propagated when we process that phi later.
           break;
         }
         default:

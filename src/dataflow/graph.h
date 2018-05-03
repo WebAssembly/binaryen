@@ -166,7 +166,7 @@ struct Graph : public Visitor<Graph, Node*> {
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     // The unused child nodes are unreachable, but we don't need this to be a fully useful node,
     // just force the type to what we know is correct.
-    expr->type = type;
+//    expr->type = type;
     auto* zero = makeZero(type);
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(expandFromI1(node));
