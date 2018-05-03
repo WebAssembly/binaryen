@@ -144,14 +144,15 @@ std::cout << node->expr << '\n';
     runner.add("precompute");
     runner.runOnFunction(func);
     node->expr = func->body;
-dump(node, std::cout);
-std::cout << node->expr << '\n';
     assert(node->isConst());
     // We no longer have values, and so do not use anything.
     for (auto* value : node->values) {
       nodeUsers[value].erase(node);
     }
     node->values.clear();
+std::cout << "after\n";
+dump(node, std::cout);
+std::cout << node->expr << '\n';
     // Our contents changed, update our users.
     replaceAllUsesWith(node, node);
   }
