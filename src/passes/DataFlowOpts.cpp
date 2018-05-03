@@ -144,8 +144,12 @@ std::cout << node->expr << '\n';
     runner.setIsNested(true);
     runner.add("precompute");
     runner.runOnFunction(func);
-    // Copy the new value, which must now be a const
-    node->expr = Builder(*getModule()).makeConst(func->body->cast<Const>()->value);;
+    // Get the optimized thing
+    auto* result = func->body;
+    // It may not be a constant, e.g. 0 / 0 does not optimize to 0
+    if (!result->is<Const>()) return;
+    // All good, copy it.
+    node->expr = Builder(*getModule()).makeConst(result->cast<Const>()->value);
     // We no longer have values, and so do not use anything.
     for (auto* value : node->values) {
       nodeUsers[value].erase(node);
