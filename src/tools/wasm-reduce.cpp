@@ -419,7 +419,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
       }
       if (tryToReplaceCurrent(iff->ifTrue)) return;
-      if (tryToReplaceCurrent(iff->ifFalse)) return;
+      if (iff->ifFalse && tryToReplaceCurrent(iff->ifFalse)) return;
       handleCondition(iff->condition);
     } else if (auto* br = curr->dynCast<Break>()) {
       handleCondition(br->condition);
