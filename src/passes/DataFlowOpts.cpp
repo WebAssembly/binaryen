@@ -53,7 +53,6 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
     graph.build(func);
-dump(graph, std::cout);
     // Generate the uses between the nodes.
     for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
@@ -66,8 +65,11 @@ dump(graph, std::cout);
       workLeft.insert(node.get()); // we should try to optimize each node
     }
     while (!workLeft.empty()) {
+std::cout << "\n\ndump before work iter\n";
+dump(graph, std::cout);
       auto iter = workLeft.begin();
       auto* node = *iter;
+std::cout << "  do the work iter noww, on " << node << "\n";
       workLeft.erase(iter);
       workOn(node);
     }
@@ -137,14 +139,13 @@ std::cout << node->expr << '\n';
     // our Binaryen IR representations of them are constant too. RUn
     // precompute, which will transform the expression into a constanat.
     Module temp;
-    Builder builder(temp);
-    auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
+    auto* func = Builder(temp).makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
     PassRunner runner(&temp);
     runner.setIsNested(true);
     runner.add("precompute");
     runner.runOnFunction(func);
-    node->expr = func->body;
-    assert(node->isConst());
+    // Copy the new value, which must now be a const
+    node->expr = Builder(*getModule()).makeConst(func->body->cast<Const>()->value);;
     // We no longer have values, and so do not use anything.
     for (auto* value : node->values) {
       nodeUsers[value].erase(node);

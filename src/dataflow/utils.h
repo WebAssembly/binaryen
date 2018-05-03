@@ -38,7 +38,7 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
     for (size_t i = 0; i < indent; i++) o << ' ';
   };
   doIndent();
-  o << '[';
+  o << '[' << node << ' ';
   switch (node->type) {
     case Node::Type::Var:   o << "var " << printType(node->wasmType) << ' ' << node; break;
     case Node::Type::Expr:  {
