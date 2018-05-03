@@ -164,9 +164,6 @@ struct Graph : public Visitor<Graph, Node*> {
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
-    // The unused child nodes are unreachable, but we don't need this to be a fully useful node,
-    // just force the type to what we know is correct.
-//    expr->type = type;
     auto* zero = makeZero(type);
     auto* check = addNode(Node::makeExpr(expr));
     check->addValue(expandFromI1(node));
@@ -176,13 +173,7 @@ struct Graph : public Visitor<Graph, Node*> {
 
   Expression* getUnused(wasm::Type type) {
     wasm::Builder builder(extra);
-    // Use unreachable nodes, so that if we see them in use that indicates
-    // something went horribly wrong.
-    switch(type) {
-      case i32: return builder.makeUnreachable();
-      case i64: return builder.makeUnreachable();
-      default: WASM_UNREACHABLE();
-    }
+    return builder.makeConst(LiteralUtils::makeLiteralZero(type));
   }
 
   void setInUnreachable() {
