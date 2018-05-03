@@ -142,12 +142,15 @@ struct Node {
     return values.at(i);
   }
 
+  // Gets the wasm type of the node. If there isn't a valid one,
+  // return unreachable.
   wasm::Type getWasmType() {
     switch (type) {
       case Var:   return wasmType;
       case Expr:  return expr->type;
       case Phi:   return getValue(1)->getWasmType();
       case Zext:  return getValue(0)->getWasmType();
+      case Bad:   return unreachable;
       default:    WASM_UNREACHABLE();
     }
   }

@@ -1,4 +1,5 @@
 (module
+  (memory $0 (shared 1 1))
   ;; Figure 1a from the Souper paper https://arxiv.org/pdf/1711.04422.pdf
   (func $figure-1a (param $a i64) (param $x i64) (param $y i64) (result i32)
     (local $i i32)
@@ -905,6 +906,39 @@
     )
     (br $label$1)
    )
+  )
+  (func $phi-value-turns-bad (result f64)
+   (local $var$0 i32)
+   (local $var$1 i32)
+   (local $var$2 f32)
+   (set_local $var$2
+    (if (result f32)
+     (tee_local $var$0
+      (i32.atomic.rmw16_u.sub offset=22
+       (i32.const 0)
+       (i32.const 0)
+      )
+     )
+     (unreachable)
+     (block (result f32)
+      (if
+       (loop $label$3 (result i32)
+        (block $label$4 (result i32)
+         (i32.clz
+          (br_if $label$4
+           (get_local $var$0)
+           (i32.const 1)
+          )
+         )
+        )
+       )
+       (nop)
+      )
+      (f32.const 1)
+     )
+    )
+   )
+   (unreachable)
   )
 )
 

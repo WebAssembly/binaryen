@@ -163,6 +163,7 @@ struct Graph : public Visitor<Graph, Node*> {
     assert(!node->isBad());
     wasm::Builder builder(extra);
     auto type = node->getWasmType();
+    if (!isConcreteType(type)) return &bad;
     auto* expr = builder.makeBinary(Abstract::getBinary(type, equal ? Abstract::Eq : Abstract::Ne), getUnused(type), getUnused(type));
     auto* zero = makeZero(type);
     auto* check = addNode(Node::makeExpr(expr));
