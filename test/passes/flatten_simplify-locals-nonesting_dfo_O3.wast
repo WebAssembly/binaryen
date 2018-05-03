@@ -53,5 +53,29 @@
    )
   )
  )
+ (func $if-nothing (param $var$0 i64)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (block $label$1
+   (loop $label$2
+    (block $label$3
+     (block $label$4
+      (br_if $label$3
+       (i32.eqz
+        (if (result i32)
+         (i32.const 0)
+         (i32.const 0)
+         (get_local $var$2)
+        )
+       )
+      )
+      (unreachable)
+     )
+     (unreachable)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
 

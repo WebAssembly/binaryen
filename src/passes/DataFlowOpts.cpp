@@ -196,7 +196,7 @@ std::cout << "index: " << i << "\n";
           for (auto index : indexes) {
             *(getIndexPointer(expr, index)) = makeUse(with);
           }
-std::cout << "after " << node->expr << '\n';
+std::cout << "after " << user->expr << '\n';
           break;
         }
         case DataFlow::Node::Type::Phi: {
