@@ -136,6 +136,7 @@ std::cout << node->expr << '\n';
   // when the node contents have changed and so the users must be updated.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
 std::cout << "raUW1\n";
+dump(node, std::cout);
     // Const nodes are trivial to replace, but other stuff is trickier -
     // in particular phis.
     assert(with->isConst()); // TODO
@@ -143,6 +144,8 @@ std::cout << "raUW1\n";
     auto& users = nodeUsers[node];
 std::cout << "raUW2\n";
     for (auto* user : users) {
+std::cout << "a user:\n";
+dump(user, std::cout);
       // Add the user to the work left to do, as we are modifying it.
       workLeft.insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
@@ -203,6 +206,13 @@ std::cout << "after " << node->expr << '\n';
           // Nothing to do: a phi is not in the Binaryen IR.
           // If the entire phi can become a constant, that will be
           // propagated when we process that phi later.
+          break;
+        }
+        case DataFlow::Node::Type::Cond: {
+          // Nothing to do: a cond is not in the Binaryen IR.
+          // If the cond input is a constant, that might indicate
+          // useful optimizations are possible, which perhaps we
+          // should look into TODO
           break;
         }
         default:
