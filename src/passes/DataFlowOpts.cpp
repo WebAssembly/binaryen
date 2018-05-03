@@ -53,6 +53,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
     graph.build(func);
+dump(graph, std::cout);
     // Generate the uses between the nodes.
     for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
@@ -105,28 +106,54 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       if (isConcreteType(node->expr->type)) {
         // This can be precomputed.
         // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
-        Module temp;
-std::cout << "before" << '\n';
-
-std::cout << node->expr << '\n';
-        Builder builder(temp);
-        auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, node->expr);
-        PassRunner runner(&temp);
-        runner.setIsNested(true);
-        runner.add("precompute");
-        runner.runOnFunction(func);
-        node->expr = func->body;
-std::cout << node->expr << '\n';
-        assert(node->isConst());
-        // We no longer have values, and so do not use anything.
-        for (auto* value : node->values) {
-          nodeUsers[value].erase(node);
-        }
-        node->values.clear();
-        // Our contents changed, update our users.
-        replaceAllUsesWith(node, node);
+        optimizeExprToConstant(node);
       }
     }
+  }
+
+  void optimizeExprToConstant(DataFlow::Node* node) {
+std::cout << "will optimize an Expr of all constant inputs. before" << '\n';
+dump(node, std::cout);
+std::cout << node->expr << '\n';
+    auto* expr = node->expr;
+    // First, note that some of the expression's children may be
+    // get_locals that we inferred during SSA analysis as constant.
+    // We can apply those now.
+    for (Index i = 0; i < node->values.size(); i++) {
+      if (node->values[i]->isConst()) {
+        auto* currp = getIndexPointer(expr, i);
+        if (!(*currp)->is<Const>()) {
+          // Directly represent it as a constant.
+std::cout << "constantize\n";
+          auto* c = node->values[i]->expr->dynCast<Const>();
+          *currp = Builder(*getModule()).makeConst(c->value);
+        }
+      }
+    }
+std::cout << "mid\n";
+dump(node, std::cout);
+std::cout << node->expr << '\n';
+    // Now we know that all our DataFlow inputs are constant, and all
+    // our Binaryen IR representations of them are constant too. RUn
+    // precompute, which will transform the expression into a constanat.
+    Module temp;
+    Builder builder(temp);
+    auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
+    PassRunner runner(&temp);
+    runner.setIsNested(true);
+    runner.add("precompute");
+    runner.runOnFunction(func);
+    node->expr = func->body;
+dump(node, std::cout);
+std::cout << node->expr << '\n';
+    assert(node->isConst());
+    // We no longer have values, and so do not use anything.
+    for (auto* value : node->values) {
+      nodeUsers[value].erase(node);
+    }
+    node->values.clear();
+    // Our contents changed, update our users.
+    replaceAllUsesWith(node, node);
   }
 
   // Replaces all uses of a node with another value. This both modifies
@@ -148,6 +175,8 @@ std::cout << "a user:\n";
 dump(user, std::cout);
       // Add the user to the work left to do, as we are modifying it.
       workLeft.insert(user);
+      // `with` is getting another user.
+      nodeUsers[with].insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
 std::cout << "update user\n";
@@ -160,44 +189,12 @@ std::cout << "index: " << i << "\n";
         }
       }
       assert(!indexes.empty());
-      // `with` now has another user.
-      nodeUsers[with].insert(user);
       // Replacing in the Binaryen IR requires more care
       switch (user->type) {
         case DataFlow::Node::Type::Expr: {
           auto* expr = user->expr;
-          if (auto* unary = expr->dynCast<Unary>()) {
-            assert(indexes.size() == 1 && indexes[0] == 0);
-            unary->value = makeUse(with);
-          } else if (auto* binary = expr->dynCast<Binary>()) {
-            for (auto index : indexes) {
-              if (index == 0) {
-                binary->left = makeUse(with);
-              } else if (index == 1) {
-                binary->right = makeUse(with);
-              } else {
-std::cout << "p1\n";
-                WASM_UNREACHABLE();
-              }
-            }
-          } else if (auto* select = expr->dynCast<Select>()) {
-std::cout << "update select\n";
-            for (auto index : indexes) {
-              if (index == 0) {
-                select->condition = makeUse(with);
-std::cout << "YESS\n";
-              } else if (index == 1) {
-                select->ifTrue = makeUse(with);
-              } else if (index == 2) {
-                select->ifFalse = makeUse(with);
-              } else {
-std::cout << "p2\n";
-                WASM_UNREACHABLE();
-              }
-            }
-          } else {
-std::cout << "p3\n";
-            WASM_UNREACHABLE();
+          for (auto index : indexes) {
+            *(getIndexPointer(expr, index)) = makeUse(with);
           }
 std::cout << "after " << node->expr << '\n';
           break;
@@ -265,6 +262,39 @@ dump(node, std::cout);
     }
     // This is not an expression, so we just need to use it.
     return makeUse(node);
+  }
+
+  // Gets a pointer to the expression pointer in an expression.
+  // That is, given an index in the values() vector, get an
+  // Expression** that we can assign to so as to modify it.
+  Expression** getIndexPointer(Expression* expr, Index index) {
+    if (auto* unary = expr->dynCast<Unary>()) {
+      assert(index == 0);
+      return &unary->value;
+    } else if (auto* binary = expr->dynCast<Binary>()) {
+      if (index == 0) {
+        return &binary->left;
+      } else if (index == 1) {
+        return &binary->right;
+      } else {
+std::cout << "p1\n";
+        WASM_UNREACHABLE();
+      }
+    } else if (auto* select = expr->dynCast<Select>()) {
+      if (index == 0) {
+        return &select->condition;
+      } else if (index == 1) {
+        return &select->ifTrue;
+      } else if (index == 2) {
+        return &select->ifFalse;
+      } else {
+std::cout << "p2\n";
+        WASM_UNREACHABLE();
+      }
+    } else {
+std::cout << "p3\n";
+      WASM_UNREACHABLE();
+    }
   }
 };
 
