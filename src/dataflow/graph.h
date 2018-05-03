@@ -709,6 +709,9 @@ struct Graph : public Visitor<Graph, Node*> {
       // Find the set we are a value of.
       auto index = getSet(node)->index;
       return builder.makeGetLocal(index, func->getLocalType(index));
+    } else if (node->isZext()) {
+      // i1 zexts are a no-op for wasm
+      return makeUse(node->values[0]);
     } else if (node->isVar()) {
       // Nothing valid for us to read here.
       // FIXME should we have a local index to get?

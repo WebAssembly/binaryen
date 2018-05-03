@@ -70,6 +70,7 @@ struct Node {
   bool isExpr() { return type == Expr; }
   bool isPhi() { return type == Phi; }
   bool isCond() { return type == Cond; }
+  bool isZext() { return type == Zext; }
   bool isBad() { return type == Bad; }
 
   bool isConst() { return type == Expr && expr->is<Const>(); }
