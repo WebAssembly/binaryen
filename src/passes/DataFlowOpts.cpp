@@ -200,7 +200,7 @@ std::cout << "index: " << i << "\n";
         case DataFlow::Node::Type::Expr: {
           auto* expr = user->expr;
           for (auto index : indexes) {
-            *(getIndexPointer(expr, index)) = makeUse(with);
+            *(getIndexPointer(expr, index)) = graph.makeUse(with);
           }
 std::cout << "after " << user->expr << '\n';
           break;
@@ -234,31 +234,6 @@ std::cout << "p4\n";
     users.clear();
   }
 
-  // Creates an expression that uses a node. Generally, a node represents
-  // a value in a local, so we create a get_local for it.
-  Expression* makeUse(DataFlow::Node* node) {
-std::cout << "make a use of ";
-dump(node, std::cout);
-    Builder builder(*getModule());
-    if (node->isPhi()) {
-      // The index is the wasm local that we assign to when implementing
-      // the phi; get from there.
-      auto index = node->index;
-      return builder.makeGetLocal(index, getFunction()->getLocalType(index));
-    } else if (node->isConst()) {
-      return builder.makeConst(node->expr->cast<Const>()->value);
-    } else if (node->isExpr()) {
-      // Find the set we are a value of.
-      auto index = graph.getSet(node)->index;
-std::cout << "making a use of an expression which was set to local " << index << '\n';
-      return builder.makeGetLocal(index, getFunction()->getLocalType(index));
-    } else {
-std::cout << "p5\n";
-dump(node, std::cout);
-      WASM_UNREACHABLE(); // TODO
-    }
-  }
-
   // Given a node, regenerate an expression for it that can fit in a
   // the set_local for that node.
   Expression* regenerate(DataFlow::Node* node) {
@@ -267,7 +242,7 @@ dump(node, std::cout);
       return node->expr;
     }
     // This is not an expression, so we just need to use it.
-    return makeUse(node);
+    return graph.makeUse(node);
   }
 
   // Gets a pointer to the expression pointer in an expression.
