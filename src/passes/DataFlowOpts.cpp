@@ -94,15 +94,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       // flattened IR expression children are get_locals or consts.
       if (node->isPhi()) {
         auto* value = node->getValue(1);
-        if (!value->isVar() && !value->isBad()) {
-std::cout << "will rep a thing with " << nodeUsers[node].size() << " users\n";
-dump(node, std::cout);
-dump(value, std::cout);
-std::cout << "state:\n";
-dump(graph, std::cout);
+        if (value->isConst()) {
           replaceAllUsesWith(node, value);
-std::cout << "after rep all\n";
-dump(graph, std::cout);
         }
       }
     }
@@ -113,14 +106,13 @@ dump(graph, std::cout);
   // updates the underlying Binaryen IR as well.
   // After this change, the original node has no users.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
-    if (node->isPhi()) {
-      // When replacing a phi with one of its uses, the other paths are
-      // not actually valid... XXX
-std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n";
-    }
     if (with == node) {
       return; // nothing to do
     }
+    // Const nodes are trivial to replace, but other stuff is trickier -
+    // in particular phis.
+    assert(with->isConst()); // TODO
+    assert(!node->isPhi()); // TODO
     auto& users = nodeUsers[node];
     for (auto* user : users) {
       // Add the user to the work left to do, as we are modifying it.
