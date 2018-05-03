@@ -106,9 +106,6 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
         // This can be precomputed.
         // TODO not just all-constant inputs? E.g. i32.mul of 0 and X.
         Module temp;
-std::cout << "before" << '\n';
-
-std::cout << node->expr << '\n';
         Builder builder(temp);
         auto* func = builder.makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, node->expr);
         PassRunner runner(&temp);
@@ -116,7 +113,6 @@ std::cout << node->expr << '\n';
         runner.add("precompute");
         runner.runOnFunction(func);
         node->expr = func->body;
-std::cout << node->expr << '\n';
         assert(node->isConst());
         // Finish up.
         planWorkOnUsers(node);
