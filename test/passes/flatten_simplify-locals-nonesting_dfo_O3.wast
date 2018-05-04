@@ -77,5 +77,36 @@
    (unreachable)
   )
  )
+ (func "only-dfo" (param $var$0 f64) (result i32)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (loop $label$1
+   (set_local $var$3
+    (tee_local $var$1
+     (tee_local $var$2
+      (get_local $var$1)
+     )
+    )
+   )
+   (if
+    (i32.eqz
+     (get_local $var$4)
+    )
+    (block
+     (set_local $var$4
+      (select
+       (get_local $var$3)
+       (i32.const -2147483648)
+       (get_local $var$2)
+      )
+     )
+     (br $label$1)
+    )
+   )
+  )
+  (i32.const -2766)
+ )
 )
 
