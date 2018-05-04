@@ -501,7 +501,7 @@ function test_binaries() {
   assert(size < 512); // this is a tiny module
 
   // read the module from the binary
-  module = Binaryen.readBinary(buffer, size);
+  module = Binaryen.readBinary(buffer);
 
   // validate, print, and free
   assert(module.validate());

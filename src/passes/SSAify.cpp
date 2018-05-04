@@ -40,7 +40,7 @@
 namespace wasm {
 
 // A set we know is impossible / not in the ast
-SetLocal IMPOSSIBLE_SET;
+static SetLocal IMPOSSIBLE_SET;
 
 // Tracks assignments to locals, assuming single-assignment form, i.e.,
 // each assignment creates a new variable.
