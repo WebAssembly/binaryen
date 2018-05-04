@@ -77,7 +77,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       auto* node = graph.setNodeMap[set];
       auto iter = optimized.find(node);
       if (iter != optimized.end()) {
-        set->value = regenerate(node);
+        assert(node->isExpr()); // this is a set, where the node is defined
+        set->value = node->expr;
       }
     }
   }
@@ -212,17 +213,6 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
     // No one is a user of this node after we replaced all the uses.
     users.clear();
-  }
-
-  // Given a node, regenerate an expression for it that can fit in a
-  // the set_local for that node.
-  Expression* regenerate(DataFlow::Node* node) {
-    if (node->isExpr()) {
-      // TODO: do we need to look deeply?
-      return node->expr;
-    }
-    // This is not an expression, so we just need to use it.
-    return graph.makeUse(node);
   }
 
   // Gets a pointer to the expression pointer in an expression.
