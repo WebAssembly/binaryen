@@ -717,7 +717,6 @@ struct Graph : public Visitor<Graph, Node*> {
       // FIXME should we have a local index to get?
       return Builder(*module).makeConst(LiteralUtils::makeLiteralZero(node->wasmType));
     } else {
-std::cout << node->type << " p5\n";
       WASM_UNREACHABLE(); // TODO
     }
   }

@@ -110,7 +110,6 @@ inline bool allInputsIdentical(Node* node) {
 // Checks if the inputs are all constant - something we could
 // probably optimize. Returns false if irrelevant.
 inline bool allInputsConstant(Node* node) {
-std::cout << "aic?\n";
   switch (node->type) {
     case Node::Type::Expr: {
       if (node->expr->is<Unary>()) {
@@ -119,11 +118,6 @@ std::cout << "aic?\n";
         return node->getValue(0)->isConst() &&
                node->getValue(1)->isConst();
       } else if (node->expr->is<Select>()) {
-std::cout << "aic: " << node->getValue(0)->isConst() << " : " <<
-                        node->getValue(1)->isConst() << " : " <<
-                        node->getValue(2)->isConst() << '\n';
-dump(node, std::cout) << '\n';
-dump(node->getValue(0), std::cout) << '\n';
         return node->getValue(0)->isConst() &&
                node->getValue(1)->isConst() &&
                node->getValue(2)->isConst();

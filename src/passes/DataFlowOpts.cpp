@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -65,11 +64,10 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       workLeft.insert(node.get()); // we should try to optimize each node
     }
     while (!workLeft.empty()) {
-//std::cout << "\n\ndump before work iter\n";
-//dump(graph, std::cout);
+      //std::cout << "\n\ndump before work iter\n";
+      //dump(graph, std::cout);
       auto iter = workLeft.begin();
       auto* node = *iter;
-//std::cout << "  do the work iter noww, on " << node << "\n";
       workLeft.erase(iter);
       workOn(node);
     }
@@ -114,9 +112,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 
   void optimizeExprToConstant(DataFlow::Node* node) {
-std::cout << "will optimize an Expr of all constant inputs. before" << '\n';
-dump(node, std::cout);
-std::cout << node->expr << '\n';
+    //std::cout << "will optimize an Expr of all constant inputs. before" << '\n';
+    //dump(node, std::cout);
     auto* expr = node->expr;
     // First, note that some of the expression's children may be
     // get_locals that we inferred during SSA analysis as constant.
@@ -126,15 +123,11 @@ std::cout << node->expr << '\n';
         auto* currp = getIndexPointer(expr, i);
         if (!(*currp)->is<Const>()) {
           // Directly represent it as a constant.
-std::cout << "constantize\n";
           auto* c = node->values[i]->expr->dynCast<Const>();
           *currp = Builder(*getModule()).makeConst(c->value);
         }
       }
     }
-std::cout << "mid\n";
-dump(node, std::cout);
-std::cout << node->expr << '\n';
     // Now we know that all our DataFlow inputs are constant, and all
     // our Binaryen IR representations of them are constant too. RUn
     // precompute, which will transform the expression into a constanat.
@@ -155,9 +148,6 @@ std::cout << node->expr << '\n';
       nodeUsers[value].erase(node);
     }
     node->values.clear();
-std::cout << "after\n";
-dump(node, std::cout);
-std::cout << node->expr << '\n';
     // Our contents changed, update our users.
     replaceAllUsesWith(node, node);
   }
@@ -168,30 +158,23 @@ std::cout << node->expr << '\n';
   // This can be used to "replace" a node with itself, which makes sense
   // when the node contents have changed and so the users must be updated.
   void replaceAllUsesWith(DataFlow::Node* node, DataFlow::Node* with) {
-std::cout << "raUW1\n";
-dump(node, std::cout);
     // Const nodes are trivial to replace, but other stuff is trickier -
     // in particular phis.
     assert(with->isConst()); // TODO
     // All the users should be worked on later, as we will update them.
     auto& users = nodeUsers[node];
-std::cout << "raUW2\n";
     for (auto* user : users) {
-std::cout << "a user:\n";
-dump(user, std::cout);
       // Add the user to the work left to do, as we are modifying it.
       workLeft.insert(user);
       // `with` is getting another user.
       nodeUsers[with].insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
-std::cout << "update user\n";
       std::vector<Index> indexes;
       for (Index i = 0; i < user->values.size(); i++) {
         if (user->values[i] == node) {
           user->values[i] = with;
           indexes.push_back(i);
-std::cout << "index: " << i << "\n";
         }
       }
       assert(!indexes.empty());
@@ -202,7 +185,6 @@ std::cout << "index: " << i << "\n";
           for (auto index : indexes) {
             *(getIndexPointer(expr, index)) = graph.makeUse(with);
           }
-std::cout << "after " << user->expr << '\n';
           break;
         }
         case DataFlow::Node::Type::Phi: {
@@ -225,9 +207,7 @@ std::cout << "after " << user->expr << '\n';
           // should look into TODO
           break;
         }
-        default:
-std::cout << "p4\n";
- WASM_UNREACHABLE();
+        default: WASM_UNREACHABLE();
       }
     }
     // No one is a user of this node after we replaced all the uses.
@@ -258,7 +238,6 @@ std::cout << "p4\n";
       } else if (index == 1) {
         return &binary->right;
       } else {
-std::cout << "p1\n";
         WASM_UNREACHABLE();
       }
     } else if (auto* select = expr->dynCast<Select>()) {
@@ -269,11 +248,9 @@ std::cout << "p1\n";
       } else if (index == 2) {
         return &select->ifFalse;
       } else {
-std::cout << "p2\n";
         WASM_UNREACHABLE();
       }
     } else {
-std::cout << "p3\n";
       WASM_UNREACHABLE();
     }
   }
