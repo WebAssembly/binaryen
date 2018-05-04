@@ -1441,5 +1441,58 @@
     )
     (return (i32.const 3))
   )
+  (func $undo-if-return (param $p i32) (result i32)
+    (local $x i32)
+    (block $out
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (br $out)
+          (i32.const 1)
+        )
+      )
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (i32.const 2)
+          (br $out)
+        )
+      )
+      (set_local $x
+        (if (result i32)
+          (get_local $p)
+          (br $out)
+          (br $out)
+        )
+      )
+    )
+    (get_local $p)
+  )
+  (func $if-unreachable-but-declares-value (param $var$0 i32) (param $var$1 f64) (param $var$2 i32) (param $var$3 f64) (param $var$4 f32) (param $var$5 f32) (result i32)
+   (local $var$6 f64)
+   (if
+    (i32.const 0)
+    (drop
+     (loop $label$3 (result i64)
+      (block $label$4 (result i64)
+       (block $label$5
+        (block $label$6
+         (set_local $var$1
+          (if (result f64)
+           (unreachable)
+           (br $label$5)
+           (f64.const 1)
+          )
+         )
+        )
+        (nop)
+       )
+       (i64.const 1)
+      )
+     )
+    )
+   )
+   (i32.const 0)
+  )
 )
 

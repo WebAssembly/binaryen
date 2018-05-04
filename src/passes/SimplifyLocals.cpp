@@ -201,6 +201,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     }
   }
 
+  void visitLoop(Loop* curr) {
+    if (allowStructure) {
+      if (canUseLoopReturnValue(curr)) {
+        loops.push_back(this->getCurrentPointer());
+      }
+    }
+  }
+
   void visitGetLocal(GetLocal *curr) {
     auto found = sinkables.find(curr->index);
     if (found != sinkables.end()) {
@@ -335,6 +343,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   std::vector<Block*> blocksToEnlarge;
   std::vector<If*> ifsToEnlarge;
+  std::vector<Expression**> loops;
 
   void optimizeBlockReturn(Block* block) {
     if (!block->name.is() || unoptimizableBlocks.count(block->name) > 0) {
@@ -456,16 +465,46 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // if this if already has a result, or is unreachable code, we have
     // nothing to do
     if (iff->type != none) return;
-    // We now have the sinkables from both sides of the if.
+    // We now have the sinkables from both sides of the if, and can look
+    // for something to sink. That is either a shared index on both sides,
+    // *or* if one side is unreachable, we can sink anything from the other,
+    //   (if
+    //     (..)
+    //     (br $x)
+    //     (set_local $y (..))
+    //   )
+    //    =>
+    //   (set_local $y
+    //     (if (result i32)
+    //       (..)
+    //       (br $x)
+    //       (..)
+    //     )
+    //   )
     Sinkables& ifFalse = sinkables;
-    Index sharedIndex = -1;
+    Index goodIndex = -1;
     bool found = false;
-    for (auto& sinkable : ifTrue) {
-      Index index = sinkable.first;
-      if (ifFalse.count(index) > 0) {
-        sharedIndex = index;
+    if (iff->ifTrue->type == unreachable) {
+      assert(iff->ifFalse->type != unreachable); // since the if type is none
+      if (!ifFalse.empty()) {
+        goodIndex = ifFalse.begin()->first;
         found = true;
-        break;
+      }
+    } else if (iff->ifFalse->type == unreachable) {
+      assert(iff->ifTrue->type != unreachable); // since the if type is none
+      if (!ifTrue.empty()) {
+        goodIndex = ifTrue.begin()->first;
+        found = true;
+      }
+    } else {
+      // Look for a shared index.
+      for (auto& sinkable : ifTrue) {
+        Index index = sinkable.first;
+        if (ifFalse.count(index) > 0) {
+          goodIndex = index;
+          found = true;
+          break;
+        }
       }
     }
     if (!found) return;
@@ -473,27 +512,38 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // ensure we have a place to write the return values for, if not, we
     // need another cycle
     auto* ifTrueBlock  = iff->ifTrue->dynCast<Block>();
+    if (iff->ifTrue->type != unreachable) {
+      if (!ifTrueBlock  || ifTrueBlock->list.size() == 0  || !ifTrueBlock->list.back()->is<Nop>()) {
+        ifsToEnlarge.push_back(iff);
+        return;
+      }
+    }
     auto* ifFalseBlock = iff->ifFalse->dynCast<Block>();
-    if (!ifTrueBlock  || ifTrueBlock->list.size() == 0  || !ifTrueBlock->list.back()->is<Nop>() ||
-        !ifFalseBlock || ifFalseBlock->list.size() == 0 || !ifFalseBlock->list.back()->is<Nop>()) {
-      ifsToEnlarge.push_back(iff);
-      return;
+    if (iff->ifFalse->type != unreachable) {
+      if (!ifFalseBlock  || ifFalseBlock->list.size() == 0  || !ifFalseBlock->list.back()->is<Nop>()) {
+        ifsToEnlarge.push_back(iff);
+        return;
+      }
     }
     // all set, go
-    auto *ifTrueItem = ifTrue.at(sharedIndex).item;
-    ifTrueBlock->list[ifTrueBlock->list.size() - 1] = (*ifTrueItem)->template cast<SetLocal>()->value;
-    ExpressionManipulator::nop(*ifTrueItem);
-    ifTrueBlock->finalize();
-    assert(ifTrueBlock->type != none);
-    auto *ifFalseItem = ifFalse.at(sharedIndex).item;
-    ifFalseBlock->list[ifFalseBlock->list.size() - 1] = (*ifFalseItem)->template cast<SetLocal>()->value;
-    ExpressionManipulator::nop(*ifFalseItem);
-    ifFalseBlock->finalize();
-    assert(ifTrueBlock->type != none);
+    if (iff->ifTrue->type != unreachable) {
+      auto *ifTrueItem = ifTrue.at(goodIndex).item;
+      ifTrueBlock->list[ifTrueBlock->list.size() - 1] = (*ifTrueItem)->template cast<SetLocal>()->value;
+      ExpressionManipulator::nop(*ifTrueItem);
+      ifTrueBlock->finalize();
+      assert(ifTrueBlock->type != none);
+    }
+    if (iff->ifFalse->type != unreachable) {
+      auto *ifFalseItem = ifFalse.at(goodIndex).item;
+      ifFalseBlock->list[ifFalseBlock->list.size() - 1] = (*ifFalseItem)->template cast<SetLocal>()->value;
+      ExpressionManipulator::nop(*ifFalseItem);
+      ifFalseBlock->finalize();
+      assert(ifFalseBlock->type != none);
+    }
     iff->finalize(); // update type
     assert(iff->type != none);
     // finally, create a set_local on the iff itself
-    auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(sharedIndex, iff);
+    auto* newSetLocal = Builder(*this->getModule()).makeSetLocal(goodIndex, iff);
     *currp = newSetLocal;
     anotherCycle = true;
   }
@@ -561,6 +611,23 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         ifsToEnlarge.clear();
         anotherCycle = true;
       }
+      // handle loops. note that a lot happens in this pass, and we can't just modify
+      // set_locals when we see a loop - it might be tracked - and we can't also just
+      // assume our loop didn't move either (might be in a block now). So we do this
+      // when all other work is done - as loop return values are rare, that is fine.
+      if (!anotherCycle) {
+        for (auto* currp : loops) {
+          auto* curr = (*currp)->template cast<Loop>();
+          assert(canUseLoopReturnValue(curr));
+          auto* set = curr->body->template cast<SetLocal>();
+          curr->body = set->value;
+          set->value = curr;
+          curr->finalize(curr->body->type);
+          *currp = set;
+          anotherCycle = true;
+        }
+      }
+      loops.clear();
       // clean up
       sinkables.clear();
       blockBreaks.clear();
@@ -579,6 +646,17 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     SetLocalRemover remover;
     remover.numGetLocals = &getCounter.num;
     remover.walkFunction(func);
+  }
+
+  bool canUseLoopReturnValue(Loop* curr) {
+    // Optimizing a loop return value is trivial: just see if it contains
+    // a set_local, and pull that out.
+    if (auto* set = curr->body->template dynCast<SetLocal>()) {
+      if (isConcreteType(set->value->type)) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 

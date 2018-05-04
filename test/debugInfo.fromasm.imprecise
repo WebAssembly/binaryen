@@ -57,18 +57,18 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (if
-   ;;@ fib.c:3:0
-   (i32.gt_s
-    (get_local $0)
-    (i32.const 0)
-   )
-   (set_local $2
+  (set_local $2
+   (if (result i32)
+    ;;@ fib.c:3:0
+    (i32.gt_s
+     (get_local $0)
+     (i32.const 0)
+    )
     (i32.const 1)
-   )
-   ;;@ fib.c:8:0
-   (return
-    (i32.const 1)
+    ;;@ fib.c:8:0
+    (return
+     (i32.const 1)
+    )
    )
   )
   (loop $while-in
