@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
@@ -369,6 +368,7 @@ struct Graph : public Visitor<Graph, Node*> {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
+    assert(isConcreteType(curr->value->type));
     sets.push_back(curr);
     expressionParentMap[curr] = parent;
     // Set the current node in the local state.
