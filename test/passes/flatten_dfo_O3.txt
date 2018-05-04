@@ -2,10 +2,13 @@
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
  (type $2 (func (param i64 i32) (result f64)))
+ (type $3 (func (param f64) (result f64)))
+ (memory $0 (shared 1 1))
  (export "one" (func $0))
  (export "two" (func $1))
  (export "use-var" (func $2))
  (export "bad1" (func $3))
+ (export "only-dfo" (func $4))
  (func $0 (; 0 ;) (type $0)
   (block $label$3
    (br_if $label$3
@@ -31,6 +34,27 @@
   (i32.store
    (i32.const 1)
    (i32.const -16384)
+  )
+ )
+ (func $4 (; 4 ;) (type $3) (param $0 f64) (result f64)
+  (local $1 i32)
+  (local $2 i32)
+  (loop $label$1
+   (if
+    (tee_local $1
+     (tee_local $2
+      (get_local $1)
+     )
+    )
+    (if
+     (get_local $2)
+     (i64.atomic.store32
+      (i32.const 3)
+      (i64.const -32768)
+     )
+    )
+   )
+   (br $label$1)
   )
  )
 )

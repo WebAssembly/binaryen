@@ -1,4 +1,5 @@
 (module
+ (memory $0 (shared 1 1))
  (func "one"
   (loop $label$2
    (br_if $label$2
@@ -156,6 +157,30 @@
      )
     )
    )
+  )
+ )
+ (func "only-dfo" (param $var$0 f64) (result f64)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (loop $label$1
+   (if
+    (tee_local $var$1
+     (tee_local $var$2
+      (get_local $var$1)
+     )
+    )
+    (if
+     (get_local $var$2)
+     (i64.atomic.store32 offset=3
+      (i32.and
+       (get_local $var$1) ;; only dfo can figure out that this is 0
+       (i32.const 15)
+      )
+      (i64.const -32768)
+     )
+    )
+   )
+   (br $label$1)
   )
  )
 )
