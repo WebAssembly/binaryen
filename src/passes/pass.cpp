@@ -103,6 +103,7 @@ void PassRegistry::registerPasses() {
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
   registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);
   registerPass("remove-unused-module-elements", "removes unused module elements", createRemoveUnusedModuleElementsPass);
+  registerPass("remove-unused-nonfunction-module-elements", "removes unused module elements that are not functions", createRemoveUnusedNonFunctionModuleElementsPass);
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);

@@ -60,6 +60,7 @@ Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryPass();
 Pass* createRemoveUnusedBrsPass();
 Pass* createRemoveUnusedModuleElementsPass();
+Pass* createRemoveUnusedNonFunctionModuleElementsPass();
 Pass* createRemoveUnusedNamesPass();
 Pass* createReorderFunctionsPass();
 Pass* createReorderLocalsPass();
