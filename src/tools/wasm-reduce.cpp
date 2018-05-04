@@ -249,6 +249,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--remove-memory",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
+      "--remove-unused-nonfunction-module-elements",
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
