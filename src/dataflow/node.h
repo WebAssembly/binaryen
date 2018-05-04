@@ -162,7 +162,7 @@ struct Node {
       case Var:
       case Block: return this == &other;
       case Expr: {
-        if (!ExpressionAnalyzer::shallowEqual(expr, other.expr)) {
+        if (!ExpressionAnalyzer::equal(expr, other.expr)) {
           return false;
         }
         break;
