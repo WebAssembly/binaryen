@@ -1,5 +1,5 @@
 (module
- (func $if-select
+ (func "if-select"
   (local $var$0 i32)
   (nop)
   (drop
@@ -14,7 +14,7 @@
    )
   )
  )
- (func $unreachable-body-update-zext (result f64)
+ (func "unreachable-body-update-zext" (result f64)
   (if
    (i32.eqz
     (i32.const 0)
@@ -23,7 +23,7 @@
   )
   (f64.const -9223372036854775808)
  )
- (func $ssa-const (param $var$0 i32) (param $var$1 f64) (param $var$2 f64) (result i32)
+ (func "ssa-const" (param $var$0 i32) (param $var$1 f64) (param $var$2 f64) (result i32)
   (block $label$1 (result i32)
    (block $label$2
     (if
@@ -53,7 +53,7 @@
    )
   )
  )
- (func $if-nothing (param $var$0 i64)
+ (func "if-nothing" (param $var$0 i64)
   (local $var$1 i32)
   (local $var$2 i32)
   (block $label$1
