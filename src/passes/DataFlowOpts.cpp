@@ -113,6 +113,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   }
 
   void optimizeExprToConstant(DataFlow::Node* node) {
+    assert(node->isExpr());
+    assert(!node->isConst());
     //std::cout << "will optimize an Expr of all constant inputs. before" << '\n';
     //dump(node, std::cout);
     auto* expr = node->expr;
@@ -144,6 +146,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     if (!result->is<Const>()) return;
     // All good, copy it.
     node->expr = Builder(*getModule()).makeConst(result->cast<Const>()->value);
+    assert(node->isConst());
     // We no longer have values, and so do not use anything.
     for (auto* value : node->values) {
       nodeUsers[value].erase(node);
