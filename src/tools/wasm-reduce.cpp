@@ -37,6 +37,7 @@
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
+#include "ir/properties.h"
 #include "wasm-validator.h"
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -675,28 +676,31 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     // a table, that is useful as then we can change the return type.
     if (module->functions.size() == 1 && module->exports.empty() && module->table.segments.empty()) {
       auto* func = module->functions[0].get();
-      auto funcType = func->type;
-      auto funcResult = func->result;
-      auto* funcBody = func->body;
-      for (auto* child : ChildIterator(func->body)) {
-        if (!(isConcreteType(child->type) || child->type == none)) {
-          continue; // not something a function can return
+      // We can't remove something that might have breaks to it.
+      if (!Properties::isNamedControlFlow(func->body)) {
+        auto funcType = func->type;
+        auto funcResult = func->result;
+        auto* funcBody = func->body;
+        for (auto* child : ChildIterator(func->body)) {
+          if (!(isConcreteType(child->type) || child->type == none)) {
+            continue; // not something a function can return
+          }
+          // Try to replace the body with the child, fixing up the function
+          // to accept it.
+          func->type = Name();
+          func->result = child->type;
+          func->body = child;
+          if (writeAndTestReduction()) {
+            // great, we succeeded!
+            std::cerr << "|    altered function result type\n";
+            noteReduction(1);
+            break;
+          }
+          // Undo.
+          func->type = funcType;
+          func->result = funcResult;
+          func->body = funcBody;
         }
-        // Try to replace the body with the child, fixing up the function
-        // to accept it.
-        func->type = Name();
-        func->result = child->type;
-        func->body = child;
-        if (writeAndTestReduction()) {
-          // great, we succeeded!
-          std::cerr << "|    altered function result type\n";
-          noteReduction(1);
-          break;
-        }
-        // Undo.
-        func->type = funcType;
-        func->result = funcResult;
-        func->body = funcBody;
       }
     }
   }
