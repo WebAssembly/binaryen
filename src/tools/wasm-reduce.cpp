@@ -671,6 +671,34 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         skip = std::min(size_t(factor), 2 * skip);
       }
     }
+    // If we are left with a single function that is not exported or used in
+    // a table, that is useful as then we can change the return type.
+    if (module->functions.size() == 1 && module->exports.empty() && module->table.segments.empty()) {
+      auto* func = module->functions[0].get();
+      auto funcType = func->type;
+      auto funcResult = func->result;
+      auto* funcBody = func->body;
+      for (auto* child : ChildIterator(func->body)) {
+        if (!(isConcreteType(child->type) || child->type == none)) {
+          continue; // not something a function can return
+        }
+        // Try to replace the body with the child, fixing up the function
+        // to accept it.
+        func->type = Name();
+        func->result = child->type;
+        func->body = child;
+        if (writeAndTestReduction()) {
+          // great, we succeeded!
+          std::cerr << "|    altered function result type\n";
+          noteReduction(1);
+          break;
+        }
+        // Undo.
+        func->type = funcType;
+        func->result = funcResult;
+        func->body = funcBody;
+      }
+    }
   }
 
   bool tryToRemoveFunctions(std::vector<Name> names) {
