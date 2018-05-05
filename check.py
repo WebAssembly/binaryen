@@ -265,7 +265,7 @@ def run_wasm_reduce_tests():
         fail_if_not_identical_to_file(seen.read(), expected)
 
   # run on a nontrivial fuzz testcase, for general coverage
-  run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unit.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+  run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
   before = os.stat('a.wasm').st_size
   run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
   after = os.stat('c.wasm').st_size
