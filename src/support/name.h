@@ -54,6 +54,16 @@ struct Name : public cashew::IString {
   bool hasSubstring(cashew::IString substring) {
     return strstr(c_str(), substring.c_str()) != nullptr;
   }
+
+  Name join(Name r) {
+    std::string newStr;
+
+    newStr.append(str);
+    newStr.append(".");
+    newStr.append(r.str);
+
+    return Name(newStr);
+  }
 };
 
 } // namespace wasm

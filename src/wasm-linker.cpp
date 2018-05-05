@@ -56,6 +56,7 @@ void Linker::ensureFunctionImport(Name module, Name name, std::string signature)
     import->module = module;
 
     // FIXME(sven): concat module . base here
+    /* import->name = module.join(name); */
     import->name = name;
 
     import->functionType = ensureFunctionType(signature, &out.wasm)->name;
@@ -65,12 +66,15 @@ void Linker::ensureFunctionImport(Name module, Name name, std::string signature)
 }
 
 void Linker::ensureObjectImport(Name module, Name name) {
-  if (!out.wasm.getImportOrNull(name)) {
+  auto import = out.wasm.getImportOrNull(name);
+
+  if (!import) {
     auto import = new Import;
     import->base = name;
     import->module = module;
 
     // FIXME(sven): concat module . base here
+    /* import->name = module.join(name); */
     import->name = name;
 
     // FIXME(sven): handle func types
@@ -78,6 +82,9 @@ void Linker::ensureObjectImport(Name module, Name name) {
     import->globalType = i32;
 
     out.wasm.addImport(import);
+  } else {
+    // If the import already exists we just update its information
+    import->module = module;
   }
 }
 
