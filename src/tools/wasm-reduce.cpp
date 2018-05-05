@@ -35,6 +35,7 @@
 #include "wasm-io.h"
 #include "wasm-builder.h"
 #include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "wasm-validator.h"
 #ifdef _WIN32
@@ -403,8 +404,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // don't need to duplicate work that they do
 
   void visitExpression(Expression* curr) {
+    // type-based reductions
     if (curr->type == none) {
-      if (tryToReduceCurrentToNone()) return;
+      if (tryToReduceCurrentToNop()) return;
     } else if (isConcreteType(curr->type)) {
       if (tryToReduceCurrentToConst()) return;
     } else {
@@ -419,8 +421,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           return;
         }
       }
-      if (tryToReplaceCurrent(iff->ifTrue)) return;
-      if (iff->ifFalse && tryToReplaceCurrent(iff->ifFalse)) return;
       handleCondition(iff->condition);
     } else if (auto* br = curr->dynCast<Break>()) {
       handleCondition(br->condition);
@@ -428,26 +428,6 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       handleCondition(select->condition);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       handleCondition(sw->condition);
-    } else if (auto* set = curr->dynCast<SetLocal>()) {
-      if (set->isTee()) {
-        // maybe we don't need the set
-        tryToReplaceCurrent(set->value);
-      }
-    } else if (auto* unary = curr->dynCast<Unary>()) {
-      // maybe we can pass through
-      tryToReplaceCurrent(unary->value);
-    } else if (auto* binary = curr->dynCast<Binary>()) {
-      // maybe we can pass through
-      if (!tryToReplaceCurrent(binary->left)) {
-        tryToReplaceCurrent(binary->right);
-      }
-    } else if (auto* call = curr->dynCast<Call>()) {
-      handleCall(call);
-    } else if (auto* call = curr->dynCast<CallImport>()) {
-      handleCall(call);
-    } else if (auto* call = curr->dynCast<CallIndirect>()) {
-      if (tryToReplaceCurrent(call->target)) return;
-      handleCall(call);
     } else if (auto* block = curr->dynCast<Block>()) {
       if (!shouldTryToReduce()) return;
       // replace a singleton
@@ -479,24 +459,16 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         }
         i++;
       }
+      return; // nothing more to do
     } else if (auto* loop = curr->dynCast<Loop>()) {
       if (shouldTryToReduce() && !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
         tryToReplaceCurrent(loop->body);
       }
-    } else if (auto* rmw = curr->dynCast<AtomicRMW>()) {
-      if (tryToReplaceCurrent(rmw->ptr)) return;
-      if (tryToReplaceCurrent(rmw->value)) return;
-    } else if (auto* cmpx = curr->dynCast<AtomicCmpxchg>()) {
-      if (tryToReplaceCurrent(cmpx->ptr)) return;
-      if (tryToReplaceCurrent(cmpx->expected)) return;
-      if (tryToReplaceCurrent(cmpx->replacement)) return;
-    } else if (auto* wait = curr->dynCast<AtomicWait>()) {
-      if (tryToReplaceCurrent(wait->ptr)) return;
-      if (tryToReplaceCurrent(wait->expected)) return;
-      if (tryToReplaceCurrent(wait->timeout)) return;
-    } else if (auto* wake = curr->dynCast<AtomicWake>()) {
-      if (tryToReplaceCurrent(wake->ptr)) return;
-      if (tryToReplaceCurrent(wake->wakeCount)) return;
+      return; // nothing more to do
+    }
+    // Finally, try to replace with a child.
+    for (auto* child : ChildIterator(curr)) {
+      if (tryToReplaceCurrent(child)) return;
     }
   }
 
@@ -729,14 +701,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
   }
 
-  template<typename T>
-  void handleCall(T* call) {
-    for (auto* op : call->operands) {
-      if (tryToReplaceCurrent(op)) return;
-    }
-  }
-
-  bool tryToReduceCurrentToNone() {
+  bool tryToReduceCurrentToNop() {
     auto* curr = getCurrent();
     if (curr->is<Nop>()) return false;
     // try to replace with a trivial value
