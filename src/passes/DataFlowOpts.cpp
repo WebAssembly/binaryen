@@ -135,6 +135,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // our Binaryen IR representations of them are constant too. RUn
     // precompute, which will transform the expression into a constanat.
     Module temp;
+    // XXX we should copy expr here, in principle, and definitely will need to
+    //     when we do arbitrarily regenerated expressions
     auto* func = Builder(temp).makeFunction("temp", std::vector<Type>{}, none, std::vector<Type>{}, expr);
     PassRunner runner(&temp);
     runner.setIsNested(true);
