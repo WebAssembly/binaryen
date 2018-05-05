@@ -151,7 +151,8 @@ public:
         break;
       }
       case Expression::Id::ReturnId: {
-        children.push_back(expr->cast<Return>()->value);
+        auto* ret = expr->dynCast<Return>();
+        if (ret->value) children.push_back(ret->value);
         break;
       }
       case Expression::Id::HostId: {
@@ -194,9 +195,7 @@ public:
       case Expression::Id::UnreachableId: {
         break; // no children
       }
-      default:
-std::cout << "bad " << expr->_id << '\n';
-WASM_UNREACHABLE();
+      default: WASM_UNREACHABLE();
     }
   }
 
