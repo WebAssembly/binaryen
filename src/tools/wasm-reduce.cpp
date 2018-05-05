@@ -470,6 +470,56 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     for (auto* child : ChildIterator(curr)) {
       if (tryToReplaceCurrent(child)) return;
     }
+    // If that didn't work, try to replace with a child + a unary conversion
+    if (isConcreteType(curr->type) &&
+        !curr->is<Unary>()) { // but not if it's already unary
+      for (auto* child : ChildIterator(curr)) {
+        if (child->type == curr->type) continue; // already tried
+        if (!isConcreteType(child->type)) continue; // no conversion
+        Expression* fixed;
+        switch (curr->type) {
+          case i32: {
+            switch (child->type) {
+              case i64: fixed = builder->makeUnary(WrapInt64, child); break;
+              case f32: fixed = builder->makeUnary(TruncSFloat32ToInt32, child); break;
+              case f64: fixed = builder->makeUnary(TruncSFloat64ToInt32, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case i64: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ExtendSInt32, child); break;
+              case f32: fixed = builder->makeUnary(TruncSFloat32ToInt64, child); break;
+              case f64: fixed = builder->makeUnary(TruncSFloat64ToInt64, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case f32: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat32, child); break;
+              case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat32, child); break;
+              case f64: fixed = builder->makeUnary(DemoteFloat64, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case f64: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat64, child); break;
+              case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat64, child); break;
+              case f32: fixed = builder->makeUnary(PromoteFloat32, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          default: WASM_UNREACHABLE();
+        }
+        assert(fixed->type == curr->type);
+        if (tryToReplaceCurrent(fixed)) return;
+      }
+    }
   }
 
   void visitFunction(Function* curr) {
