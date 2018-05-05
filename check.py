@@ -265,11 +265,11 @@ def run_wasm_reduce_tests():
         fail_if_not_identical_to_file(seen.read(), expected)
 
   # run on a nontrivial fuzz testcase, for general coverage
-  run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unit.asm.js'), '-ttf', '-o', 'a.wasm'])
+  run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unit.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
   before = os.stat('a.wasm').st_size
   run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
   after = os.stat('c.wasm').st_size
-  assert after < 0.5 * before, [before, after]
+  assert after < 0.333 * before, [before, after]
 
 def run_spec_tests():
   print '\n[ checking wasm-shell spec testcases... ]\n'
