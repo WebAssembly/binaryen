@@ -248,7 +248,7 @@ def run_wasm_metadce_tests():
       fail_if_not_identical_to_file(stdout, expected + '.stdout')
 
 def run_wasm_reduce_tests():
-  print '\n[ checking wasm-reduce ]\n'
+  print '\n[ checking wasm-reduce testcases]\n'
 
   # fixed testcases
   test_dir = os.path.join(options.binaryen_test, 'reduce')
@@ -265,11 +265,15 @@ def run_wasm_reduce_tests():
         fail_if_not_identical_to_file(seen.read(), expected)
 
   # run on a nontrivial fuzz testcase, for general coverage
-  run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
-  before = os.stat('a.wasm').st_size
-  run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
-  after = os.stat('c.wasm').st_size
-  assert after < 0.333 * before, [before, after]
+  # this is very slow in ThreadSanitizer, so avoid it there
+  if 'fsanitize=thread' not in str(os.environ):
+    print '\n[ checking wasm-reduce fuzz testcase ]\n'
+
+    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+    before = os.stat('a.wasm').st_size
+    run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+    after = os.stat('c.wasm').st_size
+    assert after < 0.333 * before, [before, after]
 
 def run_spec_tests():
   print '\n[ checking wasm-shell spec testcases... ]\n'
