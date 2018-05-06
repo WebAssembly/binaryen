@@ -74,6 +74,7 @@ Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createSouperifyPass();
+Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();
 Pass* createSSAifyPass();
 Pass* createTrapModeClamp();

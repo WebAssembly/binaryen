@@ -73,6 +73,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     }
     // After updating the DataFlow IR, we can update the sets in
     // the wasm.
+    // TODO: we also need phis, as a phi can flow directly into say
+    //       a return or a call parameter.
     for (auto* set : graph.sets) {
       auto* node = graph.setNodeMap[set];
       auto iter = optimized.find(node);

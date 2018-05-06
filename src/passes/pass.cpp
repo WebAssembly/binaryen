@@ -117,6 +117,7 @@ void PassRegistry::registerPasses() {
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations (no structure)", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations (no tees or structure)", createSimplifyLocalsNoTeeNoStructurePass);
   registerPass("souperify", "emit Souper IR in text form", createSouperifyPass);
+  registerPass("souperify-single-use", "emit Souper IR in text form (single-use nodes only)", createSouperifySingleUsePass);
   registerPass("spill-pointers", "spill pointers to the C stack (useful for Boehm-style GC)", createSpillPointersPass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);

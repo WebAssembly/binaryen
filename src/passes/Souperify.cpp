@@ -52,6 +52,7 @@ namespace DataFlow {
 struct Trace {
   Graph& graph;
   Node* toInfer;
+  std::unordered_set<Node*>& exclude; // nodes we should exclude from traces
 
   // A limit on how deep we go - we don't want to create arbitrarily
   // large traces.
@@ -66,7 +67,7 @@ struct Trace {
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
 
-  Trace(Graph& graph, Node* toInfer) : graph(graph), toInfer(toInfer) {
+  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& exclude) : graph(graph), toInfer(toInfer), exclude(exclude) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -119,7 +120,9 @@ struct Trace {
           return node;
         }
         // If we've gone too deep, emit a var instead.
-        if (depth >= depthLimit || nodes.size() >= totalLimit) {
+        // Do the same if this is a node we should exclude from traces.
+        if ((depth >= depthLimit || nodes.size() >= totalLimit) ||
+            exclude.find(node) != exclude.end()) {
           auto* var = Node::makeVar(node->getWasmType());
           replacements[node] = std::unique_ptr<Node>(var);
           return var;
@@ -443,15 +446,34 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
   // Not parallel, for now - could parallelize and combine outputs at the end.
   // If Souper is thread-safe, we could also run it in parallel.
 
+  bool singleUseOnly;
+
+  Souperify(bool singleUseOnly) : singleUseOnly(singleUseOnly) {}
+
   void doWalkFunction(Function* func) {
     std::cout << "\n; function: " << func->name << '\n';
     // Build the data-flow IR.
     DataFlow::Graph graph;
     graph.build(func, getModule());
+    // If we only want single-use nodes, exclude all the others.
+    std::unordered_set<DataFlow::Node*> exclude;
+    if (singleUseOnly) {
+      std::unordered_map<DataFlow::Node*, Index> uses;
+      for (auto& node : graph.nodes) {
+        for (auto* value : node->values) {
+          uses[value]++;
+        }
+      }
+      for (auto& node : graph.nodes) {
+        if (node->isExpr() && uses[node.get()] != 1) {
+          exclude.insert(node.get());
+        }
+      }
+    }
     // Emit possible traces.
     for (auto& node : graph.nodes) {
       if (!graph.isArtificial(node.get())) {
-        DataFlow::Trace trace(graph, node.get());
+        DataFlow::Trace trace(graph, node.get(), exclude);
         if (!trace.isBad()) {
           DataFlow::Printer(graph, trace);
         }
@@ -461,7 +483,11 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
 };
 
 Pass *createSouperifyPass() {
-  return new Souperify();
+  return new Souperify(false);
+}
+
+Pass *createSouperifySingleUsePass() {
+  return new Souperify(true);
 }
 
 } // namespace wasm
