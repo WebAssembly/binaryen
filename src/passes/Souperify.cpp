@@ -121,7 +121,7 @@ struct Trace {
         }
         // If we've gone too deep, emit a var instead.
         // Do the same if this is a node we should exclude from traces.
-        if ((depth >= depthLimit || nodes.size() >= totalLimit) ||
+        if (depth >= depthLimit || nodes.size() >= totalLimit ||
             exclude.find(node) != exclude.end()) {
           auto* var = Node::makeVar(node->getWasmType());
           replacements[node] = std::unique_ptr<Node>(var);
