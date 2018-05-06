@@ -123,9 +123,12 @@ struct Trace {
         // Do the same if this is a node we should exclude from traces.
         if (depth >= depthLimit || nodes.size() >= totalLimit ||
             exclude.find(node) != exclude.end()) {
-          auto* var = Node::makeVar(node->getWasmType());
+          auto type = node->getWasmType();
+          assert(isConcreteType(type));
+          auto* var = Node::makeVar(type);
           replacements[node] = std::unique_ptr<Node>(var);
-          return var;
+          node = var;
+          break;
         }
         // Add the dependencies.
         assert(!node->expr->is<GetLocal>());
@@ -136,6 +139,7 @@ struct Trace {
       }
       case Node::Type::Phi: {
         auto* block = add(node->getValue(0), depth);
+        assert(block);
         auto size = block->values.size();
         // First, add the conditions for the block
         for (Index i = 0; i < size; i++) {
@@ -460,14 +464,21 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     if (singleUseOnly) {
       std::unordered_map<DataFlow::Node*, Index> uses;
       for (auto& node : graph.nodes) {
-        if (!graph.isArtificial(node.get())) {
+        if (node->isExpr() && !graph.isArtificial(node.get())) {
           for (auto* value : node->values) {
-            uses[value]++;
+            if (value->isExpr() && !value->isConst()) {
+std::cout << "add a use\n";
+dump(node.get(), std::cout);
+dump(value, std::cout);
+              uses[value]++;
+            }
           }
         }
       }
       for (auto& node : graph.nodes) {
         if (node->isExpr() && uses[node.get()] > 1) {
+std::cout << "dump " << uses[node.get()] << '\n';
+dump(node.get(), std::cout);
           exclude.insert(node.get());
         }
       }
