@@ -109,6 +109,11 @@ struct Trace {
     if (addedNodes.find(node) != addedNodes.end()) {
       return node;
     }
+    // If replaced, return the replacement.
+    auto iter = replacements.find(node);
+    if (iter != replacements.end()) {
+      return iter->second.get();
+    }
     switch (node->type) {
       case Node::Type::Var: {
         break; // nothing more to add
@@ -467,9 +472,9 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
         if (node->isExpr() && !graph.isArtificial(node.get())) {
           for (auto* value : node->values) {
             if (value->isExpr() && !value->isConst()) {
-std::cout << "add a use\n";
-dump(node.get(), std::cout);
-dump(value, std::cout);
+//std::cout << "add a use\n";
+//dump(node.get(), std::cout);
+//dump(value, std::cout);
               uses[value]++;
             }
           }
@@ -477,8 +482,8 @@ dump(value, std::cout);
       }
       for (auto& node : graph.nodes) {
         if (node->isExpr() && uses[node.get()] > 1) {
-std::cout << "dump " << uses[node.get()] << '\n';
-dump(node.get(), std::cout);
+//std::cout << "dump " << uses[node.get()] << '\n';
+//dump(node.get(), std::cout);
           exclude.insert(node.get());
         }
       }
