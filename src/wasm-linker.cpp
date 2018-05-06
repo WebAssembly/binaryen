@@ -77,7 +77,6 @@ void Linker::ensureObjectImport(Name module, Name name) {
     /* import->name = module.join(name); */
     import->name = name;
 
-    // FIXME(sven): handle func types
     import->kind = ExternalKind::Global;
     import->globalType = i32;
 

@@ -125,11 +125,11 @@ class LinkerObject {
   bool isObjectImplemented(Name name) {
     for (const auto& obj : symbolInfo.importedObjects) {
       if (obj.name == name) {
-        return true;
+        return false;
       }
     }
 
-    return false;
+    return true;
   }
 
   // If name is an alias, return what it points to. Otherwise return name.
