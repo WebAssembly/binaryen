@@ -657,6 +657,7 @@ struct Graph : public Visitor<Graph, Node*> {
           // We need to actually merge some stuff.
           if (!block) {
             block = addNode(Node::makeBlock());
+            artificialNodes.insert(block);
             for (Index index = 0; index < numStates; index++) {
               auto* condition = states[index].condition;
               if (!condition->isBad()) {

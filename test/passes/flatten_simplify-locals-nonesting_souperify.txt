@@ -98,11 +98,6 @@ infer %1
 
 ; start LHS (in $figure-3-if)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $figure-3-if)
-%0 = block 2
 %1:i32 = var
 %2 = and %1, 1:i32
 %3 = ne %2, 0:i32
@@ -194,11 +189,6 @@ infer %1
 
 ; start LHS (in $various-conditions-1)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $various-conditions-1)
-%0 = block 2
 %1:i32 = var
 %2 = ne %1, 0:i32
 blockpc %0 0 %2 1:i1
@@ -243,11 +233,6 @@ infer %1
 
 ; start LHS (in $various-conditions-2)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $various-conditions-2)
-%0 = block 2
 %1:i32 = var
 %2 = slt %1, 0:i32
 blockpc %0 0 %2 1:i1
@@ -286,11 +271,6 @@ infer %6
 %3 = ne %2, 0:i32
 pc %3 1:i1
 infer %1
-
-
-; start LHS (in $various-conditions-3)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $various-conditions-3)
@@ -380,11 +360,6 @@ infer %4
 %7 = eq %2, 0:i32
 pc %7 1:i1
 infer %6
-
-
-; start LHS (in $unaries)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $unaries)
@@ -509,11 +484,6 @@ infer %1
 
 ; start LHS (in $unary-condition)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $unary-condition)
-%0 = block 2
 %1:i32 = var
 %2 = ule 1:i32, %1
 %3:i32 = zext %2
@@ -573,11 +543,6 @@ infer %3
 %4 = eq %3, 0:i32
 pc %4 1:i1
 infer %1
-
-
-; start LHS (in $unary-condition-2)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $unary-condition-2)
@@ -645,11 +610,6 @@ infer %1
 
 ; start LHS (in $if-else-cond)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $if-else-cond)
-%0 = block 2
 %1:i32 = var
 %2 = slt %1, 1:i32
 blockpc %0 0 %2 1:i1
@@ -710,11 +670,6 @@ infer %0
 
 ; start LHS (in $bad-phi-value)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $bad-phi-value)
-%0 = block 2
 %1 = ne 1:i32, 0:i32
 blockpc %0 0 %1 1:i1
 infer %0
@@ -736,11 +691,6 @@ blockpc %0 1 %2 1:i1
 %3:i32 = var
 %4 = phi %0, %3, 0:i32
 infer %4
-
-
-; start LHS (in $bad-phi-value)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $bad-phi-value)
@@ -792,11 +742,6 @@ infer %8
 
 ; start LHS (in $bad-phi-value-2)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $bad-phi-value-2)
-%0 = block 2
 %1 = ne 1:i32, 0:i32
 blockpc %0 0 %1 1:i1
 infer %0
@@ -818,11 +763,6 @@ blockpc %0 1 %2 1:i1
 %3:i32 = var
 %4 = phi %0, %3, 0:i32
 infer %4
-
-
-; start LHS (in $bad-phi-value-2)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $bad-phi-value-2)
@@ -927,11 +867,6 @@ infer %2
 
 ; start LHS (in $block-phi-1)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $block-phi-1)
-%0 = block 2
 %1:i32 = var
 %2 = add %1, 1:i32
 %3 = add %2, 2:i32
@@ -950,11 +885,6 @@ infer %5
 
 
 ; function: $block-phi-2
-
-; start LHS (in $block-phi-2)
-%0 = block 2
-infer %0
-
 
 ; start LHS (in $block-phi-2)
 %0 = block 2
@@ -1000,11 +930,6 @@ infer %2
 %5 = eq %4, 0:i32
 pc %5 1:i1
 infer %2
-
-
-; start LHS (in $phi-one-side-i1)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $phi-one-side-i1)
@@ -1080,11 +1005,6 @@ infer %5
 
 ; start LHS (in $in-unreachable-br_if)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $in-unreachable-br_if)
-%0 = block 2
 %1:i32 = var
 %2 = ne %1, 0:i32
 blockpc %0 0 %2 1:i1
@@ -1114,11 +1034,6 @@ infer %4
 
 ; start LHS (in $in-unreachable-big)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $in-unreachable-big)
-%0 = block 2
 %1:i32 = var
 %2 = phi %0, 0:i32, %1
 infer %2
@@ -1127,11 +1042,6 @@ infer %2
 ; function: $in-unreachable-operations
 
 ; function: $merge-with-one-less
-
-; start LHS (in $merge-with-one-less)
-%0 = block 2
-infer %0
-
 
 ; start LHS (in $merge-with-one-less)
 %0 = block 2
@@ -1504,11 +1414,6 @@ infer %2
 
 ; start LHS (in $two-pcs)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $two-pcs)
-%0 = block 2
 %1:i64 = var
 %2 = eq %1, 0:i64
 blockpc %0 0 %2 1:i1
@@ -1581,11 +1486,6 @@ infer %2
 
 ; start LHS (in $two-pcs)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $two-pcs)
-%0 = block 2
 %1:i64 = var
 %2 = eq %1, 0:i64
 blockpc %0 0 %2 1:i1
@@ -1615,11 +1515,6 @@ blockpc %0 1 %4 1:i1
 %7 = sdiv %5, %1
 %8 = phi %0, %6, %7
 infer %8
-
-
-; start LHS (in $two-pcs)
-%0 = block 2
-infer %0
 
 
 ; start LHS (in $two-pcs)
@@ -1911,11 +1806,6 @@ infer %1
 
 ; start LHS (in $loop-block-1)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $loop-block-1)
-%0 = block 2
 %1:i32 = var
 %2 = add %1, 5:i32
 %3 = phi %0, %1, %2
@@ -1957,11 +1847,6 @@ infer %1
 
 ; start LHS (in $loop-block-2)
 %0 = block 2
-infer %0
-
-
-; start LHS (in $loop-block-2)
-%0 = block 2
 %1:i32 = var
 %2 = add %1, 5:i32
 %3 = phi %0, %1, %2
@@ -1986,11 +1871,6 @@ infer %8
 ; function: $loop-unreachable
 
 ; function: $phi-value-turns-bad
-
-; start LHS (in $phi-value-turns-bad)
-%0 = block 2
-infer %0
-
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
