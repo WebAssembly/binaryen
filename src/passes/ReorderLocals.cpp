@@ -19,6 +19,8 @@
 //
 // Secondarily, sort by first appearance. This canonicalizes the order.
 //
+// While sorting, we remove locals that have no uses at all.
+//
 
 #include <memory>
 

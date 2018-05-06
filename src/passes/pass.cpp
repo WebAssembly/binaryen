@@ -103,13 +103,15 @@ void PassRegistry::registerPasses() {
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
   registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);
   registerPass("remove-unused-module-elements", "removes unused module elements", createRemoveUnusedModuleElementsPass);
+  registerPass("remove-unused-nonfunction-module-elements", "removes unused module elements that are not functions", createRemoveUnusedNonFunctionModuleElementsPass);
   registerPass("remove-unused-names", "removes names from locations that are never branched to", createRemoveUnusedNamesPass);
   registerPass("reorder-functions", "sorts functions by access frequency", createReorderFunctionsPass);
   registerPass("reorder-locals", "sorts locals by access frequency", createReorderLocalsPass);
   registerPass("rereloop", "re-optimize control flow using the relooper algorithm", createReReloopPass);
   registerPass("rse", "remove redundant set_locals", createRedundantSetEliminationPass);
-  registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
+  registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
+  registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all; preserves flatness)", createSimplifyLocalsNoNestingPass);
   registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
   registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
   registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);

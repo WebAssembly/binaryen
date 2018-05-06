@@ -366,21 +366,19 @@
   (local $0 i64)
   (local $1 f32)
   (local $2 f64)
-  (set_local $0
-   (call $i64s-div
-    (i64.const 100)
-    (i64.const 128849018897)
-   )
-  )
-  (set_local $0
-   (i64.rem_u
-    (get_local $0)
-    (i64.const 128849018897)
-   )
-  )
   (drop
    (i64.rem_s
-    (get_local $0)
+    (tee_local $0
+     (i64.rem_u
+      (tee_local $0
+       (call $i64s-div
+        (i64.const 100)
+        (i64.const 128849018897)
+       )
+      )
+      (i64.const 128849018897)
+     )
+    )
     (i64.const 128849018897)
    )
   )

@@ -276,6 +276,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     }
     // TODO: if-else can be turned into a br_if as well, if one of the sides is a dead end
+    //       we handle the case of a returned value to a set_local later down, see
+    //       visitSetLocal.
   }
 
   // override scan to add a pre and a post check task to all nodes
@@ -658,6 +660,56 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               }
             }
           }
+        }
+      }
+
+      void visitSetLocal(SetLocal* curr) {
+        // Undo an if return value into a local, if one arm is a br, as we
+        // prefer a br_if:
+        //  (set_local $x
+        //    (if (result i32)
+        //      (..condition..)
+        //      (br $somewhere)
+        //      (..result)
+        //    )
+        //  )
+        // =>
+        //  (br_if $somewhere
+        //    (..condition..)
+        //  )
+        //  (set_local $x
+        //    (..result)
+        //  )
+        // TODO: handle a condition in the br? need to watch for side effects
+        auto* iff = curr->value->dynCast<If>();
+        if (!iff) return;
+        if (!isConcreteType(iff->type) || !isConcreteType(iff->condition->type)) return;
+        auto tryToOptimize = [&](Expression* one, Expression* two, bool flipCondition) {
+          if (one->type == unreachable && two->type != unreachable) {
+            if (auto* br = one->dynCast<Break>()) {
+              if (ExpressionAnalyzer::isSimple(br)) {
+                // Wonderful, do it!
+                Builder builder(*getModule());
+                br->condition = iff->condition;
+                if (flipCondition) {
+                  br->condition = builder.makeUnary(EqZInt32, br->condition);
+                }
+                br->finalize();
+                curr->value = two;
+                replaceCurrent(
+                  builder.makeSequence(
+                    br,
+                    curr
+                  )
+                );
+                return true;
+              }
+            }
+          }
+          return false;
+        };
+        if (!tryToOptimize(iff->ifTrue, iff->ifFalse, false)) {
+          tryToOptimize(iff->ifFalse, iff->ifTrue, true);
         }
       }
 

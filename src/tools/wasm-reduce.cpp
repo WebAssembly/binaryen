@@ -34,6 +34,7 @@
 #include "support/timing.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
+#include "ir/branch-utils.h"
 #include "ir/literal-utils.h"
 #include "wasm-validator.h"
 #ifdef _WIN32
@@ -248,6 +249,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--remove-memory",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
+      "--remove-unused-nonfunction-module-elements",
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
@@ -417,6 +419,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           return;
         }
       }
+      if (tryToReplaceCurrent(iff->ifTrue)) return;
+      if (iff->ifFalse && tryToReplaceCurrent(iff->ifFalse)) return;
       handleCondition(iff->condition);
     } else if (auto* br = curr->dynCast<Break>()) {
       handleCondition(br->condition);
@@ -444,6 +448,55 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     } else if (auto* call = curr->dynCast<CallIndirect>()) {
       if (tryToReplaceCurrent(call->target)) return;
       handleCall(call);
+    } else if (auto* block = curr->dynCast<Block>()) {
+      if (!shouldTryToReduce()) return;
+      // replace a singleton
+      auto& list = block->list;
+      if (list.size() == 1 && !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+        if (tryToReplaceCurrent(block->list[0])) return;
+      }
+      // try to get rid of nops
+      Index i = 0;
+      while (list.size() > 1 && i < list.size()) {
+        auto* curr = list[i];
+        if (curr->is<Nop>() && shouldTryToReduce()) {
+          // try to remove it
+          for (Index j = i; j < list.size() - 1; j++) {
+            list[j] = list[j + 1];
+          }
+          list.resize(list.size() - 1);
+          if (writeAndTestReduction()) {
+            std::cerr << "|      block-nop removed\n";
+            noteReduction();
+            return;
+          }
+          list.resize(list.size() + 1);
+          // we failed; undo
+          for (Index j = list.size() - 1; j > i; j--) {
+            list[j] = list[j - 1];
+          }
+          list[i] = curr;
+        }
+        i++;
+      }
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      if (shouldTryToReduce() && !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+        tryToReplaceCurrent(loop->body);
+      }
+    } else if (auto* rmw = curr->dynCast<AtomicRMW>()) {
+      if (tryToReplaceCurrent(rmw->ptr)) return;
+      if (tryToReplaceCurrent(rmw->value)) return;
+    } else if (auto* cmpx = curr->dynCast<AtomicCmpxchg>()) {
+      if (tryToReplaceCurrent(cmpx->ptr)) return;
+      if (tryToReplaceCurrent(cmpx->expected)) return;
+      if (tryToReplaceCurrent(cmpx->replacement)) return;
+    } else if (auto* wait = curr->dynCast<AtomicWait>()) {
+      if (tryToReplaceCurrent(wait->ptr)) return;
+      if (tryToReplaceCurrent(wait->expected)) return;
+      if (tryToReplaceCurrent(wait->timeout)) return;
+    } else if (auto* wake = curr->dynCast<AtomicWake>()) {
+      if (tryToReplaceCurrent(wake->ptr)) return;
+      if (tryToReplaceCurrent(wake->wakeCount)) return;
     }
   }
 

@@ -64,6 +64,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   bool emitBinary = true;
   bool debugInfo = false;
+  bool converge = false;
   bool fuzzExec = false;
   bool fuzzBinary = false;
   std::string extraFuzzCommand;
@@ -86,6 +87,9 @@ int main(int argc, const char* argv[]) {
       .add("--debuginfo", "-g", "Emit names section and debug info",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { debugInfo = true; })
+      .add("--converge", "-c", "Run passes to convergence, continuing while binary size decreases",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { converge = true; })
       .add("--fuzz-exec", "-fe", "Execute functions before and after optimization, helping fuzzing find bugs",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzExec = true; })
@@ -211,13 +215,34 @@ int main(int argc, const char* argv[]) {
 
   if (options.runningPasses()) {
     if (options.debug) std::cerr << "running passes...\n";
-    options.runPasses(*curr);
-    if (options.passOptions.validate) {
-      bool valid = WasmValidator().validate(*curr, features);
-      if (!valid) {
-        WasmPrinter::printModule(&*curr);
+    auto runPasses = [&]() {
+      options.runPasses(*curr);
+      if (options.passOptions.validate) {
+        bool valid = WasmValidator().validate(*curr, features);
+        if (!valid) {
+          WasmPrinter::printModule(&*curr);
+        }
+        assert(valid);
       }
-      assert(valid);
+    };
+    runPasses();
+    if (converge) {
+      // Keep on running passes to convergence, defined as binary
+      // size no longer decreasing.
+      auto getSize = [&]() {
+        BufferWithRandomAccess buffer;
+        WasmBinaryWriter writer(curr, buffer);
+        writer.write();
+        return buffer.size();
+      };
+      auto lastSize = getSize();
+      while (1) {
+        if (options.debug) std::cerr << "running iteration for convergence (" << lastSize << ")...\n";
+        runPasses();
+        auto currSize = getSize();
+        if (currSize >= lastSize) break;
+        lastSize = currSize;
+      }
     }
   }
 

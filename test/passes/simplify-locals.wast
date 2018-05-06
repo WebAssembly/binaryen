@@ -987,4 +987,146 @@
    )
    (unreachable)
   )
+  (func $if-one-side-unreachable
+   (local $x i32)
+   (block $out
+    (if
+     (i32.const 1)
+     (br $out)
+     (set_local $x
+      (i32.const 2)
+     )
+    )
+    (if
+     (i32.const 3)
+     (set_local $x
+      (i32.const 4)
+     )
+     (br $out)
+    )
+    (if
+     (i32.const 5)
+     (br $out)
+     (br $out)
+    )
+   )
+  )
+  (func $if-one-side-unreachable-blocks
+   (local $x i32)
+   (local $y i32)
+   (block $out
+    (if
+     (i32.const 1)
+     (block
+      (set_local $x
+       (i32.const 2)
+      )
+      (set_local $y
+       (i32.const 3)
+      )
+      (br $out)
+     )
+     (block
+      (set_local $x
+       (i32.const 4)
+      )
+      (set_local $y
+       (i32.const 5)
+      )
+     )
+    )
+    (if
+     (i32.const 6)
+     (block
+      (set_local $x
+       (i32.const 7)
+      )
+      (set_local $y
+       (i32.const 8)
+      )
+     )
+     (block
+      (set_local $x
+       (i32.const 9)
+      )
+      (set_local $y
+       (i32.const 10)
+      )
+      (br $out)
+     )
+    )
+    (if
+     (i32.const 11)
+     (block
+      (set_local $x
+       (i32.const 12)
+      )
+      (set_local $y
+       (i32.const 13)
+      )
+      (br $out)
+     )
+     (block
+      (set_local $x
+       (i32.const 14)
+      )
+      (set_local $y
+       (i32.const 15)
+      )
+      (br $out)
+     )
+    )
+   )
+  )
+  (func $loop-value (param $x i32) (result i32)
+    (loop $loopy
+      (set_local $x (unreachable))
+    )
+    (loop $loopy
+      (set_local $x (i32.const 1))
+    )
+    (get_local $x)
+  )
+  (func $loop-loop-loopy-value (param $x i32) (result i32)
+    (loop $loopy1
+      (loop $loopy2
+        (loop $loopy3
+          (set_local $x (i32.const 1))
+        )
+      )
+    )
+    (get_local $x)
+  )
+  (func $loop-modified-during-main-pass-be-careful-fuzz (result i32)
+   (local $0 i32)
+   (if
+    (i32.const 0)
+    (set_local $0
+     (i32.const 0)
+    )
+    (loop $label$4
+     (br $label$4)
+    )
+   )
+   (get_local $0)
+  )
+  (func $loop-later (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
+   (loop $label$1
+    (block $label$2
+     (if
+      (i32.const 0)
+      (block
+       (set_local $var$0
+        (i32.const -1)
+       )
+       (br $label$2)
+      )
+     )
+     (set_local $var$0
+      (i32.const -1)
+     )
+    )
+   )
+   (i32.const 0)
+  )
 )
