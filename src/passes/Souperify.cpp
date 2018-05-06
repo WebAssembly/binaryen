@@ -460,12 +460,14 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     if (singleUseOnly) {
       std::unordered_map<DataFlow::Node*, Index> uses;
       for (auto& node : graph.nodes) {
-        for (auto* value : node->values) {
-          uses[value]++;
+        if (!graph.isArtificial(node.get())) {
+          for (auto* value : node->values) {
+            uses[value]++;
+          }
         }
       }
       for (auto& node : graph.nodes) {
-        if (node->isExpr() && uses[node.get()] != 1) {
+        if (node->isExpr() && uses[node.get()] > 1) {
           exclude.insert(node.get());
         }
       }
