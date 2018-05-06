@@ -75,6 +75,11 @@ struct Graph : public Visitor<Graph, Node*> {
   // All of our nodes
   std::vector<std::unique_ptr<Node>> nodes;
 
+  // Some nodes are created artificially, to fit into Souper IR legally,
+  // but they do not represent actual interesting work in Binaryen IR.
+  // Note those, we may ignore them later for certain things.
+  std::unordered_set<Node*> artificialNodes;
+
   // Tracking state during building
 
   // We need to track the parents of control flow nodes.
@@ -583,6 +588,7 @@ struct Graph : public Visitor<Graph, Node*> {
       conditions.push_back(ifTrue);
       ifFalse = makeZeroComp(condition, true);
       conditions.push_back(ifFalse);
+      artificialNodes.insert(ifFalse);
     } else {
       ifTrue = ifFalse = &bad;
     }
@@ -675,6 +681,7 @@ struct Graph : public Visitor<Graph, Node*> {
   Node* expandFromI1(Node* node) {
     if (!node->isBad() && node->returnsI1()) {
       node = addNode(Node::makeZext(node));
+      artificialNodes.insert(node);
     }
     return node;
   }
@@ -682,6 +689,8 @@ struct Graph : public Visitor<Graph, Node*> {
   Node* ensureI1(Node* node) {
     if (!node->isBad() && !node->returnsI1()) {
       node = makeZeroComp(node, false);
+      // This is constructed artificially, just for Souper legality.
+      artificialNodes.insert(node);
     }
     return node;
   }
@@ -719,6 +728,10 @@ struct Graph : public Visitor<Graph, Node*> {
     } else {
       WASM_UNREACHABLE(); // TODO
     }
+  }
+
+  bool isArtificial(Node* node) {
+    return artificialNodes.find(node) != artificialNodes.end();
   }
 };
 

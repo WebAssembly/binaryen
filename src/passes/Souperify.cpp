@@ -450,9 +450,11 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     graph.build(func, getModule());
     // Emit possible traces.
     for (auto& node : graph.nodes) {
-      DataFlow::Trace trace(graph, node.get());
-      if (!trace.isBad()) {
-        DataFlow::Printer(graph, trace);
+      if (!graph.isArtificial(node.get())) {
+        DataFlow::Trace trace(graph, node.get());
+        if (!trace.isBad()) {
+          DataFlow::Printer(graph, trace);
+        }
       }
     }
   }
