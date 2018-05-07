@@ -945,5 +945,11 @@
     (set_local $temp (i32.add (get_local $x) (i32.const 1)))
     (i32.add (get_local $temp) (get_local $temp))
   )
+  (func $multi-use-2 (param $x i32) (result i32)
+    (local $temp i32)
+    (set_local $temp (i32.add (get_local $x) (i32.const 1)))
+    (set_local $x (i32.mul (get-local $temp) (i32.const 2)))
+    (i32.sub (get_local $x) (get_local $temp))
+  )
 )
 

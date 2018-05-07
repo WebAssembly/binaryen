@@ -105,14 +105,14 @@ struct Trace {
 
   Node* add(Node* node, size_t depth) {
     depth++;
-    // If already added, nothing more to do.
-    if (addedNodes.find(node) != addedNodes.end()) {
-      return node;
-    }
     // If replaced, return the replacement.
     auto iter = replacements.find(node);
     if (iter != replacements.end()) {
       return iter->second.get();
+    }
+    // If already added, nothing more to do.
+    if (addedNodes.find(node) != addedNodes.end()) {
+      return node;
     }
     switch (node->type) {
       case Node::Type::Var: {
