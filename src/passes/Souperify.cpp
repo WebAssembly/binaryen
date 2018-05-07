@@ -263,15 +263,19 @@ struct Printer {
     std::cout << "infer %" << indexing[trace.toInfer] << "\n\n";
   }
 
-  void print(Node* node) {
-    assert(node);
-    // The node may have been replaced during trace building, if so then
-    // print the proper replacement.
+  Node* getMaybeReplaced(Node* node) {
     auto iter = trace.replacements.find(node);
     if (iter != trace.replacements.end()) {
-      print(iter->second.get());
-      return;
+      return iter->second.get();
     }
+    return node;
+  }
+
+  void print(Node* node) {
+    // The node may have been replaced during trace building, if so then
+    // print the proper replacement.
+    node = getMaybeReplaced(node);
+    assert(node);
     switch (node->type) {
       case Node::Type::Var: {
         std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var\n";
@@ -330,8 +334,9 @@ struct Printer {
   }
 
   void printInternal(Node* node) {
+    node = getMaybeReplaced(node);
     assert(node);
-    if (node->isExpr() && node->expr->is<Const>()) {
+    if (node->isConst()) {
       print(node->expr->cast<Const>()->value);
     } else {
       std::cout << "%" << indexing[node];

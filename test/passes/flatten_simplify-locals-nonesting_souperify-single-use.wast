@@ -969,5 +969,46 @@
       )
     )
   )
+ (func "replaced-print-internal" (param $var$0 i32)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (if
+   (tee_local $var$0
+    (i32.add
+     (get_local $var$0)
+     (i32.const -7)
+    )
+   )
+   (block $label$2
+    (block $label$3
+     (set_local $var$1
+      (get_local $var$0)
+     )
+     (br_if $label$3
+      (tee_local $var$3
+       (i32.const 12)
+      )
+     )
+     (unreachable)
+    )
+    (br_if $label$2
+     (i32.eqz
+      (get_local $var$1)
+     )
+    )
+    (if
+     (i32.ne
+      (i32.load
+       (i32.const 0)
+      )
+      (get_local $var$0)
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+  )
+ )
 )
 
