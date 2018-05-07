@@ -30,6 +30,7 @@
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/graph.h"
+#include "dataflow/users.h"
 #include "dataflow/utils.h"
 
 namespace wasm {
@@ -39,10 +40,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
 
   Pass* create() override { return new DataFlowOpts; }
 
-  // nodeUsers[x] = { y, z, .. }
-  // where y, z etc. are nodes that use x, that is, x is in their
-  // values vector.
-  std::unordered_map<DataFlow::Node*, std::unordered_set<DataFlow::Node*>> nodeUsers;
+  DataFlow::Users nodeUsers;
 
   // The optimization work left to do: nodes that we need to look at.
   std::unordered_set<DataFlow::Node*> workLeft;
@@ -52,12 +50,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void doWalkFunction(Function* func) {
     // Build the data-flow IR.
     graph.build(func, getModule());
-    // Generate the uses between the nodes.
-    for (auto& node : graph.nodes) {
-      for (auto* value : node->values) {
-        nodeUsers[value].insert(node.get());
-      }
-    }
+    nodeUsers.build(graph);
     // Propagate optimizations through the graph.
     std::unordered_set<DataFlow::Node*> optimized; // which nodes we optimized
     for (auto& node : graph.nodes) {
