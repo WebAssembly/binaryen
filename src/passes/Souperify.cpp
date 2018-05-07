@@ -52,7 +52,9 @@ namespace DataFlow {
 struct Trace {
   Graph& graph;
   Node* toInfer;
-  std::unordered_set<Node*>& exclude; // nodes we should exclude from traces
+  // Nodes we should exclude from being children of traces (but they
+  // may be the root we try to infer.
+  std::unordered_set<Node*>& excludeAsChildren;
 
   // A limit on how deep we go - we don't want to create arbitrarily
   // large traces.
@@ -67,7 +69,7 @@ struct Trace {
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
 
-  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& exclude) : graph(graph), toInfer(toInfer), exclude(exclude) {
+  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -127,7 +129,7 @@ struct Trace {
         // If we've gone too deep, emit a var instead.
         // Do the same if this is a node we should exclude from traces.
         if (depth >= depthLimit || nodes.size() >= totalLimit ||
-            exclude.find(node) != exclude.end()) {
+            (node != toInfer && excludeAsChildren.find(node) != excludeAsChildren.end())) {
           auto type = node->getWasmType();
           assert(isConcreteType(type));
           auto* var = Node::makeVar(type);
@@ -470,16 +472,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     DataFlow::Graph graph;
     graph.build(func, getModule());
     // If we only want single-use nodes, exclude all the others.
-    std::unordered_set<DataFlow::Node*> exclude;
+    std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
       std::unordered_map<DataFlow::Node*, Index> uses;
       for (auto& node : graph.nodes) {
         if (node->isExpr() && !graph.isArtificial(node.get())) {
           for (auto* value : node->values) {
             if (value->isExpr() && !value->isConst()) {
-//std::cout << "add a use\n";
-//dump(node.get(), std::cout);
-//dump(value, std::cout);
               uses[value]++;
             }
           }
@@ -487,16 +486,14 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
       }
       for (auto& node : graph.nodes) {
         if (node->isExpr() && uses[node.get()] > 1) {
-//std::cout << "dump " << uses[node.get()] << '\n';
-//dump(node.get(), std::cout);
-          exclude.insert(node.get());
+          excludeAsChildren.insert(node.get());
         }
       }
     }
     // Emit possible traces.
     for (auto& node : graph.nodes) {
       if (!graph.isArtificial(node.get())) {
-        DataFlow::Trace trace(graph, node.get(), exclude);
+        DataFlow::Trace trace(graph, node.get(), excludeAsChildren);
         if (!trace.isBad()) {
           DataFlow::Printer(graph, trace);
         }

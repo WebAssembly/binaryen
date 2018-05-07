@@ -1893,11 +1893,23 @@ infer %8
 
 ; start LHS (in $multi-use)
 %0:i32 = var
+%1 = add %0, 1:i32
+infer %1
+
+
+; start LHS (in $multi-use)
+%0:i32 = var
 %1 = add %0, %0
 infer %1
 
 
 ; function: $multi-use-2
+
+; start LHS (in $multi-use-2)
+%0:i32 = var
+%1 = add %0, 1:i32
+infer %1
+
 
 ; start LHS (in $multi-use-2)
 %0:i32 = var
@@ -1953,6 +1965,12 @@ infer %5
 
 
 ; function: $55
+
+; start LHS (in $55)
+%0:i32 = var
+%1 = add %0, -7:i32
+infer %1
+
 
 ; start LHS (in $55)
 %0:i32 = var
