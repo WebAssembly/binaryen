@@ -445,11 +445,18 @@ struct Printer {
   // Checks if a value looks suspiciously optimizable.
   void warnOnSuspiciousValues(Node* node) {
     assert(debug);
+    // If an input was replaced with a var, then we should not
+    // look into it, it's not suspiciously trivial.
+    for (auto* value : node->values) {
+      if (value != getMaybeReplaced(value)) {
+        return;
+      }
+    }
     if (allInputsIdentical(node)) {
       std::cout << "^^ suspicious identical inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
-    if (allInputsConstant(node)) {
+    if (!node->isPhi() && allInputsConstant(node)) {
       std::cout << "^^ suspicious constant inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
