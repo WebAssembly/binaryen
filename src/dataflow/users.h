@@ -44,6 +44,12 @@ public:
       }
     }
   }
+
+  Index getNumUsers(Node* node) {
+    auto iter = find(node);
+    if (iter == end()) return 0;
+    return iter->second.size();
+  }
 };
 
 } // namespace DataFlow
