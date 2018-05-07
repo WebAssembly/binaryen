@@ -1911,6 +1911,46 @@ infer %1
 %2 = sub %1, %0
 infer %2
 
+
+; function: $many-single-uses-with-param
+
+; start LHS (in $many-single-uses-with-param)
+%0:i32 = var
+%1 = mul 10:i32, %0
+infer %1
+
+
+; start LHS (in $many-single-uses-with-param)
+%0:i32 = var
+%1 = cttz %0
+infer %1
+
+
+; start LHS (in $many-single-uses-with-param)
+%0:i32 = var
+%1 = cttz %0
+%2 = sub %1, 20:i32
+infer %2
+
+
+; start LHS (in $many-single-uses-with-param)
+%0:i32 = var
+%1 = mul 10:i32, %0
+%2 = cttz %0
+%3 = sub %2, 20:i32
+%4 = add %1, %3
+infer %4
+
+
+; start LHS (in $many-single-uses-with-param)
+%0:i32 = var
+%1 = mul 10:i32, %0
+%2 = cttz %0
+%3 = sub %2, 20:i32
+%4 = add %1, %3
+%5 = eq %4, 0:i32
+infer %5
+
 (module
  (type $0 (func (param i64 i64 i64) (result i32)))
  (type $1 (func (param i32) (result i32)))
@@ -5026,5 +5066,48 @@ infer %2
   (return
    (get_local $10)
   )
+ )
+ (func $many-single-uses-with-param (; 54 ;) (type $1) (param $x i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (local $5 i32)
+  (local $6 i32)
+  (local $7 i32)
+  (nop)
+  (set_local $2
+   (i32.mul
+    (i32.const 10)
+    (get_local $x)
+   )
+  )
+  (nop)
+  (set_local $4
+   (i32.ctz
+    (get_local $x)
+   )
+  )
+  (set_local $5
+   (i32.sub
+    (get_local $4)
+    (i32.const 20)
+   )
+  )
+  (set_local $6
+   (i32.add
+    (get_local $2)
+    (get_local $5)
+   )
+  )
+  (set_local $7
+   (i32.eqz
+    (get_local $6)
+   )
+  )
+  (return
+   (get_local $7)
+  )
+  (unreachable)
  )
 )

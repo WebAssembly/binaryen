@@ -951,5 +951,23 @@
     (set_local $x (i32.mul (get-local $temp) (i32.const 2)))
     (i32.sub (get_local $x) (get_local $temp))
   )
+  (func $many-single-uses-with-param (param $x i32) (result i32)
+    (return
+      (i32.eqz
+        (i32.add
+          (i32.mul
+            (i32.const 10)
+            (get_local $x)
+          )
+          (i32.sub
+            (i32.ctz
+              (get_local $x)
+            )
+            (i32.const 20)
+          )
+        )
+      )
+    )
+  )
 )
 
