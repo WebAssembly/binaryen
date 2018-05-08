@@ -67,12 +67,14 @@ struct LivenessAction {
   void removeCopy() {
     auto* set = (*origin)->cast<SetLocal>();
     if (set->isTee()) {
-      what = Get;
       *origin = set->value->cast<GetLocal>();
     } else {
-      what = Other;
       ExpressionManipulator::nop(set);
     }
+    // Mark as an other: even if we turned the origin into a get,
+    // we already have another Action for that get, that properly
+    // represents it.
+    what = Other;
   }
 };
 
