@@ -26,6 +26,7 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "cfg-traversal.h"
+#include "ir/utils.h"
 
 namespace wasm {
 
@@ -60,6 +61,19 @@ struct LivenessAction {
   bool isGet() { return what == Get; }
   bool isSet() { return what == Set; }
   bool isOther() { return what == Other; }
+
+  // Helper to remove a set that is a copy we know is not needed. This
+  // updates both the IR and the action.
+  void removeCopy() {
+    auto* set = (*origin)->cast<SetLocal>();
+    if (set->isTee()) {
+      what = Get;
+      *origin = set->value->cast<GetLocal>();
+    } else {
+      what = Other;
+      ExpressionManipulator::nop(set);
+    }
+  }
 };
 
 // information about liveness in a basic block

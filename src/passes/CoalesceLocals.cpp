@@ -162,11 +162,7 @@ void CoalesceLocals::removeCopies() {
         if (auto* get = set->value->dynCast<GetLocal>()) {
           if (equivalences.check(set->index, get->index)) {
             // This is an unnecessary copy!
-            if (set->isTee()) {
-              *action.origin = get;
-            } else {
-              ExpressionManipulator::nop(set);
-            }
+            action.removeCopy();
           } else {
             // There is a new equivalence now.
             equivalences.reset(set->index);
@@ -434,14 +430,12 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
         auto* set = (*action.origin)->cast<SetLocal>();
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective sets
-// TODO: testcase
+
+// TODO: testcase here (something not removed before, but is remoeable now... possible?
+
         GetLocal* get;
         if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
-          if (set->isTee()) {
-            *action.origin = get;
-          } else {
-            ExpressionManipulator::nop(set);
-          }
+          action.removeCopy();
           continue;
         }
         // remove ineffective actions
