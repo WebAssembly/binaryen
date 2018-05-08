@@ -28,6 +28,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "ir/equivalent_sets.h"
 #include "ir/utils.h"
 #include "cfg/liveness-traversal.h"
 #include "wasm-builder.h"
@@ -100,61 +101,10 @@ void CoalesceLocals::doWalkFunction(Function* func) {
 void CoalesceLocals::removeCopies() {
   // Remove not just trivial copies like x = 5; y = x; but also
   // multi-element copies, x = 5; y = x; z = y;
-
-  // A set of indexes.
-  typedef std::unordered_set<Index> Set;
-  // A map of each index to all those it is equivalent to, and some helpers.
-  struct Equivalences : public std::unordered_map<Index, std::shared_ptr<Set>> {
-    // Resets an index, removing any equivalences between it and others.
-    void reset(Index index) {
-      auto iter = find(index);
-      if (iter != end()) {
-        auto& set = iter->second;
-        assert(!set->empty()); // can't be empty - we are equal to ourselves!
-        if (set->size() > 1) {
-          // We are not the last item, fix things up
-          set->erase(index);
-        }
-        erase(iter);
-      }
-    }
-
-    // Adds a new equivalence between two indexes.
-    // `justReset` is an index that was just reset, and has no
-    // equivalences. `other` may have existing equivalences.
-    void add(Index justReset, Index other) {
-      auto iter = find(other);
-      if (iter != end()) {
-        auto& set = iter->second;
-        set->insert(justReset);
-        (*this)[justReset] = set;
-      } else {
-        auto set = std::make_shared<Set>();
-        set->insert(justReset);
-        set->insert(other);
-        (*this)[justReset] = set;
-        (*this)[other] = set;
-      }
-    }
-
-    // Checks whether two indexes contain the same data.
-    bool check(Index a, Index b) {
-      if (a == b) return true;
-      auto iter = find(a);
-      if (iter != end()) {
-        auto& set = iter->second;
-        if (set->find(b) != set->end()) {
-          return true;
-        }
-      }
-      return false;
-    }
-  };
-
   for (auto& curr : basicBlocks) {
     // For now we work just within a basic block.
     // TODO: flow this among blocks too?
-    Equivalences equivalences;
+    EquivalentSets equivalences;
     auto& actions = curr->contents.actions;
     for (auto& action : actions) {
       if (action.isSet()) {
