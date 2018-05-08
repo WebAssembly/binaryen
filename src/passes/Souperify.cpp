@@ -512,10 +512,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     }
     // Emit possible traces.
     for (auto& node : graph.nodes) {
-      if (!graph.isArtificial(node.get())) {
-        DataFlow::Trace trace(graph, node.get(), excludeAsChildren);
-        if (!trace.isBad()) {
-          DataFlow::Printer(graph, trace, users);
+      // We only want to infer expressions and phis, and not artificial nodes.
+      if (node->isExpr() || node->isPhi()) {
+        if (!graph.isArtificial(node.get())) {
+          DataFlow::Trace trace(graph, node.get(), excludeAsChildren);
+          if (!trace.isBad()) {
+            DataFlow::Printer(graph, trace, users);
+          }
         }
       }
     }
