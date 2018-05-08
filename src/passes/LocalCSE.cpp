@@ -20,7 +20,7 @@
 // This requires --flatten to be run before, and preserves flatness.
 //
 // It is beneficial to optimize locals somewhat before running this,
-// e.g. --simplify-locals-nonesting --remove-local-copies
+// e.g. --simplify-locals-nonesting --coalesce-locals
 //
 // In each linear area of execution,
 //  * track each relevant (big enough) expression

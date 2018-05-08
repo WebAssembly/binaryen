@@ -48,6 +48,8 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
 
   void doWalkFunction(Function* func);
 
+  void removeCopies();
+
   void increaseBackEdgePriorities();
 
   void calculateInterferences();
@@ -82,6 +84,8 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
 
 void CoalesceLocals::doWalkFunction(Function* func) {
   super::doWalkFunction(func);
+  // remove trivial copies
+  removeCopies();
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference
@@ -91,6 +95,90 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   pickIndices(indices);
   // apply indices
   applyIndices(indices, func->body);
+}
+
+void CoalesceLocals::removeCopies() {
+  // Remove not just trivial copies like x = 5; y = x; but also
+  // multi-element copies, x = 5; y = x; z = y;
+
+  // A set of indexes.
+  typedef std::unordered_set<Index> Set;
+  // A map of each index to all those it is equivalent to, and some helpers.
+  struct Equivalences : public std::unordered_map<Index, std::shared_ptr<Set>> {
+    // Resets an index, removing any equivalences between it and others.
+    void reset(Index index) {
+      auto iter = find(index);
+      if (iter != end()) {
+        auto& set = iter->second;
+        assert(!set->empty()); // can't be empty - we are equal to ourselves!
+        if (set->size() > 1) {
+          // We are not the last item, fix things up
+          set->erase(index);
+        }
+        erase(iter);
+      }
+    }
+
+    // Adds a new equivalence between two indexes.
+    // `justReset` is an index that was just reset, and has no
+    // equivalences. `other` may have existing equivalences.
+    void add(Index justReset, Index other) {
+      auto iter = find(other);
+      if (iter != end()) {
+        auto& set = iter->second;
+        set->insert(justReset);
+        (*this)[justReset] = set;
+      } else {
+        auto set = std::make_shared<Set>();
+        set->insert(justReset);
+        set->insert(other);
+        (*this)[justReset] = set;
+        (*this)[other] = set;
+      }
+    }
+
+    // Checks whether two indexes contain the same data.
+    bool check(Index a, Index b) {
+      if (a == b) return true;
+      auto iter = find(a);
+      if (iter != end()) {
+        auto& set = iter->second;
+        if (set->find(b) != set->end()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+
+  for (auto& curr : basicBlocks) {
+    // For now we work just within a basic block.
+    // TODO: flow this among blocks too?
+    Equivalences equivalences;
+    auto& actions = curr->contents.actions;
+    for (auto& action : actions) {
+      if (action.isSet()) {
+        auto* set = (*action.origin)->cast<SetLocal>();
+        if (auto* get = set->value->dynCast<GetLocal>()) {
+          if (equivalences.check(set->index, get->index)) {
+            // This is an unnecessary copy!
+            if (set->isTee()) {
+              *action.origin = get;
+            } else {
+              ExpressionManipulator::nop(set);
+            }
+          } else {
+            // There is a new equivalence now.
+            equivalences.reset(set->index);
+            equivalences.add(set->index, get->index);
+          }
+        } else {
+          // A new value is assigned here.
+          equivalences.reset(set->index);
+        }
+      }
+    }
+  }
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to do that copy.
@@ -342,10 +430,11 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
       if (action.isGet()) {
         auto* get = (*action.origin)->cast<GetLocal>();
         get->index = indices[get->index];
-      } else {
+      } else if (action.isSet()) {
         auto* set = (*action.origin)->cast<SetLocal>();
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective sets
+// TODO: testcase
         GetLocal* get;
         if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
           if (set->isTee()) {

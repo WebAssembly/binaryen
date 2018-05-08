@@ -1,6 +1,5 @@
 SET(passes_SOURCES
   pass.cpp
-  CanonicalizeLocals.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
