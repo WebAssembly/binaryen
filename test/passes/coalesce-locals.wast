@@ -1184,4 +1184,18 @@
     (br_if $loop (get_local $x))
    )
   )
- )
+  (func $proper-type (result f64)
+   (local $var$0 i32)
+   (local $var$2 f64)
+   (set_local $var$0
+    (select
+     (i32.const 0)
+     (i32.const 1)
+     (get_local $var$0)
+    )
+   )
+   (tee_local $var$2 ;; the locals will be reordered, this should be the f64
+    (get_local $var$2)
+   )
+  )
+)
