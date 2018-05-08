@@ -43,16 +43,10 @@ enum Op {
 inline UnaryOp getUnary(Type type, Op op) {
   switch (type) {
     case i32: {
-      switch (op) {
-        default: return InvalidUnary;
-      }
-      break;
+      return InvalidUnary;
     }
     case i64: {
-      switch (op) {
-        default: return InvalidUnary;
-      }
-      break;
+      return InvalidUnary;
     }
     case f32: {
       switch (op) {

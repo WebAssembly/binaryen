@@ -52,7 +52,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
-    if (!full) full = isFullForced();
+    if (!full) full = isFullForced() != 0;
   }
 
   void visit(Expression* curr) {

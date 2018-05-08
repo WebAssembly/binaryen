@@ -224,7 +224,7 @@ private:
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
       return StandaloneExpressionRunner(getValues, replaceExpression).visit(curr);
-    } catch (StandaloneExpressionRunner::NonstandaloneException& e) {
+    } catch (StandaloneExpressionRunner::NonstandaloneException&) {
       return Flow(NONSTANDALONE_FLOW);
     }
   }

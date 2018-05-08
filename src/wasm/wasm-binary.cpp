@@ -1621,8 +1621,8 @@ Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
 void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
   auto flags = getU32LEB();
   initial = getU32LEB();
-  bool hasMax = flags & BinaryConsts::HasMaximum;
-  bool isShared = flags & BinaryConsts::IsShared;
+  bool hasMax = (flags & BinaryConsts::HasMaximum) != 0;
+  bool isShared = (flags & BinaryConsts::IsShared) != 0;
   if (isShared && !hasMax) throwError("shared memory must have max size");
   shared = isShared;
   if (hasMax) max = getU32LEB();
@@ -1954,7 +1954,7 @@ void WasmBinaryBuilder::readGlobals() {
     if (debug) std::cerr << "read one" << std::endl;
     auto type = getConcreteType();
     auto mutable_ = getU32LEB();
-    if (bool(mutable_) != mutable_) throwError("Global mutability must be 0 or 1");
+    if (mutable_ & ~1) throwError("Global mutability must be 0 or 1");
     auto* init = readExpression();
     wasm.addGlobal(Builder::makeGlobal(
       "global$" + std::to_string(wasm.globals.size()),
@@ -2267,7 +2267,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         std::cerr << "skipping debug location info for " << nextDebugLocation.first << std::endl;
       }
       debugLocation = nextDebugLocation.second;
-      useDebugLocation = currFunction; // using only for function expressions
+      useDebugLocation = currFunction != NULL; // using only for function expressions
       readNextDebugLocation();
     }
   }
