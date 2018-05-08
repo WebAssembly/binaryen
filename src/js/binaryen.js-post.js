@@ -1052,6 +1052,11 @@ Module['Module'] = function(module) {
                                                            i32sToStack(paramTypes), paramTypes.length);
     });
   };
+  this['removeFunctionType'] = function(name) {
+    return preserveStack(function () {
+      return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
+    });
+  };
   this['addFunction'] = function(name, functionType, varTypes, body) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
