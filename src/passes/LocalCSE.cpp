@@ -161,7 +161,14 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
         }
       } else if (auto* get = value->dynCast<GetLocal>()) {
         // this is a copy of one local to another
-        addEquivalence(set->index, get->index);
+        if (areEquivalent(get->index, set->index)) {
+          // A trivial copy, just remove it.
+          // (NB: this can't be a tee, since we are in flat IR)
+          ExpressionManipulator::nop(set);
+        } else {
+          // An interesting copy, note the equivalence.
+          addEquivalence(set->index, get->index);
+        }
       }
     } else if (auto* get = curr->dynCast<GetLocal>()) {
       // Perhaps we can canonicalize this get, if it is a copy of another.
@@ -219,6 +226,19 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
       return eqSet->preferred;
     }
     return index;
+  }
+
+  // Checks whether two indexes contain the same data.
+  bool areEquivalent(Index a, Index b) {
+    if (a == b) return true;
+    auto iter = localEquivalences.find(a);
+    if (iter != localEquivalences.end()) {
+      auto& set = iter->second->set;
+      if (set.find(b) != set.end()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // A relevant value is a non-trivial one, something we may want to reuse
