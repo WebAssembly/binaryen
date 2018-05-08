@@ -19,6 +19,9 @@
 //
 // This requires --flatten to be run before, and preserves flatness.
 //
+// It is beneficial to optimize locals somewhat before running this,
+// e.g. --simplify-locals-nonesting --remove-local-copies
+//
 // In each linear area of execution,
 //  * track each relevant (big enough) expression
 //  * if already seen, write to a local if not already, and reuse
@@ -59,20 +62,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // locals in current linear execution trace, which we try to sink
   Usables usables;
 
-  // We track copied locals and canonicalize them, e.g.
-  //  y = x
-  //  z = y
-  //  f(z) => turns into f(x)
-  // This lets expression comparison work well without teaching it about
-  // which locals are equal.
-  // localEquivalences[an index] = the set of indexes the index is equal to
-  struct EquivalentSet {
-    std::unordered_set<Index> set; // the set of indexes that are equivalent
-    Index preferred; // the preferred one - copy all to this
-    EquivalentSet(Index preferred) : preferred(preferred) {}
-  };
-  std::unordered_map<Index, std::shared_ptr<EquivalentSet>> localEquivalences;
-
   bool anotherPass;
 
   void doWalkFunction(Function* func) {
@@ -86,7 +75,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
     self->usables.clear();
-    self->localEquivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
@@ -143,8 +131,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   void handle(Expression* curr) {
     if (auto* set = curr->dynCast<SetLocal>()) {
-      // we are assigning to a local, so existing equivalences are moot
-      resetLocal(set->index);
       // consider the value
       auto* value = set->value;
       if (isRelevant(value)) {
@@ -159,86 +145,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
           // not in table, add this, maybe we can help others later
           usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
         }
-      } else if (auto* get = value->dynCast<GetLocal>()) {
-        // this is a copy of one local to another
-        if (areEquivalent(get->index, set->index)) {
-          // A trivial copy, just remove it.
-          // (NB: this can't be a tee, since we are in flat IR)
-          ExpressionManipulator::nop(set);
-        } else {
-          // An interesting copy, note the equivalence.
-          addEquivalence(set->index, get->index);
-        }
-      }
-    } else if (auto* get = curr->dynCast<GetLocal>()) {
-      // Perhaps we can canonicalize this get, if it is a copy of another.
-      get->index = getCanonical(get->index);
-    }
-  }
-
-  void resetLocal(Index index) {
-    auto iter = localEquivalences.find(index);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
-      if (eqSet->set.size() > 1) {
-        // We are not the last item, fix things up
-        eqSet->set.erase(index);
-        if (!eqSet->set.empty()) {
-          if (eqSet->preferred == index) {
-            // We need to pick a new preferred index. Pick the lowest.
-            eqSet->preferred = *std::min_element(eqSet->set.begin(), eqSet->set.end());
-          }
-        }
-      } else {
-        // We are the last item, just let it all go away.
-        assert(*(eqSet->set.begin()) == eqSet->preferred); // if one item, it is us
-      }
-      localEquivalences.erase(iter);
-    }
-  }
-
-  void addEquivalence(Index justReset, Index copied) {
-    auto iter = localEquivalences.find(copied);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      if (eqSet->set.empty()) {
-        eqSet->preferred = justReset;
-      }
-      eqSet->set.insert(justReset);
-      localEquivalences[justReset] = eqSet;
-    } else {
-      // Note how we set the preferred index to the copied one.
-      auto eqSet = std::make_shared<EquivalentSet>(copied);
-      eqSet->set.insert(justReset);
-      eqSet->set.insert(copied);
-      localEquivalences[justReset] = eqSet;
-      localEquivalences[copied] = eqSet;
-    }
-  }
-
-  Index getCanonical(Index index) {
-    auto iter = localEquivalences.find(index);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
-      assert(eqSet->set.size() == 1 ? *(eqSet->set.begin()) == eqSet->preferred : true); // if one item, it is us
-      return eqSet->preferred;
-    }
-    return index;
-  }
-
-  // Checks whether two indexes contain the same data.
-  bool areEquivalent(Index a, Index b) {
-    if (a == b) return true;
-    auto iter = localEquivalences.find(a);
-    if (iter != localEquivalences.end()) {
-      auto& set = iter->second->set;
-      if (set.find(b) != set.end()) {
-        return true;
       }
     }
-    return false;
   }
 
   // A relevant value is a non-trivial one, something we may want to reuse
