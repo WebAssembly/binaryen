@@ -34,7 +34,10 @@
 #include "support/timing.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
+#include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "ir/literal-utils.h"
+#include "ir/properties.h"
 #include "wasm-validator.h"
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -247,6 +250,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--remove-memory",
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
+      "--remove-unused-nonfunction-module-elements",
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
@@ -400,8 +404,9 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   // don't need to duplicate work that they do
 
   void visitExpression(Expression* curr) {
+    // type-based reductions
     if (curr->type == none) {
-      if (tryToReduceCurrentToNone()) return;
+      if (tryToReduceCurrentToNop()) return;
     } else if (isConcreteType(curr->type)) {
       if (tryToReduceCurrentToConst()) return;
     } else {
@@ -423,26 +428,97 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       handleCondition(select->condition);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       handleCondition(sw->condition);
-    } else if (auto* set = curr->dynCast<SetLocal>()) {
-      if (set->isTee()) {
-        // maybe we don't need the set
-        tryToReplaceCurrent(set->value);
+    } else if (auto* block = curr->dynCast<Block>()) {
+      if (!shouldTryToReduce()) return;
+      // replace a singleton
+      auto& list = block->list;
+      if (list.size() == 1 && !BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+        if (tryToReplaceCurrent(block->list[0])) return;
       }
-    } else if (auto* unary = curr->dynCast<Unary>()) {
-      // maybe we can pass through
-      tryToReplaceCurrent(unary->value);
-    } else if (auto* binary = curr->dynCast<Binary>()) {
-      // maybe we can pass through
-      if (!tryToReplaceCurrent(binary->left)) {
-        tryToReplaceCurrent(binary->right);
+      // try to get rid of nops
+      Index i = 0;
+      while (list.size() > 1 && i < list.size()) {
+        auto* curr = list[i];
+        if (curr->is<Nop>() && shouldTryToReduce()) {
+          // try to remove it
+          for (Index j = i; j < list.size() - 1; j++) {
+            list[j] = list[j + 1];
+          }
+          list.resize(list.size() - 1);
+          if (writeAndTestReduction()) {
+            std::cerr << "|      block-nop removed\n";
+            noteReduction();
+            return;
+          }
+          list.resize(list.size() + 1);
+          // we failed; undo
+          for (Index j = list.size() - 1; j > i; j--) {
+            list[j] = list[j - 1];
+          }
+          list[i] = curr;
+        }
+        i++;
       }
-    } else if (auto* call = curr->dynCast<Call>()) {
-      handleCall(call);
-    } else if (auto* call = curr->dynCast<CallImport>()) {
-      handleCall(call);
-    } else if (auto* call = curr->dynCast<CallIndirect>()) {
-      if (tryToReplaceCurrent(call->target)) return;
-      handleCall(call);
+      return; // nothing more to do
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      if (shouldTryToReduce() && !BranchUtils::BranchSeeker::hasNamed(loop, loop->name)) {
+        tryToReplaceCurrent(loop->body);
+      }
+      return; // nothing more to do
+    }
+    // Finally, try to replace with a child.
+    for (auto* child : ChildIterator(curr)) {
+      if (tryToReplaceCurrent(child)) return;
+    }
+    // If that didn't work, try to replace with a child + a unary conversion
+    if (isConcreteType(curr->type) &&
+        !curr->is<Unary>()) { // but not if it's already unary
+      for (auto* child : ChildIterator(curr)) {
+        if (child->type == curr->type) continue; // already tried
+        if (!isConcreteType(child->type)) continue; // no conversion
+        Expression* fixed;
+        switch (curr->type) {
+          case i32: {
+            switch (child->type) {
+              case i64: fixed = builder->makeUnary(WrapInt64, child); break;
+              case f32: fixed = builder->makeUnary(TruncSFloat32ToInt32, child); break;
+              case f64: fixed = builder->makeUnary(TruncSFloat64ToInt32, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case i64: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ExtendSInt32, child); break;
+              case f32: fixed = builder->makeUnary(TruncSFloat32ToInt64, child); break;
+              case f64: fixed = builder->makeUnary(TruncSFloat64ToInt64, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case f32: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat32, child); break;
+              case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat32, child); break;
+              case f64: fixed = builder->makeUnary(DemoteFloat64, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          case f64: {
+            switch (child->type) {
+              case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat64, child); break;
+              case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat64, child); break;
+              case f32: fixed = builder->makeUnary(PromoteFloat32, child); break;
+              default: WASM_UNREACHABLE();
+            }
+            break;
+          }
+          default: WASM_UNREACHABLE();
+        }
+        assert(fixed->type == curr->type);
+        if (tryToReplaceCurrent(fixed)) return;
+      }
     }
   }
 
@@ -595,6 +671,37 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         skip = std::min(size_t(factor), 2 * skip);
       }
     }
+    // If we are left with a single function that is not exported or used in
+    // a table, that is useful as then we can change the return type.
+    if (module->functions.size() == 1 && module->exports.empty() && module->table.segments.empty()) {
+      auto* func = module->functions[0].get();
+      // We can't remove something that might have breaks to it.
+      if (!Properties::isNamedControlFlow(func->body)) {
+        auto funcType = func->type;
+        auto funcResult = func->result;
+        auto* funcBody = func->body;
+        for (auto* child : ChildIterator(func->body)) {
+          if (!(isConcreteType(child->type) || child->type == none)) {
+            continue; // not something a function can return
+          }
+          // Try to replace the body with the child, fixing up the function
+          // to accept it.
+          func->type = Name();
+          func->result = child->type;
+          func->body = child;
+          if (writeAndTestReduction()) {
+            // great, we succeeded!
+            std::cerr << "|    altered function result type\n";
+            noteReduction(1);
+            break;
+          }
+          // Undo.
+          func->type = funcType;
+          func->result = funcResult;
+          func->body = funcBody;
+        }
+      }
+    }
   }
 
   bool tryToRemoveFunctions(std::vector<Name> names) {
@@ -675,14 +782,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     }
   }
 
-  template<typename T>
-  void handleCall(T* call) {
-    for (auto* op : call->operands) {
-      if (tryToReplaceCurrent(op)) return;
-    }
-  }
-
-  bool tryToReduceCurrentToNone() {
+  bool tryToReduceCurrentToNop() {
     auto* curr = getCurrent();
     if (curr->is<Nop>()) return false;
     // try to replace with a trivial value

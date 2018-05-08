@@ -218,7 +218,7 @@
     (drop (i32.const 0))
   )
 )
-(module ;; the function and the table can be removed
+(module ;; the function stays but the table can be removed
  (type $0 (func (param f64) (result f64)))
  (table 6 6 anyfunc)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
@@ -232,7 +232,7 @@
   )
  )
 )
-(module ;; the function uses the table, but all are removeable
+(module ;; the function keeps the table alive
  (type $0 (func (param f64) (result f64)))
  (table 6 6 anyfunc)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)

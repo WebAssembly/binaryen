@@ -196,8 +196,8 @@ public:
     HostId,
     NopId,
     UnreachableId,
-    AtomicCmpxchgId,
     AtomicRMWId,
+    AtomicCmpxchgId,
     AtomicWaitId,
     AtomicWakeId,
     NumExpressionIds

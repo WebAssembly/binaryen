@@ -29,8 +29,8 @@ BinaryenReturnId: 20
 BinaryenHostId: 21
 BinaryenNopId: 22
 BinaryenUnreachableId: 23
-BinaryenAtomicCmpxchgId: 24
-BinaryenAtomicRMWId: 25
+BinaryenAtomicCmpxchgId: 25
+BinaryenAtomicRMWId: 24
 BinaryenAtomicWaitId: 26
 BinaryenAtomicWakeId: 27
 getExpressionInfo={"id":16,"type":3,"op":6}

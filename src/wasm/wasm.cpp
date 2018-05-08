@@ -98,6 +98,10 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::HostId: return "host";
     case Expression::Id::NopId: return "nop";
     case Expression::Id::UnreachableId: return "unreachable";
+    case Expression::Id::AtomicCmpxchgId: return "atomic_cmpxchg";
+    case Expression::Id::AtomicRMWId: return "atomic_rmw";
+    case Expression::Id::AtomicWaitId: return "atomic_wait";
+    case Expression::Id::AtomicWakeId: return "atomic_wake";
     default: WASM_UNREACHABLE();
   }
 }
