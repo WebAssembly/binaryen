@@ -718,9 +718,7 @@
      (i32.const 0)
     )
     (if
-     (tee_local $2
-      (get_local $0)
-     )
+     (get_local $0)
      (br_if $while-out
       (get_local $2)
      )

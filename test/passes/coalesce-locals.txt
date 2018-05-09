@@ -1224,7 +1224,9 @@
    (set_local $0
     (get_local $1)
    )
-   (nop)
+   (set_local $1
+    (get_local $0)
+   )
    (br_if $loop
     (get_local $0)
    )

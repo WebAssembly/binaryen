@@ -581,12 +581,11 @@
  (func $switch64TOOMUCH (; 21 ;) (param $0 i64) (result i32)
   (local $1 i32)
   (local $2 i64)
+  (local $3 i64)
   (block $switch-default
    (if
     (i64.ne
-     (tee_local $2
-      (get_local $0)
-     )
+     (get_local $0)
      (i64.const -9223372036854775808)
     )
     (br_if $switch-default
@@ -627,7 +626,7 @@
     )
     (br_if $switch5
      (i64.ne
-      (get_local $0)
+      (get_local $3)
       (i64.const 4611686018427387904)
      )
     )

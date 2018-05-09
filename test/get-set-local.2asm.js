@@ -27,7 +27,6 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = r$hi;
   result$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
   return ($0 | 0) == (r | 0) & (i64toi32_i32$0 | 0) == (result$hi | 0) | 0 | 0;
  }
  
