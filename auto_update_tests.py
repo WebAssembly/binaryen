@@ -165,7 +165,7 @@ print '\n[ checking example testcases... ]\n'
 for t in sorted(os.listdir(os.path.join('test', 'example'))):
   output_file = os.path.join('bin', 'example')
   libdir = os.path.join(BINARYEN_INSTALL_DIR, 'lib')
-  cmd = ['-Isrc', '-g', '-lasmjs', '-lsupport', '-L' + libdir, '-pthread', '-o', output_file]
+  cmd = ['-Isrc', '-g', '-pthread', '-o', output_file]
   if t.endswith('.txt'):
     # check if there is a trace in the file, if so, we should build it
     out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join('test', 'example', t)], stdout=subprocess.PIPE).communicate()[0]
@@ -191,7 +191,7 @@ for t in sorted(os.listdir(os.path.join('test', 'example'))):
   print os.getcwd()
   subprocess.check_call(extra)
   # Link against the binaryen C library DSO, using rpath
-  cmd = ['example.o', '-lbinaryen', '-Wl,-rpath=' + os.path.abspath(libdir)] + cmd
+  cmd = ['example.o', '-L' + libdir, '-lbinaryen', '-Wl,-rpath=' + os.path.abspath(libdir)] + cmd
   print '  ', t, src, expected
   if os.environ.get('COMPILER_FLAGS'):
     for f in os.environ.get('COMPILER_FLAGS').split(' '):
@@ -347,7 +347,7 @@ if has_shell_timeout():
       t = os.path.join('test', 'reduce', t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      print run_command(WASM_REDUCE + ['a.wasm', '--command=bin/wasm-opt b.wasm --fuzz-exec', '-t', 'b.wasm', '-w', 'c.wasm'])
+      print run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', expected])
 
