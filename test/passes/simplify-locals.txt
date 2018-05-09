@@ -878,7 +878,7 @@
   (if
    (unreachable)
    (nop)
-   (drop
+   (set_local $var$0
     (i64.const 1)
    )
   )
@@ -1237,12 +1237,34 @@
   (local $var$2 i32)
   (nop)
   (i32.store
-   (get_local $var$0)
+   (tee_local $var$2
+    (get_local $var$0)
+   )
    (i32.const 1)
   )
   (f64.promote/f32
    (f32.load
     (get_local $var$2)
+   )
+  )
+ )
+ (func $if-value-structure-equivalent (; 17 ;) (type $5) (param $x i32) (result i32)
+  (local $y i32)
+  (set_local $y
+   (get_local $x)
+  )
+  (nop)
+  (tee_local $x
+   (if (result i32)
+    (i32.const 1)
+    (block (result i32)
+     (nop)
+     (i32.const 2)
+    )
+    (block (result i32)
+     (nop)
+     (get_local $y)
+    )
    )
   )
  )

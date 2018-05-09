@@ -58,25 +58,6 @@
 
 namespace wasm {
 
-// Helper classes
-
-struct SetLocalRemover : public PostWalker<SetLocalRemover> {
-  std::vector<Index>* numGetLocals;
-
-  void visitSetLocal(SetLocal *curr) {
-    if ((*numGetLocals)[curr->index] == 0) {
-      auto* value = curr->value;
-      if (curr->isTee()) {
-        replaceCurrent(value);
-      } else {
-        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-        drop->value = value;
-        drop->finalize();
-      }
-    }
-  }
-};
-
 // Main class
 
 template<bool allowTee = true, bool allowStructure = true, bool allowNesting = true>
@@ -130,12 +111,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   // local => # of get_locals for it
   GetLocalCounter getCounter;
 
-  // We track locals containing the same value.
-  EquivalentSets equivalences;
-
   static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
-    // TODO do this across non-linear paths too, in coalesce-locals?
-    self->equivalences.clear();
     // Main processing.
     auto* curr = *currp;
     if (curr->is<Break>()) {
@@ -307,29 +283,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // perform main SetLocal processing here, since we may be the result of
     // replaceCurrent, i.e., the visitor was not called.
     auto* set = (*currp)->dynCast<SetLocal>();
-
-    if (set) {
-      // Remove trivial copies
-      if (auto* get = set->value->dynCast<GetLocal>()) {
-        if (self->equivalences.check(set->index, get->index)) {
-          // This is an unnecessary copy!
-          if (set->isTee()) {
-            *currp = get;
-          } else {
-            ExpressionManipulator::nop(set);
-          }
-          // This is no longer a set.
-          set = nullptr;
-        } else {
-          // There is a new equivalence now.
-          self->equivalences.reset(set->index);
-          self->equivalences.add(set->index, get->index);
-        }
-      } else {
-        // A new value is assigned here.
-        self->equivalences.reset(set->index);
-      }
-    }
 
     if (set) {
       // if we see a set that was already potentially-sinkable, then the previous
@@ -662,21 +615,81 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       sinkables.clear();
       blockBreaks.clear();
       unoptimizableBlocks.clear();
-      equivalences.clear();
       if (firstCycle) {
         firstCycle = false;
         anotherCycle = true;
       }
     } while (anotherCycle);
-    // Finally, after optimizing a function, we can see if we have set_locals
+    // Finally, after optimizing a function we can do some additional
+    // optimization.
+    // One thing is we can see if we have set_locals
     // for a local with no remaining gets, in which case, we can
     // remove the set.
-    // First, recount get_locals
     getCounter.analyze(func);
-    // Second, remove unneeded sets
-    SetLocalRemover remover;
-    remover.numGetLocals = &getCounter.num;
-    remover.walkFunction(func);
+    // Remove unneeded sets, and remove equivalent copies - assignment of
+    // a local to another local that already contains that value. Note that
+    // we do that at the very end, and only after structure, as removing
+    // the copy here:
+    //   (if
+    //    (get_local $var$0)
+    //    (set_local $var$0
+    //     (get_local $var$0)
+    //    )
+    //    (set_local $var$0
+    //     (i32.const 208)
+    //    )
+    //   )
+    // will inhibit us creating an if return value.
+    struct FinalOptimizer : public LinearExecutionWalker<FinalOptimizer> {
+      std::vector<Index>* numGetLocals;
+      bool removeEquivalentSets;
+
+      // We track locals containing the same value.
+      EquivalentSets equivalences;
+
+      static void doNoteNonLinear(FinalOptimizer* self, Expression** currp) {
+        // TODO do this across non-linear paths too, in coalesce-locals perhaps? (would inhibit structure
+        //      opts here, though.
+        self->equivalences.clear();
+      }
+
+      void visitSetLocal(SetLocal *curr) {
+        if ((*numGetLocals)[curr->index] == 0) {
+          auto* value = curr->value;
+          if (curr->isTee()) {
+            this->replaceCurrent(value);
+          } else {
+            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
+            drop->value = value;
+            drop->finalize();
+          }
+        } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
+          // Remove trivial copies.
+          if (auto* get = curr->value->dynCast<GetLocal>()) {
+            if (equivalences.check(curr->index, get->index)) {
+              // This is an unnecessary copy!
+              if (curr->isTee()) {
+                this->replaceCurrent(get);
+              } else {
+                ExpressionManipulator::nop(curr);
+              }
+            } else {
+              // There is a new equivalence now.
+              equivalences.reset(curr->index);
+              equivalences.add(curr->index, get->index);
+            }
+          } else {
+            // A new value is assigned here.
+            equivalences.reset(curr->index);
+          }
+        }
+      }
+    };
+
+    FinalOptimizer finalOptimizer;
+    finalOptimizer.numGetLocals = &getCounter.num;
+    finalOptimizer.removeEquivalentSets = allowStructure;
+    finalOptimizer.walkFunction(func);
   }
 
   bool canUseLoopReturnValue(Loop* curr) {
