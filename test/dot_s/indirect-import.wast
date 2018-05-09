@@ -169,4 +169,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["extern_ijidf","extern_v","extern_vj","extern_fd","extern_struct","extern_sret"], "externs": [], "implementedFunctions": ["_bar","_baz","___wasm_nullptr","___importThunk_extern_fd","___importThunk_extern_vj","___importThunk_extern_v","___importThunk_extern_ijidf","___importThunk_extern_struct","___importThunk_extern_sret","_stackSave","_stackAlloc","_stackRestore","_dynCall_fd","_dynCall_v","_dynCall_vi"], "exports": ["bar","baz","stackSave","stackAlloc","stackRestore","dynCall_fd","dynCall_v","dynCall_vi"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["extern_ijidf","extern_v","extern_vj","extern_fd","extern_struct","extern_sret"], "externs": [], "implementedFunctions": ["_bar","_baz","_stackSave","_stackAlloc","_stackRestore","_dynCall_fd","_dynCall_v","_dynCall_vi"], "exports": ["bar","baz","stackSave","stackAlloc","stackRestore","dynCall_fd","dynCall_v","dynCall_vi"], "invokeFuncs": [] }
