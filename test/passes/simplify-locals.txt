@@ -1280,10 +1280,8 @@
   (local $w i32)
   (nop)
   (nop)
-  (drop
-   (tee_local $z
-    (get_local $x)
-   )
+  (set_local $z
+   (get_local $x)
   )
   (nop)
   (if
@@ -1304,9 +1302,7 @@
   (nop)
   (nop)
   (drop
-   (tee_local $z
-    (get_local $x)
-   )
+   (get_local $x)
   )
   (nop)
   (set_local $x
@@ -1323,9 +1319,7 @@
   (nop)
   (nop)
   (drop
-   (tee_local $z
-    (get_local $x)
-   )
+   (get_local $x)
   )
   (set_local $z
    (i32.const 2)

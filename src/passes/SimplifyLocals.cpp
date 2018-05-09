@@ -643,11 +643,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   bool runFinalOptimizations(Function* func) {
     // Finally, after optimizing a function we can do some additional
     // optimization.
-    // One thing is we can see if we have set_locals
-    // for a local with no remaining gets, in which case, we can
-    // remove the set.
     getCounter.analyze(func);
-    // Remove unneeded sets, and remove equivalent copies - assignment of
+    // Remove equivalent copies - assignment of
     // a local to another local that already contains that value. Note that
     // we do that at the very end, and only after structure, as removing
     // the copy here:
@@ -661,7 +658,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     //    )
     //   )
     // will inhibit us creating an if return value.
-    struct FinalOptimizer : public LinearExecutionWalker<FinalOptimizer> {
+    struct EquivalentOptimizer : public LinearExecutionWalker<EquivalentOptimizer> {
       std::vector<Index>* numGetLocals;
       bool removeEquivalentSets;
       Module* module;
@@ -671,51 +668,39 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       // We track locals containing the same value.
       EquivalentSets equivalences;
 
-      static void doNoteNonLinear(FinalOptimizer* self, Expression** currp) {
+      static void doNoteNonLinear(EquivalentOptimizer* self, Expression** currp) {
         // TODO do this across non-linear paths too, in coalesce-locals perhaps? (would inhibit structure
         //      opts here, though.
         self->equivalences.clear();
       }
 
       void visitSetLocal(SetLocal *curr) {
-        if ((*numGetLocals)[curr->index] == 0) {
-          auto* value = curr->value;
-          if (curr->isTee()) {
-            this->replaceCurrent(value);
-          } else {
-            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-            drop->value = value;
-            drop->finalize();
-          }
-          anotherCycle = true;
-        } else {
-          // Remove trivial copies, even through a tee
-          auto* value = curr->value;
-          while (auto* subSet = value->dynCast<SetLocal>()) {
-            value = subSet->value;
-          }
-          if (auto* get = value->dynCast<GetLocal>()) {
-            if (equivalences.check(curr->index, get->index)) {
-              // This is an unnecessary copy!
-              if (removeEquivalentSets) {
-                if (curr->isTee()) {
-                  this->replaceCurrent(value);
-                } else if (curr->value->is<GetLocal>()) {
-                  ExpressionManipulator::nop(curr);
-                } else {
-                  this->replaceCurrent(Builder(*module).makeDrop(value));
-                }
-                anotherCycle = true;
+        // Remove trivial copies, even through a tee
+        auto* value = curr->value;
+        while (auto* subSet = value->dynCast<SetLocal>()) {
+          value = subSet->value;
+        }
+        if (auto* get = value->dynCast<GetLocal>()) {
+          if (equivalences.check(curr->index, get->index)) {
+            // This is an unnecessary copy!
+            if (removeEquivalentSets) {
+              if (curr->isTee()) {
+                this->replaceCurrent(value);
+              } else if (curr->value->is<GetLocal>()) {
+                ExpressionManipulator::nop(curr);
+              } else {
+                this->replaceCurrent(Builder(*module).makeDrop(value));
               }
-            } else {
-              // There is a new equivalence now.
-              equivalences.reset(curr->index);
-              equivalences.add(curr->index, get->index);
+              anotherCycle = true;
             }
           } else {
-            // A new value is assigned here.
+            // There is a new equivalence now.
             equivalences.reset(curr->index);
+            equivalences.add(curr->index, get->index);
           }
+        } else {
+          // A new value is assigned here.
+          equivalences.reset(curr->index);
         }
       }
 
@@ -748,6 +733,11 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           // the same # of locals - make sure we actually improve.
           if (best != curr->index &&
               getNumGetsIgnoringCurr(best) > getNumGetsIgnoringCurr(curr->index)) {
+            // Update the get counts.
+            (*numGetLocals)[best]++;
+            assert((*numGetLocals)[curr->index] >= 1);
+            (*numGetLocals)[curr->index]--;
+            // Make the change.
             curr->index = best;
             anotherCycle = true;
           }
@@ -755,12 +745,40 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       }
     };
 
-    FinalOptimizer finalOptimizer;
-    finalOptimizer.module = this->getModule();
-    finalOptimizer.numGetLocals = &getCounter.num;
-    finalOptimizer.removeEquivalentSets = allowStructure;
-    finalOptimizer.walkFunction(func);
-    return finalOptimizer.anotherCycle;
+    EquivalentOptimizer eqOpter;
+    eqOpter.module = this->getModule();
+    eqOpter.numGetLocals = &getCounter.num;
+    eqOpter.removeEquivalentSets = allowStructure;
+    eqOpter.walkFunction(func);
+
+    // We may have already had a local with no uses, or we may have just
+    // gotten there thanks to the EquivalentOptimizer. If there are such
+    // locals, remove all their sets.
+    struct UneededSetRemover : public PostWalker<UneededSetRemover> {
+      std::vector<Index>* numGetLocals;
+
+      bool anotherCycle = false;
+
+      void visitSetLocal(SetLocal *curr) {
+        if ((*numGetLocals)[curr->index] == 0) {
+          auto* value = curr->value;
+          if (curr->isTee()) {
+            this->replaceCurrent(value);
+          } else {
+            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
+            drop->value = value;
+            drop->finalize();
+          }
+          anotherCycle = true;
+        }
+      }
+    };
+
+    UneededSetRemover setRemover;
+    setRemover.numGetLocals = &getCounter.num;
+    setRemover.walkFunction(func);
+
+    return eqOpter.anotherCycle || setRemover.anotherCycle;
   }
 
   bool canUseLoopReturnValue(Loop* curr) {
