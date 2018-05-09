@@ -566,55 +566,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // output patterns. further cycles do fully general sinking.
     firstCycle = true;
     do {
-      anotherCycle = false;
-      // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
-      // enlarge blocks that were marked, for the next round
-      if (blocksToEnlarge.size() > 0) {
-        for (auto* block : blocksToEnlarge) {
-          block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-        }
-        blocksToEnlarge.clear();
-        anotherCycle = true;
-      }
-      // enlarge ifs that were marked, for the next round
-      if (ifsToEnlarge.size() > 0) {
-        for (auto* iff : ifsToEnlarge) {
-          auto ifTrue = Builder(*this->getModule()).blockify(iff->ifTrue);
-          iff->ifTrue = ifTrue;
-          if (ifTrue->list.size() == 0 || !ifTrue->list.back()->template is<Nop>()) {
-            ifTrue->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-          }
-          auto ifFalse = Builder(*this->getModule()).blockify(iff->ifFalse);
-          iff->ifFalse = ifFalse;
-          if (ifFalse->list.size() == 0 || !ifFalse->list.back()->template is<Nop>()) {
-            ifFalse->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-          }
-        }
-        ifsToEnlarge.clear();
-        anotherCycle = true;
-      }
-      // handle loops. note that a lot happens in this pass, and we can't just modify
-      // set_locals when we see a loop - it might be tracked - and we can't also just
-      // assume our loop didn't move either (might be in a block now). So we do this
-      // when all other work is done - as loop return values are rare, that is fine.
-      if (!anotherCycle) {
-        for (auto* currp : loops) {
-          auto* curr = (*currp)->template cast<Loop>();
-          assert(canUseLoopReturnValue(curr));
-          auto* set = curr->body->template cast<SetLocal>();
-          curr->body = set->value;
-          set->value = curr;
-          curr->finalize(curr->body->type);
-          *currp = set;
-          anotherCycle = true;
-        }
-      }
-      loops.clear();
-      // clean up
-      sinkables.clear();
-      blockBreaks.clear();
-      unoptimizableBlocks.clear();
+      anotherCycle = runMainOptimizations(func);
+      // After the special first cycle, definitely do another.
       if (firstCycle) {
         firstCycle = false;
         anotherCycle = true;
@@ -622,9 +575,69 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       // If we are all done, run the final optimizations, which may suggest we
       // can do more work.
       if (!anotherCycle) {
-        anotherCycle = runFinalOptimizations(func);
+        // Don't run multiple cycles of just the final optimizations - in
+        // particular, get canonicalization is not guaranteed to converge.
+        // Instead, if final opts help then see if they enable main
+        // opts; continue only if they do. In other words, do not end up
+        // doing final opts again and again when no main opts are being
+        // enabled.
+        if (runFinalOptimizations(func) && runMainOptimizations(func)) {
+          anotherCycle = true;
+        }
       }
     } while (anotherCycle);
+  }
+
+  bool runMainOptimizations(Function* func) {
+    anotherCycle = false;
+    WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
+    // enlarge blocks that were marked, for the next round
+    if (blocksToEnlarge.size() > 0) {
+      for (auto* block : blocksToEnlarge) {
+        block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+      }
+      blocksToEnlarge.clear();
+      anotherCycle = true;
+    }
+    // enlarge ifs that were marked, for the next round
+    if (ifsToEnlarge.size() > 0) {
+      for (auto* iff : ifsToEnlarge) {
+        auto ifTrue = Builder(*this->getModule()).blockify(iff->ifTrue);
+        iff->ifTrue = ifTrue;
+        if (ifTrue->list.size() == 0 || !ifTrue->list.back()->template is<Nop>()) {
+          ifTrue->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        }
+        auto ifFalse = Builder(*this->getModule()).blockify(iff->ifFalse);
+        iff->ifFalse = ifFalse;
+        if (ifFalse->list.size() == 0 || !ifFalse->list.back()->template is<Nop>()) {
+          ifFalse->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        }
+      }
+      ifsToEnlarge.clear();
+      anotherCycle = true;
+    }
+    // handle loops. note that a lot happens in this pass, and we can't just modify
+    // set_locals when we see a loop - it might be tracked - and we can't also just
+    // assume our loop didn't move either (might be in a block now). So we do this
+    // when all other work is done - as loop return values are rare, that is fine.
+    if (!anotherCycle) {
+      for (auto* currp : loops) {
+        auto* curr = (*currp)->template cast<Loop>();
+        assert(canUseLoopReturnValue(curr));
+        auto* set = curr->body->template cast<SetLocal>();
+        curr->body = set->value;
+        set->value = curr;
+        curr->finalize(curr->body->type);
+        *currp = set;
+        anotherCycle = true;
+      }
+    }
+    loops.clear();
+    // clean up
+    sinkables.clear();
+    blockBreaks.clear();
+    unoptimizableBlocks.clear();
+    return anotherCycle;
   }
 
   bool runFinalOptimizations(Function* func) {
@@ -674,6 +687,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             drop->value = value;
             drop->finalize();
           }
+          anotherCycle = true;
         } else {
           // Remove trivial copies, even through a tee
           auto* value = curr->value;
@@ -691,6 +705,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
                 } else {
                   this->replaceCurrent(Builder(*module).makeDrop(value));
                 }
+                anotherCycle = true;
               }
             } else {
               // There is a new equivalence now.
