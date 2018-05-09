@@ -756,7 +756,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* c = binary->right->dynCast<Const>();
           if (!c) return nullptr;
           uint32_t value = c->value.geti32();
-          if (value >= std::numeric_limits<int32_t>::max()) return nullptr;
+          if (value >= uint32_t(std::numeric_limits<int32_t>::max())) return nullptr;
           return br;
         };
 

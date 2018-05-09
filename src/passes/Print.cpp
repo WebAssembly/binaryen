@@ -26,11 +26,11 @@
 
 namespace wasm {
 
-static int isFullForced() {
+static bool isFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
-    return std::stoi(getenv("BINARYEN_PRINT_FULL"));
+    return std::stoi(getenv("BINARYEN_PRINT_FULL")) != 0;
   }
-  return 0;
+  return false;
 }
 
 struct PrintSExpression : public Visitor<PrintSExpression> {
