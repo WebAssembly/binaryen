@@ -619,7 +619,15 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         firstCycle = false;
         anotherCycle = true;
       }
+      // If we are all done, run the final optimizations, which may suggest we
+      // can do more work.
+      if (!anotherCycle) {
+        anotherCycle = runFinalOptimizations(func);
+      }
     } while (anotherCycle);
+  }
+
+  bool runFinalOptimizations(Function* func) {
     // Finally, after optimizing a function we can do some additional
     // optimization.
     // One thing is we can see if we have set_locals
@@ -644,6 +652,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       std::vector<Index>* numGetLocals;
       bool removeEquivalentSets;
       Module* module;
+
+      bool anotherCycle = false;
 
       // We track locals containing the same value.
       EquivalentSets equivalences;
@@ -696,16 +706,23 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
         if (auto *set = equivalences.getEquivalents(curr->index)) {
-          // Pick the index with the least uses - maximizing the chance to
+          // Pick the index with the most uses - maximizing the chance to
           // lower one's uses to zero.
           Index best = -1;
           for (auto index : *set) {
             if (best == Index(-1) ||
-                (*numGetLocals)[index] < (*numGetLocals)[best]) {
+                (*numGetLocals)[index] > (*numGetLocals)[best]) {
               best = index;
             }
           }
-          curr->index = best;
+          assert(best != Index(-1));
+          // Due to ordering, the best index may be different from us but have
+          // the same # of locals - make sure we actually improve.
+          if (best != curr->index &&
+              (*numGetLocals)[best] > (*numGetLocals)[curr->index]) {
+            curr->index = best;
+            anotherCycle = true;
+          }
         }
       }
     };
@@ -715,6 +732,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     finalOptimizer.numGetLocals = &getCounter.num;
     finalOptimizer.removeEquivalentSets = allowStructure;
     finalOptimizer.walkFunction(func);
+    return finalOptimizer.anotherCycle;
   }
 
   bool canUseLoopReturnValue(Loop* curr) {

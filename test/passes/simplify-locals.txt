@@ -1280,7 +1280,7 @@
   (local $w i32)
   (nop)
   (nop)
-  (set_local $w
+  (drop
    (tee_local $z
     (get_local $x)
    )
@@ -1303,7 +1303,7 @@
   )
   (nop)
   (nop)
-  (set_local $w
+  (drop
    (tee_local $z
     (get_local $x)
    )
@@ -1322,7 +1322,7 @@
   )
   (nop)
   (nop)
-  (set_local $w
+  (drop
    (tee_local $z
     (get_local $x)
    )
@@ -1339,7 +1339,7 @@
     (get_local $y)
    )
    (br_if $loop
-    (get_local $y)
+    (get_local $x)
    )
   )
  )
@@ -1366,7 +1366,7 @@
   )
   (f64.promote/f32
    (f32.load
-    (get_local $var$0)
+    (get_local $var$2)
    )
   )
  )
