@@ -22,7 +22,12 @@
 // WARNING: this often shrinks code size, but can *increase* gzip
 //          size. apparently having the constants in their proper
 //          places lets them be compressed better, across
-//          functions, etc.
+//          functions, etc. TODO investigate
+// TODO: hoisting a zero does not even require an initial set!
+// TODO: hoisting a float or double zero is especially beneficial as there
+//       is no LEB compression for them, and no need for the set, so
+//       each f32.const is 5 bytes and f64.const is 9 bytes, while it is
+//       <= 1 byte to declare the local and 2-3 to use it!
 //
 
 #include <map>

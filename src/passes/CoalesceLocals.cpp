@@ -342,17 +342,13 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
       if (action.isGet()) {
         auto* get = (*action.origin)->cast<GetLocal>();
         get->index = indices[get->index];
-      } else {
+      } else if (action.isSet()) {
         auto* set = (*action.origin)->cast<SetLocal>();
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective sets
         GetLocal* get;
         if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
-          if (set->isTee()) {
-            *action.origin = get;
-          } else {
-            ExpressionManipulator::nop(set);
-          }
+          action.removeCopy();
           continue;
         }
         // remove ineffective actions

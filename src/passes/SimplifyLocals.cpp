@@ -52,29 +52,11 @@
 #include <pass.h>
 #include <ir/count.h>
 #include <ir/effects.h>
+#include "ir/equivalent_sets.h"
 #include <ir/find_all.h>
 #include <ir/manipulation.h>
 
 namespace wasm {
-
-// Helper classes
-
-struct SetLocalRemover : public PostWalker<SetLocalRemover> {
-  std::vector<Index>* numGetLocals;
-
-  void visitSetLocal(SetLocal *curr) {
-    if ((*numGetLocals)[curr->index] == 0) {
-      auto* value = curr->value;
-      if (curr->isTee()) {
-        replaceCurrent(value);
-      } else {
-        Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
-        drop->value = value;
-        drop->finalize();
-      }
-    }
-  }
-};
 
 // Main class
 
@@ -130,6 +112,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   GetLocalCounter getCounter;
 
   static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+    // Main processing.
     auto* curr = *currp;
     if (curr->is<Break>()) {
       auto* br = curr->cast<Break>();
@@ -637,15 +620,76 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         anotherCycle = true;
       }
     } while (anotherCycle);
-    // Finally, after optimizing a function, we can see if we have set_locals
+    // Finally, after optimizing a function we can do some additional
+    // optimization.
+    // One thing is we can see if we have set_locals
     // for a local with no remaining gets, in which case, we can
     // remove the set.
-    // First, recount get_locals
     getCounter.analyze(func);
-    // Second, remove unneeded sets
-    SetLocalRemover remover;
-    remover.numGetLocals = &getCounter.num;
-    remover.walkFunction(func);
+    // Remove unneeded sets, and remove equivalent copies - assignment of
+    // a local to another local that already contains that value. Note that
+    // we do that at the very end, and only after structure, as removing
+    // the copy here:
+    //   (if
+    //    (get_local $var$0)
+    //    (set_local $var$0
+    //     (get_local $var$0)
+    //    )
+    //    (set_local $var$0
+    //     (i32.const 208)
+    //    )
+    //   )
+    // will inhibit us creating an if return value.
+    struct FinalOptimizer : public LinearExecutionWalker<FinalOptimizer> {
+      std::vector<Index>* numGetLocals;
+      bool removeEquivalentSets;
+
+      // We track locals containing the same value.
+      EquivalentSets equivalences;
+
+      static void doNoteNonLinear(FinalOptimizer* self, Expression** currp) {
+        // TODO do this across non-linear paths too, in coalesce-locals perhaps? (would inhibit structure
+        //      opts here, though.
+        self->equivalences.clear();
+      }
+
+      void visitSetLocal(SetLocal *curr) {
+        if ((*numGetLocals)[curr->index] == 0) {
+          auto* value = curr->value;
+          if (curr->isTee()) {
+            this->replaceCurrent(value);
+          } else {
+            Drop* drop = ExpressionManipulator::convert<SetLocal, Drop>(curr);
+            drop->value = value;
+            drop->finalize();
+          }
+        } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
+          // Remove trivial copies.
+          if (auto* get = curr->value->dynCast<GetLocal>()) {
+            if (equivalences.check(curr->index, get->index)) {
+              // This is an unnecessary copy!
+              if (curr->isTee()) {
+                this->replaceCurrent(get);
+              } else {
+                ExpressionManipulator::nop(curr);
+              }
+            } else {
+              // There is a new equivalence now.
+              equivalences.reset(curr->index);
+              equivalences.add(curr->index, get->index);
+            }
+          } else {
+            // A new value is assigned here.
+            equivalences.reset(curr->index);
+          }
+        }
+      }
+    };
+
+    FinalOptimizer finalOptimizer;
+    finalOptimizer.numGetLocals = &getCounter.num;
+    finalOptimizer.removeEquivalentSets = allowStructure;
+    finalOptimizer.walkFunction(func);
   }
 
   bool canUseLoopReturnValue(Loop* curr) {
