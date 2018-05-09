@@ -512,7 +512,7 @@ def run_gcc_torture_tests():
   else:
     for t in sorted(os.listdir(os.path.join(options.binaryen_test, 'example'))):
       output_file = os.path.join(options.binaryen_bin, 'example')
-      cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-lasmjs', '-lsupport', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-pthread', '-o', output_file]
+      cmd = ['-I' + os.path.join(options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
       if t.endswith('.txt'):
         # check if there is a trace in the file, if so, we should build it
         out = subprocess.Popen([os.path.join('scripts', 'clean_c_api_trace.py'), os.path.join(options.binaryen_test, 'example', t)], stdout=subprocess.PIPE).communicate()[0]
@@ -535,7 +535,7 @@ def run_gcc_torture_tests():
         print 'build: ', ' '.join(extra)
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = ['example.o', '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
+        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
       else:
         continue
       print '  ', t, src, expected
