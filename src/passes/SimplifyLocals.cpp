@@ -662,6 +662,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       sinkables.clear();
       blockBreaks.clear();
       unoptimizableBlocks.clear();
+      equivalences.clear();
       if (firstCycle) {
         firstCycle = false;
         anotherCycle = true;
