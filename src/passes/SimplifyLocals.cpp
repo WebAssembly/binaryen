@@ -643,6 +643,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     struct FinalOptimizer : public LinearExecutionWalker<FinalOptimizer> {
       std::vector<Index>* numGetLocals;
       bool removeEquivalentSets;
+      Module* module;
 
       // We track locals containing the same value.
       EquivalentSets equivalences;
@@ -664,15 +665,20 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             drop->finalize();
           }
         } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
-          // Remove trivial copies.
-flow into the value, use a drop, etc. etc.
-          if (auto* get = curr->value->dynCast<GetLocal>()) {
+          // Remove trivial copies, even through a tee
+          auto* value = curr->value;
+          while (auto* subSet = value->dynCast<SetLocal>()) {
+            value = subSet->value;
+          }
+          if (auto* get = value->dynCast<GetLocal>()) {
             if (equivalences.check(curr->index, get->index)) {
               // This is an unnecessary copy!
               if (curr->isTee()) {
-                this->replaceCurrent(get);
-              } else {
+                this->replaceCurrent(value);
+              } else if (curr->value->is<GetLocal>()) {
                 ExpressionManipulator::nop(curr);
+              } else {
+                this->replaceCurrent(Builder(*module).makeDrop(value));
               }
             } else {
               // There is a new equivalence now.
@@ -686,10 +692,11 @@ flow into the value, use a drop, etc. etc.
         }
       }
 
-visitGetLocal - canonicalize the indexes! that was the point!
+//visitGetLocal - canonicalize the indexes! that was the point!
     };
 
     FinalOptimizer finalOptimizer;
+    finalOptimizer.module = this->getModule();
     finalOptimizer.numGetLocals = &getCounter.num;
     finalOptimizer.removeEquivalentSets = allowStructure;
     finalOptimizer.walkFunction(func);
