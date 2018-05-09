@@ -346,9 +346,6 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices, Expression* root)
         auto* set = (*action.origin)->cast<SetLocal>();
         set->index = indices[set->index];
         // in addition, we can optimize out redundant copies and ineffective sets
-
-// TODO: testcase here (something not removed before, but is remoeable now... possible?
-
         GetLocal* get;
         if ((get = set->value->dynCast<GetLocal>()) && get->index == set->index) {
           action.removeCopy();
