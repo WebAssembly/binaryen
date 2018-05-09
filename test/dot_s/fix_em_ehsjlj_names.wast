@@ -7,11 +7,11 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$ffd (func (param f32 f64) (result f32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
- (import "env" "invoke_ffd" (func $invoke_ffd (param i32 f32 f64) (result f32)))
  (import "env" "invoke_iii" (func $invoke_iii (param i32 i32 i32) (result i32)))
+ (import "env" "invoke_ffd" (func $invoke_ffd (param i32 f32 f64) (result f32)))
  (import "env" "invoke_iiii" (func $invoke_iiii (param i32 i32 i32 i32) (result i32)))
  (import "env" "invoke_v" (func $invoke_v (param i32)))
+ (import "env" "emscripten_longjmp" (func $emscripten_longjmp (param i32 i32)))
  (import "env" "memory" (memory $0 1))
  (table 5 5 anyfunc)
  (elem (i32.const 0) $__wasm_nullptr $_Z5func1v $_Z5func2iii $_Z5func3fd $_Z5func4P8mystructS_)
@@ -136,4 +136,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["emscripten_longjmp"], "externs": [], "implementedFunctions": ["__Z5func1v","__Z5func2iii","__Z5func3fd","__Z5func4P8mystructS_","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_v","_dynCall_iiii","_dynCall_ffd","_dynCall_iii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_v","dynCall_iiii","dynCall_ffd","dynCall_iii"], "invokeFuncs": ["invoke_ffd","invoke_iii","invoke_iiii","invoke_v"] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": ["emscripten_longjmp"], "externs": [], "implementedFunctions": ["__Z5func1v","__Z5func2iii","__Z5func3fd","__Z5func4P8mystructS_","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_v","_dynCall_iiii","_dynCall_ffd","_dynCall_iii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_v","dynCall_iiii","dynCall_ffd","dynCall_iii"], "invokeFuncs": ["invoke_iii","invoke_ffd","invoke_iiii","invoke_v"] }
