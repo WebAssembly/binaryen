@@ -52,6 +52,7 @@
 #include <pass.h>
 #include <ir/count.h>
 #include <ir/effects.h>
+#include "ir/equivalent_sets.h"
 #include <ir/find_all.h>
 #include <ir/manipulation.h>
 
@@ -129,7 +130,13 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
   // local => # of get_locals for it
   GetLocalCounter getCounter;
 
+  // We track locals containing the same value.
+  EquivalentSets equivalences;
+
   static void doNoteNonLinear(SimplifyLocals<allowTee, allowStructure, allowNesting>* self, Expression** currp) {
+    // TODO do this across non-linear paths too, in coalesce-locals?
+    self->equivalences.clear();
+    // Main processing.
     auto* curr = *currp;
     if (curr->is<Break>()) {
       auto* br = curr->cast<Break>();
@@ -300,6 +307,29 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // perform main SetLocal processing here, since we may be the result of
     // replaceCurrent, i.e., the visitor was not called.
     auto* set = (*currp)->dynCast<SetLocal>();
+
+    if (set) {
+      // Remove trivial copies
+      if (auto* get = set->value->dynCast<GetLocal>()) {
+        if (self->equivalences.check(set->index, get->index)) {
+          // This is an unnecessary copy!
+          if (set->isTee()) {
+            *currp = get;
+          } else {
+            ExpressionManipulator::nop(set);
+          }
+          // This is no longer a set.
+          set = nullptr;
+        } else {
+          // There is a new equivalence now.
+          self->equivalences.reset(set->index);
+          self->equivalences.add(set->index, get->index);
+        }
+      } else {
+        // A new value is assigned here.
+        self->equivalences.reset(set->index);
+      }
+    }
 
     if (set) {
       // if we see a set that was already potentially-sinkable, then the previous

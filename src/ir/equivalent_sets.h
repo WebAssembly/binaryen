@@ -30,6 +30,11 @@ struct EquivalentSets {
 
   std::unordered_map<Index, std::shared_ptr<Set>> indexSets;
 
+  // Clears the state completely, removing all equivalences.
+  void clear() {
+    indexSets.clear();
+  }
+
   // Resets an index, removing any equivalences between it and others.
   void reset(Index index) {
     auto iter = indexSets.find(index);

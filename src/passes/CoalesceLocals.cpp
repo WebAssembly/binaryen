@@ -28,7 +28,6 @@
 
 #include "wasm.h"
 #include "pass.h"
-#include "ir/equivalent_sets.h"
 #include "ir/utils.h"
 #include "cfg/liveness-traversal.h"
 #include "wasm-builder.h"
@@ -48,8 +47,6 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
   // main entry point
 
   void doWalkFunction(Function* func);
-
-  void removeCopies();
 
   void increaseBackEdgePriorities();
 
@@ -85,8 +82,6 @@ struct CoalesceLocals : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor
 
 void CoalesceLocals::doWalkFunction(Function* func) {
   super::doWalkFunction(func);
-  // remove trivial copies
-  removeCopies();
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference
@@ -96,35 +91,6 @@ void CoalesceLocals::doWalkFunction(Function* func) {
   pickIndices(indices);
   // apply indices
   applyIndices(indices, func->body);
-}
-
-void CoalesceLocals::removeCopies() {
-  // Remove not just trivial copies like x = 5; y = x; but also
-  // multi-element copies, x = 5; y = x; z = y;
-  for (auto& curr : basicBlocks) {
-    // For now we work just within a basic block.
-    // TODO: flow this among blocks too?
-    EquivalentSets equivalences;
-    auto& actions = curr->contents.actions;
-    for (auto& action : actions) {
-      if (action.isSet()) {
-        auto* set = (*action.origin)->cast<SetLocal>();
-        if (auto* get = set->value->dynCast<GetLocal>()) {
-          if (equivalences.check(set->index, get->index)) {
-            // This is an unnecessary copy!
-            action.removeCopy();
-          } else {
-            // There is a new equivalence now.
-            equivalences.reset(set->index);
-            equivalences.add(set->index, get->index);
-          }
-        } else {
-          // A new value is assigned here.
-          equivalences.reset(set->index);
-        }
-      }
-    }
-  }
 }
 
 // A copy on a backedge can be especially costly, forcing us to branch just to do that copy.
