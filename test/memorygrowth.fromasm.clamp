@@ -7716,7 +7716,7 @@
   (local $15 i32)
   (local $16 i32)
   (local $17 i32)
-  (set_local $10
+  (set_local $12
    (get_global $r)
   )
   (set_global $r
@@ -7725,19 +7725,18 @@
     (i32.const 48)
    )
   )
-  (set_local $11
+  (set_local $10
    (i32.add
-    (get_local $10)
+    (get_local $12)
     (i32.const 16)
    )
-  )
-  (set_local $12
-   (get_local $10)
   )
   (i32.store
    (tee_local $3
     (i32.add
-     (get_local $10)
+     (tee_local $11
+      (get_local $12)
+     )
      (i32.const 32)
     )
    )
@@ -7816,24 +7815,24 @@
           (get_local $0)
          )
          (i32.store
-          (get_local $12)
+          (get_local $11)
           (i32.load
            (get_local $1)
           )
          )
          (i32.store offset=4
-          (get_local $12)
+          (get_local $11)
           (get_local $5)
          )
          (i32.store offset=8
-          (get_local $12)
+          (get_local $11)
           (get_local $3)
          )
          (set_local $9
           (call $Pa
            (call $ya
             (i32.const 146)
-            (get_local $12)
+            (get_local $11)
            )
           )
          )
@@ -7844,23 +7843,23 @@
         )
         (block (result i32)
          (i32.store
-          (get_local $11)
+          (get_local $10)
           (i32.load
            (get_local $1)
           )
          )
          (i32.store offset=4
-          (get_local $11)
+          (get_local $10)
           (get_local $5)
          )
          (i32.store offset=8
-          (get_local $11)
+          (get_local $10)
           (get_local $3)
          )
          (call $Pa
           (call $ya
            (i32.const 146)
-           (get_local $11)
+           (get_local $10)
           )
          )
         )
@@ -8071,7 +8070,7 @@
    )
   )
   (set_global $r
-   (get_local $10)
+   (get_local $12)
   )
   (get_local $15)
  )

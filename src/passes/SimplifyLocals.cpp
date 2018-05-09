@@ -708,10 +708,21 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         if (auto *set = equivalences.getEquivalents(curr->index)) {
           // Pick the index with the most uses - maximizing the chance to
           // lower one's uses to zero.
+          // Helper method that returns the # of gets *ignoring the current get*,
+          // as we want to see what is best overall, treating this one as
+          // to be decided upon.
+          auto getNumGetsIgnoringCurr = [&](Index index) {
+            auto ret = (*numGetLocals)[index];
+            if (index == curr->index) {
+              assert(ret >= 1);
+              ret--;
+            }
+            return ret;
+          };
           Index best = -1;
           for (auto index : *set) {
             if (best == Index(-1) ||
-                (*numGetLocals)[index] > (*numGetLocals)[best]) {
+                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
               best = index;
             }
           }
@@ -719,7 +730,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           // Due to ordering, the best index may be different from us but have
           // the same # of locals - make sure we actually improve.
           if (best != curr->index &&
-              (*numGetLocals)[best] > (*numGetLocals)[curr->index]) {
+              getNumGetsIgnoringCurr(best) > getNumGetsIgnoringCurr(curr->index)) {
             curr->index = best;
             anotherCycle = true;
           }
