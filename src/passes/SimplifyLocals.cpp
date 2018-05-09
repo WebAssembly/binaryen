@@ -665,6 +665,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           }
         } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
           // Remove trivial copies.
+flow into the value, use a drop, etc. etc.
           if (auto* get = curr->value->dynCast<GetLocal>()) {
             if (equivalences.check(curr->index, get->index)) {
               // This is an unnecessary copy!
@@ -684,6 +685,8 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           }
         }
       }
+
+visitGetLocal - canonicalize the indexes! that was the point!
     };
 
     FinalOptimizer finalOptimizer;
