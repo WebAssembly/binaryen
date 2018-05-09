@@ -36,7 +36,7 @@
   (f64.promote/f32
    (f32.neg
     (f32.load
-     (get_local $2)
+     (get_local $0)
     )
    )
   )

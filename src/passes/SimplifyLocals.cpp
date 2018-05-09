@@ -692,7 +692,22 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
         }
       }
 
-//visitGetLocal - canonicalize the indexes! that was the point!
+      void visitGetLocal(GetLocal *curr) {
+        // Canonicalize gets: if some are equivalent, then we can pick more
+        // then one, and other passes may benefit from having more uniformity.
+        if (auto *set = equivalences.getEquivalents(curr->index)) {
+          // Pick the index with the least uses - maximizing the chance to
+          // lower one's uses to zero.
+          Index best = -1;
+          for (auto index : *set) {
+            if (best == Index(-1) ||
+                (*numGetLocals)[index] < (*numGetLocals)[best]) {
+              best = index;
+            }
+          }
+          curr->index = best;
+        }
+      }
     };
 
     FinalOptimizer finalOptimizer;

@@ -10886,11 +10886,11 @@
           (i32.and
            (i32.gt_u
             (get_local $11)
-            (get_local $1)
+            (get_local $3)
            )
            (i32.and
             (i32.lt_u
-             (get_local $1)
+             (get_local $3)
              (i32.const 2147483647)
             )
             (i32.ne

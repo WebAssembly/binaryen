@@ -1339,7 +1339,7 @@
     (get_local $y)
    )
    (br_if $loop
-    (get_local $x)
+    (get_local $y)
    )
   )
  )
@@ -1366,7 +1366,7 @@
   )
   (f64.promote/f32
    (f32.load
-    (get_local $var$2)
+    (get_local $var$0)
    )
   )
  )
