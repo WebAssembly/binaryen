@@ -674,7 +674,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             drop->value = value;
             drop->finalize();
           }
-        } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
+        } else {
           // Remove trivial copies, even through a tee
           auto* value = curr->value;
           while (auto* subSet = value->dynCast<SetLocal>()) {
@@ -683,12 +683,14 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
           if (auto* get = value->dynCast<GetLocal>()) {
             if (equivalences.check(curr->index, get->index)) {
               // This is an unnecessary copy!
-              if (curr->isTee()) {
-                this->replaceCurrent(value);
-              } else if (curr->value->is<GetLocal>()) {
-                ExpressionManipulator::nop(curr);
-              } else {
-                this->replaceCurrent(Builder(*module).makeDrop(value));
+              if (removeEquivalentSets) {
+                if (curr->isTee()) {
+                  this->replaceCurrent(value);
+                } else if (curr->value->is<GetLocal>()) {
+                  ExpressionManipulator::nop(curr);
+                } else {
+                  this->replaceCurrent(Builder(*module).makeDrop(value));
+                }
               }
             } else {
               // There is a new equivalence now.
