@@ -69,5 +69,31 @@
      )
     )
   )
+  (func $multi-pass-get-equivs-right (param $var$0 i32) (param $var$1 i32) (result f64)
+   (local $var$2 i32)
+   (set_local $var$2
+    (get_local $var$0)
+   )
+   (i32.store
+    (get_local $var$2)
+    (i32.const 1)
+   )
+   (f64.promote/f32
+    (f32.load
+     (get_local $var$2)
+    )
+   )
+  )
+  (func $if-value-structure-equivalent (param $x i32) (result i32)
+    (local $y i32)
+    (if (i32.const 1)
+      (set_local $x (i32.const 2))
+      (block
+        (set_local $y (get_local $x))
+        (set_local $x (get_local $y))
+      )
+    )
+    (get_local $x)
+  )
 )
 

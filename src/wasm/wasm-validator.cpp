@@ -474,6 +474,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "get_local index must be small enough");
   shouldBeTrue(isConcreteType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
+  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index), curr, "get_local must have proper type");
 }
 
 void FunctionValidator::visitSetLocal(SetLocal* curr) {
