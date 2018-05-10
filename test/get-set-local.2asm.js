@@ -23,12 +23,11 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   r = r | 0;
   r$hi = r$hi | 0;
-  var i64toi32_i32$0 = 0, result$hi = 0;
+  var i64toi32_i32$0 = 0;
   i64toi32_i32$0 = r$hi;
-  result$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
   i64toi32_i32$0 = i64toi32_i32$0;
-  return ($0 | 0) == (r | 0) & (i64toi32_i32$0 | 0) == (result$hi | 0) | 0 | 0;
+  return ($0 | 0) == (r | 0) & (i64toi32_i32$0 | 0) == (r$hi | 0) | 0 | 0;
  }
  
  function __wasm_ctz_i32(x) {

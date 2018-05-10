@@ -48,12 +48,11 @@ function asmFunc(global, env, buffer) {
   $0 = $0 | 0;
   r = r | 0;
   r$hi = r$hi | 0;
-  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0;
   i64toi32_i32$1 = $0;
   i64toi32_i32$0 = i64toi32_i32$1 >> 31 | 0;
-  i64toi32_i32$2 = i64toi32_i32$1;
   i64toi32_i32$1 = r$hi;
-  return (i64toi32_i32$2 | 0) == (r | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0 | 0;
+  return ($0 | 0) == (r | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0 | 0;
  }
  
  function $5($0, $0$hi) {
