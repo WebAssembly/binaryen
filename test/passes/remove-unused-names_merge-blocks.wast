@@ -1251,24 +1251,52 @@
    (drop (i32.const 33))
   )
  )
+ (func $block-tail-one
+  (block $outer
+   (block $l1
+    (drop (i32.const -2))
+    (drop (i32.const -1))
+    (br $l1)
+    (drop (i32.const 0))
+    (drop (i32.const 1))
+   )
+   (drop (i32.const 2))
+  )
+ )
  (func $block-tail-value (result i32)
-  (block $l1 (result i32)
-   (drop (i32.const -1))
-   (br $l1 (i32.const 0))
-   (drop (i32.const 1))
-   (i32.const 2)
+  (block $outer (result i32)
+   (block $l1 (result i32)
+    (drop (i32.const -1))
+    (br $l1 (i32.const 0))
+    (drop (i32.const 1))
+    (i32.const 2)
+   )
   )
  )
  (func $block-tail-empty
-  (block $l1
-   (drop (i32.const -1))
-   (br $l1)
+  (block $outer
+   (block $l1
+    (drop (i32.const -1))
+    (br $l1)
+   )
   )
  )
  (func $loop-tail-empty
-  (loop $l1
-   (drop (i32.const -1))
-   (br $l1)
+  (block $outer
+   (loop $l1
+    (drop (i32.const -1))
+    (br $l1)
+   )
+  )
+ )
+ (func $block-tail-unreachable (result i32)
+  (block $outer (result i32)
+   (block $l1 (result i32)
+    (drop (i32.const -1))
+    (drop (br_if $l1 (i32.const 0) (i32.const 1)))
+    (drop (i32.const 1))
+    (unreachable)
+   )
   )
  )
 )

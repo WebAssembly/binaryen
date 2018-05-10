@@ -190,10 +190,10 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       auto* child = list[i];
       // The child block, if there is one.
       Block* childBlock = child->dynCast<Block>();
-      // If we are merging an inner block (of a loop), then we must not
+      // If we are merging an inner block of a loop, then we must not
       // merge things before and including the name of the loop, moving
       // those out would break things.
-      Name otherName;
+      Loop* loop = nullptr;
       // To to handle a non-block child.
       if (!childBlock) {
         // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
@@ -238,27 +238,26 @@ if (getenv("DEBUGG")) std::cout << "afterr BREAK FIXEN\n" << module->functions[0
               changed = true;
             }
           }
-        } else if (auto* loop = list[i]->dynCast<Loop>()) {
+        } else if ((loop = list[i]->dynCast<Loop>())) {
           // We can merge a loop's "tail" - if the body is a block and has
           // instructions at the end that do not branch back.
           childBlock = loop->body->dynCast<Block>();
-          otherName = loop->name;
           // TODO: handle (loop (loop - the bodies of loops may not be blocks
         }
       }
-      if (!childBlock) continue;
+      // If no block, or a block that might be broken out of, we can't do anything.
+      if (!childBlock || childBlock->name.is()) continue;
       auto& childList = childBlock->list;
       auto childSize = childList.size();
       if (childSize == 0) continue;
-      // If there are names we must avoid, find the range we can optimize
+      // If this is a loop, we may be removing only the tail.
       Index start = 0;
       Index end = childSize;
-      if (childBlock->name.is() || otherName.is()) {
-        auto childName = childBlock->name;
+      if (loop) {
+        auto childName = loop->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
-          if (BranchUtils::BranchSeeker::hasNamed(item, childName) ||
-              BranchUtils::BranchSeeker::hasNamed(item, otherName)) {
+          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
             // We can't remove this from the child.
             start = j + 1;
             break;
