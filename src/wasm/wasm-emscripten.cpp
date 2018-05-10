@@ -600,7 +600,6 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
   }
 
   void visitTable(Table* curr) {
-    Name first;
     for (auto& segment : curr->segments) {
       for (size_t i = 0; i < segment.data.size(); i++) {
         auto it = importRenames.find(segment.data[i]);
