@@ -234,6 +234,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
           // instructions at the end that do not branch back.
           childBlock = loop->body->dynCast<Block>();
           otherName = loop->name;
+          // TODO: handle (loop (loop - the bodies of loops may not be blocks
         }
       }
       if (!childBlock) continue;
@@ -244,10 +245,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       Index start = 0;
       Index end = childSize;
       if (childBlock->name.is() || otherName.is()) {
-        auto blockName = childBlock->name;
+        auto childName = childBlock->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
-          if (BranchUtils::BranchSeeker::hasNamed(childBlock, blockName) ||
-              BranchUtils::BranchSeeker::hasNamed(childBlock, otherName)) {
+          auto* item = childList[j];
+          if (BranchUtils::BranchSeeker::hasNamed(item, childName) ||
+              BranchUtils::BranchSeeker::hasNamed(item, otherName)) {
             // We can't remove this from the child.
             start = j + 1;
             break;
