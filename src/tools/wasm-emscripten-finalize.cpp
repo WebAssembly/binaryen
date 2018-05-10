@@ -108,6 +108,7 @@ int main(int argc, const char *argv[]) {
   initializerFunctions.push_back("__wasm_call_ctors");
 
   EmscriptenGlueGenerator generator(wasm);
+  generator.fixInvokeFunctionNames();
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
