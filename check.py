@@ -614,6 +614,20 @@ def run_emscripten_tests():
 
 # Run all the tests
 def main():
+  run_help_tests()
+  run_wasm_opt_tests()
+  asm2wasm.test_asm2wasm()
+  asm2wasm.test_asm2wasm_binary()
+  run_wasm_dis_tests()
+  run_wasm_merge_tests()
+  run_crash_tests()
+  run_ctor_eval_tests()
+  run_wasm_metadce_tests()
+  if has_shell_timeout():
+    run_wasm_reduce_tests()
+
+  run_spec_tests()
+  run_binaryen_js_tests()
   s2wasm.test_s2wasm()
   s2wasm.test_linker()
   lld.test_wasm_emscripten_finalize()
