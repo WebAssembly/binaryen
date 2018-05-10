@@ -1236,7 +1236,27 @@
    (i32.const 2)
   )
  )
- (func $block-tail-value (; 35 ;) (type $4) (result i32)
+ (func $loop-tail-one (; 35 ;) (type $3)
+  (loop $l1
+   (drop
+    (i32.const -2)
+   )
+   (drop
+    (i32.const -1)
+   )
+   (br $l1)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 1)
+  )
+  (drop
+   (i32.const 2)
+  )
+ )
+ (func $block-tail-value (; 36 ;) (type $4) (result i32)
   (block $l1 (result i32)
    (drop
     (i32.const -1)
@@ -1250,7 +1270,7 @@
    (i32.const 2)
   )
  )
- (func $block-tail-empty (; 36 ;) (type $3)
+ (func $block-tail-empty (; 37 ;) (type $3)
   (block $l1
    (drop
     (i32.const -1)
@@ -1258,7 +1278,7 @@
    (br $l1)
   )
  )
- (func $loop-tail-empty (; 37 ;) (type $3)
+ (func $loop-tail-empty (; 38 ;) (type $3)
   (loop $l1
    (drop
     (i32.const -1)
@@ -1266,7 +1286,7 @@
    (br $l1)
   )
  )
- (func $block-tail-unreachable (; 38 ;) (type $4) (result i32)
+ (func $block-tail-unreachable (; 39 ;) (type $4) (result i32)
   (block $l1 (result i32)
    (drop
     (i32.const -1)
@@ -1282,5 +1302,19 @@
    )
    (unreachable)
   )
+ )
+ (func $loop-tail-unreachable (; 40 ;) (type $4) (result i32)
+  (loop $l1
+   (drop
+    (i32.const -1)
+   )
+   (br_if $l1
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.const 1)
+  )
+  (unreachable)
  )
 )
