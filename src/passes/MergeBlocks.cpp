@@ -17,9 +17,9 @@
 //
 // Merges blocks to their parents.
 //
-// We merge both entire blocks when possible, as well as tails, like
+// We merge both entire blocks when possible, as well as loop tails, like
 //  (block
-//   (block $child
+//   (loop $child
 //    (br_if $child (..)
 //    (call $foo)
 //   )
