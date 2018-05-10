@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2015 WebAssembly Community Group participants
  *
@@ -144,6 +145,8 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
 
   void visitBreak(Break* curr) {
     if (curr->value && curr->name == origin) {
+if (getenv("DEBUGG")) std::cout << "PRE ZZ BVD a\n" << getModule()->functions[0]->body << '\n';
+if (getenv("DEBUGG")) std::cout << "THE ZZ BVD " << curr << '\n';
       Builder builder(*getModule());
       auto* value = curr->value;
       if (value->type == unreachable) {
@@ -154,6 +157,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
       curr->value = nullptr;
       curr->finalize();
       replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
+if (getenv("DEBUGG")) std::cout << "AFTER ZZ BVD a\n" << getModule()->functions[0]->body << '\n';
     }
   }
 
@@ -211,20 +215,25 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
                 childBlock = nullptr;
               } else {
                 // fix up breaks
+if (getenv("DEBUGG")) std::cout << "before BREAK FIXEN\n" << module->functions[0]->body << '\n';
                 BreakValueDropper fixer(passOptions);
                 fixer.origin = childBlock->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
+if (getenv("DEBUGG")) std::cout << "afterr BREAK FIXEN\n" << module->functions[0]->body << '\n';
               }
             }
             if (childBlock) {
               // we can do it!
-              // reuse the drop
-              drop->value = childBlock->list.back();
-              drop->finalize();
-              childBlock->list.back() = drop;
+              // reuse the drop, if we still need it
+              auto* last = childBlock->list.back();
+              if (isConcreteType(last->type)) {
+                drop->value = last;
+                drop->finalize();
+                childBlock->list.back() = drop;
+              }
               childBlock->finalize();
-              list[i] = childBlock;
+              child = list[i] = childBlock;
               more = true;
               changed = true;
             }
@@ -263,27 +272,48 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
           continue;
         }
       }
+if (getenv("DEBUGG")) std::cout << "before\n" << module->functions[0]->body << '\n' << start << " : " << end << '\n';
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
         merged.push_back(list[j]);
       }
+//std::cout
+auto dump = [&]() {
+  Block block(module->allocator);
+  for (auto* item : merged) block.list.push_back(item);
+  std::cout << &block << '\n';
+};
+
+if (getenv("DEBUGG")) std::cout << "temp a\n"; if (getenv("DEBUGG")) dump();
       // If we can't merge it all, keep the child.
       if (start > 0) {
         merged.push_back(child);
       }
+if (getenv("DEBUGG")) std::cout << "temp b\n"; if (getenv("DEBUGG")) dump();
       for (Index j = start; j < end; j++) {
         merged.push_back(childList[j]);
       }
+if (getenv("DEBUGG")) std::cout << "temp c\n"; if (getenv("DEBUGG")) dump();
       // If we didn't merge it all, update the child.
       if (start > 0) {
+if (getenv("DEBUGG")) std::cout << "modchild a\n" << module->functions[0]->body << '\n';
         childList.resize(start);
-        // We didn't remove a flowing value, so no types should have changed.
+if (getenv("DEBUGG")) std::cout << "modchild b\n" << module->functions[0]->body << '\n';
+        // We may have removed unreachable items.
+        childBlock->finalize();
+        if (auto* loop = child->dynCast<Loop>()) {
+          loop->finalize();
+        }
       }
+if (getenv("DEBUGG")) std::cout << "temp d\n"; if (getenv("DEBUGG")) dump();
       for (size_t j = i + 1; j < list.size(); j++) {
         merged.push_back(list[j]);
       }
+if (getenv("DEBUGG")) std::cout << "temp e\n"; if (getenv("DEBUGG")) dump();
+
       // if we merged a concrete element in the middle, drop it
       if (!merged.empty()) {
+if (getenv("DEBUGG")) std::cout << "temp ZZ1\n"; if (getenv("DEBUGG")) dump();
         auto* last = merged.back();
         for (auto*& item : merged) {
           if (item != last && isConcreteType(item->type)) {
@@ -291,8 +321,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
             item = builder.makeDrop(item);
           }
         }
+if (getenv("DEBUGG")) std::cout << "temp ZZ2\n"; if (getenv("DEBUGG")) dump();
       }
+if (getenv("DEBUGG")) std::cout << "temp6 a\n" << module->functions[0]->body << '\n';
       list.swap(merged);
+if (getenv("DEBUGG")) std::cout << "after\n" << module->functions[0]->body << '\n';
       more = true;
       changed = true;
       break;
@@ -302,7 +335,9 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
+if (getenv("DEBUGG")) std::cout << "before BVD " << getModule()->functions[0]->body << '\n';
   optimizeBlock(curr, getModule(), passOptions);
+if (getenv("DEBUGG")) std::cout << "after BVD " << getModule()->functions[0]->body << '\n';
 }
 
 struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
@@ -311,7 +346,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   Pass* create() override { return new MergeBlocks; }
 
   void visitBlock(Block *curr) {
+if (getenv("DEBUGG")) std::cout << "before B " << getModule()->functions[0]->body << '\n';
     optimizeBlock(curr, getModule(), getPassOptions());
+if (getenv("DEBUGG")) std::cout << "after B " << getModule()->functions[0]->body << '\n';
   }
 
   // given
