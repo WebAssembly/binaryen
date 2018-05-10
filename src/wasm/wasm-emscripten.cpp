@@ -590,7 +590,6 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
-    //std::cerr << "rename: " << curr->name << " -> " << newname << "\n";
     // Either rename of remove the existing import
     if (wasm.getImportOrNull(newname) || !newImports.insert(newname).second) {
       toRemove.push_back(curr->name);
@@ -606,7 +605,6 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
       for (size_t i = 0; i < segment.data.size(); i++) {
         auto it = importRenames.find(segment.data[i]);
         if (it != importRenames.end()) {
-          //std::cerr << "rename table: " << segment.data[i] << " -> " << it->second << "\n";
           segment.data[i] = it->second;
         }
       }
@@ -622,7 +620,6 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
 
   void visitModule(Module* curr) {
     for (auto importName : toRemove) {
-      //std::cerr << "delete import: " << importName << "\n";
       wasm.removeImport(importName);
     }
     wasm.updateMaps();
