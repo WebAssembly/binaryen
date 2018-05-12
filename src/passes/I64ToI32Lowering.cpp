@@ -28,7 +28,7 @@
 #include "support/name.h"
 #include "wasm-builder.h"
 #include "ir/names.h"
-
+#include "asmjs/shared-constants.h"
 
 namespace wasm {
 
@@ -119,6 +119,149 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     highBits->mutable_ = true;
     module->addGlobal(highBits);
     PostWalker<I64ToI32Lowering>::doWalkModule(module);
+
+    if (needRotl64) {
+      module->addFunction(createRot64(true));
+    }
+    if (needRotr64) {
+      module->addFunction(createRot64(false));
+    }
+  }
+
+  Function* createRot64(bool leftShift) {
+    Name name = leftShift ? WASM_ROTL64 : WASM_ROTR64;
+
+    // if rotate == 32
+    //    hi = leftLow
+    //    lo = leftHigh
+    // if rotate > 32
+    //    rotate = rotate - 32
+    //    hi = (leftLow << rotate) | (leftHigh >> (32 - rotate))
+    //    lo = (leftHigh << rotate) | (leftLow >> (32 - rotate))
+    // else
+    //    hi = (leftHigh << rotate) | (leftLow >> (32 - rotate))
+    //    lo = (leftLow << rotate) | (leftHigh >> (32 - rotate))
+    Index lowBits = 0;
+    Index highBits = 1;
+    Index rotate = 2;
+    Index widthLessRotate = 3;
+    Binary* is32Rotate = builder->makeBinary(
+      EqInt32,
+      builder->makeGetLocal(rotate, i32),
+      builder->makeConst(Literal(int32_t(32)))
+    );
+    Binary* isLargeRotate = builder->makeBinary(
+      GeUInt32,
+      builder->makeGetLocal(rotate, i32),
+      builder->makeConst(Literal(int32_t(32)))
+    );
+    BinaryOp firstOp = leftShift ? ShlInt32 : ShrUInt32;
+    BinaryOp secondOp = leftShift ? ShrUInt32 : ShlInt32;
+    Block* equalRotateBlock = builder->blockify(
+      builder->makeSetGlobal(
+        highBitsGlobal,
+        builder->makeGetLocal(lowBits, i32)
+      ),
+      builder->makeGetLocal(highBits, i32)
+    );
+    Block* largeRotateBlock = builder->blockify(
+      builder->makeSetLocal(
+        rotate,
+        builder->makeBinary(
+          SubInt32,
+          builder->makeGetLocal(rotate, i32),
+          builder->makeConst(Literal(int32_t(32)))
+        )
+      ),
+      builder->makeSetLocal(
+        widthLessRotate,
+        builder->makeBinary(
+          SubInt32,
+          builder->makeConst(Literal(int32_t(32))),
+          builder->makeGetLocal(rotate, i32)
+        )
+      ),
+      builder->makeSetGlobal(
+        highBitsGlobal,
+        builder->makeBinary(
+          OrInt32,
+          builder->makeBinary(
+            firstOp,
+            builder->makeGetLocal(lowBits, i32),
+            builder->makeGetLocal(rotate, i32)
+          ),
+          builder->makeBinary(
+            secondOp,
+            builder->makeGetLocal(highBits, i32),
+            builder->makeGetLocal(widthLessRotate, i32)
+          )
+        )
+      ),
+      builder->makeBinary(
+        OrInt32,
+        builder->makeBinary(
+          firstOp,
+          builder->makeGetLocal(highBits, i32),
+          builder->makeGetLocal(rotate, i32)
+        ),
+        builder->makeBinary(
+          secondOp,
+          builder->makeGetLocal(lowBits, i32),
+          builder->makeGetLocal(widthLessRotate, i32)
+        )
+      )
+    );
+    Block* smallRotateBlock = builder->blockify(
+      builder->makeSetLocal(
+        widthLessRotate,
+        builder->makeBinary(
+          SubInt32,
+          builder->makeConst(Literal(int32_t(32))),
+          builder->makeGetLocal(rotate, i32)
+        )
+      ),
+      builder->makeSetGlobal(
+        highBitsGlobal,
+        builder->makeBinary(
+          OrInt32,
+          builder->makeBinary(
+            firstOp,
+            builder->makeGetLocal(highBits, i32),
+            builder->makeGetLocal(rotate, i32)
+          ),
+          builder->makeBinary(
+            secondOp,
+            builder->makeGetLocal(lowBits, i32),
+            builder->makeGetLocal(widthLessRotate, i32)
+          )
+        )
+      ),
+      builder->makeBinary(
+        OrInt32,
+        builder->makeBinary(
+          firstOp,
+          builder->makeGetLocal(lowBits, i32),
+          builder->makeGetLocal(rotate, i32)
+        ),
+        builder->makeBinary(
+          secondOp,
+          builder->makeGetLocal(highBits, i32),
+          builder->makeGetLocal(widthLessRotate, i32)
+        )
+      )
+    );
+    If* condition = builder->makeIf(
+      is32Rotate,
+      equalRotateBlock,
+      builder->makeIf(
+        isLargeRotate,
+        largeRotateBlock,
+        smallRotateBlock
+      )
+    );
+    std::vector<Type> params = {i32, i32, i32};
+    std::vector<Type> vars = {i32};
+    return builder->makeFunction(name, std::move(params), i32, std::move(vars), condition);
   }
 
   void visitFunctionType(FunctionType* curr) {
@@ -1180,6 +1323,46 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     return result;
   }
 
+  Block* lowerRotate(BinaryOp op, Block* result, TempVar&& leftLow,
+                  TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
+    assert(op == RotLInt64 || op == RotRInt64);
+    Name name;
+    if (op == RotLInt64) {
+      needRotl64 = true;
+      name = WASM_ROTL64;
+    } else {
+      needRotr64 = true;
+      name = WASM_ROTR64;
+    }
+    TempVar lowResult = getTemp();
+    result = builder->blockify(
+      result,
+      builder->makeSetLocal(
+        lowResult,
+        builder->makeCall(
+          name,
+          {
+            builder->makeGetLocal(leftLow, i32),
+            builder->makeGetLocal(leftHigh, i32),
+            builder->makeBinary(
+              AndInt32,
+              builder->makeGetLocal(rightLow, i32),
+              builder->makeConst(Literal(int32_t(64 - 1)))
+            )
+          },
+          i32
+        )
+      ),
+      builder->makeSetLocal(
+        rightHigh,
+        builder->makeGetGlobal(highBitsGlobal, i32)
+      ),
+      builder->makeGetLocal(lowResult, i32)
+    );
+    setOutParam(result, std::move(rightHigh));
+    return result;
+  }
+
   Block* lowerEq(Block* result, TempVar&& leftLow, TempVar&& leftHigh,
                     TempVar&& rightLow, TempVar&& rightHigh) {
     return builder->blockify(
@@ -1403,7 +1586,13 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         break;
       }
       case RotLInt64:
-      case RotRInt64: goto err;
+      case RotRInt64: {
+        replaceCurrent(
+          lowerRotate(curr->op, result, std::move(leftLow), std::move(leftHigh),
+                      std::move(rightLow), std::move(rightHigh))
+        );
+        break;
+      }
       case EqInt64: {
         replaceCurrent(
           lowerEq(result, std::move(leftLow), std::move(leftHigh),
@@ -1475,6 +1664,8 @@ private:
   std::unordered_map<Name, TempVar> labelHighBitVars;
   std::vector<Index> freeTemps;
   Index nextTemp;
+  bool needRotl64 = false;
+  bool needRotr64 = false;
 
   TempVar getTemp() {
     Index ret;
