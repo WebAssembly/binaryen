@@ -14,18 +14,18 @@ spec_tests = [os.path.join(spec_dir, t)
               for t in sorted(os.listdir(spec_dir))
               if '.fail' not in t]
 wasm2asm_dir = os.path.join(options.binaryen_test, 'wasm2asm')
-extra_tests = [os.path.join(wasm2asm_dir, t) for t in
-               sorted(os.listdir(wasm2asm_dir))]
+extra_wasm2asm_tests = [os.path.join(wasm2asm_dir, t) for t in
+                        sorted(os.listdir(wasm2asm_dir))]
 assert_tests = ['wasm2asm.wast.asserts']
 
 
 def test_wasm2asm_output():
-  for wasm in tests + spec_tests + extra_tests:
+  for wasm in tests + spec_tests + extra_wasm2asm_tests:
     if not wasm.endswith('.wast'):
       continue
 
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-    expected_file = os.path.join(options.binaryen_test, asm)
+    expected_file = os.path.join(wasm2asm_dir, asm)
 
     if not os.path.exists(expected_file):
       continue
@@ -76,7 +76,7 @@ def test_asserts_output():
     asserts_expected_file = os.path.join(options.binaryen_test, asserts)
     traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-    wasm = os.path.join(options.binaryen_test, wasm)
+    wasm = os.path.join(wasm2asm_dir, wasm)
     cmd = WASM2ASM + [wasm, '--allow-asserts']
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, asserts_expected_file)

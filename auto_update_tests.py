@@ -8,7 +8,7 @@ from scripts.test.shared import (
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
     WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR,
     files_with_pattern, has_shell_timeout)
-from scripts.test.wasm2asm import tests, spec_tests, extra_tests, assert_tests
+from scripts.test.wasm2asm import tests, spec_tests, extra_wasm2asm_tests, assert_tests, wasm2asm_dir
 
 print '[ processing and updating testcases... ]\n'
 
@@ -292,14 +292,18 @@ for t in os.listdir(os.path.join('test', 'ctor-eval')):
 
 print '\n[ checking wasm2asm ]\n'
 
-for wasm in tests + spec_tests + extra_tests:
+for wasm in tests + spec_tests + extra_wasm2asm_tests:
   if not wasm.endswith('.wast'):
     continue
 
   asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-  expected_file = os.path.join('test', asm)
+  expected_file = os.path.join(wasm2asm_dir, asm)
 
-  if not os.path.exists(expected_file):
+  # we run wasm2asm on tests and spec tests only if the output
+  # exists - only some work so far. the tests in extra are in
+  # the test/wasm2asm dir and so are specific to wasm2asm, and
+  # we run all of those.
+  if wasm not in extra_wasm2asm_tests and not os.path.exists(expected_file):
     continue
 
   print '..', wasm
@@ -316,7 +320,7 @@ for wasm in assert_tests:
   asserts_expected_file = os.path.join('test', asserts)
   traps_expected_file = os.path.join('test', traps)
 
-  cmd = WASM2ASM + [os.path.join('test', wasm), '--allow-asserts']
+  cmd = WASM2ASM + [os.path.join(wasm2asm_dir, wasm), '--allow-asserts']
   out = run_command(cmd)
   with open(asserts_expected_file, 'w') as o: o.write(out)
 
