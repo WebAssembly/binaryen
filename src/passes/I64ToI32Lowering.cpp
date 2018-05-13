@@ -587,6 +587,37 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(curr->value);
   }
 
+  void lowerReinterpretFloat64(Unary* curr) {
+    // Assume that the wasm file assumes the address 0 is invalid and roundtrip
+    // our f64 through memory at address 0
+    Expression* zero = builder->makeConst(Literal(int32_t(0)));
+    TempVar highBits = getTemp();
+    Block *result = builder->blockify(
+      builder->makeStore(8, 0, 8, zero, curr->value, f64),
+      builder->makeSetLocal(
+        highBits,
+        builder->makeLoad(4, true, 4, 4, zero, i32)
+      ),
+      builder->makeLoad(4, true, 0, 4, zero, i32)
+    );
+    setOutParam(result, std::move(highBits));
+    replaceCurrent(result);
+  }
+
+  void lowerReinterpretInt64(Unary* curr) {
+    // Assume that the wasm file assumes the address 0 is invalid and roundtrip
+    // our i64 through memory at address 0
+    TempVar highBits = fetchOutParam(curr->value);
+    TempVar lowBits = getTemp();
+    Expression* zero = builder->makeConst(Literal(int32_t(0)));
+    Block *result = builder->blockify(
+      builder->makeStore(4, 0, 4, zero, curr->value, i32),
+      builder->makeStore(4, 4, 4, zero, builder->makeGetLocal(highBits, i32), i32),
+      builder->makeLoad(8, true, 0, 8, zero, f64)
+    );
+    replaceCurrent(result);
+  }
+
   void lowerPopcnt64(Unary* curr) {
     TempVar highBits = fetchOutParam(curr->value);
     TempVar lowBits = getTemp();
@@ -701,7 +732,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       replaceCurrent(curr->value);
       return;
     }
-    assert(hasOutParam(curr->value) || curr->type == i64);
+    assert(hasOutParam(curr->value) || curr->type == i64 || curr->type == f64);
     switch (curr->op) {
       case ClzInt64:
       case CtzInt64:               lowerCountZeros(curr);   break;
@@ -710,16 +741,16 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ExtendSInt32:           lowerExtendSInt32(curr); break;
       case ExtendUInt32:           lowerExtendUInt32(curr); break;
       case WrapInt64:              lowerWrapInt64(curr);    break;
+      case ReinterpretFloat64:     lowerReinterpretFloat64(curr); break;
+      case ReinterpretInt64:       lowerReinterpretInt64(curr);   break;
       case TruncSFloat32ToInt64:
       case TruncUFloat32ToInt64:
       case TruncSFloat64ToInt64:
       case TruncUFloat64ToInt64:
-      case ReinterpretFloat64:
       case ConvertSInt64ToFloat32:
       case ConvertSInt64ToFloat64:
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64:
-      case ReinterpretInt64:
       default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
