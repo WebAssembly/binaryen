@@ -1376,6 +1376,19 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                   makeAsmCoercion(visit(curr->value,
                                         EXPRESSION_RESULT), ASM_INT), EQ,
                   makeAsmCoercion(ValueBuilder::makeInt(0), ASM_INT));
+            case ReinterpretFloat32: {
+              // Naively assume that the address 0 and the next 4 bytes are
+              // permanently unused by the source program, which is definitely
+              // true for languages like C/C++/Rust
+              Ref zero = ValueBuilder::makeInt(0);
+              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero);
+              Ref value = visit(curr->value, EXPRESSION_RESULT);
+              Ref store = ValueBuilder::makeBinary(ret, SET, value);
+              return ValueBuilder::makeSeq(
+                store,
+                ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero)
+              );
+            }
             default: {
               std::cerr << "Unhandled unary i32 operator: " << curr
                         << std::endl;
@@ -1442,6 +1455,17 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case DemoteFloat64:
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
                                      ASM_FLOAT);
+            case ReinterpretInt32: {
+              // Like above, assume address 0 is unused.
+              Ref zero = ValueBuilder::makeInt(0);
+              Ref ret = ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero);
+              Ref value = visit(curr->value, EXPRESSION_RESULT);
+              Ref store = ValueBuilder::makeBinary(ret, SET, value);
+              return ValueBuilder::makeSeq(
+                store,
+                ValueBuilder::makeSub(ValueBuilder::makeName(HEAPF32), zero)
+              );
+            }
             // TODO: more complex unary conversions
             default:
               std::cerr << "Unhandled unary float operator: " << curr
