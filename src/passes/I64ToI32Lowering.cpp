@@ -971,6 +971,30 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
+  // a >> b where `b` >= 32
+  //
+  // implement as:
+  //
+  // hi = leftHigh >> 31 // copy sign bit
+  // lo = leftHigh >> (b - 32)
+  Block* makeLargeShrS(Index highBits, Index leftHigh, Index shift) {
+    return builder->blockify(
+      builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(
+          ShrSInt32,
+          builder->makeGetLocal(leftHigh, i32),
+          builder->makeConst(Literal(int32_t(31)))
+        )
+      ),
+      builder->makeBinary(
+        ShrSInt32,
+        builder->makeGetLocal(leftHigh, i32),
+        builder->makeGetLocal(shift, i32)
+      )
+    );
+  }
+
   Block* makeLargeShrU(Index highBits, Index leftHigh, Index shift) {
     return builder->blockify(
       builder->makeSetLocal(highBits, builder->makeConst(Literal(int32_t(0)))),
@@ -1011,6 +1035,41 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
+  // a >> b where `b` < 32
+  //
+  // implement as:
+  //
+  // hi = leftHigh >> b
+  // lo = (leftLow >>> b) | (leftHigh << (32 - b))
+  Block* makeSmallShrS(Index highBits, Index leftLow, Index leftHigh,
+                       Index shift, Binary* shiftMask, Binary* widthLessShift) {
+    Binary* shiftedInBits = builder->makeBinary(
+      ShlInt32,
+      builder->makeBinary(
+        AndInt32,
+        shiftMask,
+        builder->makeGetLocal(leftHigh, i32)
+      ),
+      widthLessShift
+    );
+    Binary* shiftLow = builder->makeBinary(
+      ShrUInt32,
+      builder->makeGetLocal(leftLow, i32),
+      builder->makeGetLocal(shift, i32)
+    );
+    return builder->blockify(
+      builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(
+          ShrSInt32,
+          builder->makeGetLocal(leftHigh, i32),
+          builder->makeGetLocal(shift, i32)
+        )
+      ),
+      builder->makeBinary(OrInt32, shiftedInBits, shiftLow)
+    );
+  }
+
   Block* makeSmallShrU(Index highBits, Index leftLow, Index leftHigh,
                        Index shift, Binary* shiftMask, Binary* widthLessShift) {
     Binary* shiftedInBits = builder->makeBinary(
@@ -1040,9 +1099,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-  Block* lowerShU(BinaryOp op, Block* result, TempVar&& leftLow,
-                  TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
-    assert(op == ShlInt64 || op == ShrUInt64);
+  Block* lowerShift(BinaryOp op, Block* result, TempVar&& leftLow,
+                    TempVar&& leftHigh, TempVar&& rightLow, TempVar&& rightHigh) {
+    assert(op == ShlInt64 || op == ShrUInt64 || op == ShrSInt64);
     // shift left lowered as:
     // if 32 <= rightLow % 64:
     //     high = leftLow << k; low = 0
@@ -1072,6 +1131,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     switch (op) {
       case ShlInt64:
         largeShiftBlock = makeLargeShl(rightHigh, leftLow, shift); break;
+      case ShrSInt64:
+        largeShiftBlock = makeLargeShrS(rightHigh, leftHigh, shift); break;
       case ShrUInt64:
         largeShiftBlock = makeLargeShrU(rightHigh, leftHigh, shift); break;
       default: abort();
@@ -1095,6 +1156,11 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ShlInt64: {
         smallShiftBlock = makeSmallShl(rightHigh, leftLow, leftHigh,
                                        shift, shiftMask, widthLessShift);
+        break;
+      }
+      case ShrSInt64: {
+        smallShiftBlock = makeSmallShrS(rightHigh, leftLow, leftHigh,
+                                        shift, shiftMask, widthLessShift);
         break;
       }
       case ShrUInt64: {
@@ -1328,14 +1394,14 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         break;
       }
       case ShlInt64:
+      case ShrSInt64:
       case ShrUInt64: {
         replaceCurrent(
-          lowerShU(curr->op, result, std::move(leftLow), std::move(leftHigh),
-                   std::move(rightLow), std::move(rightHigh))
+          lowerShift(curr->op, result, std::move(leftLow), std::move(leftHigh),
+                     std::move(rightLow), std::move(rightHigh))
         );
         break;
       }
-      case ShrSInt64:
       case RotLInt64:
       case RotRInt64: goto err;
       case EqInt64: {
