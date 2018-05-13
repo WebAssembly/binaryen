@@ -235,6 +235,114 @@ function asmFunc(global, env, buffer) {
   return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = $1, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
  }
  
+ function $35($0) {
+  $0 = $0 | 0;
+  return Math_fround(Math_fround($0 | 0));
+ }
+ 
+ function $36($0) {
+  $0 = $0 | 0;
+  return +(+($0 | 0));
+ }
+ 
+ function $37($0) {
+  $0 = $0 | 0;
+  return Math_fround(Math_fround($0 >>> 0));
+ }
+ 
+ function $38($0) {
+  $0 = $0 | 0;
+  return +(+($0 >>> 0));
+ }
+ 
+ function $39($0) {
+  $0 = Math_fround($0);
+  return ~~$0 | 0;
+ }
+ 
+ function $40($0) {
+  $0 = +$0;
+  return ~~$0 | 0;
+ }
+ 
+ function $41($0) {
+  $0 = Math_fround($0);
+  return ~~$0 >>> 0 | 0;
+ }
+ 
+ function $42($0) {
+  $0 = +$0;
+  return ~~$0 >>> 0 | 0;
+ }
+ 
+ function $43($0, $0$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($0$hi | 0)));
+ }
+ 
+ function $44($0, $0$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  return +(+($0 >>> 0) + 4294967296.0 * +($0$hi | 0));
+ }
+ 
+ function $45($0, $0$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($0$hi >>> 0)));
+ }
+ 
+ function $46($0, $0$hi) {
+  $0 = $0 | 0;
+  $0$hi = $0$hi | 0;
+  return +(+($0 >>> 0) + 4294967296.0 * +($0$hi >>> 0));
+ }
+ 
+ function $47($0) {
+  $0 = Math_fround($0);
+  var i64toi32_i32$0 = Math_fround(0), $2 = 0, $3 = 0;
+  i64toi32_i32$0 = $0;
+  if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
+   if (i64toi32_i32$0 > Math_fround(0.0)) $2 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $2 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $3 = $2;
+  } else $3 = 0;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+ }
+ 
+ function $48($0) {
+  $0 = +$0;
+  var i64toi32_i32$0 = 0.0, $2 = 0, $3 = 0;
+  i64toi32_i32$0 = $0;
+  if (Math_abs(i64toi32_i32$0) >= 1.0) {
+   if (i64toi32_i32$0 > 0.0) $2 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $2 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $3 = $2;
+  } else $3 = 0;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+ }
+ 
+ function $49($0) {
+  $0 = Math_fround($0);
+  var i64toi32_i32$0 = Math_fround(0), $2 = 0, $3 = 0;
+  i64toi32_i32$0 = $0;
+  if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
+   if (i64toi32_i32$0 > Math_fround(0.0)) $2 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $2 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $3 = $2;
+  } else $3 = 0;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+ }
+ 
+ function $50($0) {
+  $0 = +$0;
+  var i64toi32_i32$0 = 0.0, $2 = 0, $3 = 0;
+  i64toi32_i32$0 = $0;
+  if (Math_abs(i64toi32_i32$0) >= 1.0) {
+   if (i64toi32_i32$0 > 0.0) $2 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $2 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $3 = $2;
+  } else $3 = 0;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0;
@@ -303,7 +411,23 @@ function asmFunc(global, env, buffer) {
   f64_floor: $29, 
   f64_ceil: $30, 
   f32_sqrt: $31, 
-  f64_sqrt: $32
+  f64_sqrt: $32, 
+  i32_to_f32: $35, 
+  i32_to_f64: $36, 
+  u32_to_f32: $37, 
+  u32_to_f64: $38, 
+  f32_to_i32: $39, 
+  f64_to_i32: $40, 
+  f32_to_u32: $41, 
+  f64_to_u32: $42, 
+  i64_to_f32: $43, 
+  i64_to_f64: $44, 
+  u64_to_f32: $45, 
+  u64_to_f64: $46, 
+  f32_to_i64: $47, 
+  f64_to_i64: $48, 
+  f32_to_u64: $49, 
+  f64_to_u64: $50
  };
 }
 

@@ -39,7 +39,8 @@ int main(int argc, const char *argv[]) {
            })
       .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
            Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
+           [&](Options* o, const std::string& argument) {
+             builderFlags.allowAsserts = true;
              o->extra["asserts"] = "1";
            })
       .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
