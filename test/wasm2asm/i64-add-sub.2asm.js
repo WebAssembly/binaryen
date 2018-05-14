@@ -17,7 +17,6 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
- var Math_trunc = global.Math.trunc;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   

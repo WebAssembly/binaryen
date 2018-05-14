@@ -17,7 +17,6 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
- var Math_trunc = global.Math.trunc;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
@@ -207,16 +206,6 @@ function asmFunc(global, env, buffer) {
   return +Math_sqrt($0);
  }
  
- function $33($0) {
-  $0 = Math_fround($0);
-  return Math_fround(Math_fround(Math_trunc($0)));
- }
- 
- function $34($0) {
-  $0 = +$0;
-  return +Math_trunc($0);
- }
- 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0;
@@ -285,9 +274,7 @@ function asmFunc(global, env, buffer) {
   f64_floor: $29, 
   f64_ceil: $30, 
   f32_sqrt: $31, 
-  f64_sqrt: $32, 
-  f32_trunc: $33, 
-  f64_trunc: $34
+  f64_sqrt: $32
  };
 }
 
