@@ -177,6 +177,46 @@ function asmFunc(global, env, buffer) {
   return Math_fround(Math_fround($0));
  }
  
+ function $27($0) {
+  $0 = Math_fround($0);
+  return Math_fround(Math_fround(Math_floor($0)));
+ }
+ 
+ function $28($0) {
+  $0 = Math_fround($0);
+  return Math_fround(Math_fround(Math_ceil($0)));
+ }
+ 
+ function $29($0) {
+  $0 = +$0;
+  return +Math_floor($0);
+ }
+ 
+ function $30($0) {
+  $0 = +$0;
+  return +Math_ceil($0);
+ }
+ 
+ function $31($0) {
+  $0 = Math_fround($0);
+  return Math_fround(Math_fround(Math_sqrt($0)));
+ }
+ 
+ function $32($0) {
+  $0 = +$0;
+  return +Math_sqrt($0);
+ }
+ 
+ function $33($0) {
+  $0 = Math_fround($0);
+  return Math_fround(Math_fround(Math_trunc($0)));
+ }
+ 
+ function $34($0) {
+  $0 = +$0;
+  return +Math_trunc($0);
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0;
@@ -239,7 +279,15 @@ function asmFunc(global, env, buffer) {
   f64_min: $23, 
   f64_max: $24, 
   f64_promote: $25, 
-  f32_demote: $26
+  f32_demote: $26, 
+  f32_floor: $27, 
+  f32_ceil: $28, 
+  f64_floor: $29, 
+  f64_ceil: $30, 
+  f32_sqrt: $31, 
+  f64_sqrt: $32, 
+  f32_trunc: $33, 
+  f64_trunc: $34
  };
 }
 
