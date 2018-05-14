@@ -81,4 +81,24 @@
 
   (func (export "f32.demote") (param $0 f64) (result f32)
     (f32.demote/f64 (get_local $0)))
+
+  ;; floor/ceil
+  (func (export "f32.floor") (param $0 f32) (result f32)
+    (f32.floor (get_local $0)))
+
+  (func (export "f32.ceil") (param $0 f32) (result f32)
+    (f32.ceil (get_local $0)))
+
+  (func (export "f64.floor") (param $0 f64) (result f64)
+    (f64.floor (get_local $0)))
+
+  (func (export "f64.ceil") (param $0 f64) (result f64)
+    (f64.ceil (get_local $0)))
+
+  ;; sqrt
+  (func (export "f32.sqrt") (param $0 f32) (result f32)
+    (f32.sqrt (get_local $0)))
+
+  (func (export "f64.sqrt") (param $0 f64) (result f64)
+    (f64.sqrt (get_local $0)))
 )
