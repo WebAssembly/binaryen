@@ -1,0 +1,40 @@
+(module
+ (type $0 (func (param f64 f64) (result f64)))
+ (type $1 (func (param f32 f32) (result f32)))
+ (func $copysign64 (; 0 ;) (type $0) (param $0 f64) (param $1 f64) (result f64)
+  (f64.reinterpret/i64
+   (i64.or
+    (i64.and
+     (i64.reinterpret/f64
+      (get_local $0)
+     )
+     (i64.const 9223372036854775807)
+    )
+    (i64.and
+     (i64.reinterpret/f64
+      (get_local $1)
+     )
+     (i64.const -9223372036854775808)
+    )
+   )
+  )
+ )
+ (func $copysign32 (; 1 ;) (type $1) (param $0 f32) (param $1 f32) (result f32)
+  (f32.reinterpret/i32
+   (i32.or
+    (i32.and
+     (i32.reinterpret/f32
+      (get_local $0)
+     )
+     (i32.const 2147483647)
+    )
+    (i32.and
+     (i32.reinterpret/f32
+      (get_local $1)
+     )
+     (i32.const -2147483648)
+    )
+   )
+  )
+ )
+)

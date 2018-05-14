@@ -206,6 +206,35 @@ function asmFunc(global, env, buffer) {
   return +Math_sqrt($0);
  }
  
+ function copysign64($0, $1) {
+  $0 = +$0;
+  $1 = +$1;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0;
+  HEAPF64[0 >> 3] = $0;
+  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$1 = 2147483647;
+  i64toi32_i32$3 = 4294967295;
+  i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
+  i64toi32_i32$3 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
+  HEAPF64[0 >> 3] = $1;
+  i64toi32_i32$2 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$3 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$0 = 2147483648;
+  i64toi32_i32$0 = i64toi32_i32$2 & i64toi32_i32$0 | 0;
+  i64toi32_i32$2 = i64toi32_i32$3 & 0 | 0;
+  i64toi32_i32$0 = i64toi32_i32$1 | i64toi32_i32$0 | 0;
+  HEAP32[0 >> 2] = i64toi32_i32$3 | i64toi32_i32$2 | 0;
+  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
+  return +(+HEAPF64[0 >> 3]);
+ }
+ 
+ function copysign32($0, $1) {
+  $0 = Math_fround($0);
+  $1 = Math_fround($1);
+  return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = $1, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
+ }
+ 
  function __wasm_ctz_i32(x) {
   x = x | 0;
   var $1 = 0;
