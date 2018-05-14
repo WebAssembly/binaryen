@@ -95,16 +95,10 @@
   (func (export "f64.ceil") (param $0 f64) (result f64)
     (f64.ceil (get_local $0)))
 
-  ;; other
+  ;; sqrt
   (func (export "f32.sqrt") (param $0 f32) (result f32)
     (f32.sqrt (get_local $0)))
 
   (func (export "f64.sqrt") (param $0 f64) (result f64)
     (f64.sqrt (get_local $0)))
-
-  (func (export "f32.trunc") (param $0 f32) (result f32)
-    (f32.trunc (get_local $0)))
-
-  (func (export "f64.trunc") (param $0 f64) (result f64)
-    (f64.trunc (get_local $0)))
 )

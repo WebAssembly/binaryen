@@ -478,7 +478,6 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   addMath(MATH_FLOOR, FLOOR);
   addMath(MATH_CEIL, CEIL);
   addMath(MATH_SQRT, SQRT);
-  addMath(MATH_TRUNC, TRUNC);
 }
 
 void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
