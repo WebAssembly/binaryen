@@ -155,4 +155,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"], "declares": ["_Z4atoiPKc"], "externs": [], "implementedFunctions": ["__Z18address_taken_funciii","__Z19address_taken_func2iii","_main","___wasm_call_ctors","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory","_dynCall_viii"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_viii"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": ["__wasm_call_ctors"], "declares": ["_Z4atoiPKc"], "externs": [], "implementedFunctions": ["___wasm_call_ctors","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory","_dynCall_viii"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_viii"], "invokeFuncs": [] }
