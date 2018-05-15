@@ -384,6 +384,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   addWasmCompatibilityFuncs(wasm);
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
+  runner.add("remove-copysign"); // must be before i64-to-i32
   runner.add("i64-to-i32-lowering");
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");

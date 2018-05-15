@@ -110,6 +110,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/PrintCallGraph.cpp \
   $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
   $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
+  $BINARYEN_SRC/passes/RemoveCopysign.cpp \
   $BINARYEN_SRC/passes/RemoveImports.cpp \
   $BINARYEN_SRC/passes/RemoveMemory.cpp \
   $BINARYEN_SRC/passes/RemoveUnusedBrs.cpp \
