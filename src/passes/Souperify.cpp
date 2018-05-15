@@ -529,7 +529,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
           DataFlow::Trace::isTraceable(node)) {
         DataFlow::Trace trace(graph, node, excludeAsChildren);
         if (!trace.isBad()) {
-          DataFlow::Printer(graph, trace);
+          DataFlow::Printer(graph, trace, users);
         }
       }
     }
