@@ -157,6 +157,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         if (curr != top && i == 0) {
           // one of the block recursions we already handled
           decIndent();
+          if (full) {
+            o << " ;; end block";
+            auto* child = list[0]->cast<Block>();
+            if (child->name.is()) {
+              o << ' ' << child->name;
+            }
+          }
           o << '\n';
           continue;
         }
@@ -164,6 +171,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
     }
     decIndent();
+    if (full) {
+      o << " ;; end block";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
   }
   void visitIf(If *curr) {
     printOpening(o, "if");
@@ -186,6 +199,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
     }
     decIndent();
+    if (full) {
+      o << " ;; end if";
+    }
   }
   void visitLoop(Loop *curr) {
     printOpening(o, "loop");
@@ -207,6 +223,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printFullLine(curr->body);
     }
     decIndent();
+    if (full) {
+      o << " ;; end loop";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
   }
   void visitBreak(Break *curr) {
     if (curr->condition) {
