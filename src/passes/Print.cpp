@@ -879,10 +879,20 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 };
 
-void Printer::run(PassRunner* runner, Module* module) {
-  PrintSExpression print(o);
-  print.visitModule(module);
-}
+// Prints out a module
+class Printer : public Pass {
+protected:
+  std::ostream& o;
+
+public:
+  Printer() : o(std::cout) {}
+  Printer(std::ostream* o) : o(*o) {}
+
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.visitModule(module);
+  }
+};
 
 Pass *createPrinterPass() {
   return new Printer();
@@ -925,6 +935,19 @@ Pass *createFullPrinterPass() {
 }
 
 // Print individual expressions
+
+std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
+  PassRunner passRunner(module);
+  passRunner.setFeatures(Feature::All);
+  passRunner.setIsNested(true);
+  passRunner.add<Printer>(&o);
+  passRunner.run();
+  return o;
+}
+
+std::ostream& WasmPrinter::printModule(Module* module) {
+  return printModule(module, std::cout);
+}
 
 std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
   if (!expression) {
