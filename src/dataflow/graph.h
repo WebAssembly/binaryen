@@ -235,6 +235,9 @@ struct Graph : public Visitor<Graph, Node*> {
     // Set up the condition.
     Node* condition = visit(curr->condition);
     assert(condition);
+    // Add a node for the condition
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(condition);
     // Handle the contents.
     auto initialState = locals;
     visit(curr->ifTrue);
@@ -336,10 +339,17 @@ struct Graph : public Visitor<Graph, Node*> {
     }
     if (!curr->condition) {
       setInUnreachable();
+    } else {
+      // Add a node for the condition.
+      auto* node = addNode(Node::makeExpr(curr));
+      node->addValue(visit(curr->condition));
     }
     return &bad;
   }
   Node* visitSwitch(Switch* curr) {
+    // Add a node for the condition.
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->condition));
     if (!isInUnreachable()) {
       std::unordered_set<Name> targets;
       for (auto target : curr->targets) {
@@ -354,12 +364,29 @@ struct Graph : public Visitor<Graph, Node*> {
     return &bad;
   }
   Node* visitCall(Call* curr) {
+    if (!curr->operands.empty()) {
+      auto* node = addNode(Node::makeExpr(curr));
+      for (auto* operand : curr->operands) {
+        node->addValue(visit(operand));
+      }
+    }
     return makeVar(curr->type);
   }
   Node* visitCallImport(CallImport* curr) {
+    if (!curr->operands.empty()) {
+      auto* node = addNode(Node::makeExpr(curr));
+      for (auto* operand : curr->operands) {
+        node->addValue(visit(operand));
+      }
+    }
     return makeVar(curr->type);
   }
   Node* visitCallIndirect(CallIndirect* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    for (auto* operand : curr->operands) {
+      node->addValue(visit(operand));
+    }
+    node->addValue(visit(curr->target));
     return makeVar(curr->type);
   }
   Node* visitGetLocal(GetLocal* curr) {
@@ -390,24 +417,45 @@ struct Graph : public Visitor<Graph, Node*> {
     return makeVar(curr->type);
   }
   Node* visitSetGlobal(SetGlobal* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->value));
     return &bad;
   }
   Node* visitLoad(Load* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
     return makeVar(curr->type);
   }
   Node* visitStore(Store* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
+    node->addValue(visit(curr->value));
     return &bad;
   }
   Node* visitAtomicRMW(AtomicRMW* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
+    node->addValue(visit(curr->value));
     return &bad;
   }
   Node* visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
+    node->addValue(visit(curr->expected));
+    node->addValue(visit(curr->replacement));
     return &bad;
   }
   Node* visitAtomicWait(AtomicWait* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
+    node->addValue(visit(curr->expected));
+    node->addValue(visit(curr->timeout));
     return &bad;
   }
   Node* visitAtomicWake(AtomicWake* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->ptr));
+    node->addValue(visit(curr->wakeCount));
     return &bad;
   }
   Node* visitConst(Const* curr) {
@@ -548,14 +596,25 @@ struct Graph : public Visitor<Graph, Node*> {
     return ret;
   }
   Node* visitDrop(Drop* curr) {
+    auto* node = addNode(Node::makeExpr(curr));
+    node->addValue(visit(curr->value));
     return &bad;
   }
   Node* visitReturn(Return* curr) {
-    // note we don't need the value (it's a const or a get as we are flattened)
+    if (curr->value) {
+      auto* node = addNode(Node::makeExpr(curr));
+      node->addValue(visit(curr->value));
+    }
     setInUnreachable();
     return &bad;
   }
   Node* visitHost(Host* curr) {
+    if (!curr->operands.empty()) {
+      auto* node = addNode(Node::makeExpr(curr));
+      for (auto* operand : curr->operands) {
+        node->addValue(visit(operand));
+      }
+    }
     return &bad;
   }
   Node* visitNop(Nop* curr) {
