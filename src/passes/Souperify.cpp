@@ -124,7 +124,10 @@ struct Trace {
     // Every time we add a node, it is a use.
     // XXX Note that we do not compute this accurately for
     //     replaced nodes. But we don't need to.
-    numUses[node]++;
+    if (node != toInfer) {
+// we really need non-artificial uses...
+      numUses[node]++;
+    }
     // If already added, nothing more to do.
     if (addedNodes.find(node) != addedNodes.end()) {
       return node;
@@ -347,9 +350,12 @@ struct Printer {
       }
       default: WASM_UNREACHABLE();
     }
-    assert(trace.numUses[node] <= users.getNumUses(node));
-    if (trace.numUses[node] < users.getNumUses(node)) {
-      std::cout << " (hasExternalUses)";
+    if (node->isExpr() || node->isPhi()) {
+      assert(trace.numUses[node] <= users.getNumUses(node));
+      if (node != trace.toInfer &&
+          trace.numUses[node] < users.getNumUses(node)) {
+        std::cout << " (hasExternalUses)";
+      }
     }
     std::cout << '\n';
     if (debug() && (node->isExpr() || node->isPhi())) {
@@ -525,9 +531,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     }
     // For debugging output, it's useful to know the users.
     DataFlow::Users users;
-    if (debug()) {
-      users.build(graph);
-    }
+    users.build(graph);
     // Emit possible traces.
     for (auto& nodePtr : graph.nodes) {
       auto* node = nodePtr.get();
