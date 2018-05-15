@@ -30,9 +30,9 @@ SET(passes_SOURCES
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp
-  RemoveCopysign.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
+  RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp

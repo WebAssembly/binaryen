@@ -29,14 +29,20 @@ function asmFunc(global, env, buffer) {
   $1$hi = $1$hi | 0;
   $2 = $2 | 0;
   $2$hi = $2$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, $5$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$2 = $0;
+  i64toi32_i32$0 = $1$hi;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$1 = $1$hi;
   i64toi32_i32$3 = $1;
-  i64toi32_i32$0 = __wasm_rotl_i64(i64toi32_i32$2 | 0, i64toi32_i32$0 | 0, i64toi32_i32$3 & 63 | 0 | 0) | 0;
-  i64toi32_i32$2 = $2$hi;
+  i64toi32_i32$4 = __wasm_rotl_i64($0 | 0, i64toi32_i32$0 | 0, i64toi32_i32$3 & 63 | 0 | 0) | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $5$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $2$hi;
+  i64toi32_i32$1 = $5$hi;
+  i64toi32_i32$0 = i64toi32_i32$4;
   i64toi32_i32$3 = $2;
-  return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$HIGH_BITS | 0) == (i64toi32_i32$2 | 0) | 0 | 0;
+  return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$1 | 0) == ($2$hi | 0) | 0 | 0;
  }
  
  function $2($0, $0$hi, $1, $1$hi, $2, $2$hi) {
@@ -46,50 +52,20 @@ function asmFunc(global, env, buffer) {
   $1$hi = $1$hi | 0;
   $2 = $2 | 0;
   $2$hi = $2$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, $5$hi = 0;
   i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$2 = $0;
+  i64toi32_i32$0 = $1$hi;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$1 = $1$hi;
   i64toi32_i32$3 = $1;
-  i64toi32_i32$0 = __wasm_rotr_i64(i64toi32_i32$2 | 0, i64toi32_i32$0 | 0, i64toi32_i32$3 & 63 | 0 | 0) | 0;
-  i64toi32_i32$2 = $2$hi;
+  i64toi32_i32$4 = __wasm_rotr_i64($0 | 0, i64toi32_i32$0 | 0, i64toi32_i32$3 & 63 | 0 | 0) | 0;
+  i64toi32_i32$1 = i64toi32_i32$HIGH_BITS;
+  $5$hi = i64toi32_i32$1;
+  i64toi32_i32$1 = $2$hi;
+  i64toi32_i32$1 = $5$hi;
+  i64toi32_i32$0 = i64toi32_i32$4;
   i64toi32_i32$3 = $2;
-  return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$HIGH_BITS | 0) == (i64toi32_i32$2 | 0) | 0 | 0;
- }
- 
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
- }
- 
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-   } while (1);
-  };
-  return $2 | 0;
- }
- 
- function __wasm_rotl_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
- }
- 
- function __wasm_rotr_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$1 | 0) == ($2$hi | 0) | 0 | 0;
  }
  
  function __wasm_rotl_i64($0, $1, $2) {

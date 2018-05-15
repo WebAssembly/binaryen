@@ -18,23 +18,49 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var i64toi32_i32$HIGH_BITS = 0;
- function even(n) {
-  n = n | 0;
-  var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 1; else $6 = odd(n - 1 | 0 | 0) | 0;
-  return $6 | 0;
+ function $0(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x == y | 0;
  }
  
- function odd(n) {
-  n = n | 0;
-  var $6 = 0;
-  if ((n | 0) == (0 | 0)) $6 = 0; else $6 = even(n - 1 | 0 | 0) | 0;
-  return $6 | 0;
+ function $1(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x != y | 0;
+ }
+ 
+ function $2(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x < y | 0;
+ }
+ 
+ function $3(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x <= y | 0;
+ }
+ 
+ function $4(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x > y | 0;
+ }
+ 
+ function $5(x, y) {
+  x = Math_fround(x);
+  y = Math_fround(y);
+  return x >= y | 0;
  }
  
  return {
-  even: even, 
-  odd: odd
+  eq: $0, 
+  ne: $1, 
+  lt: $2, 
+  le: $3, 
+  gt: $4, 
+  ge: $5
  };
 }
 
