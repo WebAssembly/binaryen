@@ -229,6 +229,17 @@ struct Trace {
   bool isBad() {
     return bad;
   }
+
+  static bool isTraceable(Node* node) {
+    if (node->isExpr()) {
+      auto* expr = node->expr;
+      return expr->is<Unary>() || expr->is<Binary>() || expr->is<Select>();
+    }
+    if (node->isPhi()) {
+      return true;
+    }
+    return false;
+  }
 };
 
 // Emits a trace, which is basically a Souper LHS.
@@ -484,16 +495,19 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
           }
         }
       }
-      for (auto& node : graph.nodes) {
-        if (node->isExpr() && uses[node.get()] > 1) {
-          excludeAsChildren.insert(node.get());
+      for (auto& nodePtr : graph.nodes) {
+        auto* node = nodePtr.get();
+        if (node->isExpr() && uses[node] > 1) {
+          excludeAsChildren.insert(node);
         }
       }
     }
     // Emit possible traces.
-    for (auto& node : graph.nodes) {
-      if (!graph.isArtificial(node.get())) {
-        DataFlow::Trace trace(graph, node.get(), excludeAsChildren);
+    for (auto& nodePtr : graph.nodes) {
+      auto* node = nodePtr.get();
+      if (!graph.isArtificial(node) &&
+          DataFlow::Trace::isTraceable(node)) {
+        DataFlow::Trace trace(graph, node, excludeAsChildren);
         if (!trace.isBad()) {
           DataFlow::Printer(graph, trace);
         }
