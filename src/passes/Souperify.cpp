@@ -41,9 +41,15 @@
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/graph.h"
+#include "dataflow/users.h"
 #include "dataflow/utils.h"
 
 namespace wasm {
+
+static bool debug() {
+  static bool ret = getenv("BINARYEN_DEBUG_SOUPERIFY") != nullptr;
+  return ret;
+}
 
 namespace DataFlow {
 
@@ -246,15 +252,12 @@ struct Trace {
 struct Printer {
   Graph& graph;
   Trace& trace;
+  Users& users;
 
   // Each Node in a trace has an index, from 0.
   std::unordered_map<Node*, Index> indexing;
 
-  bool debug;
-
-  Printer(Graph& graph, Trace& trace) : graph(graph), trace(trace) {
-    debug = getenv("BINARYEN_DEBUG_SOUPERIFY") != nullptr;
-
+  Printer(Graph& graph, Trace& trace, Users& users) : graph(graph), trace(trace), users(users) {
     std::cout << "\n; start LHS (in " << graph.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
@@ -295,7 +298,7 @@ struct Printer {
         break; // nothing more to add
       }
       case Node::Type::Expr: {
-        if (debug) {
+        if (debug()) {
           std::cout << "; ";
           WasmPrinter::printExpression(node->expr, std::cout, true);
           std::cout << '\n';
@@ -313,7 +316,7 @@ struct Printer {
           printInternal(node->getValue(i));
         }
         std::cout << '\n';
-        if (debug) warnOnSuspiciousValues(node);
+        if (debug()) warnOnSuspiciousValues(node);
         break;
       }
       case Node::Type::Cond: {
@@ -432,7 +435,7 @@ struct Printer {
       auto* right = node->getValue(1);
       printInternal(right);
       std::cout << '\n';
-      if (debug) warnOnSuspiciousValues(node);
+      if (debug()) warnOnSuspiciousValues(node);
     } else if (curr->is<Select>()) {
       std::cout << "select ";
       printInternal(node->getValue(0));
@@ -441,7 +444,7 @@ struct Printer {
       std::cout << ", ";
       printInternal(node->getValue(2));
       std::cout << '\n';
-      if (debug) warnOnSuspiciousValues(node);
+      if (debug()) warnOnSuspiciousValues(node);
     } else {
       WASM_UNREACHABLE();
     }
@@ -455,12 +458,24 @@ struct Printer {
 
   // Checks if a value looks suspiciously optimizable.
   void warnOnSuspiciousValues(Node* node) {
-    assert(debug);
+    assert(debug());
+    // If the node has no uses, it's not interesting enough to be
+    // suspicious.
+    if (users.getNumUsers(node) == 0) {
+      return;
+    }
+    // If an input was replaced with a var, then we should not
+    // look into it, it's not suspiciously trivial.
+    for (auto* value : node->values) {
+      if (value != getMaybeReplaced(value)) {
+        return;
+      }
+    }
     if (allInputsIdentical(node)) {
       std::cout << "^^ suspicious identical inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
-    if (allInputsConstant(node)) {
+    if (!node->isPhi() && allInputsConstant(node)) {
       std::cout << "^^ suspicious constant inputs! missing optimization in " << graph.func->name << "? ^^\n";
       return;
     }
@@ -501,6 +516,11 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
           excludeAsChildren.insert(node);
         }
       }
+    }
+    // For debugging output, it's useful to know the users.
+    DataFlow::Users users;
+    if (debug()) {
+      users.build(graph);
     }
     // Emit possible traces.
     for (auto& nodePtr : graph.nodes) {
