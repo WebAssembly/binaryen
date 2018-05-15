@@ -1010,5 +1010,25 @@
    )
   )
  )
+ (func $multiple-uses-to-non-expression (param $x i32)
+  (local $temp i32)
+  (set_local $x
+   (i32.add
+    (get_local $x)
+    (i32.const 10)
+   )
+  )
+  (i32.store
+   (i32.const 1)
+   (get_local $x) ;; x+10 has two uses!
+  )
+  (i32.store
+   (i32.const 2)
+   (i32.add
+    (get_local $x)
+    (i32.const 20)
+   )
+  )
+ )
 )
 

@@ -380,7 +380,7 @@ struct Graph : public Visitor<Graph, Node*> {
     auto* node = visit(curr->value);
     locals[curr->index] = setNodeMap[curr] = node;
     // If we created a new node (and not just did a get of a set, which
-    // passes around an existing node), mark it's parent.
+    // passes around an existing node), mark its parent.
     if (nodeParentMap.find(node) == nodeParentMap.end()) {
       nodeParentMap[node] = curr;
     }
