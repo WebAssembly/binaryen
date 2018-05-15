@@ -30,9 +30,9 @@ jobs:
         - export PATH="${HOME}/.jsvu:${PATH}"
         - jsvu --os=linux64 --engines=spidermonkey
       before_script:
-        - flake8
         - ./check.py --test-waterfall --only-prepare
       script:
+        - flake8
         - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
         - make -j2
         - ./check.py --test-waterfall
