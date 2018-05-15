@@ -35,20 +35,36 @@ namespace DataFlow {
 //   users[x] = { y, z, .. }
 // where y, z etc. are nodes that use x, that is, x is in their
 // values vector.
-class Users : public std::unordered_map<DataFlow::Node*, std::unordered_set<DataFlow::Node*>> {
+class Users {
+  typedef std::unordered_set<DataFlow::Node*> UserSet;
+
+  std::unordered_map<DataFlow::Node*, UserSet> users;
+
+  std::unordered_map<DataFlow::Node*, Index> numUses;
+
 public:
   void build(Graph& graph) {
     for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
-        (*this)[value].insert(node.get());
+        users[value].insert(node.get());
+        numUses[value]++;
       }
     }
   }
 
-  Index getNumUsers(Node* node) {
-    auto iter = find(node);
-    if (iter == end()) return 0;
-    return iter->second.size();
+  UserSet& getUsers(Node* node) {
+    auto iter = users.find(node);
+    if (iter == users.end()) {
+      static UserSet empty;
+      return empty;
+    }
+    return iter->second;
+  }
+
+  Index getNumUses(Node* node) {
+    auto iter = numUses.find(node);
+    if (iter == numUses.end()) return 0;
+    return iter->second;
   }
 };
 

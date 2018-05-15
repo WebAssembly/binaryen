@@ -81,9 +81,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
   void workOn(DataFlow::Node* node) {
     if (node->isConst()) return;
     // If there are no uses, there is no point to work.
-    auto iter = nodeUsers.find(node);
-    if (iter == nodeUsers.end()) return;
-    if (iter->second.empty()) return;
+    if (nodeUsers.getNumUses(node) == 0) return;
     // Optimize: Look for nodes that we can easily convert into
     // something simpler.
     // TODO: we can expressionify and run full normal opts on that,
@@ -146,7 +144,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     assert(node->isConst());
     // We no longer have values, and so do not use anything.
     for (auto* value : node->values) {
-      nodeUsers[value].erase(node);
+      nodeUsers.getUsers(value).erase(node);
     }
     node->values.clear();
     // Our contents changed, update our users.
@@ -163,12 +161,12 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     // in particular phis.
     assert(with->isConst()); // TODO
     // All the users should be worked on later, as we will update them.
-    auto& users = nodeUsers[node];
+    auto& users = nodeUsers.getUsers(node);
     for (auto* user : users) {
       // Add the user to the work left to do, as we are modifying it.
       workLeft.insert(user);
       // `with` is getting another user.
-      nodeUsers[with].insert(user);
+      nodeUsers.getUsers(with).insert(user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;

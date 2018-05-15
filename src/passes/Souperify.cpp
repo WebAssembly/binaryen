@@ -74,6 +74,9 @@ struct Trace {
   // When we need to (like when the depth is too deep), we replace
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
+  // Track how many uses in the trace each node has. This lets us
+  // compute whether they have external uses later.
+  std::unordered_map<Node*, Index> numUses;
 
   Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
     // Check if there is a depth limit override
@@ -118,6 +121,10 @@ struct Trace {
     if (iter != replacements.end()) {
       return iter->second.get();
     }
+    // Every time we add a node, it is a use.
+    // XXX Note that we do not compute this accurately for
+    //     replaced nodes. But we don't need to.
+    numUses[node]++;
     // If already added, nothing more to do.
     if (addedNodes.find(node) != addedNodes.end()) {
       return node;
@@ -294,7 +301,7 @@ struct Printer {
     assert(node);
     switch (node->type) {
       case Node::Type::Var: {
-        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var\n";
+        std::cout << "%" << indexing[node] << ":" << printType(node->wasmType) << " = var";
         break; // nothing more to add
       }
       case Node::Type::Expr: {
@@ -315,18 +322,16 @@ struct Printer {
           std::cout << ", ";
           printInternal(node->getValue(i));
         }
-        std::cout << '\n';
-        if (debug()) warnOnSuspiciousValues(node);
         break;
       }
       case Node::Type::Cond: {
         std::cout << "blockpc %" << indexing[node->getValue(0)] << ' ' << node->index << ' ';
         printInternal(node->getValue(1));
-        std::cout << " 1:i1\n";
+        std::cout << " 1:i1";
         break;
       }
       case Node::Type::Block: {
-        std::cout << "%" << indexing[node] << " = block " << node->values.size() << '\n';
+        std::cout << "%" << indexing[node] << " = block " << node->values.size();
         break;
       }
       case Node::Type::Zext: {
@@ -334,7 +339,6 @@ struct Printer {
         std::cout << "%" << indexing[node] << ':' << printType(child->getWasmType());
         std::cout << " = zext ";
         printInternal(child);
-        std::cout << '\n';
         break;
       }
       case Node::Type::Bad: {
@@ -342,6 +346,14 @@ struct Printer {
         WASM_UNREACHABLE();
       }
       default: WASM_UNREACHABLE();
+    }
+    assert(trace.numUses[node] <= users.getNumUses(node));
+    if (trace.numUses[node] < users.getNumUses(node)) {
+      std::cout << " (hasExternalUses)";
+    }
+    std::cout << '\n';
+    if (debug() && (node->isExpr() || node->isPhi())) {
+      warnOnSuspiciousValues(node);
     }
   }
 
@@ -367,7 +379,6 @@ struct Printer {
     auto* curr = node->expr;
     if (auto* c = curr->dynCast<Const>()) {
       print(c->value);
-      std::cout << '\n';
     } else if (auto* unary = curr->dynCast<Unary>()) {
       switch (unary->op) {
         case ClzInt32:
@@ -381,7 +392,6 @@ struct Printer {
       std::cout << ' ';
       auto* value = node->getValue(0);
       printInternal(value);
-      std::cout << '\n';
     } else if (auto* binary = curr->dynCast<Binary>()) {
       switch (binary->op) {
         case AddInt32:
@@ -434,8 +444,6 @@ struct Printer {
       std::cout << ", ";
       auto* right = node->getValue(1);
       printInternal(right);
-      std::cout << '\n';
-      if (debug()) warnOnSuspiciousValues(node);
     } else if (curr->is<Select>()) {
       std::cout << "select ";
       printInternal(node->getValue(0));
@@ -443,8 +451,6 @@ struct Printer {
       printInternal(node->getValue(1));
       std::cout << ", ";
       printInternal(node->getValue(2));
-      std::cout << '\n';
-      if (debug()) warnOnSuspiciousValues(node);
     } else {
       WASM_UNREACHABLE();
     }
@@ -461,7 +467,7 @@ struct Printer {
     assert(debug());
     // If the node has no uses, it's not interesting enough to be
     // suspicious.
-    if (users.getNumUsers(node) == 0) {
+    if (users.getNumUses(node) == 0) {
       return;
     }
     // If an input was replaced with a var, then we should not
