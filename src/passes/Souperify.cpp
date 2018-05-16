@@ -121,11 +121,12 @@ struct Trace {
     if (iter != replacements.end()) {
       return iter->second.get();
     }
-    // Every time we add a node, it is a use.
+    // Every time we add a node, it is a use (except for the
+    // root node, which we add directly, and don't care about
+    // use counts for).
     // XXX Note that we do not compute this accurately for
     //     replaced nodes. But we don't need to.
     if (node != toInfer) {
-// we really need non-artificial uses...
       numUses[node]++;
     }
     // If already added, nothing more to do.
@@ -354,7 +355,15 @@ struct Printer {
       assert(trace.numUses[node] <= users.getNumUses(node));
       if (node != trace.toInfer &&
           trace.numUses[node] < users.getNumUses(node)) {
-        std::cout << " (hasExternalUses)";
+        // It has external uses in the graph. Check if those are
+        // via things we care about, and if so, note that there
+        // are external uses to Souper.
+        
+        for (auto* user : users.getUsers(node)) {
+          if (
+          std::cout << " (hasExternalUses)";
+          break;
+        }
       }
     }
     std::cout << '\n';

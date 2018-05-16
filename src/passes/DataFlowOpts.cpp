@@ -143,9 +143,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     node->expr = Builder(*getModule()).makeConst(result->cast<Const>()->value);
     assert(node->isConst());
     // We no longer have values, and so do not use anything.
-    for (auto* value : node->values) {
-      nodeUsers.getUsers(value).erase(node);
-    }
+    nodeUsers.stopUsingValues(node);
     node->values.clear();
     // Our contents changed, update our users.
     replaceAllUsesWith(node, node);
@@ -166,7 +164,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       // Add the user to the work left to do, as we are modifying it.
       workLeft.insert(user);
       // `with` is getting another user.
-      nodeUsers.getUsers(with).insert(user);
+      nodeUsers.addUser(with, user);
       // Replacing in the DataFlow IR is simple - just replace it,
       // in all the indexes it appears.
       std::vector<Index> indexes;
@@ -210,7 +208,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       }
     }
     // No one is a user of this node after we replaced all the uses.
-    users.clear();
+    nodeUsers.removeAllUsesOf(node);
   }
 
   // Gets a pointer to the expression pointer in an expression.

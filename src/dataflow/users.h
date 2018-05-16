@@ -66,6 +66,8 @@ public:
     if (iter == numUses.end()) return 0;
     return iter->second;
   }
+
+  remove etc. utils - must alter numUses as well.
 };
 
 } // namespace DataFlow
