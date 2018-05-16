@@ -1,13 +1,4 @@
-bin/wasm-shell
-bin/wasm-opt
-bin/asm2wasm
-bin/wasm2asm
-bin/s2wasm
-bin/wasm-as
-bin/wasm-dis
-lib/libbinaryen.so
-lib/libbinaryen.dylib
-*.a
+*.pyc
 *~
 *.diff
 
@@ -32,7 +23,7 @@ test/wasm-torture-s-*.tbz2
 test/wasm-install/
 test/validator/*.wasm
 
-*.pyc
+# files related to building in-tree
 CMakeFiles/
 CMakeCache.txt
 Makefile
@@ -40,15 +31,22 @@ cmake_install.cmake
 *.ninja
 .ninja_deps
 .ninja_log
+bin/wasm-shell
+bin/wasm-opt
+bin/asm2wasm
+bin/wasm2asm
+bin/s2wasm
+bin/wasm-as
+bin/wasm-dis
+lib/
 
+# files related to windows build
 .vs/
 *.vcxproj*
 *.dir/
 *.sln
 *.sdf
 *.VC.opendb
-bin/
-lib/
 Win32/
 
 # macOS
