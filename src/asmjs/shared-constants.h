@@ -92,7 +92,9 @@ extern cashew::IString GLOBAL,
                 WASM_ROTR32,
                 WASM_ROTR64,
                 WASM_GROW_MEMORY,
-                WASM_CURRENT_MEMORY;
+                WASM_CURRENT_MEMORY,
+                WASM_FETCH_HIGH_BITS,
+                INT64_TO_32_HIGH_BITS;
 }
 
 #endif // wasm_asmjs_shared_constants_h

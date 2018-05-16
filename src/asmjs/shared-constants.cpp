@@ -89,5 +89,7 @@ cashew::IString GLOBAL("global"),
                 WASM_ROTR32("__wasm_rotr_i32"),
                 WASM_ROTR64("__wasm_rotr_i64"),
                 WASM_GROW_MEMORY("__wasm_grow_memory"),
-                WASM_CURRENT_MEMORY("__wasm_current_memory");
+                WASM_CURRENT_MEMORY("__wasm_current_memory"),
+                WASM_FETCH_HIGH_BITS("__wasm_fetch_high_bits"),
+                INT64_TO_32_HIGH_BITS("i64toi32_i32$HIGH_BITS");
 }
