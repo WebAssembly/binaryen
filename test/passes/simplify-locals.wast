@@ -1227,4 +1227,19 @@
     )
     (get_local $x)
   )
+  (func $set-tee-need-one-of-them (param $var$0 i32) (param $var$1 i32) (result i32)
+   (local $var$2 i32)
+   (local $var$3 i32)
+   (set_local $var$0 ;; this is redundant
+    (tee_local $var$2 ;; but this is not - we need this set, we read it at the end
+     (get_local $var$0)
+    )
+   )
+   (loop $loop
+    (br_if $loop
+     (get_local $var$1)
+    )
+   )
+   (get_local $var$2)
+  )
 )

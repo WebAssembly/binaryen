@@ -685,11 +685,9 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
               if (curr->isTee()) {
-                this->replaceCurrent(value);
-              } else if (curr->value->is<GetLocal>()) {
-                ExpressionManipulator::nop(curr);
+                this->replaceCurrent(curr->value);
               } else {
-                this->replaceCurrent(Builder(*module).makeDrop(value));
+                this->replaceCurrent(Builder(*module).makeDrop(curr->value));
               }
               anotherCycle = true;
             }

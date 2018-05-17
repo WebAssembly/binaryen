@@ -877,7 +877,9 @@
  (func $if-return-but-unreachable (; 18 ;) (type $10) (param $var$0 i64)
   (if
    (unreachable)
-   (nop)
+   (drop
+    (get_local $var$0)
+   )
    (set_local $var$0
     (i64.const 1)
    )
@@ -895,6 +897,7 @@
  (type $7 (func (param i32 i32)))
  (type $8 (func (result f64)))
  (type $9 (func (param i32 i32) (result f64)))
+ (type $10 (func (param i32 i32) (result i32)))
  (memory $0 (shared 256 256))
  (func $nonatomics (; 0 ;) (type $FUNCSIG$i) (result i32)
   (local $x i32)
@@ -1283,7 +1286,9 @@
   (set_local $z
    (get_local $x)
   )
-  (nop)
+  (drop
+   (get_local $x)
+  )
   (if
    (i32.const 1)
    (drop
@@ -1324,7 +1329,9 @@
   (set_local $z
    (i32.const 2)
   )
-  (nop)
+  (drop
+   (get_local $x)
+  )
  )
  (func $loop-copies (; 19 ;) (type $7) (param $x i32) (param $y i32)
   (loop $loop
@@ -1379,5 +1386,18 @@
     )
    )
   )
+ )
+ (func $set-tee-need-one-of-them (; 23 ;) (type $10) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (set_local $var$2
+   (get_local $var$0)
+  )
+  (loop $loop
+   (br_if $loop
+    (get_local $var$1)
+   )
+  )
+  (get_local $var$2)
  )
 )
