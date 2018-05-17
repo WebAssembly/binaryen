@@ -746,6 +746,7 @@ public:
   void emitBuffer(const char* data, size_t size);
   void emitString(const char *str);
   void finishUp();
+  void lookForProblems();
 
   // AST writing via visitors
   int depth = 0; // only for debugging
