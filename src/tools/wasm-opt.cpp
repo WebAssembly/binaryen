@@ -72,7 +72,9 @@ int main(int argc, const char* argv[]) {
   bool fuzzPasses = false;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
-  std::string sourceMapFilename;
+  std::string inputSourceMapFilename;
+  std::string outputSourceMapFilename;
+  std::string outputSourceMapUrl;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -112,9 +114,15 @@ int main(int argc, const char* argv[]) {
       .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
-      .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
+      .add("--input-source-map", "-ism", "Consume source map from the specified file",
            Options::Arguments::One,
-           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
+           [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
+      .add("--output-source-map", "-osm", "Emit source map to the specified file",
+           Options::Arguments::One,
+           [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
+      .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
+           Options::Arguments::One,
+           [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -132,7 +140,7 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     reader.setDebug(options.debug);
     try {
-      reader.read(options.extra["infile"], wasm, sourceMapFilename);
+      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -260,6 +268,10 @@ int main(int argc, const char* argv[]) {
     writer.setDebug(options.debug);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
     writer.write(*curr, options.extra["output"]);
 
     if (extraFuzzCommand.size() > 0) {

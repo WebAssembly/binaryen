@@ -103,10 +103,7 @@ int main(int argc, const char *argv[]) {
   if (options.debug) std::cerr << "writing..." << std::endl;
   ModuleWriter writer;
   writer.setBinary(true);
-  if (debugInfo) {
-    writer.setDebugInfo(debugInfo);
-  }
-  std::unique_ptr<std::ofstream> sourceMapStream = nullptr;
+  writer.setDebugInfo(debugInfo);
   if (sourceMapFilename.size()) {
     writer.setSourceMapFilename(sourceMapFilename);
     writer.setSourceMapUrl(sourceMapUrl);
