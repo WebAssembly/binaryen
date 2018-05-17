@@ -16,7 +16,6 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
-      node_js: 9
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -24,6 +23,8 @@ jobs:
       before_install:
         - export ASAN_OPTIONS="symbolize=1"
       install:
+        - nvm install 10
+        - nvm use 10
         - pip install --user flake8==3.4.1
         # get jsvu in order to get more js engines
         - npm install jsvu -g
@@ -62,15 +63,14 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
-      node_js: 7
       language: node_js
-      node_js:
-      - node
       sudo: required
       services:
       - docker
       before_install:
       - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+      - nvm install 10
+      - nvm use 10
       script:
       # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
       # version is good too
@@ -90,6 +90,8 @@ jobs:
         - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+        - nvm install 10
+        - nvm use 10
       before_script:
         - alpine ./check.py --test-waterfall --only-prepare
       script:
@@ -105,6 +107,7 @@ jobs:
       <<: *test-alpine
       stage: build
       env: ARCH=x86_64
+      node_js: '10'
       # Don't run before_script inherited from *test-alpine.
       before_script: skip
       script:
