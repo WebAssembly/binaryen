@@ -72,6 +72,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzPasses = false;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
+  std::string sourceMapFilename;
 
   OptimizationOptions options("wasm-opt", "Read, write, and optimize files");
   options
@@ -111,6 +112,9 @@ int main(int argc, const char* argv[]) {
       .add("--emit-spec-wrapper", "-esw", "Emit a wasm spec interpreter wrapper file that can run the wasm with some test values, useful for fuzzing",
            Options::Arguments::One,
            [&](Options *o, const std::string& arguments) { emitSpecWrapper = arguments; })
+      .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
+           Options::Arguments::One,
+           [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options* o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -128,7 +132,7 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     reader.setDebug(options.debug);
     try {
-      reader.read(options.extra["infile"], wasm);
+      reader.read(options.extra["infile"], wasm, sourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';

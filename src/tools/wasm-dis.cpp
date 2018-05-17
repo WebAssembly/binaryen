@@ -21,7 +21,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-binary.h"
+#include "wasm-io.h"
 #include "wasm-printing.h"
 
 using namespace cashew;
@@ -45,22 +45,10 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  auto input(read_file<std::vector<char>>(options.extra["infile"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release));
-
   if (options.debug) std::cerr << "parsing binary..." << std::endl;
   Module wasm;
   try {
-    std::unique_ptr<std::ifstream> sourceMapStream;
-    WasmBinaryBuilder parser(wasm, input, options.debug);
-    if (sourceMapFilename.size()) {
-        sourceMapStream = make_unique<std::ifstream>();
-        sourceMapStream->open(sourceMapFilename);
-        parser.setDebugLocations(sourceMapStream.get());
-    }
-    parser.read();
-    if (sourceMapStream) {
-        sourceMapStream->close();
-    }
+    ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
