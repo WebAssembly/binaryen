@@ -84,7 +84,7 @@ jobs:
       env: ARCH=x86_64
       before_install:
         - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
-        - alpine() { docker exec -it alpine "$@" }
+        - alpine() { docker exec -it alpine "$@"; }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
       before_script:
