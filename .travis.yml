@@ -69,8 +69,6 @@ jobs:
       - docker
       before_install:
       - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
-      - nvm install 10
-      - nvm use 10
       script:
       # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
       # version is good too

@@ -1,3 +1,4 @@
+atexit() called, but NO_EXIT_RUNTIME is set, so atexits() will not be called. set NO_EXIT_RUNTIME to 0 (see the FAQ)
 (module
  (type $iii (func (param i32 i32) (result i32)))
  (export "adder" (func $adder))
