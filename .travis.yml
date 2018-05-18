@@ -83,9 +83,8 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.7.0/alpine-chroot-install' \
-              && echo '090d323d887ef3a2fd4e752428553f22a52b87bb  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
-        - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
+        - alpine() { docker exec -it alpine "$@" }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
       before_script:
