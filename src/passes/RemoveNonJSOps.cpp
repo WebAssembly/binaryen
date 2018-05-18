@@ -15,12 +15,16 @@
  */
 
 //
-//
 // Removes all operations in a wasm module that aren't inherently implementable
-// in JS. This includes things like `f32.nearest` and
-// `f64.copysign`. Most operations are lowered to a call to an injected
+// in JS. This includes things like 64-bit division, `f32.nearest`,
+// `f64.copysign`, etc. Most operations are lowered to a call to an injected
 // intrinsic implementation. Intrinsics don't use themselves to implement
 // themselves.
+//
+// You'll find a large wast blob at the end of this module which contains all of
+// the injected intrinsics. We manually copy over any needed intrinsics from
+// this module into the module that we're optimizing after walking the current
+// module.
 //
 
 #include <wasm.h>
@@ -28,237 +32,119 @@
 
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
+#include "wasm-s-parser.h"
 
 namespace wasm {
 
+namespace {
+extern const char *IntrinsicsModule;
+}
+
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
-  bool needNearestF32 = false;
-  bool needNearestF64 = false;
-  bool needTruncF32 = false;
-  bool needTruncF64 = false;
-  bool needCtzInt32 = false;
-  bool needPopcntInt32 = false;
-  bool needRotLInt32 = false;
-  bool needRotRInt32 = false;
+  std::unique_ptr<Builder> builder;
+  std::unordered_set<Name> neededIntrinsics;
 
   bool isFunctionParallel() override { return false; }
 
   Pass* create() override { return new RemoveNonJSOpsPass; }
 
   void doWalkModule(Module* module) {
+    // Discover all of the intrinsics that we need to inject, lowering all
+    // operations to intrinsic calls while we're at it.
     if (!builder) builder = make_unique<Builder>(*module);
     PostWalker<RemoveNonJSOpsPass>::doWalkModule(module);
 
-    if (needNearestF32) {
-      module->addFunction(createNearest(f32));
+    if (neededIntrinsics.size() == 0) {
+      return;
     }
-    if (needNearestF64) {
-      module->addFunction(createNearest(f64));
-    }
-    if (needTruncF32) {
-      module->addFunction(createTrunc(f32));
-    }
-    if (needTruncF64) {
-      module->addFunction(createTrunc(f64));
-    }
-    if (needCtzInt32) {
-      module->addFunction(createCtz());
-    }
-    if (needPopcntInt32) {
-      module->addFunction(createPopcnt());
-    }
-    if (needRotLInt32) {
-      module->addFunction(createRot(RotLInt32));
-    }
-    if (needRotRInt32) {
-      module->addFunction(createRot(RotRInt32));
+
+    // Parse the wast blob we have at the end of this file.
+    //
+    // TODO: only do this once per invocation of wasm2asm
+    Module intrinsicsModule;
+    std::string input(IntrinsicsModule);
+    SExpressionParser parser(const_cast<char*>(input.c_str()));
+    Element& root = *parser.root;
+    SExpressionWasmBuilder builder(intrinsicsModule, *root[0]);
+
+    std::set<Name> neededFunctions;
+
+    // Iteratively link intrinsics from `intrinsicsModule` into our destination
+    // module, as needed.
+    //
+    // Note that intrinsics often use one another. For example the 64-bit
+    // division intrinsic ends up using the 32-bit ctz intrinsic, but does so
+    // via a native instruction. The loop here is used to continuously reprocess
+    // injected intrinsics to ensure that they never contain non-js ops when
+    // we're done.
+    while (neededIntrinsics.size() > 0) {
+      // TODO: move popcnt to the wast blob below and avoid special handling of
+      // it.
+      if (neededIntrinsics.erase(WASM_POPCNT32)) {
+        if (module->getFunctionOrNull(WASM_POPCNT32) == nullptr) {
+          module->addFunction(createPopcnt());
+        }
+      }
+
+      // Recursively probe all needed intrinsics for transitively used
+      // functions. This is building up a set of functions we'll link into our
+      // module.
+      for (auto &name : neededIntrinsics) {
+        addNeededFunctions(intrinsicsModule, name, neededFunctions);
+      }
+      neededIntrinsics.clear();
+
+      // Link in everything that wasn't already linked in. After we've done the
+      // copy we then walk the function to rewrite any non-js operations it has
+      // as well.
+      for (auto &name : neededFunctions) {
+        if (module->getFunctionOrNull(name) != nullptr) {
+          continue;
+        }
+        auto* curr = intrinsicsModule.getFunction(name);
+
+        std::stringstream newTypeNameS;
+        newTypeNameS << "importedType" << curr->type;
+        Name newTypeName(newTypeNameS.str().c_str());
+
+        auto* newType = module->getFunctionTypeOrNull(newTypeName);
+        if (newType == nullptr) {
+          auto *ty = intrinsicsModule.getFunctionType(curr->type);
+          newType = new FunctionType(*ty);
+          newType->name = newTypeName;
+          module->addFunctionType(newType);
+        }
+        auto* func = new Function(*curr);
+        func->body = ExpressionManipulator::copy(func->body, *module);
+        func->type = newType->name;
+        module->addFunction(func);
+        doWalkFunction(func);
+      }
+      neededFunctions.clear();
     }
   }
 
-  Function *createNearest(Type f) {
-    // fn nearest(f: float) -> float {
-    //    let ceil = ceil(f);
-    //    let floor = floor(f);
-    //    let fract = f - floor;
-    //    if fract < 0.5 {
-    //        floor
-    //    } else if fract > 0.5 {
-    //        ceil
-    //    } else {
-    //        let rem = floor / 2.0;
-    //        if rem - floor(rem) == 0.0 {
-    //            floor
-    //        } else {
-    //            ceil
-    //        }
-    //    }
-    // }
-
-    Index arg = 0;
-    Index ceil = 1;
-    Index floor = 2;
-    Index fract = 3;
-    Index rem = 4;
-
-    UnaryOp ceilOp = CeilFloat32;
-    UnaryOp floorOp = FloorFloat32;
-    BinaryOp subOp = SubFloat32;
-    BinaryOp ltOp = LtFloat32;
-    BinaryOp gtOp = GtFloat32;
-    BinaryOp divOp = DivFloat32;
-    BinaryOp eqOp = EqFloat32;
-    Literal litHalf((float) 0.5);
-    Literal litOne((float) 1.0);
-    Literal litZero((float) 0.0);
-    Literal litTwo((float) 2.0);
-    if (f == f64) {
-      ceilOp = CeilFloat64;
-      floorOp = FloorFloat64;
-      subOp = SubFloat64;
-      ltOp = LtFloat64;
-      gtOp = GtFloat64;
-      divOp = DivFloat64;
-      eqOp = EqFloat64;
-      litHalf = Literal((double) 0.5);
-      litOne = Literal((double) 1.0);
-      litZero = Literal((double) 0.0);
-      litTwo = Literal((double) 2.0);
+  void addNeededFunctions(Module &m, Name name, std::set<Name> &needed) {
+    if (needed.count(name)) {
+      return;
     }
+    needed.insert(name);
 
-    Expression *body = builder->blockify(
-      builder->makeSetLocal(
-        ceil,
-        builder->makeUnary(ceilOp, builder->makeGetLocal(arg, f))
-      ),
-      builder->makeSetLocal(
-        floor,
-        builder->makeUnary(floorOp, builder->makeGetLocal(arg, f))
-      ),
-      builder->makeSetLocal(
-        fract,
-        builder->makeBinary(
-          subOp,
-          builder->makeGetLocal(arg, f),
-          builder->makeGetLocal(floor, f)
-        )
-      ),
-      builder->makeIf(
-        builder->makeBinary(
-          ltOp,
-          builder->makeGetLocal(fract, f),
-          builder->makeConst(litHalf)
-        ),
-        builder->makeGetLocal(floor, f),
-        builder->makeIf(
-          builder->makeBinary(
-            gtOp,
-            builder->makeGetLocal(fract, f),
-            builder->makeConst(litHalf)
-          ),
-          builder->makeGetLocal(ceil, f),
-          builder->blockify(
-            builder->makeSetLocal(
-              rem,
-              builder->makeBinary(
-                divOp,
-                builder->makeGetLocal(floor, f),
-                builder->makeConst(litTwo)
-              )
-            ),
-            builder->makeIf(
-              builder->makeBinary(
-                eqOp,
-                builder->makeBinary(
-                  subOp,
-                  builder->makeGetLocal(rem, f),
-                  builder->makeUnary(
-                    floorOp,
-                    builder->makeGetLocal(rem, f)
-                  )
-                ),
-                builder->makeConst(litZero)
-              ),
-              builder->makeGetLocal(floor, f),
-              builder->makeGetLocal(ceil, f)
-            )
-          )
-        )
-      )
-    );
-    std::vector<Type> params = {f};
-    std::vector<Type> vars = {f, f, f, f, f};
-    Name name = f == f32 ? WASM_NEAREST_F32 : WASM_NEAREST_F64;
-    return builder->makeFunction(name, std::move(params), f, std::move(vars), body);
-  }
+    struct CallFinder: public PostWalker<CallFinder> {
+      RemoveNonJSOpsPass *pass;
+      Module &module;
+      std::set<Name> &needed;
 
-  Function *createTrunc(Type f) {
-    // fn trunc(f: float) -> float {
-    //    if f < 0.0 {
-    //        ceil(f)
-    //    } else {
-    //        floor(f)
-    //    }
-    // }
+      CallFinder(RemoveNonJSOpsPass *pass, Module &m, std::set<Name> &needed)
+        : pass(pass), module(m), needed(needed) {}
 
-    Index arg = 0;
+      void visitCall(Call *call) {
+        pass->addNeededFunctions(module, call->target, needed);
+      }
+    };
 
-    UnaryOp ceilOp = CeilFloat32;
-    UnaryOp floorOp = FloorFloat32;
-    BinaryOp ltOp = LtFloat32;
-    Literal litZero((float) 0.0);
-    if (f == f64) {
-      ceilOp = CeilFloat64;
-      floorOp = FloorFloat64;
-      ltOp = LtFloat64;
-      litZero = Literal((double) 0.0);
-    }
-
-    Expression *body = builder->makeIf(
-      builder->makeBinary(
-        ltOp,
-        builder->makeGetLocal(arg, f),
-        builder->makeConst(litZero)
-      ),
-      builder->makeUnary(ceilOp, builder->makeGetLocal(arg, f)),
-      builder->makeUnary(floorOp, builder->makeGetLocal(arg, f))
-    );
-    std::vector<Type> params = {f};
-    std::vector<Type> vars = {};
-    Name name = f == f32 ? WASM_TRUNC_F32 : WASM_TRUNC_F64;
-    return builder->makeFunction(name, std::move(params), f, std::move(vars), body);
-  }
-
-  Function* createCtz() {
-    // if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
-    Binary* xorExp = builder->makeBinary(
-      XorInt32,
-      builder->makeGetLocal(0, i32),
-      builder->makeBinary(
-        SubInt32,
-        builder->makeGetLocal(0, i32),
-        builder->makeConst(Literal(int32_t(1)))
-      )
-    );
-    Binary* subExp = builder->makeBinary(
-      SubInt32,
-      builder->makeConst(Literal(int32_t(32 - 1))),
-      builder->makeUnary(ClzInt32, xorExp)
-    );
-    If* body = builder->makeIf(
-      builder->makeUnary(
-        EqZInt32,
-        builder->makeGetLocal(0, i32)
-      ),
-      builder->makeConst(Literal(int32_t(32))),
-      subExp
-    );
-    return builder->makeFunction(
-      WASM_CTZ32,
-      std::vector<NameType>{NameType("x", i32)},
-      i32,
-      std::vector<NameType>{},
-      body
-    );
+    CallFinder finder(this, m, needed);
+    finder.doWalkFunction(m.getFunction(name));
   }
 
   Function* createPopcnt() {
@@ -312,46 +198,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     );
   }
 
-  Function* createRot(BinaryOp op) {
-    // left rotate is:
-    // (((((~0) >>> k) & x) << k) | ((((~0) << (w - k)) & x) >>> (w - k)))
-    // where k is shift modulo w. reverse shifts for right rotate
-    bool isLRot  = op == RotLInt32;
-    BinaryOp lshift = isLRot ? ShlInt32 : ShrUInt32;
-    BinaryOp rshift = isLRot ? ShrUInt32 : ShlInt32;
-    Literal widthMask(int32_t(32 - 1));
-    Literal width(int32_t(32));
-    auto shiftVal = [&]() {
-      return builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(1, i32),
-        builder->makeConst(widthMask)
-      );
-    };
-    auto widthSub = [&]() {
-      return builder->makeBinary(SubInt32, builder->makeConst(width), shiftVal());
-    };
-    auto fullMask = [&]() {
-      return builder->makeConst(Literal(~int32_t(0)));
-    };
-    Binary* maskRShift = builder->makeBinary(rshift, fullMask(), shiftVal());
-    Binary* lowMask = builder->makeBinary(AndInt32, maskRShift, builder->makeGetLocal(0, i32));
-    Binary* lowShift = builder->makeBinary(lshift, lowMask, shiftVal());
-    Binary* maskLShift = builder->makeBinary(lshift, fullMask(), widthSub());
-    Binary* highMask =
-        builder->makeBinary(AndInt32, maskLShift, builder->makeGetLocal(0, i32));
-    Binary* highShift = builder->makeBinary(rshift, highMask, widthSub());
-    Binary* body = builder->makeBinary(OrInt32, lowShift, highShift);
-    return builder->makeFunction(
-      isLRot ? WASM_ROTL32 : WASM_ROTR32,
-      std::vector<NameType>{NameType("x", i32),
-            NameType("k", i32)},
-      i32,
-      std::vector<NameType>{},
-      body
-    );
-  }
-
   void doWalkFunction(Function* func) {
     if (!builder) builder = make_unique<Builder>(*getModule());
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
@@ -366,16 +212,36 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         return;
 
       case RotLInt32:
-        needRotLInt32 = true;
         name = WASM_ROTL32;
         break;
       case RotRInt32:
-        needRotRInt32 = true;
         name = WASM_ROTR32;
+        break;
+      case RotLInt64:
+        name = WASM_ROTL64;
+        break;
+      case RotRInt64:
+        name = WASM_ROTR64;
+        break;
+      case MulInt64:
+        name = WASM_I64_MUL;
+        break;
+      case DivSInt64:
+        name = WASM_I64_SDIV;
+        break;
+      case DivUInt64:
+        name = WASM_I64_UDIV;
+        break;
+      case RemSInt64:
+        name = WASM_I64_SREM;
+        break;
+      case RemUInt64:
+        name = WASM_I64_UREM;
         break;
 
       default: return;
     }
+    neededIntrinsics.insert(name);
     replaceCurrent(builder->makeCall(name, {curr->left, curr->right}, curr->type));
   }
 
@@ -435,45 +301,1038 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     Name functionCall;
     switch (curr->op) {
       case NearestFloat32:
-        needNearestF32 = true;
         functionCall = WASM_NEAREST_F32;
         break;
       case NearestFloat64:
-        needNearestF64 = true;
         functionCall = WASM_NEAREST_F64;
         break;
 
       case TruncFloat32:
-        needTruncF32 = true;
         functionCall = WASM_TRUNC_F32;
         break;
       case TruncFloat64:
-        needTruncF64 = true;
         functionCall = WASM_TRUNC_F64;
         break;
 
       case PopcntInt32:
-        needPopcntInt32 = true;
         functionCall = WASM_POPCNT32;
         break;
 
       case CtzInt32:
-        needCtzInt32 = true;
         functionCall = WASM_CTZ32;
         break;
 
       default: return;
     }
+    neededIntrinsics.insert(functionCall);
     replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
   }
-
-private:
-  std::unique_ptr<Builder> builder;
 };
 
 Pass *createRemoveNonJSOpsPass() {
   return new RemoveNonJSOpsPass();
 }
+
+namespace {
+// A large WAST blob which contains the implementations of all the intrinsics
+// that we inject as part of this module. This blob was generated from a Rust
+// program [1] which uses the Rust compiler-builtins project. It's not
+// necessarily perfect but gets the job done! The idea here is that we inject
+// these pretty early so they can continue to be optimized by further passes
+// (aka inlining and whatnot)
+//
+// [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
+const char *IntrinsicsModule = R"(
+(module
+ (type $0 (func (param i64 i64) (result i64)))
+ (type $1 (func (param f32) (result f32)))
+ (type $2 (func (param f64) (result f64)))
+ (type $3 (func (param i32) (result i32)))
+ (type $4 (func (param i32 i32) (result i32)))
+ (import "env" "memory" (memory $0 17))
+ (export "__wasm_i64_sdiv" (func $__wasm_i64_sdiv))
+ (export "__wasm_i64_udiv" (func $__wasm_i64_udiv))
+ (export "__wasm_i64_srem" (func $__wasm_i64_srem))
+ (export "__wasm_i64_urem" (func $__wasm_i64_urem))
+ (export "__wasm_i64_mul" (func $__wasm_i64_mul))
+ (export "__wasm_trunc_f32" (func $__wasm_trunc_f32))
+ (export "__wasm_trunc_f64" (func $__wasm_trunc_f64))
+ (export "__wasm_ctz_i32" (func $__wasm_ctz_i32))
+ (export "__wasm_rotl_i32" (func $__wasm_rotl_i32))
+ (export "__wasm_rotr_i32" (func $__wasm_rotr_i32))
+ (export "__wasm_rotl_i64" (func $__wasm_rotl_i64))
+ (export "__wasm_rotr_i64" (func $__wasm_rotr_i64))
+ (export "__wasm_nearest_f32" (func $__wasm_nearest_f32))
+ (export "__wasm_nearest_f64" (func $__wasm_nearest_f64))
+ (func $__wasm_i64_sdiv (; 0 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_udiv (; 1 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_srem (; 2 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_urem (; 3 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (drop
+   (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
+    (get_local $var$0)
+    (get_local $var$1)
+   )
+  )
+  (i64.load
+   (i32.const 1024)
+  )
+ )
+ (func $__wasm_i64_mul (; 4 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_trunc_f32 (; 5 ;) (type $1) (param $var$0 f32) (result f32)
+  (select
+   (f32.ceil
+    (get_local $var$0)
+   )
+   (f32.floor
+    (get_local $var$0)
+   )
+   (f32.lt
+    (get_local $var$0)
+    (f32.const 0)
+   )
+  )
+ )
+ (func $__wasm_trunc_f64 (; 6 ;) (type $2) (param $var$0 f64) (result f64)
+  (select
+   (f64.ceil
+    (get_local $var$0)
+   )
+   (f64.floor
+    (get_local $var$0)
+   )
+   (f64.lt
+    (get_local $var$0)
+    (f64.const 0)
+   )
+  )
+ )
+ (func $__wasm_ctz_i32 (; 7 ;) (type $3) (param $var$0 i32) (result i32)
+  (if
+   (get_local $var$0)
+   (return
+    (i32.sub
+     (i32.const 31)
+     (i32.clz
+      (i32.xor
+       (i32.add
+        (get_local $var$0)
+        (i32.const -1)
+       )
+       (get_local $var$0)
+      )
+     )
+    )
+   )
+  )
+  (i32.const 32)
+ )
+ (func $__wasm_rotl_i32 (; 8 ;) (type $4) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+  (i32.or
+   (i32.shl
+    (i32.and
+     (i32.shr_u
+      (i32.const -1)
+      (tee_local $var$2
+       (i32.and
+        (get_local $var$1)
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i32.shr_u
+    (i32.and
+     (i32.shl
+      (i32.const -1)
+      (tee_local $var$1
+       (i32.and
+        (i32.sub
+         (i32.const 0)
+         (get_local $var$1)
+        )
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotr_i32 (; 9 ;) (type $4) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+  (i32.or
+   (i32.shr_u
+    (i32.and
+     (i32.shl
+      (i32.const -1)
+      (tee_local $var$2
+       (i32.and
+        (get_local $var$1)
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i32.shl
+    (i32.and
+     (i32.shr_u
+      (i32.const -1)
+      (tee_local $var$1
+       (i32.and
+        (i32.sub
+         (i32.const 0)
+         (get_local $var$1)
+        )
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotl_i64 (; 10 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.or
+   (i64.shl
+    (i64.and
+     (i64.shr_u
+      (i64.const -1)
+      (tee_local $var$2
+       (i64.and
+        (get_local $var$1)
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i64.shr_u
+    (i64.and
+     (i64.shl
+      (i64.const -1)
+      (tee_local $var$1
+       (i64.and
+        (i64.sub
+         (i64.const 0)
+         (get_local $var$1)
+        )
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotr_i64 (; 11 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.or
+   (i64.shr_u
+    (i64.and
+     (i64.shl
+      (i64.const -1)
+      (tee_local $var$2
+       (i64.and
+        (get_local $var$1)
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i64.shl
+    (i64.and
+     (i64.shr_u
+      (i64.const -1)
+      (tee_local $var$1
+       (i64.and
+        (i64.sub
+         (i64.const 0)
+         (get_local $var$1)
+        )
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_nearest_f32 (; 12 ;) (type $1) (param $var$0 f32) (result f32)
+  (local $var$1 f32)
+  (local $var$2 f32)
+  (if
+   (i32.eqz
+    (f32.lt
+     (tee_local $var$2
+      (f32.sub
+       (get_local $var$0)
+       (tee_local $var$1
+        (f32.floor
+         (get_local $var$0)
+        )
+       )
+      )
+     )
+     (f32.const 0.5)
+    )
+   )
+   (block
+    (set_local $var$0
+     (f32.ceil
+      (get_local $var$0)
+     )
+    )
+    (if
+     (f32.gt
+      (get_local $var$2)
+      (f32.const 0.5)
+     )
+     (return
+      (get_local $var$0)
+     )
+    )
+    (set_local $var$1
+     (select
+      (get_local $var$1)
+      (get_local $var$0)
+      (f32.eq
+       (f32.sub
+        (tee_local $var$2
+         (f32.mul
+          (get_local $var$1)
+          (f32.const 0.5)
+         )
+        )
+        (f32.floor
+         (get_local $var$2)
+        )
+       )
+       (f32.const 0)
+      )
+     )
+    )
+   )
+  )
+  (get_local $var$1)
+ )
+ (func $__wasm_nearest_f64 (; 13 ;) (type $2) (param $var$0 f64) (result f64)
+  (local $var$1 f64)
+  (local $var$2 f64)
+  (if
+   (i32.eqz
+    (f64.lt
+     (tee_local $var$2
+      (f64.sub
+       (get_local $var$0)
+       (tee_local $var$1
+        (f64.floor
+         (get_local $var$0)
+        )
+       )
+      )
+     )
+     (f64.const 0.5)
+    )
+   )
+   (block
+    (set_local $var$0
+     (f64.ceil
+      (get_local $var$0)
+     )
+    )
+    (if
+     (f64.gt
+      (get_local $var$2)
+      (f64.const 0.5)
+     )
+     (return
+      (get_local $var$0)
+     )
+    )
+    (set_local $var$1
+     (select
+      (get_local $var$1)
+      (get_local $var$0)
+      (f64.eq
+       (f64.sub
+        (tee_local $var$2
+         (f64.mul
+          (get_local $var$1)
+          (f64.const 0.5)
+         )
+        )
+        (f64.floor
+         (get_local $var$2)
+        )
+       )
+       (f64.const 0)
+      )
+     )
+    )
+   )
+  )
+  (get_local $var$1)
+ )
+ (func $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E (; 14 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (local $var$5 i64)
+  (local $var$6 i64)
+  (local $var$7 i64)
+  (local $var$8 i64)
+  (block $label$1
+   (block $label$2
+    (block $label$3
+     (block $label$4
+      (block $label$5
+       (block $label$6
+        (block $label$7
+         (block $label$8
+          (block $label$9
+           (block $label$10
+            (block $label$11
+             (if
+              (tee_local $var$2
+               (i32.wrap/i64
+                (i64.shr_u
+                 (get_local $var$0)
+                 (i64.const 32)
+                )
+               )
+              )
+              (block
+               (br_if $label$11
+                (i32.eqz
+                 (tee_local $var$3
+                  (i32.wrap/i64
+                   (get_local $var$1)
+                  )
+                 )
+                )
+               )
+               (br_if $label$9
+                (i32.eqz
+                 (tee_local $var$4
+                  (i32.wrap/i64
+                   (i64.shr_u
+                    (get_local $var$1)
+                    (i64.const 32)
+                   )
+                  )
+                 )
+                )
+               )
+               (br_if $label$8
+                (i32.le_u
+                 (tee_local $var$2
+                  (i32.sub
+                   (i32.clz
+                    (get_local $var$4)
+                   )
+                   (i32.clz
+                    (get_local $var$2)
+                   )
+                  )
+                 )
+                 (i32.const 31)
+                )
+               )
+               (br $label$2)
+              )
+             )
+             (br_if $label$2
+              (i64.ge_u
+               (get_local $var$1)
+               (i64.const 4294967296)
+              )
+             )
+             (i64.store
+              (i32.const 1024)
+              (i64.extend_u/i32
+               (i32.sub
+                (tee_local $var$2
+                 (i32.wrap/i64
+                  (get_local $var$0)
+                 )
+                )
+                (i32.mul
+                 (tee_local $var$2
+                  (i32.div_u
+                   (get_local $var$2)
+                   (tee_local $var$3
+                    (i32.wrap/i64
+                     (get_local $var$1)
+                    )
+                   )
+                  )
+                 )
+                 (get_local $var$3)
+                )
+               )
+              )
+             )
+             (return
+              (i64.extend_u/i32
+               (get_local $var$2)
+              )
+             )
+            )
+            (set_local $var$3
+             (i32.wrap/i64
+              (i64.shr_u
+               (get_local $var$1)
+               (i64.const 32)
+              )
+             )
+            )
+            (br_if $label$7
+             (i32.eqz
+              (i32.wrap/i64
+               (get_local $var$0)
+              )
+             )
+            )
+            (br_if $label$6
+             (i32.eqz
+              (get_local $var$3)
+             )
+            )
+            (br_if $label$6
+             (i32.and
+              (tee_local $var$4
+               (i32.add
+                (get_local $var$3)
+                (i32.const -1)
+               )
+              )
+              (get_local $var$3)
+             )
+            )
+            (i64.store
+             (i32.const 1024)
+             (i64.or
+              (i64.shl
+               (i64.extend_u/i32
+                (i32.and
+                 (get_local $var$4)
+                 (get_local $var$2)
+                )
+               )
+               (i64.const 32)
+              )
+              (i64.and
+               (get_local $var$0)
+               (i64.const 4294967295)
+              )
+             )
+            )
+            (return
+             (i64.extend_u/i32
+              (i32.shr_u
+               (get_local $var$2)
+               (i32.and
+                (i32.ctz
+                 (get_local $var$3)
+                )
+                (i32.const 31)
+               )
+              )
+             )
+            )
+           )
+           (unreachable)
+          )
+          (br_if $label$5
+           (i32.eqz
+            (i32.and
+             (tee_local $var$4
+              (i32.add
+               (get_local $var$3)
+               (i32.const -1)
+              )
+             )
+             (get_local $var$3)
+            )
+           )
+          )
+          (set_local $var$3
+           (i32.sub
+            (i32.const 0)
+            (tee_local $var$2
+             (i32.sub
+              (i32.add
+               (i32.clz
+                (get_local $var$3)
+               )
+               (i32.const 33)
+              )
+              (i32.clz
+               (get_local $var$2)
+              )
+             )
+            )
+           )
+          )
+          (br $label$3)
+         )
+         (set_local $var$3
+          (i32.sub
+           (i32.const 63)
+           (get_local $var$2)
+          )
+         )
+         (set_local $var$2
+          (i32.add
+           (get_local $var$2)
+           (i32.const 1)
+          )
+         )
+         (br $label$3)
+        )
+        (i64.store
+         (i32.const 1024)
+         (i64.shl
+          (i64.extend_u/i32
+           (i32.sub
+            (get_local $var$2)
+            (i32.mul
+             (tee_local $var$4
+              (i32.div_u
+               (get_local $var$2)
+               (get_local $var$3)
+              )
+             )
+             (get_local $var$3)
+            )
+           )
+          )
+          (i64.const 32)
+         )
+        )
+        (return
+         (i64.extend_u/i32
+          (get_local $var$4)
+         )
+        )
+       )
+       (br_if $label$4
+        (i32.lt_u
+         (tee_local $var$2
+          (i32.sub
+           (i32.clz
+            (get_local $var$3)
+           )
+           (i32.clz
+            (get_local $var$2)
+           )
+          )
+         )
+         (i32.const 31)
+        )
+       )
+       (br $label$2)
+      )
+      (i64.store
+       (i32.const 1024)
+       (i64.extend_u/i32
+        (i32.and
+         (get_local $var$4)
+         (i32.wrap/i64
+          (get_local $var$0)
+         )
+        )
+       )
+      )
+      (br_if $label$1
+       (i32.eq
+        (get_local $var$3)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i64.shr_u
+        (get_local $var$0)
+        (i64.extend_u/i32
+         (i32.ctz
+          (get_local $var$3)
+         )
+        )
+       )
+      )
+     )
+     (set_local $var$3
+      (i32.sub
+       (i32.const 63)
+       (get_local $var$2)
+      )
+     )
+     (set_local $var$2
+      (i32.add
+       (get_local $var$2)
+       (i32.const 1)
+      )
+     )
+    )
+    (set_local $var$5
+     (i64.shr_u
+      (get_local $var$0)
+      (i64.extend_u/i32
+       (i32.and
+        (get_local $var$2)
+        (i32.const 63)
+       )
+      )
+     )
+    )
+    (set_local $var$0
+     (i64.shl
+      (get_local $var$0)
+      (i64.extend_u/i32
+       (i32.and
+        (get_local $var$3)
+        (i32.const 63)
+       )
+      )
+     )
+    )
+    (block $label$13
+     (if
+      (get_local $var$2)
+      (block
+       (set_local $var$8
+        (i64.add
+         (get_local $var$1)
+         (i64.const -1)
+        )
+       )
+       (loop $label$15
+        (set_local $var$5
+         (i64.sub
+          (tee_local $var$5
+           (i64.or
+            (i64.shl
+             (get_local $var$5)
+             (i64.const 1)
+            )
+            (i64.shr_u
+             (get_local $var$0)
+             (i64.const 63)
+            )
+           )
+          )
+          (i64.and
+           (tee_local $var$6
+            (i64.shr_s
+             (i64.sub
+              (get_local $var$8)
+              (get_local $var$5)
+             )
+             (i64.const 63)
+            )
+           )
+           (get_local $var$1)
+          )
+         )
+        )
+        (set_local $var$0
+         (i64.or
+          (i64.shl
+           (get_local $var$0)
+           (i64.const 1)
+          )
+          (get_local $var$7)
+         )
+        )
+        (set_local $var$7
+         (tee_local $var$6
+          (i64.and
+           (get_local $var$6)
+           (i64.const 1)
+          )
+         )
+        )
+        (br_if $label$15
+         (tee_local $var$2
+          (i32.add
+           (get_local $var$2)
+           (i32.const -1)
+          )
+         )
+        )
+       )
+       (br $label$13)
+      )
+     )
+    )
+    (i64.store
+     (i32.const 1024)
+     (get_local $var$5)
+    )
+    (return
+     (i64.or
+      (i64.shl
+       (get_local $var$0)
+       (i64.const 1)
+      )
+      (get_local $var$6)
+     )
+    )
+   )
+   (i64.store
+    (i32.const 1024)
+    (get_local $var$0)
+   )
+   (set_local $var$0
+    (i64.const 0)
+   )
+  )
+  (get_local $var$0)
+ )
+ (func $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE (; 15 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (local $var$5 i32)
+  (local $var$6 i32)
+  (i64.or
+   (i64.shl
+    (i64.extend_u/i32
+     (i32.add
+      (i32.add
+       (i32.add
+        (i32.add
+         (i32.mul
+          (tee_local $var$4
+           (i32.shr_u
+            (tee_local $var$2
+             (i32.wrap/i64
+              (get_local $var$1)
+             )
+            )
+            (i32.const 16)
+           )
+          )
+          (tee_local $var$5
+           (i32.shr_u
+            (tee_local $var$3
+             (i32.wrap/i64
+              (get_local $var$0)
+             )
+            )
+            (i32.const 16)
+           )
+          )
+         )
+         (i32.mul
+          (get_local $var$2)
+          (i32.wrap/i64
+           (i64.shr_u
+            (get_local $var$0)
+            (i64.const 32)
+           )
+          )
+         )
+        )
+        (i32.mul
+         (i32.wrap/i64
+          (i64.shr_u
+           (get_local $var$1)
+           (i64.const 32)
+          )
+         )
+         (get_local $var$3)
+        )
+       )
+       (i32.shr_u
+        (tee_local $var$2
+         (i32.add
+          (i32.shr_u
+           (tee_local $var$6
+            (i32.mul
+             (tee_local $var$2
+              (i32.and
+               (get_local $var$2)
+               (i32.const 65535)
+              )
+             )
+             (tee_local $var$3
+              (i32.and
+               (get_local $var$3)
+               (i32.const 65535)
+              )
+             )
+            )
+           )
+           (i32.const 16)
+          )
+          (i32.mul
+           (get_local $var$2)
+           (get_local $var$5)
+          )
+         )
+        )
+        (i32.const 16)
+       )
+      )
+      (i32.shr_u
+       (tee_local $var$2
+        (i32.add
+         (i32.and
+          (get_local $var$2)
+          (i32.const 65535)
+         )
+         (i32.mul
+          (get_local $var$4)
+          (get_local $var$3)
+         )
+        )
+       )
+       (i32.const 16)
+      )
+     )
+    )
+    (i64.const 32)
+   )
+   (i64.extend_u/i32
+    (i32.or
+     (i32.shl
+      (get_local $var$2)
+      (i32.const 16)
+     )
+     (i32.and
+      (get_local $var$6)
+      (i32.const 65535)
+     )
+    )
+   )
+  )
+ )
+ (func $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E (; 16 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.sub
+   (i64.xor
+    (i64.div_u
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$0)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$0)
+      )
+      (get_local $var$2)
+     )
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$1)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$1)
+      )
+      (get_local $var$2)
+     )
+    )
+    (tee_local $var$0
+     (i64.shr_s
+      (i64.xor
+       (get_local $var$1)
+       (get_local $var$0)
+      )
+      (i64.const 63)
+     )
+    )
+   )
+   (get_local $var$0)
+  )
+ )
+ (func $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E (; 17 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.sub
+   (i64.xor
+    (i64.rem_u
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$0)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$0)
+      )
+      (get_local $var$2)
+     )
+     (i64.sub
+      (i64.xor
+       (tee_local $var$0
+        (i64.shr_s
+         (get_local $var$1)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$1)
+      )
+      (get_local $var$0)
+     )
+    )
+    (get_local $var$2)
+   )
+   (get_local $var$2)
+  )
+ )
+ ;; custom section "linking", size 3
+)
+
+)";
+} // namespace
 
 } // namespace wasm
 

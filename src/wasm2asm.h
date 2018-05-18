@@ -29,6 +29,8 @@
 #include "asmjs/asmangle.h"
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "wasm-io.h"
+#include "wasm-validator.h"
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
@@ -228,17 +230,34 @@ private:
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
-  runner.add("remove-non-js-ops"); // must be before i64-to-i32
+  // First up remove as many non-JS operations we can, like 64-bit integer
+  // multiplication or division. This'll make it possible actually perform
+  // i64-to-i32 lowering as otherwise that pass can't handle things like
+  // rotation/division.
+  runner.add("remove-non-js-ops");
   // Currently the i64-to-32 lowering pass requires that `flatten` be run before
   // it produce correct code. For some more details about this see #1480
   runner.add("flatten");
   runner.add("i64-to-i32-lowering");
+  // After i64 is gone run this pass again to remove any operations that were
+  // injected by i64-to-i32 which aren't actually supported in JS
+  runner.add("remove-non-js-ops");
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");
   runner.add("vacuum");
   runner.setDebug(flags.debug);
   runner.run();
+
+  // Make sure we didn't corrupt anything if we're in --allow-asserts mode (aka
+  // tests)
+  if (flags.allowAsserts) {
+    if (!WasmValidator().validate(*wasm)) {
+      WasmPrinter::printModule(wasm);
+      Fatal() << "error in validating input";
+    }
+  }
+
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
   ret[1]->push_back(asmFunc);
@@ -486,6 +505,17 @@ void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
   }
 }
 
+static bool expressionEndsInReturn(Expression *e) {
+  if (e->is<Return>()) {
+    return true;
+  }
+  if (!e->is<Block>()) {
+    return false;
+  }
+  ExpressionList* stats = &static_cast<Block*>(e)->list;
+  return expressionEndsInReturn((*stats)[stats->size()-1]);
+}
+
 Ref Wasm2AsmBuilder::processFunction(Function* func) {
   if (flags.debug) {
     static int fns = 0;
@@ -530,12 +560,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     );
   };
   scanFunctionBody(func->body);
-  bool isBodyBlock = func->body->is<Block>();
-  ExpressionList* stats = isBodyBlock ?
-      &static_cast<Block*>(func->body)->list : nullptr;
-  bool endsInReturn =
-      (isBodyBlock && ((*stats)[stats->size()-1]->is<Return>())) ||
-    func->body->is<Return>();
+  bool endsInReturn = expressionEndsInReturn(func->body);
   if (endsInReturn) {
     // return already taken care of
     flattenAppend(ret, processFunctionBody(func, NO_RESULT));

@@ -97,7 +97,12 @@ extern cashew::IString GLOBAL,
                 WASM_NEAREST_F32,
                 WASM_NEAREST_F64,
                 WASM_TRUNC_F32,
-                WASM_TRUNC_F64;
+                WASM_TRUNC_F64,
+                WASM_I64_MUL,
+                WASM_I64_SDIV,
+                WASM_I64_UDIV,
+                WASM_I64_SREM,
+                WASM_I64_UREM;
 }
 
 #endif // wasm_asmjs_shared_constants_h

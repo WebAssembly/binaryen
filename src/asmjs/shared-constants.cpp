@@ -94,5 +94,10 @@ cashew::IString GLOBAL("global"),
                 WASM_NEAREST_F32("__wasm_nearest_f32"),
                 WASM_NEAREST_F64("__wasm_nearest_f64"),
                 WASM_TRUNC_F32("__wasm_trunc_f32"),
-                WASM_TRUNC_F64("__wasm_trunc_f64");
+                WASM_TRUNC_F64("__wasm_trunc_f64"),
+                WASM_I64_MUL("__wasm_i64_mul"),
+                WASM_I64_SDIV("__wasm_i64_sdiv"),
+                WASM_I64_UDIV("__wasm_i64_udiv"),
+                WASM_I64_SREM("__wasm_i64_srem"),
+                WASM_I64_UREM("__wasm_i64_urem");
 }

@@ -188,13 +188,6 @@ function asmFunc(global, env, buffer) {
   return x >>> 0 >= y >>> 0 | 0;
  }
  
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $9 = 0;
-  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $9 | 0;
- }
- 
  function __wasm_popcnt_i32(x) {
   x = x | 0;
   var count = 0, $5 = 0;
@@ -212,16 +205,28 @@ function asmFunc(global, env, buffer) {
   return $5 | 0;
  }
  
- function __wasm_rotl_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+ function __wasm_ctz_i32(var$0) {
+  var$0 = var$0 | 0;
+  if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
+  return 32 | 0;
  }
  
- function __wasm_rotr_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+ function __wasm_rotl_i32(var$0, var$1) {
+  var$0 = var$0 | 0;
+  var$1 = var$1 | 0;
+  var var$2 = 0;
+  var$2 = var$1 & 31 | 0;
+  var$1 = (0 - var$1 | 0) & 31 | 0;
+  return ((4294967295 >>> var$2 | 0) & var$0 | 0) << var$2 | 0 | (((4294967295 << var$1 | 0) & var$0 | 0) >>> var$1 | 0) | 0 | 0;
+ }
+ 
+ function __wasm_rotr_i32(var$0, var$1) {
+  var$0 = var$0 | 0;
+  var$1 = var$1 | 0;
+  var var$2 = 0;
+  var$2 = var$1 & 31 | 0;
+  var$1 = (0 - var$1 | 0) & 31 | 0;
+  return ((4294967295 << var$2 | 0) & var$0 | 0) >>> var$2 | 0 | (((4294967295 >>> var$1 | 0) & var$0 | 0) << var$1 | 0) | 0 | 0;
  }
  
  return {

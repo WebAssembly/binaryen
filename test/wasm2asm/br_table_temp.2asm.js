@@ -50188,11 +50188,10 @@ function asmFunc(global, env, buffer) {
   return $3 | 0;
  }
  
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $9 = 0;
-  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $9 | 0;
+ function __wasm_ctz_i32(var$0) {
+  var$0 = var$0 | 0;
+  if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
+  return 32 | 0;
  }
  
  var FUNCTION_TABLE_iiii = [f];
