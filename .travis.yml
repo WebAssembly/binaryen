@@ -58,6 +58,22 @@ jobs:
         CC="gcc-5"
         CXX="g++-5"
 
+    # Build the .js outputs using emcc
+    - &test-emcc
+      stage: test
+      compiler: clang
+      python: 2.7
+      language: node_js
+      sudo: required
+      services:
+      - docker
+      before_install:
+      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+      script:
+      # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
+      # version is good too
+      - docker exec -it emscripten bash ./travis-emcc-tests.sh
+
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
     - &test-alpine
@@ -78,23 +94,6 @@ jobs:
         - alpine cmake .
         - alpine make -j2
         - alpine ./check.py --test-waterfall
-
-    # Build the .js outputs using emcc
-    - &test-emcc
-      stage: test
-      compiler: clang
-      python: 2.7
-      language: node_js
-      sudo: required
-      services:
-      - docker
-      before_install:
-      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
-      script:
-      # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
-      # version is good too
-      - docker exec -it emscripten bash ./travis-emcc-tests.sh
-
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball
