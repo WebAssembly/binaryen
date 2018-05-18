@@ -58,6 +58,27 @@ jobs:
         CC="gcc-5"
         CXX="g++-5"
 
+    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+    # Note: Alpine uses musl libc.
+    - &test-alpine
+      stage: test
+      sudo: true
+      language: minimal
+      compiler: gcc
+      env: ARCH=x86_64
+      before_install:
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
+        - alpine() { docker exec -it alpine "$@"; }
+      install:
+        - alpine apk update
+        - alpine apk add build-base cmake git python2
+      before_script:
+        - alpine ./check.py --test-waterfall --only-prepare
+      script:
+        - alpine cmake .
+        - alpine make -j2
+        - alpine ./check.py --test-waterfall
+
     # Build the .js outputs using emcc
     - &test-emcc
       stage: test
@@ -73,26 +94,6 @@ jobs:
       # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
       # version is good too
       - docker exec -it emscripten bash ./travis-emcc-tests.sh
-
-    # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
-    # Note: Alpine uses musl libc.
-    - &test-alpine
-      stage: test
-      sudo: true
-      language: minimal
-      compiler: gcc
-      env: ARCH=x86_64
-      before_install:
-        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
-        - alpine() { docker exec -it alpine "$@"; }
-      install:
-        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
-      before_script:
-        - alpine ./check.py --test-waterfall --only-prepare
-      script:
-        - alpine cmake .
-        - alpine make -j2
-        - alpine ./check.py --test-waterfall
 
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
