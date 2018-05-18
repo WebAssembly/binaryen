@@ -1,4 +1,3 @@
-atexit() called, but NO_EXIT_RUNTIME is set, so atexits() will not be called. set NO_EXIT_RUNTIME to 0 (see the FAQ)
 (module
  (type $i (func (param i32) (result i32)))
  (memory $0 1 100)
