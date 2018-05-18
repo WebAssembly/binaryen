@@ -88,8 +88,6 @@ jobs:
         - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
       install:
         - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
-        - nvm install 10
-        - nvm use 10
       before_script:
         - alpine ./check.py --test-waterfall --only-prepare
       script:
