@@ -102,7 +102,6 @@ jobs:
       <<: *test-alpine
       stage: build
       env: ARCH=x86_64
-      node_js: '10'
       # Don't run before_script inherited from *test-alpine.
       before_script: skip
       script:
