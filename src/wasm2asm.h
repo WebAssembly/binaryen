@@ -364,6 +364,16 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   addMath(MATH_FLOOR, FLOOR);
   addMath(MATH_CEIL, CEIL);
   addMath(MATH_SQRT, SQRT);
+  // abort function
+  Ref abortVar = ValueBuilder::makeVar();
+  ast->push_back(abortVar);
+  ValueBuilder::appendToVar(abortVar,
+    "abort",
+    ValueBuilder::makeDot(
+      ValueBuilder::makeName(ENV),
+      ABORT_FUNC
+    )
+  );
 }
 
 void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
