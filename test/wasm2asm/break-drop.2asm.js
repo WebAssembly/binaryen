@@ -19,34 +19,22 @@ function asmFunc(global, env, buffer) {
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
  var i64toi32_i32$HIGH_BITS = 0;
- function dummy() {
+ function $0() {
   
  }
  
- function $1($0) {
-  $0 = $0 | 0;
-  return ((HEAPF32[0] = (HEAP32[0] = $0, HEAPF32[0]), HEAP32[0]) | 0) == ($0 | 0) | 0;
+ function $1() {
+  
  }
  
- function $2($0, $0$hi) {
-  $0 = $0 | 0;
-  $0$hi = $0$hi | 0;
-  var i64toi32_i32$0 = 0, $3$hi = 0;
-  i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  HEAP32[0 >> 2] = $0;
-  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
-  HEAPF64[0 >> 3] = +HEAPF64[0 >> 3];
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  $3$hi = i64toi32_i32$0;
-  i64toi32_i32$0 = $0$hi;
-  i64toi32_i32$0 = $3$hi;
-  return (HEAP32[0 >> 2] | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
+ function $2() {
+  
  }
  
  return {
-  i32_roundtrip: $1, 
-  i64_roundtrip: $2
+  br: $0, 
+  br_if: $1, 
+  br_table: $2
  };
 }
 
