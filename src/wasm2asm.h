@@ -1753,6 +1753,9 @@ static void makeInstantiation(Ref ret) {
   insertItem(FLOAT32ARRAY);
   insertItem(FLOAT64ARRAY);
   Ref env = ValueBuilder::makeObject();
+  Ref abortFunc = ValueBuilder::makeFunction("abort");
+  abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
+  ValueBuilder::appendToObject(env, "abort", abortFunc);
   Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env,
       ValueBuilder::makeName(buffer));
   Ref module = ValueBuilder::makeVar();
