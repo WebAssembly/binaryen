@@ -15,9 +15,12 @@
  */
 
 //
-// Removes the `f32.copysign` and `f64.copysign` instructions and replaces them
-// with equivalent bit operations. Primarily intended to be used with `wasm2asm`
-// where `Math.copysign` doesn't exist.
+//
+// Removes all operations in a wasm module that aren't inherently implementable
+// in JS. This includes things like `f32.nearest` and
+// `f64.copysign`. Most operations are lowered to a call to an injected
+// intrinsic implementation. Intrinsics don't use themselves to implement
+// themselves.
 //
 
 #include <wasm.h>
