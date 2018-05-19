@@ -506,32 +506,86 @@ function asmFunc(global, env, buffer) {
  }
  
  function $76() {
-  FUNCTION_TABLE_v[1 & 7]();
-  FUNCTION_TABLE_v[4 & 7]();
+  var wasm2asm_i32$0 = 0;
+  wasm2asm_i32$0 = 1;
+  FUNCTION_TABLE_v[wasm2asm_i32$0 & 7]();
+  wasm2asm_i32$0 = 4;
+  FUNCTION_TABLE_v[wasm2asm_i32$0 & 7]();
  }
  
  function $77() {
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, wasm2asm_i32$0 = 0, wasm2asm_f64$0 = 0.0, wasm2asm_i32$1 = 0, wasm2asm_i32$2 = 0, wasm2asm_f64$1 = 0.0, wasm2asm_i32$3 = 0, wasm2asm_i32$4 = 0, wasm2asm_f64$2 = 0.0, wasm2asm_i32$5 = 0, wasm2asm_i32$6 = 0, wasm2asm_f32$0 = Math_fround(0), wasm2asm_i32$7 = 0;
   i64toi32_i32$0 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$2 = 0;
-  FUNCTION_TABLE_vdiidiidiifi[0 & 7](+(0.0), 0 | 0, i64toi32_i32$0 | 0, +(0.0), 0 | 0, i64toi32_i32$1 | 0, +(0.0), 0 | 0, i64toi32_i32$2 | 0, Math_fround(Math_fround(0.0)), 0 | 0);
+  wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$1 = 0;
+  wasm2asm_i32$2 = i64toi32_i32$0;
+  wasm2asm_f64$1 = 0.0;
+  wasm2asm_i32$3 = 0;
+  wasm2asm_i32$4 = i64toi32_i32$1;
+  wasm2asm_f64$2 = 0.0;
+  wasm2asm_i32$5 = 0;
+  wasm2asm_i32$6 = i64toi32_i32$2;
+  wasm2asm_f32$0 = Math_fround(0.0);
+  wasm2asm_i32$7 = 0;
+  wasm2asm_i32$0 = 0;
+  FUNCTION_TABLE_vdiidiidiifi[wasm2asm_i32$0 & 7](+wasm2asm_f64$0, wasm2asm_i32$1 | 0, wasm2asm_i32$2 | 0, +wasm2asm_f64$1, wasm2asm_i32$3 | 0, wasm2asm_i32$4 | 0, +wasm2asm_f64$2, wasm2asm_i32$5 | 0, wasm2asm_i32$6 | 0, Math_fround(wasm2asm_f32$0), wasm2asm_i32$7 | 0);
   i64toi32_i32$2 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$0 = 0;
-  FUNCTION_TABLE_vdiidiidiifi[2 & 7](+(0.0), 0 | 0, i64toi32_i32$2 | 0, +(0.0), 0 | 0, i64toi32_i32$1 | 0, +(0.0), 0 | 0, i64toi32_i32$0 | 0, Math_fround(Math_fround(0.0)), 0 | 0);
+  wasm2asm_f64$2 = 0.0;
+  wasm2asm_i32$7 = 0;
+  wasm2asm_i32$6 = i64toi32_i32$2;
+  wasm2asm_f64$1 = 0.0;
+  wasm2asm_i32$5 = 0;
+  wasm2asm_i32$4 = i64toi32_i32$1;
+  wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$3 = 0;
+  wasm2asm_i32$2 = i64toi32_i32$0;
+  wasm2asm_f32$0 = Math_fround(0.0);
+  wasm2asm_i32$1 = 0;
+  wasm2asm_i32$0 = 2;
+  FUNCTION_TABLE_vdiidiidiifi[wasm2asm_i32$0 & 7](+wasm2asm_f64$2, wasm2asm_i32$7 | 0, wasm2asm_i32$6 | 0, +wasm2asm_f64$1, wasm2asm_i32$5 | 0, wasm2asm_i32$4 | 0, +wasm2asm_f64$0, wasm2asm_i32$3 | 0, wasm2asm_i32$2 | 0, Math_fround(wasm2asm_f32$0), wasm2asm_i32$1 | 0);
   i64toi32_i32$0 = 0;
   i64toi32_i32$1 = 0;
   i64toi32_i32$2 = 0;
-  FUNCTION_TABLE_vdiidiidiifi[3 & 7](+(0.0), 0 | 0, i64toi32_i32$0 | 0, +(0.0), 0 | 0, i64toi32_i32$1 | 0, +(0.0), 0 | 0, i64toi32_i32$2 | 0, Math_fround(Math_fround(0.0)), 0 | 0);
+  wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$1 = 0;
+  wasm2asm_i32$2 = i64toi32_i32$0;
+  wasm2asm_f64$1 = 0.0;
+  wasm2asm_i32$3 = 0;
+  wasm2asm_i32$4 = i64toi32_i32$1;
+  wasm2asm_f64$2 = 0.0;
+  wasm2asm_i32$5 = 0;
+  wasm2asm_i32$6 = i64toi32_i32$2;
+  wasm2asm_f32$0 = Math_fround(0.0);
+  wasm2asm_i32$7 = 0;
+  wasm2asm_i32$0 = 3;
+  FUNCTION_TABLE_vdiidiidiifi[wasm2asm_i32$0 & 7](+wasm2asm_f64$0, wasm2asm_i32$1 | 0, wasm2asm_i32$2 | 0, +wasm2asm_f64$1, wasm2asm_i32$3 | 0, wasm2asm_i32$4 | 0, +wasm2asm_f64$2, wasm2asm_i32$5 | 0, wasm2asm_i32$6 | 0, Math_fround(wasm2asm_f32$0), wasm2asm_i32$7 | 0);
  }
  
  function $78() {
-  FUNCTION_TABLE_v[1 & 7]();
+  var wasm2asm_i32$0 = 0;
+  wasm2asm_i32$0 = 1;
+  FUNCTION_TABLE_v[wasm2asm_i32$0 & 7]();
  }
  
  function $79() {
-  FUNCTION_TABLE_vdiidiidiifi[0 & 7](+(0.0), 0 | 0, 0 | 0, +(0.0), 0 | 0, 0 | 0, +(0.0), 0 | 0, 0 | 0, Math_fround(Math_fround(0.0)), 0 | 0);
+  var wasm2asm_i32$0 = 0, wasm2asm_f64$0 = 0.0, wasm2asm_i32$1 = 0, wasm2asm_i32$2 = 0, wasm2asm_f64$1 = 0.0, wasm2asm_i32$3 = 0, wasm2asm_i32$4 = 0, wasm2asm_f64$2 = 0.0, wasm2asm_i32$5 = 0, wasm2asm_i32$6 = 0, wasm2asm_f32$0 = Math_fround(0), wasm2asm_i32$7 = 0;
+  wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$1 = 0;
+  wasm2asm_i32$2 = 0;
+  wasm2asm_f64$1 = 0.0;
+  wasm2asm_i32$3 = 0;
+  wasm2asm_i32$4 = 0;
+  wasm2asm_f64$2 = 0.0;
+  wasm2asm_i32$5 = 0;
+  wasm2asm_i32$6 = 0;
+  wasm2asm_f32$0 = Math_fround(0.0);
+  wasm2asm_i32$7 = 0;
+  wasm2asm_i32$0 = 0;
+  FUNCTION_TABLE_vdiidiidiifi[wasm2asm_i32$0 & 7](+wasm2asm_f64$0, wasm2asm_i32$1 | 0, wasm2asm_i32$2 | 0, +wasm2asm_f64$1, wasm2asm_i32$3 | 0, wasm2asm_i32$4 | 0, +wasm2asm_f64$2, wasm2asm_i32$5 | 0, wasm2asm_i32$6 | 0, Math_fround(wasm2asm_f32$0), wasm2asm_i32$7 | 0);
  }
  
  var FUNCTION_TABLE_v = [empty_sig_2, empty_sig_2, empty_sig_2, empty_sig_2, empty_sig_1, empty_sig_2, empty_sig_2, empty_sig_2];

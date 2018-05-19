@@ -706,16 +706,10 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      if (parent->isStatement(curr->target)) {
-        parent->setStatement(curr);
-        return;
-      }
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
+      // TODO: this is a pessimization that probably wants to get tweaked in
+      // the future. If none of the arguments have any side effects then we
+      // should be able to safely have tighter codegen.
+      parent->setStatement(curr);
     }
     void visitSetLocal(SetLocal* curr) {
       if (parent->isStatement(curr->value)) {
@@ -967,12 +961,21 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, Type type) {
+    Ref makeStatementizedCall(ExpressionList& operands,
+                              Ref ret,
+                              std::function<Ref()> genTheCall,
+                              IString result,
+                              Type type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
         temps.push_back(new ScopedTemp(operand->type, parent, func));
         IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
+      }
+      Ref theCall = genTheCall();
+      for (size_t i = 0; i < temps.size(); i++) {
+        IString temp = temps[i]->temp;
+        auto &operand = operands[i];
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
@@ -1002,7 +1005,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
       // we must statementize them all
-      return makeStatementizedCall(operands, ValueBuilder::makeBlock(), theCall,
+      return makeStatementizedCall(operands, ValueBuilder::makeBlock(),
+                                   [&]() { return theCall; },
                                    result, curr->type);
     }
 
@@ -1015,29 +1019,28 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
+      // TODO: the codegen here is a pessimization of what the ideal codegen
+      // looks like. Eventually if necessary this should be tightened up in the
+      // case that the argument expression don't have any side effects.
+      assert(isStatement(curr));
       std::string stable = std::string("FUNCTION_TABLE_") +
         getSig(module->getFunctionType(curr->fullType));
       IString table = IString(stable.c_str(), false);
-      auto makeTableCall = [&](Ref target) {
-        return ValueBuilder::makeCall(ValueBuilder::makeSub(
-          ValueBuilder::makeName(table),
-          ValueBuilder::makeBinary(target, AND, ValueBuilder::makeInt(parent->getTableSize()-1))
-        ));
-      };
-      if (!isStatement(curr)) {
-        // none of our operands is a statement; go right ahead and create a simple expression
-        Ref theCall = makeTableCall(visit(curr->target, EXPRESSION_RESULT));
-        for (auto operand : curr->operands) {
-          theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
-        }
-        return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      }
-      // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
-      ScopedTemp temp(i32, parent, func);
-      flattenAppend(ret, visit(curr->target, temp));
-      Ref theCall = makeTableCall(temp.getAstName());
-      return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
+      ScopedTemp idx(i32, parent, func);
+      return makeStatementizedCall(
+        curr->operands,
+        ret,
+        [&]() {
+          flattenAppend(ret, visitAndAssign(curr->target, idx));
+          return ValueBuilder::makeCall(ValueBuilder::makeSub(
+            ValueBuilder::makeName(table),
+            ValueBuilder::makeBinary(idx.getAstName(), AND, ValueBuilder::makeInt(parent->getTableSize()-1))
+          ));
+        },
+        result,
+        curr->type
+      );
     }
 
     Ref makeSetVar(Expression* curr, Expression* value, Name name, NameScope scope) {
@@ -1725,11 +1728,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
           tempCondition(i32, parent, func);
       return
         ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
+          ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
           ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
+            ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
             ValueBuilder::makeSeq(
-              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+              ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
               ValueBuilder::makeConditional(
                 tempCondition.getAstName(),
                 tempIfTrue.getAstName(),
@@ -1741,13 +1744,26 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
     }
 
     Ref visitReturn(Return* curr) {
-      Ref val = (curr->value == nullptr) ?
-          Ref() :
-          makeAsmCoercion(
-            visit(curr->value, NO_RESULT),
-            wasmToAsmType(curr->value->type)
-          );
-      return ValueBuilder::makeReturn(val);
+      if (curr->value == nullptr) {
+        return ValueBuilder::makeReturn(Ref());
+      }
+      if (isStatement(curr->value)) {
+        ScopedTemp temp(curr->value->type, parent, func);
+        Ref ret = ValueBuilder::makeBlock();
+        flattenAppend(ret, visitAndAssign(curr->value, temp));
+        Ref coerced = makeAsmCoercion(
+          temp.getAstName(),
+          wasmToAsmType(curr->value->type)
+        );
+        flattenAppend(ret, ValueBuilder::makeReturn(coerced));
+        return ret;
+      } else {
+        Ref val = makeAsmCoercion(
+          visit(curr->value, NO_RESULT),
+          wasmToAsmType(curr->value->type)
+        );
+        return ValueBuilder::makeReturn(val);
+      }
     }
 
     Ref visitHost(Host* curr) {

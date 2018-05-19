@@ -26,7 +26,7 @@ function asmFunc(global, env, buffer) {
   rhs = rhs | 0;
   cond = cond | 0;
   var wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$2 = 0;
-  return (wasm2asm_i32$2 = cond, wasm2asm_i32$0 = lhs, wasm2asm_i32$1 = rhs, wasm2asm_i32$2 ? wasm2asm_i32$0 : wasm2asm_i32$1) | 0;
+  return (wasm2asm_i32$0 = lhs, wasm2asm_i32$1 = rhs, wasm2asm_i32$2 = cond, wasm2asm_i32$2 ? wasm2asm_i32$0 : wasm2asm_i32$1) | 0;
  }
  
  function $1(lhs, lhs$hi, rhs, rhs$hi, cond) {
@@ -42,7 +42,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = rhs$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return (wasm2asm_i32$2 = cond, wasm2asm_i32$0 = lhs, wasm2asm_i32$1 = rhs, wasm2asm_i32$2 ? wasm2asm_i32$0 : wasm2asm_i32$1) | 0;
+  return (wasm2asm_i32$0 = lhs, wasm2asm_i32$1 = rhs, wasm2asm_i32$2 = cond, wasm2asm_i32$2 ? wasm2asm_i32$0 : wasm2asm_i32$1) | 0;
  }
  
  function $2(lhs, rhs, cond) {
@@ -50,7 +50,7 @@ function asmFunc(global, env, buffer) {
   rhs = Math_fround(rhs);
   cond = cond | 0;
   var wasm2asm_f32$0 = Math_fround(0), wasm2asm_f32$1 = Math_fround(0), wasm2asm_i32$0 = 0;
-  return Math_fround((wasm2asm_i32$0 = cond, wasm2asm_f32$0 = lhs, wasm2asm_f32$1 = rhs, wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1));
+  return Math_fround((wasm2asm_f32$0 = lhs, wasm2asm_f32$1 = rhs, wasm2asm_i32$0 = cond, wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1));
  }
  
  function $3(lhs, rhs, cond) {
@@ -58,7 +58,7 @@ function asmFunc(global, env, buffer) {
   rhs = +rhs;
   cond = cond | 0;
   var wasm2asm_f64$0 = 0.0, wasm2asm_f64$1 = 0.0, wasm2asm_i32$0 = 0;
-  return +(wasm2asm_i32$0 = cond, wasm2asm_f64$0 = lhs, wasm2asm_f64$1 = rhs, wasm2asm_i32$0 ? wasm2asm_f64$0 : wasm2asm_f64$1);
+  return +(wasm2asm_f64$0 = lhs, wasm2asm_f64$1 = rhs, wasm2asm_i32$0 = cond, wasm2asm_i32$0 ? wasm2asm_f64$0 : wasm2asm_f64$1);
  }
  
  function $4(cond) {
