@@ -99,7 +99,7 @@ void PassRegistry::registerPasses() {
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
-  registerPass("remove-copysign", "removes the copysign instruction", createRemoveCopysignPass);
+  registerPass("remove-non-js-ops", "removes operations incompatible with js", createRemoveNonJSOpsPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
   registerPass("remove-memory", "removes memory segments", createRemoveMemoryPass);
   registerPass("remove-unused-brs", "removes breaks from locations that are not needed", createRemoveUnusedBrsPass);

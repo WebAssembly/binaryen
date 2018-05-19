@@ -99,13 +99,13 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotl_i32(x, y) | 0 | 0;
+  return __wasm_rotl_i32(x | 0, y | 0) | 0 | 0;
  }
  
  function $14(x, y) {
   x = x | 0;
   y = y | 0;
-  return __wasm_rotr_i32(x, y) | 0 | 0;
+  return __wasm_rotr_i32(x | 0, y | 0) | 0 | 0;
  }
  
  function $15(x) {
@@ -115,12 +115,12 @@ function asmFunc(global, env, buffer) {
  
  function $16(x) {
   x = x | 0;
-  return __wasm_ctz_i32(x) | 0 | 0;
+  return __wasm_ctz_i32(x | 0) | 0 | 0;
  }
  
  function $17(x) {
   x = x | 0;
-  return __wasm_popcnt_i32(x) | 0 | 0;
+  return __wasm_popcnt_i32(x | 0) | 0 | 0;
  }
  
  function $18(x) {
@@ -190,18 +190,18 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_ctz_i32(x) {
   x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
+  var $9 = 0;
+  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
+  return $9 | 0;
  }
  
  function __wasm_popcnt_i32(x) {
   x = x | 0;
-  var count = 0, $2 = 0;
+  var count = 0, $5 = 0;
   count = 0;
   b : {
    l : do {
-    $2 = count;
+    $5 = count;
     if ((x | 0) == (0 | 0)) break b;
     x = x & (x - 1 | 0) | 0;
     count = count + 1 | 0;
@@ -209,7 +209,7 @@ function asmFunc(global, env, buffer) {
     break l;
    } while (1);
   };
-  return $2 | 0;
+  return $5 | 0;
  }
  
  function __wasm_rotl_i32(x, k) {

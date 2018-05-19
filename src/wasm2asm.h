@@ -32,6 +32,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
 
@@ -207,7 +208,6 @@ private:
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
-  void addWasmCompatibilityFuncs(Module* wasm);
   void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
@@ -225,170 +225,13 @@ private:
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder&) = delete;
 };
 
-static Function* makeCtzFunc(MixedArena& allocator, UnaryOp op) {
-  assert(op == CtzInt32 || op == CtzInt64);
-  Builder b(allocator);
-  // if eqz(x) then 32 else (32 - clz(x ^ (x - 1)))
-  bool is32Bit = (op == CtzInt32);
-  Name funcName    = is32Bit ? Name(WASM_CTZ32) : Name(WASM_CTZ64);
-  BinaryOp subOp   = is32Bit ? SubInt32    : SubInt64;
-  BinaryOp xorOp   = is32Bit ? XorInt32    : XorInt64;
-  UnaryOp  clzOp   = is32Bit ? ClzInt32    : ClzInt64;
-  UnaryOp  eqzOp   = is32Bit ? EqZInt32    : EqZInt64;
-  Type argType = is32Bit ? i32         : i64;
-  Binary* xorExp = b.makeBinary(
-    xorOp,
-    b.makeGetLocal(0, i32),
-    b.makeBinary(
-      subOp,
-      b.makeGetLocal(0, i32),
-      b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1)))
-    )
-  );
-  Binary* subExp = b.makeBinary(
-    subOp,
-    b.makeConst(is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1))),
-    b.makeUnary(clzOp, xorExp)
-  );
-  If* body = b.makeIf(
-    b.makeUnary(
-      eqzOp,
-      b.makeGetLocal(0, i32)
-    ),
-    b.makeConst(is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64))),
-    subExp
-  );
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType)},
-    argType,
-    std::vector<NameType>{},
-    body
-  );
-}
-
-static Function* makePopcntFunc(MixedArena& allocator, UnaryOp op) {
-  assert(op == PopcntInt32 || op == PopcntInt64);
-  Builder b(allocator);
-  // popcnt implemented as:
-  // int c; for (c = 0; x != 0; c++) { x = x & (x - 1) }; return c
-  bool is32Bit = (op == PopcntInt32);
-  Name funcName    = is32Bit ? Name(WASM_POPCNT32) : Name(WASM_POPCNT64);
-  BinaryOp addOp   = is32Bit ? AddInt32       : AddInt64;
-  BinaryOp subOp   = is32Bit ? SubInt32       : SubInt64;
-  BinaryOp andOp   = is32Bit ? AndInt32       : AndInt64;
-  UnaryOp  eqzOp   = is32Bit ? EqZInt32       : EqZInt64;
-  Type argType = is32Bit ? i32            : i64;
-  Name loopName("l");
-  Name blockName("b");
-  Break* brIf = b.makeBreak(
-    blockName,
-    b.makeGetLocal(1, i32),
-    b.makeUnary(
-      eqzOp,
-      b.makeGetLocal(0, argType)
-    )
-  );
-  SetLocal* update = b.makeSetLocal(
-    0,
-    b.makeBinary(
-      andOp,
-      b.makeGetLocal(0, argType),
-      b.makeBinary(
-        subOp,
-        b.makeGetLocal(0, argType),
-        b.makeConst(is32Bit ? Literal(int32_t(1)) : Literal(int64_t(1)))
-      )
-    )
-  );
-  SetLocal* inc = b.makeSetLocal(
-    1,
-    b.makeBinary(
-      addOp,
-      b.makeGetLocal(1, argType),
-      b.makeConst(Literal(1))
-    )
-  );
-  Break* cont = b.makeBreak(loopName);
-  Loop* loop = b.makeLoop(loopName, b.blockify(brIf, update, inc, cont));
-  Block* loopBlock = b.blockifyWithName(loop, blockName);
-  SetLocal* initCount = b.makeSetLocal(1, b.makeConst(Literal(0)));
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType)},
-    argType,
-    std::vector<NameType>{NameType("count", argType)},
-    b.blockify(initCount, loopBlock)
-  );
-}
-
-Function* makeRotFunc(MixedArena& allocator, BinaryOp op) {
-  assert(op == RotLInt32 || op == RotRInt32 ||
-         op == RotLInt64 || op == RotRInt64);
-  Builder b(allocator);
-  // left rotate is:
-  // (((((~0) >>> k) & x) << k) | ((((~0) << (w - k)) & x) >>> (w - k)))
-  // where k is shift modulo w. reverse shifts for right rotate
-  bool is32Bit = (op == RotLInt32 || op == RotRInt32);
-  bool isLRot  = (op == RotLInt32 || op == RotLInt64);
-  static Name names[2][2] = {{Name(WASM_ROTR64), Name(WASM_ROTR32)},
-                             {Name(WASM_ROTL64), Name(WASM_ROTL32)}};
-  static BinaryOp shifters[2][2] = {{ShrUInt64, ShrUInt32},
-                                    {ShlInt64, ShlInt32}};
-  Name funcName = names[isLRot][is32Bit];
-  BinaryOp lshift = shifters[isLRot][is32Bit];
-  BinaryOp rshift = shifters[!isLRot][is32Bit];
-  BinaryOp orOp    = is32Bit ? OrInt32  : OrInt64;
-  BinaryOp andOp   = is32Bit ? AndInt32 : AndInt64;
-  BinaryOp subOp   = is32Bit ? SubInt32 : SubInt64;
-  Type argType = is32Bit ? i32      : i64;
-  Literal widthMask =
-      is32Bit ? Literal(int32_t(32 - 1)) : Literal(int64_t(64 - 1));
-  Literal width =
-      is32Bit ? Literal(int32_t(32)) : Literal(int64_t(64));
-  auto shiftVal = [&]() {
-    return b.makeBinary(
-      andOp,
-      b.makeGetLocal(1, argType),
-      b.makeConst(widthMask)
-    );
-  };
-  auto widthSub = [&]() {
-    return b.makeBinary(subOp, b.makeConst(width), shiftVal());
-  };
-  auto fullMask = [&]() {
-    return b.makeConst(is32Bit ? Literal(~int32_t(0)) : Literal(~int64_t(0)));
-  };
-  Binary* maskRShift = b.makeBinary(rshift, fullMask(), shiftVal());
-  Binary* lowMask = b.makeBinary(andOp, maskRShift, b.makeGetLocal(0, argType));
-  Binary* lowShift = b.makeBinary(lshift, lowMask, shiftVal());
-  Binary* maskLShift = b.makeBinary(lshift, fullMask(), widthSub());
-  Binary* highMask =
-      b.makeBinary(andOp, maskLShift, b.makeGetLocal(0, argType));
-  Binary* highShift = b.makeBinary(rshift, highMask, widthSub());
-  Binary* body = b.makeBinary(orOp, lowShift, highShift);
-  return b.makeFunction(
-    funcName,
-    std::vector<NameType>{NameType("x", argType),
-          NameType("k", argType)},
-    argType,
-    std::vector<NameType>{},
-    body
-  );
-}
-
-void Wasm2AsmBuilder::addWasmCompatibilityFuncs(Module* wasm) {
-  wasm->addFunction(makeCtzFunc(wasm->allocator, CtzInt32));
-  wasm->addFunction(makePopcntFunc(wasm->allocator, PopcntInt32));
-  wasm->addFunction(makeRotFunc(wasm->allocator, RotLInt32));
-  wasm->addFunction(makeRotFunc(wasm->allocator, RotRInt32));
-}
-
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
-  addWasmCompatibilityFuncs(wasm);
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
-  runner.add("remove-copysign"); // must be before i64-to-i32
+  runner.add("remove-non-js-ops"); // must be before i64-to-i32
+  // Currently the i64-to-32 lowering pass requires that `flatten` be run before
+  // it produce correct code. For some more details about this see #1480
+  runner.add("flatten");
   runner.add("i64-to-i32-lowering");
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");
@@ -649,6 +492,9 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
     std::cerr << "processFunction " << (fns++) << " " << func->name
               << std::endl;
   }
+  // We will be symbolically referring to all variables in the function, so make
+  // sure that everything has a name and it's unique.
+  Names::ensureNames(func);
   Ref ret = ValueBuilder::makeFunction(fromName(func->name));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
@@ -1350,8 +1196,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         // functions, so we do a bit of a hack here to get our one `Ref` to look
         // like two function arguments.
         case i64: {
-          unsigned lo = (unsigned) curr->value.geti64();
-          unsigned hi = (unsigned) (curr->value.geti64() >> 32);
+          auto lo = (unsigned) curr->value.geti64();
+          auto hi = (unsigned) (curr->value.geti64() >> 32);
           std::ostringstream out;
           out << lo << "," << hi;
           std::string os = out.str();
@@ -1495,20 +1341,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                 visit(curr->value, EXPRESSION_RESULT)
               );
               break;
-            case TruncFloat32:
-            case TruncFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_TRUNC,
-                visit(curr->value, EXPRESSION_RESULT)
-              );
-              break;
-            case NearestFloat32:
-            case NearestFloat64:
-              ret = ValueBuilder::makeCall(
-                MATH_NEAREST,
-                visit(curr->value,EXPRESSION_RESULT)
-              );
-              break;
             case SqrtFloat32:
             case SqrtFloat64:
               ret = ValueBuilder::makeCall(
@@ -1565,6 +1397,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                 ASM_DOUBLE
               );
             // TODO: more complex unary conversions
+            case NearestFloat32:
+            case NearestFloat64:
+            case TruncFloat32:
+            case TruncFloat64:
+              std::cerr << "operation should have been removed in previous passes"
+                        << std::endl;
+              WASM_UNREACHABLE();
+
             default:
               std::cerr << "Unhandled unary float operator: " << curr
                         << std::endl;
@@ -1694,12 +1534,6 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case GeUInt32:
               return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED), GE,
                                               makeSigning(right, ASM_UNSIGNED));
-            case RotLInt32:
-              return makeSigning(ValueBuilder::makeCall(WASM_ROTL32, left, right),
-                                 ASM_SIGNED);
-            case RotRInt32:
-              return makeSigning(ValueBuilder::makeCall(WASM_ROTR32, left, right),
-                                 ASM_SIGNED);
             case EqFloat32:
             case EqFloat64:
               return ValueBuilder::makeBinary(left, EQ, right);
@@ -1718,6 +1552,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
             case LtFloat32:
             case LtFloat64:
               return ValueBuilder::makeBinary(left, LT, right);
+            case RotLInt32:
+            case RotRInt32:
+              std::cerr << "should be removed already" << std::endl;
+              WASM_UNREACHABLE();
             default: {
               std::cerr << "Unhandled i32 binary operator: " << curr << std::endl;
               abort();
@@ -1925,11 +1763,11 @@ static void makeInstantiation(Ref ret) {
        var i = new Int32Array(2);
        var f = new Float64Array(i.buffer);
        f[0] = a;
-       var ai1 = f[0];
-       var ai2 = f[1];
+       var ai1 = i[0];
+       var ai2 = i[1];
        f[0] = b;
-       var bi1 = f[0];
-       var bi2 = f[1];
+       var bi1 = i[0];
+       var bi2 = i[1];
 
        return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
     }
@@ -1956,13 +1794,13 @@ static void prefixCalls(Ref asmjs) {
       assert(arr.size() >= 2);
       if (arr[1]->getIString() == "f32Equal" ||
           arr[1]->getIString() == "f64Equal" ||
-          arr[1]->getIString() == "i64Equal") {
+          arr[1]->getIString() == "i64Equal" ||
+          arr[1]->getIString() == "isNaN") {
         // ...
       } else if (arr[1]->getIString() == "Math_fround") {
         arr[1]->setString("Math.fround");
       } else {
-        Name name = arr[1]->getIString() == "isNaN" ? "Math" : ASM_MODULE;
-        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(name),
+        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
                                              arr[1]->getIString());
         arr[1]->setArray(prefixed->getArray());
       }

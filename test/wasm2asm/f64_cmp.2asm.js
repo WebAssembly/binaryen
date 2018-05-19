@@ -18,13 +18,49 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var i64toi32_i32$HIGH_BITS = 0;
- function main($0) {
-  $0 = $0 | 0;
-  return $0 | 0;
+ function $0(x, y) {
+  x = +x;
+  y = +y;
+  return x == y | 0;
+ }
+ 
+ function $1(x, y) {
+  x = +x;
+  y = +y;
+  return x != y | 0;
+ }
+ 
+ function $2(x, y) {
+  x = +x;
+  y = +y;
+  return x < y | 0;
+ }
+ 
+ function $3(x, y) {
+  x = +x;
+  y = +y;
+  return x <= y | 0;
+ }
+ 
+ function $4(x, y) {
+  x = +x;
+  y = +y;
+  return x > y | 0;
+ }
+ 
+ function $5(x, y) {
+  x = +x;
+  y = +y;
+  return x >= y | 0;
  }
  
  return {
-  main: main
+  eq: $0, 
+  ne: $1, 
+  lt: $2, 
+  le: $3, 
+  gt: $4, 
+  ge: $5
  };
 }
 

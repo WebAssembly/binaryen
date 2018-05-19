@@ -56,7 +56,7 @@ Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createRelooperJumpThreadingPass();
-Pass* createRemoveCopysignPass();
+Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryPass();
 Pass* createRemoveUnusedBrsPass();

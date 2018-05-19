@@ -74,7 +74,6 @@ cashew::IString GLOBAL("global"),
                 MATH_CLZ32("Math_clz32"),
                 MATH_FLOOR("Math_floor"),
                 MATH_TRUNC("Math_trunc"),
-                MATH_NEAREST("Math_NEAREST"),
                 MATH_SQRT("Math_sqrt"),
                 MATH_MIN("Math_min"),
                 MATH_MAX("Math_max"),
@@ -91,5 +90,9 @@ cashew::IString GLOBAL("global"),
                 WASM_GROW_MEMORY("__wasm_grow_memory"),
                 WASM_CURRENT_MEMORY("__wasm_current_memory"),
                 WASM_FETCH_HIGH_BITS("__wasm_fetch_high_bits"),
-                INT64_TO_32_HIGH_BITS("i64toi32_i32$HIGH_BITS");
+                INT64_TO_32_HIGH_BITS("i64toi32_i32$HIGH_BITS"),
+                WASM_NEAREST_F32("__wasm_nearest_f32"),
+                WASM_NEAREST_F64("__wasm_nearest_f64"),
+                WASM_TRUNC_F32("__wasm_trunc_f32"),
+                WASM_TRUNC_F64("__wasm_trunc_f64");
 }

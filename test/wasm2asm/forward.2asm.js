@@ -20,52 +20,16 @@ function asmFunc(global, env, buffer) {
  var i64toi32_i32$HIGH_BITS = 0;
  function even(n) {
   n = n | 0;
-  var $1 = 0;
-  if ((n | 0) == (0 | 0)) $1 = 1; else $1 = odd(n - 1 | 0 | 0) | 0;
-  return $1 | 0;
+  var $6 = 0;
+  if ((n | 0) == (0 | 0)) $6 = 1; else $6 = odd(n - 1 | 0 | 0) | 0;
+  return $6 | 0;
  }
  
  function odd(n) {
   n = n | 0;
-  var $1 = 0;
-  if ((n | 0) == (0 | 0)) $1 = 0; else $1 = even(n - 1 | 0 | 0) | 0;
-  return $1 | 0;
- }
- 
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
- }
- 
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-   } while (1);
-  };
-  return $2 | 0;
- }
- 
- function __wasm_rotl_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
- }
- 
- function __wasm_rotr_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+  var $6 = 0;
+  if ((n | 0) == (0 | 0)) $6 = 0; else $6 = even(n - 1 | 0 | 0) | 0;
+  return $6 | 0;
  }
  
  return {

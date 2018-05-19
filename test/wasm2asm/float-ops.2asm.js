@@ -209,22 +209,32 @@ function asmFunc(global, env, buffer) {
  function copysign64($0, $1) {
   $0 = +$0;
   $1 = +$1;
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4 = 0, $4$hi = 0, $7 = 0, $7$hi = 0;
   HEAPF64[0 >> 3] = $0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
-  i64toi32_i32$3 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
+  $4 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
+  $4$hi = i64toi32_i32$1;
   HEAPF64[0 >> 3] = $1;
-  i64toi32_i32$2 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$3 = HEAP32[0 >> 2] | 0;
-  i64toi32_i32$0 = 2147483648;
-  i64toi32_i32$0 = i64toi32_i32$2 & i64toi32_i32$0 | 0;
-  i64toi32_i32$2 = i64toi32_i32$3 & 0 | 0;
-  i64toi32_i32$0 = i64toi32_i32$1 | i64toi32_i32$0 | 0;
-  HEAP32[0 >> 2] = i64toi32_i32$3 | i64toi32_i32$2 | 0;
+  i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
+  i64toi32_i32$1 = i64toi32_i32$1;
+  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
+  i64toi32_i32$2 = 2147483648;
+  i64toi32_i32$3 = 0;
+  i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
+  $7 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
+  $7$hi = i64toi32_i32$2;
+  i64toi32_i32$2 = $4$hi;
+  i64toi32_i32$1 = $4;
+  i64toi32_i32$0 = $7$hi;
+  i64toi32_i32$3 = $7;
+  i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  HEAP32[0 >> 2] = i64toi32_i32$1 | i64toi32_i32$3 | 0;
   HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
   return +(+HEAPF64[0 >> 3]);
  }
@@ -278,105 +288,89 @@ function asmFunc(global, env, buffer) {
  function $43($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($0$hi | 0)));
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 | 0)));
  }
  
  function $44($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  return +(+($0 >>> 0) + 4294967296.0 * +($0$hi | 0));
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  return +(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 | 0));
  }
  
  function $45($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +($0$hi >>> 0)));
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  return Math_fround(Math_fround(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0)));
  }
  
  function $46($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  return +(+($0 >>> 0) + 4294967296.0 * +($0$hi >>> 0));
+  var i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  return +(+($0 >>> 0) + 4294967296.0 * +(i64toi32_i32$0 >>> 0));
  }
  
  function $47($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), $2 = 0, $3 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $2 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $2 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $3 = $2;
-  } else $3 = 0;
-  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $4 = $3;
+  } else $4 = 0;
+  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = i64toi32_i32$1;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $48($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, $2 = 0, $3 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $2 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $2 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $3 = $2;
-  } else $3 = 0;
-  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+   if (i64toi32_i32$0 > 0.0) $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $4 = $3;
+  } else $4 = 0;
+  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = i64toi32_i32$1;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $49($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), $2 = 0, $3 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $2 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $2 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $3 = $2;
-  } else $3 = 0;
-  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $4 = $3;
+  } else $4 = 0;
+  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = i64toi32_i32$1;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $50($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, $2 = 0, $3 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $2 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $2 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $3 = $2;
-  } else $3 = 0;
-  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & ($3 | 0) == (0 | 0) | 0 | 0;
- }
- 
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
- }
- 
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-   } while (1);
-  };
-  return $2 | 0;
- }
- 
- function __wasm_rotl_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
- }
- 
- function __wasm_rotr_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+   if (i64toi32_i32$0 > 0.0) $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $4 = $3;
+  } else $4 = 0;
+  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = i64toi32_i32$1;
+  return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  return {
