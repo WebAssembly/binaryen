@@ -51,6 +51,32 @@ var __array_buffer = new ArrayBuffer(65536);
 var HEAP32 = new Int32Array(__array_buffer);
 var HEAPF32 = new Float32Array(__array_buffer);
 var HEAPF64 = new Float64Array(__array_buffer);
+
+      function f32Equal(a, b) {
+         var i = new Int32Array(1);
+         var f = new Float32Array(i.buffer);
+         f[0] = a;
+         var ai = f[0];
+         f[0] = b;
+         var bi = f[0];
+
+         return (isNaN(a) && isNaN(b)) || a == b;
+      }
+    ;
+
+      function f64Equal(a, b) {
+         var i = new Int32Array(2);
+         var f = new Float64Array(i.buffer);
+         f[0] = a;
+         var ai1 = i[0];
+         var ai2 = i[1];
+         f[0] = b;
+         var bi1 = i[0];
+         var bi2 = i[1];
+
+         return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
+      }
+    ;
 var asmModule = asmFunc({
  Math: Math, 
  Int8Array: Int8Array, 
@@ -68,35 +94,8 @@ var asmModule = asmFunc({
  
 }, __array_buffer);
 
-    function f32Equal(a, b) {
-       var i = new Int32Array(1);
-       var f = new Float32Array(i.buffer);
-       f[0] = a;
-       var ai = f[0];
-       f[0] = b;
-       var bi = f[0];
-
-       return (isNaN(a) && isNaN(b)) || a == b;
-    }
-  ;
-
-    function f64Equal(a, b) {
-       var i = new Int32Array(2);
-       var f = new Float64Array(i.buffer);
-       f[0] = a;
-       var ai1 = i[0];
-       var ai2 = i[1];
-       f[0] = b;
-       var bi1 = i[0];
-       var bi2 = i[1];
-
-       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
-    }
-  ;
-
-    function i64Equal(actual_lo, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) &&
-          asmModule.__wasm_fetch_high_bits() == (expected_hi | 0);
+    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
     }
   ;
 function check1() {

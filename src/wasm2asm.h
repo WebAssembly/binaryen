@@ -129,7 +129,7 @@ public:
 
   Wasm2AsmBuilder(Flags f) : flags(f) {}
 
-  Ref processWasm(Module* wasm);
+  Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Function* func);
 
   // The first pass on an expression: scan it to see whether it will
@@ -241,19 +241,25 @@ private:
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                            Builder& wasmBuilder,
-                           Element& e, Name testFuncName);
+                           Element& e,
+                           Name testFuncName,
+                           Name asmModule);
   Ref makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                               Builder& wasmBuilder,
-                              Element& e, Name testFuncName);
+                              Element& e,
+                              Name testFuncName,
+                              Name asmModule);
   Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                          Builder& wasmBuilder,
-                         Element& e, Name testFuncName);
+                         Element& e,
+                         Name testFuncName,
+                         Name asmModule);
   Wasm2AsmBuilder() = delete;
   Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder&) = delete;
 };
 
-Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
+Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
   // First up remove as many non-JS operations we can, including things like
@@ -282,7 +288,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 #endif
 
   Ref ret = ValueBuilder::makeToplevel();
-  Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
+  Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
@@ -1751,35 +1757,72 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
   return ExpressionProcessor(this, func).visit(func->body, result);
 }
 
-static void makeInstantiation(Ref ret) {
-  // var __array_buffer = new ArrayBuffer(..)
-  Ref mem = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
-  Ref arrayBuffer = ValueBuilder::makeVar();
+static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
   Name buffer("__array_buffer");
-  ValueBuilder::appendToVar(arrayBuffer, buffer, mem);
-  flattenAppend(ret, arrayBuffer);
+  if (first) {
+    // var __array_buffer = new ArrayBuffer(..)
+    Ref mem = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
+    Ref arrayBuffer = ValueBuilder::makeVar();
+    ValueBuilder::appendToVar(arrayBuffer, buffer, mem);
+    flattenAppend(ret, arrayBuffer);
 
-  // var HEAP32 = new Int32Array(__array_buffer);
-  Ref heap32Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(INT32ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heap32 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heap32, HEAP32, heap32Array);
-  flattenAppend(ret, heap32);
+    // var HEAP32 = new Int32Array(__array_buffer);
+    Ref heap32Array = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(INT32ARRAY, ValueBuilder::makeName(buffer)));
+    Ref heap32 = ValueBuilder::makeVar();
+    ValueBuilder::appendToVar(heap32, HEAP32, heap32Array);
+    flattenAppend(ret, heap32);
 
-  // var HEAPF32 = new Float32Array(__array_buffer);
-  Ref heapf32Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(FLOAT32ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heapf32 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heapf32, HEAPF32, heapf32Array);
-  flattenAppend(ret, heapf32);
+    // var HEAPF32 = new Float32Array(__array_buffer);
+    Ref heapf32Array = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(FLOAT32ARRAY, ValueBuilder::makeName(buffer)));
+    Ref heapf32 = ValueBuilder::makeVar();
+    ValueBuilder::appendToVar(heapf32, HEAPF32, heapf32Array);
+    flattenAppend(ret, heapf32);
 
-  // var HEAPF64 = new Float64Array(__array_buffer);
-  Ref heapf64Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(FLOAT64ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heapf64 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heapf64, HEAPF64, heapf64Array);
-  flattenAppend(ret, heapf64);
+    // var HEAPF64 = new Float64Array(__array_buffer);
+    Ref heapf64Array = ValueBuilder::makeNew(
+        ValueBuilder::makeCall(FLOAT64ARRAY, ValueBuilder::makeName(buffer)));
+    Ref heapf64 = ValueBuilder::makeVar();
+    ValueBuilder::appendToVar(heapf64, HEAPF64, heapf64Array);
+    flattenAppend(ret, heapf64);
+
+    // When equating floating point values in spec tests we want to use bitwise
+    // equality like wasm does. Unfortunately though NaN makes this tricky. JS
+    // implementations like Spidermonkey and JSC will canonicalize NaN loads from
+    // `Float32Array`, but V8 will not. This means that NaN representations are
+    // kind of all over the place and difficult to bitwise equate.
+    //
+    // To work around this problem we just use a small shim which considers all
+    // NaN representations equivalent and otherwise tests for bitwise equality.
+    flattenAppend(ret, ValueBuilder::makeName(R"(
+      function f32Equal(a, b) {
+         var i = new Int32Array(1);
+         var f = new Float32Array(i.buffer);
+         f[0] = a;
+         var ai = f[0];
+         f[0] = b;
+         var bi = f[0];
+
+         return (isNaN(a) && isNaN(b)) || a == b;
+      }
+    )"));
+    flattenAppend(ret, ValueBuilder::makeName(R"(
+      function f64Equal(a, b) {
+         var i = new Int32Array(2);
+         var f = new Float64Array(i.buffer);
+         f[0] = a;
+         var ai1 = i[0];
+         var ai2 = i[1];
+         f[0] = b;
+         var bi1 = i[0];
+         var bi2 = i[1];
+
+         return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
+      }
+    )"));
+  }
 
   Ref lib = ValueBuilder::makeObject();
   auto insertItem = [&](IString item) {
@@ -1798,63 +1841,27 @@ static void makeInstantiation(Ref ret) {
   Ref abortFunc = ValueBuilder::makeFunction("abort");
   abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
   ValueBuilder::appendToObject(env, "abort", abortFunc);
-  Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env,
+  Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
       ValueBuilder::makeName(buffer));
   Ref module = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(module, ASM_MODULE, call);
+  ValueBuilder::appendToVar(module, moduleName, call);
   flattenAppend(ret, module);
-
-  // When equating floating point values in spec tests we want to use bitwise
-  // equality like wasm does. Unfortunately though NaN makes this tricky. JS
-  // implementations like Spidermonkey and JSC will canonicalize NaN loads from
-  // `Float32Array`, but V8 will not. This means that NaN representations are
-  // kind of all over the place and difficult to bitwise equate.
-  //
-  // To work around this problem we just use a small shim which considers all
-  // NaN representations equivalent and otherwise tests for bitwise equality.
-  flattenAppend(ret, ValueBuilder::makeName(R"(
-    function f32Equal(a, b) {
-       var i = new Int32Array(1);
-       var f = new Float32Array(i.buffer);
-       f[0] = a;
-       var ai = f[0];
-       f[0] = b;
-       var bi = f[0];
-
-       return (isNaN(a) && isNaN(b)) || a == b;
-    }
-  )"));
-  flattenAppend(ret, ValueBuilder::makeName(R"(
-    function f64Equal(a, b) {
-       var i = new Int32Array(2);
-       var f = new Float64Array(i.buffer);
-       f[0] = a;
-       var ai1 = i[0];
-       var ai2 = i[1];
-       f[0] = b;
-       var bi1 = i[0];
-       var bi2 = i[1];
-
-       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
-    }
-  )"));
 
   // 64-bit numbers get a different ABI w/ wasm2asm, and in general you can't
   // actually export them from wasm at the boundary. We hack around this though
   // to get the spec tests working.
   flattenAppend(ret, ValueBuilder::makeName(R"(
-    function i64Equal(actual_lo, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) &&
-          asmModule.__wasm_fetch_high_bits() == (expected_hi | 0);
+    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
     }
   )"));
 }
 
-static void prefixCalls(Ref asmjs) {
+static void prefixCalls(Ref asmjs, Name asmModule) {
   if (asmjs->isArray()) {
     ArrayStorage& arr = asmjs->getArray();
     for (Ref& r : arr) {
-      prefixCalls(r);
+      prefixCalls(r, asmModule);
     }
     if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
       assert(arr.size() >= 2);
@@ -1866,7 +1873,7 @@ static void prefixCalls(Ref asmjs) {
       } else if (arr[1]->getIString() == "Math_fround") {
         arr[1]->setString("Math.fround");
       } else {
-        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
+        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(asmModule),
                                              arr[1]->getIString());
         arr[1]->setArray(prefixed->getArray());
       }
@@ -1874,14 +1881,16 @@ static void prefixCalls(Ref asmjs) {
   }
 
   if (asmjs->isAssign()) {
-    prefixCalls(asmjs->asAssign()->target());
-    prefixCalls(asmjs->asAssign()->value());
+    prefixCalls(asmjs->asAssign()->target(), asmModule);
+    prefixCalls(asmjs->asAssign()->value(), asmModule);
   }
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                                           Builder& wasmBuilder,
-                                          Element& e, Name testFuncName) {
+                                          Element& e,
+                                          Name testFuncName,
+                                          Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
@@ -1903,7 +1912,11 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
         break;
 
       case i64:
-        body = wasmBuilder.makeCall("i64Equal", {actual, expected}, i32);
+        body = wasmBuilder.makeCall(
+          "i64Equal",
+          {actual, wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32), expected},
+          i32
+        );
         break;
 
       case f32: {
@@ -1933,13 +1946,15 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
     )
   );
   Ref jsFunc = processFunction(testFunc.get());
-  prefixCalls(jsFunc);
+  prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                                              Builder& wasmBuilder,
-                                             Element& e, Name testFuncName) {
+                                             Element& e,
+                                             Name testFuncName,
+                                             Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = wasmBuilder.makeCallImport("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
@@ -1952,13 +1967,15 @@ Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder
     )
   );
   Ref jsFunc = processFunction(testFunc.get());
-  prefixCalls(jsFunc);
+  prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                                         Builder& wasmBuilder,
-                                        Element& e, Name testFuncName) {
+                                        Element& e,
+                                        Name testFuncName,
+                                        Name asmModule) {
   Name innerFuncName("f");
   Expression* expr = sexpBuilder.parseExpression(e[1]);
   std::unique_ptr<Function> exprFunc(
@@ -1970,7 +1987,7 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
   );
   IString expectedErr = e[2]->str();
   Ref innerFunc = processFunction(exprFunc.get());
-  prefixCalls(innerFunc);
+  prefixCalls(innerFunc, asmModule);
   Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
   outerFunc[3]->push_back(innerFunc);
   Ref tryBlock = ValueBuilder::makeBlock();
@@ -2168,9 +2185,22 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
                                    SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
   Ref ret = ValueBuilder::makeBlock();
-  makeInstantiation(ret);
+  Name asmModule = ASM_MODULE;
+  makeInstantiation(ret, ASM_FUNC, asmModule, true);
   for (size_t i = 1; i < root.size(); ++i) {
     Element& e = *root[i];
+    if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
+      std::stringstream funcNameS;
+      funcNameS << ASM_FUNC.c_str() << i;
+      std::stringstream moduleNameS;
+      moduleNameS << ASM_MODULE.c_str() << i;
+      Name funcName(funcNameS.str().c_str());
+      asmModule = Name(moduleNameS.str().c_str());
+      Module wasm;
+      SExpressionWasmBuilder builder(wasm, e);
+      flattenAppend(ret, processWasm(&wasm, funcName));
+      makeInstantiation(ret, funcName, asmModule, false);
+    }
     if (!isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
@@ -2185,10 +2215,10 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
     testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
     Ref testFunc = isReturn ?
-        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
+        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule) :
         (isReturnNan ?
-          makeAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
-          makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName));
+          makeAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule) :
+          makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule));
 
     flattenAppend(ret, testFunc);
     std::stringstream failFuncName;
