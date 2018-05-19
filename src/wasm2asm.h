@@ -417,6 +417,19 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
       ABORT_FUNC
     )
   );
+  // NaN and Infinity variables
+  Ref nanVar = ValueBuilder::makeVar();
+  ast->push_back(nanVar);
+  ValueBuilder::appendToVar(nanVar,
+    "nan",
+    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "NaN")
+  );
+  Ref infinityVar = ValueBuilder::makeVar();
+  ast->push_back(infinityVar);
+  ValueBuilder::appendToVar(infinityVar,
+    "infinity",
+    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "Infinity")
+  );
 }
 
 void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
@@ -1760,33 +1773,14 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
 static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
   Name buffer("__array_buffer");
   if (first) {
-    // var __array_buffer = new ArrayBuffer(..)
-    Ref mem = ValueBuilder::makeNew(
-        ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
-    Ref arrayBuffer = ValueBuilder::makeVar();
-    ValueBuilder::appendToVar(arrayBuffer, buffer, mem);
-    flattenAppend(ret, arrayBuffer);
-
-    // var HEAP32 = new Int32Array(__array_buffer);
-    Ref heap32Array = ValueBuilder::makeNew(
-        ValueBuilder::makeCall(INT32ARRAY, ValueBuilder::makeName(buffer)));
-    Ref heap32 = ValueBuilder::makeVar();
-    ValueBuilder::appendToVar(heap32, HEAP32, heap32Array);
-    flattenAppend(ret, heap32);
-
-    // var HEAPF32 = new Float32Array(__array_buffer);
-    Ref heapf32Array = ValueBuilder::makeNew(
-        ValueBuilder::makeCall(FLOAT32ARRAY, ValueBuilder::makeName(buffer)));
-    Ref heapf32 = ValueBuilder::makeVar();
-    ValueBuilder::appendToVar(heapf32, HEAPF32, heapf32Array);
-    flattenAppend(ret, heapf32);
-
-    // var HEAPF64 = new Float64Array(__array_buffer);
-    Ref heapf64Array = ValueBuilder::makeNew(
-        ValueBuilder::makeCall(FLOAT64ARRAY, ValueBuilder::makeName(buffer)));
-    Ref heapf64 = ValueBuilder::makeVar();
-    ValueBuilder::appendToVar(heapf64, HEAPF64, heapf64Array);
-    flattenAppend(ret, heapf64);
+    flattenAppend(ret, ValueBuilder::makeName(R"(
+      var __array_buffer = new ArrayBuffer(65536)
+      var HEAP32 = new Int32Array(__array_buffer);
+      var HEAPF32 = new Float32Array(__array_buffer);
+      var HEAPF64 = new Float64Array(__array_buffer);
+      var nan = NaN;
+      var infinity = Infinity;
+    )"));
 
     // When equating floating point values in spec tests we want to use bitwise
     // equality like wasm does. Unfortunately though NaN makes this tricky. JS
@@ -1807,8 +1801,7 @@ static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool firs
 
          return (isNaN(a) && isNaN(b)) || a == b;
       }
-    )"));
-    flattenAppend(ret, ValueBuilder::makeName(R"(
+
       function f64Equal(a, b) {
          var i = new Int32Array(2);
          var f = new Float64Array(i.buffer);
@@ -1837,6 +1830,8 @@ static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool firs
   insertItem(UINT32ARRAY);
   insertItem(FLOAT32ARRAY);
   insertItem(FLOAT64ARRAY);
+  insertItem("Infinity");
+  insertItem("NaN");
   Ref env = ValueBuilder::makeObject();
   Ref abortFunc = ValueBuilder::makeFunction("abort");
   abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));

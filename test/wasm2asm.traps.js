@@ -18,6 +18,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   
@@ -47,10 +49,14 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var __array_buffer = new ArrayBuffer(65536);
-var HEAP32 = new Int32Array(__array_buffer);
-var HEAPF32 = new Float32Array(__array_buffer);
-var HEAPF64 = new Float64Array(__array_buffer);
+
+      var __array_buffer = new ArrayBuffer(65536)
+      var HEAP32 = new Int32Array(__array_buffer);
+      var HEAPF32 = new Float32Array(__array_buffer);
+      var HEAPF64 = new Float64Array(__array_buffer);
+      var nan = NaN;
+      var infinity = Infinity;
+    ;
 
       function f32Equal(a, b) {
          var i = new Int32Array(1);
@@ -62,7 +68,6 @@ var HEAPF64 = new Float64Array(__array_buffer);
 
          return (isNaN(a) && isNaN(b)) || a == b;
       }
-    ;
 
       function f64Equal(a, b) {
          var i = new Int32Array(2);
@@ -86,7 +91,9 @@ var asmModule = asmFunc({
  Uint16Array: Uint16Array, 
  Uint32Array: Uint32Array, 
  Float32Array: Float32Array, 
- Float64Array: Float64Array
+ Float64Array: Float64Array, 
+ Infinity: Infinity, 
+ NaN: NaN
 }, {
  abort: function abort() {
   unreachable();

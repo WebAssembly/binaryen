@@ -838,15 +838,15 @@ struct JSPrinter {
   static char* numToString(double d, bool finalize=true) {
     if (std::isnan(d)) {
       if (std::signbit(d)) {
-        return (char*) "-NaN";
+        return (char*) "-nan";
       } else {
-        return (char*) "NaN";
+        return (char*) "nan";
       }
     } else if (!std::isfinite(d)) {
       if (std::signbit(d)) {
-        return (char*) "-Infinity";
+        return (char*) "-infinity";
       } else {
-        return (char*) "Infinity";
+        return (char*) "infinity";
       }
     }
     bool neg = d < 0;
@@ -1059,8 +1059,8 @@ struct JSPrinter {
       ensure(1); // we temporarily append a 0
       char *curr = buffer + last; // ensure might invalidate
       buffer[used] = 0;
-      if (strstr(curr, "Infinity")) return;
-      if (strstr(curr, "NaN")) return;
+      if (strstr(curr, "infinity")) return;
+      if (strstr(curr, "nan")) return;
       if (strchr(curr, '.')) return; // already a decimal point, all good
       char *e = strchr(curr, 'e');
       if (!e) {

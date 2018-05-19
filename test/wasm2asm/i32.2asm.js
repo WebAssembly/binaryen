@@ -18,6 +18,8 @@ function asmFunc(global, env, buffer) {
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
  var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = x | 0;
