@@ -1017,7 +1017,7 @@ function asmFunc(global, env, buffer) {
  
  function $98() {
   reset();
-  (HEAPF32[0] = Math_fround(f32_left()), HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = Math_fround(f32_right()), HEAP32[0]) & 2147483648 | 0) | 0;
+  (HEAPF32[0] = Math_fround(f32_left()), HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = Math_fround(f32_right()), HEAP32[0] | 0) & 2147483648 | 0) | 0;
   return get() | 0 | 0;
  }
  

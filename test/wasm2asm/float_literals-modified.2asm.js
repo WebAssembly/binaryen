@@ -22,123 +22,123 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $1() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $2() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
  }
  
  function $3() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $4() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $5() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
  }
  
  function $6() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $7() {
-  return (HEAPF32[0] = Math_fround(nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(nan), HEAP32[0] | 0) | 0;
  }
  
  function $8() {
-  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-nan), HEAP32[0] | 0) | 0;
  }
  
  function $9() {
-  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0] | 0) | 0;
  }
  
  function $10() {
-  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(infinity), HEAP32[0] | 0) | 0;
  }
  
  function $11() {
-  return (HEAPF32[0] = Math_fround(-infinity), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-infinity), HEAP32[0] | 0) | 0;
  }
  
  function $12() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
  }
  
  function $13() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
  }
  
  function $14() {
-  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0] | 0) | 0;
  }
  
  function $15() {
-  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0] | 0) | 0;
  }
  
  function $16() {
-  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0] | 0) | 0;
  }
  
  function $17() {
-  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0] | 0) | 0;
  }
  
  function $18() {
-  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0] | 0) | 0;
  }
  
  function $19() {
-  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0] | 0) | 0;
  }
  
  function $20() {
-  return (HEAPF32[0] = Math_fround(1024.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1024.0), HEAP32[0] | 0) | 0;
  }
  
  function $21() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
  }
  
  function $22() {
-  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(0.0), HEAP32[0] | 0) | 0;
  }
  
  function $23() {
-  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(-0.0), HEAP32[0] | 0) | 0;
  }
  
  function $24() {
-  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(6.2831854820251465), HEAP32[0] | 0) | 0;
  }
  
  function $25() {
-  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.401298464324817e-45), HEAP32[0] | 0) | 0;
  }
  
  function $26() {
-  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.1754943508222875e-38), HEAP32[0] | 0) | 0;
  }
  
  function $27() {
-  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.1754942106924411e-38), HEAP32[0] | 0) | 0;
  }
  
  function $28() {
-  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(3402823466385288598117041.0e14), HEAP32[0] | 0) | 0;
  }
  
  function $29() {
-  return (HEAPF32[0] = Math_fround(1.0e10), HEAP32[0]) | 0;
+  return (HEAPF32[0] = Math_fround(1.0e10), HEAP32[0] | 0) | 0;
  }
  
  function $30() {

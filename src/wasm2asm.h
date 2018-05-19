@@ -1365,7 +1365,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
               Ref store = ValueBuilder::makeBinary(ret, SET, value);
               return ValueBuilder::makeSeq(
                 store,
-                ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero)
+                makeAsmCoercion(
+                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero),
+                  ASM_INT
+                )
               );
             }
             // generate (~~expr), what Emscripten does

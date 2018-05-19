@@ -63,7 +63,7 @@ function asmFunc(global, env, buffer) {
  function $7(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
-  return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
+  return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
  }
  
  function $8(x) {

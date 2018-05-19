@@ -245,7 +245,7 @@ function asmFunc(global, env, buffer) {
  function copysign32($0, $1_1) {
   $0 = Math_fround($0);
   $1_1 = Math_fround($1_1);
-  return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = $1_1, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
+  return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = $1_1, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
  }
  
  function $35($0) {
