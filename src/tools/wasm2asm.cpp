@@ -76,7 +76,7 @@ int main(int argc, const char *argv[]) {
 
     if (options.extra["asserts"] == "1") {
       if (options.debug) std::cerr << "asserting..." << std::endl;
-      flattenAppend(asmjs, wasm2asm.processAsserts(*root, builder));
+      flattenAppend(asmjs, wasm2asm.processAsserts(&wasm, *root, builder));
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

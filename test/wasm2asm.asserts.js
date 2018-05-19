@@ -97,8 +97,10 @@ var asmModule = asmFunc({
 }, {
  abort: function abort() {
   unreachable();
+  console_log();
  }
- 
+ , 
+ print: function print() {}
 }, __array_buffer);
 
     function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {

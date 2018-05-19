@@ -130,7 +130,7 @@ public:
   Wasm2AsmBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
-  Ref processFunction(Function* func);
+  Ref processFunction(Module *wasm, Function* func);
 
   // The first pass on an expression: scan it to see whether it will
   // need to be statementized, and note spooky returns of values at
@@ -142,9 +142,9 @@ public:
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
-  Ref processFunctionBody(Function* func, IString result);
+  Ref processFunctionBody(Module *m, Function* func, IString result);
 
-  Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
+  Ref processAsserts(Module *wasm, Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -240,16 +240,19 @@ private:
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                           Module *awasm,
                            Builder& wasmBuilder,
                            Element& e,
                            Name testFuncName,
                            Name asmModule);
   Ref makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+                              Module *awasm,
                               Builder& wasmBuilder,
                               Element& e,
                               Name testFuncName,
                               Name asmModule);
   Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                         Module *awasm,
                          Builder& wasmBuilder,
                          Element& e,
                          Name testFuncName,
@@ -331,13 +334,13 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   }
   // functions
   for (auto& func : wasm->functions) {
-    asmFunc[3]->push_back(processFunction(func.get()));
+    asmFunc[3]->push_back(processFunction(wasm, func.get()));
   }
   if (generateFetchHighBits) {
     Builder builder(allocator);
     std::vector<Type> params;
     std::vector<Type> vars;
-    asmFunc[3]->push_back(processFunction(builder.makeFunction(
+    asmFunc[3]->push_back(processFunction(wasm, builder.makeFunction(
       WASM_FETCH_HIGH_BITS,
       std::move(params),
       i32,
@@ -579,7 +582,7 @@ static bool expressionEndsInReturn(Expression *e) {
   return expressionEndsInReturn((*stats)[stats->size()-1]);
 }
 
-Ref Wasm2AsmBuilder::processFunction(Function* func) {
+Ref Wasm2AsmBuilder::processFunction(Module *m, Function* func) {
   if (flags.debug) {
     static int fns = 0;
     std::cerr << "processFunction " << (fns++) << " " << func->name
@@ -626,22 +629,22 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   bool endsInReturn = expressionEndsInReturn(func->body);
   if (endsInReturn) {
     // return already taken care of
-    flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   } else if (isStatement(func->body)) {
     // store result in variable then return it
     IString result =
       func->result != none ? getTemp(func->result, func) : NO_RESULT;
-    flattenAppend(ret, processFunctionBody(func, result));
+    flattenAppend(ret, processFunctionBody(m, func, result));
     if (func->result != none) {
       appendFinalReturn(ValueBuilder::makeName(result));
       freeTemp(func->result, result);
     }
   } else if (func->result != none) {
     // whole thing is an expression, just return body
-    appendFinalReturn(processFunctionBody(func, EXPRESSION_RESULT));
+    appendFinalReturn(processFunctionBody(m, func, EXPRESSION_RESULT));
   } else {
     // func has no return
-    flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   }
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
@@ -759,13 +762,15 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
   ExpressionScanner(this).walk(curr);
 }
 
-Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
+Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString result) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2AsmBuilder* parent;
     IString result;
     Function* func;
+    Module *module;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2AsmBuilder* parent, Function* func) : parent(parent), func(func) {}
+    ExpressionProcessor(Wasm2AsmBuilder* parent, Module *m, Function* func)
+      : parent(parent), func(func), module(m) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -1010,7 +1015,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      std::string stable = std::string("FUNCTION_TABLE_") + curr->fullType.c_str();
+      std::string stable = std::string("FUNCTION_TABLE_") +
+        getSig(module->getFunctionType(curr->fullType));
       IString table = IString(stable.c_str(), false);
       auto makeTableCall = [&](Ref target) {
         return ValueBuilder::makeCall(ValueBuilder::makeSub(
@@ -1767,7 +1773,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };
-  return ExpressionProcessor(this, func).visit(func->body, result);
+  return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
 static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
@@ -1836,6 +1842,10 @@ static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool firs
   Ref abortFunc = ValueBuilder::makeFunction("abort");
   abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
   ValueBuilder::appendToObject(env, "abort", abortFunc);
+
+  Ref printFunc = ValueBuilder::makeFunction("print");
+  abortFunc[3]->push_back(ValueBuilder::makeCall("console_log"));
+  ValueBuilder::appendToObject(env, "print", printFunc);
   Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
       ValueBuilder::makeName(buffer));
   Ref module = ValueBuilder::makeVar();
@@ -1882,6 +1892,7 @@ static void prefixCalls(Ref asmjs, Name asmModule) {
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                                          Module *wasm,
                                           Builder& wasmBuilder,
                                           Element& e,
                                           Name testFuncName,
@@ -1940,12 +1951,13 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
       body
     )
   );
-  Ref jsFunc = processFunction(testFunc.get());
+  Ref jsFunc = processFunction(wasm, testFunc.get());
   prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+                                             Module *wasm,
                                              Builder& wasmBuilder,
                                              Element& e,
                                              Name testFuncName,
@@ -1961,12 +1973,13 @@ Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder
       body
     )
   );
-  Ref jsFunc = processFunction(testFunc.get());
+  Ref jsFunc = processFunction(wasm, testFunc.get());
   prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                                        Module *wasm,
                                         Builder& wasmBuilder,
                                         Element& e,
                                         Name testFuncName,
@@ -1981,7 +1994,7 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                              expr)
   );
   IString expectedErr = e[2]->str();
-  Ref innerFunc = processFunction(exprFunc.get());
+  Ref innerFunc = processFunction(wasm, exprFunc.get());
   prefixCalls(innerFunc, asmModule);
   Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
   outerFunc[3]->push_back(innerFunc);
@@ -2176,8 +2189,9 @@ bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
       && (*e[1])[0]->str() == Name("invoke");
 }
 
-Ref Wasm2AsmBuilder::processAsserts(Element& root,
-                                   SExpressionWasmBuilder& sexpBuilder) {
+Ref Wasm2AsmBuilder::processAsserts(Module *wasm,
+                                    Element& root,
+                                    SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
   Ref ret = ValueBuilder::makeBlock();
   Name asmModule = ASM_MODULE;
@@ -2195,6 +2209,7 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
       SExpressionWasmBuilder builder(wasm, e);
       flattenAppend(ret, processWasm(&wasm, funcName));
       makeInstantiation(ret, funcName, asmModule, false);
+      continue;
     }
     if (!isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
@@ -2210,10 +2225,10 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
     testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
     Ref testFunc = isReturn ?
-        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule) :
+        makeAssertReturnFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule) :
         (isReturnNan ?
-          makeAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule) :
-          makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName, asmModule));
+          makeAssertReturnNanFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule) :
+          makeAssertTrapFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule));
 
     flattenAppend(ret, testFunc);
     std::stringstream failFuncName;
