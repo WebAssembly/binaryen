@@ -109,7 +109,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $13() {
-  var $0 = 0, $1 = 0, $3 = 0;
+  var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
    loop_in : do {
     $0 = 3;
@@ -121,7 +121,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $14() {
-  var $0 = 0, $1 = 0, $3 = 0;
+  var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
    loop_in : do {
     dummy();
@@ -214,7 +214,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $24() {
-  var $0 = 0, $1 = 0;
+  var $0 = 0, $1_1 = 0;
   if_ : {
    $0 = 2;
    break if_;
@@ -222,55 +222,55 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function $25($0, $1) {
+ function $25($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var $3 = 0, $5 = 0;
+  $1_1 = $1_1 | 0;
+  var $3_1 = 0, $5_1 = 0;
   block : {
    if ($0) {
-    $3 = 3;
+    $3_1 = 3;
     break block;
-   } else $5 = $1;
-   $3 = $5;
+   } else $5_1 = $1_1;
+   $3_1 = $5_1;
   };
-  return $3 | 0;
+  return $3_1 | 0;
  }
  
- function $26($0, $1) {
+ function $26($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var $4 = 0, $5 = 0;
+  $1_1 = $1_1 | 0;
+  var $4_1 = 0, $5_1 = 0;
   block : {
-   if ($0) $5 = $1; else {
-    $4 = 4;
+   if ($0) $5_1 = $1_1; else {
+    $4_1 = 4;
     break block;
    }
-   $4 = $5;
+   $4_1 = $5_1;
   };
-  return $4 | 0;
+  return $4_1 | 0;
  }
  
- function $27($0, $1) {
+ function $27($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0;
+  $1_1 = $1_1 | 0;
+  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0, $6_1 = 0;
   block : {
-   $2 = 5;
+   $2_1 = 5;
    break block;
   };
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
- function $28($0, $1) {
+ function $28($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  var $2 = 0, $3 = 0, $4 = 0, $5 = 0, $6 = 0;
+  $1_1 = $1_1 | 0;
+  var $2_1 = 0, $3_1 = 0, $4_1 = 0, $5_1 = 0, $6_1 = 0;
   block : {
-   $2 = $0;
-   $3 = 6;
+   $2_1 = $0;
+   $3_1 = 6;
    break block;
   };
-  return $3 | 0;
+  return $3_1 | 0;
  }
  
  function $29() {
@@ -282,10 +282,10 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- function f($0, $1, $2) {
+ function f($0, $1_1, $2_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
-  $2 = $2 | 0;
+  $1_1 = $1_1 | 0;
+  $2_1 = $2_1 | 0;
   return 4294967295 | 0;
  }
  
@@ -353,12 +353,12 @@ function asmFunc(global, env, buffer) {
  }
  
  function $38() {
-  var $1 = 0;
+  var $1_1 = 0;
   block : {
-   $1 = 17;
+   $1_1 = 17;
    break block;
   };
-  return $1 | 0;
+  return $1_1 | 0;
  }
  
  function $39() {
@@ -508,7 +508,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $54() {
-  var $0 = 0, $1 = 0;
+  var $0 = 0, $1_1 = 0;
   block : {
    block0 : {
     $0 = 8;
@@ -519,7 +519,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $55() {
-  var $0 = 0, $1 = 0;
+  var $0 = 0, $1_1 = 0;
   block : {
    block1 : {
     $0 = 8;
@@ -539,7 +539,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $57() {
-  var $0 = 0, $1 = 0;
+  var $0 = 0, $1_1 = 0;
   block : {
    block2 : {
     $0 = 8;

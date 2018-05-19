@@ -61,13 +61,13 @@ function asmFunc(global, env, buffer) {
  
  function $4(cond) {
   cond = cond | 0;
-  var $1 = 0, $2 = 0;
+  var $1_1 = 0, $2_1 = 0;
   return abort() | 0;
  }
  
  function $5(cond) {
   cond = cond | 0;
-  var $1 = 0, $2 = 0;
+  var $1_1 = 0, $2_1 = 0;
   return abort() | 0;
  }
  

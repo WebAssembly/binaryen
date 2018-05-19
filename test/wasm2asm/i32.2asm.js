@@ -189,6 +189,26 @@ function asmFunc(global, env, buffer) {
   return x >>> 0 >= y >>> 0 | 0;
  }
  
+<<<<<<< e17ecc581d8e47fdf5f1eebe92c69e2598bf9713
+=======
+ function __wasm_popcnt_i32(x) {
+  x = x | 0;
+  var count = 0, $5_1 = 0;
+  count = 0;
+  b : {
+   l : do {
+    $5_1 = count;
+    if ((x | 0) == (0 | 0)) break b;
+    x = x & (x - 1 | 0) | 0;
+    count = count + 1 | 0;
+    continue l;
+    break l;
+   } while (1);
+  };
+  return $5_1 | 0;
+ }
+ 
+>>>>>>> wasm2asm: Fix name collisions
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;

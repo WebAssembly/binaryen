@@ -53,38 +53,38 @@ function asmFunc(global, env, buffer) {
  
  function $4($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
-   $2 = 10;
+   $2_1 = 10;
    if ($0) break block;
    return 11 | 0;
   };
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $5($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    dummy();
-   $2 = 20;
+   $2_1 = 20;
    if ($0) break block;
    return 21 | 0;
   };
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $6($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    dummy();
    dummy();
-   $2 = 11;
+   $2_1 = 11;
    if ($0) break block;
-   $2 = $2;
+   $2_1 = $2_1;
   };
-  return $2 | 0;
+  return $2_1 | 0;
  }
  
  function $7($0) {
@@ -123,113 +123,113 @@ function asmFunc(global, env, buffer) {
   };
  }
  
- function $10($0, $1) {
+ function $10($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   block : {
    if ($0) {
-    if ($1) break block;
+    if ($1_1) break block;
    } else dummy();
   };
  }
  
- function $11($0, $1) {
+ function $11($0, $1_1) {
   $0 = $0 | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   block : {
-   if ($0) dummy(); else if ($1) break block;;
+   if ($0) dummy(); else if ($1_1) break block;;
   };
  }
  
  function $12($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block0 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4 + 16 | 0;
+   $2_1 = 4 + 16 | 0;
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $13($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block1 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4;
+   $2_1 = 4;
    break block;
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $14($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block2 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4;
+   $2_1 = 4;
    if (1) break block;
-   $2 = 16;
+   $2_1 = 16;
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $15($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block3 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4;
+   $2_1 = 4;
    if (1) break block;
-   $2 = 16;
+   $2_1 = 16;
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $16($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block4 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4;
+   $2_1 = 4;
    switch (1 | 0) {
    default:
     break block;
    };
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  function $17($0) {
   $0 = $0 | 0;
-  var $2 = 0;
+  var $2_1 = 0;
   block : {
    block5 : {
-    $2 = 8;
+    $2_1 = 8;
     if ($0) break block;
    };
-   $2 = 4;
+   $2_1 = 4;
    switch (1 | 0) {
    default:
     break block;
    };
   };
-  return 1 + $2 | 0 | 0;
+  return 1 + $2_1 | 0 | 0;
  }
  
  return {

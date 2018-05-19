@@ -67,13 +67,13 @@ function asmFunc(global, env, buffer) {
  
  function $7(x) {
   x = Math_fround(x);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $4 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $4_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -82,13 +82,13 @@ function asmFunc(global, env, buffer) {
  
  function $8(x) {
   x = Math_fround(x);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $4 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $4_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -97,13 +97,13 @@ function asmFunc(global, env, buffer) {
  
  function $9(x) {
   x = +x;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $4 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > 0.0) $4_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -112,13 +112,13 @@ function asmFunc(global, env, buffer) {
  
  function $10(x) {
   x = +x;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $4 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > 0.0) $4_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;

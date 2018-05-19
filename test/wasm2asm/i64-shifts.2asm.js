@@ -23,12 +23,12 @@ function asmFunc(global, env, buffer) {
   
  }
  
- function $1($0, $0$hi, $1, $1$hi, $2, $2$hi) {
+ function $1($0, $0$hi, $1_1, $1$hi, $2_1, $2$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   $1$hi = $1$hi | 0;
-  $2 = $2 | 0;
+  $2_1 = $2_1 | 0;
   $2$hi = $2$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $12 = 0, $5$hi = 0;
   i64toi32_i32$0 = $0$hi;
@@ -36,7 +36,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$2 = $0;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$3 = $1;
+  i64toi32_i32$3 = $1_1;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$2 << i64toi32_i32$4 | 0;
@@ -50,16 +50,16 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = $5$hi;
   i64toi32_i32$0 = $12;
   i64toi32_i32$2 = $2$hi;
-  i64toi32_i32$3 = $2;
+  i64toi32_i32$3 = $2_1;
   return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$1 | 0) == (i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- function $2($0, $0$hi, $1, $1$hi, $2, $2$hi) {
+ function $2($0, $0$hi, $1_1, $1$hi, $2_1, $2$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   $1$hi = $1$hi | 0;
-  $2 = $2 | 0;
+  $2_1 = $2_1 | 0;
   $2$hi = $2$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$2 = 0, $12 = 0, $5$hi = 0;
   i64toi32_i32$0 = $0$hi;
@@ -67,7 +67,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$2 = $0;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$3 = $1;
+  i64toi32_i32$3 = $1_1;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
   if (32 >>> 0 <= (i64toi32_i32$3 & 63 | 0) >>> 0) {
    i64toi32_i32$1 = i64toi32_i32$0 >> 31 | 0;
@@ -81,7 +81,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = $5$hi;
   i64toi32_i32$0 = $12;
   i64toi32_i32$2 = $2$hi;
-  i64toi32_i32$3 = $2;
+  i64toi32_i32$3 = $2_1;
   return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$1 | 0) == ($2$hi | 0) | 0 | 0;
  }
  

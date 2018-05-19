@@ -29,19 +29,19 @@ function asmFunc(global, env, buffer) {
      $6 : {
       $5 : {
        $4 : {
-        $3 : {
-         $2 : {
-          $1 : {
-           $0 : {
+        $3_1 : {
+         $2_1 : {
+          $1_1 : {
+           $0_1 : {
             switch (i | 0) {
             case 0:
-             break $0;
+             break $0_1;
             case 1:
-             break $1;
+             break $1_1;
             case 2:
-             break $2;
+             break $2_1;
             case 3:
-             break $3;
+             break $3_1;
             case 4:
              break $4;
             case 5:
@@ -77,7 +77,7 @@ function asmFunc(global, env, buffer) {
  function $1(i, i$hi) {
   i = i | 0;
   i$hi = i$hi | 0;
-  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7 = 0, $7$hi = 0, j = 0, j$hi = 0;
+  var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7_1 = 0, $7$hi = 0, j = 0, j$hi = 0;
   j = 100;
   j$hi = 0;
   switch_ : {
@@ -86,19 +86,19 @@ function asmFunc(global, env, buffer) {
      $4 : {
       $5 : {
        $6 : {
-        $3 : {
-         $2 : {
-          $1 : {
-           $0 : {
+        $3_1 : {
+         $2_1 : {
+          $1_1 : {
+           $0_1 : {
             switch (i | 0) {
             case 0:
-             break $0;
+             break $0_1;
             case 1:
-             break $1;
+             break $1_1;
             case 2:
-             break $2;
+             break $2_1;
             case 3:
-             break $3;
+             break $3_1;
             case 4:
              break $4;
             case 5:
@@ -120,7 +120,7 @@ function asmFunc(global, env, buffer) {
         i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i >>> 0) + i$hi | 0;
         i64toi32_i32$5 = 0 - i64toi32_i32$5 | 0;
         i64toi32_i32$5 = i64toi32_i32$5;
-        $7 = i64toi32_i32$2 - i | 0;
+        $7_1 = i64toi32_i32$2 - i | 0;
         $7$hi = i64toi32_i32$5;
         break switch_;
        };
@@ -132,49 +132,49 @@ function asmFunc(global, env, buffer) {
     };
     i64toi32_i32$5 = j$hi;
     i64toi32_i32$5 = i64toi32_i32$5;
-    $7 = j;
+    $7_1 = j;
     $7$hi = i64toi32_i32$5;
     break switch_;
    };
    i64toi32_i32$5 = 4294967295;
-   $7 = 4294967291;
+   $7_1 = 4294967291;
    $7$hi = i64toi32_i32$5;
   };
   i64toi32_i32$5 = $7$hi;
   i64toi32_i32$5 = i64toi32_i32$5;
-  i64toi32_i32$2 = $7;
+  i64toi32_i32$2 = $7_1;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$5;
   return i64toi32_i32$2 | 0;
  }
  
  function $2(i) {
   i = i | 0;
-  var $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0;
-  $2 : {
-   $1 : {
-    $0 : {
+  var $5_1 = 0, $6_1 = 0, $7_1 = 0, $8 = 0, $9 = 0;
+  $2_1 : {
+   $1_1 : {
+    $0_1 : {
      default_ : {
-      $5 = Math_imul(2, i);
-      $6 = $5;
-      $7 = $5;
-      $8 = $5;
-      $9 = $5;
+      $5_1 = Math_imul(2, i);
+      $6_1 = $5_1;
+      $7_1 = $5_1;
+      $8 = $5_1;
+      $9 = $5_1;
       switch (3 & i | 0 | 0) {
       case 0:
-       break $0;
+       break $0_1;
       case 1:
-       break $1;
+       break $1_1;
       case 2:
-       break $2;
+       break $2_1;
       default:
        break default_;
       };
      };
-     $6 = 1e3 + $9 | 0;
+     $6_1 = 1e3 + $9 | 0;
     };
-    $7 = 100 + $6 | 0;
+    $7_1 = 100 + $6_1 | 0;
    };
-   $8 = 10 + $7 | 0;
+   $8 = 10 + $7_1 | 0;
   };
   return $8 | 0;
  }

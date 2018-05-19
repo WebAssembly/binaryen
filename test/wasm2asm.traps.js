@@ -62,6 +62,9 @@ var asmModule = asmFunc({
  Float32Array: Float32Array, 
  Float64Array: Float64Array
 }, {
+ abort: function abort() {
+  unreachable();
+ }
  
 }, __array_buffer);
 
