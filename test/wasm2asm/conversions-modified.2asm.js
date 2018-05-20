@@ -201,11 +201,15 @@ function asmFunc(global, env, buffer) {
  function $22(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
-  var i64toi32_i32$0 = 0;
+  var i64toi32_i32$0 = 0, wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0;
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
-  HEAP32[0 >> 2] = x;
-  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = x;
+  HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = i64toi32_i32$0;
+  HEAP32[(wasm2asm_i32$0 + 4 | 0) >> 2] = wasm2asm_i32$1;
   return +(+HEAPF64[0 >> 3]);
  }
  
@@ -216,8 +220,10 @@ function asmFunc(global, env, buffer) {
  
  function $24(x) {
   x = +x;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  HEAPF64[0 >> 3] = x;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2asm_i32$0 = 0, wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_f64$0 = x;
+  HEAPF64[wasm2asm_i32$0 >> 3] = wasm2asm_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = HEAP32[0 >> 2] | 0;

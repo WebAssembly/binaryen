@@ -199,7 +199,7 @@ function asmFunc(global, env, buffer) {
   var$0$hi = var$0$hi | 0;
   var$1 = var$1 | 0;
   var$1$hi = var$1$hi | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $38 = 0, $39 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, var$8$hi = 0, $46 = 0, $47 = 0, $48 = 0, $49 = 0, var$7$hi = 0, $50 = 0, $63$hi = 0, $65 = 0, $65$hi = 0, $66 = 0, $120$hi = 0, $129$hi = 0, $134$hi = 0, var$8 = 0, $140 = 0, $140$hi = 0, $142$hi = 0, $144 = 0, $144$hi = 0, $151 = 0, $151$hi = 0, $154$hi = 0, var$7 = 0, $165$hi = 0, wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, var$2 = 0, var$3 = 0, var$4 = 0, var$5 = 0, var$5$hi = 0, var$6 = 0, var$6$hi = 0, i64toi32_i32$6 = 0, $38 = 0, $39 = 0, $40 = 0, $41 = 0, $42 = 0, $43 = 0, $44 = 0, $45 = 0, var$8$hi = 0, $46 = 0, $47 = 0, $48 = 0, $49 = 0, var$7$hi = 0, $50 = 0, $63$hi = 0, $65 = 0, $65$hi = 0, $66 = 0, $120$hi = 0, $129$hi = 0, $134$hi = 0, var$8 = 0, $140 = 0, $140$hi = 0, $142$hi = 0, $144 = 0, $144$hi = 0, $151 = 0, $151$hi = 0, $154$hi = 0, var$7 = 0, $165$hi = 0, wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0, wasm2asm_i32$2 = 0, wasm2asm_i32$3 = 0;
   label$1 : {
    label$2 : {
     label$3 : {
@@ -267,8 +267,12 @@ function asmFunc(global, env, buffer) {
              i64toi32_i32$1 = 0;
              i64toi32_i32$2 = 1024;
              i64toi32_i32$1 = i64toi32_i32$1;
-             HEAP32[i64toi32_i32$2 >> 2] = var$0 - Math_imul(var$2, var$3) | 0;
-             (wasm2asm_i32$0 = i64toi32_i32$2, wasm2asm_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+             wasm2asm_i32$0 = i64toi32_i32$2;
+             wasm2asm_i32$1 = var$0 - Math_imul(var$2, var$3) | 0;
+             HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+             wasm2asm_i32$0 = i64toi32_i32$2;
+             wasm2asm_i32$1 = i64toi32_i32$1;
+             (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
              i64toi32_i32$1 = 0;
              i64toi32_i32$1 = i64toi32_i32$1;
              i64toi32_i32$2 = var$2;
@@ -326,8 +330,12 @@ function asmFunc(global, env, buffer) {
             $66 = i64toi32_i32$3 | i64toi32_i32$0 | 0;
             i64toi32_i32$3 = 1024;
             i64toi32_i32$1 = i64toi32_i32$1;
-            HEAP32[i64toi32_i32$3 >> 2] = $66;
-            (wasm2asm_i32$0 = i64toi32_i32$3, wasm2asm_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+            wasm2asm_i32$0 = i64toi32_i32$3;
+            wasm2asm_i32$1 = $66;
+            HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+            wasm2asm_i32$0 = i64toi32_i32$3;
+            wasm2asm_i32$1 = i64toi32_i32$1;
+            (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
             i64toi32_i32$1 = 0;
             i64toi32_i32$1 = i64toi32_i32$1;
             i64toi32_i32$3 = var$2 >>> ((__wasm_ctz_i32(var$3 | 0) | 0) & 31 | 0) | 0;
@@ -361,8 +369,12 @@ function asmFunc(global, env, buffer) {
         }
         i64toi32_i32$2 = 1024;
         i64toi32_i32$1 = i64toi32_i32$1;
-        HEAP32[i64toi32_i32$2 >> 2] = $42;
-        (wasm2asm_i32$0 = i64toi32_i32$2, wasm2asm_i32$1 = i64toi32_i32$1), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+        wasm2asm_i32$0 = i64toi32_i32$2;
+        wasm2asm_i32$1 = $42;
+        HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+        wasm2asm_i32$0 = i64toi32_i32$2;
+        wasm2asm_i32$1 = i64toi32_i32$1;
+        (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
         i64toi32_i32$1 = 0;
         i64toi32_i32$1 = i64toi32_i32$1;
         i64toi32_i32$2 = var$4;
@@ -378,8 +390,12 @@ function asmFunc(global, env, buffer) {
       i64toi32_i32$2 = 0;
       i64toi32_i32$1 = 1024;
       i64toi32_i32$2 = i64toi32_i32$2;
-      HEAP32[i64toi32_i32$1 >> 2] = var$4 & var$0 | 0;
-      (wasm2asm_i32$0 = i64toi32_i32$1, wasm2asm_i32$1 = i64toi32_i32$2), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+      wasm2asm_i32$0 = i64toi32_i32$1;
+      wasm2asm_i32$1 = var$4 & var$0 | 0;
+      HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+      wasm2asm_i32$0 = i64toi32_i32$1;
+      wasm2asm_i32$1 = i64toi32_i32$2;
+      (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
       if ((var$3 | 0) == (1 | 0)) break label$1;
       i64toi32_i32$2 = var$0$hi;
       i64toi32_i32$2 = 0;
@@ -585,8 +601,12 @@ function asmFunc(global, env, buffer) {
     i64toi32_i32$3 = var$5$hi;
     i64toi32_i32$2 = 1024;
     i64toi32_i32$3 = i64toi32_i32$3;
-    HEAP32[i64toi32_i32$2 >> 2] = var$5;
-    (wasm2asm_i32$0 = i64toi32_i32$2, wasm2asm_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+    wasm2asm_i32$0 = i64toi32_i32$2;
+    wasm2asm_i32$1 = var$5;
+    HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+    wasm2asm_i32$0 = i64toi32_i32$2;
+    wasm2asm_i32$1 = i64toi32_i32$3;
+    (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
     i64toi32_i32$3 = var$0$hi;
     i64toi32_i32$3 = i64toi32_i32$3;
     i64toi32_i32$5 = var$0;
@@ -615,8 +635,12 @@ function asmFunc(global, env, buffer) {
    i64toi32_i32$3 = var$0$hi;
    i64toi32_i32$5 = 1024;
    i64toi32_i32$3 = i64toi32_i32$3;
-   HEAP32[i64toi32_i32$5 >> 2] = var$0;
-   (wasm2asm_i32$0 = i64toi32_i32$5, wasm2asm_i32$1 = i64toi32_i32$3), ((HEAP8[(wasm2asm_i32$0 + 4 | 0) >> 0] = wasm2asm_i32$1 & 255 | 0, HEAP8[(wasm2asm_i32$0 + 5 | 0) >> 0] = (wasm2asm_i32$1 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 6 | 0) >> 0] = (wasm2asm_i32$1 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$0 + 7 | 0) >> 0] = (wasm2asm_i32$1 >>> 24 | 0) & 255 | 0;
+   wasm2asm_i32$0 = i64toi32_i32$5;
+   wasm2asm_i32$1 = var$0;
+   HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+   wasm2asm_i32$0 = i64toi32_i32$5;
+   wasm2asm_i32$1 = i64toi32_i32$3;
+   (wasm2asm_i32$2 = wasm2asm_i32$0, wasm2asm_i32$3 = wasm2asm_i32$1), ((HEAP8[(wasm2asm_i32$2 + 4 | 0) >> 0] = wasm2asm_i32$3 & 255 | 0, HEAP8[(wasm2asm_i32$2 + 5 | 0) >> 0] = (wasm2asm_i32$3 >>> 8 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 6 | 0) >> 0] = (wasm2asm_i32$3 >>> 16 | 0) & 255 | 0), HEAP8[(wasm2asm_i32$2 + 7 | 0) >> 0] = (wasm2asm_i32$3 >>> 24 | 0) & 255 | 0;
    i64toi32_i32$3 = 0;
    var$0 = 0;
    var$0$hi = i64toi32_i32$3;

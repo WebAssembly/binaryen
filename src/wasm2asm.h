@@ -722,9 +722,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitStore(Store* curr) {
-      if (parent->isStatement(curr->ptr) || parent->isStatement(curr->value)) {
-        parent->setStatement(curr);
-      }
+      parent->setStatement(curr);
     }
     void visitUnary(Unary* curr) {
       if (parent->isStatement(curr->value)) {
@@ -1188,8 +1186,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
         ScopedTemp tempValue(curr->valueType, parent, func);
         GetLocal fakeLocalPtr(allocator);
         fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
+        fakeLocalPtr.type = curr->ptr->type;
         GetLocal fakeLocalValue(allocator);
         fakeLocalValue.index = func->getLocalIndex(tempValue.getName());
+        fakeLocalValue.type = curr->value->type;
         Store fakeStore = *curr;
         fakeStore.ptr = &fakeLocalPtr;
         fakeStore.value = &fakeLocalValue;
@@ -1770,18 +1770,24 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString resu
     }
 
     Ref visitHost(Host* curr) {
+      Ref call;
       if (curr->op == HostOp::GrowMemory) {
         parent->setNeedsAlmostASM("grow_memory op");
-        return ValueBuilder::makeCall(WASM_GROW_MEMORY,
+        call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
-      }
-      if (curr->op == HostOp::CurrentMemory) {
+      } else if (curr->op == HostOp::CurrentMemory) {
         parent->setNeedsAlmostASM("current_memory op");
-        return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+        call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      return ValueBuilder::makeCall(ABORT_FUNC);
+      if (isStatement(curr)) {
+        return ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, call);
+      } else {
+        return call;
+      }
     }
 
     Ref visitNop(Nop* curr) {
@@ -1907,6 +1913,9 @@ static void prefixCalls(Ref asmjs, Name asmModule) {
   if (asmjs->isAssign()) {
     prefixCalls(asmjs->asAssign()->target(), asmModule);
     prefixCalls(asmjs->asAssign()->value(), asmModule);
+  }
+  if (asmjs->isAssignName()) {
+    prefixCalls(asmjs->asAssignName()->value(), asmModule);
   }
 }
 
