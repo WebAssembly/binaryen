@@ -102,21 +102,9 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
           continue;
         }
         auto* curr = intrinsicsModule.getFunction(name);
-
-        std::stringstream newTypeNameS;
-        newTypeNameS << "importedType" << curr->type;
-        Name newTypeName(newTypeNameS.str().c_str());
-
-        auto* newType = module->getFunctionTypeOrNull(newTypeName);
-        if (newType == nullptr) {
-          auto *ty = intrinsicsModule.getFunctionType(curr->type);
-          newType = new FunctionType(*ty);
-          newType->name = newTypeName;
-          module->addFunctionType(newType);
-        }
         auto* func = new Function(*curr);
         func->body = ExpressionManipulator::copy(func->body, *module);
-        func->type = newType->name;
+        func->type = Name();
         module->addFunction(func);
         doWalkFunction(func);
       }

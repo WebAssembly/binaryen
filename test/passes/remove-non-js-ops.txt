@@ -99,6 +99,7 @@
     (get_local $0)
    )
   )
+<<<<<<< HEAD
   (set_local $3
    (f32.sub
     (get_local $0)
@@ -109,6 +110,47 @@
    (f32.lt
     (get_local $3)
     (f32.const 0.5)
+=======
+ )
+ (func $__wasm_ctz_i32 (; 11 ;) (param $var$0 i32) (result i32)
+  (if
+   (get_local $var$0)
+   (return
+    (i32.sub
+     (i32.const 31)
+     (i32.clz
+      (i32.xor
+       (i32.add
+        (get_local $var$0)
+        (i32.const -1)
+       )
+       (get_local $var$0)
+      )
+     )
+    )
+   )
+  )
+  (i32.const 32)
+ )
+ (func $__wasm_nearest_f32 (; 12 ;) (param $var$0 f32) (result f32)
+  (local $var$1 f32)
+  (local $var$2 f32)
+  (if
+   (i32.eqz
+    (f32.lt
+     (tee_local $var$2
+      (f32.sub
+       (get_local $var$0)
+       (tee_local $var$1
+        (f32.floor
+         (get_local $var$0)
+        )
+       )
+      )
+     )
+     (f32.const 0.5)
+    )
+>>>>>>> 10d78ca... Remove named types of imported intrinsics
    )
    (get_local $2)
    (if (result f32)
@@ -141,6 +183,7 @@
    )
   )
  )
+<<<<<<< HEAD
  (func $__wasm_nearest_f64 (; 11 ;) (param $0 f64) (result f64)
   (local $1 f64)
   (local $2 f64)
@@ -186,6 +229,18 @@
       (f64.eq
        (f64.sub
         (get_local $4)
+=======
+ (func $__wasm_nearest_f64 (; 13 ;) (param $var$0 f64) (result f64)
+  (local $var$1 f64)
+  (local $var$2 f64)
+  (if
+   (i32.eqz
+    (f64.lt
+     (tee_local $var$2
+      (f64.sub
+       (get_local $var$0)
+       (tee_local $var$1
+>>>>>>> 10d78ca... Remove named types of imported intrinsics
         (f64.floor
          (get_local $4)
         )
@@ -281,7 +336,12 @@
    )
   )
  )
+<<<<<<< HEAD
  (func $__wasm_rotl_i32 (; 16 ;) (param $x i32) (param $k i32) (result i32)
+=======
+ (func $__wasm_rotl_i32 (; 14 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+>>>>>>> 10d78ca... Remove named types of imported intrinsics
   (i32.or
    (i32.shl
     (i32.and
@@ -323,7 +383,12 @@
    )
   )
  )
+<<<<<<< HEAD
  (func $__wasm_rotr_i32 (; 17 ;) (param $x i32) (param $k i32) (result i32)
+=======
+ (func $__wasm_rotr_i32 (; 15 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+>>>>>>> 10d78ca... Remove named types of imported intrinsics
   (i32.or
    (i32.shr_u
     (i32.and
@@ -362,6 +427,38 @@
       (i32.const 31)
      )
     )
+<<<<<<< HEAD
+=======
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_trunc_f32 (; 16 ;) (param $var$0 f32) (result f32)
+  (select
+   (f32.ceil
+    (get_local $var$0)
+   )
+   (f32.floor
+    (get_local $var$0)
+   )
+   (f32.lt
+    (get_local $var$0)
+    (f32.const 0)
+   )
+  )
+ )
+ (func $__wasm_trunc_f64 (; 17 ;) (param $var$0 f64) (result f64)
+  (select
+   (f64.ceil
+    (get_local $var$0)
+   )
+   (f64.floor
+    (get_local $var$0)
+   )
+   (f64.lt
+    (get_local $var$0)
+    (f64.const 0)
+>>>>>>> 10d78ca... Remove named types of imported intrinsics
    )
   )
  )
