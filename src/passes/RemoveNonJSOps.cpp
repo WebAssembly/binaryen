@@ -33,6 +33,7 @@
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -98,15 +99,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // copy we then walk the function to rewrite any non-js operations it has
       // as well.
       for (auto &name : neededFunctions) {
-        if (module->getFunctionOrNull(name) != nullptr) {
-          continue;
-        }
-        auto* curr = intrinsicsModule.getFunction(name);
-        auto* func = new Function(*curr);
-        func->body = ExpressionManipulator::copy(func->body, *module);
-        func->type = Name();
-        module->addFunction(func);
-        doWalkFunction(func);
+        doWalkFunction(ModuleUtils::copyFunction(intrinsicsModule, *module, name));
       }
       neededFunctions.clear();
     }

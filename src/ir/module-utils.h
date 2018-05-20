@@ -85,6 +85,19 @@ inline void copyModule(Module& in, Module& out) {
   out.debugInfoFileNames = in.debugInfoFileNames;
 }
 
+inline Function* copyFunction(Module& in, Module& out, Name name) {
+  Function *ret = out.getFunctionOrNull(name);
+  if (ret != nullptr) {
+    return ret;
+  }
+  auto* curr = in.getFunction(name);
+  auto* func = new Function(*curr);
+  func->body = ExpressionManipulator::copy(func->body, out);
+  func->type = Name();
+  out.addFunction(func);
+  return func;
+}
+
 } // namespace ModuleUtils
 
 } // namespace wasm
