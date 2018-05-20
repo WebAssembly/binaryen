@@ -31,6 +31,7 @@ test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
 test/wasm-install/
 test/validator/*.wasm
+*.map
 
 *.pyc
 CMakeFiles/
