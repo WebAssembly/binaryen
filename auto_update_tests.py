@@ -192,6 +192,7 @@ def update_wasm_opt_tests():
       actual = run_command(WASM_DIS + ['b.wasm', '--source-map=b.map'])
       open(f, 'w').write(actual)
 
+
 def update_bin_fmt_tests():
   print '\n[ checking binary format testcases... ]\n'
   for wast in sorted(os.listdir('test')):

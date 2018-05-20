@@ -176,6 +176,7 @@ def run_wasm_opt_tests():
       actual = run_command(WASM_DIS + ['b.wasm', '--source-map=b.map'])
       fail_if_not_identical_to_file(actual, f)
 
+
 def run_wasm_dis_tests():
   print '\n[ checking wasm-dis on provided binaries... ]\n'
 
