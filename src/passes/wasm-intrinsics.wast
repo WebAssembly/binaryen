@@ -28,6 +28,38 @@
  (export "__wasm_rotr_i64" (func $__wasm_rotr_i64))
  (export "__wasm_nearest_f32" (func $__wasm_nearest_f32))
  (export "__wasm_nearest_f64" (func $__wasm_nearest_f64))
+ (export "__wasm_popcnt_i32" (func $__wasm_popcnt_i32))
+ (func $__wasm_popcnt_i32 (param $var$0 i32) (result i32)
+  (local $var$1 i32)
+  (block $label$1 (result i32)
+   (loop $label$2
+    (drop
+     (br_if $label$1
+      (get_local $var$1)
+      (i32.eqz
+       (get_local $var$0)
+      )
+     )
+    )
+    (set_local $var$0
+     (i32.and
+      (get_local $var$0)
+      (i32.sub
+       (get_local $var$0)
+       (i32.const 1)
+      )
+     )
+    )
+    (set_local $var$1
+     (i32.add
+      (get_local $var$1)
+      (i32.const 1)
+     )
+    )
+    (br $label$2)
+   )
+  )
+ )
  (func $__wasm_i64_sdiv (; 0 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (call $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E
    (get_local $var$0)

@@ -83,6 +83,7 @@
    (get_local $0)
   )
  )
+<<<<<<< HEAD
  (func $__wasm_nearest_f32 (; 10 ;) (param $0 f32) (result f32)
   (local $1 f32)
   (local $2 f32)
@@ -113,6 +114,9 @@
 =======
  )
  (func $__wasm_ctz_i32 (; 11 ;) (param $var$0 i32) (result i32)
+=======
+ (func $__wasm_ctz_i32 (; 10 ;) (param $var$0 i32) (result i32)
+>>>>>>> a244a88... Add __wasm_popcnt_i32 to intrinsics wast
   (if
    (get_local $var$0)
    (return
@@ -132,7 +136,7 @@
   )
   (i32.const 32)
  )
- (func $__wasm_nearest_f32 (; 12 ;) (param $var$0 f32) (result f32)
+ (func $__wasm_nearest_f32 (; 11 ;) (param $var$0 f32) (result f32)
   (local $var$1 f32)
   (local $var$2 f32)
   (if
@@ -184,6 +188,7 @@
   )
  )
 <<<<<<< HEAD
+<<<<<<< HEAD
  (func $__wasm_nearest_f64 (; 11 ;) (param $0 f64) (result f64)
   (local $1 f64)
   (local $2 f64)
@@ -231,6 +236,9 @@
         (get_local $4)
 =======
  (func $__wasm_nearest_f64 (; 13 ;) (param $var$0 f64) (result f64)
+=======
+ (func $__wasm_nearest_f64 (; 12 ;) (param $var$0 f64) (result f64)
+>>>>>>> a244a88... Add __wasm_popcnt_i32 to intrinsics wast
   (local $var$1 f64)
   (local $var$2 f64)
   (if
@@ -337,8 +345,42 @@
   )
  )
 <<<<<<< HEAD
+<<<<<<< HEAD
  (func $__wasm_rotl_i32 (; 16 ;) (param $x i32) (param $k i32) (result i32)
 =======
+=======
+ (func $__wasm_popcnt_i32 (; 13 ;) (param $var$0 i32) (result i32)
+  (local $var$1 i32)
+  (block $label$1 (result i32)
+   (loop $label$2
+    (drop
+     (br_if $label$1
+      (get_local $var$1)
+      (i32.eqz
+       (get_local $var$0)
+      )
+     )
+    )
+    (set_local $var$0
+     (i32.and
+      (get_local $var$0)
+      (i32.sub
+       (get_local $var$0)
+       (i32.const 1)
+      )
+     )
+    )
+    (set_local $var$1
+     (i32.add
+      (get_local $var$1)
+      (i32.const 1)
+     )
+    )
+    (br $label$2)
+   )
+  )
+ )
+>>>>>>> a244a88... Add __wasm_popcnt_i32 to intrinsics wast
  (func $__wasm_rotl_i32 (; 14 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
   (local $var$2 i32)
 >>>>>>> 10d78ca... Remove named types of imported intrinsics

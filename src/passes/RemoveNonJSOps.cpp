@@ -77,14 +77,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // injected intrinsics to ensure that they never contain non-js ops when
     // we're done.
     while (neededIntrinsics.size() > 0) {
-      // TODO: move popcnt to the wast blob below and avoid special handling of
-      // it.
-      if (neededIntrinsics.erase(WASM_POPCNT32)) {
-        if (module->getFunctionOrNull(WASM_POPCNT32) == nullptr) {
-          module->addFunction(createPopcnt());
-        }
-      }
-
       // Recursively probe all needed intrinsics for transitively used
       // functions. This is building up a set of functions we'll link into our
       // module.
@@ -124,57 +116,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
     CallFinder finder(this, m, needed);
     finder.doWalkFunction(m.getFunction(name));
-  }
-
-  Function* createPopcnt() {
-    // popcnt implemented as:
-    // int c; for (c = 0; x != 0; c++) { x = x & (x - 1) }; return c
-    Name loopName("l");
-    Name blockName("b");
-    Break* brIf = builder->makeBreak(
-      blockName,
-      builder->makeGetLocal(1, i32),
-      builder->makeUnary(
-        EqZInt32,
-        builder->makeGetLocal(0, i32)
-      )
-    );
-    SetLocal* update = builder->makeSetLocal(
-      0,
-      builder->makeBinary(
-        AndInt32,
-        builder->makeGetLocal(0, i32),
-        builder->makeBinary(
-          SubInt32,
-          builder->makeGetLocal(0, i32),
-          builder->makeConst(Literal(int32_t(1)))
-        )
-      )
-    );
-    SetLocal* inc = builder->makeSetLocal(
-      1,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeGetLocal(1, i32),
-        builder->makeConst(Literal(1))
-      )
-    );
-    Break* cont = builder->makeBreak(loopName);
-    Loop* loop = builder->makeLoop(
-      loopName,
-      builder->blockify(builder->makeDrop(brIf), update, inc, cont)
-    );
-    Block* loopBlock = builder->blockifyWithName(loop, blockName);
-    // TODO: not sure why this is necessary...
-    loopBlock->type = i32;
-    SetLocal* initCount = builder->makeSetLocal(1, builder->makeConst(Literal(0)));
-    return builder->makeFunction(
-      WASM_POPCNT32,
-      std::vector<NameType>{NameType("x", i32)},
-      i32,
-      std::vector<NameType>{NameType("count", i32)},
-      builder->blockify(initCount, loopBlock)
-    );
   }
 
   void doWalkFunction(Function* func) {

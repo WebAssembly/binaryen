@@ -188,6 +188,7 @@ function asmFunc(global, env, buffer) {
   return x >>> 0 >= y >>> 0 | 0;
  }
  
+<<<<<<< HEAD
  function __wasm_popcnt_i32(x) {
   x = x | 0;
   var count = 0, $5 = 0;
@@ -205,10 +206,28 @@ function asmFunc(global, env, buffer) {
   return $5 | 0;
  }
  
+=======
+>>>>>>> a244a88... Add __wasm_popcnt_i32 to intrinsics wast
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
   return 32 | 0;
+ }
+ 
+ function __wasm_popcnt_i32(var$0) {
+  var$0 = var$0 | 0;
+  var var$1 = 0, $5_1 = 0;
+  label$1 : {
+   label$2 : do {
+    $5_1 = var$1;
+    if ((var$0 | 0) == (0 | 0)) break label$1;
+    var$0 = var$0 & (var$0 - 1 | 0) | 0;
+    var$1 = var$1 + 1 | 0;
+    continue label$2;
+    break label$2;
+   } while (1);
+  };
+  return $5_1 | 0;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
