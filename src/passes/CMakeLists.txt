@@ -1,3 +1,10 @@
+add_executable(embedwast embedwast.cpp)
+
+add_custom_command(
+  OUTPUT WasmIntrinsics.cpp
+  COMMAND ${CMAKE_BINARY_DIR}/bin/embedwast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS embedwast wasm-intrinsics.wast)
+
 SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
@@ -45,5 +52,6 @@ SET(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})
