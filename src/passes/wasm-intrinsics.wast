@@ -5,7 +5,7 @@
 ;; these pretty early so they can continue to be optimized by further passes
 ;; (aka inlining and whatnot)
 ;;
-;; [1]: https:;;gist.github.com;alexcrichton;e7ea67bcdd17ce4b6254e66f77165690
+;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
 (module
  (type $0 (func (param i64 i64) (result i64)))
