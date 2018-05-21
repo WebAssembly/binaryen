@@ -34,10 +34,9 @@
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
 #include "ir/module-utils.h"
+#include "passes/intrinsics-module.h"
 
 namespace wasm {
-
-extern const char *IntrinsicsModule;
 
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
@@ -61,7 +60,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     //
     // TODO: only do this once per invocation of wasm2asm
     Module intrinsicsModule;
-    std::string input(IntrinsicsModule);
+    std::string input(IntrinsicsModuleWast);
     SExpressionParser parser(const_cast<char*>(input.c_str()));
     Element& root = *parser.root;
     SExpressionWasmBuilder builder(intrinsicsModule, *root[0]);
