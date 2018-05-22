@@ -306,7 +306,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
                               0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size();
+                                return size + seg.data.size() + seg.constOffset();
                               });
   size_t pow2ed = 1;
   while (pow2ed < tableSize) {
@@ -463,7 +463,7 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
           table[j] = fromName(name, GlobalScope);
         }
       } else {
-        table[i] = fromName(name, GlobalScope);
+        table[i + seg.constOffset()] = fromName(name, GlobalScope);
       }
     }
   }

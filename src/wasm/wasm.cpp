@@ -796,4 +796,13 @@ void Module::updateMaps() {
   }
 }
 
+uint64_t Table::Segment::constOffset() {
+  if (offset->is<GetGlobal>())
+    return 0;
+  auto* c = offset->dynCast<Const>();
+  if (!c)
+    return 0;
+  return c->value.getInteger();
+}
+
 } // namespace wasm
