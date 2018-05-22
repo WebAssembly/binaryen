@@ -1559,9 +1559,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 private:
   std::unique_ptr<Builder> builder;
   std::unordered_map<Index, Index> indexMap;
+  std::unordered_map<int, std::vector<Index>> freeTemps;
   std::unordered_map<Expression*, TempVar> highBitVars;
   std::unordered_map<Name, TempVar> labelHighBitVars;
-  std::unordered_map<int, std::vector<Index>> freeTemps;
   std::unordered_map<Index, Type> tempTypes;
   Index nextTemp;
 
