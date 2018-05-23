@@ -34,6 +34,7 @@
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
 #include "ir/module-utils.h"
+#include "ir/find_all.h"
 #include "passes/intrinsics-module.h"
 
 namespace wasm {
@@ -100,21 +101,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     }
     needed.insert(name);
 
-    struct CallFinder: public PostWalker<CallFinder> {
-      RemoveNonJSOpsPass *pass;
-      Module &module;
-      std::set<Name> &needed;
-
-      CallFinder(RemoveNonJSOpsPass *pass, Module &m, std::set<Name> &needed)
-        : pass(pass), module(m), needed(needed) {}
-
-      void visitCall(Call *call) {
-        pass->addNeededFunctions(module, call->target, needed);
-      }
-    };
-
-    CallFinder finder(this, m, needed);
-    finder.doWalkFunction(m.getFunction(name));
+    auto function = m.getFunction(name);
+    FindAll<Call> calls(function->body);
+    for (auto &call : calls.list) {
+      this->addNeededFunctions(m, call->target, needed);
+    }
   }
 
   void doWalkFunction(Function* func) {
