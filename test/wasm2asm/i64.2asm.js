@@ -1595,32 +1595,17 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
-<<<<<<< HEAD
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-=======
  function __wasm_popcnt_i32(var$0) {
   var$0 = var$0 | 0;
-  var var$1 = 0, $2_1 = 0;
+  var var$1 = 0, $2 = 0;
   label$1 : {
    label$2 : do {
-    $2_1 = var$1;
+    $2 = var$1;
     if ((var$0 | 0) == (0 | 0)) break label$1;
     var$0 = var$0 & (var$0 - 1 | 0) | 0;
     var$1 = var$1 + 1 | 0;
     continue label$2;
     break label$2;
->>>>>>> a244a88... Add __wasm_popcnt_i32 to intrinsics wast
    } while (1);
   };
   return $2 | 0;
