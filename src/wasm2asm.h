@@ -1269,21 +1269,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
                 visit(curr->value, EXPRESSION_RESULT)
               );
             case CtzInt32:
-              return makeSigning(
-                ValueBuilder::makeCall(
-                  WASM_CTZ32,
-                  visit(curr->value, EXPRESSION_RESULT)
-                ),
-                ASM_SIGNED
-              );
             case PopcntInt32:
-              return makeSigning(
-                ValueBuilder::makeCall(
-                  WASM_POPCNT32,
-                  visit(curr->value, EXPRESSION_RESULT)
-                ),
-                ASM_SIGNED
-              );
+              std::cerr << "i32 unary should have been removed: " << curr
+                        << std::endl;
+              WASM_UNREACHABLE();
             case EqZInt32:
               return ValueBuilder::makeBinary(
                   makeAsmCoercion(visit(curr->value,
