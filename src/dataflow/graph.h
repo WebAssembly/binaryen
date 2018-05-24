@@ -663,7 +663,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           // We need to actually merge some stuff.
           if (!block) {
             block = addNode(Node::makeBlock());
-            artificialNodes.insert(block);
             for (Index index = 0; index < numStates; index++) {
               auto* condition = states[index].condition;
               if (!condition->isBad()) {
@@ -674,7 +673,13 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           }
           auto* phi = addNode(Node::makePhi(block, i));
           for (auto& state : states) {
-            phi->addValue(expandFromI1(state.locals[i]));
+            auto* value = expandFromI1(state.locals[i]);
+            phi->addValue(value);
+            // The phi in effect gets each of its input values. In the wasm
+            // we have gets of the index used to implement the phi, and gets
+            // of that will increment the phi's numGets, not those of the
+            // values (so if we don't set this here, they would seem to have 0).
+            value->numGets++;
           }
           out[i] = phi;
           break;
@@ -688,7 +693,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   Node* expandFromI1(Node* node) {
     if (!node->isBad() && node->returnsI1()) {
       node = addNode(Node::makeZext(node));
-      artificialNodes.insert(node);
     }
     return node;
   }
@@ -738,7 +742,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
 
   bool isArtificial(Node* node) {
-    return artificialNodes.find(node) != artificialNodes.end();
+    return node->isPhi() || node->isBlock() || node->isZext() ||
+           artificialNodes.find(node) != artificialNodes.end();
   }
 };
 

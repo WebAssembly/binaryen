@@ -76,12 +76,17 @@ struct Trace {
   // Track how many uses in the trace each node has. This lets us
   // compute whether they have external uses later.
   std::unordered_map<Node*, Index> numUses;
-  // We add path conditions later, and at that time, do not care
-  // about counting the number of users of a node, as they are not
-  // actual uses.
-  bool addingPath;
+  // The nodes that have additional external uses (only computed
+  // for the "work" nodes, not the descriptive nodes arriving for
+  // path conditions).
+  std::unordered_set<Node*> hasExternalUses;
+  // We add path conditions after the "work". We collect them here
+  // and then go through them at the proper time.
+  std::vector<Node*> conditionsToAdd;
 
   Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
+std::cout << "new trace, to infer:\n";
+dump(toInfer, std::cout);
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -92,27 +97,46 @@ struct Trace {
       totalLimit = atoi(totalLimitStr);
     }
     // Pull in all the dependencies, starting from the value itself.
-    addingPath = false;
+std::cout << "add root\n";
     add(toInfer, 0);
+    if (bad) return;
     // If we are trivial before adding pcs, we are still trivial, and
     // can ignore this.
     auto sizeBeforePathConditions = nodes.size();
-    if (!bad) {
-      // No input is uninteresting
-      if (sizeBeforePathConditions == 0) {
-        bad = true;
-        return;
-      }
-      // Just a var is uninteresting. TODO: others too?
-      if (sizeBeforePathConditions == 1 && nodes[0]->isVar()) {
-        bad = true;
-        return;
+    // No input is uninteresting
+    if (sizeBeforePathConditions == 0) {
+      bad = true;
+      return;
+    }
+    // Just a var is uninteresting. TODO: others too?
+    if (sizeBeforePathConditions == 1 && nodes[0]->isVar()) {
+      bad = true;
+      return;
+    }
+    // Before adding the path conditions, we can now compute the
+    // actual number of uses of "work" nodes, the real computation done
+    // here and that we hope to replace, as opposed to path condition
+    // computation which is only descriptive and helps optimization of
+    // the work.
+    for (auto* node : nodes) {
+std::cout << "calc uses\n";
+dump(node, std::cout);
+std::cout << numUses[node] << " : " << node->numGets << '\n';
+      // Artificial nodes do not have gets, but otherwise the uses we see
+      // here must make sense wrt the gets in the wasm.
+      assert(numUses[node] <= node->numGets || graph.isArtificial(node));
+      // Mark nodes with external uses.
+      if (numUses[node] < node->numGets) {
+        hasExternalUses.insert(node);
       }
     }
-    // Also pull in conditions based on the location of this node: e.g.
+    for (auto* condition : conditionsToAdd) {
+std::cout << "add queued condition\n";
+      add(condition, 0);
+    }
+    // Add in path conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
-    addingPath = true;
     auto iter = graph.nodeParentMap.find(toInfer);
     if (iter != graph.nodeParentMap.end()) {
       addPath(toInfer, iter->second);
@@ -120,6 +144,9 @@ struct Trace {
   }
 
   Node* add(Node* node, size_t depth) {
+std::cout << "  addddddd:\n";
+dump(node, std::cout);
+
     depth++;
     // If replaced, return the replacement.
     auto iter = replacements.find(node);
@@ -133,7 +160,7 @@ struct Trace {
     // as used.
     // XXX Note that we do not compute this accurately for
     //     replaced nodes. But we don't need to.
-    if (node != toInfer && !addingPath) {
+    if (node != toInfer) {
       numUses[node]++;
     }
     // If already added, nothing more to do.
@@ -164,11 +191,13 @@ struct Trace {
         // Add the dependencies.
         assert(!node->expr->is<GetLocal>());
         for (Index i = 0; i < node->values.size(); i++) {
+std::cout << "add expr dep. the node is " << node << " and the value is " << node->getValue(i) << "\n";
           add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Phi: {
+std::cout << "add phi block\n";
         auto* block = add(node->getValue(0), depth);
         assert(block);
         auto size = block->values.size();
@@ -178,17 +207,20 @@ struct Trace {
           // we can proceed without the extra condition information
           auto* condition = block->getValue(i);
           if (!condition->isBad()) {
-            add(condition, depth);
+            conditionsToAdd.push_back(condition);
           }
         }
         // Then, add the phi values
         for (Index i = 1; i < size + 1; i++) {
+std::cout << "add phi value\n";
           add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Cond: {
+std::cout << "add cond block\n";
         add(node->getValue(0), depth); // add the block
+std::cout << "add cond value\n";
         add(node->getValue(1), depth); // add the node
         break;
       }
@@ -196,6 +228,7 @@ struct Trace {
         break; // nothing more to add
       }
       case Node::Type::Zext: {
+std::cout << "add zext value\n";
         add(node->getValue(0), depth);
         break;
       }
@@ -242,6 +275,7 @@ struct Trace {
       auto* condition = conditions[index];
       // Add the condition itself as an instruction in the trace -
       // the pc uses it as its input.
+std::cout << "add path to\n";
       add(condition, 0);
       // Add it as a pc, which we will emit directly.
       pathConditions.push_back(condition);
@@ -273,6 +307,8 @@ struct Printer {
 
   // Each Node in a trace has an index, from 0.
   std::unordered_map<Node*, Index> indexing;
+
+  bool printedHasExternalUses = false;
 
   Printer(Graph& graph, Trace& trace) : graph(graph), trace(trace) {
     std::cout << "\n; start LHS (in " << graph.func->name << ")\n";
@@ -358,10 +394,9 @@ struct Printer {
       default: WASM_UNREACHABLE();
     }
     if (node->isExpr() || node->isPhi()) {
-      assert(trace.numUses[node] <= node->numGets);
-      if (node != trace.toInfer &&
-          trace.numUses[node] < node->numGets) {
+      if (node != trace.toInfer && trace.hasExternalUses.count(node) > 0) {
         std::cout << " (hasExternalUses)";
+        printedHasExternalUses = true;
       }
     }
     std::cout << '\n';
@@ -516,6 +551,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // Build the data-flow IR.
     DataFlow::Graph graph;
     graph.build(func, getModule());
+dump(graph, std::cout);
     // If we only want single-use nodes, exclude all the others.
     std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
@@ -533,7 +569,10 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
           DataFlow::Trace::isTraceable(node)) {
         DataFlow::Trace trace(graph, node, excludeAsChildren);
         if (!trace.isBad()) {
-          DataFlow::Printer(graph, trace);
+          DataFlow::Printer printer(graph, trace);
+          if (singleUseOnly) {
+            assert(!printer.printedHasExternalUses);
+          }
         }
       }
     }
