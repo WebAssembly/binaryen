@@ -583,7 +583,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     for (auto* child : ChildIterator(curr)) {
       visit(child);
     }
-    return &bad;
+    return makeVar(curr->type);
   }
 
   // Helpers.
