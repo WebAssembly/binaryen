@@ -22,6 +22,7 @@
  (export "__wasm_trunc_f32" (func $__wasm_trunc_f32))
  (export "__wasm_trunc_f64" (func $__wasm_trunc_f64))
  (export "__wasm_ctz_i32" (func $__wasm_ctz_i32))
+ (export "__wasm_ctz_i64" (func $__wasm_ctz_i64))
  (export "__wasm_rotl_i32" (func $__wasm_rotl_i32))
  (export "__wasm_rotr_i32" (func $__wasm_rotr_i32))
  (export "__wasm_rotl_i64" (func $__wasm_rotl_i64))
@@ -29,6 +30,7 @@
  (export "__wasm_nearest_f32" (func $__wasm_nearest_f32))
  (export "__wasm_nearest_f64" (func $__wasm_nearest_f64))
  (export "__wasm_popcnt_i32" (func $__wasm_popcnt_i32))
+ (export "__wasm_popcnt_i64" (func $__wasm_popcnt_i64))
 
  ;; lowering of the i32.popcnt instruction, counts the number of bits set in the
  ;; input and returns the result
@@ -57,6 +59,39 @@
      (i32.add
       (get_local $var$1)
       (i32.const 1)
+     )
+    )
+    (br $label$2)
+   )
+  )
+ )
+ ;; lowering of the i64.popcnt instruction, counts the number of bits set in the
+ ;; input and returns the result
+ (func $__wasm_popcnt_i64 (param $var$0 i64) (result i64)
+  (local $var$1 i64)
+  (block $label$1 (result i64)
+   (loop $label$2
+    (drop
+     (br_if $label$1
+      (get_local $var$1)
+      (i64.eqz
+       (get_local $var$0)
+      )
+     )
+    )
+    (set_local $var$0
+     (i64.and
+      (get_local $var$0)
+      (i64.sub
+       (get_local $var$0)
+       (i64.const 1)
+      )
+     )
+    )
+    (set_local $var$1
+     (i64.add
+      (get_local $var$1)
+      (i64.const 1)
      )
     )
     (br $label$2)
@@ -155,6 +190,27 @@
    )
   )
   (i32.const 32)
+ )
+ ;; lowering of the i64.ctz instruction, counting the number of zeros in $var$0
+ (func $__wasm_ctz_i64 (; 7 ;) (type $3) (param $var$0 i64) (result i64)
+  (if
+   (get_local $var$0)
+   (return
+    (i64.sub
+     (i64.const 63)
+     (i64.clz
+      (i64.xor
+       (i64.add
+        (get_local $var$0)
+        (i64.const -1)
+       )
+       (get_local $var$0)
+      )
+     )
+    )
+   )
+  )
+  (i64.const 64)
  )
  ;; lowering of the i32.rotl instruction, rotating the first argument, with
  ;; wraparound, by the second argument

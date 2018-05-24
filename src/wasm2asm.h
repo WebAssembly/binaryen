@@ -239,9 +239,6 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   // it produce correct code. For some more details about this see #1480
   runner.add("flatten");
   runner.add("i64-to-i32-lowering");
-  // After i64 is gone run this pass again to remove any operations that were
-  // injected by i64-to-i32 which aren't actually supported in JS
-  runner.add("remove-non-js-ops");
   runner.add("flatten");
   runner.add("simplify-locals-notee-nostructure");
   runner.add("reorder-locals");

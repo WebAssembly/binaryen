@@ -794,31 +794,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
-  void lowerPopcnt64(Unary* curr) {
-    TempVar highBits = fetchOutParam(curr->value);
-    TempVar lowBits = getTemp();
-    TempVar highResult = getTemp();
-
-    SetLocal* setLow = builder->makeSetLocal(lowBits, curr->value);
-    SetLocal* setHigh = builder->makeSetLocal(
-      highResult,
-      builder->makeConst(Literal(int32_t(0)))
-    );
-
-    Block* result = builder->blockify(
-      setLow,
-      setHigh,
-      builder->makeBinary(
-        AddInt32,
-        builder->makeUnary(PopcntInt32, builder->makeGetLocal(highBits, i32)),
-        builder->makeUnary(PopcntInt32, builder->makeGetLocal(lowBits, i32))
-      )
-    );
-
-    setOutParam(result, std::move(highResult));
-    replaceCurrent(result);
-  }
-
   void lowerCountZeros(Unary* curr) {
     auto lower = [&](Block* result, UnaryOp op32, TempVar&& first, TempVar&& second) {
       TempVar highResult = getTemp();
@@ -871,7 +846,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         lower(result, ClzInt32, std::move(highBits), std::move(lowBits));
         break;
       case CtzInt64:
-        lower(result, CtzInt32, std::move(lowBits), std::move(highBits));
+        std::cerr << "i64.ctz should be removed already" << std::endl;
+        WASM_UNREACHABLE();
         break;
       default:
         abort();
@@ -912,7 +888,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     switch (curr->op) {
       case ClzInt64:
       case CtzInt64:               lowerCountZeros(curr);   break;
-      case PopcntInt64:            lowerPopcnt64(curr);     break;
       case EqZInt64:               lowerEqZInt64(curr);     break;
       case ExtendSInt32:           lowerExtendSInt32(curr); break;
       case ExtendUInt32:           lowerExtendUInt32(curr); break;
@@ -927,6 +902,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       case ConvertSInt64ToFloat64:
       case ConvertUInt64ToFloat32:
       case ConvertUInt64ToFloat64: lowerConvertIntToFloat(curr); break;
+      case PopcntInt64:
+        std::cerr << "i64.popcnt should already be removed" << std::endl;
+        WASM_UNREACHABLE();
       default:
         std::cerr << "Unhandled unary operator: " << curr->op << std::endl;
         abort();
