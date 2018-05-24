@@ -130,6 +130,20 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
+    // Fix up phis: in wasm, we have sets to a specific index, then
+    // a get of that index after control flow merges is in effect
+    // a phi. In the dataflow IR, we create an explicit phi, and
+    // uses of that specific index are counted in numGets for the
+    // phi. We need to "forward" that to the phi values, as any
+    // get of the phi is in effect a get of all of them.
+    for (auto& node : nodes) {
+      if (node->isPhi()) {
+        for (Index i = 1; i < node->values.size(); i++) {
+          auto* value = node->values[i];
+          value->numGets += node->numGets;
+        }
+      }
+    }
   }
 
   // Makes a Var node, representing a value that could be anything.
@@ -675,11 +689,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           for (auto& state : states) {
             auto* value = expandFromI1(state.locals[i]);
             phi->addValue(value);
-            // The phi in effect gets each of its input values. In the wasm
-            // we have gets of the index used to implement the phi, and gets
-            // of that will increment the phi's numGets, not those of the
-            // values (so if we don't set this here, they would seem to have 0).
-            value->numGets++;
           }
           out[i] = phi;
           break;
