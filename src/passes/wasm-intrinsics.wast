@@ -192,9 +192,13 @@
   (i32.const 32)
  )
  ;; lowering of the i64.ctz instruction, counting the number of zeros in $var$0
- (func $__wasm_ctz_i64 (; 7 ;) (type $3) (param $var$0 i64) (result i64)
+ (func $__wasm_ctz_i64 (; 8 ;) (type $4) (param $var$0 i64) (result i64)
   (if
-   (get_local $var$0)
+   (i32.eqz
+    (i64.eqz
+     (get_local $var$0)
+    )
+   )
    (return
     (i64.sub
      (i64.const 63)
