@@ -45,8 +45,9 @@
 
 namespace wasm {
 
-static bool debug() {
-  static bool ret = getenv("BINARYEN_DEBUG_SOUPERIFY") != nullptr;
+static int debug() {
+  static char* str = getenv("BINARYEN_DEBUG_SOUPERIFY");
+  static int ret = str ? atoi(str) : 0;
   return ret;
 }
 
@@ -85,8 +86,6 @@ struct Trace {
   std::vector<Node*> conditionsToAdd;
 
   Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
-std::cout << "new trace, to infer:\n";
-dump(toInfer, std::cout);
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -97,7 +96,6 @@ dump(toInfer, std::cout);
       totalLimit = atoi(totalLimitStr);
     }
     // Pull in all the dependencies, starting from the value itself.
-std::cout << "add root\n";
     add(toInfer, 0);
     if (bad) return;
     // If we are trivial before adding pcs, we are still trivial, and
@@ -119,9 +117,6 @@ std::cout << "add root\n";
     // computation which is only descriptive and helps optimization of
     // the work.
     for (auto* node : nodes) {
-std::cout << "calc uses\n";
-dump(node, std::cout);
-std::cout << numUses[node] << " : " << node->numGets << '\n';
       // Artificial nodes do not have gets, but otherwise the uses we see
       // here must make sense wrt the gets in the wasm.
       assert(numUses[node] <= node->numGets || graph.isArtificial(node));
@@ -131,7 +126,6 @@ std::cout << numUses[node] << " : " << node->numGets << '\n';
       }
     }
     for (auto* condition : conditionsToAdd) {
-std::cout << "add queued condition\n";
       add(condition, 0);
     }
     // Add in path conditions based on the location of this node: e.g.
@@ -144,9 +138,6 @@ std::cout << "add queued condition\n";
   }
 
   Node* add(Node* node, size_t depth) {
-std::cout << "  addddddd:\n";
-dump(node, std::cout);
-
     depth++;
     // If replaced, return the replacement.
     auto iter = replacements.find(node);
@@ -191,13 +182,11 @@ dump(node, std::cout);
         // Add the dependencies.
         assert(!node->expr->is<GetLocal>());
         for (Index i = 0; i < node->values.size(); i++) {
-std::cout << "add expr dep. the node is " << node << " and the value is " << node->getValue(i) << "\n";
           add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Phi: {
-std::cout << "add phi block\n";
         auto* block = add(node->getValue(0), depth);
         assert(block);
         auto size = block->values.size();
@@ -212,15 +201,12 @@ std::cout << "add phi block\n";
         }
         // Then, add the phi values
         for (Index i = 1; i < size + 1; i++) {
-std::cout << "add phi value\n";
           add(node->getValue(i), depth);
         }
         break;
       }
       case Node::Type::Cond: {
-std::cout << "add cond block\n";
         add(node->getValue(0), depth); // add the block
-std::cout << "add cond value\n";
         add(node->getValue(1), depth); // add the node
         break;
       }
@@ -228,7 +214,6 @@ std::cout << "add cond value\n";
         break; // nothing more to add
       }
       case Node::Type::Zext: {
-std::cout << "add zext value\n";
         add(node->getValue(0), depth);
         break;
       }
@@ -275,7 +260,6 @@ std::cout << "add zext value\n";
       auto* condition = conditions[index];
       // Add the condition itself as an instruction in the trace -
       // the pc uses it as its input.
-std::cout << "add path to\n";
       add(condition, 0);
       // Add it as a pc, which we will emit directly.
       pathConditions.push_back(condition);
@@ -551,7 +535,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // Build the data-flow IR.
     DataFlow::Graph graph;
     graph.build(func, getModule());
-dump(graph, std::cout);
+    if (debug() >= 2) dump(graph, std::cout);
     // If we only want single-use nodes, exclude all the others.
     std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
