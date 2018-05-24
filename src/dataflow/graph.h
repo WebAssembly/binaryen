@@ -136,12 +136,30 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     // uses of that specific index are counted in numGets for the
     // phi. We need to "forward" that to the phi values, as any
     // get of the phi is in effect a get of all of them.
+    // Making this slightly complicated is that we can have nested
+    // phis:
+    //  phi [
+    //    phi [
+    //      x,
+    //      y
+    //    ],
+    //    z
+    //  ]
+    // Every use of the outer phi must be counted as a use of not just
+    // z, its direct value, but also x and y.
+    std::function<void (Node*, Index)> flowPhiGets = [this, flowPhiGets](Node* node, Index num) {
+      assert(node->isPhi());
+      for (Index i = 1; i < node->values.size(); i++) {
+        auto* value = node->values[i];
+        value->numGets += num;
+        if (value->isPhi()) {
+          flowPhiGets(value, num);
+        }
+      }
+    };
     for (auto& node : nodes) {
       if (node->isPhi()) {
-        for (Index i = 1; i < node->values.size(); i++) {
-          auto* value = node->values[i];
-          value->numGets += node->numGets;
-        }
+        flowPhiGets(node.get(), node->numGets);
       }
     }
   }
