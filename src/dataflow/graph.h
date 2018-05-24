@@ -147,19 +147,21 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     //  ]
     // Every use of the outer phi must be counted as a use of not just
     // z, its direct value, but also x and y.
-    std::function<void (Node*, Index)> flowPhiGets = [this, flowPhiGets](Node* node, Index num) {
-      assert(node->isPhi());
-      for (Index i = 1; i < node->values.size(); i++) {
-        auto* value = node->values[i];
-        value->numGets += num;
-        if (value->isPhi()) {
-          flowPhiGets(value, num);
-        }
-      }
-    };
     for (auto& node : nodes) {
       if (node->isPhi()) {
         flowPhiGets(node.get(), node->numGets);
+      }
+    }
+  }
+
+  // See explanation in build()
+  void flowPhiGets(Node* node, Index num) {
+    assert(node->isPhi());
+    for (Index i = 1; i < node->values.size(); i++) {
+      auto* value = node->values[i];
+      value->numGets += num;
+      if (value->isPhi()) {
+        flowPhiGets(value, num);
       }
     }
   }

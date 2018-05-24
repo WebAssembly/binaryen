@@ -1030,5 +1030,53 @@
    )
   )
  )
+ (func $nested-phi-forwarding (param $var$0 i32) (result i32)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (block $label$1
+   (block $label$2
+    (loop $label$3
+     (block $label$4
+      (block $label$5
+       (block $label$6
+        (block $label$7
+         (block $label$8
+          (br_table $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$8 $label$2 $label$2 $label$2 $label$6 $label$2 $label$2 $label$7 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$2 $label$5 $label$4
+           (get_local $var$0)
+          )
+         )
+         (set_local $var$1
+          (i32.const 1)
+         )
+        )
+        (br $label$4)
+       )
+       (unreachable)
+      )
+      (br $label$1)
+     )
+     (br_if $label$3
+      (tee_local $var$2
+       (i32.const 1)
+      )
+     )
+    )
+   )
+   (block $label$9
+    (br_if $label$9
+     (i32.or
+      (i32.const 1)
+      (get_local $var$1)
+     )
+    )
+   )
+   (unreachable)
+  )
+  (i32.store offset=176
+   (i32.const 0)
+   (get_local $var$2)
+  )
+  (i32.const 0)
+ )
 )
 

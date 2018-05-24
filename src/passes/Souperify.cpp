@@ -119,8 +119,6 @@ struct Trace {
     for (auto* node : nodes) {
       // Artificial nodes do not have gets, but otherwise the uses we see
       // here must make sense wrt the gets in the wasm.
-dump(node, std::cout);
-std::cout << numUses[node] << " : " << node->numGets << '\n';
       assert(numUses[node] <= node->numGets || graph.isArtificial(node));
       // Mark nodes with external uses.
       if (numUses[node] < node->numGets) {
