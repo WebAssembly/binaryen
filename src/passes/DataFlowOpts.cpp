@@ -198,7 +198,7 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
           break;
         }
         case DataFlow::Node::Type::Zext: {
-          // Nothing to do: a cond is not in the Binaryen IR.
+          // Nothing to do: a zext is not in the Binaryen IR.
           // If the cond input is a constant, that might indicate
           // useful optimizations are possible, which perhaps we
           // should look into TODO

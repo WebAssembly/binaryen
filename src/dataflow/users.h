@@ -84,7 +84,6 @@ public:
   void stopUsingValues(Node* node) {
     for (auto* value : node->values) {
       auto& users = getUsers(value);
-      assert(users.count(node) == 1);
       users.erase(node);
     }
   }
