@@ -29,6 +29,9 @@
  (export "__wasm_nearest_f32" (func $__wasm_nearest_f32))
  (export "__wasm_nearest_f64" (func $__wasm_nearest_f64))
  (export "__wasm_popcnt_i32" (func $__wasm_popcnt_i32))
+
+ ;; lowering of the i32.popcnt instruction, counts the number of bits set in the
+ ;; input and returns the result
  (func $__wasm_popcnt_i32 (param $var$0 i32) (result i32)
   (local $var$1 i32)
   (block $label$1 (result i32)
@@ -60,24 +63,28 @@
    )
   )
  )
+ ;; lowering of the i64.div_s instruction, return $var0 / $var$1
  (func $__wasm_i64_sdiv (; 0 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (call $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E
    (get_local $var$0)
    (get_local $var$1)
   )
  )
+ ;; lowering of the i64.div_u instruction, return $var0 / $var$1
  (func $__wasm_i64_udiv (; 1 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
    (get_local $var$0)
    (get_local $var$1)
   )
  )
+ ;; lowering of the i64.rem_s instruction, return $var0 % $var$1
  (func $__wasm_i64_srem (; 2 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (call $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E
    (get_local $var$0)
    (get_local $var$1)
   )
  )
+ ;; lowering of the i64.rem_u instruction, return $var0 % $var$1
  (func $__wasm_i64_urem (; 3 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (drop
    (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
@@ -89,12 +96,15 @@
    (i32.const 1024)
   )
  )
+ ;; lowering of the i64.mul instruction, return $var0 * $var$1
  (func $__wasm_i64_mul (; 4 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (call $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
    (get_local $var$0)
    (get_local $var$1)
   )
  )
+ ;; lowering of the f32.trunc instruction, rounds to the nearest integer,
+ ;; towards zero
  (func $__wasm_trunc_f32 (; 5 ;) (type $1) (param $var$0 f32) (result f32)
   (select
    (f32.ceil
@@ -109,6 +119,8 @@
    )
   )
  )
+ ;; lowering of the f64.trunc instruction, rounds to the nearest integer,
+ ;; towards zero
  (func $__wasm_trunc_f64 (; 6 ;) (type $2) (param $var$0 f64) (result f64)
   (select
    (f64.ceil
@@ -123,6 +135,7 @@
    )
   )
  )
+ ;; lowering of the i32.ctz instruction, counting the number of zeros in $var$0
  (func $__wasm_ctz_i32 (; 7 ;) (type $3) (param $var$0 i32) (result i32)
   (if
    (get_local $var$0)
@@ -143,6 +156,8 @@
   )
   (i32.const 32)
  )
+ ;; lowering of the i32.rotl instruction, rotating the first argument, with
+ ;; wraparound, by the second argument
  (func $__wasm_rotl_i32 (; 8 ;) (type $4) (param $var$0 i32) (param $var$1 i32) (result i32)
   (local $var$2 i32)
   (i32.or
@@ -181,6 +196,8 @@
    )
   )
  )
+ ;; lowering of the i32.rotr instruction, rotating the first argument, with
+ ;; wraparound, by the second argument
  (func $__wasm_rotr_i32 (; 9 ;) (type $4) (param $var$0 i32) (param $var$1 i32) (result i32)
   (local $var$2 i32)
   (i32.or
@@ -219,6 +236,8 @@
    )
   )
  )
+ ;; lowering of the i64.rotl instruction, rotating the first argument, with
+ ;; wraparound, by the second argument
  (func $__wasm_rotl_i64 (; 10 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $var$2 i64)
   (i64.or
@@ -257,6 +276,8 @@
    )
   )
  )
+ ;; lowering of the i64.rotr instruction, rotating the first argument, with
+ ;; wraparound, by the second argument
  (func $__wasm_rotr_i64 (; 11 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $var$2 i64)
   (i64.or
@@ -295,6 +316,8 @@
    )
   )
  )
+ ;; lowering of the f32.nearest instruction, rounding the input to the nearest
+ ;; integer while breaking ties by rounding to even
  (func $__wasm_nearest_f32 (; 12 ;) (type $1) (param $var$0 f32) (result f32)
   (local $var$1 f32)
   (local $var$2 f32)
@@ -353,6 +376,8 @@
   )
   (get_local $var$1)
  )
+ ;; lowering of the f64.nearest instruction, rounding the input to the nearest
+ ;; integer while breaking ties by rounding to even
  (func $__wasm_nearest_f64 (; 13 ;) (type $2) (param $var$0 f64) (result f64)
   (local $var$1 f64)
   (local $var$2 f64)
