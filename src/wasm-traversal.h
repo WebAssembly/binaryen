@@ -213,7 +213,7 @@ struct OverriddenVisitor {
 // separate visit* per node
 
 template<typename SubType, typename ReturnType = void>
-struct UnifiedExpressionVisitor : public Visitor<SubType> {
+struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   // called on each node
   ReturnType visitExpression(Expression* curr) { return ReturnType(); }
 

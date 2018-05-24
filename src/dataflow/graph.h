@@ -27,6 +27,7 @@
 
 #include "wasm.h"
 #include "ir/abstract.h"
+#include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "dataflow/node.h"
 
@@ -40,7 +41,7 @@ namespace DataFlow {
 // Bad node if not supported, or nullptr if not relevant (we only
 // use the return value for internal expressions, that is, the
 // value of a set_local or the condition of an if etc).
-struct Graph : public Visitor<Graph, Node*> {
+struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // We only need one canonical bad node. It is never modified.
   Node bad = Node(Node::Type::Bad);
 
@@ -202,9 +203,41 @@ struct Graph : public Visitor<Graph, Node*> {
     return isInUnreachable(state.locals);
   }
 
-  // Visitors.
+  // Visiting.
 
-  Node* visitBlock(Block* curr) {
+  Node* visitExpression(Expression* curr) {
+    // Control flow and get/set etc. are special. Aside from them, we just need
+    // to do something very generic.
+    if (auto* block = curr->dynCast<Block>()) {
+      return doVisitBlock(block);
+    } else if (auto* iff = curr->dynCast<If>()) {
+      return doVisitIf(iff);
+    } else if (auto* loop = curr->dynCast<Loop>()) {
+      return doVisitLoop(loop);
+    } else if (auto* get = curr->dynCast<GetLocal>()) {
+      return doVisitGetLocal(get);
+    } else if (auto* set = curr->dynCast<SetLocal>()) {
+      return doVisitSetLocal(set);
+    } else if (auto* br = curr->dynCast<Break>()) {
+      return doVisitBreak(br);
+    } else if (auto* sw = curr->dynCast<Switch>()) {
+      return doVisitSwitch(sw);
+    } else if (auto* c = curr->dynCast<Const>()) {
+      return doVisitConst(c);
+    } else if (auto* unary = curr->dynCast<Unary>()) {
+      return doVisitUnary(unary);
+    } else if (auto* binary = curr->dynCast<Binary>()) {
+      return doVisitBinary(binary);
+    } else if (auto* select = curr->dynCast<Select>()) {
+      return doVisitSelect(select);
+    } else if (auto* unreachable = curr->dynCast<Unreachable>()) {
+      return doVisitUnreachable(unreachable);
+    } else {
+      return doVisitGeneric(curr);
+    }
+  }
+
+  Node* doVisitBlock(Block* curr) {
     // TODO: handle super-deep nesting
     auto* oldParent = parent;
     expressionParentMap[curr] = oldParent;
@@ -228,7 +261,7 @@ struct Graph : public Visitor<Graph, Node*> {
     parent = oldParent;
     return &bad;
   }
-  Node* visitIf(If* curr) {
+  Node* doVisitIf(If* curr) {
     auto* oldParent = parent;
     expressionParentMap[curr] = oldParent;
     parent = curr;
@@ -253,7 +286,7 @@ struct Graph : public Visitor<Graph, Node*> {
     parent = oldParent;
     return &bad;
   }
-  Node* visitLoop(Loop* curr) {
+  Node* doVisitLoop(Loop* curr) {
     // As in Souper's LLVM extractor, we avoid loop phis, as we don't want
     // our traces to represent a value that differs across loop iterations.
     // For example,
@@ -329,11 +362,18 @@ struct Graph : public Visitor<Graph, Node*> {
             node = proper;
           }
         }
+        // Finally, all the get_locals we tracked for the temporary Var
+        // actually belong to the previous value we are replacing the Var
+        // with.
+        proper->numGets += var->numGets;
+        // We should never see this value, but properly set it to 0 for
+        // convenience of debugging and future use.
+        var->numGets = 0;
       }
     }
     return &bad;
   }
-  Node* visitBreak(Break* curr) {
+  Node* doVisitBreak(Break* curr) {
     if (!isInUnreachable()) {
       breakStates[curr->name].push_back(locals);
     }
@@ -346,7 +386,7 @@ struct Graph : public Visitor<Graph, Node*> {
     }
     return &bad;
   }
-  Node* visitSwitch(Switch* curr) {
+  Node* doVisitSwitch(Switch* curr) {
     // Add a node for the condition.
     auto* node = addNode(Node::makeExpr(curr));
     node->addValue(visit(curr->condition));
@@ -363,40 +403,17 @@ struct Graph : public Visitor<Graph, Node*> {
     setInUnreachable();
     return &bad;
   }
-  Node* visitCall(Call* curr) {
-    if (!curr->operands.empty()) {
-      auto* node = addNode(Node::makeExpr(curr));
-      for (auto* operand : curr->operands) {
-        node->addValue(visit(operand));
-      }
-    }
-    return makeVar(curr->type);
-  }
-  Node* visitCallImport(CallImport* curr) {
-    if (!curr->operands.empty()) {
-      auto* node = addNode(Node::makeExpr(curr));
-      for (auto* operand : curr->operands) {
-        node->addValue(visit(operand));
-      }
-    }
-    return makeVar(curr->type);
-  }
-  Node* visitCallIndirect(CallIndirect* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    for (auto* operand : curr->operands) {
-      node->addValue(visit(operand));
-    }
-    node->addValue(visit(curr->target));
-    return makeVar(curr->type);
-  }
-  Node* visitGetLocal(GetLocal* curr) {
+  Node* doVisitGetLocal(GetLocal* curr) {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
     // We now know which IR node this get refers to
-    return locals[curr->index];
+    auto* node = locals[curr->index];
+    // Note a get_local of this node.
+    node->numGets++;
+    return node;
   }
-  Node* visitSetLocal(SetLocal* curr) {
+  Node* doVisitSetLocal(SetLocal* curr) {
     if (!isRelevantLocal(curr->index) || isInUnreachable()) {
       return &bad;
     }
@@ -413,55 +430,10 @@ struct Graph : public Visitor<Graph, Node*> {
     }
     return &bad;
   }
-  Node* visitGetGlobal(GetGlobal* curr) {
-    return makeVar(curr->type);
-  }
-  Node* visitSetGlobal(SetGlobal* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->value));
-    return &bad;
-  }
-  Node* visitLoad(Load* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    return makeVar(curr->type);
-  }
-  Node* visitStore(Store* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    node->addValue(visit(curr->value));
-    return &bad;
-  }
-  Node* visitAtomicRMW(AtomicRMW* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    node->addValue(visit(curr->value));
-    return &bad;
-  }
-  Node* visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    node->addValue(visit(curr->expected));
-    node->addValue(visit(curr->replacement));
-    return &bad;
-  }
-  Node* visitAtomicWait(AtomicWait* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    node->addValue(visit(curr->expected));
-    node->addValue(visit(curr->timeout));
-    return &bad;
-  }
-  Node* visitAtomicWake(AtomicWake* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->ptr));
-    node->addValue(visit(curr->wakeCount));
-    return &bad;
-  }
-  Node* visitConst(Const* curr) {
+  Node* doVisitConst(Const* curr) {
     return makeConst(curr->value);
   }
-  Node* visitUnary(Unary* curr) {
+  Node* doVisitUnary(Unary* curr) {
     // First, check if we support this op.
     switch (curr->op) {
       case ClzInt32:
@@ -494,7 +466,7 @@ struct Graph : public Visitor<Graph, Node*> {
       }
     }
   }
-  Node* visitBinary(Binary *curr) {
+  Node* doVisitBinary(Binary *curr) {
     // First, check if we support this op.
     switch (curr->op) {
       case AddInt32:
@@ -581,7 +553,7 @@ struct Graph : public Visitor<Graph, Node*> {
       }
     }
   }
-  Node* visitSelect(Select* curr) {
+  Node* doVisitSelect(Select* curr) {
     auto* ifTrue = expandFromI1(visit(curr->ifTrue));
     if (ifTrue->isBad()) return ifTrue;
     auto* ifFalse = expandFromI1(visit(curr->ifFalse));
@@ -595,33 +567,15 @@ struct Graph : public Visitor<Graph, Node*> {
     ret->addValue(ifFalse);
     return ret;
   }
-  Node* visitDrop(Drop* curr) {
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->value));
-    return &bad;
-  }
-  Node* visitReturn(Return* curr) {
-    if (curr->value) {
-      auto* node = addNode(Node::makeExpr(curr));
-      node->addValue(visit(curr->value));
-    }
+  Node* doVisitUnreachable(Unreachable* curr) {
     setInUnreachable();
     return &bad;
   }
-  Node* visitHost(Host* curr) {
-    if (!curr->operands.empty()) {
-      auto* node = addNode(Node::makeExpr(curr));
-      for (auto* operand : curr->operands) {
-        node->addValue(visit(operand));
-      }
+  Node* doVisitGeneric(Expression* curr) {
+    // Just need to visit the nodes so we note all the gets
+    for (auto* child : ChildIterator(curr)) {
+      visit(child);
     }
-    return &bad;
-  }
-  Node* visitNop(Nop* curr) {
-    return &bad;
-  }
-  Node* visitUnreachable(Unreachable* curr) {
-    setInUnreachable();
     return &bad;
   }
 

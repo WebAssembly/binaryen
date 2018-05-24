@@ -40,14 +40,11 @@ class Users {
 
   std::unordered_map<DataFlow::Node*, UserSet> users;
 
-  std::unordered_map<DataFlow::Node*, Index> numUses;
-
 public:
   void build(Graph& graph) {
     for (auto& node : graph.nodes) {
       for (auto* value : node->values) {
         users[value].insert(node.get());
-        numUses[value]++;
       }
     }
   }
@@ -62,12 +59,27 @@ public:
   }
 
   Index getNumUses(Node* node) {
-    auto iter = numUses.find(node);
-    if (iter == numUses.end()) return 0;
-    return iter->second;
+    if (auto* users = getUsers(node)) {
+      // A user may have more than one use
+      Index numUses = 0;
+      for (auto* user : users) {
+#ifndef NDEBUG
+        bool found = false;
+#endif
+        for (auto* value : user->values) {
+          if (value == node) {
+            numUses++;
+#ifndef NDEBUG
+            found = true;
+#endif
+          }
+        }
+        assert(found);
+      }
+      return numUses;
+    }
+    return 0;
   }
-
-  remove etc. utils - must alter numUses as well.
 };
 
 } // namespace DataFlow

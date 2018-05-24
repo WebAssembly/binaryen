@@ -85,6 +85,12 @@ struct Node {
     Index index;
   };
 
+  // We track the number of get_locals, that is, the number of uses of
+  // this node in the wasm. Note that this can diverge from the number
+  // of uses in the dataflow IR, since in dataflow we also have Conditions
+  // and artificial nodes etc.
+  Index numGets = 0;
+
   // Extra list of related nodes.
   // For Expr, these are the Nodes for the inputs to the expression (e.g.
   // a binary would have 2 in this vector here).
