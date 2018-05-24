@@ -52,33 +52,51 @@ public:
   UserSet& getUsers(Node* node) {
     auto iter = users.find(node);
     if (iter == users.end()) {
-      static UserSet empty;
+      static UserSet empty; // FIXME thread_local?
       return empty;
     }
     return iter->second;
   }
 
   Index getNumUses(Node* node) {
-    if (auto* users = getUsers(node)) {
-      // A user may have more than one use
-      Index numUses = 0;
-      for (auto* user : users) {
+    auto& users = getUsers(node);
+    // A user may have more than one use
+    Index numUses = 0;
+    for (auto* user : users) {
 #ifndef NDEBUG
-        bool found = false;
+      bool found = false;
 #endif
-        for (auto* value : user->values) {
-          if (value == node) {
-            numUses++;
+      for (auto* value : user->values) {
+        if (value == node) {
+          numUses++;
 #ifndef NDEBUG
-            found = true;
+          found = true;
 #endif
-          }
         }
-        assert(found);
       }
-      return numUses;
+      assert(found);
     }
-    return 0;
+    return numUses;
+  }
+
+  // Stops using all the values of this node. Called when a node is being
+  // removed.
+  void stopUsingValues(Node* node) {
+    for (auto* value : node->values) {
+      auto& users = getUsers(value);
+      assert(users.count(node) == 1);
+      users.erase(node);
+    }
+  }
+
+  // Adds a new user to a node. Called when we add or change a value of a node.
+  void addUser(Node* node, Node* newUser) {
+    users[node].insert(newUser);
+  }
+
+  // Remove all uses of a node. Called when a node is being removed.
+  void removeAllUsesOf(Node* node) {
+    users.erase(node);
   }
 };
 
