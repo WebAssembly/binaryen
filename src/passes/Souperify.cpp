@@ -41,7 +41,6 @@
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/graph.h"
-#include "dataflow/users.h"
 #include "dataflow/utils.h"
 
 namespace wasm {
@@ -77,6 +76,10 @@ struct Trace {
   // Track how many uses in the trace each node has. This lets us
   // compute whether they have external uses later.
   std::unordered_map<Node*, Index> numUses;
+  // We add path conditions later, and at that time, do not care
+  // about counting the number of users of a node, as they are not
+  // actual uses.
+  bool addingPath;
 
   Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
     // Check if there is a depth limit override
@@ -89,6 +92,7 @@ struct Trace {
       totalLimit = atoi(totalLimitStr);
     }
     // Pull in all the dependencies, starting from the value itself.
+    addingPath = false;
     add(toInfer, 0);
     // If we are trivial before adding pcs, we are still trivial, and
     // can ignore this.
@@ -108,6 +112,7 @@ struct Trace {
     // Also pull in conditions based on the location of this node: e.g.
     // if it is inside an if's true branch, we can add a path-condition
     // for that.
+    addingPath = true;
     auto iter = graph.nodeParentMap.find(toInfer);
     if (iter != graph.nodeParentMap.end()) {
       addPath(toInfer, iter->second);
@@ -124,9 +129,11 @@ struct Trace {
     // Every time we add a node, it is a use (except for the
     // root node, which we add directly, and don't care about
     // use counts for).
+    // Note that values added just for the path do not count
+    // as used.
     // XXX Note that we do not compute this accurately for
     //     replaced nodes. But we don't need to.
-    if (node != toInfer) {
+    if (node != toInfer && !addingPath) {
       numUses[node]++;
     }
     // If already added, nothing more to do.
@@ -263,12 +270,11 @@ struct Trace {
 struct Printer {
   Graph& graph;
   Trace& trace;
-  Users& users;
 
   // Each Node in a trace has an index, from 0.
   std::unordered_map<Node*, Index> indexing;
 
-  Printer(Graph& graph, Trace& trace, Users& users) : graph(graph), trace(trace), users(users) {
+  Printer(Graph& graph, Trace& trace) : graph(graph), trace(trace) {
     std::cout << "\n; start LHS (in " << graph.func->name << ")\n";
     // Index the nodes.
     for (auto* node : trace.nodes) {
@@ -352,18 +358,10 @@ struct Printer {
       default: WASM_UNREACHABLE();
     }
     if (node->isExpr() || node->isPhi()) {
-      assert(trace.numUses[node] <= users.getNumUses(node));
+      assert(trace.numUses[node] <= node->numGets);
       if (node != trace.toInfer &&
-          trace.numUses[node] < users.getNumUses(node)) {
-        // It has external uses in the graph. Check if those are
-        // via things we care about, and if so, note that there
-        // are external uses to Souper.
-        
-        for (auto* user : users.getUsers(node)) {
-          if (
-          std::cout << " (hasExternalUses)";
-          break;
-        }
+          trace.numUses[node] < node->numGets) {
+        std::cout << " (hasExternalUses)";
       }
     }
     std::cout << '\n';
@@ -482,7 +480,7 @@ struct Printer {
     assert(debug());
     // If the node has no uses, it's not interesting enough to be
     // suspicious.
-    if (users.getNumUses(node) == 0) {
+    if (node->numGets == 0) {
       return;
     }
     // If an input was replaced with a var, then we should not
@@ -521,26 +519,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // If we only want single-use nodes, exclude all the others.
     std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
-      std::unordered_map<DataFlow::Node*, Index> uses;
-      for (auto& node : graph.nodes) {
-        if (node->isExpr() && !graph.isArtificial(node.get())) {
-          for (auto* value : node->values) {
-            if (value->isExpr() && !value->isConst()) {
-              uses[value]++;
-            }
-          }
-        }
-      }
       for (auto& nodePtr : graph.nodes) {
         auto* node = nodePtr.get();
-        if (node->isExpr() && uses[node] > 1) {
+        if (node->isExpr() && node->numGets > 1) {
           excludeAsChildren.insert(node);
         }
       }
     }
-    // For debugging output, it's useful to know the users.
-    DataFlow::Users users;
-    users.build(graph);
     // Emit possible traces.
     for (auto& nodePtr : graph.nodes) {
       auto* node = nodePtr.get();
@@ -548,7 +533,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
           DataFlow::Trace::isTraceable(node)) {
         DataFlow::Trace trace(graph, node, excludeAsChildren);
         if (!trace.isBad()) {
-          DataFlow::Printer(graph, trace, users);
+          DataFlow::Printer(graph, trace);
         }
       }
     }
