@@ -268,9 +268,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     // Set up the condition.
     Node* condition = visit(curr->condition);
     assert(condition);
-    // Add a node for the condition
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(condition);
     // Handle the contents.
     auto initialState = locals;
     visit(curr->ifTrue);
@@ -380,16 +377,12 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     if (!curr->condition) {
       setInUnreachable();
     } else {
-      // Add a node for the condition.
-      auto* node = addNode(Node::makeExpr(curr));
-      node->addValue(visit(curr->condition));
+      visit(curr->condition);
     }
     return &bad;
   }
   Node* doVisitSwitch(Switch* curr) {
-    // Add a node for the condition.
-    auto* node = addNode(Node::makeExpr(curr));
-    node->addValue(visit(curr->condition));
+    visit(curr->condition);
     if (!isInUnreachable()) {
       std::unordered_set<Name> targets;
       for (auto target : curr->targets) {
