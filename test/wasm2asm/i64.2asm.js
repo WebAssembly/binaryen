@@ -335,7 +335,6 @@ function asmFunc(global, env, buffer) {
  function $16(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
-<<<<<<< e17ecc581d8e47fdf5f1eebe92c69e2598bf9713
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
@@ -344,17 +343,6 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
-=======
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $5_1 = 0;
-  i64toi32_i32$0 = x$hi;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$3 = __wasm_ctz_i32(x | 0) | 0;
-  i64toi32_i32$2 = 0;
-  if ((i64toi32_i32$3 | 0) == (32 | 0)) $5_1 = (__wasm_ctz_i32(i64toi32_i32$0 | 0) | 0) + 32 | 0; else $5_1 = i64toi32_i32$3;
-  i64toi32_i32$2 = i64toi32_i32$2;
-  i64toi32_i32$0 = $5_1;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$2;
->>>>>>> wasm2asm: Fix name collisions
   return i64toi32_i32$0 | 0;
  }
  
@@ -1310,7 +1298,7 @@ function asmFunc(global, env, buffer) {
  function __wasm_ctz_i64(var$0, var$0$hi) {
   var$0 = var$0 | 0;
   var$0$hi = var$0$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10 = 0, $5$hi = 0, $8$hi = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10_1 = 0, $5$hi = 0, $8$hi = 0;
   i64toi32_i32$0 = var$0$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
   if (((var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0) | 0) == (0 | 0)) {
@@ -1333,12 +1321,12 @@ function asmFunc(global, env, buffer) {
    i64toi32_i32$0 = i64toi32_i32$0 ^ i64toi32_i32$3 | 0;
    i64toi32_i32$3 = Math_clz32(i64toi32_i32$2);
    i64toi32_i32$5 = 0;
-   if ((i64toi32_i32$3 | 0) == (32 | 0)) $10 = Math_clz32(i64toi32_i32$0) + 32 | 0; else $10 = i64toi32_i32$3;
+   if ((i64toi32_i32$3 | 0) == (32 | 0)) $10_1 = Math_clz32(i64toi32_i32$0) + 32 | 0; else $10_1 = i64toi32_i32$3;
    $8$hi = i64toi32_i32$5;
    i64toi32_i32$5 = 0;
    i64toi32_i32$0 = 63;
    i64toi32_i32$2 = $8$hi;
-   i64toi32_i32$3 = $10;
+   i64toi32_i32$3 = $10_1;
    i64toi32_i32$1 = i64toi32_i32$0 - i64toi32_i32$3 | 0;
    i64toi32_i32$4 = (i64toi32_i32$0 >>> 0 < i64toi32_i32$3 >>> 0) + i64toi32_i32$2 | 0;
    i64toi32_i32$4 = i64toi32_i32$5 - i64toi32_i32$4 | 0;
@@ -1454,17 +1442,17 @@ function asmFunc(global, env, buffer) {
  function __wasm_popcnt_i64(var$0, var$0$hi) {
   var$0 = var$0 | 0;
   var$0$hi = var$0$hi | 0;
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, var$1$hi = 0, var$1 = 0, $5 = 0, $5$hi = 0, $4 = 0, $9$hi = 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, var$1$hi = 0, var$1 = 0, $5_1 = 0, $5$hi = 0, $4_1 = 0, $9$hi = 0;
   label$1 : {
    label$2 : do {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$0 = var$0$hi;
     i64toi32_i32$0 = i64toi32_i32$0;
-    $4 = (var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0);
+    $4_1 = (var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0);
     i64toi32_i32$0 = var$1$hi;
-    $5 = var$1;
+    $5_1 = var$1;
     $5$hi = i64toi32_i32$0;
-    if ($4) break label$1;
+    if ($4_1) break label$1;
     i64toi32_i32$0 = $5$hi;
     i64toi32_i32$0 = i64toi32_i32$0;
     i64toi32_i32$0 = var$0$hi;
@@ -1502,7 +1490,7 @@ function asmFunc(global, env, buffer) {
   };
   i64toi32_i32$4 = $5$hi;
   i64toi32_i32$4 = i64toi32_i32$4;
-  i64toi32_i32$5 = $5;
+  i64toi32_i32$5 = $5_1;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$4;
   return i64toi32_i32$5 | 0;
  }
@@ -1739,26 +1727,6 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
-<<<<<<< e17ecc581d8e47fdf5f1eebe92c69e2598bf9713
-=======
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2_1 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2_1 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-   } while (1);
-  };
-  return $2_1 | 0;
- }
- 
->>>>>>> wasm2asm: Fix name collisions
  return {
   add: $0, 
   sub: $1, 

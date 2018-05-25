@@ -2,20 +2,10 @@
  (type $0 (func (param f64 f64) (result f64)))
  (type $1 (func (param f32 f32) (result f32)))
  (type $2 (func (param i32 i32) (result i32)))
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (type $3 (func (param i64 i64) (result i64)))
  (type $4 (func (param f64) (result f64)))
  (type $5 (func (param f32) (result f32)))
  (type $6 (func (param i32) (result i32)))
-=======
- (type $3 (func (param f64) (result f64)))
- (type $4 (func (param f32) (result f32)))
- (type $5 (func (param i32) (result i32)))
- (type $importedType$3 (func (param i32) (result i32)))
- (type $importedType$1 (func (param f32) (result f32)))
- (type $importedType$2 (func (param f64) (result f64)))
- (type $importedType$4 (func (param i32 i32) (result i32)))
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
  (func $copysign64 (; 0 ;) (type $0) (param $0 f64) (param $1 f64) (result f64)
   (f64.reinterpret/i64
    (i64.or
@@ -106,7 +96,6 @@
    (get_local $0)
   )
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $i64_sdiv (; 12 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
   (call $__wasm_i64_sdiv
    (get_local $0)
@@ -279,115 +268,10 @@
         (i64.shr_s
          (get_local $var$1)
          (i64.const 63)
-=======
- (func $__wasm_popcnt_i32 (; 10 ;) (param $x i32) (result i32)
-  (local $count i32)
-  (set_local $count
-   (i32.const 0)
-  )
-  (block $b (result i32)
-   (loop $l
-    (drop
-     (br_if $b
-      (get_local $count)
-      (i32.eqz
-       (get_local $x)
-      )
-     )
-    )
-    (set_local $x
-     (i32.and
-      (get_local $x)
-      (i32.sub
-       (get_local $x)
-       (i32.const 1)
-      )
-     )
-    )
-    (set_local $count
-     (i32.add
-      (get_local $count)
-      (i32.const 1)
-     )
-    )
-    (br $l)
-   )
-  )
- )
- (func $__wasm_ctz_i32 (; 11 ;) (type $importedType$3) (param $var$0 i32) (result i32)
-  (if
-   (get_local $var$0)
-   (return
-    (i32.sub
-     (i32.const 31)
-     (i32.clz
-      (i32.xor
-       (i32.add
-        (get_local $var$0)
-        (i32.const -1)
-       )
-       (get_local $var$0)
-      )
-     )
-    )
-   )
-  )
-  (i32.const 32)
- )
- (func $__wasm_nearest_f32 (; 12 ;) (type $importedType$1) (param $var$0 f32) (result f32)
-  (local $var$1 f32)
-  (local $var$2 f32)
-  (if
-   (i32.eqz
-    (f32.lt
-     (tee_local $var$2
-      (f32.sub
-       (get_local $var$0)
-       (tee_local $var$1
-        (f32.floor
-         (get_local $var$0)
-        )
-       )
-      )
-     )
-     (f32.const 0.5)
-    )
-   )
-   (block $block
-    (set_local $var$0
-     (f32.ceil
-      (get_local $var$0)
-     )
-    )
-    (if
-     (f32.gt
-      (get_local $var$2)
-      (f32.const 0.5)
-     )
-     (return
-      (get_local $var$0)
-     )
-    )
-    (set_local $var$1
-     (select
-      (get_local $var$1)
-      (get_local $var$0)
-      (f32.eq
-       (f32.sub
-        (tee_local $var$2
-         (f32.mul
-          (get_local $var$1)
-          (f32.const 0.5)
-         )
-        )
-        (f32.floor
-         (get_local $var$2)
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
         )
        )
        (get_local $var$1)
       )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
       (get_local $var$2)
      )
     )
@@ -398,16 +282,12 @@
        (get_local $var$0)
       )
       (i64.const 63)
-=======
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
      )
     )
    )
    (get_local $var$0)
   )
-  (get_local $var$1)
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E (; 19 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
   (local $var$2 i64)
   (i64.sub
@@ -846,28 +726,9 @@
        (i64.const 1)
       )
       (get_local $var$6)
-=======
- (func $__wasm_nearest_f64 (; 13 ;) (type $importedType$2) (param $var$0 f64) (result f64)
-  (local $var$1 f64)
-  (local $var$2 f64)
-  (if
-   (i32.eqz
-    (f64.lt
-     (tee_local $var$2
-      (f64.sub
-       (get_local $var$0)
-       (tee_local $var$1
-        (f64.floor
-         (get_local $var$0)
-        )
-       )
-      )
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
      )
-     (f64.const 0.5)
     )
    )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
    (i64.store
     (i32.const 1024)
     (get_local $var$0)
@@ -1010,13 +871,10 @@
      (f64.const 0.5)
     )
    )
-=======
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
    (block $block
     (set_local $var$0
      (f64.ceil
       (get_local $var$0)
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
      )
     )
     (if
@@ -1080,48 +938,10 @@
      )
     )
     (br $label$2)
-=======
-     )
-    )
-    (if
-     (f64.gt
-      (get_local $var$2)
-      (f64.const 0.5)
-     )
-     (return
-      (get_local $var$0)
-     )
-    )
-    (set_local $var$1
-     (select
-      (get_local $var$1)
-      (get_local $var$0)
-      (f64.eq
-       (f64.sub
-        (tee_local $var$2
-         (f64.mul
-          (get_local $var$1)
-          (f64.const 0.5)
-         )
-        )
-        (f64.floor
-         (get_local $var$2)
-        )
-       )
-       (f64.const 0)
-      )
-     )
-    )
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
    )
   )
-  (get_local $var$1)
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $__wasm_rotl_i32 (; 30 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
-=======
- (func $__wasm_rotl_i32 (; 14 ;) (type $importedType$4) (param $var$0 i32) (param $var$1 i32) (result i32)
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
   (local $var$2 i32)
   (i32.or
    (i32.shl
@@ -1154,7 +974,6 @@
       )
      )
      (get_local $var$0)
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
     )
     (get_local $var$1)
    )
@@ -1194,18 +1013,11 @@
      )
      (get_local $var$0)
     )
-=======
-    )
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
     (get_local $var$1)
    )
   )
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $__wasm_rotr_i32 (; 32 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
-=======
- (func $__wasm_rotr_i32 (; 15 ;) (type $importedType$4) (param $var$0 i32) (param $var$1 i32) (result i32)
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
   (local $var$2 i32)
   (i32.or
    (i32.shr_u
@@ -1238,7 +1050,6 @@
       )
      )
      (get_local $var$0)
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
     )
     (get_local $var$1)
    )
@@ -1277,18 +1088,12 @@
       )
      )
      (get_local $var$0)
-=======
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
     )
     (get_local $var$1)
    )
   )
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $__wasm_trunc_f32 (; 34 ;) (param $var$0 f32) (result f32)
-=======
- (func $__wasm_trunc_f32 (; 16 ;) (type $importedType$1) (param $var$0 f32) (result f32)
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
   (select
    (f32.ceil
     (get_local $var$0)
@@ -1302,11 +1107,7 @@
    )
   )
  )
-<<<<<<< 712a12bdf11cde06525c9f270649d38dea43452d
  (func $__wasm_trunc_f64 (; 35 ;) (param $var$0 f64) (result f64)
-=======
- (func $__wasm_trunc_f64 (; 17 ;) (type $importedType$2) (param $var$0 f64) (result f64)
->>>>>>> wasm2asm: Fix a tricky grow_memory codegen bug
   (select
    (f64.ceil
     (get_local $var$0)
