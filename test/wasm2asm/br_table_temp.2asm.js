@@ -50188,11 +50188,58 @@ function asmFunc(global, env, buffer) {
   return $3 | 0;
  }
  
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $9 = 0;
-  if ((x | 0) == (0 | 0)) $9 = 32; else $9 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $9 | 0;
+ function __wasm_ctz_i32(var$0) {
+  var$0 = var$0 | 0;
+  if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
+  return 32 | 0;
+ }
+ 
+ function __wasm_ctz_i64(var$0, var$0$hi) {
+  var$0 = var$0 | 0;
+  var$0$hi = var$0$hi | 0;
+  var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, $10 = 0, $5$hi = 0, $8$hi = 0;
+  i64toi32_i32$0 = var$0$hi;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  if (((var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0) | 0) == (0 | 0)) {
+   i64toi32_i32$0 = var$0$hi;
+   i64toi32_i32$0 = i64toi32_i32$0;
+   i64toi32_i32$2 = var$0;
+   i64toi32_i32$1 = 4294967295;
+   i64toi32_i32$3 = 4294967295;
+   i64toi32_i32$4 = i64toi32_i32$2 + i64toi32_i32$3 | 0;
+   i64toi32_i32$5 = i64toi32_i32$0 + i64toi32_i32$1 | 0;
+   if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0;
+   $5$hi = i64toi32_i32$5;
+   i64toi32_i32$5 = var$0$hi;
+   i64toi32_i32$5 = $5$hi;
+   i64toi32_i32$0 = i64toi32_i32$4;
+   i64toi32_i32$2 = var$0$hi;
+   i64toi32_i32$3 = var$0;
+   i64toi32_i32$2 = i64toi32_i32$5 ^ i64toi32_i32$2 | 0;
+   i64toi32_i32$2 = i64toi32_i32$2;
+   i64toi32_i32$0 = i64toi32_i32$0 ^ i64toi32_i32$3 | 0;
+   i64toi32_i32$3 = Math_clz32(i64toi32_i32$2);
+   i64toi32_i32$5 = 0;
+   if ((i64toi32_i32$3 | 0) == (32 | 0)) $10 = Math_clz32(i64toi32_i32$0) + 32 | 0; else $10 = i64toi32_i32$3;
+   $8$hi = i64toi32_i32$5;
+   i64toi32_i32$5 = 0;
+   i64toi32_i32$0 = 63;
+   i64toi32_i32$2 = $8$hi;
+   i64toi32_i32$3 = $10;
+   i64toi32_i32$1 = i64toi32_i32$0 - i64toi32_i32$3 | 0;
+   i64toi32_i32$4 = (i64toi32_i32$0 >>> 0 < i64toi32_i32$3 >>> 0) + i64toi32_i32$2 | 0;
+   i64toi32_i32$4 = i64toi32_i32$5 - i64toi32_i32$4 | 0;
+   i64toi32_i32$4 = i64toi32_i32$4;
+   i64toi32_i32$0 = i64toi32_i32$1;
+   i64toi32_i32$HIGH_BITS = i64toi32_i32$4;
+   return i64toi32_i32$0 | 0;
+  }
+  i64toi32_i32$0 = 0;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  i64toi32_i32$0 = i64toi32_i32$0;
+  i64toi32_i32$4 = 64;
+  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
+  return i64toi32_i32$4 | 0;
  }
  
  var FUNCTION_TABLE_iiii = [f];

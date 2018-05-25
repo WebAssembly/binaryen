@@ -1,3 +1,8 @@
+add_custom_command(
+  OUTPUT WasmIntrinsics.cpp
+  COMMAND python ../../scripts/embedwast.py ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS ../../scripts/embedwast.py wasm-intrinsics.wast)
+
 SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
@@ -45,5 +50,6 @@ SET(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})
