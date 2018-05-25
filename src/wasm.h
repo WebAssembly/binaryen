@@ -678,8 +678,6 @@ public:
     Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
       data.swap(init);
     }
-
-    uint64_t constOffset();
   };
 
   // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.

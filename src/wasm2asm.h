@@ -70,6 +70,15 @@ enum NameScope {
   ScopeMax,
 };
 
+static uint64_t constOffset(Table::Segment &segment) {
+  auto* c = segment.offset->dynCast<Const>();
+  if (!c) {
+    std::cerr << "non-constant offsets aren't supported yet" << std::endl;
+    abort();
+  }
+  return c->value.getInteger();
+}
+
 //
 // Wasm2AsmBuilder - converts a WebAssembly module into asm.js
 //
@@ -130,7 +139,7 @@ public:
   Wasm2AsmBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
-  Ref processFunction(Module *wasm, Function* func);
+  Ref processFunction(Module* wasm, Function* func);
 
   // The first pass on an expression: scan it to see whether it will
   // need to be statementized, and note spooky returns of values at
@@ -142,9 +151,9 @@ public:
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
-  Ref processFunctionBody(Module *m, Function* func, IString result);
+  Ref processFunctionBody(Module* m, Function* func, IString result);
 
-  Ref processAsserts(Module *wasm, Element& e, SExpressionWasmBuilder& sexpBuilder);
+  Ref processAsserts(Module* wasm, Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -240,19 +249,19 @@ private:
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                           Module *awasm,
+                           Module* wasm,
                            Builder& wasmBuilder,
                            Element& e,
                            Name testFuncName,
                            Name asmModule);
   Ref makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
-                              Module *awasm,
+                              Module* wasm,
                               Builder& wasmBuilder,
                               Element& e,
                               Name testFuncName,
                               Name asmModule);
   Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                         Module *awasm,
+                         Module* wasm,
                          Builder& wasmBuilder,
                          Element& e,
                          Name testFuncName,
@@ -306,7 +315,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
                               0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size() + seg.constOffset();
+                                return size + seg.data.size() + constOffset(seg);
                               });
   size_t pow2ed = 1;
   while (pow2ed < tableSize) {
@@ -463,7 +472,7 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
           table[j] = fromName(name, GlobalScope);
         }
       } else {
-        table[i + seg.constOffset()] = fromName(name, GlobalScope);
+        table[i + constOffset(seg)] = fromName(name, GlobalScope);
       }
     }
   }
@@ -582,7 +591,7 @@ static bool expressionEndsInReturn(Expression *e) {
   return expressionEndsInReturn((*stats)[stats->size()-1]);
 }
 
-Ref Wasm2AsmBuilder::processFunction(Module *m, Function* func) {
+Ref Wasm2AsmBuilder::processFunction(Module* m, Function* func) {
   if (flags.debug) {
     static int fns = 0;
     std::cerr << "processFunction " << (fns++) << " " << func->name
@@ -754,14 +763,14 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
   ExpressionScanner(this).walk(curr);
 }
 
-Ref Wasm2AsmBuilder::processFunctionBody(Module *m, Function* func, IString result) {
+Ref Wasm2AsmBuilder::processFunctionBody(Module* m, Function* func, IString result) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2AsmBuilder* parent;
     IString result;
     Function* func;
-    Module *module;
+    Module* module;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2AsmBuilder* parent, Module *m, Function* func)
+    ExpressionProcessor(Wasm2AsmBuilder* parent, Module* m, Function* func)
       : parent(parent), func(func), module(m) {}
 
     // A scoped temporary variable.
@@ -1920,7 +1929,7 @@ static void prefixCalls(Ref asmjs, Name asmModule) {
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
-                                          Module *wasm,
+                                          Module* wasm,
                                           Builder& wasmBuilder,
                                           Element& e,
                                           Name testFuncName,
@@ -1985,7 +1994,7 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
-                                             Module *wasm,
+                                             Module* wasm,
                                              Builder& wasmBuilder,
                                              Element& e,
                                              Name testFuncName,
@@ -2007,7 +2016,7 @@ Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder
 }
 
 Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
-                                        Module *wasm,
+                                        Module* wasm,
                                         Builder& wasmBuilder,
                                         Element& e,
                                         Name testFuncName,
@@ -2217,7 +2226,7 @@ bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
       && (*e[1])[0]->str() == Name("invoke");
 }
 
-Ref Wasm2AsmBuilder::processAsserts(Module *wasm,
+Ref Wasm2AsmBuilder::processAsserts(Module* wasm,
                                     Element& root,
                                     SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
