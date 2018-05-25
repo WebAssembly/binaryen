@@ -19,13 +19,13 @@ import sys
 wast = open('wasm-intrinsics.wast').read()
 
 output = ""
-output += "#include \"passes/intrinsics-module.h\"\n";
-output += "namespace wasm {\n";
-output += "const char theModule[" + str(len(wast) + 1) + "] = {\n";
+output += "#include \"passes/intrinsics-module.h\"\n"
+output += "namespace wasm {\n"
+output += "const char theModule[" + str(len(wast) + 1) + "] = {\n"
 for c in wast:
     output += str(ord(c)) + ', '
 output += '0'
-output += "\n};\n";
-output += "const char* IntrinsicsModuleWast = theModule;\n";
-output += "}\n";
+output += "\n};\n"
+output += "const char* IntrinsicsModuleWast = theModule;\n"
+output += "}\n"
 open(sys.argv[1], 'w').write(output)
