@@ -54,6 +54,42 @@ static int debug() {
 
 namespace DataFlow {
 
+// Gets a list of all the uses of an expression. As we are in flat IR,
+// the expression must be the value of a set, and we seek the other sets
+// that contain a get that uses that value.
+// There may also be non-set uses of the value, for example in a drop
+// or a return. We represent those with a nullptr, meaning "other".
+static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
+  std::vector<SetLocal*> ret;
+  // Find the set we are assigned to.
+  auto* set = graph.expressionParentMap.at(origin)->dynCast<SetLocal>();
+  // Find all the uses of that set.
+  auto& gets = localGraph.setInfluences[set];
+  for (auto* get : gets) {
+    // Each of these relevant gets is either
+    //  (1) a child of a set, which we can track, or
+    //  (2) not a child of a set, e.g., a drop or such
+    auto& sets = localGraph.getInfluences[get]; // TODO: iterator
+    // In flat IR, each get can influence at most 1 set.
+    assert(sets.size() <= 1);
+    if (sets.size() == 0) {
+      // This get is not the child of a set, it is used in a drop or
+      // something else external.
+      ret.push_back(nullptr);
+    } else {
+      // This get influences a set. See if it is external or not.
+      auto* set = *sets.begin();
+      if (origins.count(set->value) == 0) {
+        ret.push_back(nullptr);
+      } else {
+        ret.push_back(set);
+      }
+// XXX we must look through copies, i.e., set of a get!!!
+    }
+  }
+  return ret;
+}
+
 // Generates a trace: all the information to generate a Souper LHS
 // for a specific set_local whose value we want to infer.
 struct Trace {
@@ -274,32 +310,15 @@ struct Trace {
       }
     }
     for (auto& node : nodes) {
-      if (node.get() == toInfer) continue;
+      if (node == toInfer) continue;
       if (auto* origin = node->origin) {
-        // Find the set we are assigned to.
-        auto* set = graph.expressionParentMap.at(origin)->dynCast<SetLocal>();
-        // Find all the uses of that set.
-        auto& gets = localGraph.setInfluences[set];
-        for (auto* get : gets) {
-          // Each of these relevant gets is either
-          //  (1) a child of a set, which we can track, or
-          //  (2) not a child of a set, e.g., a drop or such
-          auto& sets = localGraph.getInfluences[get]; // TODO: iterator
-          // In flat IR, each get can influence at most 1 set.
-          assert(sets.size() <= 1);
-          if (sets.size() == 0) {
-            // This get is not the child of a set, it is used in a drop or
-            // something else external.
-            hasExternalUses.insert(node.get());
+        auto uses = getUses(origin, graph, localGraph);
+        for (auto* use : uses) {
+          // A non-set use (a drop or return etc.) is definitely external.
+          // Otherwise, check if internal or external.
+          if (use == nullptr || origins.count(use->value) == 0) {
+            hasExternalUses.insert(node);
             break;
-          } else {
-            // This get influences a set. See if it is external or not.
-            auto* set = *sets.begin();
-            if (origins.count(set->value) == 0) {
-              hasExternalUses.insert(node.get());
-              break;
-            }
-// XXX we must look through copies, i.e., set of a get
           }
         }
       }
@@ -521,10 +540,7 @@ struct Printer {
   void warnOnSuspiciousValues(Node* node) {
     assert(debug());
     // If the node has no uses, it's not interesting enough to be
-    // suspicious.
-    if (node->numGets == 0) {
-      return;
-    }
+    // suspicious. TODO
     // If an input was replaced with a var, then we should not
     // look into it, it's not suspiciously trivial.
     for (auto* value : node->values) {
@@ -564,7 +580,8 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     if (singleUseOnly) {
       for (auto& nodePtr : graph.nodes) {
         auto* node = nodePtr.get();
-        if (node->isExpr() && node->numGets > 1) {
+        auto uses = getUses(origin, graph, localGraph);
+        if (uses.size() > 1) {
           excludeAsChildren.insert(node);
         }
       }

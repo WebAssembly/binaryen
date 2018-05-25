@@ -64,7 +64,7 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
     }
     doIndent();
   }
-  o << "] (numGets: " << node->numGets << ")\n";
+  o << "] (origin: " << (void*)(node->origin) << ")\n";
   return o;
 }
 
