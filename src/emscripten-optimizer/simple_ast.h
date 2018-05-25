@@ -836,6 +836,11 @@ struct JSPrinter {
   }
 
   static char* numToString(double d, bool finalize=true) {
+    // If this number is NaN or infinite then things are a bit tricky. In JS we
+    // want to eventually use `NaN` and/or `Infinity`, but neither of those
+    // identifiers are valid in asm.js. Instead we have to explicitly import
+    // `NaN` and `Infinity` from the global environment, and those names are
+    // bound locally in an asm function as `nan` and `infinity`.
     if (std::isnan(d)) {
       if (std::signbit(d)) {
         return (char*) "-nan";
