@@ -1693,7 +1693,7 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   }
 
   auto* wasm = (Module*)module;
-  auto* ret = new Global();
+  auto* ret = new class Global();
   ret->name = name;
   ret->type = Type(type);
   ret->mutable_ = !!mutable_;
