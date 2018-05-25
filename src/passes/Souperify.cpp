@@ -38,6 +38,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "ir/local-graph.h"
 #include "ir/utils.h"
 #include "dataflow/node.h"
 #include "dataflow/graph.h"
@@ -74,9 +75,6 @@ struct Trace {
   // When we need to (like when the depth is too deep), we replace
   // expressions with other expressions, and track them here.
   std::unordered_map<Node*, std::unique_ptr<Node>> replacements;
-  // Track how many uses in the trace each node has. This lets us
-  // compute whether they have external uses later.
-  std::unordered_map<Node*, Index> numUses;
   // The nodes that have additional external uses (only computed
   // for the "work" nodes, not the descriptive nodes arriving for
   // path conditions).
@@ -84,8 +82,10 @@ struct Trace {
   // We add path conditions after the "work". We collect them here
   // and then go through them at the proper time.
   std::vector<Node*> conditionsToAdd;
+  // The local information graph. Used to check if a node has external uses.
+  LocalGraph& localGraph;
 
-  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren) {
+  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren), localGraph(localGraph) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -116,20 +116,7 @@ struct Trace {
     // here and that we hope to replace, as opposed to path condition
     // computation which is only descriptive and helps optimization of
     // the work.
-    for (auto* node : nodes) {
-      // Artificial nodes do not have gets, but otherwise the uses we see
-      // here must make sense wrt the gets in the wasm.
-      if (debug() >= 3) {
-        std::cout << "considering uses for\n";
-        dump(node, std::cout);
-        std::cout << numUses[node] << " : " << node->numGets << '\n';
-      }
-      assert(numUses[node] <= node->numGets || graph.isArtificial(node));
-      // Mark nodes with external uses.
-      if (numUses[node] < node->numGets) {
-        hasExternalUses.insert(node);
-      }
-    }
+    findExternalUses();
     for (auto* condition : conditionsToAdd) {
       add(condition, 0);
     }
@@ -148,16 +135,6 @@ struct Trace {
     auto iter = replacements.find(node);
     if (iter != replacements.end()) {
       return iter->second.get();
-    }
-    // Every time we add a node, it is a use (except for the
-    // root node, which we add directly, and don't care about
-    // use counts for).
-    // Note that values added just for the path do not count
-    // as used.
-    // XXX Note that we do not compute this accurately for
-    //     replaced nodes. But we don't need to.
-    if (node != toInfer) {
-      numUses[node]++;
     }
     // If already added, nothing more to do.
     if (addedNodes.find(node) != addedNodes.end()) {
@@ -286,6 +263,47 @@ struct Trace {
       return true;
     }
     return false;
+  }
+
+  void findExternalUses() {
+    // Find all the wasm code represented in this trace.
+    std::unordered_set<Expression*> origins;
+    for (auto& node : nodes) {
+      if (auto* origin = node->origin) {
+        origins.insert(origin);
+      }
+    }
+    for (auto& node : nodes) {
+      if (node.get() == toInfer) continue;
+      if (auto* origin = node->origin) {
+        // Find the set we are assigned to.
+        auto* set = graph.expressionParentMap.at(origin)->dynCast<SetLocal>();
+        // Find all the uses of that set.
+        auto& gets = localGraph.setInfluences[set];
+        for (auto* get : gets) {
+          // Each of these relevant gets is either
+          //  (1) a child of a set, which we can track, or
+          //  (2) not a child of a set, e.g., a drop or such
+          auto& sets = localGraph.getInfluences[get]; // TODO: iterator
+          // In flat IR, each get can influence at most 1 set.
+          assert(sets.size() <= 1);
+          if (sets.size() == 0) {
+            // This get is not the child of a set, it is used in a drop or
+            // something else external.
+            hasExternalUses.insert(node.get());
+            break;
+          } else {
+            // This get influences a set. See if it is external or not.
+            auto* set = *sets.begin();
+            if (origins.count(set->value) == 0) {
+              hasExternalUses.insert(node.get());
+              break;
+            }
+// XXX we must look through copies, i.e., set of a get
+          }
+        }
+      }
+    }
   }
 };
 

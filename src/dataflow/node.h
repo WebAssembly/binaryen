@@ -86,14 +86,10 @@ struct Node {
     Index index;
   };
 
-  // We track the number of get_locals, that is, the number of uses of
-  // this node in the wasm. Note that this can diverge from the number
-  // of uses in the dataflow IR, since in dataflow we also have Conditions
-  // and artificial nodes etc.
-  Index numGets = 0;
-// XXX remove this. instead, add parent, which is the original expresion,
-//    multiple dataflow nodes may correspond to one parent (e.g. an added
-//    zext). then for purpose of numGets, we look at the parent.
+  // The wasm expression that we originate from (if such exists). A single
+  // wasm instruction may be turned into multiple dataflow IR nodes, and some
+  // nodes have no wasm origin (like phis).
+  Expression* origin = nullptr;
 
   // Extra list of related nodes.
   // For Expr, these are the Nodes for the inputs to the expression (e.g.
@@ -112,9 +108,10 @@ struct Node {
     ret->wasmType = wasmType;
     return ret;
   }
-  static Node* makeExpr(Expression* expr) {
+  static Node* makeExpr(Expression* expr, Expression* origin) {
     Node* ret = new Node(Expr);
     ret->expr = expr;
+    ret->origin = origin;
     return ret;
   }
   static Node* makePhi(Node* block, Index index) {
@@ -134,9 +131,10 @@ struct Node {
     Node* ret = new Node(Block);
     return ret;
   }
-  static Node* makeZext(Node* child) {
+  static Node* makeZext(Node* child, Expression* origin) {
     Node* ret = new Node(Zext);
     ret->addValue(child);
+    ret->origin = origin;
     return ret;
   }
   static Node* makeBad() {

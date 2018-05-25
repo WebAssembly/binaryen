@@ -54,7 +54,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Maps each expression to its control-flow parent (or null if
   // there is none). We only map expressions we need to know about,
-  // which are sets and control-flow constructs.
+  // which are sets, set values, and control-flow constructs.
   std::unordered_map<Expression*, Expression*> expressionParentMap;
 
   // The same, for nodes. Note that we currently don't know the parents
@@ -130,38 +130,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     }
     // Process the function body, generating the rest of the IR.
     visit(func->body);
-    // Fix up artificial nodes: in wasm, we have sets to a specific index,
-    // then a get of that index after control flow merges is in effect
-    // a phi. In the dataflow IR, we create an explicit phi, and
-    // uses of that specific index are counted in numGets for the
-    // phi. We need to "forward" that to the phi values, as any
-    // get of the phi is in effect a get of all of them.
-    // Making this slightly complicated is that we can have nested
-    // phis:
-    //  phi [
-    //    phi [
-    //      x,
-    //      y
-    //    ],
-    //    z
-    //  ]
-    // Every use of the outer phi must be counted as a use of not just
-    // z, its direct value, but also x and y.
-    for (auto& node : nodes) {
-      flowNumGets(node.get(), node->numGets);
-    }
-  }
-
-  // See explanation in build()
-  void flowNumGets(Node* node, Index num) {
-    if (node->isPhi()) {
-      for (Index i = 1; i < node->values.size(); i++) {
-XXX we may have the same value more than once. need a set, it should be once per appearing value.
-        auto* value = node->getValue(i);
-        value->numGets += num;
-        flowNumGets(value, num);
-      }
-    }
   }
 
   // Makes a Var node, representing a value that could be anything.
@@ -183,7 +151,8 @@ XXX we may have the same value more than once. need a set, it should be once per
     }
     // Create one for this literal.
     Builder builder(*module);
-    auto* ret = addNode(Node::makeExpr(builder.makeConst(value)));
+    auto* c = builder.makeConst(value);
+    auto* ret = addNode(Node::makeExpr(c, c));
     constantNodes[value] = ret;
     return ret;
   }
@@ -198,7 +167,7 @@ XXX we may have the same value more than once. need a set, it should be once per
     return node;
   }
 
-  Node* makeZeroComp(Node* node, bool equal) {
+  Node* makeZeroComp(Node* node, bool equal, Expression* origin) {
     assert(!node->isBad());
     Builder builder(*module);
     auto type = node->getWasmType();
@@ -209,8 +178,8 @@ XXX we may have the same value more than once. need a set, it should be once per
       makeUse(node),
       makeUse(zero)
     );
-    auto* check = addNode(Node::makeExpr(expr));
-    check->addValue(expandFromI1(node));
+    auto* check = addNode(Node::makeExpr(expr, origin));
+    check->addValue(expandFromI1(node, origin));
     check->addValue(zero);
     return check;
   }
@@ -391,13 +360,6 @@ XXX we may have the same value more than once. need a set, it should be once per
             node = proper;
           }
         }
-        // Finally, all the get_locals we tracked for the temporary Var
-        // actually belong to the previous value we are replacing the Var
-        // with.
-        proper->numGets += var->numGets;
-        // We should never see this value, but properly set it to 0 for
-        // convenience of debugging and future use.
-        var->numGets = 0;
       }
     }
     return &bad;
@@ -434,8 +396,6 @@ XXX we may have the same value more than once. need a set, it should be once per
     }
     // We now know which IR node this get refers to
     auto* node = locals[curr->index];
-    // Note a get_local of this node.
-    node->numGets++;
     return node;
   }
   Node* doVisitSetLocal(SetLocal* curr) {
@@ -445,6 +405,7 @@ XXX we may have the same value more than once. need a set, it should be once per
     assert(isConcreteType(curr->value->type));
     sets.push_back(curr);
     expressionParentMap[curr] = parent;
+    expressionParentMap[curr->value] = curr;
     // Set the current node in the local state.
     auto* node = visit(curr->value);
     locals[curr->index] = setNodeMap[curr] = node;
@@ -469,10 +430,10 @@ XXX we may have the same value more than once. need a set, it should be once per
       case PopcntInt64: {
         // These are ok as-is.
         // Check if our child is supported.
-        auto* value = expandFromI1(visit(curr->value));
+        auto* value = expandFromI1(visit(curr->value), curr);
         if (value->isBad()) return value;
         // Great, we are supported!
-        auto* ret = addNode(Node::makeExpr(curr));
+        auto* ret = addNode(Node::makeExpr(curr, curr));
         ret->addValue(value);
         return ret;
       }
@@ -480,10 +441,10 @@ XXX we may have the same value more than once. need a set, it should be once per
       case EqZInt64: {
         // These can be implemented using a binary.
         // Check if our child is supported.
-        auto* value = expandFromI1(visit(curr->value));
+        auto* value = expandFromI1(visit(curr->value), curr);
         if (value->isBad()) return value;
         // Great, we are supported!
-        return makeZeroComp(value, true);
+        return makeZeroComp(value, true, curr);
       }
       default: {
         // Anything else is an unknown value.
@@ -538,12 +499,12 @@ XXX we may have the same value more than once. need a set, it should be once per
       case LeUInt64: {
         // These are ok as-is.
         // Check if our children are supported.
-        auto* left = expandFromI1(visit(curr->left));
+        auto* left = expandFromI1(visit(curr->left), curr);
         if (left->isBad()) return left;
-        auto* right = expandFromI1(visit(curr->right));
+        auto* right = expandFromI1(visit(curr->right), curr);
         if (right->isBad()) return right;
         // Great, we are supported!
-        auto* ret = addNode(Node::makeExpr(curr));
+        auto* ret = addNode(Node::makeExpr(curr, curr));
         ret->addValue(left);
         ret->addValue(right);
         return ret;
@@ -579,14 +540,14 @@ XXX we may have the same value more than once. need a set, it should be once per
     }
   }
   Node* doVisitSelect(Select* curr) {
-    auto* ifTrue = expandFromI1(visit(curr->ifTrue));
+    auto* ifTrue = expandFromI1(visit(curr->ifTrue), curr);
     if (ifTrue->isBad()) return ifTrue;
-    auto* ifFalse = expandFromI1(visit(curr->ifFalse));
+    auto* ifFalse = expandFromI1(visit(curr->ifFalse), curr);
     if (ifFalse->isBad()) return ifFalse;
-    auto* condition = ensureI1(visit(curr->condition));
+    auto* condition = ensureI1(visit(curr->condition), curr);
     if (condition->isBad()) return condition;
     // Great, we are supported!
-    auto* ret = addNode(Node::makeExpr(curr));
+    auto* ret = addNode(Node::makeExpr(curr, curr));
     ret->addValue(condition);
     ret->addValue(ifTrue);
     ret->addValue(ifFalse);
@@ -622,9 +583,9 @@ XXX we may have the same value more than once. need a set, it should be once per
     if (!condition->isBad()) {
       // Generate boolean (i1 returning) conditions for the two branches.
       auto& conditions = expressionConditionMap[expr];
-      ifTrue = ensureI1(condition);
+      ifTrue = ensureI1(condition, nullptr);
       conditions.push_back(ifTrue);
-      ifFalse = makeZeroComp(condition, true);
+      ifFalse = makeZeroComp(condition, true, nullptr);
       conditions.push_back(ifFalse);
       artificialNodes.insert(ifFalse);
     } else {
@@ -705,7 +666,7 @@ XXX we may have the same value more than once. need a set, it should be once per
           }
           auto* phi = addNode(Node::makePhi(block, i));
           for (auto& state : states) {
-            auto* value = expandFromI1(state.locals[i]);
+            auto* value = expandFromI1(state.locals[i], nullptr);
             phi->addValue(value);
           }
           out[i] = phi;
@@ -717,16 +678,16 @@ XXX we may have the same value more than once. need a set, it should be once per
 
   // If the node returns an i1, then we are called from a context that needs
   // to use it normally as in wasm - extend it
-  Node* expandFromI1(Node* node) {
+  Node* expandFromI1(Node* node, Expression* origin) {
     if (!node->isBad() && node->returnsI1()) {
-      node = addNode(Node::makeZext(node));
+      node = addNode(Node::makeZext(node, origin));
     }
     return node;
   }
 
-  Node* ensureI1(Node* node) {
+  Node* ensureI1(Node* node, Expression* origin) {
     if (!node->isBad() && !node->returnsI1()) {
-      node = makeZeroComp(node, false);
+      node = makeZeroComp(node, false, origin);
       // This is constructed artificially, just for Souper legality.
       artificialNodes.insert(node);
     }
