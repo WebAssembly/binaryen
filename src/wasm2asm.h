@@ -230,10 +230,10 @@ private:
 Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
-  // First up remove as many non-JS operations we can, like 64-bit integer
-  // multiplication or division. This'll make it possible actually perform
-  // i64-to-i32 lowering as otherwise that pass can't handle things like
-  // rotation/division.
+  // First up remove as many non-JS operations we can, including things like
+  // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
+  // This may inject intrinsics which use i64 so it needs to be run before the
+  // i64-to-i32 lowering pass.
   runner.add("remove-non-js-ops");
   // Currently the i64-to-32 lowering pass requires that `flatten` be run before
   // it produce correct code. For some more details about this see #1480
@@ -248,12 +248,12 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 
   // Make sure we didn't corrupt anything if we're in --allow-asserts mode (aka
   // tests)
-  if (flags.allowAsserts) {
-    if (!WasmValidator().validate(*wasm)) {
-      WasmPrinter::printModule(wasm);
-      Fatal() << "error in validating input";
-    }
+#ifndef NDEBUG
+  if (!WasmValidator().validate(*wasm)) {
+    WasmPrinter::printModule(wasm);
+    Fatal() << "error in validating input";
   }
+#endif
 
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);

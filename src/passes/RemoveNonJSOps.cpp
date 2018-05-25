@@ -21,10 +21,10 @@
 // intrinsic implementation. Intrinsics don't use themselves to implement
 // themselves.
 //
-// You'll find a large wast blob at the end of this module which contains all of
-// the injected intrinsics. We manually copy over any needed intrinsics from
-// this module into the module that we're optimizing after walking the current
-// module.
+// You'll find a large wast blob in `wasm-intrinsics.wast` next to this file
+// which contains all of the injected intrinsics. We manually copy over any
+// needed intrinsics from this module into the module that we're optimizing
+// after walking the current module.
 //
 
 #include <wasm.h>
