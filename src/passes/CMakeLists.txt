@@ -1,9 +1,7 @@
-add_executable(embedwast embedwast.cpp)
-
 add_custom_command(
   OUTPUT WasmIntrinsics.cpp
-  COMMAND ${CMAKE_BINARY_DIR}/bin/embedwast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
-  DEPENDS embedwast wasm-intrinsics.wast)
+  COMMAND python ../../scripts/embedwast.py ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS ../../scripts/embedwast.py wasm-intrinsics.wast)
 
 SET(passes_SOURCES
   pass.cpp
