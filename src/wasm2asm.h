@@ -67,7 +67,7 @@ void flattenAppend(Ref ast, Ref extra) {
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
 enum NameScope {
-  Global,
+  Top,
   Local,
   Label,
   Max,
@@ -225,7 +225,7 @@ public:
       // it's a bug currently if they're not globally unique. This should
       // probably be fixed via a different namespace for exports or something
       // like that.
-      if (scope == NameScope::Global) {
+      if (scope == NameScope::Top) {
         std::cerr << "global scope is colliding with other scope: " << mangled << std::endl;
         abort();
       }
@@ -272,7 +272,7 @@ private:
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
-  void addGlobal(Ref ast, class Global* global);
+  void addGlobal(Ref ast, Global* global);
   void setNeedsAlmostASM(const char *reason);
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
@@ -354,13 +354,13 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   // make sure exports get their expected names
   for (auto& e : wasm->exports) {
     if (e->kind == ExternalKind::Function) {
-      fromName(e->name, NameScope::Global);
+      fromName(e->name, NameScope::Top);
     }
   }
   for (auto& f : wasm->functions) {
-    fromName(f->name, NameScope::Global);
+    fromName(f->name, NameScope::Top);
   }
-  fromName(WASM_FETCH_HIGH_BITS, NameScope::Global);
+  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
   // globals
   bool generateFetchHighBits = false;
   for (auto& global : wasm->globals) {
@@ -477,10 +477,10 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
   ValueBuilder::appendToVar(theVar,
-    fromName(import->name, NameScope::Global),
+    fromName(import->name, NameScope::Top),
     ValueBuilder::makeDot(
       module,
-      fromName(import->base, NameScope::Global)
+      fromName(import->base, NameScope::Top)
     )
   );
 }
@@ -497,10 +497,10 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
         // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
         table.resize(tableSize);
         for (size_t j = 0; j < tableSize; j++) {
-          table[j] = fromName(name, NameScope::Global);
+          table[j] = fromName(name, NameScope::Top);
         }
       } else {
-        table[i + constOffset(seg)] = fromName(name, NameScope::Global);
+        table[i + constOffset(seg)] = fromName(name, NameScope::Top);
       }
     }
   }
@@ -526,8 +526,8 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObject(
         exports,
-        fromName(export_->name, NameScope::Global),
-        ValueBuilder::makeName(fromName(export_->value, NameScope::Global))
+        fromName(export_->name, NameScope::Top),
+        ValueBuilder::makeName(fromName(export_->value, NameScope::Top))
       );
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -563,7 +563,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
         descs);
       ValueBuilder::appendToObject(
         exports,
-        fromName(export_->name, NameScope::Global),
+        fromName(export_->name, NameScope::Top),
         memory);
     }
   }
@@ -575,7 +575,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
 
-void Wasm2AsmBuilder::addGlobal(Ref ast, class Global* global) {
+void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
     switch (const_->type) {
@@ -594,17 +594,17 @@ void Wasm2AsmBuilder::addGlobal(Ref ast, class Global* global) {
         break;
       }
       default: {
-        assert(false && "Global const type not supported");
+        assert(false && "Top const type not supported");
       }
     }
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(theVar,
-      fromName(global->name, NameScope::Global),
+      fromName(global->name, NameScope::Top),
       theValue
     );
   } else {
-    assert(false && "Global init type not supported");
+    assert(false && "Top init type not supported");
   }
 }
 
@@ -628,7 +628,7 @@ Ref Wasm2AsmBuilder::processFunction(Module* m, Function* func) {
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
-  Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Global));
+  Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps.clear();
@@ -1028,7 +1028,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module* m, Function* func, IString resu
 
     Ref visitGenericCall(Expression* curr, Name target,
                          ExpressionList& operands) {
-      Ref theCall = ValueBuilder::makeCall(fromName(target, NameScope::Global));
+      Ref theCall = ValueBuilder::makeCall(fromName(target, NameScope::Top));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a
         // simple expression
@@ -1117,11 +1117,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module* m, Function* func, IString resu
     }
 
     Ref visitGetGlobal(GetGlobal* curr) {
-      return ValueBuilder::makeName(fromName(curr->name, NameScope::Global));
+      return ValueBuilder::makeName(fromName(curr->name, NameScope::Top));
     }
 
     Ref visitSetGlobal(SetGlobal* curr) {
-      return makeSetVar(curr, curr->value, curr->name, NameScope::Global);
+      return makeSetVar(curr, curr->value, curr->name, NameScope::Top);
     }
 
     Ref visitLoad(Load* curr) {
@@ -2298,7 +2298,7 @@ Ref Wasm2AsmBuilder::processAsserts(Module* wasm,
     flattenAppend(ret, testFunc);
     std::stringstream failFuncName;
     failFuncName << "fail" << std::to_string(i);
-    IString testName = fromName(testFuncName, NameScope::Global);
+    IString testName = fromName(testFuncName, NameScope::Top);
     flattenAppend(
       ret,
       ValueBuilder::makeIf(
