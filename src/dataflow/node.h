@@ -91,6 +91,9 @@ struct Node {
   // of uses in the dataflow IR, since in dataflow we also have Conditions
   // and artificial nodes etc.
   Index numGets = 0;
+// XXX remove this. instead, add parent, which is the original expresion,
+//    multiple dataflow nodes may correspond to one parent (e.g. an added
+//    zext). then for purpose of numGets, we look at the parent.
 
   // Extra list of related nodes.
   // For Expr, these are the Nodes for the inputs to the expression (e.g.

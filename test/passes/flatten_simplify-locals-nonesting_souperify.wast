@@ -1078,5 +1078,56 @@
   )
   (i32.const 0)
  )
+ (func $zext-numGets (param $var$0 i32) (param $var$1 i32)
+  (if
+   (i32.ctz
+    (block $label$1 (result i32)
+     (drop
+      (br_if $label$1
+       (i32.const 1)
+       (i32.load
+        (i32.const -8)
+       )
+      )
+     )
+     (i32.eqz
+      (i32.load
+       (i32.const -16)
+      )
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+ (func $zext-numGets-hasAnotherUse (param $var$0 i32) (param $var$1 i32)
+  (local $temp i32)
+  (if
+   (i32.ctz
+    (block $label$1 (result i32)
+     (drop
+      (br_if $label$1
+       (i32.const 1)
+       (i32.load
+        (i32.const -8)
+       )
+      )
+     )
+     (set_local $temp
+      (i32.eqz
+       (i32.load
+        (i32.const -16)
+       )
+      )
+     )
+     (drop
+      (get_local $temp)
+     )
+     (get_local $temp)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
 

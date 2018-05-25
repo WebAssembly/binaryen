@@ -156,6 +156,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   void flowNumGets(Node* node, Index num) {
     if (node->isPhi()) {
       for (Index i = 1; i < node->values.size(); i++) {
+XXX we may have the same value more than once. need a set, it should be once per appearing value.
         auto* value = node->getValue(i);
         value->numGets += num;
         flowNumGets(value, num);
