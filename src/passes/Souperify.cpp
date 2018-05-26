@@ -293,6 +293,7 @@ struct Trace {
   }
 
   static bool isTraceable(Node* node) {
+    // TODO: check if `origin`?
     if (node->isExpr()) {
       auto* expr = node->expr;
       return expr->is<Unary>() || expr->is<Binary>() || expr->is<Select>();
@@ -422,7 +423,7 @@ struct Printer {
       default: WASM_UNREACHABLE();
     }
     if (node->isExpr() || node->isPhi()) {
-      if (node != trace.toInfer && trace.hasExternalUses.count(node) > 0) {
+      if (node->origin != trace.toInfer->origin && trace.hasExternalUses.count(node) > 0) {
         std::cout << " (hasExternalUses)";
         printedHasExternalUses = true;
       }
