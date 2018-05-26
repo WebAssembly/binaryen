@@ -720,7 +720,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
 
   // Given an expression, return the set for it if such exists.
   SetLocal* getSet(Expression* curr) {
-    return getParent(curr)->dynCast<SetLocal>();
+    auto* parent = getParent(curr);
+    return parent ? parent->dynCast<SetLocal>() : nullptr;
   }
 
   // Creates an expression that uses a node. Generally, a node represents
