@@ -331,6 +331,9 @@ struct Trace {
     std::unordered_set<Expression*> origins;
     for (auto& node : nodes) {
       if (auto* origin = node->origin) {
+        if (debug() >= 2) {
+          std::cout << "note origin " << origin << '\n';
+        }
         origins.insert(origin);
       }
     }
