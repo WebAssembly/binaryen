@@ -58,6 +58,9 @@ namespace DataFlow {
 static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<Expression*>& ret) {
   // Find all the uses of that set.
   auto& gets = localGraph.setInfluences[set];
+  if (debug() >= 2) {
+    std::cout << "addSetUses for " << set << ", " << gets.size() << "gets\n";
+  }
   for (auto* get : gets) {
     // Each of these relevant gets is either
     //  (1) a child of a set, which we can track, or
