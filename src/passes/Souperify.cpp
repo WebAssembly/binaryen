@@ -92,9 +92,10 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
         addSetUses(subSet, graph, localGraph, ret);
       } else {
         // Not a copy.
-        ret.push_back(subSet);
+        auto* value = subSet->value;
+        ret.push_back(value);
         if (debug() >= 2) {
-          std::cout << "add a value\n" << subSet->value << '\n';
+          std::cout << "add a value\n" << value << '\n';
         }
       }
     }
@@ -352,6 +353,11 @@ struct Trace {
           // A non-set use (a drop or return etc.) is definitely external.
           // Otherwise, check if internal or external.
           if (use == nullptr || origins.count(use) == 0) {
+            if (debug() >= 2) {
+              std::cout << "found external use for\n";
+              dump(node, std::cout);
+              std::cout << "  due to " << use << '\n';
+            }
             hasExternalUses.insert(node);
             break;
           }
