@@ -154,6 +154,9 @@ struct Trace {
   LocalGraph& localGraph;
 
   Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren, LocalGraph& localGraph) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren), localGraph(localGraph) {
+    if (debug() >= 2) {
+      std::cout << "\nstart a trace (in " << graph.func->name << ")\n";
+    }
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
