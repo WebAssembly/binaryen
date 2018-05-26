@@ -1172,5 +1172,28 @@
   )
   (unreachable)
  )
+ (func $loop-of-set-connections (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (param $var$3 i32) (param $var$4 i32) (result i32)
+  (loop $label$1
+   (if
+    (i32.const 0)
+    (block
+     (set_local $var$2
+      (i32.add
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (br $label$1)
+    )
+   )
+   (set_local $var$3
+    (get_local $var$2)
+   )
+   (set_local $var$2
+    (get_local $var$3)
+   )
+   (br $label$1)
+  )
+ )
 )
 

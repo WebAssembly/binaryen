@@ -54,73 +54,81 @@ static int debug() {
 
 namespace DataFlow {
 
-// Internal helper to generate all the uses of a set to an output vector. See getUses().
-static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<Expression*>& ret) {
-  // Find all the uses of that set.
-  auto& gets = localGraph.setInfluences[set];
-  if (debug() >= 2) {
-    std::cout << "addSetUses for " << set << ", " << gets.size() << " gets\n";
+// Internal helper to find all the uses of a set.
+struct UseFinder {
+  // Gets a list of all the uses of an expression. As we are in flat IR,
+  // the expression must be the value of a set, and we seek the other sets
+  // (or rather, their values) that contain a get that uses that value.
+  // There may also be non-set uses of the value, for example in a drop
+  // or a return. We represent those with a nullptr, meaning "other".
+  std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
+    if (debug() >= 2) {
+      std::cout << "getUses\n" << origin << '\n';
+    }
+    std::vector<Expression*> ret;
+    auto* set = graph.getSet(origin);
+    if (!set) {
+      // If the parent is not a set (a drop, call, return, etc.) then
+      // it is not something we need to track.
+      return ret;
+    }
+    addSetUses(set, graph, localGraph, ret);
+    return ret;
   }
-  for (auto* get : gets) {
-    // Each of these relevant gets is either
-    //  (1) a child of a set, which we can track, or
-    //  (2) not a child of a set, e.g., a call argument or such
-    auto& sets = localGraph.getInfluences[get]; // TODO: iterator
-    // In flat IR, each get can influence at most 1 set.
-    assert(sets.size() <= 1);
-    if (sets.size() == 0) {
-      // This get is not the child of a set. Check if it is a drop,
-      // otherwise it is an actual use, and so an external use.
-      auto* parent = graph.getParent(get);
-      if (parent && parent->is<Drop>()) {
-        // Just ignore it.
-      } else {
-        ret.push_back(nullptr);
-        if (debug() >= 2) {
-          std::cout << "add nullptr\n";
+
+  // There may be loops of sets with copies between them.
+  std::unordered_set<SetLocal*> seenSets;
+
+  void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<Expression*>& ret) {
+    // If already handled, nothing to do here.
+    if (seenSets.count(set)) return;
+    seenSets.insert(set);
+    // Find all the uses of that set.
+    auto& gets = localGraph.setInfluences[set];
+    if (debug() >= 2) {
+      std::cout << "addSetUses for " << set << ", " << gets.size() << " gets\n";
+    }
+    for (auto* get : gets) {
+      // Each of these relevant gets is either
+      //  (1) a child of a set, which we can track, or
+      //  (2) not a child of a set, e.g., a call argument or such
+      auto& sets = localGraph.getInfluences[get]; // TODO: iterator
+      // In flat IR, each get can influence at most 1 set.
+      assert(sets.size() <= 1);
+      if (sets.size() == 0) {
+        // This get is not the child of a set. Check if it is a drop,
+        // otherwise it is an actual use, and so an external use.
+        auto* parent = graph.getParent(get);
+        if (parent && parent->is<Drop>()) {
+          // Just ignore it.
+        } else {
+          ret.push_back(nullptr);
+          if (debug() >= 2) {
+            std::cout << "add nullptr\n";
+          }
         }
-      }
-    } else {
-      // This get is the child of a set.
-      auto* subSet = *sets.begin();
-      // If this is a copy, we need to look through it: data-flow IR
-      // counts actual values, not copies, and in particular we need
-      // to look through the copies that implement a phi.
-      if (subSet->value == get) {
-        // Indeed a copy.
-        // TODO: this could be optimized and done all at once beforehand.
-        addSetUses(subSet, graph, localGraph, ret);
       } else {
-        // Not a copy.
-        auto* value = subSet->value;
-        ret.push_back(value);
-        if (debug() >= 2) {
-          std::cout << "add a value\n" << value << '\n';
+        // This get is the child of a set.
+        auto* subSet = *sets.begin();
+        // If this is a copy, we need to look through it: data-flow IR
+        // counts actual values, not copies, and in particular we need
+        // to look through the copies that implement a phi.
+        if (subSet->value == get) {
+          // Indeed a copy.
+          // TODO: this could be optimized and done all at once beforehand.
+          addSetUses(subSet, graph, localGraph, ret);
+        } else {
+          // Not a copy.
+          auto* value = subSet->value;
+          ret.push_back(value);
+          if (debug() >= 2) {
+            std::cout << "add a value\n" << value << '\n';
+          }
         }
       }
     }
   }
-}
-
-// Gets a list of all the uses of an expression. As we are in flat IR,
-// the expression must be the value of a set, and we seek the other sets
-// (or rather, their values) that contain a get that uses that value.
-// There may also be non-set uses of the value, for example in a drop
-// or a return. We represent those with a nullptr, meaning "other".
-static std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
-  if (debug() >= 2) {
-    std::cout << "getUses\n" << origin << '\n';
-  }
-  std::vector<Expression*> ret;
-  auto* set = graph.getSet(origin);
-  if (!set) {
-    // If the parent is not a set (a drop, call, return, etc.) then
-    // it is not something we need to track.
-    return ret;
-  }
-  addSetUses(set, graph, localGraph, ret);
-  return ret;
-}
+};
 
 // Generates a trace: all the information to generate a Souper LHS
 // for a specific set_local whose value we want to infer.
@@ -355,7 +363,7 @@ struct Trace {
     for (auto& node : nodes) {
       if (node == toInfer) continue;
       if (auto* origin = node->origin) {
-        auto uses = getUses(origin, graph, localGraph);
+        auto uses = UseFinder().getUses(origin, graph, localGraph);
         for (auto* use : uses) {
           // A non-set use (a drop or return etc.) is definitely external.
           // Otherwise, check if internal or external.
@@ -633,7 +641,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
         auto* node = nodePtr.get();
         if (node->origin) {
           // TODO: work for identical origins could be saved
-          auto uses = getUses(node->origin, graph, localGraph);
+          auto uses = DataFlow::UseFinder().getUses(node->origin, graph, localGraph);
           if (debug() >= 2) {
             std::cout << "following node has " << uses.size() << " uses\n";
             dump(node, std::cout);
