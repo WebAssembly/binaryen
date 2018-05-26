@@ -341,7 +341,7 @@ struct Trace {
         for (auto* use : uses) {
           // A non-set use (a drop or return etc.) is definitely external.
           // Otherwise, check if internal or external.
-          if (use == nullptr || origins.count(use->value) == 0) {
+          if (use == nullptr || origins.count(use) == 0) {
             hasExternalUses.insert(node);
             break;
           }
