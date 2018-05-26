@@ -59,6 +59,7 @@ namespace DataFlow {
 // that contain a get that uses that value.
 // There may also be non-set uses of the value, for example in a drop
 // or a return. We represent those with a nullptr, meaning "other".
+// 
 static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
   std::vector<SetLocal*> ret;
   // Find the set we are assigned to.
@@ -79,11 +80,7 @@ static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGra
     } else {
       // This get influences a set. See if it is external or not.
       auto* set = *sets.begin();
-      if (origins.count(set->value) == 0) {
-        ret.push_back(nullptr);
-      } else {
-        ret.push_back(set);
-      }
+      ret.push_back(set);
 // XXX we must look through copies, i.e., set of a get!!!
     }
   }
@@ -121,7 +118,7 @@ struct Trace {
   // The local information graph. Used to check if a node has external uses.
   LocalGraph& localGraph;
 
-  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren), localGraph(localGraph) {
+  Trace(Graph& graph, Node* toInfer, std::unordered_set<Node*>& excludeAsChildren, LocalGraph& localGraph) : graph(graph), toInfer(toInfer), excludeAsChildren(excludeAsChildren), localGraph(localGraph) {
     // Check if there is a depth limit override
     auto* depthLimitStr = getenv("BINARYEN_SOUPERIFY_DEPTH_LIMIT");
     if (depthLimitStr) {
@@ -575,14 +572,18 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     DataFlow::Graph graph;
     graph.build(func, getModule());
     if (debug() >= 2) dump(graph, std::cout);
+    // Build the local graph data structure.
+    LocalGraph localGraph(func);
     // If we only want single-use nodes, exclude all the others.
     std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
       for (auto& nodePtr : graph.nodes) {
         auto* node = nodePtr.get();
-        auto uses = getUses(origin, graph, localGraph);
-        if (uses.size() > 1) {
-          excludeAsChildren.insert(node);
+        if (node->isExpr()) {
+          auto uses = getUses(node->expr, graph, localGraph);
+          if (uses.size() > 1) {
+            excludeAsChildren.insert(node);
+          }
         }
       }
     }
@@ -591,7 +592,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
       auto* node = nodePtr.get();
       if (!graph.isArtificial(node) &&
           DataFlow::Trace::isTraceable(node)) {
-        DataFlow::Trace trace(graph, node, excludeAsChildren);
+        DataFlow::Trace trace(graph, node, excludeAsChildren, localGraph);
         if (!trace.isBad()) {
           DataFlow::Printer printer(graph, trace);
           if (singleUseOnly) {
