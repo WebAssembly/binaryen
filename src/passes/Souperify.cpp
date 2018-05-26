@@ -54,21 +54,8 @@ static int debug() {
 
 namespace DataFlow {
 
-// Gets a list of all the uses of an expression. As we are in flat IR,
-// the expression must be the value of a set, and we seek the other sets
-// that contain a get that uses that value.
-// There may also be non-set uses of the value, for example in a drop
-// or a return. We represent those with a nullptr, meaning "other".
-// 
-static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
-  std::vector<SetLocal*> ret;
-  auto iter = graph.expressionParentMap.find(origin);
-  if (iter == graph.expressionParentMap.end()) {
-    // We don't care about things we don't track the uses or parent of,
-    // like constants and artificial nodes.
-    return ret;
-  }
-  auto* set = iter->second->cast<SetLocal>();
+// Internal helper to generate all the uses of a set to an output vector. See getUses().
+static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<SetLocal*>& ret) {
   // Find all the uses of that set.
   auto& gets = localGraph.setInfluences[set];
   for (auto* get : gets) {
@@ -82,13 +69,48 @@ static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGra
       // This get is not the child of a set, it is used in a drop or
       // something else external.
       ret.push_back(nullptr);
+      if (debug() >= 2) {
+        std::cout << "add nullptr\n";
+      }
     } else {
-      // This get influences a set. See if it is external or not.
-      auto* set = *sets.begin();
-      ret.push_back(set);
-// XXX we must look through copies, i.e., set of a get!!!
+      // This get is the child of a set.
+      auto* subSet = *sets.begin();
+      // If this is a copy, we need to look through it: data-flow IR
+      // counts actual values, not copies, and in particular we need
+      // to look through the copies that implement a phi.
+      if (subSet->value == get) {
+        // Indeed a copy.
+        // TODO: this could be optimized and done all at once beforehand.
+        addSetUses(subSet, graph, localGraph, ret);
+      } else {
+        // Not a copy.
+        ret.push_back(subSet);
+        if (debug() >= 2) {
+          std::cout << "add a set\n" << subSet << '\n';
+        }
+      }
     }
   }
+}
+
+// Gets a list of all the uses of an expression. As we are in flat IR,
+// the expression must be the value of a set, and we seek the other sets
+// that contain a get that uses that value.
+// There may also be non-set uses of the value, for example in a drop
+// or a return. We represent those with a nullptr, meaning "other".
+static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
+  if (debug() >= 2) {
+    std::cout << "getUses\n" << origin << '\n';
+  }
+  std::vector<SetLocal*> ret;
+  auto iter = graph.expressionParentMap.find(origin);
+  if (iter == graph.expressionParentMap.end()) {
+    // We don't care about things we don't track the uses or parent of,
+    // like constants and artificial nodes.
+    return ret;
+  }
+  auto* set = iter->second->cast<SetLocal>();
+  addSetUses(set, graph, localGraph, ret);
   return ret;
 }
 
