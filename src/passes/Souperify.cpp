@@ -80,6 +80,8 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
           std::cout << "add nullptr\n";
         }
       }
+//1. remove isArtificial
+//2. Do we need a set instead of a vector for the output? find a testcase which has dupes, investigate it. maybe add env var that de-dupes, check for diffs
     } else {
       // This get is the child of a set.
       auto* subSet = *sets.begin();
@@ -326,13 +328,17 @@ struct Trace {
   }
 
   static bool isTraceable(Node* node) {
-    // TODO: check if `origin`?
+    if (!node->origin) {
+      // Ignore artificial etc. nodes.
+      // TODO: perhaps require all the nodes for an origin appear, so we
+      //       don't try to compute an internal part of one, like the
+      //       extra artificial != 0 of a select?
+      return false;
+    }
     if (node->isExpr()) {
+      // Consider only the simple computational nodes.
       auto* expr = node->expr;
       return expr->is<Unary>() || expr->is<Binary>() || expr->is<Select>();
-    }
-    if (node->isPhi()) {
-      return true;
     }
     return false;
   }
@@ -638,8 +644,8 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     // Emit possible traces.
     for (auto& nodePtr : graph.nodes) {
       auto* node = nodePtr.get();
-      if (!graph.isArtificial(node) &&
-          DataFlow::Trace::isTraceable(node)) {
+      // Trace
+      if (DataFlow::Trace::isTraceable(node)) {
         DataFlow::Trace trace(graph, node, excludeAsChildren, localGraph);
         if (!trace.isBad()) {
           DataFlow::Printer printer(graph, trace);

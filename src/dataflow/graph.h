@@ -76,11 +76,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   // All of our nodes
   std::vector<std::unique_ptr<Node>> nodes;
 
-  // Some nodes are created artificially, to fit into Souper IR legally,
-  // but they do not represent actual interesting work in Binaryen IR.
-  // Note those, we may ignore them later for certain things.
-  std::unordered_set<Node*> artificialNodes;
-
   // Tracking state during building
 
   // We need to track the parents of control flow nodes.
@@ -596,7 +591,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       conditions.push_back(ifTrue);
       ifFalse = makeZeroComp(condition, true, nullptr);
       conditions.push_back(ifFalse);
-      artificialNodes.insert(ifFalse);
     } else {
       ifTrue = ifFalse = &bad;
     }
@@ -697,8 +691,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   Node* ensureI1(Node* node, Expression* origin) {
     if (!node->isBad() && !node->returnsI1()) {
       node = makeZeroComp(node, false, origin);
-      // This is constructed artificially, just for Souper legality.
-      artificialNodes.insert(node);
     }
     return node;
   }
@@ -749,11 +741,6 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     } else {
       WASM_UNREACHABLE(); // TODO
     }
-  }
-
-  bool isArtificial(Node* node) {
-    return node->isPhi() || node->isBlock() || node->isZext() ||
-           artificialNodes.find(node) != artificialNodes.end();
   }
 };
 
