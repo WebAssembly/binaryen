@@ -579,6 +579,7 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     if (debug() >= 2) dump(graph, std::cout);
     // Build the local graph data structure.
     LocalGraph localGraph(func);
+    localGraph.computeInfluences();
     // If we only want single-use nodes, exclude all the others.
     std::unordered_set<DataFlow::Node*> excludeAsChildren;
     if (singleUseOnly) {
