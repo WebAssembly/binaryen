@@ -158,6 +158,9 @@ struct Trace {
   // We add path conditions after the "work". We collect them here
   // and then go through them at the proper time.
   std::vector<Node*> conditionsToAdd;
+  // Whether we are at the adding-conditions stage (i.e., post
+  // adding the "work").
+  bool addingConditions = false;
   // The local information graph. Used to check if a node has external uses.
   LocalGraph& localGraph;
 
@@ -196,6 +199,8 @@ struct Trace {
     // computation which is only descriptive and helps optimization of
     // the work.
     findExternalUses();
+    // We can now add conditions.
+    addingConditions = true;
     for (auto* condition : conditionsToAdd) {
       add(condition, 0);
     }
@@ -257,7 +262,12 @@ struct Trace {
           // we can proceed without the extra condition information
           auto* condition = block->getValue(i);
           if (!condition->isBad()) {
-            conditionsToAdd.push_back(condition);
+            if (!addingConditions) {
+              // Too early, queue it for later.
+              conditionsToAdd.push_back(condition);
+            } else {
+              add(condition, depth);
+            }
           }
         }
         // Then, add the phi values
