@@ -528,7 +528,11 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
           case GeUInt64: opposite = LtUInt64; break;
           default: WASM_UNREACHABLE();
         }
-        return visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
+        auto* ret = visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
+        // We just created a new binary node, but we need to set the origin properly
+        // to the original.
+        ret->origin = curr;
+        return ret;
       }
       default: {
         // Anything else is an unknown value.

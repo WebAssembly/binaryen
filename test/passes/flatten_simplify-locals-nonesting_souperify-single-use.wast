@@ -1129,5 +1129,29 @@
    (unreachable)
   )
  )
+ (func $flipped-needs-right-origin (param $var$0 i32) (result i32)
+  (local $var$1 i32)
+  (block $label$1
+   (br_if $label$1
+    (i32.load
+     (i32.const 1)
+    )
+   )
+   (set_local $var$1
+    (i32.const 2)
+   )
+  )
+  (if
+   (i32.gt_s
+    (i32.const 3)
+    (i32.add
+     (get_local $var$1)
+     (i32.const 4)
+    )
+   )
+   (unreachable)
+  )
+  (i32.const 5)
+ )
 )
 

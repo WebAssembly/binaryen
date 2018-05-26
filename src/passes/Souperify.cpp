@@ -80,8 +80,6 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
           std::cout << "add nullptr\n";
         }
       }
-//1. remove isArtificial
-//2. Do we need a set instead of a vector for the output? find a testcase which has dupes, investigate it. maybe add env var that de-dupes, check for diffs
     } else {
       // This get is the child of a set.
       auto* subSet = *sets.begin();
