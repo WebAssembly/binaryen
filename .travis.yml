@@ -34,15 +34,15 @@ jobs:
         - ./check.py --test-waterfall --only-prepare
       script:
         - flake8
-        - \[ -n "${BUILD_DIR}" \] && mkdir -p ${BUILD_DIR} && cd ${BUILD_DIR}
+        - \[ -n "${BUILD_SUBDIR}" \] && mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install
         - make -j2 install
         - cd -
-        - ./check.py --test-waterfall --binaryen-bin=${TRAVIS_BUILD_DIR}/install/bin
+        - ./check.py --test-waterfall --binaryen-bin=${TRAVIS_BUILD_DIR}/${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
       env: |
-        BUILD_DIR=out
+        BUILD_SUBDIR=out
 
     - <<: *test-ubuntu
       env: |
