@@ -62,8 +62,13 @@ namespace DataFlow {
 // 
 static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
   std::vector<SetLocal*> ret;
-  // Find the set we are assigned to.
-  auto* set = graph.expressionParentMap.at(origin)->dynCast<SetLocal>();
+  auto iter = graph.expressionParentMap.find(origin);
+  if (iter == graph.expressionParentMap.end()) {
+    // We don't care about things we don't track the uses or parent of,
+    // like constants and artificial nodes.
+    return ret;
+  }
+  auto* set = iter->second->cast<SetLocal>();
   // Find all the uses of that set.
   auto& gets = localGraph.setInfluences[set];
   for (auto* get : gets) {
