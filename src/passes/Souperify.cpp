@@ -55,7 +55,7 @@ static int debug() {
 namespace DataFlow {
 
 // Internal helper to generate all the uses of a set to an output vector. See getUses().
-static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<SetLocal*>& ret) {
+static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std::vector<Expression*>& ret) {
   // Find all the uses of that set.
   auto& gets = localGraph.setInfluences[set];
   for (auto* get : gets) {
@@ -86,7 +86,7 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
         // Not a copy.
         ret.push_back(subSet);
         if (debug() >= 2) {
-          std::cout << "add a set\n" << subSet << '\n';
+          std::cout << "add a value\n" << subSet->value << '\n';
         }
       }
     }
@@ -95,10 +95,10 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
 
 // Gets a list of all the uses of an expression. As we are in flat IR,
 // the expression must be the value of a set, and we seek the other sets
-// that contain a get that uses that value.
+// (or rather, their values) that contain a get that uses that value.
 // There may also be non-set uses of the value, for example in a drop
 // or a return. We represent those with a nullptr, meaning "other".
-static std::vector<SetLocal*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
+static std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalGraph& localGraph) {
   if (debug() >= 2) {
     std::cout << "getUses\n" << origin << '\n';
   }
