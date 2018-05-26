@@ -631,8 +631,13 @@ struct Souperify : public WalkerPass<PostWalker<Souperify>> {
     if (singleUseOnly) {
       for (auto& nodePtr : graph.nodes) {
         auto* node = nodePtr.get();
-        if (node->isExpr()) {
-          auto uses = getUses(node->expr, graph, localGraph);
+        if (node->origin) {
+          // TODO: work for identical origins could be saved
+          auto uses = getUses(node->origin, graph, localGraph);
+          if (debug() >= 2) {
+            std::cout << "following node has " << uses.size() << " uses\n";
+            dump(node, std::cout);
+          }
           if (uses.size() > 1) {
             excludeAsChildren.insert(node);
           }

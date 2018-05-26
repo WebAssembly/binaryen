@@ -1153,5 +1153,24 @@
   )
   (i32.const 5)
  )
+ (func $non-expr-nodes-may-have-multiple-uses-too-its-the-ORIGIN (param $var$0 i32) (param $var$1 i32) (param $var$2 i32) (result i32)
+  (i32.store
+   (tee_local $var$1
+    (i32.gt_u
+     (get_local $var$1)
+     (i32.const 1)
+    )
+   )
+   (i32.const 2)
+  )
+  (i32.store offset=8
+   (i32.const 3)
+   (i32.sub
+    (i32.const 4)
+    (get_local $var$1)
+   )
+  )
+  (unreachable)
+ )
 )
 
