@@ -233,6 +233,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitSelect(select);
     } else if (auto* unreachable = curr->dynCast<Unreachable>()) {
       return doVisitUnreachable(unreachable);
+    } else if (auto* drop = curr->dynCast<Drop>()) {
+      return doVisitDrop(drop);
     } else {
       return doVisitGeneric(curr);
     }
@@ -557,6 +559,13 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     setInUnreachable();
     return &bad;
   }
+  Node* doVisitDrop(Drop* curr) {
+    visit(curr->value);
+    // We need to know that the value's parent is a drop, indicating
+    // the value is not actually used here.
+    expressionParentMap[curr->value] = curr;
+    return &bad;
+  }
   Node* doVisitGeneric(Expression* curr) {
     // Just need to visit the nodes so we note all the gets
     for (auto* child : ChildIterator(curr)) {
@@ -700,6 +709,18 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     auto iter = nodeParentMap.find(node);
     if (iter == nodeParentMap.end()) return nullptr;
     return iter->second->dynCast<SetLocal>();
+  }
+
+  // Given an expression, return the parent if such exists.
+  Expression* getParent(Expression* curr) {
+    auto iter = expressionParentMap.find(curr);
+    if (iter == expressionParentMap.end()) return nullptr;
+    return iter->second;
+  }
+
+  // Given an expression, return the set for it if such exists.
+  SetLocal* getSet(Expression* curr) {
+    return getParent(curr)->dynCast<SetLocal>();
   }
 
   // Creates an expression that uses a node. Generally, a node represents

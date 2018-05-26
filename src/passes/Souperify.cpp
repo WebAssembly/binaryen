@@ -59,21 +59,26 @@ static void addSetUses(SetLocal* set, Graph& graph, LocalGraph& localGraph, std:
   // Find all the uses of that set.
   auto& gets = localGraph.setInfluences[set];
   if (debug() >= 2) {
-    std::cout << "addSetUses for " << set << ", " << gets.size() << "gets\n";
+    std::cout << "addSetUses for " << set << ", " << gets.size() << " gets\n";
   }
   for (auto* get : gets) {
     // Each of these relevant gets is either
     //  (1) a child of a set, which we can track, or
-    //  (2) not a child of a set, e.g., a drop or such
+    //  (2) not a child of a set, e.g., a call argument or such
     auto& sets = localGraph.getInfluences[get]; // TODO: iterator
     // In flat IR, each get can influence at most 1 set.
     assert(sets.size() <= 1);
     if (sets.size() == 0) {
-      // This get is not the child of a set, it is used in a drop or
-      // something else external.
-      ret.push_back(nullptr);
-      if (debug() >= 2) {
-        std::cout << "add nullptr\n";
+      // This get is not the child of a set. Check if it is a drop,
+      // otherwise it is an actual use, and so an external use.
+      auto* parent = graph.getParent(get);
+      if (parent && parent->is<Drop>()) {
+        // Just ignore it.
+      } else {
+        ret.push_back(nullptr);
+        if (debug() >= 2) {
+          std::cout << "add nullptr\n";
+        }
       }
     } else {
       // This get is the child of a set.
@@ -106,13 +111,12 @@ static std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalG
     std::cout << "getUses\n" << origin << '\n';
   }
   std::vector<Expression*> ret;
-  auto iter = graph.expressionParentMap.find(origin);
-  if (iter == graph.expressionParentMap.end()) {
-    // We don't care about things we don't track the uses or parent of,
-    // like constants and artificial nodes.
+  auto* set = graph.getSet(origin);
+  if (!set) {
+    // If the parent is not a set (a drop, call, return, etc.) then
+    // it is not something we need to track.
     return ret;
   }
-  auto* set = iter->second->cast<SetLocal>();
   addSetUses(set, graph, localGraph, ret);
   return ret;
 }
