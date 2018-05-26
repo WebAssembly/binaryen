@@ -102,7 +102,7 @@ static std::vector<Expression*> getUses(Expression* origin, Graph& graph, LocalG
   if (debug() >= 2) {
     std::cout << "getUses\n" << origin << '\n';
   }
-  std::vector<SetLocal*> ret;
+  std::vector<Expression*> ret;
   auto iter = graph.expressionParentMap.find(origin);
   if (iter == graph.expressionParentMap.end()) {
     // We don't care about things we don't track the uses or parent of,
