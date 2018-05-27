@@ -29,7 +29,7 @@ struct WasmPrinter {
 
   static std::ostream& printModule(Module* module);
 
-  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false, bool commented = false);
+  static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false);
 };
 
 }

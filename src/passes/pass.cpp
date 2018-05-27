@@ -144,12 +144,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("pick-load-signs");
   }
-  // if we are willing to work hard, also propagate. first, do it while the code is still fairly flat
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    add("precompute-propagate");
-  } else {
-    add("precompute");
-  }
+  add("precompute");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("code-pushing");
   }
@@ -158,7 +153,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("reorder-locals");
   add("remove-unused-brs"); // simplify-locals opens opportunities for optimizations
   // if we are willing to work hard, also optimize copies before coalescing
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("merge-locals"); // very slow on e.g. sqlite
   }
   add("coalesce-locals");
@@ -175,16 +170,16 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  // further propagation may be possible now
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+  // if we are willing to work hard, also propagate
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
-    // altering get_locals may open up simplification opportunities - sets may
-    // no longer be needed
-    add("simplify-locals-nonesting");
-    add("reorder-locals");
-    // TODO: in -O3, should we run all these passes until we converge to a fixed point?
+  } else {
+    add("precompute");
   }
-  add("precompute");
+  if (options.shrinkLevel >= 2) {
+    add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
+    add("coalesce-locals"); // just for localCSE
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }

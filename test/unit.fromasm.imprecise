@@ -708,6 +708,7 @@
   )
  )
  (func $loophi (; 40 ;) (param $0 i32) (param $1 i32)
+  (local $2 i32)
   (loop $while-in
    (block $while-out
     (call $loophi
@@ -715,9 +716,11 @@
      (i32.const 0)
     )
     (if
-     (get_local $0)
-     (br_if $while-out
+     (tee_local $2
       (get_local $0)
+     )
+     (br_if $while-out
+      (get_local $2)
      )
     )
     (br_if $while-in
@@ -737,16 +740,20 @@
  (func $loophi2 (; 41 ;) (result i32)
   (local $0 i32)
   (local $1 i32)
+  (local $2 i32)
   (loop $label$continue$L7
    (block $label$break$L7
     (set_local $0
      (i32.const 0)
     )
     (loop $while-in
+     (set_local $2
+      (get_local $0)
+     )
      (if
       (call $return_int)
       (br_if $label$break$L7
-       (get_local $0)
+       (get_local $2)
       )
      )
      (br_if $while-in
@@ -765,16 +772,20 @@
  )
  (func $loophi2b (; 42 ;) (result i32)
   (local $0 i32)
+  (local $1 i32)
   (loop $label$continue$L7
    (block $label$break$L7
     (set_local $0
      (i32.const 0)
     )
     (loop $while-in
+     (set_local $1
+      (get_local $0)
+     )
      (if
       (call $return_int)
       (br_if $label$break$L7
-       (get_local $0)
+       (get_local $1)
       )
      )
      (br_if $while-in

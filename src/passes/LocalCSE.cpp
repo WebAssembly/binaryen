@@ -17,8 +17,6 @@
 //
 // Local CSE
 //
-// This requires --flatten to be run before, and preserves flatness.
-//
 // In each linear area of execution,
 //  * track each relevant (big enough) expression
 //  * if already seen, write to a local if not already, and reuse
@@ -26,9 +24,6 @@
 //
 // TODO: global, inter-block gvn etc.
 //
-
-#include <algorithm>
-#include <memory>
 
 #include <wasm.h>
 #include <wasm-builder.h>
@@ -39,6 +34,8 @@
 
 namespace wasm {
 
+const Index UNUSED = -1;
+
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
 
@@ -46,11 +43,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   // information for an expression we can reuse
   struct UsableInfo {
-    Expression* value; // the value we can reuse
-    Index index; // the local we are assigned to, get_local that to reuse us
+    Expression** item;
+    Index index; // if not UNUSED, then the local we are assigned to, use that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression* value, Index index, PassOptions& passOptions) : value(value), index(index), effects(passOptions, value) {}
+    UsableInfo(Expression** item, PassOptions& passOptions) : item(item), index(UNUSED), effects(passOptions, *item) {}
   };
 
   // a list of usables in a linear execution trace
@@ -59,34 +56,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // locals in current linear execution trace, which we try to sink
   Usables usables;
 
-  // We track copied locals and canonicalize them, e.g.
-  //  y = x
-  //  z = y
-  //  f(z) => turns into f(x)
-  // This lets expression comparison work well without teaching it about
-  // which locals are equal.
-  // localEquivalences[an index] = the set of indexes the index is equal to
-  struct EquivalentSet {
-    std::unordered_set<Index> set; // the set of indexes that are equivalent
-    Index preferred; // the preferred one - copy all to this
-    EquivalentSet(Index preferred) : preferred(preferred) {}
-  };
-  std::unordered_map<Index, std::shared_ptr<EquivalentSet>> localEquivalences;
-
-  bool anotherPass;
-
-  void doWalkFunction(Function* func) {
-    anotherPass = true;
-    // we may need multiple rounds
-    while (anotherPass) {
-      anotherPass = false;
-      super::doWalkFunction(func);
-    }
-  }
-
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
     self->usables.clear();
-    self->localEquivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
@@ -120,7 +91,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     auto* curr = *currp;
 
     // main operations
-    self->handle(curr);
+    if (self->isRelevant(curr)) {
+      self->handle(currp, curr);
+    }
 
     // post operations
 
@@ -141,100 +114,38 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     self->pushTask(visitPre, currp);
   }
 
-  void handle(Expression* curr) {
-    if (auto* set = curr->dynCast<SetLocal>()) {
-      // we are assigning to a local, so existing equivalences are moot
-      resetLocal(set->index);
-      // consider the value
-      auto* value = set->value;
-      if (isRelevant(value)) {
-        HashedExpression hashed(value);
-        auto iter = usables.find(hashed);
-        if (iter != usables.end()) {
-          // already exists in the table, this is good to reuse
-          auto& info = iter->second;
-          set->value = Builder(*getModule()).makeGetLocal(info.index, value->type);
-          anotherPass = true;
-        } else {
-          // not in table, add this, maybe we can help others later
-          usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
-        }
-      } else if (auto* get = value->dynCast<GetLocal>()) {
-        // this is a copy of one local to another
-        addEquivalence(set->index, get->index);
-      }
-    } else if (auto* get = curr->dynCast<GetLocal>()) {
-      // Perhaps we can canonicalize this get, if it is a copy of another.
-      get->index = getCanonical(get->index);
-    }
-  }
-
-  void resetLocal(Index index) {
-    auto iter = localEquivalences.find(index);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
-      if (eqSet->set.size() > 1) {
-        // We are not the last item, fix things up
-        eqSet->set.erase(index);
-        if (!eqSet->set.empty()) {
-          if (eqSet->preferred == index) {
-            // We need to pick a new preferred index. Pick the lowest.
-            eqSet->preferred = *std::min_element(eqSet->set.begin(), eqSet->set.end());
-          }
-        }
-      } else {
-        // We are the last item, just let it all go away.
-        assert(*(eqSet->set.begin()) == eqSet->preferred); // if one item, it is us
-      }
-      localEquivalences.erase(iter);
-    }
-  }
-
-  void addEquivalence(Index justReset, Index copied) {
-    auto iter = localEquivalences.find(copied);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      if (eqSet->set.empty()) {
-        eqSet->preferred = justReset;
-      }
-      eqSet->set.insert(justReset);
-      localEquivalences[justReset] = eqSet;
-    } else {
-      // Note how we set the preferred index to the copied one.
-      auto eqSet = std::make_shared<EquivalentSet>(copied);
-      eqSet->set.insert(justReset);
-      eqSet->set.insert(copied);
-      localEquivalences[justReset] = eqSet;
-      localEquivalences[copied] = eqSet;
-    }
-  }
-
-  Index getCanonical(Index index) {
-    auto iter = localEquivalences.find(index);
-    if (iter != localEquivalences.end()) {
-      auto& eqSet = iter->second;
-      assert(!eqSet->set.empty()); // can't be empty - we are equal to ourselves!
-      assert(eqSet->set.size() == 1 ? *(eqSet->set.begin()) == eqSet->preferred : true); // if one item, it is us
-      return eqSet->preferred;
-    }
-    return index;
-  }
-
-  // A relevant value is a non-trivial one, something we may want to reuse
-  // and are able to.
-  bool isRelevant(Expression* value) {
-    if (value->is<GetLocal>()) {
+  bool isRelevant(Expression* curr) {
+    if (curr->is<GetLocal>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteType(value->type)) {
+    if (!isConcreteType(curr->type)) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     // check what we care about TODO: use optimize/shrink levels?
-    return Measurer::measure(value) > 1;
+    return Measurer::measure(curr) > 1;
+  }
+
+  void handle(Expression** currp, Expression* curr) {
+    HashedExpression hashed(curr);
+    auto iter = usables.find(hashed);
+    if (iter != usables.end()) {
+      // already exists in the table, this is good to reuse
+      auto& info = iter->second;
+      if (info.index == UNUSED) {
+        // we need to assign to a local. create a new one
+        auto index = info.index = Builder::addVar(getFunction(), curr->type);
+        (*info.item) = Builder(*getModule()).makeTeeLocal(index, *info.item);
+      }
+      replaceCurrent(
+        Builder(*getModule()).makeGetLocal(info.index, curr->type)
+      );
+    } else {
+      // not in table, add this, maybe we can help others later
+      usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions())));
+    }
   }
 };
 

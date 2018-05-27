@@ -19,6 +19,7 @@
   (unreachable)
  )
  (func $3 (; 3 ;) (type $3) (param $0 i64)
+  (local $1 i32)
   (unreachable)
  )
  (func $4 (; 4 ;) (type $4) (param $0 f64) (result i32)

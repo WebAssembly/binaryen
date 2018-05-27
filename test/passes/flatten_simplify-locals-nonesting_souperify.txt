@@ -3805,7 +3805,7 @@ infer %4
      (nop)
      (nop)
      (br_if $loopy
-      (get_local $t)
+      (get_local $y)
      )
      (nop)
     )
@@ -3869,7 +3869,7 @@ infer %4
      (nop)
      (nop)
      (br_if $loopy
-      (get_local $t)
+      (get_local $y)
      )
      (nop)
     )
@@ -4456,13 +4456,13 @@ infer %4
           )
          )
          (nop)
-         (set_local $10
+         (drop
           (get_local $6)
          )
         )
         (nop)
         (if
-         (get_local $10)
+         (get_local $6)
          (nop)
         )
        )
