@@ -14,6 +14,9 @@ function asmFunc(global, env, buffer) {
  var Math_clz32 = global.Math.clz32;
  var Math_min = global.Math.min;
  var Math_max = global.Math.max;
+ var Math_floor = global.Math.floor;
+ var Math_ceil = global.Math.ceil;
+ var Math_sqrt = global.Math.sqrt;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
   
@@ -31,49 +34,22 @@ function asmFunc(global, env, buffer) {
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
- function __wasm_ctz_i32(x) {
-  x = x | 0;
-  var $1 = 0;
-  if ((x | 0) == (0 | 0)) $1 = 32; else $1 = 31 - Math_clz32(x ^ (x - 1 | 0) | 0) | 0;
-  return $1 | 0;
- }
- 
- function __wasm_popcnt_i32(x) {
-  x = x | 0;
-  var count = 0, $2 = 0;
-  count = 0;
-  b : {
-   l : do {
-    $2 = count;
-    if ((x | 0) == (0 | 0)) break b;
-    x = x & (x - 1 | 0) | 0;
-    count = count + 1 | 0;
-    continue l;
-    break l;
-   } while (1);
-  };
-  return $2 | 0;
- }
- 
- function __wasm_rotl_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 >>> (k & 31 | 0) | 0) & x | 0) << (k & 31 | 0) | 0 | (((4294967295 << (32 - (k & 31 | 0) | 0) | 0) & x | 0) >>> (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
- }
- 
- function __wasm_rotr_i32(x, k) {
-  x = x | 0;
-  k = k | 0;
-  return ((4294967295 << (k & 31 | 0) | 0) & x | 0) >>> (k & 31 | 0) | 0 | (((4294967295 >>> (32 - (k & 31 | 0) | 0) | 0) & x | 0) << (32 - (k & 31 | 0) | 0) | 0) | 0 | 0;
+ function __wasm_fetch_high_bits() {
+  return i64toi32_i32$HIGH_BITS | 0;
  }
  
  return {
   empty: $0, 
   add: $1, 
-  div_s: $2
+  div_s: $2, 
+  __wasm_fetch_high_bits: __wasm_fetch_high_bits
  };
 }
 
+var __array_buffer = new ArrayBuffer(65536);
+var HEAP32 = new Int32Array(__array_buffer);
+var HEAPF32 = new Float32Array(__array_buffer);
+var HEAPF64 = new Float64Array(__array_buffer);
 var asmModule = asmFunc({
  Math: Math, 
  Int8Array: Int8Array, 
@@ -86,7 +62,39 @@ var asmModule = asmFunc({
  Float64Array: Float64Array
 }, {
  
-}, new ArrayBuffer(65536));
+}, __array_buffer);
+
+    function f32Equal(a, b) {
+       var i = new Int32Array(1);
+       var f = new Float32Array(i.buffer);
+       f[0] = a;
+       var ai = f[0];
+       f[0] = b;
+       var bi = f[0];
+
+       return (isNaN(a) && isNaN(b)) || a == b;
+    }
+  ;
+
+    function f64Equal(a, b) {
+       var i = new Int32Array(2);
+       var f = new Float64Array(i.buffer);
+       f[0] = a;
+       var ai1 = i[0];
+       var ai2 = i[1];
+       f[0] = b;
+       var bi1 = i[0];
+       var bi2 = i[1];
+
+       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
+    }
+  ;
+
+    function i64Equal(actual_lo, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) &&
+          asmModule.__wasm_fetch_high_bits() == (expected_hi | 0);
+    }
+  ;
 function check1() {
  var wasm2asm_i32$0 = 0;
  asmModule.empty();
@@ -102,7 +110,7 @@ function check2() {
 if (!check2()) fail2();
 function check3() {
  function f() {
-  div_s(0 | 0, 0 | 0);
+  asmModule.div_s(0 | 0, 0 | 0);
  }
  
  try {
@@ -116,7 +124,7 @@ function check3() {
 if (!check3()) fail3();
 function check4() {
  function f() {
-  div_s(2147483648 | 0, 4294967295 | 0);
+  asmModule.div_s(2147483648 | 0, 4294967295 | 0);
  }
  
  try {

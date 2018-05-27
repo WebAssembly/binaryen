@@ -1,3 +1,17 @@
+# Copyright 2015 WebAssembly Community Group participants
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
 import difflib
 import glob
@@ -8,76 +22,77 @@ import sys
 import urllib2
 
 
-usage_str = ("usage: 'python check.py [options]'\n\n"
-             "Runs the Binaryen test suite.")
-parser = argparse.ArgumentParser(description=usage_str)
-parser.add_argument(
-    '--torture', dest='torture', action='store_true', default=True,
-    help='Chooses whether to run the torture testcases. Default: true.')
-parser.add_argument(
-    '--no-torture', dest='torture', action='store_false',
-    help='Disables running the torture testcases.')
-parser.add_argument(
-    '--only-prepare', dest='only_prepare', action='store_true', default=False,
-    help='If enabled, only fetches the waterfall build. Default: false.')
-parser.add_argument(
-    # Backwards compatibility
-    '--only_prepare', dest='only_prepare', action='store_true', default=False,
-    help='If enabled, only fetches the waterfall build. Default: false.')
-parser.add_argument(
-    '--test-waterfall', dest='test_waterfall', action='store_true',
-    default=False,
-    help=('If enabled, fetches and tests the LLVM waterfall builds.'
-          ' Default: false.'))
-parser.add_argument(
-    '--no-test-waterfall', dest='test_waterfall', action='store_false',
-    help='Disables downloading and testing of the LLVM waterfall builds.')
-parser.add_argument(
-    '--abort-on-first-failure', dest='abort_on_first_failure',
-    action='store_true', default=True,
-    help=('Specifies whether to halt test suite execution on first test error.'
-          ' Default: true.'))
-parser.add_argument(
-    '--no-abort-on-first-failure', dest='abort_on_first_failure',
-    action='store_false',
-    help=('If set, the whole test suite will run to completion independent of'
-          ' earlier errors.'))
-parser.add_argument(
-    '--run-gcc-tests', dest='run_gcc_tests', action='store_true', default=True,
-    help=('Chooses whether to run the tests that require building with native'
-          ' GCC. Default: true.'))
-parser.add_argument(
-    '--no-run-gcc-tests', dest='run_gcc_tests', action='store_false',
-    help='If set, disables the native GCC tests.')
+def parse_args(args):
+  usage_str = ("usage: 'python check.py [options]'\n\n"
+               "Runs the Binaryen test suite.")
+  parser = argparse.ArgumentParser(description=usage_str)
+  parser.add_argument(
+      '--torture', dest='torture', action='store_true', default=True,
+      help='Chooses whether to run the torture testcases. Default: true.')
+  parser.add_argument(
+      '--no-torture', dest='torture', action='store_false',
+      help='Disables running the torture testcases.')
+  parser.add_argument(
+      '--only-prepare', dest='only_prepare', action='store_true', default=False,
+      help='If enabled, only fetches the waterfall build. Default: false.')
+  parser.add_argument(
+      '--test-waterfall', dest='test_waterfall', action='store_true',
+      default=False,
+      help=('If enabled, fetches and tests the LLVM waterfall builds.'
+            ' Default: false.'))
+  parser.add_argument(
+      '--no-test-waterfall', dest='test_waterfall', action='store_false',
+      help='Disables downloading and testing of the LLVM waterfall builds.')
+  parser.add_argument(
+      '--abort-on-first-failure', dest='abort_on_first_failure',
+      action='store_true', default=True,
+      help=('Specifies whether to halt test suite execution on first test error.'
+            ' Default: true.'))
+  parser.add_argument(
+      '--no-abort-on-first-failure', dest='abort_on_first_failure',
+      action='store_false',
+      help=('If set, the whole test suite will run to completion independent of'
+            ' earlier errors.'))
+  parser.add_argument(
+      '--run-gcc-tests', dest='run_gcc_tests', action='store_true', default=True,
+      help=('Chooses whether to run the tests that require building with native'
+            ' GCC. Default: true.'))
+  parser.add_argument(
+      '--no-run-gcc-tests', dest='run_gcc_tests', action='store_false',
+      help='If set, disables the native GCC tests.')
 
-parser.add_argument(
-    '--interpreter', dest='interpreter', default='',
-    help='Specifies the wasm interpreter executable to run tests on.')
-parser.add_argument(
-    '--binaryen-bin', dest='binaryen_bin', default='',
-    help=('Specifies a path to where the built Binaryen executables reside at.'
-          ' Default: bin/ of current directory (i.e. assume an in-tree build).'
-          ' If not specified, the environment variable BINARYEN_ROOT= can also'
-          ' be used to adjust this.'))
-parser.add_argument(
-    '--binaryen-root', dest='binaryen_root', default='',
-    help=('Specifies a path to the root of the Binaryen repository tree.'
-          ' Default: the directory where this file check.py resides.'))
-parser.add_argument(
-    '--valgrind', dest='valgrind', default='',
-    help=('Specifies a path to Valgrind tool, which will be used to validate'
-          ' execution if specified. (Pass --valgrind=valgrind to search in'
-          ' PATH)'))
-parser.add_argument(
-    '--valgrind-full-leak-check', dest='valgrind_full_leak_check',
-    action='store_true', default=False,
-    help=('If specified, all unfreed (but still referenced) pointers at the'
-          ' end of execution are considered memory leaks. Default: disabled.'))
+  parser.add_argument(
+      '--interpreter', dest='interpreter', default='',
+      help='Specifies the wasm interpreter executable to run tests on.')
+  parser.add_argument(
+      '--binaryen-bin', dest='binaryen_bin', default='',
+      help=('Specifies a path to where the built Binaryen executables reside at.'
+            ' Default: bin/ of current directory (i.e. assume an in-tree build).'
+            ' If not specified, the environment variable BINARYEN_ROOT= can also'
+            ' be used to adjust this.'))
+  parser.add_argument(
+      '--binaryen-root', dest='binaryen_root', default='',
+      help=('Specifies a path to the root of the Binaryen repository tree.'
+            ' Default: the directory where this file check.py resides.'))
+  parser.add_argument(
+      '--valgrind', dest='valgrind', default='',
+      help=('Specifies a path to Valgrind tool, which will be used to validate'
+            ' execution if specified. (Pass --valgrind=valgrind to search in'
+            ' PATH)'))
+  parser.add_argument(
+      '--valgrind-full-leak-check', dest='valgrind_full_leak_check',
+      action='store_true', default=False,
+      help=('If specified, all unfreed (but still referenced) pointers at the'
+            ' end of execution are considered memory leaks. Default: disabled.'))
 
-parser.add_argument(
-    'positional_args', metavar='tests', nargs=argparse.REMAINDER,
-    help='Names specific tests to run.')
-options = parser.parse_args()
+  parser.add_argument(
+      'positional_args', metavar='tests', nargs=argparse.REMAINDER,
+      help='Names specific tests to run.')
+
+  return parser.parse_args(args)
+
+
+options = parse_args(sys.argv[1:])
 requested = options.positional_args
 
 num_failures = 0

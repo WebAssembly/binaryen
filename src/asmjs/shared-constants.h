@@ -77,7 +77,6 @@ extern cashew::IString GLOBAL,
                 MATH_CLZ32,
                 MATH_FLOOR,
                 MATH_TRUNC,
-                MATH_NEAREST,
                 MATH_SQRT,
                 MATH_MIN,
                 MATH_MAX,
@@ -92,7 +91,18 @@ extern cashew::IString GLOBAL,
                 WASM_ROTR32,
                 WASM_ROTR64,
                 WASM_GROW_MEMORY,
-                WASM_CURRENT_MEMORY;
+                WASM_CURRENT_MEMORY,
+                WASM_FETCH_HIGH_BITS,
+                INT64_TO_32_HIGH_BITS,
+                WASM_NEAREST_F32,
+                WASM_NEAREST_F64,
+                WASM_TRUNC_F32,
+                WASM_TRUNC_F64,
+                WASM_I64_MUL,
+                WASM_I64_SDIV,
+                WASM_I64_UDIV,
+                WASM_I64_SREM,
+                WASM_I64_UREM;
 }
 
 #endif // wasm_asmjs_shared_constants_h

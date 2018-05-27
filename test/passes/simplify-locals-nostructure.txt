@@ -1,5 +1,7 @@
 (module
  (type $0 (func))
+ (type $1 (func (param i32 i32) (result f64)))
+ (type $2 (func (param i32) (result i32)))
  (func $contrast (; 0 ;) (type $0)
   (local $x i32)
   (local $y i32)
@@ -98,5 +100,34 @@
     (get_local $other)
    )
   )
+ )
+ (func $multi-pass-get-equivs-right (; 4 ;) (type $1) (param $var$0 i32) (param $var$1 i32) (result f64)
+  (local $var$2 i32)
+  (nop)
+  (i32.store
+   (get_local $var$0)
+   (i32.const 1)
+  )
+  (f64.promote/f32
+   (f32.load
+    (get_local $var$0)
+   )
+  )
+ )
+ (func $if-value-structure-equivalent (; 5 ;) (type $2) (param $x i32) (result i32)
+  (local $y i32)
+  (if
+   (i32.const 1)
+   (set_local $x
+    (i32.const 2)
+   )
+   (block $block
+    (nop)
+    (set_local $x
+     (get_local $x)
+    )
+   )
+  )
+  (get_local $x)
  )
 )

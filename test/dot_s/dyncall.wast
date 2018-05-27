@@ -100,4 +100,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_i","_i_f","_vd","_ffjjdi","_vd2","_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_i","_dynCall_if","_dynCall_vd"], "exports": ["i","i_f","vd","ffjjdi","vd2","main","stackSave","stackAlloc","stackRestore","dynCall_i","dynCall_if","dynCall_vd"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 12, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_i","_i_f","_vd","_ffjjdi","_vd2","_main","_stackSave","_stackAlloc","_stackRestore","_dynCall_i","_dynCall_if","_dynCall_vd"], "exports": ["i","i_f","vd","ffjjdi","vd2","main","stackSave","stackAlloc","stackRestore","dynCall_i","dynCall_if","dynCall_vd"], "invokeFuncs": [] }

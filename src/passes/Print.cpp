@@ -26,11 +26,11 @@
 
 namespace wasm {
 
-static int isFullForced() {
+static bool isFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
-    return std::stoi(getenv("BINARYEN_PRINT_FULL"));
+    return std::stoi(getenv("BINARYEN_PRINT_FULL")) != 0;
   }
-  return 0;
+  return false;
 }
 
 struct PrintSExpression : public Visitor<PrintSExpression> {
@@ -78,15 +78,11 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     maybeNewLine = minify ? "" : "\n";
   }
 
-  void setCommented() {
-    maybeNewLine = "\n;";
-  }
-
   void setFull(bool full_) { full = full_; }
 
   void incIndent() {
     if (minify) return;
-    o << maybeNewLine;
+    o << '\n';
     indent++;
   }
   void decIndent() {
@@ -161,6 +157,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         if (curr != top && i == 0) {
           // one of the block recursions we already handled
           decIndent();
+          if (full) {
+            o << " ;; end block";
+            auto* child = list[0]->cast<Block>();
+            if (child->name.is()) {
+              o << ' ' << child->name;
+            }
+          }
           o << '\n';
           continue;
         }
@@ -168,6 +171,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
     }
     decIndent();
+    if (full) {
+      o << " ;; end block";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
   }
   void visitIf(If *curr) {
     printOpening(o, "if");
@@ -190,6 +199,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
     }
     decIndent();
+    if (full) {
+      o << " ;; end if";
+    }
   }
   void visitLoop(Loop *curr) {
     printOpening(o, "loop");
@@ -211,6 +223,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printFullLine(curr->body);
     }
     decIndent();
+    if (full) {
+      o << " ;; end loop";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
   }
   void visitBreak(Break *curr) {
     if (curr->condition) {
@@ -595,7 +613,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitSelect(Select *curr) {
     o << '(';
     prepareColor(o) << "select";
-    restoreNormalColor(o);
     incIndent();
     printFullLine(curr->ifTrue);
     printFullLine(curr->ifFalse);
@@ -862,10 +879,20 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 };
 
-void Printer::run(PassRunner* runner, Module* module) {
-  PrintSExpression print(o);
-  print.visitModule(module);
-}
+// Prints out a module
+class Printer : public Pass {
+protected:
+  std::ostream& o;
+
+public:
+  Printer() : o(std::cout) {}
+  Printer(std::ostream* o) : o(*o) {}
+
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.visitModule(module);
+  }
+};
 
 Pass *createPrinterPass() {
   return new Printer();
@@ -909,17 +936,26 @@ Pass *createFullPrinterPass() {
 
 // Print individual expressions
 
-std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full, bool commented) {
+std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
+  PassRunner passRunner(module);
+  passRunner.setFeatures(Feature::All);
+  passRunner.setIsNested(true);
+  passRunner.add<Printer>(&o);
+  passRunner.run();
+  return o;
+}
+
+std::ostream& WasmPrinter::printModule(Module* module) {
+  return printModule(module, std::cout);
+}
+
+std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream& o, bool minify, bool full) {
   if (!expression) {
     o << "(null expression)";
     return o;
   }
   PrintSExpression print(o);
   print.setMinify(minify);
-  if (commented) {
-    o << ';';
-    print.setCommented();
-  }
   if (full || isFullForced()) {
     print.setFull(true);
     o << "[" << printType(expression->type) << "] ";

@@ -239,8 +239,11 @@
   (f64.const -0)
  )
  (func $neg (; 17 ;)
+  (local $0 f32)
   (call_indirect (type $FUNCSIG$vf)
-   (f32.const -0)
+   (f32.neg
+    (get_local $0)
+   )
    (i32.const 9)
   )
  )
@@ -734,6 +737,7 @@
  )
  (func $loophi2 (; 42 ;) (result i32)
   (local $0 i32)
+  (local $1 i32)
   (loop $label$continue$L7
    (block $label$break$L7
     (set_local $0
@@ -758,7 +762,7 @@
     (br $label$continue$L7)
    )
   )
-  (i32.const 0)
+  (get_local $1)
  )
  (func $loophi2b (; 43 ;) (result i32)
   (local $0 i32)
@@ -820,9 +824,9 @@
      )
     )
    )
-   (call $h
-    (i32.const 2)
-   )
+  )
+  (call $h
+   (i32.const 2)
   )
   (call $h
    (i32.const 3)

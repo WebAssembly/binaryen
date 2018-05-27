@@ -826,7 +826,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         } else if (auto* ext = Properties::getSignExtValue(binary)) {
           // if sign extending the exact bit size we store, we can skip the extension
           // if extending something bigger, then we just alter bits we don't save anyhow
-          if (Properties::getSignExtBits(binary) >= store->bytes * 8) {
+          if (Properties::getSignExtBits(binary) >= Index(store->bytes) * 8) {
             store->value = ext;
           }
         }

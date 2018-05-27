@@ -226,6 +226,23 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
 
   return ret;
 }
+void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveFunctionType(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(name != NULL);
+
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  {
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
+    wasm->removeFunctionType(name);
+  }
+}
 
 BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralInt64(int64_t x) { return toBinaryenLiteral(Literal(x)); }
@@ -271,6 +288,11 @@ BinaryenOp BinaryenTruncUFloat64ToInt32(void) { return TruncUFloat64ToInt32; }
 BinaryenOp BinaryenTruncUFloat64ToInt64(void) { return TruncUFloat64ToInt64; }
 BinaryenOp BinaryenReinterpretFloat32(void) { return ReinterpretFloat32; }
 BinaryenOp BinaryenReinterpretFloat64(void) { return ReinterpretFloat64; }
+BinaryenOp BinaryenExtendS8Int32(void) { return ExtendS8Int32; }
+BinaryenOp BinaryenExtendS16Int32(void) { return ExtendS16Int32; }
+BinaryenOp BinaryenExtendS8Int64(void) { return ExtendS8Int64; }
+BinaryenOp BinaryenExtendS16Int64(void) { return ExtendS16Int64; }
+BinaryenOp BinaryenExtendS32Int64(void) { return ExtendS32Int64; }
 BinaryenOp BinaryenConvertSInt32ToFloat32(void) { return ConvertSInt32ToFloat32; }
 BinaryenOp BinaryenConvertSInt32ToFloat64(void) { return ConvertSInt32ToFloat64; }
 BinaryenOp BinaryenConvertUInt32ToFloat32(void) { return ConvertUInt32ToFloat32; }
@@ -835,7 +857,7 @@ BinaryenExpressionId BinaryenExpressionGetId(BinaryenExpressionRef expr) {
   if (tracing) {
     std::cout << "  BinaryenExpressionGetId(expressions[" << expressions[expr] << "]);\n";
   }
-  
+
   return ((Expression*)expr)->_id;
 }
 BinaryenType BinaryenExpressionGetType(BinaryenExpressionRef expr) {

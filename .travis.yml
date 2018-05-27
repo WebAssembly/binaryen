@@ -16,7 +16,6 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
-      node_js: 9
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -24,19 +23,27 @@ jobs:
       before_install:
         - export ASAN_OPTIONS="symbolize=1"
       install:
+        - nvm install 10
+        - nvm use 10
         - pip install --user flake8==3.4.1
         # get jsvu in order to get more js engines
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
         - jsvu --os=linux64 --engines=spidermonkey
       before_script:
-        # Check the style of a subset of Python code until the other code is updated.
-        - flake8 ./scripts/
         - ./check.py --test-waterfall --only-prepare
       script:
-        - cmake . -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
-        - make -j2
-        - ./check.py --test-waterfall
+        - flake8
+        - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
+        - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
+        - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install
+        - make -j2 install
+        - cd ${TRAVIS_BUILD_DIR}
+        - ./check.py --test-waterfall --binaryen-bin=${BUILD_SUBDIR}/install/bin
+
+    - <<: *test-ubuntu
+      env: |
+        BUILD_SUBDIR=out
 
     - <<: *test-ubuntu
       env: |
@@ -63,19 +70,16 @@ jobs:
       stage: test
       compiler: clang
       python: 2.7
-      node_js: 7
       language: node_js
-      node_js:
-      - node
       sudo: required
       services:
-      - docker
+        - docker
       before_install:
-      - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+        - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
       script:
-      # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
-      # version is good too
-      - docker exec -it emscripten bash ./travis-emcc-tests.sh
+        # run binaryen.js and wasm.js tests before and after building, so we see if the bundled
+        # version is good too
+        - docker exec -it emscripten bash ./travis-emcc-tests.sh
 
     # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
     # Note: Alpine uses musl libc.
@@ -86,18 +90,17 @@ jobs:
       compiler: gcc
       env: ARCH=x86_64
       before_install:
-        - "wget 'https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.7.0/alpine-chroot-install' \
-              && echo '090d323d887ef3a2fd4e752428553f22a52b87bb  alpine-chroot-install' | sha1sum -c || travis_terminate 1"
-        - alpine() { /alpine/enter-chroot -u "$USER" "$@"; }
+        - docker run -w /src -dit --name alpine -v $(pwd):/src node:10-alpine
+        - alpine() { docker exec -it alpine "$@"; }
       install:
-        - sudo sh alpine-chroot-install -a "$ARCH" -p 'build-base cmake git nodejs python2'
+        - alpine apk update
+        - alpine apk add build-base cmake git python2
       before_script:
         - alpine ./check.py --test-waterfall --only-prepare
       script:
         - alpine cmake .
         - alpine make -j2
         - alpine ./check.py --test-waterfall
-
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball

@@ -263,22 +263,6 @@ public:
   }
 };
 
-// Standard passes. All passes in /passes/ are runnable from the shell,
-// but registering them here in addition allows them to communicate
-// e.g. through PassRunner::getLast
-
-// Prints out a module
-class Printer : public Pass {
-protected:
-  std::ostream& o;
-
-public:
-  Printer() : o(std::cout) {}
-  Printer(std::ostream* o) : o(*o) {}
-
-  void run(PassRunner* runner, Module* module) override;
-};
-
 } // namespace wasm
 
 #endif // wasm_pass_h

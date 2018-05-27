@@ -474,6 +474,7 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 void FunctionValidator::visitGetLocal(GetLocal* curr) {
   shouldBeTrue(curr->index < getFunction()->getNumLocals(), curr, "get_local index must be small enough");
   shouldBeTrue(isConcreteType(curr->type), curr, "get_local must have a valid type - check what you provided when you constructed the node");
+  shouldBeTrue(curr->type == getFunction()->getLocalType(curr->index), curr, "get_local must have proper type");
 }
 
 void FunctionValidator::visitSetLocal(SetLocal* curr) {
@@ -494,7 +495,7 @@ void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
+  if (shouldBeTrue(global != NULL, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
     shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
     shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
   }
@@ -1031,10 +1032,10 @@ static void validateModule(Module& module, ValidationInfo& info) {
 // perhaps by moving some of the pass infrastructure into libsupport.
 bool WasmValidator::validate(Module& module, FeatureSet features, Flags flags) {
   ValidationInfo info;
-  info.validateWeb = flags & Web;
-  info.validateGlobally = flags & Globally;
+  info.validateWeb = (flags & Web) != 0;
+  info.validateGlobally = (flags & Globally) != 0;
   info.features = features;
-  info.quiet = flags & Quiet;
+  info.quiet = (flags & Quiet) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
   runner.add<FunctionValidator>(&info);

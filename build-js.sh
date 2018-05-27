@@ -41,6 +41,7 @@ EMCC_ARGS="-std=c++11 --memory-init-file 0"
 EMCC_ARGS="$EMCC_ARGS -s ALLOW_MEMORY_GROWTH=1"
 EMCC_ARGS="$EMCC_ARGS -s DEMANGLE_SUPPORT=1"
 EMCC_ARGS="$EMCC_ARGS -s NO_FILESYSTEM=1"
+EMCC_ARGS="$EMCC_ARGS -s WASM=0"
 # TODO: enable this (need nearbyint in emscripten tag) EMCC_ARGS="$EMCC_ARGS -s ERROR_ON_UNDEFINED_SYMBOLS=1"
 EMCC_ARGS="$EMCC_ARGS -s DISABLE_EXCEPTION_CATCHING=0" # Exceptions are thrown and caught when optimizing endless loops
 OUT_FILE_SUFFIX=
@@ -109,6 +110,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/PrintCallGraph.cpp \
   $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
   $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
+  $BINARYEN_SRC/passes/RemoveNonJSOps.cpp \
   $BINARYEN_SRC/passes/RemoveImports.cpp \
   $BINARYEN_SRC/passes/RemoveMemory.cpp \
   $BINARYEN_SRC/passes/RemoveUnusedBrs.cpp \
@@ -258,6 +260,11 @@ export_function "_BinaryenPromoteFloat32"
 export_function "_BinaryenDemoteFloat64"
 export_function "_BinaryenReinterpretInt32"
 export_function "_BinaryenReinterpretInt64"
+export_function "_BinaryenExtendS8Int32"
+export_function "_BinaryenExtendS16Int32"
+export_function "_BinaryenExtendS8Int64"
+export_function "_BinaryenExtendS16Int64"
+export_function "_BinaryenExtendS32Int64"
 export_function "_BinaryenAddInt32"
 export_function "_BinaryenSubInt32"
 export_function "_BinaryenMulInt32"
@@ -515,6 +522,7 @@ export_function "_BinaryenAtomicWakeGetWakeCount"
 export_function "_BinaryenModuleCreate"
 export_function "_BinaryenModuleDispose"
 export_function "_BinaryenAddFunctionType"
+export_function "_BinaryenRemoveFunctionType"
 export_function "_BinaryenGetFunctionTypeBySignature"
 export_function "_BinaryenAddFunction"
 export_function "_BinaryenGetFunction"

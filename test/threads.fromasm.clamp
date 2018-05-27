@@ -4,6 +4,7 @@
  (data (get_global $memoryBase) "threads.asm.js")
  (export "test" (func $test))
  (func $test (; 0 ;)
+  (local $0 i32)
   (drop
    (i32.atomic.load
     (i32.const 4916)
@@ -24,7 +25,7 @@
            (i32.const 0)
           )
           (i32.atomic.rmw.xchg
-           (i32.const 0)
+           (get_local $0)
            (i32.const 1)
           )
          )

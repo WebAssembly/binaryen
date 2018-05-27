@@ -154,6 +154,8 @@ typedef void* BinaryenFunctionTypeRef;
 // Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
+// Removes a function type.
+void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name);
 
 // Literals. These are passed by value.
 
@@ -233,6 +235,11 @@ BinaryenOp BinaryenPromoteFloat32(void);
 BinaryenOp BinaryenDemoteFloat64(void);
 BinaryenOp BinaryenReinterpretInt32(void);
 BinaryenOp BinaryenReinterpretInt64(void);
+BinaryenOp BinaryenExtendS8Int32(void);
+BinaryenOp BinaryenExtendS16Int32(void);
+BinaryenOp BinaryenExtendS8Int64(void);
+BinaryenOp BinaryenExtendS16Int64(void);
+BinaryenOp BinaryenExtendS32Int64(void);
 BinaryenOp BinaryenAddInt32(void);
 BinaryenOp BinaryenSubInt32(void);
 BinaryenOp BinaryenMulInt32(void);

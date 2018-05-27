@@ -17,6 +17,17 @@
 //
 // Merges blocks to their parents.
 //
+// We merge both entire blocks when possible, as well as loop tails, like
+//  (block
+//   (loop $child
+//    (br_if $child (..)
+//    (call $foo)
+//   )
+//  )
+// Here we can move the call into the outer block. Doing so may let
+// the inner block become a single expression, and usually outer
+// blocks are larger anyhow. (This also helps readability.)
+//
 // We also restructure blocks in order to enable such merging. For
 // example,
 //
@@ -64,8 +75,9 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/utils.h>
+#include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -167,62 +179,114 @@ static bool hasUnreachableChild(Block* block) {
 static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   bool more = true;
   bool changed = false;
+  auto& list = curr->list;
   while (more) {
     more = false;
-    for (size_t i = 0; i < curr->list.size(); i++) {
-      Block* child = curr->list[i]->dynCast<Block>();
-      if (!child) {
+    for (size_t i = 0; i < list.size(); i++) {
+      auto* child = list[i];
+      // The child block, if there is one.
+      Block* childBlock = child->dynCast<Block>();
+      // If we are merging an inner block of a loop, then we must not
+      // merge things before and including the name of the loop, moving
+      // those out would break things.
+      Loop* loop = nullptr;
+      // To to handle a non-block child.
+      if (!childBlock) {
         // if we have a child that is (drop (block ..)) then we can move the drop into the block, and remove br values. this allows more merging,
-        auto* drop = curr->list[i]->dynCast<Drop>();
-        if (drop) {
-          child = drop->value->dynCast<Block>();
-          if (child) {
-            if (hasUnreachableChild(child)) {
+        if (auto* drop = list[i]->dynCast<Drop>()) {
+          childBlock = drop->value->dynCast<Block>();
+          if (childBlock) {
+            if (hasUnreachableChild(childBlock)) {
               // don't move around unreachable code, as it can change types
               // dce should have been run anyhow
               continue;
             }
-            if (child->name.is()) {
-              Expression* expression = child;
+            if (childBlock->name.is()) {
+              Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us
               ProblemFinder finder(passOptions);
-              finder.origin = child->name;
+              finder.origin = childBlock->name;
               finder.walk(expression);
               if (finder.found()) {
-                child = nullptr;
+                childBlock = nullptr;
               } else {
                 // fix up breaks
                 BreakValueDropper fixer(passOptions);
-                fixer.origin = child->name;
+                fixer.origin = childBlock->name;
                 fixer.setModule(module);
                 fixer.walk(expression);
               }
             }
-            if (child) {
+            if (childBlock) {
               // we can do it!
-              // reuse the drop
-              drop->value = child->list.back();
-              drop->finalize();
-              child->list.back() = drop;
-              child->finalize();
-              curr->list[i] = child;
+              // reuse the drop, if we still need it
+              auto* last = childBlock->list.back();
+              if (isConcreteType(last->type)) {
+                drop->value = last;
+                drop->finalize();
+                childBlock->list.back() = drop;
+              }
+              childBlock->finalize();
+              child = list[i] = childBlock;
               more = true;
               changed = true;
             }
           }
+        } else if ((loop = list[i]->dynCast<Loop>())) {
+          // We can merge a loop's "tail" - if the body is a block and has
+          // instructions at the end that do not branch back.
+          childBlock = loop->body->dynCast<Block>();
+          // TODO: handle (loop (loop - the bodies of loops may not be blocks
         }
       }
-      if (!child) continue;
-      if (child->name.is()) continue; // named blocks can have breaks to them (and certainly do, if we ran RemoveUnusedNames and RemoveUnusedBrs)
+      // If no block, or a block that might be broken out of, we can't do anything.
+      if (!childBlock || childBlock->name.is()) continue;
+      auto& childList = childBlock->list;
+      auto childSize = childList.size();
+      if (childSize == 0) continue;
+      // If this is a loop, we may be removing only the tail.
+      Index start = 0;
+      Index end = childSize;
+      if (loop) {
+        auto childName = loop->name;
+        for (auto j = int(childSize - 1); j >= 0; j--) {
+          auto* item = childList[j];
+          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+            // We can't remove this from the child.
+            start = j + 1;
+            break;
+          }
+        }
+        // Maybe there's nothing to do.
+        if (start == end) continue;
+        // If we can only do part of the block, and if the block has a flowing value, we
+        // would need special handling for that - not worth it, probably TODO
+        if (start > 0 && isConcreteType(childList.back()->type)) {
+          continue;
+        }
+      }
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
-        merged.push_back(curr->list[j]);
+        merged.push_back(list[j]);
       }
-      for (auto item : child->list) {
-        merged.push_back(item);
+      // If we can't merge it all, keep the child.
+      if (start > 0) {
+        merged.push_back(child);
       }
-      for (size_t j = i + 1; j < curr->list.size(); j++) {
-        merged.push_back(curr->list[j]);
+      for (Index j = start; j < end; j++) {
+        merged.push_back(childList[j]);
+      }
+      // If we didn't merge it all, update the child.
+      if (start > 0) {
+        childList.resize(start);
+        // We may have removed unreachable items.
+        childBlock->finalize();
+        if (auto* loop = child->dynCast<Loop>()) {
+          loop->finalize();
+        }
+      }
+      for (size_t j = i + 1; j < list.size(); j++) {
+        merged.push_back(list[j]);
       }
       // if we merged a concrete element in the middle, drop it
       if (!merged.empty()) {
@@ -234,7 +298,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
           }
         }
       }
-      curr->list.swap(merged);
+      list.swap(merged);
       more = true;
       changed = true;
       break;
