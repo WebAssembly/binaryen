@@ -165,9 +165,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   add("merge-blocks"); // makes remove-unused-brs more effective
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("remove-unused-names");
-  }
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
   // if we are willing to work hard, also propagate

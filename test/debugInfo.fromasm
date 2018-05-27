@@ -142,7 +142,7 @@
         )
         (i32.const 1369188723)
        )
-       (block (result i32)
+       (block $switch (result i32)
         (br_if $__rjti$0
          (i32.eqz
           (i32.sub
@@ -153,7 +153,7 @@
         )
         (i32.const 0)
        )
-       (block (result i32)
+       (block $switch0 (result i32)
         (br_if $__rjti$0
          (i32.eqz
           (i32.sub
