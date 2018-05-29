@@ -841,6 +841,9 @@ struct JSPrinter {
     // identifiers are valid in asm.js. Instead we have to explicitly import
     // `NaN` and `Infinity` from the global environment, and those names are
     // bound locally in an asm function as `nan` and `infinity`.
+    //
+    // TODO: the JS names of `NaN` and `Infinity` should be used once literal
+    // asm.js code isn't generated any more
     if (std::isnan(d)) {
       if (std::signbit(d)) {
         return (char*) "-nan";

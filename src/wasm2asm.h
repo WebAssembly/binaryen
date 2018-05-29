@@ -457,6 +457,7 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
       ABORT_FUNC
     )
   );
+  // TODO: this shouldn't be needed once we stop generating literal asm.js code
   // NaN and Infinity variables
   Ref nanVar = ValueBuilder::makeVar();
   ast->push_back(nanVar);
@@ -1841,6 +1842,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Module* m, Function* func, IString resu
 static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
   Name buffer("__array_buffer");
   if (first) {
+    // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
+    // generated
     flattenAppend(ret, ValueBuilder::makeName(R"(
       var __array_buffer = new ArrayBuffer(65536)
       var HEAP32 = new Int32Array(__array_buffer);
@@ -1898,6 +1901,8 @@ static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool firs
   insertItem(UINT32ARRAY);
   insertItem(FLOAT32ARRAY);
   insertItem(FLOAT64ARRAY);
+  // TODO: these shouldn't be necessary once we don't generate literal asm.js
+  // code
   insertItem("Infinity");
   insertItem("NaN");
   Ref env = ValueBuilder::makeObject();
