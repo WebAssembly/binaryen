@@ -14,7 +14,7 @@ Compilers built using Binaryen include
  * [`s2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/s2wasm.h) which compiles the LLVM WebAssembly's backend `.s` output format
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
  * [`wasm2asm`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2asm.h) which compiles WebAssembly to asm.js
- * [`mir2wasm`](https://github.com/brson/mir2wasm/) which compiles Rust MIR
+ * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
