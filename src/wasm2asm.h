@@ -66,7 +66,7 @@ void flattenAppend(Ref ast, Ref extra) {
 // Used when taking a wasm name and generating a JS identifier. Each scope here
 // is used to ensure that all names have a unique name but the same wasm name
 // within a scope always resolves to the same symbol.
-enum NameScope {
+enum class NameScope {
   Top,
   Local,
   Label,
