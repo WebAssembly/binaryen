@@ -76,7 +76,7 @@ enum class NameScope {
 static uint64_t constOffset(Table::Segment &segment) {
   auto* c = segment.offset->dynCast<Const>();
   if (!c) {
-    std::cerr << "non-constant offsets aren't supported yet" << std::endl;
+    Fatal() << "non-constant offsets aren't supported yet\n";
     abort();
   }
   return c->value.getInteger();
@@ -226,7 +226,7 @@ public:
       // probably be fixed via a different namespace for exports or something
       // like that.
       if (scope == NameScope::Top) {
-        std::cerr << "global scope is colliding with other scope: " << mangled << std::endl;
+        Fatal() << "global scope is colliding with other scope: " << mangled << '\n';
         abort();
       }
     }
