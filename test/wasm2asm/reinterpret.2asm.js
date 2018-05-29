@@ -17,6 +17,9 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
@@ -24,18 +27,24 @@ function asmFunc(global, env, buffer) {
  
  function $1($0) {
   $0 = $0 | 0;
-  return ((HEAPF32[0] = (HEAP32[0] = $0, HEAPF32[0]), HEAP32[0]) | 0) == ($0 | 0) | 0;
+  return ((HEAPF32[0] = (HEAP32[0] = $0, HEAPF32[0]), HEAP32[0] | 0) | 0) == ($0 | 0) | 0;
  }
  
  function $2($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  var i64toi32_i32$0 = 0, $3$hi = 0;
+  var i64toi32_i32$0 = 0, $3$hi = 0, wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0, wasm2asm_f64$0 = 0.0;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
-  HEAP32[0 >> 2] = $0;
-  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
-  HEAPF64[0 >> 3] = +HEAPF64[0 >> 3];
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = $0;
+  HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = i64toi32_i32$0;
+  HEAP32[(wasm2asm_i32$0 + 4 | 0) >> 2] = wasm2asm_i32$1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_f64$0 = +HEAPF64[0 >> 3];
+  HEAPF64[wasm2asm_i32$0 >> 3] = wasm2asm_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;

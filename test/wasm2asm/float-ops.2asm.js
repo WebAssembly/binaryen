@@ -17,153 +17,156 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
  }
  
- function $1($0, $1) {
+ function $1($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 + $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 + $1_1));
  }
  
- function $2($0, $1) {
+ function $2($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 - $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 - $1_1));
  }
  
- function $3($0, $1) {
+ function $3($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 * $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 * $1_1));
  }
  
- function $4($0, $1) {
+ function $4($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround($0 / $1));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround($0 / $1_1));
  }
  
- function $5($0, $1) {
+ function $5($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 + $1);
+  $1_1 = +$1_1;
+  return +($0 + $1_1);
  }
  
- function $6($0, $1) {
+ function $6($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 - $1);
+  $1_1 = +$1_1;
+  return +($0 - $1_1);
  }
  
- function $7($0, $1) {
+ function $7($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 * $1);
+  $1_1 = +$1_1;
+  return +($0 * $1_1);
  }
  
- function $8($0, $1) {
+ function $8($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +($0 / $1);
+  $1_1 = +$1_1;
+  return +($0 / $1_1);
  }
  
- function $9($0, $1) {
+ function $9($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 == $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 == $1_1 | 0;
  }
  
- function $10($0, $1) {
+ function $10($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 != $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 != $1_1 | 0;
  }
  
- function $11($0, $1) {
+ function $11($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 >= $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 >= $1_1 | 0;
  }
  
- function $12($0, $1) {
+ function $12($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 > $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 > $1_1 | 0;
  }
  
- function $13($0, $1) {
+ function $13($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 <= $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 <= $1_1 | 0;
  }
  
- function $14($0, $1) {
+ function $14($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return $0 < $1 | 0;
+  $1_1 = Math_fround($1_1);
+  return $0 < $1_1 | 0;
  }
  
- function $15($0, $1) {
+ function $15($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 == $1 | 0;
+  $1_1 = +$1_1;
+  return $0 == $1_1 | 0;
  }
  
- function $16($0, $1) {
+ function $16($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 != $1 | 0;
+  $1_1 = +$1_1;
+  return $0 != $1_1 | 0;
  }
  
- function $17($0, $1) {
+ function $17($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 >= $1 | 0;
+  $1_1 = +$1_1;
+  return $0 >= $1_1 | 0;
  }
  
- function $18($0, $1) {
+ function $18($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 > $1 | 0;
+  $1_1 = +$1_1;
+  return $0 > $1_1 | 0;
  }
  
- function $19($0, $1) {
+ function $19($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 <= $1 | 0;
+  $1_1 = +$1_1;
+  return $0 <= $1_1 | 0;
  }
  
- function $20($0, $1) {
+ function $20($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return $0 < $1 | 0;
+  $1_1 = +$1_1;
+  return $0 < $1_1 | 0;
  }
  
- function $21($0, $1) {
+ function $21($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround(Math_min($0, $1)));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_min($0, $1_1)));
  }
  
- function $22($0, $1) {
+ function $22($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround(Math_fround(Math_max($0, $1)));
+  $1_1 = Math_fround($1_1);
+  return Math_fround(Math_fround(Math_max($0, $1_1)));
  }
  
- function $23($0, $1) {
+ function $23($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +Math_min($0, $1);
+  $1_1 = +$1_1;
+  return +Math_min($0, $1_1);
  }
  
- function $24($0, $1) {
+ function $24($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  return +Math_max($0, $1);
+  $1_1 = +$1_1;
+  return +Math_max($0, $1_1);
  }
  
  function $25($0) {
@@ -206,43 +209,51 @@ function asmFunc(global, env, buffer) {
   return +Math_sqrt($0);
  }
  
- function copysign64($0, $1) {
+ function copysign64($0, $1_1) {
   $0 = +$0;
-  $1 = +$1;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4 = 0, $4$hi = 0, $7 = 0, $7$hi = 0;
-  HEAPF64[0 >> 3] = $0;
+  $1_1 = +$1_1;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2asm_i32$0 = 0, wasm2asm_f64$0 = 0.0, wasm2asm_i32$1 = 0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_f64$0 = $0;
+  HEAPF64[wasm2asm_i32$0 >> 3] = wasm2asm_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$1 = 2147483647;
   i64toi32_i32$3 = 4294967295;
   i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
-  $4 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
+  $4_1 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
   $4$hi = i64toi32_i32$1;
-  HEAPF64[0 >> 3] = $1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_f64$0 = $1_1;
+  HEAPF64[wasm2asm_i32$0 >> 3] = wasm2asm_f64$0;
   i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
   i64toi32_i32$2 = 2147483648;
   i64toi32_i32$3 = 0;
   i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
-  $7 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
+  $7_1 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
   $7$hi = i64toi32_i32$2;
   i64toi32_i32$2 = $4$hi;
-  i64toi32_i32$1 = $4;
+  i64toi32_i32$1 = $4_1;
   i64toi32_i32$0 = $7$hi;
-  i64toi32_i32$3 = $7;
+  i64toi32_i32$3 = $7_1;
   i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
   i64toi32_i32$0 = i64toi32_i32$0;
-  HEAP32[0 >> 2] = i64toi32_i32$1 | i64toi32_i32$3 | 0;
-  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
+  HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = i64toi32_i32$0;
+  HEAP32[(wasm2asm_i32$0 + 4 | 0) >> 2] = wasm2asm_i32$1;
   return +(+HEAPF64[0 >> 3]);
  }
  
- function copysign32($0, $1) {
+ function copysign32($0, $1_1) {
   $0 = Math_fround($0);
-  $1 = Math_fround($1);
-  return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = $1, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
+  $1_1 = Math_fround($1_1);
+  return Math_fround((HEAP32[0] = (HEAPF32[0] = $0, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = $1_1, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
  }
  
  function $35($0) {
@@ -323,52 +334,52 @@ function asmFunc(global, env, buffer) {
  
  function $47($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $4 = $3;
-  } else $4 = 0;
-  i64toi32_i32$1 = $4;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $4_1 = $3_1;
+  } else $4_1 = 0;
+  i64toi32_i32$1 = $4_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $48($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $4 = $3;
-  } else $4 = 0;
-  i64toi32_i32$1 = $4;
+   if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $4_1 = $3_1;
+  } else $4_1 = 0;
+  i64toi32_i32$1 = $4_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $49($0) {
   $0 = Math_fround($0);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $3 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $4 = $3;
-  } else $4 = 0;
-  i64toi32_i32$1 = $4;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $3_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $3_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $4_1 = $3_1;
+  } else $4_1 = 0;
+  i64toi32_i32$1 = $4_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }
  
  function $50($0) {
   $0 = +$0;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3 = 0, $4 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $3_1 = 0, $4_1 = 0;
   i64toi32_i32$0 = $0;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $3 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $4 = $3;
-  } else $4 = 0;
-  i64toi32_i32$1 = $4;
+   if (i64toi32_i32$0 > 0.0) $3_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $3_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $4_1 = $3_1;
+  } else $4_1 = 0;
+  i64toi32_i32$1 = $4_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   return (~~i64toi32_i32$0 >>> 0 | 0) == (0 | 0) & (i64toi32_i32$1 | 0) == (0 | 0) | 0 | 0;
  }

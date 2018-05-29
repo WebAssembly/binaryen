@@ -17,6 +17,9 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
@@ -66,13 +69,13 @@ function asmFunc(global, env, buffer) {
  
  function $7(x) {
   x = Math_fround(x);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $4 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $4_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -81,13 +84,13 @@ function asmFunc(global, env, buffer) {
  
  function $8(x) {
   x = Math_fround(x);
-  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = Math_fround(0), i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_fround(Math_abs(i64toi32_i32$0)) >= Math_fround(1.0)) {
-   if (i64toi32_i32$0 > Math_fround(0.0)) $4 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > Math_fround(0.0)) $4_1 = ~~Math_fround(Math_min(Math_fround(Math_floor(Math_fround(i64toi32_i32$0 / Math_fround(4294967296.0)))), Math_fround(Math_fround(4294967296.0) - Math_fround(1.0)))) >>> 0; else $4_1 = ~~Math_fround(Math_ceil(Math_fround(Math_fround(i64toi32_i32$0 - Math_fround(~~i64toi32_i32$0 >>> 0 >>> 0)) / Math_fround(4294967296.0)))) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -96,13 +99,13 @@ function asmFunc(global, env, buffer) {
  
  function $9(x) {
   x = +x;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $4 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > 0.0) $4_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -111,13 +114,13 @@ function asmFunc(global, env, buffer) {
  
  function $10(x) {
   x = +x;
-  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4 = 0, $5 = 0, i64toi32_i32$2 = 0;
+  var i64toi32_i32$0 = 0.0, i64toi32_i32$1 = 0, $4_1 = 0, $5_1 = 0, i64toi32_i32$2 = 0;
   i64toi32_i32$0 = x;
   if (Math_abs(i64toi32_i32$0) >= 1.0) {
-   if (i64toi32_i32$0 > 0.0) $4 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
-   $5 = $4;
-  } else $5 = 0;
-  i64toi32_i32$1 = $5;
+   if (i64toi32_i32$0 > 0.0) $4_1 = ~~Math_min(Math_floor(i64toi32_i32$0 / 4294967296.0), 4294967296.0 - 1.0) >>> 0; else $4_1 = ~~Math_ceil((i64toi32_i32$0 - +(~~i64toi32_i32$0 >>> 0 >>> 0)) / 4294967296.0) >>> 0;
+   $5_1 = $4_1;
+  } else $5_1 = 0;
+  i64toi32_i32$1 = $5_1;
   i64toi32_i32$1 = i64toi32_i32$1;
   i64toi32_i32$2 = ~~i64toi32_i32$0 >>> 0;
   i64toi32_i32$HIGH_BITS = i64toi32_i32$1;
@@ -198,23 +201,29 @@ function asmFunc(global, env, buffer) {
  function $22(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
-  var i64toi32_i32$0 = 0;
+  var i64toi32_i32$0 = 0, wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0;
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
-  HEAP32[0 >> 2] = x;
-  HEAP32[(0 + 4 | 0) >> 2] = i64toi32_i32$0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = x;
+  HEAP32[wasm2asm_i32$0 >> 2] = wasm2asm_i32$1;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_i32$1 = i64toi32_i32$0;
+  HEAP32[(wasm2asm_i32$0 + 4 | 0) >> 2] = wasm2asm_i32$1;
   return +(+HEAPF64[0 >> 3]);
  }
  
  function $23(x) {
   x = Math_fround(x);
-  return (HEAPF32[0] = x, HEAP32[0]) | 0;
+  return (HEAPF32[0] = x, HEAP32[0] | 0) | 0;
  }
  
  function $24(x) {
   x = +x;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
-  HEAPF64[0 >> 3] = x;
+  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, wasm2asm_i32$0 = 0, wasm2asm_f64$0 = 0.0;
+  wasm2asm_i32$0 = 0;
+  wasm2asm_f64$0 = x;
+  HEAPF64[wasm2asm_i32$0 >> 3] = wasm2asm_f64$0;
   i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = HEAP32[0 >> 2] | 0;

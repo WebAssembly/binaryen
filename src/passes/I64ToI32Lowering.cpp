@@ -449,6 +449,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   void visitLoad(Load* curr) {
     if (curr->type != i64) return;
     assert(!curr->isAtomic && "atomic load not implemented");
+    TempVar lowBits = getTemp();
     TempVar highBits = getTemp();
     TempVar ptrTemp = getTemp();
     SetLocal* setPtr = builder->makeSetLocal(ptrTemp, curr->ptr);
@@ -465,6 +466,15 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
           i32
         )
       );
+    } else if (curr->signed_) {
+      loadHigh = builder->makeSetLocal(
+        highBits,
+        builder->makeBinary(
+          ShrSInt32,
+          builder->makeGetLocal(lowBits, i32),
+          builder->makeConst(Literal(int32_t(31)))
+        )
+      );
     } else {
       loadHigh = builder->makeSetLocal(
         highBits,
@@ -475,7 +485,12 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     curr->bytes = std::min(curr->bytes, uint8_t(4));
     curr->align = std::min(uint32_t(curr->align), uint32_t(4));
     curr->ptr = builder->makeGetLocal(ptrTemp, i32);
-    Block* result = builder->blockify(setPtr, loadHigh, curr);
+    Block* result = builder->blockify(
+      setPtr,
+      builder->makeSetLocal(lowBits, curr),
+      loadHigh,
+      builder->makeGetLocal(lowBits, i32)
+    );
     replaceCurrent(result);
     setOutParam(result, std::move(highBits));
   }

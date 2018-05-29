@@ -113,6 +113,50 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }
 
+  void visitLoad(Load *curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned loads of floats to unaligned loads of integers (which we
+    // can actually implement) and then use reinterpretation to get the float
+    // back out.
+    switch (curr->type) {
+      case f32:
+        curr->type = i32;
+        replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
+        break;
+      case f64:
+        curr->type = i64;
+        replaceCurrent(builder->makeUnary(ReinterpretInt64, curr));
+        break;
+      default:
+        break;
+    }
+  }
+
+  void visitStore(Store *curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned stores of floats to unaligned stores of integers (which
+    // we can actually implement) and then use reinterpretation to store the
+    // right value.
+    switch (curr->valueType) {
+      case f32:
+        curr->valueType = i32;
+        curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);
+        break;
+      case f64:
+        curr->valueType = i64;
+        curr->value = builder->makeUnary(ReinterpretFloat64, curr->value);
+        break;
+      default:
+        break;
+    }
+  }
+
   void visitBinary(Binary *curr) {
     Name name;
     switch (curr->op) {
