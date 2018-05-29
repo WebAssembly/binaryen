@@ -1609,3 +1609,12 @@ Module['setDebugInfo'] = function(on) {
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
+
+// Additional customizations
+
+Module['exit'] = function(status) {
+  // Instead of exiting silently on errors, always show an error with
+  // a stack trace, for debuggability.
+  if (status != 0) throw new Error('exiting due to error: ' + status);
+};
+
