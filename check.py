@@ -419,7 +419,8 @@ def run_binaryen_js_tests():
 
     def test(engine):
       cmd = [engine, 'a.js']
-      out = run_command(cmd, stderr=subprocess.STDOUT)
+      expected_status = 1 if 'fatal' in s else 0
+      out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=expected_status)
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
       if expected not in out:
         fail(out, expected)
