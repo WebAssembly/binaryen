@@ -159,8 +159,7 @@ namespace std {
 
 template <> struct hash<cashew::IString> : public unary_function<cashew::IString, size_t> {
   size_t operator()(const cashew::IString& str) const {
-    size_t hash = size_t(str.str);
-    return hash = ((hash << 5) + hash) ^ 5381; /* (hash * 33) ^ c */
+    return std::hash<size_t>{}(size_t(str.str));
   }
 };
 
