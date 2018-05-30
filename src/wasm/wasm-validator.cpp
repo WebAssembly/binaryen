@@ -182,14 +182,12 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
     BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
   };
 
-  std::map<Name, Expression*> breakTargets;
-  std::map<Expression*, BreakInfo> breakInfos;
+  std::unordered_map<Name, Expression*> breakTargets;
+  std::unordered_map<Expression*, BreakInfo> breakInfos;
 
   Type returnType = unreachable; // type used in returns
 
-  std::set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
-
-  std::unordered_set<Expression*> seenExpressions; // expressions must not appear twice
+  std::unordered_set<Name> labelNames; // Binaryen IR requires that label names must be unique - IR generators must ensure that
 
   void noteLabelName(Name name);
 
@@ -394,12 +392,14 @@ void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr
     shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
     arity = 1;
   }
-  if (!shouldBeTrue(breakTargets.count(name) > 0, curr, "all break targets must be valid")) return;
-  auto* target = breakTargets[name];
-  if (breakInfos.count(target) == 0) {
+  auto targetIter = breakTargets.find(name);
+  if (!shouldBeTrue(targetIter != breakTargets.end(), curr, "all break targets must be valid")) return;
+  auto* target = targetIter->second;
+  auto infoIter = breakInfos.find(target);
+  if (infoIter == breakInfos.end()) {
     breakInfos[target] = BreakInfo(valueType, arity);
   } else {
-    auto& info = breakInfos[target];
+    auto& info = infoIter->second;
     if (info.type == unreachable) {
       info.type = valueType;
     } else if (valueType != unreachable) {
@@ -819,24 +819,6 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(ft->params == curr->params, curr->name, "function params must match its declared type");
     shouldBeTrue(ft->result == curr->result, curr->name, "function result must match its declared type");
   }
-  // expressions must not be seen more than once
-  struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
-    std::unordered_set<Expression*>& seen;
-    std::vector<Expression*> dupes;
-
-    Walker(std::unordered_set<Expression*>& seen) : seen(seen) {}
-
-    void visitExpression(Expression* curr) {
-      bool inserted;
-      std::tie(std::ignore, inserted) = seen.insert(curr);
-      if (!inserted) dupes.push_back(curr);
-    }
-  };
-  Walker walker(seenExpressions);
-  walker.walk(curr->body);
-  for (auto* bad : walker.dupes) {
-    info.fail("expression seen more than once in the tree", bad, getFunction());
-  }
 }
 
 static bool checkOffset(Expression* curr, Address add, Address max) {
@@ -890,9 +872,12 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
   struct BinaryenIRValidator : public PostWalker<BinaryenIRValidator, UnifiedExpressionVisitor<BinaryenIRValidator>> {
     ValidationInfo& info;
 
+    std::unordered_set<Expression*> seen;
+
     BinaryenIRValidator(ValidationInfo& info) : info(info) {}
 
     void visitExpression(Expression* curr) {
+      auto scope = getFunction() ? getFunction()->name : Name("(global scope)");
       // check if a node type is 'stale', i.e., we forgot to finalize() the node.
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
@@ -907,10 +892,18 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         // ok for it to be either i32 or unreachable.
         if (!(isConcreteType(oldType) && newType == unreachable)) {
           std::ostringstream ss;
-          ss << "stale type found in " << (getFunction() ? getFunction()->name : Name("(global scope)")) << " on " << curr << "\n(marked as " << printType(oldType) << ", should be " << printType(newType) << ")\n";
+          ss << "stale type found in " << scope << " on " << curr << "\n(marked as " << printType(oldType) << ", should be " << printType(newType) << ")\n";
           info.fail(ss.str(), curr, getFunction());
         }
         curr->type = oldType;
+      }
+      // check if a node is a duplicate - expressions must not be seen more than once
+      bool inserted;
+      std::tie(std::ignore, inserted) = seen.insert(curr);
+      if (!inserted) {
+        std::ostringstream ss;
+        ss << "expression seen more than once in the tree in " << scope << " on " << curr << '\n';
+        info.fail(ss.str(), curr, getFunction());
       }
     }
   };
@@ -952,7 +945,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
       }
     }
   }
-  std::set<Name> exportNames;
+  std::unordered_set<Name> exportNames;
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
