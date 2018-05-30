@@ -283,8 +283,9 @@ private:
 
 void FunctionValidator::noteLabelName(Name name) {
   if (!name.is()) return;
-  shouldBeTrue(labelNames.find(name) == labelNames.end(), name, "names in Binaryen IR must be unique - IR generators must ensure that");
-  labelNames.insert(name);
+  bool inserted;
+  std::tie(std::ignore, inserted) = labelNames.insert(name);
+  shouldBeTrue(inserted, name, "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
 void FunctionValidator::visitBlock(Block* curr) {
