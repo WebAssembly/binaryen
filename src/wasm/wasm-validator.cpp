@@ -176,14 +176,19 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
   struct BreakInfo {
+    enum {
+      UnsetArity = Index(-1),
+      PoisonArity = Index(-2)
+    };
+
     Type type;
     Index arity;
-    BreakInfo() : type(none), arity(1) {} // an impossible value (arity 1, so a value exists, but the type is none)
+    BreakInfo() : arity(UnsetArity) {}
     BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
 
     bool hasBeenSet() {
       // Compare to the impossible value.
-      return !(type == none && arity == 1);
+      return arity != UnsetArity;
     }
   };
 
@@ -312,7 +317,7 @@ void FunctionValidator::visitBlock(Block* curr) {
       if (isConcreteType(curr->type) && info.arity && info.type != unreachable) {
         shouldBeEqual(curr->type, info.type, curr, "block+breaks must have right type if breaks have arity");
       }
-      shouldBeTrue(info.arity != Index(-1), curr, "break arities must match");
+      shouldBeTrue(info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
       if (curr->list.size() > 0) {
         auto last = curr->list.back()->type;
         if (isConcreteType(last) && info.type != unreachable) {
@@ -415,7 +420,7 @@ void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr
       }
     }
     if (arity != info.arity) {
-      info.arity = Index(-1); // a poison value
+      info.arity = BreakInfo::PoisonArity;
     }
   }
 }
