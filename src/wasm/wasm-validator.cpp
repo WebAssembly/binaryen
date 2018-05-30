@@ -178,12 +178,16 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   struct BreakInfo {
     Type type;
     Index arity;
-    BreakInfo() {}
+    BreakInfo() : type(none), arity(1) {} // an impossible value (arity 1, so a value exists, but the type is none)
     BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
+
+    bool hasBeenSet() {
+      // Compare to the impossible value.
+      return !(type == none && arity == 1);
+    }
   };
 
-  std::unordered_map<Name, Expression*> breakTargets;
-  std::unordered_map<Expression*, BreakInfo> breakInfos;
+  std::unordered_map<Name, BreakInfo> breakInfos;
 
   Type returnType = unreachable; // type used in returns
 
@@ -196,14 +200,14 @@ public:
 
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
-    if (curr->name.is()) self->breakTargets[curr->name] = curr;
+    if (curr->name.is()) self->breakInfos[curr->name];
   }
 
   void visitBlock(Block* curr);
 
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
-    if (curr->name.is()) self->breakTargets[curr->name] = curr;
+    if (curr->name.is()) self->breakInfos[curr->name];
   }
 
   void visitLoop(Loop* curr);
@@ -292,8 +296,10 @@ void FunctionValidator::visitBlock(Block* curr) {
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    if (breakInfos.count(curr) > 0) {
-      auto& info = breakInfos[curr];
+    auto iter = breakInfos.find(curr->name);
+    assert(iter != breakInfos.end()); // we set it ourselves
+    auto& info = iter->second;
+    if (info.hasBeenSet()) {
       if (isConcreteType(curr->type)) {
         shouldBeTrue(info.arity != 0, curr, "break arities must be > 0 if block has a value");
       } else {
@@ -317,7 +323,7 @@ void FunctionValidator::visitBlock(Block* curr) {
         }
       }
     }
-    breakTargets.erase(curr->name);
+    breakInfos.erase(iter);
   }
   if (curr->list.size() > 1) {
     for (Index i = 0; i < curr->list.size() - 1; i++) {
@@ -346,11 +352,13 @@ void FunctionValidator::visitBlock(Block* curr) {
 void FunctionValidator::visitLoop(Loop* curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    breakTargets.erase(curr->name);
-    if (breakInfos.count(curr) > 0) {
-      auto& info = breakInfos[curr];
+    auto iter = breakInfos.find(curr->name);
+    assert(iter != breakInfos.end()); // we set it ourselves
+    auto& info = iter->second;
+    if (info.hasBeenSet()) {
       shouldBeEqual(info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
     }
+    breakInfos.erase(iter);
   }
   if (curr->type == none) {
     shouldBeFalse(isConcreteType(curr->body->type), curr, "bad body for a loop that has no value");
@@ -393,14 +401,12 @@ void FunctionValidator::noteBreak(Name name, Expression* value, Expression* curr
     shouldBeUnequal(valueType, none, curr, "breaks must have a valid value");
     arity = 1;
   }
-  auto targetIter = breakTargets.find(name);
-  if (!shouldBeTrue(targetIter != breakTargets.end(), curr, "all break targets must be valid")) return;
-  auto* target = targetIter->second;
-  auto infoIter = breakInfos.find(target);
-  if (infoIter == breakInfos.end()) {
-    breakInfos[target] = BreakInfo(valueType, arity);
+  auto iter = breakInfos.find(name);
+  if (!shouldBeTrue(iter != breakInfos.end(), curr, "all break targets must be valid")) return;
+  auto& info = iter->second;
+  if (!info.hasBeenSet()) {
+    info = BreakInfo(valueType, arity);
   } else {
-    auto& info = infoIter->second;
     if (info.type == unreachable) {
       info.type = valueType;
     } else if (valueType != unreachable) {
@@ -811,7 +817,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   if (returnType != unreachable) {
     shouldBeEqual(curr->result, returnType, curr->body, "function result must match, if function has returns");
   }
-  shouldBeTrue(breakTargets.empty(), curr->body, "all named break targets must exist");
+  shouldBeTrue(breakInfos.empty(), curr->body, "all named break targets must exist");
   returnType = unreachable;
   labelNames.clear();
   // if function has a named type, it must match up with the function's params and result
