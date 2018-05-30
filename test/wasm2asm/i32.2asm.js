@@ -17,6 +17,9 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = x | 0;
@@ -196,10 +199,10 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_popcnt_i32(var$0) {
   var$0 = var$0 | 0;
-  var var$1 = 0, $5 = 0;
+  var var$1 = 0, $5_1 = 0;
   label$1 : {
    label$2 : do {
-    $5 = var$1;
+    $5_1 = var$1;
     if ((var$0 | 0) == (0 | 0)) break label$1;
     var$0 = var$0 & (var$0 - 1 | 0) | 0;
     var$1 = var$1 + 1 | 0;
@@ -207,7 +210,7 @@ function asmFunc(global, env, buffer) {
     break label$2;
    } while (1);
   };
-  return $5 | 0;
+  return $5_1 | 0;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {

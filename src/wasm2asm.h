@@ -63,6 +63,25 @@ void flattenAppend(Ref ast, Ref extra) {
   }
 }
 
+// Used when taking a wasm name and generating a JS identifier. Each scope here
+// is used to ensure that all names have a unique name but the same wasm name
+// within a scope always resolves to the same symbol.
+enum class NameScope {
+  Top,
+  Local,
+  Label,
+  Max,
+};
+
+static uint64_t constOffset(Table::Segment &segment) {
+  auto* c = segment.offset->dynCast<Const>();
+  if (!c) {
+    Fatal() << "non-constant offsets aren't supported yet\n";
+    abort();
+  }
+  return c->value.getInteger();
+}
+
 //
 // Wasm2AsmBuilder - converts a WebAssembly module into asm.js
 //
@@ -122,8 +141,8 @@ public:
 
   Wasm2AsmBuilder(Flags f) : flags(f) {}
 
-  Ref processWasm(Module* wasm);
-  Ref processFunction(Function* func);
+  Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
+  Ref processFunction(Module* wasm, Function* func);
 
   // The first pass on an expression: scan it to see whether it will
   // need to be statementized, and note spooky returns of values at
@@ -135,9 +154,9 @@ public:
   // @param result Whether the context we are in receives a value,
   //               and its type, or if not, then we can drop our return,
   //               if we have one.
-  Ref processFunctionBody(Function* func, IString result);
+  Ref processFunctionBody(Module* m, Function* func, IString result);
 
-  Ref processAsserts(Element& e, SExpressionWasmBuilder& sexpBuilder);
+  Ref processAsserts(Module* wasm, Element& e, SExpressionWasmBuilder& sexpBuilder);
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -161,15 +180,58 @@ public:
     frees[type].push_back(temp);
   }
 
-  IString fromName(Name name) {
+  // Generates a mangled name from `name` within the specified scope.
+  //
+  // The goal of this function is to ensure that all identifiers in JS ar
+  // unique. Otherwise there can be clashes with locals and functions and cause
+  // unwanted name shadowing.
+  //
+  // The returned string from this function is constant for a particular `name`
+  // within a `scope`. Or in other words, the same `name` and `scope` pair will
+  // always return the same result. If `scope` changes, however, the return
+  // value may differ even if the same `name` is passed in.
+  IString fromName(Name name, NameScope scope) {
     // TODO: checking names do not collide after mangling
-    auto it = mangledNames.find(name.c_str());
-    if (it != mangledNames.end()) {
+
+    // First up check our cached of mangled names to avoid doing extra work
+    // below
+    auto &mangledScope = mangledNames[(int) scope];
+    auto it = mangledScope.find(name.c_str());
+    if (it != mangledScope.end()) {
       return it->second;
     }
-    auto mangled = asmangle(std::string(name.c_str()));
-    IString ret(mangled.c_str(), false);
-    mangledNames[name.c_str()] = ret;
+
+    // This is the first time we've seen the `name` and `scope` pair. Generate a
+    // globally unique name based on `name` and then register that in our cache
+    // and return it.
+    //
+    // Identifiers here generated are of the form `${name}_${n}` where `_${n}`
+    // is omitted if `n==0` and otherwise `n` is just looped over to find the
+    // next unused identifier.
+    IString ret;
+    for (int i = 0;; i++) {
+      std::ostringstream out;
+      out << name.c_str();
+      if (i > 0) {
+        out << "_" << i;
+      }
+      auto mangled = asmangle(out.str());
+      ret = IString(mangled.c_str(), false);
+      if (!allMangledNames.count(ret)) {
+        break;
+      }
+
+      // In the global scope that's how you refer to actual function exports, so
+      // it's a bug currently if they're not globally unique. This should
+      // probably be fixed via a different namespace for exports or something
+      // like that.
+      if (scope == NameScope::Top) {
+        Fatal() << "global scope is colliding with other scope: " << mangled << '\n';
+        abort();
+      }
+    }
+    allMangledNames.insert(ret);
+    mangledScope[name.c_str()] = ret;
     return ret;
   }
 
@@ -198,7 +260,8 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString> mangledNames;
+  std::unordered_map<const char*, IString> mangledNames[(int) NameScope::Max];
+  std::unordered_set<IString> allMangledNames;
 
   // All our function tables have the same size TODO: optimize?
   size_t tableSize;
@@ -214,20 +277,29 @@ private:
   void addMemoryGrowthFuncs(Ref ast);
   bool isAssertHandled(Element& e);
   Ref makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                           Module* wasm,
                            Builder& wasmBuilder,
-                           Element& e, Name testFuncName);
+                           Element& e,
+                           Name testFuncName,
+                           Name asmModule);
   Ref makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+                              Module* wasm,
                               Builder& wasmBuilder,
-                              Element& e, Name testFuncName);
+                              Element& e,
+                              Name testFuncName,
+                              Name asmModule);
   Ref makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                         Module* wasm,
                          Builder& wasmBuilder,
-                         Element& e, Name testFuncName);
+                         Element& e,
+                         Name testFuncName,
+                         Name asmModule);
   Wasm2AsmBuilder() = delete;
   Wasm2AsmBuilder(const Wasm2AsmBuilder &) = delete;
   Wasm2AsmBuilder &operator=(const Wasm2AsmBuilder&) = delete;
 };
 
-Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
+Ref Wasm2AsmBuilder::processWasm(Module* wasm, Name funcName) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
   // First up remove as many non-JS operations we can, including things like
@@ -256,7 +328,7 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
 #endif
 
   Ref ret = ValueBuilder::makeToplevel();
-  Ref asmFunc = ValueBuilder::makeFunction(ASM_FUNC);
+  Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
@@ -271,13 +343,24 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
                               0, [&](size_t size, Table::Segment seg) -> size_t {
-                                return size + seg.data.size();
+                                return size + seg.data.size() + constOffset(seg);
                               });
   size_t pow2ed = 1;
   while (pow2ed < tableSize) {
     pow2ed <<= 1;
   }
   tableSize = pow2ed;
+
+  // make sure exports get their expected names
+  for (auto& e : wasm->exports) {
+    if (e->kind == ExternalKind::Function) {
+      fromName(e->name, NameScope::Top);
+    }
+  }
+  for (auto& f : wasm->functions) {
+    fromName(f->name, NameScope::Top);
+  }
+  fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
   // globals
   bool generateFetchHighBits = false;
   for (auto& global : wasm->globals) {
@@ -288,13 +371,13 @@ Ref Wasm2AsmBuilder::processWasm(Module* wasm) {
   }
   // functions
   for (auto& func : wasm->functions) {
-    asmFunc[3]->push_back(processFunction(func.get()));
+    asmFunc[3]->push_back(processFunction(wasm, func.get()));
   }
   if (generateFetchHighBits) {
     Builder builder(allocator);
     std::vector<Type> params;
     std::vector<Type> vars;
-    asmFunc[3]->push_back(processFunction(builder.makeFunction(
+    asmFunc[3]->push_back(processFunction(wasm, builder.makeFunction(
       WASM_FETCH_HIGH_BITS,
       std::move(params),
       i32,
@@ -364,6 +447,30 @@ void Wasm2AsmBuilder::addBasics(Ref ast) {
   addMath(MATH_FLOOR, FLOOR);
   addMath(MATH_CEIL, CEIL);
   addMath(MATH_SQRT, SQRT);
+  // abort function
+  Ref abortVar = ValueBuilder::makeVar();
+  ast->push_back(abortVar);
+  ValueBuilder::appendToVar(abortVar,
+    "abort",
+    ValueBuilder::makeDot(
+      ValueBuilder::makeName(ENV),
+      ABORT_FUNC
+    )
+  );
+  // TODO: this shouldn't be needed once we stop generating literal asm.js code
+  // NaN and Infinity variables
+  Ref nanVar = ValueBuilder::makeVar();
+  ast->push_back(nanVar);
+  ValueBuilder::appendToVar(nanVar,
+    "nan",
+    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "NaN")
+  );
+  Ref infinityVar = ValueBuilder::makeVar();
+  ast->push_back(infinityVar);
+  ValueBuilder::appendToVar(infinityVar,
+    "infinity",
+    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "Infinity")
+  );
 }
 
 void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
@@ -371,10 +478,10 @@ void Wasm2AsmBuilder::addImport(Ref ast, Import* import) {
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
   ValueBuilder::appendToVar(theVar,
-    fromName(import->name),
+    fromName(import->name, NameScope::Top),
     ValueBuilder::makeDot(
       module,
-      fromName(import->base)
+      fromName(import->base, NameScope::Top)
     )
   );
 }
@@ -391,10 +498,10 @@ void Wasm2AsmBuilder::addTables(Ref ast, Module* wasm) {
         // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
         table.resize(tableSize);
         for (size_t j = 0; j < tableSize; j++) {
-          table[j] = fromName(name);
+          table[j] = fromName(name, NameScope::Top);
         }
       } else {
-        table[i] = fromName(name);
+        table[i + constOffset(seg)] = fromName(name, NameScope::Top);
       }
     }
   }
@@ -420,8 +527,8 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
     if (export_->kind == ExternalKind::Function) {
       ValueBuilder::appendToObject(
         exports,
-        fromName(export_->name),
-        ValueBuilder::makeName(fromName(export_->value))
+        fromName(export_->name, NameScope::Top),
+        ValueBuilder::makeName(fromName(export_->value, NameScope::Top))
       );
     }
     if (export_->kind == ExternalKind::Memory) {
@@ -457,7 +564,7 @@ void Wasm2AsmBuilder::addExports(Ref ast, Module* wasm) {
         descs);
       ValueBuilder::appendToObject(
         exports,
-        fromName(export_->name),
+        fromName(export_->name, NameScope::Top),
         memory);
     }
   }
@@ -488,17 +595,17 @@ void Wasm2AsmBuilder::addGlobal(Ref ast, Global* global) {
         break;
       }
       default: {
-        assert(false && "Global const type not supported");
+        assert(false && "Top const type not supported");
       }
     }
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(theVar,
-      fromName(global->name),
+      fromName(global->name, NameScope::Top),
       theValue
     );
   } else {
-    assert(false && "Global init type not supported");
+    assert(false && "Top init type not supported");
   }
 }
 
@@ -513,7 +620,7 @@ static bool expressionEndsInReturn(Expression *e) {
   return expressionEndsInReturn((*stats)[stats->size()-1]);
 }
 
-Ref Wasm2AsmBuilder::processFunction(Function* func) {
+Ref Wasm2AsmBuilder::processFunction(Module* m, Function* func) {
   if (flags.debug) {
     static int fns = 0;
     std::cerr << "processFunction " << (fns++) << " " << func->name
@@ -522,7 +629,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
-  Ref ret = ValueBuilder::makeFunction(fromName(func->name));
+  Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
   frees.clear();
   frees.resize(std::max(i32, std::max(f32, f64)) + 1);
   temps.clear();
@@ -530,7 +637,7 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   temps[i32] = temps[f32] = temps[f64] = 0;
   // arguments
   for (Index i = 0; i < func->getNumParams(); i++) {
-    IString name = fromName(func->getLocalNameOrGeneric(i));
+    IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
     ret[3]->push_back(
       ValueBuilder::makeStatement(
@@ -560,28 +667,28 @@ Ref Wasm2AsmBuilder::processFunction(Function* func) {
   bool endsInReturn = expressionEndsInReturn(func->body);
   if (endsInReturn) {
     // return already taken care of
-    flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   } else if (isStatement(func->body)) {
     // store result in variable then return it
     IString result =
       func->result != none ? getTemp(func->result, func) : NO_RESULT;
-    flattenAppend(ret, processFunctionBody(func, result));
+    flattenAppend(ret, processFunctionBody(m, func, result));
     if (func->result != none) {
       appendFinalReturn(ValueBuilder::makeName(result));
       freeTemp(func->result, result);
     }
   } else if (func->result != none) {
     // whole thing is an expression, just return body
-    appendFinalReturn(processFunctionBody(func, EXPRESSION_RESULT));
+    appendFinalReturn(processFunctionBody(m, func, EXPRESSION_RESULT));
   } else {
     // func has no return
-    flattenAppend(ret, processFunctionBody(func, NO_RESULT));
+    flattenAppend(ret, processFunctionBody(m, func, NO_RESULT));
   }
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
       theVar,
-      fromName(func->getLocalNameOrGeneric(i)),
+      fromName(func->getLocalNameOrGeneric(i), NameScope::Local),
       makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i)))
     );
   }
@@ -637,16 +744,10 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      if (parent->isStatement(curr->target)) {
-        parent->setStatement(curr);
-        return;
-      }
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
+      // TODO: this is a pessimization that probably wants to get tweaked in
+      // the future. If none of the arguments have any side effects then we
+      // should be able to safely have tighter codegen.
+      parent->setStatement(curr);
     }
     void visitSetLocal(SetLocal* curr) {
       if (parent->isStatement(curr->value)) {
@@ -659,9 +760,7 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
       }
     }
     void visitStore(Store* curr) {
-      if (parent->isStatement(curr->ptr) || parent->isStatement(curr->value)) {
-        parent->setStatement(curr);
-      }
+      parent->setStatement(curr);
     }
     void visitUnary(Unary* curr) {
       if (parent->isStatement(curr->value)) {
@@ -693,13 +792,15 @@ void Wasm2AsmBuilder::scanFunctionBody(Expression* curr) {
   ExpressionScanner(this).walk(curr);
 }
 
-Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
+Ref Wasm2AsmBuilder::processFunctionBody(Module* m, Function* func, IString result) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
     Wasm2AsmBuilder* parent;
     IString result;
     Function* func;
+    Module* module;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2AsmBuilder* parent, Function* func) : parent(parent), func(func) {}
+    ExpressionProcessor(Wasm2AsmBuilder* parent, Module* m, Function* func)
+      : parent(parent), func(func), module(m) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -797,8 +898,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     // Breaks to the top of a loop should be emitted as continues, to that loop's main label
     std::unordered_set<Name> continueLabels;
 
-    IString fromName(Name name) {
-      return parent->fromName(name);
+    IString fromName(Name name, NameScope scope) {
+      return parent->fromName(name, scope);
     }
 
     // Visitors
@@ -815,7 +916,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         flattenAppend(ret, visitAndAssign(curr->list[size-1], result));
       }
       if (curr->name.is()) {
-        ret = ValueBuilder::makeLabel(fromName(curr->name), ret);
+        ret = ValueBuilder::makeLabel(fromName(curr->name, NameScope::Label), ret);
       }
       return ret;
     }
@@ -841,9 +942,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Name asmLabel = curr->name;
       continueLabels.insert(asmLabel);
       Ref body = blockify(visit(curr->body, result));
-      flattenAppend(body, ValueBuilder::makeBreak(fromName(asmLabel)));
+      flattenAppend(body, ValueBuilder::makeBreak(fromName(asmLabel, NameScope::Label)));
       Ref ret = ValueBuilder::makeDo(body, ValueBuilder::makeInt(1));
-      return ValueBuilder::makeLabel(fromName(asmLabel), ret);
+      return ValueBuilder::makeLabel(fromName(asmLabel, NameScope::Label), ret);
     }
 
     Ref visitBreak(Break* curr) {
@@ -859,9 +960,9 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       Ref theBreak;
       auto iter = continueLabels.find(curr->name);
       if (iter == continueLabels.end()) {
-        theBreak = ValueBuilder::makeBreak(fromName(curr->name));
+        theBreak = ValueBuilder::makeBreak(fromName(curr->name, NameScope::Label));
       } else {
-        theBreak = ValueBuilder::makeContinue(fromName(curr->name));
+        theBreak = ValueBuilder::makeContinue(fromName(curr->name, NameScope::Label));
       }
       if (!curr->value) return theBreak;
       // generate the value, including assigning to the result, and then do the break
@@ -889,19 +990,28 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       ret[1]->push_back(theSwitch);
       for (size_t i = 0; i < curr->targets.size(); i++) {
         ValueBuilder::appendCaseToSwitch(theSwitch, ValueBuilder::makeNum(i));
-        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i]))), false);
+        ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->targets[i], NameScope::Label))), false);
       }
       ValueBuilder::appendDefaultToSwitch(theSwitch);
-      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_))), false);
+      ValueBuilder::appendCodeToSwitch(theSwitch, blockify(ValueBuilder::makeBreak(fromName(curr->default_, NameScope::Label))), false);
       return ret;
     }
 
-    Ref makeStatementizedCall(ExpressionList& operands, Ref ret, Ref theCall, IString result, Type type) {
+    Ref makeStatementizedCall(ExpressionList& operands,
+                              Ref ret,
+                              std::function<Ref()> genTheCall,
+                              IString result,
+                              Type type) {
       std::vector<ScopedTemp*> temps; // TODO: utility class, with destructor?
       for (auto& operand : operands) {
         temps.push_back(new ScopedTemp(operand->type, parent, func));
         IString temp = temps.back()->temp;
         flattenAppend(ret, visitAndAssign(operand, temp));
+      }
+      Ref theCall = genTheCall();
+      for (size_t i = 0; i < temps.size(); i++) {
+        IString temp = temps[i]->temp;
+        auto &operand = operands[i];
         theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp), wasmToAsmType(operand->type)));
       }
       theCall = makeAsmCoercion(theCall, wasmToAsmType(type));
@@ -919,7 +1029,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
 
     Ref visitGenericCall(Expression* curr, Name target,
                          ExpressionList& operands) {
-      Ref theCall = ValueBuilder::makeCall(fromName(target));
+      Ref theCall = ValueBuilder::makeCall(fromName(target, NameScope::Top));
       if (!isStatement(curr)) {
         // none of our operands is a statement; go right ahead and create a
         // simple expression
@@ -931,7 +1041,8 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
       }
       // we must statementize them all
-      return makeStatementizedCall(operands, ValueBuilder::makeBlock(), theCall,
+      return makeStatementizedCall(operands, ValueBuilder::makeBlock(),
+                                   [&]() { return theCall; },
                                    result, curr->type);
     }
 
@@ -944,34 +1055,34 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     Ref visitCallIndirect(CallIndirect* curr) {
-      std::string stable = std::string("FUNCTION_TABLE_") + curr->fullType.c_str();
+      // TODO: the codegen here is a pessimization of what the ideal codegen
+      // looks like. Eventually if necessary this should be tightened up in the
+      // case that the argument expression don't have any side effects.
+      assert(isStatement(curr));
+      std::string stable = std::string("FUNCTION_TABLE_") +
+        getSig(module->getFunctionType(curr->fullType));
       IString table = IString(stable.c_str(), false);
-      auto makeTableCall = [&](Ref target) {
-        return ValueBuilder::makeCall(ValueBuilder::makeSub(
-          ValueBuilder::makeName(table),
-          ValueBuilder::makeBinary(target, AND, ValueBuilder::makeInt(parent->getTableSize()-1))
-        ));
-      };
-      if (!isStatement(curr)) {
-        // none of our operands is a statement; go right ahead and create a simple expression
-        Ref theCall = makeTableCall(visit(curr->target, EXPRESSION_RESULT));
-        for (auto operand : curr->operands) {
-          theCall[2]->push_back(makeAsmCoercion(visit(operand, EXPRESSION_RESULT), wasmToAsmType(operand->type)));
-        }
-        return makeAsmCoercion(theCall, wasmToAsmType(curr->type));
-      }
-      // we must statementize them all
       Ref ret = ValueBuilder::makeBlock();
-      ScopedTemp temp(i32, parent, func);
-      flattenAppend(ret, visit(curr->target, temp));
-      Ref theCall = makeTableCall(temp.getAstName());
-      return makeStatementizedCall(curr->operands, ret, theCall, result, curr->type);
+      ScopedTemp idx(i32, parent, func);
+      return makeStatementizedCall(
+        curr->operands,
+        ret,
+        [&]() {
+          flattenAppend(ret, visitAndAssign(curr->target, idx));
+          return ValueBuilder::makeCall(ValueBuilder::makeSub(
+            ValueBuilder::makeName(table),
+            ValueBuilder::makeBinary(idx.getAstName(), AND, ValueBuilder::makeInt(parent->getTableSize()-1))
+          ));
+        },
+        result,
+        curr->type
+      );
     }
 
-    Ref makeSetVar(Expression* curr, Expression* value, Name name) {
+    Ref makeSetVar(Expression* curr, Expression* value, Name name, NameScope scope) {
       if (!isStatement(curr)) {
         return ValueBuilder::makeBinary(
-          ValueBuilder::makeName(fromName(name)), SET,
+          ValueBuilder::makeName(fromName(name, scope)), SET,
           visit(value, EXPRESSION_RESULT)
         );
       }
@@ -983,7 +1094,7 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       ret[1]->push_back(
         ValueBuilder::makeStatement(
           ValueBuilder::makeBinary(
-            ValueBuilder::makeName(fromName(name)), SET,
+            ValueBuilder::makeName(fromName(name, scope)), SET,
             temp.getAstName()
           )
         )
@@ -993,20 +1104,25 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
 
     Ref visitGetLocal(GetLocal* curr) {
       return ValueBuilder::makeName(
-        fromName(func->getLocalNameOrGeneric(curr->index))
+        fromName(func->getLocalNameOrGeneric(curr->index), NameScope::Local)
       );
     }
 
     Ref visitSetLocal(SetLocal* curr) {
-      return makeSetVar(curr, curr->value, func->getLocalNameOrGeneric(curr->index));
+      return makeSetVar(
+        curr,
+        curr->value,
+        func->getLocalNameOrGeneric(curr->index),
+        NameScope::Local
+      );
     }
 
     Ref visitGetGlobal(GetGlobal* curr) {
-      return ValueBuilder::makeName(fromName(curr->name));
+      return ValueBuilder::makeName(fromName(curr->name, NameScope::Top));
     }
 
     Ref visitSetGlobal(SetGlobal* curr) {
-      return makeSetVar(curr, curr->value, curr->name);
+      return makeSetVar(curr, curr->value, curr->name, NameScope::Top);
     }
 
     Ref visitLoad(Load* curr) {
@@ -1108,8 +1224,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
         ScopedTemp tempValue(curr->valueType, parent, func);
         GetLocal fakeLocalPtr(allocator);
         fakeLocalPtr.index = func->getLocalIndex(tempPtr.getName());
+        fakeLocalPtr.type = curr->ptr->type;
         GetLocal fakeLocalValue(allocator);
         fakeLocalValue.index = func->getLocalIndex(tempValue.getName());
+        fakeLocalValue.type = curr->value->type;
         Store fakeStore = *curr;
         fakeStore.ptr = &fakeLocalPtr;
         fakeStore.value = &fakeLocalValue;
@@ -1285,7 +1403,10 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
               Ref store = ValueBuilder::makeBinary(ret, SET, value);
               return ValueBuilder::makeSeq(
                 store,
-                ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero)
+                makeAsmCoercion(
+                  ValueBuilder::makeSub(ValueBuilder::makeName(HEAP32), zero),
+                  ASM_INT
+                )
               );
             }
             // generate (~~expr), what Emscripten does
@@ -1648,11 +1769,11 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
           tempCondition(i32, parent, func);
       return
         ValueBuilder::makeSeq(
-          ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
+          ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
           ValueBuilder::makeSeq(
-            ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
+            ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
             ValueBuilder::makeSeq(
-              ValueBuilder::makeBinary(tempIfFalse.getAstName(), SET, ifFalse),
+              ValueBuilder::makeBinary(tempCondition.getAstName(), SET, condition),
               ValueBuilder::makeConditional(
                 tempCondition.getAstName(),
                 tempIfTrue.getAstName(),
@@ -1664,28 +1785,47 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
     }
 
     Ref visitReturn(Return* curr) {
-      Ref val = (curr->value == nullptr) ?
-          Ref() :
-          makeAsmCoercion(
-            visit(curr->value, NO_RESULT),
-            wasmToAsmType(curr->value->type)
-          );
-      return ValueBuilder::makeReturn(val);
+      if (curr->value == nullptr) {
+        return ValueBuilder::makeReturn(Ref());
+      }
+      if (isStatement(curr->value)) {
+        ScopedTemp temp(curr->value->type, parent, func);
+        Ref ret = ValueBuilder::makeBlock();
+        flattenAppend(ret, visitAndAssign(curr->value, temp));
+        Ref coerced = makeAsmCoercion(
+          temp.getAstName(),
+          wasmToAsmType(curr->value->type)
+        );
+        flattenAppend(ret, ValueBuilder::makeReturn(coerced));
+        return ret;
+      } else {
+        Ref val = makeAsmCoercion(
+          visit(curr->value, NO_RESULT),
+          wasmToAsmType(curr->value->type)
+        );
+        return ValueBuilder::makeReturn(val);
+      }
     }
 
     Ref visitHost(Host* curr) {
+      Ref call;
       if (curr->op == HostOp::GrowMemory) {
         parent->setNeedsAlmostASM("grow_memory op");
-        return ValueBuilder::makeCall(WASM_GROW_MEMORY,
+        call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
-      }
-      if (curr->op == HostOp::CurrentMemory) {
+      } else if (curr->op == HostOp::CurrentMemory) {
         parent->setNeedsAlmostASM("current_memory op");
-        return ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+        call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+      } else {
+        return ValueBuilder::makeCall(ABORT_FUNC);
       }
-      return ValueBuilder::makeCall(ABORT_FUNC);
+      if (isStatement(curr)) {
+        return ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, call);
+      } else {
+        return call;
+      }
     }
 
     Ref visitNop(Nop* curr) {
@@ -1696,38 +1836,57 @@ Ref Wasm2AsmBuilder::processFunctionBody(Function* func, IString result) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };
-  return ExpressionProcessor(this, func).visit(func->body, result);
+  return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
-static void makeInstantiation(Ref ret) {
-  // var __array_buffer = new ArrayBuffer(..)
-  Ref mem = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(ARRAY_BUFFER, ValueBuilder::makeInt(0x10000)));
-  Ref arrayBuffer = ValueBuilder::makeVar();
+static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
   Name buffer("__array_buffer");
-  ValueBuilder::appendToVar(arrayBuffer, buffer, mem);
-  flattenAppend(ret, arrayBuffer);
+  if (first) {
+    // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
+    // generated
+    flattenAppend(ret, ValueBuilder::makeName(R"(
+      var __array_buffer = new ArrayBuffer(65536)
+      var HEAP32 = new Int32Array(__array_buffer);
+      var HEAPF32 = new Float32Array(__array_buffer);
+      var HEAPF64 = new Float64Array(__array_buffer);
+      var nan = NaN;
+      var infinity = Infinity;
+    )"));
 
-  // var HEAP32 = new Int32Array(__array_buffer);
-  Ref heap32Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(INT32ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heap32 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heap32, HEAP32, heap32Array);
-  flattenAppend(ret, heap32);
+    // When equating floating point values in spec tests we want to use bitwise
+    // equality like wasm does. Unfortunately though NaN makes this tricky. JS
+    // implementations like Spidermonkey and JSC will canonicalize NaN loads from
+    // `Float32Array`, but V8 will not. This means that NaN representations are
+    // kind of all over the place and difficult to bitwise equate.
+    //
+    // To work around this problem we just use a small shim which considers all
+    // NaN representations equivalent and otherwise tests for bitwise equality.
+    flattenAppend(ret, ValueBuilder::makeName(R"(
+      function f32Equal(a, b) {
+         var i = new Int32Array(1);
+         var f = new Float32Array(i.buffer);
+         f[0] = a;
+         var ai = f[0];
+         f[0] = b;
+         var bi = f[0];
 
-  // var HEAPF32 = new Float32Array(__array_buffer);
-  Ref heapf32Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(FLOAT32ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heapf32 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heapf32, HEAPF32, heapf32Array);
-  flattenAppend(ret, heapf32);
+         return (isNaN(a) && isNaN(b)) || a == b;
+      }
 
-  // var HEAPF64 = new Float64Array(__array_buffer);
-  Ref heapf64Array = ValueBuilder::makeNew(
-      ValueBuilder::makeCall(FLOAT64ARRAY, ValueBuilder::makeName(buffer)));
-  Ref heapf64 = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(heapf64, HEAPF64, heapf64Array);
-  flattenAppend(ret, heapf64);
+      function f64Equal(a, b) {
+         var i = new Int32Array(2);
+         var f = new Float64Array(i.buffer);
+         f[0] = a;
+         var ai1 = i[0];
+         var ai2 = i[1];
+         f[0] = b;
+         var bi1 = i[0];
+         var bi2 = i[1];
+
+         return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
+      }
+    )"));
+  }
 
   Ref lib = ValueBuilder::makeObject();
   auto insertItem = [&](IString item) {
@@ -1742,64 +1901,39 @@ static void makeInstantiation(Ref ret) {
   insertItem(UINT32ARRAY);
   insertItem(FLOAT32ARRAY);
   insertItem(FLOAT64ARRAY);
+  // TODO: these shouldn't be necessary once we don't generate literal asm.js
+  // code
+  insertItem("Infinity");
+  insertItem("NaN");
   Ref env = ValueBuilder::makeObject();
-  Ref call = ValueBuilder::makeCall(IString(ASM_FUNC), lib, env,
+  Ref abortFunc = ValueBuilder::makeFunction("abort");
+  abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
+  ValueBuilder::appendToObject(env, "abort", abortFunc);
+
+  Ref printFunc = ValueBuilder::makeFunction("print");
+  abortFunc[3]->push_back(ValueBuilder::makeCall("console_log"));
+  ValueBuilder::appendToObject(env, "print", printFunc);
+  Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
       ValueBuilder::makeName(buffer));
   Ref module = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(module, ASM_MODULE, call);
+  ValueBuilder::appendToVar(module, moduleName, call);
   flattenAppend(ret, module);
-
-  // When equating floating point values in spec tests we want to use bitwise
-  // equality like wasm does. Unfortunately though NaN makes this tricky. JS
-  // implementations like Spidermonkey and JSC will canonicalize NaN loads from
-  // `Float32Array`, but V8 will not. This means that NaN representations are
-  // kind of all over the place and difficult to bitwise equate.
-  //
-  // To work around this problem we just use a small shim which considers all
-  // NaN representations equivalent and otherwise tests for bitwise equality.
-  flattenAppend(ret, ValueBuilder::makeName(R"(
-    function f32Equal(a, b) {
-       var i = new Int32Array(1);
-       var f = new Float32Array(i.buffer);
-       f[0] = a;
-       var ai = f[0];
-       f[0] = b;
-       var bi = f[0];
-
-       return (isNaN(a) && isNaN(b)) || a == b;
-    }
-  )"));
-  flattenAppend(ret, ValueBuilder::makeName(R"(
-    function f64Equal(a, b) {
-       var i = new Int32Array(2);
-       var f = new Float64Array(i.buffer);
-       f[0] = a;
-       var ai1 = i[0];
-       var ai2 = i[1];
-       f[0] = b;
-       var bi1 = i[0];
-       var bi2 = i[1];
-
-       return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
-    }
-  )"));
 
   // 64-bit numbers get a different ABI w/ wasm2asm, and in general you can't
   // actually export them from wasm at the boundary. We hack around this though
   // to get the spec tests working.
   flattenAppend(ret, ValueBuilder::makeName(R"(
-    function i64Equal(actual_lo, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) &&
-          asmModule.__wasm_fetch_high_bits() == (expected_hi | 0);
+    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
     }
   )"));
 }
 
-static void prefixCalls(Ref asmjs) {
+static void prefixCalls(Ref asmjs, Name asmModule) {
   if (asmjs->isArray()) {
     ArrayStorage& arr = asmjs->getArray();
     for (Ref& r : arr) {
-      prefixCalls(r);
+      prefixCalls(r, asmModule);
     }
     if (arr.size() > 0 && arr[0]->isString() && arr[0]->getIString() == CALL) {
       assert(arr.size() >= 2);
@@ -1811,7 +1945,7 @@ static void prefixCalls(Ref asmjs) {
       } else if (arr[1]->getIString() == "Math_fround") {
         arr[1]->setString("Math.fround");
       } else {
-        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(ASM_MODULE),
+        Ref prefixed = ValueBuilder::makeDot(ValueBuilder::makeName(asmModule),
                                              arr[1]->getIString());
         arr[1]->setArray(prefixed->getArray());
       }
@@ -1819,14 +1953,20 @@ static void prefixCalls(Ref asmjs) {
   }
 
   if (asmjs->isAssign()) {
-    prefixCalls(asmjs->asAssign()->target());
-    prefixCalls(asmjs->asAssign()->value());
+    prefixCalls(asmjs->asAssign()->target(), asmModule);
+    prefixCalls(asmjs->asAssign()->value(), asmModule);
+  }
+  if (asmjs->isAssignName()) {
+    prefixCalls(asmjs->asAssignName()->value(), asmModule);
   }
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+                                          Module* wasm,
                                           Builder& wasmBuilder,
-                                          Element& e, Name testFuncName) {
+                                          Element& e,
+                                          Name testFuncName,
+                                          Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = nullptr;
   if (e.size() == 2) {
@@ -1848,7 +1988,11 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
         break;
 
       case i64:
-        body = wasmBuilder.makeCall("i64Equal", {actual, expected}, i32);
+        body = wasmBuilder.makeCall(
+          "i64Equal",
+          {actual, wasmBuilder.makeCall(WASM_FETCH_HIGH_BITS, {}, i32), expected},
+          i32
+        );
         break;
 
       case f32: {
@@ -1877,14 +2021,17 @@ Ref Wasm2AsmBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
       body
     )
   );
-  Ref jsFunc = processFunction(testFunc.get());
-  prefixCalls(jsFunc);
+  Ref jsFunc = processFunction(wasm, testFunc.get());
+  prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+                                             Module* wasm,
                                              Builder& wasmBuilder,
-                                             Element& e, Name testFuncName) {
+                                             Element& e,
+                                             Name testFuncName,
+                                             Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
   Expression* body = wasmBuilder.makeCallImport("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
@@ -1896,14 +2043,17 @@ Ref Wasm2AsmBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder
       body
     )
   );
-  Ref jsFunc = processFunction(testFunc.get());
-  prefixCalls(jsFunc);
+  Ref jsFunc = processFunction(wasm, testFunc.get());
+  prefixCalls(jsFunc, asmModule);
   return jsFunc;
 }
 
 Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+                                        Module* wasm,
                                         Builder& wasmBuilder,
-                                        Element& e, Name testFuncName) {
+                                        Element& e,
+                                        Name testFuncName,
+                                        Name asmModule) {
   Name innerFuncName("f");
   Expression* expr = sexpBuilder.parseExpression(e[1]);
   std::unique_ptr<Function> exprFunc(
@@ -1914,8 +2064,8 @@ Ref Wasm2AsmBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                              expr)
   );
   IString expectedErr = e[2]->str();
-  Ref innerFunc = processFunction(exprFunc.get());
-  prefixCalls(innerFunc);
+  Ref innerFunc = processFunction(wasm, exprFunc.get());
+  prefixCalls(innerFunc, asmModule);
   Ref outerFunc = ValueBuilder::makeFunction(testFuncName);
   outerFunc[3]->push_back(innerFunc);
   Ref tryBlock = ValueBuilder::makeBlock();
@@ -2109,13 +2259,28 @@ bool Wasm2AsmBuilder::isAssertHandled(Element& e) {
       && (*e[1])[0]->str() == Name("invoke");
 }
 
-Ref Wasm2AsmBuilder::processAsserts(Element& root,
-                                   SExpressionWasmBuilder& sexpBuilder) {
+Ref Wasm2AsmBuilder::processAsserts(Module* wasm,
+                                    Element& root,
+                                    SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
   Ref ret = ValueBuilder::makeBlock();
-  makeInstantiation(ret);
+  Name asmModule = ASM_MODULE;
+  makeInstantiation(ret, ASM_FUNC, asmModule, true);
   for (size_t i = 1; i < root.size(); ++i) {
     Element& e = *root[i];
+    if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
+      std::stringstream funcNameS;
+      funcNameS << ASM_FUNC.c_str() << i;
+      std::stringstream moduleNameS;
+      moduleNameS << ASM_MODULE.c_str() << i;
+      Name funcName(funcNameS.str().c_str());
+      asmModule = Name(moduleNameS.str().c_str());
+      Module wasm;
+      SExpressionWasmBuilder builder(wasm, e);
+      flattenAppend(ret, processWasm(&wasm, funcName));
+      makeInstantiation(ret, funcName, asmModule, false);
+      continue;
+    }
     if (!isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
@@ -2130,18 +2295,19 @@ Ref Wasm2AsmBuilder::processAsserts(Element& root,
     testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
 
     Ref testFunc = isReturn ?
-        makeAssertReturnFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
+        makeAssertReturnFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule) :
         (isReturnNan ?
-          makeAssertReturnNanFunc(sexpBuilder, wasmBuilder, e, testFuncName) :
-          makeAssertTrapFunc(sexpBuilder, wasmBuilder, e, testFuncName));
+          makeAssertReturnNanFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule) :
+          makeAssertTrapFunc(sexpBuilder, wasm, wasmBuilder, e, testFuncName, asmModule));
 
     flattenAppend(ret, testFunc);
     std::stringstream failFuncName;
     failFuncName << "fail" << std::to_string(i);
+    IString testName = fromName(testFuncName, NameScope::Top);
     flattenAppend(
       ret,
       ValueBuilder::makeIf(
-        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testFuncName)),
+        ValueBuilder::makeUnary(L_NOT, ValueBuilder::makeCall(testName)),
         ValueBuilder::makeCall(IString(failFuncName.str().c_str(), false)),
         Ref()
       )
