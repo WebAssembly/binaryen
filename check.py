@@ -419,8 +419,13 @@ def run_binaryen_js_tests():
 
     def test(engine):
       cmd = [engine, 'a.js']
-      expected_status = 1 if 'fatal' in s else 0
-      out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=expected_status)
+      if 'fatal' not in s:
+        out = run_command(cmd, stderr=subprocess.STDOUT)
+      else:
+        # expect an error - the specific error code will depend on the vm
+        out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
+        # strip out the stack trace, which varies by vm
+        out = out.split(os.linesep)[0]
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
       if expected not in out:
         fail(out, expected)
@@ -433,7 +438,6 @@ def run_binaryen_js_tests():
         test(NODEJS)
       else:
         print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
-
 
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
