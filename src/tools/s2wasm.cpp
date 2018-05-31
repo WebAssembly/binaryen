@@ -177,10 +177,9 @@ int main(int argc, const char *argv[]) {
     emitBinary = false;
   }
 
-  if (allowMemoryGrowth && !generateEmscriptenGlue) {
-    Fatal() << "Error: adding memory growth code without Emscripten glue. "
-      "This doesn't do anything.\n";
-  }
+  FatalIf(allowMemoryGrowth && !generateEmscriptenGlue)
+    << "Error: adding memory growth code without Emscripten glue. "
+       "This doesn't do anything.\n";
 
   auto debugFlag = options.debug ? Flags::Debug : Flags::Release;
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text, debugFlag));
@@ -221,7 +220,7 @@ int main(int argc, const char *argv[]) {
     auto archiveFile(read_file<std::vector<char>>(m, Flags::Binary, debugFlag));
     bool error;
     Archive lib(archiveFile, error);
-    if (error) Fatal() << "Error opening archive " << m << "\n";
+    FatalIf(error) << "Error opening archive " << m << "\n";
     linker.linkArchive(lib);
   }
 
