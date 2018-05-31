@@ -439,6 +439,7 @@ def run_binaryen_js_tests():
       else:
         print 'Skipping ' + test_path + ' because WebAssembly might not be supported'
 
+
 def run_validator_tests():
   print '\n[ running validation tests... ]\n'
   # Ensure the tests validate by default
