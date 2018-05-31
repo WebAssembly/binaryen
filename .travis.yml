@@ -33,6 +33,7 @@ jobs:
       before_script:
         - ./check.py --test-waterfall --only-prepare
       script:
+        - set -o errexit
         - flake8
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
