@@ -207,16 +207,16 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
     }
     const auto& tableSegmentData = wasm.table.segments[0].data;
 
+    jsCallStartIndex =
+        wasm.table.segments[0].offset->cast<Const>()->value.getInteger();
     // Check if jsCalls have already been created
     for (Index i = 0; i < tableSegmentData.size(); ++i) {
       if (tableSegmentData[i].startsWith("jsCall_")) {
-        jsCallStartIndex = i;
+        jsCallStartIndex += i;
         return;
       }
     }
-    jsCallStartIndex =
-        wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-        tableSegmentData.size();
+    jsCallStartIndex += tableSegmentData.size();
   }
 
   // Gather all function signatures used in call_indirect, because any of them
