@@ -141,7 +141,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("pick-load-signs");
   }
-  add("precompute");
+  // early propagation
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("precompute-propagate");
+  } else {
+    add("precompute");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
@@ -164,7 +169,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  // if we are willing to work hard, also propagate
+  // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
   } else {

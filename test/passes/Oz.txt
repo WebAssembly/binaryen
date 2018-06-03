@@ -31,10 +31,7 @@
     (i32.load
      (get_local $2)
     )
-    (i32.xor
-     (i32.const 74)
-     (i32.const -1)
-    )
+    (i32.const -75)
    )
   )
   (i32.store
