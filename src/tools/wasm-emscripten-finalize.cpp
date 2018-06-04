@@ -132,7 +132,6 @@ int main(int argc, const char *argv[]) {
   ModuleWriter writer;
   writer.setDebug(options.debug);
   writer.setDebugInfo(debugInfo);
-  // writer.setDebugInfo(options.passOptions.debugInfo);
   // writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
   // if (emitBinary) {
