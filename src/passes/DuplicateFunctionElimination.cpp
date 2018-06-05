@@ -23,6 +23,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ir/utils.h"
+#include "ir/function-utils.h"
 #include "ir/hashed.h"
 
 namespace wasm {
@@ -80,7 +81,7 @@ std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
             if (duplicates.count(second->name)) continue;
-            if (equal(first, second)) {
+            if (FunctionUtils::equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
@@ -137,18 +138,6 @@ for (auto& iter : replacements) {
         break;
       }
     }
-  }
-
-private:
-  bool equal(Function* left, Function* right) {
-    if (left->getNumParams() != right->getNumParams()) return false;
-    if (left->getNumVars() != right->getNumVars()) return false;
-    for (Index i = 0; i < left->getNumLocals(); i++) {
-      if (left->getLocalType(i) != right->getLocalType(i)) return false;
-    }
-    if (left->result != right->result) return false;
-    if (left->type != right->type) return false;
-    return ExpressionAnalyzer::equal(left->body, right->body);
   }
 };
 
