@@ -589,7 +589,7 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
       return;
 
     if (curr->base != curr->name) {
-      Fatal() << "Import name and function name to not match: '" << curr->base << "' '" << curr->name << "'";
+      Fatal() << "Import name and function name do not match: '" << curr->base << "' '" << curr->name << "'";
     }
 
     assert(importRenames.count(curr->name) == 0);
