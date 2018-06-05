@@ -55,6 +55,7 @@ Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
+Pass* createPrintFunctionHashesPass();
 Pass* createRelooperJumpThreadingPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();

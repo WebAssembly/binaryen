@@ -53,6 +53,51 @@ template<typename T>
 class HashedExpressionMap : public std::unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
 };
 
+// A pass that hashes all functions
+
+struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
+  bool isFunctionParallel() override { return true; }
+
+  struct Map : public std::map<Function*, uint32_t> {};
+
+  FunctionHasher(Map* output) : output(output) {}
+
+  FunctionHasher* create() override {
+    return new FunctionHasher(output);
+  }
+
+  static Map createMap(Module* module) {
+    Map hashes;
+    for (auto& func : module->functions) {
+      hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
+    }
+    return hashes;
+  }
+
+  void doWalkFunction(Function* func) {
+    assert(digest == 0);
+    hash(func->getNumParams());
+    for (auto type : func->params) hash(type);
+    hash(func->getNumVars());
+    for (auto type : func->vars) hash(type);
+    hash(func->result);
+    hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
+    hash(ExpressionAnalyzer::hash(func->body));
+    output->at(func) = digest;
+  }
+
+private:
+  Map* output;
+  uint32_t digest = 0;
+
+  void hash(uint32_t hash) {
+    digest = rehash(digest, hash);
+  }
+  void hash64(uint64_t hash) {
+    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
+  };
+};
+
 } // namespace wasm
 
 #endif // _wasm_ir_hashed_h

@@ -23,42 +23,9 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ir/utils.h"
-#include "support/hash.h"
+#include "ir/hashed.h"
 
 namespace wasm {
-
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
-  bool isFunctionParallel() override { return true; }
-
-  FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
-
-  FunctionHasher* create() override {
-    return new FunctionHasher(output);
-  }
-
-  void doWalkFunction(Function* func) {
-    assert(digest == 0);
-    hash(func->getNumParams());
-    for (auto type : func->params) hash(type);
-    hash(func->getNumVars());
-    for (auto type : func->vars) hash(type);
-    hash(func->result);
-    hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
-    hash(ExpressionAnalyzer::hash(func->body));
-    output->at(func) = digest;
-  }
-
-private:
-  std::map<Function*, uint32_t>* output;
-  uint32_t digest = 0;
-
-  void hash(uint32_t hash) {
-    digest = rehash(digest, hash);
-  }
-  void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
-  };
-};
 
 struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
   bool isFunctionParallel() override { return true; }
@@ -82,12 +49,11 @@ private:
 
 struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
+// XXX based on opt level, -O1 should stop after max say 5 passes. hard limit
     while (1) {
+std::cout << "do a pass!\n";
       // Hash all the functions
-      hashes.clear();
-      for (auto& func : module->functions) {
-        hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
-      }
+      auto hashes = FunctionHasher::createMap(module);
       PassRunner hasherRunner(module);
       hasherRunner.setIsNested(true);
       hasherRunner.add<FunctionHasher>(&hashes);
@@ -95,6 +61,7 @@ struct DuplicateFunctionElimination : public Pass {
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
+std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
         hashGroups[hashes[func.get()]].push_back(func.get());
       }
       // Find actually equal functions and prepare to replace them
@@ -117,12 +84,21 @@ struct DuplicateFunctionElimination : public Pass {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
-            }
+            } else {
+std::cout << "surprisingly unequal :( " << first->name << " , " << second->name << "\n";
+}
           }
         }
       }
       // perform replacements
       if (replacements.size() > 0) {
+
+std::cout << replacements.size() << '\n';
+for (auto& iter : replacements) {
+  std::cout << iter.first << " => " << iter.second << '\n';
+  break;
+}
+
         // remove the duplicates
         auto& v = module->functions;
         v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
@@ -164,8 +140,6 @@ struct DuplicateFunctionElimination : public Pass {
   }
 
 private:
-  std::map<Function*, uint32_t> hashes;
-
   bool equal(Function* left, Function* right) {
     if (left->getNumParams() != right->getNumParams()) return false;
     if (left->getNumVars() != right->getNumVars()) return false;
