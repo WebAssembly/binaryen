@@ -272,8 +272,6 @@ if options.only_prepare:
   print 'waterfall is fetched and setup, exiting since --only-prepare'
   sys.exit(0)
 
-check_binaryen_bin()
-
 # external tools
 
 try:
