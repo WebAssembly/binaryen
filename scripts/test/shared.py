@@ -191,6 +191,8 @@ WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]
 
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
+
 
 def wrap_with_valgrind(cmd):
   # Exit code 97 is arbitrary, used to easily detect when an error occurs that

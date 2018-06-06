@@ -21,7 +21,7 @@ import sys
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
+    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE, BINARYEN_JS,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_METADCE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
@@ -393,9 +393,15 @@ def run_spec_tests():
 
 
 def run_binaryen_js_tests():
-  if not MOZJS and not NODEJS:
+  if not (MOZJS or NODEJS):
+    print 'no vm to run binaryen.js tests'
     return
+
   node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
+
+  if not os.path.exists(BINARYEN_JS):
+    print 'no binaryen.js build to test'
+    return
 
   print '\n[ checking binaryen.js testcases... ]\n'
 
@@ -408,7 +414,7 @@ def run_binaryen_js_tests():
     f.write('''
       console.warn = function(x) { console.log(x) };
     ''')
-    binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
+    binaryen_js = open(BINARYEN_JS).read()
     f.write(binaryen_js)
     if NODEJS:
       f.write(node_test_glue())
