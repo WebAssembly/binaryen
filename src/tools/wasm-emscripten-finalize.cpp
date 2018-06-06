@@ -93,9 +93,9 @@ int main(int argc, const char *argv[]) {
   try {
     reader.read(infile, wasm);
   } catch (ParseException& p) {
-     p.dump(std::cerr);
-     std::cerr << '\n';
-     Fatal() << "error in parsing input";
+    p.dump(std::cerr);
+    std::cerr << '\n';
+    Fatal() << "error in parsing input";
   }
 
   if (options.debug) {
