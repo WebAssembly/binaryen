@@ -90,7 +90,13 @@ int main(int argc, const char *argv[]) {
 
   Module wasm;
   ModuleReader reader;
-  reader.read(infile, wasm);
+  try {
+    reader.read(infile, wasm);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    std::cerr << '\n';
+    Fatal() << "error in parsing input";
+  }
 
   if (options.debug) {
     std::cerr << "Module before:\n";
