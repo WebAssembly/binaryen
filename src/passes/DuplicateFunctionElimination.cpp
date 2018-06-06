@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -52,7 +53,7 @@ struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
 // XXX based on opt level, -O1 should stop after max say 5 passes. hard limit
     while (1) {
-std::cout << "do a pass!\n";
+//std::cout << "waka do a pass!\n";
       // Hash all the functions
       auto hashes = FunctionHasher::createMap(module);
       PassRunner hasherRunner(module);
@@ -62,7 +63,7 @@ std::cout << "do a pass!\n";
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
-std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
+//std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
         hashGroups[hashes[func.get()]].push_back(func.get());
       }
       // Find actually equal functions and prepare to replace them
@@ -86,7 +87,12 @@ std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
             } else {
-std::cout << "surprisingly unequal :( " << first->name << " , " << second->name << "\n";
+//std::cout << "surprisingly unequal :( " << first->name << " , " << second->name << " : " << hashes[first] << " : " << hashes[second] << "\n";
+if (first->name.startsWith("___cxx_global_var_init")) {
+  //std::cout << "waka HERE " << *first->body << '\n' << *second->body << '\n';
+std::cout << "HERE\n";
+exit(110);
+}
 }
           }
         }
@@ -94,11 +100,11 @@ std::cout << "surprisingly unequal :( " << first->name << " , " << second->name 
       // perform replacements
       if (replacements.size() > 0) {
 
-std::cout << replacements.size() << '\n';
-for (auto& iter : replacements) {
-  std::cout << iter.first << " => " << iter.second << '\n';
-  break;
-}
+//std::cout << replacements.size() << '\n';
+//for (auto& iter : replacements) {
+  //std::cout << iter.first << " => " << iter.second << '\n';
+//  break;
+//}
 
         // remove the duplicates
         auto& v = module->functions;

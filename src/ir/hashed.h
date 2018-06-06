@@ -81,7 +81,7 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
     hash(func->getNumVars());
     for (auto type : func->vars) hash(type);
     hash(func->result);
-    hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
+    hash(func->type.is() ? std::hash<wasm::Name>{}(func->type) : uint32_t(0));
     hash(ExpressionAnalyzer::hash(func->body));
     output->at(func) = digest;
   }
@@ -93,9 +93,6 @@ private:
   void hash(uint32_t hash) {
     digest = rehash(digest, hash);
   }
-  void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
-  };
 };
 
 } // namespace wasm

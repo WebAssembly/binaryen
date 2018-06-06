@@ -26,7 +26,7 @@ namespace FunctionUtils {
 
 // Checks if two functions are equal in all functional aspects,
 // everything but their name (which can't be the same, in the same
-// module!) - same params, vars, body, type, result, etc.
+// module!) - same params, vars, body, result, etc.
 inline bool equal(Function* left, Function* right) {
   if (left->getNumParams() != right->getNumParams()) return false;
   if (left->getNumVars() != right->getNumVars()) return false;
