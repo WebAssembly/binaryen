@@ -70,6 +70,8 @@ This repository contains code that builds the following tools in `bin/`:
  * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to use Binaryen with Emscripten and execute code compiled to WASM even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen).
 
+can we link to a direct binaryen.js download for those that do not want npm?
+
 Usage instructions for each are below.
 
 ## Building
