@@ -599,6 +599,10 @@ def run_gcc_torture_tests():
 
 
 def run_emscripten_tests():
+  if not os.path.exists(os.path.join(options.binaryen_bin, 'wasm.js')):
+    print 'no wasm.js build to test'
+    return
+
   print '\n[ checking wasm.js methods... ]\n'
 
   for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
