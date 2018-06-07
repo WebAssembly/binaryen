@@ -53,7 +53,7 @@ struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
 // XXX based on opt level, -O1 should stop after max say 5 passes. hard limit
     while (1) {
-//std::cout << "waka do a pass!\n";
+std::cout << "waka do a pass!\n";
       // Hash all the functions
       auto hashes = FunctionHasher::createMap(module);
       PassRunner hasherRunner(module);
@@ -87,13 +87,18 @@ struct DuplicateFunctionElimination : public Pass {
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
             } else {
+
 //std::cout << "surprisingly unequal :( " << first->name << " , " << second->name << " : " << hashes[first] << " : " << hashes[second] << "\n";
 if (first->name.startsWith("___cxx_global_var_init")) {
-  //std::cout << "waka HERE " << *first->body << '\n' << *second->body << '\n';
-std::cout << "HERE\n";
-exit(110);
+  if (Measurer::measure(first->body) < 10 && Measurer::measure(second->body) < 10) {
+    std::cout << "waka surprisingly unequal :(\n" << first->name << " : " << hashes[first] << '\n' << *first->body << '\n';
+    std::cout << "\n" << second->name << " : " << hashes[second] << '\n' << *second->body << '\n';
+std::cout << "recalc hashes\n" << FunctionHasher::hashFunction(first) << " : " << FunctionHasher::hashFunction(second) << '\n';
+    exit(110);
+  }
 }
-}
+
+            }
           }
         }
       }

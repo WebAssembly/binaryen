@@ -58,7 +58,9 @@ class HashedExpressionMap : public std::unordered_map<HashedExpression, T, Expre
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
-  struct Map : public std::map<Function*, uint32_t> {};
+  typedef uint32_t HashType;
+
+  struct Map : public std::map<Function*, HashType> {};
 
   FunctionHasher(Map* output) : output(output) {}
 
@@ -75,24 +77,27 @@ struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   }
 
   void doWalkFunction(Function* func) {
-    assert(digest == 0);
-    hash(func->getNumParams());
-    for (auto type : func->params) hash(type);
-    hash(func->getNumVars());
-    for (auto type : func->vars) hash(type);
-    hash(func->result);
-    hash(func->type.is() ? std::hash<wasm::Name>{}(func->type) : uint32_t(0));
-    hash(ExpressionAnalyzer::hash(func->body));
-    output->at(func) = digest;
+    output->at(func) = hashFunction(func);
+  }
+
+  static HashType hashFunction(Function* func) {
+    HashType ret = 0;
+    ret = rehash(ret, (HashType)func->getNumParams());
+    for (auto type : func->params) {
+      ret = rehash(ret, (HashType)type);
+    }
+    ret = rehash(ret, (HashType)func->getNumVars());
+    for (auto type : func->vars) {
+      ret = rehash(ret, (HashType)type);
+    }
+    ret = rehash(ret, (HashType)func->result);
+    ret = rehash(ret, HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type) : HashType(0)));
+    ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
+    return ret;
   }
 
 private:
   Map* output;
-  uint32_t digest = 0;
-
-  void hash(uint32_t hash) {
-    digest = rehash(digest, hash);
-  }
 };
 
 } // namespace wasm
