@@ -23,42 +23,10 @@
 #include "wasm.h"
 #include "pass.h"
 #include "ir/utils.h"
-#include "support/hash.h"
+#include "ir/function-utils.h"
+#include "ir/hashed.h"
 
 namespace wasm {
-
-struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
-  bool isFunctionParallel() override { return true; }
-
-  FunctionHasher(std::map<Function*, uint32_t>* output) : output(output) {}
-
-  FunctionHasher* create() override {
-    return new FunctionHasher(output);
-  }
-
-  void doWalkFunction(Function* func) {
-    assert(digest == 0);
-    hash(func->getNumParams());
-    for (auto type : func->params) hash(type);
-    hash(func->getNumVars());
-    for (auto type : func->vars) hash(type);
-    hash(func->result);
-    hash64(func->type.is() ? uint64_t(func->type.str) : uint64_t(0));
-    hash(ExpressionAnalyzer::hash(func->body));
-    output->at(func) = digest;
-  }
-
-private:
-  std::map<Function*, uint32_t>* output;
-  uint32_t digest = 0;
-
-  void hash(uint32_t hash) {
-    digest = rehash(digest, hash);
-  }
-  void hash64(uint64_t hash) {
-    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
-  };
-};
 
 struct FunctionReplacer : public WalkerPass<PostWalker<FunctionReplacer>> {
   bool isFunctionParallel() override { return true; }
@@ -82,12 +50,22 @@ private:
 
 struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    while (1) {
+    // Multiple iterations may be necessary: A and B may be identical only after we
+    // see the functions C1 and C2 that they call are in fact identical. Rarely, such
+    // "chains" can be very long, so we limit how many we do.
+    auto& options = runner->options;
+    Index limit;
+    if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+      limit = module->functions.size(); // no limit
+    } else if (options.optimizeLevel >= 2) {
+      limit = 10; // 10 passes usually does most of the work, as this is typically logarithmic
+    } else {
+      limit = 1;
+    }
+    while (limit > 0) {
+      limit--;
       // Hash all the functions
-      hashes.clear();
-      for (auto& func : module->functions) {
-        hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
-      }
+      auto hashes = FunctionHasher::createMap(module);
       PassRunner hasherRunner(module);
       hasherRunner.setIsNested(true);
       hasherRunner.add<FunctionHasher>(&hashes);
@@ -113,7 +91,7 @@ struct DuplicateFunctionElimination : public Pass {
           for (Index j = i + 1; j < size; j++) {
             auto* second = group[j];
             if (duplicates.count(second->name)) continue;
-            if (equal(first, second)) {
+            if (FunctionUtils::equal(first, second)) {
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
@@ -161,20 +139,6 @@ struct DuplicateFunctionElimination : public Pass {
         break;
       }
     }
-  }
-
-private:
-  std::map<Function*, uint32_t> hashes;
-
-  bool equal(Function* left, Function* right) {
-    if (left->getNumParams() != right->getNumParams()) return false;
-    if (left->getNumVars() != right->getNumVars()) return false;
-    for (Index i = 0; i < left->getNumLocals(); i++) {
-      if (left->getLocalType(i) != right->getLocalType(i)) return false;
-    }
-    if (left->result != right->result) return false;
-    if (left->type != right->type) return false;
-    return ExpressionAnalyzer::equal(left->body, right->body);
   }
 };
 
