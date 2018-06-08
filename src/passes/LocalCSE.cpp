@@ -17,6 +17,15 @@
 //
 // Local CSE
 //
+// This requires --flatten to be run before in order to be effective,
+// and preserves flatness. The reason flatness is required is that
+// this pass assumes everything is stored in a local, and all it does
+// is alter set_locals to do get_locals of an existing value when
+// possible, replacing a recomputing of that value. That design means that
+// if there are block and if return values, nested expressions not stored
+// to a local, etc., then it can't operate on them (and will just not
+// do anything for them).
+//
 // In each linear area of execution,
 //  * track each relevant (big enough) expression
 //  * if already seen, write to a local if not already, and reuse
@@ -25,16 +34,18 @@
 // TODO: global, inter-block gvn etc.
 //
 
+#include <algorithm>
+#include <memory>
+
 #include <wasm.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/effects.h>
+#include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 
 namespace wasm {
-
-const Index UNUSED = -1;
 
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
@@ -43,11 +54,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   // information for an expression we can reuse
   struct UsableInfo {
-    Expression** item;
-    Index index; // if not UNUSED, then the local we are assigned to, use that to reuse us
+    Expression* value; // the value we can reuse
+    Index index; // the local we are assigned to, get_local that to reuse us
     EffectAnalyzer effects;
 
-    UsableInfo(Expression** item, PassOptions& passOptions) : item(item), index(UNUSED), effects(passOptions, *item) {}
+    UsableInfo(Expression* value, Index index, PassOptions& passOptions) : value(value), index(index), effects(passOptions, value) {}
   };
 
   // a list of usables in a linear execution trace
@@ -56,8 +67,29 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // locals in current linear execution trace, which we try to sink
   Usables usables;
 
+  // We track locals containing the same value - the value is what matters, not
+  // the index.
+  EquivalentSets equivalences;
+
+  bool anotherPass;
+
+  void doWalkFunction(Function* func) {
+    anotherPass = true;
+    // we may need multiple rounds
+    while (anotherPass) {
+      anotherPass = false;
+      clear();
+      super::doWalkFunction(func);
+    }
+  }
+
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
-    self->usables.clear();
+    self->clear();
+  }
+
+  void clear() {
+    usables.clear();
+    equivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
@@ -91,9 +123,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     auto* curr = *currp;
 
     // main operations
-    if (self->isRelevant(curr)) {
-      self->handle(currp, curr);
-    }
+    self->handle(curr);
 
     // post operations
 
@@ -114,38 +144,51 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     self->pushTask(visitPre, currp);
   }
 
-  bool isRelevant(Expression* curr) {
-    if (curr->is<GetLocal>()) {
+  void handle(Expression* curr) {
+    if (auto* set = curr->dynCast<SetLocal>()) {
+      // Calculate equivalences
+      equivalences.reset(set->index);
+      if (auto* get = set->value->dynCast<GetLocal>()) {
+        equivalences.add(set->index, get->index);
+      }
+      // consider the value
+      auto* value = set->value;
+      if (isRelevant(value)) {
+        HashedExpression hashed(value);
+        auto iter = usables.find(hashed);
+        if (iter != usables.end()) {
+          // already exists in the table, this is good to reuse
+          auto& info = iter->second;
+          set->value = Builder(*getModule()).makeGetLocal(info.index, value->type);
+          anotherPass = true;
+        } else {
+          // not in table, add this, maybe we can help others later
+          usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
+        }
+      }
+    } else if (auto* get = curr->dynCast<GetLocal>()) {
+      if (auto* set = equivalences.getEquivalents(get->index)) {
+        // Canonicalize to the lowest index. This lets hashing and comparisons
+        // "just work".
+        get->index = *std::min_element(set->begin(), set->end());
+      }
+    }
+  }
+
+  // A relevant value is a non-trivial one, something we may want to reuse
+  // and are able to.
+  bool isRelevant(Expression* value) {
+    if (value->is<GetLocal>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!isConcreteType(curr->type)) {
+    if (!isConcreteType(value->type)) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(getPassOptions(), curr).hasSideEffects()) {
+    if (EffectAnalyzer(getPassOptions(), value).hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     // check what we care about TODO: use optimize/shrink levels?
-    return Measurer::measure(curr) > 1;
-  }
-
-  void handle(Expression** currp, Expression* curr) {
-    HashedExpression hashed(curr);
-    auto iter = usables.find(hashed);
-    if (iter != usables.end()) {
-      // already exists in the table, this is good to reuse
-      auto& info = iter->second;
-      if (info.index == UNUSED) {
-        // we need to assign to a local. create a new one
-        auto index = info.index = Builder::addVar(getFunction(), curr->type);
-        (*info.item) = Builder(*getModule()).makeTeeLocal(index, *info.item);
-      }
-      replaceCurrent(
-        Builder(*getModule()).makeGetLocal(info.index, curr->type)
-      );
-    } else {
-      // not in table, add this, maybe we can help others later
-      usables.emplace(std::make_pair(hashed, UsableInfo(currp, getPassOptions())));
-    }
+    return Measurer::measure(value) > 1;
   }
 };
 

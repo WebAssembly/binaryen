@@ -1129,7 +1129,6 @@
    )
    (i32.const 0)
   )
-
   (func $pick
    (local $x i32)
    (local $y i32)

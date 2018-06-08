@@ -705,7 +705,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       void visitGetLocal(GetLocal *curr) {
         // Canonicalize gets: if some are equivalent, then we can pick more
         // then one, and other passes may benefit from having more uniformity.
-        if (auto *set = equivalences.getEquivalents(curr->index)) {
+        if (auto* set = equivalences.getEquivalents(curr->index)) {
           // Pick the index with the most uses - maximizing the chance to
           // lower one's uses to zero.
           // Helper method that returns the # of gets *ignoring the current get*,
