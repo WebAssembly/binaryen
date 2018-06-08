@@ -40,10 +40,11 @@ public:
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
-  void readBinary(std::string filename, Module& wasm);
+  void readBinary(std::string filename, Module& wasm,
+                  std::string sourceMapFilename="");
   // read text or binary, checking the contents for what it is
-  void read(std::string filename, Module& wasm);
-
+  void read(std::string filename, Module& wasm,
+            std::string sourceMapFilename="");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::string filename);
 };

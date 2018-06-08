@@ -165,6 +165,18 @@ def run_wasm_opt_tests():
 
       minify_check(t)
 
+  print '\n[ checking wasm-opt debugInfo read-write... ]\n'
+
+  for t in os.listdir('test'):
+    if t.endswith('.fromasm') and 'debugInfo' in t:
+      print '..', t
+      t = os.path.join('test', t)
+      f = t + '.read-written'
+      run_command(WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
+      run_command(WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
+      actual = run_command(WASM_DIS + ['b.wasm', '--source-map=b.map'])
+      fail_if_not_identical_to_file(actual, f)
+
 
 def run_wasm_dis_tests():
   print '\n[ checking wasm-dis on provided binaries... ]\n'

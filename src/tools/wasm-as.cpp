@@ -21,8 +21,9 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-binary.h"
+#include "wasm-io.h"
 #include "wasm-s-parser.h"
+#include "wasm-validator.h"
 
 #include "tool-utils.h"
 
@@ -99,26 +100,18 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  if (options.debug) std::cerr << "binarification..." << std::endl;
-  BufferWithRandomAccess buffer(options.debug);
-  WasmBinaryWriter writer(&wasm, buffer, options.debug);
-  // if debug info is used, then we want to emit the names section
-  writer.setNamesSection(debugInfo);
-  std::unique_ptr<std::ofstream> sourceMapStream = nullptr;
+  if (options.debug) std::cerr << "writing..." << std::endl;
+  ModuleWriter writer;
+  writer.setBinary(true);
+  writer.setDebugInfo(debugInfo);
   if (sourceMapFilename.size()) {
-    sourceMapStream = make_unique<std::ofstream>();
-    sourceMapStream->open(sourceMapFilename);
-    writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
+    writer.setSourceMapFilename(sourceMapFilename);
+    writer.setSourceMapUrl(sourceMapUrl);
   }
-  if (symbolMap.size() > 0) writer.setSymbolMap(symbolMap);
-  writer.write();
-
-  if (options.debug) std::cerr << "writing to output..." << std::endl;
-  Output output(options.extra["output"], Flags::Binary, options.debug ? Flags::Debug : Flags::Release);
-  buffer.writeTo(output);
-  if (sourceMapStream) {
-    sourceMapStream->close();
+  if (symbolMap.size() > 0) {
+    writer.setSymbolMap(symbolMap);
   }
+  writer.write(wasm, options.extra["output"]);
 
   if (options.debug) std::cerr << "Done." << std::endl;
 }
