@@ -19,9 +19,6 @@
 //
 // This requires --flatten to be run before, and preserves flatness.
 //
-// It is beneficial to optimize locals somewhat before running this,
-// e.g. --simplify-locals-nonesting --coalesce-locals
-//
 // In each linear area of execution,
 //  * track each relevant (big enough) expression
 //  * if already seen, write to a local if not already, and reuse
