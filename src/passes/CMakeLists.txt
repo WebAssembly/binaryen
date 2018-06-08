@@ -32,7 +32,6 @@ SET(passes_SOURCES
   Precompute.cpp
   Print.cpp
   PrintCallGraph.cpp
-  PrintFunctionHashes.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp
