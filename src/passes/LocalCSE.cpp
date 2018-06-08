@@ -38,6 +38,7 @@
 #include <wasm-traversal.h>
 #include <pass.h>
 #include <ir/effects.h>
+#include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 
 namespace wasm {
@@ -62,6 +63,10 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   // locals in current linear execution trace, which we try to sink
   Usables usables;
 
+  // We track locals containing the same value - the value is what matters, not
+  // the index.
+  EquivalentSets equivalences;
+
   bool anotherPass;
 
   void doWalkFunction(Function* func) {
@@ -75,6 +80,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
     self->usables.clear();
+    self->equivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
@@ -131,6 +137,11 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   void handle(Expression* curr) {
     if (auto* set = curr->dynCast<SetLocal>()) {
+      // Calculate equivalences
+      equivalences.reset(set->index);
+      if (auto* get = set->value->dynCast<GetLocal>()) {
+        equivalences.add(set->index, get->index);
+      }
       // consider the value
       auto* value = set->value;
       if (isRelevant(value)) {
@@ -145,6 +156,12 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
           // not in table, add this, maybe we can help others later
           usables.emplace(std::make_pair(hashed, UsableInfo(value, set->index, getPassOptions())));
         }
+      }
+    } else if (auto* get = curr->dynCast<GetLocal>()) {
+      if (auto* set = equivalences.getEquivalents(get->index)) {
+        // Canonicalize to the lowest index. This lets hashing and comparisons
+        // "just work".
+        get->index = *std::min_element(set->begin(), set->end());
       }
     }
   }
