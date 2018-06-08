@@ -145,6 +145,10 @@ int main(int argc, const char* argv[]) {
       p.dump(std::cerr);
       std::cerr << '\n';
       Fatal() << "error in parsing input";
+    } catch (MapParseException& p) {
+      p.dump(std::cerr);
+      std::cerr << '\n';
+      Fatal() << "error in parsing wasm source map";
     } catch (std::bad_alloc& b) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
