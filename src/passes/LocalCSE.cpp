@@ -17,7 +17,14 @@
 //
 // Local CSE
 //
-// This requires --flatten to be run before, and preserves flatness.
+// This requires --flatten to be run before in order to be effective,
+// and preserves flatness. The reason flatness is required is that
+// this pass assumes everything is stored in a local, and all it does
+// is alter set_locals to do get_locals of an existing value when
+// possible, replacing a recomputing of that value. That design means that
+// if there are block and if return values, nested expressions not stored
+// to a local, etc., then it can't operate on them (and will just not
+// do anything for them).
 //
 // In each linear area of execution,
 //  * track each relevant (big enough) expression
