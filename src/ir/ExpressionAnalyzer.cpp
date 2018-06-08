@@ -510,8 +510,14 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         break;
       }
       case Expression::Id::ConstId: {
-        HASH(Const, value.type);
-        HASH64(Const, value.getBits());
+        auto* c = curr->cast<Const>();
+        hash(c->type);
+        auto bits = c->value.getBits();
+        if (getTypeSize(c->type) == 4) {
+          hash(uint32_t(bits));
+        } else {
+          hash64(bits);
+        }
         break;
       }
       case Expression::Id::UnaryId: {

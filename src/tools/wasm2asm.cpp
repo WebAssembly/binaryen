@@ -39,7 +39,8 @@ int main(int argc, const char *argv[]) {
            })
       .add("--allow-asserts", "", "Allow compilation of .wast testing asserts",
            Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
+           [&](Options* o, const std::string& argument) {
+             builderFlags.allowAsserts = true;
              o->extra["asserts"] = "1";
            })
       .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
@@ -75,7 +76,7 @@ int main(int argc, const char *argv[]) {
 
     if (options.extra["asserts"] == "1") {
       if (options.debug) std::cerr << "asserting..." << std::endl;
-      flattenAppend(asmjs, wasm2asm.processAsserts(*root, builder));
+      flattenAppend(asmjs, wasm2asm.processAsserts(&wasm, *root, builder));
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

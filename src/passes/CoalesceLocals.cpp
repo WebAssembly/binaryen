@@ -117,7 +117,7 @@ void CoalesceLocals::increaseBackEdgePriorities() {
 
 void CoalesceLocals::calculateInterferences() {
   interferences.resize(numLocals * numLocals);
-  std::fill(interferences.begin(), interferences.end(), 0);
+  std::fill(interferences.begin(), interferences.end(), false);
   for (auto& curr : basicBlocks) {
     if (liveBlocks.count(curr.get()) == 0) continue; // ignore dead blocks
     // everything coming in might interfere, as it might come from a different block
@@ -207,7 +207,7 @@ void CoalesceLocals::pickIndicesFromOrder(std::vector<Index>& order, std::vector
   indices.resize(numLocals);
   types.resize(numLocals);
   newInterferences.resize(numLocals * numLocals);
-  std::fill(newInterferences.begin(), newInterferences.end(), 0);
+  std::fill(newInterferences.begin(), newInterferences.end(), false);
   auto numParams = getFunction()->getNumParams();
   newCopies.resize(numParams * numLocals); // start with enough room for the params
   std::fill(newCopies.begin(), newCopies.end(), 0);

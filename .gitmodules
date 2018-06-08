@@ -4,7 +4,6 @@
 [submodule "test/waterfall"]
 	path = test/waterfall
 	url = https://github.com/WebAssembly/waterfall.git
-
 [submodule "test/emscripten"]
 	path = test/emscripten
 	url = https://github.com/kripken/emscripten.git

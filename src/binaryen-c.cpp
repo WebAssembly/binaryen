@@ -226,6 +226,23 @@ BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const 
 
   return ret;
 }
+void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveFunctionType(the_module, ";
+    traceNameOrNULL(name);
+    std::cout << ");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  assert(name != NULL);
+
+  // Lock. This can be called from multiple threads at once, and is a
+  // point where they all access and modify the module.
+  {
+    std::lock_guard<std::mutex> lock(BinaryenFunctionTypeMutex);
+    wasm->removeFunctionType(name);
+  }
+}
 
 BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralInt64(int64_t x) { return toBinaryenLiteral(Literal(x)); }

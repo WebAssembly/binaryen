@@ -886,9 +886,9 @@
      )
     )
    )
-   (call $h
-    (i32.const 2)
-   )
+  )
+  (call $h
+   (i32.const 2)
   )
   (call $h
    (i32.const 3)

@@ -154,6 +154,8 @@ typedef void* BinaryenFunctionTypeRef;
 // Add a new function type. This is thread-safe.
 // Note: name can be NULL, in which case we auto-generate a name
 BinaryenFunctionTypeRef BinaryenAddFunctionType(BinaryenModuleRef module, const char* name, BinaryenType result, BinaryenType* paramTypes, BinaryenIndex numParams);
+// Removes a function type.
+void BinaryenRemoveFunctionType(BinaryenModuleRef module, const char* name);
 
 // Literals. These are passed by value.
 

@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+#
+# 2016 WebAssembly Community Group participants
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import argparse
 import os
@@ -55,14 +69,14 @@ def main(args):
     for ll_test in tests:
         name_noext = os.path.splitext(os.path.basename(ll_test))[0]
 
-        BLACKLIST = ['inline-asm', # inline asm containing invalid syntax
-                     'dbgvalue', # external global symbol
-                     'returned',   # external global symbol
-                     'vtable',     # external global symbol
-                     'offset-folding', # external global symbol
-                     'address-offsets', # external global symbol
-                     'memory-addr64', # wasm64
-                     'simd-arith', # No SIMD in binaryen yet
+        BLACKLIST = ['inline-asm',  # inline asm containing invalid syntax
+                     'dbgvalue',  # external global symbol
+                     'returned',  # external global symbol
+                     'vtable',  # external global symbol
+                     'offset-folding',  # external global symbol
+                     'address-offsets',  # external global symbol
+                     'memory-addr64',  # wasm64
+                     'simd-arith',  # No SIMD in binaryen yet
                      ]
         if name_noext in BLACKLIST:
           continue

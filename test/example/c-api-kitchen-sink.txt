@@ -1070,16 +1070,6 @@ module loaded from binary form:
  )
 )
 validation: 0
-(module
- (type $i (func (result i32)))
- (func $func (; 0 ;) (type $i) (result i32)
-  (i32.sub
-   (i32.const 1234)
-   (i32.const 1234)
-  )
- )
-)
-validation: 0
 // beginning a Binaryen API trace
 #include <math.h>
 #include <map>

@@ -43,4 +43,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 172, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_foo","_main","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 172, "initializers": [], "declares": [], "externs": [], "implementedFunctions": ["_main","_stackSave","_stackAlloc","_stackRestore"], "exports": ["main","stackSave","stackAlloc","stackRestore"], "invokeFuncs": [] }

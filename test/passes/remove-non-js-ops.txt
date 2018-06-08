@@ -1,0 +1,1124 @@
+(module
+ (type $0 (func (param f64 f64) (result f64)))
+ (type $1 (func (param f32 f32) (result f32)))
+ (type $2 (func (param i32 i32) (result i32)))
+ (type $3 (func (param i64 i64) (result i64)))
+ (type $4 (func (param f64) (result f64)))
+ (type $5 (func (param f32) (result f32)))
+ (type $6 (func (param i32) (result i32)))
+ (func $copysign64 (; 0 ;) (type $0) (param $0 f64) (param $1 f64) (result f64)
+  (f64.reinterpret/i64
+   (i64.or
+    (i64.and
+     (i64.reinterpret/f64
+      (get_local $0)
+     )
+     (i64.const 9223372036854775807)
+    )
+    (i64.and
+     (i64.reinterpret/f64
+      (get_local $1)
+     )
+     (i64.const -9223372036854775808)
+    )
+   )
+  )
+ )
+ (func $copysign32 (; 1 ;) (type $1) (param $0 f32) (param $1 f32) (result f32)
+  (f32.reinterpret/i32
+   (i32.or
+    (i32.and
+     (i32.reinterpret/f32
+      (get_local $0)
+     )
+     (i32.const 2147483647)
+    )
+    (i32.and
+     (i32.reinterpret/f32
+      (get_local $1)
+     )
+     (i32.const -2147483648)
+    )
+   )
+  )
+ )
+ (func $rotl32 (; 2 ;) (type $2) (param $0 i32) (param $1 i32) (result i32)
+  (call $__wasm_rotl_i32
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $rotr32 (; 3 ;) (type $2) (param $0 i32) (param $1 i32) (result i32)
+  (call $__wasm_rotr_i32
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $rotl64 (; 4 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_rotl_i64
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $rotr64 (; 5 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_rotr_i64
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $nearest64 (; 6 ;) (type $4) (param $0 f64) (result f64)
+  (call $__wasm_nearest_f64
+   (get_local $0)
+  )
+ )
+ (func $nearest32 (; 7 ;) (type $5) (param $0 f32) (result f32)
+  (call $__wasm_nearest_f32
+   (get_local $0)
+  )
+ )
+ (func $trunc64 (; 8 ;) (type $4) (param $0 f64) (result f64)
+  (call $__wasm_trunc_f64
+   (get_local $0)
+  )
+ )
+ (func $trunc32 (; 9 ;) (type $5) (param $0 f32) (result f32)
+  (call $__wasm_trunc_f32
+   (get_local $0)
+  )
+ )
+ (func $popcnt32 (; 10 ;) (type $6) (param $0 i32) (result i32)
+  (call $__wasm_popcnt_i32
+   (get_local $0)
+  )
+ )
+ (func $ctz32 (; 11 ;) (type $6) (param $0 i32) (result i32)
+  (call $__wasm_ctz_i32
+   (get_local $0)
+  )
+ )
+ (func $i64_sdiv (; 12 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_i64_sdiv
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i64_udiv (; 13 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_i64_udiv
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i64_srem (; 14 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_i64_srem
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i64_urem (; 15 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_i64_urem
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i64_mul (; 16 ;) (type $3) (param $0 i64) (param $1 i64) (result i64)
+  (call $__wasm_i64_mul
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE (; 17 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (local $var$5 i32)
+  (local $var$6 i32)
+  (i64.or
+   (i64.shl
+    (i64.extend_u/i32
+     (i32.add
+      (i32.add
+       (i32.add
+        (i32.add
+         (i32.mul
+          (tee_local $var$4
+           (i32.shr_u
+            (tee_local $var$2
+             (i32.wrap/i64
+              (get_local $var$1)
+             )
+            )
+            (i32.const 16)
+           )
+          )
+          (tee_local $var$5
+           (i32.shr_u
+            (tee_local $var$3
+             (i32.wrap/i64
+              (get_local $var$0)
+             )
+            )
+            (i32.const 16)
+           )
+          )
+         )
+         (i32.mul
+          (get_local $var$2)
+          (i32.wrap/i64
+           (i64.shr_u
+            (get_local $var$0)
+            (i64.const 32)
+           )
+          )
+         )
+        )
+        (i32.mul
+         (i32.wrap/i64
+          (i64.shr_u
+           (get_local $var$1)
+           (i64.const 32)
+          )
+         )
+         (get_local $var$3)
+        )
+       )
+       (i32.shr_u
+        (tee_local $var$2
+         (i32.add
+          (i32.shr_u
+           (tee_local $var$6
+            (i32.mul
+             (tee_local $var$2
+              (i32.and
+               (get_local $var$2)
+               (i32.const 65535)
+              )
+             )
+             (tee_local $var$3
+              (i32.and
+               (get_local $var$3)
+               (i32.const 65535)
+              )
+             )
+            )
+           )
+           (i32.const 16)
+          )
+          (i32.mul
+           (get_local $var$2)
+           (get_local $var$5)
+          )
+         )
+        )
+        (i32.const 16)
+       )
+      )
+      (i32.shr_u
+       (tee_local $var$2
+        (i32.add
+         (i32.and
+          (get_local $var$2)
+          (i32.const 65535)
+         )
+         (i32.mul
+          (get_local $var$4)
+          (get_local $var$3)
+         )
+        )
+       )
+       (i32.const 16)
+      )
+     )
+    )
+    (i64.const 32)
+   )
+   (i64.extend_u/i32
+    (i32.or
+     (i32.shl
+      (get_local $var$2)
+      (i32.const 16)
+     )
+     (i32.and
+      (get_local $var$6)
+      (i32.const 65535)
+     )
+    )
+   )
+  )
+ )
+ (func $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E (; 18 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.sub
+   (i64.xor
+    (call $__wasm_i64_udiv
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$0)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$0)
+      )
+      (get_local $var$2)
+     )
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$1)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$1)
+      )
+      (get_local $var$2)
+     )
+    )
+    (tee_local $var$0
+     (i64.shr_s
+      (i64.xor
+       (get_local $var$1)
+       (get_local $var$0)
+      )
+      (i64.const 63)
+     )
+    )
+   )
+   (get_local $var$0)
+  )
+ )
+ (func $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E (; 19 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.sub
+   (i64.xor
+    (call $__wasm_i64_urem
+     (i64.sub
+      (i64.xor
+       (tee_local $var$2
+        (i64.shr_s
+         (get_local $var$0)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$0)
+      )
+      (get_local $var$2)
+     )
+     (i64.sub
+      (i64.xor
+       (tee_local $var$0
+        (i64.shr_s
+         (get_local $var$1)
+         (i64.const 63)
+        )
+       )
+       (get_local $var$1)
+      )
+      (get_local $var$0)
+     )
+    )
+    (get_local $var$2)
+   )
+   (get_local $var$2)
+  )
+ )
+ (func $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E (; 20 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (local $var$4 i32)
+  (local $var$5 i64)
+  (local $var$6 i64)
+  (local $var$7 i64)
+  (local $var$8 i64)
+  (block $label$1
+   (block $label$2
+    (block $label$3
+     (block $label$4
+      (block $label$5
+       (block $label$6
+        (block $label$7
+         (block $label$8
+          (block $label$9
+           (block $label$10
+            (block $label$11
+             (if
+              (tee_local $var$2
+               (i32.wrap/i64
+                (i64.shr_u
+                 (get_local $var$0)
+                 (i64.const 32)
+                )
+               )
+              )
+              (block $block
+               (br_if $label$11
+                (i32.eqz
+                 (tee_local $var$3
+                  (i32.wrap/i64
+                   (get_local $var$1)
+                  )
+                 )
+                )
+               )
+               (br_if $label$9
+                (i32.eqz
+                 (tee_local $var$4
+                  (i32.wrap/i64
+                   (i64.shr_u
+                    (get_local $var$1)
+                    (i64.const 32)
+                   )
+                  )
+                 )
+                )
+               )
+               (br_if $label$8
+                (i32.le_u
+                 (tee_local $var$2
+                  (i32.sub
+                   (i32.clz
+                    (get_local $var$4)
+                   )
+                   (i32.clz
+                    (get_local $var$2)
+                   )
+                  )
+                 )
+                 (i32.const 31)
+                )
+               )
+               (br $label$2)
+              )
+             )
+             (br_if $label$2
+              (i64.ge_u
+               (get_local $var$1)
+               (i64.const 4294967296)
+              )
+             )
+             (i64.store
+              (i32.const 1024)
+              (i64.extend_u/i32
+               (i32.sub
+                (tee_local $var$2
+                 (i32.wrap/i64
+                  (get_local $var$0)
+                 )
+                )
+                (i32.mul
+                 (tee_local $var$2
+                  (i32.div_u
+                   (get_local $var$2)
+                   (tee_local $var$3
+                    (i32.wrap/i64
+                     (get_local $var$1)
+                    )
+                   )
+                  )
+                 )
+                 (get_local $var$3)
+                )
+               )
+              )
+             )
+             (return
+              (i64.extend_u/i32
+               (get_local $var$2)
+              )
+             )
+            )
+            (set_local $var$3
+             (i32.wrap/i64
+              (i64.shr_u
+               (get_local $var$1)
+               (i64.const 32)
+              )
+             )
+            )
+            (br_if $label$7
+             (i32.eqz
+              (i32.wrap/i64
+               (get_local $var$0)
+              )
+             )
+            )
+            (br_if $label$6
+             (i32.eqz
+              (get_local $var$3)
+             )
+            )
+            (br_if $label$6
+             (i32.and
+              (tee_local $var$4
+               (i32.add
+                (get_local $var$3)
+                (i32.const -1)
+               )
+              )
+              (get_local $var$3)
+             )
+            )
+            (i64.store
+             (i32.const 1024)
+             (i64.or
+              (i64.shl
+               (i64.extend_u/i32
+                (i32.and
+                 (get_local $var$4)
+                 (get_local $var$2)
+                )
+               )
+               (i64.const 32)
+              )
+              (i64.and
+               (get_local $var$0)
+               (i64.const 4294967295)
+              )
+             )
+            )
+            (return
+             (i64.extend_u/i32
+              (i32.shr_u
+               (get_local $var$2)
+               (i32.and
+                (call $__wasm_ctz_i32
+                 (get_local $var$3)
+                )
+                (i32.const 31)
+               )
+              )
+             )
+            )
+           )
+           (unreachable)
+          )
+          (br_if $label$5
+           (i32.eqz
+            (i32.and
+             (tee_local $var$4
+              (i32.add
+               (get_local $var$3)
+               (i32.const -1)
+              )
+             )
+             (get_local $var$3)
+            )
+           )
+          )
+          (set_local $var$3
+           (i32.sub
+            (i32.const 0)
+            (tee_local $var$2
+             (i32.sub
+              (i32.add
+               (i32.clz
+                (get_local $var$3)
+               )
+               (i32.const 33)
+              )
+              (i32.clz
+               (get_local $var$2)
+              )
+             )
+            )
+           )
+          )
+          (br $label$3)
+         )
+         (set_local $var$3
+          (i32.sub
+           (i32.const 63)
+           (get_local $var$2)
+          )
+         )
+         (set_local $var$2
+          (i32.add
+           (get_local $var$2)
+           (i32.const 1)
+          )
+         )
+         (br $label$3)
+        )
+        (i64.store
+         (i32.const 1024)
+         (i64.shl
+          (i64.extend_u/i32
+           (i32.sub
+            (get_local $var$2)
+            (i32.mul
+             (tee_local $var$4
+              (i32.div_u
+               (get_local $var$2)
+               (get_local $var$3)
+              )
+             )
+             (get_local $var$3)
+            )
+           )
+          )
+          (i64.const 32)
+         )
+        )
+        (return
+         (i64.extend_u/i32
+          (get_local $var$4)
+         )
+        )
+       )
+       (br_if $label$4
+        (i32.lt_u
+         (tee_local $var$2
+          (i32.sub
+           (i32.clz
+            (get_local $var$3)
+           )
+           (i32.clz
+            (get_local $var$2)
+           )
+          )
+         )
+         (i32.const 31)
+        )
+       )
+       (br $label$2)
+      )
+      (i64.store
+       (i32.const 1024)
+       (i64.extend_u/i32
+        (i32.and
+         (get_local $var$4)
+         (i32.wrap/i64
+          (get_local $var$0)
+         )
+        )
+       )
+      )
+      (br_if $label$1
+       (i32.eq
+        (get_local $var$3)
+        (i32.const 1)
+       )
+      )
+      (return
+       (i64.shr_u
+        (get_local $var$0)
+        (i64.extend_u/i32
+         (call $__wasm_ctz_i32
+          (get_local $var$3)
+         )
+        )
+       )
+      )
+     )
+     (set_local $var$3
+      (i32.sub
+       (i32.const 63)
+       (get_local $var$2)
+      )
+     )
+     (set_local $var$2
+      (i32.add
+       (get_local $var$2)
+       (i32.const 1)
+      )
+     )
+    )
+    (set_local $var$5
+     (i64.shr_u
+      (get_local $var$0)
+      (i64.extend_u/i32
+       (i32.and
+        (get_local $var$2)
+        (i32.const 63)
+       )
+      )
+     )
+    )
+    (set_local $var$0
+     (i64.shl
+      (get_local $var$0)
+      (i64.extend_u/i32
+       (i32.and
+        (get_local $var$3)
+        (i32.const 63)
+       )
+      )
+     )
+    )
+    (block $label$13
+     (if
+      (get_local $var$2)
+      (block $block3
+       (set_local $var$8
+        (i64.add
+         (get_local $var$1)
+         (i64.const -1)
+        )
+       )
+       (loop $label$15
+        (set_local $var$5
+         (i64.sub
+          (tee_local $var$5
+           (i64.or
+            (i64.shl
+             (get_local $var$5)
+             (i64.const 1)
+            )
+            (i64.shr_u
+             (get_local $var$0)
+             (i64.const 63)
+            )
+           )
+          )
+          (i64.and
+           (tee_local $var$6
+            (i64.shr_s
+             (i64.sub
+              (get_local $var$8)
+              (get_local $var$5)
+             )
+             (i64.const 63)
+            )
+           )
+           (get_local $var$1)
+          )
+         )
+        )
+        (set_local $var$0
+         (i64.or
+          (i64.shl
+           (get_local $var$0)
+           (i64.const 1)
+          )
+          (get_local $var$7)
+         )
+        )
+        (set_local $var$7
+         (tee_local $var$6
+          (i64.and
+           (get_local $var$6)
+           (i64.const 1)
+          )
+         )
+        )
+        (br_if $label$15
+         (tee_local $var$2
+          (i32.add
+           (get_local $var$2)
+           (i32.const -1)
+          )
+         )
+        )
+       )
+       (br $label$13)
+      )
+     )
+    )
+    (i64.store
+     (i32.const 1024)
+     (get_local $var$5)
+    )
+    (return
+     (i64.or
+      (i64.shl
+       (get_local $var$0)
+       (i64.const 1)
+      )
+      (get_local $var$6)
+     )
+    )
+   )
+   (i64.store
+    (i32.const 1024)
+    (get_local $var$0)
+   )
+   (set_local $var$0
+    (i64.const 0)
+   )
+  )
+  (get_local $var$0)
+ )
+ (func $__wasm_ctz_i32 (; 21 ;) (param $var$0 i32) (result i32)
+  (if
+   (get_local $var$0)
+   (return
+    (i32.sub
+     (i32.const 31)
+     (i32.clz
+      (i32.xor
+       (i32.add
+        (get_local $var$0)
+        (i32.const -1)
+       )
+       (get_local $var$0)
+      )
+     )
+    )
+   )
+  )
+  (i32.const 32)
+ )
+ (func $__wasm_i64_mul (; 22 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_sdiv (; 23 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_srem (; 24 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_udiv (; 25 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
+   (get_local $var$0)
+   (get_local $var$1)
+  )
+ )
+ (func $__wasm_i64_urem (; 26 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (drop
+   (call $_ZN17compiler_builtins3int4udiv10divmod_u6417h6026910b5ed08e40E
+    (get_local $var$0)
+    (get_local $var$1)
+   )
+  )
+  (i64.load
+   (i32.const 1024)
+  )
+ )
+ (func $__wasm_nearest_f32 (; 27 ;) (param $var$0 f32) (result f32)
+  (local $var$1 f32)
+  (local $var$2 f32)
+  (if
+   (i32.eqz
+    (f32.lt
+     (tee_local $var$2
+      (f32.sub
+       (get_local $var$0)
+       (tee_local $var$1
+        (f32.floor
+         (get_local $var$0)
+        )
+       )
+      )
+     )
+     (f32.const 0.5)
+    )
+   )
+   (block $block
+    (set_local $var$0
+     (f32.ceil
+      (get_local $var$0)
+     )
+    )
+    (if
+     (f32.gt
+      (get_local $var$2)
+      (f32.const 0.5)
+     )
+     (return
+      (get_local $var$0)
+     )
+    )
+    (set_local $var$1
+     (select
+      (get_local $var$1)
+      (get_local $var$0)
+      (f32.eq
+       (f32.sub
+        (tee_local $var$2
+         (f32.mul
+          (get_local $var$1)
+          (f32.const 0.5)
+         )
+        )
+        (f32.floor
+         (get_local $var$2)
+        )
+       )
+       (f32.const 0)
+      )
+     )
+    )
+   )
+  )
+  (get_local $var$1)
+ )
+ (func $__wasm_nearest_f64 (; 28 ;) (param $var$0 f64) (result f64)
+  (local $var$1 f64)
+  (local $var$2 f64)
+  (if
+   (i32.eqz
+    (f64.lt
+     (tee_local $var$2
+      (f64.sub
+       (get_local $var$0)
+       (tee_local $var$1
+        (f64.floor
+         (get_local $var$0)
+        )
+       )
+      )
+     )
+     (f64.const 0.5)
+    )
+   )
+   (block $block
+    (set_local $var$0
+     (f64.ceil
+      (get_local $var$0)
+     )
+    )
+    (if
+     (f64.gt
+      (get_local $var$2)
+      (f64.const 0.5)
+     )
+     (return
+      (get_local $var$0)
+     )
+    )
+    (set_local $var$1
+     (select
+      (get_local $var$1)
+      (get_local $var$0)
+      (f64.eq
+       (f64.sub
+        (tee_local $var$2
+         (f64.mul
+          (get_local $var$1)
+          (f64.const 0.5)
+         )
+        )
+        (f64.floor
+         (get_local $var$2)
+        )
+       )
+       (f64.const 0)
+      )
+     )
+    )
+   )
+  )
+  (get_local $var$1)
+ )
+ (func $__wasm_popcnt_i32 (; 29 ;) (param $var$0 i32) (result i32)
+  (local $var$1 i32)
+  (block $label$1 (result i32)
+   (loop $label$2
+    (drop
+     (br_if $label$1
+      (get_local $var$1)
+      (i32.eqz
+       (get_local $var$0)
+      )
+     )
+    )
+    (set_local $var$0
+     (i32.and
+      (get_local $var$0)
+      (i32.sub
+       (get_local $var$0)
+       (i32.const 1)
+      )
+     )
+    )
+    (set_local $var$1
+     (i32.add
+      (get_local $var$1)
+      (i32.const 1)
+     )
+    )
+    (br $label$2)
+   )
+  )
+ )
+ (func $__wasm_rotl_i32 (; 30 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+  (i32.or
+   (i32.shl
+    (i32.and
+     (i32.shr_u
+      (i32.const -1)
+      (tee_local $var$2
+       (i32.and
+        (get_local $var$1)
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i32.shr_u
+    (i32.and
+     (i32.shl
+      (i32.const -1)
+      (tee_local $var$1
+       (i32.and
+        (i32.sub
+         (i32.const 0)
+         (get_local $var$1)
+        )
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotl_i64 (; 31 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.or
+   (i64.shl
+    (i64.and
+     (i64.shr_u
+      (i64.const -1)
+      (tee_local $var$2
+       (i64.and
+        (get_local $var$1)
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i64.shr_u
+    (i64.and
+     (i64.shl
+      (i64.const -1)
+      (tee_local $var$1
+       (i64.and
+        (i64.sub
+         (i64.const 0)
+         (get_local $var$1)
+        )
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotr_i32 (; 32 ;) (param $var$0 i32) (param $var$1 i32) (result i32)
+  (local $var$2 i32)
+  (i32.or
+   (i32.shr_u
+    (i32.and
+     (i32.shl
+      (i32.const -1)
+      (tee_local $var$2
+       (i32.and
+        (get_local $var$1)
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i32.shl
+    (i32.and
+     (i32.shr_u
+      (i32.const -1)
+      (tee_local $var$1
+       (i32.and
+        (i32.sub
+         (i32.const 0)
+         (get_local $var$1)
+        )
+        (i32.const 31)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_rotr_i64 (; 33 ;) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (i64.or
+   (i64.shr_u
+    (i64.and
+     (i64.shl
+      (i64.const -1)
+      (tee_local $var$2
+       (i64.and
+        (get_local $var$1)
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$2)
+   )
+   (i64.shl
+    (i64.and
+     (i64.shr_u
+      (i64.const -1)
+      (tee_local $var$1
+       (i64.and
+        (i64.sub
+         (i64.const 0)
+         (get_local $var$1)
+        )
+        (i64.const 63)
+       )
+      )
+     )
+     (get_local $var$0)
+    )
+    (get_local $var$1)
+   )
+  )
+ )
+ (func $__wasm_trunc_f32 (; 34 ;) (param $var$0 f32) (result f32)
+  (select
+   (f32.ceil
+    (get_local $var$0)
+   )
+   (f32.floor
+    (get_local $var$0)
+   )
+   (f32.lt
+    (get_local $var$0)
+    (f32.const 0)
+   )
+  )
+ )
+ (func $__wasm_trunc_f64 (; 35 ;) (param $var$0 f64) (result f64)
+  (select
+   (f64.ceil
+    (get_local $var$0)
+   )
+   (f64.floor
+    (get_local $var$0)
+   )
+   (f64.lt
+    (get_local $var$0)
+    (f64.const 0)
+   )
+  )
+ )
+)

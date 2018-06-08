@@ -566,67 +566,85 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     // output patterns. further cycles do fully general sinking.
     firstCycle = true;
     do {
-      anotherCycle = false;
-      // main operation
-      WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
-      // enlarge blocks that were marked, for the next round
-      if (blocksToEnlarge.size() > 0) {
-        for (auto* block : blocksToEnlarge) {
-          block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-        }
-        blocksToEnlarge.clear();
-        anotherCycle = true;
-      }
-      // enlarge ifs that were marked, for the next round
-      if (ifsToEnlarge.size() > 0) {
-        for (auto* iff : ifsToEnlarge) {
-          auto ifTrue = Builder(*this->getModule()).blockify(iff->ifTrue);
-          iff->ifTrue = ifTrue;
-          if (ifTrue->list.size() == 0 || !ifTrue->list.back()->template is<Nop>()) {
-            ifTrue->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-          }
-          auto ifFalse = Builder(*this->getModule()).blockify(iff->ifFalse);
-          iff->ifFalse = ifFalse;
-          if (ifFalse->list.size() == 0 || !ifFalse->list.back()->template is<Nop>()) {
-            ifFalse->list.push_back(this->getModule()->allocator.template alloc<Nop>());
-          }
-        }
-        ifsToEnlarge.clear();
-        anotherCycle = true;
-      }
-      // handle loops. note that a lot happens in this pass, and we can't just modify
-      // set_locals when we see a loop - it might be tracked - and we can't also just
-      // assume our loop didn't move either (might be in a block now). So we do this
-      // when all other work is done - as loop return values are rare, that is fine.
-      if (!anotherCycle) {
-        for (auto* currp : loops) {
-          auto* curr = (*currp)->template cast<Loop>();
-          assert(canUseLoopReturnValue(curr));
-          auto* set = curr->body->template cast<SetLocal>();
-          curr->body = set->value;
-          set->value = curr;
-          curr->finalize(curr->body->type);
-          *currp = set;
-          anotherCycle = true;
-        }
-      }
-      loops.clear();
-      // clean up
-      sinkables.clear();
-      blockBreaks.clear();
-      unoptimizableBlocks.clear();
+      anotherCycle = runMainOptimizations(func);
+      // After the special first cycle, definitely do another.
       if (firstCycle) {
         firstCycle = false;
         anotherCycle = true;
       }
+      // If we are all done, run the final optimizations, which may suggest we
+      // can do more work.
+      if (!anotherCycle) {
+        // Don't run multiple cycles of just the final optimizations - in
+        // particular, get canonicalization is not guaranteed to converge.
+        // Instead, if final opts help then see if they enable main
+        // opts; continue only if they do. In other words, do not end up
+        // doing final opts again and again when no main opts are being
+        // enabled.
+        if (runFinalOptimizations(func) && runMainOptimizations(func)) {
+          anotherCycle = true;
+        }
+      }
     } while (anotherCycle);
+  }
+
+  bool runMainOptimizations(Function* func) {
+    anotherCycle = false;
+    WalkerPass<LinearExecutionWalker<SimplifyLocals<allowTee, allowStructure, allowNesting>>>::doWalkFunction(func);
+    // enlarge blocks that were marked, for the next round
+    if (blocksToEnlarge.size() > 0) {
+      for (auto* block : blocksToEnlarge) {
+        block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+      }
+      blocksToEnlarge.clear();
+      anotherCycle = true;
+    }
+    // enlarge ifs that were marked, for the next round
+    if (ifsToEnlarge.size() > 0) {
+      for (auto* iff : ifsToEnlarge) {
+        auto ifTrue = Builder(*this->getModule()).blockify(iff->ifTrue);
+        iff->ifTrue = ifTrue;
+        if (ifTrue->list.size() == 0 || !ifTrue->list.back()->template is<Nop>()) {
+          ifTrue->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        }
+        auto ifFalse = Builder(*this->getModule()).blockify(iff->ifFalse);
+        iff->ifFalse = ifFalse;
+        if (ifFalse->list.size() == 0 || !ifFalse->list.back()->template is<Nop>()) {
+          ifFalse->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        }
+      }
+      ifsToEnlarge.clear();
+      anotherCycle = true;
+    }
+    // handle loops. note that a lot happens in this pass, and we can't just modify
+    // set_locals when we see a loop - it might be tracked - and we can't also just
+    // assume our loop didn't move either (might be in a block now). So we do this
+    // when all other work is done - as loop return values are rare, that is fine.
+    if (!anotherCycle) {
+      for (auto* currp : loops) {
+        auto* curr = (*currp)->template cast<Loop>();
+        assert(canUseLoopReturnValue(curr));
+        auto* set = curr->body->template cast<SetLocal>();
+        curr->body = set->value;
+        set->value = curr;
+        curr->finalize(curr->body->type);
+        *currp = set;
+        anotherCycle = true;
+      }
+    }
+    loops.clear();
+    // clean up
+    sinkables.clear();
+    blockBreaks.clear();
+    unoptimizableBlocks.clear();
+    return anotherCycle;
+  }
+
+  bool runFinalOptimizations(Function* func) {
     // Finally, after optimizing a function we can do some additional
     // optimization.
-    // One thing is we can see if we have set_locals
-    // for a local with no remaining gets, in which case, we can
-    // remove the set.
     getCounter.analyze(func);
-    // Remove unneeded sets, and remove equivalent copies - assignment of
+    // Remove equivalent copies - assignment of
     // a local to another local that already contains that value. Note that
     // we do that at the very end, and only after structure, as removing
     // the copy here:
@@ -640,18 +658,104 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     //    )
     //   )
     // will inhibit us creating an if return value.
-    struct FinalOptimizer : public LinearExecutionWalker<FinalOptimizer> {
+    struct EquivalentOptimizer : public LinearExecutionWalker<EquivalentOptimizer> {
       std::vector<Index>* numGetLocals;
       bool removeEquivalentSets;
+      Module* module;
+
+      bool anotherCycle = false;
 
       // We track locals containing the same value.
       EquivalentSets equivalences;
 
-      static void doNoteNonLinear(FinalOptimizer* self, Expression** currp) {
+      static void doNoteNonLinear(EquivalentOptimizer* self, Expression** currp) {
         // TODO do this across non-linear paths too, in coalesce-locals perhaps? (would inhibit structure
         //      opts here, though.
         self->equivalences.clear();
       }
+
+      void visitSetLocal(SetLocal *curr) {
+        // Remove trivial copies, even through a tee
+        auto* value = curr->value;
+        while (auto* subSet = value->dynCast<SetLocal>()) {
+          value = subSet->value;
+        }
+        if (auto* get = value->dynCast<GetLocal>()) {
+          if (equivalences.check(curr->index, get->index)) {
+            // This is an unnecessary copy!
+            if (removeEquivalentSets) {
+              if (curr->isTee()) {
+                this->replaceCurrent(curr->value);
+              } else {
+                this->replaceCurrent(Builder(*module).makeDrop(curr->value));
+              }
+              anotherCycle = true;
+            }
+          } else {
+            // There is a new equivalence now.
+            equivalences.reset(curr->index);
+            equivalences.add(curr->index, get->index);
+          }
+        } else {
+          // A new value is assigned here.
+          equivalences.reset(curr->index);
+        }
+      }
+
+      void visitGetLocal(GetLocal *curr) {
+        // Canonicalize gets: if some are equivalent, then we can pick more
+        // then one, and other passes may benefit from having more uniformity.
+        if (auto *set = equivalences.getEquivalents(curr->index)) {
+          // Pick the index with the most uses - maximizing the chance to
+          // lower one's uses to zero.
+          // Helper method that returns the # of gets *ignoring the current get*,
+          // as we want to see what is best overall, treating this one as
+          // to be decided upon.
+          auto getNumGetsIgnoringCurr = [&](Index index) {
+            auto ret = (*numGetLocals)[index];
+            if (index == curr->index) {
+              assert(ret >= 1);
+              ret--;
+            }
+            return ret;
+          };
+          Index best = -1;
+          for (auto index : *set) {
+            if (best == Index(-1) ||
+                getNumGetsIgnoringCurr(index) > getNumGetsIgnoringCurr(best)) {
+              best = index;
+            }
+          }
+          assert(best != Index(-1));
+          // Due to ordering, the best index may be different from us but have
+          // the same # of locals - make sure we actually improve.
+          if (best != curr->index &&
+              getNumGetsIgnoringCurr(best) > getNumGetsIgnoringCurr(curr->index)) {
+            // Update the get counts.
+            (*numGetLocals)[best]++;
+            assert((*numGetLocals)[curr->index] >= 1);
+            (*numGetLocals)[curr->index]--;
+            // Make the change.
+            curr->index = best;
+            anotherCycle = true;
+          }
+        }
+      }
+    };
+
+    EquivalentOptimizer eqOpter;
+    eqOpter.module = this->getModule();
+    eqOpter.numGetLocals = &getCounter.num;
+    eqOpter.removeEquivalentSets = allowStructure;
+    eqOpter.walkFunction(func);
+
+    // We may have already had a local with no uses, or we may have just
+    // gotten there thanks to the EquivalentOptimizer. If there are such
+    // locals, remove all their sets.
+    struct UneededSetRemover : public PostWalker<UneededSetRemover> {
+      std::vector<Index>* numGetLocals;
+
+      bool anotherCycle = false;
 
       void visitSetLocal(SetLocal *curr) {
         if ((*numGetLocals)[curr->index] == 0) {
@@ -663,33 +767,16 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
             drop->value = value;
             drop->finalize();
           }
-        } else if (removeEquivalentSets && !getenv("NO_EQUIVZ")) {
-          // Remove trivial copies.
-          if (auto* get = curr->value->dynCast<GetLocal>()) {
-            if (equivalences.check(curr->index, get->index)) {
-              // This is an unnecessary copy!
-              if (curr->isTee()) {
-                this->replaceCurrent(get);
-              } else {
-                ExpressionManipulator::nop(curr);
-              }
-            } else {
-              // There is a new equivalence now.
-              equivalences.reset(curr->index);
-              equivalences.add(curr->index, get->index);
-            }
-          } else {
-            // A new value is assigned here.
-            equivalences.reset(curr->index);
-          }
+          anotherCycle = true;
         }
       }
     };
 
-    FinalOptimizer finalOptimizer;
-    finalOptimizer.numGetLocals = &getCounter.num;
-    finalOptimizer.removeEquivalentSets = allowStructure;
-    finalOptimizer.walkFunction(func);
+    UneededSetRemover setRemover;
+    setRemover.numGetLocals = &getCounter.num;
+    setRemover.walkFunction(func);
+
+    return eqOpter.anotherCycle || setRemover.anotherCycle;
   }
 
   bool canUseLoopReturnValue(Loop* curr) {

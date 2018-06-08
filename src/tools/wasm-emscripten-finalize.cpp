@@ -39,6 +39,7 @@ int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
   bool emitBinary = true;
+  bool debugInfo = false;
   unsigned numReservedFunctionPointers = 0;
   uint64_t globalBase;
   Options options("wasm-emscripten-finalize",
@@ -49,6 +50,12 @@ int main(int argc, const char *argv[]) {
            [&outfile](Options*, const std::string& argument) {
              outfile = argument;
              Colors::disable();
+           })
+      .add("--debuginfo", "-g",
+           "Emit names section in wasm binary (or full debuginfo in wast)",
+           Options::Arguments::Zero,
+           [&debugInfo](Options *, const std::string &) {
+             debugInfo = true;
            })
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
@@ -83,7 +90,13 @@ int main(int argc, const char *argv[]) {
 
   Module wasm;
   ModuleReader reader;
-  reader.read(infile, wasm);
+  try {
+    reader.read(infile, wasm);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    std::cerr << '\n';
+    Fatal() << "error in parsing input";
+  }
 
   if (options.debug) {
     std::cerr << "Module before:\n";
@@ -108,6 +121,7 @@ int main(int argc, const char *argv[]) {
   initializerFunctions.push_back("__wasm_call_ctors");
 
   EmscriptenGlueGenerator generator(wasm);
+  generator.fixInvokeFunctionNames();
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
@@ -122,9 +136,8 @@ int main(int argc, const char *argv[]) {
   auto outputBinaryFlag = emitBinary ? Flags::Binary : Flags::Text;
   Output output(outfile, outputBinaryFlag, Flags::Release);
   ModuleWriter writer;
-  // writer.setDebug(options.debug);
-  writer.setDebugInfo(true);
-  // writer.setDebugInfo(options.passOptions.debugInfo);
+  writer.setDebug(options.debug);
+  writer.setDebugInfo(debugInfo);
   // writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
   // if (emitBinary) {

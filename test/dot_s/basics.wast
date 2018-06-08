@@ -137,4 +137,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [], "declares": ["puts"], "externs": [], "implementedFunctions": ["_main","___wasm_nullptr","_stackSave","_stackAlloc","_stackRestore","_dynCall_iii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_iii"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 52, "initializers": [], "declares": ["puts"], "externs": [], "implementedFunctions": ["_main","_stackSave","_stackAlloc","_stackRestore","_dynCall_iii"], "exports": ["main","stackSave","stackAlloc","stackRestore","dynCall_iii"], "invokeFuncs": [] }

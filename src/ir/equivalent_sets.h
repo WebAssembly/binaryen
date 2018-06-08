@@ -70,14 +70,21 @@ struct EquivalentSets {
   // Checks whether two indexes contain the same data.
   bool check(Index a, Index b) {
     if (a == b) return true;
-    auto iter = indexSets.find(a);
-    if (iter != indexSets.end()) {
-      auto& set = iter->second;
+    if (auto* set = getEquivalents(a)) {
       if (set->find(b) != set->end()) {
         return true;
       }
     }
     return false;
+  }
+
+  // Returns the equivalent set, or nullptr
+  Set* getEquivalents(Index index) {
+    auto iter = indexSets.find(index);
+    if (iter != indexSets.end()) {
+      return iter->second.get();
+    }
+    return nullptr;
   }
 };
 

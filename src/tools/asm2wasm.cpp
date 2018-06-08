@@ -138,7 +138,7 @@ int main(int argc, const char *argv[]) {
 
   const auto &tm_it = options.extra.find("total memory");
   size_t totalMemory =
-      tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoi(tm_it->second.c_str());
+      tm_it == options.extra.end() ? 16 * 1024 * 1024 : atoll(tm_it->second.c_str());
   if (totalMemory & ~Memory::kPageMask) {
     std::cerr << "Error: total memory size " << totalMemory <<
         " is not a multiple of the 64k wasm page size\n";

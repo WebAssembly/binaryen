@@ -1,3 +1,8 @@
+add_custom_command(
+  OUTPUT WasmIntrinsics.cpp
+  COMMAND python ${CMAKE_SOURCE_DIR}/scripts/embedwast.py ${CMAKE_SOURCE_DIR}/src/passes/wasm-intrinsics.wast ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  DEPENDS ${CMAKE_SOURCE_DIR}/scripts/embedwast.py wasm-intrinsics.wast)
+
 SET(passes_SOURCES
   pass.cpp
   CoalesceLocals.cpp
@@ -32,6 +37,7 @@ SET(passes_SOURCES
   ReReloop.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
+  RemoveNonJSOps.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
@@ -44,5 +50,6 @@ SET(passes_SOURCES
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
 )
 ADD_LIBRARY(passes STATIC ${passes_SOURCES})
