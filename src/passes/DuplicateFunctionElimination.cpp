@@ -51,9 +51,20 @@ private:
 
 struct DuplicateFunctionElimination : public Pass {
   void run(PassRunner* runner, Module* module) override {
-// XXX based on opt level, -O1 should stop after max say 5 passes. hard limit
-    while (1) {
-std::cout << "waka do a pass!\n";
+    // Multiple iterations may be necessary: A and B may be identical only after we
+    // see the functions C1 and C2 that they call are in fact identical. Rarely, such
+    // "chains" can be very long, so we limit how many we do.
+    auto& options = runner->options;
+    Index limit;
+    if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+      limit = module->functions.size(); // no limit
+    } else if (options.optimizeLevel >= 2) {
+      limit = 10; // 10 passes usually does most of the work, as this is typically logarithmic
+    } else {
+      limit = 1;
+    }
+    while (limit > 0) {
+      limit--;
       // Hash all the functions
       auto hashes = FunctionHasher::createMap(module);
       PassRunner hasherRunner(module);
@@ -63,7 +74,6 @@ std::cout << "waka do a pass!\n";
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
-//std::cout << "hash: " << func->name << " : " << hashes[func.get()] << '\n';
         hashGroups[hashes[func.get()]].push_back(func.get());
       }
       // Find actually equal functions and prepare to replace them
@@ -86,31 +96,12 @@ std::cout << "waka do a pass!\n";
               // great, we can replace the second with the first!
               replacements[second->name] = first->name;
               duplicates.insert(second->name);
-            } else {
-
-//std::cout << "surprisingly unequal :( " << first->name << " , " << second->name << " : " << hashes[first] << " : " << hashes[second] << "\n";
-if (first->name.startsWith("___cxx_global_var_init")) {
-  if (Measurer::measure(first->body) < 10 && Measurer::measure(second->body) < 10) {
-    std::cout << "waka surprisingly unequal :(\n" << first->name << " : " << hashes[first] << '\n' << *first->body << '\n';
-    std::cout << "\n" << second->name << " : " << hashes[second] << '\n' << *second->body << '\n';
-std::cout << "recalc hashes\n" << FunctionHasher::hashFunction(first) << " : " << FunctionHasher::hashFunction(second) << '\n';
-    exit(110);
-  }
-}
-
             }
           }
         }
       }
       // perform replacements
       if (replacements.size() > 0) {
-
-//std::cout << replacements.size() << '\n';
-//for (auto& iter : replacements) {
-  //std::cout << iter.first << " => " << iter.second << '\n';
-//  break;
-//}
-
         // remove the duplicates
         auto& v = module->functions;
         v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Function>& curr) {
