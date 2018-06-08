@@ -233,6 +233,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     std::vector<std::string> passes = {
       "-Oz",
       "-Os",
+      "-O1",
       "-O2",
       "-O3",
       "--flatten -Os",
