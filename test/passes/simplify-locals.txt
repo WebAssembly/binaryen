@@ -877,13 +877,9 @@
  (func $if-return-but-unreachable (; 18 ;) (type $10) (param $var$0 i64)
   (if
    (unreachable)
-<<<<<<< HEAD
-   (nop)
-=======
    (drop
     (get_local $var$0)
    )
->>>>>>> origin/master
    (set_local $var$0
     (i64.const 1)
    )
@@ -898,14 +894,10 @@
  (type $4 (func (param i32)))
  (type $5 (func (param i32) (result i32)))
  (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-<<<<<<< HEAD
- (type $7 (func (param i32 i32) (result f64)))
-=======
  (type $7 (func (param i32 i32)))
  (type $8 (func (result f64)))
  (type $9 (func (param i32 i32) (result f64)))
  (type $10 (func (param i32 i32) (result i32)))
->>>>>>> origin/master
  (memory $0 (shared 256 256))
  (func $nonatomics (; 0 ;) (type $FUNCSIG$i) (result i32)
   (local $x i32)
@@ -1246,15 +1238,6 @@
   )
   (i32.const 0)
  )
-<<<<<<< HEAD
- (func $multi-pass-get-equivs-right (; 16 ;) (type $7) (param $var$0 i32) (param $var$1 i32) (result f64)
-  (local $var$2 i32)
-  (nop)
-  (i32.store
-   (tee_local $var$2
-    (get_local $var$0)
-   )
-=======
  (func $pick (; 16 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y i32)
@@ -1378,29 +1361,16 @@
   (nop)
   (i32.store
    (get_local $var$0)
->>>>>>> origin/master
    (i32.const 1)
   )
   (f64.promote/f32
    (f32.load
-<<<<<<< HEAD
-    (get_local $var$2)
-   )
-  )
- )
- (func $if-value-structure-equivalent (; 17 ;) (type $5) (param $x i32) (result i32)
-  (local $y i32)
-  (set_local $y
-   (get_local $x)
-  )
-=======
     (get_local $var$0)
    )
   )
  )
  (func $if-value-structure-equivalent (; 22 ;) (type $5) (param $x i32) (result i32)
   (local $y i32)
->>>>>>> origin/master
   (nop)
   (tee_local $x
    (if (result i32)
@@ -1409,22 +1379,14 @@
      (nop)
      (i32.const 2)
     )
-<<<<<<< HEAD
-    (block (result i32)
-     (nop)
-     (get_local $y)
-=======
     (block $block (result i32)
      (nop)
      (nop)
      (get_local $x)
->>>>>>> origin/master
     )
    )
   )
  )
-<<<<<<< HEAD
-=======
  (func $set-tee-need-one-of-them (; 23 ;) (type $10) (param $var$0 i32) (param $var$1 i32) (result i32)
   (local $var$2 i32)
   (local $var$3 i32)
@@ -1438,5 +1400,4 @@
   )
   (get_local $var$2)
  )
->>>>>>> origin/master
 )
