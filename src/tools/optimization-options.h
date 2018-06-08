@@ -63,6 +63,13 @@ struct OptimizationOptions : public Options {
                   passOptions.shrinkLevel = 0;
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
+           .add("", "-O4", "execute -O4 optimization passes",
+                Options::Arguments::Zero,
+                [this](Options*, const std::string&) {
+                  passOptions.optimizeLevel = 4;
+                  passOptions.shrinkLevel = 0;
+                  passes.push_back(DEFAULT_OPT_PASSES);
+                })
            .add("", "-Os", "execute default optimization passes, focusing on code size",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {

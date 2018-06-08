@@ -132,6 +132,12 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // if we are willing to work very very hard, flatten the IR and do opts
+  // that depend on flat IR
+  if (options.optimizeLevel >= 4) {
+    add("flatten");
+    add("local-cse");
+  }
   if (!options.debugInfo) { // debug info must be preserved, do not dce it
     add("dce");
   }
