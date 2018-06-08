@@ -236,6 +236,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "-O1",
       "-O2",
       "-O3",
+      "-O4",
       "--flatten -Os",
       "--flatten -O3",
       "--flatten --local-cse -Os",
