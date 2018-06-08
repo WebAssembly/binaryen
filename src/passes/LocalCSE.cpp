@@ -71,13 +71,18 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     // we may need multiple rounds
     while (anotherPass) {
       anotherPass = false;
+      clear();
       super::doWalkFunction(func);
     }
   }
 
   static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
-    self->usables.clear();
-    self->equivalences.clear();
+    self->clear();
+  }
+
+  void clear() {
+    usables.clear();
+    equivalences.clear();
   }
 
   void checkInvalidations(EffectAnalyzer& effects) {
