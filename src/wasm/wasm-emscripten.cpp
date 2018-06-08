@@ -585,7 +585,7 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
 
     FunctionType* func = wasm.getFunctionType(curr->functionType);
     Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
-    if (newname == curr->name)
+    if (newname == curr->base)
       return;
 
     if (curr->base != curr->name) {
