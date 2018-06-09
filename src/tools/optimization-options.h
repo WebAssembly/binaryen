@@ -63,7 +63,7 @@ struct OptimizationOptions : public Options {
                   passOptions.shrinkLevel = 0;
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
-           .add("", "-O4", "execute -O4 optimization passes (also flatten the IR and do flat-dependent opts)",
+           .add("", "-O4", "execute -O4 optimization passes (also flatten the IR, which can take a lot more time and memory, but is useful on more nested / complex / less-optimized input)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 4;
