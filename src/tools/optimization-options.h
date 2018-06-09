@@ -42,24 +42,31 @@ struct OptimizationOptions : public Options {
                   passOptions.optimizeLevel = 0;
                   passOptions.shrinkLevel = 0;
                 })
-           .add("", "-O1", "execute -O1 optimization passes",
+           .add("", "-O1", "execute -O1 optimization passes (quick&useful opts, useful for iteration builds)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 1;
                   passOptions.shrinkLevel = 0;
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
-           .add("", "-O2", "execute -O2 optimization passes",
+           .add("", "-O2", "execute -O2 optimization passes (most opts, generally gets most perf)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 2;
                   passOptions.shrinkLevel = 0;
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
-           .add("", "-O3", "execute -O3 optimization passes",
+           .add("", "-O3", "execute -O3 optimization passes (spends potentially a lot of time optimizing)",
                 Options::Arguments::Zero,
                 [this](Options*, const std::string&) {
                   passOptions.optimizeLevel = 3;
+                  passOptions.shrinkLevel = 0;
+                  passes.push_back(DEFAULT_OPT_PASSES);
+                })
+           .add("", "-O4", "execute -O4 optimization passes (also flatten the IR, which can take a lot more time and memory, but is useful on more nested / complex / less-optimized input)",
+                Options::Arguments::Zero,
+                [this](Options*, const std::string&) {
+                  passOptions.optimizeLevel = 4;
                   passOptions.shrinkLevel = 0;
                   passes.push_back(DEFAULT_OPT_PASSES);
                 })
