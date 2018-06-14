@@ -64,8 +64,15 @@ fi
 # input sources relative to this script
 BINARYEN_SRC="$(dirname $0)/src"
 
+# input sources relative to this script
+BINARYEN_SCRIPTS="$(dirname $0)/scripts"
+
 # output binaries relative to current working directory
 BINARYEN_BIN="$PWD/bin"
+
+echo "generate embedded intrinsics module"
+
+python $BINARYEN_SCRIPTS/embedwast.py $BINARYEN_SRC/passes/wasm-intrinsics.wast $BINARYEN_SRC/passes/WasmIntrinsics.cpp
 
 echo "building shared bitcode"
 
