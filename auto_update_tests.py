@@ -24,7 +24,7 @@ from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, S2WASM, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
     WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR,
-    files_with_pattern, has_shell_timeout)
+    files_with_pattern, has_shell_timeout, check_binaryen_bin)
 from scripts.test.wasm2asm import tests, spec_tests, extra_wasm2asm_tests, assert_tests, wasm2asm_dir
 
 
@@ -434,6 +434,8 @@ def update_reduce_tests():
 
 
 def main():
+  check_binaryen_bin()
+
   update_asm_js_tests()
   update_dot_s_tests()
   update_lld_tests()

@@ -26,7 +26,8 @@ from scripts.test.shared import (
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
-    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file
+    requested, warnings, has_shell_timeout, fail_if_not_identical_to_file,
+    check_binaryen_bin
 )
 
 import scripts.test.asm2wasm as asm2wasm
@@ -662,6 +663,8 @@ def run_emscripten_tests():
 
 # Run all the tests
 def main():
+  check_binaryen_bin()
+
   run_help_tests()
   run_wasm_opt_tests()
   asm2wasm.test_asm2wasm()

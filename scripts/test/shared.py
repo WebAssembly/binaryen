@@ -18,6 +18,7 @@ import glob
 import os
 import shutil
 import subprocess
+import stat
 import sys
 import urllib2
 
@@ -60,20 +61,15 @@ def parse_args(args):
   parser.add_argument(
       '--no-run-gcc-tests', dest='run_gcc_tests', action='store_false',
       help='If set, disables the native GCC tests.')
-
   parser.add_argument(
       '--interpreter', dest='interpreter', default='',
       help='Specifies the wasm interpreter executable to run tests on.')
   parser.add_argument(
       '--binaryen-bin', dest='binaryen_bin', default='',
-      help=('Specifies a path to where the built Binaryen executables reside at.'
+      help=('Specifies a path to where the built Binaryen executables reside.'
             ' Default: bin/ of current directory (i.e. assume an in-tree build).'
             ' If not specified, the environment variable BINARYEN_ROOT= can also'
             ' be used to adjust this.'))
-  parser.add_argument(
-      '--binaryen-root', dest='binaryen_root', default='',
-      help=('Specifies a path to the root of the Binaryen repository tree.'
-            ' Default: the directory where this file check.py resides.'))
   parser.add_argument(
       '--valgrind', dest='valgrind', default='',
       help=('Specifies a path to Valgrind tool, which will be used to validate'
@@ -84,7 +80,6 @@ def parse_args(args):
       action='store_true', default=False,
       help=('If specified, all unfreed (but still referenced) pointers at the'
             ' end of execution are considered memory leaks. Default: disabled.'))
-
   parser.add_argument(
       'positional_args', metavar='tests', nargs=argparse.REMAINDER,
       help='Names specific tests to run.')
@@ -107,6 +102,11 @@ def warn(text):
 
 # setup
 
+# Locate Binaryen source directory
+script_dir = os.path.dirname(os.path.abspath(__file__))
+options.binaryen_root = os.path.dirname(os.path.dirname(script_dir))
+options.binaryen_test = os.path.join(options.binaryen_root, 'test')
+
 # Locate Binaryen build artifacts directory (bin/ by default)
 if not options.binaryen_bin:
   if os.environ.get('BINARYEN_ROOT'):
@@ -116,25 +116,18 @@ if not options.binaryen_bin:
     else:
       options.binaryen_bin = os.environ.get('BINARYEN_ROOT')
   else:
-    options.binaryen_bin = 'bin'
-
-# ensure BINARYEN_ROOT is set up
-os.environ['BINARYEN_ROOT'] = os.path.dirname(os.path.abspath(
-    options.binaryen_bin))
+    options.binaryen_bin = os.path.join(options.binaryen_root, 'bin')
 
 options.binaryen_bin = os.path.normpath(options.binaryen_bin)
 
-wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
-if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
-           for f in wasm_dis_filenames):
-  warn('Binaryen not found (or has not been successfully built to bin/ ?')
 
-# Locate Binaryen source directory if not specified.
-if not options.binaryen_root:
-  path_parts = os.path.abspath(__file__).split(os.path.sep)
-  options.binaryen_root = os.path.sep.join(path_parts[:-3])
-
-options.binaryen_test = os.path.join(options.binaryen_root, 'test')
+def check_binaryen_bin():
+  wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
+  if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
+             for f in wasm_dis_filenames):
+    print 'binaries not found in default location: %s' % options.binaryen_bin
+    print 'Use --binaryen-bin to override'
+    sys.exit(1)
 
 
 # Finds the given executable 'program' in PATH.
@@ -190,6 +183,9 @@ WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
 
 S2WASM_EXE = S2WASM[0]
 WASM_SHELL_EXE = WASM_SHELL[0]
+
+# ensure BINARYEN_ROOT is set up
+os.environ['BINARYEN_ROOT'] = BINARYEN_INSTALL_DIR
 
 
 def wrap_with_valgrind(cmd):
@@ -334,7 +330,6 @@ def delete_from_orbit(filename):
   if not os.path.exists(filename):
     return
   try:
-    import stat
     os.chmod(filename, os.stat(filename).st_mode | stat.S_IWRITE)
 
     def remove_readonly_and_try_again(func, path, exc_info):
