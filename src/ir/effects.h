@@ -41,10 +41,11 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
 
   bool branches = false; // branches out of this expression, returns, infinite loops, etc
   bool calls = false;
-  std::set<Index> localsRead;
-  std::set<Index> localsWritten;
-  std::set<Name> globalsRead;
-  std::set<Name> globalsWritten;
+  std::vector<Index> localsRead;
+  std::vector<Index> localsWritten;
+  std::vector<Name> globalsRead;
+  std::vector<Name> globalsWritten;
+  
   bool readsMemory = false;
   bool writesMemory = false;
   bool implicitTrap = false; // a load or div/rem, which may trap. we ignore trap
@@ -54,6 +55,14 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // (global) side effects
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
                          // has a defined ordering wrt atomics (e.g. grow_memory)
+  template<typename T>
+  bool findHelper(std::vector<T> & container, const T & value) {
+    return std::find(container.begin(), container.end(), value) != container.end();
+  }
+  bool hasLocalRead(Index index) { return findHelper(localsRead, index); }
+  bool hasLocalWrite(Index index) { return findHelper(localsWritten, index); }
+  bool hasGlobalRead(const Name & name) { return findHelper(globalsRead, name); }
+  bool hasGlobalWrite(const Name & name) { return findHelper(globalsWritten, name); }
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
@@ -79,23 +88,23 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
       return true;
     }
     for (auto local : localsWritten) {
-      if (other.localsWritten.count(local) || other.localsRead.count(local)) {
+      if( other.hasLocalWrite(local) || other.hasLocalRead(local) ){
         return true;
       }
     }
     for (auto local : localsRead) {
-      if (other.localsWritten.count(local)) return true;
+      if (other.hasLocalWrite(local)) return true;
     }
     if ((accessesGlobal() && other.calls) || (other.accessesGlobal() && calls)) {
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.globalsWritten.count(global) || other.globalsRead.count(global)) {
+      if( other.hasGlobalWrite(global) || other.hasGlobalRead(global) ) {
         return true;
       }
     }
     for (auto global : globalsRead) {
-      if (other.globalsWritten.count(global)) return true;
+      if (other.hasGlobalWrite(global)) return true;
     }
     // we are ok to reorder implicit traps, but not conditionalize them
     if ((implicitTrap && other.branches) || (other.implicitTrap && branches)) {
@@ -107,16 +116,24 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
     return false;
   }
+  template<typename T>
+  static void mergeArrayHelper(std::vector<T> & dest, const std::vector<T> & src)
+  {
+    dest.insert(dest.end(), src.begin(), src.end());
+    std::sort(dest.begin(), dest.end());
+    auto endItRead = std::unique(dest.begin(), dest.end());
+    dest.erase(endItRead, dest.end());
+  }
 
   void mergeIn(EffectAnalyzer& other) {
     branches = branches || other.branches;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
-    for (auto i : other.localsRead) localsRead.insert(i);
-    for (auto i : other.localsWritten) localsWritten.insert(i);
-    for (auto i : other.globalsRead) globalsRead.insert(i);
-    for (auto i : other.globalsWritten) globalsWritten.insert(i);
+    mergeArrayHelper(localsRead, other.localsRead);
+    mergeArrayHelper(localsWritten, other.localsWritten);
+    mergeArrayHelper(globalsRead, other.globalsRead);
+    mergeArrayHelper(globalsWritten, other.globalsWritten);
   }
 
   // the checks above happen after the node's children were processed, in the order of execution
@@ -178,16 +195,16 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }
   void visitGetLocal(GetLocal *curr) {
-    localsRead.insert(curr->index);
+    localsRead.push_back(curr->index);
   }
   void visitSetLocal(SetLocal *curr) {
-    localsWritten.insert(curr->index);
+    localsWritten.push_back(curr->index);
   }
   void visitGetGlobal(GetGlobal *curr) {
-    globalsRead.insert(curr->name);
+    globalsRead.push_back(curr->name);
   }
   void visitSetGlobal(SetGlobal *curr) {
-    globalsWritten.insert(curr->name);
+    globalsWritten.push_back(curr->name);
   }
   void visitLoad(Load *curr) {
     readsMemory = true;
