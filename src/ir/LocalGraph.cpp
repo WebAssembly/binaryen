@@ -49,6 +49,7 @@ struct Action {
 
 // information about a basic block
 struct Info {
+  Index lastSeenIndex;
   std::vector<Action> actions; // actions occurring in this block
   std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
 
@@ -77,6 +78,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   BasicBlock* makeBasicBlock() {
     auto* ret = new BasicBlock();
+    ret->contents.lastSeenIndex = std::numeric_limits<Index>::max();
     auto& lastSets = ret->contents.lastSets;
     lastSets.resize(getFunction()->getNumLocals());
     std::fill(lastSets.begin(), lastSets.end(), nullptr);
@@ -106,7 +108,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto numLocals = func->getNumLocals();
     std::vector<std::vector<GetLocal*>> allGets;
     allGets.resize(numLocals);
-    std::unordered_set<BasicBlock*> seen;
     std::vector<BasicBlock*> work;
     for (auto& block : basicBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
@@ -143,7 +144,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         auto& gets = allGets[index];
         if (gets.empty()) continue;
         work.push_back(block.get());
-        seen.clear();
+
         // note that we may need to revisit the later parts of this initial
         // block, if we are in a loop, so don't mark it as seen
         while (!work.empty()) {
@@ -160,8 +161,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           } else {
             for (auto* pred : curr->in) {
-              if (seen.count(pred)) continue;
-              seen.insert(pred);
+              if (pred->contents.lastSeenIndex == index) continue;
+              pred->contents.lastSeenIndex = index;
               auto* lastSet = pred->contents.lastSets[index];
               if (lastSet) {
                 // there is a set here, apply it, and stop the flow
