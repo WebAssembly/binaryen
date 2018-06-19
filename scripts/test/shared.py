@@ -378,7 +378,7 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-  with open(expected_file, 'rb') as f:
+  with open(expected_file, 'rb' if expected_file.endswith(".wasm") else 'r') as f:
     fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 
