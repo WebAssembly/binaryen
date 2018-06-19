@@ -30,8 +30,6 @@ jobs:
         - npm install jsvu -g
         - export PATH="${HOME}/.jsvu:${PATH}"
         - jsvu --os=linux64 --engines=spidermonkey
-      before_script:
-        - ./check.py --test-waterfall --only-prepare
       script:
         - set -o errexit
         - flake8
@@ -40,7 +38,7 @@ jobs:
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install
         - make -j2 install
         - cd ${TRAVIS_BUILD_DIR}
-        - ./check.py --test-waterfall --binaryen-bin=${BUILD_SUBDIR}/install/bin
+        - ./check.py --binaryen-bin=${BUILD_SUBDIR}/install/bin
 
     - <<: *test-ubuntu
       env: |
@@ -96,12 +94,10 @@ jobs:
       install:
         - alpine apk update
         - alpine apk add build-base cmake git python2
-      before_script:
-        - alpine ./check.py --test-waterfall --only-prepare
       script:
         - alpine cmake .
         - alpine make -j2
-        - alpine ./check.py --test-waterfall
+        - alpine ./check.py
 
     # Build statically linked release binaries with gcc 6.3 on Alpine Linux
     # (inside chroot). If building a tagged commit, then deploy release tarball

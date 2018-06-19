@@ -21,8 +21,8 @@ import sys
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, S2WASM_EXE,
-    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_SHELL_EXE, WASM_METADCE,
+    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS,
+    WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_METADCE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
     has_vanilla_llvm, minify_check, num_failures, options, tests,
@@ -461,50 +461,6 @@ def run_validator_tests():
   run_command(cmd)
 
 
-def run_torture_tests():
-  print '\n[ checking torture testcases... ]\n'
-
-  # torture tests are parallel anyhow, don't create multiple threads in each child
-  old_cores = os.environ.get('BINARYEN_CORES')
-  try:
-    os.environ['BINARYEN_CORES'] = '1'
-
-    unexpected_result_count = 0
-
-    import test.waterfall.src.link_assembly_files as link_assembly_files
-    s2wasm_torture_out = os.path.abspath(os.path.join(options.binaryen_test, 's2wasm-torture-out'))
-    if os.path.isdir(s2wasm_torture_out):
-      shutil.rmtree(s2wasm_torture_out)
-    os.mkdir(s2wasm_torture_out)
-    unexpected_result_count += link_assembly_files.run(
-        linker=os.path.abspath(S2WASM_EXE),
-        files=os.path.abspath(os.path.join(options.binaryen_test, 'torture-s', '*.s')),
-        fails=[os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_gcc_test_failures.txt'))],
-        attributes=['O2'],
-        out=s2wasm_torture_out,
-        args=None)
-    assert os.path.isdir(s2wasm_torture_out), 'Expected output directory %s' % s2wasm_torture_out
-
-    import test.waterfall.src.execute_files as execute_files
-    unexpected_result_count += execute_files.run(
-        runner=os.path.abspath(WASM_SHELL_EXE),
-        files=os.path.abspath(os.path.join(s2wasm_torture_out, '*.wast')),
-        fails=[os.path.abspath(os.path.join(options.binaryen_test, 's2wasm_known_binaryen_shell_test_failures.txt'))],
-        attributes=['O2'],
-        out='',
-        wasmjs='')
-
-    shutil.rmtree(s2wasm_torture_out)
-    if unexpected_result_count:
-      fail('%s failures' % unexpected_result_count, '0 failures')
-
-  finally:
-    if old_cores:
-      os.environ['BINARYEN_CORES'] = old_cores
-    else:
-      del os.environ['BINARYEN_CORES']
-
-
 def run_vanilla_tests():
   print '\n[ checking emcc WASM_BACKEND testcases...]\n'
 
@@ -681,8 +637,6 @@ def main():
   lld.test_wasm_emscripten_finalize()
   wasm2asm.test_wasm2asm()
   run_validator_tests()
-  if options.torture and options.test_waterfall:
-    run_torture_tests()
   if has_vanilla_emcc and has_vanilla_llvm and 0:
     run_vanilla_tests()
   print '\n[ checking example testcases... ]\n'
