@@ -28,7 +28,6 @@
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
-#include "wasm-linker.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
 

@@ -31,7 +31,6 @@ from scripts.test.shared import (
 
 import scripts.test.asm2wasm as asm2wasm
 import scripts.test.lld as lld
-import scripts.test.s2wasm as s2wasm
 import scripts.test.wasm2asm as wasm2asm
 
 if options.interpreter:
@@ -632,8 +631,6 @@ def main():
 
   run_spec_tests()
   run_binaryen_js_tests()
-  s2wasm.test_s2wasm()
-  s2wasm.test_linker()
   lld.test_wasm_emscripten_finalize()
   wasm2asm.test_wasm2asm()
   run_validator_tests()
