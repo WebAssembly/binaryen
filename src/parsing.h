@@ -182,18 +182,16 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
       break;
     }
     case i64: {
+      bool negative = str[0] == '-';
+      if (negative) str++;
       if ((str[0] == '0' && str[1] == 'x') || (str[0] == '-' && str[1] == '0' && str[2] == 'x')) {
-        bool negative = str[0] == '-';
-        if (negative) str++;
         std::istringstream istr(str);
         uint64_t temp;
         istr >> std::hex >> temp;
         ret->value = Literal(negative ? -temp : temp);
       } else {
-        std::istringstream istr(str[0] == '-' ? str + 1 : str);
-        uint64_t temp;
-        istr >> temp;
-        ret->value = Literal(str[0] == '-' ? -temp : temp);
+        uint64_t temp = strtoull(str,nullptr,10);
+        ret->value = Literal(negative ? -temp : temp);
       }
       break;
     }
