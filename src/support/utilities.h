@@ -58,23 +58,45 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-// For fatal errors which could arise from input (i.e. not assertion failures)
-class Fatal {
+// Helper for non-asserting failures.
+// Used to collapse code like:
+//   if (foo() && !bar()) {
+//     Fatal() << "Error: foo and not bar!";
+//   }
+// Into:
+//   FatalIf(foo() && !bar()) << "foo and not bar!";
+class FatalIf {
+  bool condition;
  public:
-  Fatal() {
-    std::cerr << "Fatal: ";
+  FatalIf(bool condition) : condition(condition) {
+    if (condition) {
+      std::cerr << "Fatal: ";
+    }
   }
   template<typename T>
-  Fatal &operator<<(T arg) {
-    std::cerr << arg;
+  FatalIf &operator<<(T arg) {
+    if (condition) {
+      std::cerr << arg;
+    }
     return *this;
   }
+  ~FatalIf() {
+    if (condition) {
+      std::cerr << "\n";
+      exit(1);
+    }
+  }
+};
+
+// For fatal errors which could arise from input (i.e. not assertion failures)
+class Fatal : public FatalIf {
+ public:
+  Fatal() : FatalIf(true) { }
   WASM_NORETURN ~Fatal() {
     std::cerr << "\n";
     exit(1);
   }
 };
-
 
 }  // namespace wasm
 

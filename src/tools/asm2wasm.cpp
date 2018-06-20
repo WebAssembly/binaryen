@@ -131,9 +131,8 @@ int main(int argc, const char *argv[]) {
   }
 
   if (options.runningDefaultOptimizationPasses()) {
-    if (options.passes.size() > 1) {
-      Fatal() << "asm2wasm can only run default optimization passes (-O, -Ox, etc.), and not specific additional passes";
-    }
+    FatalIf(options.passes.size() > 1)
+      << "asm2wasm can only run default optimization passes (-O, -Ox, etc.), and not specific additional passes";
   }
 
   const auto &tm_it = options.extra.find("total memory");

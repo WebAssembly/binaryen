@@ -93,12 +93,8 @@ int main(int argc, const char *argv[]) {
                       });
   options.parse(argc, argv);
 
-  if (infile == "") {
-    Fatal() << "Need to specify an infile\n";
-  }
-  if (outfile == "" && emitBinary) {
-    Fatal() << "Need to specify an outfile, or use text output\n";
-  }
+  FatalIf(infile == "") << "Need to specify an infile\n";
+  FatalIf(outfile == "" && emitBinary) << "Need to specify an outfile, or use text output\n";
 
   Module wasm;
   ModuleReader reader;
@@ -120,16 +116,10 @@ int main(int argc, const char *argv[]) {
   }
 
   Export* dataEndExport = wasm.getExport("__data_end");
-  if (dataEndExport == nullptr) {
-    Fatal() << "__data_end export not found";
-  }
+  FatalIf(dataEndExport == nullptr) << "__data_end export not found";
   Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-  if (dataEnd == nullptr) {
-    Fatal() << "__data_end global not found";
-  }
-  if (dataEnd->type != Type::i32) {
-    Fatal() << "__data_end global has wrong type";
-  }
+  FatalIf(dataEnd == nullptr) << "__data_end global not found";
+  FatalIf(dataEnd->type != Type::i32) << "__data_end global has wrong type";
   Const* dataEndConst = dataEnd->init->cast<Const>();
   uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
 
