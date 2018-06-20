@@ -105,7 +105,7 @@ def run_wasm_opt_tests():
       actual = ''
       for module, asserts in split_wast(t):
         assert len(asserts) == 0
-        with open('split.wast', 'w') as o:
+        with open('split.wast', "wb" if binary else 'w') as o:
           o.write(module)
         cmd = WASM_OPT + opts + ['split.wast', '--print']
         curr = run_command(cmd)
@@ -139,12 +139,12 @@ def run_wasm_opt_tests():
       wasm = os.path.basename(t).replace('.wast', '')
       cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
       print '    ', ' '.join(cmd)
-      actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+      actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       expected_file = os.path.join(options.binaryen_test, 'print', wasm + '.txt')
       fail_if_not_identical_to_file(actual, expected_file)
       cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
       print '    ', ' '.join(cmd)
-      actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+      actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       fail_if_not_identical(actual.strip(), open(os.path.join(options.binaryen_test, 'print', wasm + '.minified.txt')).read().strip())
 
   print '\n[ checking wasm-opt testcases... ]\n'
