@@ -91,13 +91,13 @@ def split_wast(wastFile):
   # .wast files can contain multiple modules, and assertions for each one.
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
-  wast = open(wastFile,'rb').read()
+  wast = open(wastFile, 'rb').read()
 
   # if it's a binary, leave it as is
   if wast[0] == '\0':
     return [[wast, '']]
 
-  wast = open(wastFile,'r').read()
+  wast = open(wastFile, 'r').read()
   ret = []
 
   def to_end(j):
