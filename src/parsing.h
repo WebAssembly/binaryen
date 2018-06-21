@@ -126,6 +126,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           if (modifier) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
+            if (istr.fail()) pattern = -1;
             pattern |= 0x7f800000U;
           } else {
             pattern = 0x7fc00000U;
@@ -140,6 +141,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           if (modifier) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
+            if (istr.fail()) pattern = -1;
             pattern |= 0x7ff0000000000000ULL;
           } else {
             pattern = 0x7ff8000000000000UL;
