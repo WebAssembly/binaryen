@@ -172,11 +172,13 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         std::istringstream istr(str);
         uint32_t temp;
         istr >> std::hex >> temp;
+        if (istr.fail()) temp = -1;
         ret->value = Literal(negative ? -temp : temp);
       } else {
         std::istringstream istr(str[0] == '-' ? str + 1 : str);
         uint32_t temp;
         istr >> temp;
+        if (istr.fail()) temp = -1;
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
       break;
@@ -188,11 +190,13 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         std::istringstream istr(str);
         uint64_t temp;
         istr >> std::hex >> temp;
+        if (istr.fail()) temp = -1;
         ret->value = Literal(negative ? -temp : temp);
       } else {
         std::istringstream istr(str[0] == '-' ? str + 1 : str);
         uint64_t temp;
         istr >> temp;
+        if (istr.fail()) temp = -1;
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
       break;
