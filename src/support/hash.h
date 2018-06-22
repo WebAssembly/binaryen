@@ -22,7 +22,8 @@
 
 namespace wasm {
 
-inline uint32_t rehash(uint32_t x, uint32_t y) { // see http://www.cse.yorku.ca/~oz/hash.html
+inline uint32_t rehash(uint32_t x, uint32_t y) {
+  // see http://www.cse.yorku.ca/~oz/hash.html and https://stackoverflow.com/a/2595226/1176841
   uint32_t hash = 5381;
   while (x) {
     hash = ((hash << 5) + hash) ^ (x & 0xff);
@@ -35,8 +36,10 @@ inline uint32_t rehash(uint32_t x, uint32_t y) { // see http://www.cse.yorku.ca/
   return hash;
 }
 
-inline uint64_t rehash(uint64_t x, uint64_t y) { // see boost and https://stackoverflow.com/a/2595226/1176841
-  return x ^ (y + 0x9e3779b9 + (x << 6) + (x >> 2));
+inline uint64_t rehash(uint64_t x, uint64_t y) {
+  auto ret = rehash(uint32_t(x), uint32_t(x >> 32));
+  ret = rehash(ret, uint32_t(y));
+  return rehash(ret, uint32_t(y >> 32));
 }
 
 } // namespace wasm

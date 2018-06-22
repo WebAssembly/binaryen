@@ -207,16 +207,16 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
     }
     const auto& tableSegmentData = wasm.table.segments[0].data;
 
+    jsCallStartIndex =
+        wasm.table.segments[0].offset->cast<Const>()->value.getInteger();
     // Check if jsCalls have already been created
     for (Index i = 0; i < tableSegmentData.size(); ++i) {
       if (tableSegmentData[i].startsWith("jsCall_")) {
-        jsCallStartIndex = i;
+        jsCallStartIndex += i;
         return;
       }
     }
-    jsCallStartIndex =
-        wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-        tableSegmentData.size();
+    jsCallStartIndex += tableSegmentData.size();
   }
 
   // Gather all function signatures used in call_indirect, because any of them
@@ -584,9 +584,13 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
       return;
 
     FunctionType* func = wasm.getFunctionType(curr->functionType);
-    Name newname = fixEmEHSjLjNames(curr->name, getSig(func));
-    if (newname == curr->name)
+    Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
+    if (newname == curr->base)
       return;
+
+    if (curr->base != curr->name) {
+      Fatal() << "Import name and function name do not match: '" << curr->base << "' '" << curr->name << "'";
+    }
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;

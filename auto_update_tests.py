@@ -182,6 +182,17 @@ def update_wasm_opt_tests():
       actual = actual.replace('printing before:\n', '')
       open(f, 'w').write(actual)
 
+  print '\n[ checking wasm-opt debugInfo read-write... ]\n'
+  for t in os.listdir('test'):
+    if t.endswith('.fromasm') and 'debugInfo' in t:
+      print '..', t
+      t = os.path.join('test', t)
+      f = t + '.read-written'
+      run_command(WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
+      run_command(WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
+      actual = run_command(WASM_DIS + ['b.wasm', '--source-map=b.map'])
+      open(f, 'w').write(actual)
+
 
 def update_bin_fmt_tests():
   print '\n[ checking binary format testcases... ]\n'

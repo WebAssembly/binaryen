@@ -132,6 +132,12 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // if we are willing to work very very hard, flatten the IR and do opts
+  // that depend on flat IR
+  if (options.optimizeLevel >= 4) {
+    add("flatten");
+    add("local-cse");
+  }
   if (!options.debugInfo) { // debug info must be preserved, do not dce it
     add("dce");
   }
@@ -141,7 +147,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("pick-load-signs");
   }
-  add("precompute");
+  // early propagation
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("precompute-propagate");
+  } else {
+    add("precompute");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
@@ -164,15 +175,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  // if we are willing to work hard, also propagate
+  // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
   } else {
     add("precompute");
-  }
-  if (options.shrinkLevel >= 2) {
-    add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
-    add("coalesce-locals"); // just for localCSE
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum

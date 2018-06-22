@@ -38,11 +38,21 @@ void ModuleReader::readText(std::string filename, Module& wasm) {
   SExpressionWasmBuilder builder(wasm, *root[0]);
 }
 
-void ModuleReader::readBinary(std::string filename, Module& wasm) {
+void ModuleReader::readBinary(std::string filename, Module& wasm,
+                              std::string sourceMapFilename) {
   if (debug) std::cerr << "reading binary from " << filename << "\n";
   auto input(read_file<std::vector<char>>(filename, Flags::Binary, debug ? Flags::Debug : Flags::Release));
+  std::unique_ptr<std::ifstream> sourceMapStream;
   WasmBinaryBuilder parser(wasm, input, debug);
+  if (sourceMapFilename.size()) {
+    sourceMapStream = make_unique<std::ifstream>();
+    sourceMapStream->open(sourceMapFilename);
+    parser.setDebugLocations(sourceMapStream.get());
+  }
   parser.read();
+  if (sourceMapStream) {
+    sourceMapStream->close();
+  }
 }
 
 bool ModuleReader::isBinaryFile(std::string filename) {
@@ -55,11 +65,15 @@ bool ModuleReader::isBinaryFile(std::string filename) {
   return buffer[0] == '\0' && buffer[1] == 'a' && buffer[2] == 's' && buffer[3] == 'm';
 }
 
-void ModuleReader::read(std::string filename, Module& wasm) {
+void ModuleReader::read(std::string filename, Module& wasm,
+                        std::string sourceMapFilename) {
   if (isBinaryFile(filename)) {
-    readBinary(filename, wasm);
+    readBinary(filename, wasm, sourceMapFilename);
   } else {
     // default to text
+    if (sourceMapFilename.size()) {
+      std::cerr << "Binaryen ModuleReader::read() - source map filename provided, but file appears to not be binary\n";
+    }
     readText(filename, wasm);
   }
 }

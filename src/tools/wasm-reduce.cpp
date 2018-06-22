@@ -236,13 +236,16 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "-O1",
       "-O2",
       "-O3",
+      "-O4",
+      "--flatten -Os",
+      "--flatten -O3",
+      "--flatten --local-cse -Os",
       "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
-      "--local-cse --vacuum",
       "--memory-packing",
       "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
@@ -263,24 +266,21 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       //std::cerr << "|    starting passes loop iteration\n";
       more = false;
       // try both combining with a generic shrink (so minor pass overhead is compensated for), and without
-      for (auto shrinking : { false, true }) {
-        for (auto pass : passes) {
-          std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-          if (shrinking) currCommand += " --dce --vacuum ";
-          currCommand += working + " -o " + test + " " + pass;
-          if (debugInfo) currCommand += " -g ";
-          if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
-          if (!ProgramResult(currCommand).failed()) {
-            auto newSize = file_size(test);
-            if (newSize < oldSize) {
-              // the pass didn't fail, and the size looks smaller, so promising
-              // see if it is still has the property we are preserving
-              if (ProgramResult(command) == expected) {
-                std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
-                copy_file(test, working);
-                more = true;
-                oldSize = newSize;
-              }
+      for (auto pass : passes) {
+        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
+        currCommand += working + " -o " + test + " " + pass;
+        if (debugInfo) currCommand += " -g ";
+        if (verbose) std::cerr << "|    trying pass command: " << currCommand << "\n";
+        if (!ProgramResult(currCommand).failed()) {
+          auto newSize = file_size(test);
+          if (newSize < oldSize) {
+            // the pass didn't fail, and the size looks smaller, so promising
+            // see if it is still has the property we are preserving
+            if (ProgramResult(command) == expected) {
+              std::cerr << "|    command \"" << currCommand << "\" succeeded, reduced size to " << newSize << ", and preserved the property\n";
+              copy_file(test, working);
+              more = true;
+              oldSize = newSize;
             }
           }
         }

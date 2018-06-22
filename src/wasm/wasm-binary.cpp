@@ -1832,39 +1832,55 @@ static int32_t readBase64VLQ(std::istream& in) {
 void WasmBinaryBuilder::readSourceMapHeader() {
   if (!sourceMap) return;
 
+  auto skipWhitespace = [&]() {
+    while (sourceMap->peek() == ' ' || sourceMap->peek() == '\n')
+      sourceMap->get();
+  };
+
   auto maybeReadChar = [&](char expected) {
     if (sourceMap->peek() != expected) return false;
     sourceMap->get();
     return true;
   };
+
   auto mustReadChar = [&](char expected) {
-    if (sourceMap->get() != expected) {
-      throw MapParseException("Unexpected char");
+    char c = sourceMap->get();
+    if (c != expected) {
+      throw MapParseException(std::string("Unexpected char: expected '") +
+                              expected + "' got '" + c + "'");
     }
   };
-  auto findField = [&](const char* name, size_t len) {
+
+  auto findField = [&](const char* name) {
     bool matching = false;
+    size_t len = strlen(name);
     size_t pos;
     while (1) {
       int ch = sourceMap->get();
       if (ch == EOF) return false;
       if (ch == '\"') {
-        matching = true;
-        pos = 0;
+        if (matching) {
+          // we matched a terminating quote.
+          if (pos == len)
+            break;
+          matching = false;
+        } else {
+          matching = true;
+          pos = 0;
+        }
       } else if (matching && name[pos] == ch) {
         ++pos;
-        if (pos == len) {
-          if (maybeReadChar('\"')) break; // found field
-        }
-      } else {
-        matching = false;
       }
     }
+    skipWhitespace();
     mustReadChar(':');
+    skipWhitespace();
     return true;
   };
+
   auto readString = [&](std::string& str) {
     std::vector<char> vec;
+    skipWhitespace();
     mustReadChar('\"');
     if (!maybeReadChar('\"')) {
       while (1) {
@@ -1876,12 +1892,15 @@ void WasmBinaryBuilder::readSourceMapHeader() {
         vec.push_back(ch);
       }
     }
+    skipWhitespace();
     str = std::string(vec.begin(), vec.end());
   };
 
-  if (!findField("sources", strlen("sources"))) {
-    throw MapParseException("cannot find the sources field in map");
+  if (!findField("sources")) {
+    throw MapParseException("cannot find the 'sources' field in map");
   }
+
+  skipWhitespace();
   mustReadChar('[');
   if (!maybeReadChar(']')) {
     do {
@@ -1894,9 +1913,10 @@ void WasmBinaryBuilder::readSourceMapHeader() {
     mustReadChar(']');
   }
 
-  if (!findField("mappings", strlen("mappings"))) {
-    throw MapParseException("cannot find the mappings field in map");
+  if (!findField("mappings")) {
+    throw MapParseException("cannot find the 'mappings' field in map");
   }
+
   mustReadChar('\"');
   if (maybeReadChar('\"')) { // empty mappings
     nextDebugLocation.first = 0;
