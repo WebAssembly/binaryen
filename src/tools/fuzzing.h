@@ -1438,3 +1438,6 @@ private:
 } // namespace wasm
 
 // XXX Switch class has a condition?! is it real? should the node type be the value type if it exists?!
+
+// TODO copy an existing function and replace just one node in it
+

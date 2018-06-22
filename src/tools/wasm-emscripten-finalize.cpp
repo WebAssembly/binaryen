@@ -38,6 +38,9 @@ using namespace wasm;
 int main(int argc, const char *argv[]) {
   std::string infile;
   std::string outfile;
+  std::string inputSourceMapFilename;
+  std::string outputSourceMapFilename;
+  std::string outputSourceMapUrl;
   bool emitBinary = true;
   bool debugInfo = false;
   unsigned numReservedFunctionPointers = 0;
@@ -75,6 +78,15 @@ int main(int argc, const char *argv[]) {
            [&globalBase](Options*, const std::string&argument ) {
              globalBase = std::stoull(argument);
            })
+      .add("--input-source-map", "-ism", "Consume source map from the specified file",
+           Options::Arguments::One,
+           [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
+      .add("--output-source-map", "-osm", "Emit source map to the specified file",
+           Options::Arguments::One,
+           [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
+      .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
+           Options::Arguments::One,
+           [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
                         infile = argument;
@@ -90,7 +102,17 @@ int main(int argc, const char *argv[]) {
 
   Module wasm;
   ModuleReader reader;
-  reader.read(infile, wasm);
+  try {
+    reader.read(infile, wasm, inputSourceMapFilename);
+  } catch (ParseException& p) {
+    p.dump(std::cerr);
+    std::cerr << '\n';
+    Fatal() << "error in parsing input";
+  } catch (MapParseException& p) {
+    p.dump(std::cerr);
+    std::cerr << '\n';
+    Fatal() << "error in parsing wasm source map";
+  }
 
   if (options.debug) {
     std::cerr << "Module before:\n";
@@ -134,10 +156,10 @@ int main(int argc, const char *argv[]) {
   writer.setDebugInfo(debugInfo);
   // writer.setSymbolMap(symbolMap);
   writer.setBinary(emitBinary);
-  // if (emitBinary) {
-  //   writer.setSourceMapFilename(sourceMapFilename);
-  //   writer.setSourceMapUrl(sourceMapUrl);
-  // }
+  if (outputSourceMapFilename.size()) {
+    writer.setSourceMapFilename(outputSourceMapFilename);
+    writer.setSourceMapUrl(outputSourceMapUrl);
+  }
   writer.write(wasm, output);
   if (emitBinary) {
     std::cout << metadata;

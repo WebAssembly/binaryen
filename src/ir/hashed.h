@@ -53,6 +53,53 @@ template<typename T>
 class HashedExpressionMap : public std::unordered_map<HashedExpression, T, ExpressionHasher, ExpressionComparer> {
 };
 
+// A pass that hashes all functions
+
+struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
+  bool isFunctionParallel() override { return true; }
+
+  typedef uint32_t HashType;
+
+  struct Map : public std::map<Function*, HashType> {};
+
+  FunctionHasher(Map* output) : output(output) {}
+
+  FunctionHasher* create() override {
+    return new FunctionHasher(output);
+  }
+
+  static Map createMap(Module* module) {
+    Map hashes;
+    for (auto& func : module->functions) {
+      hashes[func.get()] = 0; // ensure an entry for each function - we must not modify the map shape in parallel, just the values
+    }
+    return hashes;
+  }
+
+  void doWalkFunction(Function* func) {
+    output->at(func) = hashFunction(func);
+  }
+
+  static HashType hashFunction(Function* func) {
+    HashType ret = 0;
+    ret = rehash(ret, (HashType)func->getNumParams());
+    for (auto type : func->params) {
+      ret = rehash(ret, (HashType)type);
+    }
+    ret = rehash(ret, (HashType)func->getNumVars());
+    for (auto type : func->vars) {
+      ret = rehash(ret, (HashType)type);
+    }
+    ret = rehash(ret, (HashType)func->result);
+    ret = rehash(ret, HashType(func->type.is() ? std::hash<wasm::Name>{}(func->type) : HashType(0)));
+    ret = rehash(ret, (HashType)ExpressionAnalyzer::hash(func->body));
+    return ret;
+  }
+
+private:
+  Map* output;
+};
+
 } // namespace wasm
 
 #endif // _wasm_ir_hashed_h
