@@ -51,7 +51,7 @@ struct Action {
 struct Info {
   bool traversed; // used to avoid multiple traversal of the same block
   std::vector<Action> actions; // actions occurring in this block
-  std::vector<SetLocal*> lastSets; // for each index, the last set_local for it
+  std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
 
   void dump(Function* func) {
     if (actions.empty()) return;
@@ -77,11 +77,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 
   BasicBlock* makeBasicBlock() {
-    auto* ret = new BasicBlock();
-    auto& lastSets = ret->contents.lastSets;
-    lastSets.resize(getFunction()->getNumLocals());
-    std::fill(lastSets.begin(), lastSets.end(), nullptr);
-    return ret;
+    return new BasicBlock();
   }
 
   // cfg traversal work
@@ -164,11 +160,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             for (auto* pred : curr->in) {
               if (pred->contents.traversed) continue;
               pred->contents.traversed = true;
-              auto* lastSet = pred->contents.lastSets[index];
-              if (lastSet) {
+              auto lastSet = pred->contents.lastSets.find(index);
+              if (lastSet != pred->contents.lastSets.end()) {
                 // there is a set here, apply it, and stop the flow
                 for (auto* get : gets) {
-                  getSetses[get].insert(lastSet);
+                  getSetses[get].insert(lastSet->second);
                 }
               } else {
                 // keep on flowing
