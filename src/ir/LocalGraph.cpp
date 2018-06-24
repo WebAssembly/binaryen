@@ -49,7 +49,6 @@ struct Action {
 
 // information about a basic block
 struct Info {
-  bool traversed; // used to avoid multiple traversal of the same block
   std::vector<Action> actions; // actions occurring in this block
   std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
 
@@ -60,6 +59,14 @@ struct Info {
       std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
     }
   }
+};
+
+// Minimalist block information needed
+struct OptimizedBlock {
+  size_t traverseIdx; // last Traversed Index
+  std::vector<Action> actions; // actions occurring in this block
+  std::vector<OptimizedBlock *> in;
+  std::vector<std::pair<Index, SetLocal*> > lastSets; // for each index, the last set_local for it
 };
 
 // flow helper class. flows the gets to their sets
@@ -103,8 +110,34 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto numLocals = func->getNumLocals();
     std::vector<std::vector<GetLocal*>> allGets;
     allGets.resize(numLocals);
-    std::vector<BasicBlock*> work;
-    for (auto& block : basicBlocks) {
+    std::vector<OptimizedBlock*> work;
+
+    std::vector<OptimizedBlock> optimizedBlocks;
+    optimizedBlocks.resize(basicBlocks.size());
+
+    OptimizedBlock * currentBlock = nullptr;
+    for (size_t i = 0; i < optimizedBlocks.size(); ++i) {
+      auto & optBlock = optimizedBlocks[i];
+      auto & inBlock = basicBlocks[i];
+      if (inBlock.get() == entry) currentBlock = &optBlock;
+      optBlock.traverseIdx = -1;
+      optBlock.actions.swap(inBlock->contents.actions);
+      auto & inBlocks = inBlock->in;
+      optBlock.in.reserve(inBlocks.size());
+      for (auto * pred : inBlocks) {
+        auto it = std::find_if(basicBlocks.begin(), basicBlocks.end(), [&](const std::unique_ptr<BasicBlock> & ptr) { return pred == ptr.get(); });
+        assert(it != basicBlocks.end());
+        optBlock.in.emplace_back( &optimizedBlocks[std::distance(basicBlocks.begin(), it)] );
+      }
+      optBlock.lastSets.reserve(inBlock->contents.lastSets.size());
+      for (auto set : inBlock->contents.lastSets) {
+        optBlock.lastSets.emplace_back(std::make_pair(set.first, set.second));
+      }
+    }
+    assert(currentBlock != nullptr);
+
+    size_t traverseIdx = 0;
+    for (auto& block : optimizedBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << block.get() << " :\n";
       for (auto& action : block->contents.actions) {
@@ -116,7 +149,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 #endif
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
-      auto& actions = block->contents.actions;
+      auto& actions = block.actions;
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto& action = actions[i];
@@ -138,10 +171,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
         if (gets.empty()) continue;
-        work.push_back(block.get());
-        for (auto& toResetBlock : basicBlocks) {
-          toResetBlock->contents.traversed = false;
-        }
+        work.push_back(&block);
+
         // note that we may need to revisit the later parts of this initial
         // block, if we are in a loop, so don't mark it as seen
         while (!work.empty()) {
@@ -150,7 +181,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           // we have gone through this block; now we must handle flowing to
           // the inputs
           if (curr->in.empty()) {
-            if (curr == entry) {
+            if (curr == currentBlock) {
               // these receive a param or zero init value
               for (auto* get : gets) {
                 getSetses[get].insert(nullptr);
@@ -158,10 +189,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           } else {
             for (auto* pred : curr->in) {
-              if (pred->contents.traversed) continue;
-              pred->contents.traversed = true;
-              auto lastSet = pred->contents.lastSets.find(index);
-              if (lastSet != pred->contents.lastSets.end()) {
+              if (pred->traverseIdx == traverseIdx) continue;
+              pred->traverseIdx = traverseIdx;
+              auto lastSet = std::find_if(pred->lastSets.begin(), pred->lastSets.end(), [&](std::pair<Index, SetLocal*> & value) { return value.first == index; });
+              if (lastSet != pred->lastSets.end()) {
                 // there is a set here, apply it, and stop the flow
                 for (auto* get : gets) {
                   getSetses[get].insert(lastSet->second);
@@ -174,6 +205,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           }
         }
         gets.clear();
+        traverseIdx++;
       }
     }
   }
