@@ -99,12 +99,19 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 
   void flow(Function* func) {
-    // Minimalist block information needed
+    // This block struct is optimized for this flow process (Minimal information, iteration index).
     struct FlowBlock {
-      size_t lastTraversedIteration; // last Traversed Iteration
+      // last Traversed Iteration
+      // This value help us to find if this block has been seen while traversing blocks.
+      // We compare this value to the current iteration index in order to determine if we already process this block in the current iteration.
+      // This speed up the processing compared to unordered_set or other struct usage. (No need to reset internal values, lookup into container, ...)
+      size_t lastTraversedIteration;
       std::vector<Action> actions; // actions occurring in this block
       std::vector<FlowBlock*> in;
-      std::vector<std::pair<Index, SetLocal*>> lastSets; // for each index, the last set_local for it
+      // for each index, the last set_local for it
+      // The unordered_map from BasicBlock is converted ther into a vector
+      // This speed up search as there are almost always fewer than 100 items
+      std::vector<std::pair<Index, SetLocal*>> lastSets; 
     };
 
     auto numLocals = func->getNumLocals();
@@ -112,23 +119,32 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     allGets.resize(numLocals);
     std::vector<FlowBlock*> work;
 
-    std::vector<FlowBlock> optimizedBlocks;
-    optimizedBlocks.resize(basicBlocks.size());
+
+    // Converts input blocks (basicBlocks) into more efficient blocks to improve memory access.
+    std::vector<FlowBlock> flowBlocks;
+    flowBlocks.resize(basicBlocks.size());
+
+    // Init mapping between basicblocks and flowBlocks
+    std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
+    for (size_t i = 0; i < basicBlocks.size(); ++i) {
+      basicToFlowMap.emplace(std::make_pair(basicBlocks[i].get(), &flowBlocks[i]));
+    }
 
     FlowBlock* entryFlowBlock = nullptr;
-    for (size_t i = 0; i < optimizedBlocks.size(); ++i) {
-      auto& optBlock = optimizedBlocks[i];
+    for (size_t i = 0; i < flowBlocks.size(); ++i) {
+      auto& optBlock = flowBlocks[i];
       auto& inBlock = basicBlocks[i];
+      // Get the equivalent block to entry in the flow list
       if (inBlock.get() == entry) entryFlowBlock = &optBlock;
+      // Initialize iteration index to max size_t to ensure we don't miss a block from wrong value.
       optBlock.lastTraversedIteration = -1;
       optBlock.actions.swap(inBlock->contents.actions);
+      // Map in block to flow blocks
       auto& inBlocks = inBlock->in;
-      optBlock.in.reserve(inBlocks.size());
-      for (auto * pred : inBlocks) {
-        auto it = std::find_if(basicBlocks.begin(), basicBlocks.end(), [&](const std::unique_ptr<BasicBlock>& ptr) { return pred == ptr.get(); });
-        assert(it != basicBlocks.end());
-        optBlock.in.emplace_back( &optimizedBlocks[std::distance(basicBlocks.begin(), it)] );
-      }
+      optBlock.in.resize(inBlocks.size());
+      std::transform(inBlocks.begin(), inBlocks.end(), optBlock.in.begin(), [&](BasicBlock* block) { return basicToFlowMap[block]; });
+
+      // Convert unordered_map to vector
       optBlock.lastSets.reserve(inBlock->contents.lastSets.size());
       for (auto set : inBlock->contents.lastSets) {
         optBlock.lastSets.emplace_back(std::make_pair(set.first, set.second));
@@ -137,7 +153,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     assert(entryFlowBlock != nullptr);
 
     size_t currentIteration = 0;
-    for (auto& block : optimizedBlocks) {
+    for (auto& block : flowBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << block.get() << " :\n";
       for (auto& action : block->contents.actions) {
