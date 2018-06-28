@@ -463,9 +463,19 @@ class S2WasmBuilder {
         } else {
           abort_on("unknown directive");
         }
+      } else if (match(".import_module")) {
+        Name module = getCommaSeparated();
+        skipComma();
+        Name name = getStr();
+
+        info->importedObjects.push_back(LinkerObject::ExportWithModule(module, name));
+
+        s = strchr(s, '\n');
       } else if (match(".import_global")) {
         Name name = getStr();
-        info->importedObjects.insert(name);
+        Name module = ENV;
+
+        info->importedObjects.push_back(LinkerObject::ExportWithModule(module, name));
         s = strchr(s, '\n');
       } else if (match(".set")) { // data aliases
         // syntax: .set alias, original
@@ -514,6 +524,10 @@ class S2WasmBuilder {
       else if (match("section")) parseToplevelSection();
       else if (match("file")) parseFile();
       else if (match("align") || match("p2align")) skipToEOL();
+      else if (match("import_module")) {
+        skipToEOL();
+        skipWhitespace();
+      }
       else if (match("import_global")) {
         skipToEOL();
         skipWhitespace();
@@ -635,6 +649,7 @@ class S2WasmBuilder {
       ty = decl.release();
       wasm->addFunctionType(ty);
     }
+
     linkerObj->addExternType(name, ty);
   }
 

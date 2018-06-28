@@ -49,25 +49,41 @@ void Linker::placeStackPointer(Address stackAllocation) {
   }
 }
 
-void Linker::ensureFunctionImport(Name target, std::string signature) {
-  if (!out.wasm.getImportOrNull(target)) {
+void Linker::ensureFunctionImport(Name module, Name name, std::string signature) {
+  if (!out.wasm.getImportOrNull(name)) {
     auto import = new Import;
-    import->name = import->base = target;
-    import->module = ENV;
+    import->base = name;
+    import->module = module;
+
+    // FIXME(sven): concat module . base here
+    /* import->name = module.join(name); */
+    import->name = name;
+
     import->functionType = ensureFunctionType(signature, &out.wasm)->name;
     import->kind = ExternalKind::Function;
     out.wasm.addImport(import);
   }
 }
 
-void Linker::ensureObjectImport(Name target) {
-  if (!out.wasm.getImportOrNull(target)) {
+void Linker::ensureObjectImport(Name module, Name name) {
+  auto import = out.wasm.getImportOrNull(name);
+
+  if (!import) {
     auto import = new Import;
-    import->name = import->base = target;
-    import->module = ENV;
+    import->base = name;
+    import->module = module;
+
+    // FIXME(sven): concat module . base here
+    /* import->name = module.join(name); */
+    import->name = name;
+
     import->kind = ExternalKind::Global;
     import->globalType = i32;
+
     out.wasm.addImport(import);
+  } else {
+    // If the import already exists we just update its information
+    import->module = module;
   }
 }
 
@@ -77,7 +93,7 @@ void Linker::layout() {
     Name target = f.first;
     if (!out.symbolInfo.undefinedFunctions.count(target)) continue;
     // Create an import for the target if necessary.
-    ensureFunctionImport(target, getSig(*f.second.begin()));
+    ensureFunctionImport(ENV, target, getSig(*f.second.begin()));
     // Change each call. The target is the same since it's still the name.
     // Delete and re-allocate the Expression as CallImport to avoid undefined
     // behavior.
@@ -144,7 +160,7 @@ void Linker::layout() {
 
   // Add imports for any imported objects
   for (const auto& obj : out.symbolInfo.importedObjects) {
-    ensureObjectImport(obj);
+    ensureObjectImport(obj.module, obj.name);
   }
 
   // XXX For now, export all functions marked .globl.
@@ -396,7 +412,7 @@ void Linker::makeDummyFunction() {
 Function* Linker::getImportThunk(Name name, const FunctionType* funcType) {
   Name thunkName = std::string("__importThunk_") + name.c_str();
   if (Function* thunk = out.wasm.getFunctionOrNull(thunkName)) return thunk;
-  ensureFunctionImport(name, getSig(funcType));
+  ensureFunctionImport(ENV, name, getSig(funcType));
   wasm::Builder wasmBuilder(out.wasm);
   std::vector<NameType> params;
   Index p = 0;

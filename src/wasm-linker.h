@@ -60,6 +60,13 @@ class LinkerObject {
     Relocation(Kind kind, uint32_t* data, Name symbol, int addend) :
         kind(kind), data(data), symbol(symbol), addend(addend) {}
   };
+  // Currently imports are only `name`s
+  // FIXME(sven): this structure probably already exists (Import ?)
+  struct ExportWithModule {
+    Name module;
+    Name name;
+    ExportWithModule(Name module, Name name): module(module), name(name) {}
+  };
   struct SymbolAlias {
     Name symbol;
     Relocation::Kind kind;
@@ -71,7 +78,7 @@ class LinkerObject {
   struct SymbolInfo {
     std::unordered_set<cashew::IString> implementedFunctions;
     std::unordered_set<cashew::IString> undefinedFunctions;
-    std::unordered_set<cashew::IString> importedObjects;
+    std::vector<ExportWithModule> importedObjects;
     // TODO: it's not clear that this really belongs here.
     std::unordered_map<cashew::IString, SymbolAlias> aliasedSymbols;
 
@@ -84,8 +91,11 @@ class LinkerObject {
       }
       implementedFunctions.insert(other.implementedFunctions.begin(),
                                   other.implementedFunctions.end());
-      importedObjects.insert(other.importedObjects.begin(),
+
+      importedObjects.insert(importedObjects.end(),
+                             other.importedObjects.begin(),
                              other.importedObjects.end());
+
       aliasedSymbols.insert(other.aliasedSymbols.begin(),
                             other.aliasedSymbols.end());
     }
@@ -113,7 +123,13 @@ class LinkerObject {
 
   // An object is considered implemented if it is not imported
   bool isObjectImplemented(Name name) {
-    return symbolInfo.importedObjects.count(name) == 0;
+    for (const auto& obj : symbolInfo.importedObjects) {
+      if (obj.name == name) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // If name is an alias, return what it points to. Otherwise return name.
@@ -290,8 +306,8 @@ class Linker {
   // relocation for it to point to the top of the stack.
   void placeStackPointer(Address stackAllocation);
 
-  void ensureFunctionImport(Name target, std::string signature);
-  void ensureObjectImport(Name target);
+  void ensureFunctionImport(Name module, Name target, std::string signature);
+  void ensureObjectImport(Name module, Name name);
 
   // Makes sure the table has a single segment, with offset 0,
   // to which we can add content.
