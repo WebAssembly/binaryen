@@ -23,8 +23,8 @@ from scripts.test.support import run_command, split_wast, node_test_glue, node_h
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
-    WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR,
-    files_with_pattern, has_shell_timeout)
+    WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR, BINARYEN_JS,
+    files_with_pattern, has_shell_timeout, options)
 from scripts.test.wasm2asm import tests, spec_tests, extra_wasm2asm_tests, assert_tests, wasm2asm_dir
 
 
@@ -196,7 +196,7 @@ def update_bin_fmt_tests():
 def update_example_tests():
   print '\n[ checking example testcases... ]\n'
   for t in sorted(os.listdir(os.path.join('test', 'example'))):
-    output_file = os.path.join('bin', 'example')
+    output_file = os.path.join(options.binaryen_bin, 'example')
     libdir = os.path.join(BINARYEN_INSTALL_DIR, 'lib')
     cmd = ['-Isrc', '-g', '-pthread', '-o', output_file]
     if t.endswith('.txt'):
@@ -290,6 +290,11 @@ def update_wasm_merge_tests():
 
 def update_binaryen_js_tests():
   if not (MOZJS or NODEJS):
+    print 'no vm to run binaryen.js tests'
+    return
+
+  if not os.path.exists(BINARYEN_JS):
+    print 'no binaryen.js build to test'
     return
 
   print '\n[ checking binaryen.js testcases... ]\n'
@@ -299,7 +304,7 @@ def update_binaryen_js_tests():
       continue
     print s
     f = open('a.js', 'w')
-    f.write(open(os.path.join('bin', 'binaryen.js')).read())
+    f.write(open(BINARYEN_JS).read())
     if NODEJS:
       f.write(node_test_glue())
     test_path = os.path.join('test', 'binaryen.js', s)

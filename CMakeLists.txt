@@ -167,8 +167,15 @@ TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs emscripten-optimizer ir cfg sup
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
-INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+
+# if binaryen.js and wasm.js were built (using "./build-js.sh", currently
+# optional), install them
+IF(EXISTS "bin/binaryen.js")
+  INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+ENDIF()
+IF(EXISTS "bin/wasm.js")
+  INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+ENDIF()
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
