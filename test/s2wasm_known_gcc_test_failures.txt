@@ -1,9 +1,0 @@
-# Expected failures from running s2wasm on the linked GCC torture test output
-# files.
-
-# Block address taken.
-20071220-1.c.s
-20071220-2.c.s
-
-# Call has wrong number of parameters for function declaration.
-pr44942.c.s

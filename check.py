@@ -21,7 +21,7 @@ import sys
 
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
-    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS,
+    BIN_DIR, EMCC, MOZJS, NATIVECC, NATIVEXX, NODEJS, BINARYEN_JS,
     WASM_AS, WASM_CTOR_EVAL, WASM_OPT, WASM_SHELL, WASM_MERGE, WASM_METADCE,
     WASM_DIS, WASM_REDUCE, binary_format_check, delete_from_orbit, fail, fail_with_error,
     fail_if_not_identical, fail_if_not_contained, has_vanilla_emcc,
@@ -31,7 +31,6 @@ from scripts.test.shared import (
 
 import scripts.test.asm2wasm as asm2wasm
 import scripts.test.lld as lld
-import scripts.test.s2wasm as s2wasm
 import scripts.test.wasm2asm as wasm2asm
 
 if options.interpreter:
@@ -405,9 +404,15 @@ def run_spec_tests():
 
 
 def run_binaryen_js_tests():
-  if not MOZJS and not NODEJS:
+  if not (MOZJS or NODEJS):
+    print 'no vm to run binaryen.js tests'
     return
+
   node_has_wasm = NODEJS and node_has_webassembly(NODEJS)
+
+  if not os.path.exists(BINARYEN_JS):
+    print 'no binaryen.js build to test'
+    return
 
   print '\n[ checking binaryen.js testcases... ]\n'
 
@@ -420,7 +425,7 @@ def run_binaryen_js_tests():
     f.write('''
       console.warn = function(x) { console.log(x) };
     ''')
-    binaryen_js = open(os.path.join(options.binaryen_root, 'bin', 'binaryen.js')).read()
+    binaryen_js = open(BINARYEN_JS).read()
     f.write(binaryen_js)
     if NODEJS:
       f.write(node_test_glue())
@@ -567,6 +572,10 @@ def run_gcc_torture_tests():
 
 
 def run_emscripten_tests():
+  if not os.path.exists(os.path.join(options.binaryen_bin, 'wasm.js')):
+    print 'no wasm.js build to test'
+    return
+
   print '\n[ checking wasm.js methods... ]\n'
 
   for method_init in ['interpret-asm2wasm', 'interpret-s-expr', 'asmjs', 'interpret-binary', 'asmjs,interpret-binary', 'interpret-binary,asmjs']:
@@ -638,8 +647,6 @@ def main():
 
   run_spec_tests()
   run_binaryen_js_tests()
-  s2wasm.test_s2wasm()
-  s2wasm.test_linker()
   lld.test_wasm_emscripten_finalize()
   wasm2asm.test_wasm2asm()
   run_validator_tests()

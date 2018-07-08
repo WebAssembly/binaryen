@@ -22,7 +22,6 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
-#include "wasm-linker.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -157,6 +156,18 @@ static bool hasI64ResultOrParam(FunctionType* ft) {
     if (ty == i64) return true;
   }
   return false;
+}
+
+inline void exportFunction(Module& wasm, Name name, bool must_export) {
+  if (!wasm.getFunctionOrNull(name)) {
+    assert(!must_export);
+    return;
+  }
+  if (wasm.getExportOrNull(name)) return; // Already exported
+  auto exp = new Export;
+  exp->name = exp->value = name;
+  exp->kind = ExternalKind::Function;
+  wasm.addExport(exp);
 }
 
 void EmscriptenGlueGenerator::generateDynCallThunks() {
@@ -766,31 +777,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << " }\n";
 
   return meta.str();
-}
-
-std::string emscriptenGlue(
-    Module& wasm,
-    bool allowMemoryGrowth,
-    Address stackPointer,
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions,
-    unsigned numReservedFunctionPointers) {
-  EmscriptenGlueGenerator generator(wasm, stackPointer);
-  generator.fixInvokeFunctionNames();
-  generator.generateRuntimeFunctions();
-
-  if (allowMemoryGrowth) {
-    generator.generateMemoryGrowthFunction();
-  }
-
-  generator.generateDynCallThunks();
-
-  if (numReservedFunctionPointers) {
-    generator.generateJSCallThunks(numReservedFunctionPointers);
-  }
-
-  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions,
-                                              numReservedFunctionPointers);
 }
 
 } // namespace wasm

@@ -170,11 +170,11 @@ WASM2ASM = [os.path.join(options.binaryen_bin, 'wasm2asm')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
-S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
 
 
 def wrap_with_valgrind(cmd):
@@ -192,7 +192,6 @@ if options.valgrind:
   WASM_DIS = wrap_with_valgrind(WASM_DIS)
   ASM2WASM = wrap_with_valgrind(ASM2WASM)
   WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
-  S2WASM = wrap_with_valgrind(S2WASM)
 
 os.environ['BINARYEN'] = os.getcwd()
 

@@ -167,8 +167,15 @@ TARGET_LINK_LIBRARIES(binaryen passes wasm asmjs emscripten-optimizer ir cfg sup
 INSTALL(TARGETS binaryen DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
-INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+
+# if binaryen.js and wasm.js were built (using "./build-js.sh", currently
+# optional), install them
+IF(EXISTS "${CMAKE_SOURCE_DIR}/bin/binaryen.js")
+  INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+ENDIF()
+IF(EXISTS "${CMAKE_SOURCE_DIR}/bin/wasm.js")
+  INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
+ENDIF()
 
 SET(wasm-shell_SOURCES
   src/tools/wasm-shell.cpp
@@ -229,17 +236,6 @@ TARGET_LINK_LIBRARIES(wasm2asm passes wasm asmjs emscripten-optimizer ir cfg sup
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD 11)
 SET_PROPERTY(TARGET wasm2asm PROPERTY CXX_STANDARD_REQUIRED ON)
 INSTALL(TARGETS wasm2asm DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-SET(s2wasm_SOURCES
-  src/tools/s2wasm.cpp
-  src/wasm-linker.cpp
-)
-ADD_EXECUTABLE(s2wasm
-               ${s2wasm_SOURCES})
-TARGET_LINK_LIBRARIES(s2wasm passes wasm asmjs ir cfg support)
-SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD 11)
-SET_PROPERTY(TARGET s2wasm PROPERTY CXX_STANDARD_REQUIRED ON)
-INSTALL(TARGETS s2wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 SET(wasm-emscripten-finalize_SOURCES
   src/tools/wasm-emscripten-finalize.cpp
