@@ -441,8 +441,6 @@ def run_binaryen_js_tests():
       else:
         # expect an error - the specific error code will depend on the vm
         out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
-        # strip out the stack trace, which varies by vm
-        out = out.split(os.linesep)[0]
       expected = open(os.path.join(options.binaryen_test, 'binaryen.js', s + '.txt')).read()
       if expected not in out:
         fail(out, expected)
