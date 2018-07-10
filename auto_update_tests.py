@@ -313,7 +313,11 @@ def update_binaryen_js_tests():
     f.close()
     if MOZJS or node_has_wasm or 'WebAssembly.' not in test_src:
       cmd = [MOZJS or NODEJS, 'a.js']
-      out = run_command(cmd, stderr=subprocess.STDOUT)
+      if 'fatal' not in s:
+        out = run_command(cmd, stderr=subprocess.STDOUT)
+      else:
+        # expect an error - the specific error code will depend on the vm
+        out = run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
       with open(os.path.join('test', 'binaryen.js', s + '.txt'), 'w') as o:
         o.write(out)
     else:

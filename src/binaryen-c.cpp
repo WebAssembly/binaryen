@@ -2601,4 +2601,12 @@ BinaryenFunctionTypeRef BinaryenGetFunctionTypeBySignature(BinaryenModuleRef mod
   return NULL;
 }
 
+#ifdef __EMSCRIPTEN__
+// Override atexit - we don't need any global ctors to actually run, and
+// otherwise we get clutter in the output in debug builds
+int atexit(void (*function)(void)) {
+  return 0;
+}
+#endif
+
 } // extern "C"
