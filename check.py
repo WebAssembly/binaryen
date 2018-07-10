@@ -514,7 +514,7 @@ def run_vanilla_tests():
       del os.environ['EMCC_WASM_BACKEND']
 
 
-def run_gcc_torture_tests():
+def run_gcc_tests():
   print '\n[ checking native gcc testcases...]\n'
   if not NATIVECC or not NATIVEXX:
     fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
@@ -652,7 +652,7 @@ def main():
     run_vanilla_tests()
   print '\n[ checking example testcases... ]\n'
   if options.run_gcc_tests:
-    run_gcc_torture_tests()
+    run_gcc_tests()
   if EMCC:
     run_emscripten_tests()
 

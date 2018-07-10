@@ -51,7 +51,7 @@ if [ "$1" == "-g" ]; then
   EMCC_ARGS="$EMCC_ARGS -O2" # need emcc js opts to be decently fast
   EMCC_ARGS="$EMCC_ARGS --llvm-opts 0 --llvm-lto 0"
   EMCC_ARGS="$EMCC_ARGS -profiling"
-  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=0" # assertions clutter the output - enable manually when debugging
+  EMCC_ARGS="$EMCC_ARGS -s ASSERTIONS=1"
 else
   EMCC_ARGS="$EMCC_ARGS -Oz"
   EMCC_ARGS="$EMCC_ARGS --llvm-lto 1"
