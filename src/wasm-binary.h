@@ -750,7 +750,7 @@ public:
   // AST writing via visitors
   int depth = 0; // only for debugging
 
-  void recurse(Expression*& curr);
+  void recurse(Expression* curr);
   std::vector<Name> breakStack;
   Function::DebugLocation lastDebugLocation;
   size_t lastBytecodeOffset;

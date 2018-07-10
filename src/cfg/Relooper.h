@@ -235,6 +235,10 @@ struct Block {
   // Add a branch: if the condition holds we branch (or if null, we branch if all others failed)
   // Note that there can be only one branch from A to B (if you need multiple conditions for the branch,
   // create a more interesting expression in the Condition).
+  // If a Block has no outgoing branches, the contents in Code must contain a terminating
+  // instruction, as the relooper doesn't know whether you want control flow to stop with
+  // an `unreachable` or a `return` or something else (if you forget to do this, control
+  // flow may continue into the block that happens to be emitted right after it).
   void AddBranchTo(Block *Target, wasm::Expression* Condition, wasm::Expression* Code = nullptr);
 
   // Add a switch branch: if the switch condition is one of these values, we branch (or if the list is empty, we are the default)
