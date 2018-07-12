@@ -665,12 +665,8 @@ public:
   // With a function - one is created for the entire function
   StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
     : func(func), parent(parent), o(o), sourceMap(sourceMap), debug(debug) {
-    if (func) {
-      mapLocals();
-    }
+    mapLocals();
   }
-
-  void mapLocals();
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
@@ -720,6 +716,8 @@ private:
 
   int32_t getBreakIndex(Name name);
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
+
+  void mapLocals();
 };
 
 // Writes out wasm to the binary format
