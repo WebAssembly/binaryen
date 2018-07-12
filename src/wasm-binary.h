@@ -337,7 +337,6 @@ enum EncodedType {
 };
 
 namespace UserSections {
-// waka?
 extern const char* Name;
 extern const char* SourceMapUrl;
 
