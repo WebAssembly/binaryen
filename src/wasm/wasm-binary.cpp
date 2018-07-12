@@ -210,7 +210,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  StackWriter(*this, o, sourceMap && currFunction, debug).recurse(curr);
+  StackWriter(currFunction, *this, o, sourceMap && currFunction, debug).recurse(curr);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -226,8 +226,7 @@ void WasmBinaryWriter::writeFunctions() {
     Function* function = wasm->functions[i].get();
     currFunction = function;
     if (debug) std::cerr << "writing" << function->name << std::endl;
-    StackWriter stackWriter(*this, o, sourceMap, debug);
-    stackWriter.mapLocals(function);
+    StackWriter stackWriter(function, *this, o, sourceMap, debug);
     o << U32LEB(
         (stackWriter.numLocalsByType[i32] ? 1 : 0) +
         (stackWriter.numLocalsByType[i64] ? 1 : 0) +
@@ -585,21 +584,25 @@ void WasmBinaryWriter::finishUp() {
 
 // StackWriter
 
-StackWriter::StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap, bool debug)
-  : parent(parent), o(o), sourceMap(sourceMap), debug(debug) {}
+StackWriter::StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap, bool debug)
+  : func(func), parent(parent), o(o), sourceMap(sourceMap), debug(debug) {
+  if (func) {
+    mapLocals();
+  }
+}
 
-void StackWriter::mapLocals(Function* function) {
-  for (Index i = 0; i < function->getNumParams(); i++) {
+void StackWriter::mapLocals() {
+  for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
     mappedLocals[i] = curr;
   }
-  for (auto type : function->vars) {
+  for (auto type : func->vars) {
     numLocalsByType[type]++;
   }
   std::map<Type, size_t> currLocalsByType;
-  for (Index i = function->getVarIndexBase(); i < function->getNumLocals(); i++) {
-    size_t index = function->getVarIndexBase();
-    Type type = function->getLocalType(i);
+  for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+    size_t index = func->getVarIndexBase();
+    Type type = func->getLocalType(i);
     currLocalsByType[type]++; // increment now for simplicity, must decrement it in returns
     if (type == i32) {
       mappedLocals[i] = index + currLocalsByType[i32] - 1;
@@ -712,6 +715,7 @@ void StackWriter::visitIf(If *curr) {
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
+
 void StackWriter::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   o << int8_t(BinaryConsts::Loop);
@@ -1319,7 +1323,7 @@ int32_t StackWriter::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  std::cerr << "bad break: " << name << " in " << parent.currFunction->name << std::endl;
+  std::cerr << "bad break: " << name << " in " << func->name << std::endl;
   abort();
 }
 

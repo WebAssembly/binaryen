@@ -659,9 +659,9 @@ class WasmBinaryWriter;
 
 class StackWriter : public Visitor<StackWriter> {
 public:
-  StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false);
+  StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false);
 
-  void mapLocals(Function* function);
+  void mapLocals();
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
@@ -699,6 +699,7 @@ public:
   void visitDrop(Drop *curr);
 
 private:
+  Function* func;
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
   bool sourceMap;
