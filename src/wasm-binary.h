@@ -665,10 +665,10 @@ public:
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
-  void recurse(Expression* curr); // TODO: remove this
-  // emits a node, but if it is a block with no name, emit a list of its contents
-  void recursePossibleBlockContents(Expression* curr);
+  // visits a node, emitting the proper code for it
   void visit(Expression* curr);
+  // emits a node, but if it is a block with no name, emit a list of its contents
+  void visitPossibleBlockContents(Expression* curr);
 
   void visitBlock(Block *curr);
   void visitIf(If *curr);
