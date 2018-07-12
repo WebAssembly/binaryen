@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python2
 #
 # Copyright 2015 WebAssembly Community Group participants
@@ -283,7 +284,7 @@ def run_wasm_reduce_tests():
       t = os.path.join(test_dir, t)
       # convert to wasm
       run_command(WASM_AS + [t, '-o', 'a.wasm'])
-      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
+      run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
       expected = t + '.txt'
       run_command(WASM_DIS + ['c.wasm', '-o', 'a.wast'])
       with open('a.wast') as seen:
