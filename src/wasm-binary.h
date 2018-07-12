@@ -658,7 +658,17 @@ class WasmBinaryWriter;
 
 class StackWriter : public Visitor<StackWriter> {
 public:
-  StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false);
+  // Without a function (offset for a global thing, etc.)
+  StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false)
+    : func(nullptr), parent(parent), o(o), sourceMap(false), debug(debug) {}
+
+  // With a function - one is created for the entire function
+  StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
+    : func(func), parent(parent), o(o), sourceMap(sourceMap), debug(debug) {
+    if (func) {
+      mapLocals();
+    }
+  }
 
   void mapLocals();
 
@@ -717,7 +727,6 @@ private:
 class WasmBinaryWriter {
   Module* wasm;
   BufferWithRandomAccess& o;
-  Function* currFunction = nullptr;
   bool debug;
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -789,7 +798,7 @@ public:
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
-  void writeDebugLocation(Expression* curr);
+  void writeDebugLocation(Expression* curr, Function* func);
 
   // helpers
   void writeInlineString(const char* name);

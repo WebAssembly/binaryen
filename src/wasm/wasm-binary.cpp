@@ -210,7 +210,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  StackWriter(currFunction, *this, o, sourceMap && currFunction, debug).visit(curr);
+  StackWriter(*this, o, debug).visit(curr);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -224,7 +224,6 @@ void WasmBinaryWriter::writeFunctions() {
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
-    currFunction = function;
     if (debug) std::cerr << "writing" << function->name << std::endl;
     StackWriter stackWriter(function, *this, o, sourceMap, debug);
     o << U32LEB(
@@ -252,7 +251,6 @@ void WasmBinaryWriter::writeFunctions() {
     }
     tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
   }
-  currFunction = nullptr;
   finishSection(start);
 }
 
@@ -525,9 +523,8 @@ void WasmBinaryWriter::writeUserSections() {
   }
 }
 
-void WasmBinaryWriter::writeDebugLocation(Expression* curr) {
-  if (!currFunction) return;
-  auto& debugLocations = currFunction->debugLocations;
+void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
+  auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
   if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
     auto offset = o.size();
@@ -584,13 +581,6 @@ void WasmBinaryWriter::finishUp() {
 
 // StackWriter
 
-StackWriter::StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap, bool debug)
-  : func(func), parent(parent), o(o), sourceMap(sourceMap), debug(debug) {
-  if (func) {
-    mapLocals();
-  }
-}
-
 void StackWriter::mapLocals() {
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
@@ -629,7 +619,7 @@ void StackWriter::mapLocals() {
 
 void StackWriter::visit(Expression* curr) {
   if (sourceMap) {
-    parent.writeDebugLocation(curr);
+    parent.writeDebugLocation(curr, func);
   }
   Visitor<StackWriter>::visit(curr);
 }
