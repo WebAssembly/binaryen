@@ -337,6 +337,7 @@ enum EncodedType {
 };
 
 namespace UserSections {
+// waka?
 extern const char* Name;
 extern const char* SourceMapUrl;
 
@@ -652,7 +653,68 @@ inline S32LEB binaryType(Type type) {
   return S32LEB(ret);
 }
 
-class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
+class WasmBinaryWriter;
+
+// Writes out binary format stack machine code for a Binaryen IR expression
+
+class StackWriter : public Visitor<StackWriter> {
+public:
+  StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false);
+
+  void mapLocals(Function* function);
+
+  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
+
+  void recurse(Expression* curr); // TODO: remove this
+  // emits a node, but if it is a block with no name, emit a list of its contents
+  void recursePossibleBlockContents(Expression* curr);
+  void visit(Expression* curr);
+
+  void visitBlock(Block *curr);
+  void visitIf(If *curr);
+  void visitLoop(Loop *curr);
+  void visitBreak(Break *curr);
+  void visitSwitch(Switch *curr);
+  void visitCall(Call *curr);
+  void visitCallImport(CallImport *curr);
+  void visitCallIndirect(CallIndirect *curr);
+  void visitGetLocal(GetLocal *curr);
+  void visitSetLocal(SetLocal *curr);
+  void visitGetGlobal(GetGlobal *curr);
+  void visitSetGlobal(SetGlobal *curr);
+  void visitLoad(Load *curr);
+  void visitStore(Store *curr);
+  void visitAtomicRMW(AtomicRMW *curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
+  void visitAtomicWait(AtomicWait *curr);
+  void visitAtomicWake(AtomicWake *curr);
+  void visitConst(Const *curr);
+  void visitUnary(Unary *curr);
+  void visitBinary(Binary *curr);
+  void visitSelect(Select *curr);
+  void visitReturn(Return *curr);
+  void visitHost(Host *curr);
+  void visitNop(Nop *curr);
+  void visitUnreachable(Unreachable *curr);
+  void visitDrop(Drop *curr);
+
+private:
+  WasmBinaryWriter& parent;
+  BufferWithRandomAccess& o;
+  bool sourceMap;
+  bool debug;
+
+  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
+
+  std::vector<Name> breakStack;
+
+  int32_t getBreakIndex(Name name);
+  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
+};
+
+// Writes out wasm to the binary format
+
+class WasmBinaryWriter {
   Module* wasm;
   BufferWithRandomAccess& o;
   Function* currFunction = nullptr;
@@ -663,6 +725,9 @@ class WasmBinaryWriter : public Visitor<WasmBinaryWriter, void> {
   std::string symbolMap;
 
   MixedArena allocator;
+
+  Function::DebugLocation lastDebugLocation;
+  size_t lastBytecodeOffset;
 
   void prepare();
 public:
@@ -703,10 +768,6 @@ public:
   int32_t getFunctionTypeIndex(Name type);
   void writeImports();
 
-  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
-
-  void mapLocals(Function* function);
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
   void writeFunctions();
@@ -728,7 +789,7 @@ public:
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
-  void writeDebugLocation(size_t offset, const Function::DebugLocation& loc);
+  void writeDebugLocation(Expression* curr);
 
   // helpers
   void writeInlineString(const char* name);
@@ -746,58 +807,6 @@ public:
   void emitBuffer(const char* data, size_t size);
   void emitString(const char *str);
   void finishUp();
-
-  // AST writing via visitors
-  int depth = 0; // only for debugging
-
-  void recurse(Expression* curr);
-  std::vector<Name> breakStack;
-  Function::DebugLocation lastDebugLocation;
-  size_t lastBytecodeOffset;
-
-  void visit(Expression* curr) {
-    if (sourceMap && currFunction) {
-      // Dump the sourceMap debug info
-      auto& debugLocations = currFunction->debugLocations;
-      auto iter = debugLocations.find(curr);
-      if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
-        writeDebugLocation(o.size(), iter->second);
-      }
-    }
-    Visitor<WasmBinaryWriter>::visit(curr);
-  }
-
-  void visitBlock(Block *curr);
-  // emits a node, but if it is a block with no name, emit a list of its contents
-  void recursePossibleBlockContents(Expression* curr);
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
-  int32_t getBreakIndex(Name name);
-  void visitBreak(Break *curr);
-  void visitSwitch(Switch *curr);
-  void visitCall(Call *curr);
-  void visitCallImport(CallImport *curr);
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
-  void visitSetLocal(SetLocal *curr);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
-  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
-  void visitLoad(Load *curr);
-  void visitStore(Store *curr);
-  void visitAtomicRMW(AtomicRMW *curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
-  void visitAtomicWait(AtomicWait *curr);
-  void visitAtomicWake(AtomicWake *curr);
-  void visitConst(Const *curr);
-  void visitUnary(Unary *curr);
-  void visitBinary(Binary *curr);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
-  void visitHost(Host *curr);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
 };
 
 class WasmBinaryBuilder {
