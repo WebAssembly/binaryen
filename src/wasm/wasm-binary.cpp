@@ -644,7 +644,7 @@ void StackWriter<visitChildren>::visitPossibleBlockContents(Expression* curr) {
   if (block->type == unreachable && block->list.back()->type != unreachable) {
     // similar to in visitBlock, here we could skip emitting the block itself,
     // but must still end the 'block' (the contents, really) with an unreachable
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -672,12 +672,12 @@ void StackWriter<visitChildren>::visitBlock(Block *curr) {
     // in wasm, where blocks must be none,i32,i64,f32,f64. Since the block cannot be
     // exited, we can emit an unreachable at the end, and that will always be valid,
     // and then the block is ok as a none
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
   o << int8_t(BinaryConsts::End);
   if (curr->type == unreachable) {
     // and emit an unreachable *outside* the block too, so later things can pop anything
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -688,7 +688,7 @@ void StackWriter<visitChildren>::visitIf(If *curr) {
     // this if-else is unreachable because of the condition, i.e., the condition
     // does not exit. So don't emit the if, but do consume the condition
     visitChild(curr->condition);
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
     return;
   }
   visitChild(curr->condition);
@@ -710,7 +710,7 @@ void StackWriter<visitChildren>::visitIf(If *curr) {
     // wasm does not allow this to be emitted directly, so we must do something more. we could do
     // better, but for now we emit an extra unreachable instruction after the if, so it is not consumed itself,
     assert(curr->ifFalse);
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -725,7 +725,7 @@ void StackWriter<visitChildren>::visitLoop(Loop *curr) {
   o << int8_t(BinaryConsts::End);
   if (curr->type == unreachable) {
     // we emitted a loop without a return type, so it must not be consumed
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -746,7 +746,7 @@ void StackWriter<visitChildren>::visitBreak(Break *curr) {
     // are not a reachable branch; the wasm spec on the other hand does
     // presume the br_if emits a value of the right type, even if it
     // popped unreachable)
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -761,7 +761,7 @@ void StackWriter<visitChildren>::visitSwitch(Switch *curr) {
     // if the branch is not reachable, then it's dangerous to emit it, as
     // wasm type checking rules are different, especially in unreachable
     // code. so just don't emit that unreachable code.
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
     return;
   }
   o << int8_t(BinaryConsts::TableSwitch) << U32LEB(curr->targets.size());
@@ -779,7 +779,7 @@ void StackWriter<visitChildren>::visitCall(Call *curr) {
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
   if (curr->type == unreachable) { // TODO FIXME: this and similar can be removed
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -804,7 +804,7 @@ void StackWriter<visitChildren>::visitCallIndirect(CallIndirect *curr) {
     << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
     << U32LEB(0); // Reserved flags field
   if (curr->type == unreachable) {
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -820,7 +820,7 @@ void StackWriter<visitChildren>::visitSetLocal(SetLocal *curr) {
   visitChild(curr->value);
   o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
   if (curr->type == unreachable) {
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -870,7 +870,7 @@ void StackWriter<visitChildren>::visitLoad(Load *curr) {
   } else {
     if (curr->type == unreachable) {
       // don't even emit it; we don't know the right type
-      o << int8_t(BinaryConsts::Unreachable);
+      visitUnreachable(nullptr);
       return;
     }
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -934,7 +934,7 @@ void StackWriter<visitChildren>::visitStore(Store *curr) {
   } else {
     if (curr->type == unreachable) {
       // don't even emit it; we don't know the right type
-      o << int8_t(BinaryConsts::Unreachable);
+      visitUnreachable(nullptr);
       return;
     }
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -975,7 +975,7 @@ void StackWriter<visitChildren>::visitAtomicRMW(AtomicRMW *curr) {
 
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
     return;
   }
 
@@ -1032,7 +1032,7 @@ void StackWriter<visitChildren>::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
 
   if (curr->type == unreachable) {
     // don't even emit it; we don't know the right type
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
     return;
   }
 
@@ -1185,7 +1185,7 @@ void StackWriter<visitChildren>::visitUnary(Unary *curr) {
     default: abort();
   }
   if (curr->type == unreachable) {
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -1278,7 +1278,7 @@ void StackWriter<visitChildren>::visitBinary(Binary *curr) {
     default: abort();
   }
   if (curr->type == unreachable) {
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
@@ -1290,7 +1290,7 @@ void StackWriter<visitChildren>::visitSelect(Select *curr) {
   visitChild(curr->condition);
   o << int8_t(BinaryConsts::Select);
   if (curr->type == unreachable) {
-    o << int8_t(BinaryConsts::Unreachable);
+    visitUnreachable(nullptr);
   }
 }
 
