@@ -656,7 +656,8 @@ class WasmBinaryWriter;
 
 // Writes out binary format stack machine code for a Binaryen IR expression
 
-class StackWriter : public Visitor<StackWriter> {
+template<bool visitChildren>
+class StackWriter : public Visitor<StackWriter<visitChildren>> {
 public:
   // Without a function (offset for a global thing, etc.)
   StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false)
@@ -674,6 +675,9 @@ public:
   void visit(Expression* curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
   void visitPossibleBlockContents(Expression* curr);
+  // visits a child node. if !visitChildren, this does nothing, i.e., we just
+  // visiting a parent does not cause recursive visits to all children
+  void visitChild(Expression* curr);
 
   void visitBlock(Block *curr);
   void visitIf(If *curr);
@@ -719,6 +723,9 @@ private:
 
   void mapLocals();
 };
+
+// Directly write Binaryen IR to wasm binarye stack form.
+typedef StackWriter<true> DirectStackWriter;
 
 // Writes out wasm to the binary format
 

@@ -210,7 +210,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  StackWriter(*this, o, debug).visit(curr);
+  DirectStackWriter(*this, o, debug).visit(curr);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -225,7 +225,7 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
     if (debug) std::cerr << "writing" << function->name << std::endl;
-    StackWriter stackWriter(function, *this, o, sourceMap, debug);
+    DirectStackWriter stackWriter(function, *this, o, sourceMap, debug);
     o << U32LEB(
         (stackWriter.numLocalsByType[i32] ? 1 : 0) +
         (stackWriter.numLocalsByType[i64] ? 1 : 0) +
@@ -581,7 +581,8 @@ void WasmBinaryWriter::finishUp() {
 
 // StackWriter
 
-void StackWriter::mapLocals() {
+template<bool visitChildren>
+void StackWriter<visitChildren>::mapLocals() {
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
     mappedLocals[i] = curr;
@@ -617,7 +618,8 @@ void StackWriter::mapLocals() {
   }
 }
 
-void StackWriter::visit(Expression* curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visit(Expression* curr) {
   if (sourceMap) {
     parent.writeDebugLocation(curr, func);
   }
@@ -629,14 +631,15 @@ static bool brokenTo(Block* block) {
 }
 
 // emits a node, but if it is a block with no name, emit a list of its contents
-void StackWriter::visitPossibleBlockContents(Expression* curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
   if (!block || brokenTo(block)) {
-    visit(curr);
+    visitChild(curr);
     return;
   }
   for (auto* child : block->list) {
-    visit(child);
+    visitChild(child);
   }
   if (block->type == unreachable && block->list.back()->type != unreachable) {
     // similar to in visitBlock, here we could skip emitting the block itself,
@@ -645,7 +648,15 @@ void StackWriter::visitPossibleBlockContents(Expression* curr) {
   }
 }
 
-void StackWriter::visitBlock(Block *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitChild(Expression* curr) {
+  if (visitChildren) {
+    visit(curr);
+  }
+}
+
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitBlock(Block *curr) {
   if (debug) std::cerr << "zz node: Block" << std::endl;
   o << int8_t(BinaryConsts::Block);
   o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -653,7 +664,7 @@ void StackWriter::visitBlock(Block *curr) {
   Index i = 0;
   for (auto* child : curr->list) {
     if (debug) std::cerr << "  " << size_t(curr) << "\n zz Block element " << i++ << std::endl;
-    visit(child);
+    visitChild(child);
   }
   breakStack.pop_back();
   if (curr->type == unreachable) {
@@ -670,16 +681,17 @@ void StackWriter::visitBlock(Block *curr) {
   }
 }
 
-void StackWriter::visitIf(If *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitIf(If *curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
   if (curr->condition->type == unreachable) {
     // this if-else is unreachable because of the condition, i.e., the condition
     // does not exit. So don't emit the if, but do consume the condition
-    visit(curr->condition);
+    visitChild(curr->condition);
     o << int8_t(BinaryConsts::Unreachable);
     return;
   }
-  visit(curr->condition);
+  visitChild(curr->condition);
   o << int8_t(BinaryConsts::If);
   o << binaryType(curr->type != unreachable ? curr->type : none);
   breakStack.push_back(IMPOSSIBLE_CONTINUE); // the binary format requires this; we have a block if we need one; TODO: optimize
@@ -702,7 +714,8 @@ void StackWriter::visitIf(If *curr) {
   }
 }
 
-void StackWriter::visitLoop(Loop *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitLoop(Loop *curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   o << int8_t(BinaryConsts::Loop);
   o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -716,12 +729,13 @@ void StackWriter::visitLoop(Loop *curr) {
   }
 }
 
-void StackWriter::visitBreak(Break *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitBreak(Break *curr) {
   if (debug) std::cerr << "zz node: Break" << std::endl;
   if (curr->value) {
-    visit(curr->value);
+    visitChild(curr->value);
   }
-  if (curr->condition) visit(curr->condition);
+  if (curr->condition) visitChild(curr->condition);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
   if (curr->condition && curr->type == unreachable) {
@@ -736,12 +750,13 @@ void StackWriter::visitBreak(Break *curr) {
   }
 }
 
-void StackWriter::visitSwitch(Switch *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitSwitch(Switch *curr) {
   if (debug) std::cerr << "zz node: Switch" << std::endl;
   if (curr->value) {
-    visit(curr->value);
+    visitChild(curr->value);
   }
-  visit(curr->condition);
+  visitChild(curr->condition);
   if (!BranchUtils::isBranchReachable(curr)) {
     // if the branch is not reachable, then it's dangerous to emit it, as
     // wasm type checking rules are different, especially in unreachable
@@ -756,32 +771,35 @@ void StackWriter::visitSwitch(Switch *curr) {
   o << U32LEB(getBreakIndex(curr->default_));
 }
 
-void StackWriter::visitCall(Call *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitCall(Call *curr) {
   if (debug) std::cerr << "zz node: Call" << std::endl;
   for (auto* operand : curr->operands) {
-    visit(operand);
+    visitChild(operand);
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
-  if (curr->type == unreachable) {
+  if (curr->type == unreachable) { // TODO FIXME: this and similar can be removed
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
-void StackWriter::visitCallImport(CallImport *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitCallImport(CallImport *curr) {
   if (debug) std::cerr << "zz node: CallImport" << std::endl;
   for (auto* operand : curr->operands) {
-    visit(operand);
+    visitChild(operand);
   }
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
 }
 
-void StackWriter::visitCallIndirect(CallIndirect *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitCallIndirect(CallIndirect *curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
 
   for (auto* operand : curr->operands) {
-    visit(operand);
+    visitChild(operand);
   }
-  visit(curr->target);
+  visitChild(curr->target);
   o << int8_t(BinaryConsts::CallIndirect)
     << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
     << U32LEB(0); // Reserved flags field
@@ -790,34 +808,39 @@ void StackWriter::visitCallIndirect(CallIndirect *curr) {
   }
 }
 
-void StackWriter::visitGetLocal(GetLocal *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitGetLocal(GetLocal *curr) {
   if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
   o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
 }
 
-void StackWriter::visitSetLocal(SetLocal *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitSetLocal(SetLocal *curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
-  visit(curr->value);
+  visitChild(curr->value);
   o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
   if (curr->type == unreachable) {
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
-void StackWriter::visitGetGlobal(GetGlobal *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitGetGlobal(GetGlobal *curr) {
   if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
   o << int8_t(BinaryConsts::GetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
-void StackWriter::visitSetGlobal(SetGlobal *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitSetGlobal(SetGlobal *curr) {
   if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
-  visit(curr->value);
+  visitChild(curr->value);
   o << int8_t(BinaryConsts::SetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
-void StackWriter::visitLoad(Load *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitLoad(Load *curr) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
-  visit(curr->ptr);
+  visitChild(curr->ptr);
   if (!curr->isAtomic) {
     switch (curr->type) {
       case i32: {
@@ -878,10 +901,11 @@ void StackWriter::visitLoad(Load *curr) {
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
 
-void StackWriter::visitStore(Store *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitStore(Store *curr) {
   if (debug) std::cerr << "zz node: Store" << std::endl;
-  visit(curr->ptr);
-  visit(curr->value);
+  visitChild(curr->ptr);
+  visitChild(curr->value);
   if (!curr->isAtomic) {
     switch (curr->valueType) {
       case i32: {
@@ -940,12 +964,13 @@ void StackWriter::visitStore(Store *curr) {
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
 
-void StackWriter::visitAtomicRMW(AtomicRMW *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitAtomicRMW(AtomicRMW *curr) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
-  visit(curr->ptr);
+  visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visit(curr->value);
+  visitChild(curr->value);
   if (curr->value->type == unreachable) return;
 
   if (curr->type == unreachable) {
@@ -994,14 +1019,15 @@ void StackWriter::visitAtomicRMW(AtomicRMW *curr) {
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
 
-void StackWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
-  visit(curr->ptr);
+  visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visit(curr->expected);
+  visitChild(curr->expected);
   if (curr->expected->type == unreachable) return;
-  visit(curr->replacement);
+  visitChild(curr->replacement);
   if (curr->replacement->type == unreachable) return;
 
   if (curr->type == unreachable) {
@@ -1034,14 +1060,15 @@ void StackWriter::visitAtomicCmpxchg(AtomicCmpxchg *curr) {
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
 
-void StackWriter::visitAtomicWait(AtomicWait *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitAtomicWait(AtomicWait *curr) {
   if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
-  visit(curr->ptr);
+  visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visit(curr->expected);
+  visitChild(curr->expected);
   if (curr->expected->type == unreachable) return;
-  visit(curr->timeout);
+  visitChild(curr->timeout);
   if (curr->timeout->type == unreachable) return;
 
   o << int8_t(BinaryConsts::AtomicPrefix);
@@ -1060,19 +1087,21 @@ void StackWriter::visitAtomicWait(AtomicWait *curr) {
   }
 }
 
-void StackWriter::visitAtomicWake(AtomicWake *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitAtomicWake(AtomicWake *curr) {
   if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
-  visit(curr->ptr);
+  visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
   if (curr->ptr->type == unreachable) return;
-  visit(curr->wakeCount);
+  visitChild(curr->wakeCount);
   if (curr->wakeCount->type == unreachable) return;
 
   o << int8_t(BinaryConsts::AtomicPrefix) << int8_t(BinaryConsts::AtomicWake);
   emitMemoryAccess(4, 4, 0);
 }
 
-void StackWriter::visitConst(Const *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitConst(Const *curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   switch (curr->type) {
     case i32: {
@@ -1096,9 +1125,10 @@ void StackWriter::visitConst(Const *curr) {
   if (debug) std::cerr << "zz const node done.\n";
 }
 
-void StackWriter::visitUnary(Unary *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitUnary(Unary *curr) {
   if (debug) std::cerr << "zz node: Unary" << std::endl;
-  visit(curr->value);
+  visitChild(curr->value);
   switch (curr->op) {
     case ClzInt32:               o << int8_t(BinaryConsts::I32Clz); break;
     case CtzInt32:               o << int8_t(BinaryConsts::I32Ctz); break;
@@ -1159,10 +1189,11 @@ void StackWriter::visitUnary(Unary *curr) {
   }
 }
 
-void StackWriter::visitBinary(Binary *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitBinary(Binary *curr) {
   if (debug) std::cerr << "zz node: Binary" << std::endl;
-  visit(curr->left);
-  visit(curr->right);
+  visitChild(curr->left);
+  visitChild(curr->right);
 
   switch (curr->op) {
     case AddInt32:      o << int8_t(BinaryConsts::I32Add); break;
@@ -1251,26 +1282,29 @@ void StackWriter::visitBinary(Binary *curr) {
   }
 }
 
-void StackWriter::visitSelect(Select *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitSelect(Select *curr) {
   if (debug) std::cerr << "zz node: Select" << std::endl;
-  visit(curr->ifTrue);
-  visit(curr->ifFalse);
-  visit(curr->condition);
+  visitChild(curr->ifTrue);
+  visitChild(curr->ifFalse);
+  visitChild(curr->condition);
   o << int8_t(BinaryConsts::Select);
   if (curr->type == unreachable) {
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
-void StackWriter::visitReturn(Return *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitReturn(Return *curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
   if (curr->value) {
-    visit(curr->value);
+    visitChild(curr->value);
   }
   o << int8_t(BinaryConsts::Return);
 }
 
-void StackWriter::visitHost(Host *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitHost(Host *curr) {
   if (debug) std::cerr << "zz node: Host" << std::endl;
   switch (curr->op) {
     case CurrentMemory: {
@@ -1278,7 +1312,7 @@ void StackWriter::visitHost(Host *curr) {
       break;
     }
     case GrowMemory: {
-      visit(curr->operands[0]);
+      visitChild(curr->operands[0]);
       o << int8_t(BinaryConsts::GrowMemory);
       break;
     }
@@ -1287,23 +1321,27 @@ void StackWriter::visitHost(Host *curr) {
   o << U32LEB(0); // Reserved flags field
 }
 
-void StackWriter::visitNop(Nop *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitNop(Nop *curr) {
   if (debug) std::cerr << "zz node: Nop" << std::endl;
   o << int8_t(BinaryConsts::Nop);
 }
 
-void StackWriter::visitUnreachable(Unreachable *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitUnreachable(Unreachable *curr) {
   if (debug) std::cerr << "zz node: Unreachable" << std::endl;
   o << int8_t(BinaryConsts::Unreachable);
 }
 
-void StackWriter::visitDrop(Drop *curr) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::visitDrop(Drop *curr) {
   if (debug) std::cerr << "zz node: Drop" << std::endl;
-  visit(curr->value);
+  visitChild(curr->value);
   o << int8_t(BinaryConsts::Drop);
 }
 
-int32_t StackWriter::getBreakIndex(Name name) { // -1 if not found
+template<bool visitChildren>
+int32_t StackWriter<visitChildren>::getBreakIndex(Name name) { // -1 if not found
   for (int i = breakStack.size() - 1; i >= 0; i--) {
     if (breakStack[i] == name) {
       return breakStack.size() - 1 - i;
@@ -1313,7 +1351,8 @@ int32_t StackWriter::getBreakIndex(Name name) { // -1 if not found
   abort();
 }
 
-void StackWriter::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
+template<bool visitChildren>
+void StackWriter<visitChildren>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
   o << U32LEB(Log2(alignment ? alignment : bytes));
   o << U32LEB(offset);
 }
