@@ -646,7 +646,7 @@ void StackWriter<Mode>::mapLocals() {
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visit(Expression* curr) {
-  if (sourceMap) {
+  if (Mode != StackWriterMode::Binaryen2Stack && sourceMap) {
     parent.writeDebugLocation(curr, func);
   }
   Visitor<StackWriter>::visit(curr);
