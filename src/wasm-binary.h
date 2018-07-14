@@ -744,7 +744,7 @@ public:
   // non-control flow expressions.
   bool justAddToStack(Expression* curr);
 
-private:
+protected:
   Function* func;
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
