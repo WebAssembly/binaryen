@@ -149,6 +149,7 @@ public:
     setFunction(funcInit);
     mapLocalsAndEmitHeader();
     visitPossibleBlockContents(func->body);
+    finishFunctionBody();
   }
 };
 
@@ -175,6 +176,7 @@ public:
       if (!item) continue; // a nullptr is just something we can skip
       finalWriter.visit(item);
     }
+    finishFunctionBody();
   }
 };
 
