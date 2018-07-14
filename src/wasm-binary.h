@@ -654,10 +654,24 @@ inline S32LEB binaryType(Type type) {
 
 class WasmBinaryWriter;
 
-// Writes out binary format stack machine code for a Binaryen IR expression
+//
+// StackWriter: Writes out binary format stack machine code for a Binaryen IR expression
+//
+// A stack writer has one of three modes:
+//  * Binaryen2Binary: directly writes the expression to wasm binary
+//  * Binaryen2Stack: queues the expressions linearly, in Stack IR (SIR)
+//  * Stack2Binary: emits SIR to wasm binary
+//
+// Direct writing, in Binaryen2Binary, is fast. Otherwise, Binaryen2Stack
+// lets you optimzie the Stack IR before running Stack2Binary.
+//
 
-template<bool visitChildren>
-class StackWriter : public Visitor<StackWriter<visitChildren>> {
+enum class StackWriterMode {
+  Binaryen2Binary, Binaryen2Stack, Stack2Binary
+};
+
+template<StackWriterMode Mode>
+class StackWriter : public Visitor<StackWriter<Mode>> {
 public:
   // Without a function (offset for a global thing, etc.)
   StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false)
@@ -675,8 +689,8 @@ public:
   void visit(Expression* curr);
   // emits a node, but if it is a block with no name, emit a list of its contents
   void visitPossibleBlockContents(Expression* curr);
-  // visits a child node. if !visitChildren, this does nothing, i.e., we just
-  // visiting a parent does not cause recursive visits to all children
+  // visits a child node. (in some modes we may not want to visit children,
+  // that logic is handled here)
   void visitChild(Expression* curr);
 
   void visitBlock(Block *curr);
@@ -724,8 +738,7 @@ private:
   void mapLocals();
 };
 
-// Directly write Binaryen IR to wasm binarye stack form.
-typedef StackWriter<true> DirectStackWriter;
+typedef StackWriter<StackWriterMode::Binaryen2Binary> SimpleStackWriter;
 
 // Writes out wasm to the binary format
 
