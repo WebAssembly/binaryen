@@ -15,29 +15,10 @@
  */
 
 //
-// wasm.h: WebAssembly representation and processing library, in one
-//         header file.
+// wasm.h: Define Binaryen IR, a representation for WebAssembly, with
+//         all core parts in one simple header file.
 //
-// This represents WebAssembly in an AST format, with a focus on making
-// it easy to not just inspect but also to process. For example, some
-// things that this enables are:
-//
-//  * Interpreting: See wasm-interpreter.h.
-//  * Optimizing: See asm2wasm.h, which performs some optimizations
-//                after code generation.
-//  * Validation: See wasm-validator.h.
-//  * Pretty-printing: See Print.cpp.
-//
-
-//
-// wasm.js internal WebAssembly representation design:
-//
-//  * Unify where possible. Where size isn't a concern, combine
-//    classes, so binary ops and relational ops are joined. This
-//    simplifies that AST and makes traversals easier.
-//  * Optimize for size? This might justify separating if and if_else
-//    (so that if doesn't have an always-empty else; also it avoids
-//    a branch).
+// For more overview, see README.md
 //
 
 #ifndef wasm_wasm_h
@@ -149,6 +130,10 @@ enum AtomicRMWOp {
   Add, Sub, And, Or, Xor, Xchg
 };
 
+enum StackItemOp {
+  BlockEnd, IfElse, IfEnd, LoopEnd
+};
+
 //
 // Expressions
 //
@@ -200,6 +185,7 @@ public:
     AtomicCmpxchgId,
     AtomicWaitId,
     AtomicWakeId,
+    StackItemId,
     NumExpressionIds
   };
   Id _id;
@@ -597,6 +583,21 @@ public:
     type = unreachable;
   }
   Unreachable(MixedArena& allocator) : Unreachable() {}
+};
+
+// A Stack IR node. This lets us represent the flat wasm binary format,
+// which is a stack machine, in a way that is easy to mix with other
+// Expressions. Note that there is no meaning to nesting such items
+// in regular nodes, but it is useful to have an Expression* which can
+// refer to either a regular Expression or a Stack IR expression. In
+// particular, the Visitor class works on this, but the Walker class
+// does not.
+class StackItem : public SpecificExpression<Expression::StackItemId> {
+public:
+  StackItem(MixedArena& allocator) {}
+
+  StackItemOp op;
+  Expression* origin; // the expression this originates from
 };
 
 // Globals

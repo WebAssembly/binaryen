@@ -689,7 +689,7 @@ void StackWriter<Mode>::visitBlockEnd(Block* curr) {
     emitExtraUnreachable();
   }
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back( waka a new block ending);
+    stack.push_back(Builder(temps).makeStackItem(BlockEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -734,7 +734,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfElse(If* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back( a new if-else );
+    stack.push_back(Builder(temps).makeStackItem(IfElse, curr));
   } else {
     o << int8_t(BinaryConsts::Else);
   }
@@ -746,7 +746,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfEnd(If* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back( a new if-end );
+    stack.push_back(Builder(temps).makeStackItem(IfEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -781,7 +781,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back( a new loop end );
+    stack.push_back(Builder(temps).makeStackItem(LoopEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -1446,7 +1446,7 @@ void StackWriter<Mode>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_
 template<StackWriterMode Mode>
 void StackWriter<Mode>::emitExtraUnreachable() {
   if (Mode == StackWriterMode::Binary2Stack) {
-    stack.push_back( a new unreachable );
+    stack.push_back(Builder(temps).makeUnreachable());
   } else if (Mode == StackWriterMode::Binaryen2Binary) {
     o << int8_t(BinaryConsts::Unreachable);
   }

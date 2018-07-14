@@ -752,6 +752,8 @@ private:
 
   std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
 
+  MixedArena& temps; // Stack IR needs some temporary allocations
+
   std::vector<Name> breakStack;
 
   int32_t getBreakIndex(Name name);

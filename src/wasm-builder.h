@@ -349,6 +349,12 @@ public:
   Unreachable* makeUnreachable() {
     return allocator.alloc<Unreachable>();
   }
+  StackItem* makeStackItem(StackItemOp op, Expression* origin) {
+    auto* ret = allocator.alloc<StackItem>();
+    ret->op = op;
+    ret->origin = origin;
+    return ret;
+  }
 
   // Additional helpers
 
