@@ -701,14 +701,14 @@ public:
   void visitChild(Expression* curr);
 
   void visitBlock(Block* curr);
-  void visitBlockEnd(Bl);
+  void visitBlockEnd(Block* curr);
 
   void visitIf(If* curr);
-  void visitIfElse();
-  void visitIfEnd();
+  void visitIfElse(If* curr);
+  void visitIfEnd(If* curr);
 
   void visitLoop(Loop* curr);
-  void visitLoopEnd();
+  void visitLoopEnd(Loop* curr);
 
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
@@ -753,7 +753,7 @@ private:
 
   std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
 
-  MixedArena& temps; // Stack IR needs some temporary allocations
+  MixedArena temps; // Stack IR needs some temporary allocations
 
   std::vector<Name> breakStack;
 

@@ -660,7 +660,7 @@ void StackWriter<Mode>::visitChild(Expression* curr) {
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitBlock(Block* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(curr);
+    stackIR.push_back(curr);
   } else {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
@@ -689,7 +689,7 @@ void StackWriter<Mode>::visitBlockEnd(Block* curr) {
     emitExtraUnreachable();
   }
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(Builder(temps).makeStackItem(BlockEnd, curr));
+    stackIR.push_back(Builder(temps).makeStackItem(BlockEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -712,7 +712,7 @@ void StackWriter<Mode>::visitIf(If* curr) {
   }
   visitChild(curr->condition);
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(curr);
+    stackIR.push_back(curr);
   } else {
     o << int8_t(BinaryConsts::If);
     o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -734,7 +734,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfElse(If* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(Builder(temps).makeStackItem(IfElse, curr));
+    stackIR.push_back(Builder(temps).makeStackItem(IfElse, curr));
   } else {
     o << int8_t(BinaryConsts::Else);
   }
@@ -746,7 +746,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfEnd(If* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(Builder(temps).makeStackItem(IfEnd, curr));
+    stackIR.push_back(Builder(temps).makeStackItem(IfEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -764,7 +764,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoop(Loop* curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(curr);
+    stackIR.push_back(curr);
   } else {
     o << int8_t(BinaryConsts::Loop);
     o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -781,7 +781,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(Builder(temps).makeStackItem(LoopEnd, curr));
+    stackIR.push_back(Builder(temps).makeStackItem(LoopEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -1428,11 +1428,11 @@ void StackWriter<Mode>::visitDrop(Drop* curr) {
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitStackItem(StackItem* curr) {
-  switch (item->op) {
-    case BlockEnd: visitBlockEnd(curr->origin); break;
-    case IfElse:   visitIfElse(curr->origin); break;
-    case IfEnd:    visitIfEnd(curr->origin); break;
-    case LoopEnd:  visitLoopEnd(curr->origin); break;
+  switch (curr->op) {
+    case BlockEnd: visitBlockEnd(curr->origin->cast<Block>()); break;
+    case IfElse:   visitIfElse(curr->origin->cast<If>()); break;
+    case IfEnd:    visitIfEnd(curr->origin->cast<If>()); break;
+    case LoopEnd:  visitLoopEnd(curr->origin->cast<Loop>()); break;
     default: WASM_UNREACHABLE();
   }
 }
@@ -1456,17 +1456,17 @@ void StackWriter<Mode>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::emitExtraUnreachable() {
-  if (Mode == StackWriterMode::Binary2Stack) {
-    stack.push_back(Builder(temps).makeUnreachable());
+  if (Mode == StackWriterMode::Binaryen2Stack) {
+    stackIR.push_back(Builder(temps).makeUnreachable());
   } else if (Mode == StackWriterMode::Binaryen2Binary) {
     o << int8_t(BinaryConsts::Unreachable);
   }
 }
 
 template<StackWriterMode Mode>
-void StackWriter<Mode>::justAddToStack(Expression* curr) {
+bool StackWriter<Mode>::justAddToStack(Expression* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stack.push_back(curr);
+    stackIR.push_back(curr);
     return true;
   }
   return false;
