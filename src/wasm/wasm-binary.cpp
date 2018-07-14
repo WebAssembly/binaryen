@@ -19,6 +19,7 @@
 
 #include "support/bits.h"
 #include "wasm-binary.h"
+#include "wasm-stack.h"
 #include "ir/branch-utils.h"
 #include "ir/module-utils.h"
 
@@ -210,31 +211,8 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  SimpleStackWriter(*this, o, debug).visit(curr);
+  ExpressionStackWriter(curr, *this, o, debug);
 }
-
-class OptimizingStackWriter : public StackWriter<StackWriterMode::Binaryen2Stack> {
-public:
-  OptimizingStackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false) :
-    StackWriter<StackWriterMode::Binaryen2Stack>(func, parent, o, sourceMap, debug) {
-    // TODO: if optimizations change how locals are mapped, the API must change
-  }
-
-  void process(Expression* expr) {
-    assert(expr == func->body); // for now, we only allow processing the toplevel of a whole function
-    // Write out Stack IR.
-    visitPossibleBlockContents(expr);
-    // Optimize it.
-    // TODO optimize(stackIR, func);
-    // Emit the binary.
-    // FIXME XXX this recomputes the localMap, avoid the duplication
-    StackWriter<StackWriterMode::Stack2Binary> finalWriter(func, parent, o, sourceMap, debug);
-    for (auto* item : stackIR) {
-      if (!item) continue; // a nullptr is just something we can skip
-      finalWriter.visit(item);
-    }
-  }
-};
 
 void WasmBinaryWriter::writeFunctions() {
   if (wasm->functions.size() == 0) return;
@@ -248,23 +226,13 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     Function* function = wasm->functions[i].get();
     if (debug) std::cerr << "writing" << function->name << std::endl;
-    //SimpleStackWriter stackWriter(function, *this, o, sourceMap, debug);
-    OptimizingStackWriter stackWriter(function, *this, o, sourceMap, debug);
-    o << U32LEB(
-        (stackWriter.numLocalsByType[i32] ? 1 : 0) +
-        (stackWriter.numLocalsByType[i64] ? 1 : 0) +
-        (stackWriter.numLocalsByType[f32] ? 1 : 0) +
-        (stackWriter.numLocalsByType[f64] ? 1 : 0)
-                );
-    if (stackWriter.numLocalsByType[i32]) o << U32LEB(stackWriter.numLocalsByType[i32]) << binaryType(i32);
-    if (stackWriter.numLocalsByType[i64]) o << U32LEB(stackWriter.numLocalsByType[i64]) << binaryType(i64);
-    if (stackWriter.numLocalsByType[f32]) o << U32LEB(stackWriter.numLocalsByType[f32]) << binaryType(f32);
-    if (stackWriter.numLocalsByType[f64]) o << U32LEB(stackWriter.numLocalsByType[f64]) << binaryType(f64);
-
-    //stackWriter.visitPossibleBlockContents(function->body);
-    stackWriter.process(function->body);
-
-    o << int8_t(BinaryConsts::End);
+    // Optimize if relevant.
+    bool optimize = !sourceMap;
+    if (optimize) {
+      OptimizingFunctionStackWriter(function, *this, o, debug);
+    } else {
+      FunctionStackWriter(function, *this, o, sourceMap, debug);
+    }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
     if (debug) std::cerr << "body size: " << size << ", writing at " << sizePos << ", next starts at " << o.size() << std::endl;
@@ -608,7 +576,8 @@ void WasmBinaryWriter::finishUp() {
 // StackWriter
 
 template<StackWriterMode Mode>
-void StackWriter<Mode>::mapLocals() {
+void StackWriter<Mode>::mapLocalsAndEmitHeader() {
+  // Map them
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
     mappedLocals[i] = curr;
@@ -640,13 +609,24 @@ void StackWriter<Mode>::mapLocals() {
       mappedLocals[i] = index + currLocalsByType[f64] - 1;
       continue;
     }
-    abort();
+    WASM_UNREACHABLE();
   }
+  // Emit them.
+  o << U32LEB(
+      (numLocalsByType[i32] ? 1 : 0) +
+      (numLocalsByType[i64] ? 1 : 0) +
+      (numLocalsByType[f32] ? 1 : 0) +
+      (numLocalsByType[f64] ? 1 : 0)
+              );
+  if (numLocalsByType[i32]) o << U32LEB(numLocalsByType[i32]) << binaryType(i32);
+  if (numLocalsByType[i64]) o << U32LEB(numLocalsByType[i64]) << binaryType(i64);
+  if (numLocalsByType[f32]) o << U32LEB(numLocalsByType[f32]) << binaryType(f32);
+  if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
 }
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visit(Expression* curr) {
-  if (Mode != StackWriterMode::Binaryen2Stack && sourceMap) {
+  if (Mode == StackWriterMode::Binaryen2Binary && sourceMap) {
     parent.writeDebugLocation(curr, func);
   }
   Visitor<StackWriter>::visit(curr);
@@ -1479,8 +1459,7 @@ int32_t StackWriter<Mode>::getBreakIndex(Name name) { // -1 if not found
       return breakStack.size() - 1 - i;
     }
   }
-  std::cerr << "bad break: " << name << " in " << func->name << std::endl;
-  abort();
+  WASM_UNREACHABLE();
 }
 
 template<StackWriterMode Mode>
@@ -1505,6 +1484,11 @@ bool StackWriter<Mode>::justAddToStack(Expression* curr) {
     return true;
   }
   return false;
+}
+
+template<StackWriterMode Mode>
+void StackWriter<Mode>::finishFunctionBody() {
+  o << int8_t(BinaryConsts::End);
 }
 
 // reader
