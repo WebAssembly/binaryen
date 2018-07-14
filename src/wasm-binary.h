@@ -665,6 +665,11 @@ class WasmBinaryWriter;
 // Direct writing, in Binaryen2Binary, is fast. Otherwise, Binaryen2Stack
 // lets you optimzie the Stack IR before running Stack2Binary.
 //
+// To reduce the amount of boilerplate code here, we implement all 3 in
+// a single class, templated on the mode. This allows compilers to trivially
+// optimize out irrelevant code paths, and there should be no runtime
+// downside.
+//
 
 enum class StackWriterMode {
   Binaryen2Binary, Binaryen2Stack, Stack2Binary
@@ -683,6 +688,8 @@ public:
     mapLocals();
   }
 
+  std::vector<Expression*> stackIR; // filled in Binaryen2Stack, read in Stack2Binary
+
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
   // visits a node, emitting the proper code for it
@@ -693,33 +700,48 @@ public:
   // that logic is handled here)
   void visitChild(Expression* curr);
 
-  void visitBlock(Block *curr);
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
-  void visitBreak(Break *curr);
-  void visitSwitch(Switch *curr);
-  void visitCall(Call *curr);
-  void visitCallImport(CallImport *curr);
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
-  void visitSetLocal(SetLocal *curr);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
-  void visitLoad(Load *curr);
-  void visitStore(Store *curr);
-  void visitAtomicRMW(AtomicRMW *curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
-  void visitAtomicWait(AtomicWait *curr);
-  void visitAtomicWake(AtomicWake *curr);
-  void visitConst(Const *curr);
-  void visitUnary(Unary *curr);
-  void visitBinary(Binary *curr);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
-  void visitHost(Host *curr);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
+  void visitBlock(Block* curr);
+  void visitBlockEnd(Bl);
+
+  void visitIf(If* curr);
+  void visitIfElse();
+  void visitIfEnd();
+
+  void visitLoop(Loop* curr);
+  void visitLoopEnd();
+
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallImport(CallImport* curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
+  void visitSetLocal(SetLocal* curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
+  void visitLoad(Load* curr);
+  void visitStore(Store* curr);
+  void visitAtomicRMW(AtomicRMW* curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
+  void visitAtomicWait(AtomicWait* curr);
+  void visitAtomicWake(AtomicWake* curr);
+  void visitConst(Const* curr);
+  void visitUnary(Unary* curr);
+  void visitBinary(Binary* curr);
+  void visitSelect(Select* curr);
+  void visitReturn(Return* curr);
+  void visitHost(Host* curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
+  void visitDrop(Drop* curr);
+
+  // We need to emit extra unreachable opcodes in some cases
+  void emitExtraUnreachable();
+
+  // If we are in Binaryen2Stack, then this adds the item to the
+  // stack IR and returns true, which is all we need to do for
+  // non-control flow expressions.
+  bool justAddToStack(Expression* curr);
 
 private:
   Function* func;
@@ -984,16 +1006,16 @@ public:
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, size_t start, size_t end);
-  void visitBlock(Block *curr);
+  void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
   Expression* getBlockOrSingleton(Type type);
 
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
   BreakTarget getBreakTarget(int32_t offset);
   void visitBreak(Break *curr, uint8_t code);
-  void visitSwitch(Switch *curr);
+  void visitSwitch(Switch* curr);
 
   template<typename T>
   void fillCall(T* call, FunctionType* type) {
@@ -1007,11 +1029,11 @@ public:
   }
 
   Expression* visitCall();
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal *curr, uint8_t code);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
   void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
@@ -1022,12 +1044,12 @@ public:
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
+  void visitSelect(Select* curr);
+  void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
+  void visitDrop(Drop* curr);
 
   void throwError(std::string text);
 };
