@@ -1427,6 +1427,17 @@ void StackWriter<Mode>::visitDrop(Drop* curr) {
 }
 
 template<StackWriterMode Mode>
+void StackWriter<Mode>::visitStackItem(StackItem* curr) {
+  switch (item->op) {
+    case BlockEnd: visitBlockEnd(curr->origin); break;
+    case IfElse:   visitIfElse(curr->origin); break;
+    case IfEnd:    visitIfEnd(curr->origin); break;
+    case LoopEnd:  visitLoopEnd(curr->origin); break;
+    default: WASM_UNREACHABLE();
+  }
+}
+
+template<StackWriterMode Mode>
 int32_t StackWriter<Mode>::getBreakIndex(Name name) { // -1 if not found
   for (int i = breakStack.size() - 1; i >= 0; i--) {
     if (breakStack[i] == name) {

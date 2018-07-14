@@ -734,6 +734,7 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
+  void visitStackItem(StackItem* curr);
 
   // We need to emit extra unreachable opcodes in some cases
   void emitExtraUnreachable();
