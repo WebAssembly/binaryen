@@ -59,29 +59,25 @@ struct StackInst {
 namespace std {
 
 inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
-  if (!&inst) {
-    std::cout << "(nullptr)";
-  } else {
-    switch (inst.op) {
-      case wasm::StackInst::Basic:
-      case wasm::StackInst::BlockBegin:
-      case wasm::StackInst::IfBegin:
-      case wasm::StackInst::LoopBegin: {
-        std::cout << wasm::getExpressionName(inst.origin) << " (" << wasm::printType(inst.type) << ')';
-        break;
-      }
-      case wasm::StackInst::BlockEnd:
-      case wasm::StackInst::IfEnd:
-      case wasm::StackInst::LoopEnd: {
-        std::cout << "end";
-        break;
-      }
-      case wasm::StackInst::IfElse: {
-        std::cout << "else";
-        break;
-      }
-      default: WASM_UNREACHABLE();
+  switch (inst.op) {
+    case wasm::StackInst::Basic:
+    case wasm::StackInst::BlockBegin:
+    case wasm::StackInst::IfBegin:
+    case wasm::StackInst::LoopBegin: {
+      std::cout << wasm::getExpressionName(inst.origin) << " (" << wasm::printType(inst.type) << ')';
+      break;
     }
+    case wasm::StackInst::BlockEnd:
+    case wasm::StackInst::IfEnd:
+    case wasm::StackInst::LoopEnd: {
+      std::cout << "end";
+      break;
+    }
+    case wasm::StackInst::IfElse: {
+      std::cout << "else";
+      break;
+    }
+    default: WASM_UNREACHABLE();
   }
   return o;
 }
