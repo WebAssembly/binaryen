@@ -270,6 +270,10 @@ public:
           finalWriter.visit(inst->origin);
           break;
         }
+        case StackInst::BlockEnd: {
+          finalWriter.visitBlockEnd(inst->origin->cast<Block>());
+          break;
+        }
         case StackInst::IfElse: {
           finalWriter.visitIfElse(inst->origin->cast<If>());
           break;
