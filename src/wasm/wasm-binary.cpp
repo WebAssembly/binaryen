@@ -1495,6 +1495,25 @@ StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin
   return ret;
 }
 
+void StackIR::optimize(Function* func) {
+  class Optimizer {
+    StackIR& IR;
+    Function* func;
+
+  public:
+    Optimizer(StackIR& IR, Function* func) : IR(IR), func(func) {}
+    void run() {
+      removeUnneededUnreachables();
+    }
+
+  private:
+    void removeUnneededUnreachables() {
+    }
+  };
+
+  Optimizer(*this, func).run();
+}
+
 // reader
 
 void WasmBinaryBuilder::read() {

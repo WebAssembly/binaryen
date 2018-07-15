@@ -49,6 +49,20 @@ struct StackInst {
                  // e.g. wasm has no unreachable blocks, they must be none
 };
 
+// A representation of Stack IR, containing a linear sequence of
+// stack instructions, and code to optimize.
+// This representation is very simple: just a single vector of
+// all instructions, in order.
+//  * nullptr is allowed in the vector, representing something to skip.
+//    This is useful as a common thing optimizations do is remove instructions,
+//    so this way we can do so without compacting the vector all the time.
+class StackIR : public std::vector<StackInst*> {
+  // Optimize the IR. If func is provided, the IR is the entirety of a
+  // function body; otherwise it is just a fragment from a function or
+  // a global segment offset etc.
+  void optimize(Function* func=nullptr);
+};
+
 //
 // StackWriter: Writes out binary format stack machine code for a Binaryen IR expression
 //
@@ -78,7 +92,7 @@ public:
   StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
     : parent(parent), o(o), sourceMap(sourceMap), debug(debug) {}
 
-  std::vector<StackInst*> stackInsts; // filled in Binaryen2Stack, read in Stack2Binary
+  StackIR stackInsts; // filled in Binaryen2Stack, read in Stack2Binary
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
@@ -197,7 +211,7 @@ public:
     setFunction(funcInit);
     visitPossibleBlockContents(func->body);
     // Optimize it.
-    // TODO optimize(stackInsts, func);
+    stackIR.optimize(func);
     // Emit the binary.
     // FIXME XXX this recomputes the localMap, avoid the duplication
     StackWriter<StackWriterMode::Stack2Binary> finalWriter(parent, o, /* sourceMap= */ false, debug);
