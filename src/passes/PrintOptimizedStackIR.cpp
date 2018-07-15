@@ -38,7 +38,7 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
     OptimizingFunctionStackWriter stackWriter(func, binaryWriter, buffer);
     // Print out the Stack IR
     std::cout << func->name << ":\n";
-//    int indent = 0;
+    // TODO int indent = 0;
     for (auto* inst : stackWriter.stackInsts) {
       std::cout << "  ";
       if (!inst) {
@@ -46,7 +46,7 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
       } else {
         switch (inst->op) {
           case StackInst::Basic: {
-            std::cout << "basic TODO";
+            std::cout << getExpressionName(inst->origin);
             break;
           }
           case StackInst::BlockEnd: {

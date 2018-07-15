@@ -1204,8 +1204,7 @@ void StackIR::optimize(Function* func) {
             // We can remove this.
             inst = nullptr;
           }
-        }
-        if (inst->type == unreachable) {
+        } else if (inst->type == unreachable) {
           inUnreachableCode = true;
         }
       }
