@@ -1505,11 +1505,29 @@ void StackIR::optimize(Function* func) {
     void run() {
       dce();
       stackifyLocalPairs();
+      removeUnneededBlocks();
     }
 
   private:
+    // Passes.
+
     // Remove unreachable code.
     void dce() {
+      bool inUnreachableCode = false;
+      for (auto*& inst : IR) {
+        if (inUnreachableCode) {
+          // Does the unreachable code end here?
+          if (isControlFlowBarrier(inst)) {
+            inUnreachableCode = false;
+          } else {
+            // We can remove this.
+            inst = nullptr;
+          }
+        }
+        if (inst->type == unreachable) {
+          inUnreachableCode = true;
+        }
+      }
     }
 
     // If ordered properly, we can avoid a set_local/get_local pair,
@@ -1522,11 +1540,36 @@ void StackIR::optimize(Function* func) {
     // As long as the code in between does not modify $x, and has
     // no control flow branching out, we can remove both the set
     // and the get.
+    // We can also leave a value on the stack to flow it out of
+    // a block, loop, if, or function body. TODO: verify this
+    // happens automatically here
     void stackifyLocalPairs() {
     }
 
-    // We can also leave a value on the stack to flow it out of
-    // a block, loop, if, or function body. TODO
+    // There may be unnecessary blocks we can remove: blocks
+    // without branches to them are always ok to remove.
+    // TODO: a branch to a block in an if body can become
+    //       a branch to that if body
+    void removeUnneededBlocks() {
+    }
+
+    // Utilities.
+
+    // A control flow "barrier" - a point where stack machine
+    // unreachability ends.
+    bool isControlFlowBarrier(StackInst* inst) {
+      switch (inst->op) {
+        case StackInst::BlockEnd:
+        case StackInst::IfElse:
+        case StackInst::IfEnd:
+        case StackInst::LoopEnd: {
+          return true;
+        }
+        default: {
+          return false;
+        }
+      }
+    }
   };
 
   Optimizer(*this, func).run();
