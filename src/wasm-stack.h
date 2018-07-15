@@ -32,7 +32,9 @@ namespace wasm {
 //  * Stack2Binary: emits SIR to wasm binary
 //
 // Direct writing, in Binaryen2Binary, is fast. Otherwise, Binaryen2Stack
-// lets you optimzie the Stack IR before running Stack2Binary.
+// lets you optimize the Stack IR before running Stack2Binary (but the cost
+// is that the extra IR in the middle makes things 20% slower than direct
+// Binaryen2Binary).
 //
 // To reduce the amount of boilerplate code here, we implement all 3 in
 // a single class, templated on the mode. This allows compilers to trivially
