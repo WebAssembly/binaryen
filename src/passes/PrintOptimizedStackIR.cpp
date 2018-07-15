@@ -40,6 +40,7 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
     std::cout << func->name << ":\n";
     // TODO int indent = 0;
     for (auto* inst : stackWriter.stackInsts) {
+      if (!inst) continue;
       std::cout << "  " << *inst << '\n';
     }
   }
