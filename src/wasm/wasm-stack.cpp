@@ -36,7 +36,6 @@ void StackIR::optimize(Function* func) {
 
     // Remove unreachable code.
     void dce() {
-dump("pre dce");
       bool inUnreachableCode = false;
       for (Index i = 0; i < insts.size(); i++) {
         auto* inst = insts[i];
@@ -48,13 +47,11 @@ dump("pre dce");
           } else {
             // We can remove this.
             removeAt(i);
-dump("a removal");
           }
         } else if (inst->type == unreachable) {
           inUnreachableCode = true;
         }
       }
-dump("post dce");
     }
 
     // If ordered properly, we can avoid a set_local/get_local pair,
@@ -116,17 +113,14 @@ dump("post dce");
     // is control flow, and so has been expanded to multiple
     // instructions, remove them as well.
     void removeAt(Index i) {
-std::cout << "remove at " << i << '\n';
       auto* inst = insts[i];
       insts[i] = nullptr;
       if (inst->op == StackInst::Basic) {
         return; // that was it
       }
       auto* origin = inst->origin;
-std::cout << "  origin: " << origin << '\n';
       while (1) {
         i++;
-std::cout << "  subremove at " << i << '\n';
         assert(i < insts.size());
         inst = insts[i];
         insts[i] = nullptr;

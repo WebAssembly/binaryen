@@ -46,7 +46,7 @@
   (call $main)
  )
 )
-169
+164
 (module
  (type $0 (func))
  (type $1 (func))

@@ -390,7 +390,7 @@ void StackWriter<Mode>::visitChild(Expression* curr) {
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitBlock(Block* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(curr));
+    stackInsts.push_back(makeStackInst(StackInst::BlockBegin, curr));
   } else {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
@@ -443,7 +443,7 @@ void StackWriter<Mode>::visitIf(If* curr) {
   }
   visitChild(curr->condition);
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(curr));
+    stackInsts.push_back(makeStackInst(StackInst::IfBegin, curr));
   } else {
     o << int8_t(BinaryConsts::If);
     o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -497,7 +497,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoop(Loop* curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(curr));
+    stackInsts.push_back(makeStackInst(StackInst::LoopBegin, curr));
   } else {
     o << int8_t(BinaryConsts::Loop);
     o << binaryType(curr->type != unreachable ? curr->type : none);
