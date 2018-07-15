@@ -40,35 +40,7 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
     std::cout << func->name << ":\n";
     // TODO int indent = 0;
     for (auto* inst : stackWriter.stackInsts) {
-      std::cout << "  ";
-      if (!inst) {
-        std::cout << "(nullptr)";
-      } else {
-        switch (inst->op) {
-          case StackInst::Basic: {
-            std::cout << getExpressionName(inst->origin);
-            break;
-          }
-          case StackInst::BlockEnd: {
-            std::cout << "end";
-            break;
-          }
-          case StackInst::IfElse: {
-            std::cout << "else";
-            break;
-          }
-          case StackInst::IfEnd: {
-            std::cout << "end";
-            break;
-          }
-          case StackInst::LoopEnd: {
-            std::cout << "end";
-            break;
-          }
-          default: WASM_UNREACHABLE();
-        }
-      }
-      std::cout << '\n';
+      std::cout << "  " << *inst << '\n';
     }
   }
 };

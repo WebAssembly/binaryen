@@ -37,11 +37,15 @@ struct StackInst {
   StackInst(MixedArena&) {}
 
   enum Op {
-    Basic,    // an instruction directly corresponding to a Binaryen IR node
-    BlockEnd, // a block's end
-    IfElse,   // an if's else
-    IfEnd,    // an if's end
-    LoopEnd   // a loop's end
+    Basic,      // an instruction directly corresponding to a non-control-flow
+                // Binaryen IR node
+    BlockBegin, // the beginning of a block
+    BlockEnd,   // the ending of a block
+    IfBegin,    // the beginning of a if
+    IfElse,     // the else of a if
+    IfEnd,      // the ending of a if
+    LoopBegin,  // the beginning of a loop
+    LoopEnd,    // the ending of a loop
   } op;
 
   Expression* origin; // the expression this originates from
@@ -49,6 +53,42 @@ struct StackInst {
   Type type; // the type - usually identical to the origin type, but
                  // e.g. wasm has no unreachable blocks, they must be none
 };
+
+} // namespace wasm
+
+namespace std {
+
+inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
+  if (!&inst) {
+    std::cout << "(nullptr)";
+  } else {
+    switch (inst.op) {
+      case wasm::StackInst::Basic:
+      case wasm::StackInst::BlockBegin:
+      case wasm::StackInst::IfBegin:
+      case wasm::StackInst::LoopBegin: {
+        std::cout << wasm::getExpressionName(inst.origin) << " (" << wasm::printType(inst.type) << ')';
+        break;
+      }
+      case wasm::StackInst::BlockEnd:
+      case wasm::StackInst::IfEnd:
+      case wasm::StackInst::LoopEnd: {
+        std::cout << "end";
+        break;
+      }
+      case wasm::StackInst::IfElse: {
+        std::cout << "else";
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+  }
+  return o;
+}
+
+} // namespace std
+
+namespace wasm {
 
 // A representation of Stack IR, containing a linear sequence of
 // stack instructions, and code to optimize.
@@ -223,12 +263,11 @@ public:
     for (auto* inst : stackInsts) {
       if (!inst) continue; // a nullptr is just something we can skip
       switch (inst->op) {
-        case StackInst::Basic: {
+        case StackInst::Basic:
+        case StackInst::BlockBegin:
+        case StackInst::IfBegin:
+        case StackInst::LoopBegin: {
           finalWriter.visit(inst->origin);
-          break;
-        }
-        case StackInst::BlockEnd: {
-          finalWriter.visitBlockEnd(inst->origin->cast<Block>());
           break;
         }
         case StackInst::IfElse: {
@@ -380,6 +419,7 @@ void StackWriter<Mode>::visitBlockEnd(Block* curr) {
   } else {
     o << int8_t(BinaryConsts::End);
   }
+  assert(!breakStack.empty());
   breakStack.pop_back();
   if (curr->type == unreachable) {
     // and emit an unreachable *outside* the block too, so later things can pop anything
@@ -419,6 +459,7 @@ void StackWriter<Mode>::visitIf(If* curr) {
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfElse(If* curr) {
+  assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackInsts.push_back(makeStackInst(StackInst::IfElse, curr));
@@ -431,6 +472,7 @@ void StackWriter<Mode>::visitIfElse(If* curr) {
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitIfEnd(If* curr) {
+  assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackInsts.push_back(makeStackInst(StackInst::IfEnd, curr));
@@ -466,6 +508,7 @@ void StackWriter<Mode>::visitLoop(Loop* curr) {
 
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
+  assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackInsts.push_back(makeStackInst(StackInst::LoopEnd, curr));
@@ -1178,11 +1221,11 @@ StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin
 
 void StackIR::optimize(Function* func) {
   class Optimizer {
-    StackIR& IR;
+    StackIR& insts;
     Function* func;
 
   public:
-    Optimizer(StackIR& IR, Function* func) : IR(IR), func(func) {}
+    Optimizer(StackIR& insts, Function* func) : insts(insts), func(func) {}
     void run() {
       dce();
       stackifyLocalPairs();
@@ -1194,8 +1237,10 @@ void StackIR::optimize(Function* func) {
 
     // Remove unreachable code.
     void dce() {
+dump("pre dce");
       bool inUnreachableCode = false;
-      for (auto*& inst : IR) {
+      for (Index i = 0; i < insts.size(); i++) {
+        auto* inst = insts[i];
         if (!inst) continue;
         if (inUnreachableCode) {
           // Does the unreachable code end here?
@@ -1203,12 +1248,14 @@ void StackIR::optimize(Function* func) {
             inUnreachableCode = false;
           } else {
             // We can remove this.
-            inst = nullptr;
+            removeAt(i);
+dump("a removal");
           }
         } else if (inst->type == unreachable) {
           inUnreachableCode = true;
         }
       }
+dump("post dce");
     }
 
     // If ordered properly, we can avoid a set_local/get_local pair,
@@ -1249,6 +1296,51 @@ void StackIR::optimize(Function* func) {
         default: {
           return false;
         }
+      }
+    }
+
+    // A control flow ending.
+    bool isControlFlowEnding(StackInst* inst) {
+      switch (inst->op) {
+        case StackInst::BlockEnd:
+        case StackInst::IfEnd:
+        case StackInst::LoopEnd: {
+          return true;
+        }
+        default: {
+          return false;
+        }
+      }
+    }
+
+    // Remove the instruction at index i. If the instruction
+    // is control flow, and so has been expanded to multiple
+    // instructions, remove them as well.
+    void removeAt(Index i) {
+std::cout << "remove at " << i << '\n';
+      auto* inst = insts[i];
+      insts[i] = nullptr;
+      if (inst->op == StackInst::Basic) {
+        return; // that was it
+      }
+      auto* origin = inst->origin;
+std::cout << "  origin: " << origin << '\n';
+      while (1) {
+        i++;
+std::cout << "  subremove at " << i << '\n';
+        assert(i < insts.size());
+        inst = insts[i];
+        insts[i] = nullptr;
+        if (inst->origin == origin && isControlFlowEnding(inst)) {
+          return; // that's it, we removed it all
+        }
+      }
+    }
+
+    void dump(std::string description) {
+      std::cout << description << '\n';
+      for (auto* inst : insts) {
+        std::cout << ' ' << *inst << '\n';
       }
     }
   };
