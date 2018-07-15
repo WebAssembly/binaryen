@@ -116,6 +116,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/Precompute.cpp \
   $BINARYEN_SRC/passes/Print.cpp \
   $BINARYEN_SRC/passes/PrintCallGraph.cpp \
+  $BINARYEN_SRC/passes/PrintOptimizedStackIR.cpp \
   $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
   $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
   $BINARYEN_SRC/passes/RemoveNonJSOps.cpp \
