@@ -1503,12 +1503,30 @@ void StackIR::optimize(Function* func) {
   public:
     Optimizer(StackIR& IR, Function* func) : IR(IR), func(func) {}
     void run() {
-      removeUnneededUnreachables();
+      dce();
+      stackifyLocalPairs();
     }
 
   private:
-    void removeUnneededUnreachables() {
+    // Remove unreachable code.
+    void dce() {
     }
+
+    // If ordered properly, we can avoid a set_local/get_local pair,
+    // and use the value directly from the stack, for example
+    //    [..produce a value on the stack..]
+    //    set_local $x
+    //    [..much code..]
+    //    get_local $x
+    //    call $foo ;; use the value, foo(value)
+    // As long as the code in between does not modify $x, and has
+    // no control flow branching out, we can remove both the set
+    // and the get.
+    void stackifyLocalPairs() {
+    }
+
+    // We can also leave a value on the stack to flow it out of
+    // a block, loop, if, or function body. TODO
   };
 
   Optimizer(*this, func).run();

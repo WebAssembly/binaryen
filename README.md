@@ -48,6 +48,8 @@ There are a few differences between Binaryen IR and the WebAssembly language:
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
 
+ * In particular, when optimizing Binaryen uses an additional IR while writing the wasm binary, Stack IR. Stack IR allows a bunch of optimizations that are tailored for the stack machine form of WebAssembly binary format. Since those optimizations are only done while optimizing, a round-trip operation *without* optimization may slightly increase the size of the wasm, if it was particularly well-optimized before.
+
 Notes when working with Binaryen IR:
 
  * As mentioned above, Binaryen IR has a tree structure. As a result, each expression should have exactly one parent - you should not "reuse" a node by having it appear more than once in the tree. The motivation for this limitation is that when we optimize we modify nodes, so if they appear more than once in the tree, a change in one place can appear in another incorrectly.
