@@ -33,6 +33,8 @@ namespace wasm {
 // A Stack IR instruction. Most just directly reflect a Binaryen IR node,
 // but we need extra ones for certain things.
 struct StackInst {
+  StackInst(MixedArena&) {}
+
   enum Op {
     Basic, // an instruction directly corresponding to a Binaryen IR node
     BlockEnd,

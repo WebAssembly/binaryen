@@ -1482,7 +1482,7 @@ void StackWriter<Mode>::finishFunctionBody() {
 
 template<StackWriterMode Mode>
 StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin) {
-  auto* ret = allocator.alloc<StackInst>();
+  auto* ret = temps.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
