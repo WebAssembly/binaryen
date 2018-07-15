@@ -130,10 +130,6 @@ enum AtomicRMWOp {
   Add, Sub, And, Or, Xor, Xchg
 };
 
-enum StackItemOp {
-  BlockEnd, IfElse, IfEnd, LoopEnd
-};
-
 //
 // Expressions
 //
@@ -185,7 +181,6 @@ public:
     AtomicCmpxchgId,
     AtomicWaitId,
     AtomicWakeId,
-    StackItemId,
     NumExpressionIds
   };
   Id _id;
@@ -583,21 +578,6 @@ public:
     type = unreachable;
   }
   Unreachable(MixedArena& allocator) : Unreachable() {}
-};
-
-// A Stack IR node. This lets us represent the flat wasm binary format,
-// which is a stack machine, in a way that is easy to mix with other
-// Expressions. Note that there is no meaning to nesting such items
-// in regular nodes, but it is useful to have an Expression* which can
-// refer to either a regular Expression or a Stack IR expression. In
-// particular, the Visitor class works on this, but the Walker class
-// does not.
-class StackItem : public SpecificExpression<Expression::StackItemId> {
-public:
-  StackItem(MixedArena& allocator) {}
-
-  StackItemOp op;
-  Expression* origin; // the expression this originates from
 };
 
 // Globals

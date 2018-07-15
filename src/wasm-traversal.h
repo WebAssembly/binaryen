@@ -64,7 +64,6 @@ struct Visitor {
   ReturnType visitHost(Host* curr) { return ReturnType(); }
   ReturnType visitNop(Nop* curr) { return ReturnType(); }
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
-  ReturnType visitStackItem(StackItem* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
   ReturnType visitImport(Import* curr) { return ReturnType(); }
@@ -110,7 +109,6 @@ struct Visitor {
       case Expression::Id::HostId: DELEGATE(Host);
       case Expression::Id::NopId: DELEGATE(Nop);
       case Expression::Id::UnreachableId: DELEGATE(Unreachable);
-      case Expression::Id::StackItemId: DELEGATE(StackItem);
       case Expression::Id::InvalidId:
       default: WASM_UNREACHABLE();
     }
@@ -157,7 +155,6 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Host);
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
-  UNIMPLEMENTED(StackItem);
   UNIMPLEMENTED(FunctionType);
   UNIMPLEMENTED(Import);
   UNIMPLEMENTED(Export);
@@ -204,7 +201,6 @@ struct OverriddenVisitor {
       case Expression::Id::HostId: DELEGATE(Host);
       case Expression::Id::NopId: DELEGATE(Nop);
       case Expression::Id::UnreachableId: DELEGATE(Unreachable);
-      case Expression::Id::StackItemId: DELEGATE(StackItem);
       case Expression::Id::InvalidId:
       default: WASM_UNREACHABLE();
     }
@@ -249,7 +245,6 @@ struct UnifiedExpressionVisitor : public Visitor<SubType> {
   ReturnType visitHost(Host* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitNop(Nop* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitUnreachable(Unreachable* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitStackItem(StackItem* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
 };
 
 //

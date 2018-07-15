@@ -23,6 +23,30 @@
 
 namespace wasm {
 
+// Stack IR: an IR that represents code at the wasm binary format level,
+// that is, a stack machine. Binaryen IR is *almost* identical to this,
+// but as documented in README.md, there are a few differences, intended
+// to make Binaryen IR fast and flexible for maximal optimization. Stack
+// IR, on the other hand, is designed to optimize a few final things that
+// can only really be done when modeling the stack machine format precisely.
+
+// A Stack IR instruction. Most just directly reflect a Binaryen IR node,
+// but we need extra ones for certain things.
+struct StackInst {
+  enum Op {
+    Basic, // an instruction directly corresponding to a Binaryen IR node
+    BlockEnd,
+    IfElse,
+    IfEnd,
+    LoopEnd
+  } op;
+
+  Expression* origin; // the expression this originates from
+
+  Type type; // the type - usually identical to the origin type, but
+                 // e.g. wasm has no unreachable blocks, they must be none
+};
+
 //
 // StackWriter: Writes out binary format stack machine code for a Binaryen IR expression
 //
@@ -52,7 +76,7 @@ public:
   StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
     : parent(parent), o(o), sourceMap(sourceMap), debug(debug) {}
 
-  std::vector<Expression*> stackIR; // filled in Binaryen2Stack, read in Stack2Binary
+  std::vector<StackInst*> stackInsts; // filled in Binaryen2Stack, read in Stack2Binary
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
@@ -98,7 +122,6 @@ public:
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
-  void visitStackItem(StackItem* curr);
 
   // We need to emit extra unreachable opcodes in some cases
   void emitExtraUnreachable();
@@ -132,6 +155,11 @@ protected:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
 
   void finishFunctionBody();
+
+  StackInst* makeStackInst(StackInst::Op op, Expression* origin);
+  StackInst* makeStackInst(Expression* origin) {
+    return makeStackInst(StackInst::Basic, origin);
+  }
 };
 
 // Write out a single expression, such as an offset for a global segment.
@@ -167,16 +195,38 @@ public:
     setFunction(funcInit);
     visitPossibleBlockContents(func->body);
     // Optimize it.
-    // TODO optimize(stackIR, func);
+    // TODO optimize(stackInsts, func);
     // Emit the binary.
     // FIXME XXX this recomputes the localMap, avoid the duplication
     StackWriter<StackWriterMode::Stack2Binary> finalWriter(parent, o, /* sourceMap= */ false, debug);
     finalWriter.setFunction(func);
     // Locals may have changed during optimization, let the finalWriter emit the header.
     finalWriter.mapLocalsAndEmitHeader();
-    for (auto* item : stackIR) {
-      if (!item) continue; // a nullptr is just something we can skip
-      finalWriter.visit(item);
+    for (auto* inst : stackInsts) {
+      if (!inst) continue; // a nullptr is just something we can skip
+      switch (inst->op) {
+        case StackInst::Basic: {
+          finalWriter.visit(inst->origin);
+          break;
+        }
+        case StackInst::BlockEnd: {
+          finalWriter.visitBlockEnd(inst->origin->cast<Block>());
+          break;
+        }
+        case StackInst::IfElse: {
+          finalWriter.visitIfElse(inst->origin->cast<If>());
+          break;
+        }
+        case StackInst::IfEnd: {
+          finalWriter.visitIfEnd(inst->origin->cast<If>());
+          break;
+        }
+        case StackInst::LoopEnd: {
+          finalWriter.visitLoopEnd(inst->origin->cast<Loop>());
+          break;
+        }
+        default: WASM_UNREACHABLE();
+      }
     }
     finishFunctionBody();
   }

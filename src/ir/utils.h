@@ -224,7 +224,6 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitHost(Host* curr) { curr->finalize(); }
   void visitNop(Nop* curr) { curr->finalize(); }
   void visitUnreachable(Unreachable* curr) { curr->finalize(); }
-  void visitStackItem(StackItem* curr) { WASM_UNREACHABLE(); }
 
   void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
   void visitImport(Import* curr) { WASM_UNREACHABLE(); }
