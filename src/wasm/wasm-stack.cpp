@@ -129,17 +129,16 @@ void StackIR::optimize(Function* func) {
         }
       }
     }
-
-    void dump(std::string description) {
-      std::cout << description << '\n';
-      for (auto* inst : insts) {
-        if (!inst) continue;
-        std::cout << ' ' << *inst << '\n';
-      }
-    }
   };
 
   Optimizer(*this, func).run();
+}
+
+void StackIR::dump() {
+  for (auto* inst : *this) {
+    if (!inst) continue;
+    std::cout << ' ' << *inst << '\n';
+  }
 }
 
 } // namespace wasm

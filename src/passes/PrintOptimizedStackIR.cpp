@@ -38,11 +38,7 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
     OptimizingFunctionStackWriter stackWriter(func, binaryWriter, buffer);
     // Print out the Stack IR
     std::cout << func->name << ":\n";
-    // TODO int indent = 0;
-    for (auto* inst : stackWriter.stackInsts) {
-      if (!inst) continue;
-      std::cout << "  " << *inst << '\n';
-    }
+    stackWriter.stackInsts.dump();
   }
 };
 

@@ -99,6 +99,9 @@ public:
   // function body; otherwise it is just a fragment from a function or
   // a global segment offset etc.
   void optimize(Function* func=nullptr);
+
+  // Dump out the IR, for debug purposes.
+  void dump();
 };
 
 //
