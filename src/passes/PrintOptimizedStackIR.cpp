@@ -35,7 +35,6 @@ struct PrintOptimizedStackIR : public WalkerPass<PostWalker<PrintOptimizedStackI
     // Set up a minimal binary writing environment.
     BufferWithRandomAccess buffer;
     WasmBinaryWriter binaryWriter(getModule(), buffer);
-    binaryWriter.prepare();
     OptimizingFunctionStackWriter stackWriter(func, binaryWriter, buffer);
     // Print out the Stack IR
     std::cout << func->name << ":\n";
