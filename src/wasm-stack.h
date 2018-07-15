@@ -36,11 +36,11 @@ struct StackInst {
   StackInst(MixedArena&) {}
 
   enum Op {
-    Basic, // an instruction directly corresponding to a Binaryen IR node
-    BlockEnd,
-    IfElse,
-    IfEnd,
-    LoopEnd
+    Basic,    // an instruction directly corresponding to a Binaryen IR node
+    BlockEnd, // a block's end
+    IfElse,   // an if's else
+    IfEnd,    // an if's end
+    LoopEnd   // a loop's end
   } op;
 
   Expression* origin; // the expression this originates from
