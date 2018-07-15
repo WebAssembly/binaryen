@@ -1196,6 +1196,7 @@ void StackIR::optimize(Function* func) {
     void dce() {
       bool inUnreachableCode = false;
       for (auto*& inst : IR) {
+        if (!inst) continue;
         if (inUnreachableCode) {
           // Does the unreachable code end here?
           if (isControlFlowBarrier(inst)) {
