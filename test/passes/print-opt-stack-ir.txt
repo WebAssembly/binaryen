@@ -378,6 +378,24 @@ $local-to-stack-1:
  call (i32)
  drop (none)
  unary (i32)
+$local-to-stack-1b:
+ const (i32)
+ call (i32)
+ const (i32)
+ call (i32)
+ drop (none)
+ const (i32)
+ binary (i32)
+$local-to-stack-1c-no:
+ const (i32)
+ call (i32)
+ set_local (none)
+ const (i32)
+ call (i32)
+ drop (none)
+ const (i32)
+ get_local (i32)
+ binary (i32)
 $local-to-stack-2-no:
  const (i32)
  call (i32)
@@ -1063,7 +1081,41 @@ $remove-block:
    (get_local $temp)
   )
  )
- (func $local-to-stack-2-no (; 42 ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-1b (; 42 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (call $local-to-stack
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 2)
+   )
+  )
+  (i32.add
+   (get_local $temp)
+   (i32.const 3)
+  )
+ )
+ (func $local-to-stack-1c-no (; 43 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (call $local-to-stack
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 2)
+   )
+  )
+  (i32.add
+   (i32.const 3)
+   (get_local $temp)
+  )
+ )
+ (func $local-to-stack-2-no (; 44 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   (set_local $temp
    (call $local-to-stack
@@ -1080,7 +1132,7 @@ $remove-block:
    (get_local $temp)
   )
  )
- (func $local-to-stack-3-no (; 43 ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-3-no (; 45 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   (if
    (i32.const 1)
@@ -1102,7 +1154,7 @@ $remove-block:
   )
   (get_local $temp)
  )
- (func $remove-block (; 44 ;) (type $6) (param $x i32) (result i32)
+ (func $remove-block (; 46 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   (i32.add
    (call $remove-block
