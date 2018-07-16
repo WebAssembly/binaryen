@@ -261,7 +261,7 @@ void StackIR::optimize(Function* func) {
         assert(i < insts.size());
         inst = insts[i];
         insts[i] = nullptr;
-        if (inst->origin == origin && isControlFlowEnd(inst)) {
+        if (inst && inst->origin == origin && isControlFlowEnd(inst)) {
           return; // that's it, we removed it all
         }
       }
