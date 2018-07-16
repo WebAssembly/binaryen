@@ -82,13 +82,19 @@ void StackIR::optimize(Function* func) {
       // We also maintain a stack of values vectors for control flow,
       // saving the stack as we enter and restoring it when we exit.
       std::vector<std::vector<Index>> savedValues;
-      //insts.dump();
+#ifdef STACK_OPT_DEBUG
+      insts.dump();
+#endif
       for (Index i = 0; i < insts.size(); i++) {
         auto* inst = insts[i];
         if (!inst) continue;
         // First, consume values from the stack as required.
         auto consumed = getNumConsumedValues(inst);
-        //std::cout << "  " << i << " : " << *inst << ", " << values.size() << " on stack, will consume " << consumed << '\n';
+#ifdef STACK_OPT_DEBUG
+        std::cout << "  " << i << " : " << *inst << ", " << values.size() << " on stack, will consume " << consumed << "\n    ";
+        for (auto s : values) std::cout << s << ' ';
+        std::cout << '\n';
+#endif
         while (consumed > 0) {
           assert(values.size() > 0);
           // Whenever we hit a possible stack value, kill it - it would
@@ -135,8 +141,12 @@ void StackIR::optimize(Function* func) {
                     auto& setInfluences = localGraph.setInfluences[set];
                     if (setInfluences.size() == 1) {
                       assert(*setInfluences.begin() == get);
+                      // For better multis, actual opt time is the pop, not the get. XXX
                       // Do it! The set and the get can go away, the proper
                       // value is on the stack.
+#ifdef STACK_OPT_DEBUG
+                      std::cout << "  stackify the get\n";
+#endif
                       insts[index] = nullptr;
                       insts[i] = nullptr;
                       // Continuing on from here, remove this and also
@@ -260,9 +270,10 @@ void StackIR::optimize(Function* func) {
 }
 
 void StackIR::dump() {
-  for (auto* inst : *this) {
+  for (Index i = 0; i < size(); i++) {
+    auto* inst = (*this)[i];
     if (!inst) continue;
-    std::cout << ' ' << *inst << '\n';
+    std::cout << i << ' ' << *inst << '\n';
   }
 }
 
