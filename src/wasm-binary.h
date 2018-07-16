@@ -655,22 +655,11 @@ inline S32LEB binaryType(Type type) {
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
-  Module* wasm;
-  BufferWithRandomAccess& o;
-  bool debug;
-  bool debugInfo = true;
-  std::ostream* sourceMap = nullptr;
-  std::string sourceMapUrl;
-  std::string symbolMap;
-
-  MixedArena allocator;
-
-  Function::DebugLocation lastDebugLocation;
-  size_t lastBytecodeOffset;
-
-  void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input,
+                   BufferWithRandomAccess& o,
+                   bool debug = false) :
+      wasm(input), o(o), debug(debug) {
     prepare();
   }
 
@@ -746,6 +735,23 @@ public:
   void emitBuffer(const char* data, size_t size);
   void emitString(const char *str);
   void finishUp();
+
+private:
+  Module* wasm;
+  BufferWithRandomAccess& o;
+  bool debug;
+
+  bool debugInfo = true;
+  std::ostream* sourceMap = nullptr;
+  std::string sourceMapUrl;
+  std::string symbolMap;
+
+  MixedArena allocator;
+
+  Function::DebugLocation lastDebugLocation;
+  size_t lastBytecodeOffset;
+
+  void prepare();
 };
 
 class WasmBinaryBuilder {

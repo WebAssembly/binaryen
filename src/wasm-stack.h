@@ -21,6 +21,7 @@
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "ir/branch-utils.h"
+#include "pass.h"
 
 namespace wasm {
 
@@ -101,7 +102,7 @@ public:
   // Optimize the IR. If func is provided, the IR is the entirety of a
   // function body; otherwise it is just a fragment from a function or
   // a global segment offset etc.
-  void optimize(Function* func=nullptr);
+  void optimize(PassOptions& passOptions,Function* func=nullptr);
 
   // Dump out the IR, for debug purposes.
   void dump();
@@ -249,13 +250,17 @@ public:
 // for that.
 class OptimizingFunctionStackWriter : public StackWriter<StackWriterMode::Binaryen2Stack> {
 public:
-  OptimizingFunctionStackWriter(Function* funcInit, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false) :
-    StackWriter<StackWriterMode::Binaryen2Stack>(parent, o, /* sourceMap= */ false, debug) {
+  OptimizingFunctionStackWriter(Function* funcInit,
+                                WasmBinaryWriter& parent,
+                                BufferWithRandomAccess& o,
+                                PassOptions& passOptions,
+                                bool debug=false) :
+      StackWriter<StackWriterMode::Binaryen2Stack>(parent, o, /* sourceMap= */ false, debug) {
     // Write out Stack IR.
     setFunction(funcInit);
     visitPossibleBlockContents(func->body);
     // Optimize it.
-    stackInsts.optimize(func);
+    stackInsts.optimize(passOptions, func);
     // Emit the binary.
     // FIXME XXX this recomputes the localMap, avoid the duplication
     StackWriter<StackWriterMode::Stack2Binary> finalWriter(parent, o, /* sourceMap= */ false, debug);

@@ -20,18 +20,24 @@
 
 namespace wasm {
 
-void StackIR::optimize(Function* func) {
+void StackIR::optimize(PassOptions& passOptions, Function* func) {
   class Optimizer {
     StackIR& insts;
+    PassOptions& passOptions;
     Function* func;
 
   public:
-    Optimizer(StackIR& insts, Function* func) : insts(insts), func(func) {}
+    Optimizer(StackIR& insts, PassOptions& passOptions, Function* func) :
+      insts(insts), passOptions(passOptions), func(func) {}
+
     void run() {
-      dce();
-      local2Stack();
+      // FIXME: local2Stack is currently rather slow (due to localGraph),
+      //        so for now run it only when really optimizing
+      if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
+        local2Stack();
+      }
       removeUnneededBlocks();
-      dce(); // more dce may be possible with fewer blocks
+      dce();
     }
 
   private:

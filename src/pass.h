@@ -76,6 +76,10 @@ struct PassOptions {
     ret.setDefaultOptimizationOptions();
     return ret;
   }
+
+  static PassOptions getWithoutOptimization() {
+    return PassOptions(); // defaults are to not optimize
+  }
 };
 
 //
