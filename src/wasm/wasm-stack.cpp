@@ -134,6 +134,7 @@ void StackIR::optimize(Function* func) {
                   // This might be a proper set-get pair, where the set is
                   // used by this get and nothing else, check that.
                   auto& sets = localGraph.getSetses[get];
+// XXX needs to see set infolences, that it is just one get!!!1
                   if (sets.size() == 1 && *sets.begin() == set) {
                     // Do it! The set and the get can go away, the proper
                     // value is on the stack.

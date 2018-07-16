@@ -557,14 +557,17 @@
     (drop (call $local-to-stack (i32.const 2)))
     (get_local $temp)
   )
-  ;; TODO: a test like this, with a value-returning block in the middle we can optimize out,
-  ;; (func $0 (; 0 ;) (type $0) (result f64)
-  ;;  (f64.sub
-  ;;   (f64.const 1)
-  ;;   (block $label$1 (result f64)
-  ;;    (f64.const 4.2) ;; add a save to a local, then a none, then a get-local, like in last test
-  ;;   )
-  ;;  )
-  ;; )
-
+  (func $remove-block (param $x i32) (result i32)
+   (local $temp i32)
+   (i32.add
+    (call $remove-block (i32.const 0))
+    (i32.eqz
+     (block (result i32) ;; after we use the stack instead of the local, we can remove this block
+      (set_local $temp (call $remove-block (i32.const 1)))
+      (drop (call $remove-block (i32.const 2)))
+      (get_local $temp)
+     )
+    )
+   )
+  )
 )
