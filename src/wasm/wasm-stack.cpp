@@ -71,6 +71,8 @@ void StackIR::optimize(Function* func) {
       // a set that is read by that get, and only that get. Note that we run
       // this on the Binaryen IR, so we are assuming that no previous opt
       // has changed the interaction of local operations.
+      // TODO: we can do this a lot faster, as we just care about linear
+      //       control flow.
       LocalGraph localGraph(func);
       localGraph.computeInfluences();
       // We maintain a stack of relevant values. This contains:
@@ -123,6 +125,7 @@ void StackIR::optimize(Function* func) {
         }
         // This is something we should handle, look into it.
         if (isConcreteType(inst->type)) {
+          bool optimized = false;
           if (auto* get = inst->origin->dynCast<GetLocal>()) {
             // This is a potential optimization opportunity! See if we
             // can reach the set.
@@ -141,7 +144,6 @@ void StackIR::optimize(Function* func) {
                     auto& setInfluences = localGraph.setInfluences[set];
                     if (setInfluences.size() == 1) {
                       assert(*setInfluences.begin() == get);
-                      // For better multis, actual opt time is the pop, not the get. XXX
                       // Do it! The set and the get can go away, the proper
                       // value is on the stack.
 #ifdef STACK_OPT_DEBUG
@@ -149,13 +151,13 @@ void StackIR::optimize(Function* func) {
 #endif
                       insts[index] = nullptr;
                       insts[i] = nullptr;
-                      // Continuing on from here, remove this and also
-                      // anything possible above it, that would have been
-                      // in the way. Things below are still possible.
-                      // Note how later down we still add a null on the
-                      // stack - the set+get combo was turned into a stack
-                      // value.
-                      values.resize(j);
+                      // Continuing on from here, replace this on the stack
+                      // with a null, representing a regular value. We
+                      // keep possible values above us active - they may
+                      // be optimized later, as they would be pushed after
+                      // us, and used before us, so there is no conflict.
+                      values[j] = null;
+                      optimized = true;
                       break;
                     }
                   }
@@ -166,8 +168,10 @@ void StackIR::optimize(Function* func) {
               }
             }
           }
-          // This is an actual value on the value stack.
-          values.push_back(null);
+          if (!optimized) {
+            // This is an actual regular value on the value stack.
+            values.push_back(null);
+          }
         } else if (inst->origin->is<SetLocal>() && inst->type == none) {
           // This set is potentially optimizable later, add to stack.
           values.push_back(i);

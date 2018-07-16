@@ -477,7 +477,7 @@ $local-to-stack-multi-7-justone:
 13 const (i32)
 14 call (i32)
 15 drop (none)
-$local-to-stack-overlapping-multi-8:
+$local-to-stack-overlapping-multi-8-no:
 0 const (i32)
 1 call (i32)
 2 set_local (none)
@@ -488,16 +488,14 @@ $local-to-stack-overlapping-multi-8:
 8 drop (none)
 10 get_local (i32)
 11 binary (i32)
-$local-to-stack-overlapping-multi-9-no:
+$local-to-stack-overlapping-multi-9-yes:
 0 const (i32)
 1 call (i32)
 3 const (i32)
 4 call (i32)
-5 set_local (none)
 6 const (i32)
 7 call (i32)
 8 drop (none)
-10 get_local (i32)
 11 binary (i32)
 $remove-block:
 0 const (i32)
@@ -1350,7 +1348,7 @@ $remove-block:
   )
   (get_local $temp2)
  )
- (func $local-to-stack-overlapping-multi-8 (; 50 ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-overlapping-multi-8-no (; 50 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   (set_local $temp1
@@ -1373,7 +1371,7 @@ $remove-block:
    (get_local $temp1)
   )
  )
- (func $local-to-stack-overlapping-multi-9-no (; 51 ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-overlapping-multi-9-yes (; 51 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   (set_local $temp1
