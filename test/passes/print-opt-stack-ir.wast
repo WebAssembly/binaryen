@@ -557,6 +557,32 @@
     (drop (call $local-to-stack (i32.const 2)))
     (get_local $temp)
   )
+  (func $local-to-stack-1 (param $x i32) (result i32)
+    (local $temp i32)
+    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.eqz
+      (get_local $temp)
+    )
+  )
+  (func $local-to-stack-2-no (param $x i32) (result i32)
+    (local $temp i32)
+    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.add
+      (get_local $temp)
+      (get_local $temp) ;; a second use - so cannot stack it
+    )
+  )
+  (func $local-to-stack-3-no (param $x i32) (result i32)
+    (local $temp i32)
+    (if (i32.const 1)
+      (set_local $temp (call $local-to-stack (i32.const 1)))
+      (set_local $temp (call $local-to-stack (i32.const 2))) ;; two sets for that get
+    )
+    (drop (call $local-to-stack (i32.const 3)))
+    (get_local $temp)
+  )
   (func $remove-block (param $x i32) (result i32)
    (local $temp i32)
    (i32.add

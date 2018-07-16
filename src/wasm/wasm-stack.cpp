@@ -76,6 +76,7 @@ void StackIR::optimize(Function* func) {
       // this on the Binaryen IR, so we are assuming that no previous opt
       // has changed the interaction of local operations.
       LocalGraph localGraph(func);
+      localGraph.computeInfluences();
       // We maintain a stack of relevant values. This contains:
       //  * a null for each actual value that the value stack would have
       //  * an index of each SetLocal that *could* be on the value
@@ -134,13 +135,17 @@ void StackIR::optimize(Function* func) {
                   // This might be a proper set-get pair, where the set is
                   // used by this get and nothing else, check that.
                   auto& sets = localGraph.getSetses[get];
-// XXX needs to see set infolences, that it is just one get!!!1
                   if (sets.size() == 1 && *sets.begin() == set) {
-                    // Do it! The set and the get can go away, the proper
-                    // value is on the stack.
-                    insts[index] = nullptr;
-                    insts[i] = nullptr;
-                    return; // TODO: another pass, or can we continue..?
+                    auto& setInfluences = localGraph.setInfluences[set];
+                    if (setInfluences.size() == 1) {
+                      assert(*setInfluences.begin() == get);
+                      // Do it! The set and the get can go away, the proper
+                      // value is on the stack.
+                      insts[index] = nullptr;
+                      insts[i] = nullptr;
+                      return; // TODO: another pass, or can we continue..?
+                              // XXX we *can* continue, and no need for another pass
+                    }
                   }
                 }
                 // We failed here. Can we look some more?

@@ -89,6 +89,8 @@ $hexLiterals:
 $conversions:
  get_local (f64)
  call_import (i32)
+ set_local (none)
+ get_local (i32)
  unary (f64)
  set_local (none)
  get_local (i32)
@@ -369,6 +371,50 @@ $local-to-stack:
  const (i32)
  call (i32)
  drop (none)
+$local-to-stack-1:
+ const (i32)
+ call (i32)
+ const (i32)
+ call (i32)
+ drop (none)
+ unary (i32)
+$local-to-stack-2-no:
+ const (i32)
+ call (i32)
+ set_local (none)
+ const (i32)
+ call (i32)
+ drop (none)
+ get_local (i32)
+ get_local (i32)
+ binary (i32)
+$local-to-stack-3-no:
+ const (i32)
+ if
+ const (i32)
+ call (i32)
+ set_local (none)
+ else
+ const (i32)
+ call (i32)
+ set_local (none)
+ end (none)
+ const (i32)
+ call (i32)
+ drop (none)
+ get_local (i32)
+$remove-block:
+ const (i32)
+ call (i32)
+ block
+ const (i32)
+ call (i32)
+ const (i32)
+ call (i32)
+ drop (none)
+ end (i32)
+ unary (i32)
+ binary (i32)
 (module
  (type $FUNCSIG$vf (func (param f32)))
  (type $FUNCSIG$v (func))
@@ -1000,5 +1046,83 @@ $local-to-stack:
    )
   )
   (get_local $temp)
+ )
+ (func $local-to-stack-1 (; 41 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (call $local-to-stack
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 2)
+   )
+  )
+  (i32.eqz
+   (get_local $temp)
+  )
+ )
+ (func $local-to-stack-2-no (; 42 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (call $local-to-stack
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 2)
+   )
+  )
+  (i32.add
+   (get_local $temp)
+   (get_local $temp)
+  )
+ )
+ (func $local-to-stack-3-no (; 43 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (if
+   (i32.const 1)
+   (set_local $temp
+    (call $local-to-stack
+     (i32.const 1)
+    )
+   )
+   (set_local $temp
+    (call $local-to-stack
+     (i32.const 2)
+    )
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 3)
+   )
+  )
+  (get_local $temp)
+ )
+ (func $remove-block (; 44 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (i32.add
+   (call $remove-block
+    (i32.const 0)
+   )
+   (i32.eqz
+    (block $block (result i32)
+     (set_local $temp
+      (call $remove-block
+       (i32.const 1)
+      )
+     )
+     (drop
+      (call $remove-block
+       (i32.const 2)
+      )
+     )
+     (get_local $temp)
+    )
+   )
+  )
  )
 )
