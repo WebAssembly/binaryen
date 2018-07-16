@@ -82,6 +82,10 @@ void StackIR::optimize(Function* func) {
       //    stack at that location.
       const Index null = -1;
       std::vector<Index> values;
+      // We also maintain a stack of values vectors for control flow,
+      // saving the stack as we enter and restoring it when we exit.
+      std::vector<std::vector<Index>> savedValues;
+      //insts.dump();
       for (Index i = 0; i < insts.size(); i++) {
         auto* inst = insts[i];
         if (!inst) continue;
@@ -100,9 +104,18 @@ void StackIR::optimize(Function* func) {
           values.pop_back();
           consumed--;
         }
-        // After consuming, we can see what to do with this. First, control
-        // flow clears the stack.
-        if (isControlFlow(inst)) {
+        // After consuming, we can see what to do with this. First, handle
+        // control flow.
+        if (isControlFlowBegin(inst)) {
+          // Save the stack for when we end this control flow.
+          savedValues.push_back(values); // TODO: optimize copies
+          values.clear();
+        } else if (isControlFlowEnd(inst)) {
+          assert(!savedValues.empty());
+          values = savedValues.back();
+          savedValues.pop_back();
+        } else if (isControlFlow(inst)) {
+          // Otherwise, in the middle of control flow, just clear it
           values.clear();
         }
         // This is something we should handle, look into it.
@@ -169,8 +182,22 @@ void StackIR::optimize(Function* func) {
       }
     }
 
+    // A control flow beginning.
+    bool isControlFlowBegin(StackInst* inst) {
+      switch (inst->op) {
+        case StackInst::BlockBegin:
+        case StackInst::IfBegin:
+        case StackInst::LoopBegin: {
+          return true;
+        }
+        default: {
+          return false;
+        }
+      }
+    }
+
     // A control flow ending.
-    bool isControlFlowEnding(StackInst* inst) {
+    bool isControlFlowEnd(StackInst* inst) {
       switch (inst->op) {
         case StackInst::BlockEnd:
         case StackInst::IfEnd:
@@ -202,7 +229,7 @@ void StackIR::optimize(Function* func) {
         assert(i < insts.size());
         inst = insts[i];
         insts[i] = nullptr;
-        if (inst->origin == origin && isControlFlowEnding(inst)) {
+        if (inst->origin == origin && isControlFlowEnd(inst)) {
           return; // that's it, we removed it all
         }
       }

@@ -10,7 +10,7 @@ $big_negative:
  const (f64)
  set_local (none)
 $importedDoubles:
- block (none)
+ block
  const (i32)
  load (f64)
  const (i32)
@@ -29,52 +29,52 @@ $importedDoubles:
  load (i32)
  const (i32)
  binary (i32)
- if (none)
+ if
  const (f64)
  break (unreachable)
- end
+ end (none)
  const (i32)
  load (f64)
  const (f64)
  binary (i32)
- if (none)
+ if
  const (f64)
  break (unreachable)
- end
+ end (none)
  const (f64)
- end
+ end (f64)
 $doubleCompares:
- block (none)
+ block
  get_local (f64)
  const (f64)
  binary (i32)
- if (none)
+ if
  const (f64)
  break (unreachable)
- end
+ end (none)
  get_local (f64)
  const (f64)
  binary (i32)
- if (none)
+ if
  const (f64)
  break (unreachable)
- end
+ end (none)
  get_local (i32)
  const (i32)
  binary (i32)
- if (none)
+ if
  const (f64)
  break (unreachable)
- end
+ end (none)
  get_local (f64)
  get_local (f64)
  binary (i32)
- if (none)
+ if
  get_local (f64)
  break (unreachable)
- end
+ end (none)
  get_local (f64)
- end
+ end (f64)
 $intOps:
  get_local (i32)
  const (i32)
@@ -97,92 +97,92 @@ $conversions:
  unary (f64)
  set_local (none)
 $seq:
- block (none)
+ block
  const (f64)
  drop (none)
  const (f64)
- end
- block (none)
+ end (f64)
+ block
  const (f64)
  drop (none)
  const (f64)
- end
+ end (f64)
  binary (f64)
  set_local (none)
 $switcher:
- block (none)
- block (none)
- block (none)
- block (none)
- block (none)
+ block
+ block
+ block
+ block
+ block
  get_local (i32)
  const (i32)
  binary (i32)
  switch (unreachable)
- end
+ end (none)
  const (i32)
  break (unreachable)
- end
+ end (none)
  const (i32)
  break (unreachable)
- end
+ end (none)
  nop (none)
- end
- block (none)
- block (none)
- block (none)
- block (none)
+ end (none)
+ block
+ block
+ block
+ block
  get_local (i32)
  const (i32)
  binary (i32)
  switch (unreachable)
- end
+ end (none)
  const (i32)
  break (unreachable)
- end
+ end (none)
  const (i32)
  break (unreachable)
- end
+ end (none)
  nop (none)
- end
- block (none)
- block (none)
- block (none)
- block (none)
- block (none)
- block (none)
+ end (none)
+ block
+ block
+ block
+ block
+ block
+ block
  get_local (i32)
  const (i32)
  binary (i32)
  switch (unreachable)
- end
+ end (none)
  break (unreachable)
- end
+ end (none)
  break (unreachable)
- end
- block (none)
- loop (none)
+ end (none)
+ block
+ loop
  break (unreachable)
- end
+ end (none)
  unreachable (unreachable)
- end
- end
- block (none)
- loop (none)
+ end (none)
+ end (none)
+ block
+ loop
  break (unreachable)
- end
+ end (none)
  unreachable (unreachable)
- end
+ end (none)
  unreachable (unreachable)
- end
+ end (none)
  nop (none)
- end
+ end (none)
  const (i32)
- end
+ end (i32)
 $blocker:
- block (none)
+ block
  break (unreachable)
- end
+ end (none)
 $frem:
  const (f64)
  const (f64)
@@ -210,7 +210,7 @@ $fr:
 $negZero:
  const (f64)
 $abs:
- block (none)
+ block
  const (i32)
  set_local (none)
  const (i32)
@@ -221,7 +221,7 @@ $abs:
  const (i32)
  binary (i32)
  select (i32)
- end
+ end (i32)
  set_local (none)
  const (f64)
  unary (f64)
@@ -258,18 +258,18 @@ $z:
 $w:
  nop (none)
 $block_and_after:
- block (none)
+ block
  const (i32)
  drop (none)
  break (unreachable)
- end
+ end (none)
  const (i32)
 $loop-roundtrip:
- loop (none)
+ loop
  get_local (f64)
  drop (none)
  get_local (f64)
- end
+ end (f64)
 $big-i64:
  const (i64)
 $i64-store32:
@@ -280,12 +280,12 @@ $return-unreachable:
  const (i32)
  return (unreachable)
 $unreachable-block:
- block (none)
+ block
  const (i32)
  drop (none)
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-block-toplevel:
  const (i32)
@@ -293,76 +293,76 @@ $unreachable-block-toplevel:
  const (i32)
  return (unreachable)
 $unreachable-block0:
- block (none)
+ block
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-block0-toplevel:
  const (i32)
  return (unreachable)
 $unreachable-block-with-br:
- block (none)
+ block
  const (i32)
  drop (none)
  break (unreachable)
- end
+ end (none)
  const (i32)
 $unreachable-if:
  const (i32)
- if (none)
+ if
  const (i32)
  return (unreachable)
  else
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-if-toplevel:
  const (i32)
- if (none)
+ if
  const (i32)
  return (unreachable)
  else
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-loop:
- loop (none)
+ loop
  nop (none)
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-loop0:
- loop (none)
+ loop
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-loop-toplevel:
- loop (none)
+ loop
  nop (none)
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-loop0-toplevel:
- loop (none)
+ loop
  const (i32)
  return (unreachable)
- end
+ end (none)
  unreachable (unreachable)
 $unreachable-ifs:
  unreachable (unreachable)
 $unreachable-if-arm:
  const (i32)
- if (none)
+ if
  nop (none)
  else
  unreachable (unreachable)
- end
+ end (none)
 $local-to-stack:
  const (i32)
  call (i32)
