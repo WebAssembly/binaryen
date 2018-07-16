@@ -31,6 +31,7 @@ void StackIR::optimize(Function* func) {
       dce();
       local2Stack();
       removeUnneededBlocks();
+      dce(); // more dce may be possible with fewer blocks
     }
 
   private:
@@ -184,6 +185,14 @@ void StackIR::optimize(Function* func) {
     // TODO: a branch to a block in an if body can become
     //       a branch to that if body
     void removeUnneededBlocks() {
+      for (auto*& inst : insts) {
+        if (auto* block = inst->origin->dynCast<Block>()) {
+          if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
+            // TODO optimize, maybe run remove-unused-names
+            inst = nullptr;
+          }
+        }
+      }
     }
 
     // Utilities.

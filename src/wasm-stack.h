@@ -358,15 +358,11 @@ void StackWriter<Mode>::visit(Expression* curr) {
   Visitor<StackWriter>::visit(curr);
 }
 
-static bool brokenTo(Block* block) {
-  return block->name.is() && BranchUtils::BranchSeeker::hasNamed(block, block->name);
-}
-
 // emits a node, but if it is a block with no name, emit a list of its contents
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
-  if (!block || brokenTo(block)) {
+  if (!block || BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
     visitChild(curr);
     return;
   }
