@@ -152,14 +152,11 @@
  (func $5 (; 8 ;) (type $1)
   (local $var$0 i32)
   (local $var$1 f64)
-  (set_local $var$0
-   (call $fimport$1
-    (get_local $var$1)
-   )
-  )
   (set_local $var$1
    (f64.convert_s/i32
-    (get_local $var$0)
+    (call $fimport$1
+     (get_local $var$1)
+    )
    )
   )
   (set_local $var$1
@@ -281,16 +278,13 @@
  )
  (func $10 (; 13 ;) (type $5) (result i32)
   (local $var$0 i32)
-  (set_local $var$0
-   (i32.and
-    (i32.div_u
-     (i32.const -1)
-     (i32.const 2)
-    )
+  (i32.and
+   (i32.div_u
     (i32.const -1)
+    (i32.const 2)
    )
+   (i32.const -1)
   )
-  (get_local $var$0)
  )
  (func $11 (; 14 ;) (type $0) (param $var$0 f32)
   (local $var$1 f32)
@@ -355,13 +349,10 @@
  )
  (func $14 (; 17 ;) (type $1)
   (local $var$0 f32)
-  (set_local $var$0
+  (call_indirect (type $0)
    (f32.neg
     (get_local $var$0)
    )
-  )
-  (call_indirect (type $0)
-   (get_local $var$0)
    (i32.add
     (i32.and
      (i32.const 1)

@@ -10,7 +10,7 @@ $big_negative:
  const (f64)
  set_local (none)
 $importedDoubles:
- block (f64)
+ block (none)
  const (i32)
  load (f64)
  const (i32)
@@ -44,7 +44,7 @@ $importedDoubles:
  const (f64)
  end
 $doubleCompares:
- block (f64)
+ block (none)
  get_local (f64)
  const (f64)
  binary (i32)
@@ -89,8 +89,6 @@ $hexLiterals:
 $conversions:
  get_local (f64)
  call_import (i32)
- set_local (none)
- get_local (i32)
  unary (f64)
  set_local (none)
  get_local (i32)
@@ -99,12 +97,12 @@ $conversions:
  unary (f64)
  set_local (none)
 $seq:
- block (f64)
+ block (none)
  const (f64)
  drop (none)
  const (f64)
  end
- block (f64)
+ block (none)
  const (f64)
  drop (none)
  const (f64)
@@ -112,7 +110,7 @@ $seq:
  binary (f64)
  set_local (none)
 $switcher:
- block (i32)
+ block (none)
  block (none)
  block (none)
  block (none)
@@ -195,8 +193,6 @@ $big_uint_div_u:
  binary (i32)
  const (i32)
  binary (i32)
- set_local (none)
- get_local (i32)
 $fr:
  get_local (f64)
  unary (f32)
@@ -214,7 +210,7 @@ $fr:
 $negZero:
  const (f64)
 $abs:
- block (i32)
+ block (none)
  const (i32)
  set_local (none)
  const (i32)
@@ -236,8 +232,6 @@ $abs:
 $neg:
  get_local (f32)
  unary (f32)
- set_local (none)
- get_local (f32)
  const (i32)
  const (i32)
  binary (i32)
@@ -271,7 +265,7 @@ $block_and_after:
  end
  const (i32)
 $loop-roundtrip:
- loop (f64)
+ loop (none)
  get_local (f64)
  drop (none)
  get_local (f64)
@@ -369,6 +363,12 @@ $unreachable-if-arm:
  else
  unreachable (unreachable)
  end
+$local-to-stack:
+ const (i32)
+ call (i32)
+ const (i32)
+ call (i32)
+ drop (none)
 (module
  (type $FUNCSIG$vf (func (param f32)))
  (type $FUNCSIG$v (func))
@@ -986,5 +986,19 @@ $unreachable-if-arm:
     )
    )
   )
+ )
+ (func $local-to-stack (; 40 ;) (type $6) (param $x i32) (result i32)
+  (local $temp i32)
+  (set_local $temp
+   (call $local-to-stack
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $local-to-stack
+    (i32.const 2)
+   )
+  )
+  (get_local $temp)
  )
 )

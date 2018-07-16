@@ -28,7 +28,7 @@ void StackIR::optimize(Function* func) {
     Optimizer(StackIR& insts, Function* func) : insts(insts), func(func) {}
     void run() {
       dce();
-      stackifyLocals();
+      local2Stack();
       removeUnneededBlocks();
     }
 
@@ -68,7 +68,7 @@ void StackIR::optimize(Function* func) {
     // We can also leave a value on the stack to flow it out of
     // a block, loop, if, or function body. TODO: verify this
     // happens automatically here
-    void stackifyLocals() {
+    void local2Stack() {
       // TODO: multipass
       // We maintain a stack of relevant values. This contains:
       //  * a null for each actual value that the value stack would have
@@ -91,28 +91,32 @@ void StackIR::optimize(Function* func) {
           }
           // Finally, consume the actual value that is consumed here.
           values.pop_back();
+          consumed--;
         }
         // TODO: invalidations! Or rather, LocalGraph to match gets and sets.
         // After consuming, see what to do with this. (what about breaks..?)
         if (isConcreteType(inst->type)) {
-          if (auto* get = inst->origin<dynCast<GetLocal*>()) {
+          if (auto* get = inst->origin->dynCast<GetLocal>()) {
             // This is a potential optimization opportunity! See if we
             // can reach the set.
-            Index j = values.size();
-            while (j > 0) {
-              // If there's an actual value in the way, we've failed.
-              auto index = values[j];
-              if (index == null) break;
-              auto* set = insts[index]->cast<SetLocal>();
-              if (set->index == get->index) { // FIXME LocalGraph!
-                // Do it! The set and the get can go away, the proper
-                // value is on the stack.
-                insts[index] = nullptr;
-                insts[i] = nullptr;
-                return; // TODO: another pass, or can we continue..?
+            if (values.size() > 0) {
+              Index j = values.size() - 1;
+              while (1) {
+                // If there's an actual value in the way, we've failed.
+                auto index = values[j];
+                if (index == null) break;
+                auto* set = insts[index]->origin->cast<SetLocal>();
+                if (set->index == get->index) { // FIXME LocalGraph!
+                  // Do it! The set and the get can go away, the proper
+                  // value is on the stack.
+                  insts[index] = nullptr;
+                  insts[i] = nullptr;
+                  return; // TODO: another pass, or can we continue..?
+                }
+                // We failed here. Can we look some more?
+                if (j == 0) break;
+                j--;
               }
-              // Otherwise, continue, another possible one may work.
-              j--;
             }
           }
           // This is an actual value on the value stack.

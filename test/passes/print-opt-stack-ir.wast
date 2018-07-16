@@ -551,4 +551,10 @@
       )
     )
   )
+  (func $local-to-stack (param $x i32) (result i32)
+    (local $temp i32)
+    (set_local $temp (call $local-to-stack (i32.const 1))) ;; this set could just be on the stack
+    (drop (call $local-to-stack (i32.const 2)))
+    (get_local $temp)
+  )
 )
