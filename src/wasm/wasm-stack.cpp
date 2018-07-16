@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/iteration.h"
+#include "ir/local-graph.h"
 
 namespace wasm {
 
@@ -70,6 +71,11 @@ void StackIR::optimize(Function* func) {
     // happens automatically here
     void local2Stack() {
       // TODO: multipass
+      // We use the localGraph to tell us if a get-set pair is indeed
+      // a set that is read by that get, and only that get. Note that we run
+      // this on the Binaryen IR, so we are assuming that no previous opt
+      // has changed the interaction of local operations.
+      LocalGraph localGraph(func);
       // We maintain a stack of relevant values. This contains:
       //  * a null for each actual value that the value stack would have
       //  * an index of each SetLocal that *could* be on the value
@@ -106,12 +112,17 @@ void StackIR::optimize(Function* func) {
                 auto index = values[j];
                 if (index == null) break;
                 auto* set = insts[index]->origin->cast<SetLocal>();
-                if (set->index == get->index) { // FIXME LocalGraph!
-                  // Do it! The set and the get can go away, the proper
-                  // value is on the stack.
-                  insts[index] = nullptr;
-                  insts[i] = nullptr;
-                  return; // TODO: another pass, or can we continue..?
+                if (set->index == get->index) {
+                  // This might be a proper set-get pair, where the set is
+                  // used by this get and nothing else, check that.
+                  auto& sets = localGraph.getSetses[get];
+                  if (sets.size() == 1 && *sets.begin() == set) {
+                    // Do it! The set and the get can go away, the proper
+                    // value is on the stack.
+                    insts[index] = nullptr;
+                    insts[i] = nullptr;
+                    return; // TODO: another pass, or can we continue..?
+                  }
                 }
                 // We failed here. Can we look some more?
                 if (j == 0) break;
