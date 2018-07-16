@@ -99,8 +99,13 @@ void StackIR::optimize(Function* func) {
           values.pop_back();
           consumed--;
         }
-        // TODO: invalidations! Or rather, LocalGraph to match gets and sets.
-        // After consuming, see what to do with this. (what about breaks..?)
+        // After consuming, we can see what to do with this. First, control
+        // flow clears the stack.
+        if (isControlFlow(inst)) {
+          values.clear();
+          continue;
+        }
+        // This is something we should handle, look into it.
         if (isConcreteType(inst->type)) {
           if (auto* get = inst->origin->dynCast<GetLocal>()) {
             // This is a potential optimization opportunity! See if we
