@@ -186,6 +186,7 @@ void StackIR::optimize(Function* func) {
     //       a branch to that if body
     void removeUnneededBlocks() {
       for (auto*& inst : insts) {
+        if (!inst) continue;
         if (auto* block = inst->origin->dynCast<Block>()) {
           if (!BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
             // TODO optimize, maybe run remove-unused-names
