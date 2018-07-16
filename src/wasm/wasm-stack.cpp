@@ -87,6 +87,7 @@ void StackIR::optimize(Function* func) {
         if (!inst) continue;
         // First, consume values from the stack as required.
         auto consumed = getNumConsumedValues(inst);
+        //std::cout << "  " << i << " : " << *inst << ", " << values.size() << " on stack, will consume " << consumed << '\n';
         while (consumed > 0) {
           assert(values.size() > 0);
           // Whenever we hit a possible stack value, kill it - it would
@@ -103,7 +104,6 @@ void StackIR::optimize(Function* func) {
         // flow clears the stack.
         if (isControlFlow(inst)) {
           values.clear();
-          continue;
         }
         // This is something we should handle, look into it.
         if (isConcreteType(inst->type)) {
