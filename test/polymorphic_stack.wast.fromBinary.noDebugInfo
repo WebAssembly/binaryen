@@ -28,11 +28,8 @@
  )
  (func $5 (; 5 ;) (type $1) (result i32)
   (block $label$1 (result i32)
-   (block $label$2
-    (drop
-     (i32.const 0)
-    )
-    (unreachable)
+   (drop
+    (i32.const 0)
    )
    (unreachable)
   )
@@ -62,14 +59,11 @@
  )
  (func $8 (; 8 ;) (type $1) (result i32)
   (block $label$1 (result i32)
-   (block $label$2
-    (if
-     (i32.const 0)
-     (unreachable)
-     (unreachable)
-    )
+   (if
+    (i32.const 0)
+    (unreachable)
+    (unreachable)
    )
-   (unreachable)
   )
  )
 )

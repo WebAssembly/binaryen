@@ -173,20 +173,22 @@
  )
  (func $6 (; 9 ;) (type $1)
   (local $var$0 f64)
+  (local $1 f64)
+  (drop
+   (f64.const 0.1)
+  )
   (set_local $var$0
    (f64.sub
-    (block $label$1 (result f64)
-     (drop
-      (f64.const 0.1)
+    (block (result f64)
+     (set_local $1
+      (f64.const 5.1)
      )
-     (f64.const 5.1)
-    )
-    (block $label$2 (result f64)
      (drop
       (f64.const 3.2)
      )
-     (f64.const 4.2)
+     (get_local $1)
     )
+    (f64.const 4.2)
    )
   )
  )
@@ -195,72 +197,66 @@
    (block $label$2
     (block $label$3
      (block $label$4
-      (block $label$5
-       (br_table $label$5 $label$4 $label$3
-        (i32.sub
-         (get_local $var$0)
-         (i32.const 1)
-        )
+      (br_table $label$4 $label$3 $label$2
+       (i32.sub
+        (get_local $var$0)
+        (i32.const 1)
        )
-      )
-      (br $label$1
-       (i32.const 1)
       )
      )
      (br $label$1
-      (i32.const 2)
+      (i32.const 1)
      )
     )
-    (nop)
+    (br $label$1
+     (i32.const 2)
+    )
    )
-   (block $label$6
-    (block $label$7
-     (block $label$8
-      (block $label$9
-       (br_table $label$8 $label$7 $label$7 $label$7 $label$7 $label$7 $label$7 $label$9 $label$7
-        (i32.sub
-         (get_local $var$0)
-         (i32.const 5)
-        )
+   (nop)
+   (block $label$5
+    (block $label$6
+     (block $label$7
+      (br_table $label$6 $label$5 $label$5 $label$5 $label$5 $label$5 $label$5 $label$7 $label$5
+       (i32.sub
+        (get_local $var$0)
+        (i32.const 5)
        )
-      )
-      (br $label$1
-       (i32.const 121)
       )
      )
      (br $label$1
-      (i32.const 51)
+      (i32.const 121)
      )
     )
-    (nop)
+    (br $label$1
+     (i32.const 51)
+    )
    )
-   (block $label$10
-    (block $label$11
-     (block $label$12
-      (block $label$13
-       (block $label$14
-        (block $label$15
-         (br_table $label$12 $label$11 $label$11 $label$13 $label$11 $label$11 $label$11 $label$11 $label$14 $label$11 $label$15 $label$11
+   (nop)
+   (block $label$8
+    (block $label$9
+     (block $label$10
+      (block $label$11
+       (block $label$12
+        (block $label$13
+         (br_table $label$10 $label$9 $label$9 $label$11 $label$9 $label$9 $label$9 $label$9 $label$12 $label$9 $label$13 $label$9
           (i32.sub
            (get_local $var$0)
            (i32.const 2)
           )
          )
         )
-        (br $label$10)
+        (br $label$8)
        )
-       (br $label$10)
+       (br $label$8)
       )
-      (block $label$16
-       (loop $label$17
-        (br $label$16)
+      (block $label$14
+       (loop $label$15
+        (br $label$14)
        )
       )
      )
-     (block $label$18
-      (loop $label$19
-       (br $label$10)
-      )
+     (loop $label$16
+      (br $label$8)
      )
     )
     (nop)
@@ -321,21 +317,19 @@
   (local $var$1 i32)
   (local $var$2 f32)
   (local $var$3 f64)
+  (set_local $var$1
+   (i32.const 0)
+  )
   (set_local $var$0
-   (block $label$1 (result i32)
-    (set_local $var$1
+   (select
+    (i32.sub
      (i32.const 0)
-    )
-    (select
-     (i32.sub
-      (i32.const 0)
-      (get_local $var$1)
-     )
      (get_local $var$1)
-     (i32.lt_s
-      (get_local $var$1)
-      (i32.const 0)
-     )
+    )
+    (get_local $var$1)
+    (i32.lt_s
+     (get_local $var$1)
+     (i32.const 0)
     )
    )
   )
@@ -427,13 +421,11 @@
   )
  )
  (func $24 (; 27 ;) (type $5) (result i32)
-  (block $label$1
-   (drop
-    (i32.const 1)
-   )
-   (return
-    (i32.const 2)
-   )
+  (drop
+   (i32.const 1)
+  )
+  (return
+   (i32.const 2)
   )
  )
  (func $25 (; 28 ;) (type $5) (result i32)
@@ -445,10 +437,8 @@
   )
  )
  (func $26 (; 29 ;) (type $5) (result i32)
-  (block $label$1
-   (return
-    (i32.const 2)
-   )
+  (return
+   (i32.const 2)
   )
  )
  (func $27 (; 30 ;) (type $5) (result i32)

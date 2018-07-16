@@ -44,22 +44,18 @@
  )
  (func $a-block-prepost (; 6 ;) (type $0)
   (nop)
-  (block $label$1
-   (if
-    (i32.const 1)
-    (unreachable)
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
   )
   (nop)
  )
  (func $b-block-prepost (; 7 ;) (type $0)
   (nop)
-  (block $label$1
-   (if
-    (i32.const 1)
-    (unreachable)
-    (unreachable)
-   )
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
   )
  )
  (func $recurse (; 8 ;) (type $0)
@@ -73,10 +69,8 @@
  (func $recurse-b (; 9 ;) (type $0)
   (block $label$1
    (nop)
-   (block $label$2
-    (nop)
-    (br $label$1)
-   )
+   (nop)
+   (br $label$1)
   )
  )
 )
