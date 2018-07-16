@@ -228,6 +228,7 @@ void WasmBinaryWriter::writeFunctions() {
     // Optimize if relevant.
     bool optimize = !sourceMap;
     if (optimize) {
+      // TODO: these should be run in parallel, as they can be quite slow
       OptimizingFunctionStackWriter(function, *this, o, debug);
     } else {
       FunctionStackWriter(function, *this, o, sourceMap, debug);
