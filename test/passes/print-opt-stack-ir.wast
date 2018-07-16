@@ -634,6 +634,21 @@
       (get_local $temp2)
     )
   )
+  (func $local-to-stack-multi-7-justone (param $x i32) (result i32)
+    (local $temp1 i32)
+    (local $temp2 i32)
+    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (drop (call $local-to-stack-multi-4 (i32.const 2)))
+    (drop
+      (i32.add
+        (get_local $temp1)
+        (get_local $temp1)
+      )
+    )
+    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 3))) ;; different local, used later
+    (drop (call $local-to-stack-multi-4 (i32.const 4)))
+    (get_local $temp2)
+  )
   (func $remove-block (param $x i32) (result i32)
    (local $temp i32)
    (i32.add
