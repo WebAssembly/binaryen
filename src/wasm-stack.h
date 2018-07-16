@@ -1213,10 +1213,19 @@ StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
-  if (stackType == unreachable && (origin->is<Block>() || origin->is<Loop>() || origin->is<If>())) {
-    // There are no unreachable blocks, loops, or ifs. we emit extra unreachables
-    // to fix that up, so that they are valid as having none type.
-    stackType = none;
+  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>()) {
+    if (stackType == unreachable) {
+      // There are no unreachable blocks, loops, or ifs. we emit extra unreachables
+      // to fix that up, so that they are valid as having none type.
+      stackType = none;
+    } else if (op != StackInst::BlockEnd &&
+               op != StackInst::IfEnd &&
+               op != StackInst::LoopEnd) {
+      // If a concrete type is returned, we mark the end of the construct has
+      // having that type (as it is pushed to the value stack at that point),
+      // other parts are marked as none).
+      stackType = none;
+    }
   }
   ret->type = stackType;
   return ret;

@@ -15,6 +15,7 @@
  */
 
 #include "wasm-stack.h"
+#include "ir/iteration.h"
 
 namespace wasm {
 
@@ -27,7 +28,7 @@ void StackIR::optimize(Function* func) {
     Optimizer(StackIR& insts, Function* func) : insts(insts), func(func) {}
     void run() {
       dce();
-      stackifyLocalPairs();
+      stackifyLocals();
       removeUnneededBlocks();
     }
 
@@ -67,7 +68,60 @@ void StackIR::optimize(Function* func) {
     // We can also leave a value on the stack to flow it out of
     // a block, loop, if, or function body. TODO: verify this
     // happens automatically here
-    void stackifyLocalPairs() {
+    void stackifyLocals() {
+      // TODO: multipass
+      // We maintain a stack of relevant values. This contains:
+      //  * a null for each actual value that the value stack would have
+      //  * an index of each SetLocal that *could* be on the value
+      //    stack at that location.
+      const Index null = -1;
+      std::vector<Index> values;
+      for (Index i = 0; i < insts.size(); i++) {
+        auto* inst = insts[i];
+        if (!inst) continue;
+        // First, consume values from the stack as required.
+        auto consumed = getNumConsumedValues(inst);
+        while (consumed > 0) {
+          assert(values.size() > 0);
+          // Whenever we hit a possible stack value, kill it - it would
+          // be consumed here, so we can never optimize to it.
+          while (values.back() != null) {
+            values.pop_back();
+            assert(values.size() > 0);
+          }
+          // Finally, consume the actual value that is consumed here.
+          values.pop_back();
+        }
+        // TODO: invalidations! Or rather, LocalGraph to match gets and sets.
+        // After consuming, see what to do with this. (what about breaks..?)
+        if (isConcreteType(inst->type)) {
+          if (auto* get = inst->origin<dynCast<GetLocal*>()) {
+            // This is a potential optimization opportunity! See if we
+            // can reach the set.
+            Index j = values.size();
+            while (j > 0) {
+              // If there's an actual value in the way, we've failed.
+              auto index = values[j];
+              if (index == null) break;
+              auto* set = insts[index]->cast<SetLocal>();
+              if (set->index == get->index) { // FIXME LocalGraph!
+                // Do it! The set and the get can go away, the proper
+                // value is on the stack.
+                insts[index] = nullptr;
+                insts[i] = nullptr;
+                return; // TODO: another pass, or can we continue..?
+              }
+              // Otherwise, continue, another possible one may work.
+              j--;
+            }
+          }
+          // This is an actual value on the value stack.
+          values.push_back(null);
+        } else if (inst->origin->is<SetLocal>() && inst->type == none) {
+          // This set is potentially optimizable later, add to stack.
+          values.push_back(i);
+        }
+      }
     }
 
     // There may be unnecessary blocks we can remove: blocks
@@ -109,6 +163,10 @@ void StackIR::optimize(Function* func) {
       }
     }
 
+    bool isControlFlow(StackInst* inst) {
+      return inst->op != StackInst::Basic;
+    }
+
     // Remove the instruction at index i. If the instruction
     // is control flow, and so has been expanded to multiple
     // instructions, remove them as well.
@@ -128,6 +186,18 @@ void StackIR::optimize(Function* func) {
           return; // that's it, we removed it all
         }
       }
+    }
+
+    Index getNumConsumedValues(StackInst* inst) {
+      if (isControlFlow(inst)) {
+        // If consumes 1; that's it.
+        if (inst->op == StackInst::IfBegin) {
+          return 1;
+        }
+        return 0;
+      }
+      // Otherwise, for basic instructions, just count the expression children.
+      return ChildIterator(inst->origin).children.size();
     }
   };
 
