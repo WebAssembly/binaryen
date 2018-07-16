@@ -601,6 +601,20 @@
     (drop (call $local-to-stack (i32.const 3)))
     (get_local $temp)
   )
+  (func $local-to-stack-multi-4
+
+add a multi yes and a multi no, both overlapping and non (one much later)
+also 3
+
+ (param $x i32) (result i32)
+    (local $temp i32)
+    (set_local $temp (call $local-to-stack (i32.const 1)))
+    (drop (call $local-to-stack (i32.const 2)))
+    (i32.add
+      (i32.const 3) ;; this is in the way
+      (get_local $temp)
+    )
+  )
   (func $remove-block (param $x i32) (result i32)
    (local $temp i32)
    (i32.add

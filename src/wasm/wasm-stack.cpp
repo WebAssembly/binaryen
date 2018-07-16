@@ -66,11 +66,7 @@ void StackIR::optimize(Function* func) {
     // As long as the code in between does not modify $x, and has
     // no control flow branching out, we can remove both the set
     // and the get.
-    // We can also leave a value on the stack to flow it out of
-    // a block, loop, if, or function body. TODO: verify this
-    // happens automatically here
     void local2Stack() {
-      // TODO: multipass
       // We use the localGraph to tell us if a get-set pair is indeed
       // a set that is read by that get, and only that get. Note that we run
       // this on the Binaryen IR, so we are assuming that no previous opt
@@ -143,8 +139,14 @@ void StackIR::optimize(Function* func) {
                       // value is on the stack.
                       insts[index] = nullptr;
                       insts[i] = nullptr;
-                      return; // TODO: another pass, or can we continue..?
-                              // XXX we *can* continue, and no need for another pass
+                      // Continuing on from here, remove this and also
+                      // anything possible above it, that would have been
+                      // in the way. Things below are still possible.
+                      // Note how later down we still add a null on the
+                      // stack - the set+get combo was turned into a stack
+                      // value.
+                      values.resize(j);
+                      break;
                     }
                   }
                 }
