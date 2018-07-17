@@ -35,6 +35,8 @@ typedef std::unordered_map<GetLocal*, Literal> GetValues;
 
 // Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
 class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
+  Module* module;
+
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
@@ -46,7 +48,7 @@ class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionR
   bool replaceExpression;
 
 public:
-  StandaloneExpressionRunner(GetValues& getValues, bool replaceExpression) : getValues(getValues), replaceExpression(replaceExpression) {}
+  StandaloneExpressionRunner(Module* module, GetValues& getValues, bool replaceExpression) : module(module), getValues(getValues), replaceExpression(replaceExpression) {}
 
   struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
 
@@ -87,6 +89,12 @@ public:
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
+    auto global = module->getGlobalOrNull(curr->name);
+    if (global) {
+      if (!global->mutable_) {
+        return visit(global->init);
+      }
+    }
     return Flow(NONSTANDALONE_FLOW);
   }
   Flow visitSetGlobal(SetGlobal *curr) {
@@ -223,7 +231,7 @@ private:
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      return StandaloneExpressionRunner(getValues, replaceExpression).visit(curr);
+      return StandaloneExpressionRunner(getModule(), getValues, replaceExpression).visit(curr);
     } catch (StandaloneExpressionRunner::NonstandaloneException&) {
       return Flow(NONSTANDALONE_FLOW);
     }
