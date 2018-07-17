@@ -19,16 +19,18 @@ var body = module.block(
         ),
         module.get_local(0, Binaryen.i32)
       ),
-      module.grow_memory(
-        module.i32.sub(
-          module.i32.div_u(
-            module.i32.add(
-              module.get_local(0, Binaryen.i32),
-              module.i32.const(65535)
+      module.drop(
+        module.grow_memory(
+          module.i32.sub(
+            module.i32.div_u(
+              module.i32.add(
+                module.get_local(0, Binaryen.i32),
+                module.i32.const(65535)
+              ),
+              module.i32.const(65536)
             ),
-            module.i32.const(65536)
-          ),
-          module.current_memory()
+            module.current_memory()
+          )
         )
       )
     ),
@@ -44,8 +46,8 @@ var body = module.block(
         module.i32.const(1)
       )),
       module.br_if('clear', module.i32.eq(
-        module.get_local(1),
-        module.get_local(0)
+        module.get_local(1, Binaryen.i32),
+        module.get_local(0, Binaryen.i32)
       ))
     ])),
     // perform the sieve TODO
@@ -62,6 +64,8 @@ module.addFunction('sieve', ii, [Binaryen.i32], body);
 // Export the function, so we can call it later (for simplicity we
 // export it as the same name as it has internally)
 module.addFunctionExport('sieve', 'sieve');
+
+if (!module.validate()) throw 'did not validate :(';
 
 // Print out the text
 console.log(module.emitText());
