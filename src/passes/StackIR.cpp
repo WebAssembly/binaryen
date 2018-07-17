@@ -78,6 +78,7 @@ public:
     func(func), passOptions(passOptions), insts(*func->stackIR.get()) {}
 
   void run() {
+    dce();
     // FIXME: local2Stack is currently rather slow (due to localGraph),
     //        so for now run it only when really optimizing
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
@@ -139,7 +140,7 @@ private:
     // saving the stack as we enter and restoring it when we exit.
     std::vector<std::vector<Index>> savedValues;
 #ifdef STACK_OPT_DEBUG
-    insts.dump();
+    std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
     for (Index i = 0; i < insts.size(); i++) {
       auto* inst = insts[i];
@@ -151,6 +152,9 @@ private:
       for (auto s : values) std::cout << s << ' ';
       std::cout << '\n';
 #endif
+      // TODO: currently we run dce before this, but if we didn't, we'd need
+      //       to handle unreachable code here - it's ok to pop multiple values
+      //       there even if the stack is at size 0
       while (consumed > 0) {
         assert(values.size() > 0);
         // Whenever we hit a possible stack value, kill it - it would
