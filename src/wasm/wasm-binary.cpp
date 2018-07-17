@@ -210,7 +210,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
 }
 
 void WasmBinaryWriter::writeExpression(Expression* curr) {
-  ExpressionStackWriter(curr, *this, o, debug);
+  ExpressionStackWriter<WasmBinaryWriter>(curr, *this, o, debug);
 }
 
 void WasmBinaryWriter::writeFunctions() {
@@ -227,9 +227,9 @@ void WasmBinaryWriter::writeFunctions() {
     if (debug) std::cerr << "writing" << func->name << std::endl;
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap) {
-      StackIRFunctionStackWriter(func, *this, o, debug);
+      StackIRFunctionStackWriter<WasmBinaryWriter>(func, *this, o, debug);
     } else {
-      FunctionStackWriter(func, *this, o, sourceMap, debug);
+      FunctionStackWriter<WasmBinaryWriter>(func, *this, o, sourceMap, debug);
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());

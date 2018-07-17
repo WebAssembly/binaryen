@@ -35,12 +35,29 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
   void doWalkFunction(Function* func) {
     BufferWithRandomAccess buffer;
+    // a shim for the parent that a stackWriter expects - we don't need
+    // it to do anything, as we are just writing to Stack IR
+    struct Parent {
+      Module* module;
+      Parent(Module* module) : module(module) {}
 
-// this is no good - it creates func types, modifies the module, etc.
-    WasmBinaryWriter binaryWriter(getModule(), buffer);
-// we need just the function, anyhow!
-
-    StackWriter<StackWriterMode::Binaryen2Stack> stackWriter(binaryWriter, buffer, false);
+      Module* getModule() {
+        return module;
+      }
+      void writeDebugLocation(Expression* curr, Function* func) {
+        WASM_UNREACHABLE();
+      }
+      Index getFunctionIndex(Name name) {
+        WASM_UNREACHABLE();
+      }
+      Index getFunctionTypeIndex(Name name) {
+        WASM_UNREACHABLE();
+      }
+      Index getGlobalIndex(Name name) {
+        WASM_UNREACHABLE();
+      }
+    } parent(getModule());
+    StackWriter<StackWriterMode::Binaryen2Stack, Parent> stackWriter(parent, buffer, false);
     stackWriter.setFunction(func);
     stackWriter.visitPossibleBlockContents(func->body);
     func->stackIR = make_unique<StackIR>();

@@ -130,10 +130,10 @@ enum class StackWriterMode {
   Binaryen2Binary, Binaryen2Stack, Stack2Binary
 };
 
-template<StackWriterMode Mode>
-class StackWriter : public Visitor<StackWriter<Mode>> {
+template<StackWriterMode Mode, typename Parent>
+class StackWriter : public Visitor<StackWriter<Mode, Parent>> {
 public:
-  StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
+  StackWriter(Parent& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
     : parent(parent), o(o), sourceMap(sourceMap), debug(debug), allocator(parent.getModule()->allocator) {}
 
   StackIR stackIR; // filled in Binaryen2Stack, read in Stack2Binary
@@ -198,7 +198,7 @@ public:
   void mapLocalsAndEmitHeader();
 
 protected:
-  WasmBinaryWriter& parent;
+  Parent& parent;
   BufferWithRandomAccess& o;
   bool sourceMap;
   bool debug;
@@ -223,63 +223,66 @@ protected:
 };
 
 // Write out a single expression, such as an offset for a global segment.
-class ExpressionStackWriter : StackWriter<StackWriterMode::Binaryen2Binary> {
+template<typename Parent>
+class ExpressionStackWriter : StackWriter<StackWriterMode::Binaryen2Binary, Parent> {
 public:
-  ExpressionStackWriter(Expression* curr, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false) :
-    StackWriter<StackWriterMode::Binaryen2Binary>(parent, o, /* sourceMap= */ false, debug) {
-    visit(curr);
+  ExpressionStackWriter(Expression* curr, Parent& parent, BufferWithRandomAccess& o, bool debug=false) :
+    StackWriter<StackWriterMode::Binaryen2Binary, Parent>(parent, o, /* sourceMap= */ false, debug) {
+    this->visit(curr);
   }
 };
 
 // Write out a function body, including the local header info.
-class FunctionStackWriter : StackWriter<StackWriterMode::Binaryen2Binary> {
+template<typename Parent>
+class FunctionStackWriter : StackWriter<StackWriterMode::Binaryen2Binary, Parent> {
 public:
-  FunctionStackWriter(Function* funcInit, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false) :
-    StackWriter<StackWriterMode::Binaryen2Binary>(parent, o, sourceMap, debug) {
-    setFunction(funcInit);
-    mapLocalsAndEmitHeader();
-    visitPossibleBlockContents(func->body);
-    finishFunctionBody();
+  FunctionStackWriter(Function* funcInit, Parent& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false) :
+    StackWriter<StackWriterMode::Binaryen2Binary, Parent>(parent, o, sourceMap, debug) {
+    this->setFunction(funcInit);
+    this->mapLocalsAndEmitHeader();
+    this->visitPossibleBlockContents(this->func->body);
+    this->finishFunctionBody();
   }
 };
 
 // Use Stack IR to write the function body
-class StackIRFunctionStackWriter : StackWriter<StackWriterMode::Stack2Binary> {
+template<typename Parent>
+class StackIRFunctionStackWriter : StackWriter<StackWriterMode::Stack2Binary, Parent> {
 public:
-  StackIRFunctionStackWriter(Function* funcInit, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false) :
-    StackWriter<StackWriterMode::Stack2Binary>(parent, o, false, debug) {
-    setFunction(funcInit);
-    mapLocalsAndEmitHeader();
-    for (auto* inst : stackIR) {
+  StackIRFunctionStackWriter(Function* funcInit, Parent& parent, BufferWithRandomAccess& o, bool debug=false) :
+    StackWriter<StackWriterMode::Stack2Binary, Parent>(parent, o, false, debug) {
+    this->setFunction(funcInit);
+    this->mapLocalsAndEmitHeader();
+    for (auto* inst : this->stackIR) {
       if (!inst) continue; // a nullptr is just something we can skip
       switch (inst->op) {
         case StackInst::Basic:
         case StackInst::BlockBegin:
         case StackInst::IfBegin:
         case StackInst::LoopBegin: {
-          visit(inst->origin);
+          this->visit(inst->origin);
           break;
         }
         case StackInst::BlockEnd: {
-          visitBlockEnd(inst->origin->cast<Block>());
+          this->visitBlockEnd(inst->origin->template cast<Block>());
           break;
         }
         case StackInst::IfElse: {
-          visitIfElse(inst->origin->cast<If>());
+          this->visitIfElse(inst->origin->template cast<If>());
           break;
         }
         case StackInst::IfEnd: {
-          visitIfEnd(inst->origin->cast<If>());
+          this->visitIfEnd(inst->origin->template cast<If>());
           break;
         }
         case StackInst::LoopEnd: {
-          visitLoopEnd(inst->origin->cast<Loop>());
+          this->visitLoopEnd(inst->origin->template cast<Loop>());
           break;
         }
         default: WASM_UNREACHABLE();
       }
     }
-    finishFunctionBody();
+    this->finishFunctionBody();
   }
 };
 
@@ -289,8 +292,8 @@ public:
 
 // StackWriter
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::mapLocalsAndEmitHeader() {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::mapLocalsAndEmitHeader() {
   // Map them
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
@@ -338,8 +341,8 @@ void StackWriter<Mode>::mapLocalsAndEmitHeader() {
   if (numLocalsByType[f64]) o << U32LEB(numLocalsByType[f64]) << binaryType(f64);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visit(Expression* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visit(Expression* curr) {
   if (Mode == StackWriterMode::Binaryen2Binary && sourceMap) {
     parent.writeDebugLocation(curr, func);
   }
@@ -347,8 +350,8 @@ void StackWriter<Mode>::visit(Expression* curr) {
 }
 
 // emits a node, but if it is a block with no name, emit a list of its contents
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitPossibleBlockContents(Expression* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitPossibleBlockContents(Expression* curr) {
   auto* block = curr->dynCast<Block>();
   if (!block || BranchUtils::BranchSeeker::hasNamed(block, block->name)) {
     visitChild(curr);
@@ -364,8 +367,8 @@ void StackWriter<Mode>::visitPossibleBlockContents(Expression* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitChild(Expression* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitChild(Expression* curr) {
   // In stack => binary, we don't need to visit child nodes, everything
   // is already in the linear stream.
   if (Mode != StackWriterMode::Stack2Binary) {
@@ -373,8 +376,8 @@ void StackWriter<Mode>::visitChild(Expression* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitBlock(Block* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitBlock(Block* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
   } else {
@@ -395,8 +398,8 @@ void StackWriter<Mode>::visitBlock(Block* curr) {
   visitBlockEnd(curr);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitBlockEnd(Block* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitBlockEnd(Block* curr) {
   if (curr->type == unreachable) {
     // an unreachable block is one that cannot be exited. We cannot encode this directly
     // in wasm, where blocks must be none,i32,i64,f32,f64. Since the block cannot be
@@ -417,8 +420,8 @@ void StackWriter<Mode>::visitBlockEnd(Block* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitIf(If* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitIf(If* curr) {
   if (debug) std::cerr << "zz node: If" << std::endl;
   if (curr->condition->type == unreachable) {
     // this if-else is unreachable because of the condition, i.e., the condition
@@ -447,8 +450,8 @@ void StackWriter<Mode>::visitIf(If* curr) {
   visitIfEnd(curr);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitIfElse(If* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitIfElse(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
@@ -460,8 +463,8 @@ void StackWriter<Mode>::visitIfElse(If* curr) {
   visitPossibleBlockContents(curr->ifFalse);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitIfEnd(If* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitIfEnd(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
@@ -479,8 +482,8 @@ void StackWriter<Mode>::visitIfEnd(If* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitLoop(Loop* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitLoop(Loop* curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::LoopBegin, curr));
@@ -496,8 +499,8 @@ void StackWriter<Mode>::visitLoop(Loop* curr) {
   visitLoopEnd(curr);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitLoopEnd(Loop* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
@@ -511,8 +514,8 @@ void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitBreak(Break* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
   if (debug) std::cerr << "zz node: Break" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
@@ -533,8 +536,8 @@ void StackWriter<Mode>::visitBreak(Break* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitSwitch(Switch* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSwitch(Switch* curr) {
   if (debug) std::cerr << "zz node: Switch" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
@@ -555,8 +558,8 @@ void StackWriter<Mode>::visitSwitch(Switch* curr) {
   o << U32LEB(getBreakIndex(curr->default_));
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitCall(Call* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitCall(Call* curr) {
   if (debug) std::cerr << "zz node: Call" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
@@ -568,8 +571,8 @@ void StackWriter<Mode>::visitCall(Call* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitCallImport(CallImport* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitCallImport(CallImport* curr) {
   if (debug) std::cerr << "zz node: CallImport" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
@@ -578,8 +581,8 @@ void StackWriter<Mode>::visitCallImport(CallImport* curr) {
   o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitCallIndirect(CallIndirect* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
   if (debug) std::cerr << "zz node: CallIndirect" << std::endl;
   for (auto* operand : curr->operands) {
     visitChild(operand);
@@ -594,15 +597,15 @@ void StackWriter<Mode>::visitCallIndirect(CallIndirect* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitGetLocal(GetLocal* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitGetLocal(GetLocal* curr) {
   if (debug) std::cerr << "zz node: GetLocal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetLocal) << U32LEB(mappedLocals[curr->index]);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitSetLocal(SetLocal* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
@@ -612,23 +615,23 @@ void StackWriter<Mode>::visitSetLocal(SetLocal* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitGetGlobal(GetGlobal* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitGetGlobal(GetGlobal* curr) {
   if (debug) std::cerr << "zz node: GetGlobal " << (o.size() + 1) << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::GetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitSetGlobal(SetGlobal* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSetGlobal(SetGlobal* curr) {
   if (debug) std::cerr << "zz node: SetGlobal" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::SetGlobal) << U32LEB(parent.getGlobalIndex(curr->name));
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitLoad(Load* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
   visitChild(curr->ptr);
   if (justAddToStack(curr)) return;
@@ -692,8 +695,8 @@ void StackWriter<Mode>::visitLoad(Load* curr) {
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitStore(Store* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitStore(Store* curr) {
   if (debug) std::cerr << "zz node: Store" << std::endl;
   visitChild(curr->ptr);
   visitChild(curr->value);
@@ -756,8 +759,8 @@ void StackWriter<Mode>::visitStore(Store* curr) {
   emitMemoryAccess(curr->align, curr->bytes, curr->offset);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitAtomicRMW(AtomicRMW* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitAtomicRMW(AtomicRMW* curr) {
   if (debug) std::cerr << "zz node: AtomicRMW" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
@@ -811,8 +814,8 @@ void StackWriter<Mode>::visitAtomicRMW(AtomicRMW* curr) {
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   if (debug) std::cerr << "zz node: AtomicCmpxchg" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
@@ -852,8 +855,8 @@ void StackWriter<Mode>::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   emitMemoryAccess(curr->bytes, curr->bytes, curr->offset);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitAtomicWait(AtomicWait* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitAtomicWait(AtomicWait* curr) {
   if (debug) std::cerr << "zz node: AtomicWait" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
@@ -880,8 +883,8 @@ void StackWriter<Mode>::visitAtomicWait(AtomicWait* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitAtomicWake(AtomicWake* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitAtomicWake(AtomicWake* curr) {
   if (debug) std::cerr << "zz node: AtomicWake" << std::endl;
   visitChild(curr->ptr);
   // stop if the rest isn't reachable anyhow
@@ -894,8 +897,8 @@ void StackWriter<Mode>::visitAtomicWake(AtomicWake* curr) {
   emitMemoryAccess(4, 4, 0);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitConst(Const* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitConst(Const* curr) {
   if (debug) std::cerr << "zz node: Const" << curr << " : " << curr->type << std::endl;
   if (justAddToStack(curr)) return;
   switch (curr->type) {
@@ -920,8 +923,8 @@ void StackWriter<Mode>::visitConst(Const* curr) {
   if (debug) std::cerr << "zz const node done.\n";
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitUnary(Unary* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
   if (debug) std::cerr << "zz node: Unary" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
@@ -986,8 +989,8 @@ void StackWriter<Mode>::visitUnary(Unary* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitBinary(Binary* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
   if (debug) std::cerr << "zz node: Binary" << std::endl;
   visitChild(curr->left);
   visitChild(curr->right);
@@ -1080,8 +1083,8 @@ void StackWriter<Mode>::visitBinary(Binary* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitSelect(Select* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
   if (debug) std::cerr << "zz node: Select" << std::endl;
   visitChild(curr->ifTrue);
   visitChild(curr->ifFalse);
@@ -1094,8 +1097,8 @@ void StackWriter<Mode>::visitSelect(Select* curr) {
   }
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitReturn(Return* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitReturn(Return* curr) {
   if (debug) std::cerr << "zz node: Return" << std::endl;
   if (curr->value) {
     visitChild(curr->value);
@@ -1105,8 +1108,8 @@ void StackWriter<Mode>::visitReturn(Return* curr) {
   o << int8_t(BinaryConsts::Return);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitHost(Host* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitHost(Host* curr) {
   if (debug) std::cerr << "zz node: Host" << std::endl;
   switch (curr->op) {
     case CurrentMemory: {
@@ -1133,30 +1136,30 @@ void StackWriter<Mode>::visitHost(Host* curr) {
   o << U32LEB(0); // Reserved flags field
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitNop(Nop* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitNop(Nop* curr) {
   if (debug) std::cerr << "zz node: Nop" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Nop);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitUnreachable(Unreachable* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitUnreachable(Unreachable* curr) {
   if (debug) std::cerr << "zz node: Unreachable" << std::endl;
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Unreachable);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::visitDrop(Drop* curr) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::visitDrop(Drop* curr) {
   if (debug) std::cerr << "zz node: Drop" << std::endl;
   visitChild(curr->value);
   if (justAddToStack(curr)) return;
   o << int8_t(BinaryConsts::Drop);
 }
 
-template<StackWriterMode Mode>
-int32_t StackWriter<Mode>::getBreakIndex(Name name) { // -1 if not found
+template<StackWriterMode Mode, typename Parent>
+int32_t StackWriter<Mode, Parent>::getBreakIndex(Name name) { // -1 if not found
   for (int i = breakStack.size() - 1; i >= 0; i--) {
     if (breakStack[i] == name) {
       return breakStack.size() - 1 - i;
@@ -1165,14 +1168,14 @@ int32_t StackWriter<Mode>::getBreakIndex(Name name) { // -1 if not found
   WASM_UNREACHABLE();
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset) {
   o << U32LEB(Log2(alignment ? alignment : bytes));
   o << U32LEB(offset);
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::emitExtraUnreachable() {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::emitExtraUnreachable() {
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(Builder(allocator).makeUnreachable()));
   } else if (Mode == StackWriterMode::Binaryen2Binary) {
@@ -1180,8 +1183,8 @@ void StackWriter<Mode>::emitExtraUnreachable() {
   }
 }
 
-template<StackWriterMode Mode>
-bool StackWriter<Mode>::justAddToStack(Expression* curr) {
+template<StackWriterMode Mode, typename Parent>
+bool StackWriter<Mode, Parent>::justAddToStack(Expression* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(curr));
     return true;
@@ -1189,13 +1192,13 @@ bool StackWriter<Mode>::justAddToStack(Expression* curr) {
   return false;
 }
 
-template<StackWriterMode Mode>
-void StackWriter<Mode>::finishFunctionBody() {
+template<StackWriterMode Mode, typename Parent>
+void StackWriter<Mode, Parent>::finishFunctionBody() {
   o << int8_t(BinaryConsts::End);
 }
 
-template<StackWriterMode Mode>
-StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin) {
+template<StackWriterMode Mode, typename Parent>
+StackInst* StackWriter<Mode, Parent>::makeStackInst(StackInst::Op op, Expression* origin) {
   auto* ret = allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
