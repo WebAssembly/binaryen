@@ -52,6 +52,27 @@ struct BinaryIndexes {
   }
 };
 
+inline Function* copyFunction(Module& in, Module& out, Name name) {
+  Function *ret = out.getFunctionOrNull(name);
+  if (ret != nullptr) {
+    return ret;
+  }
+  auto* curr = in.getFunction(name);
+  auto* func = new Function();
+  func->name = curr->name;
+  func->result = curr->result;
+  func->params = curr->params;
+  func->vars = curr->vars;
+  func->type = curr->type;
+  func->localNames = curr->localNames;
+  func->localIndices = curr->localIndices;
+  func->debugLocations = curr->debugLocations;
+  func->body = ExpressionManipulator::copy(func->body, out);
+  // TODO: copy Stack IR
+  out.addFunction(func);
+  return func;
+}
+
 inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
@@ -65,18 +86,7 @@ inline void copyModule(Module& in, Module& out) {
     out.addExport(new Export(*curr));
   }
   for (auto& curr : in.functions) {
-    auto* func = new Function();
-    func->name = curr->name;
-    func->result = curr->result;
-    func->params = curr->params;
-    func->vars = curr->vars;
-    func->type = curr->type;
-    func->localNames = curr->localNames;
-    func->localIndices = curr->localIndices;
-    func->debugLocations = curr->debugLocations;
-    func->body = ExpressionManipulator::copy(func->body, out);
-    // TODO: copy Stack IR
-    out.addFunction(func);
+    copyFunction(in, out, curr->name);
   }
   for (auto& curr : in.globals) {
     out.addGlobal(new Global(*curr));
@@ -92,19 +102,6 @@ inline void copyModule(Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
-}
-
-inline Function* copyFunction(Module& in, Module& out, Name name) {
-  Function *ret = out.getFunctionOrNull(name);
-  if (ret != nullptr) {
-    return ret;
-  }
-  auto* curr = in.getFunction(name);
-  auto* func = new Function(*curr);
-  func->body = ExpressionManipulator::copy(func->body, out);
-  func->type = Name();
-  out.addFunction(func);
-  return func;
 }
 
 } // namespace ModuleUtils
