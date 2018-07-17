@@ -116,7 +116,6 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/Precompute.cpp \
   $BINARYEN_SRC/passes/Print.cpp \
   $BINARYEN_SRC/passes/PrintCallGraph.cpp \
-  $BINARYEN_SRC/passes/PrintOptimizedStackIR.cpp \
   $BINARYEN_SRC/passes/RedundantSetElimination.cpp \
   $BINARYEN_SRC/passes/RelooperJumpThreading.cpp \
   $BINARYEN_SRC/passes/RemoveNonJSOps.cpp \
@@ -132,6 +131,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
   $BINARYEN_SRC/passes/SSAify.cpp \
+  $BINARYEN_SRC/passes/StackIR.cpp \
   $BINARYEN_SRC/passes/TrapMode.cpp \
   $BINARYEN_SRC/passes/Untee.cpp \
   $BINARYEN_SRC/passes/Vacuum.cpp \
