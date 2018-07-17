@@ -105,9 +105,9 @@ func: func_c
  block          : 1       
  call_import    : 15      
 export: a (func_a)
- [removable-bytes-without-it]: 72      
+ [removable-bytes-without-it]: 28      
 export: b (func_b)
- [removable-bytes-without-it]: 18      
+ [removable-bytes-without-it]: 16      
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))
@@ -184,7 +184,7 @@ func: func_a
  block          : 1       
  call_import    : 5       
 start: func_a
- [removable-bytes-without-it]: 67      
+ [removable-bytes-without-it]: 57      
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))

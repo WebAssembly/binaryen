@@ -1,7 +1,6 @@
 (module
- (type $FUNCSIG$v (func))
  (export "ex" (func $ex))
- (func $ex (; 0 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $ex (; 0 ;) (; has Stack IR ;)
   (nop)
  )
 )

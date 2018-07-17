@@ -3,13 +3,13 @@
  (import "env" "_importll" (func $importll (param i64) (result i64)))
  (export "_add" (func $add))
  (export "_main" (func $main))
- (func $add (; 1 ;) (param $0 i64) (param $1 i64) (result i64)
+ (func $add (; 1 ;) (; has Stack IR ;) (param $0 i64) (param $1 i64) (result i64)
   (i64.add
    (get_local $1)
    (get_local $0)
   )
  )
- (func $main (; 2 ;) (result i32)
+ (func $main (; 2 ;) (; has Stack IR ;) (result i32)
   (drop
    (call $importll
     (i64.const 2)
