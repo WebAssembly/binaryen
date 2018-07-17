@@ -67,7 +67,7 @@ inline Function* copyFunction(Module& in, Module& out, Name name) {
   func->localNames = curr->localNames;
   func->localIndices = curr->localIndices;
   func->debugLocations = curr->debugLocations;
-  func->body = ExpressionManipulator::copy(func->body, out);
+  func->body = ExpressionManipulator::copy(curr->body, out);
   // TODO: copy Stack IR
   out.addFunction(func);
   return func;
