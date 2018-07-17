@@ -606,7 +606,8 @@ public:
   //
   // Note that no special care is taken to synchronize the two IRs - if you
   // emit stack IR and then optimize the main IR, you need to recompute the
-  // stack IR.
+  // stack IR. The Pass system will throw away Stack IR if a pass is run
+  // that declares it may modify Binaryen IR.
   std::unique_ptr<StackIR> stackIR;
 
   // local names. these are optional.
