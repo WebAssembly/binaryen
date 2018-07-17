@@ -11,20 +11,10 @@
  (func $foo-func (; 0 ;) (type $FUNCSIG$v)
   (nop)
   (call $bar-func)
-  (drop
-   (get_global $a-global)
-  )
-  (drop
-   (get_global $b-global)
-  )
+  (nop)
+  (nop)
  )
  (func $bar-func (; 1 ;) (type $FUNCSIG$v)
   (nop)
-  (drop
-   (get_global $a-global)
-  )
-  (drop
-   (get_global $b-global)
-  )
  )
 )
