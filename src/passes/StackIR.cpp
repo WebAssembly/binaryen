@@ -154,7 +154,7 @@ private:
 #endif
       // TODO: currently we run dce before this, but if we didn't, we'd need
       //       to handle unreachable code here - it's ok to pop multiple values
-      //       there even if the stack is at size 0
+      //       there even if the stack is at size 0.
       while (consumed > 0) {
         assert(values.size() > 0);
         // Whenever we hit a possible stack value, kill it - it would
