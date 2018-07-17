@@ -89,7 +89,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       // copy we then walk the function to rewrite any non-js operations it has
       // as well.
       for (auto &name : neededFunctions) {
-        doWalkFunction(ModuleUtils::copyFunction(intrinsicsModule, *module, name));
+        auto* func = module->getFunctionOrNull(name);
+        if (!func) {
+          func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
+        }
+        doWalkFunction(func);
       }
       neededFunctions.clear();
     }

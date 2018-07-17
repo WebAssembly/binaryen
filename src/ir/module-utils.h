@@ -52,25 +52,21 @@ struct BinaryIndexes {
   }
 };
 
-inline Function* copyFunction(Module& in, Module& out, Name name) {
-  Function *ret = out.getFunctionOrNull(name);
-  if (ret != nullptr) {
-    return ret;
-  }
-  auto* curr = in.getFunction(name);
-  auto* func = new Function();
-  func->name = curr->name;
-  func->result = curr->result;
-  func->params = curr->params;
-  func->vars = curr->vars;
-  func->type = curr->type;
-  func->localNames = curr->localNames;
-  func->localIndices = curr->localIndices;
-  func->debugLocations = curr->debugLocations;
-  func->body = ExpressionManipulator::copy(curr->body, out);
+inline Function* copyFunction(Function* func, Module& out) {
+  auto* ret = new Function();
+  ret->name = func->name;
+  ret->result = func->result;
+  ret->params = func->params;
+  ret->vars = func->vars;
+  ret->type = func->type;
+  ret->localNames = func->localNames;
+  ret->localIndices = func->localIndices;
+  ret->debugLocations = func->debugLocations;
+  ret->body = ExpressionManipulator::copy(func->body, out);
   // TODO: copy Stack IR
-  out.addFunction(func);
-  return func;
+  assert(!func->stackIR);
+  out.addFunction(ret);
+  return ret;
 }
 
 inline void copyModule(Module& in, Module& out) {
@@ -86,7 +82,7 @@ inline void copyModule(Module& in, Module& out) {
     out.addExport(new Export(*curr));
   }
   for (auto& curr : in.functions) {
-    copyFunction(in, out, curr->name);
+    copyFunction(curr.get(), out);
   }
   for (auto& curr : in.globals) {
     out.addGlobal(new Global(*curr));

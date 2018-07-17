@@ -145,7 +145,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     labelHighBitVars.clear();
     freeTemps.clear();
     Module temp;
-    auto* oldFunc = ModuleUtils::copyFunction(*getModule(), temp, func->name);
+    auto* oldFunc = ModuleUtils::copyFunction(func, temp);
     func->params.clear();
     func->vars.clear();
     func->localNames.clear();
