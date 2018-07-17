@@ -263,7 +263,7 @@ void PassRunner::run() {
           runPassOnFunction(pass, func.get());
         }
       } else {
-        pass->run(this, wasm);
+        runPass(pass);
       }
       auto after = std::chrono::steady_clock::now();
       std::chrono::duration<double> diff = after - before;
@@ -331,7 +331,7 @@ void PassRunner::run() {
         stack.push_back(pass);
       } else {
         flush();
-        pass->run(this, wasm);
+        runPass(pass);
       }
     }
     flush();
@@ -358,11 +358,31 @@ void PassRunner::doAdd(Pass* pass) {
   pass->prepareToRun(this, wasm);
 }
 
+void PassRunner::runPass(Pass* pass) {
+  pass->run(this, wasm);
+  handleAfterEffects(pass);
+}
+
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
   instance->runOnFunction(this, wasm, func);
+  handleAfterEffects(pass, func);
+}
+
+void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
+  if (pass->modifiesBinaryenIR()) {
+    // If Binaryen IR is modified, Stack IR must be cleared - it would
+    // be out of sync in a potentially dangerous way.
+    if (func) {
+      func->stackIR.reset(nullptr);
+    } else {
+      for (auto& func : wasm->functions) {
+        func->stackIR.reset(nullptr);
+      }
+    }
+  }
 }
 
 int PassRunner::getPassDebug() {

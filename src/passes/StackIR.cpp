@@ -33,6 +33,8 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
   Pass* create() override { return new GenerateStackIR; }
 
+  bool modifiesBinaryenIR() { return false; }
+
   void doWalkFunction(Function* func) {
     BufferWithRandomAccess buffer;
     // a shim for the parent that a stackWriter expects - we don't need
@@ -77,6 +79,8 @@ struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
   bool isFunctionParallel() override { return false; }
 
   Pass* create() override { return new PrintStackIR; }
+
+  bool modifiesBinaryenIR() { return false; }
 
   void doWalkFunction(Function* func) {
     std::cout << func->name << ":\n";
@@ -368,6 +372,8 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new OptimizeStackIR; }
+
+  bool modifiesBinaryenIR() { return false; }
 
   void doWalkFunction(Function* func) {
     StackIROptimizer(func, getPassOptions()).run();
