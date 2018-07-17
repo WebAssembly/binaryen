@@ -141,6 +141,9 @@ struct PassRunner {
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
   // run after function passes.
+  // This is run at the very end of the optimization
+  // process - you can assume no other opts will be run
+  // afterwards.
   void addDefaultGlobalOptimizationPostPasses();
 
   // Run the passes on the module

@@ -58,7 +58,13 @@ struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
   Pass* create() override { return new PrintStackIR; }
 
   void doWalkFunction(Function* func) {
-    std::cout << func->name << ":\n" << *func->stackIR.get() << '\n';
+    std::cout << func->name << ":\n";
+    if (func->stackIR) {
+      std::cout << *func->stackIR.get();
+    } else {
+      std::cout << " (no stack ir)";
+    }
+    std::cout << '\n';
   }
 };
 

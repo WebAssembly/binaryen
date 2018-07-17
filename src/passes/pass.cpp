@@ -206,6 +206,12 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
   add("memory-packing");
+  // perform Stack IR optimizations here, at the very end of the
+  // optimization pipeline
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("generate-stack-ir");
+    add("optimize-stack-ir");
+  }
 }
 
 static void dumpWast(Name name, Module* wasm) {
