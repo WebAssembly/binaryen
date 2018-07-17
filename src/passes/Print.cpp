@@ -725,6 +725,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << " (; " << functionIndexes[curr->name] << " ;)";
     }
+    if (curr->stackIR && !minify) {
+      o << " (; has Stack IR ;)";
+    }
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }

@@ -32,6 +32,13 @@ namespace wasm {
 // IR, on the other hand, is designed to optimize a few final things that
 // can only really be done when modeling the stack machine format precisely.
 
+// A StackIR instance (see wasm.h) contains a linear sequence of
+// stack instructions. This representation is very simple: just a single vector of
+// all instructions, in order.
+//  * nullptr is allowed in the vector, representing something to skip.
+//    This is useful as a common thing optimizations do is remove instructions,
+//    so this way we can do so without compacting the vector all the time.
+
 // A Stack IR instruction. Most just directly reflect a Binaryen IR node,
 // but we need extra ones for certain things.
 struct StackInst {
@@ -86,27 +93,17 @@ inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return o;
 }
 
+inline std::ostream& operator<<(std::ostream& o, wasm::StackIR& insts) {
+  for (Index i = 0; i < insts.size(); i++) {
+    auto* inst = insts[i];
+    if (!inst) continue;
+    std::cout << i << ' ' << *inst << '\n';
+  }
+}
+
 } // namespace std
 
 namespace wasm {
-
-// A representation of Stack IR, containing a linear sequence of
-// stack instructions, and code to optimize.
-// This representation is very simple: just a single vector of
-// all instructions, in order.
-//  * nullptr is allowed in the vector, representing something to skip.
-//    This is useful as a common thing optimizations do is remove instructions,
-//    so this way we can do so without compacting the vector all the time.
-class StackIR : public std::vector<StackInst*> {
-public:
-  // Optimize the IR. If func is provided, the IR is the entirety of a
-  // function body; otherwise it is just a fragment from a function or
-  // a global segment offset etc.
-  void optimize(PassOptions& passOptions,Function* func=nullptr);
-
-  // Dump out the IR, for debug purposes.
-  void dump();
-};
 
 //
 // StackWriter: Writes out binary format stack machine code for a Binaryen IR expression
@@ -135,9 +132,9 @@ template<StackWriterMode Mode>
 class StackWriter : public Visitor<StackWriter<Mode>> {
 public:
   StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
-    : parent(parent), o(o), sourceMap(sourceMap), debug(debug) {}
+    : parent(parent), o(o), sourceMap(sourceMap), debug(debug), allocator(parent.getModule()->allocator) {}
 
-  StackIR stackInsts; // filled in Binaryen2Stack, read in Stack2Binary
+  StackIR stackIR; // filled in Binaryen2Stack, read in Stack2Binary
 
   std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
 
@@ -204,11 +201,11 @@ protected:
   bool sourceMap;
   bool debug;
 
+  MixedArena& allocator;
+
   Function* func;
 
   std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-
-  MixedArena temps; // Stack IR needs some temporary allocations
 
   std::vector<Name> breakStack;
 
@@ -260,14 +257,14 @@ public:
     setFunction(funcInit);
     visitPossibleBlockContents(func->body);
     // Optimize it.
-    stackInsts.optimize(passOptions, func);
+    stackIR.optimize(passOptions, func);
     // Emit the binary.
     // FIXME XXX this recomputes the localMap, avoid the duplication
     StackWriter<StackWriterMode::Stack2Binary> finalWriter(parent, o, /* sourceMap= */ false, debug);
     finalWriter.setFunction(func);
     // Locals may have changed during optimization, let the finalWriter emit the header.
     finalWriter.mapLocalsAndEmitHeader();
-    for (auto* inst : stackInsts) {
+    for (auto* inst : stackIR) {
       if (!inst) continue; // a nullptr is just something we can skip
       switch (inst->op) {
         case StackInst::Basic:
@@ -393,7 +390,7 @@ void StackWriter<Mode>::visitChild(Expression* curr) {
 template<StackWriterMode Mode>
 void StackWriter<Mode>::visitBlock(Block* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::BlockBegin, curr));
+    stackIR.push_back(makeStackInst(StackInst::BlockBegin, curr));
   } else {
     if (debug) std::cerr << "zz node: Block" << std::endl;
     o << int8_t(BinaryConsts::Block);
@@ -422,7 +419,7 @@ void StackWriter<Mode>::visitBlockEnd(Block* curr) {
     emitExtraUnreachable();
   }
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::BlockEnd, curr));
+    stackIR.push_back(makeStackInst(StackInst::BlockEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -446,7 +443,7 @@ void StackWriter<Mode>::visitIf(If* curr) {
   }
   visitChild(curr->condition);
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::IfBegin, curr));
+    stackIR.push_back(makeStackInst(StackInst::IfBegin, curr));
   } else {
     o << int8_t(BinaryConsts::If);
     o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -469,7 +466,7 @@ void StackWriter<Mode>::visitIfElse(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::IfElse, curr));
+    stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
   } else {
     o << int8_t(BinaryConsts::Else);
   }
@@ -482,7 +479,7 @@ void StackWriter<Mode>::visitIfEnd(If* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::IfEnd, curr));
+    stackIR.push_back(makeStackInst(StackInst::IfEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -500,7 +497,7 @@ template<StackWriterMode Mode>
 void StackWriter<Mode>::visitLoop(Loop* curr) {
   if (debug) std::cerr << "zz node: Loop" << std::endl;
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::LoopBegin, curr));
+    stackIR.push_back(makeStackInst(StackInst::LoopBegin, curr));
   } else {
     o << int8_t(BinaryConsts::Loop);
     o << binaryType(curr->type != unreachable ? curr->type : none);
@@ -518,7 +515,7 @@ void StackWriter<Mode>::visitLoopEnd(Loop* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(StackInst::LoopEnd, curr));
+    stackIR.push_back(makeStackInst(StackInst::LoopEnd, curr));
   } else {
     o << int8_t(BinaryConsts::End);
   }
@@ -1191,7 +1188,7 @@ void StackWriter<Mode>::emitMemoryAccess(size_t alignment, size_t bytes, uint32_
 template<StackWriterMode Mode>
 void StackWriter<Mode>::emitExtraUnreachable() {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(Builder(temps).makeUnreachable()));
+    stackIR.push_back(makeStackInst(Builder(allocator).makeUnreachable()));
   } else if (Mode == StackWriterMode::Binaryen2Binary) {
     o << int8_t(BinaryConsts::Unreachable);
   }
@@ -1200,7 +1197,7 @@ void StackWriter<Mode>::emitExtraUnreachable() {
 template<StackWriterMode Mode>
 bool StackWriter<Mode>::justAddToStack(Expression* curr) {
   if (Mode == StackWriterMode::Binaryen2Stack) {
-    stackInsts.push_back(makeStackInst(curr));
+    stackIR.push_back(makeStackInst(curr));
     return true;
   }
   return false;
@@ -1213,7 +1210,7 @@ void StackWriter<Mode>::finishFunctionBody() {
 
 template<StackWriterMode Mode>
 StackInst* StackWriter<Mode>::makeStackInst(StackInst::Op op, Expression* origin) {
-  auto* ret = temps.alloc<StackInst>();
+  auto* ret = allocator.alloc<StackInst>();
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;

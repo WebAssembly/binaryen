@@ -32,7 +32,7 @@ SET(passes_SOURCES
   Precompute.cpp
   Print.cpp
   PrintCallGraph.cpp
-  PrintOptimizedStackIR.cpp
+  StackIR.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp

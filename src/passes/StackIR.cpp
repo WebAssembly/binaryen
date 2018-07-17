@@ -14,21 +14,68 @@
  * limitations under the License.
  */
 
+//
+// Operations on Stack IR.
+//
+
+#include "wasm.h"
+#include "pass.h"
 #include "wasm-stack.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 
 namespace wasm {
 
-void StackIR::optimize(PassOptions& passOptions, Function* func) {
+// Generate Stack IR from Binaryen IR
+
+struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new GenerateStackIR; }
+
+  void doWalkFunction(Function* func) {
+    BufferWithRandomAccess buffer;
+    WasmBinaryWriter binaryWriter(getModule(), buffer);
+    StackWriter<StackWriterMode::Binaryen2Stack> stackWriter(func, binaryWriter, buffer);
+    stackWriter.setFunction(funcInit);
+    stackWriter.visitPossibleBlockContents(func->body);
+    func->stackIR.swap(stackWriter.stackIR);
+  }
+};
+
+Pass* createGenerateStackIRPass() {
+  return new GenerateStackIR();
+}
+
+// Print (for debugging purposes)
+
+struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
+  // Not parallel: this pass is just for testing and debugging; keep the output
+  // sorted by function order.
+  bool isFunctionParallel() override { return false; }
+
+  Pass* create() override { return new PrintStackIR; }
+
+  void doWalkFunction(Function* func) {
+    std::cout << func->name << ":\n" << *func->stackIR.get() << '\n';
+  }
+};
+
+Pass* createPrintStackIRPass() {
+  return new PrintStackIR();
+}
+
+// Optimize
+
+static void optimize(PassOptions& passOptions, Function* func) {
   class Optimizer {
     StackIR& insts;
     PassOptions& passOptions;
     Function* func;
 
   public:
-    Optimizer(StackIR& insts, PassOptions& passOptions, Function* func) :
-      insts(insts), passOptions(passOptions), func(func) {}
+    Optimizer(Function* func, PassOptions& passOptions) :
+      func(func), passOptions(passOptions), insts(func->stackIR.get()) {}
 
     void run() {
       // FIXME: local2Stack is currently rather slow (due to localGraph),
@@ -286,15 +333,21 @@ void StackIR::optimize(PassOptions& passOptions, Function* func) {
     }
   };
 
-  Optimizer(*this, func).run();
+  Optimizer(func, options).run();
 }
 
-void StackIR::dump() {
-  for (Index i = 0; i < size(); i++) {
-    auto* inst = (*this)[i];
-    if (!inst) continue;
-    std::cout << i << ' ' << *inst << '\n';
+struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new OptimizeStackIR; }
+
+  void doWalkFunction(Function* func) {
+    optimize(func);
   }
+};
+
+Pass* createOptimizeStackIRPass() {
+  return new OptimizeStackIR();
 }
 
 } // namespace wasm

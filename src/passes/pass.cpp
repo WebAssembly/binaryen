@@ -76,6 +76,7 @@ void PassRegistry::registerPasses() {
   registerPass("flatten", "flattens out code, removing nesting", createFlattenPass);
   registerPass("fpcast-emu", "emulates function pointer casts, allowing incorrect indirect calls to (sometimes) work", createFuncCastEmulationPass);
   registerPass("func-metrics", "reports function metrics", createFunctionMetricsPass);
+  registerPass("generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass("inlining", "inline functions (you probably want inlining-optimizing)", createInliningPass);
   registerPass("inlining-optimizing", "inline functions and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
@@ -90,6 +91,7 @@ void PassRegistry::registerPasses() {
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
+  registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
   registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
@@ -98,7 +100,7 @@ void PassRegistry::registerPasses() {
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
-  registerPass("print-opt-stack-ir", "print out optimized Stack IR (useful for internal debugging)", createPrintOptimizedStackIRPass);
+  registerPass("print-stack-ir", "print out Stack IR (useful for internal debugging)", createPrintStackIRPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-non-js-ops", "removes operations incompatible with js", createRemoveNonJSOpsPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
@@ -186,6 +188,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
   add("vacuum"); // just to be safe
+
+// TODO: stack IR stuff here
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {

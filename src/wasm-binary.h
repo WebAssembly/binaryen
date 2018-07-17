@@ -736,6 +736,8 @@ public:
   void emitString(const char *str);
   void finishUp();
 
+  Module* getModule() { return wasm; }
+
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
