@@ -223,15 +223,13 @@ void WasmBinaryWriter::writeFunctions() {
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
-    Function* function = wasm->functions[i].get();
-    if (debug) std::cerr << "writing" << function->name << std::endl;
-    // Optimize if relevant.
-    bool optimize = !sourceMap;
-    if (optimize) {
-      // TODO: these should be run in parallel, as they can be quite slow
-      OptimizingFunctionStackWriter(function, *this, o, debug);
+    Function* func = wasm->functions[i].get();
+    if (debug) std::cerr << "writing" << func->name << std::endl;
+    // Emit Stack IR if present, and if we can
+    if (func->stackIR && !sourceMap) {
+      StackIRFunctionStackWriter(func, *this, o, debug);
     } else {
-      FunctionStackWriter(function, *this, o, sourceMap, debug);
+      FunctionStackWriter(func, *this, o, sourceMap, debug);
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -243,7 +241,7 @@ void WasmBinaryWriter::writeFunctions() {
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
       o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
     }
-    tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
+    tableOfContents.functionBodies.emplace_back(func->name, sizePos + sizeFieldSize, size);
   }
   finishSection(start);
 }

@@ -65,8 +65,17 @@ inline void copyModule(Module& in, Module& out) {
     out.addExport(new Export(*curr));
   }
   for (auto& curr : in.functions) {
-    auto* func = new Function(*curr);
+    auto* func = new Function();
+    func->name = curr->name;
+    func->result = curr->result;
+    func->params = curr->params;
+    func->vars = curr->vars;
+    func->type = curr->type;
+    func->localNames = curr->localNames;
+    func->localIndices = curr->localIndices;
+    func->debugLocations = curr->debugLocations;
     func->body = ExpressionManipulator::copy(func->body, out);
+    // TODO: copy Stack IR
     out.addFunction(func);
   }
   for (auto& curr : in.globals) {

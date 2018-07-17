@@ -39,7 +39,8 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
     StackWriter<StackWriterMode::Binaryen2Stack> stackWriter(func, binaryWriter, buffer);
     stackWriter.setFunction(funcInit);
     stackWriter.visitPossibleBlockContents(func->body);
-    func->stackIR.swap(stackWriter.stackIR);
+    func->stackIR = make_unique<StackIR>();
+    func->stackIR->swap(stackWriter.stackIR);
   }
 };
 

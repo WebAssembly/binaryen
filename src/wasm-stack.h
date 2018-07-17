@@ -94,11 +94,12 @@ inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
 }
 
 inline std::ostream& operator<<(std::ostream& o, wasm::StackIR& insts) {
-  for (Index i = 0; i < insts.size(); i++) {
+  for (wasm::Index i = 0; i < insts.size(); i++) {
     auto* inst = insts[i];
     if (!inst) continue;
     std::cout << i << ' ' << *inst << '\n';
   }
+  return o;
 }
 
 } // namespace std
@@ -241,29 +242,13 @@ public:
   }
 };
 
-// An optimizing function body writer: emits Binaryen IR to Stack IR, runs opts,
-// then converts the optimized Stack IR to wasm binary.
-// Note that source maps are not supported here: use a simpler stack writer
-// for that.
-class OptimizingFunctionStackWriter : public StackWriter<StackWriterMode::Binaryen2Stack> {
+// Use Stack IR to write the function body
+class StackIRFunctionStackWriter : StackWriter<StackWriterMode::Stack2Binary> {
 public:
-  OptimizingFunctionStackWriter(Function* funcInit,
-                                WasmBinaryWriter& parent,
-                                BufferWithRandomAccess& o,
-                                PassOptions& passOptions,
-                                bool debug=false) :
-      StackWriter<StackWriterMode::Binaryen2Stack>(parent, o, /* sourceMap= */ false, debug) {
-    // Write out Stack IR.
+  StackIRFunctionStackWriter(Function* funcInit, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false) :
+    StackWriter<StackWriterMode::Stack2Binary>(parent, o, false, debug) {
     setFunction(funcInit);
-    visitPossibleBlockContents(func->body);
-    // Optimize it.
-    stackIR.optimize(passOptions, func);
-    // Emit the binary.
-    // FIXME XXX this recomputes the localMap, avoid the duplication
-    StackWriter<StackWriterMode::Stack2Binary> finalWriter(parent, o, /* sourceMap= */ false, debug);
-    finalWriter.setFunction(func);
-    // Locals may have changed during optimization, let the finalWriter emit the header.
-    finalWriter.mapLocalsAndEmitHeader();
+    mapLocalsAndEmitHeader();
     for (auto* inst : stackIR) {
       if (!inst) continue; // a nullptr is just something we can skip
       switch (inst->op) {
@@ -271,23 +256,23 @@ public:
         case StackInst::BlockBegin:
         case StackInst::IfBegin:
         case StackInst::LoopBegin: {
-          finalWriter.visit(inst->origin);
+          visit(inst->origin);
           break;
         }
         case StackInst::BlockEnd: {
-          finalWriter.visitBlockEnd(inst->origin->cast<Block>());
+          visitBlockEnd(inst->origin->cast<Block>());
           break;
         }
         case StackInst::IfElse: {
-          finalWriter.visitIfElse(inst->origin->cast<If>());
+          visitIfElse(inst->origin->cast<If>());
           break;
         }
         case StackInst::IfEnd: {
-          finalWriter.visitIfEnd(inst->origin->cast<If>());
+          visitIfEnd(inst->origin->cast<If>());
           break;
         }
         case StackInst::LoopEnd: {
-          finalWriter.visitLoopEnd(inst->origin->cast<Loop>());
+          visitLoopEnd(inst->origin->cast<Loop>());
           break;
         }
         default: WASM_UNREACHABLE();
