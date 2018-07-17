@@ -188,8 +188,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
   add("vacuum"); // just to be safe
-// TODO: add stack IR stuff, but can't be here - need a new "addDefaultFinal*,
-//       as the stacky stuff must be run at the very very very end
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
