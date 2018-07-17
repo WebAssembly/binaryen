@@ -891,7 +891,7 @@ public:
   Printer() : o(std::cout) {}
   Printer(std::ostream* o) : o(*o) {}
 
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);

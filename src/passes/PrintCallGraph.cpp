@@ -29,7 +29,7 @@
 namespace wasm {
 
 struct PrintCallGraph : public Pass {
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
     std::ostream &o = std::cout;

@@ -24,7 +24,7 @@ namespace wasm {
 const Index OVERHEAD = 8;
 
 struct MemoryPacking : public Pass {
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
     if (!module->memory.exists) return;

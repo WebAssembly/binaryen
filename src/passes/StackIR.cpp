@@ -33,7 +33,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
   Pass* create() override { return new GenerateStackIR; }
 
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
     BufferWithRandomAccess buffer;
@@ -80,7 +80,7 @@ struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
 
   Pass* create() override { return new PrintStackIR; }
 
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
     std::cout << func->name << ":\n";
@@ -373,7 +373,7 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
 
   Pass* create() override { return new OptimizeStackIR; }
 
-  bool modifiesBinaryenIR() { return false; }
+  bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
     StackIROptimizer(func, getPassOptions()).run();
