@@ -253,7 +253,7 @@ public:
     StackWriter<StackWriterMode::Stack2Binary, Parent>(parent, o, false, debug) {
     this->setFunction(funcInit);
     this->mapLocalsAndEmitHeader();
-    for (auto* inst : this->stackIR) {
+    for (auto* inst : *funcInit->stackIR) {
       if (!inst) continue; // a nullptr is just something we can skip
       switch (inst->op) {
         case StackInst::Basic:

@@ -227,8 +227,10 @@ void WasmBinaryWriter::writeFunctions() {
     if (debug) std::cerr << "writing" << func->name << std::endl;
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap) {
+      if (debug) std::cerr << "write Stack IR" << std::endl;
       StackIRFunctionStackWriter<WasmBinaryWriter>(func, *this, o, debug);
     } else {
+      if (debug) std::cerr << "write Binaryen IR" << std::endl;
       FunctionStackWriter<WasmBinaryWriter>(func, *this, o, sourceMap, debug);
     }
     size_t size = o.size() - start;

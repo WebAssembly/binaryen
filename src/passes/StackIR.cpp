@@ -81,7 +81,7 @@ struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
   void doWalkFunction(Function* func) {
     std::cout << func->name << ":\n";
     if (func->stackIR) {
-      std::cout << *func->stackIR.get();
+      std::cout << *func->stackIR;
     } else {
       std::cout << " (no stack ir)";
     }
