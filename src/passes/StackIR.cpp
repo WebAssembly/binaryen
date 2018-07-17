@@ -35,7 +35,11 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
   void doWalkFunction(Function* func) {
     BufferWithRandomAccess buffer;
+
+// this is no good - it creates func types, modifies the module, etc.
     WasmBinaryWriter binaryWriter(getModule(), buffer);
+// we need just the function, anyhow!
+
     StackWriter<StackWriterMode::Binaryen2Stack> stackWriter(binaryWriter, buffer, false);
     stackWriter.setFunction(func);
     stackWriter.visitPossibleBlockContents(func->body);

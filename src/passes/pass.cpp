@@ -208,7 +208,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("memory-packing");
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("generate-stack-ir");
     add("optimize-stack-ir");
   }
