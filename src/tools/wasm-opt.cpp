@@ -149,7 +149,7 @@ int main(int argc, const char* argv[]) {
       p.dump(std::cerr);
       std::cerr << '\n';
       Fatal() << "error in parsing wasm source map";
-    } catch (std::bad_alloc& b) {
+    } catch (std::bad_alloc&) {
       Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
     }
 
