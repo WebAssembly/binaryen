@@ -671,6 +671,18 @@
       (get_local $temp2) ;; and a time presents itself
     )
   )
+  (func $local-to-stack-through-control-flow
+    (local $temp1 i32)
+    (local $temp2 i32)
+    (set_local $temp2 (call $local-to-stack-multi-4 (i32.const 0)))
+    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+    (if (i32.const 0) (nop))
+    (drop (get_local $temp1))
+    (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 2)))
+    (block $block (br $block))
+    (drop (get_local $temp1))
+    (drop (get_local $temp2))
+  )
   (func $remove-block (param $x i32) (result i32)
    (local $temp i32)
    (i32.add
