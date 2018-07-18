@@ -683,6 +683,19 @@
     (drop (get_local $temp1))
     (drop (get_local $temp2))
   )
+  (func $local-to-stack-in-control-flow
+    (local $temp1 i32)
+    (if (i32.const 0)
+      (block
+        (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 0)))
+        (drop (get_local $temp1))
+      )
+      (block
+        (set_local $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+        (drop (get_local $temp1))
+      )
+    )
+  )
   (func $remove-block (param $x i32) (result i32)
    (local $temp i32)
    (i32.add
