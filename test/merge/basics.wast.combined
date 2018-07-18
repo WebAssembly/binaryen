@@ -16,9 +16,11 @@
  (global $global-collide i32 (i32.const 0))
  (global $global-collide-mut (mut i32) (i32.const 0))
  (global $global-a i32 (i32.const 1))
+ (global $global-a-mut (mut i32) (i32.const 1))
  (global $global-collide$0 i32 (i32.const 0))
  (global $global-collide-mut$0 (mut i32) (i32.const 0))
  (global $global-b i32 (i32.const 1))
+ (global $global-b-mut (mut i32) (i32.const 1))
  (elem (get_global $tableBase) $only-a $willCollide $some-func $some-collide $only-a $only-a $only-b $willCollide$0 $some-func-b $some-collide$0)
  (data (get_global $memoryBase) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
  (export "exp-a" (func $only-a))
@@ -43,6 +45,9 @@
   )
   (drop
    (get_global $global-a)
+  )
+  (drop
+   (get_global $global-a-mut)
   )
   (drop
    (get_global $memoryBase)
@@ -77,6 +82,9 @@
   )
   (drop
    (get_global $global-b)
+  )
+  (drop
+   (get_global $global-b-mut)
   )
   (drop
    (i32.add
