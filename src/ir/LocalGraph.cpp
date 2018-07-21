@@ -26,37 +26,10 @@ namespace wasm {
 
 namespace LocalGraphInternal {
 
-// A relevant action: a get or a set.
-struct Action {
-  enum What {
-    Get = 0,
-    Set = 1
-  };
-  What what;
-  Index index; // the local index read or written
-  Expression* expr; // the expression itself
-
-  Action(What what, Index index, Expression* expr) : what(what), index(index), expr(expr) {
-    if (what == Get) assert(expr->is<GetLocal>());
-    if (what == Set) assert(expr->is<SetLocal>());
-  }
-
-  bool isGet() { return what == Get; }
-  bool isSet() { return what == Set; }
-};
-
 // Information about a basic block.
 struct Info {
-  std::vector<Action> actions; // actions occurring in this block
+  std::vector<Expression*> actions; // actions occurring in this block: get_locals and set_locals
   std::unordered_map<Index, SetLocal*> lastSets; // for each index, the last set_local for it
-
-  void dump(Function* func) {
-    if (actions.empty()) return;
-    std::cout << "    actions:\n";
-    for (auto& action : actions) {
-      std::cout << "      " << (action.isGet() ? "get" : "set") << " " << func->getLocalName(action.index) << "\n";
-    }
-  }
 };
 
 // flow helper class. flows the gets to their sets
@@ -83,7 +56,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto* curr = (*currp)->cast<GetLocal>();
      // if in unreachable code, skip
     if (!self->currBasicBlock) return;
-    self->currBasicBlock->contents.actions.emplace_back(Action::Get, curr->index, curr);
+    self->currBasicBlock->contents.actions.emplace_back(curr);
     self->locations[curr] = currp;
   }
 
@@ -91,7 +64,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto* curr = (*currp)->cast<SetLocal>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) return;
-    self->currBasicBlock->contents.actions.emplace_back(Action::Set, curr->index, curr);
+    self->currBasicBlock->contents.actions.emplace_back(curr);
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
   }
@@ -103,7 +76,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       // We compare this value to the current iteration index in order to determine if we already process this block in the current iteration.
       // This speeds up the processing compared to unordered_set or other struct usage. (No need to reset internal values, lookup into container, ...)
       size_t lastTraversedIteration;
-      std::vector<Action> actions; // actions occurring in this block
+      std::vector<Expression*> actions;
       std::vector<FlowBlock*> in;
       // Sor each index, the last set_local for it
       // The unordered_map from BasicBlock.Info is converted into a vector
@@ -158,7 +131,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << block.get() << " :\n";
       for (auto& action : block->contents.actions) {
-        std::cout << "  action: " << action.expr << '\n';
+        std::cout << "  action: " << *action << '\n';
       }
       for (auto* lastSet : block->contents.lastSets) {
         std::cout << "  last set " << lastSet << '\n';
@@ -169,14 +142,13 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       auto& actions = block.actions;
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
-        auto& action = actions[i];
-        auto index = action.index;
-        if (action.isGet()) {
-          allGets[index].push_back(action.expr->cast<GetLocal>());
+        auto* action = actions[i];
+        if (auto* get = action->dynCast<GetLocal>()) {
+          allGets[get->index].push_back(get);
         } else {
-          // this set is the only set for all those gets
-          auto* set = action.expr->cast<SetLocal>();
-          auto& gets = allGets[index];
+          // This set is the only set for all those gets.
+          auto* set = action->cast<SetLocal>();
+          auto& gets = allGets[set->index];
           for (auto* get : gets) {
             getSetses[get].insert(set);
           }
@@ -189,9 +161,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         auto& gets = allGets[index];
         if (gets.empty()) continue;
         work.push_back(&block);
-
-        // note that we may need to revisit the later parts of this initial
-        // block, if we are in a loop, so don't mark it as seen
+        // Note that we may need to revisit the later parts of this initial
+        // block, if we are in a loop, so don't mark it as seen.
         while (!work.empty()) {
           auto* curr = work.back();
           work.pop_back();
