@@ -5,6 +5,8 @@
   (import "env" "table" (table 0 anyfunc))
   (import "env" "globally" (global $i-collide f64))
   (global $b f64 (get_global $i-collide))
+  (global $b-mut (mut f64) (get_global $i-collide))
   (global $g-collide f64 (get_global $i-collide))
+  (global $g-collide-mut (mut f64) (get_global $i-collide))
 )
 

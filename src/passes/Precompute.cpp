@@ -29,12 +29,14 @@
 
 namespace wasm {
 
-static const Name NONSTANDALONE_FLOW("Binaryen|nonstandalone");
+static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
 
 typedef std::unordered_map<GetLocal*, Literal> GetValues;
 
-// Execute an expression by itself. Errors if we hit anything we need anything not in the expression itself standalone.
-class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionRunner> {
+// Precomputes an expression. Errors if we hit anything that can't be precomputed.
+class PrecomputingExpressionRunner : public ExpressionRunner<PrecomputingExpressionRunner> {
+  Module* module;
+
   // map gets to constant values, if they are known to be constant
   GetValues& getValues;
 
@@ -46,24 +48,24 @@ class StandaloneExpressionRunner : public ExpressionRunner<StandaloneExpressionR
   bool replaceExpression;
 
 public:
-  StandaloneExpressionRunner(GetValues& getValues, bool replaceExpression) : getValues(getValues), replaceExpression(replaceExpression) {}
+  PrecomputingExpressionRunner(Module* module, GetValues& getValues, bool replaceExpression) : module(module), getValues(getValues), replaceExpression(replaceExpression) {}
 
   struct NonstandaloneException {}; // TODO: use a flow with a special name, as this is likely very slow
 
   Flow visitLoop(Loop* curr) {
     // loops might be infinite, so must be careful
     // but we can't tell if non-infinite, since we don't have state, so loops are just impossible to optimize for now
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
 
   Flow visitCall(Call* curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitCallImport(CallImport* curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitGetLocal(GetLocal *curr) {
     auto iter = getValues.find(curr);
@@ -73,7 +75,7 @@ public:
         return Flow(value);
       }
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitSetLocal(SetLocal *curr) {
     // If we don't need to replace the whole expression, see if there
@@ -84,34 +86,40 @@ public:
         return visit(curr->value);
       }
     }
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    auto* global = module->getGlobalOrNull(curr->name);
+    if (global) {
+      if (!global->mutable_) {
+        return visit(global->init);
+      }
+    }
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitSetGlobal(SetGlobal *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitLoad(Load *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitStore(Store *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitAtomicRMW(AtomicRMW *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitAtomicCmpxchg(AtomicCmpxchg *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitAtomicWait(AtomicWait *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitAtomicWake(AtomicWake *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitHost(Host *curr) {
-    return Flow(NONSTANDALONE_FLOW);
+    return Flow(NOTPRECOMPUTABLE_FLOW);
   }
 
   void trap(const char* why) override {
@@ -156,7 +164,7 @@ struct Precompute : public WalkerPass<PostWalker<Precompute, UnifiedExpressionVi
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (flow.breaking()) {
-      if (flow.breakTo == NONSTANDALONE_FLOW) return;
+      if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) return;
       if (flow.breakTo == RETURN_FLOW) {
         // this expression causes a return. if it's already a return, reuse the node
         if (auto* ret = curr->dynCast<Return>()) {
@@ -223,9 +231,9 @@ private:
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     try {
-      return StandaloneExpressionRunner(getValues, replaceExpression).visit(curr);
-    } catch (StandaloneExpressionRunner::NonstandaloneException&) {
-      return Flow(NONSTANDALONE_FLOW);
+      return PrecomputingExpressionRunner(getModule(), getValues, replaceExpression).visit(curr);
+    } catch (PrecomputingExpressionRunner::NonstandaloneException&) {
+      return Flow(NOTPRECOMPUTABLE_FLOW);
     }
   }
 

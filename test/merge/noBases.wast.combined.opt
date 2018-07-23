@@ -9,12 +9,8 @@
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "some-func-b" (func $some-func-b))
  (import "env" "some-collide" (func $some-collide$0))
- (global $global-collide i32 (i32.const 0))
  (global $global-collide-mut (mut i32) (i32.const 0))
- (global $global-a i32 (i32.const 1))
- (global $global-collide$0 i32 (i32.const 0))
  (global $global-collide-mut$0 (mut i32) (i32.const 0))
- (global $global-b i32 (i32.const 1))
  (elem (i32.const 10) $only-a $willCollide $some-func $some-collide $only-a)
  (elem (i32.const 20) $only-b $willCollide $some-func-b $some-collide)
  (data (i32.const 100) "hello, A!\n")
@@ -35,12 +31,8 @@
    (i32.const 456)
    (i32.const 789)
   )
-  (drop
-   (get_global $global-collide)
-  )
-  (drop
-   (get_global $global-a)
-  )
+  (nop)
+  (nop)
   (set_global $global-collide-mut
    (i32.const 1234)
   )
@@ -59,12 +51,8 @@
    (i32.const 34)
    (i32.const 56)
   )
-  (drop
-   (get_global $global-collide$0)
-  )
-  (drop
-   (get_global $global-b)
-  )
+  (nop)
+  (nop)
   (set_global $global-collide-mut$0
    (i32.const 5678)
   )
