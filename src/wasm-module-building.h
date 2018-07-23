@@ -69,6 +69,10 @@ static std::mutex debug;
 // generally slower than generation; in the optimal case, we never
 // lock beyond the first step, and all further work is lock-free.
 //
+// N.B.: Optimizing functions in parallel with adding functions is possible,
+//       but the rest of the global state of the module should be fixed,
+//       such as globals, imports, etc. Function-parallel optimization passes
+//       may read (but not modify) those fields.
 
 class OptimizingIncrementalModuleBuilder {
   Module* wasm;
