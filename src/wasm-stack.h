@@ -32,6 +32,13 @@ namespace wasm {
 // IR, on the other hand, is designed to optimize a few final things that
 // can only really be done when modeling the stack machine format precisely.
 
+// Currently the benefits of Stack IR are minor, less than 1% reduction in
+// code size. For that reason it is just a secondary IR, run optionally
+// after the main IR has been optimized. However, if we improve Stack IR
+// optimizations to a point where they have a significant impact, it's
+// possible that could motivate investigating replacing the main IR with Stack
+// IR (so that we have just a single IR).
+
 // A StackIR instance (see wasm.h) contains a linear sequence of
 // stack instructions. This representation is very simple: just a single vector of
 // all instructions, in order.
