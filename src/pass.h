@@ -211,6 +211,11 @@ public:
   // That means that you can't rely on Walker object properties to persist across
   // your functions, and you can't expect a new object to be created for each
   // function either (which could be very inefficient).
+  //
+  // It is valid for function-parallel passes to read (but not modify) global
+  // module state, like globals or imports. However, reading other functions'
+  // contents is invalid, as function-parallel tests can be run while still
+  // adding functions to the module.
   virtual bool isFunctionParallel() { return false; }
 
   // This method is used to create instances per function for a function-parallel
