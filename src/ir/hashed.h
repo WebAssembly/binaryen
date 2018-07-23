@@ -58,8 +58,6 @@ class HashedExpressionMap : public std::unordered_map<HashedExpression, T, Expre
 struct FunctionHasher : public WalkerPass<PostWalker<FunctionHasher>> {
   bool isFunctionParallel() override { return true; }
 
-  typedef uint32_t HashType;
-
   struct Map : public std::map<Function*, HashType> {};
 
   FunctionHasher(Map* output) : output(output) {}

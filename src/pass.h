@@ -184,10 +184,12 @@ private:
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
 
-  // After running a pass, handle any changes to the module due to
-  // how the pass is defined.
-  // If a function is passes here, operate on just that function;
-  // otherwise, the entire module.
+  // After running a pass, handle any changes due to
+  // how the pass is defined, such as clearing away any
+  // temporary data structures that the pass declares it
+  // invalidates.
+  // If a function is passed, we operate just on that function;
+  // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func=nullptr);
 };
 
