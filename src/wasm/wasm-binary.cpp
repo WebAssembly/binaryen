@@ -95,7 +95,7 @@ void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
 template<typename T>
 int32_t WasmBinaryWriter::startSection(T code) {
   o << U32LEB(code);
-  sectionStartAtSourceMapLocations = sourceMapLocations.size();
+  if (sourceMap) sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -106,9 +106,12 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes, &o[start] + MaxLEB32Bytes + size, &o[start] + sizeFieldSize);
-    o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
-    for (size_t i = sectionStartAtSourceMapLocations; i < sourceMapLocations.size(); ++i) {
-      sourceMapLocations[i].first -= MaxLEB32Bytes - sizeFieldSize;
+    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+    o.resize(o.size() - adjustment);
+    if (sourceMap) {
+      for (auto i = sourceMapLocationsSizeAtSectionStart; i < sourceMapLocations.size(); ++i) {
+        sourceMapLocations[i].first -= adjustment;
+      }
     }
   }
 }
@@ -224,7 +227,7 @@ void WasmBinaryWriter::writeFunctions() {
   size_t total = wasm->functions.size();
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
-    size_t functionStartAsSourceMapLocations = sourceMapLocations.size();
+    size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
@@ -252,9 +255,12 @@ void WasmBinaryWriter::writeFunctions() {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
-      o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
-      for (size_t i = functionStartAsSourceMapLocations; i < sourceMapLocations.size(); ++i) {
-        sourceMapLocations[i].first -= MaxLEB32Bytes - sizeFieldSize;
+      auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+      o.resize(o.size() - adjustment);
+      if (sourceMap) {
+        for (auto i = sourceMapLocationsSizeAtFunctionStart; i < sourceMapLocations.size(); ++i) {
+          sourceMapLocations[i].first -= adjustment;
+        }
       }
     }
     tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
