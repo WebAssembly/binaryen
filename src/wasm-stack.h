@@ -102,10 +102,11 @@ inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
 }
 
 inline std::ostream& operator<<(std::ostream& o, wasm::StackIR& insts) {
+  wasm::Index index = 0;
   for (wasm::Index i = 0; i < insts.size(); i++) {
     auto* inst = insts[i];
     if (!inst) continue;
-    std::cout << i << ' ' << *inst << '\n';
+    std::cout << index++ << ' ' << *inst << '\n';
   }
   return o;
 }
@@ -510,6 +511,11 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoopEnd(Loop* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
+  if (curr->type == unreachable) {
+    // we emitted a loop without a return type, and the body might be
+    // block contents, so ensure it is not consumed
+    emitExtraUnreachable();
+  }
   if (Mode == StackWriterMode::Binaryen2Stack) {
     stackIR.push_back(makeStackInst(StackInst::LoopEnd, curr));
   } else {

@@ -105,78 +105,78 @@ $conversions:
 10 set_local (none)
 
 $seq:
-1 const (f64)
-2 drop (none)
+0 const (f64)
+1 drop (none)
+2 const (f64)
 3 const (f64)
-6 const (f64)
-7 drop (none)
-8 const (f64)
-10 binary (f64)
-11 set_local (none)
+4 drop (none)
+5 const (f64)
+6 binary (f64)
+7 set_local (none)
 
 $switcher:
 0 block
+1 block
 2 block
 3 block
-4 block
-5 get_local (i32)
-6 const (i32)
-7 binary (i32)
-8 switch (unreachable)
-9 end (none)
-10 const (i32)
-11 break (unreachable)
-12 end (none)
-13 const (i32)
-14 break (unreachable)
-15 end (none)
-16 nop (none)
-19 block
-20 block
-21 block
-22 get_local (i32)
-23 const (i32)
-24 binary (i32)
-25 switch (unreachable)
+4 get_local (i32)
+5 const (i32)
+6 binary (i32)
+7 switch (unreachable)
+8 end (none)
+9 const (i32)
+10 break (unreachable)
+11 end (none)
+12 const (i32)
+13 break (unreachable)
+14 end (none)
+15 nop (none)
+16 block
+17 block
+18 block
+19 get_local (i32)
+20 const (i32)
+21 binary (i32)
+22 switch (unreachable)
+23 end (none)
+24 const (i32)
+25 break (unreachable)
 26 end (none)
 27 const (i32)
 28 break (unreachable)
 29 end (none)
-30 const (i32)
-31 break (unreachable)
-32 end (none)
-33 nop (none)
+30 nop (none)
+31 block
+32 block
+33 block
+34 block
 35 block
 36 block
-37 block
-38 block
-39 block
-40 block
-41 get_local (i32)
-42 const (i32)
-43 binary (i32)
-44 switch (unreachable)
+37 get_local (i32)
+38 const (i32)
+39 binary (i32)
+40 switch (unreachable)
+41 end (none)
+42 break (unreachable)
+43 end (none)
+44 break (unreachable)
 45 end (none)
-46 break (unreachable)
-47 end (none)
+46 block
+47 loop
 48 break (unreachable)
 49 end (none)
-50 block
-51 loop
-52 break (unreachable)
-54 end (none)
-55 unreachable (unreachable)
+50 unreachable (unreachable)
+51 end (none)
+52 end (none)
+53 loop
+54 break (unreachable)
+55 end (none)
+56 unreachable (unreachable)
 57 end (none)
-58 end (none)
-60 loop
-61 break (unreachable)
-63 end (none)
-64 unreachable (unreachable)
-69 end (none)
-70 nop (none)
-71 end (none)
-72 const (i32)
-73 end (i32)
+58 nop (none)
+59 end (none)
+60 const (i32)
+61 end (i32)
 
 $blocker:
 0 block
@@ -214,33 +214,33 @@ $negZero:
 0 const (f64)
 
 $abs:
-1 const (i32)
-2 set_local (none)
-3 const (i32)
-4 get_local (i32)
-5 binary (i32)
+0 const (i32)
+1 set_local (none)
+2 const (i32)
+3 get_local (i32)
+4 binary (i32)
+5 get_local (i32)
 6 get_local (i32)
-7 get_local (i32)
-8 const (i32)
-9 binary (i32)
-10 select (i32)
-12 set_local (none)
-13 const (f64)
-14 unary (f64)
-15 set_local (none)
-16 const (f32)
-17 unary (f32)
-18 set_local (none)
+7 const (i32)
+8 binary (i32)
+9 select (i32)
+10 set_local (none)
+11 const (f64)
+12 unary (f64)
+13 set_local (none)
+14 const (f32)
+15 unary (f32)
+16 set_local (none)
 
 $neg:
 0 get_local (f32)
 1 unary (f32)
-4 const (i32)
+2 const (i32)
+3 const (i32)
+4 binary (i32)
 5 const (i32)
 6 binary (i32)
-7 const (i32)
-8 binary (i32)
-9 call_indirect (none)
+7 call_indirect (none)
 
 $cneg:
 0 get_local (f32)
@@ -293,10 +293,10 @@ $return-unreachable:
 1 return (unreachable)
 
 $unreachable-block:
-1 const (i32)
-2 drop (none)
-3 const (i32)
-4 return (unreachable)
+0 const (i32)
+1 drop (none)
+2 const (i32)
+3 return (unreachable)
 
 $unreachable-block-toplevel:
 0 const (i32)
@@ -305,8 +305,8 @@ $unreachable-block-toplevel:
 3 return (unreachable)
 
 $unreachable-block0:
-1 const (i32)
-2 return (unreachable)
+0 const (i32)
+1 return (unreachable)
 
 $unreachable-block0-toplevel:
 0 const (i32)
@@ -381,31 +381,31 @@ $unreachable-if-arm:
 2 nop (none)
 3 else
 4 unreachable (unreachable)
-8 end (none)
+5 end (none)
 
 $local-to-stack:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-5 drop (none)
+2 const (i32)
+3 call (i32)
+4 drop (none)
 
 $local-to-stack-1:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-5 drop (none)
-7 unary (i32)
+2 const (i32)
+3 call (i32)
+4 drop (none)
+5 unary (i32)
 
 $local-to-stack-1b:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-5 drop (none)
-7 const (i32)
-8 binary (i32)
+2 const (i32)
+3 call (i32)
+4 drop (none)
+5 const (i32)
+6 binary (i32)
 
 $local-to-stack-1c-no:
 0 const (i32)
@@ -448,45 +448,45 @@ $local-to-stack-3-no:
 $local-to-stack-multi-4:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
+2 const (i32)
+3 call (i32)
+4 drop (none)
 5 drop (none)
-7 drop (none)
+6 const (i32)
+7 call (i32)
 8 const (i32)
 9 call (i32)
-11 const (i32)
-12 call (i32)
-13 drop (none)
+10 drop (none)
 
 $local-to-stack-multi-5:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
+2 const (i32)
+3 call (i32)
+4 drop (none)
 5 drop (none)
-7 drop (none)
+6 const (i32)
+7 call (i32)
 8 const (i32)
 9 call (i32)
-11 const (i32)
-12 call (i32)
-13 drop (none)
+10 drop (none)
 
 $local-to-stack-multi-6-justone:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
+2 const (i32)
+3 call (i32)
+4 drop (none)
 5 drop (none)
-7 drop (none)
-8 const (i32)
-9 call (i32)
-10 set_local (none)
-11 const (i32)
-12 call (i32)
-13 drop (none)
-14 get_local (i32)
-15 get_local (i32)
-16 binary (i32)
+6 const (i32)
+7 call (i32)
+8 set_local (none)
+9 const (i32)
+10 call (i32)
+11 drop (none)
+12 get_local (i32)
+13 get_local (i32)
+14 binary (i32)
 
 $local-to-stack-multi-7-justone:
 0 const (i32)
@@ -501,9 +501,9 @@ $local-to-stack-multi-7-justone:
 9 drop (none)
 10 const (i32)
 11 call (i32)
-13 const (i32)
-14 call (i32)
-15 drop (none)
+12 const (i32)
+13 call (i32)
+14 drop (none)
 
 $local-to-stack-overlapping-multi-8-no:
 0 const (i32)
@@ -511,62 +511,62 @@ $local-to-stack-overlapping-multi-8-no:
 2 set_local (none)
 3 const (i32)
 4 call (i32)
-6 const (i32)
-7 call (i32)
-8 drop (none)
-10 get_local (i32)
-11 binary (i32)
+5 const (i32)
+6 call (i32)
+7 drop (none)
+8 get_local (i32)
+9 binary (i32)
 
 $local-to-stack-overlapping-multi-9-yes:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-6 const (i32)
-7 call (i32)
-8 drop (none)
-11 binary (i32)
+2 const (i32)
+3 call (i32)
+4 const (i32)
+5 call (i32)
+6 drop (none)
+7 binary (i32)
 
 $local-to-stack-through-control-flow:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-6 const (i32)
-7 if
-8 nop (none)
-9 end (none)
-11 drop (none)
-12 const (i32)
-13 call (i32)
-15 block
-16 break (unreachable)
-17 end (none)
-19 drop (none)
-21 drop (none)
+2 const (i32)
+3 call (i32)
+4 const (i32)
+5 if
+6 nop (none)
+7 end (none)
+8 drop (none)
+9 const (i32)
+10 call (i32)
+11 block
+12 break (unreachable)
+13 end (none)
+14 drop (none)
+15 drop (none)
 
 $local-to-stack-in-control-flow:
 0 const (i32)
 1 if
 2 const (i32)
 3 call (i32)
-6 drop (none)
-7 else
-8 const (i32)
-9 call (i32)
-12 drop (none)
-13 end (none)
+4 drop (none)
+5 else
+6 const (i32)
+7 call (i32)
+8 drop (none)
+9 end (none)
 
 $remove-block:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-6 const (i32)
-7 call (i32)
-8 drop (none)
-11 unary (i32)
-12 binary (i32)
+2 const (i32)
+3 call (i32)
+4 const (i32)
+5 call (i32)
+6 drop (none)
+7 unary (i32)
+8 binary (i32)
 
 (module
  (type $FUNCSIG$vf (func (param f32)))

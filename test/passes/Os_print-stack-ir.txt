@@ -1,13 +1,13 @@
 $stacky-help:
 0 const (i32)
 1 call (i32)
-3 const (i32)
-4 call (i32)
-6 const (i32)
-7 call (i32)
-8 drop (none)
-10 unary (i32)
-12 binary (i32)
+2 const (i32)
+3 call (i32)
+4 const (i32)
+5 call (i32)
+6 drop (none)
+7 unary (i32)
+8 binary (i32)
 
 (module
  (type $0 (func (param i32) (result i32)))
