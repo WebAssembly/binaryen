@@ -22,6 +22,7 @@
 #include <pass.h>
 #include <wasm-validator.h>
 #include <wasm-io.h>
+#include "ir/hashed.h"
 
 namespace wasm {
 
@@ -356,17 +357,68 @@ void PassRunner::doAdd(Pass* pass) {
   pass->prepareToRun(this, wasm);
 }
 
+// Checks that the state is valid before and after a
+// pass runs on a function. We run these extra checks when
+// pass-debug mode is enabled.
+struct AfterEffectFunctionChecker {
+  Function* func;
+
+  // Check Stack IR state: if the main IR changes, there should be no
+  // stack IR, as the stack IR would be wrong.
+  bool beganWithStackIR;
+  HashType originalFunctionHash;
+
+  // In the creator we can scan the state of the module and function before the
+  // pass runs.
+  AfterEffectFunctionChecker(Function* func) : func(func) {
+    beganWithStackIR = func->stackIR != nullptr;
+    if (beganWithStackIR) {
+      originalFunctionHash = FunctionHasher::hashFunction(func);
+    }
+  }
+
+  // This is called after the pass is run, at which time we can check things.
+  void check() {
+    if (beganWithStackIR && func->stackIR) {
+      auto after = FunctionHasher::hashFunction(func);
+      if (after != originalFunctionHash) {
+        Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before and after the pass ran, and the pass modified the main IR, which invalidates Stack IR - pass should have been marked 'modifiesBinaryenIR'";
+      }
+    }
+  }
+};
+
 void PassRunner::runPass(Pass* pass) {
+  std::vector<std::unique_ptr<AfterEffectFunctionChecker>> checkers;
+  if (getPassDebug()) {
+    for (auto& func : wasm->functions) {
+      checkers.emplace_back(std::unique_ptr<AfterEffectFunctionChecker>(
+        new AfterEffectFunctionChecker(func.get())));
+    }
+  }
   pass->run(this, wasm);
   handleAfterEffects(pass);
+  if (getPassDebug()) {
+    for (auto& checker : checkers) {
+      checker->check();
+    }
+  }
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
+  std::unique_ptr<AfterEffectFunctionChecker> checker;
+  if (getPassDebug()) {
+    checker = std::unique_ptr<AfterEffectFunctionChecker>(
+      new AfterEffectFunctionChecker(func));
+  }
   instance->runOnFunction(this, wasm, func);
   handleAfterEffects(pass, func);
+  if (getPassDebug()) {
+    checker->check();
+  }
 }
 
 void PassRunner::handleAfterEffects(Pass* pass, Function* func) {

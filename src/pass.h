@@ -184,10 +184,12 @@ private:
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
 
-  // After running a pass, handle any changes to the module due to
-  // how the pass is defined.
-  // If a function is passes here, operate on just that function;
-  // otherwise, the entire module.
+  // After running a pass, handle any changes due to
+  // how the pass is defined, such as clearing away any
+  // temporary data structures that the pass declares it
+  // invalidates.
+  // If a function is passed, we operate just on that function;
+  // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func=nullptr);
 };
 
@@ -225,6 +227,11 @@ public:
   // That means that you can't rely on Walker object properties to persist across
   // your functions, and you can't expect a new object to be created for each
   // function either (which could be very inefficient).
+  //
+  // It is valid for function-parallel passes to read (but not modify) global
+  // module state, like globals or imports. However, reading other functions'
+  // contents is invalid, as function-parallel tests can be run while still
+  // adding functions to the module.
   virtual bool isFunctionParallel() { return false; }
 
   // This method is used to create instances per function for a function-parallel
