@@ -734,7 +734,8 @@ class WasmBinaryWriter {
   MixedArena allocator;
 
   Function::DebugLocation lastDebugLocation;
-  size_t lastBytecodeOffset;
+  std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
+  size_t sectionStartAtSourceMapLocations;
 
   void prepare();
 public:
