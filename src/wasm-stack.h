@@ -534,9 +534,10 @@ void StackWriter<Mode, Parent>::visitBreak(Break* curr) {
     visitChild(curr->value);
   }
   if (curr->condition) visitChild(curr->condition);
-  if (justAddToStack(curr)) return;
-  o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-    << U32LEB(getBreakIndex(curr->name));
+  if (!justAddToStack(curr)) {
+    o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
+      << U32LEB(getBreakIndex(curr->name));
+  }
   if (curr->condition && curr->type == unreachable) {
     // a br_if is normally none or emits a value. if it is unreachable,
     // then either the condition or the value is unreachable, which is
@@ -577,8 +578,9 @@ void StackWriter<Mode, Parent>::visitCall(Call* curr) {
   for (auto* operand : curr->operands) {
     visitChild(operand);
   }
-  if (justAddToStack(curr)) return;
-  o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
+  if (!justAddToStack(curr)) {
+    o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
+  }
   if (curr->type == unreachable) { // TODO FIXME: this and similar can be removed
     emitExtraUnreachable();
   }
@@ -601,10 +603,11 @@ void StackWriter<Mode, Parent>::visitCallIndirect(CallIndirect* curr) {
     visitChild(operand);
   }
   visitChild(curr->target);
-  if (justAddToStack(curr)) return;
-  o << int8_t(BinaryConsts::CallIndirect)
-    << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
-    << U32LEB(0); // Reserved flags field
+  if (!justAddToStack(curr)) {
+    o << int8_t(BinaryConsts::CallIndirect)
+      << U32LEB(parent.getFunctionTypeIndex(curr->fullType))
+      << U32LEB(0); // Reserved flags field
+  }
   if (curr->type == unreachable) {
     emitExtraUnreachable();
   }
@@ -621,8 +624,9 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitSetLocal(SetLocal* curr) {
   if (debug) std::cerr << "zz node: Set|TeeLocal" << std::endl;
   visitChild(curr->value);
-  if (justAddToStack(curr)) return;
-  o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  if (!justAddToStack(curr)) {
+    o << int8_t(curr->isTee() ? BinaryConsts::TeeLocal : BinaryConsts::SetLocal) << U32LEB(mappedLocals[curr->index]);
+  }
   if (curr->type == unreachable) {
     emitExtraUnreachable();
   }
@@ -647,6 +651,11 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
   if (debug) std::cerr << "zz node: Load" << std::endl;
   visitChild(curr->ptr);
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    emitExtraUnreachable();
+    return;
+  }
   if (justAddToStack(curr)) return;
   if (!curr->isAtomic) {
     switch (curr->type) {
@@ -675,11 +684,6 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
       default: WASM_UNREACHABLE();
     }
   } else {
-    if (curr->type == unreachable) {
-      // don't even emit it; we don't know the right type
-      emitExtraUnreachable();
-      return;
-    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->type) {
       case i32: {
@@ -713,6 +717,11 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
   if (debug) std::cerr << "zz node: Store" << std::endl;
   visitChild(curr->ptr);
   visitChild(curr->value);
+  if (curr->type == unreachable) {
+    // don't even emit it; we don't know the right type
+    emitExtraUnreachable();
+    return;
+  }
   if (justAddToStack(curr)) return;
   if (!curr->isAtomic) {
     switch (curr->valueType) {
@@ -740,11 +749,6 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
       default: abort();
     }
   } else {
-    if (curr->type == unreachable) {
-      // don't even emit it; we don't know the right type
-      emitExtraUnreachable();
-      return;
-    }
     o << int8_t(BinaryConsts::AtomicPrefix);
     switch (curr->valueType) {
       case i32: {
@@ -940,8 +944,11 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
   if (debug) std::cerr << "zz node: Unary" << std::endl;
   visitChild(curr->value);
+  if (curr->type == unreachable) {
+    emitExtraUnreachable();
+    return;
+  }
   if (justAddToStack(curr)) return;
-
   switch (curr->op) {
     case ClzInt32:               o << int8_t(BinaryConsts::I32Clz); break;
     case CtzInt32:               o << int8_t(BinaryConsts::I32Ctz); break;
@@ -997,9 +1004,6 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case ExtendS32Int64:         o << int8_t(BinaryConsts::I64ExtendS32); break;
     default: abort();
   }
-  if (curr->type == unreachable) {
-    emitExtraUnreachable();
-  }
 }
 
 template<StackWriterMode Mode, typename Parent>
@@ -1007,8 +1011,11 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
   if (debug) std::cerr << "zz node: Binary" << std::endl;
   visitChild(curr->left);
   visitChild(curr->right);
+  if (curr->type == unreachable) {
+    emitExtraUnreachable();
+    return;
+  }
   if (justAddToStack(curr)) return;
-
   switch (curr->op) {
     case AddInt32:      o << int8_t(BinaryConsts::I32Add); break;
     case SubInt32:      o << int8_t(BinaryConsts::I32Sub); break;
@@ -1091,9 +1098,6 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge); break;
     default: abort();
   }
-  if (curr->type == unreachable) {
-    emitExtraUnreachable();
-  }
 }
 
 template<StackWriterMode Mode, typename Parent>
@@ -1102,12 +1106,12 @@ void StackWriter<Mode, Parent>::visitSelect(Select* curr) {
   visitChild(curr->ifTrue);
   visitChild(curr->ifFalse);
   visitChild(curr->condition);
-  if (justAddToStack(curr)) return;
-
-  o << int8_t(BinaryConsts::Select);
   if (curr->type == unreachable) {
     emitExtraUnreachable();
+    return;
   }
+  if (justAddToStack(curr)) return;
+  o << int8_t(BinaryConsts::Select);
 }
 
 template<StackWriterMode Mode, typename Parent>
