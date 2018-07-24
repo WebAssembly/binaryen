@@ -106,7 +106,9 @@ class StackIROptimizer {
 
 public:
   StackIROptimizer(Function* func, PassOptions& passOptions) :
-    func(func), passOptions(passOptions), insts(*func->stackIR.get()) {}
+    func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+    assert(func->stackIR);
+  }
 
   void run() {
     dce();
