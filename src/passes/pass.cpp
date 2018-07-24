@@ -362,6 +362,7 @@ void PassRunner::doAdd(Pass* pass) {
 // pass-debug mode is enabled.
 struct AfterEffectFunctionChecker {
   Function* func;
+  Name name;
 
   // Check Stack IR state: if the main IR changes, there should be no
   // stack IR, as the stack IR would be wrong.
@@ -370,7 +371,7 @@ struct AfterEffectFunctionChecker {
 
   // In the creator we can scan the state of the module and function before the
   // pass runs.
-  AfterEffectFunctionChecker(Function* func) : func(func) {
+  AfterEffectFunctionChecker(Function* func) : func(func), name(func->name) {
     beganWithStackIR = func->stackIR != nullptr;
     if (beganWithStackIR) {
       originalFunctionHash = FunctionHasher::hashFunction(func);
@@ -379,6 +380,7 @@ struct AfterEffectFunctionChecker {
 
   // This is called after the pass is run, at which time we can check things.
   void check() {
+    assert(func->name == name); // no global module changes should have occurred
     if (beganWithStackIR && func->stackIR) {
       auto after = FunctionHasher::hashFunction(func);
       if (after != originalFunctionHash) {
@@ -388,20 +390,71 @@ struct AfterEffectFunctionChecker {
   }
 };
 
-void PassRunner::runPass(Pass* pass) {
-  std::vector<std::unique_ptr<AfterEffectFunctionChecker>> checkers;
-  if (getPassDebug()) {
-    for (auto& func : wasm->functions) {
-      checkers.emplace_back(std::unique_ptr<AfterEffectFunctionChecker>(
-        new AfterEffectFunctionChecker(func.get())));
+// Runs checks on the entire module, in a non-function-parallel pass.
+// In particular, in such a pass functions may be removed or renamed, track that.
+struct AfterEffectModuleChecker {
+  Module* module;
+
+  std::vector<AfterEffectFunctionChecker> checkers;
+
+  bool beganWithAnyStackIR;
+
+  AfterEffectModuleChecker(Module* module) : module(module) {
+    for (auto& func : module->functions) {
+      checkers.emplace_back(func.get());
     }
+    beganWithAnyStackIR = hasAnyStackIR();
+  }
+
+  void check() {
+    if (beganWithAnyStackIR && hasAnyStackIR()) {
+      // If anything changed to the functions, that's not good.
+      if (checkers.size() != module->functions.size()) {
+        error();
+      }
+      for (Index i = 0; i < checkers.size(); i++) {
+        // Did a pointer change? (a deallocated function could cause that)
+        if (module->functions[i].get() != checkers[i].func ||
+            module->functions[i]->body != checkers[i].func->body) {
+          error();
+        }
+        // Did a name change?
+        if (module->functions[i]->name != checkers[i].name) {
+          error();
+        }
+      }
+      // Global function state appears to not have been changed: the same
+      // functions are there. Look into their contents.
+      for (auto& checker : checkers) {
+        checker.check();
+      }
+    }
+  }
+
+  void error() {
+    Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before and after the pass ran, and the pass modified global function state - pass should have been marked 'modifiesBinaryenIR'";
+  }
+
+  bool hasAnyStackIR() {
+    for (auto& func : module->functions) {
+      if (func->stackIR) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+void PassRunner::runPass(Pass* pass) {
+  std::unique_ptr<AfterEffectModuleChecker> checker;
+  if (getPassDebug()) {
+    checker = std::unique_ptr<AfterEffectModuleChecker>(
+      new AfterEffectModuleChecker(wasm));
   }
   pass->run(this, wasm);
   handleAfterEffects(pass);
   if (getPassDebug()) {
-    for (auto& checker : checkers) {
-      checker->check();
-    }
+    checker->check();
   }
 }
 
