@@ -376,6 +376,9 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
+    if (!func->stackIR) {
+      return;
+    }
     StackIROptimizer(func, getPassOptions()).run();
   }
 };
