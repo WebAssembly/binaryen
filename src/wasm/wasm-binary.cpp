@@ -95,6 +95,7 @@ void WasmBinaryWriter::writeResizableLimits(Address initial, Address maximum,
 template<typename T>
 int32_t WasmBinaryWriter::startSection(T code) {
   o << U32LEB(code);
+  if (sourceMap) sourceMapLocationsSizeAtSectionStart = sourceMapLocations.size();
   return writeU32LEBPlaceholder(); // section size to be filled in later
 }
 
@@ -105,7 +106,13 @@ void WasmBinaryWriter::finishSection(int32_t start) {
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes, &o[start] + MaxLEB32Bytes + size, &o[start] + sizeFieldSize);
-    o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+    auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+    o.resize(o.size() - adjustment);
+    if (sourceMap) {
+      for (auto i = sourceMapLocationsSizeAtSectionStart; i < sourceMapLocations.size(); ++i) {
+        sourceMapLocations[i].first -= adjustment;
+      }
+    }
   }
 }
 
@@ -220,6 +227,7 @@ void WasmBinaryWriter::writeFunctions() {
   size_t total = wasm->functions.size();
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
+    size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
@@ -247,7 +255,13 @@ void WasmBinaryWriter::writeFunctions() {
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
-      o.resize(o.size() - (MaxLEB32Bytes - sizeFieldSize));
+      auto adjustment = MaxLEB32Bytes - sizeFieldSize;
+      o.resize(o.size() - adjustment);
+      if (sourceMap) {
+        for (auto i = sourceMapLocationsSizeAtFunctionStart; i < sourceMapLocations.size(); ++i) {
+          sourceMapLocations[i].first -= adjustment;
+        }
+      }
     }
     tableOfContents.functionBodies.emplace_back(function->name, sizePos + sizeFieldSize, size);
   }
@@ -482,7 +496,6 @@ void WasmBinaryWriter::writeSymbolMap() {
 
 void WasmBinaryWriter::writeSourceMapProlog() {
   lastDebugLocation = { 0, /* lineNumber = */ 1, 0 };
-  lastBytecodeOffset = 0;
   *sourceMap << "{\"version\":3,\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
     if (i > 0) *sourceMap << ",";
@@ -490,10 +503,6 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
   }
   *sourceMap << "],\"names\":[],\"mappings\":\"";
-}
-
-void WasmBinaryWriter::writeSourceMapEpilog() {
-  *sourceMap << "\"}";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -510,6 +519,26 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
     out << char(digit < 20 ? 'g' + digit : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
   }
+}
+
+void WasmBinaryWriter::writeSourceMapEpilog() {
+  // write source map entries
+  size_t lastOffset = 0;
+  Function::DebugLocation lastLoc = { 0, /* lineNumber = */ 1, 0 };
+  for (const auto &offsetAndlocPair : sourceMapLocations) {
+    if (lastOffset > 0) {
+      *sourceMap << ",";
+    }
+    size_t offset = offsetAndlocPair.first;
+    const Function::DebugLocation& loc = *offsetAndlocPair.second;
+    writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
+    writeBase64VLQ(*sourceMap, int32_t(loc.fileIndex - lastLoc.fileIndex));
+    writeBase64VLQ(*sourceMap, int32_t(loc.lineNumber - lastLoc.lineNumber));
+    writeBase64VLQ(*sourceMap, int32_t(loc.columnNumber - lastLoc.columnNumber));
+    lastLoc = loc;
+    lastOffset = offset;
+  }
+  *sourceMap << "\"}";
 }
 
 void WasmBinaryWriter::writeUserSections() {
@@ -529,15 +558,8 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
     auto offset = o.size();
     auto& loc = iter->second;
-    if (lastBytecodeOffset > 0) {
-      *sourceMap << ",";
-    }
-    writeBase64VLQ(*sourceMap, int32_t(offset - lastBytecodeOffset));
-    writeBase64VLQ(*sourceMap, int32_t(loc.fileIndex - lastDebugLocation.fileIndex));
-    writeBase64VLQ(*sourceMap, int32_t(loc.lineNumber - lastDebugLocation.lineNumber));
-    writeBase64VLQ(*sourceMap, int32_t(loc.columnNumber - lastDebugLocation.columnNumber));
+    sourceMapLocations.emplace_back(offset, &loc);
     lastDebugLocation = loc;
-    lastBytecodeOffset = offset;
   }
 }
 
@@ -1784,6 +1806,7 @@ void WasmBinaryBuilder::readFunctions() {
       }
     }
     currFunction = nullptr;
+    useDebugLocation = false;
     functions.push_back(func);
   }
   if (debug) std::cerr << " end function bodies" << std::endl;

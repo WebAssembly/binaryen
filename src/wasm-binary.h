@@ -733,8 +733,11 @@ class WasmBinaryWriter {
 
   MixedArena allocator;
 
+  // storage of source map locations until the section is placed at its final location
+  // (shrinking LEBs may cause changes there)
+  std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
+  size_t sourceMapLocationsSizeAtSectionStart;
   Function::DebugLocation lastDebugLocation;
-  size_t lastBytecodeOffset;
 
   void prepare();
 public:
