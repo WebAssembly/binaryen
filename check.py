@@ -468,6 +468,8 @@ def run_validator_tests():
   run_command(cmd, expected_status=1)
   cmd = WASM_AS + ['--validate=none', os.path.join(options.binaryen_test, 'validator', 'invalid_return.wast')]
   run_command(cmd)
+  cmd = WASM_AS + [os.path.join(options.binaryen_test, 'validator', 'invalid_number.wast')]
+  run_command(cmd, expected_status=1)
 
 
 def run_vanilla_tests():

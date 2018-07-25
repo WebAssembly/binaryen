@@ -126,6 +126,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           if (modifier) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
+            if (istr.fail()) throw ParseException("invalid f32 format");
             pattern |= 0x7f800000U;
           } else {
             pattern = 0x7fc00000U;
@@ -140,6 +141,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
           if (modifier) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
+            if (istr.fail()) throw ParseException("invalid f64 format");
             pattern |= 0x7ff0000000000000ULL;
           } else {
             pattern = 0x7ff8000000000000UL;
@@ -172,11 +174,13 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         std::istringstream istr(str);
         uint32_t temp;
         istr >> std::hex >> temp;
+        if (istr.fail()) throw ParseException("invalid i32 format");
         ret->value = Literal(negative ? -temp : temp);
       } else {
         std::istringstream istr(str[0] == '-' ? str + 1 : str);
         uint32_t temp;
         istr >> temp;
+        if (istr.fail()) throw ParseException("invalid i32 format");
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
       break;
@@ -188,11 +192,13 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
         std::istringstream istr(str);
         uint64_t temp;
         istr >> std::hex >> temp;
+        if (istr.fail()) throw ParseException("invalid i64 format");
         ret->value = Literal(negative ? -temp : temp);
       } else {
         std::istringstream istr(str[0] == '-' ? str + 1 : str);
         uint64_t temp;
         istr >> temp;
+        if (istr.fail()) throw ParseException("invalid i64 format");
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
       break;
