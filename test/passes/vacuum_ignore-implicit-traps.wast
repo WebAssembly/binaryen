@@ -18,7 +18,7 @@
   (func $unary-binary-may-trap
    (drop
     (i64.div_s
-     (i64.const 70847791997969805621592064)
+     (i64.const -1)
      (i64.const 729618461987467893)
     )
    )
