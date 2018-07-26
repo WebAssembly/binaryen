@@ -34,6 +34,14 @@ static bool isFullForced() {
   return false;
 }
 
+// Prints the internal contents of an expression: everything but
+// the children.
+struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
+  // TODO
+};
+
+// Prints an expression in s-expr format, including both the
+// internal contents and the nested children.
 struct PrintSExpression : public Visitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
@@ -132,7 +140,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       if (full) {
         o << "[" << printType(curr->type) << "] ";
       }
-      printOpening(o, "block");
+      o << '(';
+      printMedium(o, "block");
       if (curr->name.is()) {
         o << ' ';
         printName(curr->name);
@@ -180,7 +189,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
   void visitIf(If *curr) {
-    printOpening(o, "if");
+    o << '(';
+    printMedium(o, "if");
     if (isConcreteType(curr->type)) {
       o << " (result " << printType(curr->type) << ')';
     }
@@ -205,7 +215,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
   void visitLoop(Loop *curr) {
-    printOpening(o, "loop");
+    o << '(';
+    printMedium(o, "loop");
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
@@ -232,12 +243,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
   void visitBreak(Break *curr) {
+    o << '(';
     if (curr->condition) {
-      printOpening(o, "br_if ");
+      printMedium(o, "br_if ");
       printName(curr->name);
       incIndent();
     } else {
-      printOpening(o, "br ");
+      printMedium(o, "br ");
       printName(curr->name);
       if (!curr->value || curr->value->is<Nop>()) {
         // avoid a new line just for the parens
@@ -253,7 +265,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitSwitch(Switch *curr) {
-    printOpening(o, "br_table");
+    o << '(';
+    printMedium(o, "br_table");
     for (auto& t : curr->targets) {
       o << ' ' << t;
     }
@@ -279,15 +292,18 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   void visitCall(Call *curr) {
-    printOpening(o, "call ");
+    o << '(';
+    printMedium(o, "call ");
     printCallBody(curr);
   }
   void visitCallImport(CallImport *curr) {
-    printOpening(o, "call ");
+    o << '(';
+    printMedium(o, "call ");
     printCallBody(curr);
   }
   void visitCallIndirect(CallIndirect *curr) {
-    printOpening(o, "call_indirect (type ") << curr->fullType << ')';
+    o << '(';
+    printMedium(o, "call_indirect (type ") << curr->fullType << ')';
     incIndent();
     for (auto operand : curr->operands) {
       printFullLine(operand);
@@ -296,13 +312,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitGetLocal(GetLocal *curr) {
-    printOpening(o, "get_local ") << printableLocal(curr->index) << ')';
+    o << '(';
+    printMedium(o, "get_local ") << printableLocal(curr->index) << ')';
   }
   void visitSetLocal(SetLocal *curr) {
+    o << '(';
     if (curr->isTee()) {
-      printOpening(o, "tee_local ");
+      printMedium(o, "tee_local ");
     } else {
-      printOpening(o, "set_local ");
+      printMedium(o, "set_local ");
     }
     o << printableLocal(curr->index);
     incIndent();
@@ -310,11 +328,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitGetGlobal(GetGlobal *curr) {
-    printOpening(o, "get_global ");
+    o << '(';
+    printMedium(o, "get_global ");
     printName(curr->name) << ')';
   }
   void visitSetGlobal(SetGlobal *curr) {
-    printOpening(o, "set_global ");
+    o << '(';
+    printMedium(o, "set_global ");
     printName(curr->name);
     incIndent();
     printFullLine(curr->value);
@@ -445,7 +465,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitAtomicWake(AtomicWake* curr) {
-    printOpening(o, "wake");
+    o << '(';
+    printMedium(o, "wake");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -621,13 +642,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitDrop(Drop *curr) {
-    printOpening(o, "drop");
+    o << '(';
+    printMedium(o, "drop");
     incIndent();
     printFullLine(curr->value);
     decIndent();
   }
   void visitReturn(Return *curr) {
-    printOpening(o, "return");
+    o << '(';
+    printMedium(o, "return");
     if (!curr->value) {
       // avoid a new line just for the parens
       o << ')';
@@ -638,25 +661,28 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitHost(Host *curr) {
+    o << '(';
     switch (curr->op) {
-      case PageSize: printOpening(o, "pagesize") << ')'; break;
-      case CurrentMemory: printOpening(o, "current_memory") << ')'; break;
+      case PageSize: printMedium(o, "pagesize") << ')'; break;
+      case CurrentMemory: printMedium(o, "current_memory") << ')'; break;
       case GrowMemory: {
-        printOpening(o, "grow_memory");
+        printMedium(o, "grow_memory");
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
         break;
       }
-      case HasFeature: printOpening(o, "hasfeature ") << curr->nameOperand << ')'; break;
+      case HasFeature: printMedium(o, "hasfeature ") << curr->nameOperand << ')'; break;
       default: abort();
     }
   }
   void visitNop(Nop *curr) {
-    printMinorOpening(o, "nop") << ')';
+    o << '(';
+    printMinor(o, "nop") << ')';
   }
   void visitUnreachable(Unreachable *curr) {
-    printMinorOpening(o, "unreachable") << ')';
+    o << '(';
+    printMinor(o, "unreachable") << ')';
   }
   // Module-level visitors
   void visitFunctionType(FunctionType *curr, Name* internalName = nullptr) {
@@ -664,7 +690,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (internalName) o << ' ' << *internalName;
     if (curr->params.size() > 0) {
       o << maybeSpace;
-      printMinorOpening(o, "param");
+      o << '(';
+      printMinor(o, "param");
       for (auto& param : curr->params) {
         o << ' ' << printType(param);
       }
@@ -672,12 +699,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printType(curr->result) << ')';
+      o << '(';
+      printMinor(o, "result ") << printType(curr->result) << ')';
     }
     o << ")";
   }
   void visitImport(Import *curr) {
-    printOpening(o, "import ");
+    o << '(';
+    printMedium(o, "import ");
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
@@ -690,7 +719,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ')';
   }
   void visitExport(Export *curr) {
-    printOpening(o, "export ");
+    o << '(';
+    printMedium(o, "export ");
     printText(o, curr->name.str) << " (";
     switch (curr->kind) {
       case ExternalKind::Function: o << "func"; break;
@@ -703,7 +733,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printName(curr->value) << "))";
   }
   void visitGlobal(Global *curr) {
-    printOpening(o, "global ");
+    o << '(';
+    printMedium(o, "global ");
     printName(curr->name) << ' ';
     if (curr->mutable_) {
       o << "(mut " << printType(curr->type) << ") ";
@@ -716,7 +747,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitFunction(Function *curr) {
     currFunction = curr;
     lastPrintedLocation = { 0, 0, 0 };
-    printOpening(o, "func ", true);
+    o << '(';
+    printMajor(o, "func ");
     printName(curr->name);
     if (currModule && !minify) {
       // emit the function index in a comment
@@ -735,17 +767,20 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
+        o << '(';
+        printMinor(o, "param ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
       }
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printType(curr->result) << ')';
+      o << '(';
+      printMinor(o, "result ") << printType(curr->result) << ')';
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
+      o << '(';
+      printMinor(o, "local ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // It is ok to emit a block here, as a function can directly contain a list, even if our
@@ -761,7 +796,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void printTableHeader(Table* curr) {
-    printOpening(o, "table") << ' ';
+    o << '(';
+    printMedium(o, "table") << ' ';
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
     o << " anyfunc)";
@@ -778,7 +814,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // Don't print empty segments
       if (segment.data.empty()) continue;
       doIndent(o, indent);
-      printOpening(o, "elem ", true);
+      o << '(';
+      printMajor(o, "elem ");
       visit(segment.offset);
       for (auto name : segment.data) {
         o << ' ';
@@ -788,9 +825,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
   }
   void printMemoryHeader(Memory* curr) {
-    printOpening(o, "memory") << ' ';
+    o << '(';
+    printMedium(o, "memory") << ' ';
     printName(curr->name) << ' ';
-    if (curr->shared) printOpening(o, "shared ");
+    if (curr->shared) {
+      o << '(';
+      printMedium(o, "shared ");
+    }
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
     if (curr->shared) o << ")";
@@ -806,7 +847,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto segment : curr->segments) {
       doIndent(o, indent);
-      printOpening(o, "data ", true);
+      o << '(';
+      printMajor(o, "data ");
       visit(segment.offset);
       o << " \"";
       for (size_t i = 0; i < segment.data.size(); i++) {
@@ -834,11 +876,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void visitModule(Module *curr) {
     currModule = curr;
-    printOpening(o, "module", true);
+    o << '(';
+    printMajor(o, "module");
     incIndent();
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      printOpening(o, "type") << ' ';
+      o << '(';
+      printMedium(o, "type") << ' ';
       printName(child->name) << ' ';
       visitFunctionType(child.get());
       o << ")" << maybeNewLine;
@@ -864,7 +908,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     if (curr->start.is()) {
       doIndent(o, indent);
-      printOpening(o, "start") << ' ' << curr->start << ')';
+      o << '(';
+      printMedium(o, "start") << ' ' << curr->start << ')';
       o << maybeNewLine;
     }
     for (auto& child : curr->functions) {
