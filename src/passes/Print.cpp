@@ -770,11 +770,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       case HasFeature: {
         o << curr->nameOperand;
+        o << ')';
         break;
       }
-      default: {}
+      default: {
+        o << ')';
+      }
     }
-    o << ')';
   }
   void visitNop(Nop* curr) {
     o << '(';
