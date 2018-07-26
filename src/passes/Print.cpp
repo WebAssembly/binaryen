@@ -1128,17 +1128,17 @@ std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Func
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
     case StackInst::LoopBegin: {
-      std::cout << getExpressionName(inst->origin);
+      o << getExpressionName(inst->origin);
       break;
     }
     case StackInst::BlockEnd:
     case StackInst::IfEnd:
     case StackInst::LoopEnd: {
-      std::cout << "end (" << printType(inst->type) << ')';
+      o << "end (" << printType(inst->type) << ')';
       break;
     }
     case StackInst::IfElse: {
-      std::cout << "else";
+      o << "else";
       break;
     }
     default: WASM_UNREACHABLE();
@@ -1147,12 +1147,48 @@ std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Func
 }
 
 std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
-  Index index = 0;
+  size_t indent = 0;
+  auto doIndent = [&indent, &o]() {
+    for (size_t j = 0; j < indent; j++) {
+      o << ' ';
+    }
+  };
   for (Index i = 0; i < (*ir).size(); i++) {
     auto* inst = (*ir)[i];
     if (!inst) continue;
-    std::cout << index++ << ' ';
-    printStackInst(inst, o, func) << '\n';
+    switch (inst->op) {
+      case StackInst::Basic: {
+        doIndent();
+        PrintExpressionContents(func, o).visit(inst->origin);
+        break;
+      }
+      case StackInst::BlockBegin:
+      case StackInst::IfBegin:
+      case StackInst::LoopBegin: {
+        doIndent();
+        PrintExpressionContents(func, o).visit(inst->origin);
+        indent++;
+        break;
+      }
+      case StackInst::BlockEnd:
+      case StackInst::IfEnd:
+      case StackInst::LoopEnd: {
+        indent--;
+        doIndent();
+        o << "end";
+        break;
+      }
+      case StackInst::IfElse: {
+        indent--;
+        doIndent();
+        o << "else";
+        indent++;
+        doIndent();
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+    std::cout << '\n';
   }
   return o;
 }
