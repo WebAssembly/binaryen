@@ -180,6 +180,24 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       o << " align=" << curr->align;
     }
   }
+  static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
+    prepareColor(o) << printType(type) << ".atomic.rmw";
+    if (type == unreachable) {
+      o << '?';
+    } else if (bytes != getTypeSize(type)) {
+      if (bytes == 1) {
+        o << '8';
+      } else if (bytes == 2) {
+        o << "16";
+      } else if (bytes == 4) {
+        o << "32";
+      } else {
+        WASM_UNREACHABLE();
+      }
+      o << "_u";
+    }
+    o << '.';
+  }
   void visitAtomicRMW(AtomicRMW* curr) {
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
@@ -658,24 +676,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
-    prepareColor(o) << printType(type) << ".atomic.rmw";
-    if (type == unreachable) {
-      o << '?';
-    } else if (bytes != getTypeSize(type)) {
-      if (bytes == 1) {
-        o << '8';
-      } else if (bytes == 2) {
-        o << "16";
-      } else if (bytes == 4) {
-        o << "32";
-      } else {
-        WASM_UNREACHABLE();
-      }
-      o << "_u";
-    }
-    o << '.';
-  }
   void visitAtomicRMW(AtomicRMW* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
@@ -1116,10 +1116,10 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
   return o;
 }
 
-std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o) {
+std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
   switch (inst->op) {
     case StackInst::Basic: {
-      PrintExpressionContents(currFunction, o).visit(inst->origin);
+      PrintExpressionContents(func, o).visit(inst->origin);
       break;
     }
     case StackInst::BlockBegin:

@@ -31,7 +31,7 @@ struct WasmPrinter {
 
   static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false);
 
-  static std::ostream& printStackInst(StackInst* inst, std::ostream& o);
+  static std::ostream& printStackInst(StackInst* inst, std::ostream& o, Function* func=nullptr);
 
   static std::ostream& printStackIR(StackIR* ir, std::ostream& o);
 };
