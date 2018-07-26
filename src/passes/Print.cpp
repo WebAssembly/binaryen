@@ -20,6 +20,7 @@
 
 #include <wasm.h>
 #include <wasm-printing.h>
+#include <wasm-stack.h>
 #include <pass.h>
 #include <pretty_printing.h>
 #include <ir/module-utils.h>
@@ -966,6 +967,43 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
     o << "[" << printType(expression->type) << "] ";
   }
   print.visit(expression);
+  return o;
+}
+
+std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o) {
+  switch (inst->op) {
+    case StackInst::Basic: {
+      std::cout << getExpressionName(inst->origin) << " (" << printType(inst->type) << ')';
+      break;
+    }
+    case StackInst::BlockBegin:
+    case StackInst::IfBegin:
+    case StackInst::LoopBegin: {
+      std::cout << getExpressionName(inst->origin);
+      break;
+    }
+    case StackInst::BlockEnd:
+    case StackInst::IfEnd:
+    case StackInst::LoopEnd: {
+      std::cout << "end (" << printType(inst->type) << ')';
+      break;
+    }
+    case StackInst::IfElse: {
+      std::cout << "else";
+      break;
+    }
+    default: WASM_UNREACHABLE();
+  }
+  return o;
+}
+
+std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o) {
+  Index index = 0;
+  for (Index i = 0; i < (*ir).size(); i++) {
+    auto* inst = (*ir)[i];
+    if (!inst) continue;
+    std::cout << index++ << ' ' << *inst << '\n';
+  }
   return o;
 }
 
