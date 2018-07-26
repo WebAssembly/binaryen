@@ -107,9 +107,11 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitCall(Call* curr) {
     printMedium(o, "call ");
+    printName(curr->target, o);
   }
   void visitCallImport(CallImport* curr) {
     printMedium(o, "call ");
+    printName(curr->target, o);
   }
   void visitCallIndirect(CallIndirect* curr) {
     printMedium(o, "call_indirect (type ") << curr->fullType << ')';
@@ -298,7 +300,6 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     }
   }
   void visitBinary(Binary* curr) {
-    o << '(';
     prepareColor(o);
     switch (curr->op) {
       case AddInt32:      o << "i32.add";      break;
