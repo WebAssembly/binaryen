@@ -1143,12 +1143,13 @@ std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Func
   return o;
 }
 
-std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o) {
+std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   Index index = 0;
   for (Index i = 0; i < (*ir).size(); i++) {
     auto* inst = (*ir)[i];
     if (!inst) continue;
-    std::cout << index++ << ' ' << *inst << '\n';
+    std::cout << index++ << ' ';
+    printStackInst(inst, o, func) << '\n';
   }
   return o;
 }

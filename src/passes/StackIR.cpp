@@ -21,6 +21,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-stack.h"
+#include "wasm-printing.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 
@@ -85,7 +86,7 @@ struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
   void doWalkFunction(Function* func) {
     std::cout << func->name << ":\n";
     if (func->stackIR) {
-      std::cout << *func->stackIR;
+      WasmPrinter::printStackIR(func->stackIR.get(), std::cout, func);
     } else {
       std::cout << " (no stack ir)";
     }

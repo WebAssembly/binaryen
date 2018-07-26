@@ -33,7 +33,7 @@ struct WasmPrinter {
 
   static std::ostream& printStackInst(StackInst* inst, std::ostream& o, Function* func=nullptr);
 
-  static std::ostream& printStackIR(StackIR* ir, std::ostream& o);
+  static std::ostream& printStackIR(StackIR* ir, std::ostream& o, Function* func=nullptr);
 };
 
 } // namespace wasm
