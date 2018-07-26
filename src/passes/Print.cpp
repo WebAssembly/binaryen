@@ -713,7 +713,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     decIndent();
   }
   void visitConst(Const* curr) {
+    o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   void visitUnary(Unary* curr) {
     o << '(';
