@@ -289,7 +289,6 @@ def update_wasm_merge_tests():
 
 
 def update_binaryen_js_tests():
-  return
   if not (MOZJS or NODEJS):
     print 'no vm to run binaryen.js tests'
     return
