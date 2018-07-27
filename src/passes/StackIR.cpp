@@ -21,7 +21,6 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-stack.h"
-#include "wasm-printing.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 
@@ -70,32 +69,6 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
 
 Pass* createGenerateStackIRPass() {
   return new GenerateStackIR();
-}
-
-// Print (for debugging purposes)
-
-struct PrintStackIR : public WalkerPass<PostWalker<PrintStackIR>> {
-  // Not parallel: this pass is just for testing and debugging; keep the output
-  // sorted by function order.
-  bool isFunctionParallel() override { return false; }
-
-  Pass* create() override { return new PrintStackIR; }
-
-  bool modifiesBinaryenIR() override { return false; }
-
-  void doWalkFunction(Function* func) {
-    std::cout << func->name << ":\n";
-    if (func->stackIR) {
-      WasmPrinter::printStackIR(func->stackIR.get(), std::cout, func);
-    } else {
-      std::cout << " (no stack ir)";
-    }
-    std::cout << '\n';
-  }
-};
-
-Pass* createPrintStackIRPass() {
-  return new PrintStackIR();
 }
 
 // Optimize

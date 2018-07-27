@@ -424,6 +424,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
 
   bool full = false; // whether to not elide nodes in output when possible
                      // (like implicit blocks) and to emit types
+  bool printStackIR = false; // whether to print stack IR if it is present
+                             // (if false, and Stack IR is there, we just
+                             // note it exists)
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -889,15 +892,21 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMinor(o, "local ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
-    // It is ok to emit a block here, as a function can directly contain a list, even if our
-    // ast avoids that for simplicity. We can just do that optimization here..
-    if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
-      Block* block = curr->body->cast<Block>();
-      for (auto item : block->list) {
-        printFullLine(item);
+    // Print the body.
+    if (!printStackIR || !curr->stackIR) {
+      // It is ok to emit a block here, as a function can directly contain a list, even if our
+      // ast avoids that for simplicity. We can just do that optimization here..
+      if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+        Block* block = curr->body->cast<Block>();
+        for (auto item : block->list) {
+          printFullLine(item);
+        }
+      } else {
+        printFullLine(curr->body);
       }
     } else {
-      printFullLine(curr->body);
+      // Print the stack IR.
+      WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
     }
     decIndent();
   }
@@ -1091,6 +1100,24 @@ Pass *createFullPrinterPass() {
   return new FullPrinter();
 }
 
+// Print Stack IR (if present)
+
+class PrintStackIR : public Printer {
+public:
+  PrintStackIR() : Printer() {}
+  PrintStackIR(std::ostream* o) : Printer(o) {}
+
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.printStackIR = true;
+    print.visitModule(module);
+  }
+};
+
+Pass* createPrintStackIRPass() {
+  return new PrintStackIR();
+}
+
 // Print individual expressions
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
@@ -1149,7 +1176,7 @@ std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Func
 }
 
 std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
-  size_t indent = 0;
+  size_t indent = func ? 2 : 0;
   auto doIndent = [&indent, &o]() {
     for (size_t j = 0; j < indent; j++) {
       o << ' ';

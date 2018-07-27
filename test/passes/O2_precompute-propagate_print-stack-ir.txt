@@ -1,5 +1,17 @@
-$0:
- (no stack ir)
+(module
+ (type $0 (func (param i32 i32 i32 i64) (result i64)))
+ (export "func" (func $0))
+ (func $0 (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i64) (result i64)
+  (local $4 i32)
+  (block $label$1
+   (set_local $3
+    (i64.const 2147483647)
+   )
+   (nop)
+  )
+  (i64.const 2147483647)
+ )
+)
 (module
  (type $0 (func (param i32 i32 i32 i64) (result i64)))
  (export "func" (func $0))
