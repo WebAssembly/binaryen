@@ -1,13 +1,13 @@
 $stacky-help:
-0 (i32.const 0)
-1 call $stacky-help
-2 (i32.const 1)
-3 call $stacky-help
-4 (i32.const 2)
-5 call $stacky-help
-6 drop
-7 i32.eqz
-8 i32.add
+i32.const 0
+call $stacky-help
+i32.const 1
+call $stacky-help
+i32.const 2
+call $stacky-help
+drop
+i32.eqz
+i32.add
 
 (module
  (type $0 (func (param i32) (result i32)))

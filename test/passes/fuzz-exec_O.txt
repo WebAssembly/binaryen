@@ -1,5 +1,5 @@
-[fuzz-exec] note result: $func_0 => (none.const ?)
-[fuzz-exec] note result: $func_1 => (none.const ?)
+[fuzz-exec] note result: $func_0 => none.const ?
+[fuzz-exec] note result: $func_1 => none.const ?
 [fuzz-exec] 2 results noted
 (module
  (type $0 (func (result i64)))
@@ -23,8 +23,8 @@
   )
  )
 )
-[fuzz-exec] note result: $func_0 => (none.const ?)
-[fuzz-exec] note result: $func_1 => (none.const ?)
+[fuzz-exec] note result: $func_0 => none.const ?
+[fuzz-exec] note result: $func_1 => none.const ?
 [fuzz-exec] 2 results noted
 [fuzz-exec] comparing $func_0
 [fuzz-exec] comparing $func_1

@@ -1,4 +1,4 @@
-[fuzz-exec] note result: $func_0 => (i32.const 16384)
+[fuzz-exec] note result: $func_0 => i32.const 16384
 [fuzz-exec] 1 results noted
 (module
  (type $0 (func (result i32)))
@@ -125,7 +125,7 @@
   )
  )
 )
-[fuzz-exec] note result: $func_0 => (i32.const 16384)
+[fuzz-exec] note result: $func_0 => i32.const 16384
 [fuzz-exec] 1 results noted
 [fuzz-exec] comparing $func_0
 [fuzz-exec] 1 results match
