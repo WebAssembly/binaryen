@@ -725,6 +725,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << " (; " << functionIndexes[curr->name] << " ;)";
     }
+    if (curr->stackIR && !minify) {
+      o << " (; has Stack IR ;)";
+    }
     if (curr->type.is()) {
       o << maybeSpace << "(type " << curr->type << ')';
     }
@@ -887,6 +890,8 @@ protected:
 public:
   Printer() : o(std::cout) {}
   Printer(std::ostream* o) : o(*o) {}
+
+  bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);

@@ -52,6 +52,23 @@ struct BinaryIndexes {
   }
 };
 
+inline Function* copyFunction(Function* func, Module& out) {
+  auto* ret = new Function();
+  ret->name = func->name;
+  ret->result = func->result;
+  ret->params = func->params;
+  ret->vars = func->vars;
+  ret->type = Name(); // start with no named type; the names in the other module may differ
+  ret->localNames = func->localNames;
+  ret->localIndices = func->localIndices;
+  ret->debugLocations = func->debugLocations;
+  ret->body = ExpressionManipulator::copy(func->body, out);
+  // TODO: copy Stack IR
+  assert(!func->stackIR);
+  out.addFunction(ret);
+  return ret;
+}
+
 inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
@@ -65,9 +82,7 @@ inline void copyModule(Module& in, Module& out) {
     out.addExport(new Export(*curr));
   }
   for (auto& curr : in.functions) {
-    auto* func = new Function(*curr);
-    func->body = ExpressionManipulator::copy(func->body, out);
-    out.addFunction(func);
+    copyFunction(curr.get(), out);
   }
   for (auto& curr : in.globals) {
     out.addGlobal(new Global(*curr));
@@ -83,19 +98,6 @@ inline void copyModule(Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
-}
-
-inline Function* copyFunction(Module& in, Module& out, Name name) {
-  Function *ret = out.getFunctionOrNull(name);
-  if (ret != nullptr) {
-    return ret;
-  }
-  auto* curr = in.getFunction(name);
-  auto* func = new Function(*curr);
-  func->body = ExpressionManipulator::copy(func->body, out);
-  func->type = Name();
-  out.addFunction(func);
-  return func;
 }
 
 } // namespace ModuleUtils

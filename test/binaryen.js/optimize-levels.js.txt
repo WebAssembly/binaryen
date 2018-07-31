@@ -36,7 +36,7 @@ shrinkLevel=1
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
- (func $test (; 0 ;) (type $i) (param $0 i32) (result i32)
+ (func $test (; 0 ;) (; has Stack IR ;) (type $i) (param $0 i32) (result i32)
   (select
    (get_local $0)
    (i32.const 0)
@@ -66,7 +66,7 @@ shrinkLevel=1
 (module
  (type $i (func (param i32) (result i32)))
  (export "test" (func $test))
- (func $test (; 0 ;) (type $i) (param $0 i32) (result i32)
+ (func $test (; 0 ;) (; has Stack IR ;) (type $i) (param $0 i32) (result i32)
   (select
    (get_local $0)
    (i32.const 0)

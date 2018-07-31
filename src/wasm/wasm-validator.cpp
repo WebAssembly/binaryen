@@ -171,6 +171,8 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   Pass* create() override { return new FunctionValidator(&info); }
 
+  bool modifiesBinaryenIR() override { return false; }
+
   ValidationInfo& info;
 
   FunctionValidator(ValidationInfo* info) : info(*info) {}

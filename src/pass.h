@@ -76,6 +76,10 @@ struct PassOptions {
     ret.setDefaultOptimizationOptions();
     return ret;
   }
+
+  static PassOptions getWithoutOptimization() {
+    return PassOptions(); // defaults are to not optimize
+  }
 };
 
 //
@@ -137,6 +141,9 @@ struct PassRunner {
   // Adds the default optimization passes that work on
   // entire modules as a whole, and make sense to
   // run after function passes.
+  // This is run at the very end of the optimization
+  // process - you can assume no other opts will be run
+  // afterwards.
   void addDefaultGlobalOptimizationPostPasses();
 
   // Run the passes on the module
@@ -174,7 +181,16 @@ protected:
 private:
   void doAdd(Pass* pass);
 
+  void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
+
+  // After running a pass, handle any changes due to
+  // how the pass is defined, such as clearing away any
+  // temporary data structures that the pass declares it
+  // invalidates.
+  // If a function is passed, we operate just on that function;
+  // otherwise, the whole module.
+  void handleAfterEffects(Pass* pass, Function* func=nullptr);
 };
 
 //
@@ -222,6 +238,14 @@ public:
   // pass. You may need to override this if you subclass a Walker, as otherwise
   // this will create the parent class.
   virtual Pass* create() { WASM_UNREACHABLE(); }
+
+  // Whether this pass modifies the Binaryen IR in the module. This is true for
+  // most passes, except for passes that have no side effects, or passes that
+  // only modify other things than Binaryen IR (for example, the Stack IR
+  // passes only modify that IR).
+  // This property is important as if Binaryen IR is modified, we need to throw
+  // out any Stack IR - it would need to be regenerated and optimized.
+  virtual bool modifiesBinaryenIR() { return true; }
 
   std::string name;
 

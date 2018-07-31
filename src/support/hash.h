@@ -22,9 +22,11 @@
 
 namespace wasm {
 
-inline uint32_t rehash(uint32_t x, uint32_t y) {
+typedef uint32_t HashType;
+
+inline HashType rehash(HashType x, HashType y) {
   // see http://www.cse.yorku.ca/~oz/hash.html and https://stackoverflow.com/a/2595226/1176841
-  uint32_t hash = 5381;
+  HashType hash = 5381;
   while (x) {
     hash = ((hash << 5) + hash) ^ (x & 0xff);
     x >>= 8;
@@ -37,9 +39,9 @@ inline uint32_t rehash(uint32_t x, uint32_t y) {
 }
 
 inline uint64_t rehash(uint64_t x, uint64_t y) {
-  auto ret = rehash(uint32_t(x), uint32_t(x >> 32));
-  ret = rehash(ret, uint32_t(y));
-  return rehash(ret, uint32_t(y >> 32));
+  auto ret = rehash(HashType(x), HashType(x >> 32));
+  ret = rehash(ret, HashType(y));
+  return rehash(ret, HashType(y >> 32));
 }
 
 } // namespace wasm

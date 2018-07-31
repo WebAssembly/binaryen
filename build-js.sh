@@ -131,6 +131,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
   $BINARYEN_SRC/passes/SSAify.cpp \
+  $BINARYEN_SRC/passes/StackIR.cpp \
   $BINARYEN_SRC/passes/TrapMode.cpp \
   $BINARYEN_SRC/passes/Untee.cpp \
   $BINARYEN_SRC/passes/Vacuum.cpp \

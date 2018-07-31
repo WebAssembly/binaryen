@@ -88,7 +88,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
 
   std::map<Name, Type> breakValues;
 
-  void visitBlock(Block *curr) {
+  void visitBlock(Block* curr) {
     if (curr->list.size() == 0) {
       curr->type = none;
       return;
@@ -129,13 +129,13 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       }
     }
   }
-  void visitIf(If *curr) { curr->finalize(); }
-  void visitLoop(Loop *curr) { curr->finalize(); }
-  void visitBreak(Break *curr) {
+  void visitIf(If* curr) { curr->finalize(); }
+  void visitLoop(Loop* curr) { curr->finalize(); }
+  void visitBreak(Break* curr) {
     curr->finalize();
     updateBreakValueType(curr->name, getValueType(curr->value));
   }
-  void visitSwitch(Switch *curr) {
+  void visitSwitch(Switch* curr) {
     curr->finalize();
     auto valueType = getValueType(curr->value);
     for (auto target : curr->targets) {
@@ -143,28 +143,28 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     }
     updateBreakValueType(curr->default_, valueType);
   }
-  void visitCall(Call *curr) { curr->finalize(); }
-  void visitCallImport(CallImport *curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
-  void visitLoad(Load *curr) { curr->finalize(); }
-  void visitStore(Store *curr) { curr->finalize(); }
-  void visitAtomicRMW(AtomicRMW *curr) { curr->finalize(); }
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr) { curr->finalize(); }
+  void visitCall(Call* curr) { curr->finalize(); }
+  void visitCallImport(CallImport* curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+  void visitLoad(Load* curr) { curr->finalize(); }
+  void visitStore(Store* curr) { curr->finalize(); }
+  void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
-  void visitConst(Const *curr) { curr->finalize(); }
-  void visitUnary(Unary *curr) { curr->finalize(); }
-  void visitBinary(Binary *curr) { curr->finalize(); }
-  void visitSelect(Select *curr) { curr->finalize(); }
-  void visitDrop(Drop *curr) { curr->finalize(); }
-  void visitReturn(Return *curr) { curr->finalize(); }
-  void visitHost(Host *curr) { curr->finalize(); }
-  void visitNop(Nop *curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+  void visitConst(Const* curr) { curr->finalize(); }
+  void visitUnary(Unary* curr) { curr->finalize(); }
+  void visitBinary(Binary* curr) { curr->finalize(); }
+  void visitSelect(Select* curr) { curr->finalize(); }
+  void visitDrop(Drop* curr) { curr->finalize(); }
+  void visitReturn(Return* curr) { curr->finalize(); }
+  void visitHost(Host* curr) { curr->finalize(); }
+  void visitNop(Nop* curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
 
   void visitFunction(Function* curr) {
     // we may have changed the body from unreachable to none, which might be bad
@@ -197,33 +197,33 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
 struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
-  void visitBlock(Block *curr) { curr->finalize(); }
-  void visitIf(If *curr) { curr->finalize(); }
-  void visitLoop(Loop *curr) { curr->finalize(); }
-  void visitBreak(Break *curr) { curr->finalize(); }
-  void visitSwitch(Switch *curr) { curr->finalize(); }
-  void visitCall(Call *curr) { curr->finalize(); }
-  void visitCallImport(CallImport *curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect *curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal *curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal *curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal *curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal *curr) { curr->finalize(); }
-  void visitLoad(Load *curr) { curr->finalize(); }
-  void visitStore(Store *curr) { curr->finalize(); }
+  void visitBlock(Block* curr) { curr->finalize(); }
+  void visitIf(If* curr) { curr->finalize(); }
+  void visitLoop(Loop* curr) { curr->finalize(); }
+  void visitBreak(Break* curr) { curr->finalize(); }
+  void visitSwitch(Switch* curr) { curr->finalize(); }
+  void visitCall(Call* curr) { curr->finalize(); }
+  void visitCallImport(CallImport* curr) { curr->finalize(); }
+  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
+  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
+  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
+  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
+  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
+  void visitLoad(Load* curr) { curr->finalize(); }
+  void visitStore(Store* curr) { curr->finalize(); }
   void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
-  void visitConst(Const *curr) { curr->finalize(); }
-  void visitUnary(Unary *curr) { curr->finalize(); }
-  void visitBinary(Binary *curr) { curr->finalize(); }
-  void visitSelect(Select *curr) { curr->finalize(); }
-  void visitDrop(Drop *curr) { curr->finalize(); }
-  void visitReturn(Return *curr) { curr->finalize(); }
-  void visitHost(Host *curr) { curr->finalize(); }
-  void visitNop(Nop *curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable *curr) { curr->finalize(); }
+  void visitConst(Const* curr) { curr->finalize(); }
+  void visitUnary(Unary* curr) { curr->finalize(); }
+  void visitBinary(Binary* curr) { curr->finalize(); }
+  void visitSelect(Select* curr) { curr->finalize(); }
+  void visitDrop(Drop* curr) { curr->finalize(); }
+  void visitReturn(Return* curr) { curr->finalize(); }
+  void visitHost(Host* curr) { curr->finalize(); }
+  void visitNop(Nop* curr) { curr->finalize(); }
+  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
 
   void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
   void visitImport(Import* curr) { WASM_UNREACHABLE(); }

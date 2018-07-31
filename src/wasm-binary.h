@@ -652,96 +652,14 @@ inline S32LEB binaryType(Type type) {
   return S32LEB(ret);
 }
 
-class WasmBinaryWriter;
-
-// Writes out binary format stack machine code for a Binaryen IR expression
-
-class StackWriter : public Visitor<StackWriter> {
-public:
-  // Without a function (offset for a global thing, etc.)
-  StackWriter(WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool debug=false)
-    : func(nullptr), parent(parent), o(o), sourceMap(false), debug(debug) {}
-
-  // With a function - one is created for the entire function
-  StackWriter(Function* func, WasmBinaryWriter& parent, BufferWithRandomAccess& o, bool sourceMap=false, bool debug=false)
-    : func(func), parent(parent), o(o), sourceMap(sourceMap), debug(debug) {
-    mapLocals();
-  }
-
-  std::map<Type, size_t> numLocalsByType; // type => number of locals of that type in the compact form
-
-  // visits a node, emitting the proper code for it
-  void visit(Expression* curr);
-  // emits a node, but if it is a block with no name, emit a list of its contents
-  void visitPossibleBlockContents(Expression* curr);
-
-  void visitBlock(Block *curr);
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
-  void visitBreak(Break *curr);
-  void visitSwitch(Switch *curr);
-  void visitCall(Call *curr);
-  void visitCallImport(CallImport *curr);
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
-  void visitSetLocal(SetLocal *curr);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
-  void visitLoad(Load *curr);
-  void visitStore(Store *curr);
-  void visitAtomicRMW(AtomicRMW *curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg *curr);
-  void visitAtomicWait(AtomicWait *curr);
-  void visitAtomicWake(AtomicWake *curr);
-  void visitConst(Const *curr);
-  void visitUnary(Unary *curr);
-  void visitBinary(Binary *curr);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
-  void visitHost(Host *curr);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
-
-private:
-  Function* func;
-  WasmBinaryWriter& parent;
-  BufferWithRandomAccess& o;
-  bool sourceMap;
-  bool debug;
-
-  std::map<Index, size_t> mappedLocals; // local index => index in compact form of [all int32s][all int64s]etc
-
-  std::vector<Name> breakStack;
-
-  int32_t getBreakIndex(Name name);
-  void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
-
-  void mapLocals();
-};
-
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
-  Module* wasm;
-  BufferWithRandomAccess& o;
-  bool debug;
-  bool debugInfo = true;
-  std::ostream* sourceMap = nullptr;
-  std::string sourceMapUrl;
-  std::string symbolMap;
-
-  MixedArena allocator;
-
-  // storage of source map locations until the section is placed at its final location
-  // (shrinking LEBs may cause changes there)
-  std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
-  size_t sourceMapLocationsSizeAtSectionStart;
-  Function::DebugLocation lastDebugLocation;
-
-  void prepare();
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, bool debug = false) : wasm(input), o(o), debug(debug) {
+  WasmBinaryWriter(Module* input,
+                   BufferWithRandomAccess& o,
+                   bool debug = false) :
+      wasm(input), o(o), debug(debug) {
     prepare();
   }
 
@@ -817,6 +735,28 @@ public:
   void emitBuffer(const char* data, size_t size);
   void emitString(const char *str);
   void finishUp();
+
+  Module* getModule() { return wasm; }
+
+private:
+  Module* wasm;
+  BufferWithRandomAccess& o;
+  bool debug;
+
+  bool debugInfo = true;
+  std::ostream* sourceMap = nullptr;
+  std::string sourceMapUrl;
+  std::string symbolMap;
+
+  MixedArena allocator;
+
+  // storage of source map locations until the section is placed at its final location
+  // (shrinking LEBs may cause changes there)
+  std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
+  size_t sourceMapLocationsSizeAtSectionStart;
+  Function::DebugLocation lastDebugLocation;
+
+  void prepare();
 };
 
 class WasmBinaryBuilder {
@@ -967,16 +907,16 @@ public:
 
   BinaryConsts::ASTNodes readExpression(Expression*& curr);
   void pushBlockElements(Block* curr, size_t start, size_t end);
-  void visitBlock(Block *curr);
+  void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
   Expression* getBlockOrSingleton(Type type);
 
-  void visitIf(If *curr);
-  void visitLoop(Loop *curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
   BreakTarget getBreakTarget(int32_t offset);
   void visitBreak(Break *curr, uint8_t code);
-  void visitSwitch(Switch *curr);
+  void visitSwitch(Switch* curr);
 
   template<typename T>
   void fillCall(T* call, FunctionType* type) {
@@ -990,11 +930,11 @@ public:
   }
 
   Expression* visitCall();
-  void visitCallIndirect(CallIndirect *curr);
-  void visitGetLocal(GetLocal *curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal *curr, uint8_t code);
-  void visitGetGlobal(GetGlobal *curr);
-  void visitSetGlobal(SetGlobal *curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
   void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
@@ -1005,12 +945,12 @@ public:
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
-  void visitSelect(Select *curr);
-  void visitReturn(Return *curr);
+  void visitSelect(Select* curr);
+  void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);
-  void visitNop(Nop *curr);
-  void visitUnreachable(Unreachable *curr);
-  void visitDrop(Drop *curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
+  void visitDrop(Drop* curr);
 
   void throwError(std::string text);
 };

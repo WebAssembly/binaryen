@@ -3,7 +3,7 @@
  (import "env" "memoryBase" (global $memoryBase i32))
  (data (get_global $memoryBase) "two_sides.asm.js")
  (export "_test" (func $_test))
- (func $f64-to-int (; 0 ;) (param $0 f64) (result i32)
+ (func $f64-to-int (; 0 ;) (; has Stack IR ;) (param $0 f64) (result i32)
   (if (result i32)
    (f64.ne
     (get_local $0)
@@ -29,7 +29,7 @@
    )
   )
  )
- (func $_test (; 1 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
+ (func $_test (; 1 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (result i32)
   (local $5 f64)
   (if (result i32)
    (get_local $4)

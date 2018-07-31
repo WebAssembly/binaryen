@@ -27,6 +27,7 @@
 #include "emscripten-optimizer/istring.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "asmjs/shared-constants.h"
 
@@ -143,19 +144,20 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     highBitVars.clear();
     labelHighBitVars.clear();
     freeTemps.clear();
-    Function oldFunc(*func);
+    Module temp;
+    auto* oldFunc = ModuleUtils::copyFunction(func, temp);
     func->params.clear();
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
     Index newIdx = 0;
-    Names::ensureNames(&oldFunc);
-    for (Index i = 0; i < oldFunc.getNumLocals(); ++i) {
-      assert(oldFunc.hasLocalName(i));
-      Name lowName = oldFunc.getLocalName(i);
+    Names::ensureNames(oldFunc);
+    for (Index i = 0; i < oldFunc->getNumLocals(); ++i) {
+      assert(oldFunc->hasLocalName(i));
+      Name lowName = oldFunc->getLocalName(i);
       Name highName = makeHighName(lowName);
-      Type paramType = oldFunc.getLocalType(i);
-      auto builderFunc = (i < oldFunc.getVarIndexBase()) ?
+      Type paramType = oldFunc->getLocalType(i);
+      auto builderFunc = (i < oldFunc->getVarIndexBase()) ?
           Builder::addParam :
           static_cast<Index (*)(Function*, Name, Type)>(Builder::addVar);
       if (paramType == i64) {

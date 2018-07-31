@@ -7,7 +7,7 @@
  (data (get_global $memoryBase) "i64-setTempRet0.asm.js")
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
- (func $imports (; 1 ;) (result i32)
+ (func $imports (; 1 ;) (; has Stack IR ;) (result i32)
   (i32.wrap/i64
    (i64.or
     (i64.extend_u/i32
@@ -22,7 +22,7 @@
    )
   )
  )
- (func $legalstub$illegalResult (; 2 ;) (result i32)
+ (func $legalstub$illegalResult (; 2 ;) (; has Stack IR ;) (result i32)
   (set_global $tempRet0
    (i32.const 2)
   )
