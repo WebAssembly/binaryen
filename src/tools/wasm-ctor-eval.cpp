@@ -345,9 +345,12 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       }
       std::cerr << "  ...success on " << ctor << ".\n";
       // success, the entire function was evalled!
+      // we can nop the function (which may be used elsewhere)
+      // and remove the export
       auto* exp = wasm.getExport(ctor);
       auto* func = wasm.getFunction(exp->value);
       func->body = wasm.allocator.alloc<Nop>();
+      wasm.removeExport(exp->name);
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
@@ -426,6 +429,7 @@ int main(int argc, const char* argv[]) {
     passRunner.add("dce");
     passRunner.add("merge-blocks");
     passRunner.add("vacuum");
+    passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
 

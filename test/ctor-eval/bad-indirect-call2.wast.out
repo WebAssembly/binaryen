@@ -1,5 +1,4 @@
 (module
- (type $v (func))
  (type $FUNCSIG$v (func))
  (import "env" "_abort" (func $_abort))
  (table 2 2 anyfunc)
@@ -7,8 +6,8 @@
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
- (func $test1 (; 1 ;) (type $v)
-  (call_indirect (type $v)
+ (func $test1 (; 1 ;) (type $FUNCSIG$v)
+  (call_indirect (type $FUNCSIG$v)
    (i32.const 0)
   )
   (i32.store8
@@ -16,7 +15,7 @@
    (i32.const 120)
   )
  )
- (func $call-indirect (; 2 ;) (type $v)
+ (func $call-indirect (; 2 ;) (type $FUNCSIG$v)
   (i32.store8
    (i32.const 40)
    (i32.const 67)
