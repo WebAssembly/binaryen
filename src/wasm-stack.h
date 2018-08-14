@@ -70,51 +70,6 @@ public:
                  // e.g. wasm has no unreachable blocks, they must be none
 };
 
-} // namespace wasm
-
-namespace std {
-
-inline std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
-  switch (inst.op) {
-    case wasm::StackInst::Basic: {
-      std::cout << wasm::getExpressionName(inst.origin) << " (" << wasm::printType(inst.type) << ')';
-      break;
-    }
-    case wasm::StackInst::BlockBegin:
-    case wasm::StackInst::IfBegin:
-    case wasm::StackInst::LoopBegin: {
-      std::cout << wasm::getExpressionName(inst.origin);
-      break;
-    }
-    case wasm::StackInst::BlockEnd:
-    case wasm::StackInst::IfEnd:
-    case wasm::StackInst::LoopEnd: {
-      std::cout << "end (" << wasm::printType(inst.type) << ')';
-      break;
-    }
-    case wasm::StackInst::IfElse: {
-      std::cout << "else";
-      break;
-    }
-    default: WASM_UNREACHABLE();
-  }
-  return o;
-}
-
-inline std::ostream& operator<<(std::ostream& o, wasm::StackIR& insts) {
-  wasm::Index index = 0;
-  for (wasm::Index i = 0; i < insts.size(); i++) {
-    auto* inst = insts[i];
-    if (!inst) continue;
-    std::cout << index++ << ' ' << *inst << '\n';
-  }
-  return o;
-}
-
-} // namespace std
-
-namespace wasm {
-
 //
 // StackWriter: Writes out binary format stack machine code for a Binaryen IR expression
 //

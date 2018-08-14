@@ -20,6 +20,7 @@
 
 #include <wasm.h>
 #include <wasm-printing.h>
+#include <wasm-stack.h>
 #include <pass.h>
 #include <pretty_printing.h>
 #include <ir/module-utils.h>
@@ -33,294 +34,108 @@ static bool isFullForced() {
   return false;
 }
 
-struct PrintSExpression : public Visitor<PrintSExpression> {
-  std::ostream& o;
-  unsigned indent = 0;
+static std::ostream& printName(Name name, std::ostream& o) {
+  // we need to quote names if they have tricky chars
+  if (strpbrk(name.str, "()")) {
+    o << '"' << name << '"';
+  } else {
+    o << name;
+  }
+  return o;
+}
 
-  bool minify;
-  const char *maybeSpace;
-  const char *maybeNewLine;
+static Name printableLocal(Index index, Function* func) {
+  Name name;
+  if (func) {
+    name = func->getLocalNameOrDefault(index);
+  }
+  if (!name.is()) {
+    name = Name::fromInt(index);
+  }
+  return name;
+}
 
-  bool full = false; // whether to not elide nodes in output when possible
-                     // (like implicit blocks) and to emit types
 
-  Module* currModule = nullptr;
+// Prints the internal contents of an expression: everything but
+// the children.
+struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   Function* currFunction = nullptr;
-  Function::DebugLocation lastPrintedLocation;
+  std::ostream& o;
 
-  std::unordered_map<Name, Index> functionIndexes;
+  PrintExpressionContents(Function* currFunction, std::ostream& o) :
+    currFunction(currFunction), o(o) {}
 
-  PrintSExpression(std::ostream& o) : o(o) {
-    setMinify(false);
-    if (!full) full = isFullForced();
-  }
-
-  void visit(Expression* curr) {
-    if (currFunction) {
-      // show an annotation, if there is one
-      auto& debugLocations = currFunction->debugLocations;
-      auto iter = debugLocations.find(curr);
-      if (iter != debugLocations.end()) {
-        auto fileName = currModule->debugInfoFileNames[iter->second.fileIndex];
-        if (lastPrintedLocation != iter->second) {
-          lastPrintedLocation = iter->second;
-          o << ";;@ " << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
-          doIndent(o, indent);
-        }
-      }
+  void visitBlock(Block* curr) {
+    printMedium(o, "block");
+    if (curr->name.is()) {
+      o << ' ';
+      printName(curr->name, o);
     }
-    Visitor<PrintSExpression>::visit(curr);
-  }
-
-  void setMinify(bool minify_) {
-    minify = minify_;
-    maybeSpace = minify ? "" : " ";
-    maybeNewLine = minify ? "" : "\n";
-  }
-
-  void setFull(bool full_) { full = full_; }
-
-  void incIndent() {
-    if (minify) return;
-    o << '\n';
-    indent++;
-  }
-  void decIndent() {
-    if (!minify) {
-      indent--;
-      doIndent(o, indent);
-    }
-    o << ')';
-  }
-  void printFullLine(Expression *expression) {
-    !minify && doIndent(o, indent);
-    if (full) {
-      o << "[" << printType(expression->type) << "] ";
-    }
-    visit(expression);
-    o << maybeNewLine;
-  }
-
-  Name printableLocal(Index index) {
-    Name name;
-    if (currFunction) {
-      name = currFunction->getLocalNameOrDefault(index);
-    }
-    if (!name.is()) {
-      name = Name::fromInt(index);
-    }
-    return name;
-  }
-
-  std::ostream& printName(Name name) {
-    // we need to quote names if they have tricky chars
-    if (strpbrk(name.str, "()")) {
-      o << '"' << name << '"';
-    } else {
-      o << name;
-    }
-    return o;
-  }
-
-  void visitBlock(Block *curr) {
-    // special-case Block, because Block nesting (in their first element) can be incredibly deep
-    std::vector<Block*> stack;
-    while (1) {
-      if (stack.size() > 0) doIndent(o, indent);
-      stack.push_back(curr);
-      if (full) {
-        o << "[" << printType(curr->type) << "] ";
-      }
-      printOpening(o, "block");
-      if (curr->name.is()) {
-        o << ' ';
-        printName(curr->name);
-      }
-      if (isConcreteType(curr->type)) {
-        o << " (result " << printType(curr->type) << ')';
-      }
-      incIndent();
-      if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
-        // recurse into the first element
-        curr = curr->list[0]->cast<Block>();
-        continue;
-      } else {
-        break; // that's all we can recurse, start to unwind
-      }
-    }
-    auto* top = stack.back();
-    while (stack.size() > 0) {
-      curr = stack.back();
-      stack.pop_back();
-      auto& list = curr->list;
-      for (size_t i = 0; i < list.size(); i++) {
-        if (curr != top && i == 0) {
-          // one of the block recursions we already handled
-          decIndent();
-          if (full) {
-            o << " ;; end block";
-            auto* child = list[0]->cast<Block>();
-            if (child->name.is()) {
-              o << ' ' << child->name;
-            }
-          }
-          o << '\n';
-          continue;
-        }
-        printFullLine(list[i]);
-      }
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end block";
-      if (curr->name.is()) {
-        o << ' ' << curr->name;
-      }
-    }
-  }
-  void visitIf(If *curr) {
-    printOpening(o, "if");
     if (isConcreteType(curr->type)) {
       o << " (result " << printType(curr->type) << ')';
     }
-    incIndent();
-    printFullLine(curr->condition);
-    // ifTrue and False have implict blocks, avoid printing them if possible
-    if (!full && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
-      printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
-    } else {
-      printFullLine(curr->ifTrue);
-    }
-    if (curr->ifFalse) {
-      if (!full && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
-        printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
-      } else {
-        printFullLine(curr->ifFalse);
-      }
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end if";
+  }
+  void visitIf(If* curr) {
+    printMedium(o, "if");
+    if (isConcreteType(curr->type)) {
+      o << " (result " << printType(curr->type) << ')';
     }
   }
-  void visitLoop(Loop *curr) {
-    printOpening(o, "loop");
+  void visitLoop(Loop* curr) {
+    printMedium(o, "loop");
     if (curr->name.is()) {
       o << ' ' << curr->name;
     }
     if (isConcreteType(curr->type)) {
       o << " (result " << printType(curr->type) << ')';
     }
-    incIndent();
-    auto block = curr->body->dynCast<Block>();
-    if (!full && block && block->name.isNull()) {
-      // wasm spec has loops containing children directly, while our ast
-      // has a single child for simplicity. print out the optimal form.
-      for (auto expression : block->list) {
-        printFullLine(expression);
-      }
-    } else {
-      printFullLine(curr->body);
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end loop";
-      if (curr->name.is()) {
-        o << ' ' << curr->name;
-      }
-    }
   }
-  void visitBreak(Break *curr) {
+  void visitBreak(Break* curr) {
     if (curr->condition) {
-      printOpening(o, "br_if ");
-      printName(curr->name);
-      incIndent();
+      printMedium(o, "br_if ");
     } else {
-      printOpening(o, "br ");
-      printName(curr->name);
-      if (!curr->value || curr->value->is<Nop>()) {
-        // avoid a new line just for the parens
-        o << ')';
-        return;
-      }
-      incIndent();
+      printMedium(o, "br ");
     }
-    if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
-    if (curr->condition) {
-      printFullLine(curr->condition);
-    }
-    decIndent();
+    printName(curr->name, o);
   }
-  void visitSwitch(Switch *curr) {
-    printOpening(o, "br_table");
+  void visitSwitch(Switch* curr) {
+    printMedium(o, "br_table");
     for (auto& t : curr->targets) {
       o << ' ' << t;
     }
     o << ' ' << curr->default_;
-    incIndent();
-    if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
-    printFullLine(curr->condition);
-    decIndent();
   }
-
-  template<typename CallBase>
-  void printCallBody(CallBase* curr) {
-    printName(curr->target);
-    if (curr->operands.size() > 0) {
-      incIndent();
-      for (auto operand : curr->operands) {
-        printFullLine(operand);
-      }
-      decIndent();
-    } else {
-      o << ')';
-    }
+  void visitCall(Call* curr) {
+    printMedium(o, "call ");
+    printName(curr->target, o);
   }
-
-  void visitCall(Call *curr) {
-    printOpening(o, "call ");
-    printCallBody(curr);
+  void visitCallImport(CallImport* curr) {
+    printMedium(o, "call ");
+    printName(curr->target, o);
   }
-  void visitCallImport(CallImport *curr) {
-    printOpening(o, "call ");
-    printCallBody(curr);
+  void visitCallIndirect(CallIndirect* curr) {
+    printMedium(o, "call_indirect (type ") << curr->fullType << ')';
   }
-  void visitCallIndirect(CallIndirect *curr) {
-    printOpening(o, "call_indirect (type ") << curr->fullType << ')';
-    incIndent();
-    for (auto operand : curr->operands) {
-      printFullLine(operand);
-    }
-    printFullLine(curr->target);
-    decIndent();
+  void visitGetLocal(GetLocal* curr) {
+    printMedium(o, "get_local ") << printableLocal(curr->index, currFunction);
   }
-  void visitGetLocal(GetLocal *curr) {
-    printOpening(o, "get_local ") << printableLocal(curr->index) << ')';
-  }
-  void visitSetLocal(SetLocal *curr) {
+  void visitSetLocal(SetLocal* curr) {
     if (curr->isTee()) {
-      printOpening(o, "tee_local ");
+      printMedium(o, "tee_local ");
     } else {
-      printOpening(o, "set_local ");
+      printMedium(o, "set_local ");
     }
-    o << printableLocal(curr->index);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
+    o << printableLocal(curr->index, currFunction);
   }
-  void visitGetGlobal(GetGlobal *curr) {
-    printOpening(o, "get_global ");
-    printName(curr->name) << ')';
+  void visitGetGlobal(GetGlobal* curr) {
+    printMedium(o, "get_global ");
+    printName(curr->name, o);
   }
-  void visitSetGlobal(SetGlobal *curr) {
-    printOpening(o, "set_global ");
-    printName(curr->name);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
+  void visitSetGlobal(SetGlobal* curr) {
+    printMedium(o, "set_global ");
+    printName(curr->name, o);
   }
-  void visitLoad(Load *curr) {
-    o << '(';
+  void visitLoad(Load* curr) {
     prepareColor(o) << printType(curr->type);
     if (curr->isAtomic) o << ".atomic";
     o << ".load";
@@ -343,12 +158,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
-    incIndent();
-    printFullLine(curr->ptr);
-    decIndent();
   }
-  void visitStore(Store *curr) {
-    o << '(';
+  void visitStore(Store* curr) {
     prepareColor(o) << printType(curr->valueType);
     if (curr->isAtomic) o << ".atomic";
     o << ".store";
@@ -370,10 +181,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->align != curr->bytes) {
       o << " align=" << curr->align;
     }
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->value);
-    decIndent();
   }
   static void printRMWSize(std::ostream& o, Type type, uint8_t bytes) {
     prepareColor(o) << printType(type) << ".atomic.rmw";
@@ -394,7 +201,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '.';
   }
   void visitAtomicRMW(AtomicRMW* curr) {
-    o << '(';
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
@@ -409,13 +215,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->value);
-    decIndent();
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    o << '(';
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     o << "cmpxchg";
@@ -423,41 +224,24 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->expected);
-    printFullLine(curr->replacement);
-    decIndent();
   }
   void visitAtomicWait(AtomicWait* curr) {
-    o << '(' ;
     prepareColor(o);
     o << printType(curr->expectedType) << ".wait";
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    restoreNormalColor(o);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->expected);
-    printFullLine(curr->timeout);
-    decIndent();
   }
   void visitAtomicWake(AtomicWake* curr) {
-    printOpening(o, "wake");
+    printMedium(o, "wake");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->wakeCount);
-    decIndent();
   }
-  void visitConst(Const *curr) {
+  void visitConst(Const* curr) {
     o << curr->value;
   }
-  void visitUnary(Unary *curr) {
-    o << '(';
+  void visitUnary(Unary* curr) {
     prepareColor(o);
     switch (curr->op) {
       case ClzInt32:               o << "i32.clz";     break;
@@ -514,12 +298,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExtendS32Int64:         o << "i64.extend32_s"; break;
       default: abort();
     }
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
   }
-  void visitBinary(Binary *curr) {
-    o << '(';
+  void visitBinary(Binary* curr) {
     prepareColor(o);
     switch (curr->op) {
       case AddInt32:      o << "i32.add";      break;
@@ -605,28 +385,375 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       default:       abort();
     }
     restoreNormalColor(o);
+  }
+  void visitSelect(Select* curr) {
+    prepareColor(o) << "select";
+  }
+  void visitDrop(Drop* curr) {
+    printMedium(o, "drop");
+  }
+  void visitReturn(Return* curr) {
+    printMedium(o, "return");
+  }
+  void visitHost(Host* curr) {
+    switch (curr->op) {
+      case PageSize:      printMedium(o, "pagesize"); break;
+      case CurrentMemory: printMedium(o, "current_memory"); break;
+      case GrowMemory:    printMedium(o, "grow_memory"); break;
+      case HasFeature:    printMedium(o, "hasfeature ") << curr->nameOperand; break;
+      default: WASM_UNREACHABLE();
+    }
+  }
+  void visitNop(Nop* curr) {
+    printMinor(o, "nop");
+  }
+  void visitUnreachable(Unreachable* curr) {
+    printMinor(o, "unreachable");
+  }
+};
+
+// Prints an expression in s-expr format, including both the
+// internal contents and the nested children.
+struct PrintSExpression : public Visitor<PrintSExpression> {
+  std::ostream& o;
+  unsigned indent = 0;
+
+  bool minify;
+  const char *maybeSpace;
+  const char *maybeNewLine;
+
+  bool full = false; // whether to not elide nodes in output when possible
+                     // (like implicit blocks) and to emit types
+  bool printStackIR = false; // whether to print stack IR if it is present
+                             // (if false, and Stack IR is there, we just
+                             // note it exists)
+
+  Module* currModule = nullptr;
+  Function* currFunction = nullptr;
+  Function::DebugLocation lastPrintedLocation;
+
+  std::unordered_map<Name, Index> functionIndexes;
+
+  PrintSExpression(std::ostream& o) : o(o) {
+    setMinify(false);
+    if (!full) full = isFullForced();
+  }
+
+  void visit(Expression* curr) {
+    if (currFunction) {
+      // show an annotation, if there is one
+      auto& debugLocations = currFunction->debugLocations;
+      auto iter = debugLocations.find(curr);
+      if (iter != debugLocations.end()) {
+        auto fileName = currModule->debugInfoFileNames[iter->second.fileIndex];
+        if (lastPrintedLocation != iter->second) {
+          lastPrintedLocation = iter->second;
+          o << ";;@ " << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
+          doIndent(o, indent);
+        }
+      }
+    }
+    Visitor<PrintSExpression>::visit(curr);
+  }
+
+  void setMinify(bool minify_) {
+    minify = minify_;
+    maybeSpace = minify ? "" : " ";
+    maybeNewLine = minify ? "" : "\n";
+  }
+
+  void setFull(bool full_) { full = full_; }
+
+  void incIndent() {
+    if (minify) return;
+    o << '\n';
+    indent++;
+  }
+  void decIndent() {
+    if (!minify) {
+      indent--;
+      doIndent(o, indent);
+    }
+    o << ')';
+  }
+  void printFullLine(Expression *expression) {
+    !minify && doIndent(o, indent);
+    if (full) {
+      o << "[" << printType(expression->type) << "] ";
+    }
+    visit(expression);
+    o << maybeNewLine;
+  }
+
+  void visitBlock(Block* curr) {
+    // special-case Block, because Block nesting (in their first element) can be incredibly deep
+    std::vector<Block*> stack;
+    while (1) {
+      if (stack.size() > 0) doIndent(o, indent);
+      stack.push_back(curr);
+      if (full) {
+        o << "[" << printType(curr->type) << "] ";
+      }
+      o << '(';
+      PrintExpressionContents(currFunction, o).visit(curr);
+      incIndent();
+      if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
+        // recurse into the first element
+        curr = curr->list[0]->cast<Block>();
+        continue;
+      } else {
+        break; // that's all we can recurse, start to unwind
+      }
+    }
+    auto* top = stack.back();
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      auto& list = curr->list;
+      for (size_t i = 0; i < list.size(); i++) {
+        if (curr != top && i == 0) {
+          // one of the block recursions we already handled
+          decIndent();
+          if (full) {
+            o << " ;; end block";
+            auto* child = list[0]->cast<Block>();
+            if (child->name.is()) {
+              o << ' ' << child->name;
+            }
+          }
+          o << '\n';
+          continue;
+        }
+        printFullLine(list[i]);
+      }
+    }
+    decIndent();
+    if (full) {
+      o << " ;; end block";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
+  }
+  void visitIf(If* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->condition);
+    // ifTrue and False have implict blocks, avoid printing them if possible
+    if (!full && curr->ifTrue->is<Block>() && curr->ifTrue->dynCast<Block>()->name.isNull() && curr->ifTrue->dynCast<Block>()->list.size() == 1) {
+      printFullLine(curr->ifTrue->dynCast<Block>()->list.back());
+    } else {
+      printFullLine(curr->ifTrue);
+    }
+    if (curr->ifFalse) {
+      if (!full && curr->ifFalse->is<Block>() && curr->ifFalse->dynCast<Block>()->name.isNull() && curr->ifFalse->dynCast<Block>()->list.size() == 1) {
+        printFullLine(curr->ifFalse->dynCast<Block>()->list.back());
+      } else {
+        printFullLine(curr->ifFalse);
+      }
+    }
+    decIndent();
+    if (full) {
+      o << " ;; end if";
+    }
+  }
+  void visitLoop(Loop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    auto block = curr->body->dynCast<Block>();
+    if (!full && block && block->name.isNull()) {
+      // wasm spec has loops containing children directly, while our ast
+      // has a single child for simplicity. print out the optimal form.
+      for (auto expression : block->list) {
+        printFullLine(expression);
+      }
+    } else {
+      printFullLine(curr->body);
+    }
+    decIndent();
+    if (full) {
+      o << " ;; end loop";
+      if (curr->name.is()) {
+        o << ' ' << curr->name;
+      }
+    }
+  }
+  void visitBreak(Break* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    if (curr->condition) {
+      incIndent();
+    } else {
+      if (!curr->value || curr->value->is<Nop>()) {
+        // avoid a new line just for the parens
+        o << ')';
+        return;
+      }
+      incIndent();
+    }
+    if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
+    if (curr->condition) {
+      printFullLine(curr->condition);
+    }
+    decIndent();
+  }
+  void visitSwitch(Switch* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    if (curr->value && !curr->value->is<Nop>()) printFullLine(curr->value);
+    printFullLine(curr->condition);
+    decIndent();
+  }
+
+  template<typename CallBase>
+  void printCallOperands(CallBase* curr) {
+    if (curr->operands.size() > 0) {
+      incIndent();
+      for (auto operand : curr->operands) {
+        printFullLine(operand);
+      }
+      decIndent();
+    } else {
+      o << ')';
+    }
+  }
+
+  void visitCall(Call* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    printCallOperands(curr);
+  }
+  void visitCallImport(CallImport* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    printCallOperands(curr);
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    printFullLine(curr->target);
+    decIndent();
+  }
+  void visitGetLocal(GetLocal* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitSetLocal(SetLocal* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitGetGlobal(GetGlobal* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitSetGlobal(SetGlobal* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitLoad(Load* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    decIndent();
+  }
+  void visitStore(Store* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitAtomicRMW(AtomicRMW* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->expected);
+    printFullLine(curr->replacement);
+    decIndent();
+  }
+  void visitAtomicWait(AtomicWait* curr) {
+    o << '(' ;
+    PrintExpressionContents(currFunction, o).visit(curr);
+    restoreNormalColor(o);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->expected);
+    printFullLine(curr->timeout);
+    decIndent();
+  }
+  void visitAtomicWake(AtomicWake* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->wakeCount);
+    decIndent();
+  }
+  void visitConst(Const* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
+  }
+  void visitUnary(Unary* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
+  }
+  void visitBinary(Binary* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->left);
     printFullLine(curr->right);
     decIndent();
   }
-  void visitSelect(Select *curr) {
+  void visitSelect(Select* curr) {
     o << '(';
-    prepareColor(o) << "select";
+    PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ifTrue);
     printFullLine(curr->ifFalse);
     printFullLine(curr->condition);
     decIndent();
   }
-  void visitDrop(Drop *curr) {
-    printOpening(o, "drop");
+  void visitDrop(Drop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->value);
     decIndent();
   }
-  void visitReturn(Return *curr) {
-    printOpening(o, "return");
+  void visitReturn(Return* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
     if (!curr->value) {
       // avoid a new line just for the parens
       o << ')';
@@ -636,34 +763,44 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     printFullLine(curr->value);
     decIndent();
   }
-  void visitHost(Host *curr) {
+  void visitHost(Host* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
     switch (curr->op) {
-      case PageSize: printOpening(o, "pagesize") << ')'; break;
-      case CurrentMemory: printOpening(o, "current_memory") << ')'; break;
       case GrowMemory: {
-        printOpening(o, "grow_memory");
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
         break;
       }
-      case HasFeature: printOpening(o, "hasfeature ") << curr->nameOperand << ')'; break;
-      default: abort();
+      case HasFeature: {
+        o << curr->nameOperand;
+        o << ')';
+        break;
+      }
+      default: {
+        o << ')';
+      }
     }
   }
-  void visitNop(Nop *curr) {
-    printMinorOpening(o, "nop") << ')';
+  void visitNop(Nop* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
-  void visitUnreachable(Unreachable *curr) {
-    printMinorOpening(o, "unreachable") << ')';
+  void visitUnreachable(Unreachable* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   // Module-level visitors
-  void visitFunctionType(FunctionType *curr, Name* internalName = nullptr) {
+  void visitFunctionType(FunctionType* curr, Name* internalName = nullptr) {
     o << "(func";
     if (internalName) o << ' ' << *internalName;
     if (curr->params.size() > 0) {
       o << maybeSpace;
-      printMinorOpening(o, "param");
+      o << '(';
+      printMinor(o, "param");
       for (auto& param : curr->params) {
         o << ' ' << printType(param);
       }
@@ -671,12 +808,14 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printType(curr->result) << ')';
+      o << '(';
+      printMinor(o, "result ") << printType(curr->result) << ')';
     }
     o << ")";
   }
-  void visitImport(Import *curr) {
-    printOpening(o, "import ");
+  void visitImport(Import* curr) {
+    o << '(';
+    printMedium(o, "import ");
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str) << ' ';
     switch (curr->kind) {
@@ -688,8 +827,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     o << ')';
   }
-  void visitExport(Export *curr) {
-    printOpening(o, "export ");
+  void visitExport(Export* curr) {
+    o << '(';
+    printMedium(o, "export ");
     printText(o, curr->name.str) << " (";
     switch (curr->kind) {
       case ExternalKind::Function: o << "func"; break;
@@ -699,11 +839,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       default: WASM_UNREACHABLE();
     }
     o << ' ';
-    printName(curr->value) << "))";
+    printName(curr->value, o) << "))";
   }
-  void visitGlobal(Global *curr) {
-    printOpening(o, "global ");
-    printName(curr->name) << ' ';
+  void visitGlobal(Global* curr) {
+    o << '(';
+    printMedium(o, "global ");
+    printName(curr->name, o) << ' ';
     if (curr->mutable_) {
       o << "(mut " << printType(curr->type) << ") ";
     } else {
@@ -712,11 +853,12 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     visit(curr->init);
     o << ')';
   }
-  void visitFunction(Function *curr) {
+  void visitFunction(Function* curr) {
     currFunction = curr;
     lastPrintedLocation = { 0, 0, 0 };
-    printOpening(o, "func ", true);
-    printName(curr->name);
+    o << '(';
+    printMajor(o, "func ");
+    printName(curr->name, o);
     if (currModule && !minify) {
       // emit the function index in a comment
       if (functionIndexes.empty()) {
@@ -734,38 +876,48 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->params.size() > 0) {
       for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
-        printMinorOpening(o, "param ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
+        o << '(';
+        printMinor(o, "param ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
       }
     }
     if (curr->result != none) {
       o << maybeSpace;
-      printMinorOpening(o, "result ") << printType(curr->result) << ')';
+      o << '(';
+      printMinor(o, "result ") << printType(curr->result) << ')';
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
       doIndent(o, indent);
-      printMinorOpening(o, "local ") << printableLocal(i) << ' ' << printType(curr->getLocalType(i)) << ')';
+      o << '(';
+      printMinor(o, "local ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
-    // It is ok to emit a block here, as a function can directly contain a list, even if our
-    // ast avoids that for simplicity. We can just do that optimization here..
-    if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
-      Block* block = curr->body->cast<Block>();
-      for (auto item : block->list) {
-        printFullLine(item);
+    // Print the body.
+    if (!printStackIR || !curr->stackIR) {
+      // It is ok to emit a block here, as a function can directly contain a list, even if our
+      // ast avoids that for simplicity. We can just do that optimization here..
+      if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+        Block* block = curr->body->cast<Block>();
+        for (auto item : block->list) {
+          printFullLine(item);
+        }
+      } else {
+        printFullLine(curr->body);
       }
     } else {
-      printFullLine(curr->body);
+      // Print the stack IR.
+      WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
     }
     decIndent();
   }
   void printTableHeader(Table* curr) {
-    printOpening(o, "table") << ' ';
+    o << '(';
+    printMedium(o, "table") << ' ';
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
     o << " anyfunc)";
   }
-  void visitTable(Table *curr) {
+  void visitTable(Table* curr) {
     if (!curr->exists) return;
     // if table wasn't imported, declare it
     if (!curr->imported) {
@@ -777,19 +929,24 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // Don't print empty segments
       if (segment.data.empty()) continue;
       doIndent(o, indent);
-      printOpening(o, "elem ", true);
+      o << '(';
+      printMajor(o, "elem ");
       visit(segment.offset);
       for (auto name : segment.data) {
         o << ' ';
-        printName(name);
+        printName(name, o);
       }
       o << ")\n";
     }
   }
   void printMemoryHeader(Memory* curr) {
-    printOpening(o, "memory") << ' ';
-    printName(curr->name) << ' ';
-    if (curr->shared) printOpening(o, "shared ");
+    o << '(';
+    printMedium(o, "memory") << ' ';
+    printName(curr->name, o) << ' ';
+    if (curr->shared) {
+      o << '(';
+      printMedium(o, "shared ");
+    }
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
     if (curr->shared) o << ")";
@@ -805,7 +962,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     for (auto segment : curr->segments) {
       doIndent(o, indent);
-      printOpening(o, "data ", true);
+      o << '(';
+      printMajor(o, "data ");
       visit(segment.offset);
       o << " \"";
       for (size_t i = 0; i < segment.data.size(); i++) {
@@ -831,14 +989,16 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       o << "\")\n";
     }
   }
-  void visitModule(Module *curr) {
+  void visitModule(Module* curr) {
     currModule = curr;
-    printOpening(o, "module", true);
+    o << '(';
+    printMajor(o, "module");
     incIndent();
     for (auto& child : curr->functionTypes) {
       doIndent(o, indent);
-      printOpening(o, "type") << ' ';
-      printName(child->name) << ' ';
+      o << '(';
+      printMedium(o, "type") << ' ';
+      printName(child->name, o) << ' ';
       visitFunctionType(child.get());
       o << ")" << maybeNewLine;
     }
@@ -863,7 +1023,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     }
     if (curr->start.is()) {
       doIndent(o, indent);
-      printOpening(o, "start") << ' ' << curr->start << ')';
+      o << '(';
+      printMedium(o, "start") << ' ' << curr->start << ')';
       o << maybeNewLine;
     }
     for (auto& child : curr->functions) {
@@ -939,6 +1100,24 @@ Pass *createFullPrinterPass() {
   return new FullPrinter();
 }
 
+// Print Stack IR (if present)
+
+class PrintStackIR : public Printer {
+public:
+  PrintStackIR() : Printer() {}
+  PrintStackIR(std::ostream* o) : Printer(o) {}
+
+  void run(PassRunner* runner, Module* module) override {
+    PrintSExpression print(o);
+    print.printStackIR = true;
+    print.visitModule(module);
+  }
+};
+
+Pass* createPrintStackIRPass() {
+  return new PrintStackIR();
+}
+
 // Print individual expressions
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
@@ -966,6 +1145,80 @@ std::ostream& WasmPrinter::printExpression(Expression* expression, std::ostream&
     o << "[" << printType(expression->type) << "] ";
   }
   print.visit(expression);
+  return o;
+}
+
+std::ostream& WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
+  switch (inst->op) {
+    case StackInst::Basic: {
+      PrintExpressionContents(func, o).visit(inst->origin);
+      break;
+    }
+    case StackInst::BlockBegin:
+    case StackInst::IfBegin:
+    case StackInst::LoopBegin: {
+      o << getExpressionName(inst->origin);
+      break;
+    }
+    case StackInst::BlockEnd:
+    case StackInst::IfEnd:
+    case StackInst::LoopEnd: {
+      o << "end (" << printType(inst->type) << ')';
+      break;
+    }
+    case StackInst::IfElse: {
+      o << "else";
+      break;
+    }
+    default: WASM_UNREACHABLE();
+  }
+  return o;
+}
+
+std::ostream& WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
+  size_t indent = func ? 2 : 0;
+  auto doIndent = [&indent, &o]() {
+    for (size_t j = 0; j < indent; j++) {
+      o << ' ';
+    }
+  };
+  for (Index i = 0; i < (*ir).size(); i++) {
+    auto* inst = (*ir)[i];
+    if (!inst) continue;
+    switch (inst->op) {
+      case StackInst::Basic: {
+        doIndent();
+        PrintExpressionContents(func, o).visit(inst->origin);
+        break;
+      }
+      case StackInst::BlockBegin:
+      case StackInst::IfBegin:
+      case StackInst::LoopBegin: {
+        doIndent();
+        PrintExpressionContents(func, o).visit(inst->origin);
+        indent++;
+        break;
+      }
+      case StackInst::BlockEnd:
+      case StackInst::IfEnd:
+      case StackInst::LoopEnd: {
+        indent--;
+        doIndent();
+        o << "end";
+        break;
+      }
+      case StackInst::IfElse: {
+        indent--;
+        doIndent();
+        o << "else";
+        indent++;
+        doIndent();
+        break;
+      }
+      default: WASM_UNREACHABLE();
+    }
+    std::cout << '\n';
+  }
   return o;
 }
 

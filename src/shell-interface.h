@@ -138,7 +138,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
   Literal callImport(Import *import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base == PRINT) {
       for (auto argument : arguments) {
-        std::cout << argument << '\n';
+        std::cout << '(' << argument << ')' << '\n';
       }
       return Literal();
     } else if (import->module == ENV && import->base == EXIT) {

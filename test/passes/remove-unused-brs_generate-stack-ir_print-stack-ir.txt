@@ -1,25 +1,28 @@
-$0:
-0 block
-1 block
-2 loop
-3 block
-4 unreachable (unreachable)
-5 unreachable (unreachable)
-6 end (none)
-7 unreachable (unreachable)
-8 set_local (unreachable)
-9 unreachable (unreachable)
-10 unreachable (unreachable)
-11 end (none)
-12 unreachable (unreachable)
-13 unreachable (unreachable)
-14 unreachable (unreachable)
-15 end (none)
-16 unreachable (unreachable)
-17 break (unreachable)
-18 unreachable (unreachable)
-19 end (none)
-
+(module
+ (type $0 (func (param i64)))
+ (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $var$0 i64)
+  block $label$1
+   block $label$2
+    loop $label$3
+     block $label$4
+      unreachable
+      unreachable
+     end
+     unreachable
+     tee_local $var$0
+     unreachable
+     unreachable
+    end
+    unreachable
+    unreachable
+    unreachable
+   end
+   unreachable
+   br_if $label$1
+   unreachable
+  end
+ )
+)
 (module
  (type $0 (func (param i64)))
  (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $var$0 i64)
