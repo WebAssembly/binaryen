@@ -12,7 +12,7 @@ Compilers built using Binaryen include
 
  * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
- * [`wasm2asm`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2asm.h) which compiles WebAssembly to asm.js
+ * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
@@ -64,7 +64,7 @@ This repository contains code that builds the following tools in `bin/`:
  * **wasm-dis**: Un-assembles WebAssembly in binary format into text format (going through Binaryen IR).
  * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
- * **wasm2asm**: A WebAssembly-to-asm.js compiler (still experimental).
+ * **wasm2js**: A WebAssembly-to-JS compiler (still experimental).
  * **wasm-merge**: Combines wasm files into a single big wasm file (without sophisticated linking).
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of time. Used by Emscripten.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and performs emscripten-specific passes over it.
@@ -212,11 +212,11 @@ This is separate from that. `asm2wasm` focuses on compiling asm.js to WebAssembl
 
 * How about compiling WebAssembly to asm.js (the opposite direction of `asm2wasm`)? Wouldn't that be useful for polyfilling?
 
-Experimentation with this is happening, in `wasm2asm`.
+Experimentation with this is happening, in `wasm2js`.
 
 This would be useful, but it is a much harder task, due to some decisions made in WebAssembly. For example, WebAssembly can have control flow nested inside expressions, which can't directly map to asm.js. It could be supported by outlining the code to another function, or to compiling it down into new basic blocks and control-flow-free instructions, but it is hard to do so in a way that is both fast to do and emits code that is fast to execute. On the other hand, compiling asm.js to WebAssembly is almost straightforward.
 
-We just have to do more work on `wasm2asm` and see how efficient we can make it.
+We just have to do more work on `wasm2js` and see how efficient we can make it.
 
 * Can `asm2wasm` compile any asm.js code?
 

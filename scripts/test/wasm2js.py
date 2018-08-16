@@ -18,7 +18,7 @@ import os
 
 from support import run_command
 from shared import (
-    WASM2ASM, MOZJS, NODEJS, fail_if_not_identical, options, tests,
+    WASM2JS, MOZJS, NODEJS, fail_if_not_identical, options, tests,
     fail_if_not_identical_to_file
 )
 
@@ -27,26 +27,26 @@ spec_dir = os.path.join(options.binaryen_test, 'spec')
 spec_tests = [os.path.join(spec_dir, t)
               for t in sorted(os.listdir(spec_dir))
               if '.fail' not in t]
-wasm2asm_dir = os.path.join(options.binaryen_test, 'wasm2asm')
-extra_wasm2asm_tests = [os.path.join(wasm2asm_dir, t) for t in
-                        sorted(os.listdir(wasm2asm_dir))]
-assert_tests = ['wasm2asm.wast.asserts']
+wasm2js_dir = os.path.join(options.binaryen_test, 'wasm2js')
+extra_wasm2js_tests = [os.path.join(wasm2js_dir, t) for t in
+                        sorted(os.listdir(wasm2js_dir))]
+assert_tests = ['wasm2js.wast.asserts']
 
 
-def test_wasm2asm_output():
-  for wasm in tests + spec_tests + extra_wasm2asm_tests:
+def test_wasm2js_output():
+  for wasm in tests + spec_tests + extra_wasm2js_tests:
     if not wasm.endswith('.wast'):
       continue
 
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-    expected_file = os.path.join(wasm2asm_dir, asm)
+    expected_file = os.path.join(wasm2js_dir, asm)
 
     if not os.path.exists(expected_file):
       continue
 
     print '..', wasm
 
-    cmd = WASM2ASM + [os.path.join(options.binaryen_test, wasm)]
+    cmd = WASM2JS + [os.path.join(options.binaryen_test, wasm)]
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, expected_file)
 
@@ -90,8 +90,8 @@ def test_asserts_output():
     asserts_expected_file = os.path.join(options.binaryen_test, asserts)
     traps_expected_file = os.path.join(options.binaryen_test, traps)
 
-    wasm = os.path.join(wasm2asm_dir, wasm)
-    cmd = WASM2ASM + [wasm, '--allow-asserts']
+    wasm = os.path.join(wasm2js_dir, wasm)
+    cmd = WASM2JS + [wasm, '--allow-asserts']
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, asserts_expected_file)
 
@@ -100,11 +100,11 @@ def test_asserts_output():
     fail_if_not_identical_to_file(out, traps_expected_file)
 
 
-def test_wasm2asm():
-  print '\n[ checking wasm2asm testcases... ]\n'
-  test_wasm2asm_output()
+def test_wasm2js():
+  print '\n[ checking wasm2js testcases... ]\n'
+  test_wasm2js_output()
   test_asserts_output()
 
 
 if __name__ == "__main__":
-  test_wasm2asm()
+  test_wasm2js()

@@ -35,10 +35,10 @@ function asmFunc(global, env, buffer) {
  
  function $3($0) {
   $0 = $0 | 0;
-  var wasm2asm_i32$0 = 0, wasm2asm_i32$1 = 0;
-  wasm2asm_i32$1 = $0;
-  wasm2asm_i32$0 = FUNCTION_TABLE_i[wasm2asm_i32$1 & 3]() | 0;
-  return wasm2asm_i32$0 | 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  wasm2js_i32$1 = $0;
+  wasm2js_i32$0 = FUNCTION_TABLE_i[wasm2js_i32$1 & 3]() | 0;
+  return wasm2js_i32$0 | 0;
  }
  
  var FUNCTION_TABLE_i = [t1, t1, t2, t3];

@@ -29,7 +29,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-#include "wasm2asm.h"
+#include "wasm2js.h"
 #include "cfg/Relooper.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
@@ -2008,9 +2008,9 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  Wasm2AsmBuilder::Flags builderFlags;
-  Wasm2AsmBuilder wasm2asm(builderFlags);
-  Ref asmjs = wasm2asm.processWasm(wasm);
+  Wasm2JsBuilder::Flags builderFlags;
+  Wasm2JsBuilder wasm2js(builderFlags);
+  Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
 

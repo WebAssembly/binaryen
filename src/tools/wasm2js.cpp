@@ -15,21 +15,21 @@
  */
 
 //
-// wasm2asm console tool
+// wasm2js console tool
 //
 
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-s-parser.h"
-#include "wasm2asm.h"
+#include "wasm2js.h"
 
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Wasm2AsmBuilder::Flags builderFlags;
-  Options options("wasm2asm", "Transform .wast files to asm.js");
+  Wasm2JsBuilder::Flags builderFlags;
+  Options options("wasm2js", "Transform .wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
            Options::Arguments::One,
@@ -71,12 +71,12 @@ int main(int argc, const char *argv[]) {
     SExpressionWasmBuilder builder(wasm, *(*root)[0]);
 
     if (options.debug) std::cerr << "asming..." << std::endl;
-    Wasm2AsmBuilder wasm2asm(builderFlags);
-    asmjs = wasm2asm.processWasm(&wasm);
+    Wasm2JsBuilder wasm2js(builderFlags);
+    asmjs = wasm2js.processWasm(&wasm);
 
     if (options.extra["asserts"] == "1") {
       if (options.debug) std::cerr << "asserting..." << std::endl;
-      flattenAppend(asmjs, wasm2asm.processAsserts(&wasm, *root, builder));
+      flattenAppend(asmjs, wasm2js.processAsserts(&wasm, *root, builder));
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
