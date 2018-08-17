@@ -170,10 +170,10 @@ INSTALL(FILES src/binaryen-c.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # if binaryen.js and wasm.js were built (using "./build-js.sh", currently
 # optional), install them
-IF(EXISTS "${CMAKE_SOURCE_DIR}/bin/binaryen.js")
+IF(EXISTS "${PROJECT_SOURCE_DIR}/bin/binaryen.js")
   INSTALL(FILES bin/binaryen.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ENDIF()
-IF(EXISTS "${CMAKE_SOURCE_DIR}/bin/wasm.js")
+IF(EXISTS "${PROJECT_SOURCE_DIR}/bin/wasm.js")
   INSTALL(FILES bin/wasm.js DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ENDIF()
 
