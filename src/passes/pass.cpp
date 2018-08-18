@@ -22,6 +22,7 @@
 #include <pass.h>
 #include <wasm-validator.h>
 #include <wasm-io.h>
+#include "ir/hashed.h"
 
 namespace wasm {
 
@@ -77,6 +78,7 @@ void PassRegistry::registerPasses() {
   registerPass("flatten", "flattens out code, removing nesting", createFlattenPass);
   registerPass("fpcast-emu", "emulates function pointer casts, allowing incorrect indirect calls to (sometimes) work", createFuncCastEmulationPass);
   registerPass("func-metrics", "reports function metrics", createFunctionMetricsPass);
+  registerPass("generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass("inlining", "inline functions (you probably want inlining-optimizing)", createInliningPass);
   registerPass("inlining-optimizing", "inline functions and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
@@ -91,6 +93,7 @@ void PassRegistry::registerPasses() {
   registerPass("metrics", "reports metrics", createMetricsPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
+  registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);
   registerPass("post-emscripten", "miscellaneous optimizations for Emscripten-generated code", createPostEmscriptenPass);
   registerPass("precompute", "computes compile-time evaluatable expressions", createPrecomputePass);
@@ -99,6 +102,7 @@ void PassRegistry::registerPasses() {
   registerPass("print-minified", "print in minified s-expression format", createMinifiedPrinterPass);
   registerPass("print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass("print-call-graph", "print call graph", createPrintCallGraphPass);
+  registerPass("print-stack-ir", "print out Stack IR (useful for internal debugging)", createPrintStackIRPass);
   registerPass("relooper-jump-threading", "thread relooper jumps (fastcomp output only)", createRelooperJumpThreadingPass);
   registerPass("remove-non-js-ops", "removes operations incompatible with js", createRemoveNonJSOpsPass);
   registerPass("remove-imports", "removes imports and replaces them with nops", createRemoveImportsPass);
@@ -135,17 +139,28 @@ void PassRunner::addDefaultOptimizationPasses() {
 }
 
 void PassRunner::addDefaultFunctionOptimizationPasses() {
+  // if we are willing to work very very hard, flatten the IR and do opts
+  // that depend on flat IR
+  if (options.optimizeLevel >= 4) {
+    add("flatten");
+    add("local-cse");
+  }
   if (!options.debugInfo) { // debug info must be preserved, do not dce it
     add("dce");
   }
   add("remove-unused-brs");
   add("remove-unused-names");
   add("optimize-instructions");
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("pick-load-signs");
   }
-  add("precompute");
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+  // early propagation
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    add("precompute-propagate");
+  } else {
+    add("precompute");
+  }
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     add("code-pushing");
   }
   add("simplify-locals-nostructure"); // don't create if/block return values yet, as coalesce can remove copies that that could inhibit
@@ -167,15 +182,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
-  // if we are willing to work hard, also propagate
+  // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     add("precompute-propagate");
   } else {
     add("precompute");
-  }
-  if (options.shrinkLevel >= 2) {
-    add("local-cse"); // TODO: run this early, before first coalesce-locals. right now doing so uncovers some deficiencies we need to fix first
-    add("coalesce-locals"); // just for localCSE
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
@@ -197,6 +208,12 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   add("duplicate-function-elimination"); // optimizations show more functions as duplicate
   add("remove-unused-module-elements");
   add("memory-packing");
+  // perform Stack IR optimizations here, at the very end of the
+  // optimization pipeline
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("generate-stack-ir");
+    add("optimize-stack-ir");
+  }
 }
 
 static void dumpWast(Name name, Module* wasm) {
@@ -248,7 +265,7 @@ void PassRunner::run() {
           runPassOnFunction(pass, func.get());
         }
       } else {
-        pass->run(this, wasm);
+        runPass(pass);
       }
       auto after = std::chrono::steady_clock::now();
       std::chrono::duration<double> diff = after - before;
@@ -316,7 +333,7 @@ void PassRunner::run() {
         stack.push_back(pass);
       } else {
         flush();
-        pass->run(this, wasm);
+        runPass(pass);
       }
     }
     flush();
@@ -343,11 +360,135 @@ void PassRunner::doAdd(Pass* pass) {
   pass->prepareToRun(this, wasm);
 }
 
+// Checks that the state is valid before and after a
+// pass runs on a function. We run these extra checks when
+// pass-debug mode is enabled.
+struct AfterEffectFunctionChecker {
+  Function* func;
+  Name name;
+
+  // Check Stack IR state: if the main IR changes, there should be no
+  // stack IR, as the stack IR would be wrong.
+  bool beganWithStackIR;
+  HashType originalFunctionHash;
+
+  // In the creator we can scan the state of the module and function before the
+  // pass runs.
+  AfterEffectFunctionChecker(Function* func) : func(func), name(func->name) {
+    beganWithStackIR = func->stackIR != nullptr;
+    if (beganWithStackIR) {
+      originalFunctionHash = FunctionHasher::hashFunction(func);
+    }
+  }
+
+  // This is called after the pass is run, at which time we can check things.
+  void check() {
+    assert(func->name == name); // no global module changes should have occurred
+    if (beganWithStackIR && func->stackIR) {
+      auto after = FunctionHasher::hashFunction(func);
+      if (after != originalFunctionHash) {
+        Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before and after the pass ran, and the pass modified the main IR, which invalidates Stack IR - pass should have been marked 'modifiesBinaryenIR'";
+      }
+    }
+  }
+};
+
+// Runs checks on the entire module, in a non-function-parallel pass.
+// In particular, in such a pass functions may be removed or renamed, track that.
+struct AfterEffectModuleChecker {
+  Module* module;
+
+  std::vector<AfterEffectFunctionChecker> checkers;
+
+  bool beganWithAnyStackIR;
+
+  AfterEffectModuleChecker(Module* module) : module(module) {
+    for (auto& func : module->functions) {
+      checkers.emplace_back(func.get());
+    }
+    beganWithAnyStackIR = hasAnyStackIR();
+  }
+
+  void check() {
+    if (beganWithAnyStackIR && hasAnyStackIR()) {
+      // If anything changed to the functions, that's not good.
+      if (checkers.size() != module->functions.size()) {
+        error();
+      }
+      for (Index i = 0; i < checkers.size(); i++) {
+        // Did a pointer change? (a deallocated function could cause that)
+        if (module->functions[i].get() != checkers[i].func ||
+            module->functions[i]->body != checkers[i].func->body) {
+          error();
+        }
+        // Did a name change?
+        if (module->functions[i]->name != checkers[i].name) {
+          error();
+        }
+      }
+      // Global function state appears to not have been changed: the same
+      // functions are there. Look into their contents.
+      for (auto& checker : checkers) {
+        checker.check();
+      }
+    }
+  }
+
+  void error() {
+    Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before and after the pass ran, and the pass modified global function state - pass should have been marked 'modifiesBinaryenIR'";
+  }
+
+  bool hasAnyStackIR() {
+    for (auto& func : module->functions) {
+      if (func->stackIR) {
+        return true;
+      }
+    }
+    return false;
+  }
+};
+
+void PassRunner::runPass(Pass* pass) {
+  std::unique_ptr<AfterEffectModuleChecker> checker;
+  if (getPassDebug()) {
+    checker = std::unique_ptr<AfterEffectModuleChecker>(
+      new AfterEffectModuleChecker(wasm));
+  }
+  pass->run(this, wasm);
+  handleAfterEffects(pass);
+  if (getPassDebug()) {
+    checker->check();
+  }
+}
+
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
   // function-parallel passes get a new instance per function
   auto instance = std::unique_ptr<Pass>(pass->create());
+  std::unique_ptr<AfterEffectFunctionChecker> checker;
+  if (getPassDebug()) {
+    checker = std::unique_ptr<AfterEffectFunctionChecker>(
+      new AfterEffectFunctionChecker(func));
+  }
   instance->runOnFunction(this, wasm, func);
+  handleAfterEffects(pass, func);
+  if (getPassDebug()) {
+    checker->check();
+  }
+}
+
+void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
+  if (pass->modifiesBinaryenIR()) {
+    // If Binaryen IR is modified, Stack IR must be cleared - it would
+    // be out of sync in a potentially dangerous way.
+    if (func) {
+      func->stackIR.reset(nullptr);
+    } else {
+      for (auto& func : wasm->functions) {
+        func->stackIR.reset(nullptr);
+      }
+    }
+  }
 }
 
 int PassRunner::getPassDebug() {

@@ -11,10 +11,9 @@ Binaryen is a compiler and toolchain infrastructure library for WebAssembly, wri
 Compilers built using Binaryen include
 
  * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
- * [`s2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/s2wasm.h) which compiles the LLVM WebAssembly's backend `.s` output format
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
  * [`wasm2asm`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2asm.h) which compiles WebAssembly to asm.js
- * [`mir2wasm`](https://github.com/brson/mir2wasm/) which compiles Rust MIR
+ * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
@@ -49,6 +48,8 @@ There are a few differences between Binaryen IR and the WebAssembly language:
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR => wasm) change code a little in some corner cases.
 
+ * When optimizing Binaryen uses an additional IR, Stack IR (see `src/wasm-stack.h`). Stack IR allows a bunch of optimizations that are tailored for the stack machine form of WebAssembly's binary format (but Stack IR is less efficient for general optimizations than the main Binaryen IR). If you have a wasm file that has been particularly well-optimized, a simple round-trip conversion (just read and write, without optimization) may cause more noticeable differences, as Binaryen fits it into Binaryen IR's more structured format. If you also optimize during the round-trip conversion then Stack IR opts will be run and the final wasm will be better optimized.
+
 Notes when working with Binaryen IR:
 
  * As mentioned above, Binaryen IR has a tree structure. As a result, each expression should have exactly one parent - you should not "reuse" a node by having it appear more than once in the tree. The motivation for this limitation is that when we optimize we modify nodes, so if they appear more than once in the tree, a change in one place can appear in another incorrectly.
@@ -64,11 +65,11 @@ This repository contains code that builds the following tools in `bin/`:
  * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
  * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm optimizer infrastructure. This is used by Emscripten in Binaryen mode when it uses Emscripten's fastcomp asm.js backend.
  * **wasm2asm**: A WebAssembly-to-asm.js compiler (still experimental).
- * **s2wasm**: A compiler from the `.s` format emitted by the new WebAssembly backend being developed in LLVM. This is used by Emscripten in Binaryen mode when it integrates with the new LLVM backend.
  * **wasm-merge**: Combines wasm files into a single big wasm file (without sophisticated linking).
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of time. Used by Emscripten.
+ * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and performs emscripten-specific passes over it.
  * **wasm.js**: wasm.js contains Binaryen components compiled to JavaScript, including the interpreter, `asm2wasm`, the S-Expression parser, etc., which allow you to use Binaryen with Emscripten and execute code compiled to WASM even if the browser doesn't have native support yet. This can be useful as a (slow) polyfill.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
 
@@ -179,31 +180,6 @@ Pass `--debug` on the command line to see debug info, about asm.js functions as 
 
 When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to WebAssembly. This lets you compile C and C++ to WebAssembly, with emscripten using asm.js internally as a build step. Since emscripten's asm.js generation is very stable, and asm2wasm is a fairly simple process, this method of compiling C and C++ to WebAssembly is usable already. See the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details about how to use it.
 
-### C/C++ Source ⇒ WebAssembly LLVM backend ⇒ s2wasm ⇒ WebAssembly
-
-Binaryen's `s2wasm` tool can translate the `.s` output from the LLVM WebAssembly backend into WebAssembly. You can receive `.s` output from `llc`, and then run `s2wasm` on that:
-
-```
-llc code.ll -mtriple=wasm32-unknown-unknown-elf -filetype=asm -o code.s
-s2wasm code.s > code.wat
-```
-
-You can also use Emscripten, which will do those steps for you (as well as link to system libraries, etc.). You can use either normal Emscripten, including it's "fastcomp" fork of LLVM, or you can use "vanilla" LLVM, that is, pure upstream LLVM without Emscripten's additions. With Vanilla LLVM, you can build with
-
-```
-./emcc input.cpp -s BINARYEN=1
-```
-
-With normal Emscripten, you will need to tell it to use the WebAssembly backend, since its default is asm.js, by setting an env var,
-
-```
-EMCC_WASM_BACKEND=1 ./emcc input.cpp -s BINARYEN=1
-```
-
-(without the env var, the `BINARYEN` option will make it use the asm.js backend, then `asm2wasm`).
-
-For more details, see the [emscripten wiki](https://github.com/kripken/emscripten/wiki/WebAssembly).
-
 ## Testing
 
 ```
@@ -211,10 +187,6 @@ For more details, see the [emscripten wiki](https://github.com/kripken/emscripte
 ```
 
 (or `python check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, `wasm.js`, etc. on the testcases in `test/`, and verify their outputs.
-
-It will also run `s2wasm` through the last known good LLVM output from the [build waterfall][].
-
-  [build waterfall]: https://build.chromium.org/p/client.wasm.llvm/console
 
 The `check.py` script supports some options:
 
@@ -225,7 +197,7 @@ The `check.py` script supports some options:
  * If an interpreter is provided, we run the output through it, checking for parse errors.
  * If tests are provided, we run exactly those. If none are provided, we run them all.
  * Some tests require `emcc` or `nodejs` in the path. They will not run if the tool cannot be found, and you'll see a warning.
- * We have tests from upstream in `tests/spec` and `tests/waterfall`, in git submodules. Running `./check.py` should update those.
+ * We have tests from upstream in `tests/spec`, in git submodules. Running `./check.py` should update those.
 
 ## Design Principles
 

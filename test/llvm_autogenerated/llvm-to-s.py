@@ -69,14 +69,14 @@ def main(args):
     for ll_test in tests:
         name_noext = os.path.splitext(os.path.basename(ll_test))[0]
 
-        BLACKLIST = ['inline-asm', # inline asm containing invalid syntax
-                     'dbgvalue', # external global symbol
-                     'returned',   # external global symbol
-                     'vtable',     # external global symbol
-                     'offset-folding', # external global symbol
-                     'address-offsets', # external global symbol
-                     'memory-addr64', # wasm64
-                     'simd-arith', # No SIMD in binaryen yet
+        BLACKLIST = ['inline-asm',  # inline asm containing invalid syntax
+                     'dbgvalue',  # external global symbol
+                     'returned',  # external global symbol
+                     'vtable',  # external global symbol
+                     'offset-folding',  # external global symbol
+                     'address-offsets',  # external global symbol
+                     'memory-addr64',  # wasm64
+                     'simd-arith',  # No SIMD in binaryen yet
                      ]
         if name_noext in BLACKLIST:
           continue

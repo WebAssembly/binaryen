@@ -1163,19 +1163,19 @@ Module['Module'] = function(module) {
     return Module['_BinaryenSetStart'](module, start);
   };
   this['emitText'] = function() {
-    var old = Module['print'];
+    var old = out;
     var ret = '';
-    Module['print'] = function(x) { ret += x + '\n' };
+    out = function(x) { ret += x + '\n' };
     Module['_BinaryenModulePrint'](module);
-    Module['print'] = old;
+    out = old;
     return ret;
   };
   this['emitAsmjs'] = function() {
-    var old = Module['print'];
+    var old = out;
     var ret = '';
-    Module['print'] = function(x) { ret += x + '\n' };
+    out = function(x) { ret += x + '\n' };
     Module['_BinaryenModulePrintAsmjs'](module);
-    Module['print'] = old;
+    out = old;
     return ret;
   };
   this['validate'] = function() {
@@ -1550,11 +1550,11 @@ Module['emitText'] = function(expr) {
   if (typeof expr === 'object') {
     return expr.emitText();
   }
-  var old = Module['print'];
+  var old = out;
   var ret = '';
-  Module['print'] = function(x) { ret += x + '\n' };
+  out = function(x) { ret += x + '\n' };
   Module['_BinaryenExpressionPrint'](expr);
-  Module['print'] = old;
+  out = old;
   return ret;
 };
 
@@ -1609,3 +1609,12 @@ Module['setDebugInfo'] = function(on) {
 Module['setAPITracing'] = function(on) {
   return Module['_BinaryenSetAPITracing'](on);
 };
+
+// Additional customizations
+
+Module['exit'] = function(status) {
+  // Instead of exiting silently on errors, always show an error with
+  // a stack trace, for debuggability.
+  if (status != 0) throw new Error('exiting due to error: ' + status);
+};
+

@@ -17,6 +17,12 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+<<<<<<< HEAD
+=======
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
+>>>>>>> origin/master
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x, y) {
   x = Math_fround(x);
@@ -92,7 +98,11 @@ function asmFunc(global, env, buffer) {
  function $13(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
+<<<<<<< HEAD
   return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0]) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0]) & 2147483648 | 0) | 0, HEAPF32[0]));
+=======
+  return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
+>>>>>>> origin/master
  }
  
  function __wasm_nearest_f32(var$0) {
@@ -104,7 +114,11 @@ function asmFunc(global, env, buffer) {
    var$0 = Math_fround(Math_ceil(var$0));
    if (var$2 > Math_fround(.5)) return Math_fround(var$0);
    var$2 = Math_fround(var$1 * Math_fround(.5));
+<<<<<<< HEAD
    var$1 = (wasm2asm_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2asm_f32$0 = var$1, wasm2asm_f32$1 = var$0, wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1);
+=======
+   var$1 = (wasm2asm_f32$0 = var$1, wasm2asm_f32$1 = var$0, wasm2asm_i32$0 = Math_fround(var$2 - Math_fround(Math_floor(var$2))) == Math_fround(0.0), wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1);
+>>>>>>> origin/master
   };
   return Math_fround(var$1);
  }
@@ -112,7 +126,11 @@ function asmFunc(global, env, buffer) {
  function __wasm_trunc_f32(var$0) {
   var$0 = Math_fround(var$0);
   var wasm2asm_f32$0 = Math_fround(0), wasm2asm_f32$1 = Math_fround(0), wasm2asm_i32$0 = 0;
+<<<<<<< HEAD
   return Math_fround((wasm2asm_i32$0 = var$0 < Math_fround(0.0), wasm2asm_f32$0 = Math_fround(Math_ceil(var$0)), wasm2asm_f32$1 = Math_fround(Math_floor(var$0)), wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1));
+=======
+  return Math_fround((wasm2asm_f32$0 = Math_fround(Math_ceil(var$0)), wasm2asm_f32$1 = Math_fround(Math_floor(var$0)), wasm2asm_i32$0 = var$0 < Math_fround(0.0), wasm2asm_i32$0 ? wasm2asm_f32$0 : wasm2asm_f32$1));
+>>>>>>> origin/master
  }
  
  return {

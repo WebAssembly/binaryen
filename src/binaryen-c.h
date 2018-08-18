@@ -822,7 +822,8 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_);
 // General usage is (1) create a relooper, (2) create blocks, (3) add
 // branches between them, (4) render the output.
 //
-// See Relooper.h for more details
+// For more details, see src/cfg/Relooper.h and
+// https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 
 typedef void* RelooperRef;
 typedef void* RelooperBlockRef;

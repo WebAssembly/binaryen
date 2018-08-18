@@ -1,0 +1,1 @@
+Fatal: Module::addFunctionType: $vI already exists

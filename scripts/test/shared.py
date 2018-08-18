@@ -19,7 +19,6 @@ import os
 import shutil
 import subprocess
 import sys
-import urllib2
 
 
 def parse_args(args):
@@ -32,17 +31,6 @@ def parse_args(args):
   parser.add_argument(
       '--no-torture', dest='torture', action='store_false',
       help='Disables running the torture testcases.')
-  parser.add_argument(
-      '--only-prepare', dest='only_prepare', action='store_true', default=False,
-      help='If enabled, only fetches the waterfall build. Default: false.')
-  parser.add_argument(
-      '--test-waterfall', dest='test_waterfall', action='store_true',
-      default=False,
-      help=('If enabled, fetches and tests the LLVM waterfall builds.'
-            ' Default: false.'))
-  parser.add_argument(
-      '--no-test-waterfall', dest='test_waterfall', action='store_false',
-      help='Disables downloading and testing of the LLVM waterfall builds.')
   parser.add_argument(
       '--abort-on-first-failure', dest='abort_on_first_failure',
       action='store_true', default=True,
@@ -182,14 +170,11 @@ WASM2ASM = [os.path.join(options.binaryen_bin, 'wasm2asm')]
 WASM_CTOR_EVAL = [os.path.join(options.binaryen_bin, 'wasm-ctor-eval')]
 WASM_SHELL = [os.path.join(options.binaryen_bin, 'wasm-shell')]
 WASM_MERGE = [os.path.join(options.binaryen_bin, 'wasm-merge')]
-S2WASM = [os.path.join(options.binaryen_bin, 's2wasm')]
 WASM_REDUCE = [os.path.join(options.binaryen_bin, 'wasm-reduce')]
 WASM_METADCE = [os.path.join(options.binaryen_bin, 'wasm-metadce')]
 WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
-
-S2WASM_EXE = S2WASM[0]
-WASM_SHELL_EXE = WASM_SHELL[0]
+BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen.js')
 
 
 def wrap_with_valgrind(cmd):
@@ -207,7 +192,6 @@ if options.valgrind:
   WASM_DIS = wrap_with_valgrind(WASM_DIS)
   ASM2WASM = wrap_with_valgrind(ASM2WASM)
   WASM_SHELL = wrap_with_valgrind(WASM_SHELL)
-  S2WASM = wrap_with_valgrind(S2WASM)
 
 os.environ['BINARYEN'] = os.getcwd()
 
@@ -223,58 +207,7 @@ def has_shell_timeout():
   return get_platform() != 'windows' and os.system('timeout 1s pwd') == 0
 
 
-def fetch_waterfall():
-  rev = open(os.path.join(options.binaryen_test, 'revision')).read().strip()
-  buildername = get_platform()
-  local_rev_path = os.path.join(WATERFALL_BUILD_DIR, 'local-revision')
-  if os.path.exists(local_rev_path):
-    with open(local_rev_path) as f:
-      local_rev = f.read().strip()
-    if local_rev == rev:
-      return
-  # fetch it
-  basename = 'wasm-binaries-' + rev + '.tbz2'
-  url = '/'.join(['https://storage.googleapis.com/wasm-llvm/builds',
-                  buildername, rev, basename])
-  print '(downloading waterfall %s: %s)' % (rev, url)
-  downloaded = urllib2.urlopen(url).read().strip()
-  fullname = os.path.join(options.binaryen_test, basename)
-  open(fullname, 'wb').write(downloaded)
-  print '(unpacking)'
-  if os.path.exists(WATERFALL_BUILD_DIR):
-    shutil.rmtree(WATERFALL_BUILD_DIR)
-  os.mkdir(WATERFALL_BUILD_DIR)
-  subprocess.check_call(['tar', '-xf', os.path.abspath(fullname)],
-                        cwd=WATERFALL_BUILD_DIR)
-  print '(noting local revision)'
-  with open(local_rev_path, 'w') as o:
-    o.write(rev + '\n')
-
-
 has_vanilla_llvm = False
-
-
-def setup_waterfall():
-  # if we can use the waterfall llvm, do so
-  global has_vanilla_llvm
-  CLANG = os.path.join(BIN_DIR, 'clang')
-  print 'trying waterfall clang at', CLANG
-  try:
-    subprocess.check_call([CLANG, '-v'])
-    has_vanilla_llvm = True
-    print '...success'
-  except (OSError, subprocess.CalledProcessError) as e:
-    warn('could not run vanilla LLVM from waterfall: ' + str(e) +
-         ', looked for clang at ' + CLANG)
-
-
-if options.test_waterfall:
-  fetch_waterfall()
-  setup_waterfall()
-
-if options.only_prepare:
-  print 'waterfall is fetched and setup, exiting since --only-prepare'
-  sys.exit(0)
 
 # external tools
 
@@ -378,7 +311,7 @@ def fail_if_not_contained(actual, expected):
 
 
 def fail_if_not_identical_to_file(actual, expected_file):
-  with open(expected_file, 'rb') as f:
+  with open(expected_file, 'rb' if expected_file.endswith(".wasm") else 'r') as f:
     fail_if_not_identical(actual, f.read(), fromfile=expected_file)
 
 

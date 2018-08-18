@@ -1,7 +1,5 @@
 (module
  (type $0 (func))
- (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
- (global $mine (mut i32) (get_global $tempDoublePtr))
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))

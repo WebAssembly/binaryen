@@ -14,20 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-A bunch of hackish fixups for testing of SpiderMonkey support. We should
+"""A bunch of hackish fixups for testing of SpiderMonkey support. We should
 get rid of these ASAP.
 
 This is meant to be run using BINARYEN_SCRIPTS in emcc, and not standalone.
-'''
+"""
 
-import os
 import subprocess
 import sys
 
 import emscripten
-
-binaryen_root = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 js_target = sys.argv[1]
 wast_target = sys.argv[2]

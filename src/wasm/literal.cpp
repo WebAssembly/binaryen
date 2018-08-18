@@ -168,7 +168,6 @@ void Literal::printDouble(std::ostream& o, double d) {
 }
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
-  o << '(';
   prepareMinorColor(o) << printType(literal.type) << ".const ";
   switch (literal.type) {
     case none: o << "?"; break;
@@ -179,7 +178,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     default: WASM_UNREACHABLE();
   }
   restoreNormalColor(o);
-  return o << ')';
+  return o;
 }
 
 Literal Literal::countLeadingZeroes() const {

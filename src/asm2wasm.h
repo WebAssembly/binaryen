@@ -973,7 +973,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   wasm.table.initial = wasm.table.max = 0;
 
-  // first pass - do almost everything, but function imports and indirect calls
+  // first pass - do all global things, aside from function bodies (second pass)
+  // and function imports and indirect calls (last pass)
 
   for (unsigned i = 1; i < body->size(); i++) {
     Ref curr = body[i];
@@ -1108,17 +1109,6 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           abort_on("invalid var element", pair);
         }
       }
-    } else if (curr[0] == DEFUN) {
-      // function
-      auto* func = processFunction(curr);
-      if (wasm.getFunctionOrNull(func->name)) {
-        Fatal() << "duplicate function: " << func->name;
-      }
-      if (runOptimizationPasses) {
-        optimizingBuilder->addFunction(func);
-      } else {
-        wasm.addFunction(func);
-      }
     } else if (curr[0] == RETURN) {
       // exports
       Ref object = curr[1];
@@ -1173,6 +1163,23 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
   }
 
+  // second pass: function bodies
+  for (unsigned i = 1; i < body->size(); i++) {
+    Ref curr = body[i];
+    if (curr[0] == DEFUN) {
+      // function
+      auto* func = processFunction(curr);
+      if (wasm.getFunctionOrNull(func->name)) {
+        Fatal() << "duplicate function: " << func->name;
+      }
+      if (runOptimizationPasses) {
+        optimizingBuilder->addFunction(func);
+      } else {
+        wasm.addFunction(func);
+      }
+    }
+  }
+
   if (runOptimizationPasses) {
     optimizingBuilder->finish();
     // if we added any helper functions (like non-trapping i32-div, etc.), then those
@@ -1191,7 +1198,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
   wasm.debugInfoFileNames = std::move(preprocessor.debugInfoFileNames);
 
-  // second pass. first, function imports
+  // third pass. first, function imports
 
   std::vector<IString> toErase;
 

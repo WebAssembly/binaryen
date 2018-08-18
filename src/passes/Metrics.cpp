@@ -32,6 +32,8 @@ static Counts lastCounts;
 
 // Prints metrics between optimization passes.
 struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<Metrics>>> {
+  bool modifiesBinaryenIR() override { return false; }
+
   bool byFunction;
 
   Counts counts;

@@ -619,8 +619,11 @@ Name Function::getLocalNameOrGeneric(Index index) {
 }
 
 Index Function::getLocalIndex(Name name) {
-  assert(localIndices.count(name) > 0);
-  return localIndices[name];
+  auto iter = localIndices.find(name);
+  if (iter == localIndices.end()) {
+    Fatal() << "Function::getLocalIndex: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 Index Function::getVarIndexBase() {
@@ -638,92 +641,137 @@ Type Function::getLocalType(Index index) {
 }
 
 FunctionType* Module::getFunctionType(Name name) {
-  assert(functionTypesMap.count(name));
-  return functionTypesMap[name];
+  auto iter = functionTypesMap.find(name);
+  if (iter == functionTypesMap.end()) {
+    Fatal() << "Module::getFunctionType: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 Import* Module::getImport(Name name) {
-  assert(importsMap.count(name));
-  return importsMap[name];
+  auto iter = importsMap.find(name);
+  if (iter == importsMap.end()) {
+    Fatal() << "Module::getImport: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 Export* Module::getExport(Name name) {
-  assert(exportsMap.count(name));
-  return exportsMap[name];
+  auto iter = exportsMap.find(name);
+  if (iter == exportsMap.end()) {
+    Fatal() << "Module::getExport: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 Function* Module::getFunction(Name name) {
-  assert(functionsMap.count(name));
-  return functionsMap[name];
+  auto iter = functionsMap.find(name);
+  if (iter == functionsMap.end()) {
+    Fatal() << "Module::getFunction: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 Global* Module::getGlobal(Name name) {
-  assert(globalsMap.count(name));
-  return globalsMap[name];
+  auto iter = globalsMap.find(name);
+  if (iter == globalsMap.end()) {
+    Fatal() << "Module::getGlobal: " << name << " does not exist";
+  }
+  return iter->second;
 }
 
 FunctionType* Module::getFunctionTypeOrNull(Name name) {
-  if (!functionTypesMap.count(name))
+  auto iter = functionTypesMap.find(name);
+  if (iter == functionTypesMap.end()) {
     return nullptr;
-  return functionTypesMap[name];
+  }
+  return iter->second;
 }
 
 Import* Module::getImportOrNull(Name name) {
-  if (!importsMap.count(name))
+  auto iter = importsMap.find(name);
+  if (iter == importsMap.end()) {
     return nullptr;
-  return importsMap[name];
+  }
+  return iter->second;
 }
 
 Export* Module::getExportOrNull(Name name) {
-  if (!exportsMap.count(name))
+  auto iter = exportsMap.find(name);
+  if (iter == exportsMap.end()) {
     return nullptr;
-  return exportsMap[name];
+  }
+  return iter->second;
 }
 
 Function* Module::getFunctionOrNull(Name name) {
-  if (!functionsMap.count(name))
+  auto iter = functionsMap.find(name);
+  if (iter == functionsMap.end()) {
     return nullptr;
-  return functionsMap[name];
+  }
+  return iter->second;
 }
 
 Global* Module::getGlobalOrNull(Name name) {
-  if (!globalsMap.count(name))
+  auto iter = globalsMap.find(name);
+  if (iter == globalsMap.end()) {
     return nullptr;
-  return globalsMap[name];
+  }
+  return iter->second;
 }
 
 void Module::addFunctionType(FunctionType* curr) {
-  assert(curr->name.is());
+  if (!curr->name.is()) {
+    Fatal() << "Module::addFunctionType: empty name";
+  }
+  if (getFunctionTypeOrNull(curr->name)) {
+    Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
+  }
   functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
-  assert(functionTypesMap.find(curr->name) == functionTypesMap.end());
   functionTypesMap[curr->name] = curr;
 }
 
 void Module::addImport(Import* curr) {
-  assert(curr->name.is());
+  if (!curr->name.is()) {
+    Fatal() << "Module::addImport: empty name";
+  }
+  if (getImportOrNull(curr->name)) {
+    Fatal() << "Module::addImport: " << curr->name << " already exists";
+  }
   imports.push_back(std::unique_ptr<Import>(curr));
-  assert(importsMap.find(curr->name) == importsMap.end());
   importsMap[curr->name] = curr;
 }
 
 void Module::addExport(Export* curr) {
-  assert(curr->name.is());
+  if (!curr->name.is()) {
+    Fatal() << "Module::addExport: empty name";
+  }
+  if (getExportOrNull(curr->name)) {
+    Fatal() << "Module::addExport: " << curr->name << " already exists";
+  }
   exports.push_back(std::unique_ptr<Export>(curr));
-  assert(exportsMap.find(curr->name) == exportsMap.end());
   exportsMap[curr->name] = curr;
 }
 
 void Module::addFunction(Function* curr) {
-  assert(curr->name.is());
+  if (!curr->name.is()) {
+    Fatal() << "Module::addFunction: empty name";
+  }
+  if (getFunctionOrNull(curr->name)) {
+    Fatal() << "Module::addFunction: " << curr->name << " already exists";
+  }
   functions.push_back(std::unique_ptr<Function>(curr));
-  assert(functionsMap.find(curr->name) == functionsMap.end());
   functionsMap[curr->name] = curr;
 }
 
 void Module::addGlobal(Global* curr) {
-  assert(curr->name.is());
+  if (!curr->name.is()) {
+    Fatal() << "Module::addGlobal: empty name";
+  }
+  if (getGlobalOrNull(curr->name)) {
+    Fatal() << "Module::addGlobal: " << curr->name << " already exists";
+  }
   globals.push_back(std::unique_ptr<Global>(curr));
-  assert(globalsMap.find(curr->name) == globalsMap.end());
   globalsMap[curr->name] = curr;
 }
 

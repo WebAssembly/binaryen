@@ -22,7 +22,6 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
-#include "wasm-linker.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -159,6 +158,18 @@ static bool hasI64ResultOrParam(FunctionType* ft) {
   return false;
 }
 
+inline void exportFunction(Module& wasm, Name name, bool must_export) {
+  if (!wasm.getFunctionOrNull(name)) {
+    assert(!must_export);
+    return;
+  }
+  if (wasm.getExportOrNull(name)) return; // Already exported
+  auto exp = new Export;
+  exp->name = exp->value = name;
+  exp->kind = ExternalKind::Function;
+  wasm.addExport(exp);
+}
+
 void EmscriptenGlueGenerator::generateDynCallThunks() {
   std::unordered_set<std::string> sigs;
   Builder builder(wasm);
@@ -207,16 +218,16 @@ struct JSCallWalker : public PostWalker<JSCallWalker> {
     }
     const auto& tableSegmentData = wasm.table.segments[0].data;
 
+    jsCallStartIndex =
+        wasm.table.segments[0].offset->cast<Const>()->value.getInteger();
     // Check if jsCalls have already been created
     for (Index i = 0; i < tableSegmentData.size(); ++i) {
       if (tableSegmentData[i].startsWith("jsCall_")) {
-        jsCallStartIndex = i;
+        jsCallStartIndex += i;
         return;
       }
     }
-    jsCallStartIndex =
-        wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-        tableSegmentData.size();
+    jsCallStartIndex += tableSegmentData.size();
   }
 
   // Gather all function signatures used in call_indirect, because any of them
@@ -584,9 +595,13 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
       return;
 
     FunctionType* func = wasm.getFunctionType(curr->functionType);
-    Name newname = fixEmEHSjLjNames(curr->name, getSig(func));
-    if (newname == curr->name)
+    Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
+    if (newname == curr->base)
       return;
+
+    if (curr->base != curr->name) {
+      Fatal() << "Import name and function name do not match: '" << curr->base << "' '" << curr->name << "'";
+    }
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
@@ -762,31 +777,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << " }\n";
 
   return meta.str();
-}
-
-std::string emscriptenGlue(
-    Module& wasm,
-    bool allowMemoryGrowth,
-    Address stackPointer,
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions,
-    unsigned numReservedFunctionPointers) {
-  EmscriptenGlueGenerator generator(wasm, stackPointer);
-  generator.fixInvokeFunctionNames();
-  generator.generateRuntimeFunctions();
-
-  if (allowMemoryGrowth) {
-    generator.generateMemoryGrowthFunction();
-  }
-
-  generator.generateDynCallThunks();
-
-  if (numReservedFunctionPointers) {
-    generator.generateJSCallThunks(numReservedFunctionPointers);
-  }
-
-  return generator.generateEmscriptenMetadata(staticBump, initializerFunctions,
-                                              numReservedFunctionPointers);
 }
 
 } // namespace wasm

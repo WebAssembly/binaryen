@@ -569,22 +569,6 @@ void test_nonvalid() {
 
     BinaryenModuleDispose(module);
   }
-  // validation failure due to duplicate nodes
-  {
-    BinaryenModuleRef module = BinaryenModuleCreate();
-
-    BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "i", BinaryenTypeInt32(), NULL, 0);
-    BinaryenType localTypes[] = { };
-    BinaryenExpressionRef num = makeInt32(module, 1234);
-    BinaryenFunctionRef func = BinaryenAddFunction(module, "func", v, NULL, 0,
-      BinaryenBinary(module, BinaryenTypeInt32(), num, num) // incorrectly use num twice
-    );
-
-    BinaryenModulePrint(module);
-    printf("validation: %d\n", BinaryenModuleValidate(module));
-
-    BinaryenModuleDispose(module);
-  }
 }
 
 void test_tracing() {

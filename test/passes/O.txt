@@ -3,7 +3,7 @@
  (type $1 (func (param i64)))
  (export "ret" (func $ret))
  (export "waka" (func $if-0-unreachable-to-none))
- (func $ret (; 0 ;) (type $0) (result i32)
+ (func $ret (; 0 ;) (; has Stack IR ;) (type $0) (result i32)
   (block $out (result i32)
    (drop
     (call $ret)
@@ -17,7 +17,7 @@
    (i32.const 999)
   )
  )
- (func $if-0-unreachable-to-none (; 1 ;) (type $1) (param $0 i64)
+ (func $if-0-unreachable-to-none (; 1 ;) (; has Stack IR ;) (type $1) (param $0 i64)
   (unreachable)
  )
 )

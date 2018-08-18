@@ -5,7 +5,7 @@
  (export "fac-iter" (func $2))
  (export "fac-iter-named" (func $3))
  (export "fac-opt" (func $4))
- (func $0 (; 0 ;) (type $0) (param $0 i64) (result i64)
+ (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
    (i64.eq
     (get_local $0)
@@ -23,7 +23,7 @@
    )
   )
  )
- (func $1 (; 1 ;) (type $0) (param $0 i64) (result i64)
+ (func $1 (; 1 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (if (result i64)
    (i64.eq
     (get_local $0)
@@ -41,10 +41,10 @@
    )
   )
  )
- (func $2 (; 2 ;) (type $0) (param $0 i64) (result i64)
+ (func $2 (; 2 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (unreachable)
  )
- (func $3 (; 3 ;) (type $0) (param $0 i64) (result i64)
+ (func $3 (; 3 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (local $1 i64)
   (set_local $1
    (i64.const 1)
@@ -74,7 +74,7 @@
   )
   (get_local $1)
  )
- (func $4 (; 4 ;) (type $0) (param $0 i64) (result i64)
+ (func $4 (; 4 ;) (; has Stack IR ;) (type $0) (param $0 i64) (result i64)
   (local $1 i64)
   (set_local $1
    (i64.const 1)

@@ -15,29 +15,10 @@
  */
 
 //
-// wasm.h: WebAssembly representation and processing library, in one
-//         header file.
+// wasm.h: Define Binaryen IR, a representation for WebAssembly, with
+//         all core parts in one simple header file.
 //
-// This represents WebAssembly in an AST format, with a focus on making
-// it easy to not just inspect but also to process. For example, some
-// things that this enables are:
-//
-//  * Interpreting: See wasm-interpreter.h.
-//  * Optimizing: See asm2wasm.h, which performs some optimizations
-//                after code generation.
-//  * Validation: See wasm-validator.h.
-//  * Pretty-printing: See Print.cpp.
-//
-
-//
-// wasm.js internal WebAssembly representation design:
-//
-//  * Unify where possible. Where size isn't a concern, combine
-//    classes, so binary ops and relational ops are joined. This
-//    simplifies that AST and makes traversals easier.
-//  * Optimize for size? This might justify separating if and if_else
-//    (so that if doesn't have an always-empty else; also it avoids
-//    a branch).
+// For more overview, see README.md
 //
 
 #ifndef wasm_wasm_h
@@ -601,6 +582,13 @@ public:
 
 // Globals
 
+// Forward declarations of Stack IR, as functions can contain it, see
+// the stackIR property.
+// Stack IR is a secondary IR to the main IR defined in this file (Binaryen
+// IR). See wasm-stack.h.
+class StackInst;
+typedef std::vector<StackInst*> StackIR;
+
 class Function {
 public:
   Name name;
@@ -608,7 +596,19 @@ public:
   std::vector<Type> params; // function locals are
   std::vector<Type> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
+
+  // The body of the function
   Expression* body;
+
+  // If present, this stack IR was generated from the main Binaryen IR body,
+  // and possibly optimized. If it is present when writing to wasm binary,
+  // it will be emitted instead of the main Binaryen IR.
+  //
+  // Note that no special care is taken to synchronize the two IRs - if you
+  // emit stack IR and then optimize the main IR, you need to recompute the
+  // stack IR. The Pass system will throw away Stack IR if a pass is run
+  // that declares it may modify Binaryen IR.
+  std::unique_ptr<StackIR> stackIR;
 
   // local names. these are optional.
   std::map<Index, Name> localNames;

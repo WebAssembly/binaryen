@@ -1,7 +1,8 @@
 (module
   (memory 0)
   (type $0 (func (param i32)))
-  (global $global$0 (mut i32) (i32.const 0))
+  (global $global i32 (i32.const 1))
+  (global $global-mut (mut i32) (i32.const 2))
   (func $x (type $0) (param $x i32)
     (call $x
       (i32.add
@@ -257,7 +258,7 @@
       (select
        (i64.const 1)
        (block (result i64)
-        (set_global $global$0
+        (set_global $global-mut
          (i32.const 1)
         )
         (br_if $label$0
@@ -278,6 +279,30 @@
     (br_if $label$6
      (unreachable)
      (i32.const 0)
+    )
+   )
+  )
+  (func $global-notprecomputable (result i32)
+   (i32.add
+    (i32.const 1)
+    (get_global $global-mut)
+   )
+  )
+  (func $global-precomputable (result i32)
+   (i32.add
+    (i32.const 1)
+    (get_global $global)
+   )
+  )
+  (func $global-partiallyprecomputable (result i32)
+   (i32.sub
+    (i32.add
+     (i32.const 1)
+     (get_global $global-mut)
+    )
+    (i32.add
+     (i32.const 1)
+     (get_global $global)
     )
    )
   )

@@ -67,14 +67,6 @@ private:
   void generateStackRestoreFunction();
 };
 
-std::string emscriptenGlue(
-    Module& wasm,
-    bool allowMemoryGrowth,
-    Address stackPointer,
-    Address staticBump,
-    std::vector<Name> const& initializerFunctions,
-    unsigned numReservedFunctionPointers);
-
 } // namespace wasm
 
 #endif // wasm_wasm_emscripten_h

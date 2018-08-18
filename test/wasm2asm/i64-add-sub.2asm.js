@@ -17,23 +17,36 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
+<<<<<<< HEAD:test/wasm2asm/i64-add-sub.2asm.js
+=======
+ var abort = env.abort;
+ var nan = global.NaN;
+ var infinity = global.Infinity;
+>>>>>>> origin/master:test/wasm2asm/i64-add-sub.2asm.js
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
  }
  
- function $1($0, $0$hi, $1, $1$hi, r, r$hi) {
+ function $1($0, $0$hi, $1_1, $1$hi, r, r$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   $1$hi = $1$hi | 0;
   r = r | 0;
   r$hi = r$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$4 = 0, $5$hi = 0;
+<<<<<<< HEAD:test/wasm2asm/i64-add-sub.2asm.js
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$3 = $1;
+=======
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$0 = $1$hi;
+  i64toi32_i32$0 = $0$hi;
+  i64toi32_i32$3 = $1_1;
+>>>>>>> origin/master:test/wasm2asm/i64-add-sub.2asm.js
   i64toi32_i32$4 = $0 + i64toi32_i32$3 | 0;
   i64toi32_i32$5 = i64toi32_i32$0 + $1$hi | 0;
   if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0;
@@ -45,10 +58,10 @@ function asmFunc(global, env, buffer) {
   return (i64toi32_i32$0 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$5 | 0) == (r$hi | 0) | 0 | 0;
  }
  
- function $2($0, $0$hi, $1, $1$hi, r, r$hi) {
+ function $2($0, $0$hi, $1_1, $1$hi, r, r$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1 = $1 | 0;
+  $1_1 = $1_1 | 0;
   $1$hi = $1$hi | 0;
   r = r | 0;
   r$hi = r$hi | 0;
@@ -57,7 +70,7 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$2 = $0;
-  i64toi32_i32$3 = $1;
+  i64toi32_i32$3 = $1_1;
   i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i64toi32_i32$3 >>> 0) + $1$hi | 0;
   i64toi32_i32$5 = i64toi32_i32$0 - i64toi32_i32$5 | 0;
   $5$hi = i64toi32_i32$5;

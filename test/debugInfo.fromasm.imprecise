@@ -5,14 +5,14 @@
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
- (func $add (; 0 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $add (; 0 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
    (get_local $1)
    (get_local $1)
   )
  )
- (func $ret (; 1 ;) (param $0 i32) (result i32)
+ (func $ret (; 1 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   ;;@ return.cpp:50:0
   (set_local $0
    (i32.shl
@@ -26,7 +26,7 @@
    (i32.const 1)
   )
  )
- (func $opts (; 2 ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $opts (; 2 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;;@ even-opted.cpp:1:0
   (set_local $0
    (i32.add
@@ -50,7 +50,7 @@
    (get_local $1)
   )
  )
- (func $fib (; 3 ;) (param $0 i32) (result i32)
+ (func $fib (; 3 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
@@ -113,7 +113,7 @@
   ;;@ fib.c:8:0
   (get_local $1)
  )
- (func $switch_reach (; 4 ;) (param $0 i32) (result i32)
+ (func $switch_reach (; 4 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (block $__rjto$0 (result i32)
@@ -167,7 +167,7 @@
   ;;@ /tmp/emscripten_test_binaryen2_28hnAe/src.c:59950:0
   (get_local $1)
  )
- (func $nofile (; 5 ;)
+ (func $nofile (; 5 ;) (; has Stack IR ;)
   ;;@ (unknown):1337:0
   (call $nofile)
  )

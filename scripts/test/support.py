@@ -87,16 +87,17 @@ def untar(tarfile, outdir):
       shutil.rmtree(tmpdir)
 
 
-def split_wast(wast):
+def split_wast(wastFile):
   # .wast files can contain multiple modules, and assertions for each one.
   # this splits out a wast into [(module, assertions), ..]
   # we ignore module invalidity tests here.
-  wast = open(wast).read()
+  wast = open(wastFile, 'rb').read()
 
   # if it's a binary, leave it as is
   if wast[0] == '\0':
     return [[wast, '']]
 
+  wast = open(wastFile, 'r').read()
   ret = []
 
   def to_end(j):
@@ -152,10 +153,10 @@ def run_command(cmd, expected_status=0, stderr=None,
         "Can't redirect stderr if using expected_err"
     stderr = subprocess.PIPE
   print 'executing: ', ' '.join(cmd)
-  proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr)
+  proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=stderr, universal_newlines=True)
   out, err = proc.communicate()
   code = proc.returncode
-  if code != expected_status:
+  if expected_status is not None and code != expected_status:
     raise Exception(('run_command failed (%s)' % code, out + str(err or '')))
   err_correct = expected_err is None or \
       (expected_err in err if err_contains else expected_err == err)

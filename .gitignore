@@ -25,6 +25,7 @@ test/wasm-binaries-*.tbz2
 test/wasm-torture-s-*.tbz2
 test/wasm-install/
 test/validator/*.wasm
+*.map
 
 # files related to building in-tree
 CMakeFiles/
@@ -38,7 +39,6 @@ bin/wasm-shell
 bin/wasm-opt
 bin/asm2wasm
 bin/wasm2asm
-bin/s2wasm
 bin/wasm-as
 bin/wasm-dis
 lib/

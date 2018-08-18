@@ -1129,7 +1129,10 @@
    )
    (i32.const 0)
   )
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
   (func $pick
    (local $x i32)
    (local $y i32)
