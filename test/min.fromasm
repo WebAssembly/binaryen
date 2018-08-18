@@ -27,11 +27,7 @@
    )
   )
  )
-<<<<<<< HEAD
- (func $legalstub$neg (; 3 ;) (param $0 i32) (param $1 i32) (result f64)
-=======
  (func $legalstub$neg (; 3 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result f64)
->>>>>>> origin/master
   (i32.store
    (get_local $0)
    (get_local $1)

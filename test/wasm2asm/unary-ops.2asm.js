@@ -17,12 +17,9 @@ function asmFunc(global, env, buffer) {
  var Math_floor = global.Math.floor;
  var Math_ceil = global.Math.ceil;
  var Math_sqrt = global.Math.sqrt;
-<<<<<<< HEAD
-=======
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
->>>>>>> origin/master
  var i64toi32_i32$HIGH_BITS = 0;
  function dummy() {
   
@@ -101,29 +98,17 @@ function asmFunc(global, env, buffer) {
   $0$hi = $0$hi | 0;
   r = r | 0;
   r$hi = r$hi | 0;
-<<<<<<< HEAD
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, $9 = 0, $3$hi = 0;
-=======
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, $9_1 = 0, $3$hi = 0;
->>>>>>> origin/master
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$0 = i64toi32_i32$0;
   i64toi32_i32$1 = $0;
   i64toi32_i32$3 = Math_clz32(i64toi32_i32$0);
   i64toi32_i32$2 = 0;
-<<<<<<< HEAD
-  if ((i64toi32_i32$3 | 0) == (32 | 0)) $9 = Math_clz32(i64toi32_i32$1) + 32 | 0; else $9 = i64toi32_i32$3;
-  $3$hi = i64toi32_i32$2;
-  i64toi32_i32$2 = r$hi;
-  i64toi32_i32$2 = $3$hi;
-  i64toi32_i32$1 = $9;
-=======
   if ((i64toi32_i32$3 | 0) == (32 | 0)) $9_1 = Math_clz32(i64toi32_i32$1) + 32 | 0; else $9_1 = i64toi32_i32$3;
   $3$hi = i64toi32_i32$2;
   i64toi32_i32$2 = r$hi;
   i64toi32_i32$2 = $3$hi;
   i64toi32_i32$1 = $9_1;
->>>>>>> origin/master
   i64toi32_i32$0 = r$hi;
   i64toi32_i32$3 = r;
   return (i64toi32_i32$1 | 0) == (i64toi32_i32$3 | 0) & (i64toi32_i32$2 | 0) == (i64toi32_i32$0 | 0) | 0 | 0;
@@ -203,17 +188,10 @@ function asmFunc(global, env, buffer) {
  
  function __wasm_popcnt_i32(var$0) {
   var$0 = var$0 | 0;
-<<<<<<< HEAD
-  var var$1 = 0, $5 = 0;
-  label$1 : {
-   label$2 : do {
-    $5 = var$1;
-=======
   var var$1 = 0, $5_1 = 0;
   label$1 : {
    label$2 : do {
     $5_1 = var$1;
->>>>>>> origin/master
     if ((var$0 | 0) == (0 | 0)) break label$1;
     var$0 = var$0 & (var$0 - 1 | 0) | 0;
     var$1 = var$1 + 1 | 0;
@@ -221,39 +199,23 @@ function asmFunc(global, env, buffer) {
     break label$2;
    } while (1);
   };
-<<<<<<< HEAD
-  return $5 | 0;
-=======
   return $5_1 | 0;
->>>>>>> origin/master
  }
  
  function __wasm_popcnt_i64(var$0, var$0$hi) {
   var$0 = var$0 | 0;
   var$0$hi = var$0$hi | 0;
-<<<<<<< HEAD
-  var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, var$1$hi = 0, var$1 = 0, $5 = 0, $5$hi = 0, $4 = 0, $9$hi = 0;
-=======
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$5 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, var$1$hi = 0, var$1 = 0, $5_1 = 0, $5$hi = 0, $4_1 = 0, $9$hi = 0;
->>>>>>> origin/master
   label$1 : {
    label$2 : do {
     i64toi32_i32$0 = var$1$hi;
     i64toi32_i32$0 = var$0$hi;
     i64toi32_i32$0 = i64toi32_i32$0;
-<<<<<<< HEAD
-    $4 = (var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0);
-    i64toi32_i32$0 = var$1$hi;
-    $5 = var$1;
-    $5$hi = i64toi32_i32$0;
-    if ($4) break label$1;
-=======
     $4_1 = (var$0 | i64toi32_i32$0 | 0 | 0) == (0 | 0);
     i64toi32_i32$0 = var$1$hi;
     $5_1 = var$1;
     $5$hi = i64toi32_i32$0;
     if ($4_1) break label$1;
->>>>>>> origin/master
     i64toi32_i32$0 = $5$hi;
     i64toi32_i32$0 = i64toi32_i32$0;
     i64toi32_i32$0 = var$0$hi;
@@ -291,11 +253,7 @@ function asmFunc(global, env, buffer) {
   };
   i64toi32_i32$4 = $5$hi;
   i64toi32_i32$4 = i64toi32_i32$4;
-<<<<<<< HEAD
-  i64toi32_i32$5 = $5;
-=======
   i64toi32_i32$5 = $5_1;
->>>>>>> origin/master
   i64toi32_i32$HIGH_BITS = i64toi32_i32$4;
   return i64toi32_i32$5 | 0;
  }
