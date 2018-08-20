@@ -47,10 +47,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool anotherCycle;
 
-  // Whether a value can flow in the current path. If so, then a br with value
-  // can be turned into a value, which will flow through blocks/ifs to the right place
-  bool valueCanFlow;
-
   typedef std::vector<Expression**> Flows;
 
   // list of breaks that are currently flowing. if they reach their target without
@@ -73,14 +69,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (!br->condition) { // TODO: optimize?
         // a break, let's see where it flows to
         flows.push_back(currp);
-        self->valueCanFlow = true; // start optimistic
       } else {
         self->stopValueFlow();
       }
     } else if (curr->is<Return>()) {
       flows.clear();
       flows.push_back(currp);
-      self->valueCanFlow = true; // start optimistic
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
       if (iff->condition->type == unreachable) {
@@ -90,10 +84,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       if (iff->ifFalse) {
         assert(self->ifStack.size() > 0);
-        for (auto* flow : self->ifStack.back()) {
+        auto ifTrueFlows = std::move(self->ifStack.back());
+        self->ifStack.pop_back();
+        // we can flow values out in most cases, except if one arm
+        // has the none type - we will update the types later, but
+        // there is no way to emit a proper type for one arm being
+        // none and the other flowing a value; and there is no way
+        // to flow a value from a none.
+        if (iff->ifTrue->type == none || iff->ifFalse->type == none) {
+          self->removeValueFlow(ifTrueFlows);
+          self->stopValueFlow();
+        }
+        for (auto* flow : ifTrueFlows) {
           flows.push_back(flow);
         }
-        self->ifStack.pop_back();
       } else {
         // if without else stops the flow of values
         self->stopValueFlow();
@@ -108,17 +112,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         for (size_t i = 0; i < size; i++) {
           auto* flow = (*flows[i])->dynCast<Break>();
           if (flow && flow->name == name) {
-            if (!flow->value || self->valueCanFlow) {
-              if (!flow->value) {
-                // br => nop
-                ExpressionManipulator::nop<Break>(flow);
-              } else {
-                // br with value => value
-                *flows[i] = flow->value;
-              }
-              skip++;
-              self->anotherCycle = true;
+            if (!flow->value) {
+              // br => nop
+              ExpressionManipulator::nop<Break>(flow);
+            } else {
+              // br with value => value
+              *flows[i] = flow->value;
             }
+            skip++;
+            self->anotherCycle = true;
           } else if (skip > 0) {
             flows[i - skip] = flows[i];
           }
@@ -148,18 +150,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void stopFlow() {
     flows.clear();
-    valueCanFlow = false;
   }
 
-  void stopValueFlow() {
-    flows.erase(std::remove_if(flows.begin(), flows.end(), [&](Expression** currp) {
+  void removeValueFlow(Flows& currFlows) {
+    currFlows.erase(std::remove_if(currFlows.begin(), currFlows.end(), [&](Expression** currp) {
       auto* curr = *currp;
       if (auto* ret = curr->dynCast<Return>()) {
         return ret->value;
       }
       return curr->cast<Break>()->value;
-    }), flows.end());
-    valueCanFlow = false;
+    }), currFlows.end());
+  }
+
+  void stopValueFlow() {
+    removeValueFlow(flows);
   }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
@@ -447,7 +451,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // return => nop
           ExpressionManipulator::nop(flow);
           anotherCycle = true;
-        } else if (valueCanFlow) {
+        } else {
           // return with value => value
           *flows[i] = flow->value;
           anotherCycle = true;

@@ -1494,5 +1494,51 @@
    )
    (i32.const 0)
   )
+  (func $if-flow-1 (result i32)
+    (if
+      (i32.const 0)
+      (return (i32.const 1))
+      (return (i32.const 2))
+    )
+  )
+  (func $if-flow-2 (result i32)
+    (if
+      (i32.const 0)
+      (unreachable)
+      (return (i32.const 2))
+    )
+  )
+  (func $if-flow-3 (result i32)
+    (if
+      (i32.const 0)
+      (return (i32.const 1))
+      (unreachable)
+    )
+  )
+  (func $if-flow-4 (result i32)
+    (if
+      (return (i32.const 0))
+      (return (i32.const 1))
+      (return (i32.const 2))
+    )
+  )
+  (func $iff-flow-fuzz-bug (result i32)
+   (loop $label$1
+    (if
+     (i32.const 1)
+     (loop $label$2
+      (unreachable)
+      (if ;; a loop that is never reached at the end of a loop
+       (i32.const 0)
+       (nop)
+       (return
+        (i32.const 0)
+       )
+      )
+     )
+    )
+    (br $label$1)
+   )
+  )
 )
 
