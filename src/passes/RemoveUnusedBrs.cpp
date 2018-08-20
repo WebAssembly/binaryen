@@ -90,10 +90,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       if (iff->ifFalse) {
         assert(self->ifStack.size() > 0);
-        for (auto* flow : self->ifStack.back()) {
+        auto ifTrueFlows = std::move(self->ifStack.back());
+        self->ifStack.pop_back();
+        // we can flow values out in most cases, except if one arm
+        // has the none type - we will update the types later, but
+        // there is no way to emit a proper type for one arm being
+        // none and the other flowing a value; and there is no way
+        // to flow a value from a none.
+        if (iff->ifTrue->type == none || iff->ifFalse->type == none) {
+          self->removeValueFlow(ifTrueFlows);
+          self->stopValueFlow();
+        }
+        for (auto* flow : ifTrueFlows) {
           flows.push_back(flow);
         }
-        self->ifStack.pop_back();
+        // one arm of the if may have blocked flowing, but values
+        // from the other can, unless blocked later
+        self->valueCanFlow = true;
       } else {
         // if without else stops the flow of values
         self->stopValueFlow();
@@ -151,14 +164,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     valueCanFlow = false;
   }
 
-  void stopValueFlow() {
-    flows.erase(std::remove_if(flows.begin(), flows.end(), [&](Expression** currp) {
+  void removeValueFlow(Flows& currFlows) {
+    currFlows.erase(std::remove_if(currFlows.begin(), currFlows.end(), [&](Expression** currp) {
       auto* curr = *currp;
       if (auto* ret = curr->dynCast<Return>()) {
         return ret->value;
       }
       return curr->cast<Break>()->value;
-    }), flows.end());
+    }), currFlows.end());
+  }
+
+  void stopValueFlow() {
+    removeValueFlow(flows);
     valueCanFlow = false;
   }
 
