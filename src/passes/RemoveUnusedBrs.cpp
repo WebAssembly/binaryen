@@ -47,10 +47,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool anotherCycle;
 
-  // Whether a value can flow in the current path. If so, then a br with value
-  // can be turned into a value, which will flow through blocks/ifs to the right place
-  bool valueCanFlow;
-
   typedef std::vector<Expression**> Flows;
 
   // list of breaks that are currently flowing. if they reach their target without
@@ -73,14 +69,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (!br->condition) { // TODO: optimize?
         // a break, let's see where it flows to
         flows.push_back(currp);
-        self->valueCanFlow = true; // start optimistic
       } else {
         self->stopValueFlow();
       }
     } else if (curr->is<Return>()) {
       flows.clear();
       flows.push_back(currp);
-      self->valueCanFlow = true; // start optimistic
     } else if (curr->is<If>()) {
       auto* iff = curr->cast<If>();
       if (iff->condition->type == unreachable) {
@@ -104,9 +98,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         for (auto* flow : ifTrueFlows) {
           flows.push_back(flow);
         }
-        // one arm of the if may have blocked flowing, but values
-        // from the other can, unless blocked later
-        self->valueCanFlow = true;
       } else {
         // if without else stops the flow of values
         self->stopValueFlow();
@@ -121,17 +112,15 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         for (size_t i = 0; i < size; i++) {
           auto* flow = (*flows[i])->dynCast<Break>();
           if (flow && flow->name == name) {
-            if (!flow->value || self->valueCanFlow) {
-              if (!flow->value) {
-                // br => nop
-                ExpressionManipulator::nop<Break>(flow);
-              } else {
-                // br with value => value
-                *flows[i] = flow->value;
-              }
-              skip++;
-              self->anotherCycle = true;
+            if (!flow->value) {
+              // br => nop
+              ExpressionManipulator::nop<Break>(flow);
+            } else {
+              // br with value => value
+              *flows[i] = flow->value;
             }
+            skip++;
+            self->anotherCycle = true;
           } else if (skip > 0) {
             flows[i - skip] = flows[i];
           }
@@ -161,7 +150,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void stopFlow() {
     flows.clear();
-    valueCanFlow = false;
   }
 
   void removeValueFlow(Flows& currFlows) {
@@ -176,7 +164,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   void stopValueFlow() {
     removeValueFlow(flows);
-    valueCanFlow = false;
   }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
@@ -464,7 +451,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // return => nop
           ExpressionManipulator::nop(flow);
           anotherCycle = true;
-        } else if (valueCanFlow) {
+        } else {
           // return with value => value
           *flows[i] = flow->value;
           anotherCycle = true;
