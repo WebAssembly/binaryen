@@ -27,16 +27,19 @@
 //    the previous point was true for an argument, then the second
 //    must as well.)
 //
+// This pass does not depend on flattening, but it may be more effective,
+// as then call arguments never have side effects (which we need to
+// watch for here).
+//
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <wasm.h>
 #include <pass.h>
-//#include <wasm-builder.h>
+#include <wasm-builder.h>
 #include <cfg/cfg-traversal.h>
-//#include <ir/literal-utils.h>
-//#include <ir/utils.h>
+#include <ir/utils.h>
 #include <support/sorted_vector.h>
 #include <support/unique_deferring_queue.h>
 
@@ -45,10 +48,12 @@ namespace wasm {
 // Information for a function
 struct CAOFunctionInfo {
   // The unused parameters, if any.
-  std::unordered_map<Index> unusedParams;
+  SortedVector unusedParams;
   // Maps a function name to the calls going to it.
-  std::unordered_map<Name, std::vector<Expression**> calls;
+  std::unordered_map<Name, std::vector<Call*> calls;
 };
+
+typedef std::unordered_map<Name, CAOFunctionInfo> CAOFunctionInfoMap;
 
 // Information in a basic block
 struct CAOBlockInfo {
@@ -68,8 +73,9 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
 
   Pass* create() override { return new CAOScanner(info); }
 
-  CAOScanner(CAOFunctionInfo* info) : info(info) {}
+  CAOScanner(CAOFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
+  CAOFunctionInfoMap* infoMap;
   CAOFunctionInfo* info;
 
   Index numParams;
@@ -96,14 +102,15 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
     }
   }
 
-  static void doVisitCall(Expression** currp) {
-    info->calls[curr->name].push_back(currp);
+  static void visitCall(Call* curr) {
+    info->calls[curr->name].push_back(curr);
   }
 
   // main entry point
 
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
+    info = &((*infoMap)[func->info]);
     CFGWalker<CAOScanner, Visitor<CAOScanner>, Info>::doWalkFunction(func);
     // If there are params, check if they are used
     if (numParams > 0) {
@@ -174,9 +181,126 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
   }
 };
 
+struct CallArgumentOptimization : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    CAOFunctionInfoMap infoMap;
+    // Ensure they all exist so the parallel threads don't modify the data structure.
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
+    // Scan all the functions.
+    {
+      PassRunner runner(module);
+      runner.setIsNested(true);
+      runner.add<CAOScanner>(&infoMap);
+      runner.run();
+    }
+    // Combine all the info.
+    std::unordered_map<Name, std::vector<Call*> allCalls;
+    for (auto& pair : infoMap) {
+      auto& info = pair.second;
+      for (auto& pair : info.calls) {
+        auto name = pair.first;
+        auto& calls = pair.second;
+        auto& allCallsToName = allCalls[name];
+        allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+      }
+    }
+    // We now have a mapping of all call sites for each function. Check which
+    // are always passed the same constant for a particular argument.
+    for (auto& pair : allCalls) {
+      auto name = pair.first;
+      auto& calls = pair.second;
+      auto* func = module->getFunction(name);
+      auto numParams = func->getNumParams();
+      for (Index i = 0; i < numParams; i++) {
+        Literal value;
+        for (auto* call : calls) {
+          assert(call->operands.size() == numParams);
+          auto* operand = call->operands[i];
+          if (auto* c = operand->dynCall<Const>()) {
+            if (value.type == none) {
+              // This is the first value seen.
+              value = c->value;
+            } else if (value != c->value) {
+              // Not identical, give up
+              value.type = none;
+              break;
+            }
+          } else {
+            // Not a constant, give up
+            value.type = none;
+            break;
+          }
+        }
+        if (value.type != none) {
+          // Success! We can just apply the constant in the function, which makes
+          // the parameter value unused, which lets us remove it later.
+          Builder builder(*module);
+          func->body = builder.makeSequence(
+            builder.makeSetLocal(i, builder.makeConst(value)),
+            func->body
+          );
+          // Mark it as unused (to avoid scanning again).
+          infoMap[name].unusedParams.insert(i);
+        }
+      }
+    }
+    // FIXME: remove stuff in table and exports, here
+    // We now know which parameters are unused, and can potentially remove them.
+    for (auto& pair : allCalls) {
+      auto name = pair.first;
+      auto& calls = pair.second;
+      auto* func = module->getFunction(name);
+      auto numParams = func->getNumParams();
+      if (numParams == 0) continue;
+      // Iterate downwards, as we may remove more than one.
+      Index i = numParams - 1;
+      while (1) {
+        if (infoMap[name].unusedParams.has(i)) {
+          // Great, it's not used. Check if none of the calls has a param with side
+          // effects, as that would prevent us removing them (flattening before
+          // should have been done).
+          bool can = true;
+          for (auto* call : calls) {
+            auto* operand = call->operands[i];
+            if (EffectAnalyzer(runner->getPassOptions(), operand).hasSideEffects()) {
+              can = false;
+              break;
+            }
+          }
+          if (can) {
+            // Wonderful, nothing stands in our way! Do it.
+            removeParameter(func, calls);
+          }
+        }
+        if (i == 0) break;
+        i--;
+      }
+    }
+  }
+
+private:
+  void removeParameter(Function* func, std::vector<Call*> calls) {
+    // Clear the type, which is no longer accurate.
+    func->type = Name();
+    // Remove the parameter from the function.
+..
+    // Remove the arguments from the calls.
+..
+  }
+};
+
 Pass *createCallArgumentOptimizationPass() {
   return new CallArgumentOptimization();
 }
 
 } // namespace wasm
+
+/*
+tests:
+  * args with side effects
+  * in table or in export, prevents us
+  * removing more than one - the order matterz
+*/
 
