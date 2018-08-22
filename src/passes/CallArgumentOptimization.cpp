@@ -271,7 +271,8 @@ struct CallArgumentOptimization : public Pass {
           }
           if (can) {
             // Wonderful, nothing stands in our way! Do it.
-            removeParameter(func, calls);
+            // TODO: parallelize this?
+            removeParameter(func, i, calls);
           }
         }
         if (i == 0) break;
@@ -281,13 +282,42 @@ struct CallArgumentOptimization : public Pass {
   }
 
 private:
-  void removeParameter(Function* func, std::vector<Call*> calls) {
+  void removeParameter(Function* func, Index i, std::vector<Call*> calls) {
     // Clear the type, which is no longer accurate.
     func->type = Name();
-    // Remove the parameter from the function.
-..
+    // It's cumbersome to adjust local names - TODO don't clear them?
+    Builder::clearLocalNames(func);
+    // Remove the parameter from the function. We must add a new local
+    // for uses of the parameter, but cannot make it use the same index
+    // (in general).
+    auto type = func->getLocalType(i);
+    func->params.erase(func->params.begin() + i);
+    Index newIndex = Builder::addVar(func, type);
+    // Update local operations.
+    struct LocalUpdater : public PostWalker<LocalUpdater> {
+      Index removedIndex;
+      Index newIndex;
+      LocalUpdater(Function* func, Index removedIndex, Index newIndex) : removedIndex(removedIndex), newIndex(newIndex) {
+        walk(func->body);
+      }
+      void visitGetLocal(GetLocal* curr) {
+        updateIndex(curr->index);
+      }
+      void visitSetLocal(SetLocal* curr) {
+        updateIndex(curr->index);
+      }
+      void updateIndex(Index& index) {
+        if (index == removedIndex) {
+          index = newIndex;
+        } else if (index > removedIndex) {
+          index--;
+        }
+      }
+    } localUpdater(func);
     // Remove the arguments from the calls.
-..
+    for (auto* call : calls) {
+      call->operands.erase(call->operands.begin() + i);
+    }
   }
 };
 
