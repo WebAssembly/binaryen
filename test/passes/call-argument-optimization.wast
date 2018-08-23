@@ -39,5 +39,12 @@
   (func $b43
     (call $a4 (i32.const 4))
   )
+  (func $a5 (param $x i32) (param $y f64) ;; optimize two
+    (drop (get_local $x))
+    (drop (get_local $y))
+  )
+  (func $b5
+    (call $a5 (i32.const 1) (f64.const 3.14159))
+  )
 )
 

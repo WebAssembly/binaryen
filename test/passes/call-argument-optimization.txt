@@ -1,70 +1,94 @@
-findUnused in $a
-  BB 1
+findUnused in $a1
+  BB findUnused in $1a
+
+  BB     later 1
+1an unused param in the func 
+$a1 : 0
     later 1
-an unused param in the func $a : 0
+findUnused in $a3an unused param in the func $
+a :   BB 0
+1findUnused in $a4
+  BB 
+get local
+  in block
+    add a read
+    later 11
+get local
+    later 1
+an unused param in the func   in block
+$    add a read
+a4 : 0
+findUnused in $a5
+  BB 2
+    later 2
 get local
   in block
     add a read
 findUnused in $a2
   BB 1
     later 1
-findUnused in $a3
-  BB 1
-    later 1
+
 an unused param in the func $a3 : 0
-findUnused in $a4
-  BB 1
-    later 1
-an unused param in the func $a4 : 0
-findUnused in $a1
-  BB 1
-    later 1
-an unused param in the func $a1 : 0
+calls to $a2
+  0
+  see none.const ?
+    frist
+  see i32.const 4
+    diff :(
+calls to $a4
+  0
+  see none.const ?
+    frist
+    notconst
+calls to $a5
+  0
+  see none.const ?
+    frist
+  yay!
+  1
+  see none.const ?
+    frist
+  yay!
 calls to $a3
   0
   see none.const ?
     frist
   see i32.const 4
     diff :(
+calls to $a
+  0
+  see none.const ?
+    frist
+  yay!
 calls to $a1
   0
   see none.const ?
     frist
   see i32.const 2
   yay!
-calls to $a
-  0
-  see none.const ?
-    frist
-  yay!
-calls to $a4
-  0
-  see none.const ?
-    frist
-    notconst
-calls to $a2
-  0
-  see none.const ?
-    frist
-  see i32.const 3
-    diff :(
-latah $a3
+latah $a2
+  chak 0
+latah $a4
   chak 0
   unused!
-latah $a1
+latah $a5
+  chak 1
+  unused!
+  chak 0
+  unused!
+latah $a3
   chak 0
   unused!
 latah $a
   chak 0
   unused!
-latah $a4
+latah $a1
   chak 0
   unused!
-latah $a2
-  chak 0
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
+ (type $2 (func (param i32 f64)))
  (func $a (; 0 ;)
   (local $0 i32)
   (set_local $0
@@ -127,5 +151,28 @@ latah $a2
   (call $a4
    (i32.const 4)
   )
+ )
+ (func $a5 (; 14 ;)
+  (local $0 f64)
+  (local $1 i32)
+  (set_local $0
+   (f64.const 3.14159)
+  )
+  (block
+   (set_local $1
+    (i32.const 1)
+   )
+   (block
+    (drop
+     (get_local $1)
+    )
+    (drop
+     (get_local $0)
+    )
+   )
+  )
+ )
+ (func $b5 (; 15 ;) (type $1)
+  (call $a5)
  )
 )
