@@ -51,6 +51,12 @@ struct CAOFunctionInfo {
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
   std::unordered_map<Name, std::vector<Call*> calls;
+  // Whether the function can be called from places that
+  // affect what we can do. For now, any call we don't
+  // see inhibits our optimizations, but TODO: an export
+  // could be worked around by exporting a thunk that
+  // adds the parameter.
+  bool hasUnseenCalls = false;
 };
 
 typedef std::unordered_map<Name, CAOFunctionInfo> CAOFunctionInfoMap;
@@ -112,8 +118,9 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
     numParams = func->getNumParams();
     info = &((*infoMap)[func->info]);
     CFGWalker<CAOScanner, Visitor<CAOScanner>, Info>::doWalkFunction(func);
-    // If there are params, check if they are used
-    if (numParams > 0) {
+    // If there are relevant params, check if they are used. (If
+    // we can't optimize the function anyhow, there's no point.)
+    if (numParams > 0 && !info->hasUnseenCalls) {
       findUnusedParams(func);
     }
   }
@@ -188,6 +195,17 @@ struct CallArgumentOptimization : public Pass {
     for (auto& func : module->functions) {
       infoMap[func->name];
     }
+    // Check the influence of the table and exports.
+    for (auto& curr : module->exports) {
+      if (curr->kind == ExternalKind::Function) {
+        infoMap[curr->value].hasUnseenCalls = true;
+      }
+    }
+    for (auto& segment : module->table.segments) {
+      for (auto name : segment.data) {
+        infoMap[name].hasUnseenCalls = true;
+      }
+    }
     // Scan all the functions.
     {
       PassRunner runner(module);
@@ -210,6 +228,9 @@ struct CallArgumentOptimization : public Pass {
     // are always passed the same constant for a particular argument.
     for (auto& pair : allCalls) {
       auto name = pair.first;
+      // We can only optimize if we see all the calls and can modify
+      // them.
+      if (infoMap[name].hasUnseenCalls) continue;
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
@@ -246,7 +267,6 @@ struct CallArgumentOptimization : public Pass {
         }
       }
     }
-// XXX need this earlier Functions that are exported or in the table cannot be modified.
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& pair : allCalls) {
       auto name = pair.first;

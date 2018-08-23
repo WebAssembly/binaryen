@@ -66,6 +66,7 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
+  registerPass("call-argument-optimization", "optimizes away arguments to calls in an lto-like manner", createCallArgumentOptimizationPass);
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
