@@ -1,5 +1,7 @@
 (module
   (export "a8" (func $a8))
+  (table 1 1 anyfunc)
+  (elem (i32.const 0) $a9)
   (func $a (param $x i32))
   (func $b
     (call $a (i32.const 1)) ;; best case scenario
@@ -60,9 +62,13 @@
   (func $b7
     (call $a7 (i32.const 1) (unreachable))
   )
-  (func $a8 (param $x i32))
+  (func $a8 (param $x i32)) ;; exported, do not optimize
   (func $b8
     (call $a8 (i32.const 1))
+  )
+  (func $a9 (param $x i32)) ;; tabled, do not optimize
+  (func $b9
+    (call $a9 (i32.const 1))
   )
 )
 
