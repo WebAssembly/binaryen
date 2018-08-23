@@ -70,5 +70,18 @@
   (func $b9
     (call $a9 (i32.const 1))
   )
+  (func $a10 (param $x i32) ;; recursion
+    (call $a10 (i32.const 1))
+    (call $a10 (i32.const 1))
+  )
+  (func $a11 (param $x i32) ;; partially successful recursion
+    (call $a11 (i32.const 1))
+    (call $a11 (i32.const 2))
+  )
+  (func $a12 (param $x i32) ;; unsuccessful recursion
+    (drop (get_local $x))
+    (call $a12 (i32.const 1))
+    (call $a12 (i32.const 2))
+  )
 )
 

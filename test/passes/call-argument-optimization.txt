@@ -145,4 +145,30 @@
    (i32.const 1)
   )
  )
+ (func $a10 (; 24 ;)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 1)
+  )
+  (block
+   (call $a10)
+   (call $a10)
+  )
+ )
+ (func $a11 (; 25 ;)
+  (local $0 i32)
+  (call $a11)
+  (call $a11)
+ )
+ (func $a12 (; 26 ;) (type $0) (param $x i32)
+  (drop
+   (get_local $x)
+  )
+  (call $a12
+   (i32.const 1)
+  )
+  (call $a12
+   (i32.const 2)
+  )
+ )
 )

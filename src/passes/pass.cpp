@@ -194,7 +194,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+  if (getenv("DOIT") && (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
     add("call-argument-optimization");
   }
 }
