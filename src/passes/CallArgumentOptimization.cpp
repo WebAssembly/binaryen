@@ -39,9 +39,8 @@
 #include <pass.h>
 #include <wasm-builder.h>
 #include <cfg/cfg-traversal.h>
-#include <ir/utils.h>
+#include <ir/effects.h>
 #include <support/sorted_vector.h>
-#include <support/unique_deferring_queue.h>
 
 namespace wasm {
 
@@ -50,7 +49,7 @@ struct CAOFunctionInfo {
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
-  std::unordered_map<Name, std::vector<Call*> calls;
+  std::unordered_map<Name, std::vector<Call*>> calls;
   // Whether the function can be called from places that
   // affect what we can do. For now, any call we don't
   // see inhibits our optimizations, but TODO: an export
@@ -71,13 +70,13 @@ struct CAOBlockInfo {
     Read,
     Written
   };
-  std::unordered_set<LocalUse> localUses;
+  std::unordered_map<Index, LocalUse> localUses;
 };
 
 struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>, CAOBlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new CAOScanner(info); }
+  Pass* create() override { return new CAOScanner(infoMap); }
 
   CAOScanner(CAOFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
@@ -108,16 +107,16 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
     }
   }
 
-  static void visitCall(Call* curr) {
-    info->calls[curr->name].push_back(curr);
+  void visitCall(Call* curr) {
+    info->calls[curr->target].push_back(curr);
   }
 
   // main entry point
 
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
-    info = &((*infoMap)[func->info]);
-    CFGWalker<CAOScanner, Visitor<CAOScanner>, Info>::doWalkFunction(func);
+    info = &((*infoMap)[func->name]);
+    CFGWalker<CAOScanner, Visitor<CAOScanner>, CAOBlockInfo>::doWalkFunction(func);
     // If there are relevant params, check if they are used. (If
     // we can't optimize the function anyhow, there's no point.)
     if (numParams > 0 && !info->hasUnseenCalls) {
@@ -139,22 +138,23 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
     std::unordered_set<Index> usedParams;
     // An item of work is a block plus the values arriving there.
     typedef std::pair<BasicBlock*, SortedVector> Item;
-    UniqueDeferredQueue<Item> work;
-    work.push(Item(entry, initial));
+    std::vector<Item> work;
+    work.emplace_back(entry, initial);
     while (!work.empty()) {
-      auto item = work.pop();
+      auto item = std::move(work.back());
+      work.pop_back();
       auto* block = item.first;
       auto& indexes = item.second;
       // Ignore things we've already seen, or we've already seen to be used.
       auto& seenIndexes = seenBlockIndexes[block];
-      indexes.erase(std::remove_if(indexes.begin(), indexes.end(), [&](const Index i) {
+      indexes.filter([&](const Index i) {
         if (seenIndexes.has(i) || usedParams.count(i)) {
           return true;
         } else {
           seenIndexes.insert(i);
           return false;
         }
-      }), indexes.end());
+      });
       if (indexes.empty()) {
         continue; // nothing more to flow
       }
@@ -162,7 +162,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
       SortedVector remainingIndexes;
       for (auto i : indexes) {
         auto iter = localUses.find(i);
-        if (iter != localuses.end()) {
+        if (iter != localUses.end()) {
           auto use = iter->second;
           if (use == CAOBlockInfo::Read) {
             usedParams.insert(i);
@@ -175,7 +175,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
       // If there are remaining indexes, flow them forward.
       if (!remainingIndexes.empty()) {
         for (auto* next : block->out) {
-          work.push(Item(next, remainingIndexes));
+          work.emplace_back(next, remainingIndexes);
         }
       }
     }
@@ -214,7 +214,7 @@ struct CallArgumentOptimization : public Pass {
       runner.run();
     }
     // Combine all the info.
-    std::unordered_map<Name, std::vector<Call*> allCalls;
+    std::unordered_map<Name, std::vector<Call*>> allCalls;
     for (auto& pair : infoMap) {
       auto& info = pair.second;
       for (auto& pair : info.calls) {
@@ -239,7 +239,7 @@ struct CallArgumentOptimization : public Pass {
         for (auto* call : calls) {
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
-          if (auto* c = operand->dynCall<Const>()) {
+          if (auto* c = operand->dynCast<Const>()) {
             if (value.type == none) {
               // This is the first value seen.
               value = c->value;
@@ -284,7 +284,7 @@ struct CallArgumentOptimization : public Pass {
           bool can = true;
           for (auto* call : calls) {
             auto* operand = call->operands[i];
-            if (EffectAnalyzer(runner->getPassOptions(), operand).hasSideEffects()) {
+            if (EffectAnalyzer(runner->options, operand).hasSideEffects()) {
               can = false;
               break;
             }
@@ -333,7 +333,7 @@ private:
           index--;
         }
       }
-    } localUpdater(func);
+    } localUpdater(func, i, newIndex);
     // Remove the arguments from the calls.
     for (auto* call : calls) {
       call->operands.erase(call->operands.begin() + i);
