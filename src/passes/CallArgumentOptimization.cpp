@@ -88,13 +88,10 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
   // cfg traversal work
 
   void visitGetLocal(GetLocal* curr) {
-std::cout << "get local\n";
     if (currBasicBlock) {
-std::cout << "  in block\n";
       auto& localUses = currBasicBlock->contents.localUses;
       auto index = curr->index;
       if (localUses.count(index) == 0) {
-std::cout << "    add a read\n";
         localUses[index] = CAOBlockInfo::Read;
       }
     }
@@ -128,7 +125,6 @@ std::cout << "    add a read\n";
   }
 
   void findUnusedParams(Function* func) {
-std::cout << "findUnused in " << func->name << '\n';
     // Flow the incoming parameter values, see if they reach a read.
     // Once we've seen a parameter at a block, we need never consider it there
     // again.
@@ -149,7 +145,6 @@ std::cout << "findUnused in " << func->name << '\n';
       work.pop_back();
       auto* block = item.first;
       auto& indexes = item.second;
-std::cout << "  BB " << indexes.size() << '\n';
       // Ignore things we've already seen, or we've already seen to be used.
       auto& seenIndexes = seenBlockIndexes[block];
       indexes.filter([&](const Index i) {
@@ -160,7 +155,6 @@ std::cout << "  BB " << indexes.size() << '\n';
           return true;
         }
       });
-std::cout << "    later " << indexes.size() << '\n';
       if (indexes.empty()) {
         continue; // nothing more to flow
       }
@@ -188,7 +182,6 @@ std::cout << "    later " << indexes.size() << '\n';
     // We can now compute the unused params.
     for (Index i = 0; i < numParams; i++) {
       if (usedParams.count(i) == 0) {
-std::cout << "an unused param in the func " << func->name << " : " << i << '\n';
         info->unusedParams.insert(i);
       }
     }
@@ -235,7 +228,6 @@ struct CallArgumentOptimization : public Pass {
     // are always passed the same constant for a particular argument.
     for (auto& pair : allCalls) {
       auto name = pair.first;
-std::cout << "calls to " << name << '\n';
       // We can only optimize if we see all the calls and can modify
       // them.
       if (infoMap[name].hasUnseenCalls) continue;
@@ -243,33 +235,27 @@ std::cout << "calls to " << name << '\n';
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       for (Index i = 0; i < numParams; i++) {
-std::cout << "  " << i << '\n';
         Literal value;
         for (auto* call : calls) {
           assert(call->target == name);
           assert(call->operands.size() == numParams);
           auto* operand = call->operands[i];
           if (auto* c = operand->dynCast<Const>()) {
-std::cout << "  see " << value << '\n';
             if (value.type == none) {
-std::cout << "    frist\n";
               // This is the first value seen.
               value = c->value;
             } else if (value != c->value) {
-std::cout << "    diff :(\n";
               // Not identical, give up
               value.type = none;
               break;
             }
           } else {
-std::cout << "    notconst\n";
             // Not a constant, give up
             value.type = none;
             break;
           }
         }
         if (value.type != none) {
-std::cout << "  yay!\n";
           // Success! We can just apply the constant in the function, which makes
           // the parameter value unused, which lets us remove it later.
           Builder builder(*module);
@@ -286,7 +272,6 @@ std::cout << "  yay!\n";
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& pair : allCalls) {
       auto name = pair.first;
-std::cout << "latah " << name << '\n';
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
@@ -294,9 +279,7 @@ std::cout << "latah " << name << '\n';
       // Iterate downwards, as we may remove more than one.
       Index i = numParams - 1;
       while (1) {
-std::cout << "  chak " << i << '\n';
         if (infoMap[name].unusedParams.has(i)) {
-std::cout << "  unused!\n";
           // Great, it's not used. Check if none of the calls has a param with side
           // effects, as that would prevent us removing them (flattening before
           // should have been done).
