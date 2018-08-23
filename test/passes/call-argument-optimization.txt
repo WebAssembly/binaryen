@@ -1,0 +1,14 @@
+(module
+ (type $0 (func (param i32)))
+ (type $1 (func))
+ (func $a (; 0 ;)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 1)
+  )
+  (nop)
+ )
+ (func $b (; 1 ;) (type $1)
+  (call $a)
+ )
+)
