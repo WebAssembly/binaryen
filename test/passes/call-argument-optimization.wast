@@ -53,5 +53,12 @@
   (func $b6
     (call $a6 (unreachable) (f64.const 3.14159))
   )
+  (func $a7 (param $x i32) (param $y f64) ;; optimize just the other one
+    (drop (get_local $x))
+    (drop (get_local $y))
+  )
+  (func $b7
+    (call $a7 (i32.const 1) (unreachable))
+  )
 )
 
