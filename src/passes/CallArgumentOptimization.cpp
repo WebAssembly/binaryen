@@ -368,7 +368,6 @@ Pass *createCallArgumentOptimizationPass() {
 
 /*
 tests:
-  * args with side effects
   * in table or in export, prevents us
   * removing more than one - the order matterz
 */
