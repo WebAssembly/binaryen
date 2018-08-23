@@ -5,6 +5,7 @@
     (call $a (i32.const 1))
   )
   (func $a1 (param $x i32)
+    (unreachable)
   )
   (func $b1
     (call $a1 (i32.const 2))

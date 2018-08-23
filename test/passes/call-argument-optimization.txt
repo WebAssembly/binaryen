@@ -16,7 +16,7 @@
   (set_local $0
    (i32.const 2)
   )
-  (nop)
+  (unreachable)
  )
  (func $b1 (; 3 ;) (type $1)
   (call $a1)
