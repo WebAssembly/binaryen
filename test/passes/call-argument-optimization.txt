@@ -1,45 +1,78 @@
-findUnused in $a1
-  BB findUnused in $1a
-
-  BB     later 1
-1an unused param in the func 
-$a1 : 0
-    later 1
-findUnused in $a3an unused param in the func $
-a :   BB 0
-1findUnused in $a4
-  BB 
+findUnused in findUnused in $a1
+  BB $a
 get local
-  in block
-    add a read
-    later 11
-get local
-    later 1
-an unused param in the func   in block
-$    add a read
-a4 : 0
-findUnused in $a5
-  BB 2
-    later 2
-get local
-  in block
+  BB   in block
     add a read
 findUnused in $a2
   BB 1
+1
+1
     later 1
+    later 1
+    later 1
+an unused param in the func $a1an unused param in the func  : $findUnused in a0$a3 : 
+0
 
+  BB 1
+    later 1
 an unused param in the func $a3 : 0
-calls to $a2
+findUnused in $a4get local
+
+  in block
+get local
+    add a read
+  in block
+  BB     add a read
+get local
+  in block
+    add a read
+1get local
+
+  in block
+    add a read
+    later 1
+an unused param in the func $a4 : 0
+findUnused in $a5findUnused in 
+$a6
+  BB 2
+  BB 2
+    later 2
+    later 2
+calls to $a1
   0
   see none.const ?
     frist
-  see i32.const 4
-    diff :(
+  see i32.const 2
+  yay!
+calls to $a6
+  0
+    notconst
+  1
+  see none.const ?
+    frist
+  yay!
+calls to $a
+  0
+  see none.const ?
+    frist
+  yay!
 calls to $a4
   0
   see none.const ?
     frist
     notconst
+calls to $a3
+  0
+  see none.const ?
+    frist
+  see i32.const 4
+    diff :(
+calls to $a2
+  0
+  see none.const ?
+    frist
+  see i32.const 3
+    diff :(
 calls to $a5
   0
   see none.const ?
@@ -49,40 +82,27 @@ calls to $a5
   see none.const ?
     frist
   yay!
-calls to $a3
-  0
-  see none.const ?
-    frist
-  see i32.const 4
-    diff :(
-calls to $a
-  0
-  see none.const ?
-    frist
-  yay!
-calls to $a1
-  0
-  see none.const ?
-    frist
-  see i32.const 2
-  yay!
-latah $a2
-  chak 0
-latah $a4
+latah $a1
   chak 0
   unused!
-latah $a5
+latah $a6
   chak 1
   unused!
+  chak 0
+latah $a
+  chak 0
+  unused!
+latah $a4
   chak 0
   unused!
 latah $a3
   chak 0
   unused!
-latah $a
+latah $a2
   chak 0
+latah $a5
+  chak 1
   unused!
-latah $a1
   chak 0
   unused!
 (module
@@ -174,5 +194,24 @@ latah $a1
  )
  (func $b5 (; 15 ;) (type $1)
   (call $a5)
+ )
+ (func $a6 (; 16 ;) (param $0 i32)
+  (local $1 f64)
+  (set_local $1
+   (f64.const 3.14159)
+  )
+  (block
+   (drop
+    (get_local $0)
+   )
+   (drop
+    (get_local $1)
+   )
+  )
+ )
+ (func $b6 (; 17 ;) (type $1)
+  (call $a6
+   (unreachable)
+  )
  )
 )
