@@ -1,6 +1,6 @@
 (module
-  (func $a (param $x i32)
-  )
+  (export "a8" (func $a8))
+  (func $a (param $x i32))
   (func $b
     (call $a (i32.const 1)) ;; best case scenario
   )
@@ -59,6 +59,10 @@
   )
   (func $b7
     (call $a7 (i32.const 1) (unreachable))
+  )
+  (func $a8 (param $x i32))
+  (func $b8
+    (call $a8 (i32.const 1))
   )
 )
 
