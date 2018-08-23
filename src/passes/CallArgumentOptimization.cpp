@@ -246,7 +246,7 @@ struct CallArgumentOptimization : public Pass {
         }
       }
     }
-    // FIXME: remove stuff in table and exports, here
+// XXX need this earlier Functions that are exported or in the table cannot be modified.
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& pair : allCalls) {
       auto name = pair.first;
