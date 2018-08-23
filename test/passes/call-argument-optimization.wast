@@ -10,8 +10,17 @@
   (func $b1
     (call $a1 (i32.const 2))
   )
-  (func $b2
+  (func $b11
     (call $a1 (i32.const 2))
+  )
+  (func $a2 (param $x i32)
+    (drop (get_local $x))
+  )
+  (func $b2
+    (call $a2 (i32.const 3))
+  )
+  (func $b22
+    (call $a2 (i32.const 4))
   )
 )
 

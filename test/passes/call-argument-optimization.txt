@@ -1,3 +1,42 @@
+findUnused in $findUnused in get local
+  in block
+    add a read
+findUnused in $a2
+  BB $a1
+  BB 1
+1
+    later 1
+    later 1
+an unused param in the func $a1 : 0
+a
+  BB 1
+    later 1
+an unused param in the func $a : 0
+calls to $a
+  0
+  see none.const ?
+    frist
+  yay!
+calls to $a1
+  0
+  see none.const ?
+    frist
+  see i32.const 2
+  yay!
+calls to $a2
+  0
+  see none.const ?
+    frist
+  see i32.const 4
+    diff :(
+latah $a
+  chak 0
+  unused!
+latah $a1
+  chak 0
+  unused!
+latah $a2
+  chak 0
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
@@ -21,7 +60,22 @@
  (func $b1 (; 3 ;) (type $1)
   (call $a1)
  )
- (func $b2 (; 4 ;) (type $1)
+ (func $b11 (; 4 ;) (type $1)
   (call $a1)
+ )
+ (func $a2 (; 5 ;) (type $0) (param $x i32)
+  (drop
+   (get_local $x)
+  )
+ )
+ (func $b2 (; 6 ;) (type $1)
+  (call $a2
+   (i32.const 3)
+  )
+ )
+ (func $b22 (; 7 ;) (type $1)
+  (call $a2
+   (i32.const 4)
+  )
  )
 )
