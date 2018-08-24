@@ -37,7 +37,10 @@ static std::mutex debug;
 // starts optimizing using worker threads *while you are still adding*.
 // It runs function optimization passes at that time. This does not
 // run global optimization after that by default, but you can do that
-// to by calling optimizeGlobally().
+// to by calling optimizeGlobally(), which runs the the global post-passes
+// (we can't run the pre-passes, as they must be run before function
+// passes, and no such time is possible here given that we receive
+// functions one by one and optimize them).
 //
 // This might also be faster than normal module optimization since it
 // runs all passes on each function, then goes on to the next function

@@ -66,7 +66,8 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
-  registerPass("call-argument-optimization", "optimizes away arguments to calls in an lto-like manner", createCallArgumentOptimizationPass);
+  registerPass("cao", "removes arguments to calls in an lto-like manner", createCAOPass);
+  registerPass("cao-optimizing", "removes arguments to calls in an lto-like manner, and optimizes where we removed", createCAOOptimizingPass);
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
@@ -194,12 +195,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   add("duplicate-function-elimination");
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("call-argument-optimization");
-  }
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("cao-optimizing");
+  }
   // inline when working hard, and when not preserving debug info
   // (inlining+optimizing can remove the annotations)
   if ((options.optimizeLevel >= 2 || options.shrinkLevel >= 2) &&

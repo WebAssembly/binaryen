@@ -40,6 +40,7 @@
 #include <wasm-builder.h>
 #include <cfg/cfg-traversal.h>
 #include <ir/effects.h>
+#include <passes/opt-utils.h>
 #include <support/sorted_vector.h>
 
 namespace wasm {
@@ -188,7 +189,9 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
   }
 };
 
-struct CallArgumentOptimization : public Pass {
+struct CAO : public Pass {
+  bool optimize = false;
+
   void run(PassRunner* runner, Module* module) override {
     CAOFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data structure.
@@ -269,6 +272,8 @@ struct CallArgumentOptimization : public Pass {
         }
       }
     }
+    // Track which functions we changed, and optimize them later if necessary.
+    std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& pair : allCalls) {
       auto name = pair.first;
@@ -295,11 +300,15 @@ struct CallArgumentOptimization : public Pass {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
+            changed.insert(func);
           }
         }
         if (i == 0) break;
         i--;
       }
+    }
+    if (optimize && changed.size() > 0) {
+      OptUtils::optimizeAfterInlining(changed, module, runner);
     }
   }
 
@@ -343,8 +352,14 @@ private:
   }
 };
 
-Pass *createCallArgumentOptimizationPass() {
-  return new CallArgumentOptimization();
+Pass *createCAOPass() {
+  return new CAO();
+}
+
+Pass *createCAOOptimizingPass() {
+  auto* ret = new CAO();
+  ret->optimize = true;
+  return ret;
 }
 
 } // namespace wasm

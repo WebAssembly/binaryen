@@ -22,7 +22,8 @@ namespace wasm {
 class Pass;
 
 // All passes:
-Pass* createCallArgumentOptimizationPass();
+Pass* createCAOPass();
+Pass* createCAOOptimizingPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
