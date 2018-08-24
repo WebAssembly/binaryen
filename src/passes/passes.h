@@ -22,13 +22,13 @@ namespace wasm {
 class Pass;
 
 // All passes:
-Pass* createCAOPass();
-Pass* createCAOOptimizingPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();
 Pass* createCodePushingPass();
 Pass* createConstHoistingPass();
+Pass* createDAEPass();
+Pass* createDAEOptimizingPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createExtractFunctionPass();

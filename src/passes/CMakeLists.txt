@@ -5,11 +5,11 @@ add_custom_command(
 
 SET(passes_SOURCES
   pass.cpp
-  CallArgumentOptimization.cpp
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
   ConstHoisting.cpp
+  DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp

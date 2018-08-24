@@ -15,7 +15,8 @@
  */
 
 //
-// Optimizes call arguments in a whole-program manner.
+// Optimizes call arguments in a whole-program manner, removing ones
+// that are not used (dead).
 //
 // Specifically, this does these things:
 //
@@ -46,7 +47,7 @@
 namespace wasm {
 
 // Information for a function
-struct CAOFunctionInfo {
+struct DAEFunctionInfo {
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -59,10 +60,10 @@ struct CAOFunctionInfo {
   bool hasUnseenCalls = false;
 };
 
-typedef std::unordered_map<Name, CAOFunctionInfo> CAOFunctionInfoMap;
+typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
 
 // Information in a basic block
-struct CAOBlockInfo {
+struct DAEBlockInfo {
   // A local may be read, written, or not accessed in this block.
   // If it is both read and written, we just care about the first
   // action (if it is read first, that's all the info we are
@@ -74,15 +75,15 @@ struct CAOBlockInfo {
   std::unordered_map<Index, LocalUse> localUses;
 };
 
-struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>, CAOBlockInfo>> {
+struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new CAOScanner(infoMap); }
+  Pass* create() override { return new DAEScanner(infoMap); }
 
-  CAOScanner(CAOFunctionInfoMap* infoMap) : infoMap(infoMap) {}
+  DAEScanner(DAEFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
-  CAOFunctionInfoMap* infoMap;
-  CAOFunctionInfo* info;
+  DAEFunctionInfoMap* infoMap;
+  DAEFunctionInfo* info;
 
   Index numParams;
 
@@ -93,7 +94,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
       auto& localUses = currBasicBlock->contents.localUses;
       auto index = curr->index;
       if (localUses.count(index) == 0) {
-        localUses[index] = CAOBlockInfo::Read;
+        localUses[index] = DAEBlockInfo::Read;
       }
     }
   }
@@ -103,7 +104,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
       auto& localUses = currBasicBlock->contents.localUses;
       auto index = curr->index;
       if (localUses.count(index) == 0) {
-        localUses[index] = CAOBlockInfo::Written;
+        localUses[index] = DAEBlockInfo::Written;
       }
     }
   }
@@ -117,7 +118,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
   void doWalkFunction(Function* func) {
     numParams = func->getNumParams();
     info = &((*infoMap)[func->name]);
-    CFGWalker<CAOScanner, Visitor<CAOScanner>, CAOBlockInfo>::doWalkFunction(func);
+    CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(func);
     // If there are relevant params, check if they are used. (If
     // we can't optimize the function anyhow, there's no point.)
     if (numParams > 0 && !info->hasUnseenCalls) {
@@ -165,7 +166,7 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
         auto iter = localUses.find(i);
         if (iter != localUses.end()) {
           auto use = iter->second;
-          if (use == CAOBlockInfo::Read) {
+          if (use == DAEBlockInfo::Read) {
             usedParams.insert(i);
           }
           // Whether it was a read or a write, we can stop looking at that local here.
@@ -189,11 +190,11 @@ struct CAOScanner : public WalkerPass<CFGWalker<CAOScanner, Visitor<CAOScanner>,
   }
 };
 
-struct CAO : public Pass {
+struct DAE : public Pass {
   bool optimize = false;
 
   void run(PassRunner* runner, Module* module) override {
-    CAOFunctionInfoMap infoMap;
+    DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data structure.
     for (auto& func : module->functions) {
       infoMap[func->name];
@@ -213,7 +214,7 @@ struct CAO : public Pass {
     {
       PassRunner runner(module);
       runner.setIsNested(true);
-      runner.add<CAOScanner>(&infoMap);
+      runner.add<DAEScanner>(&infoMap);
       runner.run();
     }
     // Combine all the info.
@@ -286,17 +287,17 @@ struct CAO : public Pass {
       while (1) {
         if (infoMap[name].unusedParams.has(i)) {
           // Great, it's not used. Check if none of the calls has a param with side
-          // effects, as that would prevent us removing them (flattening before
-          // should have been done).
-          bool can = true;
+          // effects, as that would prevent us removing them (flattening should
+          // have been done earlier).
+          bool canRemove = true;
           for (auto* call : calls) {
             auto* operand = call->operands[i];
             if (EffectAnalyzer(runner->options, operand).hasSideEffects()) {
-              can = false;
+              canRemove = false;
               break;
             }
           }
-          if (can) {
+          if (canRemove) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
@@ -352,12 +353,12 @@ private:
   }
 };
 
-Pass *createCAOPass() {
-  return new CAO();
+Pass *createDAEPass() {
+  return new DAE();
 }
 
-Pass *createCAOOptimizingPass() {
-  auto* ret = new CAO();
+Pass *createDAEOptimizingPass() {
+  auto* ret = new DAE();
   ret->optimize = true;
   return ret;
 }
