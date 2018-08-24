@@ -137,6 +137,7 @@ public:
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
+    bool onlyAsmjsWrapper = false;
   };
 
   Wasm2JsBuilder(Flags f) : flags(f) {}

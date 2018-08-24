@@ -46,7 +46,7 @@ def test_wasm2js_output():
 
     print '..', wasm
 
-    cmd = WASM2JS + [os.path.join(options.binaryen_test, wasm)]
+    cmd = WASM2JS + [os.path.join(options.binaryen_test, wasm), '--only-asmjs-wrapper']
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, expected_file)
 
@@ -91,7 +91,7 @@ def test_asserts_output():
     traps_expected_file = os.path.join(options.binaryen_test, traps)
 
     wasm = os.path.join(wasm2js_dir, wasm)
-    cmd = WASM2JS + [wasm, '--allow-asserts']
+    cmd = WASM2JS + [wasm, '--allow-asserts', '--only-asmjs-wrapper']
     out = run_command(cmd)
     fail_if_not_identical_to_file(out, asserts_expected_file)
 

@@ -48,6 +48,11 @@ int main(int argc, const char *argv[]) {
            [&](Options* o, const std::string& argument) {
              builderFlags.pedantic = true;
            })
+      .add("--only-asmjs-wrapper", "", "Only emit the asm.js wrapper function",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             builderFlags.onlyAsmjsWrapper = true;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;

@@ -370,7 +370,7 @@ def update_wasm2js_tests():
     asserts_expected_file = os.path.join('test', asserts)
     traps_expected_file = os.path.join('test', traps)
 
-    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
+    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts', '--only-asmjs-wrapper']
     out = run_command(cmd)
     with open(asserts_expected_file, 'w') as o:
       o.write(out)
