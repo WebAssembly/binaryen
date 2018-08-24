@@ -146,6 +146,36 @@ inline Index getZeroExtBits(Expression* curr) {
   return Bits::getMaskedBits(curr->cast<Binary>()->right->cast<Const>()->value.geti32());
 }
 
+// looks through fallthrough operations, like tee_local, block fallthrough, etc.
+inline Expression* getFallthrough(Expression* curr) {
+  if (auto* set = curr->dynCast<SetLocal>()) {
+    if (set->isTee()) {
+      return getFallthrough(set->value);
+    }
+  } else if (auto* block = curr->dynCast<Block>()) {
+    // if no name, we can't be broken to, and then can look at the fallthrough
+    if (!block->name.is() && block->list.size() > 0) {
+      return getFallthrough(block->list.back());
+    }
+  } else if (auto* loop = curr->dynCast<Loop>()) {
+    return getFallthrough(loop->body);
+  } else if (auto* iff = curr->dynCast<If>()) {
+    if (iff->ifFalse) {
+      // Perhaps just one of the two actually returns.
+      if (iff->ifTrue->type == unreachable) {
+        return getFallthrough(iff->ifFalse);
+      } else if (iff->ifFalse->type == unreachable) {
+        return getFallthrough(iff->ifTrue);
+      }
+    }
+  } else if (auto* br = curr->dynCast<Break>()) {
+    if (br->condition && br->value) {
+      return getFallthrough(br->value);
+    }
+  }
+  return curr;
+}
+
 } // Properties
 
 } // wasm

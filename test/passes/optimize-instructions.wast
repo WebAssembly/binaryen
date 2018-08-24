@@ -3479,6 +3479,42 @@
       )
     )
   )
+  (func $getFallthrough ;; unit tests for Properties::getFallthrough
+    (local $x0 i32)
+    (local $x1 i32)
+    (local $x2 i32)
+    (local $x3 i32)
+    (local $x4 i32)
+    (local $x5 i32)
+    (local $x6 i32)
+    (local $x7 i32)
+    ;; the trivial case
+    (set_local $x0 (i32.const 1))
+    (drop (i32.and (get_local $x0) (i32.const 7)))
+    ;; tees
+    (set_local $x1 (tee_local $x2 (i32.const 1)))
+    (drop (i32.and (get_local $x1) (i32.const 7)))
+    ;; loop
+    (set_local $x3 (loop (result i32) (i32.const 1)))
+    (drop (i32.and (get_local $x3) (i32.const 7)))
+    ;; if - two sides, can't
+    (set_local $x4 (if (result i32) (i32.const 1) (i32.const 2) (i32.const 3)))
+    (drop (i32.and (get_local $x4) (i32.const 7)))
+    ;; if - one side, can
+    (set_local $x5 (if (result i32) (i32.const 1) (unreachable) (i32.const 3)))
+    (drop (i32.and (get_local $x5) (i32.const 7)))
+    ;; if - one side, can
+    (set_local $x6 (if (result i32) (i32.const 1) (i32.const 3) (unreachable)))
+    (drop (i32.and (get_local $x6) (i32.const 7)))
+    ;; br_if with value
+    (drop
+      (block $out (result i32)
+        (set_local $x7 (br_if $out (i32.const 1) (i32.const 1)))
+        (drop (i32.and (get_local $x7) (i32.const 7)))
+        (unreachable)
+      )
+    )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
