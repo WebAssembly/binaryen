@@ -163,7 +163,9 @@ function asm(global, env, buffer) {
     a = 0;
     x = i64(x);
     b = +0;
+    store4(50, a, 0);
     store8(100, x, 0);
+    stored(200, b, 0);
     illegalParam(0, i64(x), 12.34); // "coercion"/"cast"
   }
   function result() { // illegal result, but not exported

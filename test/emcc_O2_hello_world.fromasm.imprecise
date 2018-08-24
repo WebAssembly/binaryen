@@ -8482,7 +8482,8 @@
    (get_local $3)
   )
  )
- (func $___overflow (; 21 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $___overflow (; 21 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+  (local $1 i32)
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
@@ -8490,9 +8491,7 @@
   (local $6 i32)
   (local $7 i32)
   (local $8 i32)
-  (local $9 i32)
-  (local $10 i32)
-  (set_local $5
+  (set_local $4
    (get_global $STACKTOP)
   )
   (set_global $STACKTOP
@@ -8502,20 +8501,15 @@
    )
   )
   (i32.store8
-   (tee_local $6
-    (get_local $5)
+   (tee_local $5
+    (get_local $4)
    )
-   (tee_local $9
-    (i32.and
-     (get_local $1)
-     (i32.const 255)
-    )
-   )
+   (i32.const 10)
   )
   (if
-   (tee_local $3
+   (tee_local $2
     (i32.load
-     (tee_local $2
+     (tee_local $1
       (i32.add
        (get_local $0)
        (i32.const 16)
@@ -8524,10 +8518,10 @@
     )
    )
    (block
-    (set_local $7
-     (get_local $3)
+    (set_local $6
+     (get_local $2)
     )
-    (set_local $8
+    (set_local $7
      (i32.const 4)
     )
    )
@@ -8535,16 +8529,16 @@
     (call $___towrite
      (get_local $0)
     )
-    (set_local $4
+    (set_local $3
      (i32.const -1)
     )
     (block
-     (set_local $7
+     (set_local $6
       (i32.load
-       (get_local $2)
+       (get_local $1)
       )
      )
-     (set_local $8
+     (set_local $7
       (i32.const 4)
      )
     )
@@ -8553,16 +8547,16 @@
   (block $do-once
    (if
     (i32.eq
-     (get_local $8)
+     (get_local $7)
      (i32.const 4)
     )
     (block
      (if
       (if (result i32)
        (i32.lt_u
-        (tee_local $2
+        (tee_local $1
          (i32.load
-          (tee_local $3
+          (tee_local $2
            (i32.add
             (get_local $0)
             (i32.const 20)
@@ -8570,14 +8564,11 @@
           )
          )
         )
-        (get_local $7)
+        (get_local $6)
        )
        (i32.ne
-        (tee_local $10
-         (i32.and
-          (get_local $1)
-          (i32.const 255)
-         )
+        (tee_local $8
+         (i32.const 10)
         )
         (i32.load8_s offset=75
          (get_local $0)
@@ -8587,28 +8578,28 @@
       )
       (block
        (i32.store
-        (get_local $3)
+        (get_local $2)
         (i32.add
-         (get_local $2)
+         (get_local $1)
          (i32.const 1)
         )
        )
        (i32.store8
-        (get_local $2)
-        (get_local $9)
+        (get_local $1)
+        (i32.const 10)
        )
-       (set_local $4
-        (get_local $10)
+       (set_local $3
+        (get_local $8)
        )
        (br $do-once)
       )
      )
-     (set_local $4
+     (set_local $3
       (if (result i32)
        (i32.eq
         (call_indirect (type $FUNCSIG$iiii)
          (get_local $0)
-         (get_local $6)
+         (get_local $5)
          (i32.const 1)
          (i32.add
           (i32.and
@@ -8623,7 +8614,7 @@
         (i32.const 1)
        )
        (i32.load8_u
-        (get_local $6)
+        (get_local $5)
        )
        (i32.const -1)
       )
@@ -8632,9 +8623,9 @@
    )
   )
   (set_global $STACKTOP
-   (get_local $5)
+   (get_local $4)
   )
-  (get_local $4)
+  (get_local $3)
  )
  (func $___fflush_unlocked (; 22 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
@@ -9047,13 +9038,13 @@
    (get_local $2)
   )
  )
- (func $_puts (; 26 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $_puts (; 26 ;) (; has Stack IR ;) (result i32)
+  (local $0 i32)
   (local $1 i32)
   (local $2 i32)
-  (local $3 i32)
   (drop
    (i32.load offset=76
-    (tee_local $1
+    (tee_local $0
      (i32.load
       (i32.const 52)
      )
@@ -9068,12 +9059,11 @@
        (i32.lt_s
         (i32.add
          (call $_fwrite
-          (get_local $0)
+          (i32.const 672)
           (call $_strlen
-           (get_local $0)
+           (i32.const 672)
           )
-          (i32.const 1)
-          (get_local $1)
+          (get_local $0)
          )
          (i32.const -1)
         )
@@ -9085,37 +9075,37 @@
          (if (result i32)
           (i32.ne
            (i32.load8_s offset=75
-            (get_local $1)
+            (get_local $0)
            )
            (i32.const 10)
           )
           (i32.lt_u
-           (tee_local $2
+           (tee_local $1
             (i32.load
-             (tee_local $3
+             (tee_local $2
               (i32.add
-               (get_local $1)
+               (get_local $0)
                (i32.const 20)
               )
              )
             )
            )
            (i32.load offset=16
-            (get_local $1)
+            (get_local $0)
            )
           )
           (i32.const 0)
          )
          (block
           (i32.store
-           (get_local $3)
+           (get_local $2)
            (i32.add
-            (get_local $2)
+            (get_local $1)
             (i32.const 1)
            )
           )
           (i32.store8
-           (get_local $2)
+           (get_local $1)
            (i32.const 10)
           )
           (br $do-once
@@ -9125,8 +9115,7 @@
         )
         (i32.lt_s
          (call $___overflow
-          (get_local $1)
-          (i32.const 10)
+          (get_local $0)
          )
          (i32.const 0)
         )
@@ -9286,33 +9275,34 @@
    )
   )
  )
- (func $_fwrite (; 29 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $_fwrite (; 29 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+  (local $3 i32)
   (local $4 i32)
   (set_local $4
-   (i32.mul
-    (get_local $2)
-    (get_local $1)
-   )
+   (i32.const 1)
+  )
+  (set_local $3
+   (get_local $1)
   )
   (if
    (i32.ne
     (tee_local $0
      (call $___fwritex
       (get_local $0)
-      (get_local $4)
       (get_local $3)
+      (get_local $2)
      )
     )
-    (get_local $4)
+    (get_local $3)
    )
-   (set_local $2
+   (set_local $4
     (i32.div_u
      (get_local $0)
      (get_local $1)
     )
    )
   )
-  (get_local $2)
+  (get_local $4)
  )
  (func $___stdout_write (; 30 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
@@ -9553,9 +9543,7 @@
  )
  (func $_main (; 46 ;) (; has Stack IR ;) (result i32)
   (drop
-   (call $_puts
-    (i32.const 672)
-   )
+   (call $_puts)
   )
   (i32.const 0)
  )
