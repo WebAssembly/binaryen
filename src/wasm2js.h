@@ -82,6 +82,15 @@ static uint64_t constOffset(Table::Segment &segment) {
   return c->value.getInteger();
 }
 
+static uint64_t constOffset(Memory::Segment &segment) {
+  auto* c = segment.offset->dynCast<Const>();
+  if (!c) {
+    Fatal() << "non-constant offsets aren't supported yet\n";
+    abort();
+  }
+  return c->value.getInteger();
+}
+
 //
 // Wasm2JsBuilder - converts a WebAssembly module into asm.js
 //
@@ -269,6 +278,8 @@ private:
 
   bool almostASM = false;
 
+  void addEsmImports(Ref ast, Module* wasm);
+  void addEsmExportsAndInstantiate(Ref ast, Module* wasm);
   void addBasics(Ref ast);
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
@@ -329,8 +340,12 @@ Ref Wasm2JsBuilder::processWasm(Module* wasm, Name funcName) {
 #endif
 
   Ref ret = ValueBuilder::makeToplevel();
+  if (!flags.onlyAsmjsWrapper)
+    addEsmImports(ret, wasm);
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
+  if (!flags.onlyAsmjsWrapper)
+    addEsmExportsAndInstantiate(ret, wasm);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
@@ -396,6 +411,179 @@ Ref Wasm2JsBuilder::processWasm(Module* wasm, Name funcName) {
   // memory XXX
   addExports(asmFunc[3], wasm);
   return ret;
+}
+
+void Wasm2JsBuilder::addEsmImports(Ref ast, Module *wasm) {
+  std::unordered_map<Name, Name> nameMap;
+
+  for (auto& import : wasm->imports) {
+    // Only function imports are supported for now, but eventually imported
+    // memories can probably be supported at least.
+    switch (import->kind) {
+      case ExternalKind::Function: break;
+      default:
+        Fatal() << "non-function imports aren't supported yet\n";
+        abort();
+    }
+
+    // Right now codegen requires a flat namespace going into the module,
+    // meaning we don't importing the same name from multiple namespaces yet.
+    if (nameMap.count(import->base) && nameMap[import->base] != import->module) {
+        Fatal() << "the name " << import->base << " cannot be imported from "
+            << "two different modules yet\n";
+        abort();
+    }
+
+    nameMap[import->base] = import->module;
+
+    std::ostringstream out;
+    out << "import { "
+      << import->base.str
+      << " } from '"
+      << import->module.str
+      << "'";
+    std::string os = out.str();
+    IString name(os.c_str(), false);
+    flattenAppend(ast, ValueBuilder::makeName(name));
+  }
+}
+
+static std::string base64Encode(std::vector<char> &data) {
+  std::string ret;
+  size_t i = 0;
+
+  const char* alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+  while (i + 3 <= data.size()) {
+    int bits =
+      (((int) data[i + 0]) << 16) |
+      (((int) data[i + 1]) << 8) |
+      (((int) data[i + 2]) << 0);
+    ret += alphabet[(bits >> 18) & 0x3f];
+    ret += alphabet[(bits >> 12) & 0x3f];
+    ret += alphabet[(bits >> 6) & 0x3f];
+    ret += alphabet[(bits >> 0) & 0x3f];
+    i += 3;
+  }
+
+  if (i + 2 == data.size()) {
+    int bits =
+      (((int) data[i + 0]) << 8) |
+      (((int) data[i + 1]) << 0);
+    ret += alphabet[(bits >> 10) & 0x3f];
+    ret += alphabet[(bits >> 4) & 0x3f];
+    ret += alphabet[(bits << 2) & 0x3f];
+    ret += '=';
+  } else if (i + 1 == data.size()) {
+    int bits =(int) data[i + 0];
+    ret += alphabet[(bits >> 2) & 0x3f];
+    ret += alphabet[(bits << 4) & 0x3f];
+    ret += '=';
+    ret += '=';
+  } else {
+    assert(i == data.size());
+  }
+
+  return ret;
+}
+
+void Wasm2JsBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
+  // Create an initial `ArrayBuffer` and populate it with static data.
+  // Currently we use base64 encoding to encode static data and we decode it at
+  // instantiation time.
+  {
+    std::ostringstream out;
+    out << "const mem = new ArrayBuffer("
+      << wasm->memory.initial * Memory::kPageSize
+      << ")";
+    std::string os = out.str();
+    IString name(os.c_str(), false);
+    flattenAppend(ast, ValueBuilder::makeName(name));
+  }
+
+  if (wasm->memory.segments.size() > 0) {
+    flattenAppend(ast, ValueBuilder::makeName(R"(
+      const _mem = new Uint8Array(mem);
+      function _assign(offset, s) {
+        if (typeof Buffer === 'undefined') {
+          const bytes = atob(s);
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes.charCodeAt(i);
+        } else {
+          const bytes = Buffer.from(s, 'base64');
+          for (let i = 0; i < bytes.length; i++)
+            _mem[offset + i] = bytes[i];
+        }
+      }
+    )"));
+  }
+
+  for (auto& seg : wasm->memory.segments) {
+    std::ostringstream out;
+    out << "_assign("
+      << constOffset(seg)
+      << ", \""
+      << base64Encode(seg.data)
+      << "\")";
+    std::string os = out.str();
+    IString name(os.c_str(), false);
+    flattenAppend(ast, ValueBuilder::makeName(name));
+  }
+
+  // Actually invoke the `asmFunc` generated function, passing in all global
+  // values followed by all imports (imported via addEsmImports above)
+  std::ostringstream construct;
+  construct << "const ret = asmFunc({"
+    << "Math,"
+    << "Int8Array,"
+    << "Uint8Array,"
+    << "Int16Array,"
+    << "Uint16Array,"
+    << "Int32Array,"
+    << "Uint32Array,"
+    << "Float32Array,"
+    << "Float64Array,"
+    << "NaN,"
+    << "Infinity"
+    << "}, {";
+
+  construct << "abort:function() { throw new Error('abort'); }";
+  for (auto& import : wasm->imports) {
+    switch (import->kind) {
+      case ExternalKind::Function: break;
+      default: continue;
+    }
+    construct << "," << import->base.str;
+  }
+  construct << "},mem)";
+  std::string sconstruct = construct.str();
+  IString name(sconstruct.c_str(), false);
+  flattenAppend(ast, ValueBuilder::makeName(name));
+
+  // And now that we have our returned instance, export all our functions
+  // that are hanging off it.
+  for (auto& exp : wasm->exports) {
+    switch (exp->kind) {
+      case ExternalKind::Function:
+      case ExternalKind::Memory:
+        break;
+
+      // Exported globals and function tables aren't supported yet
+      default:
+        continue;
+    }
+    std::ostringstream out;
+    out << "export const "
+      << exp->name.str
+      << " = ret."
+      << exp->name.str;
+    std::string os = out.str();
+    IString name(os.c_str(), false);
+    flattenAppend(ast, ValueBuilder::makeName(name));
+  }
 }
 
 void Wasm2JsBuilder::addBasics(Ref ast) {
