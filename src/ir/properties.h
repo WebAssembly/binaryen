@@ -146,7 +146,8 @@ inline Index getZeroExtBits(Expression* curr) {
   return Bits::getMaskedBits(curr->cast<Binary>()->right->cast<Const>()->value.geti32());
 }
 
-// looks through fallthrough operations, like tee_local, block fallthrough, etc.
+// Returns a falling-through value, that is, it looks through a tee_local
+// and other operations that receive a value and let it flow through them.
 inline Expression* getFallthrough(Expression* curr) {
   if (auto* set = curr->dynCast<SetLocal>()) {
     if (set->isTee()) {
