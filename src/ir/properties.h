@@ -149,6 +149,11 @@ inline Index getZeroExtBits(Expression* curr) {
 // Returns a falling-through value, that is, it looks through a tee_local
 // and other operations that receive a value and let it flow through them.
 inline Expression* getFallthrough(Expression* curr) {
+  // If the current node is unreachable, there is no value
+  // falling through.
+  if (curr->type == unreachable) {
+    return curr;
+  }
   if (auto* set = curr->dynCast<SetLocal>()) {
     if (set->isTee()) {
       return getFallthrough(set->value);

@@ -3515,6 +3515,17 @@
       )
     )
   )
+  (func $tee-with-unreachable-value (result f64)
+   (local $var$0 i32)
+   (block $label$1 (result f64)
+    (tee_local $var$0
+     (br_if $label$1 ;; the f64 does not actually flow through this, it's unreachable (and the type is wrong - but unchecked)
+      (f64.const 1)
+      (unreachable)
+     )
+    )
+   )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
