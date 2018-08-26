@@ -1,7 +1,7 @@
 (module
  (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 0 0 anyfunc))
- (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "memoryBase" (global $memoryBase (mut i32)))
  (import "env" "tableBase" (global $tableBase i32))
  (export "add" (func $add))
  (func $add (; 0 ;) (param $x i32) (param $y i32) (result i32)

@@ -1754,7 +1754,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       auto& inner2 = *inner[j];
       if (inner2[0]->str() != MUT) throw ParseException("expected mut");
       im->globalType = stringToType(inner2[1]->str());
-      throw ParseException("cannot import a mutable global", s.line, s.col);
+      im->mutable_ = true;
     }
   } else if (im->kind == ExternalKind::Table) {
     if (j < inner.size() - 1) {
@@ -1824,14 +1824,15 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   if (importModule.is()) {
     // this is an import, actually
     if (!preParseImport) throw ParseException("!preParseImport in global");
-    if (mutable_) throw ParseException("cannot import a mutable global", s.line, s.col);
     std::unique_ptr<Import> im = make_unique<Import>();
     im->name = global->name;
     im->module = importModule;
     im->base = importBase;
     im->kind = ExternalKind::Global;
     im->globalType = type;
-    if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
+    im->mutable_ = mutable_;
+    if (wasm.getImportOrNull(im->name))
+      throw ParseException("duplicate import", s.line, s.col);
     wasm.addImport(im.release());
     return;
   }

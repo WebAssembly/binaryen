@@ -650,7 +650,7 @@ enum class ExternalKind {
 
 class Import {
 public:
-  Import() : globalType(none) {}
+  Import() : globalType(none), mutable_(false) {}
 
   Name name, module, base; // name = module.base
   ExternalKind kind;

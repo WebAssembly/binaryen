@@ -10,7 +10,7 @@
  (import "env" "memory" (memory $0 256 256))
  (import "env" "table" (table 18 18 anyfunc))
  (import "env" "tableBase" (global $tableBase i32))
- (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+ (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import (mut i32)))
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
  (import "env" "tempDoublePtr" (global $tempDoublePtr$asm2wasm$import i32))
  (import "env" "abort" (func $abort))

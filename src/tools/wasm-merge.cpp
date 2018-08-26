@@ -130,6 +130,7 @@ struct Mergeable {
       import->base = MEMORY_BASE;
       import->kind = ExternalKind::Global;
       import->globalType = i32;
+      import->mutable_ = false;
       wasm.addImport(import);
       memoryBaseGlobals.insert(import->name);
     }
@@ -143,6 +144,7 @@ struct Mergeable {
       import->base = TABLE_BASE;
       import->kind = ExternalKind::Global;
       import->globalType = i32;
+      import->mutable_ = false;
       wasm.addImport(import);
       tableBaseGlobals.insert(import->name);
     }

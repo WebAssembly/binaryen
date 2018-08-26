@@ -825,9 +825,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExternalKind::Global:
         o << "(global " << curr->name << ' ';
         if (curr->mutable_) {
-          o << "(mut " << printType(curr->globalType) << ") ";
+          o << "(mut " << printType(curr->globalType) << ")";
         } else {
-          o << printType(curr->globalType) << ' ';
+          o << printType(curr->globalType);
         }
         o << ")";
         break;
