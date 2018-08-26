@@ -509,10 +509,19 @@ void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global != NULL, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
+  if (global) {
     shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
     shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
+    return;
   }
+  auto* import = getModule()->getImportOrNull(curr->name);
+  if (import) {
+    shouldBeTrue(import->kind == ExternalKind::Global, curr, "set_global imported name is not a global");
+    shouldBeTrue(import->mutable_, curr, "set_global imported global must be mutable");
+    shouldBeEqualOrFirstIsUnreachable(curr->value->type, import->globalType, curr, "set_global value must have right type");
+    return;
+  }
+  info.fail("set_global global must exist", curr, getFunction());
 }
 
 void FunctionValidator::visitLoad(Load* curr) {

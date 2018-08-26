@@ -656,6 +656,7 @@ public:
   ExternalKind kind;
   Name functionType; // for Function imports
   Type globalType; // for Global imports
+  bool mutable_; // for Global imports
 };
 
 class Export {

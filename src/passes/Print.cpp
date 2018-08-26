@@ -822,7 +822,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       case ExternalKind::Function: if (curr->functionType.is()) visitFunctionType(currModule->getFunctionType(curr->functionType), &curr->name); break;
       case ExternalKind::Table:    printTableHeader(&currModule->table); break;
       case ExternalKind::Memory:   printMemoryHeader(&currModule->memory); break;
-      case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printType(curr->globalType) << ")"; break;
+      case ExternalKind::Global:
+        o << "(global " << curr->name << ' ';
+        if (curr->mutable_) {
+          o << "(mut " << printType(curr->globalType) << ") ";
+        } else {
+          o << printType(curr->globalType) << ' ';
+        }
+        o << ")";
+        break;
       default: WASM_UNREACHABLE();
     }
     o << ')';

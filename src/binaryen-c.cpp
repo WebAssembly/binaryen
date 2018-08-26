@@ -1765,7 +1765,7 @@ BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* 
   wasm->addImport(ret);
   return ret;
 }
-BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType) {
+BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType, int8_t mutable_) {
   auto* wasm = (Module*)module;
   auto* ret = new Import();
 
@@ -1780,6 +1780,7 @@ BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* 
   ret->base = externalBaseName;
   ret->globalType = Type(globalType);
   ret->kind = ExternalKind::Global;
+  ret->mutable_ = !!mutable_;
   wasm->addImport(ret);
   return ret;
 }

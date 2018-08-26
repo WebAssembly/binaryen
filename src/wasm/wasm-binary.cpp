@@ -196,7 +196,7 @@ void WasmBinaryWriter::writeImports() {
       }
       case ExternalKind::Global:
         o << binaryType(import->globalType);
-        o << U32LEB(0); // Mutable global's can't be imported for now.
+        o << U32LEB(import->mutable_);
         break;
       default: WASM_UNREACHABLE();
     }
@@ -959,9 +959,7 @@ void WasmBinaryBuilder::readImports() {
         curr->name = Name(std::string("gimport$") + std::to_string(i));
         curr->globalType = getConcreteType();
         auto globalMutable = getU32LEB();
-        // TODO: actually use the globalMutable flag. Currently mutable global
-        // imports is a future feature, to be implemented with thread support.
-        (void)globalMutable;
+        curr->mutable_ = !!globalMutable;
         break;
       }
       default: {
