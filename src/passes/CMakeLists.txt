@@ -22,6 +22,7 @@ SET(passes_SOURCES
   I64ToI32Lowering.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
+  LoopInvariantCodeMotion.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
