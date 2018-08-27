@@ -73,17 +73,9 @@ enum class NameScope {
   Max,
 };
 
-static uint64_t constOffset(Table::Segment &segment) {
-  auto* c = segment.offset->dynCast<Const>();
-  if (!c) {
-    Fatal() << "non-constant offsets aren't supported yet\n";
-    abort();
-  }
-  return c->value.getInteger();
-}
-
-static uint64_t constOffset(Memory::Segment &segment) {
-  auto* c = segment.offset->dynCast<Const>();
+template<typename T>
+static uint64_t constOffset(const T& segment) {
+  auto* c = segment.offset->template dynCast<Const>();
   if (!c) {
     Fatal() << "non-constant offsets aren't supported yet\n";
     abort();
