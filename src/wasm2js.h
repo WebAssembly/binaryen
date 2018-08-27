@@ -340,12 +340,14 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 #endif
 
   Ref ret = ValueBuilder::makeToplevel();
-  if (!flags.onlyAsmjsWrapper)
+  if (!flags.onlyAsmjsWrapper) {
     addEsmImports(ret, wasm);
+  }
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
-  if (!flags.onlyAsmjsWrapper)
+  if (!flags.onlyAsmjsWrapper) {
     addEsmExportsAndInstantiate(ret, wasm);
+  }
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
