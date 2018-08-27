@@ -2008,8 +2008,8 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  Wasm2JsBuilder::Flags builderFlags;
-  Wasm2JsBuilder wasm2js(builderFlags);
+  Wasm2JSBuilder::Flags builderFlags;
+  Wasm2JSBuilder wasm2js(builderFlags);
   Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
   jser.printAst();

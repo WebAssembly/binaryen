@@ -28,7 +28,7 @@ using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char *argv[]) {
-  Wasm2JsBuilder::Flags builderFlags;
+  Wasm2JSBuilder::Flags builderFlags;
   Options options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -75,7 +75,7 @@ int main(int argc, const char *argv[]) {
       reader.read(input, wasm, "");
 
       if (options.debug) std::cerr << "asming..." << std::endl;
-      Wasm2JsBuilder wasm2js(builderFlags);
+      Wasm2JSBuilder wasm2js(builderFlags);
       asmjs = wasm2js.processWasm(&wasm);
 
     // Otherwise assume it's a `*.wast` file and go from there
@@ -90,7 +90,7 @@ int main(int argc, const char *argv[]) {
       SExpressionWasmBuilder builder(wasm, *(*root)[0]);
 
       if (options.debug) std::cerr << "asming..." << std::endl;
-      Wasm2JsBuilder wasm2js(builderFlags);
+      Wasm2JSBuilder wasm2js(builderFlags);
       asmjs = wasm2js.processWasm(&wasm);
 
       if (options.extra["asserts"] == "1") {

@@ -92,7 +92,7 @@ static uint64_t constOffset(Memory::Segment &segment) {
 }
 
 //
-// Wasm2JsBuilder - converts a WebAssembly module into asm.js
+// Wasm2JSBuilder - converts a WebAssembly module into asm.js
 //
 // In general, asm.js => wasm is very straightforward, as can
 // be seen in asm2wasm.h. Just a single pass, plus a little
@@ -138,7 +138,7 @@ static uint64_t constOffset(Memory::Segment &segment) {
 // optimizing away unnecessary forwarding.
 
 
-class Wasm2JsBuilder {
+class Wasm2JSBuilder {
   MixedArena allocator;
 
 public:
@@ -149,7 +149,7 @@ public:
     bool onlyAsmjsWrapper = false;
   };
 
-  Wasm2JsBuilder(Flags f) : flags(f) {}
+  Wasm2JSBuilder(Flags f) : flags(f) {}
 
   Ref processWasm(Module* wasm, Name funcName = ASM_FUNC);
   Ref processFunction(Module* wasm, Function* func);
@@ -306,12 +306,12 @@ private:
                          Element& e,
                          Name testFuncName,
                          Name asmModule);
-  Wasm2JsBuilder() = delete;
-  Wasm2JsBuilder(const Wasm2JsBuilder &) = delete;
-  Wasm2JsBuilder &operator=(const Wasm2JsBuilder&) = delete;
+  Wasm2JSBuilder() = delete;
+  Wasm2JSBuilder(const Wasm2JSBuilder &) = delete;
+  Wasm2JSBuilder &operator=(const Wasm2JSBuilder&) = delete;
 };
 
-Ref Wasm2JsBuilder::processWasm(Module* wasm, Name funcName) {
+Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   PassRunner runner(wasm);
   runner.add<AutoDrop>();
   // First up remove as many non-JS operations we can, including things like
@@ -413,7 +413,7 @@ Ref Wasm2JsBuilder::processWasm(Module* wasm, Name funcName) {
   return ret;
 }
 
-void Wasm2JsBuilder::addEsmImports(Ref ast, Module *wasm) {
+void Wasm2JSBuilder::addEsmImports(Ref ast, Module *wasm) {
   std::unordered_map<Name, Name> nameMap;
 
   for (auto& import : wasm->imports) {
@@ -490,7 +490,7 @@ static std::string base64Encode(std::vector<char> &data) {
   return ret;
 }
 
-void Wasm2JsBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
+void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
   // Create an initial `ArrayBuffer` and populate it with static data.
   // Currently we use base64 encoding to encode static data and we decode it at
   // instantiation time.
@@ -586,7 +586,7 @@ void Wasm2JsBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
   }
 }
 
-void Wasm2JsBuilder::addBasics(Ref ast) {
+void Wasm2JSBuilder::addBasics(Ref ast) {
   // heaps, var HEAP8 = new global.Int8Array(buffer); etc
   auto addHeap = [&](IString name, IString view) {
     Ref theVar = ValueBuilder::makeVar();
@@ -662,7 +662,7 @@ void Wasm2JsBuilder::addBasics(Ref ast) {
   );
 }
 
-void Wasm2JsBuilder::addImport(Ref ast, Import* import) {
+void Wasm2JSBuilder::addImport(Ref ast, Import* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -675,7 +675,7 @@ void Wasm2JsBuilder::addImport(Ref ast, Import* import) {
   );
 }
 
-void Wasm2JsBuilder::addTables(Ref ast, Module* wasm) {
+void Wasm2JSBuilder::addTables(Ref ast, Module* wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
   for (Table::Segment& seg : wasm->table.segments) {
     for (size_t i = 0; i < seg.data.size(); i++) {
@@ -710,7 +710,7 @@ void Wasm2JsBuilder::addTables(Ref ast, Module* wasm) {
   }
 }
 
-void Wasm2JsBuilder::addExports(Ref ast, Module* wasm) {
+void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
     if (export_->kind == ExternalKind::Function) {
@@ -765,7 +765,7 @@ void Wasm2JsBuilder::addExports(Ref ast, Module* wasm) {
   ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
 
-void Wasm2JsBuilder::addGlobal(Ref ast, Global* global) {
+void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   if (auto* const_ = global->init->dynCast<Const>()) {
     Ref theValue;
     switch (const_->type) {
@@ -809,7 +809,7 @@ static bool expressionEndsInReturn(Expression *e) {
   return expressionEndsInReturn((*stats)[stats->size()-1]);
 }
 
-Ref Wasm2JsBuilder::processFunction(Module* m, Function* func) {
+Ref Wasm2JSBuilder::processFunction(Module* m, Function* func) {
   if (flags.debug) {
     static int fns = 0;
     std::cerr << "processFunction " << (fns++) << " " << func->name
@@ -893,11 +893,11 @@ Ref Wasm2JsBuilder::processFunction(Module* m, Function* func) {
   return ret;
 }
 
-void Wasm2JsBuilder::scanFunctionBody(Expression* curr) {
+void Wasm2JSBuilder::scanFunctionBody(Expression* curr) {
   struct ExpressionScanner : public PostWalker<ExpressionScanner> {
-    Wasm2JsBuilder* parent;
+    Wasm2JSBuilder* parent;
 
-    ExpressionScanner(Wasm2JsBuilder* parent) : parent(parent) {}
+    ExpressionScanner(Wasm2JSBuilder* parent) : parent(parent) {}
 
     // Visitors
 
@@ -981,26 +981,26 @@ void Wasm2JsBuilder::scanFunctionBody(Expression* curr) {
   ExpressionScanner(this).walk(curr);
 }
 
-Ref Wasm2JsBuilder::processFunctionBody(Module* m, Function* func, IString result) {
+Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString result) {
   struct ExpressionProcessor : public Visitor<ExpressionProcessor, Ref> {
-    Wasm2JsBuilder* parent;
+    Wasm2JSBuilder* parent;
     IString result;
     Function* func;
     Module* module;
     MixedArena allocator;
-    ExpressionProcessor(Wasm2JsBuilder* parent, Module* m, Function* func)
+    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
       : parent(parent), func(func), module(m) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
-      Wasm2JsBuilder* parent;
+      Wasm2JSBuilder* parent;
       Type type;
       IString temp;
       bool needFree;
       // @param possible if provided, this is a variable we can use as our temp. it has already been
       //                 allocated in a higher scope, and we can just assign to it as our result is
       //                 going there anyhow.
-      ScopedTemp(Type type, Wasm2JsBuilder* parent, Function* func,
+      ScopedTemp(Type type, Wasm2JSBuilder* parent, Function* func,
                  IString possible = NO_RESULT) : parent(parent), type(type) {
         assert(possible != EXPRESSION_RESULT);
         if (possible == NO_RESULT) {
@@ -2150,7 +2150,7 @@ static void prefixCalls(Ref asmjs, Name asmModule) {
   }
 }
 
-Ref Wasm2JsBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
                                           Module* wasm,
                                           Builder& wasmBuilder,
                                           Element& e,
@@ -2215,7 +2215,7 @@ Ref Wasm2JsBuilder::makeAssertReturnFunc(SExpressionWasmBuilder& sexpBuilder,
   return jsFunc;
 }
 
-Ref Wasm2JsBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                                              Module* wasm,
                                              Builder& wasmBuilder,
                                              Element& e,
@@ -2237,7 +2237,7 @@ Ref Wasm2JsBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
   return jsFunc;
 }
 
-Ref Wasm2JsBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
+Ref Wasm2JSBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
                                         Module* wasm,
                                         Builder& wasmBuilder,
                                         Element& e,
@@ -2281,14 +2281,14 @@ Ref Wasm2JsBuilder::makeAssertTrapFunc(SExpressionWasmBuilder& sexpBuilder,
   return outerFunc;
 }
 
-void Wasm2JsBuilder::setNeedsAlmostASM(const char *reason) {
+void Wasm2JSBuilder::setNeedsAlmostASM(const char *reason) {
   if (!almostASM) {
     almostASM = true;
     std::cerr << "Switching to \"almost asm\" mode, reason: " << reason << std::endl;
   }
 }
 
-void Wasm2JsBuilder::addMemoryGrowthFuncs(Ref ast) {
+void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
   Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
   ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
 
@@ -2439,7 +2439,7 @@ void Wasm2JsBuilder::addMemoryGrowthFuncs(Ref ast) {
   ast->push_back(currentMemoryFunc);
 }
 
-bool Wasm2JsBuilder::isAssertHandled(Element& e) {
+bool Wasm2JSBuilder::isAssertHandled(Element& e) {
   return e.isList() && e.size() >= 2 && e[0]->isStr()
       && (e[0]->str() == Name("assert_return") ||
           e[0]->str() == Name("assert_return_nan") ||
@@ -2448,7 +2448,7 @@ bool Wasm2JsBuilder::isAssertHandled(Element& e) {
       && (*e[1])[0]->str() == Name("invoke");
 }
 
-Ref Wasm2JsBuilder::processAsserts(Module* wasm,
+Ref Wasm2JSBuilder::processAsserts(Module* wasm,
                                     Element& root,
                                     SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
