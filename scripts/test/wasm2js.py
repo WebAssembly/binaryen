@@ -29,7 +29,7 @@ spec_tests = [os.path.join(spec_dir, t)
               if '.fail' not in t]
 wasm2js_dir = os.path.join(options.binaryen_test, 'wasm2js')
 extra_wasm2js_tests = [os.path.join(wasm2js_dir, t) for t in
-                        sorted(os.listdir(wasm2js_dir))]
+                       sorted(os.listdir(wasm2js_dir))]
 assert_tests = ['wasm2js.wast.asserts']
 
 
