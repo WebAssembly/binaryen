@@ -56,11 +56,11 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
   std::unordered_map<Loop*, std::vector<Expression*>> hoisted;
 
   void visitExpression(Expression* curr) {
-    // Don't try to hoist loops themselves out of loops, keep the general structure.
+    // Note how we don't try to hoist loops themselves out of loops; keep the general structure.
     if (auto* loop = curr->dynCast<Loop>()) {
       auto& currHoisted = hoisted[loop];
       if (!currHoisted.empty()) {
-        // Finish the hoisting by emitting the code outside
+        // Finish the hoisting by emitting the code outside.
         Builder builder(*getModule());
         auto* ret = builder.makeBlock(currHoisted);
         ret->list.push_back(loop);
@@ -87,7 +87,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       // without curr.
       EffectAnalyzer myEffects(curr);
       auto* currp = getCurrentPointer();
-      Nop nop;
+      Nop nop; // a temporary nop, just to check
       *currp = &nop;
       EffectAnalyzer loopEffects(loop);
       if (loopEffects.invalidates(myEffects)) {
@@ -97,7 +97,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       }
       // We can do it!
       hoisted[loop].push_back(curr);
-      // Allocate a proper nop
+      // Allocate a proper nop.
       *currp = Builder(*getModule()).makeNop();
     }
   }
