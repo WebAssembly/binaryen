@@ -72,6 +72,7 @@ void PassRegistry::registerPasses() {
   registerPass("code-folding", "fold code, merging duplicates", createCodeFoldingPass);
   registerPass("const-hoisting", "hoist repeated constants to a local", createConstHoistingPass);
   registerPass("dce", "removes unreachable code", createDeadCodeEliminationPass);
+  registerPass("dfo", "optimizes using the DataFlow SSA IR", createDataFlowOptsPass);
   registerPass("duplicate-function-elimination", "removes duplicate functions", createDuplicateFunctionEliminationPass);
   registerPass("extract-function", "leaves just one function (useful for debugging)", createExtractFunctionPass);
   registerPass("flatten", "flattens out code, removing nesting", createFlattenPass);
@@ -117,9 +118,11 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap", "instrument loads and stores to check for invalid behavior", createSafeHeapPass);
   registerPass("simplify-locals", "miscellaneous locals-related optimizations", createSimplifyLocalsPass);
   registerPass("simplify-locals-nonesting", "miscellaneous locals-related optimizations (no nesting at all; preserves flatness)", createSimplifyLocalsNoNestingPass);
-  registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeePass);
-  registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoStructurePass);
-  registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations", createSimplifyLocalsNoTeeNoStructurePass);
+  registerPass("simplify-locals-notee", "miscellaneous locals-related optimizations (no tees)", createSimplifyLocalsNoTeePass);
+  registerPass("simplify-locals-nostructure", "miscellaneous locals-related optimizations (no structure)", createSimplifyLocalsNoStructurePass);
+  registerPass("simplify-locals-notee-nostructure", "miscellaneous locals-related optimizations (no tees or structure)", createSimplifyLocalsNoTeeNoStructurePass);
+  registerPass("souperify", "emit Souper IR in text form", createSouperifyPass);
+  registerPass("souperify-single-use", "emit Souper IR in text form (single-use nodes only)", createSouperifySingleUsePass);
   registerPass("spill-pointers", "spill pointers to the C stack (useful for Boehm-style GC)", createSpillPointersPass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
