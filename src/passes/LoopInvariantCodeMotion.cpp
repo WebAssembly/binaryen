@@ -26,10 +26,6 @@
 //       branch back to the loop top. We should ignore invalidations
 //       with that (and can ignore hoisting it too).
 //
-// TODO: Even things with side effects can be hoisted out of a loop -
-//       if something would trap, and can otherwise be hoisted, hoisting
-//       it just means the trap happens earlier, which is fine.
-//
 // TODO: This is O(N^2) now, which we can fix with an Effect analyzer
 //       which can add and subtract.
 //
@@ -83,9 +79,16 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
         i--;
       }
       if (!loop) return;
-      // There is a loop, check the effects of curr versus the loop
-      // without curr.
+      // Great, there is a .loop!
+      // Check if we have side effects we can't move out.
       EffectAnalyzer myEffects(curr);
+      // If something would trap, and can otherwise be hoisted, hoisting
+      // it just means the trap happens earlier, which is fine.
+      myEffects.implicitTrap = false;
+      if (myEffects.hasSideEffects()) return;
+      // Check the effects of curr versus the loop
+      // without curr, to see if it depends on activity in
+      // the loop.
       auto* currp = getCurrentPointer();
       Nop nop; // a temporary nop, just to check
       *currp = &nop;

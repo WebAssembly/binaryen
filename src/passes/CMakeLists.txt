@@ -15,13 +15,13 @@ SET(passes_SOURCES
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  I64ToI32Lowering.cpp
   Inlining.cpp
+  InstrumentLocals.cpp
+  InstrumentMemory.cpp
   LegalizeJSInterface.cpp
   LocalCSE.cpp
   LogExecution.cpp
-  I64ToI32Lowering.cpp
-  InstrumentLocals.cpp
-  InstrumentMemory.cpp
   LoopInvariantCodeMotion.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
