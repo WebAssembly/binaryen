@@ -160,11 +160,11 @@ def run_command(cmd, expected_status=0, stderr=None,
     raise Exception(('run_command failed (%s)' % code, out + str(err or '')))
   if expected_err is not None:
     if err_ignore is not None:
-      err = "\n".join([line for line in err.split('\n') if not err_ignore in line])
+      err = "\n".join([line for line in err.split('\n') if err_ignore not in line])
     err_correct = expected_err in err if err_contains else expected_err == err
     if not err_correct:
       raise Exception(('run_command unexpected stderr',
-                         "expected '%s', actual '%s'" % (expected_err, err)))
+                       "expected '%s', actual '%s'" % (expected_err, err)))
   return out
 
 
