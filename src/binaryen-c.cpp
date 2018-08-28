@@ -1882,28 +1882,27 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* funcs, BinaryenIndex numFuncs) {
+void BinaryenSetFunctionTable(BinaryenModuleRef module, const char **funcNames, BinaryenIndex numFuncNames) {
   if (tracing) {
     std::cout << "  {\n";
-    std::cout << "    BinaryenFunctionRef funcs[] = { ";
-    for (BinaryenIndex i = 0; i < numFuncs; i++) {
+    std::cout << "    const char* funcNames[] = { ";
+    for (BinaryenIndex i = 0; i < numFuncNames; i++) {
       if (i > 0) std::cout << ", ";
-      std::cout << "functions[" << functions[funcs[i]] << "]";
+      std::cout << "\"" << funcNames[i] << "\"";
     }
-    if (numFuncs == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
-    std::cout << "    BinaryenSetFunctionTable(the_module, funcs, " << numFuncs << ");\n";
+    std::cout << "    BinaryenSetFunctionTable(the_module, funcNames, " << numFuncNames << ");\n";
     std::cout << "  }\n";
   }
 
   auto* wasm = (Module*)module;
   wasm->table.exists = true;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
-  for (BinaryenIndex i = 0; i < numFuncs; i++) {
-    segment.data.push_back(((Function*)funcs[i])->name);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    segment.data.push_back(funcNames[i]);
   }
   wasm->table.segments.push_back(segment);
-  wasm->table.initial = wasm->table.max = numFuncs;
+  wasm->table.initial = wasm->table.max = numFuncNames;
 }
 
 // Memory. One per module

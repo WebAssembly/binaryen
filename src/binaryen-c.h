@@ -634,7 +634,7 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* funcs, BinaryenIndex numFuncs);
+void BinaryenSetFunctionTable(BinaryenModuleRef module, const char **funcNames, BinaryenIndex numFuncNames);
 
 // Memory. One per module
 
