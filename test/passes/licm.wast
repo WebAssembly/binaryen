@@ -65,5 +65,21 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $loop11
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (drop (get_local $x))
+      (br_if $loop (tee_local $x (i32.const 2)))
+    )
+  )
+  (func $loop12
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (drop (get_local $x))
+      (br_if $loop (tee_local $y (i32.const 2)))
+    )
+  )
 )
 

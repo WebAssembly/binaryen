@@ -144,4 +144,33 @@
    )
   )
  )
+ (func $loop11 (; 10 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (drop
+    (get_local $x)
+   )
+   (br_if $loop
+    (tee_local $x
+     (i32.const 2)
+    )
+   )
+  )
+ )
+ (func $loop12 (; 11 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (drop
+   (get_local $x)
+  )
+  (loop $loop
+   (nop)
+   (br_if $loop
+    (tee_local $y
+     (i32.const 2)
+    )
+   )
+  )
+ )
 )
