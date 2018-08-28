@@ -133,7 +133,9 @@ int main(int argc, const char *argv[]) {
   uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
 
   std::vector<Name> initializerFunctions;
-  initializerFunctions.push_back("__wasm_call_ctors");
+  if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
+    initializerFunctions.push_back("__wasm_call_ctors");
+  }
 
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
