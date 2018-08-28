@@ -17,5 +17,10 @@
       (drop (i32.const 20))
     )
   )
+  (func $loop4
+    (loop $loop
+      (drop (i32.load (i32.const 1)))
+    )
+  )
 )
 
