@@ -120,5 +120,11 @@
       (drop (get_local $x))
     )
   )
+  (func $nop
+    (loop $loop
+      (nop)
+      (br_if $loop (i32.const 1))
+    )
+  )
 )
 

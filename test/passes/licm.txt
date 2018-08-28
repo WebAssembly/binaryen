@@ -237,4 +237,12 @@
    )
   )
  )
+ (func $nop (; 16 ;) (type $0)
+  (loop $loop
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
 )

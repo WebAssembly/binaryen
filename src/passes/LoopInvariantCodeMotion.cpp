@@ -27,7 +27,8 @@
 //       with that (and can ignore hoisting it too).
 //
 // TODO: This is O(N^2) now, which we can fix with an Effect analyzer
-//       which can add and subtract.
+//       which can add and subtract. (Memoizing Effects in a single
+//       initial pass may help further, but take a lot more memory.)
 //
 // TODO: Multiple passes? A single loop may in theory allow hoisting of
 //       X after Y is hoisted, and we may want to hoist A out of one
@@ -64,6 +65,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
         replaceCurrent(ret);
       }
     } else if (curr->type == none) {
+      // Nops are uninteresting
+      if (curr->is<Nop>()) return;
       // This has the right type to try to hoist it. See if there is a loop above.
       Loop* loop = nullptr;
       auto i = controlFlowStack.size();
