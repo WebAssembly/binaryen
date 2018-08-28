@@ -144,5 +144,23 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $nested-unhoistable-blocks
+    (loop $loop
+      (block
+        (call $nested-unhoistable-blocks)
+      )
+      (block $x
+        (call $nested-unhoistable-blocks)
+      )
+      (block $a
+        (block $b
+          (block $c
+            (call $nested-unhoistable-blocks)
+          )
+        )
+      )
+      (br_if $loop (i32.const 1))
+    )
+  )
 )
 

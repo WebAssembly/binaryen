@@ -92,6 +92,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       // as they don't interfere with anything in the loop - for example,
       // a store is ok, as is an implicit trap, we don't care if those
       // happen (or try to happen, for a trap) more than once.
+      // TODO: we can memoize nodes that were invalidated here, and
+      //       carefully use that later - for example, heavily nested
+      //       blocks with a call at the top could be done in linear
+      //       time that way.
       if (myEffects.calls || myEffects.branches) return;
       // Check the effects of curr versus the loop
       // without curr, to see if it depends on activity in
