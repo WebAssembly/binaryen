@@ -55,4 +55,19 @@
    (nop)
   )
  )
+ (func $loop6 (; 5 ;) (type $0)
+  (block
+   (i32.store
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.store
+    (i32.const 2)
+    (i32.const 3)
+   )
+  )
+  (loop $loop
+   (nop)
+  )
+ )
 )
