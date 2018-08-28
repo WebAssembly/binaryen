@@ -28,9 +28,16 @@
     )
   )
   (func $loop6
-    (loop $loop ;; even two stores work, when we look at them as a whole in their block
+    (loop $loop ;; even two stores work, when we look at them as a whole in their block (and no br in the block!)
       (i32.store (i32.const 1) (i32.const 2))
       (i32.store (i32.const 2) (i32.const 3))
+    )
+  )
+  (func $loop7
+    (loop $loop
+      (i32.store (i32.const 1) (i32.const 2))
+      (i32.store (i32.const 2) (i32.const 3))
+      (br $loop)
     )
   )
 )

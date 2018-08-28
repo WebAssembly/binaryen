@@ -70,4 +70,17 @@
    (nop)
   )
  )
+ (func $loop7 (; 6 ;) (type $0)
+  (loop $loop
+   (i32.store
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (i32.store
+    (i32.const 2)
+    (i32.const 3)
+   )
+   (br $loop)
+  )
+ )
 )
