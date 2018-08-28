@@ -66,11 +66,11 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
     } else if (curr->type == none) {
       // This has the right type to try to hoist it. See if there is a loop above.
       Loop* loop = nullptr;
-      auto i = controlFlowStack().size();
+      auto i = controlFlowStack.size();
       if (i == 0) return;
       i--;
       while (1) {
-        if (loop = controlFlowStack[i]->dynCast<Loop>()) {
+        if ((loop = controlFlowStack[i]->dynCast<Loop>())) {
           break;
         }
         if (i == 0) {
@@ -81,7 +81,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       if (!loop) return;
       // Great, there is a .loop!
       // Check if we have side effects we can't move out.
-      EffectAnalyzer myEffects(curr);
+      EffectAnalyzer myEffects(getPassOptions(), curr);
       // If something would trap, and can otherwise be hoisted, hoisting
       // it just means the trap happens earlier, which is fine.
       myEffects.implicitTrap = false;
@@ -92,7 +92,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       auto* currp = getCurrentPointer();
       Nop nop; // a temporary nop, just to check
       *currp = &nop;
-      EffectAnalyzer loopEffects(loop);
+      EffectAnalyzer loopEffects(getPassOptions(), loop);
       if (loopEffects.invalidates(myEffects)) {
         // We can't do it, undo.
         *currp = curr;
