@@ -202,5 +202,21 @@
     (loop $loop)
     (drop (i32.const 10)) ;; may be part of the loop's basic block, logically, but is not nested in it
   )
+  (func $loops
+    (loop $loop2
+      (loop $loop1
+        (drop (i32.const 10))
+        (br_if $loop1 (i32.const 1))
+      )
+    )
+  )
+  (func $loops2
+    (loop $loop2
+      (loop $loop1
+        (drop (i32.const 10))
+        (br_if $loop2 (i32.const 1))
+      )
+    )
+  )
 )
 

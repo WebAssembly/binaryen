@@ -358,4 +358,30 @@
    (i32.const 10)
   )
  )
+ (func $loops (; 24 ;) (type $0)
+  (loop $loop2
+   (drop
+    (i32.const 10)
+   )
+   (loop $loop1
+    (nop)
+    (br_if $loop1
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $loops2 (; 25 ;) (type $0)
+  (loop $loop2
+   (drop
+    (i32.const 10)
+   )
+   (loop $loop1
+    (nop)
+    (br_if $loop2
+     (i32.const 1)
+    )
+   )
+  )
+ )
 )

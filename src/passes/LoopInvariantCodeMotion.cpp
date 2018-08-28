@@ -64,7 +64,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     // Create the CFG by walking the IR.
     CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doWalkFunction(func);
     // Find and move the code we can move.
-    findAndMove();
+    findAndMove(func);
   }
 
   // Track which loop a node is nested in. This is necessary because
@@ -103,7 +103,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
   // Maps each loop to code we have managed to move out of it.
   std::unordered_map<Loop*, std::vector<Expression*>> movedCode;
 
-  void findAndMove() {
+  void findAndMove(Function* func) {
     // We can only move code if it is unconditionally run at the
     // start of the loop. Once we see potential branching, we
     // must stop.
@@ -146,18 +146,24 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     // The moved code is now in movedCode. Do a final pass to replace
     // loops with the moved code + the loop.
     if (movedCode.empty()) return;
-    for (auto** currp : loops) {
-      auto* loop = (*currp)->cast<Loop>();
-      auto& currMovedCode = movedCode[loop];
-      if (!currMovedCode.empty()) {
-        // Finish the moving by emitting the code outside.
-        Builder builder(*getModule());
-        auto* ret = builder.makeBlock(currMovedCode);
-        ret->list.push_back(loop);
-        ret->finalize(loop->type);
-        *currp = ret;
+    struct UpdateLoops : public PostWalker<UpdateLoops> {
+      std::unordered_map<Loop*, std::vector<Expression*>>* movedCode;
+
+      void visitLoop(Loop* curr) {
+        auto& currMovedCode = (*movedCode)[curr];
+        if (!currMovedCode.empty()) {
+          // Finish the moving by emitting the code outside.
+          Builder builder(*getModule());
+          auto* ret = builder.makeBlock(currMovedCode);
+          ret->list.push_back(curr);
+          ret->finalize(curr->type);
+          replaceCurrent(ret);
+        }
       }
-    }
+    } updater;
+    updater.setModule(getModule());
+    updater.movedCode = &movedCode;
+    updater.walk(func->body);
   }
 
   bool interestingToMove(Expression* curr) {
