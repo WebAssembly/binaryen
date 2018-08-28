@@ -239,6 +239,21 @@ def run_crash_tests():
       run_command(cmd, expected_err='parse exception:', err_contains=True, expected_status=1)
 
 
+def run_dylink_tests():
+  print "\n[ we emit dylink sections properly... ]\n"
+
+  for t in os.listdir(options.binaryen_test):
+    if t.startswith('dylib') and t.endswith('.wasm'):
+      print '..', t
+      t = os.path.join(options.binaryen_test, t)
+      cmd = WASM_OPT + [t, '-o', 'a.wasm']
+      run_command(cmd)
+      with open('a.wasm') as output:
+        index = output.read().find('dylink')
+        print '  ', index
+        assert index == 11, 'dylink section must be first, right after the magic number etc.'
+
+
 def run_ctor_eval_tests():
   print '\n[ checking wasm-ctor-eval... ]\n'
 
@@ -640,6 +655,7 @@ def main():
   run_wasm_dis_tests()
   run_wasm_merge_tests()
   run_crash_tests()
+  run_dylink_tests()
   run_ctor_eval_tests()
   run_wasm_metadce_tests()
   if has_shell_timeout():
