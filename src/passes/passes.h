@@ -44,7 +44,7 @@ Pass* createLocalCSEPass();
 Pass* createLogExecutionPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();
-Pass* createLoopInvariantCodeMotion();
+Pass* createLoopInvariantCodeMotionPass();
 Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
 Pass* createMergeLocalsPass();

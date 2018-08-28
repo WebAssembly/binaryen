@@ -1,0 +1,11 @@
+(module
+ (type $0 (func))
+ (func $loop1 (; 0 ;) (type $0)
+  (drop
+   (i32.const 10)
+  )
+  (loop $loop1
+   (nop)
+  )
+ )
+)

@@ -87,7 +87,7 @@ void PassRegistry::registerPasses() {
   registerPass("i64-to-i32-lowering", "lower all uses of i64s to use i32s instead", createI64ToI32LoweringPass);
   registerPass("instrument-locals", "instrument the build with code to intercept all loads and stores", createInstrumentLocalsPass);
   registerPass("instrument-memory", "instrument the build with code to intercept all loads and stores", createInstrumentMemoryPass);
-  registerPass("licm", "loop invariant code motion", createLoopInvariantCodeMotion);
+  registerPass("licm", "loop invariant code motion", createLoopInvariantCodeMotionPass);
   registerPass("memory-packing", "packs memory into separate segments, skipping zeros", createMemoryPackingPass);
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("merge-locals", "merges locals when beneficial", createMergeLocalsPass);
