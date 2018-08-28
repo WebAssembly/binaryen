@@ -23,4 +23,17 @@
    (nop)
   )
  )
+ (func $loop3 (; 2 ;) (type $0)
+  (drop
+   (i32.const 10)
+  )
+  (drop
+   (i32.const 20)
+  )
+  (loop $loop
+   (nop)
+   (call $loop2)
+   (nop)
+  )
+ )
 )
