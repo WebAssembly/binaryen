@@ -1,5 +1,6 @@
 (module
  (type $0 (func))
+ (type $1 (func (result i32)))
  (func $loop1 (; 0 ;) (type $0)
   (drop
    (i32.const 10)
@@ -209,16 +210,15 @@
   (set_local $x
    (get_local $y)
   )
-  (drop
-   (get_local $y)
-  )
   (loop $loop
    (nop)
    (call $loop12)
    (br_if $loop
     (i32.const 1)
    )
-   (nop)
+   (drop
+    (get_local $y)
+   )
   )
  )
  (func $loop16 (; 15 ;) (type $0)
@@ -288,6 +288,74 @@
    (br_if $loop
     (i32.const 1)
    )
+  )
+ )
+ (func $conditional (; 19 ;) (type $0)
+  (loop $loop
+   (if
+    (i32.const 0)
+    (drop
+     (i32.const 10)
+    )
+   )
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
+ (func $conditional1 (; 20 ;) (type $1) (result i32)
+  (loop $loop
+   (if
+    (call $conditional1)
+    (drop
+     (i32.const 10)
+    )
+   )
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+  (unreachable)
+ )
+ (func $conditional2 (; 21 ;) (type $0)
+  (block $out
+   (loop $loop
+    (br_if $out
+     (i32.const 1)
+    )
+    (drop
+     (i32.const 10)
+    )
+    (br_if $loop
+     (i32.const 1)
+    )
+   )
+  )
+ )
+ (func $conditional3 (; 22 ;) (type $0)
+  (block $out
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (loop $loop
+     (nop)
+     (br_if $out
+      (i32.const 1)
+     )
+     (br_if $loop
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+ (func $after (; 23 ;) (type $0)
+  (loop $loop
+   (nop)
+  )
+  (drop
+   (i32.const 10)
   )
  )
 )

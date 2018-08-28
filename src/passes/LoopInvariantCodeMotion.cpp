@@ -74,10 +74,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
 
   void visitExpression(Expression* curr) {
     if (!currBasicBlock) return;
-    if (curr->is<Loop>()) {
-      currBasicBlock->contents.items.push_back(getCurrentPointer());
-    } else {
-      // Check if there is a loop.
+    if (!curr->is<Loop>()) {
+      // Check if there is a loop parent.
       auto i = controlFlowStack.size();
       if (i == 0) return;
       i--;
@@ -93,6 +91,13 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
         i--;
       }
     }
+  }
+
+  static void doStartLoop(LoopInvariantCodeMotion* self, Expression** currp) {
+    if (self->currBasicBlock) {
+      self->currBasicBlock->contents.items.push_back(currp);
+    }
+    CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doStartLoop(self, currp);
   }
 
   // Maps each loop to code we have managed to move out of it.
@@ -186,6 +191,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     Nop nop; // a temporary nop, just to check
     *currp = &nop;
     EffectAnalyzer loopEffects(getPassOptions(), loop);
+    // Ignore branching here - we handle that directly by only
+    // considering code that is guaranteed to execute at the
+    // loop start.
+    loopEffects.branches = false;
     if (loopEffects.invalidates(myEffects)) {
       // We can't do it, undo.
       *currp = curr;

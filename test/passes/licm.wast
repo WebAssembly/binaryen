@@ -166,7 +166,6 @@
     (loop $loop
       (if (i32.const 0)
         (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
-                              ;; (the whole if, however, can be hoisted)
       )
       (br_if $loop (i32.const 1))
     )
@@ -175,7 +174,7 @@
     (loop $loop
       (if (call $conditional1)
         (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
-                              ;; the whole if also cannot, due to the call
+                              ;; also anyhow the whole if also cannot, due to the call
       )
       (br_if $loop (i32.const 1))
     )
@@ -198,6 +197,10 @@
         (br_if $loop (i32.const 1))
       )
     )
+  )
+  (func $after
+    (loop $loop)
+    (drop (i32.const 10)) ;; may be part of the loop's basic block, logically, but is not nested in it
   )
 )
 
