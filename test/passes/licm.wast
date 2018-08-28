@@ -162,5 +162,42 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $conditional
+    (loop $loop
+      (if (i32.const 0)
+        (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+                              ;; (the whole if, however, can be hoisted)
+      )
+      (br_if $loop (i32.const 1))
+    )
+  )
+  (func $conditional1 (result i32)
+    (loop $loop
+      (if (call $conditional1)
+        (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+                              ;; the whole if also cannot, due to the call
+      )
+      (br_if $loop (i32.const 1))
+    )
+    (unreachable)
+  )
+  (func $conditional2
+    (block $out
+      (loop $loop
+        (br_if $out (i32.const 1))
+        (drop (i32.const 10)) ;; cannot be hoisted - might never be reached
+        (br_if $loop (i32.const 1))
+      )
+    )
+  )
+  (func $conditional3
+    (block $out
+      (loop $loop
+        (drop (i32.const 10)) ;; *CAN* be hoisted - will definitely be reached
+        (br_if $out (i32.const 1))
+        (br_if $loop (i32.const 1))
+      )
+    )
+  )
 )
 
