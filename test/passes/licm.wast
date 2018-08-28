@@ -126,5 +126,23 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $nested-blocks
+    (loop $loop
+      (block
+        (nop)
+      )
+      (block $x
+        (nop)
+      )
+      (block $a
+        (block $b
+          (block $c
+            (nop)
+          )
+        )
+      )
+      (br_if $loop (i32.const 1))
+    )
+  )
 )
 

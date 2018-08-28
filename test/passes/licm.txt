@@ -245,4 +245,29 @@
    )
   )
  )
+ (func $nested-blocks (; 17 ;) (type $0)
+  (block $block
+   (nop)
+  )
+  (block $x
+   (nop)
+  )
+  (block $c
+   (nop)
+  )
+  (block $b
+   (nop)
+  )
+  (block $a
+   (nop)
+  )
+  (loop $loop
+   (nop)
+   (nop)
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
 )
