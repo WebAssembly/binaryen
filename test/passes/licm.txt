@@ -6,6 +6,9 @@
   )
   (loop $loop
    (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
  (func $loop2 (; 1 ;) (type $0)
@@ -15,12 +18,12 @@
   (drop
    (i32.const 20)
   )
-  (block
-   (nop)
-   (nop)
-  )
   (loop $loop
    (nop)
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
  (func $loop3 (; 2 ;) (type $0)
@@ -34,6 +37,9 @@
    (nop)
    (call $loop2)
    (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
  (func $loop4 (; 3 ;) (type $0)
@@ -44,6 +50,9 @@
   )
   (loop $loop
    (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
  (func $loop5 (; 4 ;) (type $0)
@@ -53,6 +62,9 @@
   )
   (loop $loop
    (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
  (func $loop6 (; 5 ;) (type $0)
@@ -80,7 +92,21 @@
     (i32.const 2)
     (i32.const 3)
    )
-   (br $loop)
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop8 (; 7 ;) (type $0)
+  (i32.store
+   (i32.const 1)
+   (i32.const 2)
+  )
+  (loop $loop
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
   )
  )
 )
