@@ -49,6 +49,8 @@ namespace wasm {
 // its current value
 typedef std::vector<Index> LocalValues;
 
+namespace {
+
 // information in a basic block
 struct Info {
   LocalValues start, end; // the local values at the start and end of the block
@@ -365,6 +367,8 @@ struct RedundantSetElimination : public WalkerPass<CFGWalker<RedundantSetElimina
     std::cout << '\n';
   }
 };
+
+} // namespace
 
 Pass *createRedundantSetEliminationPass() {
   return new RedundantSetElimination();
