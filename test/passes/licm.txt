@@ -187,4 +187,20 @@
    )
   )
  )
+ (func $loop14 (; 13 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (set_local $x
+    (get_local $y)
+   )
+   (call $loop12)
+   (br_if $loop
+    (i32.const 1)
+   )
+   (set_local $y
+    (get_local $x)
+   )
+  )
+ )
 )
