@@ -101,7 +101,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
   }
 
   // Maps each loop to code we have managed to move out of it.
-  std::unordered_map<Loop*, std::vector<Expression*>> movedCode;
+  std::unordered_map<Loop*, std::vector<Expression*>> loopMovedCode;
+
+  // All code we can move.
+  std::unordered_set<Expression*> movedCode;
 
   void findAndMove(Function* func) {
     // We can only move code if it is unconditionally run at the
@@ -150,25 +153,31 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
         }
       }
     }
-    // The moved code is now in movedCode. Do a final pass to replace
-    // loops with the moved code + the loop.
-    if (movedCode.empty()) return;
-    struct UpdateLoops : public PostWalker<UpdateLoops> {
-      std::unordered_map<Loop*, std::vector<Expression*>>* movedCode;
+    // The moved code is now in loopMovedCode. Do a final pass to replace
+    // loops with the moved code + the loop, and the moved code with nops.
+    if (loopMovedCode.empty()) return;
+    struct Updater : public PostWalker<Updater, UnifiedExpressionVisitor<Updater>> {
+      std::unordered_map<Loop*, std::vector<Expression*>>* loopMovedCode;
+      std::unordered_set<Expression*>* movedCode;
 
-      void visitLoop(Loop* curr) {
-        auto& currMovedCode = (*movedCode)[curr];
-        if (!currMovedCode.empty()) {
-          // Finish the moving by emitting the code outside.
-          Builder builder(*getModule());
-          auto* ret = builder.makeBlock(currMovedCode);
-          ret->list.push_back(curr);
-          ret->finalize(curr->type);
-          replaceCurrent(ret);
+      void visitExpression(Expression* curr) {
+        if (auto* loop = curr->dynCast<Loop>()) {
+          auto& currMovedCode = (*loopMovedCode)[loop];
+          if (!currMovedCode.empty()) {
+            // Finish the moving by emitting the code outside.
+            Builder builder(*getModule());
+            auto* ret = builder.makeBlock(currMovedCode);
+            ret->list.push_back(loop);
+            ret->finalize(loop->type);
+            replaceCurrent(ret);
+          }
+        } else if ((*movedCode).count(curr)) {
+          replaceCurrent(Builder(*getModule()).makeNop());
         }
       }
     } updater;
     updater.setModule(getModule());
+    updater.loopMovedCode = &loopMovedCode;
     updater.movedCode = &movedCode;
     updater.walk(func->body);
   }
@@ -204,19 +213,18 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     Nop nop; // a temporary nop, just to check
     *currp = &nop;
     EffectAnalyzer loopEffects(getPassOptions(), loop);
+    *currp = curr;
     // Ignore branching here - we handle that directly by only
     // considering code that is guaranteed to execute at the
     // loop start.
     loopEffects.branches = false;
     if (loopEffects.invalidates(myEffects)) {
       // We can't do it, undo.
-      *currp = curr;
       return false;
     }
     // We can do it!
-    movedCode[loop].push_back(curr);
-    // Allocate a proper nop.
-    *currp = Builder(*getModule()).makeNop();
+    loopMovedCode[loop].push_back(curr);
+    movedCode.insert(curr);
     return true;
   }
 };
