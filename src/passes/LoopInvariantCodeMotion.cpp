@@ -113,7 +113,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     for (auto& startBlock : basicBlocks) {
       auto* block = startBlock.get();
       Loop* loop = nullptr;
+      std::unordered_set<BasicBlock*> seen;
       while (1) {
+        seen.insert(block);
         bool stop = false;
         // Go through the current block.
         for (auto**& currp : block->contents.items) {
@@ -140,6 +142,11 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
           break;
         } else {
           block = block->out[0];
+          // If we already saw this block before, we are in a loop of
+          // single-successors, and can stop.
+          if (seen.count(block)) {
+            break;
+          }
         }
       }
     }
