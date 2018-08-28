@@ -110,5 +110,15 @@
       (drop (get_local $y))
     )
   )
+  (func $loop16
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (br_if $loop (i32.const 1))
+      (drop (get_local $x))
+    )
+  )
 )
 
