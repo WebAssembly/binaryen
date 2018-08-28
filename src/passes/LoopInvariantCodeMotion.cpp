@@ -82,10 +82,14 @@ struct LoopInvariantCodeMotion : public WalkerPass<ControlFlowWalker<LoopInvaria
       // Great, there is a .loop!
       // Check if we have side effects we can't move out.
       EffectAnalyzer myEffects(getPassOptions(), curr);
-      // If something would trap, and can otherwise be hoisted, hoisting
-      // it just means the trap happens earlier, which is fine.
-      myEffects.implicitTrap = false;
-      if (myEffects.hasSideEffects()) return;
+      // If we have an effect that can happen more than once, then that
+      // is immediately disaqualifying, like a call. A branch is also
+      // invalid as it may not make sense to be moved up (TODO: check
+      // nesting of blocks?). Otherwise, side effects are ok, so long
+      // as they don't interfere with anything in the loop - for example,
+      // a store is ok, as is an implicit trap, we don't care if those
+      // happen (or try to happen, for a trap) more than once.
+      if (myEffects.calls || myEffects.branches) return;
       // Check the effects of curr versus the loop
       // without curr, to see if it depends on activity in
       // the loop.
