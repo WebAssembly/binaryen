@@ -39,6 +39,9 @@ void WasmBinaryWriter::prepare() {
 
 void WasmBinaryWriter::write() {
   writeHeader();
+
+  writeEarlyUserSections();
+
   if (sourceMap) {
     writeSourceMapProlog();
   }
@@ -62,7 +65,7 @@ void WasmBinaryWriter::write() {
     writeSourceMapEpilog();
   }
 
-  writeUserSections();
+  writeLateUserSections();
 
   finishUp();
 }
@@ -535,15 +538,31 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   *sourceMap << "\"}";
 }
 
-void WasmBinaryWriter::writeUserSections() {
+void WasmBinaryWriter::writeEarlyUserSections() {
+  // The dylink section must be the first in the module, per
+  // the spec, to allow simple parsing by loaders.
   for (auto& section : wasm->userSections) {
-    auto start = startSection(0);
-    writeInlineString(section.name.c_str());
-    for (size_t i = 0; i < section.data.size(); i++) {
-      o << uint8_t(section.data[i]);
+    if (section.name == BinaryConsts::UserSections::Dylink) {
+      writeUserSection(section);
     }
-    finishSection(start);
   }
+}
+
+void WasmBinaryWriter::writeLateUserSections() {
+  for (auto& section : wasm->userSections) {
+    if (section.name != BinaryConsts::UserSections::Dylink) {
+      writeUserSection(section);
+    }
+  }
+}
+
+void WasmBinaryWriter::writeUserSection(const UserSection& section) {
+  auto start = startSection(0);
+  writeInlineString(section.name.c_str());
+  for (size_t i = 0; i < section.data.size(); i++) {
+    o << uint8_t(section.data[i]);
+  }
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
