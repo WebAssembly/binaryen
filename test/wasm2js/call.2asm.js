@@ -472,3 +472,24 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const type_i32 = retasmFunc.type_i32;
+export const type_i64 = retasmFunc.type_i64;
+export const type_f32 = retasmFunc.type_f32;
+export const type_f64 = retasmFunc.type_f64;
+export const type_first_i32 = retasmFunc.type_first_i32;
+export const type_first_i64 = retasmFunc.type_first_i64;
+export const type_first_f32 = retasmFunc.type_first_f32;
+export const type_first_f64 = retasmFunc.type_first_f64;
+export const type_second_i32 = retasmFunc.type_second_i32;
+export const type_second_i64 = retasmFunc.type_second_i64;
+export const type_second_f32 = retasmFunc.type_second_f32;
+export const type_second_f64 = retasmFunc.type_second_f64;
+export const fac = retasmFunc.fac;
+export const fac_acc = retasmFunc.fac_acc;
+export const fib = retasmFunc.fib;
+export const even = retasmFunc.even;
+export const odd = retasmFunc.odd;
+export const runaway = retasmFunc.runaway;
+export const mutual_runaway = retasmFunc.mutual_runaway;

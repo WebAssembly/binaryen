@@ -199,3 +199,15 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const eq_i64 = retasmFunc.eq_i64;
+export const ne_i64 = retasmFunc.ne_i64;
+export const ge_s_i64 = retasmFunc.ge_s_i64;
+export const gt_s_i64 = retasmFunc.gt_s_i64;
+export const le_s_i64 = retasmFunc.le_s_i64;
+export const lt_s_i64 = retasmFunc.lt_s_i64;
+export const ge_u_i64 = retasmFunc.ge_u_i64;
+export const gt_u_i64 = retasmFunc.gt_u_i64;
+export const le_u_i64 = retasmFunc.le_u_i64;
+export const lt_u_i64 = retasmFunc.lt_u_i64;

@@ -49,11 +49,9 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 
-      var __array_buffer = new ArrayBuffer(65536)
-      var HEAP32 = new Int32Array(__array_buffer);
-      var HEAPF32 = new Float32Array(__array_buffer);
-      var HEAPF64 = new Float64Array(__array_buffer);
       var nan = NaN;
       var infinity = Infinity;
     ;
@@ -81,42 +79,23 @@ function asmFunc(global, env, buffer) {
 
          return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
       }
-    ;
-var asmModule = asmFunc({
- Math: Math, 
- Int8Array: Int8Array, 
- Int16Array: Int16Array, 
- Int32Array: Int32Array, 
- Uint8Array: Uint8Array, 
- Uint16Array: Uint16Array, 
- Uint32Array: Uint32Array, 
- Float32Array: Float32Array, 
- Float64Array: Float64Array, 
- Infinity: Infinity, 
- NaN: NaN
-}, {
- abort: function abort() {
-  unreachable();
-  console_log();
- }
- , 
- print: function print() {}
-}, __array_buffer);
 
     function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
        return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
     }
+    ;
+
   ;
 function check1() {
  var wasm2js_i32$0 = 0;
- asmModule.empty();
+ retasmFunc.empty();
  wasm2js_i32$0 = 1;
  return wasm2js_i32$0 | 0;
 }
 
 if (!check1()) fail1();
 function check2() {
- return (asmModule.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
+ return (retasmFunc.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
 }
 
 if (!check2()) fail2();

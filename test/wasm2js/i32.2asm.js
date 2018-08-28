@@ -264,3 +264,34 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const add = retasmFunc.add;
+export const sub = retasmFunc.sub;
+export const mul = retasmFunc.mul;
+export const div_s = retasmFunc.div_s;
+export const div_u = retasmFunc.div_u;
+export const rem_s = retasmFunc.rem_s;
+export const rem_u = retasmFunc.rem_u;
+export const and = retasmFunc.and;
+export const or = retasmFunc.or;
+export const xor = retasmFunc.xor;
+export const shl = retasmFunc.shl;
+export const shr_s = retasmFunc.shr_s;
+export const shr_u = retasmFunc.shr_u;
+export const rotl = retasmFunc.rotl;
+export const rotr = retasmFunc.rotr;
+export const clz = retasmFunc.clz;
+export const ctz = retasmFunc.ctz;
+export const popcnt = retasmFunc.popcnt;
+export const eqz = retasmFunc.eqz;
+export const eq = retasmFunc.eq;
+export const ne = retasmFunc.ne;
+export const lt_s = retasmFunc.lt_s;
+export const lt_u = retasmFunc.lt_u;
+export const le_s = retasmFunc.le_s;
+export const le_u = retasmFunc.le_u;
+export const gt_s = retasmFunc.gt_s;
+export const gt_u = retasmFunc.gt_u;
+export const ge_s = retasmFunc.ge_s;
+export const ge_u = retasmFunc.ge_u;

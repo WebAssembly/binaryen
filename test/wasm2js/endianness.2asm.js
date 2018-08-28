@@ -354,3 +354,22 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const i32_load16_s = retasmFunc.i32_load16_s;
+export const i32_load16_u = retasmFunc.i32_load16_u;
+export const i32_load = retasmFunc.i32_load;
+export const i64_load16_s = retasmFunc.i64_load16_s;
+export const i64_load16_u = retasmFunc.i64_load16_u;
+export const i64_load32_s = retasmFunc.i64_load32_s;
+export const i64_load32_u = retasmFunc.i64_load32_u;
+export const i64_load = retasmFunc.i64_load;
+export const f32_load = retasmFunc.f32_load;
+export const f64_load = retasmFunc.f64_load;
+export const i32_store16 = retasmFunc.i32_store16;
+export const i32_store = retasmFunc.i32_store;
+export const i64_store16 = retasmFunc.i64_store16;
+export const i64_store32 = retasmFunc.i64_store32;
+export const i64_store = retasmFunc.i64_store;
+export const f32_store = retasmFunc.f32_store;
+export const f64_store = retasmFunc.f64_store;

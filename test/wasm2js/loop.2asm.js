@@ -617,3 +617,23 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const empty = retasmFunc.empty;
+export const singular = retasmFunc.singular;
+export const multi = retasmFunc.multi;
+export const nested = retasmFunc.nested;
+export const deep = retasmFunc.deep;
+export const as_unary_operand = retasmFunc.as_unary_operand;
+export const as_binary_operand = retasmFunc.as_binary_operand;
+export const as_test_operand = retasmFunc.as_test_operand;
+export const as_compare_operand = retasmFunc.as_compare_operand;
+export const break_bare = retasmFunc.break_bare;
+export const break_value = retasmFunc.break_value;
+export const break_repeated = retasmFunc.break_repeated;
+export const break_inner = retasmFunc.break_inner;
+export const cont_inner = retasmFunc.cont_inner;
+export const effects = retasmFunc.effects;
+export const while_ = retasmFunc.while_;
+export const for_ = retasmFunc.for_;
+export const nesting = retasmFunc.nesting;

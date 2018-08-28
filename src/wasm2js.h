@@ -138,7 +138,6 @@ public:
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
-    bool onlyAsmjsWrapper = false;
   };
 
   Wasm2JSBuilder(Flags f) : flags(f) {}
@@ -271,7 +270,7 @@ private:
   bool almostASM = false;
 
   void addEsmImports(Ref ast, Module* wasm);
-  void addEsmExportsAndInstantiate(Ref ast, Module* wasm);
+  void addEsmExportsAndInstantiate(Ref ast, Module* wasm, Name funcName);
   void addBasics(Ref ast);
   void addImport(Ref ast, Import* import);
   void addTables(Ref ast, Module* wasm);
@@ -332,14 +331,10 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 #endif
 
   Ref ret = ValueBuilder::makeToplevel();
-  if (!flags.onlyAsmjsWrapper) {
-    addEsmImports(ret, wasm);
-  }
+  addEsmImports(ret, wasm);
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
-  if (!flags.onlyAsmjsWrapper) {
-    addEsmExportsAndInstantiate(ret, wasm);
-  }
+  addEsmExportsAndInstantiate(ret, wasm, funcName);
   ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
   ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
@@ -484,14 +479,18 @@ static std::string base64Encode(std::vector<char> &data) {
   return ret;
 }
 
-void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
+void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name funcName) {
   // Create an initial `ArrayBuffer` and populate it with static data.
   // Currently we use base64 encoding to encode static data and we decode it at
   // instantiation time.
+  //
+  // Note that the translation here expects that the lower values of this memory
+  // can be used for conversions, so make sure there's at least one page.
   {
+    auto pages = wasm->memory.initial == 0 ? 1 : wasm->memory.initial.addr;
     std::ostringstream out;
-    out << "const mem = new ArrayBuffer("
-      << wasm->memory.initial * Memory::kPageSize
+    out << "const mem" << funcName.str << " = new ArrayBuffer("
+      << pages * Memory::kPageSize
       << ")";
     std::string os = out.str();
     IString name(os.c_str(), false);
@@ -499,25 +498,34 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
   }
 
   if (wasm->memory.segments.size() > 0) {
-    flattenAppend(ast, ValueBuilder::makeName(R"(
-      const _mem = new Uint8Array(mem);
-      function _assign(offset, s) {
-        if (typeof Buffer === 'undefined') {
-          const bytes = atob(s);
-          for (let i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes.charCodeAt(i);
-        } else {
-          const bytes = Buffer.from(s, 'base64');
-          for (let i = 0; i < bytes.length; i++)
-            _mem[offset + i] = bytes[i];
+    auto expr = R"(
+      function(mem) {
+        const _mem = new Uint8Array(mem);
+        return function(offset, s) {
+          if (typeof Buffer === 'undefined') {
+            const bytes = atob(s);
+            for (let i = 0; i < bytes.length; i++)
+              _mem[offset + i] = bytes.charCodeAt(i);
+          } else {
+            const bytes = Buffer.from(s, 'base64');
+            for (let i = 0; i < bytes.length; i++)
+              _mem[offset + i] = bytes[i];
+          }
         }
       }
-    )"));
-  }
+    )";
 
+    // const assign$name = ($expr)(mem$name);
+    std::ostringstream out;
+    out << "const assign" << funcName.str
+      << " = (" << expr << ")(mem" << funcName.str << ")";
+    std::string os = out.str();
+    IString name(os.c_str(), false);
+    flattenAppend(ast, ValueBuilder::makeName(name));
+  }
   for (auto& seg : wasm->memory.segments) {
     std::ostringstream out;
-    out << "_assign("
+    out << "assign" << funcName.str << "("
       << constOffset(seg)
       << ", \""
       << base64Encode(seg.data)
@@ -530,7 +538,7 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports (imported via addEsmImports above)
   std::ostringstream construct;
-  construct << "const ret = asmFunc({"
+  construct << "const ret" << funcName.str << " = " << funcName.str << "({"
     << "Math,"
     << "Int8Array,"
     << "Uint8Array,"
@@ -552,10 +560,14 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
     }
     construct << "," << import->base.str;
   }
-  construct << "},mem)";
+  construct << "},mem" << funcName.str << ")";
   std::string sconstruct = construct.str();
   IString name(sconstruct.c_str(), false);
   flattenAppend(ast, ValueBuilder::makeName(name));
+
+  if (flags.allowAsserts) {
+    return;
+  }
 
   // And now that we have our returned instance, export all our functions
   // that are hanging off it.
@@ -569,11 +581,21 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm) {
       default:
         continue;
     }
+    std::ostringstream export_name;
+    for (auto *ptr = exp->name.str; *ptr; ptr++) {
+      if (*ptr == '-') {
+        export_name << '_';
+      } else {
+        export_name << *ptr;
+      }
+    }
     std::ostringstream out;
     out << "export const "
-      << exp->name.str
-      << " = ret."
-      << exp->name.str;
+      << fromName(exp->name, NameScope::Top).str
+      << " = ret"
+      << funcName.str
+      << "."
+      << fromName(exp->name, NameScope::Top).str;
     std::string os = out.str();
     IString name(os.c_str(), false);
     flattenAppend(ast, ValueBuilder::makeName(name));
@@ -2022,16 +2044,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
   return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
-static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool first) {
-  Name buffer("__array_buffer");
+static void makeHelpers(Ref ret, Name funcName, Name moduleName, bool first) {
+  // Name buffer("__array_buffer");
   if (first) {
     // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
     // generated
     flattenAppend(ret, ValueBuilder::makeName(R"(
-      var __array_buffer = new ArrayBuffer(65536)
-      var HEAP32 = new Int32Array(__array_buffer);
-      var HEAPF32 = new Float32Array(__array_buffer);
-      var HEAPF64 = new Float64Array(__array_buffer);
       var nan = NaN;
       var infinity = Infinity;
     )"));
@@ -2068,47 +2086,48 @@ static void makeInstantiation(Ref ret, Name funcName, Name moduleName, bool firs
 
          return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
       }
+
+    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
+    }
     )"));
   }
 
-  Ref lib = ValueBuilder::makeObject();
-  auto insertItem = [&](IString item) {
-    ValueBuilder::appendToObject(lib, item, ValueBuilder::makeName(item));
-  };
-  insertItem(MATH);
-  insertItem(INT8ARRAY);
-  insertItem(INT16ARRAY);
-  insertItem(INT32ARRAY);
-  insertItem(UINT8ARRAY);
-  insertItem(UINT16ARRAY);
-  insertItem(UINT32ARRAY);
-  insertItem(FLOAT32ARRAY);
-  insertItem(FLOAT64ARRAY);
-  // TODO: these shouldn't be necessary once we don't generate literal asm.js
-  // code
-  insertItem("Infinity");
-  insertItem("NaN");
-  Ref env = ValueBuilder::makeObject();
-  Ref abortFunc = ValueBuilder::makeFunction("abort");
-  abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
-  ValueBuilder::appendToObject(env, "abort", abortFunc);
-
-  Ref printFunc = ValueBuilder::makeFunction("print");
-  abortFunc[3]->push_back(ValueBuilder::makeCall("console_log"));
-  ValueBuilder::appendToObject(env, "print", printFunc);
-  Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
-      ValueBuilder::makeName(buffer));
-  Ref module = ValueBuilder::makeVar();
-  ValueBuilder::appendToVar(module, moduleName, call);
-  flattenAppend(ret, module);
+  // Ref lib = ValueBuilder::makeObject();
+  // auto insertItem = [&](IString item) {
+  //   ValueBuilder::appendToObject(lib, item, ValueBuilder::makeName(item));
+  // };
+  // insertItem(MATH);
+  // insertItem(INT8ARRAY);
+  // insertItem(INT16ARRAY);
+  // insertItem(INT32ARRAY);
+  // insertItem(UINT8ARRAY);
+  // insertItem(UINT16ARRAY);
+  // insertItem(UINT32ARRAY);
+  // insertItem(FLOAT32ARRAY);
+  // insertItem(FLOAT64ARRAY);
+  // // TODO: these shouldn't be necessary once we don't generate literal asm.js
+  // // code
+  // insertItem("Infinity");
+  // insertItem("NaN");
+  // Ref env = ValueBuilder::makeObject();
+  // Ref abortFunc = ValueBuilder::makeFunction("abort");
+  // abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
+  // ValueBuilder::appendToObject(env, "abort", abortFunc);
+  //
+  // Ref printFunc = ValueBuilder::makeFunction("print");
+  // abortFunc[3]->push_back(ValueBuilder::makeCall("console_log"));
+  // ValueBuilder::appendToObject(env, "print", printFunc);
+  // Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
+  //     ValueBuilder::makeName(buffer));
+  // Ref module = ValueBuilder::makeVar();
+  // ValueBuilder::appendToVar(module, moduleName, call);
+  // flattenAppend(ret, module);
 
   // 64-bit numbers get a different ABI w/ wasm2js, and in general you can't
   // actually export them from wasm at the boundary. We hack around this though
   // to get the spec tests working.
   flattenAppend(ret, ValueBuilder::makeName(R"(
-    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
-    }
   )"));
 }
 
@@ -2447,21 +2466,23 @@ Ref Wasm2JSBuilder::processAsserts(Module* wasm,
                                     SExpressionWasmBuilder& sexpBuilder) {
   Builder wasmBuilder(sexpBuilder.getAllocator());
   Ref ret = ValueBuilder::makeBlock();
-  Name asmModule = ASM_MODULE;
-  makeInstantiation(ret, ASM_FUNC, asmModule, true);
+  std::stringstream asmModuleS;
+  asmModuleS << "ret" << ASM_FUNC.c_str();
+  Name asmModule(asmModuleS.str().c_str());
+  makeHelpers(ret, ASM_FUNC, asmModule, true);
   for (size_t i = 1; i < root.size(); ++i) {
     Element& e = *root[i];
     if (e.isList() && e.size() >= 1 && e[0]->isStr() && e[0]->str() == Name("module")) {
       std::stringstream funcNameS;
       funcNameS << ASM_FUNC.c_str() << i;
       std::stringstream moduleNameS;
-      moduleNameS << ASM_MODULE.c_str() << i;
+      moduleNameS << "ret" << ASM_FUNC.c_str() << i;
       Name funcName(funcNameS.str().c_str());
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       SExpressionWasmBuilder builder(wasm, e);
       flattenAppend(ret, processWasm(&wasm, funcName));
-      makeInstantiation(ret, funcName, asmModule, false);
+      makeHelpers(ret, funcName, asmModule, false);
       continue;
     }
     if (!isAssertHandled(e)) {

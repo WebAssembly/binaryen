@@ -338,3 +338,22 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const block = retasmFunc.block;
+export const loop1 = retasmFunc.loop1;
+export const loop2 = retasmFunc.loop2;
+export const loop3 = retasmFunc.loop3;
+export const loop4 = retasmFunc.loop4;
+export const loop5 = retasmFunc.loop5;
+export const if_ = retasmFunc.if_;
+export const if2 = retasmFunc.if2;
+export const switch_ = retasmFunc.switch_;
+export const return_ = retasmFunc.return_;
+export const br_if0 = retasmFunc.br_if0;
+export const br_if1 = retasmFunc.br_if1;
+export const br_if2 = retasmFunc.br_if2;
+export const br_if3 = retasmFunc.br_if3;
+export const br = retasmFunc.br;
+export const shadowing = retasmFunc.shadowing;
+export const redefinition = retasmFunc.redefinition;

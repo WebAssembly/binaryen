@@ -260,3 +260,30 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const i64_extend_s_i32 = retasmFunc.i64_extend_s_i32;
+export const i64_extend_u_i32 = retasmFunc.i64_extend_u_i32;
+export const i32_wrap_i64 = retasmFunc.i32_wrap_i64;
+export const i32_trunc_s_f32 = retasmFunc.i32_trunc_s_f32;
+export const i32_trunc_u_f32 = retasmFunc.i32_trunc_u_f32;
+export const i32_trunc_s_f64 = retasmFunc.i32_trunc_s_f64;
+export const i32_trunc_u_f64 = retasmFunc.i32_trunc_u_f64;
+export const i64_trunc_s_f32 = retasmFunc.i64_trunc_s_f32;
+export const i64_trunc_u_f32 = retasmFunc.i64_trunc_u_f32;
+export const i64_trunc_s_f64 = retasmFunc.i64_trunc_s_f64;
+export const i64_trunc_u_f64 = retasmFunc.i64_trunc_u_f64;
+export const f32_convert_s_i32 = retasmFunc.f32_convert_s_i32;
+export const f32_convert_s_i64 = retasmFunc.f32_convert_s_i64;
+export const f64_convert_s_i32 = retasmFunc.f64_convert_s_i32;
+export const f64_convert_s_i64 = retasmFunc.f64_convert_s_i64;
+export const f32_convert_u_i32 = retasmFunc.f32_convert_u_i32;
+export const f32_convert_u_i64 = retasmFunc.f32_convert_u_i64;
+export const f64_convert_u_i32 = retasmFunc.f64_convert_u_i32;
+export const f64_convert_u_i64 = retasmFunc.f64_convert_u_i64;
+export const f64_promote_f32 = retasmFunc.f64_promote_f32;
+export const f32_demote_f64 = retasmFunc.f32_demote_f64;
+export const f32_reinterpret_i32 = retasmFunc.f32_reinterpret_i32;
+export const f64_reinterpret_i64 = retasmFunc.f64_reinterpret_i64;
+export const i32_reinterpret_f32 = retasmFunc.i32_reinterpret_f32;
+export const i64_reinterpret_f64 = retasmFunc.i64_reinterpret_f64;

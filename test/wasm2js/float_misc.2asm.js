@@ -282,3 +282,33 @@ function asmFunc(global, env, buffer) {
  };
 }
 
+const memasmFunc = new ArrayBuffer(65536);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
+export const f32_add = retasmFunc.f32_add;
+export const f32_sub = retasmFunc.f32_sub;
+export const f32_mul = retasmFunc.f32_mul;
+export const f32_div = retasmFunc.f32_div;
+export const f32_sqrt = retasmFunc.f32_sqrt;
+export const f32_abs = retasmFunc.f32_abs;
+export const f32_neg = retasmFunc.f32_neg;
+export const f32_copysign = retasmFunc.f32_copysign;
+export const f32_ceil = retasmFunc.f32_ceil;
+export const f32_floor = retasmFunc.f32_floor;
+export const f32_trunc = retasmFunc.f32_trunc;
+export const f32_nearest = retasmFunc.f32_nearest;
+export const f32_min = retasmFunc.f32_min;
+export const f32_max = retasmFunc.f32_max;
+export const f64_add = retasmFunc.f64_add;
+export const f64_sub = retasmFunc.f64_sub;
+export const f64_mul = retasmFunc.f64_mul;
+export const f64_div = retasmFunc.f64_div;
+export const f64_sqrt = retasmFunc.f64_sqrt;
+export const f64_abs = retasmFunc.f64_abs;
+export const f64_neg = retasmFunc.f64_neg;
+export const f64_copysign = retasmFunc.f64_copysign;
+export const f64_ceil = retasmFunc.f64_ceil;
+export const f64_floor = retasmFunc.f64_floor;
+export const f64_trunc = retasmFunc.f64_trunc;
+export const f64_nearest = retasmFunc.f64_nearest;
+export const f64_min = retasmFunc.f64_min;
+export const f64_max = retasmFunc.f64_max;

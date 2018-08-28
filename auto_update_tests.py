@@ -25,7 +25,7 @@ from scripts.test.shared import (
     WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2JS, WASM_METADCE,
     WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR, BINARYEN_JS,
     files_with_pattern, has_shell_timeout, options)
-from scripts.test.wasm2js import tests, spec_tests, extra_wasm2js_tests, assert_tests, wasm2js_dir
+from scripts.test.wasm2js import tests, spec_tests, extra_wasm2js_tests, assert_tests, wasm2js_dir, wasm2js_blacklist
 
 
 def update_asm_js_tests():
@@ -345,6 +345,9 @@ def update_wasm2js_tests():
     if not wasm.endswith('.wast'):
       continue
 
+    if os.path.basename(wasm) in wasm2js_blacklist:
+      continue
+
     asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
     expected_file = os.path.join(wasm2js_dir, asm)
 
@@ -370,7 +373,7 @@ def update_wasm2js_tests():
     asserts_expected_file = os.path.join('test', asserts)
     traps_expected_file = os.path.join('test', traps)
 
-    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts', '--only-asmjs-wrapper']
+    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
     out = run_command(cmd)
     with open(asserts_expected_file, 'w') as o:
       o.write(out)
