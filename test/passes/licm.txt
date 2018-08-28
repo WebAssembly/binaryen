@@ -109,4 +109,39 @@
    )
   )
  )
+ (func $loop9 (; 8 ;) (type $0)
+  (loop $loop
+   (drop
+    (i32.load
+     (i32.const 1)
+    )
+   )
+   (i32.store
+    (i32.const 1)
+    (i32.const 2)
+   )
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop10 (; 9 ;) (type $0)
+  (drop
+   (i32.load
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 2)
+   )
+  )
+  (loop $loop
+   (nop)
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
 )

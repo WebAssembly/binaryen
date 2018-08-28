@@ -51,5 +51,19 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $loop9
+    (loop $loop
+      (drop (i32.load (i32.const 1)))
+      (i32.store (i32.const 1) (i32.const 2)) ;; but one is ok
+      (br_if $loop (i32.const 1))
+    )
+  )
+  (func $loop10
+    (loop $loop
+      (drop (i32.load (i32.const 1)))
+      (drop (i32.load (i32.const 2)))
+      (br_if $loop (i32.const 1))
+    )
+  )
 )
 
