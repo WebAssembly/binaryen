@@ -218,5 +218,30 @@
       )
     )
   )
+  (func $fuzz1 (result i64)
+   (local $var$1 i64)
+   (loop $label$1 (result i64) ;; multiple loops here require us to be careful not to Nop out stuff before we finalize things
+    (block $label$2
+     (block $label$3
+      (drop
+       (loop $label$4 (result i32)
+        (set_local $var$1
+         (block $label$5 (result i64)
+          (set_local $var$1
+           (i64.const -29585)
+          )
+          (i64.const -70)
+         )
+        )
+        (i32.const 1)
+       )
+      )
+      (br $label$2)
+     )
+     (unreachable)
+    )
+    (get_local $var$1)
+   )
+  )
 )
 
