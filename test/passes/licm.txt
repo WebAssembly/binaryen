@@ -203,4 +203,22 @@
    )
   )
  )
+ (func $loop15 (; 14 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (set_local $x
+   (get_local $y)
+  )
+  (drop
+   (get_local $y)
+  )
+  (loop $loop
+   (nop)
+   (call $loop12)
+   (br_if $loop
+    (i32.const 1)
+   )
+   (nop)
+  )
+ )
 )
