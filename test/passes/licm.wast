@@ -243,5 +243,13 @@
     (get_local $var$1)
    )
   )
+  (func $self (result i32)
+    (local $x i32)
+    (loop $loop
+      (set_local $x (i32.add (get_local $x) (i32.const 1)))
+      (br_if $loop (i32.const 1))
+    )
+    (get_local $x)
+  )
 )
 
