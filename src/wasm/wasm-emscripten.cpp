@@ -724,6 +724,11 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "]";
   }
 
+  // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
+  // though we might import the same function multiple times (i.e. with
+  // different sigs) we only need to list is in the metadata once.
+  std::set<std::string> importedNames;
+
   // We use the `base` rather than the `name` of the imports here and below
   // becasue this is the externally visible name that the embedder (JS) will
   // see.
@@ -735,7 +740,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->base.startsWith("invoke_") &&
         !import->base.startsWith("jsCall_")) {
-      meta << maybeComma() << '"' << import->base.str << '"';
+      if (importedNames.insert(import->base.str).second)
+        meta << maybeComma() << '"' << import->base.str << '"';
     }
   }
   meta << "]";
@@ -769,7 +775,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   for (const auto& import : wasm.imports) {
     if (import->base.startsWith("invoke_")) {
-      meta << maybeComma() << '"' << import->base.str << '"';
+      if (importedNames.insert(import->base.str).second)
+        meta << maybeComma() << '"' << import->base.str << '"';
     }
   }
   meta << "]";
