@@ -98,9 +98,12 @@ struct PassRunner {
   PassRunner(const PassRunner&) = delete;
   PassRunner& operator=(const PassRunner&) = delete;
 
-  void setDebug(bool debug_) {
-    options.debug = debug_;
-    options.validateGlobally = debug_; // validate everything by default if debugging
+  void setDebug(bool debug) {
+    options.debug = debug;
+    options.validateGlobally = debug; // validate everything by default if debugging
+  }
+  void setDebugInfo(bool debugInfo) {
+    options.debugInfo = debugInfo;
   }
   void setValidateGlobally(bool validate) {
     options.validateGlobally = validate;

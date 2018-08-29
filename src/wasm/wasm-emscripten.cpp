@@ -605,7 +605,7 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
-    // Either rename of remove the existing import
+    // Either rename or remove the existing import
     if (wasm.getImportOrNull(newname) || !newImports.insert(newname).second) {
       toRemove.push_back(curr->name);
     } else {
