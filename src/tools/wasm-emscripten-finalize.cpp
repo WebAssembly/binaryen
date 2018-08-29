@@ -42,6 +42,7 @@ int main(int argc, const char *argv[]) {
   std::string outputSourceMapUrl;
   bool emitBinary = true;
   bool debugInfo = false;
+  bool legalizeJavaScriptFFI = true;
   unsigned numReservedFunctionPointers = 0;
   uint64_t globalBase;
   Options options("wasm-emscripten-finalize",
@@ -77,9 +78,16 @@ int main(int argc, const char *argv[]) {
            [&globalBase](Options*, const std::string&argument ) {
              globalBase = std::stoull(argument);
            })
+
       .add("--input-source-map", "-ism", "Consume source map from the specified file",
            Options::Arguments::One,
            [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
+      .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, "
+           "f32->f64) the imports and exports for interfacing with JS",
+           Options::Arguments::Zero,
+           [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
+             legalizeJavaScriptFFI = false;
+           })
       .add("--output-source-map", "-osm", "Emit source map to the specified file",
            Options::Arguments::One,
            [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
@@ -133,10 +141,21 @@ int main(int argc, const char *argv[]) {
   uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
 
   std::vector<Name> initializerFunctions;
-  initializerFunctions.push_back("__wasm_call_ctors");
+  if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
+    initializerFunctions.push_back("__wasm_call_ctors");
+  }
 
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
+
+  if (legalizeJavaScriptFFI) {
+    PassRunner passRunner(&wasm);
+    passRunner.setDebug(options.debug);
+    passRunner.setDebugInfo(debugInfo);
+    passRunner.add("legalize-js-interface");
+    passRunner.run();
+  }
+
   generator.generateRuntimeFunctions();
   generator.generateMemoryGrowthFunction();
   generator.generateDynCallThunks();
