@@ -14,4 +14,4 @@ Current Trunk
 
 ### BREAKING CHANGES
 
-- `BinaryenSetFunctionTable` no longer accepts an array of functions, instead it accepts an array of function names, `const char **funcNames`. Previously, you could not include imported functions because they are of type `BinaryenImportRef` instead of `BinaryenFunctionRef`. [#1650](https://github.com/WebAssembly/binaryen/pull/1650)
+- `BinaryenSetFunctionTable` in the C API no longer accepts an array of functions, instead it accepts an array of function names, `const char** funcNames`. Previously, you could not include imported functions because they are of type `BinaryenImportRef` instead of `BinaryenFunctionRef`. [#1650](https://github.com/WebAssembly/binaryen/pull/1650)

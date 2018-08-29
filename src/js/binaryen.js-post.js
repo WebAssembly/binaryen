@@ -1129,9 +1129,17 @@ Module['Module'] = function(module) {
       return Module['_BinaryenRemoveExport'](module, strToStack(externalName));
     });
   };
-  this['setFunctionTable'] = function(funcs) {
+  this['setFunctionTable'] = function(funcNames) {
     return preserveStack(function() {
-      return Module['_BinaryenSetFunctionTable'](module, i32sToStack(funcs), funcs.length);
+      return Module['_BinaryenSetFunctionTable'](
+        module,
+        i32sToStack(
+          funcNames.map(function(funcName) {
+            return allocate(funcName, 'i8', ALLOC_STACK);
+          })
+        ),
+        funcNames.length
+      );
     });
   };
   this['setMemory'] = function(initial, maximum, exportName, segments) {
