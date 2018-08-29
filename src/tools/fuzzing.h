@@ -169,7 +169,7 @@ private:
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
   // no hang protection.
-  static const int HANG_LIMIT = 10;
+  static const int HANG_LIMIT = 0;
 
   // Optionally remove NaNs, which are a source of nondeterminism (which makes
   // cross-VM comparisons harder)

@@ -94,10 +94,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
   }
 
   static void doStartLoop(LoopInvariantCodeMotion* self, Expression** currp) {
+    CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doStartLoop(self, currp);
     if (self->currBasicBlock) {
       self->currBasicBlock->contents.items.push_back(currp);
     }
-    CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doStartLoop(self, currp);
   }
 
   // Maps each loop to code we have managed to move out of it.
@@ -116,9 +116,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
     for (auto& startBlock : basicBlocks) {
       auto* block = startBlock.get();
       Loop* loop = nullptr;
-      std::unordered_set<BasicBlock*> seen;
       while (1) {
-        seen.insert(block);
         bool stop = false;
         // Go through the current block.
         for (auto**& currp : block->contents.items) {
@@ -145,9 +143,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMo
           break;
         } else {
           block = block->out[0];
-          // If we already saw this block before, we are in a loop of
-          // single-successors, and can stop.
-          if (seen.count(block)) {
+          // We can continue if the next block only has us as the
+          // predecessor - then we are just a direct continuation.
+          if (block->in.size() != 1) {
             break;
           }
         }
