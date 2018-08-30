@@ -22,14 +22,6 @@
 // Flattening is not necessary here, but may help (as separating
 // out expressions may allow movng at least part of a larger whole).
 //
-// TODO: Loops may have "tails" - code at the end that cannot actually
-//       branch back to the loop top. We should ignore invalidations
-//       with that (and can ignore moving it too).
-//
-// TODO: This is O(N^2) now, which we can fix with an Effect analyzer
-//       which can add and subtract. (Memoizing Effects in a single
-//       initial pass may help further, but take a lot more memory.)
-//
 // TODO: Multiple passes? A single loop may in theory allow moving of
 //       X after Y is moved, and we may want to mov A out of one
 //       loop, then another.
@@ -40,190 +32,138 @@
 #include "wasm.h"
 #include "pass.h"
 #include "wasm-builder.h"
-#include "cfg/cfg-traversal.h"
+#include "ir/local-graph.h"
 #include "ir/effects.h"
+#include <ir/find_all.h>
 
 namespace wasm {
 
 namespace {
 
-// Each basic block has a list of all interesting items in it,
-// which means either a loop, or an item we can move out of a loop.
-struct Info {
-  std::vector<Expression**> items;
-};
-
-struct LoopInvariantCodeMotion : public WalkerPass<CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>> {
+struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
 
   // main entry point
 
+  LocalGraph* localGraph;
+
   void doWalkFunction(Function* func) {
-    // Create the CFG by walking the IR.
-    CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doWalkFunction(func);
-    // Find and move the code we can move.
-    findAndMove(func);
-  }
-
-  // Track which loop a node is nested in. This is necessary because
-  // the CFG may show as as being in the same basic block without
-  // actually being nested, if there is no branch in the loop node.
-  std::unordered_map<Expression*, Loop*> expressionLoops;
-
-  void visitExpression(Expression* curr) {
-    if (!currBasicBlock) return;
-    if (!curr->is<Loop>()) {
-      // Check if there is a loop parent.
-      auto i = controlFlowStack.size();
-      if (i == 0) return;
-      i--;
-      while (1) {
-        if (auto* loop = controlFlowStack[i]->dynCast<Loop>()) {
-          currBasicBlock->contents.items.push_back(getCurrentPointer());
-          expressionLoops[curr] = loop;
-          break;
-        }
-        if (i == 0) {
-          break;
-        }
-        i--;
-      }
-    }
-  }
-
-  static void doStartLoop(LoopInvariantCodeMotion* self, Expression** currp) {
-    CFGWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>, Info>::doStartLoop(self, currp);
-    if (self->currBasicBlock) {
-      self->currBasicBlock->contents.items.push_back(currp);
-    }
-  }
-
-  // Maps each loop to code we have managed to move out of it.
-  std::unordered_map<Loop*, std::vector<Expression*>> loopMovedCode;
-
-  // All code we can move.
-  std::unordered_set<Expression*> movedCode;
-
-  void findAndMove(Function* func) {
-    // We can only move code if it is unconditionally run at the
-    // start of the loop. Once we see potential branching, we
-    // must stop.
-    // Each basic block is a bunch of linear code, and may have
-    // a single successor which means more linear code.
-    std::vector<Expression**> loops;
-    for (auto& startBlock : basicBlocks) {
-      auto* block = startBlock.get();
-      Loop* loop = nullptr;
-      while (1) {
-        bool stop = false;
-        // Go through the current block.
-        for (auto**& currp : block->contents.items) {
-          if (!currp) continue;
-          auto* curr = *currp;
-          if (auto* check = curr->dynCast<Loop>()) {
-            loop = check;
-            loops.push_back(currp);
-          } else if (loop) {
-            // Check for control flow. That would stop us.
-            // Note that other side effects are ok - we will check them.
-            if (EffectAnalyzer(getPassOptions(), curr).branches) {
-              stop = true;
-              break;
-            }
-            if (interestingToMove(curr) && move(currp, loop)) {
-              // We may see a predeccesor of this block later, in theory.
-              currp = nullptr;
-            }
-          }
-        }
-        // See if we can continue on.
-        if (stop || block->out.size() != 1) {
-          break;
-        } else {
-          block = block->out[0];
-          // We can continue if the next block only has us as the
-          // predecessor - then we are just a direct continuation.
-          if (block->in.size() != 1) {
-            break;
-          }
-        }
-      }
-    }
-    // The moved code is now in loopMovedCode. Do a final pass to replace
-    // loops with the moved code + the loop, and the moved code with nops.
-    if (loopMovedCode.empty()) return;
-    struct Updater : public PostWalker<Updater, UnifiedExpressionVisitor<Updater>> {
-      std::unordered_map<Loop*, std::vector<Expression*>>* loopMovedCode;
-      std::unordered_set<Expression*>* movedCode;
-
-      void visitExpression(Expression* curr) {
-        if (auto* loop = curr->dynCast<Loop>()) {
-          auto& currMovedCode = (*loopMovedCode)[loop];
-          if (!currMovedCode.empty()) {
-            // Finish the moving by emitting the code outside.
-            Builder builder(*getModule());
-            auto* ret = builder.makeBlock(currMovedCode);
-            ret->list.push_back(loop);
-            ret->finalize(loop->type);
-            replaceCurrent(ret);
-          }
-        } else if ((*movedCode).count(curr)) {
-          replaceCurrent(Builder(*getModule()).makeNop());
-        }
-      }
-    } updater;
-    updater.setModule(getModule());
-    updater.loopMovedCode = &loopMovedCode;
-    updater.movedCode = &movedCode;
-    updater.walk(func->body);
+    // Compute all dependencies first.
+    LocalGraph localGraphInstance(func);
+    localGraphInstance.computeInfluences();
+    localGraph = &localGraphInstance;
+    // Traverse the function. While doing so, we note the nesting of
+    // each expression we might try to move. That way, when we get
+    // to a loop, we know the nesting of all the code in it and before
+    // it, which is all we need to know to decide what to optimize.
+    super::doWalkFunction(func);
   }
 
   bool interestingToMove(Expression* curr) {
-    // TODO: perhaps ignore blocks? would avoid the switch block pattern
-    //       with very heavy nesting
-    return curr->type == none && !curr->is<Nop>();
+    // In theory we could consider blocks, but then heavy nesting of
+    // switch patterns would be heavy, and almost always pointless.
+    return curr->type == none && !curr->is<Nop>() && !curr->is<Block>()
+                              && !curr->is<Loop>();
   }
 
-  bool move(Expression** currp, Loop* loop) {
-    auto* curr = *currp;
-    assert(interestingToMove(curr));
-    // Verify proper nesting.
-    if (expressionLoops[curr] != loop) return false;
-    // Check if we have side effects we can't move out.
-    EffectAnalyzer myEffects(getPassOptions(), curr);
-    // If we have an effect that can happen more than once, then that
-    // is immediately disaqualifying, like a call. A branch is also
-    // invalid as it may not make sense to be moved up (TODO: check
-    // nesting of blocks?). Otherwise, side effects are ok, so long
-    // as they don't interfere with anything in the loop - for example,
-    // a store is ok, as is an implicit trap, we don't care if those
-    // happen (or try to happen, for a trap) more than once.
-    // TODO: we can memoize nodes that were invalidated here, and
-    //       carefully use that later - for example, heavily nested
-    //       blocks with a call at the top could be done in linear
-    //       time that way.
-    if (myEffects.calls || myEffects.branches) return false;
-    // Check the effects of curr versus the loop
-    // without curr, to see if it depends on activity in
-    // the loop.
-    Nop nop; // a temporary nop, just to check
-    *currp = &nop;
-    EffectAnalyzer loopEffects(getPassOptions(), loop);
-    *currp = curr;
-    // Ignore branching here - we handle that directly by only
-    // considering code that is guaranteed to execute at the
-    // loop start.
-    loopEffects.branches = false;
-    if (loopEffects.invalidates(myEffects)) {
-      // We can't do it, undo.
-      return false;
+  // For each expression, its nesting stack TODO: share stacks!
+  std::unordered_map<Expression*, std::vector<Expression*>> expressionStacks;
+
+  void visitExpression(Expression* curr) {
+    if (interestingToMove(curr)) {
+      auto& stack = expressionStacks[curr] = expressionStack;
+      // We don't need the expression itself on top of the stack
+      stack.pop_back();
+    } else if (auto* loop = curr->dynCast<Loop>(curr)) {
+      handleLoop(loop);
     }
-    // We can do it!
-    loopMovedCode[loop].push_back(curr);
-    movedCode.insert(curr);
-    return true;
+  }
+
+  void handleLoop(Loop* loop) {
+    // Walk along the loop entrance, while all the code there
+    // is executed unconditionally. That is the code we want to
+    // move out - anything that might or might not be executed
+    // may be best left alone anyhow.
+    std::vector<Expression*> movedCode;
+    std::vector<Expression*> work;
+    work.push_back(loop->body);
+    while (!work.empty()) {
+      auto* curr = work.front();
+      work.pop_front();
+      // If this may branch, we are done.
+      EffectAnalyzer effects(getPassOptions(), curr);
+      if (effects.branches) {
+        break;
+      }
+      if (interestingToMove(curr)) {
+        // Let's see if we can move this out.
+        // Global side effects would prevent this - we might end up
+        // executing them just once.
+        if (!effects.hasGlobalSideEffects()) {
+          // So far so good. Check if our local dependencies are all
+          // outside of the loop, in which case everything is good -
+          // either they are before the loop and constant for us, or
+          // they are after and don't matter.
+          bool canMove = true;
+          if (!effects.localsRead.empty()) {
+            FindAll<GetLocal> gets(curr);
+            for (auto* get : gets.list) {
+              auto& sets = localGraph->getSetses[get];
+              for (auto* set : sets) {
+                // nullptr means a parameter or zero-init value;
+                // no danger to us.
+                if (!set) continue;
+                // If the set is in the loop, we can't move out.
+                auto& stack = expressionStacks[curr];
+                assert(stack.size());
+                for (auto* parent : stack) {
+                  if (parent == loop) {
+                    canMove = false;
+                    break;
+                  }
+                }
+                if (!canMove) {
+                  break;
+                }
+              }
+              if (!canMove) {
+                break;
+              }
+            }
+          }
+          if (canMove) {
+            movedCode.push_back(curr);
+            // Update the stack, we are no longer in the loop.
+            auto& stack = expressionStacks[curr];
+            while (1) {
+              assert(!stack.empty());
+              auto* back = stack.back();
+              stack.pop_back();
+              if (back == loop) {
+                break;
+              }
+            }
+          }
+        }
+      } else if (auto* block = curr->dynCast<Block>()) {
+        // Look into the block.
+        for (auto iter = block->list.rbegin(); iter != block->list.rend(); iter++) {
+          work.push_back(*iter);
+        }
+      }
+    }
+    // If we moved the code out, finish up by emitting it
+    // outside of the loop
+    if (!movedCode.empty()) {
+      // Finish the moving by emitting the code outside.
+      Builder builder(*getModule());
+      auto* ret = builder.makeBlock(movedCode);
+      ret->list.push_back(loop);
+      ret->finalize(loop->type);
+      replaceCurrent(ret);
+    }
   }
 };
 
