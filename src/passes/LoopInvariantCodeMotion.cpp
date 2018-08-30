@@ -33,9 +33,7 @@
 
 namespace wasm {
 
-namespace {
-
-struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion, UnifiedExpressionVisitor<LoopInvariantCodeMotion>>> {
+struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInvariantCodeMotion>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
@@ -45,39 +43,14 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   LocalGraph* localGraph;
 
   void doWalkFunction(Function* func) {
-    // Compute all dependencies first.
+    // Compute all local dependencies first.
     LocalGraph localGraphInstance(func);
     localGraph = &localGraphInstance;
-    // Traverse the function. While doing so, we note the nesting of
-    // each expression we might try to move. That way, when we get
-    // to a loop, we know the nesting of all the code in it and before
-    // it, which is all we need to know to decide what to optimize.
+    // Traverse the function.
     super::doWalkFunction(func);
   }
 
-  bool interestingToMove(Expression* curr) {
-    // In theory we could consider blocks, but then heavy nesting of
-    // switch patterns would be heavy, and almost always pointless.
-    return curr->type == none && !curr->is<Nop>() && !curr->is<Block>()
-                              && !curr->is<Loop>();
-  }
-
-  // For each set_local, its nesting stack. We use this to tell
-  // if relevant sets are in or out of the loop we are optimizing.
-  // TODO: share stacks!
-  std::unordered_map<Expression*, std::vector<Expression*>> expressionStacks;
-
-  void visitExpression(Expression* curr) {
-    if (curr->is<SetLocal>()) {
-      auto& stack = expressionStacks[curr] = expressionStack;
-      // We don't need the expression itself on top of the stack
-      stack.pop_back();
-    } else if (auto* loop = curr->dynCast<Loop>()) {
-      handleLoop(loop);
-    }
-  }
-
-  void handleLoop(Loop* loop) {
+  void visitLoop(Loop* loop) {
     // We accumulate all the code we can move out, and will place it
     // in a block just preceding the loop.
     std::vector<Expression*> movedCode;
@@ -91,7 +64,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     //        possible branch back, which can cause false positives
     //        for bad effect interactions.
     EffectAnalyzer loopEffects(getPassOptions(), loop);
-    // We also count the number of sets of each index, as currently
+    // Note all the sets in each loop, and how many per index. Currently
     // EffectAnalyzer can't do that, and we need it to know if we
     // can move a set out of the loop (if there is another set
     // still there, we can't). Another possible option here is for
@@ -100,10 +73,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     auto numLocals = getFunction()->getNumLocals();
     std::vector<Index> numSetsForIndex(numLocals);
     std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
+    std::unordered_set<SetLocal*> loopSets;
     {
-      FindAll<SetLocal> loopSets(loop);
-      for (auto* set : loopSets.list) {
+      FindAll<SetLocal> finder(loop);
+      for (auto* set : finder.list) {
         numSetsForIndex[set->index]++;
+        loopSets.insert(set);
       }
     }
     // Walk along the loop entrance, while all the code there
@@ -160,21 +135,13 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
                 // nullptr means a parameter or zero-init value;
                 // no danger to us.
                 if (!set) continue;
-                // The set may not have been seen yet, if it appears after
-                // us (in an outer loop). If so, it's not a danger to us,
-                // it happens after the loop.
-                auto iter = expressionStacks.find(set);
-                if (iter != expressionStacks.end()) {
-                  // The set may be in the loop - if so, we can't move out.
-                  auto& stack = iter->second;
-                  for (auto* parent : stack) {
-                    if (parent == loop) {
-                      canMove = false;
-                      break;
-                    }
-                  }
-                }
-                if (!canMove) {
+                // Check if the set is in the loop. If not, it's either before,
+                // which is fine, or after, which is also fine - moving curr
+                // to just outside the loop will preserve those relationships.
+                // TODO: this still counts curr's sets as inside the loop, which
+                //       might matter in non-flat mode.
+                if (loopSets.count(set)) {
+                  canMove = false;
                   break;
                 }
               }
@@ -188,12 +155,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
             // must also check if our sets interfere with them. To do so, assume
             // temporarily that we are moving curr out; see if any sets remain for
             // its indexes.
-            FindAll<SetLocal> sets(curr);
-            for (auto* set : sets.list) {
+            FindAll<SetLocal> currSets(curr);
+            for (auto* set : currSets.list) {
               assert(numSetsForIndex[set->index] > 0);
               numSetsForIndex[set->index]--;
             }
-            for (auto* set : sets.list) {
+            for (auto* set : currSets.list) {
               if (numSetsForIndex[set->index] > 0) {
                 canMove = false;
                 break;
@@ -201,24 +168,16 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
             }
             if (!canMove) {
               // We failed to move the code, undo those changes.
-              for (auto* set : sets.list) {
+              for (auto* set : currSets.list) {
                 numSetsForIndex[set->index]++;
               }
             } else {
-              // We can move it! Leave the changes, and move the code.
+              // We can move it! Leave the changes, move the code, and update
+              // loopSets.
               movedCode.push_back(curr);
               *currp = Builder(*getModule()).makeNop();
-              // If we have noted our stack, update it, we are no longer in the loop.
-              if (curr->is<SetLocal>()) {
-                auto& stack = expressionStacks[curr];
-                while (1) {
-                  assert(!stack.empty());
-                  auto* back = stack.back();
-                  stack.pop_back();
-                  if (back == loop) {
-                    break;
-                  }
-                }
+              for (auto* set : currSets.list) {
+                loopSets.erase(set);
               }
               continue;
             }
@@ -245,9 +204,14 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       // sets as before.
     }
   }
-};
 
-} // namespace
+  bool interestingToMove(Expression* curr) {
+    // In theory we could consider blocks, but then heavy nesting of
+    // switch patterns would be heavy, and almost always pointless.
+    return curr->type == none && !curr->is<Nop>() && !curr->is<Block>()
+                              && !curr->is<Loop>();
+  }
+};
 
 Pass *createLoopInvariantCodeMotionPass() {
   return new LoopInvariantCodeMotion();
