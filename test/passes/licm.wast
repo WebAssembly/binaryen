@@ -34,6 +34,23 @@
       (br_if $loop (i32.const 1))
     )
   )
+ (func $loop3-4-b (; 4 ;) (type $0)
+  (loop $loop
+   (drop
+    (i32.load
+     (i32.const 10)
+    )
+   )
+   (drop
+    (i32.load
+     (i32.const 20)
+    )
+   )
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
   (func $loop5
     (loop $loop
       (i32.store (i32.const 1) (i32.const 2))
@@ -41,7 +58,7 @@
     )
   )
   (func $loop6
-    (loop $loop ;; even two stores work, when we look at them as a whole in their block (and no br in the block!)
+    (loop $loop
       (i32.store (i32.const 1) (i32.const 2))
       (i32.store (i32.const 2) (i32.const 3))
     )
@@ -55,14 +72,14 @@
   )
   (func $loop8
     (loop $loop
-      (i32.store (i32.const 1) (i32.const 2)) ;; but one is ok
+      (i32.store (i32.const 1) (i32.const 2))
       (br_if $loop (i32.const 1))
     )
   )
   (func $loop9
     (loop $loop
       (drop (i32.load (i32.const 1)))
-      (i32.store (i32.const 1) (i32.const 2)) ;; but one is ok
+      (i32.store (i32.const 1) (i32.const 2))
       (br_if $loop (i32.const 1))
     )
   )
@@ -330,6 +347,13 @@
      (i32.const 0)
     )
    )
+  )
+  (func $load-store (param $x i32)
+    (loop $loop
+      (drop (i32.load (i32.const 0))) ;; can't move this out, the store might affect it for later iterations
+      (i32.store (get_local $x) (get_local $x))
+      (br_if $loop (i32.const 1))
+    )
   )
 )
 

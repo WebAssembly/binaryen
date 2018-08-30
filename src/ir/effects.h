@@ -67,7 +67,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
 
-  bool readsGlobalState() { return calls || readsMemory || isAtomic || globalsRead.size(); }
+  bool noticesGlobalSideEffects() { return calls || readsMemory || isAtomic || globalsRead.size(); }
 
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() { return !breakNames.empty(); }

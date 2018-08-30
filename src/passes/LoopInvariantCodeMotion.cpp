@@ -22,10 +22,6 @@
 // Flattening is not necessary here, but may help (as separating
 // out expressions may allow movng at least part of a larger whole).
 //
-// TODO: Multiple passes? A single loop may in theory allow moving of
-//       X after Y is moved, and we may want to mov A out of one
-//       loop, then another.
-//
 
 #include <unordered_map>
 
@@ -83,15 +79,23 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   }
 
   void handleLoop(Loop* loop) {
-    // Walk along the loop entrance, while all the code there
-    // is executed unconditionally. That is the code we want to
-    // move out - anything that might or might not be executed
-    // may be best left alone anyhow.
+    // We accumulate all the code we can move out, and will place it
+    // in a block just preceding the loop.
     std::vector<Expression*> movedCode;
     // Accumulate effects of things we can't move out - things
     // we move out later must cross them, so we must verify it
     // is ok to do so.
     EffectAnalyzer effectsSoFar(getPassOptions());
+    // The loop's total effects also matter. For example, a store
+    // in the loop means we can't move a load outside.
+    // FIXME: we look at the loop "tail" area too, after the last
+    //        possible branch back, which can cause false positives
+    //        for bad effect interactions.
+    EffectAnalyzer loopEffects(getPassOptions(), loop);
+    // Walk along the loop entrance, while all the code there
+    // is executed unconditionally. That is the code we want to
+    // move out - anything that might or might not be executed
+    // may be best left alone anyhow.
     std::vector<Expression**> work;
     work.push_back(&loop->body);
     while (!work.empty()) {
@@ -119,10 +123,16 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       if (interestingToMove(curr)) {
         // Let's see if we can move this out.
         // Global side effects would prevent this - we might end up
-        // executing them just once. And we must also move across
-        // anything not moved out already, so check for issues there too.
+        // executing them just once.
+        // And we must also move across anything not moved out already,
+        // so check for issues there too.
+        // The rest of the loop's effects matter too - we check local
+        // interactions directly (both locals, and branching), but
+        // must also take into account global state like interacting
+        // loads and stores.
         if (!effects.hasGlobalSideEffects() &&
-            !effectsSoFar.invalidates(effects)) {
+            !effectsSoFar.invalidates(effects) &&
+            !(effects.noticesGlobalSideEffects() && loopEffects.hasGlobalSideEffects())) {
           // So far so good. Check if our local dependencies are all
           // outside of the loop, in which case everything is good -
           // either they are before the loop and constant for us, or
@@ -183,7 +193,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       effectsSoFar.mergeIn(effects);
     }
     // If we moved the code out, finish up by emitting it
-    // outside of the loop
+    // outside of the loop.
+    // Note that this works with nested loops - after moving outside
+    // of an inner loop, we can encounter it again in an outer loop,
+    // and move it further outside, without requiring any extra pass.
     if (!movedCode.empty()) {
       // Finish the moving by emitting the code outside.
       Builder builder(*getModule());
@@ -191,6 +204,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       ret->list.push_back(loop);
       ret->finalize(loop->type);
       replaceCurrent(ret);
+      // Note that we do not need to modify the localGraph - we keep
+      // each get in a position to be influenced by exactly the same
+      // sets as before.
     }
   }
 };

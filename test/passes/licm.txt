@@ -2,6 +2,7 @@
  (type $0 (func))
  (type $1 (func (result i32)))
  (type $2 (func (result i64)))
+ (type $3 (func (param i32)))
  (func $loop1 (; 0 ;) (type $0)
   (drop
    (i32.const 10)
@@ -58,13 +59,12 @@
   )
  )
  (func $loop3-4 (; 4 ;) (type $0)
-  (drop
-   (i32.load
-    (i32.const 10)
-   )
-  )
   (loop $loop
-   (nop)
+   (drop
+    (i32.load
+     (i32.const 10)
+    )
+   )
    (call $loop2)
    (drop
     (i32.load
@@ -76,7 +76,26 @@
    )
   )
  )
- (func $loop5 (; 5 ;) (type $0)
+ (func $loop3-4-b (; 5 ;) (type $0)
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 20)
+   )
+  )
+  (loop $loop
+   (nop)
+   (nop)
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
+ )
+ (func $loop5 (; 6 ;) (type $0)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -87,7 +106,7 @@
    )
   )
  )
- (func $loop6 (; 6 ;) (type $0)
+ (func $loop6 (; 7 ;) (type $0)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -99,7 +118,7 @@
    )
   )
  )
- (func $loop7 (; 7 ;) (type $0)
+ (func $loop7 (; 8 ;) (type $0)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -114,7 +133,7 @@
    )
   )
  )
- (func $loop8 (; 8 ;) (type $0)
+ (func $loop8 (; 9 ;) (type $0)
   (loop $loop
    (i32.store
     (i32.const 1)
@@ -125,14 +144,13 @@
    )
   )
  )
- (func $loop9 (; 9 ;) (type $0)
-  (drop
-   (i32.load
-    (i32.const 1)
-   )
-  )
+ (func $loop9 (; 10 ;) (type $0)
   (loop $loop
-   (nop)
+   (drop
+    (i32.load
+     (i32.const 1)
+    )
+   )
    (i32.store
     (i32.const 1)
     (i32.const 2)
@@ -142,7 +160,7 @@
    )
   )
  )
- (func $loop10 (; 10 ;) (type $0)
+ (func $loop10 (; 11 ;) (type $0)
   (drop
    (i32.load
     (i32.const 1)
@@ -161,7 +179,7 @@
    )
   )
  )
- (func $loop11 (; 11 ;) (type $0)
+ (func $loop11 (; 12 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -175,7 +193,7 @@
    )
   )
  )
- (func $loop12 (; 12 ;) (type $0)
+ (func $loop12 (; 13 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (drop
@@ -190,7 +208,7 @@
    )
   )
  )
- (func $loop13 (; 13 ;) (type $0)
+ (func $loop13 (; 14 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -204,7 +222,7 @@
    )
   )
  )
- (func $loop14 (; 14 ;) (type $0)
+ (func $loop14 (; 15 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -221,7 +239,7 @@
    )
   )
  )
- (func $loop14-1 (; 15 ;) (type $0)
+ (func $loop14-1 (; 16 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -237,7 +255,7 @@
    )
   )
  )
- (func $loop15 (; 16 ;) (type $0)
+ (func $loop15 (; 17 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -254,7 +272,7 @@
    )
   )
  )
- (func $loop15-1 (; 17 ;) (type $0)
+ (func $loop15-1 (; 18 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -272,7 +290,7 @@
    )
   )
  )
- (func $loop16 (; 18 ;) (type $0)
+ (func $loop16 (; 19 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -289,7 +307,7 @@
    )
   )
  )
- (func $loop16-1 (; 19 ;) (type $0)
+ (func $loop16-1 (; 20 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -307,7 +325,7 @@
    )
   )
  )
- (func $loop16-2 (; 20 ;) (type $0)
+ (func $loop16-2 (; 21 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $x
@@ -330,7 +348,7 @@
    )
   )
  )
- (func $loop16-3 (; 21 ;) (type $0)
+ (func $loop16-3 (; 22 ;) (type $0)
   (local $x i32)
   (local $y i32)
   (set_local $y
@@ -353,7 +371,7 @@
    )
   )
  )
- (func $nop (; 22 ;) (type $0)
+ (func $nop (; 23 ;) (type $0)
   (loop $loop
    (nop)
    (br_if $loop
@@ -361,7 +379,7 @@
    )
   )
  )
- (func $nested-blocks (; 23 ;) (type $0)
+ (func $nested-blocks (; 24 ;) (type $0)
   (loop $loop
    (block $block
     (nop)
@@ -381,7 +399,7 @@
    )
   )
  )
- (func $nested-unhoistable-blocks (; 24 ;) (type $0)
+ (func $nested-unhoistable-blocks (; 25 ;) (type $0)
   (loop $loop
    (block $block
     (call $nested-unhoistable-blocks)
@@ -401,7 +419,7 @@
    )
   )
  )
- (func $conditional (; 25 ;) (type $0)
+ (func $conditional (; 26 ;) (type $0)
   (if
    (i32.const 0)
    (drop
@@ -415,7 +433,7 @@
    )
   )
  )
- (func $conditional1 (; 26 ;) (type $1) (result i32)
+ (func $conditional1 (; 27 ;) (type $1) (result i32)
   (loop $loop
    (if
     (call $conditional1)
@@ -429,7 +447,7 @@
   )
   (unreachable)
  )
- (func $conditional2 (; 27 ;) (type $0)
+ (func $conditional2 (; 28 ;) (type $0)
   (block $out
    (loop $loop
     (br_if $out
@@ -444,7 +462,7 @@
    )
   )
  )
- (func $conditional3 (; 28 ;) (type $0)
+ (func $conditional3 (; 29 ;) (type $0)
   (block $out
    (block
     (drop
@@ -462,7 +480,7 @@
    )
   )
  )
- (func $after (; 29 ;) (type $0)
+ (func $after (; 30 ;) (type $0)
   (loop $loop
    (nop)
   )
@@ -470,7 +488,7 @@
    (i32.const 10)
   )
  )
- (func $loops (; 30 ;) (type $0)
+ (func $loops (; 31 ;) (type $0)
   (drop
    (i32.const 10)
   )
@@ -484,7 +502,7 @@
    )
   )
  )
- (func $loops2 (; 31 ;) (type $0)
+ (func $loops2 (; 32 ;) (type $0)
   (drop
    (i32.const 10)
   )
@@ -498,7 +516,7 @@
    )
   )
  )
- (func $fuzz1 (; 32 ;) (type $2) (result i64)
+ (func $fuzz1 (; 33 ;) (type $2) (result i64)
   (local $var$1 i64)
   (drop
    (block (result i32)
@@ -527,7 +545,7 @@
    (get_local $var$1)
   )
  )
- (func $self (; 33 ;) (type $1) (result i32)
+ (func $self (; 34 ;) (type $1) (result i32)
   (local $x i32)
   (loop $loop
    (set_local $x
@@ -542,7 +560,7 @@
   )
   (get_local $x)
  )
- (func $nested-set (; 34 ;) (type $0)
+ (func $nested-set (; 35 ;) (type $0)
   (local $var$0 i32)
   (local $var$1 i64)
   (loop $label$1
@@ -559,6 +577,22 @@
    )
    (br_if $label$1
     (i32.const 0)
+   )
+  )
+ )
+ (func $load-store (; 36 ;) (type $3) (param $x i32)
+  (loop $loop
+   (drop
+    (i32.load
+     (i32.const 0)
+    )
+   )
+   (i32.store
+    (get_local $x)
+    (get_local $x)
+   )
+   (br_if $loop
+    (i32.const 1)
    )
   )
  )
