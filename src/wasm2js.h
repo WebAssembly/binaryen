@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <numeric>
+#include <unordered_map>
 
 #include "asmjs/shared-constants.h"
 #include "asmjs/asmangle.h"
@@ -994,6 +995,23 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Function* func;
     Module* module;
     MixedArena allocator;
+
+    // Fake expression may derive original node location, using debugLocationSources
+    // and DebugLocationSourceAnchor to track this mapping.
+    std::unordered_map<Expression*, Expression*> debugLocationSources;
+    class DebugLocationSourceAnchor {
+      std::unordered_map<Expression*, Expression*>& map;
+      Expression* fake;
+    public:
+      DebugLocationSourceAnchor(std::unordered_map<Expression*, Expression*>& map, Expression* fake, Expression* expr)
+        : map(map), fake(fake) {
+        map.insert(std::pair<Expression*, Expression*>(fake, expr));
+      }
+      ~DebugLocationSourceAnchor() {
+        map.erase(fake);
+      }
+    };
+
     ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
       : parent(parent), func(func), module(m) {}
 
@@ -1031,10 +1049,35 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       }
     };
 
+    Ref::RefDebugLocation getDebugLocation(Expression* curr) {
+      auto& debugLocations = func->debugLocations;
+      auto repl = debugLocationSources.find(curr);
+      if (repl != debugLocationSources.end()) {
+        curr = repl->second;
+      }
+      auto iter = debugLocations.find(curr);
+      if (iter == debugLocations.end()) {
+        return {0, 0, 0, false};
+      }
+      return {
+        iter->second.fileIndex, iter->second.lineNumber, iter->second.columnNumber,
+        true
+      };
+    }
+
+    Ref assignDebugLocation(Ref ret, Expression* curr) {
+      auto loc = getDebugLocation(curr);
+      if (loc.isPresent) {
+        ret.debugLocation = loc;
+      }
+      return ret;
+    }
+
     Ref visit(Expression* curr, IString nextResult) {
       IString old = result;
       result = nextResult;
       Ref ret = Visitor::visit(curr);
+      assignDebugLocation(ret, curr);
       result = old; // keep it consistent for the rest of this frame, which may call visit on multiple children
       return ret;
     }
@@ -1062,6 +1105,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         ret = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
+      ret.debugLocation = getDebugLocation(curr);
       return ret;
     }
 
@@ -1324,6 +1368,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Load fakeLoad = *curr;
         fakeLoad.ptr = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->ptr, temp));
+        DebugLocationSourceAnchor anchor(debugLocationSources, &fakeLoad, curr);
         flattenAppend(ret, visitAndAssign(&fakeLoad, result));
         return ret;
       }
@@ -1424,6 +1469,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         fakeStore.value = &fakeLocalValue;
         Ref ret = blockify(visitAndAssign(curr->ptr, tempPtr));
         flattenAppend(ret, visitAndAssign(curr->value, tempValue));
+        DebugLocationSourceAnchor anchor(debugLocationSources, &fakeStore, curr);
         flattenAppend(ret, visitAndAssign(&fakeStore, result));
         return ret;
       }
@@ -1448,6 +1494,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Store store = *curr;
         store.ptr = &get;
         store.bytes = 1; // do the worst
+        DebugLocationSourceAnchor anchor(debugLocationSources, &store, curr);
         Ref rest;
         switch (curr->valueType) {
           case i32: {
@@ -1562,6 +1609,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Unary fakeUnary = *curr;
         fakeUnary.value = &fakeLocal;
         Ref ret = blockify(visitAndAssign(curr->value, temp));
+        DebugLocationSourceAnchor anchor(debugLocationSources, &fakeUnary, curr);
         flattenAppend(ret, visitAndAssign(&fakeUnary, result));
         return ret;
       }
@@ -1758,6 +1806,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         fakeBinary.right = &fakeLocalRight;
         Ref ret = blockify(visitAndAssign(curr->left, tempLeft));
         flattenAppend(ret, visitAndAssign(curr->right, tempRight));
+        DebugLocationSourceAnchor anchor(debugLocationSources, &fakeBinary, curr);
         flattenAppend(ret, visitAndAssign(&fakeBinary, result));
         return ret;
       }
@@ -1948,6 +1997,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         Ref ret = blockify(visitAndAssign(curr->ifTrue, tempIfTrue));
         flattenAppend(ret, visitAndAssign(curr->ifFalse, tempIfFalse));
         flattenAppend(ret, visitAndAssign(curr->condition, tempCondition));
+        DebugLocationSourceAnchor anchor(debugLocationSources, &fakeSelect, curr);
         flattenAppend(ret, visitAndAssign(&fakeSelect, result));
         return ret;
       }

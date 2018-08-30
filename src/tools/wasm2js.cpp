@@ -18,6 +18,7 @@
 // wasm2js console tool
 //
 
+#include <fstream>
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
@@ -27,8 +28,57 @@
 using namespace cashew;
 using namespace wasm;
 
+static void writeBase64VLQ(std::ostream& out, int32_t n) {
+  uint32_t value = n >= 0 ? n << 1 : ((-n) << 1) | 1;
+  while (1) {
+    uint32_t digit = value & 0x1F;
+    value >>= 5;
+    if (!value) {
+      // last VLQ digit -- base64 codes 'A'..'Z', 'a'..'f'
+      out << char(digit < 26 ? 'A' + digit : 'a' + digit - 26);
+      break;
+    }
+    // more VLG digit will follow -- add continuation bit (0x20),
+    // base64 codes 'g'..'z', '0'..'9', '+', '/'
+    out << char(digit < 20 ? 'g' + digit : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+  }
+}
+
+void writeSourceMap(const std::string& outputSourceMapFilename,
+                    const std::vector<JSDebugLocMapping>& debugLocMappings,
+                    const std::vector<std::string>& debugInfoFileNames) {
+  std::ofstream map(outputSourceMapFilename.c_str());
+  map << "{\"version\":3,\"sources\":[";
+  for (size_t i = 0; i < debugInfoFileNames.size(); i++) {
+    if (i > 0) map << ",";
+    // TODO respect JSON string encoding, e.g. quotes and control chars.
+    map << "\"" << debugInfoFileNames[i] << "\"";
+  }
+  map << "],\"names\":[],\"mappings\":\"";
+  JSDebugLocMapping lastLoc = { 0, 0, 0, /* lineNumber = */ 1, 0 };
+  for (const auto &mapping : debugLocMappings) {
+    while (lastLoc.generatedLineNumber < mapping.generatedLineNumber) {
+      lastLoc.generatedLineNumber++;
+      lastLoc.generatedColumnNumber = 0;
+      map << ";";
+    }
+    if (lastLoc.generatedColumnNumber > 0) {
+      map << ",";
+    }
+    writeBase64VLQ(map, int32_t(mapping.generatedColumnNumber - lastLoc.generatedColumnNumber));
+    writeBase64VLQ(map, int32_t(mapping.fileIndex - lastLoc.fileIndex));
+    writeBase64VLQ(map, int32_t(mapping.lineNumber - lastLoc.lineNumber));
+    writeBase64VLQ(map, int32_t(mapping.columnNumber - lastLoc.columnNumber));
+    lastLoc = mapping;
+  }
+  map << "\"}";
+}
+
 int main(int argc, const char *argv[]) {
   Wasm2JSBuilder::Flags builderFlags;
+  std::string inputSourceMapFilename;
+  std::string outputSourceMapFilename;
+  std::string outputSourceMapUrl;
   Options options("wasm2js", "Transform .wasm/.wast files to asm.js");
   options
       .add("--output", "-o", "Output file (stdout if not specified)",
@@ -48,6 +98,15 @@ int main(int argc, const char *argv[]) {
            [&](Options* o, const std::string& argument) {
              builderFlags.pedantic = true;
            })
+      .add("--input-source-map", "-ism", "Consume source map from the specified .wasm file",
+           Options::Arguments::One,
+           [&inputSourceMapFilename](Options *o, const std::string& argument) { inputSourceMapFilename = argument; })
+      .add("--output-source-map", "-osm", "Emit source map to the specified .js file",
+           Options::Arguments::One,
+           [&outputSourceMapFilename](Options *o, const std::string& argument) { outputSourceMapFilename = argument; })
+      .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
+           Options::Arguments::One,
+           [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -74,7 +133,7 @@ int main(int argc, const char *argv[]) {
         input.compare(input.size() - suffix.size(), suffix.size(), suffix) == 0) {
       ModuleReader reader;
       reader.setDebug(options.debug);
-      reader.read(input, wasm, "");
+      reader.read(input, wasm, inputSourceMapFilename);
 
       if (options.debug) std::cerr << "asming..." << std::endl;
       Wasm2JSBuilder wasm2js(builderFlags);
@@ -114,9 +173,16 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "j-printing..." << std::endl;
   JSPrinter jser(true, true, asmjs);
+  jser.enableDebugLocation = outputSourceMapFilename.size();
   jser.printAst();
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
   output << jser.buffer << std::endl;
+  if (outputSourceMapUrl.size()) {
+    output << "//# sourceMappingURL=" << outputSourceMapUrl;
+  }
+  if (outputSourceMapFilename.size()) {
+    writeSourceMap(outputSourceMapFilename, jser.debugLocMappings, wasm.debugInfoFileNames);
+  }
 
   if (options.debug) std::cerr << "done." << std::endl;
 }

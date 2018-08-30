@@ -53,7 +53,15 @@ void dump(const char *str, Ref node, bool pretty=false);
 struct Ref {
   Value* inst;
 
-  Ref(Value *v=nullptr) : inst(v) {}
+  struct RefDebugLocation {
+    uint32_t fileIndex, lineNumber, columnNumber;
+    bool isPresent;
+    bool operator==(const RefDebugLocation& other) const { return isPresent && other.isPresent && fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
+    bool operator!=(const RefDebugLocation& other) const { return !(*this == other); }
+  };
+  RefDebugLocation debugLocation;
+
+  Ref(Value *v=nullptr) : inst(v), debugLocation({0, 0, 0, false}) {}
 
   Value* get() { return inst; }
 
@@ -539,6 +547,14 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
 // Traverses all the top-level functions in the document
 void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
 
+struct JSDebugLocMapping {
+  uint32_t generatedLineNumber;
+  uint32_t generatedColumnNumber;
+  uint32_t fileIndex;
+  uint32_t lineNumber;
+  uint32_t columnNumber;
+};
+
 // JS printing support
 
 struct JSPrinter {
@@ -551,8 +567,16 @@ struct JSPrinter {
   bool possibleSpace; // add a space to separate identifiers
 
   Ref ast;
+  Ref::RefDebugLocation lastRecordedDebugLocation;
+  bool enableDebugLocation;
+  std::vector<JSDebugLocMapping> debugLocMappings;
+  struct {
+    size_t used;
+    uint32_t line;
+    uint32_t column;
+  } lastPosition;
 
-  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_) {}
+  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_), lastRecordedDebugLocation({0,0,0,false}), lastPosition({0,0,0}) {}
 
   ~JSPrinter() {
     free(buffer);
@@ -640,7 +664,34 @@ struct JSPrinter {
     return node->isArray() && node[0] == IF;
   }
 
+  void recordDebugLocation(const Ref::RefDebugLocation &loc) {
+    if (!enableDebugLocation || !loc.isPresent || lastRecordedDebugLocation == loc) {
+      return;
+    }
+    lastRecordedDebugLocation = loc;
+    while (lastPosition.used < used) {
+      if (buffer[lastPosition.used++] == '\n') {
+        lastPosition.line++;
+        lastPosition.column = 0;
+      } else {
+        lastPosition.column++;
+      }
+    }
+    debugLocMappings.push_back({
+      lastPosition.line, lastPosition.column,
+      loc.fileIndex, loc.lineNumber, loc.columnNumber
+    });
+    // emit("/* ");
+    // emit(std::to_string(loc.fileIndex).c_str());
+    // emit(",");
+    // emit(std::to_string(loc.lineNumber).c_str());
+    // emit(",");
+    // emit(std::to_string(loc.columnNumber).c_str());
+    // emit(" */");
+  }
+
   void print(Ref node) {
+    recordDebugLocation(node.debugLocation);
     ensure();
     if (node->isString()) {
       printName(node);
