@@ -355,5 +355,14 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $set-set (param $x i32) (result i32)
+    (loop $loop
+      (set_local $x (i32.const 1))
+      (br_if $loop (i32.const 2))
+      (set_local $x (i32.const 3))
+      (br_if $loop (i32.const 4))
+    )
+    (get_local $x)
+  )
 )
 

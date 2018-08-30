@@ -3,6 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (result i64)))
  (type $3 (func (param i32)))
+ (type $4 (func (param i32) (result i32)))
  (func $loop1 (; 0 ;) (type $0)
   (drop
    (i32.const 10)
@@ -595,5 +596,22 @@
     (i32.const 1)
    )
   )
+ )
+ (func $set-set (; 37 ;) (type $4) (param $x i32) (result i32)
+  (loop $loop
+   (set_local $x
+    (i32.const 1)
+   )
+   (br_if $loop
+    (i32.const 2)
+   )
+   (set_local $x
+    (i32.const 3)
+   )
+   (br_if $loop
+    (i32.const 4)
+   )
+  )
+  (get_local $x)
  )
 )

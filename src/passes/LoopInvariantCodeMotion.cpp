@@ -92,6 +92,21 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     //        possible branch back, which can cause false positives
     //        for bad effect interactions.
     EffectAnalyzer loopEffects(getPassOptions(), loop);
+    // We also count the number of sets of each index, as currently
+    // EffectAnalyzer can't do that, and we need it to know if we
+    // can move a set out of the loop (if there is another set
+    // still there, we can't). Another possible option here is for
+    // LocalGraph to track interfering sets. TODO
+    // FIXME: also the loop tail issue from above.
+    auto numLocals = getFunction()->getNumLocals();
+    std::vector<Index> numSetsForIndex(numLocals);
+    std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
+    {
+      FindAll<SetLocal> loopSets(loop);
+      for (auto* set : loopSets.list) {
+        numSetsForIndex[set->index]++;
+      }
+    }
     // Walk along the loop entrance, while all the code there
     // is executed unconditionally. That is the code we want to
     // move out - anything that might or might not be executed
@@ -126,10 +141,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
         // executing them just once.
         // And we must also move across anything not moved out already,
         // so check for issues there too.
-        // The rest of the loop's effects matter too - we check local
-        // interactions directly (both locals, and branching), but
-        // must also take into account global state like interacting
-        // loads and stores.
+        // The rest of the loop's effects matter too, we must also
+        // take into account global state like interacting loads and
+        // stores.
         if (!effects.hasGlobalSideEffects() &&
             !effectsSoFar.invalidates(effects) &&
             !(effects.noticesGlobalSideEffects() && loopEffects.hasGlobalSideEffects())) {
@@ -170,22 +184,44 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
             }
           }
           if (canMove) {
-            // We can move it!
-            movedCode.push_back(curr);
-            *currp = Builder(*getModule()).makeNop();
-            // If we have noted our stack, update it, we are no longer in the loop.
-            if (curr->is<SetLocal>()) {
-              auto& stack = expressionStacks[curr];
-              while (1) {
-                assert(!stack.empty());
-                auto* back = stack.back();
-                stack.pop_back();
-                if (back == loop) {
-                  break;
-                }
+            // We have checked if our gets are influenced by sets in the loop, and
+            // must also check if our sets interfere with them. To do so, assume
+            // temporarily that we are moving curr out; see if any sets remain for
+            // its indexes.
+            FindAll<SetLocal> sets(curr);
+            for (auto* set : sets.list) {
+              assert(numSetsForIndex[set->index] > 0);
+              numSetsForIndex[set->index]--;
+            }
+            for (auto* set : sets.list) {
+              if (numSetsForIndex[set->index] > 0) {
+                canMove = false;
+                break;
               }
             }
-            continue;
+            if (!canMove) {
+              // We failed to move the code, undo those changes.
+              for (auto* set : sets.list) {
+                numSetsForIndex[set->index]++;
+              }
+            } else {
+              // We can move it! Leave the changes, and move the code.
+              movedCode.push_back(curr);
+              *currp = Builder(*getModule()).makeNop();
+              // If we have noted our stack, update it, we are no longer in the loop.
+              if (curr->is<SetLocal>()) {
+                auto& stack = expressionStacks[curr];
+                while (1) {
+                  assert(!stack.empty());
+                  auto* back = stack.back();
+                  stack.pop_back();
+                  if (back == loop) {
+                    break;
+                  }
+                }
+              }
+              continue;
+            }
           }
         }
       }
