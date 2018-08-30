@@ -135,13 +135,18 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
                 // nullptr means a parameter or zero-init value;
                 // no danger to us.
                 if (!set) continue;
-                // If the set is in the loop, we can't move out.
-                auto& stack = expressionStacks[set];
-                assert(stack.size());
-                for (auto* parent : stack) {
-                  if (parent == loop) {
-                    canMove = false;
-                    break;
+                // The set may not have been seen yet, if it appears after
+                // us (in an outer loop). If so, it's not a danger to us,
+                // it happens after the loop.
+                auto iter = expressionStacks.find(set);
+                if (iter != expressionStacks.end()) {
+                  // The set may be in the loop - if so, we can't move out.
+                  auto& stack = iter->second;
+                  for (auto* parent : stack) {
+                    if (parent == loop) {
+                      canMove = false;
+                      break;
+                    }
                   }
                 }
                 if (!canMove) {

@@ -148,6 +148,38 @@
       (drop (get_local $x))
     )
   )
+  (func $loop16-1
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (drop (get_local $x))
+      (br_if $loop (i32.const 1))
+    )
+  )
+  (func $loop16-2
+    (local $x i32)
+    (local $y i32)
+    (set_local $x (i32.const 2))
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (drop (get_local $x))
+      (br_if $loop (i32.const 1))
+    )
+  )
+  (func $loop16-3
+    (local $x i32)
+    (local $y i32)
+    (set_local $y (i32.const 2))
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (drop (get_local $x))
+      (br_if $loop (i32.const 1))
+    )
+  )
   (func $nop
     (loop $loop
       (nop)
