@@ -80,12 +80,10 @@ const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int
          return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
       }
 
-    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
-    }
+      function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+         return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
+      }
     ;
-
-  ;
 function check1() {
  var wasm2js_i32$0 = 0;
  retasmFunc.empty();
