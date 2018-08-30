@@ -542,4 +542,24 @@
   )
   (get_local $x)
  )
+ (func $nested-set (; 34 ;) (type $0)
+  (local $var$0 i32)
+  (local $var$1 i64)
+  (loop $label$1
+   (set_local $var$0
+    (block $label$3 (result i32)
+     (set_local $var$1
+      (i64.const 0)
+     )
+     (get_local $var$0)
+    )
+   )
+   (set_local $var$1
+    (i64.const 1)
+   )
+   (br_if $label$1
+    (i32.const 0)
+   )
+  )
+ )
 )

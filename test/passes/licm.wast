@@ -317,7 +317,7 @@
    (loop $label$1
     (set_local $var$0
      (block $label$3 (result i32)
-      (set_local $var$1
+      (set_local $var$1 ;; cannot be moved out (in current position - other opts would help), and invalidates moving out the set below
        (i64.const 0)
       )
       (get_local $var$0)
