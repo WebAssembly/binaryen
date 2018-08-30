@@ -76,7 +76,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       auto& stack = expressionStacks[curr] = expressionStack;
       // We don't need the expression itself on top of the stack
       stack.pop_back();
-    } else if (auto* loop = curr->dynCast<Loop>(curr)) {
+    } else if (auto* loop = curr->dynCast<Loop>()) {
       handleLoop(loop);
     }
   }
@@ -90,8 +90,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     std::vector<Expression*> work;
     work.push_back(loop->body);
     while (!work.empty()) {
-      auto* curr = work.front();
-      work.pop_front();
+      auto* curr = work.back();
+      work.pop_back();
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), curr);
       if (effects.branches) {
@@ -149,8 +149,13 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
         }
       } else if (auto* block = curr->dynCast<Block>()) {
         // Look into the block.
-        for (auto iter = block->list.rbegin(); iter != block->list.rend(); iter++) {
-          work.push_back(*iter);
+        auto& list = block->list;
+        Index i = list.size();
+        if (i > 0) {
+          do {
+            i--;
+            work.push_back(list[i]);
+          } while (i != 0);
         }
       }
     }
