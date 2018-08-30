@@ -19,7 +19,7 @@
 // expression in a loop, see if we can move it out.
 //
 // Flattening is not necessary here, but may help (as separating
-// out expressions may allow movng at least part of a larger whole).
+// out expressions may allow moving at least part of a larger whole).
 //
 
 #include <unordered_map>
@@ -29,7 +29,7 @@
 #include "wasm-builder.h"
 #include "ir/local-graph.h"
 #include "ir/effects.h"
-#include <ir/find_all.h>
+#include "ir/find_all.h"
 
 namespace wasm {
 
