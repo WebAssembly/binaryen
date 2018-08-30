@@ -16,8 +16,7 @@
 
 //
 // Simple loop invariant code motion (licm): for every none-typed
-// expression in a loop, see if it conflicts with the body of the
-// loop minus itself. If not, it can be moved out.
+// expression in a loop, see if we can move it out.
 //
 // Flattening is not necessary here, but may help (as separating
 // out expressions may allow movng at least part of a larger whole).
