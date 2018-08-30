@@ -52,7 +52,6 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   void doWalkFunction(Function* func) {
     // Compute all dependencies first.
     LocalGraph localGraphInstance(func);
-    localGraphInstance.computeInfluences();
     localGraph = &localGraphInstance;
     // Traverse the function. While doing so, we note the nesting of
     // each expression we might try to move. That way, when we get
@@ -68,11 +67,13 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
                               && !curr->is<Loop>();
   }
 
-  // For each expression, its nesting stack TODO: share stacks!
+  // For each set_local, its nesting stack. We use this to tell
+  // if relevant sets are in or out of the loop we are optimizing.
+  // TODO: share stacks!
   std::unordered_map<Expression*, std::vector<Expression*>> expressionStacks;
 
   void visitExpression(Expression* curr) {
-    if (interestingToMove(curr)) {
+    if (curr->is<SetLocal>()) {
       auto& stack = expressionStacks[curr] = expressionStack;
       // We don't need the expression itself on top of the stack
       stack.pop_back();
@@ -130,7 +131,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
                 // no danger to us.
                 if (!set) continue;
                 // If the set is in the loop, we can't move out.
-                auto& stack = expressionStacks[curr];
+                auto& stack = expressionStacks[set];
                 assert(stack.size());
                 for (auto* parent : stack) {
                   if (parent == loop) {
@@ -151,14 +152,16 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
             // We can move it!
             movedCode.push_back(curr);
             *currp = Builder(*getModule()).makeNop();
-            // Update the stack, we are no longer in the loop.
-            auto& stack = expressionStacks[curr];
-            while (1) {
-              assert(!stack.empty());
-              auto* back = stack.back();
-              stack.pop_back();
-              if (back == loop) {
-                break;
+            // If we have noted our stack, update it, we are no longer in the loop.
+            if (curr->is<SetLocal>()) {
+              auto& stack = expressionStacks[curr];
+              while (1) {
+                assert(!stack.empty());
+                auto* back = stack.back();
+                stack.pop_back();
+                if (back == loop) {
+                  break;
+                }
               }
             }
           }
