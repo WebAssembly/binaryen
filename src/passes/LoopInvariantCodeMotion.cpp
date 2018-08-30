@@ -93,6 +93,19 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       auto** currp = work.back();
       work.pop_back();
       auto* curr = *currp;
+      // Look into blocks.
+      if (auto* block = curr->dynCast<Block>()) {
+        auto& list = block->list;
+        Index i = list.size();
+        if (i > 0) {
+          do {
+            i--;
+            work.push_back(&list[i]);
+          } while (i != 0);
+        }
+        continue;
+        // XXX what if the loop has a merge at the end?
+      }
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), curr);
       if (effects.branches) {
@@ -149,16 +162,6 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
               }
             }
           }
-        }
-      } else if (auto* block = curr->dynCast<Block>()) {
-        // Look into the block.
-        auto& list = block->list;
-        Index i = list.size();
-        if (i > 0) {
-          do {
-            i--;
-            work.push_back(&list[i]);
-          } while (i != 0);
         }
       }
     }
