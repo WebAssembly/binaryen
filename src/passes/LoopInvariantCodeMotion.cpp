@@ -128,7 +128,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
           } while (i != 0);
         }
         continue;
-        // XXX what if the loop has a merge at the end?
+        // Note that if the block had a merge at the end, we would have seen
+        // a branch to it anyhow, so we would stop before that point anyhow.
       }
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), curr);
