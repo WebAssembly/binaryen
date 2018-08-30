@@ -87,11 +87,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     // move out - anything that might or might not be executed
     // may be best left alone anyhow.
     std::vector<Expression*> movedCode;
-    std::vector<Expression*> work;
-    work.push_back(loop->body);
+    std::vector<Expression**> work;
+    work.push_back(&loop->body);
     while (!work.empty()) {
-      auto* curr = work.back();
+      auto** currp = work.back();
       work.pop_back();
+      auto* curr = *currp;
       // If this may branch, we are done.
       EffectAnalyzer effects(getPassOptions(), curr);
       if (effects.branches) {
@@ -134,7 +135,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
             }
           }
           if (canMove) {
+            // We can move it!
             movedCode.push_back(curr);
+            *currp = Builder(*getModule()).makeNop();
             // Update the stack, we are no longer in the loop.
             auto& stack = expressionStacks[curr];
             while (1) {
@@ -154,7 +157,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
         if (i > 0) {
           do {
             i--;
-            work.push_back(list[i]);
+            work.push_back(&list[i]);
           } while (i != 0);
         }
       }
