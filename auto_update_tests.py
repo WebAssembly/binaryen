@@ -225,7 +225,7 @@ def update_example_tests():
     print os.getcwd()
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using rpath
-    cmd = ['example.o', '-L' + libdir, '-lbinaryen', '-Wl,-rpath=' + os.path.abspath(libdir)] + cmd
+    cmd = ['example.o', '-L' + libdir, '-lbinaryen', '-Wl,-rpath,' + os.path.abspath(libdir)] + cmd
     print '  ', t, src, expected
     if os.environ.get('COMPILER_FLAGS'):
       for f in os.environ.get('COMPILER_FLAGS').split(' '):
