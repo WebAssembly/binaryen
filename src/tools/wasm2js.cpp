@@ -60,7 +60,14 @@ int main(int argc, const char *argv[]) {
   Ref asmjs;
 
   try {
-    // If the input filename ends in `.wasm`, then parse it in binary form
+    // If the input filename ends in `.wasm`, then parse it in binary form,
+    // otherwise assume it's a `*.wast` file and go from there.
+    //
+    // Note that we're not using the built-in `ModuleReader` which will also do
+    // similar logic here because when testing JS files we use the
+    // `--allow-asserts` flag which means we need to parse the extra
+    // s-expressions that come at the end of the `*.wast` file after the module
+    // is defined.
     auto &input = options.extra["infile"];
     std::string suffix(".wasm");
     if (input.size() >= suffix.size() &&
@@ -73,7 +80,6 @@ int main(int argc, const char *argv[]) {
       Wasm2JSBuilder wasm2js(builderFlags);
       asmjs = wasm2js.processWasm(&wasm);
 
-    // Otherwise assume it's a `*.wast` file and go from there
     } else {
       auto input(
           read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));

@@ -2045,7 +2045,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
 }
 
 static void makeHelpers(Ref ret, Name funcName, Name moduleName, bool first) {
-  // Name buffer("__array_buffer");
   if (first) {
     // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
     // generated
@@ -2087,48 +2086,11 @@ static void makeHelpers(Ref ret, Name funcName, Name moduleName, bool first) {
          return (isNaN(a) && isNaN(b)) || (ai1 == bi1 && ai2 == bi2);
       }
 
-    function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
-       return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
-    }
+      function i64Equal(actual_lo, actual_hi, expected_lo, expected_hi) {
+         return actual_lo == (expected_lo | 0) && actual_hi == (expected_hi | 0);
+      }
     )"));
   }
-
-  // Ref lib = ValueBuilder::makeObject();
-  // auto insertItem = [&](IString item) {
-  //   ValueBuilder::appendToObject(lib, item, ValueBuilder::makeName(item));
-  // };
-  // insertItem(MATH);
-  // insertItem(INT8ARRAY);
-  // insertItem(INT16ARRAY);
-  // insertItem(INT32ARRAY);
-  // insertItem(UINT8ARRAY);
-  // insertItem(UINT16ARRAY);
-  // insertItem(UINT32ARRAY);
-  // insertItem(FLOAT32ARRAY);
-  // insertItem(FLOAT64ARRAY);
-  // // TODO: these shouldn't be necessary once we don't generate literal asm.js
-  // // code
-  // insertItem("Infinity");
-  // insertItem("NaN");
-  // Ref env = ValueBuilder::makeObject();
-  // Ref abortFunc = ValueBuilder::makeFunction("abort");
-  // abortFunc[3]->push_back(ValueBuilder::makeCall("unreachable"));
-  // ValueBuilder::appendToObject(env, "abort", abortFunc);
-  //
-  // Ref printFunc = ValueBuilder::makeFunction("print");
-  // abortFunc[3]->push_back(ValueBuilder::makeCall("console_log"));
-  // ValueBuilder::appendToObject(env, "print", printFunc);
-  // Ref call = ValueBuilder::makeCall(IString(funcName), lib, env,
-  //     ValueBuilder::makeName(buffer));
-  // Ref module = ValueBuilder::makeVar();
-  // ValueBuilder::appendToVar(module, moduleName, call);
-  // flattenAppend(ret, module);
-
-  // 64-bit numbers get a different ABI w/ wasm2js, and in general you can't
-  // actually export them from wasm at the boundary. We hack around this though
-  // to get the spec tests working.
-  flattenAppend(ret, ValueBuilder::makeName(R"(
-  )"));
 }
 
 static void prefixCalls(Ref asmjs, Name asmModule) {
