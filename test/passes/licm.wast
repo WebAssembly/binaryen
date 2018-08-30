@@ -26,6 +26,14 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $loop3-4
+    (loop $loop
+      (drop (i32.load (i32.const 10)))
+      (call $loop2) ;; may have global side effects which alter a load!
+      (drop (i32.load (i32.const 20))) ;; this load must stay put
+      (br_if $loop (i32.const 1))
+    )
+  )
   (func $loop5
     (loop $loop
       (i32.store (i32.const 1) (i32.const 2))
@@ -97,7 +105,17 @@
       (set_local $x (get_local $y))
       (call $loop12)
       (br_if $loop (i32.const 1))
-      (set_local $y (get_local $x))
+      (set_local $y (get_local $x)) ;; not actually in the loop!
+    )
+  )
+  (func $loop14-1
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (set_local $y (get_local $x)) ;; in the loop
+      (br_if $loop (i32.const 1))
     )
   )
   (func $loop15
@@ -108,6 +126,16 @@
       (call $loop12)
       (br_if $loop (i32.const 1))
       (drop (get_local $y))
+    )
+  )
+  (func $loop15-1
+    (local $x i32)
+    (local $y i32)
+    (loop $loop
+      (set_local $x (get_local $y))
+      (call $loop12)
+      (drop (get_local $y))
+      (br_if $loop (i32.const 1))
     )
   )
   (func $loop16
