@@ -72,6 +72,10 @@ struct LegalizeJSInterface : public Pass {
       }
     }
     if (illegalToLegal.size() > 0) {
+      for (auto& pair : illegalToLegal) {
+        module->removeImport(pair.first);
+      }
+
       for (auto* im : newImports) {
         module->addImport(im);
       }
