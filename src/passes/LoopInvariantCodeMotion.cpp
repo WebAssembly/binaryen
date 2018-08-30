@@ -88,6 +88,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     // move out - anything that might or might not be executed
     // may be best left alone anyhow.
     std::vector<Expression*> movedCode;
+    // Once we see global side effects, we can't move things out
+    // of the loop that might be influenced by them.
+    bool seenGlobalSideEffects = false;
     std::vector<Expression**> work;
     work.push_back(&loop->body);
     while (!work.empty()) {
@@ -115,8 +118,10 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       if (interestingToMove(curr)) {
         // Let's see if we can move this out.
         // Global side effects would prevent this - we might end up
-        // executing them just once.
-        if (!effects.hasGlobalSideEffects()) {
+        // executing them just once. And reading global state is only
+        // possible if it has not been altered.
+        if (!effects.hasGlobalSideEffects() &&
+            !(seenGlobalSideEffects && effects.readsGlobalState())) {
           // So far so good. Check if our local dependencies are all
           // outside of the loop, in which case everything is good -
           // either they are before the loop and constant for us, or
@@ -164,9 +169,12 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
                 }
               }
             }
+            continue;
           }
         }
       }
+      // We did not move this item. Note if it changed global state.
+      seenGlobalSideEffects = seenGlobalSideEffects || effects.hasGlobalSideEffects();
     }
     // If we moved the code out, finish up by emitting it
     // outside of the loop

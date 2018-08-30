@@ -58,9 +58,12 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
+
   bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory || isAtomic; }
   bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
+
+  bool readsGlobalState() { return calls || readsMemory || isAtomic || globalsRead.size(); }
 
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() { return !breakNames.empty(); }
