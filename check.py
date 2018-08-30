@@ -547,7 +547,7 @@ def run_gcc_tests():
         print 'build: ', ' '.join(extra)
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
+        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath,$ORIGIN/../lib']
       else:
         continue
       print '  ', t, src, expected
