@@ -89,18 +89,6 @@ bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
 }
 
-bool Literal::nonBitwiseEqual(const Literal& other) const {
-  if (type != other.type) return false;
-  switch (type) {
-    case Type::none: return true;
-    case Type::i32: return i32 == other.i32;
-    case Type::f32: return getf32() == other.getf32();
-    case Type::i64: return i64 == other.i64;
-    case Type::f64: return getf64() == other.getf64();
-    default: abort();
-  }
-}
-
 uint32_t Literal::NaNPayload(float f) {
   assert(std::isnan(f) && "expected a NaN");
   // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
