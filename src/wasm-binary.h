@@ -721,6 +721,7 @@ public:
 
   // helpers
   void writeInlineString(const char* name);
+  void writeEscapedName(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
 
   struct Buffer {
