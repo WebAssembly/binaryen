@@ -219,6 +219,11 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     // copy, as we don't have another pass that considers moving code
     // back *into* loops.
     // Likewise, constants also are not worth moving out.
+    // Note that the issue remains for moving things out which later
+    // optimizations turn into a copy or a constant, so in general
+    // it is beneficial to run this pass later on (but that has downsides
+    // too, as with more nesting moving code is harder - so something
+    // like -O --flatten --licm -O may be best).
     if (auto* set = curr->dynCast<SetLocal>()) {
       while (1) {
         auto* next = set->value->dynCast<SetLocal>();

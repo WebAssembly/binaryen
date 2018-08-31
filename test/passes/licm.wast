@@ -378,5 +378,15 @@
       (br_if $loop (i32.const 1))
     )
   )
+  (func $consts-no
+    (local $x i32)
+    (local $a i32)
+    (local $b i32)
+    (loop $loop
+      (set_local $x (i32.const 0))
+      (set_local $a (tee_local $b (i32.const 1)))
+      (br_if $loop (i32.const 1))
+    )
+  )
 )
 
