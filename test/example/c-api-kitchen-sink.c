@@ -253,7 +253,7 @@ void test_core() {
   BinaryenAddFunctionExport(module, "kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
-  const char** funcNames[] = { BinaryenFunctionGetName(sinker) };
+  const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
   BinaryenSetFunctionTable(module, funcNames, 1);
 
   // Memory. One per module
