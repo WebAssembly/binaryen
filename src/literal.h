@@ -72,12 +72,10 @@ public:
   double getFloat() const;
   int64_t getBits() const;
   // Equality checks for the type and the bits, so a nan float would
-  // be compared bitwise.
+  // be compared bitwise (which means that a Literal containing a nan
+  // would be equal to itself, if the bits are equal).
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
-  // Compare in a non-bitwise manner, which means for a nan a we have
-  // a != a
-  bool nonBitwiseEqual(const Literal& other) const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
@@ -134,6 +132,9 @@ public:
   Literal rotL(const Literal& other) const;
   Literal rotR(const Literal& other) const;
 
+  // Note that these functions perform equality checks based
+  // on the type of the literal, so that (unlike the == operator)
+  // a float nan would not be identical to itself.
   Literal eq(const Literal& other) const;
   Literal ne(const Literal& other) const;
   Literal ltS(const Literal& other) const;
