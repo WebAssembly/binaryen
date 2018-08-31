@@ -201,14 +201,14 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
                                  ->dynCast<Const>()
                                  ->value;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          if (!expected.bitwiseEqual(result)) {
+          if (expected != result) {
             std::cout << "unexpected, should be identical\n";
             abort();
           }
         } else {
           Literal expected;
           std::cerr << "seen " << result << ", expected " << expected << '\n';
-          if (!expected.bitwiseEqual(result)) {
+          if (expected != result) {
             std::cout << "unexpected, should be identical\n";
             abort();
           }

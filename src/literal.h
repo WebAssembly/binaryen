@@ -71,9 +71,13 @@ public:
   int64_t getInteger() const;
   double getFloat() const;
   int64_t getBits() const;
+  // Equality checks for the type and the bits, so a nan float would
+  // be compared bitwise.
   bool operator==(const Literal& other) const;
   bool operator!=(const Literal& other) const;
-  bool bitwiseEqual(const Literal& other) const;
+  // Compare in a non-bitwise manner, which means for a nan a we have
+  // a != a
+  bool nonBitwiseEqual(const Literal& other) const;
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);
