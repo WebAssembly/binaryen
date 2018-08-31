@@ -1200,6 +1200,8 @@ void WasmBinaryBuilder::readSourceMapHeader() {
         }
       } else if (matching && name[pos] == ch) {
         ++pos;
+      } else if (matching) {
+        matching = false;
       }
     }
     skipWhitespace();
