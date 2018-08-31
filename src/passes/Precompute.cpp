@@ -316,7 +316,7 @@ private:
             value = curr; // this is the first
             first = false;
           } else {
-            if (!value.bitwiseEqual(curr)) {
+            if (value != curr) {
               // not the same, give up
               value = Literal();
               break;
