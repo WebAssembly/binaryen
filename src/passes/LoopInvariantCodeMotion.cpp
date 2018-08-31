@@ -218,13 +218,14 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     // out it will prevent other opts from potentially eliminating the
     // copy, as we don't have another pass that considers moving code
     // back *into* loops.
+    // Likewise, constants also are not worth moving out.
     if (auto* set = curr->dynCast<SetLocal>()) {
       while (1) {
         auto* next = set->value->dynCast<SetLocal>();
         if (!next) break;
         set = next;
       }
-      if (set->value->is<GetLocal>()) {
+      if (set->value->is<GetLocal>() || set->value->is<Const>()) {
         return false;
       }
     }
