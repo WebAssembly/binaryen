@@ -213,7 +213,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (loop $loop
    (nop)
@@ -227,7 +229,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (loop $loop
    (nop)
@@ -245,7 +249,9 @@
   (local $y i32)
   (loop $loop
    (set_local $x
-    (get_local $y)
+    (i32.eqz
+     (get_local $y)
+    )
    )
    (call $loop12)
    (set_local $y
@@ -260,7 +266,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (loop $loop
    (nop)
@@ -277,7 +285,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (drop
    (get_local $y)
@@ -295,7 +305,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (loop $loop
    (nop)
@@ -312,7 +324,9 @@
   (local $x i32)
   (local $y i32)
   (set_local $x
-   (get_local $y)
+   (i32.eqz
+    (get_local $y)
+   )
   )
   (drop
    (get_local $x)
@@ -334,7 +348,9 @@
   )
   (block
    (set_local $x
-    (get_local $y)
+    (i32.eqz
+     (get_local $y)
+    )
    )
    (drop
     (get_local $x)
@@ -357,7 +373,9 @@
   )
   (block
    (set_local $x
-    (get_local $y)
+    (i32.eqz
+     (get_local $y)
+    )
    )
    (drop
     (get_local $x)
@@ -613,5 +631,29 @@
    )
   )
   (get_local $x)
+ )
+ (func $copies-no (; 38 ;) (type $0)
+  (local $x i32)
+  (local $y i32)
+  (local $z i32)
+  (local $a i32)
+  (local $b i32)
+  (local $c i32)
+  (loop $loop
+   (set_local $x
+    (get_local $x)
+   )
+   (set_local $y
+    (get_local $z)
+   )
+   (set_local $a
+    (tee_local $b
+     (get_local $c)
+    )
+   )
+   (br_if $loop
+    (i32.const 1)
+   )
+  )
  )
 )

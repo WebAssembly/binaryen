@@ -208,8 +208,27 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
   bool interestingToMove(Expression* curr) {
     // In theory we could consider blocks, but then heavy nesting of
     // switch patterns would be heavy, and almost always pointless.
-    return curr->type == none && !curr->is<Nop>() && !curr->is<Block>()
-                              && !curr->is<Loop>();
+    if (curr->type != none || curr->is<Nop>() || curr->is<Block>()
+                           || curr->is<Loop>()) {
+      return false;
+    }
+    // Don't move copies (set of a get, or set of a tee of a get, etc.),
+    // as they often do not turn into actual work inside the loop
+    // (after later optimizations by us or the VM), and if we move them
+    // out it will prevent other opts from potentially eliminating the
+    // copy, as we don't have another pass that considers moving code
+    // back *into* loops.
+    if (auto* set = curr->dynCast<SetLocal>()) {
+      while (1) {
+        auto* next = set->value->dynCast<SetLocal>();
+        if (!next) break;
+        set = next;
+      }
+      if (set->value->is<GetLocal>()) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 

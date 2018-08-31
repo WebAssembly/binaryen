@@ -110,7 +110,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
     )
@@ -119,7 +119,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
       (set_local $y (get_local $x)) ;; not actually in the loop!
@@ -129,7 +129,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (set_local $y (get_local $x)) ;; in the loop
       (br_if $loop (i32.const 1))
@@ -139,7 +139,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
       (drop (get_local $y))
@@ -149,7 +149,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (drop (get_local $y))
       (br_if $loop (i32.const 1))
@@ -159,7 +159,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (br_if $loop (i32.const 1))
       (drop (get_local $x))
@@ -169,7 +169,7 @@
     (local $x i32)
     (local $y i32)
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (drop (get_local $x))
       (br_if $loop (i32.const 1))
@@ -180,7 +180,7 @@
     (local $y i32)
     (set_local $x (i32.const 2))
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (drop (get_local $x))
       (br_if $loop (i32.const 1))
@@ -191,7 +191,7 @@
     (local $y i32)
     (set_local $y (i32.const 2))
     (loop $loop
-      (set_local $x (get_local $y))
+      (set_local $x (i32.eqz (get_local $y)))
       (call $loop12)
       (drop (get_local $x))
       (br_if $loop (i32.const 1))
@@ -363,6 +363,20 @@
       (br_if $loop (i32.const 4))
     )
     (get_local $x)
+  )
+  (func $copies-no
+    (local $x i32)
+    (local $y i32)
+    (local $z i32)
+    (local $a i32)
+    (local $b i32)
+    (local $c i32)
+    (loop $loop
+      (set_local $x (get_local $x))
+      (set_local $y (get_local $z))
+      (set_local $a (tee_local $b (get_local $c)))
+      (br_if $loop (i32.const 1))
+    )
   )
 )
 
