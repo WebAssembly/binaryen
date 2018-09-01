@@ -253,12 +253,12 @@ void test_core() {
   BinaryenAddFunctionExport(module, "kitchen()sinker", "kitchen_sinker");
 
   // Function table. One per module
-  BinaryenFunctionRef functions[] = { sinker };
-  BinaryenSetFunctionTable(module, functions, 1);
+  const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
+  BinaryenSetFunctionTable(module, funcNames, 1);
 
   // Memory. One per module
 
-  const char *segments[] = { "hello, world" };
+  const char* segments[] = { "hello, world" };
   BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)) };
   BinaryenIndex segmentSizes[] = { 12 };
   BinaryenSetMemory(module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);

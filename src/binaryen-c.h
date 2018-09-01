@@ -340,7 +340,7 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* in, Bin
 // Break: value and condition can be NULL
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 // Switch: value can be NULL
-BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 // Call, CallImport: Note the 'returnType' parameter. You must declare the
 //                   type returned by the function being called, as that
 //                   function might not have been created yet, so we don't
@@ -348,8 +348,8 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
 //                   Also note that WebAssembly does not differentiate
 //                   between Call and CallImport, but Binaryen does, so you
 //                   must use CallImport if calling an import, and vice versa.
-BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
-BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
+BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
+BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type);
 // GetLocal: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
@@ -368,8 +368,8 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
 BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenType type);
 BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
 BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex index, BinaryenExpressionRef value);
-BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *name, BinaryenType type);
-BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char *name, BinaryenExpressionRef value);
+BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char* name, BinaryenType type);
+BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value);
 // Load: align can be 0, in which case it will be the natural alignment (equal to bytes)
 BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int8_t signed_, uint32_t offset, uint32_t align, BinaryenType type, BinaryenExpressionRef ptr);
 // Store: align can be 0, in which case it will be the natural alignment (equal to bytes)
@@ -608,11 +608,11 @@ void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name);
 
 typedef void* BinaryenImportRef;
 
-WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type);
-BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef functionType);
-BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
-BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName);
-BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenType globalType);
+WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef type);
+BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef functionType);
+BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName);
+BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName);
+BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType);
 void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
 
 // Exports
@@ -634,13 +634,13 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* funcs, BinaryenIndex numFuncs);
+void BinaryenSetFunctionTable(BinaryenModuleRef module, const char** funcNames, BinaryenIndex numFuncNames);
 
 // Memory. One per module
 
 // Each segment has data in segments, a start offset in segmentOffsets, and a size in segmentSizes.
 // exportName can be NULL
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments);
 
 // Start function. One per module
 
@@ -693,7 +693,7 @@ void BinaryenSetDebugInfo(int on);
 
 // Runs the specified passes on the module. Uses the currently set global
 // optimize and shrink level.
-void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char** passes, BinaryenIndex numPasses);
 
 // Auto-generate drop() operations where needed. This lets you generate code without
 // worrying about where they are needed. (It is more efficient to do it yourself,
@@ -783,7 +783,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
 
 // Runs the specified passes on the function. Uses the currently set global
 // optimize and shrink level.
-void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses);
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char** passes, BinaryenIndex numPasses);
 
 // Sets the debug location of the specified `Expression` within the specified `Function`.
 void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressionRef expr, BinaryenIndex fileIndex, BinaryenIndex lineNumber, BinaryenIndex columnNumber);
