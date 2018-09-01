@@ -248,5 +248,34 @@
     )
    )
   )
+  (func $fuzz-nan
+   (local $0 f64)
+   (local $1 f64)
+   (block $block
+    (br_if $block
+     (i32.const 0)
+    )
+    (loop $loop
+     (set_local $1
+      (get_local $0)
+     )
+     (set_local $0
+      (f64.const -nan:0xfffffffffff87)
+     )
+     (br_if $loop
+      (i32.const 1)
+     )
+    )
+   )
+   (set_local $0 ;; make them equal
+    (get_local $1)
+   )
+   (if
+    (i32.const 0)
+    (set_local $1 ;; we can drop this
+     (get_local $0)
+    )
+   )
+  )
 )
 

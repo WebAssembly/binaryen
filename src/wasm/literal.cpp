@@ -81,24 +81,12 @@ int64_t Literal::getBits() const {
 
 bool Literal::operator==(const Literal& other) const {
   if (type != other.type) return false;
-  switch (type) {
-    case Type::none: return true;
-    case Type::i32: return i32 == other.i32;
-    case Type::f32: return getf32() == other.getf32();
-    case Type::i64: return i64 == other.i64;
-    case Type::f64: return getf64() == other.getf64();
-    default: abort();
-  }
+  if (type == none) return true;
+  return getBits() == other.getBits();
 }
 
 bool Literal::operator!=(const Literal& other) const {
   return !(*this == other);
-}
-
-bool Literal::bitwiseEqual(const Literal& other) const {
-  if (type != other.type) return false;
-  if (type == none) return true;
-  return getBits() == other.getBits();
 }
 
 uint32_t Literal::NaNPayload(float f) {
