@@ -599,10 +599,6 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     if (newname == curr->base)
       return;
 
-    if (curr->base != curr->name) {
-      Fatal() << "Import name and function name do not match: '" << curr->base << "' '" << curr->name << "'";
-    }
-
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
     // Either rename or remove the existing import
