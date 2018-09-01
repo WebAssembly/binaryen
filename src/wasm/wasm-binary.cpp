@@ -973,7 +973,7 @@ void WasmBinaryBuilder::readImports() {
     // due to the names section.
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->name = Name(std::string("fimport$") + std::to_string(i));
+        curr->name = Name(std::string("fimport$") + std::to_string(i) + std::string("$") + curr->module.str + std::string(".") + curr->base.str);
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
@@ -1478,7 +1478,16 @@ void WasmBinaryBuilder::processFunctions() {
     auto index = exportIndexes[curr];
     switch (curr->kind) {
       case ExternalKind::Function: {
-        curr->value = getFunctionIndexName(index);
+        if (index >= functionImports.size()) {
+          index -= functionImports.size();
+          if (index >= wasm.functions.size()) {
+            throw ParseException("bad function index");
+          }
+          wasm.setFunctionName(wasm.functions[index].get(), curr->name);
+          curr->value = curr->name;
+        } else {
+          curr->value = getFunctionIndexName(index);
+        }
         break;
       }
       case ExternalKind::Table: curr->value = Name::fromInt(0); break;
