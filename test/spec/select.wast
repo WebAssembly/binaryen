@@ -13,9 +13,19 @@
 
   ;; Check that both sides of the select are evaluated
   (func (export "select_trap_l") (param $cond i32) (result i32)
-   (select (unreachable) (i32.const 0) (get_local $cond)))
+    (select (unreachable) (i32.const 0) (get_local $cond))
+  )
   (func (export "select_trap_r") (param $cond i32) (result i32)
-   (select (i32.const 0) (unreachable) (get_local $cond)))
+    (select (i32.const 0) (unreachable) (get_local $cond))
+  )
+
+  (func (export "select_unreached")
+    (unreachable) (select)
+    (unreachable) (i32.const 0) (select)
+    (unreachable) (i32.const 0) (i32.const 0) (select)
+    (unreachable) (f32.const 0) (i32.const 0) (select)
+    (unreachable)
+  )
 )
 
 (assert_return (invoke "select_i32" (i32.const 1) (i32.const 2) (i32.const 1)) (i32.const 1))

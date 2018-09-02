@@ -52,12 +52,48 @@
     )
   )
 
+  ;; Syntax
+
+  (func
+    (call_indirect (i32.const 0))
+    (call_indirect (param i64) (i64.const 0) (i32.const 0))
+    (call_indirect (param i64) (param) (param f64 i32 i64)
+      (i64.const 0) (f64.const 0) (i32.const 0) (i64.const 0) (i32.const 0)
+    )
+    (call_indirect (result) (i32.const 0))
+    (drop (i32.eqz (call_indirect (result i32) (i32.const 0))))
+    (drop (i32.eqz (call_indirect (result i32) (result) (i32.const 0))))
+    (drop (i32.eqz
+      (call_indirect (param i64) (result i32) (i64.const 0) (i32.const 0))
+    ))
+    (drop (i32.eqz
+      (call_indirect
+        (param) (param i64) (param) (param f64 i32 i64) (param) (param)
+        (result) (result i32) (result) (result)
+        (i64.const 0) (f64.const 0) (i32.const 0) (i64.const 0) (i32.const 0)
+      )
+    ))
+    (drop (i64.eqz
+      (call_indirect (type $over-i64) (param i64) (result i64)
+        (i64.const 0) (i32.const 0)
+      )
+    ))
+  )
+
   ;; Typing
 
-  (func (export "type-i32") (result i32) (call_indirect (type $out-i32) (i32.const 0)))
-  (func (export "type-i64") (result i64) (call_indirect (type $out-i64) (i32.const 1)))
-  (func (export "type-f32") (result f32) (call_indirect (type $out-f32) (i32.const 2)))
-  (func (export "type-f64") (result f64) (call_indirect (type $out-f64) (i32.const 3)))
+  (func (export "type-i32") (result i32)
+    (call_indirect (type $out-i32) (i32.const 0))
+  )
+  (func (export "type-i64") (result i64)
+    (call_indirect (type $out-i64) (i32.const 1))
+  )
+  (func (export "type-f32") (result f32)
+    (call_indirect (type $out-f32) (i32.const 2))
+  )
+  (func (export "type-f64") (result f64)
+    (call_indirect (type $out-f64) (i32.const 3))
+  )
 
   (func (export "type-index") (result i64)
     (call_indirect (type $over-i64) (i64.const 100) (i32.const 5))
@@ -102,49 +138,57 @@
   ;; Recursion
 
   (func $fac (export "fac") (type $over-i64)
-    (if i64 (i64.eqz (get_local 0))
-      (i64.const 1)
-      (i64.mul
-        (get_local 0)
-        (call_indirect (type $over-i64)
-          (i64.sub (get_local 0) (i64.const 1))
-          (i32.const 12)
+    (if (result i64) (i64.eqz (get_local 0))
+      (then (i64.const 1))
+      (else
+        (i64.mul
+          (get_local 0)
+          (call_indirect (type $over-i64)
+            (i64.sub (get_local 0) (i64.const 1))
+            (i32.const 12)
+          )
         )
       )
     )
   )
 
   (func $fib (export "fib") (type $over-i64)
-    (if i64 (i64.le_u (get_local 0) (i64.const 1))
-      (i64.const 1)
-      (i64.add
-        (call_indirect (type $over-i64)
-          (i64.sub (get_local 0) (i64.const 2))
-          (i32.const 13)
-        )
-        (call_indirect (type $over-i64)
-          (i64.sub (get_local 0) (i64.const 1))
-          (i32.const 13)
+    (if (result i64) (i64.le_u (get_local 0) (i64.const 1))
+      (then (i64.const 1))
+      (else
+        (i64.add
+          (call_indirect (type $over-i64)
+            (i64.sub (get_local 0) (i64.const 2))
+            (i32.const 13)
+          )
+          (call_indirect (type $over-i64)
+            (i64.sub (get_local 0) (i64.const 1))
+            (i32.const 13)
+          )
         )
       )
     )
   )
 
   (func $even (export "even") (param i32) (result i32)
-    (if i32 (i32.eqz (get_local 0))
-      (i32.const 44)
-      (call_indirect (type $over-i32)
-        (i32.sub (get_local 0) (i32.const 1))
-        (i32.const 15)
+    (if (result i32) (i32.eqz (get_local 0))
+      (then (i32.const 44))
+      (else
+        (call_indirect (type $over-i32)
+          (i32.sub (get_local 0) (i32.const 1))
+          (i32.const 15)
+        )
       )
     )
   )
   (func $odd (export "odd") (param i32) (result i32)
-    (if i32 (i32.eqz (get_local 0))
-      (i32.const 99)
-      (call_indirect (type $over-i32)
-        (i32.sub (get_local 0) (i32.const 1))
-        (i32.const 14)
+    (if (result i32) (i32.eqz (get_local 0))
+      (then (i32.const 99))
+      (else
+        (call_indirect (type $over-i32)
+          (i32.sub (get_local 0) (i32.const 1))
+          (i32.const 14)
+        )
       )
     )
   )
@@ -186,8 +230,8 @@
 (assert_return (invoke "dispatch" (i32.const 12) (i64.const 5)) (i64.const 120))
 (assert_return (invoke "dispatch" (i32.const 13) (i64.const 5)) (i64.const 8))
 (assert_return (invoke "dispatch" (i32.const 20) (i64.const 2)) (i64.const 2))
-(assert_trap (invoke "dispatch" (i32.const 0) (i64.const 2)) "indirect call signature mismatch")
-(assert_trap (invoke "dispatch" (i32.const 15) (i64.const 2)) "indirect call signature mismatch")
+(assert_trap (invoke "dispatch" (i32.const 0) (i64.const 2)) "indirect call type mismatch")
+(assert_trap (invoke "dispatch" (i32.const 15) (i64.const 2)) "indirect call type mismatch")
 (assert_trap (invoke "dispatch" (i32.const 23) (i64.const 2)) "undefined element")
 (assert_trap (invoke "dispatch" (i32.const -1) (i64.const 2)) "undefined element")
 (assert_trap (invoke "dispatch" (i32.const 1213432423) (i64.const 2)) "undefined element")
@@ -196,8 +240,8 @@
 (assert_return (invoke "dispatch-structural" (i32.const 5)) (i64.const 9))
 (assert_return (invoke "dispatch-structural" (i32.const 12)) (i64.const 362880))
 (assert_return (invoke "dispatch-structural" (i32.const 20)) (i64.const 9))
-(assert_trap (invoke "dispatch-structural" (i32.const 11)) "indirect call signature mismatch")
-(assert_trap (invoke "dispatch-structural" (i32.const 22)) "indirect call signature mismatch")
+(assert_trap (invoke "dispatch-structural" (i32.const 11)) "indirect call type mismatch")
+(assert_trap (invoke "dispatch-structural" (i32.const 22)) "indirect call type mismatch")
 
 (assert_return (invoke "fac" (i64.const 0)) (i64.const 1))
 (assert_return (invoke "fac" (i64.const 1)) (i64.const 1))
@@ -219,9 +263,131 @@
 (assert_return (invoke "odd" (i32.const 200)) (i32.const 99))
 (assert_return (invoke "odd" (i32.const 77)) (i32.const 44))
 
-(assert_trap (invoke "runaway") "call stack exhausted")
-(assert_trap (invoke "mutual-runaway") "call stack exhausted")
+(assert_exhaustion (invoke "runaway") "call stack exhausted")
+(assert_exhaustion (invoke "mutual-runaway") "call stack exhausted")
 
+
+;; Invalid syntax
+
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (type $sig) (result i32) (param i32)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (param i32) (type $sig) (result i32)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (param i32) (result i32) (type $sig)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (result i32) (type $sig) (param i32)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (result i32) (param i32) (type $sig)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (result i32) (param i32) (i32.const 0) (i32.const 0))"
+    ")"
+  )
+  "unexpected token"
+)
+
+(assert_malformed
+  (module quote
+    "(table 0 anyfunc)"
+    "(func (call_indirect (param $x i32) (i32.const 0) (i32.const 0)))"
+  )
+  "unexpected token"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (type $sig) (result i32) (i32.const 0))"
+    ")"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (type $sig) (result i32) (i32.const 0))"
+    ")"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func"
+    "  (call_indirect (type $sig) (param i32) (i32.const 0) (i32.const 0))"
+    ")"
+  )
+  "inline function type"
+)
+(assert_malformed
+  (module quote
+    "(type $sig (func (param i32 i32) (result i32)))"
+    "(table 0 anyfunc)"
+    "(func (result i32)"
+    "  (call_indirect (type $sig) (param i32) (result i32)"
+    "    (i32.const 0) (i32.const 0)"
+    "  )"
+    ")"
+  )
+  "inline function type"
+)
 
 ;; Invalid typing
 
@@ -359,4 +525,12 @@
     (func $large-type (call_indirect (type 1012321300) (i32.const 0)))
   )
   "unknown type"
+)
+
+
+;; Unbound function in table
+
+(assert_invalid
+  (module (table anyfunc (elem 0 0)))
+  "unknown function 0"
 )
