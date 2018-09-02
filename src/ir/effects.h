@@ -53,7 +53,7 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
                              // can't move them in a way that would cause other noticeable
                              // (global) side effects
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
-                         // has a defined ordering wrt atomics (e.g. grow_memory)
+                         // has a defined ordering wrt atomics (e.g. memory.grow)
 
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
@@ -268,9 +268,9 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   void visitReturn(Return *curr) { branches = true; }
   void visitHost(Host *curr) {
     calls = true;
-    // grow_memory modifies the set of valid addresses, and thus can be modeled as modifying memory
+    // memory.grow modifies the set of valid addresses, and thus can be modeled as modifying memory
     writesMemory = true;
-    // Atomics are also sequentially consistent with grow_memory.
+    // Atomics are also sequentially consistent with memory.grow.
     isAtomic = true;
   }
   void visitUnreachable(Unreachable *curr) { branches = true; }

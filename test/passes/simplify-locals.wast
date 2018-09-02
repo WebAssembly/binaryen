@@ -898,9 +898,9 @@
     (drop (i32.load (i32.const 1028)))
     (get_local $x)
   )
-  (func $nonatomic-growmem (result i32) ;; grow_memory is modeled as modifying memory
+  (func $nonatomic-growmem (result i32) ;; memory.grow is modeled as modifying memory
     (local $x i32)
-    (set_local $x (i32.load (grow_memory (i32.const 1))))
+    (set_local $x (i32.load (memory.grow (i32.const 1))))
     (drop (i32.load (i32.const 1028)))
     (get_local $x)
   )
@@ -922,9 +922,9 @@
     (drop (i32.load (i32.const 1028)))
     (drop (get_local $x))
   )
-  (func $atomic-growmem (result i32) ;; grow_memory is modeled as modifying memory
+  (func $atomic-growmem (result i32) ;; memory.grow is modeled as modifying memory
     (local $x i32)
-    (set_local $x (i32.load (grow_memory (i32.const 1))))
+    (set_local $x (i32.load (memory.grow (i32.const 1))))
     (drop (i32.atomic.load (i32.const 1028)))
     (get_local $x)
   )

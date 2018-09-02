@@ -6,9 +6,9 @@
  (export "stackRestore" (func $stackRestore))
  (func $_main (; 0 ;)
   (drop
-   (grow_memory
+   (memory.grow
     (i32.add
-     (current_memory)
+     (memory.size)
      (i32.const 1)
     )
    )

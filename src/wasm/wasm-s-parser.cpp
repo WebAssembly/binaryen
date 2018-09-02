@@ -649,12 +649,22 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
   const char *str = id.str;
   const char *dot = strchr(str, '.');
   if (dot) {
+    // memory.
+    if (str[0] == 'm') {
+      // memory.size
+      if (str[7] == 's') return makeHost(s, HostOp::MemorySize);
+      // memory.grow
+      if (str[7] == 'g') return makeHost(s, HostOp::MemoryGrow);
+      abort_on(str);
+    }
+
     // type.operation (e.g. i32.add)
     Type type = stringToType(str, false, true);
     // Local copy to index into op without bounds checking.
     enum { maxNameSize = 15 };
     char op[maxNameSize + 1] = {'\0'};
     strncpy(op, dot + 1, maxNameSize);
+
 #define BINARY_INT_OR_FLOAT(op) (type == i32 ? BinaryOp::op##Int32 : (type == i64 ? BinaryOp::op##Int64 : (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)))
 #define BINARY_INT(op) (type == i32 ? BinaryOp::op##Int32 : BinaryOp::op##Int64)
 #define BINARY_FLOAT(op) (type == f32 ? BinaryOp::op##Float32 : BinaryOp::op##Float64)
@@ -812,7 +822,7 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
           if (id == CALL) return makeCall(s);
           if (id == CALL_IMPORT) return makeCallImport(s);
           if (id == CALL_INDIRECT) return makeCallIndirect(s);
-        } else if (str[1] == 'u') return makeHost(s, HostOp::CurrentMemory);
+        }
         abort_on(str);
       }
       case 'd': {
@@ -828,7 +838,6 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
           if (str[4] == 'l') return makeGetLocal(s);
           if (str[4] == 'g') return makeGetGlobal(s);
         }
-        if (str[1] == 'r') return makeHost(s, HostOp::GrowMemory);
         abort_on(str);
       }
       case 'h': {
@@ -980,9 +989,9 @@ Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   } else {
     parseCallOperands(s, 1, s.size(), ret);
   }
-  if (ret->op == HostOp::GrowMemory) {
+  if (ret->op == HostOp::MemoryGrow) {
     if (ret->operands.size() != 1) {
-      throw ParseException("grow_memory needs one operand");
+      throw ParseException("memory.grow needs one operand");
     }
   } else {
     if (ret->operands.size() != 0) {

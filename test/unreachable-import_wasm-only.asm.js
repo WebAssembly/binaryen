@@ -51,7 +51,7 @@ function asm(global, env, buffer) {
   var assert=env.assert;
   var enlargeMemory=env.enlargeMemory;
   var getTotalMemory=env.getTotalMemory;
-  var abortOnCannotGrowMemory=env.abortOnCannotGrowMemory;
+  var abortOnCannotMemoryGrow=env.abortOnCannotMemoryGrow;
   var invoke_iiii=env.invoke_iiii;
   var invoke_viiiii=env.invoke_viiiii;
   var invoke_vi=env.invoke_vi;

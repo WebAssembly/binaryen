@@ -1121,7 +1121,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           // exporting a function
           IString value = pair[1]->getIString();
           if (key == Name("_emscripten_replace_memory")) {
-            // asm.js memory growth provides this special non-asm function, which we don't need (we use grow_memory)
+            // asm.js memory growth provides this special non-asm function, which we don't need (we use memory.grow)
             assert(!wasm.getFunctionOrNull(value));
             continue;
           } else if (key == UDIVMODDI4) {

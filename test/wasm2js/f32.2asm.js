@@ -82,22 +82,6 @@ function asmFunc(global, env, buffer) {
   return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
  }
  
- function $11(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(Math_abs(x)));
- }
- 
- function $12(x) {
-  x = Math_fround(x);
-  return Math_fround(Math_fround(-x));
- }
- 
- function $13(x, y) {
-  x = Math_fround(x);
-  y = Math_fround(y);
-  return Math_fround((HEAP32[0] = (HEAPF32[0] = x, HEAP32[0] | 0) & 2147483647 | 0 | ((HEAPF32[0] = y, HEAP32[0] | 0) & 2147483648 | 0) | 0, HEAPF32[0]));
- }
- 
  function __wasm_nearest_f32(var$0) {
   var$0 = Math_fround(var$0);
   var var$1 = Math_fround(0), var$2 = Math_fround(0), wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
@@ -129,10 +113,7 @@ function asmFunc(global, env, buffer) {
   ceil: $7, 
   floor: $8, 
   trunc: $9, 
-  nearest: $10, 
-  abs: $11, 
-  neg: $12, 
-  copysign: $13
+  nearest: $10
  };
 }
 
@@ -149,6 +130,3 @@ export const ceil = retasmFunc.ceil;
 export const floor = retasmFunc.floor;
 export const trunc = retasmFunc.trunc;
 export const nearest = retasmFunc.nearest;
-export const abs = retasmFunc.abs;
-export const neg = retasmFunc.neg;
-export const copysign = retasmFunc.copysign;

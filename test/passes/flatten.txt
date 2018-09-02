@@ -1558,7 +1558,7 @@
     (i32.const 18)
    )
    (br $label$0)
-   (grow_memory
+   (memory.grow
     (unreachable)
    )
    (unreachable)

@@ -49582,12 +49582,15 @@ function asmFunc(global, env, buffer) {
  }
  
  function $23() {
-  var $0 = 0;
+  var $1_1 = 0;
   block : {
-   $0 = 9;
-   break block;
+   $1_1 = 9;
+   switch (0 | 0) {
+   default:
+    break block;
+   };
   };
-  return $0 | 0;
+  return $1_1 | 0;
  }
  
  function $24() {
@@ -49667,7 +49670,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $31() {
-  var $1_1 = 0, $2_1 = 0;
+  var $1_1 = 0, $6_1 = 0;
   if_ : {
    $1_1 = 2;
    switch (0 | 0) {
@@ -49681,7 +49684,7 @@ function asmFunc(global, env, buffer) {
  function $32($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $4_1 = 0, $6_1 = 0;
+  var $4_1 = 0, $8_1 = 0;
   block : {
    if ($0) {
     $4_1 = 3;
@@ -49689,8 +49692,8 @@ function asmFunc(global, env, buffer) {
     default:
      break block;
     };
-   } else $6_1 = $1_1;
-   $4_1 = $6_1;
+   } else $8_1 = $1_1;
+   $4_1 = $8_1;
   };
   return $4_1 | 0;
  }
@@ -49698,13 +49701,13 @@ function asmFunc(global, env, buffer) {
  function $33($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $4_1 = 0, $5_1 = 0, $6_1 = 0, $7_1 = 0;
+  var $6_1 = 0, $7_1 = 0, $8_1 = 0, $9_1 = 0;
   block : {
    if_ : {
-    if ($0) $7_1 = $1_1; else {
-     $4_1 = 4;
-     $5_1 = $4_1;
-     $6_1 = $4_1;
+    if ($0) $9_1 = $1_1; else {
+     $6_1 = 4;
+     $7_1 = $6_1;
+     $8_1 = $6_1;
      switch (0 | 0) {
      case 0:
       break block;
@@ -49712,11 +49715,11 @@ function asmFunc(global, env, buffer) {
       break if_;
      };
     }
-    $6_1 = $7_1;
+    $8_1 = $9_1;
    };
-   $5_1 = $6_1;
+   $7_1 = $8_1;
   };
-  return $5_1 | 0;
+  return $7_1 | 0;
  }
  
  function $34($0, $1_1) {
@@ -50195,6 +50198,41 @@ function asmFunc(global, env, buffer) {
   return $3_1 | 0;
  }
  
+ function $66($0) {
+  $0 = $0 | 0;
+  var $4_1 = 0, $9_1 = 0;
+  loop_in : do {
+   block : {
+    switch ($0 | 0) {
+    case 0:
+     break loop_in;
+    case 1:
+     break block;
+    default:
+     break block;
+    };
+   };
+   $4_1 = 0;
+   break loop_in;
+  } while (1);
+  $0 = $4_1;
+  loop_in21 : do {
+   block22 : {
+    switch ($0 | 0) {
+    case 0:
+     break block22;
+    case 1:
+     break loop_in21;
+    default:
+     break loop_in21;
+    };
+   };
+   $9_1 = 3;
+   break loop_in21;
+  } while (1);
+  return $9_1 | 0;
+ }
+ 
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) return 31 - Math_clz32((var$0 + 4294967295 | 0) ^ var$0 | 0) | 0 | 0;
@@ -50308,13 +50346,14 @@ function asmFunc(global, env, buffer) {
   as_compare_left: $56, 
   as_compare_right: $57, 
   as_convert_operand: $58, 
-  as_grow_memory_size: $59, 
+  as_memory_grow_size: $59, 
   nested_block_value: $60, 
   nested_br_value: $61, 
   nested_br_if_value: $62, 
   nested_br_if_value_cond: $63, 
   nested_br_table_value: $64, 
-  nested_br_table_value_index: $65
+  nested_br_table_value_index: $65, 
+  nested_br_table_loop_block: $66
  };
 }
 
@@ -50377,10 +50416,11 @@ export const as_test_operand = retasmFunc.as_test_operand;
 export const as_compare_left = retasmFunc.as_compare_left;
 export const as_compare_right = retasmFunc.as_compare_right;
 export const as_convert_operand = retasmFunc.as_convert_operand;
-export const as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export const as_memory_grow_size = retasmFunc.as_memory_grow_size;
 export const nested_block_value = retasmFunc.nested_block_value;
 export const nested_br_value = retasmFunc.nested_br_value;
 export const nested_br_if_value = retasmFunc.nested_br_if_value;
 export const nested_br_if_value_cond = retasmFunc.nested_br_if_value_cond;
 export const nested_br_table_value = retasmFunc.nested_br_table_value;
 export const nested_br_table_value_index = retasmFunc.nested_br_table_value_index;
+export const nested_br_table_loop_block = retasmFunc.nested_br_table_loop_block;

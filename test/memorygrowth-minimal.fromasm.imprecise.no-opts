@@ -5,7 +5,7 @@
  (import "env" "tableBase" (global $tableBase i32))
  (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__growWasmMemory (; 0 ;) (param $newSize i32) (result i32)
-  (grow_memory
+  (memory.grow
    (get_local $newSize)
   )
  )

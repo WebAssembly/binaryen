@@ -51,7 +51,7 @@
  (export "dynCall_iiii" (func $lb))
  (export "dynCall_vi" (func $mb))
  (func $__growWasmMemory (; 12 ;) (; has Stack IR ;) (param $0 i32) (result i32)
-  (grow_memory
+  (memory.grow
    (get_local $0)
   )
  )

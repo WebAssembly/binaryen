@@ -1084,10 +1084,10 @@ template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::visitHost(Host* curr) {
   if (debug) std::cerr << "zz node: Host" << std::endl;
   switch (curr->op) {
-    case CurrentMemory: {
+    case MemorySize: {
       break;
     }
-    case GrowMemory: {
+    case MemoryGrow: {
       visitChild(curr->operands[0]);
       break;
     }
@@ -1095,12 +1095,12 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
   }
   if (justAddToStack(curr)) return;
   switch (curr->op) {
-    case CurrentMemory: {
-      o << int8_t(BinaryConsts::CurrentMemory);
+    case MemorySize: {
+      o << int8_t(BinaryConsts::MemorySize);
       break;
     }
-    case GrowMemory: {
-      o << int8_t(BinaryConsts::GrowMemory);
+    case MemoryGrow: {
+      o << int8_t(BinaryConsts::MemoryGrow);
       break;
     }
     default: WASM_UNREACHABLE();

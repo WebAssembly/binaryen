@@ -24,13 +24,13 @@ function asmFunc(global, env, buffer) {
  function $0(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x | 0) / (y | 0) | 0 | 0;
+  (x | 0) / (y | 0) | 0;
  }
  
  function $1(x, y) {
   x = x | 0;
   y = y | 0;
-  return (x >>> 0) / (y >>> 0) | 0 | 0;
+  (x >>> 0) / (y >>> 0) | 0;
  }
  
  function $2(x, x$hi, y, y$hi) {
@@ -42,13 +42,9 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  i64toi32_i32$1 = y$hi;
-  i64toi32_i32$1 = __wasm_i64_sdiv(x | 0, i64toi32_i32$0 | 0, y | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_i64_sdiv(x | 0, i64toi32_i32$0 | 0, y | 0, y$hi | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$1 = i64toi32_i32$1;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return i64toi32_i32$1 | 0;
  }
  
  function $3(x, x$hi, y, y$hi) {
@@ -60,13 +56,9 @@ function asmFunc(global, env, buffer) {
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$0 = y$hi;
   i64toi32_i32$0 = x$hi;
-  i64toi32_i32$1 = y$hi;
-  i64toi32_i32$1 = __wasm_i64_udiv(x | 0, i64toi32_i32$0 | 0, y | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_i64_udiv(x | 0, i64toi32_i32$0 | 0, y | 0, y$hi | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$1 = i64toi32_i32$1;
-  i64toi32_i32$HIGH_BITS = i64toi32_i32$0;
-  return i64toi32_i32$1 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {

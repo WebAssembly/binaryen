@@ -488,7 +488,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       }
     }
 
-    void growMemory(Address oldSize, Address newSize) override {
+    void memoryGrow(Address oldSize, Address newSize) override {
       EM_ASM_({
         var size = $0;
         var buffer;

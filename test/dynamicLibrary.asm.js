@@ -1,7 +1,7 @@
 Module["asm"] =  (function(global, env, buffer) {
   'almost asm';
-  
-  
+
+
   var HEAP8 = new global.Int8Array(buffer);
   var HEAP16 = new global.Int16Array(buffer);
   var HEAP32 = new global.Int32Array(buffer);
@@ -51,7 +51,7 @@ Module["asm"] =  (function(global, env, buffer) {
   var assert=env.assert;
   var enlargeMemory=env.enlargeMemory;
   var getTotalMemory=env.getTotalMemory;
-  var abortOnCannotGrowMemory=env.abortOnCannotGrowMemory;
+  var abortOnCannotMemoryGrow=env.abortOnCannotMemoryGrow;
   var abortStackOverflow=env.abortStackOverflow;
   var setTempRet0=env.setTempRet0;
   var getTempRet0=env.getTempRet0;
@@ -125,7 +125,7 @@ function __post_instantiate() {
  __GLOBAL__sub_I_liblib_cpp();
 }
 
-  
+
 
 
 // EMSCRIPTEN_END_FUNCS

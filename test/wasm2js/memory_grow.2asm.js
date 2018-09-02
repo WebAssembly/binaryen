@@ -22,28 +22,39 @@ function asmFunc(global, env, buffer) {
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function $0() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = __wasm_grow_memory(1 | 0);
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
   return HEAPU32[0 >> 2] | 0 | 0;
  }
  
  function $1() {
   var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
   wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = grow() | 0;
+  wasm2js_i32$1 = 2;
   HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  return HEAPU32[0 >> 2] | 0 | 0;
  }
  
- function grow() {
-  return __wasm_grow_memory(1 | 0) | 0;
+ function $2() {
+  return HEAPU32[65536 >> 2] | 0 | 0;
  }
  
- function __wasm_grow_memory(pagesToAdd) {
+ function $3() {
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  wasm2js_i32$0 = 65536;
+  wasm2js_i32$1 = 3;
+  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+ }
+ 
+ function $4(sz) {
+  sz = sz | 0;
+  return __wasm_memory_grow(sz | 0) | 0;
+ }
+ 
+ function $5() {
+  return __wasm_memory_size() | 0;
+ }
+ 
+ function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
+  var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65535)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
@@ -62,29 +73,25 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_current_memory() {
+ function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
  
  return {
-  memory: Object.create(Object.prototype, {
-   grow: {
-    value: __wasm_grow_memory
-   }, 
-   buffer: {
-    get: function () {
-     return buffer;
-    }
-    
-   }
-  }), 
-  f1: $0, 
-  f2: $1
+  load_at_zero: $0, 
+  store_at_zero: $1, 
+  load_at_page_size: $2, 
+  store_at_page_size: $3, 
+  grow: $4, 
+  size: $5
  };
 }
 
 const memasmFunc = new ArrayBuffer(65536);
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
-export const memory = retasmFunc.memory;
-export const f1 = retasmFunc.f1;
-export const f2 = retasmFunc.f2;
+export const load_at_zero = retasmFunc.load_at_zero;
+export const store_at_zero = retasmFunc.store_at_zero;
+export const load_at_page_size = retasmFunc.load_at_page_size;
+export const store_at_page_size = retasmFunc.store_at_page_size;
+export const grow = retasmFunc.grow;
+export const size = retasmFunc.size;

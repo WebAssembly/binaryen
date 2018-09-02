@@ -180,7 +180,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
   void store32(Address addr, int32_t value) override { memory.set<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { memory.set<int64_t>(addr, value); }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  void memoryGrow(Address /*oldSize*/, Address newSize) override {
     memory.resize(newSize);
   }
 

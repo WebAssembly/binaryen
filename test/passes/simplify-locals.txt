@@ -915,7 +915,7 @@
   (local $x i32)
   (set_local $x
    (i32.load
-    (grow_memory
+    (memory.grow
      (i32.const 1)
     )
    )
@@ -979,7 +979,7 @@
   (local $x i32)
   (set_local $x
    (i32.load
-    (grow_memory
+    (memory.grow
      (i32.const 1)
     )
    )

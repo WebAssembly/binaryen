@@ -402,8 +402,8 @@ enum ASTNodes {
   I64StoreMem16 = 0x3d,
   I64StoreMem32 = 0x3e,
 
-  CurrentMemory = 0x3f,
-  GrowMemory = 0x40,
+  MemorySize = 0x3f,
+  MemoryGrow = 0x40,
 
   I32Const = 0x41,
   I64Const = 0x42,
