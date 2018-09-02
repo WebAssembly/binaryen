@@ -1060,21 +1060,24 @@ void WasmBinaryBuilder::readFunctions() {
     endOfFunction = pos + size;
     auto type = functionTypes[i];
     if (debug) std::cerr << "reading " << i << std::endl;
-    size_t nextVar = 0;
-    auto addVar = [&]() {
-      Name name = cashew::IString(("var$" + std::to_string(nextVar++)).c_str(), false);
-      return name;
-    };
-    std::vector<NameType> params, vars;
+    std::vector<Type> params, vars;
     for (size_t j = 0; j < type->params.size(); j++) {
-      params.emplace_back(addVar(), type->params[j]);
+      params.emplace_back(type->params[j]);
     }
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
       auto type = getConcreteType();
+      if (num > WebLimitations::MaxFunctionLocals) {
+        // In general for Web limitations we try to just warn, but not actually
+        // enforce the limit ourselves (as we may be looking at wasm not intended
+        // to run on the Web). However, too many locals will simply cause us to
+        // OOM, so some arbitrary limit makes sense - and if so, why not use
+        // the arbitrary Web limit, for consistency.
+        throwError("too many locals, wasm VMs would not accept this binary");
+      }
       while (num > 0) {
-        vars.emplace_back(addVar(), type);
+        vars.emplace_back(type);
         num--;
       }
     }
