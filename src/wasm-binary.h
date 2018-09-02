@@ -45,7 +45,7 @@ enum {
 enum WebLimitations {
   MaxDataSegments = 100 * 1000,
   MaxFunctionBodySize = 128 * 1024,
-  MaxFunctionLocals = 50000
+  MaxFunctionLocals = 50 * 1000
 };
 
 template<typename T, typename MiniT>
