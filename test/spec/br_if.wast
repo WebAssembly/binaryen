@@ -3,18 +3,19 @@
 (module
   (func $dummy)
 
-  (func (export "type-i32")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "type-i32")
     (block (drop (i32.ctz (br_if 0 (i32.const 0) (i32.const 1)))))
-  )
-  (func (export "type-i64")
+  ;)
+  (;func (export "type-i64")
     (block (drop (i64.ctz (br_if 0 (i64.const 0) (i32.const 1)))))
-  )
-  (func (export "type-f32")
+  ;)
+  (;func (export "type-f32")
     (block (drop (f32.neg (br_if 0 (f32.const 0) (i32.const 1)))))
-  )
-  (func (export "type-f64")
+  ;)
+  (;func (export "type-f64")
     (block (drop (f64.neg (br_if 0 (f64.const 0) (i32.const 1)))))
-  )
+  ;)
 
   (func (export "type-i32-value") (result i32)
     (block (result i32) (i32.ctz (br_if 0 (i32.const 1) (i32.const 1))))
@@ -72,9 +73,10 @@
     (block (result i32) (br 0 (br_if 0 (i32.const 1) (i32.const 2))))
   )
 
-  (func (export "as-br_if-cond")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-br_if-cond")
     (block (br_if 0 (br_if 0 (i32.const 1) (i32.const 1))))
-  )
+  ;)
   (func (export "as-br_if-value") (result i32)
     (block (result i32)
       (drop (br_if 0 (br_if 0 (i32.const 1) (i32.const 2)) (i32.const 3)))
@@ -88,9 +90,10 @@
     )
   )
 
-  (func (export "as-br_table-index")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-br_table-index")
     (block (br_table 0 0 0 (br_if 0 (i32.const 1) (i32.const 2))))
-  )
+  ;)
   (func (export "as-br_table-value") (result i32)
     (block (result i32)
       (br_table 0 0 0 (br_if 0 (i32.const 1) (i32.const 2)) (i32.const 3)) (i32.const 4)
@@ -318,10 +321,11 @@
 
 )
 
-(assert_return (invoke "type-i32"))
-(assert_return (invoke "type-i64"))
-(assert_return (invoke "type-f32"))
-(assert_return (invoke "type-f64"))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "type-i32"))
+;; (assert_return (invoke "type-i64"))
+;; (assert_return (invoke "type-f32"))
+;; (assert_return (invoke "type-f64"))
 
 (assert_return (invoke "type-i32-value") (i32.const 1))
 (assert_return (invoke "type-i64-value") (i64.const 2))
@@ -351,12 +355,14 @@
 
 (assert_return (invoke "as-br-value") (i32.const 1))
 
-(assert_return (invoke "as-br_if-cond"))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-br_if-cond"))
 (assert_return (invoke "as-br_if-value") (i32.const 1))
 (assert_return (invoke "as-br_if-value-cond" (i32.const 0)) (i32.const 2))
 (assert_return (invoke "as-br_if-value-cond" (i32.const 1)) (i32.const 1))
 
-(assert_return (invoke "as-br_table-index"))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-br_table-index"))
 (assert_return (invoke "as-br_table-value") (i32.const 1))
 (assert_return (invoke "as-br_table-value-index") (i32.const 1))
 

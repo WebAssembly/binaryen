@@ -58,15 +58,15 @@
 (assert_return (invoke "i64.unsigned_decimal") (i64.const -1))
 (assert_return (invoke "i64.plus_sign") (i64.const 42))
 
-(assert_return (invoke "i32-dec-sep1") (i32.const 1000000))
-(assert_return (invoke "i32-dec-sep2") (i32.const 1000))
-(assert_return (invoke "i32-hex-sep1") (i32.const 0xa0f0099))
-(assert_return (invoke "i32-hex-sep2") (i32.const 0x1aa0f))
-
-(assert_return (invoke "i64-dec-sep1") (i64.const 1000000))
-(assert_return (invoke "i64-dec-sep2") (i64.const 1000))
-(assert_return (invoke "i64-hex-sep1") (i64.const 0xaf00f00009999))
-(assert_return (invoke "i64-hex-sep2") (i64.const 0x1aa0f))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "i32-dec-sep1") (i32.const 1000000))
+;; (assert_return (invoke "i32-dec-sep2") (i32.const 1000))
+;; (assert_return (invoke "i32-hex-sep1") (i32.const 0xa0f0099))
+;; (assert_return (invoke "i32-hex-sep2") (i32.const 0x1aa0f))
+;; (assert_return (invoke "i64-dec-sep1") (i64.const 1000000))
+;; (assert_return (invoke "i64-dec-sep2") (i64.const 1000))
+;; (assert_return (invoke "i64-hex-sep1") (i64.const 0xaf00f00009999))
+;; (assert_return (invoke "i64-hex-sep2") (i64.const 0x1aa0f))
 
 (assert_malformed
   (module quote "(global i32 (i32.const _100))")

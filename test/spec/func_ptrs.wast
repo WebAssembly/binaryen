@@ -27,7 +27,8 @@
 (assert_return (invoke "one") (i32.const 13))
 (assert_return (invoke "two" (i32.const 13)) (i32.const 14))
 (assert_return (invoke "three" (i32.const 13)) (i32.const 11))
-(invoke "four" (i32.const 83))
+;; NOT SUPPORTED IN BINARYEN
+;; (invoke "four" (i32.const 83))
 
 (assert_invalid (module (elem (i32.const 0))) "unknown table")
 (assert_invalid (module (elem (i32.const 0) 0) (func)) "unknown table")

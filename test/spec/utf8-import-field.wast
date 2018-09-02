@@ -1,3 +1,4 @@
+(; NOT SUPPORTED IN BINARYEN
 ;;;;;; Invalid UTF-8 import field names
 
 ;;;; Continuation bytes not preceded by prefixes
@@ -2670,3 +2671,4 @@
   "invalid UTF-8 encoding"
 )
 
+;)

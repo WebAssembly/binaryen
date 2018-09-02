@@ -550,18 +550,19 @@
   "type mismatch"
 )
 
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $type-block-value-nested-unreachable-num-vs-void
     (block (i32.const 3) (block (unreachable)))
   ))
   "type mismatch"
-)
-(assert_invalid
+;)
+(;assert_invalid
   (module (func $type-block-value-nested-unreachable-void-vs-num (result i32)
     (block (block (unreachable)))
   ))
   "type mismatch"
-)
+;)
 (assert_invalid
   (module (func $type-block-value-nested-unreachable-num-vs-num (result i32)
     (block (result i64) (i64.const 0) (block (unreachable)))
@@ -581,12 +582,13 @@
   ))
   "type mismatch"
 )
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $type-block-value-nested-br-void-vs-num (result i32)
     (block (result i32) (block (br 1 (i32.const 0))))
   ))
   "type mismatch"
-)
+;)
 (assert_invalid
   (module (func $type-block-value-nested-br-num-vs-num (result i32)
     (block (result i32) (i64.const 0) (block (br 1 (i32.const 0))))
@@ -600,12 +602,13 @@
   ))
   "type mismatch"
 )
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $type-block-value-nested2-br-void-vs-num (result i32)
     (block (result i32) (block (block (br 2 (i32.const 0)))))
   ))
   "type mismatch"
-)
+;)
 (assert_invalid
   (module (func $type-block-value-nested2-br-num-vs-num (result i32)
     (block (result i32)
@@ -627,12 +630,13 @@
   ))
   "type mismatch"
 )
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $type-block-value-nested-return-void-vs-num (result i32)
     (block (block (return (i32.const 0))))
   ))
   "type mismatch"
-)
+;)
 (assert_invalid
   (module (func $type-block-value-nested-return-num-vs-num (result i32)
     (block (result i64) (i64.const 0) (block (return (i32.const 0))))
@@ -653,12 +657,13 @@
   ))
   "type mismatch"
 )
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $type-loop-value-nested-unreachable-void-vs-num (result i32)
     (loop (block (unreachable)))
   ))
   "type mismatch"
-)
+;)
 (assert_invalid
   (module (func $type-loop-value-nested-unreachable-num-vs-num (result i32)
     (loop (result i64) (i64.const 0) (block (unreachable)))
@@ -678,15 +683,15 @@
   ))
   "type mismatch"
 )
-
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module (func $tee-local-unreachable-value
     (local i32)
     (tee_local 0 (unreachable))
   ))
   "type mismatch"
-)
-(assert_invalid
+;)
+(;assert_invalid
   (module (func $br_if-unreachable (result i32)
     (block (result i32)
       (block
@@ -696,8 +701,8 @@
     )
   ))
   "type mismatch"
-)
-(assert_invalid 
+;)
+(assert_invalid
   (module
     (func $type-br_if-after-unreachable (result i64)
       unreachable

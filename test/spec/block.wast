@@ -80,19 +80,21 @@
     (select (i32.const 2) (i32.const 3) (block (result i32) (i32.const 1)))
   )
 
-  (func (export "as-loop-first") (result i32)
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-loop-first") (result i32)
     (loop (result i32) (block (result i32) (i32.const 1)) (call $dummy) (call $dummy))
-  )
-  (func (export "as-loop-mid") (result i32)
+  ;)
+  (;func (export "as-loop-mid") (result i32)
     (loop (result i32) (call $dummy) (block (result i32) (i32.const 1)) (call $dummy))
-  )
+  ;)
   (func (export "as-loop-last") (result i32)
     (loop (result i32) (call $dummy) (call $dummy) (block (result i32) (i32.const 1)))
   )
 
-  (func (export "as-if-condition")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-if-condition")
     (block (result i32) (i32.const 1)) (if (then (call $dummy)))
-  )
+  ;)
   (func (export "as-if-then") (result i32)
     (if (result i32) (i32.const 1) (then (block (result i32) (i32.const 1))) (else (i32.const 2)))
   )
@@ -106,13 +108,13 @@
   (func (export "as-br_if-last") (result i32)
     (block (result i32) (br_if 0 (i32.const 2) (block (result i32) (i32.const 1))))
   )
-
-  (func (export "as-br_table-first") (result i32)
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-br_table-first") (result i32)
     (block (result i32) (block (result i32) (i32.const 1)) (i32.const 2) (br_table 0 0))
-  )
-  (func (export "as-br_table-last") (result i32)
+  ;)
+  (;func (export "as-br_table-last") (result i32)
     (block (result i32) (i32.const 2) (block (result i32) (i32.const 1)) (br_table 0 0))
-  )
+  ;)
 
   (func $func (param i32 i32) (result i32) (get_local 0))
   (type $check (func (param i32 i32) (result i32)))
@@ -138,13 +140,13 @@
       )
     )
   )
-
-  (func (export "as-store-first")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-store-first")
     (block (result i32) (i32.const 1)) (i32.const 1) (i32.store)
-  )
-  (func (export "as-store-last")
+  ;)
+  (;func (export "as-store-last")
     (i32.const 10) (block (result i32) (i32.const 1)) (i32.store)
-  )
+  ;)
 
   (func (export "as-memory.grow-value") (result i32)
     (memory.grow (block (result i32) (i32.const 1)))
@@ -155,9 +157,10 @@
   (func (export "as-call-value") (result i32)
     (call $f (block (result i32) (i32.const 1)))
   )
-  (func (export "as-return-value") (result i32)
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-return-value") (result i32)
     (block (result i32) (i32.const 1)) (return)
-  )
+  ;)
   (func (export "as-drop-operand")
     (drop (block (result i32) (i32.const 1)))
   )
@@ -167,9 +170,10 @@
   (func (export "as-set_local-value") (result i32)
     (local i32) (set_local 0 (block (result i32) (i32.const 1))) (get_local 0)
   )
-  (func (export "as-load-operand") (result i32)
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "as-load-operand") (result i32)
     (i32.load (block (result i32) (i32.const 1)))
-  )
+  ;)
 
   (func (export "as-unary-operand") (result i32)
     (i32.ctz (block (result i32) (call $dummy) (i32.const 13)))
@@ -250,34 +254,40 @@
 (assert_return (invoke "as-select-mid") (i32.const 2))
 (assert_return (invoke "as-select-last") (i32.const 2))
 
-(assert_return (invoke "as-loop-first") (i32.const 1))
-(assert_return (invoke "as-loop-mid") (i32.const 1))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-loop-first") (i32.const 1))
+;; (assert_return (invoke "as-loop-mid") (i32.const 1))
 (assert_return (invoke "as-loop-last") (i32.const 1))
 
-(assert_return (invoke "as-if-condition"))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-if-condition"))
 (assert_return (invoke "as-if-then") (i32.const 1))
 (assert_return (invoke "as-if-else") (i32.const 2))
 
 (assert_return (invoke "as-br_if-first") (i32.const 1))
 (assert_return (invoke "as-br_if-last") (i32.const 2))
 
-(assert_return (invoke "as-br_table-first") (i32.const 1))
-(assert_return (invoke "as-br_table-last") (i32.const 2))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-br_table-first") (i32.const 1))
+;; (assert_return (invoke "as-br_table-last") (i32.const 2))
 
 (assert_return (invoke "as-call_indirect-first") (i32.const 1))
 (assert_return (invoke "as-call_indirect-mid") (i32.const 2))
 (assert_return (invoke "as-call_indirect-last") (i32.const 1))
 
-(assert_return (invoke "as-store-first"))
-(assert_return (invoke "as-store-last"))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-store-first"))
+;; (assert_return (invoke "as-store-last"))
 
 (assert_return (invoke "as-memory.grow-value") (i32.const 1))
 (assert_return (invoke "as-call-value") (i32.const 1))
-(assert_return (invoke "as-return-value") (i32.const 1))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-return-value") (i32.const 1))
 (assert_return (invoke "as-drop-operand"))
 (assert_return (invoke "as-br-value") (i32.const 1))
 (assert_return (invoke "as-set_local-value") (i32.const 1))
-(assert_return (invoke "as-load-operand") (i32.const 1))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "as-load-operand") (i32.const 1))
 
 (assert_return (invoke "as-unary-operand") (i32.const 0))
 (assert_return (invoke "as-binary-operand") (i32.const 12))

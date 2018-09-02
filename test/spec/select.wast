@@ -19,13 +19,14 @@
     (select (i32.const 0) (unreachable) (get_local $cond))
   )
 
-  (func (export "select_unreached")
+  ;; NOT SUPPORTED IN BINARYEN
+  (;func (export "select_unreached")
     (unreachable) (select)
     (unreachable) (i32.const 0) (select)
     (unreachable) (i32.const 0) (i32.const 0) (select)
     (unreachable) (f32.const 0) (i32.const 0) (select)
     (unreachable)
-  )
+  ;)
 )
 
 (assert_return (invoke "select_i32" (i32.const 1) (i32.const 2) (i32.const 1)) (i32.const 1))

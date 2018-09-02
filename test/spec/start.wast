@@ -77,24 +77,22 @@
 (invoke "inc")
 (assert_return (invoke "get") (i32.const 70))
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (func $print_i32 (import "spectest" "print_i32") (param i32))
   (func $main (call $print_i32 (i32.const 1)))
   (start 1)
-)
-
-(module
+;)
+(;module
   (func $print_i32 (import "spectest" "print_i32") (param i32))
   (func $main (call $print_i32 (i32.const 2)))
   (start $main)
-)
-
-(module
+;)
+(;module
   (func $print (import "spectest" "print"))
   (start $print)
-)
-
-(assert_trap
+;)
+(;assert_trap
   (module (func $main (unreachable)) (start $main))
   "unreachable"
-)
+;)

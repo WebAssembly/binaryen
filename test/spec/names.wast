@@ -1094,4 +1094,5 @@
   (export "print32" (func 2))
 )
 
-(assert_return (invoke "print32" (i32.const 42) (i32.const 123)))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "print32" (i32.const 42) (i32.const 123)))

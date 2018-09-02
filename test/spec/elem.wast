@@ -1,21 +1,23 @@
 ;; Test the element section
 
 ;; Syntax
+
+;; `offset` NOT SUPPORTED IN BINARYEN
 (module
   (table $t 10 anyfunc)
   (func $f)
   (elem (i32.const 0))
   (elem (i32.const 0) $f $f)
-  (elem (offset (i32.const 0)))
-  (elem (offset (i32.const 0)) $f $f)
+  ;; (elem (offset (i32.const 0)))
+  ;; (elem (offset (i32.const 0)) $f $f)
   (elem 0 (i32.const 0))
   (elem 0x0 (i32.const 0) $f $f)
-  (elem 0x000 (offset (i32.const 0)))
-  (elem 0 (offset (i32.const 0)) $f $f)
+  ;; (elem 0x000 (offset (i32.const 0)))
+  ;; (elem 0 (offset (i32.const 0)) $f $f)
   (elem $t (i32.const 0))
   (elem $t (i32.const 0) $f $f)
-  (elem $t (offset (i32.const 0)))
-  (elem $t (offset (i32.const 0)) $f $f)
+  ;; (elem $t (offset (i32.const 0)))
+  ;; (elem $t (offset (i32.const 0)) $f $f)
 )
 
 ;; Basic use
@@ -49,20 +51,19 @@
   (elem (i32.const 3) $f)
   (elem (i32.const 5) $f)
 )
-
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (global (import "spectest" "global_i32") i32)
   (table 1000 anyfunc)
   (func $f)
   (elem (get_global 0) $f)
-)
-
-(module
+;)
+(;module
   (global $g (import "spectest" "global_i32") i32)
   (table 1000 anyfunc)
   (func $f)
   (elem (get_global $g) $f)
-)
+;)
 
 (module
   (type $out-i32 (func (result i32)))
@@ -113,134 +114,126 @@
   (elem (i32.const 20))
 )
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (import "spectest" "table" (table 0 anyfunc))
   (func $f)
   (elem (i32.const 0) $f)
-)
-
-(module
+;)
+(;module
   (import "spectest" "table" (table 0 100 anyfunc))
   (func $f)
   (elem (i32.const 0) $f)
-)
-
-(module
+;)
+(;module
   (import "spectest" "table" (table 0 anyfunc))
   (func $f)
   (elem (i32.const 1) $f)
-)
-
-(module
+;)
+(;module
   (import "spectest" "table" (table 0 30 anyfunc))
   (func $f)
   (elem (i32.const 1) $f)
-)
+;)
 
 ;; Invalid bounds for elements
 
-(assert_unlinkable
+;; NOT SUPPORTED IN BINARYEN
+(;assert_unlinkable
   (module
     (table 0 anyfunc)
     (func $f)
     (elem (i32.const 0) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 0 0 anyfunc)
     (func $f)
     (elem (i32.const 0) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 0 1 anyfunc)
     (func $f)
     (elem (i32.const 0) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 0 anyfunc)
     (elem (i32.const 1))
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 10 anyfunc)
     (func $f)
     (elem (i32.const 10) $f)
   )
   "elements segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "table" (table 10 anyfunc))
     (func $f)
     (elem (i32.const 10) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 10 20 anyfunc)
     (func $f)
     (elem (i32.const 10) $f)
   )
   "elements segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "table" (table 10 anyfunc))
     (func $f)
     (elem (i32.const 10) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 10 anyfunc)
     (func $f)
     (elem (i32.const -1) $f)
   )
   "elements segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "table" (table 10 anyfunc))
     (func $f)
     (elem (i32.const -1) $f)
   )
   "elements segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (table 10 anyfunc)
     (func $f)
     (elem (i32.const -10) $f)
   )
   "elements segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "table" (table 10 anyfunc))
     (func $f)
     (elem (i32.const -10) $f)
   )
   "elements segment does not fit"
-)
+;)
 
 ;; Element without table
 
@@ -254,29 +247,28 @@
 
 ;; Invalid offsets
 
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module
     (table 1 anyfunc)
     (elem (i64.const 0))
   )
   "type mismatch"
-)
-
-(assert_invalid
+;)
+(;assert_invalid
   (module
     (table 1 anyfunc)
     (elem (i32.ctz (i32.const 0)))
   )
   "constant expression required"
-)
-
-(assert_invalid
+;)
+(;assert_invalid
   (module
     (table 1 anyfunc)
     (elem (nop))
   )
   "constant expression required"
-)
+;)
 
 (assert_invalid
   (module
@@ -348,11 +340,11 @@
   )
 )
 
-(register "module1" $module1)
-
-(assert_trap (invoke $module1 "call-7") "uninitialized element 7")
-(assert_return (invoke $module1 "call-8") (i32.const 65))
-(assert_return (invoke $module1 "call-9") (i32.const 66))
+;; NOT SUPPORTED IN BINARYEN
+;; (register "module1" $module1)
+;; (assert_trap (invoke $module1 "call-7") "uninitialized element 7")
+;; (assert_return (invoke $module1 "call-8") (i32.const 65))
+;; (assert_return (invoke $module1 "call-9") (i32.const 66))
 
 (module $module2
   (type $out-i32 (func (result i32)))
@@ -363,9 +355,10 @@
   (func $const-i32-d (type $out-i32) (i32.const 68))
 )
 
-(assert_return (invoke $module1 "call-7") (i32.const 67))
-(assert_return (invoke $module1 "call-8") (i32.const 68))
-(assert_return (invoke $module1 "call-9") (i32.const 66))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 68))
+;; (assert_return (invoke $module1 "call-9") (i32.const 66))
 
 (module $module3
   (type $out-i32 (func (result i32)))
@@ -376,6 +369,7 @@
   (func $const-i32-f (type $out-i32) (i32.const 70))
 )
 
-(assert_return (invoke $module1 "call-7") (i32.const 67))
-(assert_return (invoke $module1 "call-8") (i32.const 69))
-(assert_return (invoke $module1 "call-9") (i32.const 70))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 69))
+;; (assert_return (invoke $module1 "call-9") (i32.const 70))

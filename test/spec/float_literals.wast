@@ -79,27 +79,27 @@
   ;; https://twitter.com/Archivd/status/994637336506912768
   (func (export "f64_dec.root_beer_float") (result i64) (i64.reinterpret/f64 (f64.const 1.000000119)))
 
-  (func (export "f32-dec-sep1") (result f32) (f32.const 1_000_000))
-  (func (export "f32-dec-sep2") (result f32) (f32.const 1_0_0_0))
-  (func (export "f32-dec-sep3") (result f32) (f32.const 100_3.141_592))
-  (func (export "f32-dec-sep4") (result f32) (f32.const 99e+1_3))
-  (func (export "f32-dec-sep5") (result f32) (f32.const 122_000.11_3_54E0_2_3))
-  (func (export "f32-hex-sep1") (result f32) (f32.const 0xa_0f_00_99))
-  (func (export "f32-hex-sep2") (result f32) (f32.const 0x1_a_A_0_f))
-  (func (export "f32-hex-sep3") (result f32) (f32.const 0xa0_ff.f141_a59a))
-  (func (export "f32-hex-sep4") (result f32) (f32.const 0xf0P+1_3))
-  (func (export "f32-hex-sep5") (result f32) (f32.const 0x2a_f00a.1f_3_eep2_3))
-
-  (func (export "f64-dec-sep1") (result f64) (f64.const 1_000_000))
-  (func (export "f64-dec-sep2") (result f64) (f64.const 1_0_0_0))
-  (func (export "f64-dec-sep3") (result f64) (f64.const 100_3.141_592))
-  (func (export "f64-dec-sep4") (result f64) (f64.const 99e-1_23))
-  (func (export "f64-dec-sep5") (result f64) (f64.const 122_000.11_3_54e0_2_3))
-  (func (export "f64-hex-sep1") (result f64) (f64.const 0xa_f00f_0000_9999))
-  (func (export "f64-hex-sep2") (result f64) (f64.const 0x1_a_A_0_f))
-  (func (export "f64-hex-sep3") (result f64) (f64.const 0xa0_ff.f141_a59a))
-  (func (export "f64-hex-sep4") (result f64) (f64.const 0xf0P+1_3))
-  (func (export "f64-hex-sep5") (result f64) (f64.const 0x2a_f00a.1f_3_eep2_3))
+  ;; NOT SUPPORTED IN BINARYEN
+  ;; (func (export "f32-dec-sep1") (result f32) (f32.const 1_000_000))
+  ;; (func (export "f32-dec-sep2") (result f32) (f32.const 1_0_0_0))
+  ;; (func (export "f32-dec-sep3") (result f32) (f32.const 100_3.141_592))
+  ;; (func (export "f32-dec-sep4") (result f32) (f32.const 99e+1_3))
+  ;; (func (export "f32-dec-sep5") (result f32) (f32.const 122_000.11_3_54E0_2_3))
+  ;; (func (export "f32-hex-sep1") (result f32) (f32.const 0xa_0f_00_99))
+  ;; (func (export "f32-hex-sep2") (result f32) (f32.const 0x1_a_A_0_f))
+  ;; (func (export "f32-hex-sep3") (result f32) (f32.const 0xa0_ff.f141_a59a))
+  ;; (func (export "f32-hex-sep4") (result f32) (f32.const 0xf0P+1_3))
+  ;; (func (export "f32-hex-sep5") (result f32) (f32.const 0x2a_f00a.1f_3_eep2_3))
+  ;; (func (export "f64-dec-sep1") (result f64) (f64.const 1_000_000))
+  ;; (func (export "f64-dec-sep2") (result f64) (f64.const 1_0_0_0))
+  ;; (func (export "f64-dec-sep3") (result f64) (f64.const 100_3.141_592))
+  ;; (func (export "f64-dec-sep4") (result f64) (f64.const 99e-1_23))
+  ;; (func (export "f64-dec-sep5") (result f64) (f64.const 122_000.11_3_54e0_2_3))
+  ;; (func (export "f64-hex-sep1") (result f64) (f64.const 0xa_f00f_0000_9999))
+  ;; (func (export "f64-hex-sep2") (result f64) (f64.const 0x1_a_A_0_f))
+  ;; (func (export "f64-hex-sep3") (result f64) (f64.const 0xa0_ff.f141_a59a))
+  ;; (func (export "f64-hex-sep4") (result f64) (f64.const 0xf0P+1_3))
+  ;; (func (export "f64-hex-sep5") (result f64) (f64.const 0x2a_f00a.1f_3_eep2_3))
 )
 
 (assert_return (invoke "f32.nan") (i32.const 0x7fc00000))
@@ -166,39 +166,39 @@
 (assert_return (invoke "f64_dec.trailing_dot") (i64.const 0x54b249ad2594c37d))
 (assert_return (invoke "f64_dec.root_beer_float") (i64.const 0x3ff000001ff19e24))
 
-(assert_return (invoke "f32-dec-sep1") (f32.const 1000000))
-(assert_return (invoke "f32-dec-sep2") (f32.const 1000))
-(assert_return (invoke "f32-dec-sep3") (f32.const 1003.141592))
-(assert_return (invoke "f32-dec-sep4") (f32.const 99e+13))
-(assert_return (invoke "f32-dec-sep5") (f32.const 122000.11354e23))
-(assert_return (invoke "f32-hex-sep1") (f32.const 0xa0f0099))
-(assert_return (invoke "f32-hex-sep2") (f32.const 0x1aa0f))
-(assert_return (invoke "f32-hex-sep3") (f32.const 0xa0ff.f141a59a))
-(assert_return (invoke "f32-hex-sep4") (f32.const 0xf0P+13))
-(assert_return (invoke "f32-hex-sep5") (f32.const 0x2af00a.1f3eep23))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "f32-dec-sep1") (f32.const 1000000))
+;; (assert_return (invoke "f32-dec-sep2") (f32.const 1000))
+;; (assert_return (invoke "f32-dec-sep3") (f32.const 1003.141592))
+;; (assert_return (invoke "f32-dec-sep4") (f32.const 99e+13))
+;; (assert_return (invoke "f32-dec-sep5") (f32.const 122000.11354e23))
+;; (assert_return (invoke "f32-hex-sep1") (f32.const 0xa0f0099))
+;; (assert_return (invoke "f32-hex-sep2") (f32.const 0x1aa0f))
+;; (assert_return (invoke "f32-hex-sep3") (f32.const 0xa0ff.f141a59a))
+;; (assert_return (invoke "f32-hex-sep4") (f32.const 0xf0P+13))
+;; (assert_return (invoke "f32-hex-sep5") (f32.const 0x2af00a.1f3eep23))
+;; (assert_return (invoke "f64-dec-sep1") (f64.const 1000000))
+;; (assert_return (invoke "f64-dec-sep2") (f64.const 1000))
+;; (assert_return (invoke "f64-dec-sep3") (f64.const 1003.141592))
+;; (assert_return (invoke "f64-dec-sep4") (f64.const 99e-123))
+;; (assert_return (invoke "f64-dec-sep5") (f64.const 122000.11354e23))
+;; (assert_return (invoke "f64-hex-sep1") (f64.const 0xaf00f00009999))
+;; (assert_return (invoke "f64-hex-sep2") (f64.const 0x1aa0f))
+;; (assert_return (invoke "f64-hex-sep3") (f64.const 0xa0ff.f141a59a))
+;; (assert_return (invoke "f64-hex-sep4") (f64.const 0xf0P+13))
+;; (assert_return (invoke "f64-hex-sep5") (f64.const 0x2af00a.1f3eep23))
 
-(assert_return (invoke "f64-dec-sep1") (f64.const 1000000))
-(assert_return (invoke "f64-dec-sep2") (f64.const 1000))
-(assert_return (invoke "f64-dec-sep3") (f64.const 1003.141592))
-(assert_return (invoke "f64-dec-sep4") (f64.const 99e-123))
-(assert_return (invoke "f64-dec-sep5") (f64.const 122000.11354e23))
-(assert_return (invoke "f64-hex-sep1") (f64.const 0xaf00f00009999))
-(assert_return (invoke "f64-hex-sep2") (f64.const 0x1aa0f))
-(assert_return (invoke "f64-hex-sep3") (f64.const 0xa0ff.f141a59a))
-(assert_return (invoke "f64-hex-sep4") (f64.const 0xf0P+13))
-(assert_return (invoke "f64-hex-sep5") (f64.const 0x2af00a.1f3eep23))
-
+;; NOT SUPPORTED IN BINARYEN
 ;; Test parsing a float from binary
-(module binary
+(;module binary
   ;; (func (export "4294967249") (result f64) (f64.const 4294967249))
   "\00\61\73\6d\01\00\00\00\01\85\80\80\80\00\01\60"
   "\00\01\7c\03\82\80\80\80\00\01\00\07\8e\80\80\80"
   "\00\01\0a\34\32\39\34\39\36\37\32\34\39\00\00\0a"
   "\91\80\80\80\00\01\8b\80\80\80\00\00\44\00\00\20"
   "\fa\ff\ff\ef\41\0b"
-)
-
-(assert_return (invoke "4294967249") (f64.const 4294967249))
+;)
+;; (assert_return (invoke "4294967249") (f64.const 4294967249))
 
 (assert_malformed
   (module quote "(global f32 (f32.const _100))")

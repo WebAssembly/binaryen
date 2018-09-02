@@ -1,3 +1,5 @@
+(; NOT SUPPORTED IN BINARYEN
+
 ;; This tests that the stack overflow guard page can't be skipped by a function with more than a page of locals.
 (module
   (memory 1)
@@ -2282,3 +2284,5 @@
 (assert_exhaustion (invoke "test-guard-page-skip" (i32.const 700)) "call stack exhausted")
 (assert_exhaustion (invoke "test-guard-page-skip" (i32.const 800)) "call stack exhausted")
 (assert_exhaustion (invoke "test-guard-page-skip" (i32.const 900)) "call stack exhausted")
+
+;)

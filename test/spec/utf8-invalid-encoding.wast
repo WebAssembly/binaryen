@@ -1,3 +1,4 @@
+(; NOT SUPPORTED IN BINARYEN
 (assert_malformed (module quote "(func (export \"\\00\\00\\fe\\ff\"))") "invalid UTF-8 encoding")
 (assert_malformed (module quote "(func (export \"\\80\"))") "invalid UTF-8 encoding")
 (assert_malformed (module quote "(func (export \"\\8f\"))") "invalid UTF-8 encoding")
@@ -174,3 +175,4 @@
 (assert_malformed (module quote "(func (export \"\\ff\"))") "invalid UTF-8 encoding")
 (assert_malformed (module quote "(func (export \"\\ff\\fe\\00\\00\"))") "invalid UTF-8 encoding")
 (assert_malformed (module quote "(func (export \"\\ff\\fe\"))") "invalid UTF-8 encoding")
+;)

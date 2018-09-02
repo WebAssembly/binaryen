@@ -2,7 +2,9 @@
 
 ;; Syntax
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+
+(;module
   (memory $m 1)
   (data (i32.const 0))
   (data (i32.const 1) "a" "" "bcd")
@@ -16,7 +18,7 @@
   (data $m (i32.const 1) "a" "" "bcd")
   (data $m (offset (i32.const 0)))
   (data $m (offset (i32.const 0)) "" "a" "bc" "")
-)
+;)
 
 ;; Basic use
 
@@ -47,27 +49,28 @@
   (data (i32.const 1) "h")
 )
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (global (import "spectest" "global_i32") i32)
   (memory 1)
   (data (get_global 0) "a")
-)
-(module
+;)
+(;module
   (global (import "spectest" "global_i32") i32)
   (import "spectest" "memory" (memory 1))
   (data (get_global 0) "a")
-)
+;)
 
-(module
+(;module
   (global $g (import "spectest" "global_i32") i32)
   (memory 1)
   (data (get_global $g) "a")
-)
-(module
+;)
+(;module
   (global $g (import "spectest" "global_i32") i32)
   (import "spectest" "memory" (memory 1))
   (data (get_global $g) "a")
-)
+;)
 
 ;; Use of internal globals in constant expressions is not allowed in MVP.
 ;; (module (memory 1) (data (get_global 0) "a") (global i32 (i32.const 0)))
@@ -124,79 +127,72 @@
   (data (i32.const 0) "" "")
 )
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (import "spectest" "memory" (memory 0))
   (data (i32.const 0) "a")
-)
-
-(module
+;)
+(;module
   (import "spectest" "memory" (memory 0 3))
   (data (i32.const 0) "a")
-)
-
-(module
+;)
+(;module
   (global (import "spectest" "global_i32") i32)
   (import "spectest" "memory" (memory 0))
   (data (get_global 0) "a")
-)
-
-(module
+;)
+(;module
   (global (import "spectest" "global_i32") i32)
   (import "spectest" "memory" (memory 0 3))
   (data (get_global 0) "a")
-)
-
-(module
+;)
+(;module
   (import "spectest" "memory" (memory 0))
   (data (i32.const 1) "a")
-)
-
-(module
+;)
+(;module
   (import "spectest" "memory" (memory 0 3))
   (data (i32.const 1) "a")
-)
+;)
 
 ;; Invalid bounds for data
 
-(assert_unlinkable
+;; NOT SUPPORTED IN BINARYEN
+(;assert_unlinkable
   (module
     (memory 0)
     (data (i32.const 0) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 0 0)
     (data (i32.const 0) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 0 1)
     (data (i32.const 0) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 0)
     (data (i32.const 1))
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 0 1)
     (data (i32.const 1))
   )
   "data segment does not fit"
-)
+;)
 
 ;; This seems to cause a time-out on Travis.
 (;assert_unlinkable
@@ -206,76 +202,70 @@
   )
   ""  ;; either out of memory or segment does not fit
 ;)
-
-(assert_unlinkable
+(;assert_unlinkable
   (module
     (global (import "spectest" "global_i32") i32)
     (memory 0)
     (data (get_global 0) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 1 2)
     (data (i32.const 0x1_0000) "a")
   )
   "data segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "memory" (memory 1))
     (data (i32.const 0x1_0000) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 2)
     (data (i32.const 0x2_0000) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 2 3)
     (data (i32.const 0x2_0000) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 1)
     (data (i32.const -1) "a")
   )
   "data segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "memory" (memory 1))
     (data (i32.const -1) "a")
   )
   "data segment does not fit"
-)
-
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (memory 2)
     (data (i32.const -100) "a")
   )
   "data segment does not fit"
-)
-(assert_unlinkable
+;)
+(;assert_unlinkable
   (module
     (import "spectest" "memory" (memory 1))
     (data (i32.const -100) "a")
   )
   "data segment does not fit"
-)
+;)
 
 ;; Data without memory
 

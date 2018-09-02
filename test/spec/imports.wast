@@ -16,7 +16,8 @@
   ;; (memory (export "memory-2-4") 2 4)
 )
 
-(register "test")
+;; NOT SUPPORTED IN BINARYEN
+;; (register "test")
 
 
 ;; Functions
@@ -43,13 +44,14 @@
 
   (func (export "p1") (import "spectest" "print_i32") (param i32))
   (func $p (export "p2") (import "spectest" "print_i32") (param i32))
-  (func (export "p3") (export "p4") (import "spectest" "print_i32") (param i32))
+  ;; NOT SUPPORTED IN BINARYEN
+  ;; (func (export "p3") (export "p4") (import "spectest" "print_i32") (param i32))
   (func (export "p5") (import "spectest" "print_i32") (type 0))
-  (func (export "p6") (import "spectest" "print_i32") (type 0) (param i32) (result))
-
-  (import "spectest" "print_i32" (func (type $forward)))
-  (func (import "spectest" "print_i32") (type $forward))
-  (type $forward (func (param i32)))
+  ;; NOT SUPPORTED IN BINARYEN
+  ;; (func (export "p6") (import "spectest" "print_i32") (type 0) (param i32) (result))
+  ;; (import "spectest" "print_i32" (func (type $forward)))
+  ;; (func (import "spectest" "print_i32") (type $forward))
+  ;; (type $forward (func (param i32)))
 
   (table anyfunc (elem $print_i32 $print_f64))
 
@@ -84,11 +86,12 @@
   )
 )
 
-(assert_return (invoke "print32" (i32.const 13)))
-(assert_return (invoke "print64" (i64.const 24)))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "print32" (i32.const 13)))
+;; (assert_return (invoke "print64" (i64.const 24)))
 
 (assert_invalid
-  (module 
+  (module
     (type (func (result i32)))
     (import "test" "func" (func (type 1)))
   )
@@ -197,10 +200,11 @@
   (module (import "spectest" "table" (func)))
   "incompatible import type"
 )
-(assert_unlinkable
+;; NOT SUPPORTED IN BINARYEN
+(;assert_unlinkable
   (module (import "spectest" "memory" (func)))
   "incompatible import type"
-)
+;)
 
 
 ;; Globals
@@ -223,10 +227,11 @@
   (func (export "get-y") (result i32) (get_global $y))
 )
 
-(assert_return (invoke "get-0") (i32.const 666))
-(assert_return (invoke "get-1") (i32.const 666))
-(assert_return (invoke "get-x") (i32.const 666))
-(assert_return (invoke "get-y") (i32.const 666))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "get-0") (i32.const 666))
+;; (assert_return (invoke "get-1") (i32.const 666))
+;; (assert_return (invoke "get-x") (i32.const 666))
+;; (assert_return (invoke "get-y") (i32.const 666))
 
 (module (import "test" "global-i32" (global i32)))
 (module (import "test" "global-f32" (global f32)))

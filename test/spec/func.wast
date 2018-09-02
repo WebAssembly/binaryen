@@ -32,25 +32,28 @@
 
   (type $sig-1 (func))
   (type $sig-2 (func (result i32)))
-  (type $sig-3 (func (param $x i32)))
+  ;; NOT SUPPORTED IN BINARYEN
+  ;; (type $sig-3 (func (param $x i32)))
   (type $sig-4 (func (param i32 f64 i32) (result i32)))
 
   (func (export "type-use-1") (type $sig-1))
   (func (export "type-use-2") (type $sig-2) (i32.const 0))
-  (func (export "type-use-3") (type $sig-3))
+  ;; (func (export "type-use-3") (type $sig-3))
   (func (export "type-use-4") (type $sig-4) (i32.const 0))
   (func (export "type-use-5") (type $sig-2) (result i32) (i32.const 0))
-  (func (export "type-use-6") (type $sig-3) (param i32))
+  ;; (func (export "type-use-6") (type $sig-3) (param i32))
   (func (export "type-use-7")
     (type $sig-4) (param i32) (param f64 i32) (result i32) (i32.const 0)
   )
 
   (func (type $sig))
-  (func (type $forward))  ;; forward reference
+  ;; NOT SUPPORTED IN BINARYEN
+  ;; (func (type $forward))  ;; forward reference
 
   (func $complex
     (param i32 f32) (param $x i64) (param) (param i32)
-    (result) (result i32) (result)
+    ;; NOT SUPPORTED IN BINARYEN
+    ;; (result) (result i32) (result)
     (local f32) (local $y i32) (local i64 i32) (local) (local f64 i32)
     (unreachable) (unreachable)
   )
@@ -60,7 +63,8 @@
     (unreachable) (unreachable)
   )
 
-  (type $forward (func))
+  ;; NOT SUPPORTED IN BINARYEN
+  (;type $forward (func);)
 
   ;; Typing of locals
 
@@ -170,13 +174,15 @@
 
 (assert_return (invoke "type-use-1"))
 (assert_return (invoke "type-use-2") (i32.const 0))
-(assert_return (invoke "type-use-3" (i32.const 1)))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "type-use-3" (i32.const 1)))
 (assert_return
   (invoke "type-use-4" (i32.const 1) (f64.const 1) (i32.const 1))
   (i32.const 0)
 )
 (assert_return (invoke "type-use-5") (i32.const 0))
-(assert_return (invoke "type-use-6" (i32.const 1)))
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "type-use-6" (i32.const 1)))
 (assert_return
   (invoke "type-use-7" (i32.const 1) (f64.const 1) (i32.const 1))
   (i32.const 0)
@@ -286,7 +292,8 @@
 
 ;; Expansion of inline function types
 
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (func $f (result f64) (f64.const 0))  ;; adds implicit type definition
   (func $g (param i32))                 ;; reuses explicit type definition
   (type $t (func (param i32)))
@@ -297,9 +304,10 @@
     (call $i32->void (i32.const 0))
     (drop (call $void->f64))
   )
-)
+;)
 
-(assert_invalid
+;; NOT SUPPORTED IN BINARYEN
+(;assert_invalid
   (module
     (func $f (result f64) (f64.const 0))  ;; adds implicit type definition
     (func $g (param i32))                 ;; reuses explicit type definition
@@ -309,10 +317,10 @@
     (func (type 2))  ;; does not exist
   )
   "unknown type"
-)
+;)
 
-
-(module
+;; NOT SUPPORTED IN BINARYEN
+(;module
   (type $sig (func))
 
   (func $empty-sig-1)  ;; should be assigned type $sig
@@ -336,6 +344,7 @@
     (call_indirect (type $sig) (i32.const 1))
     (call_indirect (type $sig) (i32.const 4))
   )
+
 
   (func (export "signature-implicit-reused")
     ;; The implicit index 3 in this test depends on the function and
@@ -373,12 +382,12 @@
       (i32.const 6)
     )
   )
-)
-
-(assert_return (invoke "signature-explicit-reused"))
-(assert_return (invoke "signature-implicit-reused"))
-(assert_return (invoke "signature-explicit-duplicate"))
-(assert_return (invoke "signature-implicit-duplicate"))
+;)
+;; NOT SUPPORTED IN BINARYEN
+;; (assert_return (invoke "signature-explicit-reused"))
+;; (assert_return (invoke "signature-implicit-reused"))
+;; (assert_return (invoke "signature-explicit-duplicate"))
+;; (assert_return (invoke "signature-implicit-duplicate"))
 
 
 ;; Malformed type use

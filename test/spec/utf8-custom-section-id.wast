@@ -1,3 +1,4 @@
+(; NOT SUPPORTED IN BINARYEN
 ;;;;;; Invalid UTF-8 custom section names
 
 ;;;; Continuation bytes not preceded by prefixes
@@ -1790,3 +1791,4 @@
   "invalid UTF-8 encoding"
 )
 
+;)
