@@ -1191,7 +1191,7 @@ static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
   if (!ret) throw ParseException("missing '.' in memory access", s.line, s.col);
   ret += skip;
   if (isAtomic) ret += 7; // after "type.atomic.load"
-  if (ret >= str + size) throw ParseException("memory access ends abruptly", s.line, s.col);
+  if (ret > str + size) throw ParseException("memory access ends abruptly", s.line, s.col);
   return ret;
 }
 
