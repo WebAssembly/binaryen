@@ -1210,7 +1210,6 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomi
 
 Expression* SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
   const char* extra = findMemExtra(*s[0], 6 /* after "type.store" */, isAtomic);
-  if (isAtomic) extra += 7; // after "type.atomic.store"
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
