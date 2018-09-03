@@ -1338,6 +1338,7 @@ void WasmBinaryBuilder::processExpressions() {
       if (pos == endOfFunction) {
         throwError("Reached function end without seeing End opcode");
       }
+      if (!more()) throwError("unexpected end of input");
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
         if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
