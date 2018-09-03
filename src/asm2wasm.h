@@ -737,6 +737,9 @@ private:
 
 void Asm2WasmBuilder::processAsm(Ref ast) {
   assert(ast[0] == TOPLEVEL);
+  if (ast[1]->size() == 0) {
+    Fatal() << "empty input";
+  }
   Ref asmFunction = ast[1][0];
   assert(asmFunction[0] == DEFUN);
   Ref body = asmFunction[3];
