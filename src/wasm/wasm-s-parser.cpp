@@ -1138,20 +1138,19 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   return ret;
 }
 
-static uint8_t parseMemBytes(const char** in, uint8_t fallback) {
+static uint8_t parseMemBytes(const char*& s, uint8_t fallback) {
   uint8_t ret;
-  const char* s = *in;
   if (s[0] == '8') {
     ret = 1;
-    (*in)++;
+    s++;
   } else if (s[0] == '1') {
     if (s[1] != '6') throw ParseException("expected 16 for memop size");
     ret = 2;
-    *in += 2;
+    s += 2;
   } else if (s[0] == '3') {
     if (s[1] != '2') throw ParseException("expected 32 for memop size");;
     ret = 4;
-    *in += 2;
+    s += 2;
   } else {
     ret = fallback;
   }
@@ -1185,13 +1184,23 @@ static size_t parseMemAttributes(Element& s, Address* offset, Address* align, Ad
   return i;
 }
 
+static const char* findMemExtra(const Element& s, size_t skip, bool isAtomic) {
+  auto* str = s.c_str();
+  auto size = strlen(str);
+  auto* ret = strchr(str, '.');
+  if (!ret) throw ParseException("missing '.' in memory access", s.line, s.col);
+  ret += skip;
+  if (isAtomic) ret += 7; // after "type.atomic.load"
+  if (ret >= str + size) throw ParseException("memory access ends abruptly", s.line, s.col);
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomic) {
-  const char *extra = strchr(s[0]->c_str(), '.') + 5; // after "type.load"
-  if (isAtomic) extra += 7; // after "type.atomic.load"
+  const char* extra = findMemExtra(*s[0], 5 /* after "type.load" */, isAtomic);
   auto* ret = allocator.alloc<Load>();
   ret->isAtomic = isAtomic;
   ret->type = type;
-  ret->bytes = parseMemBytes(&extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, getTypeSize(type));
   ret->signed_ = extra[0] && extra[1] == 's';
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
@@ -1200,12 +1209,12 @@ Expression* SExpressionWasmBuilder::makeLoad(Element& s, Type type, bool isAtomi
 }
 
 Expression* SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtomic) {
-  const char *extra = strchr(s[0]->c_str(), '.') + 6; // after "type.store"
+  const char* extra = findMemExtra(*s[0], 6 /* after "type.store" */, isAtomic);
   if (isAtomic) extra += 7; // after "type.atomic.store"
   auto ret = allocator.alloc<Store>();
   ret->isAtomic = isAtomic;
   ret->valueType = type;
-  ret->bytes = parseMemBytes(&extra, getTypeSize(type));
+  ret->bytes = parseMemBytes(extra, getTypeSize(type));
   size_t i = parseMemAttributes(s, &ret->offset, &ret->align, ret->bytes);
   ret->ptr = parseExpression(s[i]);
   ret->value = parseExpression(s[i+1]);
@@ -1214,8 +1223,8 @@ Expression* SExpressionWasmBuilder::makeStore(Element& s, Type type, bool isAtom
 }
 
 Expression* SExpressionWasmBuilder::makeAtomicRMWOrCmpxchg(Element& s, Type type) {
-  const char* extra = strchr(s[0]->c_str(), '.') + 11; // afer "type.atomic.rmw"
-  auto bytes = parseMemBytes(&extra, getTypeSize(type));
+  const char* extra = findMemExtra(*s[0], 11 /* after "type.atomic.rmw" */, /* isAtomic = */ false);
+  auto bytes = parseMemBytes(extra, getTypeSize(type));
   extra = strchr(extra, '.'); // after the optional '_u' and before the opcode
   if (!extra) throw ParseException("malformed atomic rmw instruction");
   extra++; // after the '.'
