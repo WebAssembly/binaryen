@@ -4,8 +4,8 @@
   ;; stack imports are special
   (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
   (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
-  ;; other imports must not be touched!
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
+  (global $tempDoublePtrMut (mut i32) (get_global $tempDoublePtr))
   (export "test1" $test1)
   (export "test2" $test2)
   (export "test3" $test3)
@@ -39,7 +39,7 @@
     (i32.store8 (i32.const 12) (i32.const 115))
   )
   (func $test2
-    (set_global $tempDoublePtr (i32.const 1)) ;; bad!
+    (set_global $tempDoublePtrMut (i32.const 1)) ;; bad!
     (i32.store8 (i32.const 13) (i32.const 115))
   )
   (func $test3
