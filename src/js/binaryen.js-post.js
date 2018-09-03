@@ -196,10 +196,8 @@ Module['LtFloat64'] = Module['_BinaryenLtFloat64']();
 Module['LeFloat64'] = Module['_BinaryenLeFloat64']();
 Module['GtFloat64'] = Module['_BinaryenGtFloat64']();
 Module['GeFloat64'] = Module['_BinaryenGeFloat64']();
-Module['PageSize'] = Module['_BinaryenPageSize']();
 Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
 Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
-Module['HasFeature'] = Module['_BinaryenHasFeature']();
 Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
 Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
 Module['AtomicRMWAnd'] = Module['_BinaryenAtomicRMWAnd']();
@@ -282,9 +280,6 @@ Module['Module'] = function(module) {
   }
   this['growMemory'] = this['grow_memory'] = function(value) {
     return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
-  }
-  this['hasFeature'] = this['has_feature'] = function(name) {
-    return Module['_BinaryenHost'](module, Module['HasFeature'], strToStack(name));
   }
 
   // The Const creation API is a little different: we don't want users to

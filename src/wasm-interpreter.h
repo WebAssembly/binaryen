@@ -925,7 +925,6 @@ public:
       Flow visitHost(Host *curr) {
         NOTE_ENTER("Host");
         switch (curr->op) {
-          case PageSize:   return Literal((int32_t)Memory::kPageSize);
           case CurrentMemory: return Literal(int32_t(instance.memorySize));
           case GrowMemory: {
             auto fail = Literal(int32_t(-1));
@@ -940,11 +939,6 @@ public:
             instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
             return Literal(int32_t(ret));
-          }
-          case HasFeature: {
-            Name id = curr->nameOperand;
-            if (id == WASM) return Literal(1);
-            return Literal((int32_t)0);
           }
           default: WASM_UNREACHABLE();
         }

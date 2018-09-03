@@ -558,7 +558,7 @@ void Drop::finalize() {
 
 void Host::finalize() {
   switch (op) {
-    case PageSize: case CurrentMemory: case HasFeature: {
+    case CurrentMemory: {
       type = i32;
       break;
     }

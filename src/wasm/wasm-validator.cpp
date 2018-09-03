@@ -802,9 +802,7 @@ void FunctionValidator::visitHost(Host* curr) {
       shouldBeEqualOrFirstIsUnreachable(curr->operands[0]->type, i32, curr, "grow_memory must have i32 operand");
       break;
     }
-    case PageSize:
-    case CurrentMemory:
-    case HasFeature: break;
+    case CurrentMemory: break;
     default: WASM_UNREACHABLE();
   }
 }

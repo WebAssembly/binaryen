@@ -832,7 +832,6 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         abort_on(str);
       }
       case 'h': {
-        if (str[1] == 'a') return makeHost(s, HostOp::HasFeature);
         abort_on(str);
       }
       case 'i': {
@@ -848,7 +847,6 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
         abort_on(str);
       }
       case 'p': {
-        if (str[1] == 'a') return makeHost(s, HostOp::PageSize);
         abort_on(str);
       }
       case 's': {
@@ -975,11 +973,7 @@ Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
 Expression* SExpressionWasmBuilder::makeHost(Element& s, HostOp op) {
   auto ret = allocator.alloc<Host>();
   ret->op = op;
-  if (op == HostOp::HasFeature) {
-    ret->nameOperand = s[1]->str();
-  } else {
-    parseCallOperands(s, 1, s.size(), ret);
-  }
+  parseCallOperands(s, 1, s.size(), ret);
   if (ret->op == HostOp::GrowMemory) {
     if (ret->operands.size() != 1) {
       throw ParseException("grow_memory needs one operand");

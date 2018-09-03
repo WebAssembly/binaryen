@@ -397,10 +397,8 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   }
   void visitHost(Host* curr) {
     switch (curr->op) {
-      case PageSize:      printMedium(o, "pagesize"); break;
       case CurrentMemory: printMedium(o, "current_memory"); break;
       case GrowMemory:    printMedium(o, "grow_memory"); break;
-      case HasFeature:    printMedium(o, "hasfeature ") << curr->nameOperand; break;
       default: WASM_UNREACHABLE();
     }
   }
@@ -771,11 +769,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
-        break;
-      }
-      case HasFeature: {
-        o << curr->nameOperand;
-        o << ')';
         break;
       }
       default: {
