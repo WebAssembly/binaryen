@@ -38,6 +38,8 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
 
   Pass* create() override { return new LoopInvariantCodeMotion; }
 
+  typedef std::unordered_set<SetLocal*> LoopSets;
+
   // main entry point
 
   LocalGraph* localGraph;
@@ -73,7 +75,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
     auto numLocals = getFunction()->getNumLocals();
     std::vector<Index> numSetsForIndex(numLocals);
     std::fill(numSetsForIndex.begin(), numSetsForIndex.end(), 0);
-    std::unordered_set<SetLocal*> loopSets;
+    LoopSets loopSets;
     {
       FindAll<SetLocal> finder(loop);
       for (auto* set : finder.list) {
@@ -95,11 +97,9 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       if (auto* block = curr->dynCast<Block>()) {
         auto& list = block->list;
         Index i = list.size();
-        if (i > 0) {
-          do {
-            i--;
-            work.push_back(&list[i]);
-          } while (i != 0);
+        while (i > 0) {
+          i--;
+          work.push_back(&list[i]);
         }
         continue;
         // Note that if the block had a merge at the end, we would have seen
@@ -119,38 +119,16 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
         // The rest of the loop's effects matter too, we must also
         // take into account global state like interacting loads and
         // stores.
-        if (!effects.hasGlobalSideEffects() &&
-            !effectsSoFar.invalidates(effects) &&
-            !(effects.noticesGlobalSideEffects() && loopEffects.hasGlobalSideEffects())) {
+        bool unsafeToMove = effects.hasGlobalSideEffects() ||
+                            effectsSoFar.invalidates(effects) ||
+                            (effects.noticesGlobalSideEffects() &&
+                             loopEffects.hasGlobalSideEffects());
+        if (!unsafeToMove) {
           // So far so good. Check if our local dependencies are all
           // outside of the loop, in which case everything is good -
           // either they are before the loop and constant for us, or
           // they are after and don't matter.
-          bool canMove = true;
-          if (!effects.localsRead.empty()) {
-            FindAll<GetLocal> gets(curr);
-            for (auto* get : gets.list) {
-              auto& sets = localGraph->getSetses[get];
-              for (auto* set : sets) {
-                // nullptr means a parameter or zero-init value;
-                // no danger to us.
-                if (!set) continue;
-                // Check if the set is in the loop. If not, it's either before,
-                // which is fine, or after, which is also fine - moving curr
-                // to just outside the loop will preserve those relationships.
-                // TODO: this still counts curr's sets as inside the loop, which
-                //       might matter in non-flat mode.
-                if (loopSets.count(set)) {
-                  canMove = false;
-                  break;
-                }
-              }
-              if (!canMove) {
-                break;
-              }
-            }
-          }
-          if (canMove) {
+          if (effects.localsRead.empty() || !hasGetDependingOnLoopSet(curr, loopSets)) {
             // We have checked if our gets are influenced by sets in the loop, and
             // must also check if our sets interfere with them. To do so, assume
             // temporarily that we are moving curr out; see if any sets remain for
@@ -160,6 +138,7 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
               assert(numSetsForIndex[set->index] > 0);
               numSetsForIndex[set->index]--;
             }
+            bool canMove = true;
             for (auto* set : currSets.list) {
               if (numSetsForIndex[set->index] > 0) {
                 canMove = false;
@@ -235,6 +214,27 @@ struct LoopInvariantCodeMotion : public WalkerPass<ExpressionStackWalker<LoopInv
       }
     }
     return true;
+  }
+
+  bool hasGetDependingOnLoopSet(Expression* curr, LoopSets& loopSets) {
+    FindAll<GetLocal> gets(curr);
+    for (auto* get : gets.list) {
+      auto& sets = localGraph->getSetses[get];
+      for (auto* set : sets) {
+        // nullptr means a parameter or zero-init value;
+        // no danger to us.
+        if (!set) continue;
+        // Check if the set is in the loop. If not, it's either before,
+        // which is fine, or after, which is also fine - moving curr
+        // to just outside the loop will preserve those relationships.
+        // TODO: this still counts curr's sets as inside the loop, which
+        //       might matter in non-flat mode.
+        if (loopSets.count(set)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 };
 
