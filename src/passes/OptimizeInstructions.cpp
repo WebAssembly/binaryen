@@ -258,22 +258,6 @@ Index getMaxBits(Expression* curr, LocalInfoProvider* localInfoProvider) {
   }
 }
 
-// looks through fallthrough operations, like tee_local, block fallthrough, etc.
-// too and block fallthroughs, etc.
-Expression* getFallthrough(Expression* curr) {
-  if (auto* set = curr->dynCast<SetLocal>()) {
-    if (set->isTee()) {
-      return getFallthrough(set->value);
-    }
-  } else if (auto* block = curr->dynCast<Block>()) {
-    // if no name, we can't be broken to, and then can look at the fallthrough
-    if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back());
-    }
-  }
-  return curr;
-}
-
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
@@ -316,7 +300,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
     auto type = getFunction()->getLocalType(curr->index);
     if (type != i32 && type != i64) return;
     // an integer var, worth processing
-    auto* value = getFallthrough(curr->value);
+    auto* value = Properties::getFallthrough(curr->value);
     auto& info = localInfo[curr->index];
     info.maxBits = std::max(info.maxBits, getMaxBits(value, this));
     auto signExtBits = LocalInfo::kUnknown;
@@ -421,7 +405,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         Index extraShifts;
         auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
         if (extraShifts == 0) {
-          if (auto* load = getFallthrough(ext)->dynCast<Load>()) {
+          if (auto* load = Properties::getFallthrough(ext)->dynCast<Load>()) {
             // pattern match a load of 8 bits and a sign extend using a shl of 24 then shr_s of 24 as well, etc.
             if (LoadUtils::canBeSigned(load) &&
                 ((load->bytes == 1 && bits == 8) || (load->bytes == 2 && bits == 16))) {

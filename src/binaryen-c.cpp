@@ -29,7 +29,7 @@
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-#include "wasm2asm.h"
+#include "wasm2js.h"
 #include "cfg/Relooper.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
@@ -77,7 +77,7 @@ static PassOptions globalPassOptions = PassOptions::getWithDefaultOptimizationOp
 
 static int tracing = 0;
 
-void traceNameOrNULL(const char *name) {
+void traceNameOrNULL(const char* name) {
   if (name) std::cout << "\"" << name << "\"";
   else std::cout << "NULL";
 }
@@ -459,7 +459,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, 
 
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<Switch>();
 
   if (tracing) {
@@ -485,7 +485,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char **name
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
+BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<Call>();
 
   if (tracing) {
@@ -510,7 +510,7 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char *target,
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char *target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
+BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
   auto* ret = ((Module*)module)->allocator.alloc<CallImport>();
 
   if (tracing) {
@@ -603,7 +603,7 @@ BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex i
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *name, BinaryenType type) {
+BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char* name, BinaryenType type) {
   auto* ret = ((Module*)module)->allocator.alloc<GetGlobal>();
 
   if (tracing) {
@@ -616,7 +616,7 @@ BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char *na
   ret->finalize();
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char *name, BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char* name, BinaryenExpressionRef value) {
   auto* ret = ((Module*)module)->allocator.alloc<SetGlobal>();
 
   if (tracing) {
@@ -1704,10 +1704,10 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
 
 // Imports
 
-WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef type) {
+WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef type) {
   return BinaryenAddFunctionImport(module, internalName, externalModuleName, externalBaseName, type);
 }
-BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char *externalBaseName, BinaryenFunctionTypeRef functionType) {
+BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef functionType) {
   auto* ret = new Import();
   auto* wasm = (Module*)module;
 
@@ -1882,33 +1882,32 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenFunctionRef* funcs, BinaryenIndex numFuncs) {
+void BinaryenSetFunctionTable(BinaryenModuleRef module, const char** funcNames, BinaryenIndex numFuncNames) {
   if (tracing) {
     std::cout << "  {\n";
-    std::cout << "    BinaryenFunctionRef funcs[] = { ";
-    for (BinaryenIndex i = 0; i < numFuncs; i++) {
+    std::cout << "    const char* funcNames[] = { ";
+    for (BinaryenIndex i = 0; i < numFuncNames; i++) {
       if (i > 0) std::cout << ", ";
-      std::cout << "functions[" << functions[funcs[i]] << "]";
+      std::cout << "\"" << funcNames[i] << "\"";
     }
-    if (numFuncs == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
     std::cout << " };\n";
-    std::cout << "    BinaryenSetFunctionTable(the_module, funcs, " << numFuncs << ");\n";
+    std::cout << "    BinaryenSetFunctionTable(the_module, funcNames, " << numFuncNames << ");\n";
     std::cout << "  }\n";
   }
 
   auto* wasm = (Module*)module;
   wasm->table.exists = true;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
-  for (BinaryenIndex i = 0; i < numFuncs; i++) {
-    segment.data.push_back(((Function*)funcs[i])->name);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    segment.data.push_back(funcNames[i]);
   }
   wasm->table.segments.push_back(segment);
-  wasm->table.initial = wasm->table.max = numFuncs;
+  wasm->table.initial = wasm->table.max = numFuncNames;
 }
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char **segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -2008,9 +2007,9 @@ void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
   }
 
   Module* wasm = (Module*)module;
-  Wasm2AsmBuilder::Flags builderFlags;
-  Wasm2AsmBuilder wasm2asm(builderFlags);
-  Ref asmjs = wasm2asm.processWasm(wasm);
+  Wasm2JSBuilder::Flags builderFlags;
+  Wasm2JSBuilder wasm2js(builderFlags);
+  Ref asmjs = wasm2js.processWasm(wasm);
   JSPrinter jser(true, true, asmjs);
   jser.printAst();
 
@@ -2088,7 +2087,7 @@ void BinaryenSetDebugInfo(int on) {
   globalPassOptions.debugInfo = on != 0;
 }
 
-void BinaryenModuleRunPasses(BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
+void BinaryenModuleRunPasses(BinaryenModuleRef module, const char** passes, BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";
@@ -2347,7 +2346,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func, BinaryenModuleRef module
   passRunner.addDefaultOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
-void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char **passes, BinaryenIndex numPasses) {
+void BinaryenFunctionRunPasses(BinaryenFunctionRef func, BinaryenModuleRef module, const char** passes, BinaryenIndex numPasses) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* passes[] = { ";

@@ -1400,9 +1400,10 @@ int main() {
   }
   imports[0] = BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  BinaryenFunctionGetName(functions[0]);
   {
-    BinaryenFunctionRef funcs[] = { functions[0] };
-    BinaryenSetFunctionTable(the_module, funcs, 1);
+    const char* funcNames[] = { "kitchen()sinker" };
+    BinaryenSetFunctionTable(the_module, funcNames, 1);
   }
   expressions[254] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {

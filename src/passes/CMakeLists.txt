@@ -9,6 +9,7 @@ SET(passes_SOURCES
   CodePushing.cpp
   CodeFolding.cpp
   ConstHoisting.cpp
+  DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
@@ -48,6 +49,7 @@ SET(passes_SOURCES
   TrapMode.cpp
   SafeHeap.cpp
   SimplifyLocals.cpp
+  Souperify.cpp
   SpillPointers.cpp
   SSAify.cpp
   Untee.cpp

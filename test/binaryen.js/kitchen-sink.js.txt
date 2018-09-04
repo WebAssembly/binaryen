@@ -1456,9 +1456,20 @@ getExpressionInfo(f64.const)={"id":15,"type":4,"value":9.5}
   }
   imports[0] = BinaryenAddFunctionImport(the_module, "an-imported", "module", "base", functionTypes[1]);
   exports[0] = BinaryenAddFunctionExport(the_module, "kitchen()sinker", "kitchen_sinker");
+  BinaryenFunctionGetName(functions[0]);
+  BinaryenFunctionGetType(functions[0]);
+  BinaryenFunctionGetNumParams(functions[0]);
+  BinaryenFunctionGetParam(functions[0], 0);
+  BinaryenFunctionGetParam(functions[0], 1);
+  BinaryenFunctionGetParam(functions[0], 2);
+  BinaryenFunctionGetParam(functions[0], 3);
+  BinaryenFunctionGetResult(functions[0]);
+  BinaryenFunctionGetNumVars(functions[0]);
+  BinaryenFunctionGetVar(functions[0], 0);
+  BinaryenFunctionGetBody(functions[0]);
   {
-    BinaryenFunctionRef funcs[] = { functions[0] };
-    BinaryenSetFunctionTable(the_module, funcs, 1);
+    const char* funcNames[] = { "kitchen()sinker" };
+    BinaryenSetFunctionTable(the_module, funcNames, 1);
   }
   expressions[256] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {

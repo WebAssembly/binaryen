@@ -106,7 +106,7 @@ struct Mergeable {
       }
     }
     for (auto& section : wasm.userSections) {
-      if (section.name == "dylink") {
+      if (section.name == BinaryConsts::UserSections::Dylink) {
         WasmBinaryBuilder builder(wasm, section.data, false);
         totalMemorySize = std::max(totalMemorySize, builder.getU32LEB());
         totalTableSize = std::max(totalTableSize, builder.getU32LEB());

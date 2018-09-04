@@ -22,10 +22,10 @@ import sys
 from scripts.test.support import run_command, split_wast, node_test_glue, node_has_webassembly
 from scripts.test.shared import (
     ASM2WASM, MOZJS, NODEJS, WASM_OPT, WASM_AS, WASM_DIS,
-    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2ASM, WASM_METADCE,
+    WASM_CTOR_EVAL, WASM_MERGE, WASM_REDUCE, WASM2JS, WASM_METADCE,
     WASM_EMSCRIPTEN_FINALIZE, BINARYEN_INSTALL_DIR, BINARYEN_JS,
     files_with_pattern, has_shell_timeout, options)
-from scripts.test.wasm2asm import tests, spec_tests, extra_wasm2asm_tests, assert_tests, wasm2asm_dir
+from scripts.test.wasm2js import tests, spec_tests, extra_wasm2js_tests, assert_tests, wasm2js_dir, wasm2js_blacklist
 
 
 def update_asm_js_tests():
@@ -225,7 +225,7 @@ def update_example_tests():
     print os.getcwd()
     subprocess.check_call(extra)
     # Link against the binaryen C library DSO, using rpath
-    cmd = ['example.o', '-L' + libdir, '-lbinaryen', '-Wl,-rpath=' + os.path.abspath(libdir)] + cmd
+    cmd = ['example.o', '-L' + libdir, '-lbinaryen', '-Wl,-rpath,' + os.path.abspath(libdir)] + cmd
     print '  ', t, src, expected
     if os.environ.get('COMPILER_FLAGS'):
       for f in os.environ.get('COMPILER_FLAGS').split(' '):
@@ -339,25 +339,28 @@ def update_ctor_eval_tests():
         o.write(actual)
 
 
-def update_wasm2asm_tests():
-  print '\n[ checking wasm2asm ]\n'
-  for wasm in tests + spec_tests + extra_wasm2asm_tests:
+def update_wasm2js_tests():
+  print '\n[ checking wasm2js ]\n'
+  for wasm in tests + spec_tests + extra_wasm2js_tests:
     if not wasm.endswith('.wast'):
       continue
 
-    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
-    expected_file = os.path.join(wasm2asm_dir, asm)
+    if os.path.basename(wasm) in wasm2js_blacklist:
+      continue
 
-    # we run wasm2asm on tests and spec tests only if the output
+    asm = os.path.basename(wasm).replace('.wast', '.2asm.js')
+    expected_file = os.path.join(wasm2js_dir, asm)
+
+    # we run wasm2js on tests and spec tests only if the output
     # exists - only some work so far. the tests in extra are in
-    # the test/wasm2asm dir and so are specific to wasm2asm, and
+    # the test/wasm2js dir and so are specific to wasm2js, and
     # we run all of those.
-    if wasm not in extra_wasm2asm_tests and not os.path.exists(expected_file):
+    if wasm not in extra_wasm2js_tests and not os.path.exists(expected_file):
       continue
 
     print '..', wasm
 
-    cmd = WASM2ASM + [os.path.join('test', wasm)]
+    cmd = WASM2JS + [os.path.join('test', wasm)]
     out = run_command(cmd)
     with open(expected_file, 'w') as o:
       o.write(out)
@@ -370,7 +373,7 @@ def update_wasm2asm_tests():
     asserts_expected_file = os.path.join('test', asserts)
     traps_expected_file = os.path.join('test', traps)
 
-    cmd = WASM2ASM + [os.path.join(wasm2asm_dir, wasm), '--allow-asserts']
+    cmd = WASM2JS + [os.path.join(wasm2js_dir, wasm), '--allow-asserts']
     out = run_command(cmd)
     with open(asserts_expected_file, 'w') as o:
       o.write(out)
@@ -423,7 +426,7 @@ def main():
   update_wasm_merge_tests()
   update_binaryen_js_tests()
   update_ctor_eval_tests()
-  update_wasm2asm_tests()
+  update_wasm2js_tests()
   update_metadce_tests()
   update_reduce_tests()
 

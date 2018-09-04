@@ -78,7 +78,7 @@ struct ExecutionResults {
         abort();
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (!results[name].bitwiseEqual(other.results[name])) {
+      if (results[name] != other.results[name]) {
         std::cout << "not identical!\n";
         abort();
       }

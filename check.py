@@ -31,7 +31,7 @@ from scripts.test.shared import (
 
 import scripts.test.asm2wasm as asm2wasm
 import scripts.test.lld as lld
-import scripts.test.wasm2asm as wasm2asm
+import scripts.test.wasm2js as wasm2js
 
 if options.interpreter:
   print '[ using wasm interpreter at "%s" ]' % options.interpreter
@@ -237,6 +237,21 @@ def run_crash_tests():
       cmd = WASM_OPT + [t]
       # expect a parse error to be reported
       run_command(cmd, expected_err='parse exception:', err_contains=True, expected_status=1)
+
+
+def run_dylink_tests():
+  print "\n[ we emit dylink sections properly... ]\n"
+
+  for t in os.listdir(options.binaryen_test):
+    if t.startswith('dylib') and t.endswith('.wasm'):
+      print '..', t
+      t = os.path.join(options.binaryen_test, t)
+      cmd = WASM_OPT + [t, '-o', 'a.wasm']
+      run_command(cmd)
+      with open('a.wasm') as output:
+        index = output.read().find('dylink')
+        print '  ', index
+        assert index == 11, 'dylink section must be first, right after the magic number etc.'
 
 
 def run_ctor_eval_tests():
@@ -547,7 +562,7 @@ def run_gcc_tests():
         print 'build: ', ' '.join(extra)
         subprocess.check_call(extra)
         # Link against the binaryen C library DSO, using an executable-relative rpath
-        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath=$ORIGIN/../lib']
+        cmd = ['example.o', '-L' + os.path.join(options.binaryen_bin, '..', 'lib'), '-lbinaryen'] + cmd + ['-Wl,-rpath,$ORIGIN/../lib']
       else:
         continue
       print '  ', t, src, expected
@@ -640,6 +655,7 @@ def main():
   run_wasm_dis_tests()
   run_wasm_merge_tests()
   run_crash_tests()
+  run_dylink_tests()
   run_ctor_eval_tests()
   run_wasm_metadce_tests()
   if has_shell_timeout():
@@ -648,7 +664,7 @@ def main():
   run_spec_tests()
   run_binaryen_js_tests()
   lld.test_wasm_emscripten_finalize()
-  wasm2asm.test_wasm2asm()
+  wasm2js.test_wasm2js()
   run_validator_tests()
   if has_vanilla_emcc and has_vanilla_llvm and 0:
     run_vanilla_tests()

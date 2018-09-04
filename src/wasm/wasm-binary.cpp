@@ -39,6 +39,9 @@ void WasmBinaryWriter::prepare() {
 
 void WasmBinaryWriter::write() {
   writeHeader();
+
+  writeEarlyUserSections();
+
   if (sourceMap) {
     writeSourceMapProlog();
   }
@@ -62,7 +65,7 @@ void WasmBinaryWriter::write() {
     writeSourceMapEpilog();
   }
 
-  writeUserSections();
+  writeLateUserSections();
 
   finishUp();
 }
@@ -452,13 +455,13 @@ void WasmBinaryWriter::writeNames() {
   for (auto& import : wasm->imports) {
     if (import->kind == ExternalKind::Function) {
       o << U32LEB(emitted);
-      writeInlineString(import->name.str);
+      writeEscapedName(import->name.str);
       emitted++;
     }
   }
   for (auto& curr : wasm->functions) {
     o << U32LEB(emitted);
-    writeInlineString(curr->name.str);
+    writeEscapedName(curr->name.str);
     emitted++;
   }
   assert(emitted == mappedFunctions.size());
@@ -535,15 +538,31 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   *sourceMap << "\"}";
 }
 
-void WasmBinaryWriter::writeUserSections() {
+void WasmBinaryWriter::writeEarlyUserSections() {
+  // The dylink section must be the first in the module, per
+  // the spec, to allow simple parsing by loaders.
   for (auto& section : wasm->userSections) {
-    auto start = startSection(0);
-    writeInlineString(section.name.c_str());
-    for (size_t i = 0; i < section.data.size(); i++) {
-      o << uint8_t(section.data[i]);
+    if (section.name == BinaryConsts::UserSections::Dylink) {
+      writeUserSection(section);
     }
-    finishSection(start);
   }
+}
+
+void WasmBinaryWriter::writeLateUserSections() {
+  for (auto& section : wasm->userSections) {
+    if (section.name != BinaryConsts::UserSections::Dylink) {
+      writeUserSection(section);
+    }
+  }
+}
+
+void WasmBinaryWriter::writeUserSection(const UserSection& section) {
+  auto start = startSection(0);
+  writeInlineString(section.name.c_str());
+  for (size_t i = 0; i < section.data.size(); i++) {
+    o << uint8_t(section.data[i]);
+  }
+  finishSection(start);
 }
 
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
@@ -563,6 +582,35 @@ void WasmBinaryWriter::writeInlineString(const char* name) {
   for (int32_t i = 0; i < size; i++) {
     o << int8_t(name[i]);
   }
+}
+
+static bool isHexDigit(char ch) {
+  return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+}
+
+static int decodeHexNibble(char ch) {
+  return ch <= '9' ? ch & 15 : (ch & 15) + 9;
+}
+
+void WasmBinaryWriter::writeEscapedName(const char* name) {
+  if (!strpbrk(name, "\\")) {
+    writeInlineString(name);
+    return;
+  }
+  // decode escaped by escapeName (see below) function names
+  std::string unescaped;
+  int32_t size = strlen(name);
+  for (int32_t i = 0; i < size;) {
+    char ch = name[i++];
+    // support only `\xx` escapes; ignore invalid or unsupported escapes
+    if (ch != '\\' || i + 1 >= size || !isHexDigit(name[i]) || !isHexDigit(name[i + 1])) {
+      unescaped.push_back(ch);
+      continue;
+    }
+    unescaped.push_back(char((decodeHexNibble(name[i]) << 4) | decodeHexNibble(name[i + 1])));
+    i += 2;
+  }
+  writeInlineString(unescaped.c_str());
 }
 
 void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
@@ -1152,6 +1200,8 @@ void WasmBinaryBuilder::readSourceMapHeader() {
         }
       } else if (matching && name[pos] == ch) {
         ++pos;
+      } else if (matching) {
+        matching = false;
       }
     }
     skipWhitespace();
@@ -1515,6 +1565,42 @@ void WasmBinaryBuilder::readTableElements() {
   }
 }
 
+static bool isIdChar(char ch) {
+  return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+    ch == '!' || ch == '#' || ch == '$' || ch == '%' || ch == '&' || ch == '\'' || ch == '*' ||
+    ch == '+' || ch == '-' || ch == '.' || ch == '/' || ch == ':' || ch == '<' || ch == '=' ||
+    ch == '>' || ch == '?' || ch == '@' || ch == '^' || ch == '_' || ch == '`' || ch == '|' ||
+    ch == '~';
+}
+
+static char formatNibble(int nibble) {
+  return nibble < 10 ? '0' + nibble : 'a' - 10 + nibble;
+}
+
+static void escapeName(Name &name) {
+  bool allIdChars = true;
+  for (const char *p = name.str; allIdChars && *p; p++) {
+    allIdChars = isIdChar(*p);
+  }
+  if (allIdChars) {
+    return;
+  }
+  // encode name, if at least one non-idchar (per WebAssembly spec) was found
+  std::string escaped;
+  for (const char *p = name.str; *p; p++) {
+    char ch = *p;
+    if (isIdChar(ch)) {
+      escaped.push_back(ch);
+      continue;
+    }
+    // replace non-idchar with `\xx` escape
+    escaped.push_back('\\');
+    escaped.push_back(formatNibble(ch >> 4));
+    escaped.push_back(formatNibble(ch & 15));
+  }
+  name = escaped;
+}
+
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
   if (debug) std::cerr << "== readNames" << std::endl;
   auto sectionPos = pos;
@@ -1533,6 +1619,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     for (size_t i = 0; i < num; i++) {
       auto index = getU32LEB();
       auto rawName = getInlineString();
+      escapeName(rawName);
       auto name = rawName;
       // De-duplicate names by appending .1, .2, etc.
       for (int i = 1; !usedNames.insert(name).second; ++i) {

@@ -94,6 +94,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/CodeFolding.cpp \
   $BINARYEN_SRC/passes/CodePushing.cpp \
   $BINARYEN_SRC/passes/ConstHoisting.cpp \
+  $BINARYEN_SRC/passes/DataFlowOpts.cpp \
   $BINARYEN_SRC/passes/DeadCodeElimination.cpp \
   $BINARYEN_SRC/passes/DuplicateFunctionElimination.cpp \
   $BINARYEN_SRC/passes/ExtractFunction.cpp \
@@ -130,6 +131,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/ReReloop.cpp \
   $BINARYEN_SRC/passes/SafeHeap.cpp \
   $BINARYEN_SRC/passes/SimplifyLocals.cpp \
+  $BINARYEN_SRC/passes/Souperify.cpp \
   $BINARYEN_SRC/passes/SpillPointers.cpp \
   $BINARYEN_SRC/passes/SSAify.cpp \
   $BINARYEN_SRC/passes/StackIR.cpp \

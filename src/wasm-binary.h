@@ -340,6 +340,8 @@ namespace UserSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
 
+extern const char* Dylink;
+
 enum Subsection {
   NameFunction = 1,
   NameLocal = 2,
@@ -713,7 +715,9 @@ public:
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeUserSections();
+  void writeEarlyUserSections();
+  void writeLateUserSections();
+  void writeUserSection(const UserSection& section);
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
@@ -721,6 +725,7 @@ public:
 
   // helpers
   void writeInlineString(const char* name);
+  void writeEscapedName(const char* name);
   void writeInlineBuffer(const char* data, size_t size);
 
   struct Buffer {
