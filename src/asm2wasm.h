@@ -415,6 +415,7 @@ public:
   TrappingFunctionContainer trappingFunctions;
   PassOptions passOptions;
   bool legalizeJavaScriptFFI;
+  bool compactFunctionTable;
   bool runOptimizationPasses;
   bool wasmOnly;
 
@@ -535,7 +536,7 @@ private:
   }
 
 public:
- Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool runOptimizationPasses, bool wasmOnly)
+ Asm2WasmBuilder(Module& wasm, Asm2WasmPreProcessor& preprocessor, bool debug, TrapMode trapMode, PassOptions passOptions, bool legalizeJavaScriptFFI, bool compactFunctionTable, bool runOptimizationPasses, bool wasmOnly)
      : wasm(wasm),
        allocator(wasm.allocator),
        builder(wasm),
@@ -545,6 +546,7 @@ public:
        trappingFunctions(trapMode, wasm, /* immediate = */ true),
        passOptions(passOptions),
        legalizeJavaScriptFFI(legalizeJavaScriptFFI),
+       compactFunctionTable(compactFunctionTable),
        runOptimizationPasses(runOptimizationPasses),
        wasmOnly(wasmOnly) {}
 
@@ -1100,10 +1102,25 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           auto& segment = wasm.table.segments[0];
           functionTableStarts[name] = segment.data.size(); // this table starts here
           Ref contents = value[1];
-          for (unsigned k = 0; k < contents->size(); k++) {
-            IString curr = contents[k]->getIString();
-            segment.data.push_back(curr);
-          }
+          if (compactFunctionTable) {
+            if (segment.data.size() == 0 && contents->size() > 0) {
+			  IString curr = contents[0]->getIString();
+			  segment.data.push_back(curr); //null fnptr
+			}
+            for (unsigned k = 1; k < contents->size(); k++) {
+              IString curr = contents[k]->getIString();
+              if (curr.c_str()[0] == '_') {//FIXME This only works with C symbols
+                if (segment.data.size () <= k)
+                  segment.data.resize (k + 1, Name());
+                segment.data[k] = curr;
+			  }
+            }
+          } else {
+            for (unsigned k = 0; k < contents->size(); k++) {
+              IString curr = contents[k]->getIString();
+              segment.data.push_back(curr);
+            }
+		  }
           wasm.table.initial = wasm.table.max = segment.data.size();
         } else {
           abort_on("invalid var element", pair);
@@ -1370,13 +1387,34 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         auto* offset = add->right->cast<CallImport>();
         auto tableName = offset->target;
         if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
-        add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        if (parent->compactFunctionTable) {
+          add->right = parent->builder.makeConst(Literal((int32_t)0));
+          if (add->left->is<Binary>()) {
+            auto* and_op = add->left->dynCast<Binary>();
+            //this is masking the index, we can eliminate it
+            if (and_op->op == BinaryOp::AndInt32) {
+              add->left = and_op->left; //FIXME figure out which one is the mask operand
+            }
+          }
+        } else {
+          add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        }
       } else {
         auto* offset = add->left->dynCast<CallImport>();
         if (!offset) return;
         auto tableName = offset->target;
         if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
-        add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        if (parent->compactFunctionTable) {
+          add->left = parent->builder.makeConst(Literal((int32_t)0));
+          if (add->right->is<Binary>()) {
+            auto *and_op = add->right->dynCast<Binary>();
+            //this is masking the index, we can eliminate it
+            if (and_op->op == BinaryOp::AndInt32)
+              add->right = and_op->left; //FIXME figure out which one is the mask operand
+          }
+        } else {
+          add->left = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
+        }
       }
     }
 
