@@ -39,6 +39,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     if (breakNames.size() > 0) branches = true;
   }
 
+  // Core effect tracking
+
   bool branches = false; // branches out of this expression, returns, infinite loops, etc
   bool calls = false;
   std::set<Index> localsRead;
@@ -55,12 +57,17 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
   bool isAtomic = false; // An atomic load/store/RMW/Cmpxchg or an operator that
                          // has a defined ordering wrt atomics (e.g. grow_memory)
 
+  // Helper functions to check for various effect types
+
   bool accessesLocal() { return localsRead.size() + localsWritten.size() > 0; }
   bool accessesGlobal() { return globalsRead.size() + globalsWritten.size() > 0; }
   bool accessesMemory() { return calls || readsMemory || writesMemory; }
+
   bool hasGlobalSideEffects() { return calls || globalsWritten.size() > 0 || writesMemory || isAtomic; }
   bool hasSideEffects() { return hasGlobalSideEffects() || localsWritten.size() > 0 || branches || implicitTrap; }
   bool hasAnything() { return branches || calls || accessesLocal() || readsMemory || writesMemory || accessesGlobal() || implicitTrap || isAtomic; }
+
+  bool noticesGlobalSideEffects() { return calls || readsMemory || isAtomic || globalsRead.size(); }
 
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() { return !breakNames.empty(); }
@@ -113,6 +120,8 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    implicitTrap = implicitTrap || other.implicitTrap;
+    isAtomic = isAtomic || other.isAtomic;
     for (auto i : other.localsRead) localsRead.insert(i);
     for (auto i : other.localsWritten) localsWritten.insert(i);
     for (auto i : other.globalsRead) globalsRead.insert(i);
