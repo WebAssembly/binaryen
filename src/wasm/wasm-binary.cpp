@@ -233,7 +233,7 @@ void WasmBinaryWriter::writeFunctions() {
   if (wasm->functions.size() == 0) return;
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
-  size_t total = wasm->functions.size() - importInfo->getNumImportedFunctions();
+  size_t total = wasm->functions.size() - importInfo->getNumFunctionImports();
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
     Function* func = wasm->functions[i].get();
@@ -276,7 +276,7 @@ void WasmBinaryWriter::writeGlobals() {
   if (wasm->globals.size() == 0) return;
   if (debug) std::cerr << "== writeglobals" << std::endl;
   auto start = startSection(BinaryConsts::Section::Global);
-  auto num = wasm->globals.size() - importInfo->getNumImportedGlobals();
+  auto num = wasm->globals.size() - importInfo->getNumGlobalImports();
   o << U32LEB(num);
   for (auto& curr : wasm->globals) {
     if (!curr->imported()) continue;
@@ -484,13 +484,18 @@ void WasmBinaryWriter::writeSourceMapUrl() {
 
 void WasmBinaryWriter::writeSymbolMap() {
   std::ofstream file(symbolMap);
-  for (auto& import : wasm->imports) {
-    if (import->kind == ExternalKind::Function) {
-      file << getFunctionIndex(import->name) << ":" << import->name.str << std::endl;
+  auto write = [&](Function* func) {
+    file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
+  };
+  for (auto& func : wasm->functions) {
+    if (func->imported()) {
+      write(func.get());
     }
   }
   for (auto& func : wasm->functions) {
-    file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
+    if (!import->imported()) {
+      write(func.get());
+    }
   }
   file.close();
 }
