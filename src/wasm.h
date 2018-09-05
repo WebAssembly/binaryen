@@ -596,7 +596,7 @@ public:
   Name type; // if null, it is implicit in params and result
 
   // The body of the function
-  Expression* body;
+  Expression* body = nullptr;
 
   // If present, this stack IR was generated from the main Binaryen IR body,
   // and possibly optimized. If it is present when writing to wasm binary,

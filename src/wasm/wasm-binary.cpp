@@ -413,7 +413,7 @@ uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
 }
 
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
-  if (!wasm->table.exists || wasm->table.imported) return;
+  if (!wasm->table.exists || wasm->table.imported()) return;
   if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
@@ -493,7 +493,7 @@ void WasmBinaryWriter::writeSymbolMap() {
     }
   }
   for (auto& func : wasm->functions) {
-    if (!import->imported()) {
+    if (!func->imported()) {
       write(func.get());
     }
   }
@@ -987,11 +987,10 @@ void WasmBinaryBuilder::readImports() {
         if (index >= wasm.functionTypes.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
         }
-        auto* functionType = wasm.functionTypes[index];
-        assert(functionType.is());
+        auto* functionType = wasm.functionTypes[index].get();
         auto params = functionType->params;
         auto result = functionType->result;
-        auto* curr = builder.makeFunction(name, params, result, {});
+        auto* curr = builder.makeFunction(name, std::move(params), result, {});
         curr->module = module;
         curr->base = base;
         curr->type = functionType->name;
@@ -1007,7 +1006,6 @@ void WasmBinaryBuilder::readImports() {
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
         wasm.table.exists = true;
-        wasm.table.imported = true;
         bool is_shared;
         getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
         if (is_shared) throwError("Tables may not be shared");
@@ -1018,7 +1016,6 @@ void WasmBinaryBuilder::readImports() {
         wasm.memory.base = base;
         wasm.memory.name = Name(std::string("mimport$") + std::to_string(i));
         wasm.memory.exists = true;
-        wasm.memory.imported = true;
         getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
@@ -1027,7 +1024,7 @@ void WasmBinaryBuilder::readImports() {
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         assert(!mutable_); // for now, until mutable globals
-        auto* curr = builder.makeGlobal(name, type, nullptr, mutable_) {
+        auto* curr = builder.makeGlobal(name, type, nullptr, mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
         wasm.addGlobal(curr);
@@ -1457,7 +1454,7 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
     // Create name => index mapping.
     auto add = [&](Global* curr) {
       auto index = mappedGlobals.size();
-      mappedGlobals[index] = import->name;
+      mappedGlobals[index] = curr->name;
     };
     for (auto& curr : wasm.globals) {
       if (curr->imported()) {
@@ -1982,17 +1979,7 @@ void WasmBinaryBuilder::visitGetGlobal(GetGlobal* curr) {
   if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
-  auto* global = wasm.getGlobalOrNull(curr->name);
-  if (global) {
-    curr->type = global->type;
-    return;
-  }
-  auto* import = wasm.getImportOrNull(curr->name);
-  if (import && import->kind == ExternalKind::Global) {
-    curr->type = import->globalType;
-    return;
-  }
-  throwError("bad get_global");
+  curr->type = wasm.getGlobal(curr->name)->type;
 }
 
 void WasmBinaryBuilder::visitSetGlobal(SetGlobal* curr) {
