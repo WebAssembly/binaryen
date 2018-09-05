@@ -65,7 +65,6 @@ struct Visitor {
   ReturnType visitUnreachable(Unreachable* curr) { return ReturnType(); }
   // Module-level visitors
   ReturnType visitFunctionType(FunctionType* curr) { return ReturnType(); }
-  ReturnType visitImport(Import* curr) { return ReturnType(); }
   ReturnType visitExport(Export* curr) { return ReturnType(); }
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
@@ -334,9 +333,6 @@ struct Walker : public VisitorType {
     SubType* self = static_cast<SubType*>(this);
     for (auto& curr : module->functionTypes) {
       self->visitFunctionType(curr.get());
-    }
-    for (auto& curr : module->imports) {
-      self->visitImport(curr.get());
     }
     for (auto& curr : module->exports) {
       self->visitExport(curr.get());

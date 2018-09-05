@@ -652,7 +652,7 @@ public:
   ExternalKind kind;
 };
 
-class Table {
+class Table : public Importable {
 public:
   static const Address::address_t kPageSize = 1;
   static const Index kMaxSize = Index(-1);
@@ -670,18 +670,17 @@ public:
   // Currently the wasm object always 'has' one Table. It 'exists' if it has been defined or imported.
   // The table can exist but be empty and have no defined initial or max size.
   bool exists;
-  bool imported;
   Name name;
   Address initial, max;
   std::vector<Segment> segments;
 
-  Table() : exists(false), imported(false), initial(0), max(kMaxSize) {
+  Table() : exists(false), initial(0), max(kMaxSize) {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kMaxSize; }
 };
 
-class Memory {
+class Memory : public Importable {
 public:
   static const Address::address_t kPageSize = 64 * 1024;
   static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
@@ -707,10 +706,9 @@ public:
 
   // See comment in Table.
   bool exists;
-  bool imported;
   bool shared;
 
-  Memory() : initial(0), max(kMaxSize), exists(false), imported(false), shared(false) {
+  Memory() : initial(0), max(kMaxSize), exists(false), shared(false) {
     name = Name::fromInt(0);
   }
   bool hasMax() { return max != kMaxSize; }
