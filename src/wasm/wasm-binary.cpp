@@ -196,15 +196,15 @@ void WasmBinaryWriter::writeImports() {
     writeInlineString(func->module.str);
     writeInlineString(func->base.str);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getFunctionTypeIndex(func->functionType));
+    o << U32LEB(getFunctionTypeIndex(func->type));
   }
-  if (wasm->memory.imported) {
+  if (wasm->memory.imported()) {
     writeInlineString(wasm->memory.module.str);
     writeInlineString(wasm->memory.base.str);
     writeResizableLimits(wasm->memory.initial, wasm->memory.max,
                          wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
   }
-  if (wasm->table.imported) {
+  if (wasm->table.imported()) {
     writeInlineString(wasm->table.module.str);
     writeInlineString(wasm->table.base.str);
     o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
