@@ -78,6 +78,8 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
   ret->body = ExpressionManipulator::copy(func->body, out);
+  ret->module = func->module;
+  ret->base = func->base;
   // TODO: copy Stack IR
   assert(!func->stackIR);
   out.addFunction(ret);
@@ -89,9 +91,6 @@ inline void copyModule(Module& in, Module& out) {
   // for everything *but* expressions
   for (auto& curr : in.functionTypes) {
     out.addFunctionType(new FunctionType(*curr));
-  }
-  for (auto& curr : in.imports) {
-    out.addImport(new Import(*curr));
   }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));

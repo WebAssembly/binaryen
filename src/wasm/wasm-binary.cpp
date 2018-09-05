@@ -966,6 +966,7 @@ void WasmBinaryBuilder::readImports() {
   if (debug) std::cerr << "== readImports" << std::endl;
   size_t num = getU32LEB();
   if (debug) std::cerr << "num: " << num << std::endl;
+  Builder builder(wasm);
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
     auto module = getInlineString();
