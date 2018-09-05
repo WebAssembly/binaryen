@@ -810,7 +810,6 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
       case 'c': {
         if (str[1] == 'a') {
           if (id == CALL) return makeCall(s);
-          if (id == CALL_IMPORT) return makeCallImport(s);
           if (id == CALL_INDIRECT) return makeCallIndirect(s);
         } else if (str[1] == 'u') return makeHost(s, HostOp::CurrentMemory);
         abort_on(str);
@@ -1361,28 +1360,9 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeCall(Element& s) {
   auto target = getFunctionName(*s[1]);
-  auto* import = wasm.getImportOrNull(target);
-  if (import && import->kind == ExternalKind::Function) {
-    auto ret = allocator.alloc<CallImport>();
-    ret->target = target;
-    Import* import = wasm.getImport(ret->target);
-    ret->type = wasm.getFunctionType(import->functionType)->result;
-    parseCallOperands(s, 2, s.size(), ret);
-    return ret;
-  }
   auto ret = allocator.alloc<Call>();
   ret->target = target;
   ret->type = functionTypes[ret->target];
-  parseCallOperands(s, 2, s.size(), ret);
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makeCallImport(Element& s) {
-  auto ret = allocator.alloc<CallImport>();
-  ret->target = s[1]->str();
-  Import* import = wasm.getImport(ret->target);
-  ret->type = wasm.getFunctionType(import->functionType)->result;
   parseCallOperands(s, 2, s.size(), ret);
   ret->finalize();
   return ret;

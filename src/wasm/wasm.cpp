@@ -53,7 +53,6 @@ Name GROW_WASM_MEMORY("__growWasmMemory"),
      LOCAL("local"),
      TYPE("type"),
      CALL("call"),
-     CALL_IMPORT("call_import"),
      CALL_INDIRECT("call_indirect"),
      BLOCK("block"),
      BR_IF("br_if"),
@@ -83,7 +82,6 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::BreakId: return "break";
     case Expression::Id::SwitchId: return "switch";
     case Expression::Id::CallId: return "call";
-    case Expression::Id::CallImportId: return "call_import";
     case Expression::Id::CallIndirectId: return "call_indirect";
     case Expression::Id::GetLocalId: return "get_local";
     case Expression::Id::SetLocalId: return "set_local";
@@ -321,10 +319,6 @@ void handleUnreachableOperands(T* curr) {
 }
 
 void Call::finalize() {
-  handleUnreachableOperands(this);
-}
-
-void CallImport::finalize() {
   handleUnreachableOperands(this);
 }
 
@@ -650,14 +644,6 @@ FunctionType* Module::getFunctionType(Name name) {
   return iter->second;
 }
 
-Import* Module::getImport(Name name) {
-  auto iter = importsMap.find(name);
-  if (iter == importsMap.end()) {
-    Fatal() << "Module::getImport: " << name << " does not exist";
-  }
-  return iter->second;
-}
-
 Export* Module::getExport(Name name) {
   auto iter = exportsMap.find(name);
   if (iter == exportsMap.end()) {
@@ -685,14 +671,6 @@ Global* Module::getGlobal(Name name) {
 FunctionType* Module::getFunctionTypeOrNull(Name name) {
   auto iter = functionTypesMap.find(name);
   if (iter == functionTypesMap.end()) {
-    return nullptr;
-  }
-  return iter->second;
-}
-
-Import* Module::getImportOrNull(Name name) {
-  auto iter = importsMap.find(name);
-  if (iter == importsMap.end()) {
     return nullptr;
   }
   return iter->second;
@@ -733,17 +711,6 @@ void Module::addFunctionType(FunctionType* curr) {
   functionTypesMap[curr->name] = curr;
 }
 
-void Module::addImport(Import* curr) {
-  if (!curr->name.is()) {
-    Fatal() << "Module::addImport: empty name";
-  }
-  if (getImportOrNull(curr->name)) {
-    Fatal() << "Module::addImport: " << curr->name << " already exists";
-  }
-  imports.push_back(std::unique_ptr<Import>(curr));
-  importsMap[curr->name] = curr;
-}
-
 void Module::addExport(Export* curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addExport: empty name";
@@ -779,16 +746,6 @@ void Module::addGlobal(Global* curr) {
 
 void Module::addStart(const Name& s) {
   start = s;
-}
-
-void Module::removeImport(Name name) {
-  for (size_t i = 0; i < imports.size(); i++) {
-    if (imports[i]->name == name) {
-      imports.erase(imports.begin() + i);
-      break;
-    }
-  }
-  importsMap.erase(name);
 }
 
 void Module::removeExport(Name name) {
@@ -831,10 +788,6 @@ void Module::updateMaps() {
   functionTypesMap.clear();
   for (auto& curr : functionTypes) {
     functionTypesMap[curr->name] = curr.get();
-  }
-  importsMap.clear();
-  for (auto& curr : imports) {
-    importsMap[curr->name] = curr.get();
   }
   exportsMap.clear();
   for (auto& curr : exports) {

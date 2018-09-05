@@ -233,7 +233,6 @@ public:
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal* curr);
@@ -444,29 +443,10 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 void FunctionValidator::visitCall(Call* curr) {
   if (!info.validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
-    if (getModule()->getImportOrNull(curr->target) && !info.quiet) {
-      getStream() << "(perhaps it should be a CallImport instead of Call?)\n";
-    }
-    return;
-  }
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !info.quiet) {
-      getStream() << "(on argument " << i << ")\n";
-    }
-  }
-}
-
-void FunctionValidator::visitCallImport(CallImport* curr) {
-  if (!info.validateGlobally) return;
-  auto* import = getModule()->getImportOrNull(curr->target);
-  if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
-  if (!shouldBeTrue(!!import->functionType.is(), curr, "called import must be function")) return;
-  auto* type = getModule()->getFunctionType(import->functionType);
-  if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
-  for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
   }

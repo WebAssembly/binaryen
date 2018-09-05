@@ -43,7 +43,6 @@ struct Visitor {
   ReturnType visitBreak(Break* curr) { return ReturnType(); }
   ReturnType visitSwitch(Switch* curr) { return ReturnType(); }
   ReturnType visitCall(Call* curr) { return ReturnType(); }
-  ReturnType visitCallImport(CallImport* curr) { return ReturnType(); }
   ReturnType visitCallIndirect(CallIndirect* curr) { return ReturnType(); }
   ReturnType visitGetLocal(GetLocal* curr) { return ReturnType(); }
   ReturnType visitSetLocal(SetLocal* curr) { return ReturnType(); }
@@ -88,7 +87,6 @@ struct Visitor {
       case Expression::Id::BreakId: DELEGATE(Break);
       case Expression::Id::SwitchId: DELEGATE(Switch);
       case Expression::Id::CallId: DELEGATE(Call);
-      case Expression::Id::CallImportId: DELEGATE(CallImport);
       case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
       case Expression::Id::GetLocalId: DELEGATE(GetLocal);
       case Expression::Id::SetLocalId: DELEGATE(SetLocal);
@@ -134,7 +132,6 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Break);
   UNIMPLEMENTED(Switch);
   UNIMPLEMENTED(Call);
-  UNIMPLEMENTED(CallImport);
   UNIMPLEMENTED(CallIndirect);
   UNIMPLEMENTED(GetLocal);
   UNIMPLEMENTED(SetLocal);
@@ -180,7 +177,6 @@ struct OverriddenVisitor {
       case Expression::Id::BreakId: DELEGATE(Break);
       case Expression::Id::SwitchId: DELEGATE(Switch);
       case Expression::Id::CallId: DELEGATE(Call);
-      case Expression::Id::CallImportId: DELEGATE(CallImport);
       case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
       case Expression::Id::GetLocalId: DELEGATE(GetLocal);
       case Expression::Id::SetLocalId: DELEGATE(SetLocal);
@@ -224,7 +220,6 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   ReturnType visitBreak(Break* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSwitch(Switch* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitCall(Call* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
-  ReturnType visitCallImport(CallImport* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitCallIndirect(CallIndirect* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitGetLocal(GetLocal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
   ReturnType visitSetLocal(SetLocal* curr) { return static_cast<SubType*>(this)->visitExpression(curr); }
@@ -405,7 +400,6 @@ struct Walker : public VisitorType {
   static void doVisitBreak(SubType* self, Expression** currp)        { self->visitBreak((*currp)->cast<Break>()); }
   static void doVisitSwitch(SubType* self, Expression** currp)       { self->visitSwitch((*currp)->cast<Switch>()); }
   static void doVisitCall(SubType* self, Expression** currp)         { self->visitCall((*currp)->cast<Call>()); }
-  static void doVisitCallImport(SubType* self, Expression** currp)   { self->visitCallImport((*currp)->cast<CallImport>()); }
   static void doVisitCallIndirect(SubType* self, Expression** currp) { self->visitCallIndirect((*currp)->cast<CallIndirect>()); }
   static void doVisitGetLocal(SubType* self, Expression** currp)     { self->visitGetLocal((*currp)->cast<GetLocal>()); }
   static void doVisitSetLocal(SubType* self, Expression** currp)     { self->visitSetLocal((*currp)->cast<SetLocal>()); }
@@ -488,14 +482,6 @@ struct PostWalker : public Walker<SubType, VisitorType> {
       case Expression::Id::CallId: {
         self->pushTask(SubType::doVisitCall, currp);
         auto& list = curr->cast<Call>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallImportId: {
-        self->pushTask(SubType::doVisitCallImport, currp);
-        auto& list = curr->cast<CallImport>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
         }

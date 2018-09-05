@@ -160,7 +160,6 @@ public:
     BreakId,
     SwitchId,
     CallId,
-    CallImportId,
     CallIndirectId,
     GetLocalId,
     SetLocalId,
@@ -317,16 +316,6 @@ public:
 class Call : public SpecificExpression<Expression::CallId> {
 public:
   Call(MixedArena& allocator) : operands(allocator) {}
-
-  ExpressionList operands;
-  Name target;
-
-  void finalize();
-};
-
-class CallImport : public SpecificExpression<Expression::CallImportId> {
-public:
-  CallImport(MixedArena& allocator) : operands(allocator) {}
 
   ExpressionList operands;
   Name target;
@@ -582,6 +571,15 @@ public:
 
 // Globals
 
+struct Importable {
+  // If these are set, then this is an import, as module.base
+  Name module, base;
+
+  bool imported() {
+    return module.is();
+  }
+};
+
 // Forward declarations of Stack IR, as functions can contain it, see
 // the stackIR property.
 // Stack IR is a secondary IR to the main IR defined in this file (Binaryen
@@ -589,10 +587,10 @@ public:
 class StackInst;
 typedef std::vector<StackInst*> StackIR;
 
-class Function {
+class Function : public Importable {
 public:
   Name name;
-  Type result;
+  Type result = none;
   std::vector<Type> params; // function locals are
   std::vector<Type> vars;   // params plus vars
   Name type; // if null, it is implicit in params and result
@@ -621,8 +619,6 @@ public:
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
 
-  Function() : result(none) {}
-
   size_t getNumParams();
   size_t getNumVars();
   size_t getNumLocals();
@@ -639,23 +635,6 @@ public:
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
-};
-
-enum class ExternalKind {
-  Function = 0,
-  Table = 1,
-  Memory = 2,
-  Global = 3
-};
-
-class Import {
-public:
-  Import() : globalType(none) {}
-
-  Name name, module, base; // name = module.base
-  ExternalKind kind;
-  Name functionType; // for Function imports
-  Type globalType; // for Global imports
 };
 
 class Export {
@@ -729,7 +708,7 @@ public:
   bool hasMax() { return max != kMaxSize; }
 };
 
-class Global {
+class Global : public Importable {
 public:
   Name name;
   Type type;
@@ -749,7 +728,6 @@ class Module {
 public:
   // wasm contents (generally you shouldn't access these from outside, except maybe for iterating; use add*() and the get() functions)
   std::vector<std::unique_ptr<FunctionType>> functionTypes;
-  std::vector<std::unique_ptr<Import>> imports;
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
@@ -766,7 +744,6 @@ public:
 private:
   // TODO: add a build option where Names are just indices, and then these methods are not needed
   std::map<Name, FunctionType*> functionTypesMap;
-  std::map<Name, Import*> importsMap;
   std::map<Name, Export*> exportsMap; // exports map is by the *exported* name, which is unique
   std::map<Name, Function*> functionsMap;
   std::map<Name, Global*> globalsMap;
@@ -775,26 +752,22 @@ public:
   Module() {};
 
   FunctionType* getFunctionType(Name name);
-  Import* getImport(Name name);
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Global* getGlobal(Name name);
 
   FunctionType* getFunctionTypeOrNull(Name name);
-  Import* getImportOrNull(Name name);
   Export* getExportOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
 
   void addFunctionType(FunctionType* curr);
-  void addImport(Import* curr);
   void addExport(Export* curr);
   void addFunction(Function* curr);
   void addGlobal(Global* curr);
 
   void addStart(const Name& s);
 
-  void removeImport(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeFunctionType(Name name);

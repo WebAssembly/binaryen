@@ -190,7 +190,6 @@ private:
   Expression* makeMaybeBlock(Element& s, size_t i, Type type);
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s);
-  Expression* makeCallImport(Element& s);
   Expression* makeCallIndirect(Element& s);
   template<class T>
   void parseCallOperands(Element& s, Index i, Index j, T* call) {

@@ -158,7 +158,6 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     updateBreakValueType(curr->default_, valueType);
   }
   void visitCall(Call* curr) { curr->finalize(); }
-  void visitCallImport(CallImport* curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
   void visitGetLocal(GetLocal* curr) { curr->finalize(); }
   void visitSetLocal(SetLocal* curr) { curr->finalize(); }
@@ -217,7 +216,6 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitBreak(Break* curr) { curr->finalize(); }
   void visitSwitch(Switch* curr) { curr->finalize(); }
   void visitCall(Call* curr) { curr->finalize(); }
-  void visitCallImport(CallImport* curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
   void visitGetLocal(GetLocal* curr) { curr->finalize(); }
   void visitSetLocal(SetLocal* curr) { curr->finalize(); }

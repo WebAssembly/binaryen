@@ -25,30 +25,45 @@ namespace wasm {
 namespace ModuleUtils {
 
 // Computes the indexes in a wasm binary, i.e., with function imports
-// and function implementations sharing a single index space, etc.
+// and function implementations sharing a single index space, etc.,
+// and with the imports first (the Module's functions and globals
+// arrays are not assumed to be in a particular order, so we can't
+// just use them directly).
 struct BinaryIndexes {
   std::unordered_map<Name, Index> functionIndexes;
   std::unordered_map<Name, Index> globalIndexes;
 
   BinaryIndexes(Module& wasm) {
-    for (Index i = 0; i < wasm.imports.size(); i++) {
-      auto& import = wasm.imports[i];
-      if (import->kind == ExternalKind::Function) {
-        auto index = functionIndexes.size();
-        functionIndexes[import->name] = index;
-      } else if (import->kind == ExternalKind::Global) {
-        auto index = globalIndexes.size();
-        globalIndexes[import->name] = index;
+    auto addGlobal = [&](Global* curr) {
+      auto index = globalIndexes.size();
+      globalIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.globals) {
+      if (curr->imported()) {
+        addGlobal(curr.get());
       }
     }
-    for (Index i = 0; i < wasm.functions.size(); i++) {
+    for (auto& curr : wasm.globals) {
+      if (!curr->imported()) {
+        addGlobal(curr.get());
+      }
+    }
+    assert(globalIndexes.size() == wasm.globals.size());
+    auto addFunction = [&](Function* curr) {
       auto index = functionIndexes.size();
-      functionIndexes[wasm.functions[i]->name] = index;
+      functionIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.functions) {
+      if (curr->imported()) {
+        addFunction(curr.get());
+      }
     }
-    for (Index i = 0; i < wasm.globals.size(); i++) {
-      auto index = globalIndexes.size();
-      globalIndexes[wasm.globals[i]->name] = index;
+    for (auto& curr : wasm.functions) {
+      if (!curr->imported()) {
+        addFunction(curr.get());
+      }
     }
+    assert(functionIndexes.size() == wasm.functions.size());
   }
 };
 

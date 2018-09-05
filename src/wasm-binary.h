@@ -637,6 +637,14 @@ enum MemoryFlags {
   IsShared = 1 << 1
 };
 
+// The kind of an import or export.
+enum ExternalKind {
+  Function = 0,
+  Table = 1,
+  Memory = 2,
+  Global = 3
+};
+
 } // namespace BinaryConsts
 
 
@@ -760,6 +768,8 @@ private:
   std::vector<std::pair<size_t, const Function::DebugLocation*>> sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
   Function::DebugLocation lastDebugLocation;
+
+  std::unique_ptr<ImportInfo> importInfo;
 
   void prepare();
 };

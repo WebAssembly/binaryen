@@ -20,6 +20,7 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
+#include "ir/import-utils.h"
 #include "ir/module-utils.h"
 
 namespace wasm {
@@ -35,6 +36,8 @@ void WasmBinaryWriter::prepare() {
   ModuleUtils::BinaryIndexes indexes(*wasm);
   mappedFunctions = std::move(indexes.functionIndexes);
   mappedGlobals = std::move(indexes.globalIndexes);
+
+  importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
 void WasmBinaryWriter::write() {
@@ -176,33 +179,37 @@ int32_t WasmBinaryWriter::getFunctionTypeIndex(Name type) {
 }
 
 void WasmBinaryWriter::writeImports() {
-  if (wasm->imports.size() == 0) return;
+  auto num = importInfo->getNumImports();
+  if (num == 0) return;
   if (debug) std::cerr << "== writeImports" << std::endl;
   auto start = startSection(BinaryConsts::Section::Import);
-  o << U32LEB(wasm->imports.size());
-  for (auto& import : wasm->imports) {
-    if (debug) std::cerr << "write one" << std::endl;
+  o << U32LEB(num);
+  for (auto& global : wasm->globals) {
+    if (!global->imported()) continue;
     writeInlineString(import->module.str);
     writeInlineString(import->base.str);
-    o << U32LEB(int32_t(import->kind));
-    switch (import->kind) {
-      case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
-      case ExternalKind::Table: {
-        o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
-        break;
-      }
-      case ExternalKind::Memory: {
-        writeResizableLimits(wasm->memory.initial, wasm->memory.max,
-                             wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
-        break;
-      }
-      case ExternalKind::Global:
-        o << binaryType(import->globalType);
-        o << U32LEB(0); // Mutable global's can't be imported for now.
-        break;
-      default: WASM_UNREACHABLE();
-    }
+    o << U32LEB(int32_t(BinaryConst::ExternalKind::Global));
+    o << binaryType(global->type);
+    o << U32LEB(0); // Mutable global's can't be imported for now.
+  }
+  for (auto& func : wasm->functions) {
+    if (!func->imported()) continue;
+    writeInlineString(import->module.str);
+    writeInlineString(import->base.str);
+    o << U32LEB(int32_t(BinaryConst::ExternalKind::Function));
+    o << U32LEB(getFunctionTypeIndex(import->functionType));
+  }
+  if (wasm->memory.imported) {
+    writeInlineString(wasm->memory.module.str);
+    writeInlineString(wasm->memory.base.str);
+    writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                         wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
+  }
+  if (wasm->table.imported) {
+    writeInlineString(wasm->table.module.str);
+    writeInlineString(wasm->table.base.str);
+    o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+    writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
   }
   finishSection(start);
 }
@@ -227,14 +234,15 @@ void WasmBinaryWriter::writeFunctions() {
   if (wasm->functions.size() == 0) return;
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
-  size_t total = wasm->functions.size();
+  size_t total = wasm->functions.size() - importInfo->getNumImportedFunctions();
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
+    Function* func = wasm->functions[i].get();
+    if (!func->imported()) continue;
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
-    Function* func = wasm->functions[i].get();
     if (debug) std::cerr << "writing" << func->name << std::endl;
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap) {
@@ -269,8 +277,10 @@ void WasmBinaryWriter::writeGlobals() {
   if (wasm->globals.size() == 0) return;
   if (debug) std::cerr << "== writeglobals" << std::endl;
   auto start = startSection(BinaryConsts::Section::Global);
-  o << U32LEB(wasm->globals.size());
+  auto num = wasm->globals.size() - importInfo->getNumImportedGlobals();
+  o << U32LEB(num);
   for (auto& curr : wasm->globals) {
+    if (!curr->imported()) continue;
     if (debug) std::cerr << "write one" << std::endl;
     o << binaryType(curr->type);
     o << U32LEB(curr->mutable_);
@@ -436,14 +446,6 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->functions.size() > 0) {
     hasContents = true;
     getFunctionIndex(wasm->functions[0]->name); // generate mappedFunctions
-  } else {
-    for (auto& import : wasm->imports) {
-      if (import->kind == ExternalKind::Function) {
-        hasContents = true;
-        getFunctionIndex(import->name); // generate mappedFunctions
-        break;
-      }
-    }
   }
   if (!hasContents) return;
   if (debug) std::cerr << "== writeNames" << std::endl;
@@ -452,17 +454,20 @@ void WasmBinaryWriter::writeNames() {
   auto substart = startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
   o << U32LEB(mappedFunctions.size());
   Index emitted = 0;
-  for (auto& import : wasm->imports) {
-    if (import->kind == ExternalKind::Function) {
-      o << U32LEB(emitted);
-      writeEscapedName(import->name.str);
-      emitted++;
-    }
-  }
-  for (auto& curr : wasm->functions) {
+  auto add = [&](Function* curr) {
     o << U32LEB(emitted);
     writeEscapedName(curr->name.str);
     emitted++;
+  };
+  for (auto& curr : wasm->functions) {
+    if (curr->imported()) {
+      add(curr.get());
+    }
+  }
+  for (auto& curr : wasm->functions) {
+    if (!curr->imported()) {
+      add(curr.get());
+    }
   }
   assert(emitted == mappedFunctions.size());
   finishSubsection(substart);
@@ -1435,14 +1440,19 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
 Name WasmBinaryBuilder::getGlobalName(Index index) {
   if (!mappedGlobals.size()) {
     // Create name => index mapping.
-    for (auto& import : wasm.imports) {
-      if (import->kind != ExternalKind::Global) continue;
+    auto add = [&](Global* curr) {
       auto index = mappedGlobals.size();
       mappedGlobals[index] = import->name;
+    };
+    for (auto& curr : wasm.globals) {
+      if (curr->imported()) {
+        add(curr.get());
+      }
     }
-    for (size_t i = 0; i < wasm.globals.size(); i++) {
-      auto index = mappedGlobals.size();
-      mappedGlobals[index] = wasm.globals[i]->name;
+    for (auto& curr : wasm.globals) {
+      if (!curr->imported()) {
+        add(curr.get());
+      }
     }
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild

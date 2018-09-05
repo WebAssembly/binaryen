@@ -22,16 +22,53 @@
 
 namespace wasm {
 
-namespace ImportUtils {
-  // find an import by the module.base that is being imported.
-  // return the internal name
-  inline Import* getImport(Module& wasm, Name module, Name base) {
-    for (auto& import : wasm.imports) {
+struct ImportInfo {
+  Module& wasm;
+
+  std::vector<Global*> importedGlobals;
+  std::vector<Function*> importedFunctions;
+
+  ImportInfo(Module& wasm) {
+    for (auto& import : wasm.globals) {
       if (import->module == module && import->base == base) {
-        return import.get();
+        importedGlobals.push_back(import.get());
+      }
+    }
+    for (auto& import : wasm.functions) {
+      if (import->module == module && import->base == base) {
+        importedFunctions.push_back(import.get());
+      }
+    }
+  }
+
+  Global* getImportedGlobal(Name module, Name base) {
+    for (auto* import : importedGlobals) {
+      if (import->module == module && import->base == base) {
+        return import;
       }
     }
     return nullptr;
+  }
+
+  Function* getImportedFunction(Name module, Name base) {
+    for (auto* import : importedFunctions) {
+      if (import->module == module && import->base == base) {
+        return import;
+      }
+    }
+    return nullptr;
+  }
+
+  Index getNumGlobalImports() {
+    return importedGlobals.size();
+  }
+
+  Index getNumFunctionImports() {
+    return importedFunctions.size();
+  }
+
+  Index getNumImports() {
+    return getNumGlobalImports() + getNumFunctionImports();
   }
 };
 
