@@ -223,6 +223,10 @@ public:
     usedElements -= size;
   }
 
+  void erase(Iterator it) {
+    erase(it, it + 1);
+  }
+
   void clear() {
     usedElements = 0;
   }

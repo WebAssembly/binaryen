@@ -389,11 +389,15 @@ public:
     return addVar(func, Name(), type);
   }
 
+  static void clearLocalNames(Function* func) {
+    func->localNames.clear();
+    func->localIndices.clear();
+  }
+
   static void clearLocals(Function* func) {
     func->params.clear();
     func->vars.clear();
-    func->localNames.clear();
-    func->localIndices.clear();
+    clearLocalNames(func);
   }
 
   // ensure a node is a block, if it isn't already, and optionally append to the block
