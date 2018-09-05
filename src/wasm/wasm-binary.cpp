@@ -138,7 +138,7 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemory() {
-  if (!wasm->memory.exists || wasm->memory.imported) return;
+  if (!wasm->memory.exists || wasm->memory.imported()) return;
   if (debug) std::cerr << "== writeMemory" << std::endl;
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
@@ -185,18 +185,18 @@ void WasmBinaryWriter::writeImports() {
   o << U32LEB(num);
   for (auto& global : wasm->globals) {
     if (!global->imported()) continue;
-    writeInlineString(import->module.str);
-    writeInlineString(import->base.str);
+    writeInlineString(global->module.str);
+    writeInlineString(global->base.str);
     o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
     o << U32LEB(0); // Mutable global's can't be imported for now.
   }
   for (auto& func : wasm->functions) {
     if (!func->imported()) continue;
-    writeInlineString(import->module.str);
-    writeInlineString(import->base.str);
+    writeInlineString(func->module.str);
+    writeInlineString(func->base.str);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getFunctionTypeIndex(import->functionType));
+    o << U32LEB(getFunctionTypeIndex(func->functionType));
   }
   if (wasm->memory.imported) {
     writeInlineString(wasm->memory.module.str);
