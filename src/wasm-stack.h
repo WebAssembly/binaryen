@@ -124,7 +124,6 @@ public:
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal* curr);
@@ -539,16 +538,6 @@ void StackWriter<Mode, Parent>::visitCall(Call* curr) {
   if (curr->type == unreachable) { // TODO FIXME: this and similar can be removed
     emitExtraUnreachable();
   }
-}
-
-template<StackWriterMode Mode, typename Parent>
-void StackWriter<Mode, Parent>::visitCallImport(CallImport* curr) {
-  if (debug) std::cerr << "zz node: CallImport" << std::endl;
-  for (auto* operand : curr->operands) {
-    visitChild(operand);
-  }
-  if (justAddToStack(curr)) return;
-  o << int8_t(BinaryConsts::CallFunction) << U32LEB(parent.getFunctionIndex(curr->target));
 }
 
 template<StackWriterMode Mode, typename Parent>

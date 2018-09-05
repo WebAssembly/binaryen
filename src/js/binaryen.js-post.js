@@ -39,7 +39,6 @@ Module['LoopId'] = Module['_BinaryenLoopId']();
 Module['BreakId'] = Module['_BinaryenBreakId']();
 Module['SwitchId'] = Module['_BinaryenSwitchId']();
 Module['CallId'] = Module['_BinaryenCallId']();
-Module['CallImportId'] = Module['_BinaryenCallImportId']();
 Module['CallIndirectId'] = Module['_BinaryenCallIndirectId']();
 Module['GetLocalId'] = Module['_BinaryenGetLocalId']();
 Module['SetLocalId'] = Module['_BinaryenSetLocalId']();
@@ -250,11 +249,6 @@ Module['Module'] = function(module) {
   this['call'] = function(name, operands, type) {
     return preserveStack(function() {
       return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
-    });
-  };
-  this['callImport'] = this['call_import'] = function(name, operands, type) {
-    return preserveStack(function() {
-      return Module['_BinaryenCallImport'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
   this['callIndirect'] = this['call_indirect'] = function(target, operands, type) {
@@ -1336,13 +1330,6 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'target': Pointer_stringify(Module['_BinaryenCallGetTarget'](expr)),
         'operands': getAllNested(expr, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperand'])
-      };
-    case Module['CallImportId']:
-      return {
-        'id': id,
-        'type': type,
-        'target': Pointer_stringify(Module['_BinaryenCallImportGetTarget'](expr)),
-        'operands': getAllNested(expr, Module['_BinaryenCallImportGetNumOperands'], Module['_BinaryenCallImportGetOperand']),
       };
     case Module['CallIndirectId']:
       return {

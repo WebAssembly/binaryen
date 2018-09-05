@@ -167,25 +167,10 @@ public:
     call->operands.set(args);
     return call;
   }
-  CallImport* makeCallImport(Name target, const std::vector<Expression*>& args, Type type) {
-    auto* call = allocator.alloc<CallImport>();
-    call->type = type; // similar to makeCall, for consistency
-    call->target = target;
-    call->operands.set(args);
-    return call;
-  }
   template<typename T>
   Call* makeCall(Name target, const T& args, Type type) {
     auto* call = allocator.alloc<Call>();
     call->type = type; // not all functions may exist yet, so type must be provided
-    call->target = target;
-    call->operands.set(args);
-    return call;
-  }
-  template<typename T>
-  CallImport* makeCallImport(Name target, const T& args, Type type) {
-    auto* call = allocator.alloc<CallImport>();
-    call->type = type; // similar to makeCall, for consistency
     call->target = target;
     call->operands.set(args);
     return call;

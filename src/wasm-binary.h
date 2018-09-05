@@ -842,8 +842,7 @@ public:
   // We read functions before we know their names, so we need to backpatch the names later
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
   std::vector<Import*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
-  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the defined function i
-  std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
+  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
 

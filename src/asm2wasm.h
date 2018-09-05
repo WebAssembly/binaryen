@@ -343,8 +343,8 @@ struct Asm2WasmPreProcessor {
   }
 };
 
-static CallImport* checkDebugInfo(Expression* curr) {
-  if (auto* call = curr->dynCast<CallImport>()) {
+static Call* checkDebugInfo(Expression* curr) {
+  if (auto* call = curr->dynCast<Call>()) {
     if (call->target == EMSCRIPTEN_DEBUGINFO) {
       return call;
     }
@@ -478,7 +478,7 @@ private:
 
   std::map<IString, std::unique_ptr<FunctionType>> importedFunctionTypes;
 
-  void noteImportedFunctionCall(Ref ast, Type resultType, CallImport* call) {
+  void noteImportedFunctionCall(Ref ast, Type resultType, Call* call) {
     assert(ast[0] == CALL && ast[1]->isString());
     IString importName = ast[1]->getIString();
     auto type = make_unique<FunctionType>();
@@ -696,7 +696,6 @@ private:
 
   void fixCallType(Expression* call, Type type) {
     if (call->is<Call>()) call->cast<Call>()->type = type;
-    if (call->is<CallImport>()) call->cast<CallImport>()->type = type;
     else if (call->is<CallIndirect>()) call->cast<CallIndirect>()->type = type;
   }
 
@@ -1255,96 +1254,93 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void visitCall(Call* curr) {
-      auto* calledFunc = getModule()->getFunctionOrNull(curr->target);
-      if (!calledFunc) {
-        std::cerr << "invalid call target: " << curr->target << '\n';
-        WASM_UNREACHABLE();
-      }
-      // The result type of the function being called is now known, and can be applied.
-      auto result = calledFunc->result;
-      if (curr->type != result) {
-        curr->type = result;
-      }
-      // Handle mismatched numbers of arguments. In clang, if a function is declared one way
-      // but called in another, it inserts bitcasts to make things work. Those end up
-      // working since it is "ok" to drop or add parameters in native platforms, even
-      // though it's undefined behavior. We warn about it here, but tolerate it, if there is
-      // a simple solution.
-      if (curr->operands.size() < calledFunc->params.size()) {
-        notifyAboutWrongOperands("warning: asm2wasm adding operands", calledFunc);
-        while (curr->operands.size() < calledFunc->params.size()) {
-          // Add params as necessary, with zeros.
-          curr->operands.push_back(
-            LiteralUtils::makeZero(calledFunc->params[curr->operands.size()], *getModule())
-          );
+      auto* calledFunc = getModule()->getFunction(curr->target);
+      if (!calledFunc->imported()) {
+        // The result type of the function being called is now known, and can be applied.
+        auto result = calledFunc->result;
+        if (curr->type != result) {
+          curr->type = result;
         }
-      }
-      if (curr->operands.size() > calledFunc->params.size()) {
-        notifyAboutWrongOperands("warning: asm2wasm dropping operands", calledFunc);
-        curr->operands.resize(calledFunc->params.size());
-      }
-      // If the types are wrong, validation will fail later anyhow, but add a warning here,
-      // it may help people.
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        auto sent = curr->operands[i]->type;
-        auto expected = calledFunc->params[i];
-        if (sent != unreachable && sent != expected) {
-          notifyAboutWrongOperands("error: asm2wasm seeing an invalid argument type at index " + std::to_string(i) + " (this will not validate)", calledFunc);
-        }
-      }
-    }
-
-    void visitCallImport(CallImport* curr) {
-      // fill out call_import - add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
-      auto iter = parent->importedFunctionTypes.find(curr->target);
-      if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
-      auto type = iter->second.get();
-      for (size_t i = 0; i < type->params.size(); i++) {
-        if (i >= curr->operands.size()) {
-          // add a new param
-          auto val = parent->allocator.alloc<Const>();
-          val->type = val->value.type = type->params[i];
-          curr->operands.push_back(val);
-        } else if (curr->operands[i]->type != type->params[i]) {
-          // if the param is used, then we have overloading here and the combined type must be f64;
-          // if this is an unreachable param, then it doesn't matter.
-          assert(type->params[i] == f64 || curr->operands[i]->type == unreachable);
-          // overloaded, upgrade to f64
-          switch (curr->operands[i]->type) {
-            case i32: curr->operands[i] = parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]); break;
-            case f32: curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]); break;
-            default: {} // f64, unreachable, etc., are all good
+        // Handle mismatched numbers of arguments. In clang, if a function is declared one way
+        // but called in another, it inserts bitcasts to make things work. Those end up
+        // working since it is "ok" to drop or add parameters in native platforms, even
+        // though it's undefined behavior. We warn about it here, but tolerate it, if there is
+        // a simple solution.
+        if (curr->operands.size() < calledFunc->params.size()) {
+          notifyAboutWrongOperands("warning: asm2wasm adding operands", calledFunc);
+          while (curr->operands.size() < calledFunc->params.size()) {
+            // Add params as necessary, with zeros.
+            curr->operands.push_back(
+              LiteralUtils::makeZero(calledFunc->params[curr->operands.size()], *getModule())
+            );
           }
         }
-      }
-      Module* wasm = getModule();
-      auto importResult = wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
-      if (curr->type != importResult) {
-        auto old = curr->type;
-        curr->type = importResult;
-        if (importResult == f64) {
-          // we use a JS f64 value which is the most general, and convert to it
-          switch (old) {
-            case i32:  {
-              Unary* trunc = parent->builder.makeUnary(TruncSFloat64ToInt32, curr);
-              replaceCurrent(makeTrappingUnary(trunc, parent->trappingFunctions));
-              break;
-            }
-            case f32: {
-              replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr));
-              break;
-            }
-            case none: {
-              // this function returns a value, but we are not using it, so it must be dropped.
-              // autodrop will do that for us.
-              break;
-            }
-            default: WASM_UNREACHABLE();
+        if (curr->operands.size() > calledFunc->params.size()) {
+          notifyAboutWrongOperands("warning: asm2wasm dropping operands", calledFunc);
+          curr->operands.resize(calledFunc->params.size());
+        }
+        // If the types are wrong, validation will fail later anyhow, but add a warning here,
+        // it may help people.
+        for (Index i = 0; i < curr->operands.size(); i++) {
+          auto sent = curr->operands[i]->type;
+          auto expected = calledFunc->params[i];
+          if (sent != unreachable && sent != expected) {
+            notifyAboutWrongOperands("error: asm2wasm seeing an invalid argument type at index " + std::to_string(i) + " (this will not validate)", calledFunc);
           }
-        } else {
-          assert(old == none);
-          // we don't want a return value here, but the import does provide one
-          // autodrop will do that for us.
+        }
+      } else {
+        // A call to an import
+        // fill things out: add extra params as needed, etc. asm tolerates ffi overloading, wasm does not
+        auto iter = parent->importedFunctionTypes.find(curr->target);
+        if (iter == parent->importedFunctionTypes.end()) return; // one of our fake imports for callIndirect fixups
+        auto type = iter->second.get();
+        for (size_t i = 0; i < type->params.size(); i++) {
+          if (i >= curr->operands.size()) {
+            // add a new param
+            auto val = parent->allocator.alloc<Const>();
+            val->type = val->value.type = type->params[i];
+            curr->operands.push_back(val);
+          } else if (curr->operands[i]->type != type->params[i]) {
+            // if the param is used, then we have overloading here and the combined type must be f64;
+            // if this is an unreachable param, then it doesn't matter.
+            assert(type->params[i] == f64 || curr->operands[i]->type == unreachable);
+            // overloaded, upgrade to f64
+            switch (curr->operands[i]->type) {
+              case i32: curr->operands[i] = parent->builder.makeUnary(ConvertSInt32ToFloat64, curr->operands[i]); break;
+              case f32: curr->operands[i] = parent->builder.makeUnary(PromoteFloat32, curr->operands[i]); break;
+              default: {} // f64, unreachable, etc., are all good
+            }
+          }
+        }
+        Module* wasm = getModule();
+        auto importResult = wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
+        if (curr->type != importResult) {
+          auto old = curr->type;
+          curr->type = importResult;
+          if (importResult == f64) {
+            // we use a JS f64 value which is the most general, and convert to it
+            switch (old) {
+              case i32:  {
+                Unary* trunc = parent->builder.makeUnary(TruncSFloat64ToInt32, curr);
+                replaceCurrent(makeTrappingUnary(trunc, parent->trappingFunctions));
+                break;
+              }
+              case f32: {
+                replaceCurrent(parent->builder.makeUnary(DemoteFloat64, curr));
+                break;
+              }
+              case none: {
+                // this function returns a value, but we are not using it, so it must be dropped.
+                // autodrop will do that for us.
+                break;
+              }
+              default: WASM_UNREACHABLE();
+            }
+          } else {
+            assert(old == none);
+            // we don't want a return value here, but the import does provide one
+            // autodrop will do that for us.
+          }
         }
       }
     }
@@ -1358,7 +1354,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         target = block->list.back();
       }
       // the something might have been optimized out, leaving only the call
-      if (auto* call = target->dynCast<CallImport>()) {
+      if (auto* call = target->dynCast<Call>()) {
         auto tableName = call->target;
         if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         curr->target = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
@@ -1366,13 +1362,13 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       }
       auto* add = target->dynCast<Binary>();
       if (!add) return;
-      if (add->right->is<CallImport>()) {
-        auto* offset = add->right->cast<CallImport>();
+      if (add->right->is<Call>()) {
+        auto* offset = add->right->cast<Call>();
         auto tableName = offset->target;
         if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
         add->right = parent->builder.makeConst(Literal((int32_t)parent->functionTableStarts[tableName]));
       } else {
-        auto* offset = add->left->dynCast<CallImport>();
+        auto* offset = add->left->dynCast<Call>();
         if (!offset) return;
         auto tableName = offset->target;
         if (parent->functionTableStarts.find(tableName) == parent->functionTableStarts.end()) return;
@@ -1397,7 +1393,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       name = "apply-debug-info";
     }
 
-    CallImport* lastDebugInfo = nullptr;
+    Call* lastDebugInfo = nullptr;
 
     void visitExpression(Expression* curr) {
       if (auto* call = checkDebugInfo(curr)) {
@@ -1627,7 +1623,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         return ret;
       }
       if (name == DEBUGGER) {
-        CallImport *call = allocator.alloc<CallImport>();
+        Call *call = allocator.alloc<Call>();
         call->target = DEBUGGER;
         call->type = none;
         static bool addedImport = false;
@@ -1729,7 +1725,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->finalize();
       if (ret->op == BinaryOp::RemSInt32 && isFloatType(ret->type)) {
         // WebAssembly does not have floating-point remainder, we have to emit a call to a special import of ours
-        CallImport *call = allocator.alloc<CallImport>();
+        Call *call = allocator.alloc<Call>();
         call->target = F64_REM;
         call->operands.push_back(ensureDouble(ret->left));
         call->operands.push_back(ensureDouble(ret->right));
@@ -2197,7 +2193,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         }
         Expression* ret;
         ExpressionList* operands;
-        CallImport* callImport = nullptr;
+        bool callImport = false;
         Index firstOperand = 0;
         Ref args = ast[2];
         if (tableCall) {
@@ -2206,12 +2202,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           firstOperand = 1;
           operands = &specific->operands;
           ret = specific;
-        } else if (wasm.getImportOrNull(name)) {
-          callImport = allocator.alloc<CallImport>();
-          callImport->target = name;
-          operands = &callImport->operands;
-          ret = callImport;
         } else {
+          callImport = wasm.getFunction(name)->imported();
           auto specific = allocator.alloc<Call>();
           specific->target = name;
           operands = &specific->operands;
@@ -2254,7 +2246,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       ret->fullType = fullType->name;
       ret->type = fullType->result;
       // we don't know the table offset yet. emit target = target + callImport(tableName), which we fix up later when we know how asm function tables are layed out inside the wasm table.
-      ret->target = builder.makeBinary(BinaryOp::AddInt32, ret->target, builder.makeCallImport(target[1]->getIString(), {}, i32));
+      ret->target = builder.makeBinary(BinaryOp::AddInt32, ret->target, builder.makeCall(target[1]->getIString(), {}, i32));
       return ret;
     } else if (what == RETURN) {
       Type type = !!ast[1] ? detectWasmType(ast[1], &asmData) : none;

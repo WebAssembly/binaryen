@@ -940,14 +940,6 @@ void Wasm2JSBuilder::scanFunctionBody(Expression* curr) {
         }
       }
     }
-    void visitCallImport(CallImport* curr) {
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
-    }
     void visitCallIndirect(CallIndirect* curr) {
       // TODO: this is a pessimization that probably wants to get tweaked in
       // the future. If none of the arguments have any side effects then we
@@ -1252,10 +1244,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitCall(Call* curr) {
-      return visitGenericCall(curr, curr->target, curr->operands);
-    }
-
-    Ref visitCallImport(CallImport* curr) {
       return visitGenericCall(curr, curr->target, curr->operands);
     }
 
@@ -2197,7 +2185,7 @@ Ref Wasm2JSBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                                              Name testFuncName,
                                              Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
-  Expression* body = wasmBuilder.makeCallImport("isNaN", {actual}, i32);
+  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(
       testFuncName,

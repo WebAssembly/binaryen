@@ -1507,14 +1507,6 @@ void WasmBinaryBuilder::processFunctions() {
     }
   }
 
-  for (auto& iter : functionImportCalls) {
-    size_t index = iter.first;
-    auto& calls = iter.second;
-    for (auto* call : calls) {
-      call->target = functionImports[index]->name;
-    }
-  }
-
   for (auto& pair : functionTable) {
     auto i = pair.first;
     auto& indexes = pair.second;
@@ -1918,29 +1910,16 @@ Expression* WasmBinaryBuilder::visitCall() {
   auto index = getU32LEB();
   FunctionType* type;
   Expression* ret;
-  if (index < functionImports.size()) {
-    // this is a call of an imported function
-    auto* call = allocator.alloc<CallImport>();
-    auto* import = functionImports[index];
-    type = wasm.getFunctionType(import->functionType);
-    functionImportCalls[index].push_back(call);
-    call->target = import->name; // name section may modify it
-    fillCall(call, type);
-    call->finalize();
-    ret = call;
-  } else {
-    // this is a call of a defined function
-    auto* call = allocator.alloc<Call>();
-    auto adjustedIndex = index - functionImports.size();
-    if (adjustedIndex >= functionTypes.size()) {
-      throwError("bad call index");
-    }
-    type = functionTypes[adjustedIndex];
-    fillCall(call, type);
-    functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
-    call->finalize();
-    ret = call;
+  auto* call = allocator.alloc<Call>();
+  auto adjustedIndex = index - functionImports.size();
+  if (adjustedIndex >= functionTypes.size()) {
+    throwError("bad call index");
   }
+  type = functionTypes[adjustedIndex];
+  fillCall(call, type);
+  functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
+  call->finalize();
+  ret = call;
   return ret;
 }
 

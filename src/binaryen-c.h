@@ -96,7 +96,6 @@ BinaryenExpressionId BinaryenLoopId(void);
 BinaryenExpressionId BinaryenBreakId(void);
 BinaryenExpressionId BinaryenSwitchId(void);
 BinaryenExpressionId BinaryenCallId(void);
-BinaryenExpressionId BinaryenCallImportId(void);
 BinaryenExpressionId BinaryenCallIndirectId(void);
 BinaryenExpressionId BinaryenGetLocalId(void);
 BinaryenExpressionId BinaryenSetLocalId(void);
@@ -341,15 +340,11 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* in, Bin
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, BinaryenExpressionRef condition, BinaryenExpressionRef value);
 // Switch: value can be NULL
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** names, BinaryenIndex numNames, const char* defaultName, BinaryenExpressionRef condition, BinaryenExpressionRef value);
-// Call, CallImport: Note the 'returnType' parameter. You must declare the
-//                   type returned by the function being called, as that
-//                   function might not have been created yet, so we don't
-//                   know what it is.
-//                   Also note that WebAssembly does not differentiate
-//                   between Call and CallImport, but Binaryen does, so you
-//                   must use CallImport if calling an import, and vice versa.
+// Call: Note the 'returnType' parameter. You must declare the
+//       type returned by the function being called, as that
+//       function might not have been created yet, so we don't
+//       know what it is.
 BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
-BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType);
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, const char* type);
 // GetLocal: Note the 'type' parameter. It might seem redundant, since the
 //           local at that index must have a type. However, this API lets you
@@ -442,13 +437,6 @@ const char* BinaryenCallGetTarget(BinaryenExpressionRef expr);
 BinaryenIndex BinaryenCallGetNumOperands(BinaryenExpressionRef expr);
 // Gets the nested operand expression at the specified index within the specified `Call` expression.
 BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
-
-// Gets the name of the target of the specified `CallImport` expression.
-const char* BinaryenCallImportGetTarget(BinaryenExpressionRef expr);
-// Gets the number of nested operand expressions within the specified `CallImport` expression.
-BinaryenIndex BinaryenCallImportGetNumOperands(BinaryenExpressionRef expr);
-// Gets the nested operand expression at the specified index within the specified `CallImport` expression.
-BinaryenExpressionRef BinaryenCallImportGetOperand(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Gets the nested target expression of the specified `CallIndirect` expression.
 BinaryenExpressionRef BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
