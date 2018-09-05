@@ -1966,12 +1966,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         return ret;
       }
       // normal select
-      Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
-      Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
-      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       ScopedTemp tempIfTrue(curr->type, parent, func),
           tempIfFalse(curr->type, parent, func),
           tempCondition(i32, parent, func);
+      Ref ifTrue = visit(curr->ifTrue, EXPRESSION_RESULT);
+      Ref ifFalse = visit(curr->ifFalse, EXPRESSION_RESULT);
+      Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       return
         ValueBuilder::makeSeq(
           ValueBuilder::makeBinary(tempIfTrue.getAstName(), SET, ifTrue),
