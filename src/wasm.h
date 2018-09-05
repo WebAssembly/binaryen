@@ -638,7 +638,7 @@ public:
 };
 
 // The kind of an import or export.
-enum ExternalKind {
+enum class ExternalKind {
   Function = 0,
   Table = 1,
   Memory = 2,
