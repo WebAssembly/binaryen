@@ -188,7 +188,7 @@ void WasmBinaryWriter::writeImports() {
     if (!global->imported()) continue;
     writeInlineString(import->module.str);
     writeInlineString(import->base.str);
-    o << U32LEB(int32_t(BinaryConst::ExternalKind::Global));
+    o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
     o << U32LEB(0); // Mutable global's can't be imported for now.
   }
@@ -196,7 +196,7 @@ void WasmBinaryWriter::writeImports() {
     if (!func->imported()) continue;
     writeInlineString(import->module.str);
     writeInlineString(import->base.str);
-    o << U32LEB(int32_t(BinaryConst::ExternalKind::Function));
+    o << U32LEB(int32_t(ExternalKind::Function));
     o << U32LEB(getFunctionTypeIndex(import->functionType));
   }
   if (wasm->memory.imported) {

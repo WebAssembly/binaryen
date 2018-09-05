@@ -637,6 +637,14 @@ public:
   bool hasLocalName(Index index) const;
 };
 
+// The kind of an import or export.
+enum ExternalKind {
+  Function = 0,
+  Table = 1,
+  Memory = 2,
+  Global = 3
+};
+
 class Export {
 public:
   Name name;  // exported name - note that this is the key, as the internal name is non-unique (can have multiple exports for an internal, also over kinds)
