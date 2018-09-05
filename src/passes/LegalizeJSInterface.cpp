@@ -91,7 +91,7 @@ struct LegalizeJSInterface : public Pass {
 
         FixImports(std::map<Name, Name>* illegalToLegal) : illegalToLegal(illegalToLegal) {}
 
-        void visitCallImport(CallImport* curr) {
+        void visitCall(Call* curr) {
           auto iter = illegalToLegal->find(curr->target);
           if (iter == illegalToLegal->end()) return;
 
@@ -193,7 +193,7 @@ private:
     func->name = Name(std::string("legalfunc$") + im->name.str);
     funcName = func->name;
 
-    auto* call = module->allocator.alloc<CallImport>();
+    auto* call = module->allocator.alloc<Call>();
     call->target = legal->name;
 
     auto* imFunctionType = module->getFunctionType(im->functionType);

@@ -63,7 +63,6 @@ struct Vacuum : public WalkerPass<PostWalker<Vacuum>> {
         case Expression::Id::BreakId:
         case Expression::Id::SwitchId:
         case Expression::Id::CallId:
-        case Expression::Id::CallImportId:
         case Expression::Id::CallIndirectId:
         case Expression::Id::SetLocalId:
         case Expression::Id::StoreId:

@@ -109,10 +109,6 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
     printMedium(o, "call ");
     printName(curr->target, o);
   }
-  void visitCallImport(CallImport* curr) {
-    printMedium(o, "call ");
-    printName(curr->target, o);
-  }
   void visitCallIndirect(CallIndirect* curr) {
     printMedium(o, "call_indirect (type ") << curr->fullType << ')';
   }
@@ -622,11 +618,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
 
   void visitCall(Call* curr) {
-    o << '(';
-    PrintExpressionContents(currFunction, o).visit(curr);
-    printCallOperands(curr);
-  }
-  void visitCallImport(CallImport* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     printCallOperands(curr);

@@ -244,7 +244,7 @@ struct Mergeable {
 struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergeable>>, public Mergeable {
   OutputMergeable(Module& wasm) : Mergeable(wasm) {}
 
-  void visitCallImport(CallImport* curr) {
+  void visitCall(Call* curr) {
     auto iter = implementedFunctionImports.find(curr->target);
     if (iter != implementedFunctionImports.end()) {
       // this import is now in the module - call it
@@ -292,7 +292,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     assert(curr->target.is());
   }
 
-  void visitCallImport(CallImport* curr) {
+  void visitCall(Call* curr) {
     auto iter = implementedFunctionImports.find(curr->target);
     if (iter != implementedFunctionImports.end()) {
       // this import is now in the module - call it

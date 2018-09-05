@@ -83,11 +83,6 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.emplace_back(ModuleElementKind::Function, curr->target);
     }
   }
-  void visitCallImport(CallImport* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Function, curr->target)) == 0) {
-      queue.emplace_back(ModuleElementKind::Function, curr->target);
-    }
-  }
   void visitCallIndirect(CallIndirect* curr) {
     usesTable = true;
   }

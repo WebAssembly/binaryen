@@ -199,15 +199,16 @@ struct MetaDCEGraph {
       }
 
       void visitCall(Call* curr) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->functionToDCENode[curr->target]
-        );
-      }
-      void visitCallImport(CallImport* curr) {
-        assert(parent->functionToDCENode.count(getFunction()->name) > 0);
-        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->importIdToDCENode[parent->getImportId(curr->target)]
-        );
+        if (!getModule()->getFunction(curr->target)->imported()) {
+          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+            parent->functionToDCENode[curr->target]
+          );
+        } else {
+          assert(parent->functionToDCENode.count(getFunction()->name) > 0);
+          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+            parent->importIdToDCENode[parent->getImportId(curr->target)]
+          );
+        }
       }
       void visitGetGlobal(GetGlobal* curr) {
         handleGlobal(curr->name);
@@ -222,7 +223,8 @@ struct MetaDCEGraph {
       void handleGlobal(Name name) {
         if (!getFunction()) return; // non-function stuff (initializers) are handled separately
         Name dceName;
-        if (getModule()->getGlobalOrNull(name)) {
+        auto* global = getModule()->getGlobal(name);
+        if (!global->imported()) {
           // its a global
           dceName = parent->globalToDCENode[name];
         } else {

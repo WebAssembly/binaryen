@@ -74,7 +74,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       default: WASM_UNREACHABLE();
     }
     replaceCurrent(
-      builder.makeCallImport(
+      builder.makeCall(
         import,
         {
           builder.makeConst(Literal(int32_t(id++))),
@@ -97,7 +97,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable: return; // nothing to do here
       default: WASM_UNREACHABLE();
     }
-    curr->value = builder.makeCallImport(
+    curr->value = builder.makeCall(
       import,
       {
         builder.makeConst(Literal(int32_t(id++))),

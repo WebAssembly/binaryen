@@ -361,11 +361,6 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
   }
 
-  void visitCallImport(CallImport* curr) {
-    // imports cannot contain i64s
-    return;
-  }
-
   void visitCallIndirect(CallIndirect* curr) {
     visitGenericCall<CallIndirect>(
       curr,

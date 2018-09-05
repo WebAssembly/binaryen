@@ -263,7 +263,7 @@ Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFu
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
     ensureF64ToI64JSImport(trappingFunctions);
     Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
-    return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
+    return builder.makeCall(F64_TO_INT, {f64Value}, i32);
   }
 
   ensureUnaryFunc(curr, wasm, trappingFunctions);

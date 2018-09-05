@@ -297,7 +297,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
         args.push_back(builder.makeGetLocal(i, funcType->params[i]));
       }
       Expression* call =
-          builder.makeCallImport(import->name, args, funcType->result);
+          builder.makeCall(import->name, args, funcType->result);
       f->body = call;
       wasm.addFunction(f);
       tableSegmentData.push_back(f->name);
@@ -378,7 +378,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
     : wasm(_wasm),
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
-  void visitCallImport(CallImport* curr);
+  void visitCall(Call* curr);
 
 private:
   Literal idLiteralForCode(std::string code);
@@ -387,7 +387,7 @@ private:
   void addImport(Name importName, std::string baseSig);
 };
 
-void AsmConstWalker::visitCallImport(CallImport* curr) {
+void AsmConstWalker::visitCall(Call* curr) {
   Import* import = wasm.getImport(curr->target);
   if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
@@ -621,10 +621,12 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     }
   }
 
-  void visitCallImport(CallImport* curr) {
-    auto it = importRenames.find(curr->target);
-    if (it != importRenames.end()) {
-      curr->target = it->second;
+  void visitCall(Call* curr) {
+    if (wasm.getFunction(curr->target)->imported()) {
+      auto it = importRenames.find(curr->target);
+      if (it != importRenames.end()) {
+        curr->target = it->second;
+      }
     }
   }
 

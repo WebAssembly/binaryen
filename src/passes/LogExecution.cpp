@@ -60,7 +60,7 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCallImport(
+      builder.makeCall(
         LOGGER,
         { builder.makeConst(Literal(int32_t(id++))) },
         none

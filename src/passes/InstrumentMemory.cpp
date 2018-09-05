@@ -94,7 +94,7 @@ private:
   std::atomic<Index> id;
   Expression* makeLoadCall(Load* curr) {
     Builder builder(*getModule());
-    curr->ptr = builder.makeCallImport(load,
+    curr->ptr = builder.makeCall(load,
       { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),
@@ -106,7 +106,7 @@ private:
 
   Expression* makeStoreCall(Store* curr) {
     Builder builder(*getModule());
-    curr->ptr = builder.makeCallImport(store,
+    curr->ptr = builder.makeCall(store,
       { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),

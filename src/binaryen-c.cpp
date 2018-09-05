@@ -128,7 +128,6 @@ BinaryenExpressionId BinaryenLoopId(void) { return Expression::Id::LoopId; }
 BinaryenExpressionId BinaryenBreakId(void) { return Expression::Id::BreakId; }
 BinaryenExpressionId BinaryenSwitchId(void) { return Expression::Id::SwitchId; }
 BinaryenExpressionId BinaryenCallId(void) { return Expression::Id::CallId; }
-BinaryenExpressionId BinaryenCallImportId(void) { return Expression::Id::CallImportId; }
 BinaryenExpressionId BinaryenCallIndirectId(void) { return Expression::Id::CallIndirectId; }
 BinaryenExpressionId BinaryenGetLocalId(void) { return Expression::Id::GetLocalId; }
 BinaryenExpressionId BinaryenSetLocalId(void) { return Expression::Id::SetLocalId; }
@@ -499,31 +498,6 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target,
     std::cout << " };\n";
     auto id = noteExpression(ret);
     std::cout << "    expressions[" << id << "] = BinaryenCall(the_module, \"" << target << "\", operands, " << numOperands << ", " << returnType << ");\n";
-    std::cout << "  }\n";
-  }
-
-  ret->target = target;
-  for (BinaryenIndex i = 0; i < numOperands; i++) {
-    ret->operands.push_back((Expression*)operands[i]);
-  }
-  ret->type = Type(returnType);
-  ret->finalize();
-  return static_cast<Expression*>(ret);
-}
-BinaryenExpressionRef BinaryenCallImport(BinaryenModuleRef module, const char* target, BinaryenExpressionRef* operands, BinaryenIndex numOperands, BinaryenType returnType) {
-  auto* ret = ((Module*)module)->allocator.alloc<CallImport>();
-
-  if (tracing) {
-    std::cout << "  {\n";
-    std::cout << "    BinaryenExpressionRef operands[] = { ";
-    for (BinaryenIndex i = 0; i < numOperands; i++) {
-      if (i > 0) std::cout << ", ";
-      std::cout << "expressions[" << expressions[operands[i]] << "]";
-    }
-    if (numOperands == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenCallImport(the_module, \"" << target << "\", operands, " << numOperands << ", " << returnType << ");\n";
     std::cout << "  }\n";
   }
 
@@ -1057,35 +1031,6 @@ BinaryenExpressionRef BinaryenCallGetOperand(BinaryenExpressionRef expr, Binarye
   assert(expression->is<Call>());
   assert(index < static_cast<Call*>(expression)->operands.size());
   return static_cast<Call*>(expression)->operands[index];
-}
-// CallImport
-const char* BinaryenCallImportGetTarget(BinaryenExpressionRef expr) {
-  if (tracing) {
-    std::cout << "  BinaryenCallImportGetTarget(expressions[" << expressions[expr] << "]);\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<CallImport>());
-  return static_cast<CallImport*>(expression)->target.c_str();
-}
-BinaryenIndex BinaryenCallImportGetNumOperands(BinaryenExpressionRef expr) {
-  if (tracing) {
-    std::cout << "  BinaryenCallImportGetNumOperands(expressions[" << expressions[expr] << "]);\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<CallImport>());
-  return static_cast<CallImport*>(expression)->operands.size();
-}
-BinaryenExpressionRef BinaryenCallImportGetOperand(BinaryenExpressionRef expr, BinaryenIndex index) {
-  if (tracing) {
-    std::cout << "  BinaryenCallImportGetOperand(expressions[" << expressions[expr] << "], " << index << ");\n";
-  }
-
-  auto* expression = (Expression*)expr;
-  assert(expression->is<CallImport>());
-  assert(index < static_cast<CallImport*>(expression)->operands.size());
-  return static_cast<CallImport*>(expression)->operands[index];
 }
 // CallIndirect
 BinaryenExpressionRef BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr) {

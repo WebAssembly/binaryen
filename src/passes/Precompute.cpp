@@ -61,9 +61,6 @@ public:
   Flow visitCall(Call* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
-  Flow visitCallImport(CallImport* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
   Flow visitCallIndirect(CallIndirect* curr) {
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }

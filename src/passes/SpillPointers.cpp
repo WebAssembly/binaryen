@@ -60,9 +60,6 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
   void visitCall(Call* curr) {
     visitSpillable(curr);
   }
-  void visitCallImport(CallImport* curr) {
-    visitSpillable(curr);
-  }
   void visitCallIndirect(CallIndirect* curr) {
     visitSpillable(curr);
   }
@@ -159,10 +156,6 @@ struct SpillPointers : public WalkerPass<LivenessWalker<SpillPointers, Visitor<S
     };
     if (call->is<Call>()) {
       for (auto*& operand : call->cast<Call>()->operands) {
-        handleOperand(operand);
-      }
-    } else if (call->is<CallImport>()) {
-      for (auto*& operand : call->cast<CallImport>()->operands) {
         handleOperand(operand);
       }
     } else if (call->is<CallIndirect>()) {

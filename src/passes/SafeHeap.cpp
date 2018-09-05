@@ -291,7 +291,7 @@ struct SafeHeap : public Pass {
         builder.makeGetLocal(local, i32),
         builder.makeConst(Literal(int32_t(align - 1)))
       ),
-      builder.makeCallImport(alignfault, {}, none)
+      builder.makeCall(alignfault, {}, none)
     );
   }
 
@@ -316,7 +316,7 @@ struct SafeHeap : public Pass {
           )
         )
       ),
-      builder.makeCallImport(segfault, {}, none)
+      builder.makeCall(segfault, {}, none)
     );
   }
 };

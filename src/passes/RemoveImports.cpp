@@ -28,7 +28,10 @@
 namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
-  void visitCallImport(CallImport *curr) {
+  void visitCall(Call *curr) {
+    if (!getModule()->getFunction(curr->target)->imported()) {
+      return;
+    }
     Type type = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
     if (type == none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());

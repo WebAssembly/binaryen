@@ -453,10 +453,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     handleCall(curr);
   }
 
-  void visitCallImport(CallImport* curr) {
-    handleCall(curr);
-  }
-
   void visitCallIndirect(CallIndirect* curr) {
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
