@@ -20,7 +20,6 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
-#include "ir/import-utils.h"
 #include "ir/module-utils.h"
 
 namespace wasm {
@@ -941,7 +940,7 @@ void WasmBinaryBuilder::readSignatures() {
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
   if (i < functionImports.size()) {
     auto* import = functionImports[i];
-    assert(import->kind == ExternalKind::Function);
+    assert(import->imported());
     return import->name;
   } else {
     i -= functionImports.size();
@@ -969,28 +968,35 @@ void WasmBinaryBuilder::readImports() {
   if (debug) std::cerr << "num: " << num << std::endl;
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto curr = new Import;
-    curr->module = getInlineString();
-    curr->base = getInlineString();
-    curr->kind = (ExternalKind)getU32LEB();
+    auto module = getInlineString();
+    auto base = getInlineString();
+    auto kind = (ExternalKind)getU32LEB();
     // We set a unique prefix for the name based on the kind. This ensures no collisions
     // between them, which can't occur here (due to the index i) but could occur later
     // due to the names section.
-    switch (curr->kind) {
+    switch (kind) {
       case ExternalKind::Function: {
-        curr->name = Name(std::string("fimport$") + std::to_string(i));
+        auto name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
         }
-        curr->functionType = wasm.functionTypes[index]->name;
-        assert(curr->functionType.is());
+        auto* functionType = wasm.functionTypes[index];
+        assert(functionType.is());
+        auto params = functionType->params;
+        auto result = functionType->result;
+        auto* curr = builder.makeFunction(name, params, result, {});
+        curr->module = module;
+        curr->base = base;
+        curr->type = functionType->name;
+        wasm.addFunction(curr);
         functionImports.push_back(curr);
-        continue; // don't add the import yet, we add them later after we know their names
         break;
       }
       case ExternalKind::Table: {
-        curr->name = Name(std::string("timport$") + std::to_string(i));
+        wasm.table.module = module;
+        wasm.table.base = base;
+        wasm.table.name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
@@ -1002,26 +1008,29 @@ void WasmBinaryBuilder::readImports() {
         break;
       }
       case ExternalKind::Memory: {
-        curr->name = Name(std::string("mimport$") + std::to_string(i));
+        wasm.memory.module = module;
+        wasm.memory.base = base;
+        wasm.memory.name = Name(std::string("mimport$") + std::to_string(i));
         wasm.memory.exists = true;
         wasm.memory.imported = true;
         getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
       case ExternalKind::Global: {
-        curr->name = Name(std::string("gimport$") + std::to_string(i));
-        curr->globalType = getConcreteType();
-        auto globalMutable = getU32LEB();
-        // TODO: actually use the globalMutable flag. Currently mutable global
-        // imports is a future feature, to be implemented with thread support.
-        (void)globalMutable;
+        auto name = Name(std::string("gimport$") + std::to_string(i));
+        auto type = getConcreteType();
+        auto mutable_ = getU32LEB();
+        assert(!mutable_); // for now, until mutable globals
+        auto* curr = builder.makeGlobal(name, type, nullptr, mutable_) {
+        curr->module = module;
+        curr->base = base;
+        wasm.addGlobal(curr);
         break;
       }
       default: {
         throwError("bad import kind");
       }
     }
-    wasm.addImport(curr);
   }
 }
 
@@ -1465,10 +1474,6 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
 void WasmBinaryBuilder::processFunctions() {
   for (auto* func : functions) {
     wasm.addFunction(func);
-  }
-
-  for (auto* import : functionImports) {
-    wasm.addImport(import);
   }
 
   // we should have seen all the functions

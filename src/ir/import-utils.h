@@ -22,20 +22,22 @@
 
 namespace wasm {
 
+// Collects info on imports, into a form convenient for summarizing
+// and searching.
 struct ImportInfo {
   Module& wasm;
 
   std::vector<Global*> importedGlobals;
   std::vector<Function*> importedFunctions;
 
-  ImportInfo(Module& wasm) {
+  ImportInfo(Module& wasm) : wasm(wasm) {
     for (auto& import : wasm.globals) {
-      if (import->module == module && import->base == base) {
+      if (import->imported()) {
         importedGlobals.push_back(import.get());
       }
     }
     for (auto& import : wasm.functions) {
-      if (import->module == module && import->base == base) {
+      if (import->imported()) {
         importedFunctions.push_back(import.get());
       }
     }

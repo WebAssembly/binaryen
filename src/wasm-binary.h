@@ -32,6 +32,7 @@
 #include "wasm-builder.h"
 #include "parsing.h"
 #include "wasm-validator.h"
+#include "ir/import-utils.h"
 
 namespace wasm {
 
@@ -833,7 +834,7 @@ public:
 
   // We read functions before we know their names, so we need to backpatch the names later
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
-  std::vector<Import*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
+  std::vector<Function*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
   std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check

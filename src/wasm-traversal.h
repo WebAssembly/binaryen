@@ -152,7 +152,6 @@ struct OverriddenVisitor {
   UNIMPLEMENTED(Nop);
   UNIMPLEMENTED(Unreachable);
   UNIMPLEMENTED(FunctionType);
-  UNIMPLEMENTED(Import);
   UNIMPLEMENTED(Export);
   UNIMPLEMENTED(Global);
   UNIMPLEMENTED(Function);
