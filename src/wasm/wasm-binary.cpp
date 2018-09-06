@@ -944,17 +944,7 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i < functionImports.size()) {
-    auto* import = functionImports[i];
-    assert(import->imported());
-    return import->name;
-  } else {
-    i -= functionImports.size();
-    if (i >= wasm.functions.size()) {
-      throwError("bad function index");
-    }
-    return wasm.functions[i]->name;
-  }
+  return wasm.functions[i]->name;
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
