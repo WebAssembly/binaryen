@@ -63,15 +63,15 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         reachable.insert(curr);
         if (curr.first == ModuleElementKind::Function) {
           // if not an import, walk it
-          auto* func = module->getFunctionOrNull(curr.second);
-          if (func) {
+          auto* func = module->getFunction(curr.second);
+          if (!func->imported()) {
             walk(func->body);
           }
         } else {
           // if not imported, it has an init expression we need to walk
-          auto* glob = module->getGlobalOrNull(curr.second);
-          if (glob) {
-            walk(glob->init);
+          auto* global = module->getGlobal(curr.second);
+          if (!global->imported()) {
+            walk(global->init);
           }
         }
       }
@@ -187,15 +187,14 @@ struct RemoveUnusedModuleElements : public Pass {
         exportsTable = true;
       }
     }
-    // Check for special imports are roots.
+    // Check for special imports, which are roots.
     bool importsMemory = false;
     bool importsTable = false;
-    for (auto& curr : module->imports) {
-      if (curr->kind == ExternalKind::Memory) {
-        importsMemory = true;
-      } else if (curr->kind == ExternalKind::Table) {
-        importsTable = true;
-      }
+    if (module->memory.imported()) {
+      importsMemory = true;
+    }
+    if (module->table.imported()) {
+      importsTable = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
     for (auto& segment : module->table.segments) {
@@ -218,17 +217,6 @@ struct RemoveUnusedModuleElements : public Pass {
         return analyzer.reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
       }), v.end());
     }
-    {
-      auto& v = module->imports;
-      v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Import>& curr) {
-        if (curr->kind == ExternalKind::Function) {
-          return analyzer.reachable.count(ModuleElement(ModuleElementKind::Function, curr->name)) == 0;
-        } else if (curr->kind == ExternalKind::Global) {
-          return analyzer.reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
-        }
-        return false;
-      }), v.end());
-    }
     module->updateMaps();
     // Handle the memory and table
     if (!exportsMemory && !analyzer.usesMemory) {
@@ -238,10 +226,9 @@ struct RemoveUnusedModuleElements : public Pass {
       }
       if (module->memory.segments.empty()) {
         module->memory.exists = false;
-        module->memory.imported = false;
+        module->memory.module = module->memory.base = Name();
         module->memory.initial = 0;
         module->memory.max = 0;
-        removeImport(ExternalKind::Memory, module);
       }
     }
     if (!exportsTable && !analyzer.usesTable) {
@@ -251,19 +238,11 @@ struct RemoveUnusedModuleElements : public Pass {
       }
       if (module->table.segments.empty()) {
         module->table.exists = false;
-        module->table.imported = false;
+        module->table.module = module->table.base = Name();
         module->table.initial = 0;
         module->table.max = 0;
-        removeImport(ExternalKind::Table, module);
       }
     }
-  }
-
-  void removeImport(ExternalKind kind, Module* module) {
-    auto& v = module->imports;
-    v.erase(std::remove_if(v.begin(), v.end(), [&](const std::unique_ptr<Import>& curr) {
-      return curr->kind == kind;
-    }), v.end());
   }
 
   void optimizeFunctionTypes(Module* module) {
@@ -287,7 +266,7 @@ struct RemoveUnusedModuleElements : public Pass {
     };
     // canonicalize all uses of function types
     for (auto* import : analyzer.functionImports) {
-      import->functionType = canonicalize(import->functionType);
+      import->type = canonicalize(import->type);
     }
     for (auto* func : analyzer.functions) {
       func->type = canonicalize(func->type);
