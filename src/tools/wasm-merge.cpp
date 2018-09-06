@@ -280,18 +280,17 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
   std::map<Name, Name> gNames; // globals
 
   void visitCall(Call* curr) {
-    curr->target = fNames[curr->target];
-    assert(curr->target.is());
-  }
-
-  void visitCall(Call* curr) {
-    auto iter = implementedFunctionImports.find(curr->target);
-    if (iter != implementedFunctionImports.end()) {
-      // this import is now in the module - call it
-      replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-      return;
+    if (!getModule()->getFunction(curr->target)->imported()) {
+      curr->target = fNames[curr->target];
+    } else {
+      auto iter = implementedFunctionImports.find(curr->target);
+      if (iter != implementedFunctionImports.end()) {
+        // this import is now in the module - call it
+        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+        return;
+      }
+      curr->target = fNames[curr->target];
     }
-    curr->target = fNames[curr->target];
     assert(curr->target.is());
   }
 
@@ -325,29 +324,38 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
   void merge() {
     // find function imports in us that are implemented in the output
     // TODO make maps, avoid N^2
-    for (auto& imp : wasm.imports) {
+    ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
       // per wasm dynamic library rules, we expect to see exports on 'env'
-      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+      if (import->module == ENV) {
         // seek an export on the other side that matches
         for (auto& exp : outputMergeable.wasm.exports) {
-          if (exp->kind == imp->kind && exp->name == imp->base) {
+          if (exp->name == import->base) {
             // fits!
-            if (imp->kind == ExternalKind::Function) {
-              implementedFunctionImports[imp->name] = exp->value;
-            } else {
-              implementedGlobalImports[imp->name] = exp->value;
-            }
+            implementedFunctionImports[import->name] = exp->value;
             break;
           }
         }
       }
-    }
+    });
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      // per wasm dynamic library rules, we expect to see exports on 'env'
+      if (import->module == ENV) {
+        // seek an export on the other side that matches
+        for (auto& exp : outputMergeable.wasm.exports) {
+          if (exp->name == import->base) {
+            // fits!
+            implementedGlobalImports[import->name] = exp->value;
+            break;
+          }
+        }
+      }
+    });
     // remove the unneeded ones
     for (auto& pair : implementedFunctionImports) {
-      wasm.removeImport(pair.first);
+      wasm.removeFunction(pair.first);
     }
     for (auto& pair : implementedGlobalImports) {
-      wasm.removeImport(pair.first);
+      wasm.removeGlobal(pair.first);
     }
 
     // find new names
@@ -356,27 +364,26 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         return outputMergeable.wasm.getFunctionTypeOrNull(name);
       });
     }
-    for (auto& curr : wasm.imports) {
-      if (curr->kind == ExternalKind::Function) {
-        curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getFunctionOrNull(name);
-        });
-      } else if (curr->kind == ExternalKind::Global) {
-        curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
-          return !!outputMergeable.wasm.getImportOrNull(name) || !!outputMergeable.wasm.getGlobalOrNull(name);
-        });
-      }
-    }
-    for (auto& curr : wasm.functions) {
+    ImportInfo::iterImportedFunctions(wasm, [&](Function* curr) {
+      curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!outputMergeable.wasm.getFunctionOrNull(name);
+      });
+    });
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* curr) {
+      curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
+        return !!outputMergeable.wasm.getGlobalOrNull(name);
+      });
+    });
+    ImportInfo::iterDefinedFunctions(wasm, [&](Function* curr) {
       curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return outputMergeable.wasm.getFunctionOrNull(name);
       });
-    }
-    for (auto& curr : wasm.globals) {
+    });
+    ImportInfo::iterDefinedGlobals(wasm, [&](Global* curr) {
       curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return outputMergeable.wasm.getGlobalOrNull(name);
       });
-    }
+    });
 
     // update global names in input
     {
@@ -395,20 +402,26 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     }
 
     // find function imports in output that are implemented in the input
-    for (auto& imp : outputMergeable.wasm.imports) {
-      if ((imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) && imp->module == ENV) {
+    ImportInfo::iterImportedFunctions(outputMergeable.wasm, [&](Function* import) {
+      if (import->module == ENV) {
         for (auto& exp : wasm.exports) {
-          if (exp->kind == imp->kind && exp->name == imp->base) {
-            if (imp->kind == ExternalKind::Function) {
-              outputMergeable.implementedFunctionImports[imp->name] = fNames[exp->value];
-            } else {
-              outputMergeable.implementedGlobalImports[imp->name] = gNames[exp->value];
-            }
+          if (exp->name == import->base) {
+            outputMergeable.implementedFunctionImports[import->name] = fNames[exp->value];
             break;
           }
         }
       }
-    }
+    });
+    ImportInfo::iterImportedGlobals(outputMergeable.wasm, [&](Global* import) {
+      if (import->module == ENV) {
+        for (auto& exp : wasm.exports) {
+          if (exp->name == import->base) {
+            outputMergeable.implementedGlobalImports[import->name] = gNames[exp->value];
+            break;
+          }
+        }
+      }
+    });
 
     // update the output before bringing anything in. avoid doing so when possible, as in the
     // common case the output module is very large.
