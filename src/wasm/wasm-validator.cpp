@@ -483,13 +483,13 @@ void FunctionValidator::visitSetLocal(SetLocal* curr) {
 
 void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
   if (!info.validateGlobally) return;
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name) || getModule()->getImportOrNull(curr->name), curr, "get_global name must be valid");
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name), curr, "get_global name must be valid");
 }
 
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global != NULL, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
+  if (shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
     shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
     shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
   }
@@ -908,8 +908,8 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 // Main validator class
 
 static void validateImports(Module& module, ValidationInfo& info) {
-  for (auto& curr : module.imports) {
-    if (curr->kind == ExternalKind::Function) {
+  for (auto& curr : module.functions) {
+    if (curr->imported()) {
       if (info.validateWeb) {
         auto* functionType = module.getFunctionType(curr->functionType);
         info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
@@ -917,12 +917,6 @@ static void validateImports(Module& module, ValidationInfo& info) {
           info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
         }
       }
-    }
-    if (curr->kind == ExternalKind::Table) {
-      info.shouldBeTrue(module.table.imported, curr->name, "Table import record exists but table is not marked as imported");
-    }
-    if (curr->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(module.memory.imported, curr->name, "Memory import record exists but memory is not marked as imported");
     }
   }
 }
