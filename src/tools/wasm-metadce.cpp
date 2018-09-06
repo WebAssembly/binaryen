@@ -69,13 +69,13 @@ struct MetaDCEGraph {
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
 
-  ImportId getFunctionImportId(Function* func) {
+  ImportId getFunctionImportId(Name name) {
     auto* imp = wasm.getFunction(name);
     return getImportId(imp->module, imp->base);
   }
 
-  ImportId getGlobalImportId(Function* func) {
-    auto* imp = wasm.getFunction(name);
+  ImportId getGlobalImportId(Name name) {
+    auto* imp = wasm.getGlobal(name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -103,16 +103,21 @@ struct MetaDCEGraph {
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    for (auto& imp : wasm.imports) {
-      // only process function and global imports - the table and memory are always there
-      if (imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) {
-        auto id = getImportId(imp->module, imp->base);
-        if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
-          auto dceName = getName("importId", imp->name.str);
-          importIdToDCENode[id] = dceName;
-        }
+    // only process function and global imports - the table and memory are always there
+    ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.str);
+        importIdToDCENode[id] = dceName;
       }
-    }
+    });
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.str);
+        importIdToDCENode[id] = dceName;
+      }
+    });
     for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
         auto dceName = getName("export", exp->name.str);
@@ -211,7 +216,7 @@ struct MetaDCEGraph {
         } else {
           assert(parent->functionToDCENode.count(getFunction()->name) > 0);
           parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-            parent->importIdToDCENode[parent->getImportId(curr->target)]
+            parent->importIdToDCENode[parent->getFunctionImportId(curr->target)]
           );
         }
       }
@@ -233,7 +238,7 @@ struct MetaDCEGraph {
           dceName = parent->globalToDCENode[name];
         } else {
           // it's an import.
-          dceName = parent->importIdToDCENode[parent->getImportId(name)];
+          dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(dceName);
       }
