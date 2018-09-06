@@ -197,8 +197,8 @@ Module['LeFloat64'] = Module['_BinaryenLeFloat64']();
 Module['GtFloat64'] = Module['_BinaryenGtFloat64']();
 Module['GeFloat64'] = Module['_BinaryenGeFloat64']();
 Module['PageSize'] = Module['_BinaryenPageSize']();
-Module['CurrentMemory'] = Module['_BinaryenCurrentMemory']();
-Module['GrowMemory'] = Module['_BinaryenGrowMemory']();
+Module['MemorySize'] = Module['_BinaryenMemorySize']();
+Module['MemoryGrow'] = Module['_BinaryenMemoryGrow']();
 Module['HasFeature'] = Module['_BinaryenHasFeature']();
 Module['AtomicRMWAdd'] = Module['_BinaryenAtomicRMWAdd']();
 Module['AtomicRMWSub'] = Module['_BinaryenAtomicRMWSub']();
@@ -277,11 +277,11 @@ Module['Module'] = function(module) {
   this['setGlobal'] = this['set_global'] = function(name, value) {
     return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
   }
-  this['currentMemory'] = this['current_memory'] = function() {
-    return Module['_BinaryenHost'](module, Module['CurrentMemory']);
+  this['memorySize'] = this['memory_size'] = function() {
+    return Module['_BinaryenHost'](module, Module['MemorySize']);
   }
-  this['growMemory'] = this['grow_memory'] = function(value) {
-    return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
+  this['memoryGrow'] = this['memory_grow'] = function(value) {
+    return Module['_BinaryenHost'](module, Module['MemoryGrow'], null, i32sToStack([value]), 1);
   }
   this['hasFeature'] = this['has_feature'] = function(name) {
     return Module['_BinaryenHost'](module, Module['HasFeature'], strToStack(name));

@@ -382,8 +382,8 @@ BinaryenOp BinaryenLeFloat64(void) { return LeFloat64; }
 BinaryenOp BinaryenGtFloat64(void) { return GtFloat64; }
 BinaryenOp BinaryenGeFloat64(void) { return GeFloat64; }
 BinaryenOp BinaryenPageSize(void) { return PageSize; }
-BinaryenOp BinaryenCurrentMemory(void) { return CurrentMemory; }
-BinaryenOp BinaryenGrowMemory(void) { return GrowMemory; }
+BinaryenOp BinaryenMemorySize(void) { return MemorySize; }
+BinaryenOp BinaryenMemoryGrow(void) { return MemoryGrow; }
 BinaryenOp BinaryenHasFeature(void) { return HasFeature; }
 BinaryenOp BinaryenAtomicRMWAdd(void) { return AtomicRMWOp::Add; }
 BinaryenOp BinaryenAtomicRMWSub(void) { return AtomicRMWOp::Sub; }

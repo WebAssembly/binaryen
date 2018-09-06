@@ -126,6 +126,42 @@ function asmFunc(global, env, buffer) {
   return 42 | 0;
  }
  
+ function $22() {
+  return 1 | 0;
+ }
+ 
+ function $23() {
+  return 1 | 0;
+ }
+ 
+ function $24() {
+  return 10 | 0;
+ }
+ 
+ function $25() {
+  return 1 | 0;
+ }
+ 
+ function $26() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 1 | 0;
+ }
+ 
+ function $27() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 1 | 0;
+ }
+ 
+ function $28() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 10 | 0;
+ }
+ 
+ function $29() {
+  i64toi32_i32$HIGH_BITS = 0;
+  return 1 | 0;
+ }
+ 
  return {
   i32_test: $0, 
   i32_umax: $1, 
@@ -148,7 +184,15 @@ function asmFunc(global, env, buffer) {
   i64_neg_zero: $18, 
   i64_not_octal: $19, 
   i64_unsigned_decimal: $20, 
-  i64_plus_sign: $21
+  i64_plus_sign: $21, 
+  i32_dec_sep1: $22, 
+  i32_dec_sep2: $23, 
+  i32_hex_sep1: $24, 
+  i32_hex_sep2: $25, 
+  i64_dec_sep1: $26, 
+  i64_dec_sep2: $27, 
+  i64_hex_sep1: $28, 
+  i64_hex_sep2: $29
  };
 }
 
@@ -176,3 +220,11 @@ export const i64_neg_zero = retasmFunc.i64_neg_zero;
 export const i64_not_octal = retasmFunc.i64_not_octal;
 export const i64_unsigned_decimal = retasmFunc.i64_unsigned_decimal;
 export const i64_plus_sign = retasmFunc.i64_plus_sign;
+export const i32_dec_sep1 = retasmFunc.i32_dec_sep1;
+export const i32_dec_sep2 = retasmFunc.i32_dec_sep2;
+export const i32_hex_sep1 = retasmFunc.i32_hex_sep1;
+export const i32_hex_sep2 = retasmFunc.i32_hex_sep2;
+export const i64_dec_sep1 = retasmFunc.i64_dec_sep1;
+export const i64_dec_sep2 = retasmFunc.i64_dec_sep2;
+export const i64_hex_sep1 = retasmFunc.i64_hex_sep1;
+export const i64_hex_sep2 = retasmFunc.i64_hex_sep2;

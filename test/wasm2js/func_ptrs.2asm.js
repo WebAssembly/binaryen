@@ -1,4 +1,4 @@
-import { print } from 'spectest';
+import { print_i32 } from 'spectest';
 function asmFunc(global, env, buffer) {
  "use asm";
  var HEAP8 = new global.Int8Array(buffer);
@@ -21,7 +21,7 @@ function asmFunc(global, env, buffer) {
  var abort = env.abort;
  var nan = global.NaN;
  var infinity = global.Infinity;
- var print = env.print;
+ var print = env.print_i32;
  var i64toi32_i32$HIGH_BITS = 0;
  function $1() {
   
@@ -59,7 +59,7 @@ function asmFunc(global, env, buffer) {
 }
 
 const memasmFunc = new ArrayBuffer(65536);
-const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print},memasmFunc);
+const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },print_i32},memasmFunc);
 export const one = retasmFunc.one;
 export const two = retasmFunc.two;
 export const three = retasmFunc.three;

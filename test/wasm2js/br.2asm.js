@@ -216,7 +216,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $24() {
-  var $0 = 0, $1_1 = 0;
+  var $0 = 0, $5_1 = 0;
   if_ : {
    $0 = 2;
    break if_;
@@ -227,13 +227,13 @@ function asmFunc(global, env, buffer) {
  function $25($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $3_1 = 0, $5_1 = 0;
+  var $3_1 = 0, $7_1 = 0;
   block : {
    if ($0) {
     $3_1 = 3;
     break block;
-   } else $5_1 = $1_1;
-   $3_1 = $5_1;
+   } else $7_1 = $1_1;
+   $3_1 = $7_1;
   };
   return $3_1 | 0;
  }
@@ -241,15 +241,15 @@ function asmFunc(global, env, buffer) {
  function $26($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $4_1 = 0, $5_1 = 0;
+  var $6_1 = 0, $7_1 = 0;
   block : {
-   if ($0) $5_1 = $1_1; else {
-    $4_1 = 4;
+   if ($0) $7_1 = $1_1; else {
+    $6_1 = 4;
     break block;
    }
-   $4_1 = $5_1;
+   $6_1 = $7_1;
   };
-  return $4_1 | 0;
+  return $6_1 | 0;
  }
  
  function $27($0, $1_1) {
@@ -666,7 +666,7 @@ function asmFunc(global, env, buffer) {
   as_compare_left: $49, 
   as_compare_right: $50, 
   as_convert_operand: $51, 
-  as_grow_memory_size: $52, 
+  as_memory_grow_size: $52, 
   nested_block_value: $53, 
   nested_br_value: $54, 
   nested_br_if_value: $55, 
@@ -728,7 +728,7 @@ export const as_test_operand = retasmFunc.as_test_operand;
 export const as_compare_left = retasmFunc.as_compare_left;
 export const as_compare_right = retasmFunc.as_compare_right;
 export const as_convert_operand = retasmFunc.as_convert_operand;
-export const as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export const as_memory_grow_size = retasmFunc.as_memory_grow_size;
 export const nested_block_value = retasmFunc.nested_block_value;
 export const nested_br_value = retasmFunc.nested_br_value;
 export const nested_br_if_value = retasmFunc.nested_br_if_value;

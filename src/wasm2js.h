@@ -747,7 +747,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       ValueBuilder::appendToObject(
         growDesc,
         IString("value"),
-        ValueBuilder::makeName(WASM_GROW_MEMORY));
+        ValueBuilder::makeName(WASM_MEMORY_GROW));
       Ref bufferDesc = ValueBuilder::makeObject();
       Ref bufferGetter = ValueBuilder::makeFunction(IString(""));
       bufferGetter[3]->push_back(ValueBuilder::makeReturn(
@@ -2014,15 +2014,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
 
     Ref visitHost(Host* curr) {
       Ref call;
-      if (curr->op == HostOp::GrowMemory) {
-        parent->setNeedsAlmostASM("grow_memory op");
-        call = ValueBuilder::makeCall(WASM_GROW_MEMORY,
+      if (curr->op == HostOp::MemoryGrow) {
+        parent->setNeedsAlmostASM("memory.grow op");
+        call = ValueBuilder::makeCall(WASM_MEMORY_GROW,
           makeAsmCoercion(
             visit(curr->operands[0], EXPRESSION_RESULT),
             wasmToAsmType(curr->operands[0]->type)));
-      } else if (curr->op == HostOp::CurrentMemory) {
-        parent->setNeedsAlmostASM("current_memory op");
-        call = ValueBuilder::makeCall(WASM_CURRENT_MEMORY);
+      } else if (curr->op == HostOp::MemorySize) {
+        parent->setNeedsAlmostASM("memory.size op");
+        call = ValueBuilder::makeCall(WASM_MEMORY_SIZE);
       } else {
         return ValueBuilder::makeCall(ABORT_FUNC);
       }
@@ -2264,10 +2264,10 @@ void Wasm2JSBuilder::setNeedsAlmostASM(const char *reason) {
 }
 
 void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
-  Ref growMemoryFunc = ValueBuilder::makeFunction(WASM_GROW_MEMORY);
-  ValueBuilder::appendArgumentToFunction(growMemoryFunc, IString("pagesToAdd"));
+  Ref memoryGrowFunc = ValueBuilder::makeFunction(WASM_MEMORY_GROW);
+  ValueBuilder::appendArgumentToFunction(memoryGrowFunc, IString("pagesToAdd"));
 
-  growMemoryFunc[3]->push_back(
+  memoryGrowFunc[3]->push_back(
     ValueBuilder::makeStatement(
       ValueBuilder::makeBinary(
         ValueBuilder::makeName(IString("pagesToAdd")), SET,
@@ -2280,14 +2280,14 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
   );
 
   Ref oldPages = ValueBuilder::makeVar();
-  growMemoryFunc[3]->push_back(oldPages);
+  memoryGrowFunc[3]->push_back(oldPages);
   ValueBuilder::appendToVar(
     oldPages,
     IString("oldPages"),
-    makeAsmCoercion(ValueBuilder::makeCall(WASM_CURRENT_MEMORY), AsmType::ASM_INT));
+    makeAsmCoercion(ValueBuilder::makeCall(WASM_MEMORY_SIZE), AsmType::ASM_INT));
 
   Ref newPages = ValueBuilder::makeVar();
-  growMemoryFunc[3]->push_back(newPages);
+  memoryGrowFunc[3]->push_back(newPages);
   ValueBuilder::appendToVar(
     newPages,
     IString("newPages"),
@@ -2298,7 +2298,7 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
     ), AsmType::ASM_INT));
 
   Ref block = ValueBuilder::makeBlock();
-  growMemoryFunc[3]->push_back(ValueBuilder::makeIf(
+  memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(
     ValueBuilder::makeBinary(
       ValueBuilder::makeBinary(
         ValueBuilder::makeName(IString("oldPages")),
@@ -2392,12 +2392,12 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
     )
   );
 
-  growMemoryFunc[3]->push_back(
+  memoryGrowFunc[3]->push_back(
     ValueBuilder::makeReturn(
       ValueBuilder::makeName(IString("oldPages"))));
 
-  Ref currentMemoryFunc = ValueBuilder::makeFunction(WASM_CURRENT_MEMORY);
-  currentMemoryFunc[3]->push_back(ValueBuilder::makeReturn(
+  Ref memorySizeFunc = ValueBuilder::makeFunction(WASM_MEMORY_SIZE);
+  memorySizeFunc[3]->push_back(ValueBuilder::makeReturn(
     makeAsmCoercion(
       ValueBuilder::makeBinary(
         ValueBuilder::makeDot(
@@ -2410,8 +2410,8 @@ void Wasm2JSBuilder::addMemoryGrowthFuncs(Ref ast) {
       AsmType::ASM_INT
     )
   ));
-  ast->push_back(growMemoryFunc);
-  ast->push_back(currentMemoryFunc);
+  ast->push_back(memoryGrowFunc);
+  ast->push_back(memorySizeFunc);
 }
 
 bool Wasm2JSBuilder::isAssertHandled(Element& e) {

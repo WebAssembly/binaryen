@@ -123,7 +123,7 @@ enum BinaryOp {
 };
 
 enum HostOp {
-  PageSize, CurrentMemory, GrowMemory, HasFeature
+  PageSize, MemorySize, MemoryGrow, HasFeature
 };
 
 enum AtomicRMWOp {

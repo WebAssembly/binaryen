@@ -82,57 +82,6 @@ function asmFunc(global, env, buffer) {
   return +(+__wasm_nearest_f64(+x));
  }
  
- function $11(x) {
-  x = +x;
-  return +Math_abs(x);
- }
- 
- function $12(x) {
-  x = +x;
-  return +-x;
- }
- 
- function $13(x, y) {
-  x = +x;
-  y = +y;
-  var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, $4_1 = 0, $4$hi = 0, $7_1 = 0, $7$hi = 0, wasm2js_i32$0 = 0, wasm2js_f64$0 = 0.0, wasm2js_i32$1 = 0;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = x;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$0 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  i64toi32_i32$2 = HEAP32[0 >> 2] | 0;
-  i64toi32_i32$1 = 2147483647;
-  i64toi32_i32$3 = 4294967295;
-  i64toi32_i32$1 = i64toi32_i32$0 & i64toi32_i32$1 | 0;
-  $4_1 = i64toi32_i32$2 & i64toi32_i32$3 | 0;
-  $4$hi = i64toi32_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_f64$0 = y;
-  HEAPF64[wasm2js_i32$0 >> 3] = wasm2js_f64$0;
-  i64toi32_i32$1 = HEAP32[(0 + 4 | 0) >> 2] | 0;
-  i64toi32_i32$1 = i64toi32_i32$1;
-  i64toi32_i32$0 = HEAP32[0 >> 2] | 0;
-  i64toi32_i32$2 = 2147483648;
-  i64toi32_i32$3 = 0;
-  i64toi32_i32$2 = i64toi32_i32$1 & i64toi32_i32$2 | 0;
-  $7_1 = i64toi32_i32$0 & i64toi32_i32$3 | 0;
-  $7$hi = i64toi32_i32$2;
-  i64toi32_i32$2 = $4$hi;
-  i64toi32_i32$1 = $4_1;
-  i64toi32_i32$0 = $7$hi;
-  i64toi32_i32$3 = $7_1;
-  i64toi32_i32$0 = i64toi32_i32$2 | i64toi32_i32$0 | 0;
-  i64toi32_i32$0 = i64toi32_i32$0;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = i64toi32_i32$1 | i64toi32_i32$3 | 0;
-  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
-  wasm2js_i32$0 = 0;
-  wasm2js_i32$1 = i64toi32_i32$0;
-  HEAP32[(wasm2js_i32$0 + 4 | 0) >> 2] = wasm2js_i32$1;
-  return +(+HEAPF64[0 >> 3]);
- }
- 
  function __wasm_nearest_f64(var$0) {
   var$0 = +var$0;
   var var$1 = 0.0, var$2 = 0.0, wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
@@ -164,10 +113,7 @@ function asmFunc(global, env, buffer) {
   ceil: $7, 
   floor: $8, 
   trunc: $9, 
-  nearest: $10, 
-  abs: $11, 
-  neg: $12, 
-  copysign: $13
+  nearest: $10
  };
 }
 
@@ -184,6 +130,3 @@ export const ceil = retasmFunc.ceil;
 export const floor = retasmFunc.floor;
 export const trunc = retasmFunc.trunc;
 export const nearest = retasmFunc.nearest;
-export const abs = retasmFunc.abs;
-export const neg = retasmFunc.neg;
-export const copysign = retasmFunc.copysign;

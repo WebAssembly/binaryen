@@ -14,13 +14,13 @@ var body = module.block(
     module.if(
       module.i32.lt_u(
         module.i32.mul(
-          module.current_memory(),
+          module.memory_size(),
           module.i32.const(65536)
         ),
         module.get_local(0, Binaryen.i32)
       ),
       module.drop(
-        module.grow_memory(
+        module.memory_grow(
           module.i32.sub(
             module.i32.div_u(
               module.i32.add(
@@ -29,7 +29,7 @@ var body = module.block(
               ),
               module.i32.const(65536)
             ),
-            module.current_memory()
+            module.memory_size()
           )
         )
       )

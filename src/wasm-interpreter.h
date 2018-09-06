@@ -547,7 +547,7 @@ public:
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
     virtual Literal callTable(Index index, LiteralList& arguments, Type result, SubType& instance) = 0;
-    virtual void growMemory(Address oldSize, Address newSize) = 0;
+    virtual void memoryGrow(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
@@ -926,8 +926,8 @@ public:
         NOTE_ENTER("Host");
         switch (curr->op) {
           case PageSize:   return Literal((int32_t)Memory::kPageSize);
-          case CurrentMemory: return Literal(int32_t(instance.memorySize));
-          case GrowMemory: {
+          case MemorySize: return Literal(int32_t(instance.memorySize));
+          case MemoryGrow: {
             auto fail = Literal(int32_t(-1));
             Flow flow = this->visit(curr->operands[0]);
             if (flow.breaking()) return flow;
@@ -937,7 +937,7 @@ public:
             if (instance.memorySize >= uint32_t(-1) - delta) return fail;
             uint32_t newSize = instance.memorySize + delta;
             if (newSize > instance.wasm.memory.max) return fail;
-            instance.externalInterface->growMemory(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
+            instance.externalInterface->memoryGrow(instance.memorySize * Memory::kPageSize, newSize * Memory::kPageSize);
             instance.memorySize = newSize;
             return Literal(int32_t(ret));
           }

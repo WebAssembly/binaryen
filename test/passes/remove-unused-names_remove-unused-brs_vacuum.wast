@@ -24,7 +24,7 @@
   (import "global" "Infinity" (global $import$6 f64))
   (import "env" "enlargeMemory" (func $import$7 (result i32)))
   (import "env" "getTotalMemory" (func $import$8 (result i32)))
-  (import "env" "abortOnCannotGrowMemory" (func $import$9 (result i32)))
+  (import "env" "abortOnCannotMemoryGrow" (func $import$9 (result i32)))
   (import "env" "abortStackOverflow" (func $import$10 (param i32)))
   (import "env" "nullFunc_ii" (func $import$11 (param i32)))
   (import "env" "nullFunc_iiii" (func $import$12 (param i32)))

@@ -21,18 +21,29 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(var$0) {
-  var$0 = var$0 | 0;
-  return __wasm_grow_memory(var$0 | 0) | 0;
+ function $0() {
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  wasm2js_i32$0 = 0;
+  wasm2js_i32$1 = __wasm_memory_grow(1 | 0);
+  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  return HEAPU32[0 >> 2] | 0 | 0;
  }
  
  function $1() {
-  return __wasm_current_memory() | 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0;
+  wasm2js_i32$0 = 0;
+  wasm2js_i32$1 = grow() | 0;
+  HEAP32[wasm2js_i32$0 >> 2] = wasm2js_i32$1;
+  return HEAPU32[0 >> 2] | 0 | 0;
  }
  
- function __wasm_grow_memory(pagesToAdd) {
+ function grow() {
+  return __wasm_memory_grow(1 | 0) | 0;
+ }
+ 
+ function __wasm_memory_grow(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
-  var oldPages = __wasm_current_memory() | 0;
+  var oldPages = __wasm_memory_size() | 0;
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65535)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
@@ -51,14 +62,14 @@ function asmFunc(global, env, buffer) {
   return oldPages;
  }
  
- function __wasm_current_memory() {
+ function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
  
  return {
   memory: Object.create(Object.prototype, {
    grow: {
-    value: __wasm_grow_memory
+    value: __wasm_memory_grow
    }, 
    buffer: {
     get: function () {
@@ -67,13 +78,13 @@ function asmFunc(global, env, buffer) {
     
    }
   }), 
-  grow: $0, 
-  current: $1
+  f1: $0, 
+  f2: $1
  };
 }
 
 const memasmFunc = new ArrayBuffer(65536);
 const retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); }},memasmFunc);
 export const memory = retasmFunc.memory;
-export const grow = retasmFunc.grow;
-export const current = retasmFunc.current;
+export const f1 = retasmFunc.f1;
+export const f2 = retasmFunc.f2;

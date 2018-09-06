@@ -704,7 +704,7 @@
  (func $unreachable-brs-3 (result i32)
   (block $label$0 (result i32)
    (br $label$0
-    (grow_memory
+    (memory.grow
      (br $label$0
       (i32.const 18)
      )

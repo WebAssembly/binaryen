@@ -140,7 +140,7 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
     name, std::move(params), i32, {}
   );
   growFunction->body = builder.makeHost(
-    GrowMemory,
+    MemoryGrow,
     Name(),
     { builder.makeGetLocal(0, i32) }
   );

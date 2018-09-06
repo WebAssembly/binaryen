@@ -50304,7 +50304,7 @@ function asmFunc(global, env, buffer) {
   as_compare_left: $56, 
   as_compare_right: $57, 
   as_convert_operand: $58, 
-  as_grow_memory_size: $59, 
+  as_memory_grow_size: $59, 
   nested_block_value: $60, 
   nested_br_value: $61, 
   nested_br_if_value: $62, 
@@ -50373,7 +50373,7 @@ export const as_test_operand = retasmFunc.as_test_operand;
 export const as_compare_left = retasmFunc.as_compare_left;
 export const as_compare_right = retasmFunc.as_compare_right;
 export const as_convert_operand = retasmFunc.as_convert_operand;
-export const as_grow_memory_size = retasmFunc.as_grow_memory_size;
+export const as_memory_grow_size = retasmFunc.as_memory_grow_size;
 export const nested_block_value = retasmFunc.nested_block_value;
 export const nested_br_value = retasmFunc.nested_br_value;
 export const nested_br_if_value = retasmFunc.nested_br_if_value;

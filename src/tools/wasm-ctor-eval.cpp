@@ -250,8 +250,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   void store32(Address addr, int32_t value) override { doStore<int32_t>(addr, value); }
   void store64(Address addr, int64_t value) override { doStore<int64_t>(addr, value); }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
-    throw FailToEvalException("grow memory");
+  void memoryGrow(Address /*oldSize*/, Address newSize) override {
+    throw FailToEvalException("memory.grow");
   }
 
   void trap(const char* why) override {

@@ -398,8 +398,8 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
   void visitHost(Host* curr) {
     switch (curr->op) {
       case PageSize:      printMedium(o, "pagesize"); break;
-      case CurrentMemory: printMedium(o, "current_memory"); break;
-      case GrowMemory:    printMedium(o, "grow_memory"); break;
+      case MemorySize: printMedium(o, "memory.size"); break;
+      case MemoryGrow:    printMedium(o, "memory.grow"); break;
       case HasFeature:    printMedium(o, "hasfeature ") << curr->nameOperand; break;
       default: WASM_UNREACHABLE();
     }
@@ -767,7 +767,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     switch (curr->op) {
-      case GrowMemory: {
+      case MemoryGrow: {
         incIndent();
         printFullLine(curr->operands[0]);
         decIndent();
