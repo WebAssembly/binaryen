@@ -234,11 +234,8 @@ void WasmBinaryWriter::writeFunctions() {
   if (wasm->functions.size() == 0) return;
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
-  size_t total = wasm->functions.size() - importInfo->getNumImportedFunctions();
-  o << U32LEB(total);
-  for (size_t i = 0; i < total; i++) {
-    Function* func = wasm->functions[i].get();
-    if (func->imported()) continue;
+  o << U32LEB(importInfo->getNumDefinedFunctions());
+  ImportInfo::iterDefinedFunctions(*wasm, [&](Function* func) {
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
@@ -269,7 +266,7 @@ void WasmBinaryWriter::writeFunctions() {
       }
     }
     tableOfContents.functionBodies.emplace_back(func->name, sizePos + sizeFieldSize, size);
-  }
+  });
   finishSection(start);
 }
 

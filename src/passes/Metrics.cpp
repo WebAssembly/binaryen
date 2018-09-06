@@ -91,15 +91,14 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       WasmBinaryWriter writer(module, buffer);
       writer.write();
       // print for each function
-      for (Index i = 0; i < module->functions.size(); i++) {
-        auto* func = module->functions[i].get();
-        if (func->imported()) continue;
+      Index binaryIndex = 0;
+      ImportInfo::iterDefinedFunctions(*module, [&](Function* func) {
         counts.clear();
         walkFunction(func);
         counts["[vars]"] = func->getNumVars();
-        counts["[binary-bytes]"] = writer.tableOfContents.functionBodies[i].size;
+        counts["[binary-bytes]"] = writer.tableOfContents.functionBodies[binaryIndex++].size;
         printCounts(std::string("func: ") + func->name.str);
-      }
+      });
       // print for each export how much code size is due to it, i.e.,
       // how much the module could shrink without it.
       auto sizeAfterGlobalCleanup = [](Module* module) {
