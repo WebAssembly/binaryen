@@ -284,7 +284,7 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     for (auto& func : module->functions) {
-      // on the first iteration, allow multiple inlinings per function
+      if (func->imported()) continue;
       if (infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
