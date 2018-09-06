@@ -467,6 +467,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   }
   void decIndent() {
     if (!minify) {
+      assert(indent > 0);
       indent--;
       doIndent(o, indent);
     }
@@ -896,6 +897,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         // Print the stack IR.
         WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
       }
+      decIndent();
     } else {
       printMedium(o, "import ");
       printText(o, curr->module.str) << ' ';
@@ -904,7 +906,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
       }
     }
-    decIndent();
     o << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
