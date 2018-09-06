@@ -51,9 +51,6 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     for (auto& curr : module->functionTypes) {
       visitFunctionType(curr.get());
     }
-    for (auto& curr : module->imports) {
-      visitImport(curr.get());
-    }
     for (auto& curr : module->exports) {
       visitExport(curr.get());
     }

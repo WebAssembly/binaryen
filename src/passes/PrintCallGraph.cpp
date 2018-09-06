@@ -47,13 +47,15 @@ struct PrintCallGraph : public Pass {
          "  node [shape=box, fontname=courier, fontsize=10];\n";
 
     // All Functions
-    for (auto& func : module->functions) {
-      std::cout << "  \"" << func.get()->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+    for (auto& curr : module->functions) {
+      if (!curr->imported()) {
+        std::cout << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+      }
     }
 
     // Imports Nodes
-    for (auto& curr : module->imports) {
-      if (curr->kind == ExternalKind::Function) {
+    for (auto& curr : module->functions) {
+      if (curr->imported()) {
         o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
       }
     }

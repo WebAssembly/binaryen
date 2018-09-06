@@ -825,13 +825,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMedium(o, "import ");
       printText(o, curr->module.str) << ' ';
       printText(o, curr->base.str) << ' ';
-      switch (curr->kind) {
-        case ExternalKind::Function: if (curr->functionType.is()) visitFunctionType(currModule->getFunctionType(curr->functionType), &curr->name); break;
-        case ExternalKind::Table:    printTableHeader(&currModule->table); break;
-        case ExternalKind::Memory:   printMemoryHeader(&currModule->memory); break;
-        case ExternalKind::Global:   o << "(global " << curr->name << ' ' << printType(curr->globalType) << ")"; break;
-        default: WASM_UNREACHABLE();
-      }
+      o << "(global " << curr->name << ' ' << printType(curr->type) << ")";
     } else {
       printMedium(o, "global ");
       printName(curr->name, o) << ' ';
@@ -906,8 +900,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMedium(o, "import ");
       printText(o, curr->module.str) << ' ';
       printText(o, curr->base.str) << ' ';
-      if (curr->functionType.is()) {
-        visitFunctionType(currModule->getFunctionType(curr->functionType), &curr->name);
+      if (curr->type.is()) {
+        visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
       }
     }
     decIndent();
