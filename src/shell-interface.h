@@ -26,6 +26,7 @@
 #include "support/name.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
+#include "ir/import-utils.h"
 
 namespace wasm {
 
@@ -118,8 +119,8 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
-    for (auto& import : wasm.globals) {
-      if (import->imported() && import->module == SPECTEST && import->base == GLOBAL) {
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      if (import->module == SPECTEST && import->base == GLOBAL) {
         switch (import->type) {
           case i32: globals[import->name] = Literal(int32_t(666)); break;
           case i64: globals[import->name] = Literal(int64_t(666)); break;
@@ -127,15 +128,16 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
           case f64: globals[import->name] = Literal(double(666.6)); break;
           default: WASM_UNREACHABLE();
         }
-      } else if (import->kind == ExternalKind::Memory && import->module == SPECTEST && import->base == MEMORY) {
-        // imported memory has initial 1 and max 2
-        wasm.memory.initial = 1;
-        wasm.memory.max = 2;
       }
+    });
+    if (wasm.memory.imported() && wasm.memory.module == SPECTEST && wasm.memory.base == MEMORY) {
+      // imported memory has initial 1 and max 2
+      wasm.memory.initial = 1;
+      wasm.memory.max = 2;
     }
   }
 
-  Literal callImport(Import *import, LiteralList& arguments) override {
+  Literal callImport(Function* import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base == PRINT) {
       for (auto argument : arguments) {
         std::cout << '(' << argument << ')' << '\n';
