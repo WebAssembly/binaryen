@@ -73,7 +73,9 @@ struct DuplicateFunctionElimination : public Pass {
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
       for (auto& func : module->functions) {
-        hashGroups[hashes[func.get()]].push_back(func.get());
+        if (!func->imported()) {
+          hashGroups[hashes[func.get()]].push_back(func.get());
+        }
       }
       // Find actually equal functions and prepare to replace them
       std::map<Name, Name> replacements;

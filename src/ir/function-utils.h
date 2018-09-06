@@ -35,7 +35,10 @@ inline bool equal(Function* left, Function* right) {
   }
   if (left->result != right->result) return false;
   if (left->type != right->type) return false;
-  return ExpressionAnalyzer::equal(left->body, right->body);
+  if (!left->imported() && !right->imported()) {
+    return ExpressionAnalyzer::equal(left->body, right->body);
+  }
+  return left->imported() && right->imported();
 }
 
 } // namespace FunctionUtils
