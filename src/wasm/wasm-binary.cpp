@@ -237,7 +237,7 @@ void WasmBinaryWriter::writeFunctions() {
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
     Function* func = wasm->functions[i].get();
-    if (!func->imported()) continue;
+    if (func->imported()) continue;
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
