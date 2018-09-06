@@ -23,7 +23,7 @@ namespace wasm {
 namespace FunctionTypeUtils {
 
 // Fills in function info from a function type
-void fillFunction(Function* func, FunctionType* type) {
+inline void fillFunction(Function* func, FunctionType* type) {
   func->params = type->params;
   func->result = type->result;
 }

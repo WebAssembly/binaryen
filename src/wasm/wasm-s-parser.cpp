@@ -587,6 +587,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->base = importBase;
     im->type = type;
     FunctionTypeUtils::fillFunction(im.get(), wasm.getFunctionType(type));
+    functionTypes[name] = im->result;
     if (wasm.getFunctionOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
     wasm.addFunction(im.release());
     if (currFunction) throw ParseException("import module inside function dec");
@@ -1717,6 +1718,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     auto* functionType = ensureFunctionType(getSig(type.get()), &wasm);
     func->type = functionType->name;
     FunctionTypeUtils::fillFunction(func.get(), functionType);
+    functionTypes[name] = func->result;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;
