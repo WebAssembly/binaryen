@@ -179,17 +179,16 @@ private:
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal JS import
-  Import* makeLegalStub(Import* im, Module* module, Name& funcName) {
+  Function* makeLegalStub(Function* im, Module* module, Name& funcName) {
     Builder builder(*module);
-    auto* type = new FunctionType();
+    auto* type = new FunctionType;
     type->name =  Name(std::string("legaltype$") + im->name.str);
-    auto* legal = new Import();
+    auto* legal = new Function;
     legal->name = Name(std::string("legalimport$") + im->name.str);
     legal->module = im->module;
     legal->base = im->base;
-    legal->kind = ExternalKind::Function;
-    legal->functionType = type->name;
-    auto* func = new Function();
+    legal->type = type->name;
+    auto* func = new Function;
     func->name = Name(std::string("legalfunc$") + im->name.str);
     funcName = func->name;
 

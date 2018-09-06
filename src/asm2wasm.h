@@ -779,23 +779,21 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // Import memory offset, if not already there
   {
-    auto* import = new Import;
-    import->name = Name("memoryBase");
-    import->module = Name("env");
-    import->base = Name("memoryBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
+    auto* import = new Global;
+    import->name = "memoryBase";
+    import->module = "env";
+    import->base = "memoryBase";
+    import->type = i32;
     wasm.addImport(import);
   }
 
   // Import table offset, if not already there
   {
-    auto* import = new Import;
-    import->name = Name("tableBase");
-    import->module = Name("env");
-    import->base = Name("tableBase");
-    import->kind = ExternalKind::Global;
-    import->globalType = i32;
+    auto* import = new Global;
+    import->name = "tableBase";
+    import->module = "env";
+    import->base = "tableBase";
+    import->type = i32;
     wasm.addImport(import);
   }
 
@@ -1629,13 +1627,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = new Import; // debugger = asm2wasm.debugger;
+          auto import = new Function; // debugger = asm2wasm.debugger;
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->functionType = ensureFunctionType("v", &wasm)->name;
-          import->kind = ExternalKind::Function;
-          wasm.addImport(import);
+          import->type = ensureFunctionType("v", &wasm)->name;
+          wasm.addFunction(import);
         }
         return call;
       }
@@ -1733,13 +1730,12 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = new Import; // f64-rem = asm2wasm.f64-rem;
+          auto import = new FUnction; // f64-rem = asm2wasm.f64-rem;
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->functionType = ensureFunctionType("ddd", &wasm)->name;
-          import->kind = ExternalKind::Function;
-          wasm.addImport(import);
+          import->type = ensureFunctionType("ddd", &wasm)->name;
+          wasm.addFunction(import);
         }
         return call;
       }

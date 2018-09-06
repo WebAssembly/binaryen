@@ -91,7 +91,7 @@ public:
 
 private:
   std::map<Name, Function*> functions;
-  std::map<Name, Import*> imports;
+  std::map<Name, Function*> imports;
 
   TrapMode mode;
   Module& wasm;

@@ -126,19 +126,17 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
 // Finds function type usage
 
 struct FunctionTypeAnalyzer : public PostWalker<FunctionTypeAnalyzer> {
-  std::vector<Import*> functionImports;
+  std::vector<Function*> functionImports;
   std::vector<Function*> functions;
   std::vector<CallIndirect*> indirectCalls;
 
-  void visitImport(Import* curr) {
-    if (curr->kind == ExternalKind::Function && curr->functionType.is()) {
-      functionImports.push_back(curr);
-    }
-  }
-
   void visitFunction(Function* curr) {
     if (curr->type.is()) {
-      functions.push_back(curr);
+      if (curr->imported()) {
+        functionImports.push_back(curr);
+      } else {
+        functions.push_back(curr);
+      }
     }
   }
 
