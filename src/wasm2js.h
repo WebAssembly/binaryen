@@ -418,7 +418,7 @@ void Wasm2JSBuilder::addEsmImports(Ref ast, Module* wasm) {
   std::unordered_map<Name, Name> nameMap;
 
   ImportInfo imports(*wasm);
-  if (imports.getNumGlobalImports() > 0) {
+  if (imports.getNumImportedGlobals() > 0) {
     Fatal() << "non-function imports aren't supported yet\n";
     abort();
   }

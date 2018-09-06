@@ -20,6 +20,7 @@
 #include <support/colors.h>
 #include <wasm.h>
 #include <wasm-binary.h>
+#include <ir/import-utils.h>
 #include <ir/module-utils.h>
 
 using namespace std;
@@ -46,6 +47,8 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
   }
 
   void doWalkModule(Module* module) {
+    ImportInfo imports(*module);
+
     // global things
 
     for (auto& curr : module->functionTypes) {
@@ -54,14 +57,16 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     for (auto& curr : module->exports) {
       visitExport(curr.get());
     }
-    for (auto& curr : module->globals) {
-      walkGlobal(curr.get());
-    }
+    ImportInfo::iterDefinedGlobals(*module, [&](Global* curr) {
+      walkGlobal(curr);
+    });
     walkTable(&module->table);
     walkMemory(&module->memory);
 
+    // add imports
+    counts["[imports]"] = imports.getNumImports();
     // add functions
-    counts["[funcs]"] = module->functions.size();
+    counts["[funcs]"] = imports.getNumDefinedFunctions();
     // add memory and table
     if (module->memory.exists) {
       Index size = 0;
@@ -88,6 +93,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       // print for each function
       for (Index i = 0; i < module->functions.size(); i++) {
         auto* func = module->functions[i].get();
+        if (func->imported()) continue;
         counts.clear();
         walkFunction(func);
         counts["[vars]"] = func->getNumVars();
@@ -136,6 +142,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       // add function info
       size_t vars = 0;
       for (auto& func : module->functions) {
+        if (func->imported()) continue;
         walkFunction(func.get());
         vars += func->getNumVars();
       }

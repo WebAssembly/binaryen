@@ -61,16 +61,24 @@ struct ImportInfo {
     return nullptr;
   }
 
-  Index getNumGlobalImports() {
+  Index getNumImportedGlobals() {
     return importedGlobals.size();
   }
 
-  Index getNumFunctionImports() {
+  Index getNumImportedFunctions() {
     return importedFunctions.size();
   }
 
   Index getNumImports() {
-    return getNumGlobalImports() + getNumFunctionImports();
+    return getNumImportedGlobals() + getNumImportedFunctions();
+  }
+
+  Index getNumDefinedGlobals() {
+    return wasm.globals.size() - getNumImportedGlobals();
+  }
+
+  Index getNumDefinedFunctions() {
+    return wasm.functions.size() - getNumImportedFunctions();
   }
 
   // Convenient iteration over imported/non-imported functions/globals

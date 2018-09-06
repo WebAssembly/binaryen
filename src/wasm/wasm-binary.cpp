@@ -234,7 +234,7 @@ void WasmBinaryWriter::writeFunctions() {
   if (wasm->functions.size() == 0) return;
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
-  size_t total = wasm->functions.size() - importInfo->getNumFunctionImports();
+  size_t total = wasm->functions.size() - importInfo->getNumImportedFunctions();
   o << U32LEB(total);
   for (size_t i = 0; i < total; i++) {
     Function* func = wasm->functions[i].get();
@@ -277,7 +277,7 @@ void WasmBinaryWriter::writeGlobals() {
   if (wasm->globals.size() == 0) return;
   if (debug) std::cerr << "== writeglobals" << std::endl;
   auto start = startSection(BinaryConsts::Section::Global);
-  auto num = wasm->globals.size() - importInfo->getNumGlobalImports();
+  auto num = wasm->globals.size() - importInfo->getNumImportedGlobals();
   o << U32LEB(num);
   for (auto& curr : wasm->globals) {
     if (!curr->imported()) continue;
