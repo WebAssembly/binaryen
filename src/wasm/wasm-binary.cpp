@@ -1480,13 +1480,6 @@ void WasmBinaryBuilder::processFunctions() {
     wasm.addFunction(func);
   }
 
-  // we should have seen all the functions
-  // we assume this later down in fact, when we read wasm.functions[index],
-  // as index was validated vs functionTypes.size()
-  if (wasm.functions.size() != functionTypes.size()) {
-    throwError("did not see the right number of functions");
-  }
-
   // now that we have names for each function, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
@@ -1512,7 +1505,7 @@ void WasmBinaryBuilder::processFunctions() {
     size_t index = iter.first;
     auto& calls = iter.second;
     for (auto* call : calls) {
-      call->target = wasm.functions[index]->name;
+      call->target = getFunctionIndexName(index);
     }
   }
 
@@ -1918,11 +1911,13 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
   if (debug) std::cerr << "zz node: Call" << std::endl;
   auto index = getU32LEB();
   FunctionType* type;
-  auto adjustedIndex = index - functionImports.size();
-  if (adjustedIndex >= functionTypes.size()) {
-    throwError("bad call index");
+  if (index < functionImports.size()) {
+    auto* import = functionImports[index];
+    type = wasm.getFunctionType(import->type);
+  } else {
+    auto adjustedIndex = index - functionImports.size();
+    type = functionTypes[adjustedIndex];
   }
-  type = functionTypes[adjustedIndex];
   assert(type);
   auto num = type->params.size();
   curr->operands.resize(num);
@@ -1930,7 +1925,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = type->result;
-  functionCalls[adjustedIndex].push_back(curr); // we don't know function names yet
+  functionCalls[index].push_back(curr); // we don't know function names yet
   curr->finalize();
 }
 
