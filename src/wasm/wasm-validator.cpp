@@ -955,10 +955,12 @@ static void validateExports(Module& module, ValidationInfo& info) {
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
   for (auto& curr : module.globals) {
-    info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
-    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-    if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
-      info.getStream(nullptr) << "(on global " << curr->name << ")\n";
+    if (!curr->imported()) {
+      info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
+      info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
+      if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
+        info.getStream(nullptr) << "(on global " << curr->name << ")\n";
+      }
     }
   }
 }

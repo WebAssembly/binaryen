@@ -277,7 +277,7 @@ void WasmBinaryWriter::writeGlobals() {
   auto num = wasm->globals.size() - importInfo->getNumImportedGlobals();
   o << U32LEB(num);
   for (auto& curr : wasm->globals) {
-    if (!curr->imported()) continue;
+    if (curr->imported()) continue;
     if (debug) std::cerr << "write one" << std::endl;
     o << binaryType(curr->type);
     o << U32LEB(curr->mutable_);
