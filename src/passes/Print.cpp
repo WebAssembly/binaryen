@@ -1015,6 +1015,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitFunctionType(child.get());
       o << ")" << maybeNewLine;
     }
+    visitMemory(&curr->memory);
+    if (curr->table.exists) {
+      visitTable(&curr->table); // Prints its own newlines
+    }
     for (auto& child : curr->globals) {
       if (child->imported()) {
         visitGlobal(child.get());
@@ -1030,10 +1034,6 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         visitGlobal(child.get());
       }
     }
-    if (curr->table.exists) {
-      visitTable(&curr->table); // Prints its own newlines
-    }
-    visitMemory(&curr->memory);
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());

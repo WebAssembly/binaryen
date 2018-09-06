@@ -1002,7 +1002,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Memory: {
         wasm.memory.module = module;
         wasm.memory.base = base;
-        wasm.memory.name = Name(std::string("mimport$") + std::to_string(i));
+        wasm.memory.name = Name(std::to_string(i));
         wasm.memory.exists = true;
         getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
@@ -1314,7 +1314,7 @@ void WasmBinaryBuilder::readGlobals() {
     if (mutable_ & ~1) throwError("Global mutability must be 0 or 1");
     auto* init = readExpression();
     wasm.addGlobal(Builder::makeGlobal(
-      "global$" + std::to_string(wasm.globals.size()),
+      "global$" + std::to_string(i),
       type,
       init,
       mutable_ ? Builder::Mutable : Builder::Immutable
