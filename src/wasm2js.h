@@ -272,7 +272,7 @@ private:
   void addEsmImports(Ref ast, Module* wasm);
   void addEsmExportsAndInstantiate(Ref ast, Module* wasm, Name funcName);
   void addBasics(Ref ast);
-  void addImport(Ref ast, Import* import);
+  void addFunction(Ref ast, Function* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -341,8 +341,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // create heaps, etc
   addBasics(asmFunc[3]);
-  for (auto& import : wasm->imports) {
-    addImport(asmFunc[3], import.get());
+  for (auto& import : wasm->functions) {
+    if (import->imported()) {
+      addFunction(asmFunc[3], import.get());
+    }
+  }
+  for (auto& import : wasm->globals) {
+    if (import->imported()) {
+      addGlobal(asmFunc[3], import.get());
+    }
   }
   // figure out the table size
   tableSize = std::accumulate(wasm->table.segments.begin(),
@@ -369,14 +376,18 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // globals
   bool generateFetchHighBits = false;
   for (auto& global : wasm->globals) {
-    addGlobal(asmFunc[3], global.get());
-    if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
-      generateFetchHighBits = true;
+    if (!global->imported()) {
+      addGlobal(asmFunc[3], global.get());
+      if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
+        generateFetchHighBits = true;
+      }
     }
   }
   // functions
   for (auto& func : wasm->functions) {
-    asmFunc[3]->push_back(processFunction(wasm, func.get()));
+    if (!func->imported()) {
+      asmFunc[3]->push_back(processFunction(wasm, func.get()));
+    }
   }
   if (generateFetchHighBits) {
     Builder builder(allocator);
@@ -678,7 +689,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   );
 }
 
-void Wasm2JSBuilder::addImport(Ref ast, Import* import) {
+void Wasm2JSBuilder::addImport(Ref ast, Function* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports

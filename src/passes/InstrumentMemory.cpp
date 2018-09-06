@@ -76,13 +76,12 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     makeStoreCall(curr);
   }
   void addImport(Module *curr, Name name, std::string sig) {
-    auto import = new Import;
+    auto import = new Function;
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->functionType = ensureFunctionType(sig, curr)->name;
-    import->kind = ExternalKind::Function;
-    curr->addImport(import);
+    import->type = ensureFunctionType(sig, curr)->name;
+    curr->addFunction(import);
   }
 
   void visitModule(Module *curr) {

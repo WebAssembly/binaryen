@@ -222,12 +222,11 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer &trappingFunctions) {
   }
 
   Module& wasm = trappingFunctions.getModule();
-  auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
+  auto import = new Function; // f64-to-int = asm2wasm.f64-to-int;
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->functionType = ensureFunctionType("id", &wasm)->name;
-  import->kind = ExternalKind::Function;
+  import->type = ensureFunctionType("id", &wasm)->name;
   trappingFunctions.addImport(import);
 }
 

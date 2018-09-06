@@ -46,13 +46,12 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void visitModule(Module *curr) {
     // Add the import
-    auto import = new Import;
+    auto import = new Function;
     import->name = LOGGER;
     import->module = ENV;
     import->base = LOGGER;
-    import->functionType = ensureFunctionType("vi", curr)->name;
-    import->kind = ExternalKind::Function;
-    curr->addImport(import);
+    import->type = ensureFunctionType("vi", curr)->name;
+    curr->addFunction(import);
   }
 
 private:

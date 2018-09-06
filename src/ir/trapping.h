@@ -57,10 +57,10 @@ public:
       wasm.addFunction(function);
     }
   }
-  void addImport(Import* import) {
+  void addImport(Function* import) {
     imports[import->name] = import;
     if (immediate) {
-      wasm.addImport(import);
+      wasm.addFunction(import);
     }
   }
 
@@ -70,7 +70,7 @@ public:
         wasm.addFunction(pair.second);
       }
       for (auto &pair : imports) {
-        wasm.addImport(pair.second);
+        wasm.addFunction(pair.second);
       }
     }
     functions.clear();

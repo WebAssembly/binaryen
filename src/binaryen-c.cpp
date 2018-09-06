@@ -1649,9 +1649,6 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
 
 // Imports
 
-WASM_DEPRECATED BinaryenImportRef BinaryenAddImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef type) {
-  return BinaryenAddFunctionImport(module, internalName, externalModuleName, externalBaseName, type);
-}
 BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenFunctionTypeRef functionType) {
   auto* ret = new Import();
   auto* wasm = (Module*)module;
@@ -1665,9 +1662,8 @@ BinaryenImportRef BinaryenAddFunctionImport(BinaryenModuleRef module, const char
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->functionType = ((FunctionType*)functionType)->name;
-  ret->kind = ExternalKind::Function;
-  wasm->addImport(ret);
+  ret->type = ((FunctionType*)functionType)->name;
+  wasm->addFunction(ret);
   return ret;
 }
 BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
@@ -1680,14 +1676,11 @@ BinaryenImportRef BinaryenAddTableImport(BinaryenModuleRef module, const char* i
     std::cout << "  imports[" << id << "] = BinaryenAddTableImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
   }
 
-  ret->name = internalName;
-  ret->module = externalModuleName;
-  ret->base = externalBaseName;
-  ret->kind = ExternalKind::Table;
-  if (wasm->table.name == ret->name) {
+  wasm->table.module = externalModuleName;
+  wasm->table.base = externalBaseName;
+  if (wasm->table.name == internalName) {
     wasm->table.imported = true;
   }
-  wasm->addImport(ret);
   return ret;
 }
 BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
@@ -1700,14 +1693,11 @@ BinaryenImportRef BinaryenAddMemoryImport(BinaryenModuleRef module, const char* 
     std::cout << "  imports[" << id << "] = BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
   }
 
-  ret->name = internalName;
-  ret->module = externalModuleName;
-  ret->base = externalBaseName;
-  ret->kind = ExternalKind::Memory;
-  if (wasm->memory.name == ret->name) {
+  wasm->memory.module = externalModuleName;
+  wasm->memory. = externalBaseName;
+  if (wasm->memory.name == internalName) {
     wasm->memory.imported = true;
   }
-  wasm->addImport(ret);
   return ret;
 }
 BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType) {
@@ -1723,9 +1713,8 @@ BinaryenImportRef BinaryenAddGlobalImport(BinaryenModuleRef module, const char* 
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->globalType = Type(globalType);
-  ret->kind = ExternalKind::Global;
-  wasm->addImport(ret);
+  ret->type = Type(globalType);
+  wasm->addGlobal(ret);
   return ret;
 }
 void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName) {

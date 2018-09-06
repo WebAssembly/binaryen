@@ -1071,7 +1071,6 @@ Module['Module'] = function(module) {
       return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
     });
   }
-  this['addImport'] = // deprecated
   this['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);

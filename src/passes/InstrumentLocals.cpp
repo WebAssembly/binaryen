@@ -123,13 +123,12 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, std::string sig) {
-    auto import = new Import;
+    auto import = new Function;
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->functionType = ensureFunctionType(sig, wasm)->name;
-    import->kind = ExternalKind::Function;
-    wasm->addImport(import);
+    import->type = ensureFunctionType(sig, wasm)->name;
+    wasm->addFunction(import);
   }
 };
 

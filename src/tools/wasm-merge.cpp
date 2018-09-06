@@ -124,26 +124,24 @@ struct Mergeable {
     });
     if (memoryBaseGlobals.size() == 0) {
       // add one
-      auto* import = new Import;
+      auto* import = new Global;
       import->name = MEMORY_BASE;
       import->module = ENV;
       import->base = MEMORY_BASE;
-      import->kind = ExternalKind::Global;
-      import->globalType = i32;
-      wasm.addImport(import);
+      import->type = i32;
+      wasm.addGlobal(import);
       memoryBaseGlobals.insert(import->name);
     }
     findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
       tableBaseGlobals.insert(name);
     });
     if (tableBaseGlobals.size() == 0) {
-      auto* import = new Import;
+      auto* import = new Global;
       import->name = TABLE_BASE;
       import->module = ENV;
       import->base = TABLE_BASE;
-      import->kind = ExternalKind::Global;
-      import->globalType = i32;
-      wasm.addImport(import);
+      import->type = i32;
+      wasm.addGlobal(import);
       tableBaseGlobals.insert(import->name);
     }
   }
@@ -448,16 +446,19 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     for (auto& curr : wasm.functionTypes) {
       outputMergeable.wasm.addFunctionType(curr.release());
     }
-    for (auto& curr : wasm.imports) {
-      if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
-        continue; // wasm has just 1 of each, they must match
+    for (auto& curr : wasm.globals) {
+      if (curr->imported()) {
+        outputMergeable.wasm.addGlobal(curr.release());
       }
-      // update and add
-      if (curr->functionType.is()) {
-        curr->functionType = ftNames[curr->functionType];
-        assert(curr->functionType.is());
+    }
+    for (auto& curr : wasm.functions) {
+      if (curr->imported()) {
+        if (curr->type.is()) {
+          curr->type = ftNames[curr->type];
+          assert(curr->type.is());
+        }
+        outputMergeable.wasm.addFunction(curr.release());
       }
-      outputMergeable.wasm.addImport(curr.release());
     }
     for (auto& curr : wasm.exports) {
       if (curr->kind == ExternalKind::Memory || curr->kind == ExternalKind::Table) {
