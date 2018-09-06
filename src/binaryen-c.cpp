@@ -85,6 +85,7 @@ void traceNameOrNULL(const char* name) {
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
 std::map<BinaryenExpressionRef, size_t> expressions;
 std::map<BinaryenFunctionRef, size_t> functions;
+std::map<BinaryenGlobalRef, size_t> globals;
 std::map<BinaryenExportRef, size_t> exports;
 std::map<RelooperBlockRef, size_t> relooperBlocks;
 
@@ -172,11 +173,13 @@ void BinaryenModuleDispose(BinaryenModuleRef module) {
     std::cout << "  functionTypes.clear();\n";
     std::cout << "  expressions.clear();\n";
     std::cout << "  functions.clear();\n";
+    std::cout << "  globals.clear();\n";
     std::cout << "  exports.clear();\n";
     std::cout << "  relooperBlocks.clear();\n";
     functionTypes.clear();
     expressions.clear();
     functions.clear();
+    globals.clear();
     exports.clear();
     relooperBlocks.clear();
   }
@@ -1669,9 +1672,6 @@ void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, 
 
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
-  if (wasm->table.name == internalName) {
-    wasm->table.imported = true;
-  }
 }
 void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
   auto* wasm = (Module*)module;
@@ -1681,10 +1681,7 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName,
   }
 
   wasm->memory.module = externalModuleName;
-  wasm->memory. = externalBaseName;
-  if (wasm->memory.name == internalName) {
-    wasm->memory.imported = true;
-  }
+  wasm->memory.base = externalBaseName;
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType) {
   auto* wasm = (Module*)module;
@@ -1699,23 +1696,6 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName,
   ret->base = externalBaseName;
   ret->type = Type(globalType);
   wasm->addGlobal(ret);
-}
-void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName) {
-  if (tracing) {
-    std::cout << "  BinaryenRemoveImport(the_module, \"" << internalName << "\");\n";
-  }
-
-  auto* wasm = (Module*)module;
-  // TODO: separate remove for each Kind
-  if (wasm->getFunctionOrNull(internalName)) {
-    wasm->removeFunction(internalName);
-  } else if (wasm->getGlobalOrNull(internalName)) {
-    wasm->removeGlobal(internalName);
-  } else if (internalName == wasm->table.name) {
-    wasm->table.imported = false;
-   } else if (internalName == wasm->memory.name) {
-    wasm->memory.imported = false;
-  }
 }
 
 // Exports

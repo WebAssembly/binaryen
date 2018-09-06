@@ -598,8 +598,6 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalNam
 void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName);
 void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName);
 void BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType);
-// TODO: separate remove for each Kind
-void BinaryenRemoveImport(BinaryenModuleRef module, const char* internalName);
 
 // Exports
 

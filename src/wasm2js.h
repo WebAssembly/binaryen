@@ -34,6 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ir/import-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
@@ -413,19 +414,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   return ret;
 }
 
-void Wasm2JSBuilder::addEsmImports(Ref ast, Module *wasm) {
+void Wasm2JSBuilder::addEsmImports(Ref ast, Module* wasm) {
   std::unordered_map<Name, Name> nameMap;
 
-  for (auto& import : wasm->imports) {
-    // Only function imports are supported for now, but eventually imported
-    // memories can probably be supported at least.
-    switch (import->kind) {
-      case ExternalKind::Function: break;
-      default:
-        Fatal() << "non-function imports aren't supported yet\n";
-        abort();
-    }
-
+  ImportInfo imports(*wasm);
+  if (imports.getNumGlobalImports() > 0) {
+    Fatal() << "non-function imports aren't supported yet\n";
+    abort();
+  }
+  ImportInfo::iterImportedFunctions(*wasm, [&](Function* import) {
     // Right now codegen requires a flat namespace going into the module,
     // meaning we don't importing the same name from multiple namespaces yet.
     if (nameMap.count(import->base) && nameMap[import->base] != import->module) {
@@ -445,7 +442,7 @@ void Wasm2JSBuilder::addEsmImports(Ref ast, Module *wasm) {
     std::string os = out.str();
     IString name(os.c_str(), false);
     flattenAppend(ast, ValueBuilder::makeName(name));
-  }
+  });
 }
 
 static std::string base64Encode(std::vector<char> &data) {
@@ -564,13 +561,10 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
     << "}, {";
 
   construct << "abort:function() { throw new Error('abort'); }";
-  for (auto& import : wasm->imports) {
-    switch (import->kind) {
-      case ExternalKind::Function: break;
-      default: continue;
-    }
+
+  ImportInfo::iterImportedFunctions(*wasm, [&](Function* import) {
     construct << "," << import->base.str;
-  }
+  });
   construct << "},mem" << funcName.str << ")";
   std::string sconstruct = construct.str();
   IString name(sconstruct.c_str(), false);
@@ -689,6 +683,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   );
 }
 
+/* XXX
 void Wasm2JSBuilder::addImport(Ref ast, Function* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
@@ -701,6 +696,7 @@ void Wasm2JSBuilder::addImport(Ref ast, Function* import) {
     )
   );
 }
+*/
 
 void Wasm2JSBuilder::addTables(Ref ast, Module* wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
