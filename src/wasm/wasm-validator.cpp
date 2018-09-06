@@ -442,8 +442,11 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 
 void FunctionValidator::visitCall(Call* curr) {
   if (!info.validateGlobally) return;
+std::cout << "try to validate " << curr->target << "\n";
+for (auto& f : getModule()->functions) std::cout << f->name << '\n';
   auto* target = getModule()->getFunctionOrNull(curr->target);
   if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
+std::cout << "ok.\n";
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !info.quiet) {
