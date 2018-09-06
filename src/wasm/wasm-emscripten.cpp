@@ -181,12 +181,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     if (indirectFunc == dummyFunction) {
       continue;
     }
-    std::string sig;
-    if (auto import = wasm.getImportOrNull(indirectFunc)) {
-      sig = getSig(wasm.getFunctionType(import->functionType));
-    } else {
-      sig = getSig(wasm.getFunction(indirectFunc));
-    }
+    std::string sig = getSig(wasm.getFunction(indirectFunc));
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
@@ -269,12 +264,11 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     // function would have signature 'vii'.)
     std::string importSig = std::string(1, sig[0]) + 'i' + sig.substr(1);
     FunctionType *importType = ensureFunctionType(importSig, &wasm);
-    auto import = new Import;
+    auto import = new Function;
     import->name = import->base = "jsCall_" + sig;
     import->module = ENV;
-    import->functionType = importType->name;
-    import->kind = ExternalKind::Function;
-    wasm.addImport(import);
+    import->type = importType->name;
+    wasm.addFunction(import);
     FunctionType *funcType = ensureFunctionType(sig, &wasm);
 
     // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
@@ -388,8 +382,8 @@ private:
 };
 
 void AsmConstWalker::visitCall(Call* curr) {
-  Import* import = wasm.getImport(curr->target);
-  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  auto* import = wasm.getFunction(curr->target);
+  if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, arg);
     arg->value = idLiteralForCode(code);
@@ -434,20 +428,19 @@ Name AsmConstWalker::nameForImportWithSig(std::string sig) {
 }
 
 void AsmConstWalker::addImport(Name importName, std::string baseSig) {
-  auto import = new Import;
+  auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->functionType = ensureFunctionType(baseSig, &wasm)->name;
-  import->kind = ExternalKind::Function;
-  wasm.addImport(import);
+  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  wasm.addFunction(import);
 }
 
 AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   // Collect imports to remove
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
-  for (auto& import : wasm.imports) {
-    if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  for (auto& import : wasm.functions) {
+    if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
       toRemove.push_back(import->name);
     }
   }
@@ -602,7 +595,7 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
     // Either rename or remove the existing import
-    if (wasm.getImportOrNull(newname) || !newImports.insert(newname).second) {
+    if (wasm.getFunctionOrNull(newname) || !newImports.insert(newname).second) {
       toRemove.push_back(curr->name);
     } else {
       curr->base = newname;
@@ -733,22 +726,23 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // see.
   meta << ", \"declares\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
-    if (import->kind == ExternalKind::Function &&
+  for (const auto& import : wasm.functions) {
+    if (import->imported() &&
         (emJsWalker.codeByName.count(import->base.str) == 0) &&
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->base.startsWith("invoke_") &&
         !import->base.startsWith("jsCall_")) {
-      if (declares.insert(import->base.str).second)
+      if (declares.insert(import->base.str).second) {
         meta << maybeComma() << '"' << import->base.str << '"';
+      }
     }
   }
   meta << "]";
 
   meta << ", \"externs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
-    if (import->kind == ExternalKind::Global) {
+  for (const auto& import : wasm.globals) {
+    if (import->imported()) {
       meta << maybeComma() << "\"_" << import->base.str << '"';
     }
   }
@@ -772,10 +766,11 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   meta << ", \"invokeFuncs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
-    if (import->base.startsWith("invoke_")) {
-      if (invokeFuncs.insert(import->base.str).second)
+  for (const auto& import : wasm.functions) {
+    if (import->imported() && import->base.startsWith("invoke_")) {
+      if (invokeFuncs.insert(import->base.str).second) {
         meta << maybeComma() << '"' << import->base.str << '"';
+      }
     }
   }
   meta << "]";
