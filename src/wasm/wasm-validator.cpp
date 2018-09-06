@@ -911,7 +911,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
   for (auto& curr : module.functions) {
     if (curr->imported()) {
       if (info.validateWeb) {
-        auto* functionType = module.getFunctionType(curr->functionType);
+        auto* functionType = module.getFunctionType(curr->type);
         info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
         for (Type param : functionType->params) {
           info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
@@ -937,13 +937,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
-      Import* imp;
-      info.shouldBeTrue(module.getFunctionOrNull(name) ||
-                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Function), name, "module function exports must be found");
+      info.shouldBeTrue(module.getFunctionOrNull(name), name, "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
-      Import* imp;
-      info.shouldBeTrue(module.getGlobalOrNull(name) ||
-                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Global), name, "module global exports must be found");
+      info.shouldBeTrue(module.getGlobalOrNull(name), name, "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
       info.shouldBeTrue(name == Name("0") || name == module.table.name, name, "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
@@ -992,7 +988,7 @@ static void validateTable(Module& module, ValidationInfo& info) {
     info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
     info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), module.table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
     for (auto name : segment.data) {
-      info.shouldBeTrue(module.getFunctionOrNull(name) || module.getImportOrNull(name), name, "segment name should be valid");
+      info.shouldBeTrue(module.getFunctionOrNull(name), name, "segment name should be valid");
     }
   }
 }

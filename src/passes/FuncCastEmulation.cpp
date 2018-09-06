@@ -208,7 +208,7 @@ private:
     for (Index i = 0; i < params.size(); i++) {
       callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), params[i], module));
     }
-    auto* call = builder.makeCall(name, callOperands, type)
+    auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(i64);
