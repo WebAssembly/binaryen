@@ -1033,6 +1033,7 @@ Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   auto ret = allocator.alloc<GetGlobal>();
   ret->name = getGlobalName(*s[1]);
   ret->type = wasm.getGlobal(ret->name)->type;
+  return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
@@ -1496,7 +1497,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) throw ParseException("too many memories");
   wasm.memory.exists = true;
-  wasm.memory.imported = preParseImport;
+  // FIXME wasm.memory.imported = preParseImport;
   wasm.memory.shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
@@ -1631,12 +1632,10 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       kind = ExternalKind::Memory;
       if (wasm.memory.exists) throw ParseException("more than one memory");
       wasm.memory.exists = true;
-      wasm.memory.imported = true;
     } else if ((*s[3])[0]->str() == TABLE) {
       kind = ExternalKind::Table;
       if (wasm.table.exists) throw ParseException("more than one table");
       wasm.table.exists = true;
-      wasm.table.imported = true;
     } else if ((*s[3])[0]->str() == GLOBAL) {
       kind = ExternalKind::Global;
     } else {
@@ -1731,7 +1730,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     global->base = base;
     global->type = type;
     wasm.addGlobal(global.release());
-  } else if (im->kind == ExternalKind::Table) {
+  } else if (kind == ExternalKind::Table) {
     if (j < inner.size() - 1) {
       wasm.table.initial = getCheckedAddress(inner[j++], "excessive table init size");
     }
@@ -1741,7 +1740,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       wasm.table.max = Table::kMaxSize;
     }
     // ends with the table element type
-  } else if (im->kind == ExternalKind::Memory) {
+  } else if (kind == ExternalKind::Memory) {
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
       if (!(limits[0]->isStr() && limits[0]->str() == "shared")) throw ParseException("bad memory limit declaration");
@@ -1751,8 +1750,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       parseMemoryLimits(inner, j);
     }
   }
-  if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
-  wasm.addImport(im.release());
 }
 
 void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
