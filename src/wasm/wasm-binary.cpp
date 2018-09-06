@@ -1506,6 +1506,10 @@ void WasmBinaryBuilder::processFunctions() {
       wasm.table.segments[i].data.push_back(getFunctionIndexName(j));
     }
   }
+
+  // Everything now has its proper name.
+
+  wasm.updateMaps();
 }
 
 void WasmBinaryBuilder::readDataSegments() {
