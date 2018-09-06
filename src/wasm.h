@@ -775,10 +775,10 @@ public:
 
   void addStart(const Name& s);
 
+  void removeFunctionType(Name name);
   void removeExport(Name name);
   void removeFunction(Name name);
-  void removeFunctionType(Name name);
-  // TODO: remove* for other elements
+  void removeGlobal(Name name);
 
   void updateMaps();
 };

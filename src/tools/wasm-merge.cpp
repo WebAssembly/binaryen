@@ -34,19 +34,9 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-validator.h"
+#include "ir/import-utils.h"
 
 using namespace wasm;
-
-// Calls note() on every import that has form "env".(base)
-static void findImportsByBase(Module& wasm, Name base, std::function<void (Name)> note) {
-  for (auto& curr : wasm.imports) {
-    if (curr->module == ENV) {
-      if (curr->base == base) {
-        note(curr->name);
-      }
-    }
-  }
-}
 
 // Ensure a memory or table is of at least a size
 template<typename T>
@@ -119,8 +109,10 @@ struct Mergeable {
   }
 
   void findImports() {
-    findImportsByBase(wasm, MEMORY_BASE, [&](Name name) {
-      memoryBaseGlobals.insert(name);
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      if (import->module == ENV && import->base == MEMORY_BASE) {
+        memoryBaseGlobals.insert(import->name);
+      }
     });
     if (memoryBaseGlobals.size() == 0) {
       // add one
@@ -132,8 +124,10 @@ struct Mergeable {
       wasm.addGlobal(import);
       memoryBaseGlobals.insert(import->name);
     }
-    findImportsByBase(wasm, TABLE_BASE, [&](Name name) {
-      tableBaseGlobals.insert(name);
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      if (import->module == ENV && import->base == TABLE_BASE) {
+        tableBaseGlobals.insert(import->name);
+      }
     });
     if (tableBaseGlobals.size() == 0) {
       auto* import = new Global;
@@ -262,10 +256,10 @@ struct OutputMergeable : public PostWalker<OutputMergeable, Visitor<OutputMergea
   void visitModule(Module* curr) {
     // remove imports that are being implemented
     for (auto& pair : implementedFunctionImports) {
-      curr->removeImport(pair.first);
+      curr->removeFunction(pair.first);
     }
     for (auto& pair : implementedGlobalImports) {
-      curr->removeImport(pair.first);
+      curr->removeGlobal(pair.first);
     }
   }
 };

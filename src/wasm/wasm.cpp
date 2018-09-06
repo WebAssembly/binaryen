@@ -748,6 +748,16 @@ void Module::addStart(const Name& s) {
   start = s;
 }
 
+void Module::removeFunctionType(Name name) {
+  for (size_t i = 0; i < functionTypes.size(); i++) {
+    if (functionTypes[i]->name == name) {
+      functionTypes.erase(functionTypes.begin() + i);
+      break;
+    }
+  }
+  functionTypesMap.erase(name);
+}
+
 void Module::removeExport(Name name) {
   for (size_t i = 0; i < exports.size(); i++) {
     if (exports[i]->name == name) {
@@ -768,14 +778,14 @@ void Module::removeFunction(Name name) {
   functionsMap.erase(name);
 }
 
-void Module::removeFunctionType(Name name) {
-  for (size_t i = 0; i < functionTypes.size(); i++) {
-    if (functionTypes[i]->name == name) {
-      functionTypes.erase(functionTypes.begin() + i);
+void Module::removeGlobal(Name name) {
+  for (size_t i = 0; i < globals.size(); i++) {
+    if (globals[i]->name == name) {
+      globals.erase(globals.begin() + i);
       break;
     }
   }
-  functionTypesMap.erase(name);
+  globalsMap.erase(name);
 }
 
 // TODO: remove* for other elements
