@@ -193,7 +193,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     for (auto& import : wasm_.imports) {
       if (import->kind == ExternalKind::Global) {
         if (globals.find(import->name) == globals.end()) {
-          globals[import->name] = LiteralUtils::makeLiteralZero(import->globalType);
+          globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
         }
       }
     }

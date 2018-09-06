@@ -912,7 +912,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     if (type != Type::none) {
       // this is a global
       import->kind = ExternalKind::Global;
-      import->globalType = type;
+      import->type = type;
       mappedGlobals.emplace(name, type);
       // tableBase and memoryBase are used as segment/element offsets, and must be constant;
       // otherwise, an asm.js import of a constant is mutable, e.g. STACKTOP

@@ -118,9 +118,9 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
-    for (auto& import : wasm.imports) {
-      if (import->kind == ExternalKind::Global && import->module == SPECTEST && import->base == GLOBAL) {
-        switch (import->globalType) {
+    for (auto& import : wasm.globals) {
+      if (import->imported() && import->module == SPECTEST && import->base == GLOBAL) {
+        switch (import->type) {
           case i32: globals[import->name] = Literal(int32_t(666)); break;
           case i64: globals[import->name] = Literal(int64_t(666)); break;
           case f32: globals[import->name] = Literal(float(666.6)); break;

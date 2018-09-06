@@ -286,7 +286,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
 
           if (wasmJSDebug) std::cout << "calling importGlobal for " << import->name << " returning " << ret << '\n';
 
-          globals[import->name] = getResultFromJS(ret, import->globalType);
+          globals[import->name] = getResultFromJS(ret, import->type);
         }
       }
     }
