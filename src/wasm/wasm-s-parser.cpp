@@ -23,6 +23,7 @@
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/branch-utils.h"
+#include "ir/function-type-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
@@ -584,7 +585,8 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->name = name;
     im->module = importModule;
     im->base = importBase;
-    im->type = wasm.getFunctionType(type)->name;
+    im->type = type;
+    FunctionTypeUtils::fillFunction(im.get(), wasm.getFunctionType(type));
     if (wasm.getFunctionOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
     wasm.addFunction(im.release());
     if (currFunction) throw ParseException("import module inside function dec");
@@ -1712,7 +1714,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     func->name = name;
     func->module = module;
     func->base = base;
-    func->type = ensureFunctionType(getSig(type.get()), &wasm)->name;
+    auto* functionType = ensureFunctionType(getSig(type.get()), &wasm);
+    func->type = functionType->name;
+    FunctionTypeUtils::fillFunction(func.get(), functionType);
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;

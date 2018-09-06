@@ -925,18 +925,7 @@ public:
   void visitBreak(Break *curr, uint8_t code);
   void visitSwitch(Switch* curr);
 
-  template<typename T>
-  void fillCall(T* call, FunctionType* type) {
-    assert(type);
-    auto num = type->params.size();
-    call->operands.resize(num);
-    for (size_t i = 0; i < num; i++) {
-      call->operands[num - i - 1] = popNonVoidExpression();
-    }
-    call->type = type->result;
-  }
-
-  Expression* visitCall();
+  void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal *curr, uint8_t code);

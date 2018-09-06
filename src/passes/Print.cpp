@@ -905,6 +905,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       if (curr->type.is()) {
         visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
       }
+      o << ')';
     }
     o << maybeNewLine;
   }

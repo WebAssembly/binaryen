@@ -20,6 +20,7 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
+#include "ir/function-type-utils.h"
 #include "ir/module-utils.h"
 
 namespace wasm {
@@ -1679,7 +1680,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Br:
     case BinaryConsts::BrIf:         visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code); break; // code distinguishes br from br_if
     case BinaryConsts::TableSwitch:  visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>()); break;
-    case BinaryConsts::CallFunction: curr = visitCall(); break; // we don't know if it's a call or call_import yet
+    case BinaryConsts::CallFunction: visitCall((curr = allocator.alloc<Call>())->cast<Call>()); break;
     case BinaryConsts::CallIndirect: visitCallIndirect((curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>()); break;
     case BinaryConsts::GetLocal:     visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>()); break;
     case BinaryConsts::TeeLocal:
@@ -1913,22 +1914,24 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
   curr->finalize();
 }
 
-Expression* WasmBinaryBuilder::visitCall() {
+void WasmBinaryBuilder::visitCall(Call* curr) {
   if (debug) std::cerr << "zz node: Call" << std::endl;
   auto index = getU32LEB();
   FunctionType* type;
-  Expression* ret;
-  auto* call = allocator.alloc<Call>();
   auto adjustedIndex = index - functionImports.size();
   if (adjustedIndex >= functionTypes.size()) {
     throwError("bad call index");
   }
   type = functionTypes[adjustedIndex];
-  fillCall(call, type);
-  functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
-  call->finalize();
-  ret = call;
-  return ret;
+  assert(type);
+  auto num = type->params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->type = type->result;
+  functionCalls[adjustedIndex].push_back(curr); // we don't know function names yet
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
