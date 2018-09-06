@@ -54,8 +54,8 @@ struct LegalizeJSInterface : public Pass {
     }
     // for each illegal import, we must call a legalized stub instead
     std::vector<Function*> newImports; // add them at the end, to not invalidate the iter
-    for (auto& im : module->imports) {
-      if (im->kind == ExternalKind::Function && isIllegal(module->getFunctionType(im->functionType))) {
+    for (auto& im : module->functions) {
+      if (im->imported() && isIllegal(module->getFunctionType(im->functionType))) {
         Name funcName;
         auto* legal = makeLegalStub(im.get(), module, funcName);
         illegalToLegal[im->name] = funcName;
@@ -73,7 +73,7 @@ struct LegalizeJSInterface : public Pass {
     }
     if (illegalToLegal.size() > 0) {
       for (auto& pair : illegalToLegal) {
-        module->removeImport(pair.first);
+        module->removeFunction(pair.first);
       }
 
       for (auto* im : newImports) {
@@ -195,7 +195,7 @@ private:
     auto* call = module->allocator.alloc<Call>();
     call->target = legal->name;
 
-    auto* imFunctionType = module->getFunctionType(im->functionType);
+    auto* imFunctionType = module->getFunctionType(im->type);
 
     for (auto param : imFunctionType->params) {
       if (param == i64) {
