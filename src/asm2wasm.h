@@ -33,6 +33,7 @@
 #include "parsing.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
+#include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/trapping.h"
 #include "ir/utils.h"
@@ -758,24 +759,16 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   }
 
   // import memory
-  auto memoryImport = make_unique<Import>();
-  memoryImport->name = MEMORY;
-  memoryImport->module = ENV;
-  memoryImport->base = MEMORY;
-  memoryImport->kind = ExternalKind::Memory;
+  wasm.memory.name = MEMORY;
+  wasm.memory.module = ENV;
+  wasm.memory.base = MEMORY;
   wasm.memory.exists = true;
-  wasm.memory.imported = true;
-  wasm.addImport(memoryImport.release());
 
   // import table
-  auto tableImport = make_unique<Import>();
-  tableImport->name = TABLE;
-  tableImport->module = ENV;
-  tableImport->base = TABLE;
-  tableImport->kind = ExternalKind::Table;
-  wasm.addImport(tableImport.release());
+  wasm.table.name = TABLE;
+  wasm.table.module = ENV;
+  wasm.table.base = TABLE;
   wasm.table.exists = true;
-  wasm.table.imported = true;
 
   // Import memory offset, if not already there
   {
@@ -784,7 +777,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->module = "env";
     import->base = "memoryBase";
     import->type = i32;
-    wasm.addImport(import);
+    wasm.addGlobal(import);
   }
 
   // Import table offset, if not already there
@@ -794,7 +787,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     import->module = "env";
     import->base = "tableBase";
     import->type = i32;
-    wasm.addImport(import);
+    wasm.addGlobal(import);
   }
 
   auto addImport = [&](IString name, Ref imported, Type type) {
@@ -901,17 +894,17 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
     }
-    auto import = make_unique<Import>();
-    import->name = name;
-    import->module = moduleName;
-    import->base = imported[2]->getIString();
+    auto base = imported[2]->getIString();
     // special-case some asm builtins
-    if (import->module == GLOBAL && (import->base == NAN_ || import->base == INFINITY_)) {
+    if (module == GLOBAL && (base == NAN_ || base == INFINITY_)) {
       type = Type::f64;
     }
     if (type != Type::none) {
       // this is a global
-      import->kind = ExternalKind::Global;
+      auto* import = new Global;
+      import->name = name;
+      import->module = moduleName;
+      import->base = base;
       import->type = type;
       mappedGlobals.emplace(name, type);
       // tableBase and memoryBase are used as segment/element offsets, and must be constant;
@@ -929,15 +922,19 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           ));
         }
       }
+      if ((name == "tableBase" || name == "memoryBase") &&
+          (wasm.getGlobalOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
+        return;
+      }
+      wasm.addGlobal(import);
     } else {
-      import->kind = ExternalKind::Function;
+      // this is a function
+      auto* import = new Function;
+      import->name = name;
+      import->module = moduleName;
+      import->base = base;
+      wasm.addFunction(import);
     }
-    // we may have already created an import for this manually
-    if ((name == "tableBase" || name == "memoryBase") &&
-        (wasm.getImportOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
-      return;
-    }
-    wasm.addImport(import.release());
   };
 
   IString Int8Array, Int16Array, Int32Array, UInt8Array, UInt16Array, UInt32Array, Float32Array, Float64Array;
@@ -1199,25 +1196,24 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  for (auto& import : wasm.imports) {
-    if (import->kind != ExternalKind::Function) continue;
+  ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins
       FunctionType* builtin = getBuiltinFunctionType(import->module, import->base);
       if (builtin) {
-        import->functionType = builtin->name;
-        continue;
+        import->type = builtin->name;
+      } else {
+        import->type = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm)->name;
       }
-      import->functionType = ensureFunctionType(getSig(importedFunctionTypes[name].get()), &wasm)->name;
     } else if (import->module != ASM2WASM) { // special-case the special module
       // never actually used, which means we don't know the function type since the usage tells us, so illegal for it to remain
       toErase.push_back(name);
     }
-  }
+  });
 
   for (auto curr : toErase) {
-    wasm.removeImport(curr);
+    wasm.removeFunction(curr);
   }
 
   // Finalize calls now that everything is known and generated
@@ -1311,7 +1307,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           }
         }
         Module* wasm = getModule();
-        auto importResult = wasm->getFunctionType(wasm->getImport(curr->target)->functionType)->result;
+        auto importResult = wasm->getFunctionType(wasm->getFunction(curr->target)->type)->result;
         if (curr->type != importResult) {
           auto old = curr->type;
           curr->type = importResult;
@@ -1474,7 +1470,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // remove the debug info intrinsic
   if (preprocessor.debugInfo) {
-    wasm.removeImport(EMSCRIPTEN_DEBUGINFO);
+    wasm.removeFunction(EMSCRIPTEN_DEBUGINFO);
   }
 
   if (udivmoddi4.is() && getTempRet0.is()) {
@@ -1730,7 +1726,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
         static bool addedImport = false;
         if (!addedImport) {
           addedImport = true;
-          auto import = new FUnction; // f64-rem = asm2wasm.f64-rem;
+          auto import = new Function; // f64-rem = asm2wasm.f64-rem;
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
@@ -2224,8 +2220,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           // this is important as we run the optimizer on functions before we get
           // to finalizeCalls (which we can only do once we've read all the functions,
           // and we optimize in parallel starting earlier).
-          callImport->type = getResultTypeOfCallUsingParent(astStackHelper.getParent(), &asmData);
-          noteImportedFunctionCall(ast, callImport->type, callImport);
+          auto* call = ret->cast<Call>();
+          call->type = getResultTypeOfCallUsingParent(astStackHelper.getParent(), &asmData);
+          noteImportedFunctionCall(ast, call->type, call);
         }
         return ret;
       }
