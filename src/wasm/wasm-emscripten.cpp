@@ -451,7 +451,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
 
   // Remove the base functions that we didn't generate
   for (auto importName : toRemove) {
-    wasm.removeImport(importName);
+    wasm.removeFunction(importName);
   }
   return walker;
 }
@@ -583,14 +583,16 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     return fixEmExceptionInvoke(name, sig);
   }
 
-  void visitImport(Import* curr) {
-    if (curr->kind != ExternalKind::Function)
+  void visitFunction(Function* curr) {
+    if (!curr->imported()) {
       return;
+    }
 
-    FunctionType* func = wasm.getFunctionType(curr->functionType);
+    FunctionType* func = wasm.getFunctionType(curr->type);
     Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
-    if (newname == curr->base)
+    if (newname == curr->base) {
       return;
+    }
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
@@ -625,7 +627,7 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
 
   void visitModule(Module* curr) {
     for (auto importName : toRemove) {
-      wasm.removeImport(importName);
+      wasm.removeFunction(importName);
     }
     wasm.updateMaps();
   }
