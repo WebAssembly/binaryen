@@ -1624,7 +1624,7 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
 void SExpressionWasmBuilder::parseImport(Element& s) {
   size_t i = 1;
   bool newStyle = s.size() == 4 && s[3]->isList(); // (import "env" "STACKTOP" (global $stackTop i32))
-  ExternalKind kind;
+  auto kind = ExternalKind::Invalid;
   if (newStyle) {
     if ((*s[3])[0]->str() == FUNC) {
       kind = ExternalKind::Function;
@@ -1823,7 +1823,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   if (wasm.table.exists) throw ParseException("more than one table");
   wasm.table.exists = true;
-  wasm.table.imported = preParseImport;
+  // FIXME wasm.table.imported = preParseImport;
   Index i = 1;
   if (i == s.size()) return; // empty table in old notation
   if (s[i]->dollared()) {

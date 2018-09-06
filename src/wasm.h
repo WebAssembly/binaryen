@@ -642,7 +642,8 @@ enum class ExternalKind {
   Function = 0,
   Table = 1,
   Memory = 2,
-  Global = 3
+  Global = 3,
+  Invalid = -1
 };
 
 class Export {
