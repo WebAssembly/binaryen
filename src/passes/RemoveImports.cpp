@@ -29,10 +29,11 @@ namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
   void visitCall(Call *curr) {
-    if (!getModule()->getFunction(curr->target)->imported()) {
+    auto* func = getModule()->getFunction(curr->target);
+    if (!func->imported()) {
       return;
     }
-    Type type = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
+    Type type = getModule()->getFunctionType(func->type)->result;
     if (type == none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
@@ -44,13 +45,13 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
 
   void visitModule(Module *curr) {
     std::vector<Name> names;
-    for (auto& import : curr->imports) {
-      if (import->kind == ExternalKind::Function) {
+    for (auto& import : curr->functions) {
+      if (import->imported()) {
         names.push_back(import->name);
       }
     }
     for (auto& name : names) {
-      curr->removeImport(name);
+      curr->removeFunction(name);
     }
   }
 };
