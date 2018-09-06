@@ -31,7 +31,7 @@ namespace GlobalUtils {
   inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
     // find the import
     Name imported;
-    ImportInfo::iterImportedGlobals([&](Global* import) {
+    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == module && import->base == base) {
         imported = import->name;
       }
@@ -39,7 +39,7 @@ namespace GlobalUtils {
     if (imported.isNull()) return nullptr;
     // find a global inited to it
     Global* ret = nullptr;
-    ImportInfo::iterDefinedGlobals([&](Global* defined) {
+    ImportInfo::iterDefinedGlobals(wasm, [&](Global* defined) {
       if (auto* init = defined->init->dynCast<GetGlobal>()) {
         if (init->name == imported) {
           ret = defined;

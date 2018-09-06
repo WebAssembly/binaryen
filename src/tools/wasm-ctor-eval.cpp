@@ -128,7 +128,7 @@ public:
         // some constants are ok to use
         if (auto* get = global->init->dynCast<GetGlobal>()) {
           auto name = get->name;
-          auto* import = wasm.getImport(name);
+          auto* import = wasm.getGlobal(name);
           if (import->module == Name("env") && (
             import->base == Name("STACKTOP") || // stack constants are special, we handle them
             import->base == Name("STACK_MAX")
@@ -172,34 +172,33 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     // fill usable values for stack imports, and globals initialized to them
-    if (auto* stackTop = ImportUtils::getImport(wasm_, "env", "STACKTOP")) {
+    ImportInfo imports(wasm_);
+    if (auto* stackTop = imports.getImportedGlobal("env", "STACKTOP")) {
       globals[stackTop->name] = Literal(int32_t(STACK_START));
       if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACKTOP")) {
         globals[stackTop->name] = Literal(int32_t(STACK_START));
       }
     }
-    if (auto* stackMax = ImportUtils::getImport(wasm_, "env", "STACK_MAX")) {
+    if (auto* stackMax = imports.getImportedGlobal("env", "STACK_MAX")) {
       globals[stackMax->name] = Literal(int32_t(STACK_START));
       if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
         globals[stackMax->name] = Literal(int32_t(STACK_START));
       }
     }
     // fill in fake values for everything else, which is dangerous to use
-    for (auto& global : wasm_.globals) {
-      if (globals.find(global->name) == globals.end()) {
-        globals[global->name] = LiteralUtils::makeLiteralZero(global->type);
+    ImportInfo::iterDefinedGlobals(wasm_, [&](Global* defined) {
+      if (globals.find(defined->name) == globals.end()) {
+        globals[defined->name] = LiteralUtils::makeLiteralZero(defined->type);
       }
-    }
-    for (auto& import : wasm_.imports) {
-      if (import->kind == ExternalKind::Global) {
-        if (globals.find(import->name) == globals.end()) {
-          globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
-        }
+    });
+    ImportInfo::iterImportedGlobals(wasm_, [&](Global* import) {
+      if (globals.find(import->name) == globals.end()) {
+        globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
       }
-    }
+    });
   }
 
-  Literal callImport(Import *import, LiteralList& arguments) override {
+  Literal callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
     if (import->module == "env" && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
