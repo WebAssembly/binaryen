@@ -337,10 +337,18 @@ struct Walker : public VisitorType {
       self->visitExport(curr.get());
     }
     for (auto& curr : module->globals) {
-      self->walkGlobal(curr.get());
+      if (curr->imported()) {
+        self->visitGlobal(curr.get());
+      } else {
+        self->walkGlobal(curr.get());
+      }
     }
     for (auto& curr : module->functions) {
-      self->walkFunction(curr.get());
+      if (curr->imported()) {
+        self->visitFunction(curr.get());
+      } else {
+        self->walkFunction(curr.get());
+      }
     }
     self->walkTable(&module->table);
     self->walkMemory(&module->memory);
