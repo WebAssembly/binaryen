@@ -580,14 +580,13 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   if (importModule.is()) {
     // this is an import, actually
     if (!preParseImport) throw ParseException("!preParseImport in func");
-    std::unique_ptr<Import> im = make_unique<Import>();
+    auto im = make_unique<Function>();
     im->name = name;
     im->module = importModule;
     im->base = importBase;
-    im->kind = ExternalKind::Function;
-    im->functionType = wasm.getFunctionType(type)->name;
-    if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
-    wasm.addImport(im.release());
+    im->type = wasm.getFunctionType(type)->name;
+    if (wasm.getFunctionOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
+    wasm.addFunction(im.release());
     if (currFunction) throw ParseException("import module inside function dec");
     currLocalTypes.clear();
     nameMapper.clear();
@@ -1033,17 +1032,7 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
 Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   auto ret = allocator.alloc<GetGlobal>();
   ret->name = getGlobalName(*s[1]);
-  auto* global = wasm.getGlobalOrNull(ret->name);
-  if (global) {
-    ret->type = global->type;
-    return ret;
-  }
-  auto* import = wasm.getImportOrNull(ret->name);
-  if (import && import->kind == ExternalKind::Global) {
-    ret->type = import->globalType;
-    return ret;
-  }
-  throw ParseException("bad get_global name", s.line, s.col);
+  ret->type = wasm.getGlobal(ret->name)->type;
 }
 
 Expression* SExpressionWasmBuilder::makeSetGlobal(Element& s) {
@@ -1525,15 +1514,8 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       wasm.addExport(ex.release());
       i++;
     } else if (inner[0]->str() == IMPORT) {
-      importModule = inner[1]->str();
-      importBase = inner[2]->str();
-      auto im = make_unique<Import>();
-      im->kind = ExternalKind::Memory;
-      im->module = importModule;
-      im->base = importBase;
-      im->name = importModule;
-      if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
-      wasm.addImport(im.release());
+      wasm.memory.module = inner[1]->str();
+      wasm.memory.base = inner[2]->str();
       i++;
     } else if (inner[0]->str() == "shared") {
       wasm.memory.shared = true;
@@ -1639,70 +1621,71 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
 }
 
 void SExpressionWasmBuilder::parseImport(Element& s) {
-  std::unique_ptr<Import> im = make_unique<Import>();
   size_t i = 1;
   bool newStyle = s.size() == 4 && s[3]->isList(); // (import "env" "STACKTOP" (global $stackTop i32))
+  ExternalKind kind;
   if (newStyle) {
     if ((*s[3])[0]->str() == FUNC) {
-      im->kind = ExternalKind::Function;
+      kind = ExternalKind::Function;
     } else if ((*s[3])[0]->str() == MEMORY) {
-      im->kind = ExternalKind::Memory;
+      kind = ExternalKind::Memory;
       if (wasm.memory.exists) throw ParseException("more than one memory");
       wasm.memory.exists = true;
       wasm.memory.imported = true;
     } else if ((*s[3])[0]->str() == TABLE) {
-      im->kind = ExternalKind::Table;
+      kind = ExternalKind::Table;
       if (wasm.table.exists) throw ParseException("more than one table");
       wasm.table.exists = true;
       wasm.table.imported = true;
     } else if ((*s[3])[0]->str() == GLOBAL) {
-      im->kind = ExternalKind::Global;
+      kind = ExternalKind::Global;
     } else {
       newStyle = false; // either (param..) or (result..)
     }
   }
   Index newStyleInner = 1;
+  Name name;
   if (s.size() > 3 && s[3]->isStr()) {
-    im->name = s[i++]->str();
+    name = s[i++]->str();
   } else if (newStyle && newStyleInner < s[3]->size() && (*s[3])[newStyleInner]->dollared()) {
-    im->name = (*s[3])[newStyleInner++]->str();
+    name = (*s[3])[newStyleInner++]->str();
   }
-  if (!im->name.is()) {
-    if (im->kind == ExternalKind::Function) {
-      im->name = Name("import$function$" + std::to_string(functionCounter++));
-      functionNames.push_back(im->name);
-    } else if (im->kind == ExternalKind::Global) {
-      im->name = Name("import$global" + std::to_string(globalCounter++));
-      globalNames.push_back(im->name);
-    } else if (im->kind == ExternalKind::Memory) {
-      im->name = Name("import$memory$" + std::to_string(0));
-    } else if (im->kind == ExternalKind::Table) {
-      im->name = Name("import$table$" + std::to_string(0));
+  if (!name.is()) {
+    if (kind == ExternalKind::Function) {
+      name = Name("import$function$" + std::to_string(functionCounter++));
+      functionNames.push_back(name);
+    } else if (kind == ExternalKind::Global) {
+      name = Name("import$global" + std::to_string(globalCounter++));
+      globalNames.push_back(name);
+    } else if (kind == ExternalKind::Memory) {
+      name = Name("import$memory$" + std::to_string(0));
+    } else if (kind == ExternalKind::Table) {
+      name = Name("import$table$" + std::to_string(0));
     } else {
       throw ParseException("invalid import");
     }
   }
   if (!s[i]->quoted()) {
     if (s[i]->str() == MEMORY) {
-      im->kind = ExternalKind::Memory;
+      kind = ExternalKind::Memory;
     } else if (s[i]->str() == TABLE) {
-      im->kind = ExternalKind::Table;
+      kind = ExternalKind::Table;
     } else if (s[i]->str() == GLOBAL) {
-      im->kind = ExternalKind::Global;
+      kind = ExternalKind::Global;
     } else {
       throw ParseException("invalid ext import");
     }
     i++;
   } else if (!newStyle) {
-    im->kind = ExternalKind::Function;
+    kind = ExternalKind::Function;
   }
-  im->module = s[i++]->str();
+  auto module = s[i++]->str();
   if (!s[i]->isStr()) throw ParseException("no name for import");
-  im->base = s[i++]->str();
+  auto base = s[i++]->str();
   // parse internals
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
-  if (im->kind == ExternalKind::Function) {
+  if (kind == ExternalKind::Function) {
     std::unique_ptr<FunctionType> type = make_unique<FunctionType>();
     if (inner.size() > j) {
       Element& params = *inner[j];
@@ -1726,16 +1709,28 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
         type->result = stringToType(result[1]->str());
       }
     }
-    im->functionType = ensureFunctionType(getSig(type.get()), &wasm)->name;
-  } else if (im->kind == ExternalKind::Global) {
+    auto func = make_unique<Function>();
+    func->name = name;
+    func->module = module;
+    func->base = base;
+    func->type = ensureFunctionType(getSig(type.get()), &wasm)->name;
+    wasm.addFunction(func.release());
+  } else if (kind == ExternalKind::Global) {
+    Type type;
     if (inner[j]->isStr()) {
-      im->globalType = stringToType(inner[j]->str());
+      type = stringToType(inner[j]->str());
     } else {
       auto& inner2 = *inner[j];
       if (inner2[0]->str() != MUT) throw ParseException("expected mut");
-      im->globalType = stringToType(inner2[1]->str());
+      type = stringToType(inner2[1]->str());
       throw ParseException("cannot import a mutable global", s.line, s.col);
     }
+    auto global = make_unique<Global>();
+    global->name = name;
+    global->module = module;
+    global->base = base;
+    global->type = type;
+    wasm.addGlobal(global.release());
   } else if (im->kind == ExternalKind::Table) {
     if (j < inner.size() - 1) {
       wasm.table.initial = getCheckedAddress(inner[j++], "excessive table init size");
@@ -1805,14 +1800,13 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
     // this is an import, actually
     if (!preParseImport) throw ParseException("!preParseImport in global");
     if (mutable_) throw ParseException("cannot import a mutable global", s.line, s.col);
-    std::unique_ptr<Import> im = make_unique<Import>();
+    auto im = make_unique<Global>();
     im->name = global->name;
     im->module = importModule;
     im->base = importBase;
-    im->kind = ExternalKind::Global;
-    im->globalType = type;
-    if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
-    wasm.addImport(im.release());
+    im->type = type;
+    if (wasm.getGlobalOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
+    wasm.addGlobal(im.release());
     return;
   }
   if (preParseImport) throw ParseException("preParseImport in global");
@@ -1851,16 +1845,9 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       wasm.addExport(ex.release());
       i++;
     } else if (inner[0]->str() == IMPORT) {
-      importModule = inner[1]->str();
-      importBase = inner[2]->str();
       if (!preParseImport) throw ParseException("!preParseImport in table");
-      auto im = make_unique<Import>();
-      im->kind = ExternalKind::Table;
-      im->module = importModule;
-      im->base = importBase;
-      im->name = importModule;
-      if (wasm.getImportOrNull(im->name)) throw ParseException("duplicate import", s.line, s.col);
-      wasm.addImport(im.release());
+      wasm.table.module = inner[1]->str();
+      wasm.table.base = inner[2]->str();
       i++;
     } else {
       throw ParseException("invalid table");

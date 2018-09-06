@@ -756,7 +756,7 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        auto* func = wasm.getFunction(curr->target);
+        auto* func = instance.wasm.getFunction(curr->target);
         Flow ret;
         if (func->imported()) {
           ret = instance.externalInterface->callImport(func, arguments);
