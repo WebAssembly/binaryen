@@ -273,7 +273,7 @@ private:
   void addEsmImports(Ref ast, Module* wasm);
   void addEsmExportsAndInstantiate(Ref ast, Module* wasm, Name funcName);
   void addBasics(Ref ast);
-  void addFunction(Ref ast, Function* import);
+  void addFunctionImport(Ref ast, Function* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -344,7 +344,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   addBasics(asmFunc[3]);
   for (auto& import : wasm->functions) {
     if (import->imported()) {
-      addFunction(asmFunc[3], import.get());
+      addFunctionImport(asmFunc[3], import.get());
     }
   }
   for (auto& import : wasm->globals) {
@@ -683,8 +683,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   );
 }
 
-/* XXX
-void Wasm2JSBuilder::addImport(Ref ast, Function* import) {
+void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -696,7 +695,6 @@ void Wasm2JSBuilder::addImport(Ref ast, Function* import) {
     )
   );
 }
-*/
 
 void Wasm2JSBuilder::addTables(Ref ast, Module* wasm) {
   std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
