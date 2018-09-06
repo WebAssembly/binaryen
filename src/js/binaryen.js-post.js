@@ -1091,11 +1091,6 @@ Module['Module'] = function(module) {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
     });
   };
-  this['removeImport'] = function(internalName) {
-    return preserveStack(function() {
-      return Module['_BinaryenRemoveImport'](module, strToStack(internalName));
-    });
-  };
   this['addExport'] = // deprecated
   this['addFunctionExport'] = function(internalName, externalName) {
     return preserveStack(function() {
@@ -1504,6 +1499,8 @@ Module['getFunctionTypeInfo'] = function(func) {
 Module['getFunctionInfo'] = function(func) {
   return {
     'name': Pointer_stringify(Module['_BinaryenFunctionGetName'](func)),
+    'module': Pointer_stringify(Module['_BinaryenFunctionImportGetModule'](func)),
+    'base': Pointer_stringify(Module['_BinaryenFunctionImportGetBase'](func)),
     'type': Pointer_stringify(Module['_BinaryenFunctionGetType'](func)),
     'params': getAllNested(func, Module['_BinaryenFunctionGetNumParams'], Module['_BinaryenFunctionGetParam']),
     'result': Module['_BinaryenFunctionGetResult'](func),
@@ -1512,15 +1509,13 @@ Module['getFunctionInfo'] = function(func) {
   };
 };
 
-// Obtains information about an 'Import'
-Module['getImportInfo'] = function(import_) {
+// Obtains information about a 'Global'
+Module['getGlobalInfo'] = function(func) {
   return {
-    'kind': Module['_BinaryenImportGetKind'](import_),
-    'module': Pointer_stringify(Module['_BinaryenImportGetModule'](import_)),
-    'base': Pointer_stringify(Module['_BinaryenImportGetBase'](import_)),
-    'name': Pointer_stringify(Module['_BinaryenImportGetName'](import_)),
-    'globalType': Module['_BinaryenImportGetGlobalType'](import_),
-    'functionType': Pointer_stringify(Module['_BinaryenImportGetFunctionType'](import_))
+    'name': Pointer_stringify(Module['_BinaryenGlobalGetName'](func)),
+    'module': Pointer_stringify(Module['_BinaryenGlobalImportGetModule'](func)),
+    'base': Pointer_stringify(Module['_BinaryenGlobalImportGetBase'](func)),
+    'type': Pointer_stringify(Module['_BinaryenGlobalGetType'](func))
   };
 };
 

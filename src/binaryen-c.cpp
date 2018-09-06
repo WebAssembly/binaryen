@@ -2303,47 +2303,53 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressi
 // =========== Import operations ===========
 //
 
-BinaryenExternalKind BinaryenImportGetKind(void import) {
+const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetKind(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenFunctionImportGetModule(functions[" << functions[import] << "]);\n";
   }
 
-  return BinaryenExternalKind(((Import*)import)->kind);
+  auto* func = (Function*)import;
+  if (func->imported()) {
+    return func->module.c_str();
+  } else {
+    return "";
+  }
 }
-const char* BinaryenImportGetModule(void import) {
+const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetModule(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenGlobalImportGetModule(globals[" << globals[import] << "]);\n";
   }
 
-  return ((Import*)import)->module.c_str();
+  auto* global = (Global*)import;
+  if (global->imported()) {
+    return global->module.c_str();
+  } else {
+    return "";
+  }
 }
-const char* BinaryenImportGetBase(void import) {
+const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetBase(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenFunctionImportGetBase(functions[" << functions[import] << "]);\n";
   }
 
-  return ((Import*)import)->base.c_str();
+  auto* func = (Function*)import;
+  if (func->imported()) {
+    return func->base.c_str();
+  } else {
+    return "";
+  }
 }
-const char* BinaryenImportGetName(void import) {
+const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
   if (tracing) {
-    std::cout << "  BinaryenImportGetName(imports[" << imports[import] << "]);\n";
+    std::cout << "  BinaryenGlobalImportGetBase(globals[" << globals[import] << "]);\n";
   }
 
-  return ((Import*)import)->name.c_str();
-}
-BinaryenType BinaryenImportGetGlobalType(void import) {
-  if (tracing) {
-    std::cout << "  BinaryenImportGetGlobalType(imports[" << imports[import] << "]);\n";
+  auto* global = (Global*)import;
+  if (global->imported()) {
+    return global->base.c_str();
+  } else {
+    return "";
   }
-
-  return ((Import*)import)->globalType;
-}
-const char* BinaryenImportGetFunctionType(void import) {
-  if (tracing) {
-    std::cout << "  BinaryenImportGetFunctionType(imports[" << imports[import] << "]);\n";
-  }
-
-  return ((Import*)import)->functionType.c_str();
 }
 
 //

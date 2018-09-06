@@ -778,18 +778,12 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func, BinaryenExpressi
 // ========== Import Operations ==========
 //
 
-// Gets the external kind of the specified import.
-BinaryenExternalKind BinaryenImportGetKind(BinaryenImportRef import);
 // Gets the external module name of the specified import.
-const char* BinaryenImportGetModule(BinaryenImportRef import);
+const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
+const char* BinaryeGlobalImportGetModule(BinaryenGlobalRef import);
 // Gets the external base name of the specified import.
-const char* BinaryenImportGetBase(BinaryenImportRef import);
-// Gets the internal name of the specified import.
-const char* BinaryenImportGetName(BinaryenImportRef import);
-// Gets the type of the imported global, if referencing a `Global`.
-BinaryenType BinaryenImportGetGlobalType(BinaryenImportRef import);
-// Gets the name of the function type of the imported function, if referencing a `Function`.
-const char* BinaryenImportGetFunctionType(BinaryenImportRef import);
+const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
+const char* BinaryeGlobalImportGetBase(BinaryenGlobalRef import);
 
 //
 // ========== Export Operations ==========
