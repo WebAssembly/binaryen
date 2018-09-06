@@ -919,29 +919,30 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitTable(Table* curr) {
     if (!curr->exists) return;
     if (curr->imported()) {
+      doIndent(o, indent);
       o << '(';
       printMedium(o, "import ");
       printText(o, curr->module.str) << ' ';
       printText(o, curr->base.str) << ' ';
       printTableHeader(&currModule->table);
-      o << ')';
+      o << ")\n";
     } else {
       doIndent(o, indent);
       printTableHeader(curr);
       o << maybeNewLine;
-      for (auto& segment : curr->segments) {
-        // Don't print empty segments
-        if (segment.data.empty()) continue;
-        doIndent(o, indent);
-        o << '(';
-        printMajor(o, "elem ");
-        visit(segment.offset);
-        for (auto name : segment.data) {
-          o << ' ';
-          printName(name, o);
-        }
-        o << ")\n";
+    }
+    for (auto& segment : curr->segments) {
+      // Don't print empty segments
+      if (segment.data.empty()) continue;
+      doIndent(o, indent);
+      o << '(';
+      printMajor(o, "elem ");
+      visit(segment.offset);
+      for (auto name : segment.data) {
+        o << ' ';
+        printName(name, o);
       }
+      o << ")\n";
     }
   }
   void printMemoryHeader(Memory* curr) {
@@ -960,44 +961,45 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitMemory(Memory* curr) {
     if (!curr->exists) return;
     if (curr->imported()) {
+      doIndent(o, indent);
       o << '(';
       printMedium(o, "import ");
       printText(o, curr->module.str) << ' ';
       printText(o, curr->base.str) << ' ';
       printMemoryHeader(&currModule->memory);
-      o << ')';
+      o << ")\n";
     } else {
       doIndent(o, indent);
       printMemoryHeader(curr);
       o << '\n';
-      for (auto segment : curr->segments) {
-        doIndent(o, indent);
-        o << '(';
-        printMajor(o, "data ");
-        visit(segment.offset);
-        o << " \"";
-        for (size_t i = 0; i < segment.data.size(); i++) {
-          unsigned char c = segment.data[i];
-          switch (c) {
-            case '\n': o << "\\n"; break;
-            case '\r': o << "\\0d"; break;
-            case '\t': o << "\\t"; break;
-            case '\f': o << "\\0c"; break;
-            case '\b': o << "\\08"; break;
-            case '\\': o << "\\\\"; break;
-            case '"' : o << "\\\""; break;
-            case '\'' : o << "\\'"; break;
-            default: {
-              if (c >= 32 && c < 127) {
-                o << c;
-              } else {
-                o << std::hex << '\\' << (c/16) << (c%16) << std::dec;
-              }
+    }
+    for (auto segment : curr->segments) {
+      doIndent(o, indent);
+      o << '(';
+      printMajor(o, "data ");
+      visit(segment.offset);
+      o << " \"";
+      for (size_t i = 0; i < segment.data.size(); i++) {
+        unsigned char c = segment.data[i];
+        switch (c) {
+          case '\n': o << "\\n"; break;
+          case '\r': o << "\\0d"; break;
+          case '\t': o << "\\t"; break;
+          case '\f': o << "\\0c"; break;
+          case '\b': o << "\\08"; break;
+          case '\\': o << "\\\\"; break;
+          case '"' : o << "\\\""; break;
+          case '\'' : o << "\\'"; break;
+          default: {
+            if (c >= 32 && c < 127) {
+              o << c;
+            } else {
+              o << std::hex << '\\' << (c/16) << (c%16) << std::dec;
             }
           }
         }
-        o << "\")\n";
       }
+      o << "\")\n";
     }
   }
   void visitModule(Module* curr) {
