@@ -76,9 +76,11 @@ struct PrintCallGraph : public Pass {
       CallPrinter(Module *module) : module(module) {
         // Walk function bodies.
         for (auto& func : module->functions) {
-          currFunction = func.get();
-          visitedTargets.clear();
-          walk(func.get()->body);
+          if (!func->imported()) {
+            currFunction = func.get();
+            visitedTargets.clear();
+            walk(func.get()->body);
+          }
         }
       }
       void visitCall(Call *curr) {

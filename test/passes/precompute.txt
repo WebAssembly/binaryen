@@ -3,9 +3,9 @@
  (type $1 (func (result i32)))
  (type $2 (func))
  (type $3 (func (result f64)))
+ (memory $0 0)
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (memory $0 0)
  (func $x (; 0 ;) (type $0) (param $x i32)
   (call $x
    (i32.const 2300)

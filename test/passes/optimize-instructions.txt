@@ -3000,7 +3000,7 @@
 )
 (module
  (type $0 (func))
- (import "env" "memory" (memory $0 (shared 256 256)))
+ (memory $0 (shared 256 256))
  (func $x (; 0 ;) (type $0)
   (drop
    (i32.shr_s
