@@ -2200,7 +2200,10 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           operands = &specific->operands;
           ret = specific;
         } else {
-          callImport = wasm.getFunction(name)->imported();
+          // if we call an import, it definitely exists already; if it's a
+          // defined function then it might not have been seen yet
+          auto* target = wasm.getFunctionOrNull(name);
+          callImport = target && target->imported();
           auto specific = allocator.alloc<Call>();
           specific->target = name;
           operands = &specific->operands;
