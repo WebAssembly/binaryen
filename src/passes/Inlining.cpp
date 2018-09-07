@@ -117,6 +117,11 @@ struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> 
     (*infos)[getFunction()->name].lightweight = false;
   }
 
+  void visitCallImport(CallImport* curr) {
+    // having a call is not lightweight
+    (*infos)[getFunction()->name].lightweight = false;
+  }
+
   void visitFunction(Function* curr) {
     (*infos)[curr->name].size = Measurer::measure(curr->body);
   }
