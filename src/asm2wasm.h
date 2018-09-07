@@ -33,6 +33,7 @@
 #include "parsing.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
+#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/trapping.h"
@@ -1627,7 +1628,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = DEBUGGER;
           import->module = ASM2WASM;
           import->base = DEBUGGER;
-          import->type = ensureFunctionType("v", &wasm)->name;
+          auto* functionType = ensureFunctionType("v", &wasm);
+          import->type = functionType->name;
+          FunctionTypeUtils::fillFunction(import, functionType);
           wasm.addFunction(import);
         }
         return call;
@@ -1730,7 +1733,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           import->name = F64_REM;
           import->module = ASM2WASM;
           import->base = F64_REM;
-          import->type = ensureFunctionType("ddd", &wasm)->name;
+          auto* functionType = ensureFunctionType("ddd", &wasm);
+          import->type = functionType->name;
+          FunctionTypeUtils::fillFunction(import, functionType);
           wasm.addFunction(import);
         }
         return call;

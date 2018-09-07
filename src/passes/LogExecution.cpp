@@ -30,6 +30,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -50,7 +51,9 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     import->name = LOGGER;
     import->module = ENV;
     import->base = LOGGER;
-    import->type = ensureFunctionType("vi", curr)->name;
+    auto* functionType = ensureFunctionType("vi", curr);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
     curr->addFunction(import);
   }
 

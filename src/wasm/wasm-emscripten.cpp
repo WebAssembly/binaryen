@@ -24,6 +24,7 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -268,6 +269,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     import->name = import->base = "jsCall_" + sig;
     import->module = ENV;
     import->type = importType->name;
+    FunctionTypeUtils::fillFunction(import, importType);
     wasm.addFunction(import);
     FunctionType *funcType = ensureFunctionType(sig, &wasm);
 

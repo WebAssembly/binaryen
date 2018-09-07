@@ -26,6 +26,7 @@
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 #include "ir/bits.h"
+#include "ir/function-type-utils.h"
 #include "ir/import-utils.h"
 
 namespace wasm {
@@ -132,7 +133,9 @@ struct SafeHeap : public Pass {
       import->name = segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      import->type = ensureFunctionType("v", module)->name;
+      auto* functionType = ensureFunctionType("v", module);
+      import->type = functionType->name;
+      FunctionTypeUtils::fillFunction(import, functionType);
       module->addFunction(import);
     }
     if (auto* existing = info.getImportedGlobal(ENV, ALIGNFAULT_IMPORT)) {
@@ -142,7 +145,9 @@ struct SafeHeap : public Pass {
       import->name = alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      import->type = ensureFunctionType("v", module)->name;
+      auto* functionType = ensureFunctionType("v", module);
+      import->type = functionType->name;
+      FunctionTypeUtils::fillFunction(import, functionType);
       module->addFunction(import);
     }
   }

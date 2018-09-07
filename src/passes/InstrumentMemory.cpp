@@ -61,6 +61,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -80,7 +81,9 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->type = ensureFunctionType(sig, curr)->name;
+    auto* functionType = ensureFunctionType(sig, curr);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
     curr->addFunction(import);
   }
 
