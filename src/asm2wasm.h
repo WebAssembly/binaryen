@@ -1217,6 +1217,14 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     wasm.removeFunction(curr);
   }
 
+  // Finalize function imports now that we've seen all the calls
+
+  for (auto& func : wasm.functions) {
+    if (func->imported()) {
+      FunctionTypeUtils::fillFunction(func.get(), wasm.getFunctionType(func->type));
+    }
+  }
+
   // Finalize calls now that everything is known and generated
 
   struct FinalizeCalls : public WalkerPass<PostWalker<FinalizeCalls>> {

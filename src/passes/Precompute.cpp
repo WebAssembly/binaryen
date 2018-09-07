@@ -86,11 +86,9 @@ public:
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
   Flow visitGetGlobal(GetGlobal *curr) {
-    auto* global = module->getGlobalOrNull(curr->name);
-    if (global) {
-      if (!global->mutable_) {
-        return visit(global->init);
-      }
+    auto* global = module->getGlobal(curr->name);
+    if (!global->imported() && !global->mutable_) {
+      return visit(global->init);
     }
     return Flow(NOTPRECOMPUTABLE_FLOW);
   }
