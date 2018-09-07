@@ -51,7 +51,7 @@ class Element {
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr), endLoc(nullptr) {}
 
   bool isList() const { return isList_; }
   bool isStr() const { return !isList_; }
@@ -60,6 +60,7 @@ public:
 
   size_t line, col;
   SourceLocation* loc;
+  SourceLocation* endLoc;
 
   // list methods
   List& list();
@@ -218,6 +219,8 @@ private:
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
   void parseType(Element& s);
+
+  Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 };
 
 } // namespace wasm

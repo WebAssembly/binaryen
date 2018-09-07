@@ -1,0 +1,18 @@
+(module
+ (type $0 (func))
+ ;;@ src.cpp:1:1
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+  ;;@ src.cpp:2:1
+  (block $label$1
+   ;;@ src.cpp:2:2
+   (block $label$2
+    (br $label$2)
+   )
+  )
+  ;;@ src.cpp:3:1
+  (return)
+  ;;@ src.cpp:3:2
+ )
+)
+

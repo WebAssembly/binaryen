@@ -620,8 +620,10 @@ public:
     bool operator!=(const DebugLocation& other) const { return !(*this == other); }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
+  std::pair<DebugLocation, bool> prologLocation;
+  std::pair<DebugLocation, bool> epilogLocation;
 
-  Function() : result(none) {}
+  Function() : result(none), prologLocation({{0, 0, 0}, false}), epilogLocation({{0, 0, 0}, false}) {}
 
   size_t getNumParams();
   size_t getNumVars();

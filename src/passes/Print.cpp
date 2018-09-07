@@ -439,20 +439,29 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (!full) full = isFullForced();
   }
 
-  void visit(Expression* curr) {
+  void printDebugLocation(const Function::DebugLocation &location) {
+    if (lastPrintedLocation == location) {
+      return;
+    }
+    lastPrintedLocation = location;
+    auto fileName = currModule->debugInfoFileNames[location.fileIndex];
+    o << ";;@ " << fileName << ":" << location.lineNumber << ":" << location.columnNumber << '\n';
+    doIndent(o, indent);
+  }
+
+  void printDebugLocation(Expression* curr) {
     if (currFunction) {
       // show an annotation, if there is one
       auto& debugLocations = currFunction->debugLocations;
       auto iter = debugLocations.find(curr);
       if (iter != debugLocations.end()) {
-        auto fileName = currModule->debugInfoFileNames[iter->second.fileIndex];
-        if (lastPrintedLocation != iter->second) {
-          lastPrintedLocation = iter->second;
-          o << ";;@ " << fileName << ":" << iter->second.lineNumber << ":" << iter->second.columnNumber << '\n';
-          doIndent(o, indent);
-        }
+        printDebugLocation(iter->second);
       }
     }
+  }
+
+  void visit(Expression* curr) {
+    printDebugLocation(curr);
     Visitor<PrintSExpression>::visit(curr);
   }
 
@@ -489,7 +498,10 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     // special-case Block, because Block nesting (in their first element) can be incredibly deep
     std::vector<Block*> stack;
     while (1) {
-      if (stack.size() > 0) doIndent(o, indent);
+      if (stack.size() > 0) {
+        doIndent(o, indent);
+        printDebugLocation(curr);
+      }
       stack.push_back(curr);
       if (full) {
         o << "[" << printType(curr->type) << "] ";
@@ -856,6 +868,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitFunction(Function* curr) {
     currFunction = curr;
     lastPrintedLocation = { 0, 0, 0 };
+    if (currFunction->prologLocation.second) {
+      printDebugLocation(currFunction->prologLocation.first);
+    }
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
@@ -908,7 +923,17 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // Print the stack IR.
       WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
     }
-    decIndent();
+    if (currFunction->epilogLocation.second && lastPrintedLocation != currFunction->epilogLocation.first) {
+      // Print last debug location: mix of decIndent and printDebugLocation logic.
+      doIndent(o, indent);
+      if (!minify) {
+        indent--;
+      }
+      printDebugLocation(currFunction->epilogLocation.first);
+      o << ')';
+    } else {
+      decIndent();
+    }
   }
   void printTableHeader(Table* curr) {
     o << '(';

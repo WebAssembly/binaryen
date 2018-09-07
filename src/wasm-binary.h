@@ -722,6 +722,7 @@ public:
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
+  void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
 
   // helpers
@@ -775,7 +776,7 @@ class WasmBinaryBuilder {
 
   size_t pos = 0;
   Index startIndex = -1;
-  bool useDebugLocation;
+  std::pair<Function::DebugLocation, bool> debugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
@@ -787,7 +788,7 @@ public:
       debug(debug),
       sourceMap(nullptr),
       nextDebugLocation(0, { 0, 0, 0 }),
-      useDebugLocation(false) {}
+      debugLocation({0, 0, 0}, false) {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -837,6 +838,7 @@ public:
   std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
+  inline bool isInFunction() { return endOfFunction != (Index)-1; }
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
@@ -903,7 +905,6 @@ public:
   void setDebugLocations(std::istream* sourceMap_) {
       sourceMap = sourceMap_;
   }
-  Function::DebugLocation debugLocation;
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
   void readSourceMapHeader();
