@@ -20,7 +20,6 @@
 #include "support/bits.h"
 #include "wasm-binary.h"
 #include "wasm-stack.h"
-#include "ir/function-type-utils.h"
 #include "ir/module-utils.h"
 
 namespace wasm {

@@ -49,6 +49,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -127,7 +128,9 @@ private:
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->type = ensureFunctionType(sig, wasm)->name;
+    auto* functionType = ensureFunctionType(sig, wasm);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
     wasm->addFunction(import);
   }
 };
