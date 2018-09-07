@@ -77,7 +77,6 @@ bool ExpressionAnalyzer::isResultDropped(std::vector<Expression*> stack) {
 
 
 bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, ExprComparer comparer) {
-  assert(left && right);
   std::vector<Name> nameStack;
   std::map<Name, std::vector<Name>> rightNames; // for each name on the left, the stack of names on the right (a stack, since names are scoped and can nest duplicatively
   Nop popNameMarker;
