@@ -126,7 +126,7 @@ struct SafeHeap : public Pass {
       import->type = i32;
       module->addGlobal(import);
     }
-    if (auto* existing = info.getImportedGlobal(ENV, SEGFAULT_IMPORT)) {
+    if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
       segfault = existing->name;
     } else {
       auto* import = new Function;
