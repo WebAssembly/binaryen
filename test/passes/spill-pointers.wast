@@ -159,7 +159,7 @@
   )
   (func $spill-call_import
     (local $x i32)
-    (call_import $segfault
+    (call $segfault
       (i32.const 200)
     )
     (drop (get_local $x))

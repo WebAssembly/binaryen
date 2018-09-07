@@ -138,7 +138,7 @@ struct SafeHeap : public Pass {
       FunctionTypeUtils::fillFunction(import, functionType);
       module->addFunction(import);
     }
-    if (auto* existing = info.getImportedGlobal(ENV, ALIGNFAULT_IMPORT)) {
+    if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
       alignfault = existing->name;
     } else {
       auto* import = new Function;

@@ -22,6 +22,7 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
+#include "ir/function-type-utils.h"
 #include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
@@ -226,7 +227,9 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer &trappingFunctions) {
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->type = ensureFunctionType("id", &wasm)->name;
+  auto* functionType = ensureFunctionType("id", &wasm);
+  import->type = functionType->name;
+  FunctionTypeUtils::fillFunction(import, functionType);
   trappingFunctions.addImport(import);
 }
 
