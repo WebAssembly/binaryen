@@ -5,10 +5,10 @@
  (type $3 (func (param i32) (result i32)))
  (type $4 (func (param i64 i64) (result i64)))
  (type $5 (func (result f32)))
- (global $x (mut i32) (i32.const 0))
+ (memory $0 10)
  (table 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
- (memory $0 10)
+ (global $x (mut i32) (i32.const 0))
  (func $a1 (; 0 ;) (type $1)
   (local $0 i32)
   (set_local $0
