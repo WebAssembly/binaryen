@@ -26,11 +26,12 @@
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <ir/utils.h>
-#include <ir/literal-utils.h>
+#include "wasm.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "ir/function-type-utils.h"
+#include "ir/literal-utils.h"
+#include "ir/utils.h"
 
 namespace wasm {
 
@@ -51,16 +52,16 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
+    // Avoid iterator invalidation later.
+    std::vector<Function*> originalFunctions;
+    for (auto& func : module->functions) {
+      originalFunctions.push_back(func.get());
+    }
     // for each illegal import, we must call a legalized stub instead
-    std::vector<Function*> newImports; // add them at the end, to not invalidate the iter
-    for (auto& im : module->functions) {
-std::cout << "a func " << im.get() << '\n';
-std::cout << "  imported? " << im->imported() << '\n';
+    for (auto* im : originalFunctions) {
       if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
-        Name funcName;
-        auto* legal = makeLegalStub(im.get(), module, funcName);
+        auto funcName = makeLegalStubForCalledImport(im, module);
         illegalToLegal[im->name] = funcName;
-        newImports.push_back(legal);
         // we need to use the legalized version in the table, as the import from JS
         // is legal for JS. Our stub makes it look like a native wasm function.
         for (auto& segment : module->table.segments) {
@@ -75,10 +76,6 @@ std::cout << "  imported? " << im->imported() << '\n';
     if (illegalToLegal.size() > 0) {
       for (auto& pair : illegalToLegal) {
         module->removeFunction(pair.first);
-      }
-
-      for (auto* im : newImports) {
-        module->addFunction(im);
       }
 
       // fix up imports: call_import of an illegal must be turned to a call of a legal
@@ -180,7 +177,7 @@ private:
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal JS import
-  Function* makeLegalStub(Function* im, Module* module, Name& funcName) {
+  Name makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
     auto* type = new FunctionType;
     type->name =  Name(std::string("legaltype$") + im->name.str);
@@ -191,7 +188,6 @@ private:
     legal->type = type->name;
     auto* func = new Function;
     func->name = Name(std::string("legalfunc$") + im->name.str);
-    funcName = func->name;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = legal->name;
@@ -231,10 +227,13 @@ private:
       type->result = imFunctionType->result;
     }
     func->result = imFunctionType->result;
+    FunctionTypeUtils::fillFunction(legal, type);
 
     module->addFunction(func);
     module->addFunctionType(type);
-    return legal;
+    module->addFunction(legal);
+
+    return func->name;
   }
 
   void ensureTempRet0(Module* module) {
