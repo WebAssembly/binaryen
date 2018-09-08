@@ -1,10 +1,10 @@
 (module
  (type $legaltype$illegalImportResult (func (result i32)))
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $memory 256 256))
+ (data (get_global $memoryBase) "i64-setTempRet0.asm.js")
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
  (global $tempRet0 (mut i32) (i32.const 0))
- (data (get_global $memoryBase) "i64-setTempRet0.asm.js")
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
  (func $imports (; 1 ;) (; has Stack IR ;) (result i32)

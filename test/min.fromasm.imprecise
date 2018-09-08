@@ -1,5 +1,5 @@
 (module
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $memory 256 256))
  (global $M (mut i32) (i32.const 0))
  (export "floats" (func $legalstub$floats))
  (export "getTempRet0" (func $ub))

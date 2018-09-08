@@ -1,5 +1,5 @@
 (module
- (import "env" "memory" (memory $0 (shared 256 256)))
+ (import "env" "memory" (memory $memory (shared 256 256)))
  (import "env" "table" (table 0 0 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

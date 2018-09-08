@@ -1,5 +1,5 @@
 (module
- (import "env" "memory" (memory $0 (shared 256 256)))
+ (import "env" "memory" (memory $memory (shared 256 256)))
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "test64" (func $legalstub$test64))
  (export "getTempRet0" (func $getTempRet0))
