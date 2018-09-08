@@ -1737,6 +1737,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     global->type = type;
     wasm.addGlobal(global.release());
   } else if (kind == ExternalKind::Table) {
+    wasm.table.module = module;
+    wasm.table.base = base;
     if (j < inner.size() - 1) {
       wasm.table.initial = getCheckedAddress(inner[j++], "excessive table init size");
     }
@@ -1747,6 +1749,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
+    wasm.memory.module = module;
+    wasm.memory.base = base;
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
       if (!(limits[0]->isStr() && limits[0]->str() == "shared")) throw ParseException("bad memory limit declaration");
