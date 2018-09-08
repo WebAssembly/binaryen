@@ -655,6 +655,7 @@ Export* Module::getExport(Name name) {
 Function* Module::getFunction(Name name) {
   auto iter = functionsMap.find(name);
   if (iter == functionsMap.end()) {
+assert(0);
     Fatal() << "Module::getFunction: " << name << " does not exist";
   }
   return iter->second;
@@ -723,6 +724,7 @@ void Module::addExport(Export* curr) {
 }
 
 void Module::addFunction(Function* curr) {
+assert(curr);
   if (!curr->name.is()) {
     Fatal() << "Module::addFunction: empty name";
   }

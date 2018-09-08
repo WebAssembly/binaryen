@@ -1257,8 +1257,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     }
 
     void visitCall(Call* curr) {
-      auto* calledFunc = getModule()->getFunction(curr->target);
-      if (!calledFunc->imported()) {
+      // The call target may not exist if it is one of our special fake imports for callIndirect fixups
+      auto* calledFunc = getModule()->getFunctionOrNull(curr->target);
+      if (calledFunc && !calledFunc->imported()) {
         // The result type of the function being called is now known, and can be applied.
         auto result = calledFunc->result;
         if (curr->type != result) {
