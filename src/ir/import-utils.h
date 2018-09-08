@@ -70,7 +70,9 @@ struct ImportInfo {
   }
 
   Index getNumImports() {
-    return getNumImportedGlobals() + getNumImportedFunctions();
+    return getNumImportedGlobals() + getNumImportedFunctions() +
+           (wasm.memory.imported() ? 1 : 0) +
+           (wasm.table.imported() ? 1 : 0);
   }
 
   Index getNumDefinedGlobals() {
