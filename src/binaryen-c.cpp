@@ -2463,7 +2463,7 @@ void BinaryenSetAPITracing(int on) {
                  "  std::map<size_t, BinaryenFunctionTypeRef> functionTypes;\n"
                  "  std::map<size_t, BinaryenExpressionRef> expressions;\n"
                  "  std::map<size_t, BinaryenFunctionRef> functions;\n"
-                 "  std::map<size_t, void> imports;\n"
+                 "  std::map<size_t, BinaryenGlobalRef> globals;\n"
                  "  std::map<size_t, BinaryenExportRef> exports;\n"
                  "  std::map<size_t, RelooperBlockRef> relooperBlocks;\n"
                  "  BinaryenModuleRef the_module = NULL;\n"
