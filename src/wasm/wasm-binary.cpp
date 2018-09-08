@@ -223,7 +223,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   if (importInfo->getNumDefinedFunctions() == 0) return;
   if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
   auto start = startSection(BinaryConsts::Section::Function);
-  o << U32LEB(wasm->functions.size());
+  o << U32LEB(importInfo->getNumDefinedFunctions());
   ImportInfo::iterDefinedFunctions(*wasm, [&](Function* func) {
     if (debug) std::cerr << "write one" << std::endl;
     o << U32LEB(getFunctionTypeIndex(func->type));
