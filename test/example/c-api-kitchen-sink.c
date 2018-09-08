@@ -202,7 +202,7 @@ void test_core() {
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
       BinaryenUnary(module,
         BinaryenTruncSFloat32ToInt32(),
-        BinaryenCallImport(module, "an-imported", callOperands2, 2, BinaryenTypeFloat32())
+        BinaryenCall(module, "an-imported", callOperands2, 2, BinaryenTypeFloat32())
       )
     ),
     BinaryenUnary(module, BinaryenEqZInt32(), // check the output type of the call node
@@ -301,7 +301,7 @@ void test_unreachable() {
 
 BinaryenExpressionRef makeCallCheck(BinaryenModuleRef module, int x) {
   BinaryenExpressionRef callOperands[] = { makeInt32(module, x) };
-  return BinaryenCallImport(module, "check", callOperands, 1, BinaryenTypeNone());
+  return BinaryenCall(module, "check", callOperands, 1, BinaryenTypeNone());
 }
 
 void test_relooper() {
@@ -543,7 +543,7 @@ void test_interpret() {
 
   BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v", BinaryenTypeNone(), NULL, 0);
   BinaryenExpressionRef callOperands[] = { makeInt32(module, 1234) };
-  BinaryenExpressionRef call = BinaryenCallImport(module, "print-i32", callOperands, 1, BinaryenTypeNone());
+  BinaryenExpressionRef call = BinaryenCall(module, "print-i32", callOperands, 1, BinaryenTypeNone());
   BinaryenFunctionRef starter = BinaryenAddFunction(module, "starter", v, NULL, 0, call);
   BinaryenSetStart(module, starter);
 

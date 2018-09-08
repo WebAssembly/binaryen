@@ -1,6 +1,6 @@
 total
  [funcs]        : 9       
- [imports]      : 1       
+ [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
  [total]        : 136     
@@ -248,7 +248,7 @@ total
 )
 total
  [funcs]        : 9       
- [imports]      : 1       
+ [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
  [total]        : 136     

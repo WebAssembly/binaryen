@@ -147,7 +147,7 @@ int main() {
   expressions[47] = BinaryenGetLocal(the_module, 2, 1);
   {
     BinaryenExpressionRef operands[] = { expressions[47] };
-    expressions[48] = BinaryenCallImport(the_module, "print_i32", operands, 1, 0);
+    expressions[48] = BinaryenCall(the_module, "print_i32", operands, 1, 0);
   }
   {
     BinaryenExpressionRef children[] = { expressions[44], expressions[46], expressions[48] };

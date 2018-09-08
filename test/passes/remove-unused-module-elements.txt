@@ -84,21 +84,25 @@
 (module
 )
 (module
- (memory $0 256)
- (table 1 anyfunc)
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 1 anyfunc))
  (export "mem" (memory $0))
  (export "tab" (table $0))
 )
 (module
  (type $0 (func))
+ (import "env" "memory" (memory $0 256))
+ (data (i32.const 1) "hello, world!")
+ (import "env" "table" (table 1 anyfunc))
+ (elem (i32.const 0) $waka)
  (func $waka (; 0 ;) (type $0)
   (nop)
  )
 )
 (module
  (type $0 (func))
- (memory $0 256)
- (table 0 anyfunc)
+ (import "env" "memory" (memory $0 256))
+ (import "env" "table" (table 0 anyfunc))
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0)
   (drop
@@ -184,7 +188,7 @@
 )
 (module
  (type $0 (func (result i32)))
- (memory $0 256)
+ (import "env" "memory" (memory $0 256))
  (export "user" (func $user))
  (func $user (; 0 ;) (type $0) (result i32)
   (grow_memory
@@ -202,6 +206,10 @@
 )
 (module
  (type $0 (func))
+ (import "env" "memory" (memory $0 256))
+ (data (get_global $memoryBase) "hello, world!")
+ (import "env" "table" (table 0 anyfunc))
+ (elem (get_global $tableBase) $waka)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (func $waka (; 0 ;) (type $0)
@@ -257,6 +265,8 @@
 )
 (module
  (type $0 (func (param f64) (result f64)))
+ (import "env" "table" (table 6 6 anyfunc))
+ (elem (i32.const 0) $0)
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
   (if (result f64)
    (f64.eq

@@ -186,7 +186,7 @@ func: func_a
  block          : 1       
  call           : 5       
 start: func_a
- [removable-bytes-without-it]: 68      
+ [removable-bytes-without-it]: 67      
 (module
  (type $FUNCSIG$v (func))
  (import "env" "waka" (func $waka))

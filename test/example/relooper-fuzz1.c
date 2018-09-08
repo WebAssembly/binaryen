@@ -50,7 +50,7 @@ int main() {
     )
   };
   BinaryenExpressionRef debugger;
-  if (1) debugger = BinaryenCallImport(module, "print", args, 1,
+  if (1) debugger = BinaryenCall(module, "print", args, 1,
                                        BinaryenTypeNone());
   else debugger = BinaryenNop(module);
 
@@ -83,7 +83,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(0))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -99,7 +99,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(1))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -115,7 +115,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(2))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -131,7 +131,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(3))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -147,7 +147,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(4))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -163,7 +163,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(5))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -179,7 +179,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(6))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -195,7 +195,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(7))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -211,7 +211,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(8))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
@@ -227,7 +227,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(9))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenTypeNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };

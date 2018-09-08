@@ -1,8 +1,8 @@
 (module
  (type $0 (func))
+ (memory $0 0)
  (import "env" "table" (table 1 1 anyfunc))
  (elem (i32.const 0) $0)
- (memory $0 0)
  (func $0 (; 0 ;) (type $0)
   (nop)
  )
