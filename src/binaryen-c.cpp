@@ -31,6 +31,7 @@
 #include "wasm-validator.h"
 #include "wasm2js.h"
 #include "cfg/Relooper.h"
+#include "ir/function-type-utils.h"
 #include "ir/utils.h"
 #include "shell-interface.h"
 
@@ -1661,6 +1662,7 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module, const char* internalNam
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->type = ((FunctionType*)functionType)->name;
+  FunctionTypeUtils::fillFunction(ret, (FunctionType*)functionType);
   wasm->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
