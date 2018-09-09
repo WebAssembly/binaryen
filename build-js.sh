@@ -584,6 +584,12 @@ export_function "_BinaryenFunctionOptimize"
 export_function "_BinaryenFunctionRunPasses"
 export_function "_BinaryenFunctionSetDebugLocation"
 
+# 'Import' operations
+export_function "_BinaryenGlobalImportGetModule"
+export_function "_BinaryenGlobalImportGetBase"
+export_function "_BinaryenFunctionImportGetModule"
+export_function "_BinaryenFunctionImportGetBase"
+
 # 'Export' operations
 export_function "_BinaryenExportGetKind"
 export_function "_BinaryenExportGetName"
