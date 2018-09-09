@@ -481,13 +481,20 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         }
       }
     }
+    // Copy over the non-imports
     for (auto& curr : wasm.functions) {
-      curr->type = ftNames[curr->type];
-      assert(curr->type.is());
-      outputMergeable.wasm.addFunction(curr.release());
+      if (curr) {
+        assert(!curr->imported());
+        curr->type = ftNames[curr->type];
+        assert(curr->type.is());
+        outputMergeable.wasm.addFunction(curr.release());
+      }
     }
     for (auto& curr : wasm.globals) {
-      outputMergeable.wasm.addGlobal(curr.release());
+      if (curr) {
+        assert(!curr->imported());
+        outputMergeable.wasm.addGlobal(curr.release());
+      }
     }
   }
 
