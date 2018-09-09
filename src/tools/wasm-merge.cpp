@@ -280,17 +280,13 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
   std::map<Name, Name> gNames; // globals
 
   void visitCall(Call* curr) {
-    if (!getModule()->getFunction(curr->target)->imported()) {
-      curr->target = fNames[curr->target];
-    } else {
-      auto iter = implementedFunctionImports.find(curr->target);
-      if (iter != implementedFunctionImports.end()) {
-        // this import is now in the module - call it
-        replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
-        return;
-      }
-      curr->target = fNames[curr->target];
+    auto iter = implementedFunctionImports.find(curr->target);
+    if (iter != implementedFunctionImports.end()) {
+      // this import is now in the module - call it
+      replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
+      return;
     }
+    curr->target = fNames[curr->target];
     assert(curr->target.is());
   }
 
