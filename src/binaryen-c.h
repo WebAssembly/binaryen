@@ -781,7 +781,7 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
 const char* BinaryeGlobalImportGetModule(BinaryenGlobalRef import);
 // Gets the external base name of the specified import.
 const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
-const char* BinaryeGlobalImportGetBase(BinaryenGlobalRef import);
+const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import);
 
 //
 // ========== Export Operations ==========
