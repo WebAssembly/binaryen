@@ -20,7 +20,7 @@
     (drop (i32.const 111))
     (call $only-b)
     (call $some-func-b)
-    (call_import $some-collide)
+    (call $some-collide)
     (call_indirect (type $ii)
       (i32.const 12)
       (i32.const 34)

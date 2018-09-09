@@ -10,7 +10,7 @@
   (import "env" "bglobal" (global $b-global f64))
   (func $foo-func
     (drop (i32.const 1337))
-    (call_import $bar-func)
+    (call $bar-func)
     (drop (get_global $a-global))
     (drop (get_global $b-global))
   )
