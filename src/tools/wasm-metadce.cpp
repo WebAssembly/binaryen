@@ -174,11 +174,11 @@ struct MetaDCEGraph {
         }
       }
     };
-    for (auto& global : wasm.globals) {
+    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
       InitScanner scanner(this, globalToDCENode[global->name]);
       scanner.setModule(&wasm);
       scanner.walk(global->init);
-    }
+    });
     // we can't remove segments, so root what they need
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
