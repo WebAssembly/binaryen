@@ -180,11 +180,3 @@ def node_test_glue():
   # a workaround:
   return ('if (typeof module === "object" && typeof exports === "object")\n'
           '  Binaryen = module.exports;\n')
-
-'''
-(module
- (import "env" "table" (table 18 18 anyfunc))
-)
-writing that to binary then eading it will  drop the import :(
-'''
-
