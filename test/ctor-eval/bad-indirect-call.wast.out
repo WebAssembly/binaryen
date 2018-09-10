@@ -1,9 +1,9 @@
 (module
  (type $v (func))
- (table 1 1 anyfunc)
- (elem (i32.const 0) $call-indirect)
  (memory $0 256 256)
  (data (i32.const 10) "waka waka waka waka waka")
+ (table 1 1 anyfunc)
+ (elem (i32.const 0) $call-indirect)
  (export "test1" (func $test1))
  (func $test1 (; 0 ;) (type $v)
   (call_indirect (type $v)

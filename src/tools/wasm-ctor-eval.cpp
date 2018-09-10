@@ -123,7 +123,7 @@ public:
   EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {
     // if any global in the module has a non-const constructor, it is using a global import,
     // which we don't have, and is illegal to use
-    for (auto& global : wasm.globals) {
+    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
         // some constants are ok to use
         if (auto* get = global->init->dynCast<GetGlobal>()) {
@@ -133,13 +133,13 @@ public:
             import->base == Name("STACKTOP") || // stack constants are special, we handle them
             import->base == Name("STACK_MAX")
           )) {
-            continue; // this is fine
+            return; // this is fine
           }
         }
         // this global is dangerously initialized by an import, so if it is used, we must fail
         globals.addDangerous(global->name);
       }
-    }
+    });
   }
 
   std::vector<char> stack;
@@ -225,7 +225,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       if (start <= index && index < end) {
         auto name = segment.data[index - start];
         // if this is one of our functions, we can call it; if it was imported, fail
-        if (wasm->getFunctionOrNull(name)) {
+        auto* func = wasm->getFunction(name);
+        if (!func->imported()) {
           return instance.callFunctionInternal(name, arguments);
         } else {
           throw FailToEvalException(std::string("callTable on imported function: ") + name.str);

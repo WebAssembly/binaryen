@@ -31,6 +31,7 @@
 #include "support/safe_integer.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
+#include "ir/import-utils.h"
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
@@ -635,9 +636,9 @@ public:
     // prepare memory
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
-    for (auto& global : wasm.globals) {
+    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
-    }
+    });
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
     // run start, if present

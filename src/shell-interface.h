@@ -165,7 +165,11 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
     if (func->result != result) {
       trap("callIndirect: bad result type");
     }
-    return instance.callFunctionInternal(func->name, arguments);
+    if (func->imported()) {
+      return callImport(func, arguments);
+    } else {
+      return instance.callFunctionInternal(func->name, arguments);
+    }
   }
 
   int8_t load8s(Address addr) override { return memory.get<int8_t>(addr); }
