@@ -20,7 +20,7 @@
  (elem (get_global $from_segment_2) $table_func)
 
  (func $a_wasm_func
-  (call_import $a_js_func)
+  (call $a_js_func)
   (drop (get_global $DYNAMICTOP_PTR$asm2wasm$import))
   (drop (get_global $__THREW__))
  )
