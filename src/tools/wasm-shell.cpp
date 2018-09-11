@@ -150,14 +150,18 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
           std::cerr << "spectest.print should be a function, but is a global\n";
           invalid = true;
         });
-        ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
+        auto verifyImport = [&](Importable* import) {
           if (import->module == SPECTEST && import->base == PRINT) {
             // We can handle it.
           } else {
             std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
             invalid = true;
           }
-        });
+        };
+        ImportInfo::iterImportedFunctions(wasm, verifyImport);
+        ImportInfo::iterImportedGlobals(wasm, verifyImport);
+        verifyImport(&wasm.memory);
+        verifyImport(&wasm.table);
         for (auto& segment : wasm.table.segments) {
           for (auto name : segment.data) {
             // spec tests consider it illegal to use spectest.print in a table
