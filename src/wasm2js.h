@@ -34,6 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"

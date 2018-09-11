@@ -33,7 +33,7 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 
 using namespace wasm;
 
@@ -91,27 +91,27 @@ struct MetaDCEGraph {
     // Add an entry for everything we might need ahead of time, so parallel work
     // does not alter parent state, just adds to things pointed by it, independently
     // (each thread will add for one function, etc.)
-    ImportInfo::iterDefinedFunctions(wasm, [&](Function* func) {
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
       auto dceName = getName("func", func->name.str);
       DCENodeToFunction[dceName] = func->name;
       functionToDCENode[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       auto dceName = getName("global", global->name.str);
       DCENodeToGlobal[dceName] = global->name;
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
     // only process function and global imports - the table and memory are always there
-    ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
+    ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
         auto dceName = getName("importId", import->name.str);
         importIdToDCENode[id] = dceName;
       }
     });
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       auto id = getImportId(import->module, import->base);
       if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
         auto dceName = getName("importId", import->name.str);
@@ -174,7 +174,7 @@ struct MetaDCEGraph {
         }
       }
     };
-    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       InitScanner scanner(this, globalToDCENode[global->name]);
       scanner.setModule(&wasm);
       scanner.walk(global->init);
