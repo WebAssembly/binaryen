@@ -1035,7 +1035,11 @@ Expression* SExpressionWasmBuilder::makeSetLocal(Element& s) {
 Expression* SExpressionWasmBuilder::makeGetGlobal(Element& s) {
   auto ret = allocator.alloc<GetGlobal>();
   ret->name = getGlobalName(*s[1]);
-  ret->type = wasm.getGlobal(ret->name)->type;
+  auto* global = wasm.getGlobalOrNull(ret->name);
+  if (!global) {
+    throw ParseException("bad get_global name", s.line, s.col);
+  }
+  ret->type = global->type;
   return ret;
 }
 
