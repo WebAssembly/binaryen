@@ -34,7 +34,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
@@ -422,7 +422,7 @@ void Wasm2JSBuilder::addEsmImports(Ref ast, Module* wasm) {
     Fatal() << "non-function imports aren't supported yet\n";
     abort();
   }
-  ImportInfo::iterImportedFunctions(*wasm, [&](Function* import) {
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
     // Right now codegen requires a flat namespace going into the module,
     // meaning we don't importing the same name from multiple namespaces yet.
     if (nameMap.count(import->base) && nameMap[import->base] != import->module) {
@@ -562,7 +562,7 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
 
   construct << "abort:function() { throw new Error('abort'); }";
 
-  ImportInfo::iterImportedFunctions(*wasm, [&](Function* import) {
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
     construct << "," << import->base.str;
   });
   construct << "},mem" << funcName.str << ")";

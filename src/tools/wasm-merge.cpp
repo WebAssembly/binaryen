@@ -34,7 +34,7 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-validator.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 
 using namespace wasm;
 
@@ -109,7 +109,7 @@ struct Mergeable {
   }
 
   void findImports() {
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == ENV && import->base == MEMORY_BASE) {
         memoryBaseGlobals.insert(import->name);
       }
@@ -124,7 +124,7 @@ struct Mergeable {
       wasm.addGlobal(import);
       memoryBaseGlobals.insert(import->name);
     }
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == ENV && import->base == TABLE_BASE) {
         tableBaseGlobals.insert(import->name);
       }
@@ -320,7 +320,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
   void merge() {
     // find function imports in us that are implemented in the output
     // TODO make maps, avoid N^2
-    ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
+    ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
       // per wasm dynamic library rules, we expect to see exports on 'env'
       if (import->module == ENV) {
         // seek an export on the other side that matches
@@ -333,7 +333,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         }
       }
     });
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       // per wasm dynamic library rules, we expect to see exports on 'env'
       if (import->module == ENV) {
         // seek an export on the other side that matches
@@ -360,22 +360,22 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         return outputMergeable.wasm.getFunctionTypeOrNull(name);
       });
     }
-    ImportInfo::iterImportedFunctions(wasm, [&](Function* curr) {
+    ModuleUtils::iterImportedFunctions(wasm, [&](Function* curr) {
       curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return !!outputMergeable.wasm.getFunctionOrNull(name);
       });
     });
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* curr) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* curr) {
       curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return !!outputMergeable.wasm.getGlobalOrNull(name);
       });
     });
-    ImportInfo::iterDefinedFunctions(wasm, [&](Function* curr) {
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* curr) {
       curr->name = fNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return outputMergeable.wasm.getFunctionOrNull(name);
       });
     });
-    ImportInfo::iterDefinedGlobals(wasm, [&](Global* curr) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* curr) {
       curr->name = gNames[curr->name] = getNonColliding(curr->name, [&](Name name) -> bool {
         return outputMergeable.wasm.getGlobalOrNull(name);
       });
@@ -398,7 +398,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
     }
 
     // find function imports in output that are implemented in the input
-    ImportInfo::iterImportedFunctions(outputMergeable.wasm, [&](Function* import) {
+    ModuleUtils::iterImportedFunctions(outputMergeable.wasm, [&](Function* import) {
       if (import->module == ENV) {
         for (auto& exp : wasm.exports) {
           if (exp->name == import->base) {
@@ -408,7 +408,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         }
       }
     });
-    ImportInfo::iterImportedGlobals(outputMergeable.wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(outputMergeable.wasm, [&](Global* import) {
       if (import->module == ENV) {
         for (auto& exp : wasm.exports) {
           if (exp->name == import->base) {

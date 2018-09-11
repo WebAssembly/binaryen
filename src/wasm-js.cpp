@@ -28,7 +28,7 @@
 #include "wasm-s-parser.h"
 #include "wasm-binary.h"
 #include "wasm-printing.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -166,8 +166,8 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       assert(Module['lookupImport'](mod, base) !== undefined, 'checking import ' + mod + '.' + base);
     }, import->module.str, import->base.str);
   };
-  ImportInfo::iterImportedFunctions(*module, verifyImportIsProvided);
-  ImportInfo::iterImportedGlobals(*module, verifyImportIsProvided);
+  ModuleUtils::iterImportedFunctions(*module, verifyImportIsProvided);
+  ModuleUtils::iterImportedGlobals(*module, verifyImportIsProvided);
 
   if (wasmJSDebug) std::cerr << "creating instance...\n";
 
@@ -257,7 +257,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
     }
 
     void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
-      ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+      ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
         double ret = EM_ASM_DOUBLE({
           var mod = Pointer_stringify($0);
           var base = Pointer_stringify($1);

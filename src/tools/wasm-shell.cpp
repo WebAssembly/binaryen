@@ -146,7 +146,7 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
-        ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+        ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
           std::cerr << "spectest.print should be a function, but is a global\n";
           invalid = true;
         });
@@ -158,8 +158,8 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
             invalid = true;
           }
         };
-        ImportInfo::iterImportedFunctions(wasm, verifyImport);
-        ImportInfo::iterImportedGlobals(wasm, verifyImport);
+        ModuleUtils::iterImportedFunctions(wasm, verifyImport);
+        ModuleUtils::iterImportedGlobals(wasm, verifyImport);
         verifyImport(&wasm.memory);
         verifyImport(&wasm.table);
         for (auto& segment : wasm.table.segments) {

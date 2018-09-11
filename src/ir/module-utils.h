@@ -128,6 +128,44 @@ inline void copyModule(Module& in, Module& out) {
   out.debugInfoFileNames = in.debugInfoFileNames;
 }
 
+// Convenient iteration over imported/non-imported functions/globals
+
+template<typename T>
+inline void iterImportedGlobals(Module& wasm, T visitor) {
+  for (auto& import : wasm.globals) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterDefinedGlobals(Module& wasm, T visitor) {
+  for (auto& import : wasm.globals) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterImportedFunctions(Module& wasm, T visitor) {
+  for (auto& import : wasm.functions) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterDefinedFunctions(Module& wasm, T visitor) {
+  for (auto& import : wasm.functions) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
 } // namespace ModuleUtils
 
 } // namespace wasm

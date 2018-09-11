@@ -20,7 +20,6 @@
 #include <support/colors.h>
 #include <wasm.h>
 #include <wasm-binary.h>
-#include <ir/import-utils.h>
 #include <ir/module-utils.h>
 
 using namespace std;
@@ -57,7 +56,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     for (auto& curr : module->exports) {
       visitExport(curr.get());
     }
-    ImportInfo::iterDefinedGlobals(*module, [&](Global* curr) {
+    ModuleUtils::iterDefinedGlobals(*module, [&](Global* curr) {
       walkGlobal(curr);
     });
     walkTable(&module->table);
@@ -92,7 +91,7 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
       writer.write();
       // print for each function
       Index binaryIndex = 0;
-      ImportInfo::iterDefinedFunctions(*module, [&](Function* func) {
+      ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
         counts.clear();
         walkFunction(func);
         counts["[vars]"] = func->getNumVars();

@@ -34,8 +34,8 @@
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/function-type-utils.h"
-#include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/module-utils.h"
 #include "ir/trapping.h"
 #include "ir/utils.h"
 #include "wasm-builder.h"
@@ -1197,7 +1197,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   std::vector<IString> toErase;
 
-  ImportInfo::iterImportedFunctions(wasm, [&](Function* import) {
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     IString name = import->name;
     if (importedFunctionTypes.find(name) != importedFunctionTypes.end()) {
       // special math builtins

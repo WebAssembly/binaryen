@@ -224,7 +224,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
   auto start = startSection(BinaryConsts::Section::Function);
   o << U32LEB(importInfo->getNumDefinedFunctions());
-  ImportInfo::iterDefinedFunctions(*wasm, [&](Function* func) {
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     if (debug) std::cerr << "write one" << std::endl;
     o << U32LEB(getFunctionTypeIndex(func->type));
   });
@@ -240,7 +240,7 @@ void WasmBinaryWriter::writeFunctions() {
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
-  ImportInfo::iterDefinedFunctions(*wasm, [&](Function* func) {
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
@@ -281,7 +281,7 @@ void WasmBinaryWriter::writeGlobals() {
   auto start = startSection(BinaryConsts::Section::Global);
   auto num = importInfo->getNumDefinedGlobals();
   o << U32LEB(num);
-  ImportInfo::iterDefinedGlobals(*wasm, [&](Global* global) {
+  ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     if (debug) std::cerr << "write one" << std::endl;
     o << binaryType(global->type);
     o << U32LEB(global->mutable_);

@@ -33,8 +33,8 @@
 #include "wasm-builder.h"
 #include "ir/memory-utils.h"
 #include "ir/global-utils.h"
-#include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/module-utils.h"
 
 using namespace wasm;
 
@@ -123,7 +123,7 @@ public:
   EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {
     // if any global in the module has a non-const constructor, it is using a global import,
     // which we don't have, and is illegal to use
-    ImportInfo::iterDefinedGlobals(wasm, [&](Global* global) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
         // some constants are ok to use
         if (auto* get = global->init->dynCast<GetGlobal>()) {
@@ -186,12 +186,12 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       }
     }
     // fill in fake values for everything else, which is dangerous to use
-    ImportInfo::iterDefinedGlobals(wasm_, [&](Global* defined) {
+    ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
         globals[defined->name] = LiteralUtils::makeLiteralZero(defined->type);
       }
     });
-    ImportInfo::iterImportedGlobals(wasm_, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
         globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
       }

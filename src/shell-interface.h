@@ -26,7 +26,7 @@
 #include "support/name.h"
 #include "wasm.h"
 #include "wasm-interpreter.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -119,7 +119,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
 
   void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
     // add spectest globals
-    ImportInfo::iterImportedGlobals(wasm, [&](Global* import) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == SPECTEST && import->base == GLOBAL) {
         switch (import->type) {
           case i32: globals[import->name] = Literal(int32_t(666)); break;

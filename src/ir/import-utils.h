@@ -82,44 +82,6 @@ struct ImportInfo {
   Index getNumDefinedFunctions() {
     return wasm.functions.size() - getNumImportedFunctions();
   }
-
-  // Convenient iteration over imported/non-imported functions/globals
-
-  template<typename T>
-  static void iterImportedGlobals(Module& wasm, T visitor) {
-    for (auto& import : wasm.globals) {
-      if (import->imported()) {
-        visitor(import.get());
-      }
-    }
-  }
-
-  template<typename T>
-  static void iterDefinedGlobals(Module& wasm, T visitor) {
-    for (auto& import : wasm.globals) {
-      if (!import->imported()) {
-        visitor(import.get());
-      }
-    }
-  }
-
-  template<typename T>
-  static void iterImportedFunctions(Module& wasm, T visitor) {
-    for (auto& import : wasm.functions) {
-      if (import->imported()) {
-        visitor(import.get());
-      }
-    }
-  }
-
-  template<typename T>
-  static void iterDefinedFunctions(Module& wasm, T visitor) {
-    for (auto& import : wasm.functions) {
-      if (!import->imported()) {
-        visitor(import.get());
-      }
-    }
-  }
 };
 
 } // namespace wasm
