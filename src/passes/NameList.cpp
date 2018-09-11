@@ -20,17 +20,16 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 
 namespace wasm {
 
 struct NameList : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    for (auto& func : module->functions) {
-      if (!func->imported()) {
-        std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
-      }
-    }
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+      std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
+    });
   }
 };
 

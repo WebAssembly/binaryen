@@ -139,11 +139,10 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
     } else {
       // add function info
       size_t vars = 0;
-      for (auto& func : module->functions) {
-        if (func->imported()) continue;
-        walkFunction(func.get());
+      ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+        walkFunction(func);
         vars += func->getNumVars();
-      }
+      });
       counts["[vars]"] = vars;
       // print
       printCounts("total");

@@ -25,6 +25,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "asm_v_wasm.h"
 
@@ -169,11 +170,9 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // If told to, root all the functions
     if (rootAllFunctions) {
-      for (auto& func : module->functions) {
-        if (!func->imported()) {
-          roots.emplace_back(ModuleElementKind::Function, func->name);
-        }
-      }
+      ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+        roots.emplace_back(ModuleElementKind::Function, func->name);
+      });
     }
     // Exports are roots.
     bool exportsMemory = false;

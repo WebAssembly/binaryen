@@ -33,6 +33,7 @@
 #include "wasm-builder.h"
 #include "ir/memory-utils.h"
 #include "ir/global-utils.h"
+#include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 

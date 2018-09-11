@@ -1219,11 +1219,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
 
   // Finalize function imports now that we've seen all the calls
 
-  for (auto& func : wasm.functions) {
-    if (func->imported()) {
-      FunctionTypeUtils::fillFunction(func.get(), wasm.getFunctionType(func->type));
-    }
-  }
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
+    FunctionTypeUtils::fillFunction(func, wasm.getFunctionType(func->type));
+  });
 
   // Finalize calls now that everything is known and generated
 

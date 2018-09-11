@@ -342,16 +342,12 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // create heaps, etc
   addBasics(asmFunc[3]);
-  for (auto& import : wasm->functions) {
-    if (import->imported()) {
-      addFunctionImport(asmFunc[3], import.get());
-    }
-  }
-  for (auto& import : wasm->globals) {
-    if (import->imported()) {
-      addGlobal(asmFunc[3], import.get());
-    }
-  }
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
+    addFunctionImport(asmFunc[3], import);
+  });
+  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
+    addGlobal(asmFunc[3], import);
+  });
   // figure out the table size
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
@@ -376,20 +372,16 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
   // globals
   bool generateFetchHighBits = false;
-  for (auto& global : wasm->globals) {
-    if (!global->imported()) {
-      addGlobal(asmFunc[3], global.get());
-      if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
-        generateFetchHighBits = true;
-      }
+  ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
+    addGlobal(asmFunc[3], global);
+    if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
+      generateFetchHighBits = true;
     }
-  }
+  });
   // functions
-  for (auto& func : wasm->functions) {
-    if (!func->imported()) {
-      asmFunc[3]->push_back(processFunction(wasm, func.get()));
-    }
-  }
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    asmFunc[3]->push_back(processFunction(wasm, func));
+  });
   if (generateFetchHighBits) {
     Builder builder(allocator);
     std::vector<Type> params;

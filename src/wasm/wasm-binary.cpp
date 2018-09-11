@@ -183,23 +183,21 @@ void WasmBinaryWriter::writeImports() {
   if (debug) std::cerr << "== writeImports" << std::endl;
   auto start = startSection(BinaryConsts::Section::Import);
   o << U32LEB(num);
-  for (auto& func : wasm->functions) {
-    if (!func->imported()) continue;
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     if (debug) std::cerr << "write one function" << std::endl;
     writeInlineString(func->module.str);
     writeInlineString(func->base.str);
     o << U32LEB(int32_t(ExternalKind::Function));
     o << U32LEB(getFunctionTypeIndex(func->type));
-  }
-  for (auto& global : wasm->globals) {
-    if (!global->imported()) continue;
+  });
+  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     if (debug) std::cerr << "write one global" << std::endl;
     writeInlineString(global->module.str);
     writeInlineString(global->base.str);
     o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
     o << U32LEB(0); // Mutable globals can't be imported for now.
-  }
+  });
   if (wasm->memory.imported()) {
     if (debug) std::cerr << "write one memory" << std::endl;
     writeInlineString(wasm->memory.module.str);
@@ -460,16 +458,12 @@ void WasmBinaryWriter::writeNames() {
     writeEscapedName(curr->name.str);
     emitted++;
   };
-  for (auto& curr : wasm->functions) {
-    if (curr->imported()) {
-      add(curr.get());
-    }
-  }
-  for (auto& curr : wasm->functions) {
-    if (!curr->imported()) {
-      add(curr.get());
-    }
-  }
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
+    add(func);
+  });
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    add(func);
+  });
   assert(emitted == mappedFunctions.size());
   finishSubsection(substart);
   /* TODO: locals */
@@ -489,16 +483,12 @@ void WasmBinaryWriter::writeSymbolMap() {
   auto write = [&](Function* func) {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
   };
-  for (auto& func : wasm->functions) {
-    if (func->imported()) {
-      write(func.get());
-    }
-  }
-  for (auto& func : wasm->functions) {
-    if (!func->imported()) {
-      write(func.get());
-    }
-  }
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
+    write(func);
+  });
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    write(func);
+  });
   file.close();
 }
 
@@ -1451,16 +1441,12 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
       auto index = mappedGlobals.size();
       mappedGlobals[index] = curr->name;
     };
-    for (auto& curr : wasm.globals) {
-      if (curr->imported()) {
-        add(curr.get());
-      }
-    }
-    for (auto& curr : wasm.globals) {
-      if (!curr->imported()) {
-        add(curr.get());
-      }
-    }
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
+      add(global);
+    });
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
+      add(global);
+    });
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {

@@ -24,6 +24,7 @@
 #include "wasm-validator.h"
 #include "ir/utils.h"
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "support/colors.h"
 
 
@@ -908,17 +909,15 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 // Main validator class
 
 static void validateImports(Module& module, ValidationInfo& info) {
-  for (auto& curr : module.functions) {
-    if (curr->imported()) {
-      if (info.validateWeb) {
-        auto* functionType = module.getFunctionType(curr->type);
-        info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-        for (Type param : functionType->params) {
-          info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
-        }
+  ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
+    if (info.validateWeb) {
+      auto* functionType = module.getFunctionType(curr->type);
+      info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+      for (Type param : functionType->params) {
+        info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
       }
     }
-  }
+  });
 }
 
 static void validateExports(Module& module, ValidationInfo& info) {
@@ -954,15 +953,13 @@ static void validateExports(Module& module, ValidationInfo& info) {
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
-  for (auto& curr : module.globals) {
-    if (!curr->imported()) {
-      info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
-      info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
-      if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
-        info.getStream(nullptr) << "(on global " << curr->name << ")\n";
-      }
+  ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
+    info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
+    info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
+    if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
+      info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
-  }
+  });
 }
 
 static void validateMemory(Module& module, ValidationInfo& info) {

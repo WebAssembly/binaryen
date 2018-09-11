@@ -25,6 +25,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include "ir/function-type-utils.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -730,9 +731,8 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // see.
   meta << ", \"declares\": [";
   commaFirst = true;
-  for (const auto& import : wasm.functions) {
-    if (import->imported() &&
-        (emJsWalker.codeByName.count(import->base.str) == 0) &&
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (emJsWalker.codeByName.count(import->base.str) == 0 &&
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->base.startsWith("invoke_") &&
         !import->base.startsWith("jsCall_")) {
@@ -740,16 +740,14 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
         meta << maybeComma() << '"' << import->base.str << '"';
       }
     }
-  }
+  });
   meta << "]";
 
   meta << ", \"externs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.globals) {
-    if (import->imported()) {
-      meta << maybeComma() << "\"_" << import->base.str << '"';
-    }
-  }
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+    meta << maybeComma() << "\"_" << import->base.str << '"';
+  });
   meta << "]";
 
   meta << ", \"implementedFunctions\": [";
@@ -770,13 +768,13 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   meta << ", \"invokeFuncs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.functions) {
-    if (import->imported() && import->base.startsWith("invoke_")) {
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (import->base.startsWith("invoke_")) {
       if (invokeFuncs.insert(import->base.str).second) {
         meta << maybeComma() << '"' << import->base.str << '"';
       }
     }
-  }
+  });
   meta << "]";
 
   meta << " }\n";

@@ -22,8 +22,9 @@
 // look at all the rest of the code).
 //
 
-#include <wasm.h>
-#include <pass.h>
+#include "wasm.h"
+#include "pass.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -45,11 +46,9 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
 
   void visitModule(Module *curr) {
     std::vector<Name> names;
-    for (auto& import : curr->functions) {
-      if (import->imported()) {
-        names.push_back(import->name);
-      }
-    }
+    ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
+      names.push_back(func->name);
+    });
     for (auto& name : names) {
       curr->removeFunction(name);
     }

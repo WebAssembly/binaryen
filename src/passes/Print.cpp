@@ -1019,21 +1019,15 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->table.exists) {
       visitTable(&curr->table); // Prints its own newlines
     }
-    for (auto& child : curr->globals) {
-      if (child->imported()) {
-        visitGlobal(child.get());
-      }
-    }
-    for (auto& child : curr->functions) {
-      if (child->imported()) {
-        visitFunction(child.get());
-      }
-    }
-    for (auto& child : curr->globals) {
-      if (!child->imported()) {
-        visitGlobal(child.get());
-      }
-    }
+    ModuleUtils::iterImportedGlobals(*curr, [&](Global* global) {
+      visitGlobal(global);
+    });
+    ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
+      visitFunction(func);
+    });
+    ModuleUtils::iterDefinedGlobals(*curr, [&](Global* global) {
+      visitGlobal(global);
+    });
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());
@@ -1045,11 +1039,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       printMedium(o, "start") << ' ' << curr->start << ')';
       o << maybeNewLine;
     }
-    for (auto& child : curr->functions) {
-      if (!child->imported()) {
-        visitFunction(child.get());
-      }
-    }
+    ModuleUtils::iterDefinedFunctions(*curr, [&](Function* func) {
+      visitFunction(func);
+    });
     for (auto& section : curr->userSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size " << section.data.size();

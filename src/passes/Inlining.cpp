@@ -32,13 +32,14 @@
 
 #include <atomic>
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <ir/utils.h>
-#include <ir/literal-utils.h>
-#include <parsing.h>
-#include <passes/opt-utils.h>
+#include "wasm.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "ir/literal-utils.h"
+#include "ir/module-utils.h"
+#include "ir/utils.h"
+#include "parsing.h"
+#include "passes/opt-utils.h"
 
 namespace wasm {
 
@@ -284,12 +285,11 @@ struct Inlining : public Pass {
   bool iteration(PassRunner* runner, Module* module) {
     // decide which to inline
     InliningState state;
-    for (auto& func : module->functions) {
-      if (func->imported()) continue;
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       if (infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
-    }
+    });
     if (state.worthInlining.size() == 0) return false;
     // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {
