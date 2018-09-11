@@ -36,13 +36,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <cfg/cfg-traversal.h>
-#include <ir/effects.h>
-#include <passes/opt-utils.h>
-#include <support/sorted_vector.h>
+#include "wasm.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "cfg/cfg-traversal.h"
+#include "ir/effects.h"
+#include "ir/module-utils.h"
+#include "passes/opt-utils.h"
+#include "support/sorted_vector.h"
 
 namespace wasm {
 
@@ -110,7 +111,9 @@ struct DAEScanner : public WalkerPass<CFGWalker<DAEScanner, Visitor<DAEScanner>,
   }
 
   void visitCall(Call* curr) {
-    info->calls[curr->target].push_back(curr);
+    if (!getModule()->getFunction(curr->target)->imported()) {
+      info->calls[curr->target].push_back(curr);
+    }
   }
 
   // main entry point
@@ -196,9 +199,9 @@ struct DAE : public Pass {
   void run(PassRunner* runner, Module* module) override {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data structure.
-    for (auto& func : module->functions) {
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       infoMap[func->name];
-    }
+    });
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
