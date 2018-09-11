@@ -170,7 +170,9 @@ struct RemoveUnusedModuleElements : public Pass {
     // If told to, root all the functions
     if (rootAllFunctions) {
       for (auto& func : module->functions) {
-        roots.emplace_back(ModuleElementKind::Function, func->name);
+        if (!func->imported()) {
+          roots.emplace_back(ModuleElementKind::Function, func->name);
+        }
       }
     }
     // Exports are roots.

@@ -86,6 +86,20 @@ inline Function* copyFunction(Function* func, Module& out) {
   return ret;
 }
 
+inline Global* copyGlobal(Global* global, Module& out) {
+  auto* ret = new Global();
+  ret->name = global->name;
+  ret->type = global->type;
+  ret->mutable_ = global->mutable_;
+  if (global->imported()) {
+    ret->init = nullptr;
+  } else {
+    ret->init = ExpressionManipulator::copy(global->init, out);
+  }
+  out.addGlobal(ret);
+  return ret;
+}
+
 inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
@@ -99,7 +113,7 @@ inline void copyModule(Module& in, Module& out) {
     copyFunction(curr.get(), out);
   }
   for (auto& curr : in.globals) {
-    out.addGlobal(new Global(*curr));
+    copyGlobal(curr.get(), out);
   }
   out.table = in.table;
   for (auto& segment : out.table.segments) {

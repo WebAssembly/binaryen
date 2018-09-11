@@ -27,7 +27,9 @@ namespace wasm {
 struct NameList : public Pass {
   void run(PassRunner* runner, Module* module) override {
     for (auto& func : module->functions) {
-      std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
+      if (!func->imported()) {
+        std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
+      }
     }
   }
 };

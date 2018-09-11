@@ -279,7 +279,7 @@ void WasmBinaryWriter::writeGlobals() {
   if (importInfo->getNumDefinedGlobals() == 0) return;
   if (debug) std::cerr << "== writeglobals" << std::endl;
   auto start = startSection(BinaryConsts::Section::Global);
-  auto num = wasm->globals.size() - importInfo->getNumImportedGlobals();
+  auto num = importInfo->getNumDefinedGlobals();
   o << U32LEB(num);
   ImportInfo::iterDefinedGlobals(*wasm, [&](Global* global) {
     if (debug) std::cerr << "write one" << std::endl;
