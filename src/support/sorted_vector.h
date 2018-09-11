@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct SortedVector : std::vector<Index> {
+struct SortedVector : public std::vector<Index> {
   SortedVector() {}
 
   SortedVector merge(const SortedVector& other) const {
@@ -83,6 +83,20 @@ struct SortedVector : std::vector<Index> {
   bool has(Index x) {
     auto it = std::lower_bound(begin(), end(), x);
     return it != end() && *it == x;
+  }
+
+  template<typename T>
+  SortedVector& filter(T keep) {
+    size_t skip = 0;
+    for (size_t i = 0; i < size(); i++) {
+      if (keep((*this)[i])) {
+        (*this)[i - skip] = (*this)[i];
+      } else {
+        skip++;
+      }
+    }
+    resize(size() - skip);
+    return *this;
   }
 
   void verify() const {

@@ -90,6 +90,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/LocalGraph.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
+  $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \
   $BINARYEN_SRC/passes/CodeFolding.cpp \
   $BINARYEN_SRC/passes/CodePushing.cpp \
   $BINARYEN_SRC/passes/ConstHoisting.cpp \

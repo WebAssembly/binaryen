@@ -67,6 +67,8 @@ std::string PassRegistry::getPassDescription(std::string name) {
 // PassRunner
 
 void PassRegistry::registerPasses() {
+  registerPass("dae", "removes arguments to calls in an lto-like manner", createDAEPass);
+  registerPass("dae-optimizing", "removes arguments to calls in an lto-like manner, and optimizes where we removed", createDAEOptimizingPass);
   registerPass("coalesce-locals", "reduce # of locals by coalescing", createCoalesceLocalsPass);
   registerPass("coalesce-locals-learning", "reduce # of locals by coalescing and learning", createCoalesceLocalsWithLearningPass);
   registerPass("code-pushing", "push code forward, potentially making it not always execute", createCodePushingPass);
@@ -201,6 +203,9 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    add("dae-optimizing");
+  }
   // inline when working hard, and when not preserving debug info
   // (inlining+optimizing can remove the annotations)
   if ((options.optimizeLevel >= 2 || options.shrinkLevel >= 2) &&

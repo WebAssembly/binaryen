@@ -10,6 +10,7 @@ SET(passes_SOURCES
   CodeFolding.cpp
   ConstHoisting.cpp
   DataFlowOpts.cpp
+  DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DuplicateFunctionElimination.cpp
   ExtractFunction.cpp

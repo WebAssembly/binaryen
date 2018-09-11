@@ -572,9 +572,17 @@
   )
  )
  (func $illegalParam (; 11 ;) (param $a i32) (param $x i64) (param $b f64)
+  (i32.store
+   (i32.const 50)
+   (get_local $a)
+  )
   (i64.store
    (i32.const 100)
    (get_local $x)
+  )
+  (f64.store
+   (i32.const 200)
+   (get_local $b)
   )
   (call $illegalParam
    (i32.const 0)

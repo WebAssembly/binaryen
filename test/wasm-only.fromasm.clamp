@@ -489,9 +489,17 @@
   )
  )
  (func $illegalParam (; 15 ;) (; has Stack IR ;) (param $0 i32) (param $1 i64) (param $2 f64)
+  (i32.store
+   (i32.const 50)
+   (get_local $0)
+  )
   (i64.store
    (i32.const 100)
    (get_local $1)
+  )
+  (f64.store
+   (i32.const 200)
+   (get_local $2)
   )
   (call $illegalParam
    (i32.const 0)
@@ -520,235 +528,18 @@
    (get_local $1)
   )
  )
- (func $switch64 (; 19 ;) (; has Stack IR ;) (param $0 i64) (result i32)
-  (block $switch (result i32)
-   (block $switch-default
-    (block $switch-case0
-     (block $switch-case
-      (br_if $switch-default
-       (i32.wrap/i64
-        (i64.shr_u
-         (tee_local $0
-          (i64.sub
-           (get_local $0)
-           (i64.const 42949672965)
-          )
-         )
-         (i64.const 32)
-        )
-       )
-      )
-      (br_table $switch-case0 $switch-default $switch-case $switch-default
-       (i32.wrap/i64
-        (get_local $0)
-       )
-      )
-     )
-     (br $switch
-      (i32.const 11000)
-     )
-    )
-    (br $switch
-     (i32.const 10)
-    )
-   )
-   (i32.const 1)
+ (func $unreachable_leftovers (; 19 ;) (; has Stack IR ;)
+  (i32.store
+   (i32.const 0)
+   (i32.const -2)
   )
  )
- (func $unreachable_leftovers (; 20 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32)
-  (block $__rjto$0
-   (if
-    (i32.eqz
-     (get_local $1)
-    )
-    (block
-     (br_if $__rjto$0
-      (get_local $2)
-     )
-     (i32.store
-      (get_local $0)
-      (i32.const -2)
-     )
-     (return)
-    )
-   )
-   (i32.store
-    (get_local $0)
-    (i32.const -1)
-   )
-  )
- )
- (func $switch64TOOMUCH (; 21 ;) (; has Stack IR ;) (param $0 i64) (result i32)
+ (func $_memchr (; 20 ;) (; has Stack IR ;) (result i32)
+  (local $0 i32)
   (local $1 i32)
-  (local $2 i64)
-  (block $switch-default
-   (if
-    (i64.ne
-     (tee_local $2
-      (get_local $0)
-     )
-     (i64.const -9223372036854775808)
-    )
-    (br_if $switch-default
-     (i64.ne
-      (get_local $2)
-      (i64.const 4611686018427387904)
-     )
-    )
-   )
-   (return
-    (i32.const 40)
-   )
-  )
-  (block $switch-default4
-   (if
-    (i32.ne
-     (tee_local $1
-      (i32.const 100)
-     )
-     (i32.const 214748364)
-    )
-    (br_if $switch-default4
-     (i32.ne
-      (get_local $1)
-      (i32.const 107374182)
-     )
-    )
-   )
-   (return
-    (i32.const 41)
-   )
-  )
-  (block $switch5
-   (if
-    (i64.ne
-     (get_local $0)
-     (i64.const -9223372036854775808)
-    )
-    (br_if $switch5
-     (i64.ne
-      (get_local $0)
-      (i64.const 4611686018427387904)
-     )
-    )
-   )
-   (return
-    (i32.const 42)
-   )
-  )
-  (block $switch8
-   (if
-    (i32.ne
-     (i32.const 100)
-     (i32.const 214748364)
-    )
-    (br_if $switch8
-     (i32.ne
-      (get_local $1)
-      (i32.const 107374182)
-     )
-    )
-   )
-   (return
-    (i32.const 43)
-   )
-  )
-  (i32.const 44)
- )
- (func $_memchr (; 22 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (local $3 i32)
-  (local $4 i32)
-  (local $5 i32)
-  (set_local $5
-   (i32.and
-    (get_local $1)
-    (i32.const 255)
-   )
-  )
+  (local $2 i32)
   (block $label$break$L8
    (block $__rjti$2
-    (if
-     (i32.and
-      (tee_local $4
-       (i32.ne
-        (get_local $2)
-        (i32.const 0)
-       )
-      )
-      (i32.ne
-       (i32.and
-        (get_local $0)
-        (i32.const 3)
-       )
-       (i32.const 0)
-      )
-     )
-     (block
-      (set_local $4
-       (i32.and
-        (get_local $1)
-        (i32.const 255)
-       )
-      )
-      (set_local $3
-       (get_local $2)
-      )
-      (set_local $2
-       (get_local $0)
-      )
-      (loop $while-in
-       (br_if $__rjti$2
-        (i32.eq
-         (i32.load8_u
-          (get_local $2)
-         )
-         (i32.and
-          (get_local $4)
-          (i32.const 255)
-         )
-        )
-       )
-       (br_if $while-in
-        (i32.and
-         (tee_local $0
-          (i32.ne
-           (tee_local $3
-            (i32.add
-             (get_local $3)
-             (i32.const -1)
-            )
-           )
-           (i32.const 0)
-          )
-         )
-         (i32.ne
-          (i32.and
-           (tee_local $2
-            (i32.add
-             (get_local $2)
-             (i32.const 1)
-            )
-           )
-           (i32.const 3)
-          )
-          (i32.const 0)
-         )
-        )
-       )
-      )
-     )
-     (block
-      (set_local $3
-       (get_local $2)
-      )
-      (set_local $2
-       (get_local $0)
-      )
-      (set_local $0
-       (get_local $4)
-      )
-     )
-    )
     (br_if $__rjti$2
      (get_local $0)
     )
@@ -758,27 +549,13 @@
     (br $label$break$L8)
    )
    (set_local $0
-    (get_local $3)
+    (get_local $2)
    )
    (if
-    (i32.ne
-     (i32.load8_u
-      (get_local $2)
-     )
-     (tee_local $1
-      (i32.and
-       (get_local $1)
-       (i32.const 255)
-      )
-     )
+    (i32.load8_u
+     (get_local $1)
     )
     (block
-     (set_local $3
-      (i32.mul
-       (get_local $5)
-       (i32.const 16843009)
-      )
-     )
      (block $__rjto$0
       (block $__rjti$0
        (br_if $__rjti$0
@@ -793,12 +570,9 @@
           (i32.and
            (i32.xor
             (i32.and
-             (tee_local $4
-              (i32.xor
-               (i32.load
-                (get_local $2)
-               )
-               (get_local $3)
+             (tee_local $2
+              (i32.load
+               (get_local $1)
               )
              )
              (i32.const -2139062144)
@@ -806,15 +580,15 @@
             (i32.const -2139062144)
            )
            (i32.add
-            (get_local $4)
+            (get_local $2)
             (i32.const -16843009)
            )
           )
          )
          (block
-          (set_local $2
+          (set_local $1
            (i32.add
-            (get_local $2)
+            (get_local $1)
             (i32.const 4)
            )
           )
@@ -849,19 +623,15 @@
      )
      (loop $while-in5
       (br_if $label$break$L8
-       (i32.eq
+       (i32.eqz
         (i32.load8_u
-         (get_local $2)
-        )
-        (i32.and
          (get_local $1)
-         (i32.const 255)
         )
        )
       )
-      (set_local $2
+      (set_local $1
        (i32.add
-        (get_local $2)
+        (get_local $1)
         (i32.const 1)
        )
       )
@@ -881,12 +651,12 @@
    )
   )
   (select
-   (get_local $2)
+   (get_local $1)
    (i32.const 0)
    (get_local $0)
   )
  )
- (func $keepAlive (; 23 ;) (; has Stack IR ;)
+ (func $keepAlive (; 21 ;) (; has Stack IR ;)
   (call $loads)
   (call $loads)
   (call $stores)
@@ -947,40 +717,13 @@
     (i32.const 0)
    )
   )
+  (call $unreachable_leftovers)
+  (call $unreachable_leftovers)
   (drop
-   (call $switch64
-    (i64.const 0)
-   )
-  )
-  (drop
-   (call $switch64
-    (i64.const 0)
-   )
-  )
-  (call $unreachable_leftovers
-   (i32.const 0)
-   (i32.const 0)
-   (i32.const 0)
-  )
-  (call $unreachable_leftovers
-   (i32.const 0)
-   (i32.const 0)
-   (i32.const 0)
-  )
-  (drop
-   (call $_memchr
-    (i32.const 0)
-    (i32.const 0)
-    (i32.const 0)
-   )
-  )
-  (drop
-   (call $switch64TOOMUCH
-    (i64.const 0)
-   )
+   (call $_memchr)
   )
  )
- (func $legalstub$illegalParam (; 24 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
+ (func $legalstub$illegalParam (; 22 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
   (call $illegalParam
    (get_local $0)
    (i64.or
@@ -997,13 +740,13 @@
    (get_local $3)
   )
  )
- (func $legalstub$illegalResult (; 25 ;) (; has Stack IR ;) (result i32)
+ (func $legalstub$illegalResult (; 23 ;) (; has Stack IR ;) (result i32)
   (set_global $tempRet0
    (i32.const 2)
   )
   (i32.const 1)
  )
- (func $legalfunc$illegalImport (; 26 ;) (; has Stack IR ;) (param $0 f64) (param $1 i64) (param $2 i32)
+ (func $legalfunc$illegalImport (; 24 ;) (; has Stack IR ;) (param $0 f64) (param $1 i64) (param $2 i32)
   (call $legalimport$illegalImport
    (get_local $0)
    (i32.wrap/i64
@@ -1018,7 +761,7 @@
    (get_local $2)
   )
  )
- (func $legalfunc$_fabsf (; 27 ;) (; has Stack IR ;) (param $0 f32) (result f32)
+ (func $legalfunc$_fabsf (; 25 ;) (; has Stack IR ;) (param $0 f32) (result f32)
   (f32.demote/f64
    (call $legalimport$_fabsf
     (f64.promote/f32
@@ -1027,7 +770,7 @@
    )
   )
  )
- (func $legalfunc$do_i64 (; 28 ;) (; has Stack IR ;) (result i64)
+ (func $legalfunc$do_i64 (; 26 ;) (; has Stack IR ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$do_i64)
@@ -1040,10 +783,10 @@
    )
   )
  )
- (func $getTempRet0 (; 29 ;) (; has Stack IR ;) (result i32)
+ (func $getTempRet0 (; 27 ;) (; has Stack IR ;) (result i32)
   (get_global $tempRet0)
  )
- (func $setTempRet0 (; 30 ;) (; has Stack IR ;) (param $0 i32)
+ (func $setTempRet0 (; 28 ;) (; has Stack IR ;) (param $0 i32)
   (set_global $tempRet0
    (get_local $0)
   )
