@@ -80,10 +80,10 @@ Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
   return this;
 }
 
-Element* Element::setMetadata(size_t line_, size_t col_, SourceLocation* loc_) {
+Element* Element::setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_) {
   line = line_;
   col = col_;
-  loc = loc_;
+  startLoc = startLoc_;
   return this;
 }
 
@@ -609,8 +609,8 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
   currFunction->body = body;
   currFunction->type = type;
-  if (s.loc) {
-    currFunction->prologLocation.insert(getDebugLocation(*s.loc));
+  if (s.startLoc) {
+    currFunction->prologLocation.insert(getDebugLocation(*s.startLoc));
   }
   if (s.endLoc) {
     currFunction->epilogLocation.insert(getDebugLocation(*s.endLoc));
@@ -649,8 +649,8 @@ Function::DebugLocation SExpressionWasmBuilder::getDebugLocation(const SourceLoc
 
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
   Expression* result = makeExpression(s);
-  if (s.loc) {
-    currFunction->debugLocations[result] = getDebugLocation(*s.loc);
+  if (s.startLoc) {
+    currFunction->debugLocations[result] = getDebugLocation(*s.startLoc);
   }
   return result;
 }
@@ -1096,8 +1096,8 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     if (first[0]->str() == BLOCK) {
       // recurse
       curr = allocator.alloc<Block>();
-      if (first.loc) {
-        currFunction->debugLocations[curr] = getDebugLocation(*first.loc);
+      if (first.startLoc) {
+        currFunction->debugLocations[curr] = getDebugLocation(*first.startLoc);
       }
       sp = &first;
       continue;
