@@ -36,8 +36,8 @@ namespace MemoryUtils {
     }
     for (auto& segment : memory.segments) {
       auto* offset = segment.offset->dynCast<Const>();
-      auto start = offset->value.getInteger();
-      auto end = start + segment.data.size();
+      Index start = offset->value.getInteger();
+      Index end = start + segment.data.size();
       if (end > data.size()) {
         data.resize(end);
       }

@@ -1,4 +1,2 @@
 (module
- (export "test2" (func $test2))
- (export "test3" (func $test3))
 )

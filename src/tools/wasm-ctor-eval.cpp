@@ -31,6 +31,7 @@
 #include "wasm-io.h"
 #include "wasm-interpreter.h"
 #include "wasm-builder.h"
+#include "wasm-validator.h"
 #include "ir/memory-utils.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
@@ -410,6 +411,11 @@ int main(int argc, const char* argv[]) {
       p.dump(std::cerr);
       Fatal() << "error in parsing input";
     }
+  }
+
+  if (!WasmValidator().validate(wasm)) {
+    WasmPrinter::printModule(&wasm);
+    Fatal() << "error in validating input";
   }
 
   // get list of ctors, and eval them
