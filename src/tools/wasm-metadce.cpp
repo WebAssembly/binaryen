@@ -128,13 +128,13 @@ struct MetaDCEGraph {
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
       if (exp->kind == ExternalKind::Function) {
-        if (wasm.getFunctionOrNull(exp->value)) {
+        if (!wasm.getFunction(exp->value)->imported()) {
           node.reaches.push_back(functionToDCENode[exp->value]);
         } else {
           node.reaches.push_back(importIdToDCENode[getFunctionImportId(exp->value)]);
         }
       } else if (exp->kind == ExternalKind::Global) {
-        if (wasm.getGlobalOrNull(exp->value)) {
+        if (!wasm.getGlobal(exp->value)->imported()) {
           node.reaches.push_back(globalToDCENode[exp->value]);
         } else {
           node.reaches.push_back(importIdToDCENode[getGlobalImportId(exp->value)]);
@@ -186,7 +186,7 @@ struct MetaDCEGraph {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
       for (auto& name : segment.data) {
-        if (wasm.getFunctionOrNull(name)) {
+        if (!wasm.getFunction(name)->imported()) {
           roots.insert(functionToDCENode[name]);
         } else {
           roots.insert(importIdToDCENode[getFunctionImportId(name)]);
