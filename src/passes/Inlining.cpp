@@ -275,9 +275,7 @@ struct Inlining : public Pass {
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
-        if (module->getFunctionOrNull(name)) {
-          infos[name].usedGlobally = true;
-        }
+        infos[name].usedGlobally = true;
       }
     }
   }

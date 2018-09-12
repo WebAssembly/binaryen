@@ -924,7 +924,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
         }
       }
       if ((name == "tableBase" || name == "memoryBase") &&
-          (wasm.getGlobalOrNull(import->base) || wasm.getGlobalOrNull(import->base))) {
+          wasm.getGlobalOrNull(import->base)) {
         return;
       }
       wasm.addGlobal(import);
