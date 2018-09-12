@@ -5,6 +5,7 @@
   (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
   (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
   (import "env" "tempDoublePtr" (global $tempDoublePtr i32))
+  (global $tempDoublePtrMut (mut i32) (get_global $tempDoublePtr))
   (export "test1" $test1)
   (export "test2" $test2)
   (export "test3" $test3)
