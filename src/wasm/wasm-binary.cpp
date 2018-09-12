@@ -1057,6 +1057,7 @@ void WasmBinaryBuilder::readFunctions() {
   if (total != functionTypes.size()) {
     throwError("invalid function section size, must equal types");
   }
+  isInFunction = true;
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
@@ -1097,13 +1098,13 @@ void WasmBinaryBuilder::readFunctions() {
       std::move(vars)
     );
     func->type = type->name;
-    func->prologLocation = debugLocation;
+    std::swap(func->prologLocation, debugLocation);
     currFunction = func;
     {
       // process the function body
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
-      debugLocation = {{0, 0, 0}, false};
+      debugLocation.clear();
       willBeIgnored = false;
       // process body
       assert(breakTargetNames.size() == 0);
@@ -1121,12 +1122,12 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("binary offset at function exit not at expected location");
       }
     }
-    func->epilogLocation = debugLocation;
+    std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
-    debugLocation = {{0, 0, 0}, false};
+    debugLocation.clear();
     functions.push_back(func);
   }
-  endOfFunction = -1;
+  isInFunction = false;
   if (debug) std::cerr << " end function bodies" << std::endl;
 }
 
@@ -1285,11 +1286,10 @@ void WasmBinaryBuilder::readNextDebugLocation() {
       std::cerr << "skipping debug location info for 0x";
       std::cerr << std::hex << nextDebugLocation.first << std::dec << std::endl;
     }
+    debugLocation.clear();
     // use debugLocation only for function expressions
-    if (isInFunction()) {
-      debugLocation = {nextDebugLocation.second, true};
-    } else {
-      debugLocation = {{0, 0, 0}, false};
+    if (isInFunction) {
+      debugLocation.insert(nextDebugLocation.second);
     }
 
     char ch;
@@ -1680,7 +1680,10 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   }
   if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
   readNextDebugLocation();
-  auto currDebugLocation = debugLocation;
+  std::set<Function::DebugLocation> currDebugLocation;
+  if (debugLocation.size()) {
+    currDebugLocation.insert(*debugLocation.begin());
+  }
   uint8_t code = getInt8();
   if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
   switch (code) {
@@ -1727,8 +1730,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
   }
-  if (curr && currDebugLocation.second) {
-    currFunction->debugLocations[curr] = currDebugLocation.first;
+  if (curr && currDebugLocation.size()) {
+    currFunction->debugLocations[curr] = *currDebugLocation.begin();
   }
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
   return BinaryConsts::ASTNodes(code);
@@ -1787,8 +1790,8 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
       readNextDebugLocation();
       curr = allocator.alloc<Block>();
       pos++;
-      if (debugLocation.second) {
-        currFunction->debugLocations[curr] = debugLocation.first;
+      if (debugLocation.size()) {
+        currFunction->debugLocations[curr] = *debugLocation.begin();
       }
       continue;
     } else {

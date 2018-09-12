@@ -610,10 +610,10 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   currFunction->body = body;
   currFunction->type = type;
   if (s.loc) {
-    currFunction->prologLocation = {getDebugLocation(*s.loc), true};
+    currFunction->prologLocation.insert(getDebugLocation(*s.loc));
   }
   if (s.endLoc) {
-    currFunction->epilogLocation = {getDebugLocation(*s.endLoc), true};
+    currFunction->epilogLocation.insert(getDebugLocation(*s.endLoc));
   }
   if (wasm.getFunctionOrNull(currFunction->name)) throw ParseException("duplicate function", s.line, s.col);
   wasm.addFunction(currFunction.release());

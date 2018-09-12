@@ -776,7 +776,7 @@ class WasmBinaryBuilder {
 
   size_t pos = 0;
   Index startIndex = -1;
-  std::pair<Function::DebugLocation, bool> debugLocation;
+  std::set<Function::DebugLocation> debugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
@@ -788,7 +788,7 @@ public:
       debug(debug),
       sourceMap(nullptr),
       nextDebugLocation(0, { 0, 0, 0 }),
-      debugLocation({0, 0, 0}, false) {}
+      debugLocation() {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -838,7 +838,7 @@ public:
   std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
-  inline bool isInFunction() { return endOfFunction != (Index)-1; }
+  bool isInFunction = false;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);

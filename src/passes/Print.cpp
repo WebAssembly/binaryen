@@ -868,8 +868,8 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void visitFunction(Function* curr) {
     currFunction = curr;
     lastPrintedLocation = { 0, 0, 0 };
-    if (currFunction->prologLocation.second) {
-      printDebugLocation(currFunction->prologLocation.first);
+    if (currFunction->prologLocation.size()) {
+      printDebugLocation(*currFunction->prologLocation.begin());
     }
     o << '(';
     printMajor(o, "func ");
@@ -923,13 +923,13 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       // Print the stack IR.
       WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
     }
-    if (currFunction->epilogLocation.second && lastPrintedLocation != currFunction->epilogLocation.first) {
+    if (currFunction->epilogLocation.size() && lastPrintedLocation != *currFunction->epilogLocation.begin()) {
       // Print last debug location: mix of decIndent and printDebugLocation logic.
       doIndent(o, indent);
       if (!minify) {
         indent--;
       }
-      printDebugLocation(currFunction->epilogLocation.first);
+      printDebugLocation(*currFunction->epilogLocation.begin());
       o << ')';
     } else {
       decIndent();
