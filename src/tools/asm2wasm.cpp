@@ -43,6 +43,7 @@ int main(int argc, const char *argv[]) {
   std::string sourceMapUrl;
   std::string symbolMap;
   bool emitBinary = true;
+  bool compactFunctionTable = false;
 
   OptimizationOptions options("asm2wasm", "Translate asm.js files to .wast files");
   options
@@ -121,8 +122,13 @@ int main(int argc, const char *argv[]) {
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
-                      });
+                      })
+      .add("--compact-function-tables", "-cft", "Compact function tables. Requires code compiled with wasm-only and ALIASING_FUNCTION_POINTERS=0", Options::Arguments::Zero,
+           [&compactFunctionTable](Options *o, const std::string& ) {
+             compactFunctionTable = true;
+           });
   options.parse(argc, argv);
+
 
   // finalize arguments
   if (options.extra["output"].size() == 0) {
@@ -181,7 +187,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // compile the code
-  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, options.runningDefaultOptimizationPasses(), wasmOnly);
+  Asm2WasmBuilder asm2wasm(wasm, pre, options.debug, trapMode, options.passOptions, legalizeJavaScriptFFI, compactFunctionTable, options.runningDefaultOptimizationPasses(), wasmOnly);
   asm2wasm.processAsm(asmjs);
 
   // finalize the imported mem init
