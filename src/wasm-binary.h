@@ -838,7 +838,6 @@ public:
   std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
-  bool isInFunction = false;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);

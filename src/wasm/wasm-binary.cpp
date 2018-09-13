@@ -1057,7 +1057,6 @@ void WasmBinaryBuilder::readFunctions() {
   if (total != functionTypes.size()) {
     throwError("invalid function section size, must equal types");
   }
-  isInFunction = true;
   for (size_t i = 0; i < total; i++) {
     if (debug) std::cerr << "read one at " << pos << std::endl;
     size_t size = getU32LEB();
@@ -1066,13 +1065,18 @@ void WasmBinaryBuilder::readFunctions() {
     }
     endOfFunction = pos + size;
 
+    Function *func = new Function;
+    func->name = Name::fromInt(i);
+    currFunction = func;
+
     readNextDebugLocation();
 
     auto type = functionTypes[i];
     if (debug) std::cerr << "reading " << i << std::endl;
-    std::vector<Type> params, vars;
+    func->type = type->name;
+    func->result = type->result;
     for (size_t j = 0; j < type->params.size(); j++) {
-      params.emplace_back(type->params[j]);
+      func->params.emplace_back(type->params[j]);
     }
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
@@ -1087,19 +1091,11 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("too many locals, wasm VMs would not accept this binary");
       }
       while (num > 0) {
-        vars.emplace_back(type);
+        func->vars.push_back(type);
         num--;
       }
     }
-    auto func = Builder(wasm).makeFunction(
-      Name::fromInt(i),
-      std::move(params),
-      type->result,
-      std::move(vars)
-    );
-    func->type = type->name;
     std::swap(func->prologLocation, debugLocation);
-    currFunction = func;
     {
       // process the function body
       if (debug) std::cerr << "processing function: " << i << std::endl;
@@ -1127,7 +1123,6 @@ void WasmBinaryBuilder::readFunctions() {
     debugLocation.clear();
     functions.push_back(func);
   }
-  isInFunction = false;
   if (debug) std::cerr << " end function bodies" << std::endl;
 }
 
@@ -1288,7 +1283,7 @@ void WasmBinaryBuilder::readNextDebugLocation() {
     }
     debugLocation.clear();
     // use debugLocation only for function expressions
-    if (isInFunction) {
+    if (currFunction) {
       debugLocation.insert(nextDebugLocation.second);
     }
 
