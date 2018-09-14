@@ -2086,7 +2086,26 @@
    )
   )
  )
- (func $keepAlive (; 79 ;)
+ (func $mod_detectSign (; 79 ;) (param $d1 f64) (param $d2 f64) (param $d8 f64) (result i32)
+  (return
+   (call $f64-to-int
+    (f64.sub
+     (get_local $d2)
+     (f64.mul
+      (f64.div
+       (call $f64-rem
+        (get_local $d8)
+        (get_local $d1)
+       )
+       (get_local $d1)
+      )
+      (get_local $d2)
+     )
+    )
+   )
+  )
+ )
+ (func $keepAlive (; 80 ;)
   (drop
    (call $sqrts
     (f64.const 3.14159)
@@ -2115,19 +2134,26 @@
   (call $indirectInSequence)
   (call $emterpretify_assertions_safeHeap)
   (call $call_emscripten_log)
+  (drop
+   (call $mod_detectSign
+    (f64.const 1)
+    (f64.const 2.31)
+    (f64.const 9.78)
+   )
+  )
  )
- (func $v (; 80 ;)
+ (func $v (; 81 ;)
   (nop)
  )
- (func $vi (; 81 ;) (param $x i32)
+ (func $vi (; 82 ;) (param $x i32)
   (nop)
  )
- (func $ii (; 82 ;) (param $x i32) (result i32)
+ (func $ii (; 83 ;) (param $x i32) (result i32)
   (return
    (get_local $x)
   )
  )
- (func $legalstub$conversions (; 83 ;) (param $0 i32) (param $1 f64) (param $2 f64)
+ (func $legalstub$conversions (; 84 ;) (param $0 i32) (param $1 f64) (param $2 f64)
   (call $conversions
    (get_local $0)
    (get_local $1)
@@ -2136,19 +2162,19 @@
    )
   )
  )
- (func $legalstub$frem_float (; 84 ;) (result f64)
+ (func $legalstub$frem_float (; 85 ;) (result f64)
   (f64.promote/f32
    (call $frem_float)
   )
  )
- (func $legalstub$fr (; 85 ;) (param $0 f64)
+ (func $legalstub$fr (; 86 ;) (param $0 f64)
   (call $fr
    (f32.demote/f64
     (get_local $0)
    )
   )
  )
- (func $legalstub$ceiling_32_64 (; 86 ;) (param $0 f64) (param $1 f64)
+ (func $legalstub$ceiling_32_64 (; 87 ;) (param $0 f64) (param $1 f64)
   (call $ceiling_32_64
    (f32.demote/f64
     (get_local $0)
@@ -2156,7 +2182,7 @@
    (get_local $1)
   )
  )
- (func $legalstub$bitcasts (; 87 ;) (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (; 88 ;) (param $0 i32) (param $1 f64)
   (call $bitcasts
    (get_local $0)
    (f32.demote/f64
@@ -2164,7 +2190,7 @@
    )
   )
  )
- (func $legalstub$exported_f32_user (; 88 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
+ (func $legalstub$exported_f32_user (; 89 ;) (param $0 i32) (param $1 f64) (param $2 f64) (result f64)
   (f64.promote/f32
    (call $exported_f32_user
     (get_local $0)

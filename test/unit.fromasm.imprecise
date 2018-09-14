@@ -1167,6 +1167,12 @@
     (f64.const 0)
    )
   )
+  (drop
+   (call $f64-rem
+    (f64.const 9.78)
+    (f64.const 1)
+   )
+  )
  )
  (func $vi (; 54 ;) (; has Stack IR ;) (param $0 i32)
   (nop)

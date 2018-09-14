@@ -768,6 +768,13 @@ function asm(global, env, buffer) {
     emscripten_log(), 2 ? abort() | 0 : 3;
   }
 
+  function mod_detectSign(d1, d2, d8) {
+    d1 = +d1;
+    d2 = +d2;
+    d8 = +d8;
+    return ~~(d2 - d8 % d1 / d1 * d2);
+  }
+
   function keepAlive() {
     sqrts(3.14159);
     sqrts(2.18281); // don't inline it either
@@ -777,6 +784,7 @@ function asm(global, env, buffer) {
     indirectInSequence();
     emterpretify_assertions_safeHeap();
     call_emscripten_log();
+    mod_detectSign(1.0, 2.31, 9.78);
   }
 
   function v() {
