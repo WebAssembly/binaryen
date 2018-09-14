@@ -61,7 +61,7 @@ struct LegalizeJSInterface : public Pass {
     for (auto* im : originalFunctions) {
       if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
         auto funcName = makeLegalStubForCalledImport(im, module);
-        illegalToLegal[im->name] = funcName;
+        illegalImportsToLegal[im->name] = funcName;
         // we need to use the legalized version in the table, as the import from JS
         // is legal for JS. Our stub makes it look like a native wasm function.
         for (auto& segment : module->table.segments) {
@@ -73,8 +73,8 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    if (illegalToLegal.size() > 0) {
-      for (auto& pair : illegalToLegal) {
+    if (illegalImportsToLegal.size() > 0) {
+      for (auto& pair : illegalImportsToLegal) {
         module->removeFunction(pair.first);
       }
 
@@ -83,15 +83,15 @@ struct LegalizeJSInterface : public Pass {
       struct FixImports : public WalkerPass<PostWalker<FixImports>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override { return new FixImports(illegalToLegal); }
+        Pass* create() override { return new FixImports(illegalImportsToLegal); }
 
-        std::map<Name, Name>* illegalToLegal;
+        std::map<Name, Name>* illegalImportsToLegal;
 
-        FixImports(std::map<Name, Name>* illegalToLegal) : illegalToLegal(illegalToLegal) {}
+        FixImports(std::map<Name, Name>* illegalImportsToLegal) : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
-          auto iter = illegalToLegal->find(curr->target);
-          if (iter == illegalToLegal->end()) return;
+          auto iter = illegalImportsToLegal->find(curr->target);
+          if (iter == illegalImportsToLegal->end()) return;
 
           if (iter->second == getFunction()->name) return; // inside the stub function itself, is the one safe place to do the call
           replaceCurrent(Builder(*getModule()).makeCall(iter->second, curr->operands, curr->type));
@@ -100,7 +100,7 @@ struct LegalizeJSInterface : public Pass {
 
       PassRunner passRunner(module);
       passRunner.setIsNested(true);
-      passRunner.add<FixImports>(&illegalToLegal);
+      passRunner.add<FixImports>(&illegalImportsToLegal);
       passRunner.run();
     }
 
@@ -111,7 +111,7 @@ struct LegalizeJSInterface : public Pass {
 
 private:
   // map of illegal to legal names for imports
-  std::map<Name, Name> illegalToLegal;
+  std::map<Name, Name> illegalImportsToLegal;
 
   bool needTempRet0Helpers = false;
 
@@ -229,10 +229,15 @@ private:
     func->result = imFunctionType->result;
     FunctionTypeUtils::fillFunction(legal, type);
 
-    module->addFunction(func);
-    module->addFunctionType(type);
-    module->addFunction(legal);
-
+    if (!module->getFunctionOrNull(func->name)) {
+      module->addFunction(func);
+    }
+    if (!module->getFunctionTypeOrNull(type->name)) {
+      module->addFunctionType(type);
+    }
+    if (!module->getFunctionOrNull(legal->name)) {
+      module->addFunction(legal);
+    }
     return func->name;
   }
 
