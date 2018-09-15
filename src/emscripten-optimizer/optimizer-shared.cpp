@@ -158,7 +158,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
       } // fallthrough
       case '|': case '&': case '^': case '<': case '=': case '!': return ASM_SIGNED;
       case '+': case '-': return ASM_FLEXIBLE;
-      case '*': case '/': return ASM_NONSIGNED; // without a coercion, these are double
+      case '*': case '/': case '%': return ASM_NONSIGNED; // without a coercion, these are double
       default: abort_on(node);
     }
   } else if (type == UNARY_PREFIX) {
