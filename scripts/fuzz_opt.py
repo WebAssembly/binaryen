@@ -123,7 +123,7 @@ def test_one(infile, opts):
   for i in range(len(before)):
     compare(before[i], after[i], 'comparing between builds at ' + str(i))
   # fuzz binaryen interpreter itself. separate invocation so result is easily fuzzable
-  run(['bin/wasm-opt', 'a.wasm', '--fuzz-exec'] + opts)
+  run(['bin/wasm-opt', 'a.wasm', '--fuzz-exec', '--fuzz-binary'] + opts)
 
   return bytes
 
@@ -136,33 +136,40 @@ opt_choices = [
   # XXX slow, non-default ["--coalesce-locals-learning"],
   ["--code-pushing"],
   ["--code-folding"],
+  ["--const-hoisting"],
   ["--dae"],
   ["--dae-optimizing"],
   ["--dce"],
+  ["--flatten", "--dfo"],
   ["--duplicate-function-elimination"],
   ["--flatten"],
   # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
   ["--inlining"],
   ["--inlining-optimizing"],
   ["--flatten", "--local-cse"],
+  ["--generate-stack-ir"],
   ["--licm"],
   ["--memory-packing"],
   ["--merge-blocks"],
   ['--merge-locals'],
   ["--optimize-instructions"],
+  ["--optimize-stack-ir"],
+  ["--generate-stack-ir", "--optimize-stack-ir"],
   ["--pick-load-signs"],
   ["--precompute"],
   ["--precompute-propagate"],
   ["--remove-unused-brs"],
+  ["--remove-unused-nonfunction-module-elements"],
   ["--remove-unused-module-elements"],
   ["--remove-unused-names"],
   ["--reorder-functions"],
   ["--reorder-locals"],
-  ["--rse"],
   ["--flatten", "--rereloop"],
+  ["--rse"],
   ["--simplify-locals"],
-  ["--simplify-locals-notee"],
+  ["--simplify-locals-nonesting"],
   ["--simplify-locals-nostructure"],
+  ["--simplify-locals-notee"],
   ["--simplify-locals-notee-nostructure"],
   ["--ssa"],
   ["--vacuum"],
