@@ -1,11 +1,16 @@
 '''
-Runs random passes and options on random inputs. Can be configured to
-run just wasm-opt fuzzing or also run VMs on it.
+Runs random passes and options on random inputs, using wasm-opt.
+
+Can be configured to run just wasm-opt itself (using --fuzz-exec)
+or also run VMs on it.
 
 For afl-fuzz integration, you probably don't want this, and can use
 something like
 
 BINARYEN_CORES=1 BINARYEN_PASS_DEBUG=1 afl-fuzz -i afl-testcases/ -o afl-findings/ -m 100 -d -- bin/wasm-opt -ttf --fuzz-exec --Os @@
+
+(that is on a fixed set of arguments to wasm-opt, though - this
+script covers different options being passed)
 '''
 
 import os
