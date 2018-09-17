@@ -618,10 +618,16 @@ public:
     uint32_t fileIndex, lineNumber, columnNumber;
     bool operator==(const DebugLocation& other) const { return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
     bool operator!=(const DebugLocation& other) const { return !(*this == other); }
+    bool operator<(const DebugLocation& other) const {
+      return fileIndex != other.fileIndex ? fileIndex < other.fileIndex :
+        lineNumber != other.lineNumber ? lineNumber < other.lineNumber : columnNumber < other.columnNumber;
+    }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
+  std::set<DebugLocation> prologLocation;
+  std::set<DebugLocation> epilogLocation;
 
-  Function() : result(none) {}
+  Function() : result(none), prologLocation(), epilogLocation() {}
 
   size_t getNumParams();
   size_t getNumVars();

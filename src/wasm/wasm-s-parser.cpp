@@ -80,10 +80,10 @@ Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
   return this;
 }
 
-Element* Element::setMetadata(size_t line_, size_t col_, SourceLocation* loc_) {
+Element* Element::setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_) {
   line = line_;
   col = col_;
-  loc = loc_;
+  startLoc = startLoc_;
   return this;
 }
 
@@ -127,6 +127,7 @@ Element* SExpressionParser::parse() {
       assert(stack.size() == stackLocs.size());
     } else if (input[0] == ')') {
       input++;
+      curr->endLoc = loc;
       auto last = curr;
       if (stack.empty()) {
         throw ParseException("s-expr stack empty");
@@ -608,6 +609,12 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   if (currFunction->result != result) throw ParseException("bad func declaration", s.line, s.col);
   currFunction->body = body;
   currFunction->type = type;
+  if (s.startLoc) {
+    currFunction->prologLocation.insert(getDebugLocation(*s.startLoc));
+  }
+  if (s.endLoc) {
+    currFunction->epilogLocation.insert(getDebugLocation(*s.endLoc));
+  }
   if (wasm.getFunctionOrNull(currFunction->name)) throw ParseException("duplicate function", s.line, s.col);
   wasm.addFunction(currFunction.release());
   currLocalTypes.clear();
@@ -627,19 +634,23 @@ Type SExpressionWasmBuilder::stringToType(const char* str, bool allowError, bool
   throw ParseException("invalid wasm type");
 }
 
+Function::DebugLocation SExpressionWasmBuilder::getDebugLocation(const SourceLocation& loc) {
+  IString file = loc.filename;
+  auto& debugInfoFileNames = wasm.debugInfoFileNames;
+  auto iter = debugInfoFileIndices.find(file);
+  if (iter == debugInfoFileIndices.end()) {
+    Index index = debugInfoFileNames.size();
+    debugInfoFileNames.push_back(file.c_str());
+    debugInfoFileIndices[file] = index;
+  }
+  uint32_t fileIndex = debugInfoFileIndices[file];
+  return {fileIndex, loc.line, loc.column};
+}
+
 Expression* SExpressionWasmBuilder::parseExpression(Element& s) {
   Expression* result = makeExpression(s);
-  if (s.loc) {
-    IString file = s.loc->filename;
-    auto& debugInfoFileNames = wasm.debugInfoFileNames;
-    auto iter = debugInfoFileIndices.find(file);
-    if (iter == debugInfoFileIndices.end()) {
-      Index index = debugInfoFileNames.size();
-      debugInfoFileNames.push_back(file.c_str());
-      debugInfoFileIndices[file] = index;
-    }
-    uint32_t fileIndex = debugInfoFileIndices[file];
-    currFunction->debugLocations[result] = {fileIndex, s.loc->line, s.loc->column};
+  if (s.startLoc) {
+    currFunction->debugLocations[result] = getDebugLocation(*s.startLoc);
   }
   return result;
 }
@@ -1079,6 +1090,9 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     if (first[0]->str() == BLOCK) {
       // recurse
       curr = allocator.alloc<Block>();
+      if (first.startLoc) {
+        currFunction->debugLocations[curr] = getDebugLocation(*first.startLoc);
+      }
       sp = &first;
       continue;
     }
