@@ -21,11 +21,14 @@ import random
 import shutil
 import time
 
+# parameters
+
 LOG_LIMIT = 125
+INPUT_SIZE_LIMIT = 250 * 1024
 
 
 def random_size():
-  return random.randint(1, 250 * 1024)
+  return random.randint(1, INPUT_SIZE_LIMIT)
 
 
 def run(cmd):
