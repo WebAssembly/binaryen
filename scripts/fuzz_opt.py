@@ -130,6 +130,7 @@ def test_one(infile, opts):
 
   return bytes
 
+
 # main
 
 opt_choices = [
