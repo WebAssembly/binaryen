@@ -953,6 +953,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     } else {
       decIndent();
     }
+    o << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
     o << '(';
