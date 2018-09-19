@@ -1673,15 +1673,16 @@ void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, 
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
 }
-void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
+void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, bool shared) {
   auto* wasm = (Module*)module;
 
   if (tracing) {
-    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
+    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << shared << ");\n";
   }
 
   wasm->memory.module = externalModuleName;
   wasm->memory.base = externalBaseName;
+  wasm->memory.shared = shared;
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType) {
   auto* wasm = (Module*)module;
@@ -1804,7 +1805,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, B
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments, bool shared) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -1846,6 +1847,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   wasm->memory.initial = initial;
   wasm->memory.max = maximum;
   wasm->memory.exists = true;
+  wasm->memory.shared = shared;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
