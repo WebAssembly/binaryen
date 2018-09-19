@@ -812,94 +812,122 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ' ';
     printName(curr->value, o) << "))";
   }
+  template<typename T>
+  void emitImportHeader(T* curr) {
+    printMedium(o, "import ");
+    printText(o, curr->module.str) << ' ';
+    printText(o, curr->base.str) << ' ';
+  }
   void visitGlobal(Global* curr) {
+    if (curr->imported()) {
+      visitImportedGlobal(curr);
+    } else {
+      visitDefinedGlobal(curr);
+    }
+  }
+  void emitGlobalType(Global* curr) {
+    if (curr->mutable_) {
+      o << "(mut " << printType(curr->type) << ')';
+    } else {
+      o << printType(curr->type);
+    }
+  }
+  void visitImportedGlobal(Global* curr) {
     doIndent(o, indent);
     o << '(';
-    if (curr->imported()) {
-      printMedium(o, "import ");
-      printText(o, curr->module.str) << ' ';
-      printText(o, curr->base.str) << ' ';
-      o << "(global " << curr->name << ' ' << printType(curr->type) << ")";
-    } else {
-      printMedium(o, "global ");
-      printName(curr->name, o) << ' ';
-      if (curr->mutable_) {
-        o << "(mut " << printType(curr->type) << ") ";
-      } else {
-        o << printType(curr->type) << ' ';
-      }
-      visit(curr->init);
-    }
+    emitImportHeader(curr);
+    o << "(global ";
+    printName(curr->name, o) << ' ';
+    emitGlobalType(curr);
+    o << "))" << maybeNewLine;
+  }
+  void visitDefinedGlobal(Global* curr) {
+    doIndent(o, indent);
+    o << '(';
+    printMedium(o, "global ");
+    printName(curr->name, o) << ' ';
+    emitGlobalType(curr);
+    o << ' ';
+    visit(curr->init);
     o << ')';
     o << maybeNewLine;
   }
   void visitFunction(Function* curr) {
+    if (curr->imported()) {
+      visitImportedFunction(curr);
+    } else {
+      visitDefinedFunction(curr);
+    }
+  }
+  void visitImportedFunction(Function* curr) {
     doIndent(o, indent);
     currFunction = curr;
     lastPrintedLocation = { 0, 0, 0 };
     o << '(';
-    if (!curr->imported()) {
-      printMajor(o, "func ");
-      printName(curr->name, o);
-      if (currModule && !minify) {
-        // emit the function index in a comment
-        if (functionIndexes.empty()) {
-          ModuleUtils::BinaryIndexes indexes(*currModule);
-          functionIndexes = std::move(indexes.functionIndexes);
-        }
-        o << " (; " << functionIndexes[curr->name] << " ;)";
+    emitImportHeader(curr);
+    if (curr->type.is()) {
+      visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
+    }
+    o << ')';
+    o << maybeNewLine;
+  }
+  void visitDefinedFunction(Function* curr) {
+    doIndent(o, indent);
+    currFunction = curr;
+    lastPrintedLocation = { 0, 0, 0 };
+    o << '(';
+    printMajor(o, "func ");
+    printName(curr->name, o);
+    if (currModule && !minify) {
+      // emit the function index in a comment
+      if (functionIndexes.empty()) {
+        ModuleUtils::BinaryIndexes indexes(*currModule);
+        functionIndexes = std::move(indexes.functionIndexes);
       }
-      if (curr->stackIR && !minify) {
-        o << " (; has Stack IR ;)";
-      }
-      if (curr->type.is()) {
-        o << maybeSpace << "(type " << curr->type << ')';
-      }
-      if (curr->params.size() > 0) {
-        for (size_t i = 0; i < curr->params.size(); i++) {
-          o << maybeSpace;
-          o << '(';
-          printMinor(o, "param ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
-        }
-      }
-      if (curr->result != none) {
+      o << " (; " << functionIndexes[curr->name] << " ;)";
+    }
+    if (curr->stackIR && !minify) {
+      o << " (; has Stack IR ;)";
+    }
+    if (curr->type.is()) {
+      o << maybeSpace << "(type " << curr->type << ')';
+    }
+    if (curr->params.size() > 0) {
+      for (size_t i = 0; i < curr->params.size(); i++) {
         o << maybeSpace;
         o << '(';
-        printMinor(o, "result ") << printType(curr->result) << ')';
+        printMinor(o, "param ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
       }
-      incIndent();
-      for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
-        doIndent(o, indent);
-        o << '(';
-        printMinor(o, "local ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
-        o << maybeNewLine;
-      }
-      // Print the body.
-      if (!printStackIR || !curr->stackIR) {
-        // It is ok to emit a block here, as a function can directly contain a list, even if our
-        // ast avoids that for simplicity. We can just do that optimization here..
-        if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
-          Block* block = curr->body->cast<Block>();
-          for (auto item : block->list) {
-            printFullLine(item);
-          }
-        } else {
-          printFullLine(curr->body);
+    }
+    if (curr->result != none) {
+      o << maybeSpace;
+      o << '(';
+      printMinor(o, "result ") << printType(curr->result) << ')';
+    }
+    incIndent();
+    for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
+      doIndent(o, indent);
+      o << '(';
+      printMinor(o, "local ") << printableLocal(i, currFunction) << ' ' << printType(curr->getLocalType(i)) << ')';
+      o << maybeNewLine;
+    }
+    // Print the body.
+    if (!printStackIR || !curr->stackIR) {
+      // It is ok to emit a block here, as a function can directly contain a list, even if our
+      // ast avoids that for simplicity. We can just do that optimization here..
+      if (!full && curr->body->is<Block>() && curr->body->cast<Block>()->name.isNull()) {
+        Block* block = curr->body->cast<Block>();
+        for (auto item : block->list) {
+          printFullLine(item);
         }
       } else {
-        // Print the stack IR.
-        WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
+        printFullLine(curr->body);
       }
-      decIndent();
     } else {
-      printMedium(o, "import ");
-      printText(o, curr->module.str) << ' ';
-      printText(o, curr->base.str) << ' ';
-      if (curr->type.is()) {
-        visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
-      }
-      o << ')';
+      // Print the stack IR.
+      WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
     }
+    decIndent();
     o << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
@@ -914,11 +942,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
-      printMedium(o, "import ");
-      printText(o, curr->module.str) << ' ';
-      printText(o, curr->base.str) << ' ';
+      emitImportHeader(curr);
       printTableHeader(&currModule->table);
-      o << ")\n";
+      o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);
       printTableHeader(curr);
@@ -935,7 +961,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
         o << ' ';
         printName(name, o);
       }
-      o << ")\n";
+      o << ')' << maybeNewLine;
     }
   }
   void printMemoryHeader(Memory* curr) {
@@ -956,11 +982,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
-      printMedium(o, "import ");
-      printText(o, curr->module.str) << ' ';
-      printText(o, curr->base.str) << ' ';
+      emitImportHeader(curr);
       printMemoryHeader(&currModule->memory);
-      o << ")\n";
+      o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);
       printMemoryHeader(curr);
@@ -992,7 +1016,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
           }
         }
       }
-      o << "\")\n";
+      o << "\")" << maybeNewLine;
     }
   }
   void visitModule(Module* curr) {

@@ -720,7 +720,7 @@ public:
   Name name;
   Type type;
   Expression* init;
-  bool mutable_;
+  bool mutable_ = false;
 };
 
 // "Opaque" data, not part of the core wasm spec, that is held in binaries.
