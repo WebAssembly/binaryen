@@ -723,6 +723,7 @@ public:
 
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
+  void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
 
   // helpers
@@ -778,7 +779,7 @@ class WasmBinaryBuilder {
 
   size_t pos = 0;
   Index startIndex = -1;
-  bool useDebugLocation;
+  std::set<Function::DebugLocation> debugLocation;
 
   std::set<BinaryConsts::Section> seenSections;
 
@@ -790,7 +791,7 @@ public:
       debug(debug),
       sourceMap(nullptr),
       nextDebugLocation(0, { 0, 0, 0 }),
-      useDebugLocation(false) {}
+      debugLocation() {}
 
   void read();
   void readUserSection(size_t payloadLen);
@@ -905,7 +906,6 @@ public:
   void setDebugLocations(std::istream* sourceMap_) {
       sourceMap = sourceMap_;
   }
-  Function::DebugLocation debugLocation;
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
   void readSourceMapHeader();

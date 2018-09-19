@@ -256,6 +256,9 @@ public:
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::mapLocalsAndEmitHeader() {
+  if (func->prologLocation.size()) {
+    parent.writeDebugLocation(*func->prologLocation.begin());
+  }
   // Map them
   for (Index i = 0; i < func->getNumParams(); i++) {
     size_t curr = mappedLocals.size();
@@ -1155,6 +1158,9 @@ bool StackWriter<Mode, Parent>::justAddToStack(Expression* curr) {
 
 template<StackWriterMode Mode, typename Parent>
 void StackWriter<Mode, Parent>::finishFunctionBody() {
+  if (func->epilogLocation.size()) {
+    parent.writeDebugLocation(*func->epilogLocation.begin());
+  }
   o << int8_t(BinaryConsts::End);
 }
 

@@ -73,8 +73,8 @@
   (local $4 i32)
   ;;@ fib.c:8:0
   (set_local $4
+   ;;@ fib.c:3:0
    (if (result i32)
-    ;;@ fib.c:3:0
     (i32.gt_s
      (get_local $0)
      (i32.const 0)
@@ -96,7 +96,6 @@
     )
    )
   )
-  ;;@ fib.c:3:0
   (loop $label$3
    ;;@ fib.c:4:0
    (set_local $1

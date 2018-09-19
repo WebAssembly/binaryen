@@ -51,7 +51,7 @@ class Element {
   bool quoted_;
 
 public:
-  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), loc(nullptr) {}
+  Element(MixedArena& allocator) : isList_(true), list_(allocator), line(-1), col(-1), startLoc(nullptr), endLoc(nullptr) {}
 
   bool isList() const { return isList_; }
   bool isStr() const { return !isList_; }
@@ -59,7 +59,9 @@ public:
   bool quoted() const { return isStr() && quoted_; }
 
   size_t line, col;
-  SourceLocation* loc;
+  // original locations at the start/end of the S-Expression list
+  SourceLocation* startLoc;
+  SourceLocation* endLoc;
 
   // list methods
   List& list();
@@ -72,7 +74,7 @@ public:
   cashew::IString str() const;
   const char* c_str() const;
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
-  Element* setMetadata(size_t line_, size_t col_, SourceLocation* loc_);
+  Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
@@ -217,6 +219,8 @@ private:
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
   void parseType(Element& s);
+
+  Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 };
 
 } // namespace wasm

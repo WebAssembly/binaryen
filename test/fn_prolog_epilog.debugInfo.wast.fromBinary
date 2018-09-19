@@ -1,0 +1,13 @@
+(module
+ (type $0 (func))
+ (func $0 (; 0 ;) (type $0)
+  (nop)
+  (block $label$1
+   (block $label$2
+    (br $label$2)
+   )
+  )
+  (return)
+ )
+)
+

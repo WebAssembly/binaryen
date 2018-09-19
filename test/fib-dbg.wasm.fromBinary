@@ -122,7 +122,6 @@
   (local $9 i32)
   (local $10 i32)
   (local $11 i32)
-  ;;@ fib.c:8:0
   (block $label$1
    (set_local $11
     (get_global $global$3)
@@ -134,9 +133,7 @@
      (i32.const 0)
     )
    )
-   ;;@ fib.c:8:0
    (if
-    ;;@ fib.c:3:0
     (get_local $6)
     (block
      (set_local $1
@@ -159,7 +156,6 @@
      )
     )
    )
-   ;;@ fib.c:3:0
    (loop $label$4
     (block $label$5
      ;;@ fib.c:4:0

@@ -566,14 +566,20 @@ void WasmBinaryWriter::writeUserSection(const UserSection& section) {
   finishSection(start);
 }
 
+void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
+  if (loc == lastDebugLocation) {
+    return;
+  }
+  auto offset = o.size();
+  sourceMapLocations.emplace_back(offset, &loc);
+  lastDebugLocation = loc;
+}
+
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   auto& debugLocations = func->debugLocations;
   auto iter = debugLocations.find(curr);
-  if (iter != debugLocations.end() && iter->second != lastDebugLocation) {
-    auto offset = o.size();
-    auto& loc = iter->second;
-    sourceMapLocations.emplace_back(offset, &loc);
-    lastDebugLocation = loc;
+  if (iter != debugLocations.end()) {
+    writeDebugLocation(iter->second);
   }
 }
 
@@ -1057,11 +1063,19 @@ void WasmBinaryBuilder::readFunctions() {
       throwError("empty function size");
     }
     endOfFunction = pos + size;
+
+    Function *func = new Function;
+    func->name = Name::fromInt(i);
+    currFunction = func;
+
+    readNextDebugLocation();
+
     auto type = functionTypes[i];
     if (debug) std::cerr << "reading " << i << std::endl;
-    std::vector<Type> params, vars;
+    func->type = type->name;
+    func->result = type->result;
     for (size_t j = 0; j < type->params.size(); j++) {
-      params.emplace_back(type->params[j]);
+      func->params.emplace_back(type->params[j]);
     }
     size_t numLocalTypes = getU32LEB();
     for (size_t t = 0; t < numLocalTypes; t++) {
@@ -1076,23 +1090,16 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("too many locals, wasm VMs would not accept this binary");
       }
       while (num > 0) {
-        vars.emplace_back(type);
+        func->vars.push_back(type);
         num--;
       }
     }
-    auto func = Builder(wasm).makeFunction(
-      Name::fromInt(i),
-      std::move(params),
-      type->result,
-      std::move(vars)
-    );
-    func->type = type->name;
-    currFunction = func;
+    std::swap(func->prologLocation, debugLocation);
     {
       // process the function body
       if (debug) std::cerr << "processing function: " << i << std::endl;
       nextLabel = 0;
-      useDebugLocation = false;
+      debugLocation.clear();
       willBeIgnored = false;
       // process body
       assert(breakTargetNames.size() == 0);
@@ -1110,8 +1117,9 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("binary offset at function exit not at expected location");
       }
     }
+    std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
-    useDebugLocation = false;
+    debugLocation.clear();
     functions.push_back(func);
   }
   if (debug) std::cerr << " end function bodies" << std::endl;
@@ -1267,26 +1275,38 @@ void WasmBinaryBuilder::readSourceMapHeader() {
 void WasmBinaryBuilder::readNextDebugLocation() {
   if (!sourceMap) return;
 
-  char ch;
-  *sourceMap >> ch;
-  if (ch == '\"') { // end of records
-    nextDebugLocation.first = 0;
-    return;
-  }
-  if (ch != ',') {
-    throw MapParseException("Unexpected delimiter");
-  }
+  while (nextDebugLocation.first && nextDebugLocation.first <= pos) {
+    if (nextDebugLocation.first < pos) {
+      std::cerr << "skipping debug location info for 0x";
+      std::cerr << std::hex << nextDebugLocation.first << std::dec << std::endl;
+    }
+    debugLocation.clear();
+    // use debugLocation only for function expressions
+    if (currFunction) {
+      debugLocation.insert(nextDebugLocation.second);
+    }
 
-  int32_t positionDelta = readBase64VLQ(*sourceMap);
-  uint32_t position = nextDebugLocation.first + positionDelta;
-  int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-  uint32_t fileIndex = nextDebugLocation.second.fileIndex + fileIndexDelta;
-  int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-  uint32_t lineNumber = nextDebugLocation.second.lineNumber + lineNumberDelta;
-  int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-  uint32_t columnNumber = nextDebugLocation.second.columnNumber + columnNumberDelta;
+    char ch;
+    *sourceMap >> ch;
+    if (ch == '\"') { // end of records
+      nextDebugLocation.first = 0;
+      break;
+    }
+    if (ch != ',') {
+      throw MapParseException("Unexpected delimiter");
+    }
 
-  nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
+    int32_t positionDelta = readBase64VLQ(*sourceMap);
+    uint32_t position = nextDebugLocation.first + positionDelta;
+    int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
+    uint32_t fileIndex = nextDebugLocation.second.fileIndex + fileIndexDelta;
+    int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
+    uint32_t lineNumber = nextDebugLocation.second.lineNumber + lineNumberDelta;
+    int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
+    uint32_t columnNumber = nextDebugLocation.second.columnNumber + columnNumberDelta;
+
+    nextDebugLocation = { position, { fileIndex, lineNumber, columnNumber } };
+  }
 }
 
 Expression* WasmBinaryBuilder::readExpression() {
@@ -1344,6 +1364,7 @@ void WasmBinaryBuilder::processExpressions() {
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else) {
         if (debug) std::cerr << "== processExpressions finished with unreachable" << std::endl;
+        readNextDebugLocation();
         lastSeparator = BinaryConsts::ASTNodes(peek);
         pos++;
         return;
@@ -1639,15 +1660,10 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     throwError("Reached function end without seeing End opcode");
   }
   if (debug) std::cerr << "zz recurse into " << ++depth << " at " << pos << std::endl;
-  if (nextDebugLocation.first) {
-    while (nextDebugLocation.first && nextDebugLocation.first <= pos) {
-      if (nextDebugLocation.first < pos) {
-        std::cerr << "skipping debug location info for " << nextDebugLocation.first << std::endl;
-      }
-      debugLocation = nextDebugLocation.second;
-      useDebugLocation = currFunction != NULL; // using only for function expressions
-      readNextDebugLocation();
-    }
+  readNextDebugLocation();
+  std::set<Function::DebugLocation> currDebugLocation;
+  if (debugLocation.size()) {
+    currDebugLocation.insert(*debugLocation.begin());
   }
   uint8_t code = getInt8();
   if (debug) std::cerr << "readExpression seeing " << (int)code << std::endl;
@@ -1695,8 +1711,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
   }
-  if (useDebugLocation && curr) {
-    currFunction->debugLocations[curr] = debugLocation;
+  if (curr && currDebugLocation.size()) {
+    currFunction->debugLocations[curr] = *currDebugLocation.begin();
   }
   if (debug) std::cerr << "zz recurse from " << depth-- << " at " << pos << std::endl;
   return BinaryConsts::ASTNodes(code);
@@ -1749,13 +1765,18 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type != none});
     stack.push_back(curr);
-    if (getInt8() == BinaryConsts::Block) {
+    auto peek = input[pos];
+    if (peek == BinaryConsts::Block) {
       // a recursion
+      readNextDebugLocation();
       curr = allocator.alloc<Block>();
+      pos++;
+      if (debugLocation.size()) {
+        currFunction->debugLocations[curr] = *debugLocation.begin();
+      }
       continue;
     } else {
       // end of recursion
-      ungetInt8();
       break;
     }
   }
