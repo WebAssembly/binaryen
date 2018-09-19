@@ -1520,7 +1520,6 @@ Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (wasm.memory.exists) throw ParseException("too many memories");
   wasm.memory.exists = true;
-  // FIXME wasm.memory.imported = preParseImport;
   wasm.memory.shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
@@ -1853,7 +1852,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   if (wasm.table.exists) throw ParseException("more than one table");
   wasm.table.exists = true;
-  // FIXME wasm.table.imported = preParseImport;
   Index i = 1;
   if (i == s.size()) return; // empty table in old notation
   if (s[i]->dollared()) {

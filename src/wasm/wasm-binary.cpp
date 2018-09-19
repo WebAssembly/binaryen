@@ -183,33 +183,33 @@ void WasmBinaryWriter::writeImports() {
   if (debug) std::cerr << "== writeImports" << std::endl;
   auto start = startSection(BinaryConsts::Section::Import);
   o << U32LEB(num);
+  auto writeImportHeader = [&](Importable* import) {
+    writeInlineString(import->module.str);
+    writeInlineString(import->base.str);
+  };
   ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
     if (debug) std::cerr << "write one function" << std::endl;
-    writeInlineString(func->module.str);
-    writeInlineString(func->base.str);
+    writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
     o << U32LEB(getFunctionTypeIndex(func->type));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     if (debug) std::cerr << "write one global" << std::endl;
-    writeInlineString(global->module.str);
-    writeInlineString(global->base.str);
+    writeImportHeader(global);
     o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
     o << U32LEB(0); // Mutable globals can't be imported for now.
   });
   if (wasm->memory.imported()) {
     if (debug) std::cerr << "write one memory" << std::endl;
-    writeInlineString(wasm->memory.module.str);
-    writeInlineString(wasm->memory.base.str);
+    writeImportHeader(&wasm->memory);
     o << U32LEB(int32_t(ExternalKind::Memory));
     writeResizableLimits(wasm->memory.initial, wasm->memory.max,
                          wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
   }
   if (wasm->table.imported()) {
     if (debug) std::cerr << "write one table" << std::endl;
-    writeInlineString(wasm->table.module.str);
-    writeInlineString(wasm->table.base.str);
+    writeImportHeader(&wasm->table);
     o << U32LEB(int32_t(ExternalKind::Table));
     o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
     writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
@@ -458,12 +458,8 @@ void WasmBinaryWriter::writeNames() {
     writeEscapedName(curr->name.str);
     emitted++;
   };
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
-    add(func);
-  });
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    add(func);
-  });
+  ModuleUtils::iterImportedFunctions(*wasm, add);
+  ModuleUtils::iterDefinedFunctions(*wasm, add);
   assert(emitted == mappedFunctions.size());
   finishSubsection(substart);
   /* TODO: locals */
@@ -483,12 +479,8 @@ void WasmBinaryWriter::writeSymbolMap() {
   auto write = [&](Function* func) {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
   };
-  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
-    write(func);
-  });
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    write(func);
-  });
+  ModuleUtils::iterImportedFunctions(*wasm, write);
+  ModuleUtils::iterDefinedFunctions(*wasm, write);
   file.close();
 }
 
@@ -1463,12 +1455,8 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
       auto index = mappedGlobals.size();
       mappedGlobals[index] = curr->name;
     };
-    ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-      add(global);
-    });
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      add(global);
-    });
+    ModuleUtils::iterImportedGlobals(wasm, add);
+    ModuleUtils::iterDefinedGlobals(wasm, add);
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {

@@ -24,6 +24,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -46,21 +47,17 @@ struct PrintCallGraph : public Pass {
          "  }\n\n"
          "  node [shape=box, fontname=courier, fontsize=10];\n";
 
-    // All Functions
-    for (auto& curr : module->functions) {
-      if (!curr->imported()) {
-        std::cout << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
-      }
-    }
+    // Defined functions
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+      std::cout << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+    });
 
-    // Imports Nodes
-    for (auto& curr : module->functions) {
-      if (curr->imported()) {
-        o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
-      }
-    }
+    // Imported functions
+    ModuleUtils::iterImportedFunctions(*module, [&](Function* curr) {
+      o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
+    });
 
-    // Exports Nodes
+    // Exports
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         Function* func = module->getFunction(curr->value);
@@ -75,13 +72,11 @@ struct PrintCallGraph : public Pass {
       std::vector<Function*> allIndirectTargets;
       CallPrinter(Module *module) : module(module) {
         // Walk function bodies.
-        for (auto& func : module->functions) {
-          if (!func->imported()) {
-            currFunction = func.get();
-            visitedTargets.clear();
-            walk(func.get()->body);
-          }
-        }
+        ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+          currFunction = curr;
+          visitedTargets.clear();
+          walk(curr->body);
+        });
       }
       void visitCall(Call *curr) {
         auto* target = module->getFunction(curr->target);

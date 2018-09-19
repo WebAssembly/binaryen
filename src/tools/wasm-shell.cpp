@@ -146,22 +146,24 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
-        ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-          std::cerr << "spectest.print should be a function, but is a global\n";
+        auto reportUnknownImport = [&](Importable* import) {
+          std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
           invalid = true;
-        });
-        auto verifyImport = [&](Importable* import) {
+        };
+        ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
+        ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
           if (import->module == SPECTEST && import->base == PRINT) {
             // We can handle it.
           } else {
-            std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
-            invalid = true;
+            reportUnknownImport(import);
           }
-        };
-        ModuleUtils::iterImportedFunctions(wasm, verifyImport);
-        ModuleUtils::iterImportedGlobals(wasm, verifyImport);
-        verifyImport(&wasm.memory);
-        verifyImport(&wasm.table);
+        });
+        if (wasm.memory.imported()) {
+          reportUnknownImport(&wasm.memory);
+        }
+        if (wasm.table.imported()) {
+          reportUnknownImport(&wasm.table);
+        }
         for (auto& segment : wasm.table.segments) {
           for (auto name : segment.data) {
             // spec tests consider it illegal to use spectest.print in a table

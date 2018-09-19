@@ -481,7 +481,8 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
         }
       }
     }
-    // Copy over the non-imports
+    // Copy over the remaining non-imports (we have already transferred
+    // the imports, and they are nullptrs).
     for (auto& curr : wasm.functions) {
       if (curr) {
         assert(!curr->imported());

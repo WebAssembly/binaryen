@@ -824,8 +824,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     o << ' ';
     printName(curr->value, o) << "))";
   }
-  template<typename T>
-  void emitImportHeader(T* curr) {
+  void emitImportHeader(Importable* curr) {
     printMedium(o, "import ");
     printText(o, curr->module.str) << ' ';
     printText(o, curr->base.str) << ' ';
