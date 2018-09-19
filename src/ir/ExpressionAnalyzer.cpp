@@ -170,14 +170,6 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
         }
         break;
       }
-      case Expression::Id::CallImportId: {
-        CHECK(CallImport, target);
-        CHECK(CallImport, operands.size());
-        for (Index i = 0; i < left->cast<CallImport>()->operands.size(); i++) {
-          PUSH(CallImport, operands[i]);
-        }
-        break;
-      }
       case Expression::Id::CallIndirectId: {
         PUSH(CallIndirect, target);
         CHECK(CallIndirect, fullType);
@@ -420,14 +412,6 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         HASH(Call, operands.size());
         for (Index i = 0; i < curr->cast<Call>()->operands.size(); i++) {
           PUSH(Call, operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallImportId: {
-        HASH_NAME(CallImport, target);
-        HASH(CallImport, operands.size());
-        for (Index i = 0; i < curr->cast<CallImport>()->operands.size(); i++) {
-          PUSH(CallImport, operands[i]);
         }
         break;
       }

@@ -176,13 +176,13 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     }
   }
 
-  void visitCall(Call *curr) { calls = true; }
-  void visitCallImport(CallImport *curr) {
+  void visitCall(Call *curr) {
     calls = true;
     if (debugInfo) {
       // debugInfo call imports must be preserved very strongly, do not
       // move code around them
-      branches = true; // !
+      // FIXME: we could check if the call is to an import
+      branches = true;
     }
   }
   void visitCallIndirect(CallIndirect *curr) { calls = true; }

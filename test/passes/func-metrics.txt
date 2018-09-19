@@ -28,11 +28,11 @@ func: ifs
 (module
  (type $0 (func (param i32)))
  (type $1 (func))
- (global $glob i32 (i32.const 1337))
- (table 256 256 anyfunc)
- (elem (i32.const 0) $ifs $ifs $ifs)
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
+ (table 256 256 anyfunc)
+ (elem (i32.const 0) $ifs $ifs $ifs)
+ (global $glob i32 (i32.const 1337))
  (func $empty (; 0 ;) (type $1)
   (nop)
  )
@@ -88,22 +88,22 @@ global
 )
 global
  [funcs]        : 3       
+ [imports]      : 1       
 func: func_a
  [binary-bytes] : 16      
  [total]        : 8       
  block          : 1       
- call           : 2       
- call_import    : 5       
+ call           : 7       
 func: func_b
  [binary-bytes] : 22      
  [total]        : 11      
  block          : 1       
- call_import    : 10      
+ call           : 10      
 func: func_c
  [binary-bytes] : 32      
  [total]        : 16      
  block          : 1       
- call_import    : 15      
+ call           : 15      
 export: a (func_a)
  [removable-bytes-without-it]: 72      
 export: b (func_b)
@@ -154,11 +154,12 @@ export: b (func_b)
 )
 global
  [funcs]        : 1       
+ [imports]      : 1       
 func: func_a
  [binary-bytes] : 12      
  [total]        : 6       
  block          : 1       
- call_import    : 5       
+ call           : 5       
 export: a (func_a)
  [removable-bytes-without-it]: 7       
 start: func_a
@@ -178,11 +179,12 @@ start: func_a
 )
 global
  [funcs]        : 1       
+ [imports]      : 1       
 func: func_a
  [binary-bytes] : 12      
  [total]        : 6       
  block          : 1       
- call_import    : 5       
+ call           : 5       
 start: func_a
  [removable-bytes-without-it]: 67      
 (module

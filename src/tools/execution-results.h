@@ -20,6 +20,7 @@
 
 #include "wasm.h"
 #include "shell-interface.h"
+#include "ir/import-utils.h"
 
 namespace wasm {
 
@@ -32,7 +33,7 @@ struct ExecutionResults {
 
   // get results of execution
   void get(Module& wasm) {
-    if (wasm.imports.size() > 0) {
+    if (ImportInfo(wasm).getNumImports() > 0) {
       std::cout << "[fuzz-exec] imports, so quitting\n";
       return;
     }

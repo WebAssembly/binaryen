@@ -31,6 +31,7 @@
 #include "support/safe_integer.h"
 #include "wasm.h"
 #include "wasm-traversal.h"
+#include "ir/module-utils.h"
 
 #ifdef WASM_INTERPRETER_DEBUG
 #include "wasm-printing.h"
@@ -511,7 +512,6 @@ public:
 
   Flow visitLoop(Loop* curr) { WASM_UNREACHABLE(); }
   Flow visitCall(Call* curr) { WASM_UNREACHABLE(); }
-  Flow visitCallImport(CallImport* curr) { WASM_UNREACHABLE(); }
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE(); }
   Flow visitGetLocal(GetLocal *curr) { WASM_UNREACHABLE(); }
   Flow visitSetLocal(SetLocal *curr) { WASM_UNREACHABLE(); }
@@ -545,7 +545,7 @@ public:
   struct ExternalInterface {
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
-    virtual Literal callImport(Import* import, LiteralList& arguments) = 0;
+    virtual Literal callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literal callTable(Index index, LiteralList& arguments, Type result, SubType& instance) = 0;
     virtual void growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
@@ -636,9 +636,9 @@ public:
     // prepare memory
     memorySize = wasm.memory.initial;
     // generate internal (non-imported) globals
-    for (auto& global : wasm.globals) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       globals[global->name] = ConstantExpressionRunner<GlobalManager>(globals).visit(global->init).value;
-    }
+    });
     // initialize the rest of the external interface
     externalInterface->init(wasm, *self());
     // run start, if present
@@ -757,18 +757,17 @@ public:
         LiteralList arguments;
         Flow flow = generateArguments(curr->operands, arguments);
         if (flow.breaking()) return flow;
-        Flow ret = instance.callFunctionInternal(curr->target, arguments);
+        auto* func = instance.wasm.getFunction(curr->target);
+        Flow ret;
+        if (func->imported()) {
+          ret = instance.externalInterface->callImport(func, arguments);
+        } else {
+          ret = instance.callFunctionInternal(curr->target, arguments);
+        }
 #ifdef WASM_INTERPRETER_DEBUG
         std::cout << "(returned to " << scope.function->name << ")\n";
 #endif
         return ret;
-      }
-      Flow visitCallImport(CallImport *curr) {
-        NOTE_ENTER("CallImport");
-        LiteralList arguments;
-        Flow flow = generateArguments(curr->operands, arguments);
-        if (flow.breaking()) return flow;
-        return instance.externalInterface->callImport(instance.wasm.getImport(curr->target), arguments);
       }
       Flow visitCallIndirect(CallIndirect *curr) {
         NOTE_ENTER("CallIndirect");

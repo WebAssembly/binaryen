@@ -1,13 +1,20 @@
 (module
- (type $0 (func (result i64)))
+ (type $FUNCSIG$j (func (result i64)))
+ (type $legaltype$imported (func (result i32)))
+ (import "env" "imported" (func $legalimport$imported (result i32)))
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "func" (func $legalstub$func))
+ (export "imported" (func $legalstub$imported))
+ (export "imported_again" (func $legalstub$imported))
  (export "getTempRet0" (func $getTempRet0))
  (export "setTempRet0" (func $setTempRet0))
- (func $func (; 0 ;) (type $0) (result i64)
+ (func $func (; 1 ;) (type $FUNCSIG$j) (result i64)
+  (drop
+   (call $legalfunc$imported)
+  )
   (unreachable)
  )
- (func $legalstub$func (; 1 ;) (result i32)
+ (func $legalstub$func (; 2 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $func)
@@ -24,10 +31,40 @@
    (get_local $0)
   )
  )
- (func $getTempRet0 (; 2 ;) (result i32)
+ (func $legalstub$imported (; 3 ;) (result i32)
+  (local $0 i64)
+  (set_local $0
+   (call $legalfunc$imported)
+  )
+  (set_global $tempRet0
+   (i32.wrap/i64
+    (i64.shr_u
+     (get_local $0)
+     (i64.const 32)
+    )
+   )
+  )
+  (i32.wrap/i64
+   (get_local $0)
+  )
+ )
+ (func $legalfunc$imported (; 4 ;) (result i64)
+  (i64.or
+   (i64.extend_u/i32
+    (call $legalimport$imported)
+   )
+   (i64.shl
+    (i64.extend_u/i32
+     (get_global $tempRet0)
+    )
+    (i64.const 32)
+   )
+  )
+ )
+ (func $getTempRet0 (; 5 ;) (result i32)
   (get_global $tempRet0)
  )
- (func $setTempRet0 (; 3 ;) (param $0 i32)
+ (func $setTempRet0 (; 6 ;) (param $0 i32)
   (set_global $tempRet0
    (get_local $0)
   )

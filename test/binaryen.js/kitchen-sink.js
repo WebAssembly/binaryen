@@ -63,7 +63,6 @@ function test_ids() {
   console.log("BinaryenBreakId: " + Binaryen.BreakId);
   console.log("BinaryenSwitchId: " + Binaryen.SwitchId);
   console.log("BinaryenCallId: " + Binaryen.CallId);
-  console.log("BinaryenCallImportId: " + Binaryen.CallImportId);
   console.log("BinaryenCallIndirectId: " + Binaryen.CallIndirectId);
   console.log("BinaryenGetLocalId: " + Binaryen.GetLocalId);
   console.log("BinaryenSetLocalId: " + Binaryen.SetLocalId);
@@ -199,7 +198,7 @@ function test_core() {
     ),
     module.i32.eqz( // check the output type of the call node
       module.i32.trunc_s.f32(
-        module.callImport("an-imported", [ makeInt32(13), makeFloat64(3.7) ], Binaryen.f32)
+        module.call("an-imported", [ makeInt32(13), makeFloat64(3.7) ], Binaryen.f32)
       )
     ),
     module.i32.eqz( // check the output type of the call node
@@ -283,7 +282,7 @@ function test_core() {
 }
 
 function makeCallCheck(x) {
-  return module.callImport("check", [ makeInt32(x) ], Binaryen.None);
+  return module.call("check", [ makeInt32(x) ], Binaryen.None);
 }
 
 function test_relooper() {
@@ -518,7 +517,7 @@ function test_interpret() {
   module.addFunctionImport("print-i32", "spectest", "print", vi);
 
   var v = module.addFunctionType("v", Binaryen.None, []);
-  call = module.callImport("print-i32", [ makeInt32(1234) ], Binaryen.None);
+  call = module.call("print-i32", [ makeInt32(1234) ], Binaryen.None);
   var starter = module.addFunction("starter", v, [], call);
   module.setStart(starter);
 

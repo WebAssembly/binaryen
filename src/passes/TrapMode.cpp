@@ -22,6 +22,7 @@
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
+#include "ir/function-type-utils.h"
 #include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
@@ -222,12 +223,13 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer &trappingFunctions) {
   }
 
   Module& wasm = trappingFunctions.getModule();
-  auto import = new Import; // f64-to-int = asm2wasm.f64-to-int;
+  auto import = new Function; // f64-to-int = asm2wasm.f64-to-int;
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->functionType = ensureFunctionType("id", &wasm)->name;
-  import->kind = ExternalKind::Function;
+  auto* functionType = ensureFunctionType("id", &wasm);
+  import->type = functionType->name;
+  FunctionTypeUtils::fillFunction(import, functionType);
   trappingFunctions.addImport(import);
 }
 
@@ -263,7 +265,7 @@ Expression* makeTrappingUnary(Unary* curr, TrappingFunctionContainer &trappingFu
     // WebAssembly traps on float-to-int overflows, but asm.js wouldn't, so we must emulate that
     ensureF64ToI64JSImport(trappingFunctions);
     Expression* f64Value = ensureDouble(curr->value, wasm.allocator);
-    return builder.makeCallImport(F64_TO_INT, {f64Value}, i32);
+    return builder.makeCall(F64_TO_INT, {f64Value}, i32);
   }
 
   ensureUnaryFunc(curr, wasm, trappingFunctions);

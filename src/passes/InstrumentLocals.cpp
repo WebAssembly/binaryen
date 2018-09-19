@@ -49,6 +49,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -74,7 +75,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       default: WASM_UNREACHABLE();
     }
     replaceCurrent(
-      builder.makeCallImport(
+      builder.makeCall(
         import,
         {
           builder.makeConst(Literal(int32_t(id++))),
@@ -97,7 +98,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case unreachable: return; // nothing to do here
       default: WASM_UNREACHABLE();
     }
-    curr->value = builder.makeCallImport(
+    curr->value = builder.makeCall(
       import,
       {
         builder.makeConst(Literal(int32_t(id++))),
@@ -123,13 +124,14 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, std::string sig) {
-    auto import = new Import;
+    auto import = new Function;
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->functionType = ensureFunctionType(sig, wasm)->name;
-    import->kind = ExternalKind::Function;
-    wasm->addImport(import);
+    auto* functionType = ensureFunctionType(sig, wasm);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
+    wasm->addFunction(import);
   }
 };
 

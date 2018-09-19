@@ -146,24 +146,29 @@ static void run_asserts(Name moduleName, size_t* i, bool* checked, Module* wasm,
       }
       if (!invalid && id == ASSERT_UNLINKABLE) {
         // validate "instantiating" the mdoule
-        for (auto& import : wasm.imports) {
+        auto reportUnknownImport = [&](Importable* import) {
+          std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
+          invalid = true;
+        };
+        ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
+        ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
           if (import->module == SPECTEST && import->base == PRINT) {
-            if (import->kind != ExternalKind::Function) {
-              std::cerr << "spectest.print should be a function, but is " << int32_t(import->kind) << '\n';
-              invalid = true;
-              break;
-            }
+            // We can handle it.
           } else {
-            std::cerr << "unknown import: " << import->module << '.' << import->base << '\n';
-            invalid = true;
-            break;
+            reportUnknownImport(import);
           }
+        });
+        if (wasm.memory.imported()) {
+          reportUnknownImport(&wasm.memory);
+        }
+        if (wasm.table.imported()) {
+          reportUnknownImport(&wasm.table);
         }
         for (auto& segment : wasm.table.segments) {
           for (auto name : segment.data) {
             // spec tests consider it illegal to use spectest.print in a table
-            if (auto* import = wasm.getImportOrNull(name)) {
-              if (import->module == SPECTEST && import->base == PRINT) {
+            if (auto* import = wasm.getFunction(name)) {
+              if (import->imported() && import->module == SPECTEST && import->base == PRINT) {
                 std::cerr << "cannot put spectest.print in table\n";
                 invalid = true;
               }

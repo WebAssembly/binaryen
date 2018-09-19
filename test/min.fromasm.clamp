@@ -1,8 +1,8 @@
 (module
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $memory 256 256))
+ (data (get_global $memoryBase) "min.asm.js")
  (import "env" "memoryBase" (global $memoryBase i32))
  (global $M (mut i32) (i32.const 0))
- (data (get_global $memoryBase) "min.asm.js")
  (export "floats" (func $legalstub$floats))
  (export "getTempRet0" (func $ub))
  (export "neg" (func $legalstub$neg))

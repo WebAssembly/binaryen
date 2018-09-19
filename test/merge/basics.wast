@@ -18,8 +18,8 @@
   (func $only-a
     (drop (i32.const 100))
     (call $only-a)
-    (call_import $some-func)
-    (call_import $some-collide)
+    (call $some-func)
+    (call $some-collide)
     (call_indirect (type $ii)
       (i32.const 123)
       (i32.const 456)

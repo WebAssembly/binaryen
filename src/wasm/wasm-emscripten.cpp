@@ -24,6 +24,8 @@
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+#include "ir/function-type-utils.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -181,12 +183,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     if (indirectFunc == dummyFunction) {
       continue;
     }
-    std::string sig;
-    if (auto import = wasm.getImportOrNull(indirectFunc)) {
-      sig = getSig(wasm.getFunctionType(import->functionType));
-    } else {
-      sig = getSig(wasm.getFunction(indirectFunc));
-    }
+    std::string sig = getSig(wasm.getFunction(indirectFunc));
     auto* funcType = ensureFunctionType(sig, &wasm);
     if (hasI64ResultOrParam(funcType)) continue; // Can't export i64s on the web.
     if (!sigs.insert(sig).second) continue; // Sig is already in the set
@@ -269,12 +266,12 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
     // function would have signature 'vii'.)
     std::string importSig = std::string(1, sig[0]) + 'i' + sig.substr(1);
     FunctionType *importType = ensureFunctionType(importSig, &wasm);
-    auto import = new Import;
+    auto import = new Function;
     import->name = import->base = "jsCall_" + sig;
     import->module = ENV;
-    import->functionType = importType->name;
-    import->kind = ExternalKind::Function;
-    wasm.addImport(import);
+    import->type = importType->name;
+    FunctionTypeUtils::fillFunction(import, importType);
+    wasm.addFunction(import);
     FunctionType *funcType = ensureFunctionType(sig, &wasm);
 
     // Create jsCall_sig_index thunks (e.g. jsCall_vi_0, jsCall_vi_1, ...)
@@ -297,7 +294,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
         args.push_back(builder.makeGetLocal(i, funcType->params[i]));
       }
       Expression* call =
-          builder.makeCallImport(import->name, args, funcType->result);
+          builder.makeCall(import->name, args, funcType->result);
       f->body = call;
       wasm.addFunction(f);
       tableSegmentData.push_back(f->name);
@@ -378,7 +375,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
     : wasm(_wasm),
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
-  void visitCallImport(CallImport* curr);
+  void visitCall(Call* curr);
 
 private:
   Literal idLiteralForCode(std::string code);
@@ -387,9 +384,9 @@ private:
   void addImport(Name importName, std::string baseSig);
 };
 
-void AsmConstWalker::visitCallImport(CallImport* curr) {
-  Import* import = wasm.getImport(curr->target);
-  if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+void AsmConstWalker::visitCall(Call* curr) {
+  auto* import = wasm.getFunction(curr->target);
+  if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
     auto arg = curr->operands[0]->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, arg);
     arg->value = idLiteralForCode(code);
@@ -434,20 +431,19 @@ Name AsmConstWalker::nameForImportWithSig(std::string sig) {
 }
 
 void AsmConstWalker::addImport(Name importName, std::string baseSig) {
-  auto import = new Import;
+  auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
-  import->functionType = ensureFunctionType(baseSig, &wasm)->name;
-  import->kind = ExternalKind::Function;
-  wasm.addImport(import);
+  import->type = ensureFunctionType(baseSig, &wasm)->name;
+  wasm.addFunction(import);
 }
 
 AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
   // Collect imports to remove
   // This would find our generated functions if we ran it later
   std::vector<Name> toRemove;
-  for (auto& import : wasm.imports) {
-    if (import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+  for (auto& import : wasm.functions) {
+    if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
       toRemove.push_back(import->name);
     }
   }
@@ -458,7 +454,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
 
   // Remove the base functions that we didn't generate
   for (auto importName : toRemove) {
-    wasm.removeImport(importName);
+    wasm.removeFunction(importName);
   }
   return walker;
 }
@@ -590,19 +586,21 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     return fixEmExceptionInvoke(name, sig);
   }
 
-  void visitImport(Import* curr) {
-    if (curr->kind != ExternalKind::Function)
+  void visitFunction(Function* curr) {
+    if (!curr->imported()) {
       return;
+    }
 
-    FunctionType* func = wasm.getFunctionType(curr->functionType);
+    FunctionType* func = wasm.getFunctionType(curr->type);
     Name newname = fixEmEHSjLjNames(curr->base, getSig(func));
-    if (newname == curr->base)
+    if (newname == curr->base) {
       return;
+    }
 
     assert(importRenames.count(curr->name) == 0);
     importRenames[curr->name] = newname;
     // Either rename or remove the existing import
-    if (wasm.getImportOrNull(newname) || !newImports.insert(newname).second) {
+    if (wasm.getFunctionOrNull(newname) || !newImports.insert(newname).second) {
       toRemove.push_back(curr->name);
     } else {
       curr->base = newname;
@@ -621,16 +619,18 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     }
   }
 
-  void visitCallImport(CallImport* curr) {
-    auto it = importRenames.find(curr->target);
-    if (it != importRenames.end()) {
-      curr->target = it->second;
+  void visitCall(Call* curr) {
+    if (wasm.getFunction(curr->target)->imported()) {
+      auto it = importRenames.find(curr->target);
+      if (it != importRenames.end()) {
+        curr->target = it->second;
+      }
     }
   }
 
   void visitModule(Module* curr) {
     for (auto importName : toRemove) {
-      wasm.removeImport(importName);
+      wasm.removeFunction(importName);
     }
     wasm.updateMaps();
   }
@@ -731,25 +731,23 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // see.
   meta << ", \"declares\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
-    if (import->kind == ExternalKind::Function &&
-        (emJsWalker.codeByName.count(import->base.str) == 0) &&
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (emJsWalker.codeByName.count(import->base.str) == 0 &&
         !import->base.startsWith(EMSCRIPTEN_ASM_CONST.str) &&
         !import->base.startsWith("invoke_") &&
         !import->base.startsWith("jsCall_")) {
-      if (declares.insert(import->base.str).second)
+      if (declares.insert(import->base.str).second) {
         meta << maybeComma() << '"' << import->base.str << '"';
+      }
     }
-  }
+  });
   meta << "]";
 
   meta << ", \"externs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
-    if (import->kind == ExternalKind::Global) {
-      meta << maybeComma() << "\"_" << import->base.str << '"';
-    }
-  }
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+    meta << maybeComma() << "\"_" << import->base.str << '"';
+  });
   meta << "]";
 
   meta << ", \"implementedFunctions\": [";
@@ -770,12 +768,13 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   meta << ", \"invokeFuncs\": [";
   commaFirst = true;
-  for (const auto& import : wasm.imports) {
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base.startsWith("invoke_")) {
-      if (invokeFuncs.insert(import->base.str).second)
+      if (invokeFuncs.insert(import->base.str).second) {
         meta << maybeComma() << '"' << import->base.str << '"';
+      }
     }
-  }
+  });
   meta << "]";
 
   meta << " }\n";

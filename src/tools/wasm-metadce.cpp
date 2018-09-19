@@ -33,7 +33,7 @@
 #include "support/colors.h"
 #include "wasm-io.h"
 #include "wasm-builder.h"
-#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 
 using namespace wasm;
 
@@ -69,8 +69,13 @@ struct MetaDCEGraph {
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
 
-  ImportId getImportId(Name name) {
-    auto* imp = wasm.getImport(name);
+  ImportId getFunctionImportId(Name name) {
+    auto* imp = wasm.getFunction(name);
+    return getImportId(imp->module, imp->base);
+  }
+
+  ImportId getGlobalImportId(Name name) {
+    auto* imp = wasm.getGlobal(name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -86,28 +91,33 @@ struct MetaDCEGraph {
     // Add an entry for everything we might need ahead of time, so parallel work
     // does not alter parent state, just adds to things pointed by it, independently
     // (each thread will add for one function, etc.)
-    for (auto& func : wasm.functions) {
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
       auto dceName = getName("func", func->name.str);
       DCENodeToFunction[dceName] = func->name;
       functionToDCENode[func->name] = dceName;
       nodes[dceName] = DCENode(dceName);
-    }
-    for (auto& global : wasm.globals) {
+    });
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       auto dceName = getName("global", global->name.str);
       DCENodeToGlobal[dceName] = global->name;
       globalToDCENode[global->name] = dceName;
       nodes[dceName] = DCENode(dceName);
-    }
-    for (auto& imp : wasm.imports) {
-      // only process function and global imports - the table and memory are always there
-      if (imp->kind == ExternalKind::Function || imp->kind == ExternalKind::Global) {
-        auto id = getImportId(imp->module, imp->base);
-        if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
-          auto dceName = getName("importId", imp->name.str);
-          importIdToDCENode[id] = dceName;
-        }
+    });
+    // only process function and global imports - the table and memory are always there
+    ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.str);
+        importIdToDCENode[id] = dceName;
       }
-    }
+    });
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.str);
+        importIdToDCENode[id] = dceName;
+      }
+    });
     for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
         auto dceName = getName("export", exp->name.str);
@@ -118,16 +128,16 @@ struct MetaDCEGraph {
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
       if (exp->kind == ExternalKind::Function) {
-        if (wasm.getFunctionOrNull(exp->value)) {
+        if (!wasm.getFunction(exp->value)->imported()) {
           node.reaches.push_back(functionToDCENode[exp->value]);
         } else {
-          node.reaches.push_back(importIdToDCENode[getImportId(exp->value)]);
+          node.reaches.push_back(importIdToDCENode[getFunctionImportId(exp->value)]);
         }
       } else if (exp->kind == ExternalKind::Global) {
-        if (wasm.getGlobalOrNull(exp->value)) {
+        if (!wasm.getGlobal(exp->value)->imported()) {
           node.reaches.push_back(globalToDCENode[exp->value]);
         } else {
-          node.reaches.push_back(importIdToDCENode[getImportId(exp->value)]);
+          node.reaches.push_back(importIdToDCENode[getGlobalImportId(exp->value)]);
         }
       }
     }
@@ -150,12 +160,12 @@ struct MetaDCEGraph {
 
       void handleGlobal(Name name) {
         Name dceName;
-        if (getModule()->getGlobalOrNull(name)) {
-          // its a global
+        if (!getModule()->getGlobal(name)->imported()) {
+          // its a defined global
           dceName = parent->globalToDCENode[name];
         } else {
           // it's an import.
-          dceName = parent->importIdToDCENode[parent->getImportId(name)];
+          dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
         if (parentDceName.isNull()) {
           parent->roots.insert(parentDceName);
@@ -164,11 +174,11 @@ struct MetaDCEGraph {
         }
       }
     };
-    for (auto& global : wasm.globals) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       InitScanner scanner(this, globalToDCENode[global->name]);
       scanner.setModule(&wasm);
       scanner.walk(global->init);
-    }
+    });
     // we can't remove segments, so root what they need
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
@@ -176,10 +186,10 @@ struct MetaDCEGraph {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
       for (auto& name : segment.data) {
-        if (wasm.getFunctionOrNull(name)) {
+        if (!wasm.getFunction(name)->imported()) {
           roots.insert(functionToDCENode[name]);
         } else {
-          roots.insert(importIdToDCENode[getImportId(name)]);
+          roots.insert(importIdToDCENode[getFunctionImportId(name)]);
         }
       }
       rooter.walk(segment.offset);
@@ -199,15 +209,16 @@ struct MetaDCEGraph {
       }
 
       void visitCall(Call* curr) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->functionToDCENode[curr->target]
-        );
-      }
-      void visitCallImport(CallImport* curr) {
-        assert(parent->functionToDCENode.count(getFunction()->name) > 0);
-        parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
-          parent->importIdToDCENode[parent->getImportId(curr->target)]
-        );
+        if (!getModule()->getFunction(curr->target)->imported()) {
+          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+            parent->functionToDCENode[curr->target]
+          );
+        } else {
+          assert(parent->functionToDCENode.count(getFunction()->name) > 0);
+          parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(
+            parent->importIdToDCENode[parent->getFunctionImportId(curr->target)]
+          );
+        }
       }
       void visitGetGlobal(GetGlobal* curr) {
         handleGlobal(curr->name);
@@ -222,12 +233,12 @@ struct MetaDCEGraph {
       void handleGlobal(Name name) {
         if (!getFunction()) return; // non-function stuff (initializers) are handled separately
         Name dceName;
-        if (getModule()->getGlobalOrNull(name)) {
+        if (!getModule()->getGlobal(name)->imported()) {
           // its a global
           dceName = parent->globalToDCENode[name];
         } else {
           // it's an import.
-          dceName = parent->importIdToDCENode[parent->getImportId(name)];
+          dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
         parent->nodes[parent->functionToDCENode[getFunction()->name]].reaches.push_back(dceName);
       }

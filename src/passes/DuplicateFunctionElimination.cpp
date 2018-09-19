@@ -25,6 +25,7 @@
 #include "ir/utils.h"
 #include "ir/function-utils.h"
 #include "ir/hashed.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -72,9 +73,9 @@ struct DuplicateFunctionElimination : public Pass {
       hasherRunner.run();
       // Find hash-equal groups
       std::map<uint32_t, std::vector<Function*>> hashGroups;
-      for (auto& func : module->functions) {
-        hashGroups[hashes[func.get()]].push_back(func.get());
-      }
+      ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+        hashGroups[hashes[func]].push_back(func);
+      });
       // Find actually equal functions and prepare to replace them
       std::map<Name, Name> replacements;
       std::set<Name> duplicates;

@@ -24,6 +24,7 @@
 #include "wasm-validator.h"
 #include "ir/utils.h"
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "support/colors.h"
 
 
@@ -233,7 +234,6 @@ public:
   void visitBreak(Break* curr);
   void visitSwitch(Switch* curr);
   void visitCall(Call* curr);
-  void visitCallImport(CallImport* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal* curr);
@@ -444,29 +444,10 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 void FunctionValidator::visitCall(Call* curr) {
   if (!info.validateGlobally) return;
   auto* target = getModule()->getFunctionOrNull(curr->target);
-  if (!shouldBeTrue(!!target, curr, "call target must exist")) {
-    if (getModule()->getImportOrNull(curr->target) && !info.quiet) {
-      getStream() << "(perhaps it should be a CallImport instead of Call?)\n";
-    }
-    return;
-  }
+  if (!shouldBeTrue(!!target, curr, "call target must exist")) return;
   if (!shouldBeTrue(curr->operands.size() == target->params.size(), curr, "call param number must match")) return;
   for (size_t i = 0; i < curr->operands.size(); i++) {
     if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, target->params[i], curr, "call param types must match") && !info.quiet) {
-      getStream() << "(on argument " << i << ")\n";
-    }
-  }
-}
-
-void FunctionValidator::visitCallImport(CallImport* curr) {
-  if (!info.validateGlobally) return;
-  auto* import = getModule()->getImportOrNull(curr->target);
-  if (!shouldBeTrue(!!import, curr, "call_import target must exist")) return;
-  if (!shouldBeTrue(!!import->functionType.is(), curr, "called import must be function")) return;
-  auto* type = getModule()->getFunctionType(import->functionType);
-  if (!shouldBeTrue(curr->operands.size() == type->params.size(), curr, "call param number must match")) return;
-  for (size_t i = 0; i < curr->operands.size(); i++) {
-    if (!shouldBeEqualOrFirstIsUnreachable(curr->operands[i]->type, type->params[i], curr, "call param types must match") && !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
   }
@@ -503,13 +484,13 @@ void FunctionValidator::visitSetLocal(SetLocal* curr) {
 
 void FunctionValidator::visitGetGlobal(GetGlobal* curr) {
   if (!info.validateGlobally) return;
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name) || getModule()->getImportOrNull(curr->name), curr, "get_global name must be valid");
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name), curr, "get_global name must be valid");
 }
 
 void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
   if (!info.validateGlobally) return;
   auto* global = getModule()->getGlobalOrNull(curr->name);
-  if (shouldBeTrue(global != NULL, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
+  if (shouldBeTrue(global, curr, "set_global name must be valid (and not an import; imports can't be modified)")) {
     shouldBeTrue(global->mutable_, curr, "set_global global must be mutable");
     shouldBeEqualOrFirstIsUnreachable(curr->value->type, global->type, curr, "set_global value must have right type");
   }
@@ -926,23 +907,15 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 // Main validator class
 
 static void validateImports(Module& module, ValidationInfo& info) {
-  for (auto& curr : module.imports) {
-    if (curr->kind == ExternalKind::Function) {
-      if (info.validateWeb) {
-        auto* functionType = module.getFunctionType(curr->functionType);
-        info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
-        for (Type param : functionType->params) {
-          info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
-        }
+  ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
+    if (info.validateWeb) {
+      auto* functionType = module.getFunctionType(curr->type);
+      info.shouldBeUnequal(functionType->result, i64, curr->name, "Imported function must not have i64 return type");
+      for (Type param : functionType->params) {
+        info.shouldBeUnequal(param, i64, curr->name, "Imported function must not have i64 parameters");
       }
     }
-    if (curr->kind == ExternalKind::Table) {
-      info.shouldBeTrue(module.table.imported, curr->name, "Table import record exists but table is not marked as imported");
-    }
-    if (curr->kind == ExternalKind::Memory) {
-      info.shouldBeTrue(module.memory.imported, curr->name, "Memory import record exists but memory is not marked as imported");
-    }
-  }
+  });
 }
 
 static void validateExports(Module& module, ValidationInfo& info) {
@@ -961,13 +934,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
   for (auto& exp : module.exports) {
     Name name = exp->value;
     if (exp->kind == ExternalKind::Function) {
-      Import* imp;
-      info.shouldBeTrue(module.getFunctionOrNull(name) ||
-                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Function), name, "module function exports must be found");
+      info.shouldBeTrue(module.getFunctionOrNull(name), name, "module function exports must be found");
     } else if (exp->kind == ExternalKind::Global) {
-      Import* imp;
-      info.shouldBeTrue(module.getGlobalOrNull(name) ||
-                        ((imp = module.getImportOrNull(name)) && imp->kind == ExternalKind::Global), name, "module global exports must be found");
+      info.shouldBeTrue(module.getGlobalOrNull(name), name, "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
       info.shouldBeTrue(name == Name("0") || name == module.table.name, name, "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
@@ -982,13 +951,13 @@ static void validateExports(Module& module, ValidationInfo& info) {
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
-  for (auto& curr : module.globals) {
+  ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
     info.shouldBeTrue(curr->init != nullptr, curr->name, "global init must be non-null");
     info.shouldBeTrue(curr->init->is<Const>() || curr->init->is<GetGlobal>(), curr->name, "global init must be valid");
     if (!info.shouldBeEqual(curr->type, curr->init->type, curr->init, "global init must have correct type") && !info.quiet) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
-  }
+  });
 }
 
 static void validateMemory(Module& module, ValidationInfo& info) {
@@ -1016,7 +985,7 @@ static void validateTable(Module& module, ValidationInfo& info) {
     info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32");
     info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), module.table.initial * Table::kPageSize), segment.offset, "segment offset should be reasonable");
     for (auto name : segment.data) {
-      info.shouldBeTrue(module.getFunctionOrNull(name) || module.getImportOrNull(name), name, "segment name should be valid");
+      info.shouldBeTrue(module.getFunctionOrNull(name), name, "segment name should be valid");
     }
   }
 }

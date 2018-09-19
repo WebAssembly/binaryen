@@ -25,30 +25,45 @@ namespace wasm {
 namespace ModuleUtils {
 
 // Computes the indexes in a wasm binary, i.e., with function imports
-// and function implementations sharing a single index space, etc.
+// and function implementations sharing a single index space, etc.,
+// and with the imports first (the Module's functions and globals
+// arrays are not assumed to be in a particular order, so we can't
+// just use them directly).
 struct BinaryIndexes {
   std::unordered_map<Name, Index> functionIndexes;
   std::unordered_map<Name, Index> globalIndexes;
 
   BinaryIndexes(Module& wasm) {
-    for (Index i = 0; i < wasm.imports.size(); i++) {
-      auto& import = wasm.imports[i];
-      if (import->kind == ExternalKind::Function) {
-        auto index = functionIndexes.size();
-        functionIndexes[import->name] = index;
-      } else if (import->kind == ExternalKind::Global) {
-        auto index = globalIndexes.size();
-        globalIndexes[import->name] = index;
+    auto addGlobal = [&](Global* curr) {
+      auto index = globalIndexes.size();
+      globalIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.globals) {
+      if (curr->imported()) {
+        addGlobal(curr.get());
       }
     }
-    for (Index i = 0; i < wasm.functions.size(); i++) {
+    for (auto& curr : wasm.globals) {
+      if (!curr->imported()) {
+        addGlobal(curr.get());
+      }
+    }
+    assert(globalIndexes.size() == wasm.globals.size());
+    auto addFunction = [&](Function* curr) {
       auto index = functionIndexes.size();
-      functionIndexes[wasm.functions[i]->name] = index;
+      functionIndexes[curr->name] = index;
+    };
+    for (auto& curr : wasm.functions) {
+      if (curr->imported()) {
+        addFunction(curr.get());
+      }
     }
-    for (Index i = 0; i < wasm.globals.size(); i++) {
-      auto index = globalIndexes.size();
-      globalIndexes[wasm.globals[i]->name] = index;
+    for (auto& curr : wasm.functions) {
+      if (!curr->imported()) {
+        addFunction(curr.get());
+      }
     }
+    assert(functionIndexes.size() == wasm.functions.size());
   }
 };
 
@@ -63,9 +78,25 @@ inline Function* copyFunction(Function* func, Module& out) {
   ret->localIndices = func->localIndices;
   ret->debugLocations = func->debugLocations;
   ret->body = ExpressionManipulator::copy(func->body, out);
+  ret->module = func->module;
+  ret->base = func->base;
   // TODO: copy Stack IR
   assert(!func->stackIR);
   out.addFunction(ret);
+  return ret;
+}
+
+inline Global* copyGlobal(Global* global, Module& out) {
+  auto* ret = new Global();
+  ret->name = global->name;
+  ret->type = global->type;
+  ret->mutable_ = global->mutable_;
+  if (global->imported()) {
+    ret->init = nullptr;
+  } else {
+    ret->init = ExpressionManipulator::copy(global->init, out);
+  }
+  out.addGlobal(ret);
   return ret;
 }
 
@@ -75,9 +106,6 @@ inline void copyModule(Module& in, Module& out) {
   for (auto& curr : in.functionTypes) {
     out.addFunctionType(new FunctionType(*curr));
   }
-  for (auto& curr : in.imports) {
-    out.addImport(new Import(*curr));
-  }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));
   }
@@ -85,7 +113,7 @@ inline void copyModule(Module& in, Module& out) {
     copyFunction(curr.get(), out);
   }
   for (auto& curr : in.globals) {
-    out.addGlobal(new Global(*curr));
+    copyGlobal(curr.get(), out);
   }
   out.table = in.table;
   for (auto& segment : out.table.segments) {
@@ -98,6 +126,44 @@ inline void copyModule(Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+}
+
+// Convenient iteration over imported/non-imported functions/globals
+
+template<typename T>
+inline void iterImportedGlobals(Module& wasm, T visitor) {
+  for (auto& import : wasm.globals) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterDefinedGlobals(Module& wasm, T visitor) {
+  for (auto& import : wasm.globals) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterImportedFunctions(Module& wasm, T visitor) {
+  for (auto& import : wasm.functions) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterDefinedFunctions(Module& wasm, T visitor) {
+  for (auto& import : wasm.functions) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
+  }
 }
 
 } // namespace ModuleUtils

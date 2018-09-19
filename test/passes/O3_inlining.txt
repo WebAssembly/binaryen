@@ -1,7 +1,7 @@
 (module
  (type $1 (func (param i32)))
- (global $global$1 (mut i32) (i32.const 100))
  (memory $0 1 1)
+ (global $global$1 (mut i32) (i32.const 100))
  (export "func_217" (func $1))
  (func $1 (; 0 ;) (type $1) (param $0 i32)
   (if

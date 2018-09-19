@@ -32,13 +32,14 @@
 
 #include <atomic>
 
-#include <wasm.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <ir/utils.h>
-#include <ir/literal-utils.h>
-#include <parsing.h>
-#include <passes/opt-utils.h>
+#include "wasm.h"
+#include "pass.h"
+#include "wasm-builder.h"
+#include "ir/literal-utils.h"
+#include "ir/module-utils.h"
+#include "ir/utils.h"
+#include "parsing.h"
+#include "passes/opt-utils.h"
 
 namespace wasm {
 
@@ -113,11 +114,6 @@ struct FunctionInfoScanner : public WalkerPass<PostWalker<FunctionInfoScanner>> 
   void visitCall(Call* curr) {
     assert(infos->count(curr->target) > 0); // can't add a new element in parallel
     (*infos)[curr->target].calls++;
-    // having a call is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
-  }
-
-  void visitCallImport(CallImport* curr) {
     // having a call is not lightweight
     (*infos)[getFunction()->name].lightweight = false;
   }
@@ -279,9 +275,7 @@ struct Inlining : public Pass {
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
-        if (module->getFunctionOrNull(name)) {
-          infos[name].usedGlobally = true;
-        }
+        infos[name].usedGlobally = true;
       }
     }
   }
@@ -289,12 +283,11 @@ struct Inlining : public Pass {
   bool iteration(PassRunner* runner, Module* module) {
     // decide which to inline
     InliningState state;
-    for (auto& func : module->functions) {
-      // on the first iteration, allow multiple inlinings per function
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       if (infos[func->name].worthInlining(runner->options)) {
         state.worthInlining.insert(func->name);
       }
-    }
+    });
     if (state.worthInlining.size() == 0) return false;
     // fill in actionsForFunction, as we operate on it in parallel (each function to its own entry)
     for (auto& func : module->functions) {

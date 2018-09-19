@@ -22,14 +22,19 @@
 // look at all the rest of the code).
 //
 
-#include <wasm.h>
-#include <pass.h>
+#include "wasm.h"
+#include "pass.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
 struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
-  void visitCallImport(CallImport *curr) {
-    Type type = getModule()->getFunctionType(getModule()->getImport(curr->target)->functionType)->result;
+  void visitCall(Call *curr) {
+    auto* func = getModule()->getFunction(curr->target);
+    if (!func->imported()) {
+      return;
+    }
+    Type type = getModule()->getFunctionType(func->type)->result;
     if (type == none) {
       replaceCurrent(getModule()->allocator.alloc<Nop>());
     } else {
@@ -41,13 +46,11 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
 
   void visitModule(Module *curr) {
     std::vector<Name> names;
-    for (auto& import : curr->imports) {
-      if (import->kind == ExternalKind::Function) {
-        names.push_back(import->name);
-      }
-    }
+    ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
+      names.push_back(func->name);
+    });
     for (auto& name : names) {
-      curr->removeImport(name);
+      curr->removeFunction(name);
     }
   }
 };

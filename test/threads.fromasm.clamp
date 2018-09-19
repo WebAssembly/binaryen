@@ -1,7 +1,7 @@
 (module
- (import "env" "memory" (memory $0 (shared 256 256)))
- (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "memory" (memory $memory (shared 256 256)))
  (data (get_global $memoryBase) "threads.asm.js")
+ (import "env" "memoryBase" (global $memoryBase i32))
  (export "test" (func $test))
  (func $test (; 0 ;) (; has Stack IR ;)
   (local $0 i32)

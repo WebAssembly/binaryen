@@ -61,6 +61,7 @@
 #include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "asm_v_wasm.h"
+#include "ir/function-type-utils.h"
 
 namespace wasm {
 
@@ -76,13 +77,14 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     makeStoreCall(curr);
   }
   void addImport(Module *curr, Name name, std::string sig) {
-    auto import = new Import;
+    auto import = new Function;
     import->name = name;
     import->module = INSTRUMENT;
     import->base = name;
-    import->functionType = ensureFunctionType(sig, curr)->name;
-    import->kind = ExternalKind::Function;
-    curr->addImport(import);
+    auto* functionType = ensureFunctionType(sig, curr);
+    import->type = functionType->name;
+    FunctionTypeUtils::fillFunction(import, functionType);
+    curr->addFunction(import);
   }
 
   void visitModule(Module *curr) {
@@ -94,7 +96,7 @@ private:
   std::atomic<Index> id;
   Expression* makeLoadCall(Load* curr) {
     Builder builder(*getModule());
-    curr->ptr = builder.makeCallImport(load,
+    curr->ptr = builder.makeCall(load,
       { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),
@@ -106,7 +108,7 @@ private:
 
   Expression* makeStoreCall(Store* curr) {
     Builder builder(*getModule());
-    curr->ptr = builder.makeCallImport(store,
+    curr->ptr = builder.makeCall(store,
       { builder.makeConst(Literal(int32_t(id.fetch_add(1)))),
         builder.makeConst(Literal(int32_t(curr->bytes))),
         builder.makeConst(Literal(int32_t(curr->offset.addr))),

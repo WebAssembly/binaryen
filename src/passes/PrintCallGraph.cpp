@@ -24,6 +24,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "ir/module-utils.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -46,19 +47,17 @@ struct PrintCallGraph : public Pass {
          "  }\n\n"
          "  node [shape=box, fontname=courier, fontsize=10];\n";
 
-    // All Functions
-    for (auto& func : module->functions) {
-      std::cout << "  \"" << func.get()->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
-    }
+    // Defined functions
+    ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+      std::cout << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"white\"];\n";
+    });
 
-    // Imports Nodes
-    for (auto& curr : module->imports) {
-      if (curr->kind == ExternalKind::Function) {
-        o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
-      }
-    }
+    // Imported functions
+    ModuleUtils::iterImportedFunctions(*module, [&](Function* curr) {
+      o << "  \"" << curr->name << "\" [style=\"filled\", fillcolor=\"turquoise\"];\n";
+    });
 
-    // Exports Nodes
+    // Exports
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         Function* func = module->getFunction(curr->value);
@@ -73,23 +72,17 @@ struct PrintCallGraph : public Pass {
       std::vector<Function*> allIndirectTargets;
       CallPrinter(Module *module) : module(module) {
         // Walk function bodies.
-        for (auto& func : module->functions) {
-          currFunction = func.get();
+        ModuleUtils::iterDefinedFunctions(*module, [&](Function* curr) {
+          currFunction = curr;
           visitedTargets.clear();
-          walk(func.get()->body);
-        }
+          walk(curr->body);
+        });
       }
       void visitCall(Call *curr) {
         auto* target = module->getFunction(curr->target);
         if (visitedTargets.count(target->name) > 0) return;
         visitedTargets.insert(target->name);
         std::cout << "  \"" << currFunction->name << "\" -> \"" << target->name << "\"; // call\n";
-      }
-      void visitCallImport(CallImport *curr) {
-        auto name = curr->target;
-        if (visitedTargets.count(name) > 0) return;
-        visitedTargets.insert(name);
-        std::cout << "  \"" << currFunction->name << "\" -> \"" << name << "\"; // callImport\n";
       }
     };
     CallPrinter printer(module);

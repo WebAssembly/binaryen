@@ -63,13 +63,6 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
       }
       return ret;
     }
-    Expression* visitCallImport(CallImport *curr) {
-      auto* ret = builder.makeCallImport(curr->target, {}, curr->type);
-      for (Index i = 0; i < curr->operands.size(); i++) {
-        ret->operands.push_back(copy(curr->operands[i]));
-      }
-      return ret;
-    }
     Expression* visitCallIndirect(CallIndirect *curr) {
       auto* ret = builder.makeCallIndirect(curr->fullType, copy(curr->target), {}, curr->type);
       for (Index i = 0; i < curr->operands.size(); i++) {

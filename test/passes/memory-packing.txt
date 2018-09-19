@@ -1,6 +1,5 @@
 (module
  (import "env" "memory" (memory $0 2048 2048))
- (import "env" "memoryBase" (global $memoryBase i32))
  (data (get_global $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
  (data (i32.const 1024) "waka this CAN be optimized")
  (data (i32.const 1107) "we DO know where it will go")
@@ -9,6 +8,7 @@
  (data (i32.const 4000) "zeros\00in\00the\00middle")
  (data (i32.const 4035) "nice skip here")
  (data (i32.const 4066) "another\00but no")
+ (import "env" "memoryBase" (global $memoryBase i32))
 )
 (module
  (import "env" "memory" (memory $0 2048 2048))

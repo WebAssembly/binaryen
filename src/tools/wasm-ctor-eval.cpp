@@ -36,6 +36,7 @@
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/module-utils.h"
 
 using namespace wasm;
 
@@ -124,23 +125,23 @@ public:
   EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface) : ModuleInstanceBase(wasm, externalInterface) {
     // if any global in the module has a non-const constructor, it is using a global import,
     // which we don't have, and is illegal to use
-    for (auto& global : wasm.globals) {
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
       if (!global->init->is<Const>()) {
         // some constants are ok to use
         if (auto* get = global->init->dynCast<GetGlobal>()) {
           auto name = get->name;
-          auto* import = wasm.getImport(name);
+          auto* import = wasm.getGlobal(name);
           if (import->module == Name("env") && (
             import->base == Name("STACKTOP") || // stack constants are special, we handle them
             import->base == Name("STACK_MAX")
           )) {
-            continue; // this is fine
+            return; // this is fine
           }
         }
         // this global is dangerously initialized by an import, so if it is used, we must fail
         globals.addDangerous(global->name);
       }
-    }
+    });
   }
 
   std::vector<char> stack;
@@ -173,34 +174,33 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     // fill usable values for stack imports, and globals initialized to them
-    if (auto* stackTop = ImportUtils::getImport(wasm_, "env", "STACKTOP")) {
+    ImportInfo imports(wasm_);
+    if (auto* stackTop = imports.getImportedGlobal("env", "STACKTOP")) {
       globals[stackTop->name] = Literal(int32_t(STACK_START));
       if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACKTOP")) {
         globals[stackTop->name] = Literal(int32_t(STACK_START));
       }
     }
-    if (auto* stackMax = ImportUtils::getImport(wasm_, "env", "STACK_MAX")) {
+    if (auto* stackMax = imports.getImportedGlobal("env", "STACK_MAX")) {
       globals[stackMax->name] = Literal(int32_t(STACK_START));
       if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
         globals[stackMax->name] = Literal(int32_t(STACK_START));
       }
     }
     // fill in fake values for everything else, which is dangerous to use
-    for (auto& global : wasm_.globals) {
-      if (globals.find(global->name) == globals.end()) {
-        globals[global->name] = LiteralUtils::makeLiteralZero(global->type);
+    ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
+      if (globals.find(defined->name) == globals.end()) {
+        globals[defined->name] = LiteralUtils::makeLiteralZero(defined->type);
       }
-    }
-    for (auto& import : wasm_.imports) {
-      if (import->kind == ExternalKind::Global) {
-        if (globals.find(import->name) == globals.end()) {
-          globals[import->name] = LiteralUtils::makeLiteralZero(import->globalType);
-        }
+    });
+    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
+      if (globals.find(import->name) == globals.end()) {
+        globals[import->name] = LiteralUtils::makeLiteralZero(import->type);
       }
-    }
+    });
   }
 
-  Literal callImport(Import *import, LiteralList& arguments) override {
+  Literal callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
     if (import->module == "env" && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
@@ -227,7 +227,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       if (start <= index && index < end) {
         auto name = segment.data[index - start];
         // if this is one of our functions, we can call it; if it was imported, fail
-        if (wasm->getFunctionOrNull(name)) {
+        auto* func = wasm->getFunction(name);
+        if (!func->imported()) {
           return instance.callFunctionInternal(name, arguments);
         } else {
           throw FailToEvalException(std::string("callTable on imported function: ") + name.str);

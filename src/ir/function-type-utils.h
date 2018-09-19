@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 WebAssembly Community Group participants
+ * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-//
-// Write out the name list of the module, similar to `nm`.
-//
+#ifndef wasm_ir_function_type_utils_h
+#define wasm_ir_function_type_utils_h
 
-#include "wasm.h"
-#include "pass.h"
-#include "ir/module-utils.h"
-#include "ir/utils.h"
 
 namespace wasm {
 
-struct NameList : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      std::cout << "    " << func->name << " : " << Measurer::measure(func->body) << '\n';
-    });
-  }
-};
+namespace FunctionTypeUtils {
 
-Pass *createNameListPass() {
-  return new NameList();
+// Fills in function info from a function type
+inline void fillFunction(Function* func, FunctionType* type) {
+  func->params = type->params;
+  func->result = type->result;
 }
+
+} // namespace FunctionTypeUtils
 
 } // namespace wasm
 
+#endif // wasm_ir_function_type_utils_h

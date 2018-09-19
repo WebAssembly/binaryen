@@ -51,12 +51,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return 2 + visit(curr->condition) + maybeVisit(curr->value);
   }
   Index visitCall(Call *curr) {
+    // XXX this does not take into account if the call is to an import, which
+    //     may be costlier in general
     Index ret = 4;
-    for (auto* child : curr->operands) ret += visit(child);
-    return ret;
-  }
-  Index visitCallImport(CallImport *curr) {
-    Index ret = 15;
     for (auto* child : curr->operands) ret += visit(child);
     return ret;
   }

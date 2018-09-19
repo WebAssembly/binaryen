@@ -34,6 +34,8 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "mixed_arena.h"
 #include "asm_v_wasm.h"
+#include "ir/import-utils.h"
+#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "passes/passes.h"
@@ -272,7 +274,7 @@ private:
   void addEsmImports(Ref ast, Module* wasm);
   void addEsmExportsAndInstantiate(Ref ast, Module* wasm, Name funcName);
   void addBasics(Ref ast);
-  void addImport(Ref ast, Import* import);
+  void addFunctionImport(Ref ast, Function* import);
   void addTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -341,9 +343,12 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   asmFunc[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeString(USE_ASM)));
   // create heaps, etc
   addBasics(asmFunc[3]);
-  for (auto& import : wasm->imports) {
-    addImport(asmFunc[3], import.get());
-  }
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
+    addFunctionImport(asmFunc[3], import);
+  });
+  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* import) {
+    addGlobal(asmFunc[3], import);
+  });
   // figure out the table size
   tableSize = std::accumulate(wasm->table.segments.begin(),
                               wasm->table.segments.end(),
@@ -368,16 +373,16 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   fromName(WASM_FETCH_HIGH_BITS, NameScope::Top);
   // globals
   bool generateFetchHighBits = false;
-  for (auto& global : wasm->globals) {
-    addGlobal(asmFunc[3], global.get());
+  ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
+    addGlobal(asmFunc[3], global);
     if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
       generateFetchHighBits = true;
     }
-  }
+  });
   // functions
-  for (auto& func : wasm->functions) {
-    asmFunc[3]->push_back(processFunction(wasm, func.get()));
-  }
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+    asmFunc[3]->push_back(processFunction(wasm, func));
+  });
   if (generateFetchHighBits) {
     Builder builder(allocator);
     std::vector<Type> params;
@@ -402,19 +407,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   return ret;
 }
 
-void Wasm2JSBuilder::addEsmImports(Ref ast, Module *wasm) {
+void Wasm2JSBuilder::addEsmImports(Ref ast, Module* wasm) {
   std::unordered_map<Name, Name> nameMap;
 
-  for (auto& import : wasm->imports) {
-    // Only function imports are supported for now, but eventually imported
-    // memories can probably be supported at least.
-    switch (import->kind) {
-      case ExternalKind::Function: break;
-      default:
-        Fatal() << "non-function imports aren't supported yet\n";
-        abort();
-    }
-
+  ImportInfo imports(*wasm);
+  if (imports.getNumImportedGlobals() > 0) {
+    Fatal() << "non-function imports aren't supported yet\n";
+    abort();
+  }
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
     // Right now codegen requires a flat namespace going into the module,
     // meaning we don't importing the same name from multiple namespaces yet.
     if (nameMap.count(import->base) && nameMap[import->base] != import->module) {
@@ -434,7 +435,7 @@ void Wasm2JSBuilder::addEsmImports(Ref ast, Module *wasm) {
     std::string os = out.str();
     IString name(os.c_str(), false);
     flattenAppend(ast, ValueBuilder::makeName(name));
-  }
+  });
 }
 
 static std::string base64Encode(std::vector<char> &data) {
@@ -553,13 +554,10 @@ void Wasm2JSBuilder::addEsmExportsAndInstantiate(Ref ast, Module *wasm, Name fun
     << "}, {";
 
   construct << "abort:function() { throw new Error('abort'); }";
-  for (auto& import : wasm->imports) {
-    switch (import->kind) {
-      case ExternalKind::Function: break;
-      default: continue;
-    }
+
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* import) {
     construct << "," << import->base.str;
-  }
+  });
   construct << "},mem" << funcName.str << ")";
   std::string sconstruct = construct.str();
   IString name(sconstruct.c_str(), false);
@@ -678,7 +676,7 @@ void Wasm2JSBuilder::addBasics(Ref ast) {
   );
 }
 
-void Wasm2JSBuilder::addImport(Ref ast, Import* import) {
+void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref module = ValueBuilder::makeName(ENV); // TODO: handle nested module imports
@@ -933,14 +931,6 @@ void Wasm2JSBuilder::scanFunctionBody(Expression* curr) {
       parent->setStatement(curr);
     }
     void visitCall(Call* curr) {
-      for (auto item : curr->operands) {
-        if (parent->isStatement(item)) {
-          parent->setStatement(curr);
-          break;
-        }
-      }
-    }
-    void visitCallImport(CallImport* curr) {
       for (auto item : curr->operands) {
         if (parent->isStatement(item)) {
           parent->setStatement(curr);
@@ -1252,10 +1242,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     }
 
     Ref visitCall(Call* curr) {
-      return visitGenericCall(curr, curr->target, curr->operands);
-    }
-
-    Ref visitCallImport(CallImport* curr) {
       return visitGenericCall(curr, curr->target, curr->operands);
     }
 
@@ -2197,7 +2183,7 @@ Ref Wasm2JSBuilder::makeAssertReturnNanFunc(SExpressionWasmBuilder& sexpBuilder,
                                              Name testFuncName,
                                              Name asmModule) {
   Expression* actual = sexpBuilder.parseExpression(e[1]);
-  Expression* body = wasmBuilder.makeCallImport("isNaN", {actual}, i32);
+  Expression* body = wasmBuilder.makeCall("isNaN", {actual}, i32);
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(
       testFuncName,

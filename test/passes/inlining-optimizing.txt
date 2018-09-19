@@ -78,8 +78,8 @@
 (module
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
- (table 89 89 anyfunc)
  (memory $0 17)
+ (table 89 89 anyfunc)
  (start $1)
  (func $1 (; 0 ;) (type $0)
   (i32.store

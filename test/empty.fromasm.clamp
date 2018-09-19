@@ -1,4 +1,4 @@
 (module
- (import "env" "memory" (memory $0 256 256))
+ (import "env" "memory" (memory $memory 256 256))
  (data (i32.const 1024) "empty.asm.js")
 )

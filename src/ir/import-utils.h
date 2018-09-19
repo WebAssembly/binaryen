@@ -22,16 +22,65 @@
 
 namespace wasm {
 
-namespace ImportUtils {
-  // find an import by the module.base that is being imported.
-  // return the internal name
-  inline Import* getImport(Module& wasm, Name module, Name base) {
-    for (auto& import : wasm.imports) {
+// Collects info on imports, into a form convenient for summarizing
+// and searching.
+struct ImportInfo {
+  Module& wasm;
+
+  std::vector<Global*> importedGlobals;
+  std::vector<Function*> importedFunctions;
+
+  ImportInfo(Module& wasm) : wasm(wasm) {
+    for (auto& import : wasm.globals) {
+      if (import->imported()) {
+        importedGlobals.push_back(import.get());
+      }
+    }
+    for (auto& import : wasm.functions) {
+      if (import->imported()) {
+        importedFunctions.push_back(import.get());
+      }
+    }
+  }
+
+  Global* getImportedGlobal(Name module, Name base) {
+    for (auto* import : importedGlobals) {
       if (import->module == module && import->base == base) {
-        return import.get();
+        return import;
       }
     }
     return nullptr;
+  }
+
+  Function* getImportedFunction(Name module, Name base) {
+    for (auto* import : importedFunctions) {
+      if (import->module == module && import->base == base) {
+        return import;
+      }
+    }
+    return nullptr;
+  }
+
+  Index getNumImportedGlobals() {
+    return importedGlobals.size();
+  }
+
+  Index getNumImportedFunctions() {
+    return importedFunctions.size();
+  }
+
+  Index getNumImports() {
+    return getNumImportedGlobals() + getNumImportedFunctions() +
+           (wasm.memory.imported() ? 1 : 0) +
+           (wasm.table.imported() ? 1 : 0);
+  }
+
+  Index getNumDefinedGlobals() {
+    return wasm.globals.size() - getNumImportedGlobals();
+  }
+
+  Index getNumDefinedFunctions() {
+    return wasm.functions.size() - getNumImportedFunctions();
   }
 };
 

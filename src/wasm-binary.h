@@ -32,6 +32,7 @@
 #include "wasm-builder.h"
 #include "parsing.h"
 #include "wasm-validator.h"
+#include "ir/import-utils.h"
 
 namespace wasm {
 
@@ -763,6 +764,8 @@ private:
   size_t sourceMapLocationsSizeAtSectionStart;
   Function::DebugLocation lastDebugLocation;
 
+  std::unique_ptr<ImportInfo> importInfo;
+
   void prepare();
 };
 
@@ -833,9 +836,8 @@ public:
 
   // We read functions before we know their names, so we need to backpatch the names later
   std::vector<Function*> functions; // we store functions here before wasm.addFunction after we know their names
-  std::vector<Import*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
-  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the defined function i
-  std::map<Index, std::vector<CallImport*>> functionImportCalls; // at index i we have all callImports to the imported function i
+  std::vector<Function*> functionImports; // we store function imports here before wasm.addFunctionImport after we know their names
+  std::map<Index, std::vector<Call*>> functionCalls; // at index i we have all calls to the function i
   Function* currFunction = nullptr;
   Index endOfFunction = -1; // before we see a function (like global init expressions), there is no end of function to check
 
@@ -924,18 +926,7 @@ public:
   void visitBreak(Break *curr, uint8_t code);
   void visitSwitch(Switch* curr);
 
-  template<typename T>
-  void fillCall(T* call, FunctionType* type) {
-    assert(type);
-    auto num = type->params.size();
-    call->operands.resize(num);
-    for (size_t i = 0; i < num; i++) {
-      call->operands[num - i - 1] = popNonVoidExpression();
-    }
-    call->type = type->result;
-  }
-
-  Expression* visitCall();
+  void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitGetLocal(GetLocal* curr);
   void visitSetLocal(SetLocal *curr, uint8_t code);

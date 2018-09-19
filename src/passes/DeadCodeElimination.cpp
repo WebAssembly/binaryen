@@ -237,7 +237,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
         case Expression::Id::BreakId: DELEGATE(Break);
         case Expression::Id::SwitchId: DELEGATE(Switch);
         case Expression::Id::CallId: DELEGATE(Call);
-        case Expression::Id::CallImportId: DELEGATE(CallImport);
         case Expression::Id::CallIndirectId: DELEGATE(CallIndirect);
         case Expression::Id::GetLocalId: DELEGATE(GetLocal);
         case Expression::Id::SetLocalId: DELEGATE(SetLocal);
@@ -309,10 +308,6 @@ struct DeadCodeElimination : public WalkerPass<PostWalker<DeadCodeElimination>> 
   }
 
   void visitCall(Call* curr) {
-    handleCall(curr);
-  }
-
-  void visitCallImport(CallImport* curr) {
     handleCall(curr);
   }
 

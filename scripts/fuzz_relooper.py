@@ -131,8 +131,8 @@ int main() {
     )
   };
   BinaryenExpressionRef debugger;
-  if (1) debugger = BinaryenCallImport(module, "print", args, 1,
-                                       BinaryenNone());
+  if (1) debugger = BinaryenCall(module, "print", args, 1,
+                                 BinaryenNone());
   else debugger = BinaryenNop(module);
 
   // return the decision. need to subtract 4 that we just added,
@@ -177,7 +177,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCallImport(module, "print", args, 1, BinaryenNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenInt32()))
     };

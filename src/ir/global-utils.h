@@ -22,6 +22,7 @@
 
 #include "literal.h"
 #include "wasm.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -30,22 +31,22 @@ namespace GlobalUtils {
   inline Global* getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
     // find the import
     Name imported;
-    for (auto& import : wasm.imports) {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
       if (import->module == module && import->base == base) {
         imported = import->name;
-        break;
       }
-    }
+    });
     if (imported.isNull()) return nullptr;
     // find a global inited to it
-    for (auto& global : wasm.globals) {
-      if (auto* init = global->init->dynCast<GetGlobal>()) {
+    Global* ret = nullptr;
+    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* defined) {
+      if (auto* init = defined->init->dynCast<GetGlobal>()) {
         if (init->name == imported) {
-          return global.get();
+          ret = defined;
         }
       }
-    }
-    return nullptr;
+    });
+    return ret;
   }
 };
 

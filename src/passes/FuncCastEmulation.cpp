@@ -200,18 +200,15 @@ private:
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in use. Was the pass already run on this code?";
     }
     // The item in the table may be a function or a function import.
-    auto* func = module->getFunctionOrNull(name);
-    Import* imp = nullptr;
-    if (!func) imp = module->getImport(name);
-    std::vector<Type>& params = func ? func->params : module->getFunctionType(imp->functionType)->params;
-    Type type = func ? func->result : module->getFunctionType(imp->functionType)->result;
+    auto* func = module->getFunction(name);
+    std::vector<Type>& params = func->params;
+    Type type = func->result;
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     for (Index i = 0; i < params.size(); i++) {
       callOperands.push_back(fromABI(builder.makeGetLocal(i, i64), params[i], module));
     }
-    Expression* call = func ? (Expression*)builder.makeCall(name, callOperands, type)
-                            : (Expression*)builder.makeCallImport(name, callOperands, type);
+    auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(i64);

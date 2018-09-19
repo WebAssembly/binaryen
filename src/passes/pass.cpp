@@ -17,12 +17,13 @@
 #include <chrono>
 #include <sstream>
 
-#include <support/colors.h>
-#include <passes/passes.h>
-#include <pass.h>
-#include <wasm-validator.h>
-#include <wasm-io.h>
+#include "support/colors.h"
+#include "passes/passes.h"
+#include "pass.h"
+#include "wasm-validator.h"
+#include "wasm-io.h"
 #include "ir/hashed.h"
+#include "ir/module-utils.h"
 
 namespace wasm {
 
@@ -267,9 +268,9 @@ void PassRunner::run() {
       auto before = std::chrono::steady_clock::now();
       if (pass->isFunctionParallel()) {
         // function-parallel passes should get a new instance per function
-        for (auto& func : wasm->functions) {
-          runPassOnFunction(pass, func.get());
-        }
+        ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
+          runPassOnFunction(pass, func);
+        });
       } else {
         runPass(pass);
       }
@@ -320,9 +321,11 @@ void PassRunner::run() {
               return ThreadWorkState::Finished; // nothing left
             }
             Function* func = this->wasm->functions[index].get();
-            // do the current task: run all passes on this function
-            for (auto* pass : stack) {
-              runPassOnFunction(pass, func);
+            if (!func->imported()) {
+              // do the current task: run all passes on this function
+              for (auto* pass : stack) {
+                runPassOnFunction(pass, func);
+              }
             }
             if (index + 1 == numFunctions) {
               return ThreadWorkState::Finished; // we did the last one

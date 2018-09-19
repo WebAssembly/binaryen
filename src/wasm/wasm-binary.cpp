@@ -35,6 +35,8 @@ void WasmBinaryWriter::prepare() {
   ModuleUtils::BinaryIndexes indexes(*wasm);
   mappedFunctions = std::move(indexes.functionIndexes);
   mappedGlobals = std::move(indexes.globalIndexes);
+
+  importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
 void WasmBinaryWriter::write() {
@@ -136,7 +138,7 @@ void WasmBinaryWriter::writeStart() {
 }
 
 void WasmBinaryWriter::writeMemory() {
-  if (!wasm->memory.exists || wasm->memory.imported) return;
+  if (!wasm->memory.exists || wasm->memory.imported()) return;
   if (debug) std::cerr << "== writeMemory" << std::endl;
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
@@ -176,46 +178,54 @@ int32_t WasmBinaryWriter::getFunctionTypeIndex(Name type) {
 }
 
 void WasmBinaryWriter::writeImports() {
-  if (wasm->imports.size() == 0) return;
+  auto num = importInfo->getNumImports();
+  if (num == 0) return;
   if (debug) std::cerr << "== writeImports" << std::endl;
   auto start = startSection(BinaryConsts::Section::Import);
-  o << U32LEB(wasm->imports.size());
-  for (auto& import : wasm->imports) {
-    if (debug) std::cerr << "write one" << std::endl;
+  o << U32LEB(num);
+  auto writeImportHeader = [&](Importable* import) {
     writeInlineString(import->module.str);
     writeInlineString(import->base.str);
-    o << U32LEB(int32_t(import->kind));
-    switch (import->kind) {
-      case ExternalKind::Function: o << U32LEB(getFunctionTypeIndex(import->functionType)); break;
-      case ExternalKind::Table: {
-        o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-        writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
-        break;
-      }
-      case ExternalKind::Memory: {
-        writeResizableLimits(wasm->memory.initial, wasm->memory.max,
-                             wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
-        break;
-      }
-      case ExternalKind::Global:
-        o << binaryType(import->globalType);
-        o << U32LEB(0); // Mutable global's can't be imported for now.
-        break;
-      default: WASM_UNREACHABLE();
-    }
+  };
+  ModuleUtils::iterImportedFunctions(*wasm, [&](Function* func) {
+    if (debug) std::cerr << "write one function" << std::endl;
+    writeImportHeader(func);
+    o << U32LEB(int32_t(ExternalKind::Function));
+    o << U32LEB(getFunctionTypeIndex(func->type));
+  });
+  ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
+    if (debug) std::cerr << "write one global" << std::endl;
+    writeImportHeader(global);
+    o << U32LEB(int32_t(ExternalKind::Global));
+    o << binaryType(global->type);
+    o << U32LEB(0); // Mutable globals can't be imported for now.
+  });
+  if (wasm->memory.imported()) {
+    if (debug) std::cerr << "write one memory" << std::endl;
+    writeImportHeader(&wasm->memory);
+    o << U32LEB(int32_t(ExternalKind::Memory));
+    writeResizableLimits(wasm->memory.initial, wasm->memory.max,
+                         wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
+  }
+  if (wasm->table.imported()) {
+    if (debug) std::cerr << "write one table" << std::endl;
+    writeImportHeader(&wasm->table);
+    o << U32LEB(int32_t(ExternalKind::Table));
+    o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+    writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
   }
   finishSection(start);
 }
 
 void WasmBinaryWriter::writeFunctionSignatures() {
-  if (wasm->functions.size() == 0) return;
+  if (importInfo->getNumDefinedFunctions() == 0) return;
   if (debug) std::cerr << "== writeFunctionSignatures" << std::endl;
   auto start = startSection(BinaryConsts::Section::Function);
-  o << U32LEB(wasm->functions.size());
-  for (auto& curr : wasm->functions) {
+  o << U32LEB(importInfo->getNumDefinedFunctions());
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     if (debug) std::cerr << "write one" << std::endl;
-    o << U32LEB(getFunctionTypeIndex(curr->type));
-  }
+    o << U32LEB(getFunctionTypeIndex(func->type));
+  });
   finishSection(start);
 }
 
@@ -224,17 +234,15 @@ void WasmBinaryWriter::writeExpression(Expression* curr) {
 }
 
 void WasmBinaryWriter::writeFunctions() {
-  if (wasm->functions.size() == 0) return;
+  if (importInfo->getNumDefinedFunctions() == 0) return;
   if (debug) std::cerr << "== writeFunctions" << std::endl;
   auto start = startSection(BinaryConsts::Section::Code);
-  size_t total = wasm->functions.size();
-  o << U32LEB(total);
-  for (size_t i = 0; i < total; i++) {
+  o << U32LEB(importInfo->getNumDefinedFunctions());
+  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     if (debug) std::cerr << "write one at" << o.size() << std::endl;
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
-    Function* func = wasm->functions[i].get();
     if (debug) std::cerr << "writing" << func->name << std::endl;
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap) {
@@ -261,22 +269,23 @@ void WasmBinaryWriter::writeFunctions() {
       }
     }
     tableOfContents.functionBodies.emplace_back(func->name, sizePos + sizeFieldSize, size);
-  }
+  });
   finishSection(start);
 }
 
 void WasmBinaryWriter::writeGlobals() {
-  if (wasm->globals.size() == 0) return;
+  if (importInfo->getNumDefinedGlobals() == 0) return;
   if (debug) std::cerr << "== writeglobals" << std::endl;
   auto start = startSection(BinaryConsts::Section::Global);
-  o << U32LEB(wasm->globals.size());
-  for (auto& curr : wasm->globals) {
+  auto num = importInfo->getNumDefinedGlobals();
+  o << U32LEB(num);
+  ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
     if (debug) std::cerr << "write one" << std::endl;
-    o << binaryType(curr->type);
-    o << U32LEB(curr->mutable_);
-    writeExpression(curr->init);
+    o << binaryType(global->type);
+    o << U32LEB(global->mutable_);
+    writeExpression(global->init);
     o << int8_t(BinaryConsts::End);
-  }
+  });
   finishSection(start);
 }
 
@@ -404,7 +413,7 @@ uint32_t WasmBinaryWriter::getGlobalIndex(Name name) {
 }
 
 void WasmBinaryWriter::writeFunctionTableDeclaration() {
-  if (!wasm->table.exists || wasm->table.imported) return;
+  if (!wasm->table.exists || wasm->table.imported()) return;
   if (debug) std::cerr << "== writeFunctionTableDeclaration" << std::endl;
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
@@ -436,14 +445,6 @@ void WasmBinaryWriter::writeNames() {
   if (wasm->functions.size() > 0) {
     hasContents = true;
     getFunctionIndex(wasm->functions[0]->name); // generate mappedFunctions
-  } else {
-    for (auto& import : wasm->imports) {
-      if (import->kind == ExternalKind::Function) {
-        hasContents = true;
-        getFunctionIndex(import->name); // generate mappedFunctions
-        break;
-      }
-    }
   }
   if (!hasContents) return;
   if (debug) std::cerr << "== writeNames" << std::endl;
@@ -452,18 +453,13 @@ void WasmBinaryWriter::writeNames() {
   auto substart = startSubsection(BinaryConsts::UserSections::Subsection::NameFunction);
   o << U32LEB(mappedFunctions.size());
   Index emitted = 0;
-  for (auto& import : wasm->imports) {
-    if (import->kind == ExternalKind::Function) {
-      o << U32LEB(emitted);
-      writeEscapedName(import->name.str);
-      emitted++;
-    }
-  }
-  for (auto& curr : wasm->functions) {
+  auto add = [&](Function* curr) {
     o << U32LEB(emitted);
     writeEscapedName(curr->name.str);
     emitted++;
-  }
+  };
+  ModuleUtils::iterImportedFunctions(*wasm, add);
+  ModuleUtils::iterDefinedFunctions(*wasm, add);
   assert(emitted == mappedFunctions.size());
   finishSubsection(substart);
   /* TODO: locals */
@@ -480,14 +476,11 @@ void WasmBinaryWriter::writeSourceMapUrl() {
 
 void WasmBinaryWriter::writeSymbolMap() {
   std::ofstream file(symbolMap);
-  for (auto& import : wasm->imports) {
-    if (import->kind == ExternalKind::Function) {
-      file << getFunctionIndex(import->name) << ":" << import->name.str << std::endl;
-    }
-  }
-  for (auto& func : wasm->functions) {
+  auto write = [&](Function* func) {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
-  }
+  };
+  ModuleUtils::iterImportedFunctions(*wasm, write);
+  ModuleUtils::iterDefinedFunctions(*wasm, write);
   file.close();
 }
 
@@ -940,17 +933,7 @@ void WasmBinaryBuilder::readSignatures() {
 }
 
 Name WasmBinaryBuilder::getFunctionIndexName(Index i) {
-  if (i < functionImports.size()) {
-    auto* import = functionImports[i];
-    assert(import->kind == ExternalKind::Function);
-    return import->name;
-  } else {
-    i -= functionImports.size();
-    if (i >= wasm.functions.size()) {
-      throwError("bad function index");
-    }
-    return wasm.functions[i]->name;
-  }
+  return wasm.functions[i]->name;
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial, Address& max, bool &shared, Address defaultIfNoMax) {
@@ -968,61 +951,69 @@ void WasmBinaryBuilder::readImports() {
   if (debug) std::cerr << "== readImports" << std::endl;
   size_t num = getU32LEB();
   if (debug) std::cerr << "num: " << num << std::endl;
+  Builder builder(wasm);
   for (size_t i = 0; i < num; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto curr = new Import;
-    curr->module = getInlineString();
-    curr->base = getInlineString();
-    curr->kind = (ExternalKind)getU32LEB();
+    auto module = getInlineString();
+    auto base = getInlineString();
+    auto kind = (ExternalKind)getU32LEB();
     // We set a unique prefix for the name based on the kind. This ensures no collisions
     // between them, which can't occur here (due to the index i) but could occur later
     // due to the names section.
-    switch (curr->kind) {
+    switch (kind) {
       case ExternalKind::Function: {
-        curr->name = Name(std::string("fimport$") + std::to_string(i));
+        auto name = Name(std::string("fimport$") + std::to_string(i));
         auto index = getU32LEB();
         if (index >= wasm.functionTypes.size()) {
           throwError("invalid function index " + std::to_string(index) + " / " + std::to_string(wasm.functionTypes.size()));
         }
-        curr->functionType = wasm.functionTypes[index]->name;
-        assert(curr->functionType.is());
+        auto* functionType = wasm.functionTypes[index].get();
+        auto params = functionType->params;
+        auto result = functionType->result;
+        auto* curr = builder.makeFunction(name, std::move(params), result, {});
+        curr->module = module;
+        curr->base = base;
+        curr->type = functionType->name;
+        wasm.addFunction(curr);
         functionImports.push_back(curr);
-        continue; // don't add the import yet, we add them later after we know their names
         break;
       }
       case ExternalKind::Table: {
-        curr->name = Name(std::string("timport$") + std::to_string(i));
+        wasm.table.module = module;
+        wasm.table.base = base;
+        wasm.table.name = Name(std::string("timport$") + std::to_string(i));
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
         wasm.table.exists = true;
-        wasm.table.imported = true;
         bool is_shared;
         getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
         if (is_shared) throwError("Tables may not be shared");
         break;
       }
       case ExternalKind::Memory: {
-        curr->name = Name(std::string("mimport$") + std::to_string(i));
+        wasm.memory.module = module;
+        wasm.memory.base = base;
+        wasm.memory.name = Name(std::to_string(i));
         wasm.memory.exists = true;
-        wasm.memory.imported = true;
         getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
         break;
       }
       case ExternalKind::Global: {
-        curr->name = Name(std::string("gimport$") + std::to_string(i));
-        curr->globalType = getConcreteType();
-        auto globalMutable = getU32LEB();
-        // TODO: actually use the globalMutable flag. Currently mutable global
-        // imports is a future feature, to be implemented with thread support.
-        (void)globalMutable;
+        auto name = Name(std::string("gimport$") + std::to_string(i));
+        auto type = getConcreteType();
+        auto mutable_ = getU32LEB();
+        assert(!mutable_); // for now, until mutable globals
+        auto* curr = builder.makeGlobal(name, type, nullptr, mutable_ ? Builder::Mutable : Builder::Immutable);
+        curr->module = module;
+        curr->base = base;
+        wasm.addGlobal(curr);
         break;
       }
       default: {
         throwError("bad import kind");
       }
     }
-    wasm.addImport(curr);
   }
 }
 
@@ -1332,7 +1323,7 @@ void WasmBinaryBuilder::readGlobals() {
     if (mutable_ & ~1) throwError("Global mutability must be 0 or 1");
     auto* init = readExpression();
     wasm.addGlobal(Builder::makeGlobal(
-      "global$" + std::to_string(wasm.globals.size()),
+      "global$" + std::to_string(i),
       type,
       init,
       mutable_ ? Builder::Mutable : Builder::Immutable
@@ -1460,15 +1451,12 @@ Expression* WasmBinaryBuilder::popNonVoidExpression() {
 Name WasmBinaryBuilder::getGlobalName(Index index) {
   if (!mappedGlobals.size()) {
     // Create name => index mapping.
-    for (auto& import : wasm.imports) {
-      if (import->kind != ExternalKind::Global) continue;
+    auto add = [&](Global* curr) {
       auto index = mappedGlobals.size();
-      mappedGlobals[index] = import->name;
-    }
-    for (size_t i = 0; i < wasm.globals.size(); i++) {
-      auto index = mappedGlobals.size();
-      mappedGlobals[index] = wasm.globals[i]->name;
-    }
+      mappedGlobals[index] = curr->name;
+    };
+    ModuleUtils::iterImportedGlobals(wasm, add);
+    ModuleUtils::iterDefinedGlobals(wasm, add);
   }
   if (index == Index(-1)) return Name("null"); // just a force-rebuild
   if (mappedGlobals.count(index) == 0) {
@@ -1480,17 +1468,6 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
 void WasmBinaryBuilder::processFunctions() {
   for (auto* func : functions) {
     wasm.addFunction(func);
-  }
-
-  for (auto* import : functionImports) {
-    wasm.addImport(import);
-  }
-
-  // we should have seen all the functions
-  // we assume this later down in fact, when we read wasm.functions[index],
-  // as index was validated vs functionTypes.size()
-  if (wasm.functions.size() != functionTypes.size()) {
-    throwError("did not see the right number of functions");
   }
 
   // now that we have names for each function, apply things
@@ -1518,15 +1495,7 @@ void WasmBinaryBuilder::processFunctions() {
     size_t index = iter.first;
     auto& calls = iter.second;
     for (auto* call : calls) {
-      call->target = wasm.functions[index]->name;
-    }
-  }
-
-  for (auto& iter : functionImportCalls) {
-    size_t index = iter.first;
-    auto& calls = iter.second;
-    for (auto* call : calls) {
-      call->target = functionImports[index]->name;
+      call->target = getFunctionIndexName(index);
     }
   }
 
@@ -1537,6 +1506,10 @@ void WasmBinaryBuilder::processFunctions() {
       wasm.table.segments[i].data.push_back(getFunctionIndexName(j));
     }
   }
+
+  // Everything now has its proper name.
+
+  wasm.updateMaps();
 }
 
 void WasmBinaryBuilder::readDataSegments() {
@@ -1689,7 +1662,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Br:
     case BinaryConsts::BrIf:         visitBreak((curr = allocator.alloc<Break>())->cast<Break>(), code); break; // code distinguishes br from br_if
     case BinaryConsts::TableSwitch:  visitSwitch((curr = allocator.alloc<Switch>())->cast<Switch>()); break;
-    case BinaryConsts::CallFunction: curr = visitCall(); break; // we don't know if it's a call or call_import yet
+    case BinaryConsts::CallFunction: visitCall((curr = allocator.alloc<Call>())->cast<Call>()); break;
     case BinaryConsts::CallIndirect: visitCallIndirect((curr = allocator.alloc<CallIndirect>())->cast<CallIndirect>()); break;
     case BinaryConsts::GetLocal:     visitGetLocal((curr = allocator.alloc<GetLocal>())->cast<GetLocal>()); break;
     case BinaryConsts::TeeLocal:
@@ -1928,35 +1901,26 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
   curr->finalize();
 }
 
-Expression* WasmBinaryBuilder::visitCall() {
+void WasmBinaryBuilder::visitCall(Call* curr) {
   if (debug) std::cerr << "zz node: Call" << std::endl;
   auto index = getU32LEB();
   FunctionType* type;
-  Expression* ret;
   if (index < functionImports.size()) {
-    // this is a call of an imported function
-    auto* call = allocator.alloc<CallImport>();
     auto* import = functionImports[index];
-    type = wasm.getFunctionType(import->functionType);
-    functionImportCalls[index].push_back(call);
-    call->target = import->name; // name section may modify it
-    fillCall(call, type);
-    call->finalize();
-    ret = call;
+    type = wasm.getFunctionType(import->type);
   } else {
-    // this is a call of a defined function
-    auto* call = allocator.alloc<Call>();
     auto adjustedIndex = index - functionImports.size();
-    if (adjustedIndex >= functionTypes.size()) {
-      throwError("bad call index");
-    }
     type = functionTypes[adjustedIndex];
-    fillCall(call, type);
-    functionCalls[adjustedIndex].push_back(call); // we don't know function names yet
-    call->finalize();
-    ret = call;
   }
-  return ret;
+  assert(type);
+  auto num = type->params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->type = type->result;
+  functionCalls[index].push_back(curr); // we don't know function names yet
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
@@ -2007,17 +1971,7 @@ void WasmBinaryBuilder::visitGetGlobal(GetGlobal* curr) {
   if (debug) std::cerr << "zz node: GetGlobal " << pos << std::endl;
   auto index = getU32LEB();
   curr->name = getGlobalName(index);
-  auto* global = wasm.getGlobalOrNull(curr->name);
-  if (global) {
-    curr->type = global->type;
-    return;
-  }
-  auto* import = wasm.getImportOrNull(curr->name);
-  if (import && import->kind == ExternalKind::Global) {
-    curr->type = import->globalType;
-    return;
-  }
-  throwError("bad get_global");
+  curr->type = wasm.getGlobal(curr->name)->type;
 }
 
 void WasmBinaryBuilder::visitSetGlobal(SetGlobal* curr) {

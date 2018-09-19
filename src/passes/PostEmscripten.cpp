@@ -92,11 +92,12 @@ struct PostEmscripten : public WalkerPass<PostWalker<PostEmscripten>> {
     optimizeMemoryAccess(curr->ptr, curr->offset);
   }
 
-  void visitCallImport(CallImport* curr) {
+  void visitCall(Call* curr) {
     // special asm.js imports can be optimized
-    auto* import = getModule()->getImport(curr->target);
-    if (import->module == GLOBAL_MATH) {
-      if (import->base == POW) {
+    auto* func = getModule()->getFunction(curr->target);
+    if (!func->imported()) return;
+    if (func->module == GLOBAL_MATH) {
+      if (func->base == POW) {
         if (auto* exponent = curr->operands[1]->dynCast<Const>()) {
           if (exponent->value == Literal(double(2.0))) {
             // This is just a square operation, do a multiply

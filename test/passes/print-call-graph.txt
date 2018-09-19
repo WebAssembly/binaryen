@@ -75,32 +75,32 @@ digraph call {
   "$dynCall_vi" [style="filled", fillcolor="gray"];
   "$dynCall_v" [style="filled", fillcolor="gray"];
   "$_main" -> "$__Znwj"; // call
-  "$___stdio_close" -> "$___syscall6"; // callImport
+  "$___stdio_close" -> "$___syscall6"; // call
   "$___stdio_close" -> "$___syscall_ret"; // call
-  "$___stdio_write" -> "$_pthread_cleanup_push"; // callImport
-  "$___stdio_write" -> "$___syscall146"; // callImport
+  "$___stdio_write" -> "$_pthread_cleanup_push"; // call
+  "$___stdio_write" -> "$___syscall146"; // call
   "$___stdio_write" -> "$___syscall_ret"; // call
-  "$___stdio_write" -> "$_pthread_cleanup_pop"; // callImport
-  "$___stdio_seek" -> "$___syscall140"; // callImport
+  "$___stdio_write" -> "$_pthread_cleanup_pop"; // call
+  "$___stdio_seek" -> "$___syscall140"; // call
   "$___stdio_seek" -> "$___syscall_ret"; // call
   "$___syscall_ret" -> "$___errno_location"; // call
   "$___errno_location" -> "$_pthread_self"; // call
   "$_cleanup_387" -> "$_free"; // call
-  "$___stdout_write" -> "$___syscall54"; // callImport
+  "$___stdout_write" -> "$___syscall54"; // call
   "$___stdout_write" -> "$___stdio_write"; // call
   "$_fflush" -> "$___fflush_unlocked"; // call
   "$_fflush" -> "$_malloc"; // call
   "$_fflush" -> "$_free"; // call
   "$_fflush" -> "$_fflush"; // call
-  "$_fflush" -> "$___lock"; // callImport
-  "$_fflush" -> "$___unlock"; // callImport
+  "$_fflush" -> "$___lock"; // call
+  "$_fflush" -> "$___unlock"; // call
   "$__Znwj" -> "$_malloc"; // call
   "$__Znwj" -> "$__ZSt15get_new_handlerv"; // call
-  "$_memcpy" -> "$_emscripten_memcpy_big"; // callImport
-  "$b0" -> "$abort"; // callImport
-  "$b1" -> "$abort"; // callImport
-  "$b2" -> "$abort"; // callImport
-  "$b3" -> "$abort"; // callImport
+  "$_memcpy" -> "$_emscripten_memcpy_big"; // call
+  "$b0" -> "$abort"; // call
+  "$b1" -> "$abort"; // call
+  "$b2" -> "$abort"; // call
+  "$b3" -> "$abort"; // call
   "$b0" [style="filled, rounded"];
   "$___stdio_close" [style="filled, rounded"];
   "$b1" [style="filled, rounded"];
@@ -120,6 +120,10 @@ digraph call {
  (type $FUNCSIG$vii (func (param i32 i32)))
  (type $6 (func (result i32)))
  (type $7 (func (param i32 i32 i32 i32) (result i32)))
+ (import "env" "memory" (memory $0 256 256))
+ (data (get_global $memoryBase) "\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\02\00\00\00\b0\04\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04")
+ (import "env" "table" (table 9 9 anyfunc))
+ (elem (i32.const 0) $b0 $___stdio_close $b1 $___stdout_write $___stdio_seek $___stdio_write $b2 $_cleanup_387 $b3)
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "STACK_MAX" (global $STACK_MAX$asm2wasm$import i32))
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR$asm2wasm$import i32))
@@ -127,6 +131,8 @@ digraph call {
  (import "env" "ABORT" (global $ABORT$asm2wasm$import i32))
  (import "global" "NaN" (global $nan$asm2wasm$import f64))
  (import "global" "Infinity" (global $inf$asm2wasm$import f64))
+ (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "tableBase" (global $tableBase i32))
  (import "env" "abort" (func $abort (param i32)))
  (import "env" "_pthread_cleanup_pop" (func $_pthread_cleanup_pop (param i32)))
  (import "env" "___lock" (func $___lock (param i32)))
@@ -137,10 +143,6 @@ digraph call {
  (import "env" "___syscall54" (func $___syscall54 (param i32 i32) (result i32)))
  (import "env" "___unlock" (func $___unlock (param i32)))
  (import "env" "___syscall146" (func $___syscall146 (param i32 i32) (result i32)))
- (import "env" "memory" (memory $0 256 256))
- (import "env" "table" (table 9 9 anyfunc))
- (import "env" "memoryBase" (global $memoryBase i32))
- (import "env" "tableBase" (global $tableBase i32))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (global $STACK_MAX (mut i32) (get_global $STACK_MAX$asm2wasm$import))
  (global $DYNAMICTOP_PTR (mut i32) (get_global $DYNAMICTOP_PTR$asm2wasm$import))
@@ -164,8 +166,6 @@ digraph call {
  (global $tempRet0 (mut i32) (i32.const 0))
  (global $tempFloat (mut f32) (f32.const 0))
  (global $f0 (mut f32) (f32.const 0))
- (elem (i32.const 0) $b0 $___stdio_close $b1 $___stdout_write $___stdio_seek $___stdio_write $b2 $_cleanup_387 $b3)
- (data (get_global $memoryBase) "\05\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\01\00\00\00\02\00\00\00\b0\04\00\00\00\04\00\00\00\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\n\ff\ff\ff\ff\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\04")
  (export "_fflush" (func $_fflush))
  (export "_main" (func $_main))
  (export "_pthread_self" (func $_pthread_self))
