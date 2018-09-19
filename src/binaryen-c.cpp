@@ -1839,7 +1839,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     std::cout << " };\n";
     std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
     traceNameOrNULL(exportName);
-    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ");\n";
+    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ", " << shared << ");\n";
     std::cout << "  }\n";
   }
 
