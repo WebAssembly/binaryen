@@ -1,4 +1,5 @@
 (module
+  (import "env" "func" (func $import))
   (func $nopp
     (nop)
   )

@@ -489,6 +489,9 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
   void visitFunction(Function* curr) {
+    if (curr->imported()) {
+      return;
+    }
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }

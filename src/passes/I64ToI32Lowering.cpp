@@ -175,6 +175,9 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitFunction(Function* func) {
+    if (func->imported()) {
+      return;
+    }
     if (func->result == i64) {
       func->result = i32;
       // body may not have out param if it ends with control flow

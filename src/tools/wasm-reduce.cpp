@@ -524,9 +524,11 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   }
 
   void visitFunction(Function* curr) {
-    // extra chance to work on the function toplevel element, as if it can
-    // be reduced it's great
-    visitExpression(curr->body);
+    if (!curr->imported()) {
+      // extra chance to work on the function toplevel element, as if it can
+      // be reduced it's great
+      visitExpression(curr->body);
+    }
     // finish function
     funcsSeen++;
     static int last = 0;
@@ -677,7 +679,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     if (module->functions.size() == 1 && module->exports.empty() && module->table.segments.empty()) {
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
-      if (!Properties::isNamedControlFlow(func->body)) {
+      if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
         auto funcType = func->type;
         auto funcResult = func->result;
         auto* funcBody = func->body;
