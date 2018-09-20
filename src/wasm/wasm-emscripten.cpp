@@ -377,11 +377,16 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
 
   void visitCall(Call* curr);
 
+  void process();
+
 private:
   Literal idLiteralForCode(std::string code);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig);
-  void addImport(Name importName, std::string baseSig);
+  void queueImport(Name importName, std::string baseSig);
+  void addImports();
+
+  std::vector<std::unique_ptr<Function>> queuedImports;
 };
 
 void AsmConstWalker::visitCall(Call* curr) {
@@ -398,9 +403,17 @@ void AsmConstWalker::visitCall(Call* curr) {
 
     if (allSigs.count(sig) == 0) {
       allSigs.insert(sig);
-      addImport(importName, baseSig);
+      queueImport(importName, baseSig);
     }
   }
+}
+
+void AsmConstWalker::process() {
+  // Find and queue necessary imports
+  walkModule(&wasm);
+  // Add them after the walk, to avoid iterator invalidation on
+  // the list of functions.
+  addImports();
 }
 
 Literal AsmConstWalker::idLiteralForCode(std::string code) {
@@ -430,12 +443,18 @@ Name AsmConstWalker::nameForImportWithSig(std::string sig) {
   return Name(fixedTarget.c_str());
 }
 
-void AsmConstWalker::addImport(Name importName, std::string baseSig) {
+void AsmConstWalker::queueImport(Name importName, std::string baseSig) {
   auto import = new Function;
   import->name = import->base = importName;
   import->module = ENV;
   import->type = ensureFunctionType(baseSig, &wasm)->name;
-  wasm.addFunction(import);
+  queuedImports.push_back(std::unique_ptr<Function>(import));
+}
+
+void AsmConstWalker::addImports() {
+  for (auto& import : queuedImports) {
+    wasm.addFunction(import.release());
+  }
 }
 
 AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
@@ -450,7 +469,7 @@ AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm) {
 
   // Walk the module, generate _sig versions of EM_ASM functions
   AsmConstWalker walker(wasm);
-  walker.walkModule(&wasm);
+  walker.process();
 
   // Remove the base functions that we didn't generate
   for (auto importName : toRemove) {
