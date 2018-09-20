@@ -175,7 +175,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   void visitFunction(Function* func) {
-    if (curr->imported()) {
+    if (func->imported()) {
       return;
     }
     if (func->result == i64) {
