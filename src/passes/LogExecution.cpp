@@ -42,6 +42,9 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
   }
 
   void visitFunction(Function* curr) {
+    if (curr->imported()) {
+      return;
+    }
     curr->body = makeLogCall(curr->body);
   }
 
