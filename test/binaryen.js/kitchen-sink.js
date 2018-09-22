@@ -249,7 +249,7 @@ function test_core() {
 
   // Function table. One per module
 
-  module.setFunctionTable([ Binaryen.getFunctionInfo(sinker).name ]);
+  module.setFunctionTable(1, 0x7fffffff, [ Binaryen.getFunctionInfo(sinker).name ]);
 
   // Memory. One per module
 
