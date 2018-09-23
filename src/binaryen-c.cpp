@@ -1792,14 +1792,14 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, B
   }
 
   auto* wasm = (Module*)module;
-  wasm->table.exists = true;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }
+  wasm->table.initial = initial;
+  wasm->table.max = maximum;
+  wasm->table.exists = true;
   wasm->table.segments.push_back(segment);
-  wasm->table.initial = initial = std::max(initial, numFuncNames);
-  wasm->table.max = std::max(initial, maximum);
 }
 
 // Memory. One per module
@@ -1843,8 +1843,8 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   }
 
   auto* wasm = (Module*)module;
-  wasm->memory.initial = initial = std::max(initial, numSegments);
-  wasm->memory.max = std::max(initial, maximum);
+  wasm->memory.initial = initial;
+  wasm->memory.max = maximum;
   wasm->memory.exists = true;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
