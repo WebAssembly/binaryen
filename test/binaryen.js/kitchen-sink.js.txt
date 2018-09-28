@@ -48,7 +48,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $3 (func))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
- (table 1 1 anyfunc)
+ (table 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
@@ -1470,7 +1470,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   BinaryenFunctionGetBody(functions[0]);
   {
     const char* funcNames[] = { "kitchen()sinker" };
-    BinaryenSetFunctionTable(the_module, funcNames, 1);
+    BinaryenSetFunctionTable(the_module, 1, 4294967295, funcNames, 1);
   }
   expressions[256] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
@@ -1504,7 +1504,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
  (type $3 (func))
  (memory $0 1 256)
  (data (i32.const 10) "hello, world")
- (table 1 1 anyfunc)
+ (table 1 anyfunc)
  (elem (i32.const 0) "$kitchen()sinker")
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (export "kitchen_sinker" (func "$kitchen()sinker"))

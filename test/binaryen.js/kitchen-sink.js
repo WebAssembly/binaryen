@@ -1,4 +1,3 @@
-
 // kitchen sink, tests the full API
 
 function cleanInfo(info) {
@@ -249,7 +248,7 @@ function test_core() {
 
   // Function table. One per module
 
-  module.setFunctionTable([ Binaryen.getFunctionInfo(sinker).name ]);
+  module.setFunctionTable(1, 0xffffffff, [ Binaryen.getFunctionInfo(sinker).name ]);
 
   // Memory. One per module
 

@@ -1778,7 +1778,7 @@ void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
 
 // Function table. One per module
 
-void BinaryenSetFunctionTable(BinaryenModuleRef module, const char** funcNames, BinaryenIndex numFuncNames) {
+void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char** funcNames, BinaryenIndex numFuncNames) {
   if (tracing) {
     std::cout << "  {\n";
     std::cout << "    const char* funcNames[] = { ";
@@ -1787,18 +1787,19 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, const char** funcNames, 
       std::cout << "\"" << funcNames[i] << "\"";
     }
     std::cout << " };\n";
-    std::cout << "    BinaryenSetFunctionTable(the_module, funcNames, " << numFuncNames << ");\n";
+    std::cout << "    BinaryenSetFunctionTable(the_module, " << initial << ", " << maximum << ", funcNames, " << numFuncNames << ");\n";
     std::cout << "  }\n";
   }
 
   auto* wasm = (Module*)module;
-  wasm->table.exists = true;
   Table::Segment segment(wasm->allocator.alloc<Const>()->set(Literal(int32_t(0))));
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }
+  wasm->table.initial = initial;
+  wasm->table.max = maximum;
+  wasm->table.exists = true;
   wasm->table.segments.push_back(segment);
-  wasm->table.initial = wasm->table.max = numFuncNames;
 }
 
 // Memory. One per module

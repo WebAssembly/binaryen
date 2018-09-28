@@ -1403,7 +1403,7 @@ int main() {
   BinaryenFunctionGetName(functions[0]);
   {
     const char* funcNames[] = { "kitchen()sinker" };
-    BinaryenSetFunctionTable(the_module, funcNames, 1);
+    BinaryenSetFunctionTable(the_module, 1, 1, funcNames, 1);
   }
   expressions[254] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   {
