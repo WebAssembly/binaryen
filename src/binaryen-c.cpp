@@ -1673,11 +1673,11 @@ void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, 
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
 }
-void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenIndex sharedMemoryMax) {
+void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, bool shared) {
   auto* wasm = (Module*)module;
 
   if (tracing) {
-    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << sharedMemoryMax << ");\n";
+    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << shared << ");\n";
   }
 
   wasm->memory.module = externalModuleName;
