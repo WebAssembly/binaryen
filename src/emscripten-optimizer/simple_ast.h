@@ -53,15 +53,7 @@ void dump(const char *str, Ref node, bool pretty=false);
 struct Ref {
   Value* inst;
 
-  struct RefDebugLocation {
-    uint32_t fileIndex, lineNumber, columnNumber;
-    bool isPresent;
-    bool operator==(const RefDebugLocation& other) const { return isPresent && other.isPresent && fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber; }
-    bool operator!=(const RefDebugLocation& other) const { return !(*this == other); }
-  };
-  RefDebugLocation debugLocation;
-
-  Ref(Value *v=nullptr) : inst(v), debugLocation({0, 0, 0, false}) {}
+  Ref(Value *v=nullptr) : inst(v) {}
 
   Value* get() { return inst; }
 
@@ -107,6 +99,19 @@ public:
 struct Assign;
 struct AssignName;
 
+struct ValueDebugLocation {
+    uint32_t fileIndex, lineNumber, columnNumber;
+    bool operator<(const ValueDebugLocation& other) const {
+      return fileIndex != other.fileIndex ? fileIndex < other.fileIndex :
+             lineNumber != other.lineNumber ? lineNumber < other.lineNumber :
+             columnNumber < other.columnNumber;
+    }
+    bool operator==(const ValueDebugLocation& other) const {
+      return fileIndex == other.fileIndex && lineNumber == other.lineNumber && columnNumber == other.columnNumber;
+    }
+    bool operator!=(const ValueDebugLocation& other) const { return !(*this == other); }
+};
+
 // Main value type
 struct Value {
   enum Type {
@@ -137,6 +142,8 @@ struct Value {
     ObjectStorage *obj;
     Ref ref;
   };
+
+  std::set<ValueDebugLocation> debugLocation;
 
   // constructors all copy their input
   Value() : type(Null), num(0) {}
@@ -214,6 +221,12 @@ struct Value {
   }
   Value& setAssign(Ref target, Ref value);
   Value& setAssignName(IString target, Ref value);
+
+  Value& setDebugLocation(const ValueDebugLocation& loc) {
+    debugLocation.clear();
+    debugLocation.insert(loc);
+    return *this;
+  }
 
   bool isString() { return type == String; }
   bool isNumber() { return type == Number; }
@@ -548,11 +561,11 @@ void traversePrePostConditional(Ref node, std::function<bool (Ref)> visitPre, st
 void traverseFunctions(Ref ast, std::function<void (Ref)> visit);
 
 struct JSDebugLocMapping {
-  uint32_t generatedLineNumber;
-  uint32_t generatedColumnNumber;
-  uint32_t fileIndex;
-  uint32_t lineNumber;
-  uint32_t columnNumber;
+  struct {
+    uint32_t lineNumber;
+    uint32_t columnNumber;
+  } generated;
+  ValueDebugLocation original;
 };
 
 // JS printing support
@@ -567,7 +580,7 @@ struct JSPrinter {
   bool possibleSpace; // add a space to separate identifiers
 
   Ref ast;
-  Ref::RefDebugLocation lastRecordedDebugLocation;
+  std::set<ValueDebugLocation> lastRecordedDebugLocation;
   bool enableDebugLocation;
   std::vector<JSDebugLocMapping> debugLocMappings;
   struct {
@@ -576,7 +589,7 @@ struct JSPrinter {
     uint32_t column;
   } lastPosition;
 
-  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_), lastRecordedDebugLocation({0,0,0,false}), lastPosition({0,0,0}) {}
+  JSPrinter(bool pretty_, bool finalize_, Ref ast_) : pretty(pretty_), finalize(finalize_), buffer(0), size(0), used(0), indent(0), possibleSpace(false), ast(ast_), lastPosition({0,0,0}) {}
 
   ~JSPrinter() {
     free(buffer);
@@ -664,11 +677,13 @@ struct JSPrinter {
     return node->isArray() && node[0] == IF;
   }
 
-  void recordDebugLocation(const Ref::RefDebugLocation &loc) {
-    if (!enableDebugLocation || !loc.isPresent || lastRecordedDebugLocation == loc) {
+  void recordDebugLocation(const ValueDebugLocation &loc) {
+    if (!enableDebugLocation ||
+        (!lastRecordedDebugLocation.empty() && *lastRecordedDebugLocation.begin() == loc)) {
       return;
     }
-    lastRecordedDebugLocation = loc;
+    lastRecordedDebugLocation.clear();
+    lastRecordedDebugLocation.insert(loc);
     while (lastPosition.used < used) {
       if (buffer[lastPosition.used++] == '\n') {
         lastPosition.line++;
@@ -678,8 +693,8 @@ struct JSPrinter {
       }
     }
     debugLocMappings.push_back({
-      lastPosition.line, lastPosition.column,
-      loc.fileIndex, loc.lineNumber, loc.columnNumber
+      {lastPosition.line, lastPosition.column},
+      loc
     });
     // emit("/* ");
     // emit(std::to_string(loc.fileIndex).c_str());
@@ -691,7 +706,9 @@ struct JSPrinter {
   }
 
   void print(Ref node) {
-    recordDebugLocation(node.debugLocation);
+    if (!node->debugLocation.empty()) {
+      recordDebugLocation(*node->debugLocation.begin());
+    }
     ensure();
     if (node->isString()) {
       printName(node);

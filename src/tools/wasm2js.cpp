@@ -55,20 +55,20 @@ void writeSourceMap(const std::string& outputSourceMapFilename,
     map << "\"" << debugInfoFileNames[i] << "\"";
   }
   map << "],\"names\":[],\"mappings\":\"";
-  JSDebugLocMapping lastLoc = { 0, 0, 0, /* lineNumber = */ 1, 0 };
+  JSDebugLocMapping lastLoc = { {0, 0}, {0, /* lineNumber = */ 1, 0} };
   for (const auto &mapping : debugLocMappings) {
-    while (lastLoc.generatedLineNumber < mapping.generatedLineNumber) {
-      lastLoc.generatedLineNumber++;
-      lastLoc.generatedColumnNumber = 0;
+    while (lastLoc.generated.lineNumber < mapping.generated.lineNumber) {
+      lastLoc.generated.lineNumber++;
+      lastLoc.generated.columnNumber = 0;
       map << ";";
     }
-    if (lastLoc.generatedColumnNumber > 0) {
+    if (lastLoc.generated.columnNumber > 0) {
       map << ",";
     }
-    writeBase64VLQ(map, int32_t(mapping.generatedColumnNumber - lastLoc.generatedColumnNumber));
-    writeBase64VLQ(map, int32_t(mapping.fileIndex - lastLoc.fileIndex));
-    writeBase64VLQ(map, int32_t(mapping.lineNumber - lastLoc.lineNumber));
-    writeBase64VLQ(map, int32_t(mapping.columnNumber - lastLoc.columnNumber));
+    writeBase64VLQ(map, int32_t(mapping.generated.columnNumber - lastLoc.generated.columnNumber));
+    writeBase64VLQ(map, int32_t(mapping.original.fileIndex - lastLoc.original.fileIndex));
+    writeBase64VLQ(map, int32_t(mapping.original.lineNumber - lastLoc.original.lineNumber));
+    writeBase64VLQ(map, int32_t(mapping.original.columnNumber - lastLoc.original.columnNumber));
     lastLoc = mapping;
   }
   map << "\"}";

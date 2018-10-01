@@ -1049,26 +1049,24 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       }
     };
 
-    Ref::RefDebugLocation getDebugLocation(Expression* curr) {
+    const Function::DebugLocation* getDebugLocation(Expression* curr) {
       auto& debugLocations = func->debugLocations;
       auto repl = debugLocationSources.find(curr);
       if (repl != debugLocationSources.end()) {
         curr = repl->second;
       }
       auto iter = debugLocations.find(curr);
+      std::set<ValueDebugLocation> result;
       if (iter == debugLocations.end()) {
-        return {0, 0, 0, false};
+        return nullptr;
       }
-      return {
-        iter->second.fileIndex, iter->second.lineNumber, iter->second.columnNumber,
-        true
-      };
+      return &iter->second;
     }
 
     Ref assignDebugLocation(Ref ret, Expression* curr) {
       auto loc = getDebugLocation(curr);
-      if (loc.isPresent) {
-        ret.debugLocation = loc;
+      if (loc) {
+        ret->setDebugLocation({loc->fileIndex, loc->lineNumber, loc->columnNumber});
       }
       return ret;
     }
@@ -1105,7 +1103,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
         ret = ValueBuilder::makeStatement(
             ValueBuilder::makeBinary(ValueBuilder::makeName(result), SET, ret));
       }
-      ret.debugLocation = getDebugLocation(curr);
+      auto loc = getDebugLocation(curr);
+      if (loc) {
+        ret->setDebugLocation({loc->fileIndex, loc->lineNumber, loc->columnNumber});
+      }
       return ret;
     }
 
