@@ -677,7 +677,7 @@ struct JSPrinter {
     return node->isArray() && node[0] == IF;
   }
 
-  void recordDebugLocation(const ValueDebugLocation &loc) {
+  void mapGeneratedLocation(const ValueDebugLocation &loc) {
     if (!enableDebugLocation ||
         (!lastRecordedDebugLocation.empty() && *lastRecordedDebugLocation.begin() == loc)) {
       return;
@@ -707,7 +707,7 @@ struct JSPrinter {
 
   void print(Ref node) {
     if (!node->debugLocation.empty()) {
-      recordDebugLocation(*node->debugLocation.begin());
+      mapGeneratedLocation(*node->debugLocation.begin());
     }
     ensure();
     if (node->isString()) {
