@@ -16,7 +16,7 @@ int main() {
     const char* segments[] = { 0 };
     BinaryenExpressionRef segmentOffsets[] = { 0 };
     BinaryenIndex segmentSizes[] = { 0 };
-    BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentOffsets, segmentSizes, 0);
+    BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentOffsets, segmentSizes, 0, 0);
   }
   the_relooper = RelooperCreate();
   expressions[1] = BinaryenGetLocal(the_module, 0, 1);
@@ -347,7 +347,7 @@ int main() {
     const char* segments[] = { 0 };
     BinaryenExpressionRef segmentOffsets[] = { 0 };
     BinaryenIndex segmentSizes[] = { 0 };
-    BinaryenSetMemory(the_module, 1, 1, NULL, segments, segmentOffsets, segmentSizes, 0);
+    BinaryenSetMemory(the_module, 1, 1, NULL, segments, segmentOffsets, segmentSizes, 0, 0);
   }
   expressions[157] = BinaryenConst(the_module, BinaryenLiteralInt32(65535));
   expressions[158] = BinaryenConst(the_module, BinaryenLiteralInt32(0));

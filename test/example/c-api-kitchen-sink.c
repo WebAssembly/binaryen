@@ -261,7 +261,7 @@ void test_core() {
   const char* segments[] = { "hello, world" };
   BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)) };
   BinaryenIndex segmentSizes[] = { 12 };
-  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
+  BinaryenSetMemory(module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1, 0);
 
   // Start function. One per module
 
