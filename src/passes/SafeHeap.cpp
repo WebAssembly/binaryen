@@ -152,6 +152,10 @@ struct SafeHeap : public Pass {
     }
   }
 
+  bool isPossibleAtomicOperation(Index align, bool shared, Type type) {
+    return align == bytes && module->memory.shared && isIntegerType(type);
+  }
+
   void addGlobals(Module* module) {
     // load funcs
     Load load;
@@ -168,8 +172,10 @@ struct SafeHeap : public Pass {
             if (align > bytes) continue;
             for (auto isAtomic : { true, false }) {
               load.isAtomic = isAtomic;
-              if (isAtomic && align != bytes) continue;
-              if (isAtomic && !module->memory.shared) continue;
+              if (isAtomic &&
+                  !isPossibleAtomicOperation(align, module->memory.shared, type)) {
+                continue;
+              }
               addLoadFunc(load, module);
             }
           }
@@ -189,8 +195,10 @@ struct SafeHeap : public Pass {
           if (align > bytes) continue;
           for (auto isAtomic : { true, false }) {
             store.isAtomic = isAtomic;
-            if (isAtomic && align != bytes) continue;
-            if (isAtomic && !module->memory.shared) continue;
+            if (isAtomic &&
+                !isPossibleAtomicOperation(align, module->memory.shared, type)) {
+              continue;
+            }
             addStoreFunc(store, module);
           }
         }

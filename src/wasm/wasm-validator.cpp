@@ -502,7 +502,10 @@ void FunctionValidator::visitLoad(Load* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
-  if (curr->isAtomic) shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
+  if (curr->isAtomic) {
+    shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
+    shouldBeTrue(isIntegerType(curr->type), "atomic loads must be of integers");
+  }
 }
 
 void FunctionValidator::visitStore(Store* curr) {
@@ -513,6 +516,9 @@ void FunctionValidator::visitStore(Store* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "store pointer type must be i32");
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
+  if (curr->isAtomic) {
+    shouldBeTrue(isIntegerType(curr->valueType), "atomic stores must be of integers");
+  }
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
