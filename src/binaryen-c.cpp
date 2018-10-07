@@ -1677,7 +1677,7 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName,
   auto* wasm = (Module*)module;
 
   if (tracing) {
-    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << shared << ");\n";
+    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << int(shared) << ");\n";
   }
 
   wasm->memory.module = externalModuleName;
@@ -1839,7 +1839,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     std::cout << " };\n";
     std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
     traceNameOrNULL(exportName);
-    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ", " << shared << ");\n";
+    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ", " << int(shared) << ");\n";
     std::cout << "  }\n";
   }
 
