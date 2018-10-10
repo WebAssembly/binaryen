@@ -1645,6 +1645,14 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   wasm->addGlobal(ret);
   return ret;
 }
+void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveGlobal(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeGlobal(name);
+}
 
 // Imports
 
