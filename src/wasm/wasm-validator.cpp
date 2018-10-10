@@ -504,7 +504,7 @@ void FunctionValidator::visitLoad(Load* curr) {
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "load pointer type must be i32");
   if (curr->isAtomic) {
     shouldBeFalse(curr->signed_, curr, "atomic loads must be unsigned");
-    shouldBeTrue(isIntegerType(curr->type), curr, "atomic loads must be of integers");
+    shouldBeIntOrUnreachable(curr->type, curr, "atomic loads must be of integers");
   }
 }
 
@@ -517,7 +517,7 @@ void FunctionValidator::visitStore(Store* curr) {
   shouldBeUnequal(curr->value->type, none, curr, "store value type must not be none");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type, curr->valueType, curr, "store value type must match");
   if (curr->isAtomic) {
-    shouldBeTrue(isIntegerType(curr->valueType), curr, "atomic stores must be of integers");
+    shouldBeIntOrUnreachable(curr->valueType, curr, "atomic stores must be of integers");
   }
 }
 
