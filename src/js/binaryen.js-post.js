@@ -1081,9 +1081,9 @@ Module['Module'] = function(module) {
       return Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
     });
   };
-  this['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName) {
+  this['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName, shared) {
     return preserveStack(function() {
-      return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
+      return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared);
     });
   };
   this['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
@@ -1125,7 +1125,7 @@ Module['Module'] = function(module) {
       );
     });
   };
-  this['setMemory'] = function(initial, maximum, exportName, segments) {
+  this['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
@@ -1146,7 +1146,8 @@ Module['Module'] = function(module) {
             return segment.data.length;
           })
         ),
-        segments.length
+        segments.length,
+        shared
       );
     });
   };

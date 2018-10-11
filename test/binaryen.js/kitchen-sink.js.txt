@@ -1478,7 +1478,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     const char* segments[] = { segment0 };
     BinaryenExpressionRef segmentOffsets[] = { expressions[256] };
     BinaryenIndex segmentSizes[] = { 12 };
-    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1);
+    BinaryenSetMemory(the_module, 1, 256, "mem", segments, segmentOffsets, segmentSizes, 1, 0);
   }
   {
     BinaryenType paramTypes[] = { 0 };

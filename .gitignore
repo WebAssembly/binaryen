@@ -60,3 +60,7 @@ Win32/
 
 # macOS
 .DS_Store
+
+# files related to VS Code
+.history
+.vscode
