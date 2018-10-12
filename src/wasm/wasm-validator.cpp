@@ -969,6 +969,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 static void validateMemory(Module& module, ValidationInfo& info) {
   auto& curr = module.memory;
   info.shouldBeFalse(curr.initial > curr.max, "memory", "memory max >= initial");
+std::cout << curr.max << " : " << Memory::kMaxSize << '\n';
   info.shouldBeTrue(curr.max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB");
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
   if (curr.shared) info.shouldBeTrue(info.features & Feature::Atomics, "memory", "memory is shared, but atomics are disabled");
