@@ -41,6 +41,12 @@ bin/asm2wasm
 bin/wasm2asm
 bin/wasm-as
 bin/wasm-dis
+bin/wasm-ctor-eval
+bin/wasm-emscripten-finalize
+bin/wasm-merge
+bin/wasm-metadce
+bin/wasm-reduce
+bin/wasm2js
 lib/
 
 # files related to windows build
@@ -54,3 +60,7 @@ Win32/
 
 # macOS
 .DS_Store
+
+# files related to VS Code
+.history
+.vscode

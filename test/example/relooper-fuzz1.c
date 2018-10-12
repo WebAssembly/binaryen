@@ -328,7 +328,7 @@ int main() {
   BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0, 0);
 
   assert(BinaryenModuleValidate(module));
 

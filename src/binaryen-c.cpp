@@ -1645,6 +1645,14 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module, const char* name, 
   wasm->addGlobal(ret);
   return ret;
 }
+void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
+  if (tracing) {
+    std::cout << "  BinaryenRemoveGlobal(the_module, \"" << name << "\");\n";
+  }
+
+  auto* wasm = (Module*)module;
+  wasm->removeGlobal(name);
+}
 
 // Imports
 
@@ -1673,15 +1681,16 @@ void BinaryenAddTableImport(BinaryenModuleRef module, const char* internalName, 
   wasm->table.module = externalModuleName;
   wasm->table.base = externalBaseName;
 }
-void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName) {
+void BinaryenAddMemoryImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, uint8_t shared) {
   auto* wasm = (Module*)module;
 
   if (tracing) {
-    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\");\n";
+    std::cout << "  BinaryenAddMemoryImport(the_module, \"" << internalName << "\", \"" << externalModuleName << "\", \"" << externalBaseName << "\", " << int(shared) << ");\n";
   }
 
   wasm->memory.module = externalModuleName;
   wasm->memory.base = externalBaseName;
+  wasm->memory.shared = shared;
 }
 void BinaryenAddGlobalImport(BinaryenModuleRef module, const char* internalName, const char* externalModuleName, const char* externalBaseName, BinaryenType globalType) {
   auto* wasm = (Module*)module;
@@ -1804,7 +1813,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module, BinaryenIndex initial, B
 
 // Memory. One per module
 
-void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments) {
+void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, BinaryenIndex maximum, const char* exportName, const char** segments, BinaryenExpressionRef* segmentOffsets, BinaryenIndex* segmentSizes, BinaryenIndex numSegments, uint8_t shared) {
   if (tracing) {
     std::cout << "  {\n";
     for (BinaryenIndex i = 0; i < numSegments; i++) {
@@ -1838,7 +1847,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
     std::cout << " };\n";
     std::cout << "    BinaryenSetMemory(the_module, " << initial << ", " << maximum << ", ";
     traceNameOrNULL(exportName);
-    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ");\n";
+    std::cout << ", segments, segmentOffsets, segmentSizes, " << numSegments << ", " << int(shared) << ");\n";
     std::cout << "  }\n";
   }
 
@@ -1846,6 +1855,7 @@ void BinaryenSetMemory(BinaryenModuleRef module, BinaryenIndex initial, Binaryen
   wasm->memory.initial = initial;
   wasm->memory.max = maximum;
   wasm->memory.exists = true;
+  wasm->memory.shared = shared;
   if (exportName) {
     auto memoryExport = make_unique<Export>();
     memoryExport->name = exportName;
