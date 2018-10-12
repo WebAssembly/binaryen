@@ -207,7 +207,7 @@ int main(int argc, const char *argv[]) {
     if (max >= 0) {
       wasm.table.max = max;
     } else {
-      wasm.table.max = Table::kMaxSize;
+      wasm.table.max = Table::kUnlimitedSize;
     }
   }
 
