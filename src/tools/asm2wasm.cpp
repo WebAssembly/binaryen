@@ -197,8 +197,12 @@ int main(int argc, const char *argv[]) {
   // Set the max memory size, if requested
   const auto &memMax = options.extra.find("mem max");
   if (memMax != options.extra.end()) {
-    auto max = strtoull(memMax->second.c_str(), nullptr, 10);
-    wasm.memory.max = max / Memory::kPageSize;
+    uint64_t max = strtoull(memMax->second.c_str(), nullptr, 10);
+    if (max != uint64_t(-1)) {
+      wasm.memory.max = max / Memory::kPageSize;
+    } else {
+      wasm.memory.max = Memory::kUnlimitedSize;
+    }
   }
   // Set the table sizes, if requested
   const auto &tableMax = options.extra.find("table max");
