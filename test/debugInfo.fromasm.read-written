@@ -2,15 +2,20 @@
  (type $0 (func (param i32 i32) (result i32)))
  (type $1 (func (param i32) (result i32)))
  (type $2 (func))
+ (type $3 (func (result i32)))
+ (type $4 (func (param i32)))
  (import "env" "memory" (memory $1 256 256))
  (data (get_global $gimport$0) "debugInfo.asm.js")
  (import "env" "memoryBase" (global $gimport$0 i32))
+ (global $global$0 (mut i32) (i32.const 0))
  (export "add" (func $add))
  (export "ret" (func $ret))
  (export "opts" (func $opts))
  (export "fib" (func $fib))
  (export "switch_reach" (func $switch_reach))
  (export "nofile" (func $nofile))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
  (func $add (; 0 ;) (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;;@ tests/other_file.cpp:314159:0
   (i32.add
@@ -187,6 +192,14 @@
  (func $nofile (; 6 ;) (type $2)
   ;;@ (unknown):1337:0
   (call $nofile)
+ )
+ (func $getTempRet0 (; 7 ;) (type $3) (result i32)
+  (get_global $global$0)
+ )
+ (func $setTempRet0 (; 8 ;) (type $4) (param $0 i32)
+  (set_global $global$0
+   (get_local $0)
+  )
  )
 )
 

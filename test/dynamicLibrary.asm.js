@@ -26,7 +26,6 @@ Module["asm"] =  (function(global, env, buffer) {
   var undef = 0;
   var nan = global.NaN, inf = global.Infinity;
   var tempInt = 0, tempBigInt = 0, tempBigIntP = 0, tempBigIntS = 0, tempBigIntR = 0.0, tempBigIntI = 0, tempBigIntD = 0, tempValue = 0, tempDouble = 0.0;
-  var tempRet0 = 0;
 
   var Math_floor=global.Math.floor;
   var Math_abs=global.Math.abs;
