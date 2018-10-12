@@ -691,7 +691,7 @@ class Memory : public Importable {
 public:
   static const Address::address_t kPageSize = 64 * 1024;
   // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
-  static const Address::address_t kMaxSize = (4ULL * 1024ULL * 1024ULL) / kPageSize;
+  static const Address::address_t kMaxSize = (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
