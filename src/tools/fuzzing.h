@@ -268,7 +268,7 @@ private:
 
   void finalizeTable() {
     wasm.table.initial = wasm.table.segments[0].data.size();
-    wasm.table.max = oneIn(2) ? Address(Table::kMaxSize) : wasm.table.initial;
+    wasm.table.max = oneIn(2) ? Address(Table::kUnlimitedSize) : wasm.table.initial;
   }
 
   const Name HANG_LIMIT_GLOBAL = "hangLimit";

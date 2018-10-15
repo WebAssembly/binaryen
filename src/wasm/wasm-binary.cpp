@@ -143,7 +143,7 @@ void WasmBinaryWriter::writeMemory() {
   auto start = startSection(BinaryConsts::Section::Memory);
   o << U32LEB(1); // Define 1 memory
   writeResizableLimits(wasm->memory.initial, wasm->memory.max,
-                       wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
+                       wasm->memory.hasMax(), wasm->memory.shared);
   finishSection(start);
 }
 
@@ -205,14 +205,14 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(&wasm->memory);
     o << U32LEB(int32_t(ExternalKind::Memory));
     writeResizableLimits(wasm->memory.initial, wasm->memory.max,
-                         wasm->memory.max != Memory::kMaxSize, wasm->memory.shared);
+                         wasm->memory.hasMax(), wasm->memory.shared);
   }
   if (wasm->table.imported()) {
     if (debug) std::cerr << "write one table" << std::endl;
     writeImportHeader(&wasm->table);
     o << U32LEB(int32_t(ExternalKind::Table));
     o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-    writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
+    writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.hasMax(), /*shared=*/false);
   }
   finishSection(start);
 }
@@ -418,7 +418,7 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
-  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.max != Table::kMaxSize, /*shared=*/false);
+  writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.hasMax(), /*shared=*/false);
   finishSection(start);
 }
 
@@ -899,7 +899,7 @@ void WasmBinaryBuilder::readMemory() {
     throwError("Memory cannot be both imported and defined");
   }
   wasm.memory.exists = true;
-  getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
+  getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kUnlimitedSize);
 }
 
 void WasmBinaryBuilder::readSignatures() {
@@ -987,7 +987,7 @@ void WasmBinaryBuilder::readImports() {
         if (elementType != BinaryConsts::EncodedType::AnyFunc) throwError("Imported table type is not AnyFunc");
         wasm.table.exists = true;
         bool is_shared;
-        getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+        getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
         if (is_shared) throwError("Tables may not be shared");
         break;
       }
@@ -996,7 +996,7 @@ void WasmBinaryBuilder::readImports() {
         wasm.memory.base = base;
         wasm.memory.name = Name(std::to_string(i));
         wasm.memory.exists = true;
-        getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kMaxSize);
+        getResizableLimits(wasm.memory.initial, wasm.memory.max, wasm.memory.shared, Memory::kUnlimitedSize);
         break;
       }
       case ExternalKind::Global: {
@@ -1542,7 +1542,7 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   auto elemType = getS32LEB();
   if (elemType != BinaryConsts::EncodedType::AnyFunc) throwError("ElementType must be AnyFunc in MVP");
   bool is_shared;
-  getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kMaxSize);
+  getResizableLimits(wasm.table.initial, wasm.table.max, is_shared, Table::kUnlimitedSize);
   if (is_shared) throwError("Tables may not be shared");
 }
 

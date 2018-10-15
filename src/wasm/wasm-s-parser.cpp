@@ -1510,7 +1510,10 @@ void SExpressionWasmBuilder::stringToBinary(const char* input, size_t size, std:
 
 Index SExpressionWasmBuilder::parseMemoryLimits(Element& s, Index i) {
   wasm.memory.initial = getCheckedAddress(s[i++], "excessive memory init");
-  if (i == s.size()) return i;
+  if (i == s.size()) {
+    wasm.memory.max = Memory::kUnlimitedSize;
+    return i;
+  }
   uint64_t max = atoll(s[i++]->c_str());
   if (max > Memory::kMaxSize) throw ParseException("total memory must be <= 4GB");
   wasm.memory.max = max;
@@ -1764,7 +1767,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     if (j < inner.size() - 1) {
       wasm.table.max = getCheckedAddress(inner[j++], "excessive table max size");
     } else {
-      wasm.table.max = Table::kMaxSize;
+      wasm.table.max = Table::kUnlimitedSize;
     }
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {

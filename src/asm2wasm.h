@@ -759,7 +759,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     EmscriptenGlueGenerator generator(wasm);
     auto* func = generator.generateMemoryGrowthFunction();
     extraSupportFunctions.push_back(func);
-    wasm.memory.max = Memory::kMaxSize;
+    wasm.memory.max = Memory::kUnlimitedSize;
   }
 
   // import memory

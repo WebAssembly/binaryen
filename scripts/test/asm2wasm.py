@@ -58,6 +58,8 @@ def test_asm2wasm():
           cmd += ['--mem-init=a.mem']
           if asm[0] == 'e':
             cmd += ['--mem-base=1024']
+        if '4GB' in asm:
+          cmd += ['--mem-max=4294967296']
         if 'i64' in asm or 'wasm-only' in asm or 'noffi' in asm:
           cmd += ['--wasm-only']
         wasm = os.path.join(options.binaryen_test, wasm)

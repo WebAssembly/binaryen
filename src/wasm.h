@@ -662,6 +662,8 @@ public:
 class Table : public Importable {
 public:
   static const Address::address_t kPageSize = 1;
+  static const Index kUnlimitedSize = Index(-1);
+  // In wasm32, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
@@ -684,13 +686,15 @@ public:
   Table() : exists(false), initial(0), max(kMaxSize) {
     name = Name::fromInt(0);
   }
-  bool hasMax() { return max != kMaxSize; }
+  bool hasMax() { return max != kUnlimitedSize; }
 };
 
 class Memory : public Importable {
 public:
   static const Address::address_t kPageSize = 64 * 1024;
-  static const Address::address_t kMaxSize = ~Address::address_t(0) / kPageSize;
+  static const Address::address_t kUnlimitedSize = Address::address_t(-1);
+  // In wasm32, the maximum memory size is limited by a 32-bit pointer: 4GB
+  static const Address::address_t kMaxSize = (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
   static const Address::address_t kPageMask = ~(kPageSize - 1);
 
   struct Segment {
@@ -718,7 +722,7 @@ public:
   Memory() : initial(0), max(kMaxSize), exists(false), shared(false) {
     name = Name::fromInt(0);
   }
-  bool hasMax() { return max != kMaxSize; }
+  bool hasMax() { return max != kUnlimitedSize; }
 };
 
 class Global : public Importable {
