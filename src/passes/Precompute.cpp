@@ -17,6 +17,11 @@
 //
 // Computes code at compile time where possible.
 //
+// Possible nondeterminism: WebAssembly NaN signs are nondeterministic,
+// and this pass may optimize e.g. a float 0 / 0 into +nan while a VM may
+// emit -nan, which can be a noticeable difference if the bits are
+// looked at.
+//
 
 #include <wasm.h>
 #include <pass.h>
