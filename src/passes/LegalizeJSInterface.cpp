@@ -41,6 +41,13 @@ Name SET_TEMP_RET_0("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // First of all, ensure we have the tempRet global and getter/setter
+    // for it.
+    // With asm2wasm these will almost certainly already exists since
+    // emscripten creates them, but for wasm inputs they always get created
+    // here.
+    addTempRet0Helpers(module);
+
     // for each illegal export, we must export a legalized stub instead
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
@@ -52,27 +59,30 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    // Avoid iterator invalidation later.
+
+    // Avoid iterator invalidation since we are about to add functions
     std::vector<Function*> originalFunctions;
     for (auto& func : module->functions) {
       originalFunctions.push_back(func.get());
     }
+
     // for each illegal import, we must call a legalized stub instead
-    for (auto* im : originalFunctions) {
-      if (im->imported() && isIllegal(module->getFunctionType(im->type))) {
-        auto funcName = makeLegalStubForCalledImport(im, module);
-        illegalImportsToLegal[im->name] = funcName;
+    for (auto* func : originalFunctions) {
+      if (func->imported() && isIllegal(func)) {
+        auto funcName = makeLegalStubForCalledImport(func, module);
+        illegalImportsToLegal[func->name] = funcName;
         // we need to use the legalized version in the table, as the import from JS
         // is legal for JS. Our stub makes it look like a native wasm function.
         for (auto& segment : module->table.segments) {
           for (auto& name : segment.data) {
-            if (name == im->name) {
+            if (name == func->name) {
               name = funcName;
             }
           }
         }
       }
     }
+
     if (illegalImportsToLegal.size() > 0) {
       for (auto& pair : illegalImportsToLegal) {
         module->removeFunction(pair.first);
@@ -103,24 +113,17 @@ struct LegalizeJSInterface : public Pass {
       passRunner.add<FixImports>(&illegalImportsToLegal);
       passRunner.run();
     }
-
-    if (needTempRet0Helpers) {
-      addTempRet0Helpers(module);
-    }
   }
 
 private:
   // map of illegal to legal names for imports
   std::map<Name, Name> illegalImportsToLegal;
 
-  bool needTempRet0Helpers = false;
-
-  template<typename T>
-  bool isIllegal(T* t) {
-    for (auto param : t->params) {
+  bool isIllegal(Function* f) {
+    for (auto param : f->params) {
       if (param == i64 || param == f32) return true;
     }
-    if (t->result == i64 || t->result == f32) return true;
+    if (f->result == i64 || f->result == f32) return true;
     return false;
   }
 
@@ -153,7 +156,6 @@ private:
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeSetLocal(index, call));
-      ensureTempRet0(module);
       block->list.push_back(builder.makeSetGlobal(
         TEMP_RET_0,
         I64Utilities::getI64High(builder, index)
@@ -213,7 +215,6 @@ private:
     if (imFunctionType->result == i64) {
       call->type = i32;
       Expression* get;
-      ensureTempRet0(module);
       get = builder.makeGetGlobal(TEMP_RET_0, i32);
       func->body = I64Utilities::recreateI64(builder, call, get);
       type->result = i32;
@@ -241,50 +242,67 @@ private:
     return func->name;
   }
 
-  void ensureTempRet0(Module* module) {
-    if (!module->getGlobalOrNull(TEMP_RET_0)) {
-      module->addGlobal(Builder::makeGlobal(
-        TEMP_RET_0,
-        i32,
-        LiteralUtils::makeZero(i32, *module),
-        Builder::Mutable
-      ));
-      needTempRet0Helpers = true;
-    }
-  }
 
   void addTempRet0Helpers(Module* module) {
-    // We should also let JS access the tempRet0 global, which
-    // is necessary to send/receive 64-bit return values.
+    // Synthesize implementations of getTempRet0/setTempRet0
+    bool getterExists = module->getExportOrNull(GET_TEMP_RET_0) != nullptr;
+    bool setterExists = module->getExportOrNull(SET_TEMP_RET_0) != nullptr;
+
+    // If they both exist alrady as exports then do nothing.
+    if (getterExists && setterExists) {
+      return;
+    }
+
+    // If only one exists we can't create the other becasue we don't know
+    // how tempRet0 is stored.
+    if (getterExists || setterExists) {
+      Fatal() << "getTempRet0/setTempRet0 must exist together.";
+    }
+
+    module->addGlobal(Builder::makeGlobal(
+      TEMP_RET_0,
+      i32,
+      LiteralUtils::makeZero(i32, *module),
+      Builder::Mutable
+    ));
+
+    // We should also let JS access the tempRet0 global, which is necessary
+    // to (among other things) send/receive 64-bit return values.
     auto exportIt = [&](Function* func) {
+      // Remove any existing import
+      Function* existing = module->getFunctionOrNull(func->name);
+      if (existing) {
+        assert(existing->imported());
+        module->removeFunction(func->name);
+      }
+
+      // Add the function
+      module->addFunction(func);
+
+      // Export the function
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
       export_->kind = ExternalKind::Function;
       module->addExport(export_);
     };
-    if (!module->getExportOrNull(GET_TEMP_RET_0)) {
-      Builder builder(*module);
-      auto* func = new Function();
-      func->name = GET_TEMP_RET_0;
-      func->result = i32;
-      func->body = builder.makeGetGlobal(TEMP_RET_0, i32);
-      module->addFunction(func);
-      exportIt(func);
-    }
-    if (!module->getExportOrNull(SET_TEMP_RET_0)) {
-      Builder builder(*module);
-      auto* func = new Function();
-      func->name = SET_TEMP_RET_0;
-      func->result = none;
-      func->params.push_back(i32);
-      func->body = builder.makeSetGlobal(
-        TEMP_RET_0,
-        builder.makeGetLocal(0, i32)
-      );
-      module->addFunction(func);
-      exportIt(func);
-    }
+
+    Builder builder(*module);
+    auto* getter = new Function();
+    getter->name = GET_TEMP_RET_0;
+    getter->result = i32;
+    getter->body = builder.makeGetGlobal(TEMP_RET_0, i32);
+    exportIt(getter);
+
+    auto* setter = new Function();
+    setter->name = SET_TEMP_RET_0;
+    setter->result = none;
+    setter->params.push_back(i32);
+    setter->body = builder.makeSetGlobal(
+      TEMP_RET_0,
+      builder.makeGetLocal(0, i32)
+    );
+    exportIt(setter);
   }
 };
 
@@ -293,4 +311,3 @@ Pass *createLegalizeJSInterfacePass() {
 }
 
 } // namespace wasm
-

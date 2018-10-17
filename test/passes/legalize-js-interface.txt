@@ -14,7 +14,15 @@
   )
   (unreachable)
  )
- (func $legalstub$func (; 2 ;) (result i32)
+ (func $getTempRet0 (; 2 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 3 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
+  )
+ )
+ (func $legalstub$func (; 4 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $func)
@@ -31,7 +39,7 @@
    (get_local $0)
   )
  )
- (func $legalstub$imported (; 3 ;) (result i32)
+ (func $legalstub$imported (; 5 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $legalfunc$imported)
@@ -48,7 +56,7 @@
    (get_local $0)
   )
  )
- (func $legalfunc$imported (; 4 ;) (result i64)
+ (func $legalfunc$imported (; 6 ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$imported)
@@ -61,14 +69,17 @@
    )
   )
  )
- (func $getTempRet0 (; 5 ;) (result i32)
+)
+(module
+ (global $tempRet0 (mut i32) (i32.const 0))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
+ (func $getTempRet0 (; 0 ;) (result i32)
   (get_global $tempRet0)
  )
- (func $setTempRet0 (; 6 ;) (param $0 i32)
+ (func $setTempRet0 (; 1 ;) (param $0 i32)
   (set_global $tempRet0
    (get_local $0)
   )
  )
-)
-(module
 )

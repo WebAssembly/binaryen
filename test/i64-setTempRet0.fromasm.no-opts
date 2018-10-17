@@ -9,6 +9,8 @@
  (global $tempRet0 (mut i32) (i32.const 0))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
  (func $illegalResult (; 1 ;) (result i64)
   (return
    (i64.const 8589934593)
@@ -21,7 +23,15 @@
    )
   )
  )
- (func $legalstub$illegalResult (; 3 ;) (result i32)
+ (func $getTempRet0 (; 3 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 4 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
+  )
+ )
+ (func $legalstub$illegalResult (; 5 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $illegalResult)
@@ -38,7 +48,7 @@
    (get_local $0)
   )
  )
- (func $legalfunc$illegalImportResult (; 4 ;) (result i64)
+ (func $legalfunc$illegalImportResult (; 6 ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$illegalImportResult)

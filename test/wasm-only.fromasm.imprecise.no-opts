@@ -1676,7 +1676,15 @@
    (call $legalfunc$do_i64)
   )
  )
- (func $legalstub$illegalParam (; 27 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
+ (func $getTempRet0 (; 27 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 28 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
+  )
+ )
+ (func $legalstub$illegalParam (; 29 ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 f64)
   (call $illegalParam
    (get_local $0)
    (i64.or
@@ -1693,7 +1701,7 @@
    (get_local $3)
   )
  )
- (func $legalstub$illegalResult (; 28 ;) (result i32)
+ (func $legalstub$illegalResult (; 30 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $illegalResult)
@@ -1710,7 +1718,7 @@
    (get_local $0)
   )
  )
- (func $legalfunc$illegalImport (; 29 ;) (param $0 f64) (param $1 i64) (param $2 i32)
+ (func $legalfunc$illegalImport (; 31 ;) (param $0 f64) (param $1 i64) (param $2 i32)
   (call $legalimport$illegalImport
    (get_local $0)
    (i32.wrap/i64
@@ -1725,7 +1733,7 @@
    (get_local $2)
   )
  )
- (func $legalfunc$illegalImportResult (; 30 ;) (result i64)
+ (func $legalfunc$illegalImportResult (; 32 ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$illegalImportResult)
@@ -1738,7 +1746,7 @@
    )
   )
  )
- (func $legalfunc$_fabsf (; 31 ;) (param $0 f32) (result f32)
+ (func $legalfunc$_fabsf (; 33 ;) (param $0 f32) (result f32)
   (f32.demote/f64
    (call $legalimport$_fabsf
     (f64.promote/f32
@@ -1747,7 +1755,7 @@
    )
   )
  )
- (func $legalfunc$do_i64 (; 32 ;) (result i64)
+ (func $legalfunc$do_i64 (; 34 ;) (result i64)
   (i64.or
    (i64.extend_u/i32
     (call $legalimport$do_i64)
@@ -1758,14 +1766,6 @@
     )
     (i64.const 32)
    )
-  )
- )
- (func $getTempRet0 (; 33 ;) (result i32)
-  (get_global $tempRet0)
- )
- (func $setTempRet0 (; 34 ;) (param $0 i32)
-  (set_global $tempRet0
-   (get_local $0)
   )
  )
 )

@@ -72,7 +72,15 @@
    (get_local $x)
   )
  )
- (func $legalstub$test64 (; 1 ;) (result i32)
+ (func $getTempRet0 (; 1 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 2 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
+  )
+ )
+ (func $legalstub$test64 (; 3 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $test64)
@@ -86,14 +94,6 @@
    )
   )
   (i32.wrap/i64
-   (get_local $0)
-  )
- )
- (func $getTempRet0 (; 2 ;) (result i32)
-  (get_global $tempRet0)
- )
- (func $setTempRet0 (; 3 ;) (param $0 i32)
-  (set_global $tempRet0
    (get_local $0)
   )
  )

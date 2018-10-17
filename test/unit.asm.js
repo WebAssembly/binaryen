@@ -302,7 +302,7 @@ function asm(global, env, buffer) {
     if (return_int() | 0) {
       phi() | 0; // drop this
       setTempRet0(10); // this too
-      zeroInit(setTempRet0(10) | 0);
+      //zeroInit(setTempRet0(10) | 0);
     }
     return phi() | 0;
   }

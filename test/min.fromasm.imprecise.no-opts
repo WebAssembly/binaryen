@@ -5,12 +5,13 @@
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "tempDoublePtr" (global $tDP$asm2wasm$import i32))
  (global $tDP (mut i32) (get_global $tDP$asm2wasm$import))
- (global $M (mut i32) (i32.const 0))
+ (global $tempRet0 (mut i32) (i32.const 0))
  (export "floats" (func $legalstub$floats))
- (export "getTempRet0" (func $ub))
  (export "neg" (func $legalstub$neg))
  (export "bitcasts" (func $legalstub$bitcasts))
  (export "ctzzzz" (func $ctzzzz))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
  (func $floats (; 0 ;) (param $f f32) (result f32)
   (local $t f32)
   (return
@@ -65,15 +66,15 @@
    )
   )
  )
- (func $ub (; 4 ;) (result i32)
-  (drop
-   (call $ub)
-  )
-  (return
-   (get_global $M)
+ (func $getTempRet0 (; 4 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 5 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
   )
  )
- (func $legalstub$floats (; 5 ;) (param $0 f64) (result f64)
+ (func $legalstub$floats (; 6 ;) (param $0 f64) (result f64)
   (f64.promote/f32
    (call $floats
     (f32.demote/f64
@@ -82,7 +83,7 @@
    )
   )
  )
- (func $legalstub$neg (; 6 ;) (param $0 i32) (param $1 i32) (result f64)
+ (func $legalstub$neg (; 7 ;) (param $0 i32) (param $1 i32) (result f64)
   (f64.promote/f32
    (call $neg
     (get_local $0)
@@ -90,7 +91,7 @@
    )
   )
  )
- (func $legalstub$bitcasts (; 7 ;) (param $0 i32) (param $1 f64)
+ (func $legalstub$bitcasts (; 8 ;) (param $0 i32) (param $1 f64)
   (call $bitcasts
    (get_local $0)
    (f32.demote/f64

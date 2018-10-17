@@ -42,10 +42,12 @@
  (global $tempBigIntD (mut i32) (i32.const 0))
  (global $tempValue (mut i32) (i32.const 0))
  (global $tempDouble (mut f64) (f64.const 0))
- (global $tempRet0 (mut i32) (i32.const 0))
  (global $tempFloat (mut f32) (f32.const 0))
  (global $f0 (mut f32) (f32.const 0))
+ (global $tempRet0 (mut i32) (i32.const 0))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
  (func $__ZN10WasmAssertC2Ev__async_cb (; 2 ;) (param $$0 i32)
   (block $switch
    (block $switch-default
@@ -82,6 +84,14 @@
      (i32.const 0)
     )
    )
+  )
+ )
+ (func $getTempRet0 (; 3 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 4 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
   )
  )
 )

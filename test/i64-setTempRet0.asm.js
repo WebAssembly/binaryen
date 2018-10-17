@@ -9,8 +9,6 @@ function asm(global, env, buffer) {
 
   var illegalImportResult = env.illegalImportResult;
 
-  var tempRet0 = 0; // this should be used to legalize the illegal result
-
   function illegalResult() { // illegal result, exported
     return i64_const(1, 2);
   }

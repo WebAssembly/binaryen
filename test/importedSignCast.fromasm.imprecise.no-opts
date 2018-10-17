@@ -6,7 +6,10 @@
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))
+ (global $tempRet0 (mut i32) (i32.const 0))
  (export "func" (func $func))
+ (export "getTempRet0" (func $getTempRet0))
+ (export "setTempRet0" (func $setTempRet0))
  (func $func (; 1 ;)
   (drop
    (i32.shr_s
@@ -18,6 +21,14 @@
     )
     (i32.const 24)
    )
+  )
+ )
+ (func $getTempRet0 (; 2 ;) (result i32)
+  (get_global $tempRet0)
+ )
+ (func $setTempRet0 (; 3 ;) (param $0 i32)
+  (set_global $tempRet0
+   (get_local $0)
   )
  )
 )

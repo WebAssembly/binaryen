@@ -23,7 +23,6 @@ Module["asm"] =  (function(global, env, buffer) {
   var undef = 0;
   var nan = global.NaN, inf = global.Infinity;
   var tempInt = 0, tempBigInt = 0, tempBigIntS = 0, tempValue = 0, tempDouble = 0.0;
-  var tempRet0 = 0;
 
   var __pthread_ptr = 0;
   var __pthread_is_main_runtime_thread = 0;
