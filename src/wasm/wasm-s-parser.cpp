@@ -421,7 +421,7 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
       functionType->name = Name::fromInt(wasm.functionTypes.size());
       functionTypeNames.push_back(functionType->name);
       if (wasm.getFunctionTypeOrNull(functionType->name)) throw ParseException("duplicate function type", s.line, s.col);
-      wasm.addFunctionType(functionType.release());
+      wasm.addFunctionType(std::move(functionType));
     }
   }
 }
@@ -1828,7 +1828,7 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   }
   functionTypeNames.push_back(type->name);
   if (wasm.getFunctionTypeOrNull(type->name)) throw ParseException("duplicate function type", s.line, s.col);
-  wasm.addFunctionType(type.release());
+  wasm.addFunctionType(std::move(type));
 }
 
 } // namespace wasm

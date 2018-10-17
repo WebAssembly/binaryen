@@ -937,7 +937,7 @@ void WasmBinaryBuilder::readSignatures() {
   if (debug) std::cerr << "num: " << numTypes << std::endl;
   for (size_t i = 0; i < numTypes; i++) {
     if (debug) std::cerr << "read one" << std::endl;
-    auto curr = new FunctionType;
+    auto curr = make_unique<FunctionType>();
     auto form = getS32LEB();
     if (form != BinaryConsts::EncodedType::Func) {
       throwError("bad signature form " + std::to_string(form));
@@ -957,7 +957,7 @@ void WasmBinaryBuilder::readSignatures() {
       curr->result = getType();
     }
     curr->name = Name::fromInt(wasm.functionTypes.size());
-    wasm.addFunctionType(curr);
+    wasm.addFunctionType(std::move(curr));
   }
 }
 

@@ -105,7 +105,7 @@ inline void copyModule(Module& in, Module& out) {
   // we use names throughout, not raw points, so simple copying is fine
   // for everything *but* expressions
   for (auto& curr : in.functionTypes) {
-    out.addFunctionType(new FunctionType(*curr));
+    out.addFunctionType(make_unique<FunctionType>(*curr));
   }
   for (auto& curr : in.exports) {
     out.addExport(new Export(*curr));

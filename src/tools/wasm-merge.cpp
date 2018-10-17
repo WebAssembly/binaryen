@@ -447,7 +447,7 @@ struct InputMergeable : public ExpressionStackWalker<InputMergeable, Visitor<Inp
 
     // copy in the data
     for (auto& curr : wasm.functionTypes) {
-      outputMergeable.wasm.addFunctionType(curr.release());
+      outputMergeable.wasm.addFunctionType(std::move(curr));
     }
     for (auto& curr : wasm.globals) {
       if (curr->imported()) {

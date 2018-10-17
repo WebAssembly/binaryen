@@ -917,7 +917,7 @@ public:
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
 
-  void addFunctionType(FunctionType* curr);
+  FunctionType* addFunctionType(std::unique_ptr<FunctionType> curr);
   void addExport(Export* curr);
   void addFunction(Function* curr);
   void addGlobal(Global* curr);

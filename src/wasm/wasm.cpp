@@ -809,15 +809,17 @@ Global* Module::getGlobalOrNull(Name name) {
   return iter->second;
 }
 
-void Module::addFunctionType(FunctionType* curr) {
+FunctionType* Module::addFunctionType(std::unique_ptr<FunctionType> curr) {
   if (!curr->name.is()) {
     Fatal() << "Module::addFunctionType: empty name";
   }
   if (getFunctionTypeOrNull(curr->name)) {
     Fatal() << "Module::addFunctionType: " << curr->name << " already exists";
   }
-  functionTypes.push_back(std::unique_ptr<FunctionType>(curr));
-  functionTypesMap[curr->name] = curr;
+  auto* p = curr.get();
+  functionTypes.emplace_back(std::move(curr));
+  functionTypesMap[p->name] = p;
+  return p;
 }
 
 void Module::addExport(Export* curr) {
