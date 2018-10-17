@@ -52,7 +52,7 @@ struct LegalizeJSInterface : public Pass {
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
-        Function* func = module->getFunction(ex->value);
+        auto* func = module->getFunction(ex->value);
         if (isIllegal(func)) {
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
