@@ -9,7 +9,7 @@ effective**:
 
  * **Easy**: Binaryen has a simple [C API] in a single header, and can also be
    [used from JavaScript][JS_API]. It accepts input in [WebAssembly-like
-   form][compiler_to_wasm] but also accepts a general [control flow graph] for
+   form][compile_to_wasm] but also accepts a general [control flow graph] for
    compilers that prefer that.
 
  * **Fast**: Binaryen's internal IR uses compact data structures and is designed
