@@ -15,6 +15,7 @@
  */
 
 #ifndef _wasm_ir_hashed_h
+#define _wasm_ir_hashed_h
 
 #include "support/hash.h"
 #include "wasm.h"
