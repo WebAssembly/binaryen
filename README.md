@@ -71,7 +71,10 @@ There are a few differences between Binaryen IR and the WebAssembly language:
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
      block/if/loop to take it, allowing [local transforms that don't need to
-     know the global context][unreachable].
+     know the global context][unreachable]. As a result, Binaryen's default
+     text output is not necessarily valid wasm text. (To get valid wasm text,
+     you can do `--generate-stack-ir --print-stack-ir`, which prints Stack IR,
+     this is guaranteed to be valid for wasm parsers.)
    * Binaryen ignores unreachable code when reading WebAssembly binaries. That
      means that if you read a wasm file with unreachable code, that code will be
      discarded as if it were optimized out (often this is what you want anyhow,
