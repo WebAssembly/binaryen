@@ -128,7 +128,35 @@ inline void copyModule(Module& in, Module& out) {
   out.debugInfoFileNames = in.debugInfoFileNames;
 }
 
-// Convenient iteration over imported/non-imported functions/globals
+// Convenient iteration over imported/non-imported module elements
+
+template<typename T>
+inline void iterImportedMemories(Module& wasm, T visitor) {
+  if (wasm.memory.exists && wasm.memory.imported()) {
+    visitor(&wasm.memory);
+  }
+}
+
+template<typename T>
+inline void iterDefinedMemories(Module& wasm, T visitor) {
+  if (wasm.memory.exists && !wasm.memory.imported()) {
+    visitor(&wasm.memory);
+  }
+}
+
+template<typename T>
+inline void iterImportedTables(Module& wasm, T visitor) {
+  if (wasm.table.exists && wasm.table.imported()) {
+    visitor(&wasm.table);
+  }
+}
+
+template<typename T>
+inline void iterDefinedTables(Module& wasm, T visitor) {
+  if (wasm.table.exists && !wasm.table.imported()) {
+    visitor(&wasm.table);
+  }
+}
 
 template<typename T>
 inline void iterImportedGlobals(Module& wasm, T visitor) {

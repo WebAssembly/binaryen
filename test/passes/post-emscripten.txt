@@ -3,8 +3,8 @@
  (type $FUNCSIG$ddd (func (param f64 f64) (result f64)))
  (type $2 (func (param i32) (result i32)))
  (type $3 (func))
- (memory $0 256 256)
  (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
+ (memory $0 256 256)
  (export "load-off-2" (func $load-off-2))
  (func $b0 (; 1 ;) (type $0) (param $x i32)
   (drop

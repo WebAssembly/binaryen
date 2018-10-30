@@ -1,10 +1,10 @@
 (module
  (type $0 (func))
  (type $FUNCSIG$v (func))
- (memory $0 (shared 100 100))
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
+ (memory $0 (shared 100 100))
  (func $loads (; 2 ;) (type $0)
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_U_4
@@ -3686,10 +3686,10 @@
 (module
  (type $0 (func))
  (type $FUNCSIG$v (func))
- (memory $0 100 100)
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
+ (memory $0 100 100)
  (func $loads (; 2 ;) (type $0)
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_U_4
@@ -6448,10 +6448,10 @@
 )
 (module
  (type $FUNCSIG$v (func))
- (memory $0 (shared 100 100))
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
+ (memory $0 (shared 100 100))
  (func $actions (; 2 ;) (type $FUNCSIG$v)
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_U_4

@@ -1,5 +1,5 @@
 (module
- (memory $0 0)
  (import "env" "table" (table 0 0 anyfunc))
+ (memory $0 0)
 )
 

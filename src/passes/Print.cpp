@@ -1056,15 +1056,23 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       visitFunctionType(child.get());
       o << ")" << maybeNewLine;
     }
-    visitMemory(&curr->memory);
-    if (curr->table.exists) {
-      visitTable(&curr->table); // Prints its own newlines
-    }
+    ModuleUtils::iterImportedMemories(*curr, [&](Memory* memory) {
+      visitMemory(memory);
+    });
+    ModuleUtils::iterImportedTables(*curr, [&](Table* table) {
+      visitTable(table);
+    });
     ModuleUtils::iterImportedGlobals(*curr, [&](Global* global) {
       visitGlobal(global);
     });
     ModuleUtils::iterImportedFunctions(*curr, [&](Function* func) {
       visitFunction(func);
+    });
+    ModuleUtils::iterDefinedMemories(*curr, [&](Memory* memory) {
+      visitMemory(memory);
+    });
+    ModuleUtils::iterDefinedTables(*curr, [&](Table* table) {
+      visitTable(table);
     });
     ModuleUtils::iterDefinedGlobals(*curr, [&](Global* global) {
       visitGlobal(global);
