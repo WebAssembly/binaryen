@@ -957,6 +957,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
   void printTableHeader(Table* curr) {
     o << '(';
     printMedium(o, "table") << ' ';
+    printName(curr->name, o) << ' ';
     o << curr->initial;
     if (curr->hasMax()) o << ' ' << curr->max;
     o << " anyfunc)";

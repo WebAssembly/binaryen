@@ -7,7 +7,7 @@
  (data (i32.const 100) "hello, A!\n")
  (data (i32.const 1024) "")
  (data (i32.const 200) "hello, B!\n")
- (import "env" "table" (table 1000 anyfunc))
+ (import "env" "table" (table $0 1000 anyfunc))
  (elem (i32.const 10) $only-a $willCollide $some-func $some-collide $only-a)
  (elem (i32.const 20) $only-b $willCollide $some-func-b $some-collide)
  (import "env" "memoryBase" (global $memoryBase i32))

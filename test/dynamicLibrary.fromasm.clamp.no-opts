@@ -2,7 +2,7 @@
  (type $FUNCSIG$vi (func (param i32)))
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR$asm2wasm$import i32))

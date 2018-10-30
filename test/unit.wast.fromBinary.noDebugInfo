@@ -14,7 +14,7 @@
  (import "asm2wasm" "f64-rem" (func $fimport$2 (param f64 f64) (result f64)))
  (memory $0 4096 4096)
  (data (i32.const 1026) "\14\00")
- (table 10 anyfunc)
+ (table $0 10 anyfunc)
  (elem (i32.const 0) $17 $0 $17 $17 $18 $18 $1 $18 $17 $15)
  (export "big_negative" (func $0))
  (func $0 (; 3 ;) (type $1)

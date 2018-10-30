@@ -7,7 +7,7 @@
  (type $5 (func (param f32 i64)))
  (type $6 (func (param f32 i64) (result i32)))
  (memory $0 10)
- (table 1 1 anyfunc)
+ (table $0 1 1 anyfunc)
  (elem (i32.const 0) $call-me)
  (global $x (mut i32) (i32.const 0))
  (func $call-me (; 0 ;) (type $ii) (param $0 i32) (param $1 i32)

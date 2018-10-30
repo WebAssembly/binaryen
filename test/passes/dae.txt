@@ -2,7 +2,7 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (type $2 (func (param i32 f64)))
- (table 1 1 anyfunc)
+ (table $0 1 1 anyfunc)
  (elem (i32.const 0) $a9)
  (export "a8" (func $a8))
  (func $a (; 0 ;)

@@ -8,7 +8,7 @@
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "segfault" (func $segfault (param i32)))
  (memory $0 10)
- (table 1 1 anyfunc)
+ (table $0 1 1 anyfunc)
  (global $stack_ptr (mut i32) (get_global $STACKTOP$asm2wasm$import))
  (func $nothing (; 1 ;) (type $2)
   (nop)

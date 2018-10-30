@@ -10,7 +10,7 @@
  (type $8 (func (param f64) (result f64)))
  (memory $0 (shared 1 1))
  (data (i32.const 0) "\00\00\00\00\00\00\00\00X\00\00\00U\00\00\0b\00\00\00\00\00\00\00k\00\00")
- (table 2 anyfunc)
+ (table $0 2 anyfunc)
  (elem (i32.const 0) $1 $5)
  (global $global$0 (mut i32) (i32.const 255))
  (global $global$1 (mut i32) (i32.const -7045592))
