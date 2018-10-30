@@ -1162,6 +1162,14 @@ Module['Module'] = function(module) {
     out = old;
     return ret;
   };
+  this['emitStackIR'] = function() {
+    var old = out;
+    var ret = '';
+    out = function(x) { ret += x + '\n' };
+    this['runPasses'](['print-stack-ir']);
+    out = old;
+    return ret;
+  };
   this['emitAsmjs'] = function() {
     var old = out;
     var ret = '';
