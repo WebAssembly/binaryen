@@ -1162,7 +1162,9 @@ Module['Module'] = function(module) {
     out = old;
     return ret;
   };
-  this['emitStackIR'] = function() {
+  this['emitStackIR'] = function(optimize) {
+    this['runPasses'](['generate-stack-ir']);
+    if (optimize) this['runPasses'](['optimize-stack-ir']);
     var old = out;
     var ret = '';
     out = function(x) { ret += x + '\n' };
