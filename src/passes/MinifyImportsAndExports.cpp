@@ -149,7 +149,7 @@ struct MinifyImportsAndExports : public Pass {
     module->updateMaps();
     // Emit the mapping.
     for (auto& pair : oldToNew) {
-      std::cout << pair.second << " => " << pair.first << '\n';
+      std::cout << pair.second.str << " => " << pair.first.str << '\n';
     }
   }
 };
