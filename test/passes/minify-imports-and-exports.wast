@@ -4999,6 +4999,8 @@
   (import "env" "longname4997" (func $internal4997))
   (import "env" "longname4998" (func $internal4998))
   (import "env" "longname4999" (func $internal4999))
+  (import "env" "memoryBase" (global i32))
+  (import "env" "tableBase" (global i32))
   (export "exp1" (func $foo1))
   (export "exp2" (func $foo2))
   (func $foo1)

@@ -34,6 +34,7 @@
 
 #include <wasm.h>
 #include <pass.h>
+#include <shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/module-utils.h>
 
@@ -133,18 +134,23 @@ struct MinifyImportsAndExports : public Pass {
     MinifiedNames names;
     size_t soFar = 0;
     std::map<Name, Name> oldToNew;
-    auto minifyBase = [&](Importable* curr) {
+    auto process = [&](Name& name) {
+      // do not minifiy special imports, they must always exist
+      if (name == MEMORY_BASE || name == TABLE_BASE) {
+        return;
+      }
       auto newName = names.getName(soFar++);
-      oldToNew[newName] = curr->base;
-      curr->base = newName;
+      oldToNew[newName] = name;
+      name = newName;
+    };
+    auto minifyBase = [&](Importable* curr) {
+      process(curr->base);
     };
     ModuleUtils::iterImportedGlobals(*module, minifyBase);
     ModuleUtils::iterImportedFunctions(*module, minifyBase);
     // Minify the exported names.
     for (auto& curr : module->exports) {
-      auto newName = names.getName(soFar++);
-      oldToNew[newName] = curr->name;
-      curr->name = newName;
+      process(curr->name);
     }
     module->updateMaps();
     // Emit the mapping.
