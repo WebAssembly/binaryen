@@ -999,5 +999,9 @@
   (import "env" "longname997" (func $internal997))
   (import "env" "longname998" (func $internal998))
   (import "env" "longname999" (func $internal999))
+  (export "exp1" (func $foo1))
+  (export "exp2" (func $foo2))
+  (func $foo1)
+  (func $foo2)
 )
 

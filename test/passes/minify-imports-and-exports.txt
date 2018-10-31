@@ -129,6 +129,7 @@ $longname785 => $Fn
 $longname838 => $Fo
 $longname892 => $Fp
 $longname946 => $Fq
+$exp1 => $Fr
 $longname32 => $G
 $longname86 => $Ga
 $longname140 => $Gb
@@ -147,6 +148,7 @@ $longname786 => $Gn
 $longname839 => $Go
 $longname893 => $Gp
 $longname947 => $Gq
+$exp2 => $Gr
 $longname33 => $H
 $longname87 => $Ha
 $longname141 => $Hb
@@ -2000,4 +2002,12 @@ $longname994 => $zr
  (import "env" "Cr" (func $internal997))
  (import "env" "Dr" (func $internal998))
  (import "env" "Er" (func $internal999))
+ (export "Fr" (func $foo1))
+ (export "Gr" (func $foo2))
+ (func $foo1 (; 999 ;) (type $FUNCSIG$v)
+  (nop)
+ )
+ (func $foo2 (; 1000 ;) (type $FUNCSIG$v)
+  (nop)
+ )
 )

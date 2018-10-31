@@ -140,6 +140,13 @@ struct MinifyImportsAndExports : public Pass {
     };
     ModuleUtils::iterImportedGlobals(*module, minifyBase);
     ModuleUtils::iterImportedFunctions(*module, minifyBase);
+    // Minify the exported names.
+    for (auto& curr : module->exports) {
+      auto newName = names.getName(soFar++);
+      oldToNew[newName] = curr->name;
+      curr->name = newName;
+    }
+    module->updateMaps();
     // Emit the mapping.
     for (auto& pair : oldToNew) {
       std::cout << pair.second << " => " << pair.first << '\n';
