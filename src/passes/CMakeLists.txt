@@ -28,6 +28,7 @@ SET(passes_SOURCES
   MergeBlocks.cpp
   MergeLocals.cpp
   Metrics.cpp
+  MinifyImportsAndExports.cpp
   NameList.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
