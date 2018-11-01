@@ -71,7 +71,7 @@ class Fatal {
   }
   WASM_NORETURN ~Fatal() {
     std::cerr << "\n";
-    exit(1);
+    _Exit(1);
   }
 };
 

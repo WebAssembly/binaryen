@@ -128,7 +128,7 @@ void ThreadPool::initialize(size_t num) {
 }
 
 size_t ThreadPool::getNumCores() {
-#if EMSCRIPTEN
+#ifdef __EMSCRIPTEN__
   return 1;
 #else
   size_t num = std::max(1U, std::thread::hardware_concurrency());
@@ -181,7 +181,7 @@ void ThreadPool::work(std::vector<std::function<ThreadWorkState ()>>& doWorkers)
   }
   DEBUG_POOL("main thread waiting\n");
   condition.wait(lock, [this]() { return areThreadsReady(); });
-  DEBUG_POOL("main thread waiting\n");
+  DEBUG_POOL("main thread done waiting\n");
   DEBUG_POOL("running = false\n");
   running = false;
   DEBUG_POOL("work() is done\n");
