@@ -137,6 +137,9 @@ Module["asm"] =  (function(global, env, buffer) {
    $temp = (Atomics_xor(HEAPU32, 1024, 0)|0);
    $temp = (Atomics_xor(HEAP16, 1024, 0)|0);
    $temp = (Atomics_xor(HEAPU8, 1024, 0)|0);
+   // corner cases
+   $temp = (Atomics_compareExchange(HEAP8, $temp | 0, 1, 2)|0);
+   $temp = (Atomics_compareExchange(HEAP8, $temp >> 2, 1, 2)|0);
   }
 
   return { test: test };

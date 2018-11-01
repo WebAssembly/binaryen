@@ -2737,6 +2737,9 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       unsigned addr = ptr->getInteger();
       unsigned shifted = addr << shifts;
       return (Expression*)builder.makeConst(Literal(int32_t(shifted)));
+    } else if (bytes == 1) {
+      // no shift is needed, and the shift is just a normal operation, e.g. HEAP8[x >> 2]
+      return process(ptr);
     }
     abort_on("bad processUnshifted", ptr);
     return (Expression*)nullptr; // avoid warning
