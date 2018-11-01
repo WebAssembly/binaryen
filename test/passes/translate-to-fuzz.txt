@@ -4,7 +4,7 @@
  (type $FUNCSIG$ifj (func (param f32 i64) (result i32)))
  (memory $0 (shared 1 1))
  (data (i32.const 0) "n\00\05E\00\00\00\00")
- (table 4 anyfunc)
+ (table $0 4 anyfunc)
  (elem (i32.const 0) $func_2 $func_4 $func_5 $func_8)
  (global $global$0 (mut f32) (f32.const 536870912))
  (global $global$1 (mut f32) (f32.const 2147483648))

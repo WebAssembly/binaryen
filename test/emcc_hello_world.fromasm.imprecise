@@ -7,7 +7,7 @@
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (type $FUNCSIG$vii (func (param i32 i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table 18 18 anyfunc))
+ (import "env" "table" (table $table 18 18 anyfunc))
  (elem (get_global $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))

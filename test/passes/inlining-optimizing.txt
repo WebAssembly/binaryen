@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (result f64)))
  (type $3 (func (param f32 i64)))
- (table 1 1 anyfunc)
+ (table $0 1 1 anyfunc)
  (elem (i32.const 0) $tabled)
  (export "user" (func $user))
  (export "exported" (func $exported))
@@ -79,7 +79,7 @@
  (type $0 (func))
  (type $1 (func (param i32 i32) (result i32)))
  (memory $0 17)
- (table 89 89 anyfunc)
+ (table $0 89 89 anyfunc)
  (start $1)
  (func $1 (; 0 ;) (type $0)
   (i32.store

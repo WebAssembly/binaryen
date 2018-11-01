@@ -5,7 +5,7 @@
  (type $3 (func (param i32)))
  (type $4 (func))
  (import "env" "memory" (memory $9 256 256))
- (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "table" (table $timport$10 0 0 anyfunc))
  (import "env" "DYNAMICTOP_PTR" (global $gimport$0 i32))
  (import "env" "tempDoublePtr" (global $gimport$1 i32))
  (import "env" "ABORT" (global $gimport$2 i32))

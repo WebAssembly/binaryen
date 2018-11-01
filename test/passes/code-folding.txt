@@ -3,7 +3,7 @@
  (type $1 (func))
  (type $2 (func (result f32)))
  (memory $0 1 1)
- (table 282 282 anyfunc)
+ (table $0 282 282 anyfunc)
  (func $0 (; 0 ;) (type $1)
   (block $label$1
    (if

@@ -637,7 +637,7 @@
  (type $0 (func))
  (type $1 (func (param i32 f64) (result i32)))
  (type $2 (func (param i64 f32 i32)))
- (table 23 23 anyfunc)
+ (table $0 23 23 anyfunc)
  (global $global$0 (mut i32) (i32.const 10))
  (export "func_1_invoker" (func $1))
  (export "func_6" (func $2))

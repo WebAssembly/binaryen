@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$ii (func (param i32) (result i32)))
- (import "env" "table" (table 1 1 anyfunc))
+ (import "env" "table" (table $table 1 1 anyfunc))
  (elem (get_global $tableBase) $gm)
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "_emscripten_glIsTexture" (func $gm (param i32) (result i32)))

@@ -2,7 +2,7 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (memory $0 256 256)
- (table 481 481 anyfunc)
+ (table $0 481 481 anyfunc)
  (elem (i32.const 0) $0 $0 $0 $2)
  (export "f1" (func $1))
  (export "f2" (func $2))

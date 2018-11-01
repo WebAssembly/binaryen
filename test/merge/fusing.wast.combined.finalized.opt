@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$v (func))
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table 8 anyfunc))
+ (import "env" "table" (table $0 8 anyfunc))
  (global $a-global i32 (i32.const 0))
  (global $b-global$0 f64 (f64.const 2.14281428))
  (export "foo" (func $foo-func))

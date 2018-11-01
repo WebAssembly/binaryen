@@ -1,7 +1,7 @@
 (module
  (type $FUNCSIG$jj (func (param i64) (result i64)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table 0 0 anyfunc))
+ (import "env" "table" (table $table 0 0 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "_importll" (func $importll (param i64) (result i64)))
