@@ -5001,6 +5001,7 @@
   (import "env" "longname4999" (func $internal4999))
   (import "env" "memoryBase" (global i32))
   (import "env" "tableBase" (global i32))
+  (import "other" "anything" (func $internalInfinity))
   (export "exp1" (func $foo1))
   (export "exp2" (func $foo2))
   (func $foo1)

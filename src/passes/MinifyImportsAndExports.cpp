@@ -35,6 +35,7 @@
 #include <wasm.h>
 #include <pass.h>
 #include <shared-constants.h>
+#include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/module-utils.h>
 
@@ -143,11 +144,13 @@ struct MinifyImportsAndExports : public Pass {
       oldToNew[newName] = name;
       name = newName;
     };
-    auto minifyBase = [&](Importable* curr) {
-      process(curr->base);
+    auto processImport = [&](Importable* curr) {
+      if (curr->module == ENV) {
+        process(curr->base);
+      }
     };
-    ModuleUtils::iterImportedGlobals(*module, minifyBase);
-    ModuleUtils::iterImportedFunctions(*module, minifyBase);
+    ModuleUtils::iterImportedGlobals(*module, processImport);
+    ModuleUtils::iterImportedFunctions(*module, processImport);
     // Minify the exported names.
     for (auto& curr : module->exports) {
       process(curr->name);
