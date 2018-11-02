@@ -2015,7 +2015,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (name == Atomics_exchange) {
             return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
           } else if (name == Atomics_compareExchange) {
-            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
+            return builder.makeAtomicCmpxchg(view.bytes, 0, processIgnoringShift(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
           } else if (name == Atomics_add) {
             return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
           } else if (name == Atomics_sub) {
@@ -2738,9 +2738,6 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
       unsigned addr = ptr->getInteger();
       unsigned shifted = addr << shifts;
       return (Expression*)builder.makeConst(Literal(int32_t(shifted)));
-    } else if (bytes == 1) {
-      // no shift is needed, and the shift is just a normal operation, e.g. HEAP8[x >> 2]
-      return process(ptr);
     }
     abort_on("bad processUnshifted", ptr);
     return (Expression*)nullptr; // avoid warning
