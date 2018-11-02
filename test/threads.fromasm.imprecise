@@ -54,9 +54,17 @@
    )
   )
   (drop
-   (i32.atomic.rmw8_u.xor
-    (i32.const 1024)
-    (i32.const 0)
+   (i32.atomic.rmw8_u.cmpxchg
+    (i32.atomic.rmw8_u.cmpxchg
+     (i32.atomic.rmw8_u.xor
+      (i32.const 1024)
+      (i32.const 0)
+     )
+     (i32.const 1)
+     (i32.const 2)
+    )
+    (i32.const 1)
+    (i32.const 2)
    )
   )
  )

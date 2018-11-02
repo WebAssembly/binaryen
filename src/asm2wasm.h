@@ -1615,6 +1615,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
   // processors
   std::function<Expression* (Ref, unsigned)> processStatements;
   std::function<Expression* (Ref, unsigned)> processUnshifted;
+  std::function<Expression* (Ref, unsigned)> processIgnoringShift;
 
   std::function<Expression* (Ref)> process = [&](Ref ast) -> Expression* {
     AstStackHelper astStackHelper(ast); // TODO: only create one when we need it?
@@ -2014,7 +2015,8 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (name == Atomics_exchange) {
             return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
           } else if (name == Atomics_compareExchange) {
-            return builder.makeAtomicCmpxchg(view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
+            // cmpxchg is odd in fastcomp output - we must ignore the shift, a cmpxchg of a i8 will look like compareExchange(HEAP8, ptr >> 2)
+            return builder.makeAtomicCmpxchg(view.bytes, 0, processIgnoringShift(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
           } else if (name == Atomics_add) {
             return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
           } else if (name == Atomics_sub) {
@@ -2740,6 +2742,16 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
     }
     abort_on("bad processUnshifted", ptr);
     return (Expression*)nullptr; // avoid warning
+  };
+
+  processIgnoringShift = [&](Ref ptr, unsigned bytes) {
+    // If there is a shift here, no matter the size look through it.
+    if ((ptr->isArray(BINARY) && ptr[1] == RSHIFT && ptr[3]->isNumber()) ||
+        (bytes == 1 && ptr->isArray(BINARY) && ptr[1] == OR && ptr[3]->isNumber() && ptr[3]->getInteger() == 0)) {
+      return process(ptr[2]);
+    }
+    // Otherwise do the same as processUnshifted.
+    return processUnshifted(ptr, bytes);
   };
 
   processStatements = [&](Ref ast, unsigned from) -> Expression* {
