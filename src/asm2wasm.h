@@ -2015,6 +2015,7 @@ Function* Asm2WasmBuilder::processFunction(Ref ast) {
           } else if (name == Atomics_exchange) {
             return builder.makeAtomicRMW(AtomicRMWOp::Xchg, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
           } else if (name == Atomics_compareExchange) {
+            // cmpxchg is odd in fastcomp output - we must ignore the shift, a cmpxchg of a i8 will look like compareExchange(HEAP8, ptr >> 2)
             return builder.makeAtomicCmpxchg(view.bytes, 0, processIgnoringShift(ast[2][1], view.bytes), process(ast[2][2]), process(ast[2][3]), asmToWasmType(view.type));
           } else if (name == Atomics_add) {
             return builder.makeAtomicRMW(AtomicRMWOp::Add, view.bytes, 0, processUnshifted(ast[2][1], view.bytes), process(ast[2][2]), asmToWasmType(view.type));
