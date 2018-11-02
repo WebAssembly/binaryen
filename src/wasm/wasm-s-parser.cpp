@@ -1384,14 +1384,35 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s) {
 Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s) {
   if (!wasm.table.exists) throw ParseException("no table");
   auto ret = allocator.alloc<CallIndirect>();
-  Element& typeElement = *s[1];
-  if (typeElement[0]->str() != "type") throw ParseException("expected 'type' in call_indirect", s.line, s.col);
-  IString type = typeElement[1]->str();
-  auto* fullType = wasm.getFunctionTypeOrNull(type);
-  if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
-  ret->fullType = fullType->name;
-  ret->type = fullType->result;
-  parseCallOperands(s, 2, s.size() - 1, ret);
+  Index i = 1;
+  Element& typeElement = *s[i];
+  if (typeElement[0]->str() == "type") {
+    // type name given
+    IString type = typeElement[1]->str();
+    auto* fullType = wasm.getFunctionTypeOrNull(type);
+    if (!fullType) throw ParseException("invalid call_indirect type", s.line, s.col);
+    ret->fullType = fullType->name;
+    i++;
+  } else {
+    // inline type
+    FunctionType type;
+    while (1) {
+      Element& curr = *s[i];
+      if (curr[0]->str() == PARAM) {
+        for (size_t j = 1; j < curr.size(); j++) {
+          type.params.push_back(stringToType(curr[j]->str()));
+        }
+      } else if (curr[0]->str() == RESULT) {
+        type.result = stringToType(curr[1]->str());
+      } else {
+        break;
+      }
+      i++;
+    }
+    ret->fullType = ensureFunctionType(getSig(&type), &wasm)->name;
+  }
+  ret->type = wasm.getFunctionType(ret->fullType)->result;
+  parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->finalize();
   return ret;
