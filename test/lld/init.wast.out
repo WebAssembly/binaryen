@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (memory $0 2)
  (data (i32.const 568) "\00\00\00\00\00\00\00\00")
- (table 1 1 anyfunc)
+ (table $0 1 1 anyfunc)
  (global $global$0 (mut i32) (i32.const 66112))
  (global $global$1 i32 (i32.const 66112))
  (global $global$2 i32 (i32.const 576))

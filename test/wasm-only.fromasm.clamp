@@ -4,7 +4,7 @@
  (type $legaltype$_fabsf (func (param f64) (result f64)))
  (import "env" "memory" (memory $memory 256 256))
  (data (get_global $memoryBase) "wasm-only.asm.js")
- (import "env" "table" (table 3 3 anyfunc))
+ (import "env" "table" (table $table 3 3 anyfunc))
  (elem (get_global $tableBase) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

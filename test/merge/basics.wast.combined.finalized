@@ -5,7 +5,7 @@
  (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
  (data (i32.const 1024) "hello, A!\n\00\00\00\00\00\00hello, B!\n\00\00\00\00\00\00")
- (import "env" "table" (table 18 anyfunc))
+ (import "env" "table" (table $0 18 anyfunc))
  (elem (i32.const 8) $only-a $willCollide $some-func $some-collide $only-a $some-func $only-b $willCollide$0 $some-func-b $some-collide$0)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

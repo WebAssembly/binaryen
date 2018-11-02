@@ -8,7 +8,7 @@
  (type $FUNCSIG$dd (func (param f64) (result f64)))
  (type $FUNCSIG$i (func (result i32)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table 25 25 anyfunc))
+ (import "env" "table" (table $table 25 25 anyfunc))
  (elem (get_global $tableBase) $big_negative $big_negative $big_negative $big_negative $w $w $importedDoubles $w $z $cneg $z $z $z $z $z $z $vi $vi $vi $vi $vi $vi $vi $vi $ii)
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "gb" (global $n$asm2wasm$import i32))

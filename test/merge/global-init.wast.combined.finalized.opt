@@ -1,4 +1,4 @@
 (module
  (import "env" "memory" (memory $0 256))
- (import "env" "table" (table 8 anyfunc))
+ (import "env" "table" (table $0 8 anyfunc))
 )

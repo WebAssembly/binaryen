@@ -71,7 +71,10 @@ class Fatal {
   }
   WASM_NORETURN ~Fatal() {
     std::cerr << "\n";
-    exit(1);
+    // Use _Exit here to avoid calling static destructors. This avoids deadlocks
+    // in (for example) the thread worker pool, where workers hold a lock while
+    // performing their work.
+    _Exit(1);
   }
 };
 

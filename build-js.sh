@@ -112,6 +112,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/MergeBlocks.cpp \
   $BINARYEN_SRC/passes/MergeLocals.cpp \
   $BINARYEN_SRC/passes/Metrics.cpp \
+  $BINARYEN_SRC/passes/MinifyImportsAndExports.cpp \
   $BINARYEN_SRC/passes/NameList.cpp \
   $BINARYEN_SRC/passes/OptimizeInstructions.cpp \
   $BINARYEN_SRC/passes/PickLoadSigns.cpp \

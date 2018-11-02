@@ -3,7 +3,7 @@
  (type $1 (func (result i32)))
  (type $2 (func (param i32)))
  (type $3 (func))
- (import "env" "table" (table 9 9 anyfunc))
+ (import "env" "table" (table $0 9 9 anyfunc))
  (func $break-and-binary (; 0 ;) (type $1) (result i32)
   (block $x (result i32)
    (f32.add
