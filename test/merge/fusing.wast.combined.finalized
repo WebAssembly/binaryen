@@ -3,7 +3,7 @@
  (type $FUNCSIG$v$0 (func))
  (import "env" "memory" (memory $0 256))
  (data (i32.const 1024) "")
- (import "env" "table" (table 8 anyfunc))
+ (import "env" "table" (table $0 8 anyfunc))
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "memoryBase" (global $memoryBase$0 i32))

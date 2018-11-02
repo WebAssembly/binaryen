@@ -2,7 +2,7 @@
  (type $0 (func))
  (import "env" "memory" (memory $0 256))
  (data (get_global $memoryBase) "hello, this is some data!")
- (import "env" "table" (table 2 anyfunc))
+ (import "env" "table" (table $0 2 anyfunc))
  (elem (get_global $tableBase) $foo $foo)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))

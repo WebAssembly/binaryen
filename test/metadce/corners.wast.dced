@@ -1,6 +1,6 @@
 (module
  (type $FUNCSIG$v (func))
- (import "env" "table" (table 10 10 anyfunc))
+ (import "env" "table" (table $0 10 10 anyfunc))
  (elem (i32.const 0) $imported_table_func)
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
  (import "env" "imported_twice" (func $imported_twice_a))

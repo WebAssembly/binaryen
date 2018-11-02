@@ -7,12 +7,12 @@
  (type $FUNCSIG$ii (func (param i32) (result i32)))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
- (memory $0 2)
- (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
- (table 1 1 anyfunc)
  (import "env" "emscripten_asm_const_i" (func $emscripten_asm_const_i (param i32) (result i32)))
  (import "env" "emscripten_asm_const_iii" (func $emscripten_asm_const_iii (param i32 i32 i32) (result i32)))
  (import "env" "emscripten_asm_const_ii" (func $emscripten_asm_const_ii (param i32 i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
+ (table $0 1 1 anyfunc)
  (global $global$0 (mut i32) (i32.const 66192))
  (global $global$1 i32 (i32.const 66192))
  (global $global$2 i32 (i32.const 652))
@@ -75,4 +75,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {"2": ["{ Module.print(\"Got \" + $0); }", ["ii"]],"0": ["{ Module.print(\"Hello world\"); }", ["i"]],"1": ["{ return $0 + $1; }", ["iii"]]},"staticBump": 84, "initializers": ["__wasm_call_ctors"], "declares": [], "externs": [], "implementedFunctions": ["___wasm_call_ctors","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {"2": ["{ Module.print(\"Got \" + $0); }", ["ii"], [""]],"0": ["{ Module.print(\"Hello world\"); }", ["i"], [""]],"1": ["{ return $0 + $1; }", ["iii"], [""]]},"staticBump": 84, "initializers": ["__wasm_call_ctors"], "declares": [], "externs": [], "implementedFunctions": ["___wasm_call_ctors","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": [] }

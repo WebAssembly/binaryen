@@ -702,6 +702,12 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << maybeComma();
     meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
     printSet(meta, sigs);
+    meta << ", ";
+
+    // TODO: proxying to main thread. Currently this is unsupported, so proxy
+    // mode is "none", represented by an empty string.
+    meta << "[\"\"]";
+
     meta << "]";
   }
   meta << "},";

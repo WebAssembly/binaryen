@@ -3,7 +3,7 @@
  (type $legaltype$illegalImportResult (func (result i32)))
  (type $legaltype$_fabsf (func (param f64) (result f64)))
  (import "env" "memory" (memory $memory 256 256))
- (import "env" "table" (table 3 3 anyfunc))
+ (import "env" "table" (table $table 3 3 anyfunc))
  (elem (get_global $tableBase) $legalfunc$illegalImport $legalfunc$_fabsf $legalfunc$do_i64)
  (import "env" "tableBase" (global $tableBase i32))
  (import "env" "illegalImport" (func $legalimport$illegalImport (param f64 i32 i32 i32)))
