@@ -1,6 +1,6 @@
 (module
  (type $0 (func (param i64)))
- (func $0 (; 0 ;) (; has Stack IR ;) (type $0) (param $var$0 i64)
+ (func $0 (; 0 ;) (type $0) (param $var$0 i64)
   block $label$1
    block $label$2
     loop $label$3

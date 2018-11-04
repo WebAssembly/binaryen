@@ -17,7 +17,7 @@
  (table $0 10 anyfunc)
  (elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
  (export "big_negative" (func $big_negative))
- (func $big_negative (; 3 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $big_negative (; 3 ;) (type $FUNCSIG$v)
   (local $temp f64)
   f64.const -2147483648
   set_local $temp
@@ -30,7 +30,7 @@
   f64.const -0.039625
   set_local $temp
  )
- (func $importedDoubles (; 4 ;) (; has Stack IR ;) (type $4) (result f64)
+ (func $importedDoubles (; 4 ;) (type $4) (result f64)
   (local $temp f64)
   block $topmost (result f64)
    i32.const 8
@@ -66,7 +66,7 @@
    f64.const 1.2
   end
  )
- (func $doubleCompares (; 5 ;) (; has Stack IR ;) (type $FUNCSIG$ddd) (param $x f64) (param $y f64) (result f64)
+ (func $doubleCompares (; 5 ;) (type $FUNCSIG$ddd) (param $x f64) (param $y f64) (result f64)
   (local $t f64)
   (local $Int f64)
   (local $Double i32)
@@ -102,13 +102,13 @@
    get_local $y
   end
  )
- (func $intOps (; 6 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $intOps (; 6 ;) (type $5) (result i32)
   (local $x i32)
   get_local $x
   i32.const 0
   i32.eq
  )
- (func $hexLiterals (; 7 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $hexLiterals (; 7 ;) (type $FUNCSIG$v)
   i32.const 0
   i32.const 313249263
   i32.add
@@ -116,7 +116,7 @@
   i32.add
   drop
  )
- (func $conversions (; 8 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $conversions (; 8 ;) (type $FUNCSIG$v)
   (local $i i32)
   (local $d f64)
   get_local $d
@@ -131,7 +131,7 @@
   f64.convert_u/i32
   set_local $d
  )
- (func $seq (; 9 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $seq (; 9 ;) (type $FUNCSIG$v)
   (local $J f64)
   f64.const 0.1
   drop
@@ -142,7 +142,7 @@
   f64.sub
   set_local $J
  )
- (func $switcher (; 10 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $switcher (; 10 ;) (type $6) (param $x i32) (result i32)
   block $topmost (result i32)
    block $switch-default$3
     block $switch-case$2
@@ -206,17 +206,17 @@
    i32.const 0
   end
  )
- (func $blocker (; 11 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $blocker (; 11 ;) (type $FUNCSIG$v)
   block $label$break$L
    br $label$break$L
   end
  )
- (func $frem (; 12 ;) (; has Stack IR ;) (type $4) (result f64)
+ (func $frem (; 12 ;) (type $4) (result f64)
   f64.const 5.5
   f64.const 1.2
   call $f64-rem
  )
- (func $big_uint_div_u (; 13 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $big_uint_div_u (; 13 ;) (type $5) (result i32)
   (local $x i32)
   i32.const -1
   i32.const 2
@@ -224,7 +224,7 @@
   i32.const -1
   i32.and
  )
- (func $fr (; 14 ;) (; has Stack IR ;) (type $FUNCSIG$vf) (param $x f32)
+ (func $fr (; 14 ;) (type $FUNCSIG$vf) (param $x f32)
   (local $y f32)
   (local $z f64)
   get_local $z
@@ -241,10 +241,10 @@
   f32.const 0
   drop
  )
- (func $negZero (; 15 ;) (; has Stack IR ;) (type $4) (result f64)
+ (func $negZero (; 15 ;) (type $4) (result f64)
   f64.const -0
  )
- (func $abs (; 16 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $abs (; 16 ;) (type $FUNCSIG$v)
   (local $x i32)
   (local $y f64)
   (local $z f32)
@@ -267,7 +267,7 @@
   f32.abs
   set_local $z
  )
- (func $neg (; 17 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $neg (; 17 ;) (type $FUNCSIG$v)
   (local $x f32)
   get_local $x
   f32.neg
@@ -278,7 +278,7 @@
   i32.add
   call_indirect (type $FUNCSIG$vf)
  )
- (func $cneg (; 18 ;) (; has Stack IR ;) (type $FUNCSIG$vf) (param $x f32)
+ (func $cneg (; 18 ;) (type $FUNCSIG$vf) (param $x f32)
   get_local $x
   i32.const 1
   i32.const 7
@@ -287,7 +287,7 @@
   i32.add
   call_indirect (type $FUNCSIG$vf)
  )
- (func $___syscall_ret (; 19 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $___syscall_ret (; 19 ;) (type $FUNCSIG$v)
   (local $$0 i32)
   get_local $$0
   i32.const 0
@@ -296,13 +296,13 @@
   i32.gt_u
   drop
  )
- (func $z (; 20 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $z (; 20 ;) (type $FUNCSIG$v)
   nop
  )
- (func $w (; 21 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $w (; 21 ;) (type $FUNCSIG$v)
   nop
  )
- (func $block_and_after (; 22 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $block_and_after (; 22 ;) (type $5) (result i32)
   block $waka
    i32.const 1
    drop
@@ -310,46 +310,46 @@
   end
   i32.const 0
  )
- (func $loop-roundtrip (; 23 ;) (; has Stack IR ;) (type $7) (param $0 f64) (result f64)
+ (func $loop-roundtrip (; 23 ;) (type $7) (param $0 f64) (result f64)
   loop $loop-in1 (result f64)
    get_local $0
    drop
    get_local $0
   end
  )
- (func $big-i64 (; 24 ;) (; has Stack IR ;) (type $8) (result i64)
+ (func $big-i64 (; 24 ;) (type $8) (result i64)
   i64.const -9218868437227405313
  )
- (func $i64-store32 (; 25 ;) (; has Stack IR ;) (type $9) (param $0 i32) (param $1 i64)
+ (func $i64-store32 (; 25 ;) (type $9) (param $0 i32) (param $1 i64)
   get_local $0
   get_local $1
   i64.store32
  )
- (func $return-unreachable (; 26 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $return-unreachable (; 26 ;) (type $5) (result i32)
   i32.const 1
   return
  )
- (func $unreachable-block (; 27 ;) (; has Stack IR ;) (type $5) (result i32)
-  i32.const 1
-  drop
-  i32.const 2
-  return
- )
- (func $unreachable-block-toplevel (; 28 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-block (; 27 ;) (type $5) (result i32)
   i32.const 1
   drop
   i32.const 2
   return
  )
- (func $unreachable-block0 (; 29 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-block-toplevel (; 28 ;) (type $5) (result i32)
+  i32.const 1
+  drop
   i32.const 2
   return
  )
- (func $unreachable-block0-toplevel (; 30 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-block0 (; 29 ;) (type $5) (result i32)
   i32.const 2
   return
  )
- (func $unreachable-block-with-br (; 31 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-block0-toplevel (; 30 ;) (type $5) (result i32)
+  i32.const 2
+  return
+ )
+ (func $unreachable-block-with-br (; 31 ;) (type $5) (result i32)
   block $block
    i32.const 1
    drop
@@ -357,7 +357,7 @@
   end
   i32.const 1
  )
- (func $unreachable-if (; 32 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-if (; 32 ;) (type $5) (result i32)
   i32.const 3
   if
    i32.const 2
@@ -368,7 +368,7 @@
   end
   unreachable
  )
- (func $unreachable-if-toplevel (; 33 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-if-toplevel (; 33 ;) (type $5) (result i32)
   i32.const 3
   if
    i32.const 2
@@ -379,7 +379,7 @@
   end
   unreachable
  )
- (func $unreachable-loop (; 34 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-loop (; 34 ;) (type $5) (result i32)
   loop $loop-in
    nop
    i32.const 1
@@ -387,14 +387,14 @@
   end
   unreachable
  )
- (func $unreachable-loop0 (; 35 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-loop0 (; 35 ;) (type $5) (result i32)
   loop $loop-in
    i32.const 1
    return
   end
   unreachable
  )
- (func $unreachable-loop-toplevel (; 36 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-loop-toplevel (; 36 ;) (type $5) (result i32)
   loop $loop-in
    nop
    i32.const 1
@@ -402,17 +402,17 @@
   end
   unreachable
  )
- (func $unreachable-loop0-toplevel (; 37 ;) (; has Stack IR ;) (type $5) (result i32)
+ (func $unreachable-loop0-toplevel (; 37 ;) (type $5) (result i32)
   loop $loop-in
    i32.const 1
    return
   end
   unreachable
  )
- (func $unreachable-ifs (; 38 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $unreachable-ifs (; 38 ;) (type $FUNCSIG$v)
   unreachable
  )
- (func $unreachable-if-arm (; 39 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $unreachable-if-arm (; 39 ;) (type $FUNCSIG$v)
   i32.const 1
   if
    nop
@@ -420,7 +420,7 @@
    unreachable
   end
  )
- (func $local-to-stack (; 40 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack (; 40 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   call $local-to-stack
@@ -428,7 +428,7 @@
   call $local-to-stack
   drop
  )
- (func $local-to-stack-1 (; 41 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-1 (; 41 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   call $local-to-stack
@@ -437,7 +437,7 @@
   drop
   i32.eqz
  )
- (func $local-to-stack-1b (; 42 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-1b (; 42 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   call $local-to-stack
@@ -447,7 +447,7 @@
   i32.const 3
   i32.add
  )
- (func $local-to-stack-1c-no (; 43 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-1c-no (; 43 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   call $local-to-stack
@@ -459,7 +459,7 @@
   get_local $temp
   i32.add
  )
- (func $local-to-stack-2-no (; 44 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-2-no (; 44 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   call $local-to-stack
@@ -471,7 +471,7 @@
   get_local $temp
   i32.add
  )
- (func $local-to-stack-3-no (; 45 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-3-no (; 45 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 1
   if
@@ -488,7 +488,7 @@
   drop
   get_local $temp
  )
- (func $local-to-stack-multi-4 (; 46 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-multi-4 (; 46 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -503,7 +503,7 @@
   call $local-to-stack-multi-4
   drop
  )
- (func $local-to-stack-multi-5 (; 47 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-multi-5 (; 47 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -518,7 +518,7 @@
   call $local-to-stack-multi-4
   drop
  )
- (func $local-to-stack-multi-6-justone (; 48 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-multi-6-justone (; 48 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -537,7 +537,7 @@
   get_local $temp2
   i32.add
  )
- (func $local-to-stack-multi-7-justone (; 49 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-multi-7-justone (; 49 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -556,7 +556,7 @@
   call $local-to-stack-multi-4
   drop
  )
- (func $local-to-stack-overlapping-multi-8-no (; 50 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-overlapping-multi-8-no (; 50 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -570,7 +570,7 @@
   get_local $temp1
   i32.add
  )
- (func $local-to-stack-overlapping-multi-9-yes (; 51 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $local-to-stack-overlapping-multi-9-yes (; 51 ;) (type $6) (param $x i32) (result i32)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 1
@@ -582,7 +582,7 @@
   drop
   i32.add
  )
- (func $local-to-stack-through-control-flow (; 52 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $local-to-stack-through-control-flow (; 52 ;) (type $FUNCSIG$v)
   (local $temp1 i32)
   (local $temp2 i32)
   i32.const 0
@@ -602,7 +602,7 @@
   drop
   drop
  )
- (func $local-to-stack-in-control-flow (; 53 ;) (; has Stack IR ;) (type $FUNCSIG$v)
+ (func $local-to-stack-in-control-flow (; 53 ;) (type $FUNCSIG$v)
   (local $temp1 i32)
   i32.const 0
   if
@@ -615,7 +615,7 @@
    drop
   end
  )
- (func $remove-block (; 54 ;) (; has Stack IR ;) (type $6) (param $x i32) (result i32)
+ (func $remove-block (; 54 ;) (type $6) (param $x i32) (result i32)
   (local $temp i32)
   i32.const 0
   call $remove-block
