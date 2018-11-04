@@ -900,7 +900,7 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
       }
       o << " (; " << functionIndexes[curr->name] << " ;)";
     }
-    if (curr->stackIR && !minify) {
+    if (!printStackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
     if (curr->type.is()) {
