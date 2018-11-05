@@ -3526,6 +3526,20 @@
     )
    )
   )
+  (func $add-sub-zero-reorder (param $temp i32) (result i32)
+   (i32.add
+    (i32.add
+     (i32.sub
+      (i32.const 0) ;; this zero looks like we could remove it by subtracting the get of $temp from the parent, but that would reorder it *after* the tee :(
+      (get_local $temp)
+     )
+     (tee_local $temp ;; cannot move this tee before the get
+      (i32.const 1)
+     )
+    )
+    (i32.const 2)
+   )
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

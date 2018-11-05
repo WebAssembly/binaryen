@@ -384,8 +384,10 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           if (sub->op == SubInt32) {
             if (auto* subZero = sub->left->dynCast<Const>()) {
               if (subZero->value.geti32() == 0) {
-                sub->left = binary->right;
-                return sub;
+                if (EffectAnalyzer::canReorder(getPassOptions(), sub->right, binary->right)) {
+                  sub->left = binary->right;
+                  return sub;
+                }
               }
             }
           }
@@ -394,8 +396,10 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           if (sub->op == SubInt32) {
             if (auto* subZero = sub->left->dynCast<Const>()) {
               if (subZero->value.geti32() == 0) {
-                sub->left = binary->left;
-                return sub;
+                if (EffectAnalyzer::canReorder(getPassOptions(), sub->right, binary->left)) {
+                  sub->left = binary->left;
+                  return sub;
+                }
               }
             }
           }
@@ -761,6 +765,7 @@ private:
           constant += value * mul;
           constants.push_back(c);
         }
+        return;
       } else if (auto* binary = curr->dynCast<Binary>()) {
         if (binary->op == AddInt32) {
           seek(binary->left, mul);
