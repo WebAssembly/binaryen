@@ -2997,7 +2997,7 @@
    )
   )
  )
- (func $add-sub-zero-reorder (; 73 ;) (type $3) (param $temp i32) (result i32)
+ (func $add-sub-zero-reorder-1 (; 73 ;) (type $3) (param $temp i32) (result i32)
   (i32.add
    (i32.add
     (i32.sub
@@ -3007,6 +3007,17 @@
     (tee_local $temp
      (i32.const 1)
     )
+   )
+   (i32.const 2)
+  )
+ )
+ (func $add-sub-zero-reorder-2 (; 74 ;) (type $3) (param $temp i32) (result i32)
+  (i32.add
+   (i32.sub
+    (tee_local $temp
+     (i32.const 1)
+    )
+    (get_local $temp)
    )
    (i32.const 2)
   )

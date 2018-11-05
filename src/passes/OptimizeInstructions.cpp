@@ -380,6 +380,7 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
         //     Y
         //     X
         //   )
+        // Note that this reorders X and Y, so we need to be careful about that.
         if (auto* sub = binary->left->dynCast<Binary>()) {
           if (sub->op == SubInt32) {
             if (auto* subZero = sub->left->dynCast<Const>()) {
@@ -392,14 +393,25 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
             }
           }
         }
+        // The flip case is even easier, as no reordering occurs:
+        //   (i32.add
+        //     Y
+        //     (i32.sub
+        //       (i32.const 0)
+        //       X
+        //     )
+        //   )
+        // =>
+        //   (i32.sub
+        //     Y
+        //     X
+        //   )
         if (auto* sub = binary->right->dynCast<Binary>()) {
           if (sub->op == SubInt32) {
             if (auto* subZero = sub->left->dynCast<Const>()) {
               if (subZero->value.geti32() == 0) {
-                if (EffectAnalyzer::canReorder(getPassOptions(), sub->right, binary->left)) {
-                  sub->left = binary->left;
-                  return sub;
-                }
+                sub->left = binary->left;
+                return sub;
               }
             }
           }

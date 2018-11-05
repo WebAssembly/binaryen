@@ -3526,7 +3526,7 @@
     )
    )
   )
-  (func $add-sub-zero-reorder (param $temp i32) (result i32)
+  (func $add-sub-zero-reorder-1 (param $temp i32) (result i32)
    (i32.add
     (i32.add
      (i32.sub
@@ -3535,6 +3535,20 @@
      )
      (tee_local $temp ;; cannot move this tee before the get
       (i32.const 1)
+     )
+    )
+    (i32.const 2)
+   )
+  )
+  (func $add-sub-zero-reorder-2 (param $temp i32) (result i32)
+   (i32.add
+    (i32.add
+     (tee_local $temp ;; in this order, the tee already comes first, so all is good for the optimization
+      (i32.const 1)
+     )
+     (i32.sub
+      (i32.const 0)
+      (get_local $temp)
      )
     )
     (i32.const 2)
