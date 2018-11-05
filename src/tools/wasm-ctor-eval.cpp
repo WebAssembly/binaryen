@@ -331,8 +331,11 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       // snapshot globals (note that STACKTOP might be modified, but should
       // be returned, so that works out)
       auto globalsBefore = instance.globals;
+      Export *ex = wasm.getExportOrNull(ctor);
+      if (!ex)
+        Fatal() << "export not found: " << ctor;
       try {
-        instance.callExport(ctor);
+        instance.callFunction(ex->value, LiteralList());
       } catch (FailToEvalException& fail) {
         // that's it, we failed, so stop here, cleaning up partial
         // memory changes first
