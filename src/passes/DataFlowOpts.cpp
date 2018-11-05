@@ -118,10 +118,8 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
       if (node->values[i]->isConst()) {
         auto* currp = getIndexPointer(expr, i);
         // Directly represent it as a constant. (Note that it may already be
-        // a constant, in which case we could assert to verify it is the right
-        // one. However, currently we emit some placeholder constants in our
-        // artificial expressions, and must ensure that we replace those with
-        // the right constant here - see the makeVar case of makeUse.)
+        // a constant, but for now to avoid corner cases just replace them
+        // all here.)
         auto* c = node->values[i]->expr->dynCast<Const>();
         *currp = Builder(*getModule()).makeConst(c->value);
       }
