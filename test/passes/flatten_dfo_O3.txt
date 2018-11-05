@@ -3,12 +3,14 @@
  (type $1 (func (param i32 i32) (result i32)))
  (type $2 (func (param i64 i32) (result f64)))
  (type $3 (func (param f64) (result f64)))
+ (type $4 (func (result i32)))
  (memory $0 (shared 1 1))
  (export "one" (func $0))
  (export "two" (func $1))
  (export "use-var" (func $2))
  (export "bad1" (func $3))
  (export "only-dfo" (func $4))
+ (export "dfo-tee-get" (func $5))
  (func $0 (; 0 ;) (; has Stack IR ;) (type $0)
   (loop $label$2
    (block $label$3
@@ -46,5 +48,8 @@
   (loop $label$1
    (br $label$1)
   )
+ )
+ (func $5 (; 5 ;) (; has Stack IR ;) (type $4) (result i32)
+  (i32.const 1)
  )
 )

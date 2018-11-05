@@ -183,5 +183,21 @@
    (br $label$1)
   )
  )
+ (func "dfo-tee-get" (result i32)
+  (local $0 i32)
+  (if (result i32)
+   (tee_local $0
+    (i32.const 1)
+   )
+   (loop $label$2 (result i32)
+    (select
+     (i32.const 1)
+     (i32.const -1709605511)
+     (get_local $0)
+    )
+   )
+   (unreachable)
+  )
+ )
 )
 
