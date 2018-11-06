@@ -332,8 +332,9 @@ void evalCtors(Module& wasm, std::vector<std::string> ctors) {
       // be returned, so that works out)
       auto globalsBefore = instance.globals;
       Export *ex = wasm.getExportOrNull(ctor);
-      if (!ex)
+      if (!ex) {
         Fatal() << "export not found: " << ctor;
+      }
       try {
         instance.callFunction(ex->value, LiteralList());
       } catch (FailToEvalException& fail) {
