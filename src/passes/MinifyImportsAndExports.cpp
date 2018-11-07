@@ -64,7 +64,6 @@ struct MinifyImportsAndExports : public Pass {
       reserved.insert("enum");
       reserved.insert("void");
       reserved.insert("this");
-      reserved.insert("void");
       reserved.insert("with");
 
       validInitialChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";

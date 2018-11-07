@@ -283,6 +283,14 @@ struct EffectAnalyzer : public PostWalker<EffectAnalyzer> {
     isAtomic = true;
   }
   void visitUnreachable(Unreachable *curr) { branches = true; }
+
+  // Helpers
+
+  static bool canReorder(PassOptions& passOptions, Expression* a, Expression* b) {
+    EffectAnalyzer aEffects(passOptions, a);
+    EffectAnalyzer bEffects(passOptions, b);
+    return !aEffects.invalidates(bEffects);
+  }
 };
 
 } // namespace wasm
