@@ -117,11 +117,11 @@ struct DataFlowOpts : public WalkerPass<PostWalker<DataFlowOpts>> {
     for (Index i = 0; i < node->values.size(); i++) {
       if (node->values[i]->isConst()) {
         auto* currp = getIndexPointer(expr, i);
-        if (!(*currp)->is<Const>()) {
-          // Directly represent it as a constant.
-          auto* c = node->values[i]->expr->dynCast<Const>();
-          *currp = Builder(*getModule()).makeConst(c->value);
-        }
+        // Directly represent it as a constant. (Note that it may already be
+        // a constant, but for now to avoid corner cases just replace them
+        // all here.)
+        auto* c = node->values[i]->expr->dynCast<Const>();
+        *currp = Builder(*getModule()).makeConst(c->value);
       }
     }
     // Now we know that all our DataFlow inputs are constant, and all

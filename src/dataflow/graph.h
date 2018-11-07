@@ -739,13 +739,15 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       // i1 zexts are a no-op for wasm
       return makeUse(node->values[0]);
     } else if (node->isVar()) {
-      // Nothing valid for us to read here.
-      // FIXME should we have a local index to get?
-      return Builder(*module).makeConst(LiteralUtils::makeLiteralZero(node->wasmType));
+      // Nothing valid for us to read here. Emit a call, representing an unknown
+      // variable value.
+      return Builder(*module).makeCall(FAKE_CALL, {}, node->wasmType);
     } else {
       WASM_UNREACHABLE(); // TODO
     }
   }
+
+  const Name FAKE_CALL = "fake$dfo$call";
 };
 
 } // namespace DataFlow
