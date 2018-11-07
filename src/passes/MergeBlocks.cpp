@@ -196,11 +196,6 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
           if (childBlock) {
-            if (hasUnreachableChild(childBlock)) {
-              // don't move around unreachable code, as it can change types
-              // dce should have been run anyhow
-              continue;
-            }
             if (childBlock->name.is()) {
               Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us
@@ -304,7 +299,31 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       break;
     }
   }
-  if (changed) curr->finalize(curr->type);
+  if (changed) {
+    // If we have an unreachable element, remove everything after it.
+    // DCE does this, but we need it here because we may be invalid
+    // otherwise, e.g.
+    // (block (result i32)
+    //   (block
+    //     (unreachable)
+    //     (nop)
+    //   )
+    // )
+    // After the merge,
+    // (block (result i32)
+    //   (unreachable)
+    //   (nop) ;; bad final element for an i32 block (but ok before for an unreachable)
+    // )
+    // (Here we rely on the fact that it is always ok to end a block with an unreachable.)
+    auto& list = curr->list;
+    for (size_t j = 0; j < list.size(); j++) {
+      if (list[j]->type == unreachable) {
+        list.resize(j + 1);
+        break;
+      }
+    }
+    curr->finalize(curr->type);
+  }
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {

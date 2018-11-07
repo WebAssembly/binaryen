@@ -1322,4 +1322,60 @@
   )
  )
 )
-
+(module
+ (func $unreachable-in-sub-block (param $0 f64) (param $1 i32) (result i32)
+  (local $2 i32)
+  (local $9 i32)
+  (loop $label$1
+   (set_local $9
+    (tee_local $2
+     (block $label$2 (result i32)
+      (block
+       (drop
+        (br_if $label$2
+         (tee_local $2
+          (i32.const 0)
+         )
+         (i32.const 0)
+        )
+       )
+      )
+      (br_if $label$1
+       (i32.const 0)
+      )
+      (block
+       (unreachable)
+       (nop) ;; bad if moved out to the outer block which is i32. current state works since this block is unreachable!
+      )
+     )
+    )
+   )
+  )
+  (nop)
+  (get_local $9)
+ )
+ (func $trivial (result i32)
+   (block (result i32)
+     (block
+       (unreachable)
+       (nop)
+     )
+   )
+ )
+ (func $trivial-more (result i32)
+   (block (result i32)
+     (block
+       (nop)
+       (unreachable)
+       (nop)
+       (nop)
+       (nop)
+     )
+     (block
+       (nop)
+       (unreachable)
+       (nop)
+     )
+   )
+ )
+)
