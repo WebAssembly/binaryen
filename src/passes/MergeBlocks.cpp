@@ -239,6 +239,17 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       auto& childList = childBlock->list;
       auto childSize = childList.size();
       if (childSize == 0) continue;
+      if (childSize > 1) {
+        // If the child has items after an unreachable, ignore it - dce should have
+        // been run, and we prefer to not handle the complexity here.
+        bool hasDeadCode = false;
+        for (size_t j = 0; j < childSize - 1; j++) {
+          if (childList[j]->type == unreachable) {
+            hasDeadCode = true;
+          }
+        }
+        if (hasDeadCode) continue;
+      }
       // If this is a loop, we may be removing only the tail.
       Index start = 0;
       Index end = childSize;
@@ -300,28 +311,6 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
     }
   }
   if (changed) {
-    // If we have an unreachable element, remove everything after it.
-    // DCE does this, but we need it here because we may be invalid
-    // otherwise, e.g.
-    // (block (result i32)
-    //   (block
-    //     (unreachable)
-    //     (nop)
-    //   )
-    // )
-    // After the merge,
-    // (block (result i32)
-    //   (unreachable)
-    //   (nop) ;; bad final element for an i32 block (but ok before for an unreachable)
-    // )
-    // (Here we rely on the fact that it is always ok to end a block with an unreachable.)
-    auto& list = curr->list;
-    for (size_t j = 0; j < list.size(); j++) {
-      if (list[j]->type == unreachable) {
-        list.resize(j + 1);
-        break;
-      }
-    }
     curr->finalize(curr->type);
   }
 }
