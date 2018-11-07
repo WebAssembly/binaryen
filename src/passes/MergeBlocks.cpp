@@ -175,6 +175,19 @@ static bool hasUnreachableChild(Block* block) {
   return false;
 }
 
+// Checks for code after an unreachable element.
+static bool hasDeadCode(Block* block) {
+  auto& list = block->list;
+  auto size = list.size();
+  if (size <= 1) return false;
+  for (size_t i = 0; i < size - 1; i++) {
+    if (list[i]->type == unreachable) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // core block optimizer routine
 static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
   bool more = true;
@@ -244,17 +257,9 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       auto& childList = childBlock->list;
       auto childSize = childList.size();
       if (childSize == 0) continue;
-      if (childSize > 1) {
-        // If the child has items after an unreachable, ignore it - dce should have
-        // been run, and we prefer to not handle the complexity here.
-        bool hasDeadCode = false;
-        for (size_t j = 0; j < childSize - 1; j++) {
-          if (childList[j]->type == unreachable) {
-            hasDeadCode = true;
-          }
-        }
-        if (hasDeadCode) continue;
-      }
+      // If the child has items after an unreachable, ignore it - dce should have
+      // been run, and we prefer to not handle the complexity here.
+      if (hasDeadCode(childBlock)) continue;
       // If this is a loop, we may be removing only the tail.
       Index start = 0;
       Index end = childSize;
