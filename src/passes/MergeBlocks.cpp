@@ -196,6 +196,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
           if (childBlock) {
+            if (hasUnreachableChild(childBlock)) {
+              // don't move around unreachable code, as it can change types
+              // dce should have been run anyhow
+              continue;
+            }
             if (childBlock->name.is()) {
               Expression* expression = childBlock;
               // check if it's ok to remove the value from all breaks to us

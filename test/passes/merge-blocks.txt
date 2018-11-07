@@ -13,12 +13,11 @@
  )
  (func $drop-block-br (; 1 ;) (type $0)
   (block $block
-   (block $x
-    (drop
-     (i32.const 1)
-    )
-    (br $x)
-    (drop
+   (drop
+    (block $x (result i32)
+     (br $x
+      (i32.const 1)
+     )
      (i32.const 0)
     )
    )
@@ -90,9 +89,11 @@
  (func $drop-block-squared-iloop (; 6 ;) (type $0)
   (drop
    (block $label$0 (result i32)
-    (block $label$1
-     (loop $label$2
-      (br $label$2)
+    (drop
+     (block $label$1
+      (loop $label$2
+       (br $label$2)
+      )
      )
     )
    )
@@ -120,8 +121,10 @@
  (func $loop-block-drop-block-return (; 8 ;) (type $0)
   (loop $label$4
    (block $label$5
-    (block $label$6
-     (return)
+    (drop
+     (block $label$6 (result i32)
+      (return)
+     )
     )
    )
   )

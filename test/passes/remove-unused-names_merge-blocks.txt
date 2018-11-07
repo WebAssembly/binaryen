@@ -299,12 +299,12 @@
     )
    )
   )
-  (block
-   (unreachable)
-   (drop
-    (i32.const 20)
-   )
-   (drop
+  (drop
+   (block (result i32)
+    (unreachable)
+    (drop
+     (i32.const 20)
+    )
     (i32.add
      (i32.const 10)
      (i32.const 30)
@@ -845,13 +845,17 @@
  )
  (func $drop-unreachable (; 24 ;) (type $4) (result i32)
   (local $0 i32)
-  (unreachable)
+  (drop
+   (block (result i32)
+    (unreachable)
+   )
+  )
   (unreachable)
  )
  (func $concrete_finale_in_unreachable (; 25 ;) (type $5) (result f64)
-  (block
-   (unreachable)
-   (drop
+  (drop
+   (block (result f64)
+    (unreachable)
     (f64.const 6.322092475576799e-96)
    )
   )
@@ -897,7 +901,11 @@
   (drop
    (block (result i32)
     (drop
-     (return)
+     (block
+      (drop
+       (return)
+      )
+     )
     )
     (i32.const -452)
    )
@@ -916,9 +924,13 @@
  )
  (func $remove-br-after-unreachable (; 31 ;) (type $3)
   (block $label$9
-   (block
-    (return)
-    (br $label$9)
+   (drop
+    (block
+     (block
+      (return)
+      (br $label$9)
+     )
+    )
    )
   )
  )
