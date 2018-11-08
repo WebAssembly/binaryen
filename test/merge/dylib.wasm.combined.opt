@@ -6,7 +6,7 @@
  (data (get_global $gimport$0) "hello, world!")
  (import "env" "table" (table $timport$3 0 anyfunc))
  (import "env" "memoryBase" (global $gimport$0 i32))
- (import "env" "tableBase" (global $gimport$4 i32))
+ (import "env" "__table_base" (global $__table_base i32))
  (import "env" "memoryBase" (global $gimport$0$0 i32))
  (import "env" "_puts" (func $import$1 (param i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 0))
@@ -72,10 +72,7 @@
   (block $label$1
    (block $label$2
     (set_global $global$0$0
-     (i32.add
-      (get_global $gimport$0$0)
-      (i32.const 48)
-     )
+     (get_global $gimport$0$0)
     )
     (set_global $global$1$0
      (i32.add

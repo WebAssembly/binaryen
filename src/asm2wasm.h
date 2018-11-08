@@ -777,9 +777,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // Import memory offset, if not already there
   {
     auto* import = new Global;
-    import->name = "memoryBase";
+    import->name = MEMORY_BASE;
     import->module = "env";
-    import->base = "memoryBase";
+    import->base = MEMORY_BASE;
     import->type = i32;
     wasm.addGlobal(import);
   }
@@ -787,9 +787,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // Import table offset, if not already there
   {
     auto* import = new Global;
-    import->name = "tableBase";
+    import->name = TABLE_BASE;
     import->module = "env";
-    import->base = "tableBase";
+    import->base = TABLE_BASE;
     import->type = i32;
     wasm.addGlobal(import);
   }
@@ -911,9 +911,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
       import->base = base;
       import->type = type;
       mappedGlobals.emplace(name, type);
-      // tableBase and memoryBase are used as segment/element offsets, and must be constant;
+      // __table_base and __memory_base are used as segment/element offsets, and must be constant;
       // otherwise, an asm.js import of a constant is mutable, e.g. STACKTOP
-      if (name != "tableBase" && name != "memoryBase") {
+      if (name != TABLE_BASE && name != MEMORY_BASE) {
         // we need imported globals to be mutable, but wasm doesn't support that yet, so we must
         // import an immutable and create a mutable global initialized to its value
         import->name = Name(std::string(import->name.str) + "$asm2wasm$import");
@@ -926,7 +926,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           ));
         }
       }
-      if ((name == "tableBase" || name == "memoryBase") &&
+      if ((name == TABLE_BASE || name == MEMORY_BASE) &&
           wasm.getGlobalOrNull(import->base)) {
         return;
       }
@@ -1093,7 +1093,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
           //       index 0 in each table is the null func, and each other index should only have one
           //       non-null func. However, that breaks down when function pointer casts are emulated.
           if (wasm.table.segments.size() == 0) {
-            wasm.table.segments.emplace_back(builder.makeGetGlobal(Name("tableBase"), i32));
+            wasm.table.segments.emplace_back(builder.makeGetGlobal(Name(TABLE_BASE), i32));
           }
           auto& segment = wasm.table.segments[0];
           functionTableStarts[name] = segment.data.size(); // this table starts here

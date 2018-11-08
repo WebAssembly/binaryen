@@ -5003,8 +5003,8 @@ longname4882 => zza
 (module
  (type $FUNCSIG$v (func))
  (import "env" "a" (global $import$global0 i32))
- (import "env" "memoryBase" (global $import$global1 i32))
- (import "env" "tableBase" (global $import$global2 i32))
+ (import "env" "__memory_base" (global $import$global1 i32))
+ (import "env" "__table_base" (global $import$global2 i32))
  (import "env" "b" (func $internal1))
  (import "env" "c" (func $internal2))
  (import "env" "d" (func $internal3))

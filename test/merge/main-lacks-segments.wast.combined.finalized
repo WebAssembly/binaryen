@@ -6,20 +6,18 @@
  (elem (i32.const 8) $foo $foo)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "__memory_base" (global $__memory_base i32))
+ (import "env" "__table_base" (global $__table_base i32))
  (import "env" "memoryBase" (global $memoryBase$0 i32))
  (import "env" "tableBase" (global $tableBase$0 i32))
+ (import "env" "__memory_base" (global $__memory_base$0 i32))
+ (import "env" "__table_base" (global $__table_base$0 i32))
  (func $foo (; 0 ;) (type $0)
   (drop
-   (i32.add
-    (i32.const 8)
-    (i32.const 0)
-   )
+   (get_global $tableBase$0)
   )
   (drop
-   (i32.add
-    (i32.const 1024)
-    (i32.const 0)
-   )
+   (get_global $memoryBase$0)
   )
  )
 )

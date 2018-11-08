@@ -580,12 +580,12 @@ int main(int argc, const char* argv[]) {
       .add("--emit-text", "-S", "Emit text instead of binary for the output file",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& argument) { emitBinary = false; })
-      .add("--finalize-memory-base", "-fmb", "Finalize the env.memoryBase import",
+      .add("--finalize-memory-base", "-fmb", "Finalize the env.__memory_base import",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              finalizeMemoryBase = atoi(argument.c_str());
            })
-      .add("--finalize-table-base", "-ftb", "Finalize the env.tableBase import",
+      .add("--finalize-table-base", "-ftb", "Finalize the env.__table_base import",
            Options::Arguments::One,
            [&](Options* o, const std::string& argument) {
              finalizeTableBase = atoi(argument.c_str());

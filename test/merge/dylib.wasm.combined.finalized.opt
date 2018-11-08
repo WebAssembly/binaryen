@@ -3,8 +3,10 @@
  (type $2 (func (result i32)))
  (type $3 (func))
  (import "env" "memory" (memory $2 256))
- (data (i32.const 1024) "hello, world!")
+ (data (get_global $gimport$0) "hello, world!")
  (import "env" "table" (table $timport$3 8 anyfunc))
+ (import "env" "memoryBase" (global $gimport$0 i32))
+ (import "env" "memoryBase" (global $gimport$0$0 i32))
  (import "env" "_puts" (func $import$1 (param i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
@@ -21,7 +23,7 @@
    (block $label$2 (result i32)
     (drop
      (call $import$1
-      (i32.const 1024)
+      (get_global $gimport$0)
      )
     )
     (i32.const 0)
@@ -36,7 +38,10 @@
   (block $label$1
    (block $label$2
     (set_global $global$0
-     (i32.const 1040)
+     (i32.add
+      (get_global $gimport$0)
+      (i32.const 16)
+     )
     )
     (set_global $global$1
      (i32.add
@@ -66,7 +71,7 @@
   (block $label$1
    (block $label$2
     (set_global $global$0$0
-     (i32.const 1072)
+     (get_global $gimport$0$0)
     )
     (set_global $global$1$0
      (i32.add

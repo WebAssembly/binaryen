@@ -1,10 +1,10 @@
 (module
  (type $FUNCSIG$v (func))
  (import "env" "memory" (memory $0 256))
- (data (get_global $memoryBase) "")
+ (data (get_global $__memory_base) "")
  (import "env" "table" (table $0 0 anyfunc))
- (import "env" "memoryBase" (global $memoryBase i32))
- (import "env" "tableBase" (global $tableBase i32))
+ (import "env" "__memory_base" (global $__memory_base i32))
+ (import "env" "__table_base" (global $__table_base i32))
  (global $a-global i32 (i32.const 0))
  (global $b-global$0 f64 (f64.const 2.14281428))
  (export "foo" (func $foo-func))

@@ -4,7 +4,14 @@
  (data (i32.const 1024) "hello, this is some data!")
  (import "env" "table" (table $0 10 anyfunc))
  (elem (i32.const 8) $foo $foo)
+ (import "env" "memoryBase" (global $memoryBase$0 i32))
+ (import "env" "tableBase" (global $tableBase$0 i32))
  (func $foo (; 0 ;) (type $0)
-  (nop)
+  (drop
+   (get_global $tableBase$0)
+  )
+  (drop
+   (get_global $memoryBase$0)
+  )
  )
 )
