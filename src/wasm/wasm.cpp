@@ -35,8 +35,8 @@ const char* Dylink = "dylink";
 }
 
 Name GROW_WASM_MEMORY("__growWasmMemory"),
-     MEMORY_BASE("memoryBase"),
-     TABLE_BASE("tableBase"),
+     MEMORY_BASE("__memory_base"),
+     TABLE_BASE("__table_base"),
      NEW_SIZE("newSize"),
      MODULE("module"),
      START("start"),

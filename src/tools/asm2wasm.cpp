@@ -60,7 +60,7 @@ int main(int argc, const char *argv[]) {
            [](Options *o, const std::string& argument) {
              o->extra["mem init"] = argument;
            })
-      .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the memoryBase global import is used.", Options::Arguments::One,
+      .add("--mem-base", "-mb", "Set the location to write the memory initialization (--mem-init) file (GLOBAL_BASE in emscripten). If not provided, the __memory_base global import is used.", Options::Arguments::One,
            [](Options *o, const std::string& argument) {
              o->extra["mem base"] = argument;
            })
@@ -173,7 +173,7 @@ int main(int argc, const char *argv[]) {
     Expression* init;
     const auto &memBase = options.extra.find("mem base");
     if (memBase == options.extra.end()) {
-      init = Builder(wasm).makeGetGlobal(Name("memoryBase"), i32);
+      init = Builder(wasm).makeGetGlobal(Name("__memory_base"), i32);
     } else {
       init = Builder(wasm).makeConst(Literal(int32_t(atoi(memBase->second.c_str()))));
     }

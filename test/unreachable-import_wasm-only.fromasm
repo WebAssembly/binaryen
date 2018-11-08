@@ -1,7 +1,7 @@
 (module
  (import "env" "memory" (memory $memory 256 256))
- (data (get_global $memoryBase) "unreachable-import_wasm-only.asm.js")
- (import "env" "memoryBase" (global $memoryBase i32))
+ (data (get_global $__memory_base) "unreachable-import_wasm-only.asm.js")
+ (import "env" "__memory_base" (global $__memory_base i32))
  (export "__ZN10WasmAssertC2Ev__async_cb" (func $__ZN10WasmAssertC2Ev__async_cb))
  (func $__ZN10WasmAssertC2Ev__async_cb (; 0 ;) (; has Stack IR ;) (param $0 i32)
   (i32.store

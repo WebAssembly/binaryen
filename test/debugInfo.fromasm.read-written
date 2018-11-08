@@ -4,7 +4,7 @@
  (type $2 (func))
  (import "env" "memory" (memory $1 256 256))
  (data (get_global $gimport$0) "debugInfo.asm.js")
- (import "env" "memoryBase" (global $gimport$0 i32))
+ (import "env" "__memory_base" (global $gimport$0 i32))
  (export "add" (func $add))
  (export "ret" (func $ret))
  (export "opts" (func $opts))
