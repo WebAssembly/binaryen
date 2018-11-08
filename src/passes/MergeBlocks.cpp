@@ -179,9 +179,8 @@ static bool hasUnreachableChild(Block* block) {
 static bool hasDeadCode(Block* block) {
   auto& list = block->list;
   auto size = list.size();
-  if (size <= 1) return false;
-  for (size_t i = 0; i < size - 1; i++) {
-    if (list[i]->type == unreachable) {
+  for (size_t i = 1; i < size; i++) {
+    if (list[i - 1]->type == unreachable) {
       return true;
     }
   }
