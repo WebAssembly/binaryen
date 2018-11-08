@@ -86,14 +86,21 @@
       )
     )
   )
+  (func $send-i32 (param i32))
   ;; flipping of greater than/or equals ops, which are not in Souper IR
   (func $flips
     (local $x i32)
     (local $y i32)
+    (local $z i64)
+    (local $w i64)
     (set_local $x (i32.ge_s (get_local $x) (get_local $y)))
     (set_local $x (i32.ge_u (get_local $x) (get_local $y)))
     (set_local $x (i32.gt_s (get_local $x) (get_local $y)))
     (set_local $x (i32.gt_u (get_local $x) (get_local $y)))
+    (call $send-i32 (i64.ge_s (get_local $z) (get_local $w)))
+    (call $send-i32 (i64.ge_u (get_local $z) (get_local $w)))
+    (call $send-i32 (i64.gt_s (get_local $z) (get_local $w)))
+    (call $send-i32 (i64.gt_u (get_local $z) (get_local $w)))
   )
   (func $various-conditions-1 (param $x i32)
     (if
