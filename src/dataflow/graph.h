@@ -518,14 +518,14 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
         Builder builder(*module);
         BinaryOp opposite;
         switch (curr->op) {
-          case GtSInt32: opposite = LeSInt32; break;
-          case GtSInt64: opposite = LeSInt64; break;
-          case GeSInt32: opposite = LtSInt32; break;
-          case GeSInt64: opposite = LtSInt64; break;
-          case GtUInt32: opposite = LeUInt32; break;
-          case GtUInt64: opposite = LeUInt64; break;
-          case GeUInt32: opposite = LtUInt32; break;
-          case GeUInt64: opposite = LtUInt64; break;
+          case GtSInt32: opposite = LtSInt32; break;
+          case GtSInt64: opposite = LtSInt64; break;
+          case GeSInt32: opposite = LeSInt32; break;
+          case GeSInt64: opposite = LeSInt64; break;
+          case GtUInt32: opposite = LtUInt32; break;
+          case GtUInt64: opposite = LtUInt64; break;
+          case GeUInt32: opposite = LeUInt32; break;
+          case GeUInt64: opposite = LeUInt64; break;
           default: WASM_UNREACHABLE();
         }
         auto* ret = visitBinary(builder.makeBinary(opposite, curr->right, curr->left));
