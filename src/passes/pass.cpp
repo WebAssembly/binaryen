@@ -148,7 +148,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     add("flatten");
+    add("dfo");
     add("local-cse");
+    add("rereloop");
   }
   if (!options.debugInfo) { // debug info must be preserved, do not dce it
     add("dce");
