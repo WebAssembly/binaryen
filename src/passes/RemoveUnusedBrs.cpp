@@ -480,6 +480,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // the names to update
       std::map<Break*, Name> newNames;
 
+      bool worked = false;
+
       void visitBreak(Break* curr) {
         if (!curr->value) {
           if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
@@ -502,6 +504,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 breaksToBlock[curr].push_back(br); // update the list - we may push it even more later
               }
               breaksToBlock.erase(child);
+              worked = true;
             }
           }
         } else if (list.size() == 2) {
@@ -523,6 +526,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                     }
                   }
                   breaksToBlock.erase(child);
+                  worked = true;
                 }
               } else if (auto* ret = second->dynCast<Return>()) {
                 if (!ret->value) {
@@ -531,12 +535,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                     auto* newReturn = ExpressionManipulator::convert<Break, Return>(br);
                     newReturn->value = nullptr;
                     newReturn->finalize();
+                    worked = true;
                   }
                 }
               } else if (second->is<Unreachable>()) {
                 auto& breaks = breaksToBlock[child];
                 for (auto* br : breaks) {
                   ExpressionManipulator::convert<Break, Unreachable>(br);
+                  worked = true;
                 }
               }
             }
@@ -550,7 +556,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto name = iter.second;
           br->name = name;
         }
-        if (newNames.size() > 0) {
+        if (worked) {
           // by changing where brs go, we may change block types etc.
           ReFinalize().walkFunctionInModule(func, getModule());
         }
