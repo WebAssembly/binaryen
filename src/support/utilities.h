@@ -30,6 +30,8 @@
 
 namespace wasm {
 
+using vec128_t = uint8_t __attribute((vector_size(16)));
+
 // Type punning needs to be done through this function to avoid undefined
 // behavior: unions and reinterpret_cast aren't valid approaches.
 template <class Destination, class Source>

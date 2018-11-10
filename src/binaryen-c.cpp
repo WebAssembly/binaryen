@@ -110,6 +110,7 @@ BinaryenType BinaryenTypeInt32(void) { return i32; }
 BinaryenType BinaryenTypeInt64(void) { return i64; }
 BinaryenType BinaryenTypeFloat32(void) { return f32; }
 BinaryenType BinaryenTypeFloat64(void) { return f64; }
+BinaryenType BinaryenTypeVec128(void) { return v128; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 

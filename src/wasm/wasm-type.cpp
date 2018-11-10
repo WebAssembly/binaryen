@@ -28,6 +28,7 @@ const char* printType(Type type) {
     case Type::i64: return "i64";
     case Type::f32: return "f32";
     case Type::f64: return "f64";
+    case Type::v128: return "v128";
     case Type::unreachable: return "unreachable";
     default: WASM_UNREACHABLE();
   }
@@ -40,6 +41,7 @@ unsigned getTypeSize(Type type) {
     case Type::i64: return 8;
     case Type::f32: return 4;
     case Type::f64: return 8;
+    case Type::v128: return 16;
     default: WASM_UNREACHABLE();
   }
 }
@@ -48,6 +50,7 @@ Type getType(unsigned size, bool float_) {
   if (size < 4) return Type::i32;
   if (size == 4) return float_ ? Type::f32 : Type::i32;
   if (size == 8) return float_ ? Type::f64 : Type::i64;
+  if (size == 16) return Type::v128;
   abort();
 }
 
@@ -73,6 +76,10 @@ bool isFloatType(Type type) {
     case f64: return true;
     default: return false;
   }
+}
+
+bool isVectorType(Type type) {
+  return type == v128;
 }
 
 } // namespace wasm
