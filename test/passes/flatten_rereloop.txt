@@ -123,3 +123,1430 @@
   (unreachable)
  )
 )
+(module
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
+ (type $2 (func (param i32)))
+ (func $br-to-unreachable (; 0 ;) (type $0)
+  (local $0 i32)
+  (block $block$3$break
+   (block
+   )
+   (block
+    (br $block$3$break)
+   )
+  )
+  (block
+   (block
+    (nop)
+    (unreachable)
+   )
+  )
+ )
+ (func $many-br-to-unreachable (; 1 ;) (type $1) (param $x i32) (result i32)
+  (local $1 i32)
+  (local $2 i32)
+  (local $3 i32)
+  (local $4 i32)
+  (block $block$12$break
+   (block $block$11$break
+    (block $block$10$break
+     (block $block$9$break
+      (block $block$8$break
+       (block $block$7$break
+        (block $block$6$break
+         (block $block$5$break
+          (block $block$4$break
+           (block $block$3$break
+            (block $block$2$break
+             (block
+              (set_local $1
+               (get_local $x)
+              )
+             )
+             (block $switch$1$leave
+              (block $switch$1$default
+               (block $switch$1$case$64
+                (block $switch$1$case$63
+                 (block $switch$1$case$62
+                  (block $switch$1$case$61
+                   (block $switch$1$case$60
+                    (block $switch$1$case$59
+                     (block $switch$1$case$58
+                      (block $switch$1$case$57
+                       (block $switch$1$case$56
+                        (block $switch$1$case$55
+                         (block $switch$1$case$54
+                          (block $switch$1$case$53
+                           (block $switch$1$case$52
+                            (block $switch$1$case$51
+                             (block $switch$1$case$50
+                              (block $switch$1$case$49
+                               (block $switch$1$case$48
+                                (block $switch$1$case$47
+                                 (block $switch$1$case$46
+                                  (block $switch$1$case$45
+                                   (block $switch$1$case$44
+                                    (block $switch$1$case$43
+                                     (block $switch$1$case$42
+                                      (block $switch$1$case$41
+                                       (block $switch$1$case$40
+                                        (block $switch$1$case$39
+                                         (block $switch$1$case$38
+                                          (block $switch$1$case$37
+                                           (block $switch$1$case$36
+                                            (block $switch$1$case$35
+                                             (block $switch$1$case$34
+                                              (block $switch$1$case$33
+                                               (block $switch$1$case$32
+                                                (block $switch$1$case$31
+                                                 (block $switch$1$case$30
+                                                  (block $switch$1$case$29
+                                                   (block $switch$1$case$28
+                                                    (block $switch$1$case$27
+                                                     (block $switch$1$case$26
+                                                      (block $switch$1$case$25
+                                                       (block $switch$1$case$24
+                                                        (block $switch$1$case$23
+                                                         (block $switch$1$case$22
+                                                          (block $switch$1$case$21
+                                                           (block $switch$1$case$20
+                                                            (block $switch$1$case$19
+                                                             (block $switch$1$case$18
+                                                              (block $switch$1$case$17
+                                                               (block $switch$1$case$16
+                                                                (block $switch$1$case$15
+                                                                 (block $switch$1$case$14
+                                                                  (br_table $switch$1$case$18 $switch$1$case$18 $switch$1$case$18 $switch$1$case$19 $switch$1$case$20 $switch$1$case$22 $switch$1$case$23 $switch$1$case$23 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$25 $switch$1$case$25 $switch$1$case$26 $switch$1$case$26 $switch$1$case$26 $switch$1$case$27 $switch$1$case$27 $switch$1$case$28 $switch$1$case$28 $switch$1$case$29 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$31 $switch$1$case$33 $switch$1$case$34 $switch$1$case$35 $switch$1$case$36 $switch$1$case$36 $switch$1$case$37 $switch$1$case$37 $switch$1$case$37 $switch$1$case$38 $switch$1$case$38 $switch$1$case$38 $switch$1$case$39 $switch$1$case$40 $switch$1$case$41 $switch$1$case$41 $switch$1$case$42 $switch$1$case$42 $switch$1$case$44 $switch$1$case$44 $switch$1$case$44 $switch$1$case$45 $switch$1$case$45 $switch$1$case$46 $switch$1$case$46 $switch$1$case$47 $switch$1$case$48 $switch$1$case$48 $switch$1$case$49 $switch$1$case$50 $switch$1$case$51 $switch$1$case$51 $switch$1$case$52 $switch$1$case$53 $switch$1$case$55 $switch$1$case$55 $switch$1$case$55 $switch$1$case$56 $switch$1$case$57 $switch$1$case$58 $switch$1$case$58 $switch$1$case$58 $switch$1$case$58 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$61 $switch$1$case$62 $switch$1$case$63 $switch$1$case$63 $switch$1$case$63 $switch$1$case$64 $switch$1$case$14 $switch$1$case$14 $switch$1$case$15 $switch$1$case$15 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$17 $switch$1$case$17 $switch$1$case$21 $switch$1$case$32 $switch$1$case$32 $switch$1$case$32 $switch$1$case$43 $switch$1$case$54 $switch$1$case$54 $switch$1$default
+                                                                   (get_local $1)
+                                                                  )
+                                                                 )
+                                                                 (block
+                                                                  (block
+                                                                   (block
+                                                                    (nop)
+                                                                   )
+                                                                   (block
+                                                                    (br $block$6$break)
+                                                                   )
+                                                                  )
+                                                                 )
+                                                                )
+                                                                (block
+                                                                 (block
+                                                                  (block
+                                                                   (nop)
+                                                                  )
+                                                                  (block
+                                                                   (br $block$6$break)
+                                                                  )
+                                                                 )
+                                                                )
+                                                               )
+                                                               (block
+                                                                (block
+                                                                 (block
+                                                                  (nop)
+                                                                 )
+                                                                 (block
+                                                                  (br $block$6$break)
+                                                                 )
+                                                                )
+                                                               )
+                                                              )
+                                                              (block
+                                                               (block
+                                                                (block
+                                                                 (nop)
+                                                                )
+                                                                (block
+                                                                 (br $block$4$break)
+                                                                )
+                                                               )
+                                                              )
+                                                             )
+                                                             (block
+                                                              (block
+                                                               (block
+                                                                (nop)
+                                                                (unreachable)
+                                                               )
+                                                              )
+                                                             )
+                                                            )
+                                                            (block
+                                                             (block
+                                                              (block
+                                                               (nop)
+                                                               (unreachable)
+                                                              )
+                                                             )
+                                                            )
+                                                           )
+                                                           (block
+                                                            (block
+                                                             (block
+                                                              (nop)
+                                                              (unreachable)
+                                                             )
+                                                            )
+                                                           )
+                                                          )
+                                                          (block
+                                                           (block
+                                                            (block
+                                                             (nop)
+                                                            )
+                                                            (block
+                                                             (br $block$4$break)
+                                                            )
+                                                           )
+                                                          )
+                                                         )
+                                                         (block
+                                                          (block
+                                                           (block
+                                                            (nop)
+                                                            (unreachable)
+                                                           )
+                                                          )
+                                                         )
+                                                        )
+                                                        (block
+                                                         (block
+                                                          (block
+                                                           (nop)
+                                                          )
+                                                          (block
+                                                           (br $block$7$break)
+                                                          )
+                                                         )
+                                                        )
+                                                       )
+                                                       (block
+                                                        (block
+                                                         (block
+                                                          (nop)
+                                                         )
+                                                         (block
+                                                          (br $block$7$break)
+                                                         )
+                                                        )
+                                                       )
+                                                      )
+                                                      (block
+                                                       (block
+                                                        (block
+                                                         (nop)
+                                                         (unreachable)
+                                                        )
+                                                       )
+                                                      )
+                                                     )
+                                                     (block
+                                                      (block
+                                                       (block
+                                                        (nop)
+                                                        (unreachable)
+                                                       )
+                                                      )
+                                                     )
+                                                    )
+                                                    (block
+                                                     (block
+                                                      (block
+                                                       (nop)
+                                                       (unreachable)
+                                                      )
+                                                     )
+                                                    )
+                                                   )
+                                                   (block
+                                                    (block
+                                                     (block
+                                                      (nop)
+                                                      (unreachable)
+                                                     )
+                                                    )
+                                                   )
+                                                  )
+                                                  (block
+                                                   (block
+                                                    (block
+                                                     (nop)
+                                                    )
+                                                    (block
+                                                     (br $block$5$break)
+                                                    )
+                                                   )
+                                                  )
+                                                 )
+                                                 (block
+                                                  (block
+                                                   (block
+                                                    (nop)
+                                                   )
+                                                   (block
+                                                    (br $block$5$break)
+                                                   )
+                                                  )
+                                                 )
+                                                )
+                                                (block
+                                                 (block
+                                                  (block
+                                                   (nop)
+                                                  )
+                                                  (block
+                                                   (br $block$5$break)
+                                                  )
+                                                 )
+                                                )
+                                               )
+                                               (block
+                                                (block
+                                                 (block
+                                                  (nop)
+                                                 )
+                                                 (block
+                                                  (br $block$4$break)
+                                                 )
+                                                )
+                                               )
+                                              )
+                                              (block
+                                               (block
+                                                (block
+                                                 (nop)
+                                                 (unreachable)
+                                                )
+                                               )
+                                              )
+                                             )
+                                             (block
+                                              (block
+                                               (block
+                                                (nop)
+                                               )
+                                               (block
+                                                (br $block$8$break)
+                                               )
+                                              )
+                                             )
+                                            )
+                                            (block
+                                             (block
+                                              (block
+                                               (nop)
+                                              )
+                                              (block
+                                               (br $block$8$break)
+                                              )
+                                             )
+                                            )
+                                           )
+                                           (block
+                                            (block
+                                             (block
+                                              (nop)
+                                             )
+                                             (block
+                                              (br $block$9$break)
+                                             )
+                                            )
+                                           )
+                                          )
+                                          (block
+                                           (block
+                                            (block
+                                             (nop)
+                                            )
+                                            (block
+                                             (br $block$9$break)
+                                            )
+                                           )
+                                          )
+                                         )
+                                         (block
+                                          (block
+                                           (block
+                                            (nop)
+                                            (unreachable)
+                                           )
+                                          )
+                                         )
+                                        )
+                                        (block
+                                         (block
+                                          (block
+                                           (nop)
+                                           (unreachable)
+                                          )
+                                         )
+                                        )
+                                       )
+                                       (block
+                                        (block
+                                         (block
+                                          (nop)
+                                          (unreachable)
+                                         )
+                                        )
+                                       )
+                                      )
+                                      (block
+                                       (block
+                                        (block
+                                         (nop)
+                                         (unreachable)
+                                        )
+                                       )
+                                      )
+                                     )
+                                     (block
+                                      (block
+                                       (block
+                                        (nop)
+                                        (unreachable)
+                                       )
+                                      )
+                                     )
+                                    )
+                                    (block
+                                     (block
+                                      (block
+                                       (nop)
+                                      )
+                                      (block
+                                       (br $block$4$break)
+                                      )
+                                     )
+                                    )
+                                   )
+                                   (block
+                                    (block
+                                     (block
+                                      (nop)
+                                      (unreachable)
+                                     )
+                                    )
+                                   )
+                                  )
+                                  (block
+                                   (block
+                                    (block
+                                     (nop)
+                                    )
+                                    (block
+                                     (br $block$10$break)
+                                    )
+                                   )
+                                  )
+                                 )
+                                 (block
+                                  (block
+                                   (block
+                                    (nop)
+                                   )
+                                   (block
+                                    (br $block$10$break)
+                                   )
+                                  )
+                                 )
+                                )
+                                (block
+                                 (block
+                                  (block
+                                   (nop)
+                                  )
+                                  (block
+                                   (br $block$11$break)
+                                  )
+                                 )
+                                )
+                               )
+                               (block
+                                (block
+                                 (block
+                                  (nop)
+                                 )
+                                 (block
+                                  (br $block$11$break)
+                                 )
+                                )
+                               )
+                              )
+                              (block
+                               (block
+                                (block
+                                 (nop)
+                                )
+                                (block
+                                 (br $block$12$break)
+                                )
+                               )
+                              )
+                             )
+                             (block
+                              (block
+                               (block
+                                (nop)
+                               )
+                               (block
+                                (br $block$12$break)
+                               )
+                              )
+                             )
+                            )
+                            (block
+                             (block
+                              (block
+                               (nop)
+                              )
+                              (block
+                               (br $block$3$break)
+                              )
+                             )
+                            )
+                           )
+                           (block
+                            (block
+                             (block
+                              (nop)
+                             )
+                             (block
+                              (br $block$3$break)
+                             )
+                            )
+                           )
+                          )
+                          (block
+                           (block
+                            (block
+                             (nop)
+                            )
+                            (block
+                             (br $block$3$break)
+                            )
+                           )
+                          )
+                         )
+                         (block
+                          (block
+                           (block
+                            (nop)
+                           )
+                           (block
+                            (br $block$4$break)
+                           )
+                          )
+                         )
+                        )
+                        (block
+                         (block
+                          (block
+                           (nop)
+                          )
+                          (block
+                           (br $block$3$break)
+                          )
+                         )
+                        )
+                       )
+                       (block
+                        (block
+                         (block
+                          (nop)
+                         )
+                         (block
+                          (br $block$3$break)
+                         )
+                        )
+                       )
+                      )
+                      (block
+                       (block
+                        (block
+                         (nop)
+                        )
+                        (block
+                         (br $block$3$break)
+                        )
+                       )
+                      )
+                     )
+                     (block
+                      (block
+                       (block
+                        (nop)
+                       )
+                       (block
+                        (br $block$2$break)
+                       )
+                      )
+                     )
+                    )
+                    (block
+                     (block
+                      (block
+                       (nop)
+                      )
+                      (block
+                       (br $block$2$break)
+                      )
+                     )
+                    )
+                   )
+                   (block
+                    (block
+                     (block
+                      (nop)
+                     )
+                     (block
+                      (br $block$2$break)
+                     )
+                    )
+                   )
+                  )
+                  (block
+                   (block
+                    (block
+                     (nop)
+                    )
+                    (block
+                     (br $block$2$break)
+                    )
+                   )
+                  )
+                 )
+                 (block
+                  (block
+                   (block
+                    (nop)
+                   )
+                   (block
+                    (br $block$2$break)
+                   )
+                  )
+                 )
+                )
+                (block
+                 (block
+                  (block
+                   (nop)
+                  )
+                  (block
+                   (br $block$2$break)
+                  )
+                 )
+                )
+               )
+               (block
+                (block
+                 (block
+                  (nop)
+                 )
+                 (block
+                  (br $block$2$break)
+                 )
+                )
+               )
+              )
+              (block
+               (block
+                (block
+                 (nop)
+                 (unreachable)
+                )
+               )
+              )
+             )
+            )
+            (block
+             (block
+              (nop)
+              (unreachable)
+             )
+            )
+           )
+           (block
+            (block
+             (nop)
+             (unreachable)
+            )
+           )
+          )
+          (block
+           (block
+            (nop)
+            (unreachable)
+           )
+          )
+         )
+         (block
+          (block
+           (nop)
+           (unreachable)
+          )
+         )
+        )
+        (block
+         (block
+          (nop)
+          (unreachable)
+         )
+        )
+       )
+       (block
+        (block
+         (nop)
+         (unreachable)
+        )
+       )
+      )
+      (block
+       (block
+        (nop)
+        (unreachable)
+       )
+      )
+     )
+     (block
+      (block
+       (nop)
+       (unreachable)
+      )
+     )
+    )
+    (block
+     (block
+      (nop)
+      (unreachable)
+     )
+    )
+   )
+   (block
+    (block
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+  (block
+   (block
+    (nop)
+    (unreachable)
+   )
+  )
+ )
+ (func $br-to-return_b (; 2 ;) (type $0)
+  (local $0 i32)
+  (block $block$3$break
+   (block
+   )
+   (block
+    (br $block$3$break)
+   )
+  )
+  (block
+   (block
+    (nop)
+    (return)
+   )
+  )
+ )
+ (func $many-br-to-return_b (; 3 ;) (type $2) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block $block$12$break
+   (block $block$11$break
+    (block $block$10$break
+     (block $block$9$break
+      (block $block$8$break
+       (block $block$7$break
+        (block $block$6$break
+         (block $block$5$break
+          (block $block$4$break
+           (block $block$3$break
+            (block $block$2$break
+             (block
+              (set_local $1
+               (get_local $x)
+              )
+             )
+             (block $switch$1$leave
+              (block $switch$1$default
+               (block $switch$1$case$64
+                (block $switch$1$case$63
+                 (block $switch$1$case$62
+                  (block $switch$1$case$61
+                   (block $switch$1$case$60
+                    (block $switch$1$case$59
+                     (block $switch$1$case$58
+                      (block $switch$1$case$57
+                       (block $switch$1$case$56
+                        (block $switch$1$case$55
+                         (block $switch$1$case$54
+                          (block $switch$1$case$53
+                           (block $switch$1$case$52
+                            (block $switch$1$case$51
+                             (block $switch$1$case$50
+                              (block $switch$1$case$49
+                               (block $switch$1$case$48
+                                (block $switch$1$case$47
+                                 (block $switch$1$case$46
+                                  (block $switch$1$case$45
+                                   (block $switch$1$case$44
+                                    (block $switch$1$case$43
+                                     (block $switch$1$case$42
+                                      (block $switch$1$case$41
+                                       (block $switch$1$case$40
+                                        (block $switch$1$case$39
+                                         (block $switch$1$case$38
+                                          (block $switch$1$case$37
+                                           (block $switch$1$case$36
+                                            (block $switch$1$case$35
+                                             (block $switch$1$case$34
+                                              (block $switch$1$case$33
+                                               (block $switch$1$case$32
+                                                (block $switch$1$case$31
+                                                 (block $switch$1$case$30
+                                                  (block $switch$1$case$29
+                                                   (block $switch$1$case$28
+                                                    (block $switch$1$case$27
+                                                     (block $switch$1$case$26
+                                                      (block $switch$1$case$25
+                                                       (block $switch$1$case$24
+                                                        (block $switch$1$case$23
+                                                         (block $switch$1$case$22
+                                                          (block $switch$1$case$21
+                                                           (block $switch$1$case$20
+                                                            (block $switch$1$case$19
+                                                             (block $switch$1$case$18
+                                                              (block $switch$1$case$17
+                                                               (block $switch$1$case$16
+                                                                (block $switch$1$case$15
+                                                                 (block $switch$1$case$14
+                                                                  (br_table $switch$1$case$18 $switch$1$case$18 $switch$1$case$18 $switch$1$case$19 $switch$1$case$20 $switch$1$case$22 $switch$1$case$23 $switch$1$case$23 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$24 $switch$1$case$25 $switch$1$case$25 $switch$1$case$26 $switch$1$case$26 $switch$1$case$26 $switch$1$case$27 $switch$1$case$27 $switch$1$case$28 $switch$1$case$28 $switch$1$case$29 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$30 $switch$1$case$31 $switch$1$case$33 $switch$1$case$34 $switch$1$case$35 $switch$1$case$36 $switch$1$case$36 $switch$1$case$37 $switch$1$case$37 $switch$1$case$37 $switch$1$case$38 $switch$1$case$38 $switch$1$case$38 $switch$1$case$39 $switch$1$case$40 $switch$1$case$41 $switch$1$case$41 $switch$1$case$42 $switch$1$case$42 $switch$1$case$44 $switch$1$case$44 $switch$1$case$44 $switch$1$case$45 $switch$1$case$45 $switch$1$case$46 $switch$1$case$46 $switch$1$case$47 $switch$1$case$48 $switch$1$case$48 $switch$1$case$49 $switch$1$case$50 $switch$1$case$51 $switch$1$case$51 $switch$1$case$52 $switch$1$case$53 $switch$1$case$55 $switch$1$case$55 $switch$1$case$55 $switch$1$case$56 $switch$1$case$57 $switch$1$case$58 $switch$1$case$58 $switch$1$case$58 $switch$1$case$58 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$59 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$60 $switch$1$case$61 $switch$1$case$62 $switch$1$case$63 $switch$1$case$63 $switch$1$case$63 $switch$1$case$64 $switch$1$case$14 $switch$1$case$14 $switch$1$case$15 $switch$1$case$15 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$16 $switch$1$case$17 $switch$1$case$17 $switch$1$case$21 $switch$1$case$32 $switch$1$case$32 $switch$1$case$32 $switch$1$case$43 $switch$1$case$54 $switch$1$case$54 $switch$1$default
+                                                                   (get_local $1)
+                                                                  )
+                                                                 )
+                                                                 (block
+                                                                  (block
+                                                                   (block
+                                                                    (nop)
+                                                                   )
+                                                                   (block
+                                                                    (br $block$6$break)
+                                                                   )
+                                                                  )
+                                                                 )
+                                                                )
+                                                                (block
+                                                                 (block
+                                                                  (block
+                                                                   (nop)
+                                                                  )
+                                                                  (block
+                                                                   (br $block$6$break)
+                                                                  )
+                                                                 )
+                                                                )
+                                                               )
+                                                               (block
+                                                                (block
+                                                                 (block
+                                                                  (nop)
+                                                                 )
+                                                                 (block
+                                                                  (br $block$6$break)
+                                                                 )
+                                                                )
+                                                               )
+                                                              )
+                                                              (block
+                                                               (block
+                                                                (block
+                                                                 (nop)
+                                                                )
+                                                                (block
+                                                                 (br $block$4$break)
+                                                                )
+                                                               )
+                                                              )
+                                                             )
+                                                             (block
+                                                              (block
+                                                               (block
+                                                                (nop)
+                                                                (return)
+                                                               )
+                                                              )
+                                                             )
+                                                            )
+                                                            (block
+                                                             (block
+                                                              (block
+                                                               (nop)
+                                                               (return)
+                                                              )
+                                                             )
+                                                            )
+                                                           )
+                                                           (block
+                                                            (block
+                                                             (block
+                                                              (nop)
+                                                              (return)
+                                                             )
+                                                            )
+                                                           )
+                                                          )
+                                                          (block
+                                                           (block
+                                                            (block
+                                                             (nop)
+                                                            )
+                                                            (block
+                                                             (br $block$4$break)
+                                                            )
+                                                           )
+                                                          )
+                                                         )
+                                                         (block
+                                                          (block
+                                                           (block
+                                                            (nop)
+                                                            (return)
+                                                           )
+                                                          )
+                                                         )
+                                                        )
+                                                        (block
+                                                         (block
+                                                          (block
+                                                           (nop)
+                                                          )
+                                                          (block
+                                                           (br $block$7$break)
+                                                          )
+                                                         )
+                                                        )
+                                                       )
+                                                       (block
+                                                        (block
+                                                         (block
+                                                          (nop)
+                                                         )
+                                                         (block
+                                                          (br $block$7$break)
+                                                         )
+                                                        )
+                                                       )
+                                                      )
+                                                      (block
+                                                       (block
+                                                        (block
+                                                         (nop)
+                                                         (return)
+                                                        )
+                                                       )
+                                                      )
+                                                     )
+                                                     (block
+                                                      (block
+                                                       (block
+                                                        (nop)
+                                                        (return)
+                                                       )
+                                                      )
+                                                     )
+                                                    )
+                                                    (block
+                                                     (block
+                                                      (block
+                                                       (nop)
+                                                       (return)
+                                                      )
+                                                     )
+                                                    )
+                                                   )
+                                                   (block
+                                                    (block
+                                                     (block
+                                                      (nop)
+                                                      (return)
+                                                     )
+                                                    )
+                                                   )
+                                                  )
+                                                  (block
+                                                   (block
+                                                    (block
+                                                     (nop)
+                                                    )
+                                                    (block
+                                                     (br $block$5$break)
+                                                    )
+                                                   )
+                                                  )
+                                                 )
+                                                 (block
+                                                  (block
+                                                   (block
+                                                    (nop)
+                                                   )
+                                                   (block
+                                                    (br $block$5$break)
+                                                   )
+                                                  )
+                                                 )
+                                                )
+                                                (block
+                                                 (block
+                                                  (block
+                                                   (nop)
+                                                  )
+                                                  (block
+                                                   (br $block$5$break)
+                                                  )
+                                                 )
+                                                )
+                                               )
+                                               (block
+                                                (block
+                                                 (block
+                                                  (nop)
+                                                 )
+                                                 (block
+                                                  (br $block$4$break)
+                                                 )
+                                                )
+                                               )
+                                              )
+                                              (block
+                                               (block
+                                                (block
+                                                 (nop)
+                                                 (return)
+                                                )
+                                               )
+                                              )
+                                             )
+                                             (block
+                                              (block
+                                               (block
+                                                (nop)
+                                               )
+                                               (block
+                                                (br $block$8$break)
+                                               )
+                                              )
+                                             )
+                                            )
+                                            (block
+                                             (block
+                                              (block
+                                               (nop)
+                                              )
+                                              (block
+                                               (br $block$8$break)
+                                              )
+                                             )
+                                            )
+                                           )
+                                           (block
+                                            (block
+                                             (block
+                                              (nop)
+                                             )
+                                             (block
+                                              (br $block$9$break)
+                                             )
+                                            )
+                                           )
+                                          )
+                                          (block
+                                           (block
+                                            (block
+                                             (nop)
+                                            )
+                                            (block
+                                             (br $block$9$break)
+                                            )
+                                           )
+                                          )
+                                         )
+                                         (block
+                                          (block
+                                           (block
+                                            (nop)
+                                            (return)
+                                           )
+                                          )
+                                         )
+                                        )
+                                        (block
+                                         (block
+                                          (block
+                                           (nop)
+                                           (return)
+                                          )
+                                         )
+                                        )
+                                       )
+                                       (block
+                                        (block
+                                         (block
+                                          (nop)
+                                          (return)
+                                         )
+                                        )
+                                       )
+                                      )
+                                      (block
+                                       (block
+                                        (block
+                                         (nop)
+                                         (return)
+                                        )
+                                       )
+                                      )
+                                     )
+                                     (block
+                                      (block
+                                       (block
+                                        (nop)
+                                        (return)
+                                       )
+                                      )
+                                     )
+                                    )
+                                    (block
+                                     (block
+                                      (block
+                                       (nop)
+                                      )
+                                      (block
+                                       (br $block$4$break)
+                                      )
+                                     )
+                                    )
+                                   )
+                                   (block
+                                    (block
+                                     (block
+                                      (nop)
+                                      (return)
+                                     )
+                                    )
+                                   )
+                                  )
+                                  (block
+                                   (block
+                                    (block
+                                     (nop)
+                                    )
+                                    (block
+                                     (br $block$10$break)
+                                    )
+                                   )
+                                  )
+                                 )
+                                 (block
+                                  (block
+                                   (block
+                                    (nop)
+                                   )
+                                   (block
+                                    (br $block$10$break)
+                                   )
+                                  )
+                                 )
+                                )
+                                (block
+                                 (block
+                                  (block
+                                   (nop)
+                                  )
+                                  (block
+                                   (br $block$11$break)
+                                  )
+                                 )
+                                )
+                               )
+                               (block
+                                (block
+                                 (block
+                                  (nop)
+                                 )
+                                 (block
+                                  (br $block$11$break)
+                                 )
+                                )
+                               )
+                              )
+                              (block
+                               (block
+                                (block
+                                 (nop)
+                                )
+                                (block
+                                 (br $block$12$break)
+                                )
+                               )
+                              )
+                             )
+                             (block
+                              (block
+                               (block
+                                (nop)
+                               )
+                               (block
+                                (br $block$12$break)
+                               )
+                              )
+                             )
+                            )
+                            (block
+                             (block
+                              (block
+                               (nop)
+                              )
+                              (block
+                               (br $block$3$break)
+                              )
+                             )
+                            )
+                           )
+                           (block
+                            (block
+                             (block
+                              (nop)
+                             )
+                             (block
+                              (br $block$3$break)
+                             )
+                            )
+                           )
+                          )
+                          (block
+                           (block
+                            (block
+                             (nop)
+                            )
+                            (block
+                             (br $block$3$break)
+                            )
+                           )
+                          )
+                         )
+                         (block
+                          (block
+                           (block
+                            (nop)
+                           )
+                           (block
+                            (br $block$4$break)
+                           )
+                          )
+                         )
+                        )
+                        (block
+                         (block
+                          (block
+                           (nop)
+                          )
+                          (block
+                           (br $block$3$break)
+                          )
+                         )
+                        )
+                       )
+                       (block
+                        (block
+                         (block
+                          (nop)
+                         )
+                         (block
+                          (br $block$3$break)
+                         )
+                        )
+                       )
+                      )
+                      (block
+                       (block
+                        (block
+                         (nop)
+                        )
+                        (block
+                         (br $block$3$break)
+                        )
+                       )
+                      )
+                     )
+                     (block
+                      (block
+                       (block
+                        (nop)
+                       )
+                       (block
+                        (br $block$2$break)
+                       )
+                      )
+                     )
+                    )
+                    (block
+                     (block
+                      (block
+                       (nop)
+                      )
+                      (block
+                       (br $block$2$break)
+                      )
+                     )
+                    )
+                   )
+                   (block
+                    (block
+                     (block
+                      (nop)
+                     )
+                     (block
+                      (br $block$2$break)
+                     )
+                    )
+                   )
+                  )
+                  (block
+                   (block
+                    (block
+                     (nop)
+                    )
+                    (block
+                     (br $block$2$break)
+                    )
+                   )
+                  )
+                 )
+                 (block
+                  (block
+                   (block
+                    (nop)
+                   )
+                   (block
+                    (br $block$2$break)
+                   )
+                  )
+                 )
+                )
+                (block
+                 (block
+                  (block
+                   (nop)
+                  )
+                  (block
+                   (br $block$2$break)
+                  )
+                 )
+                )
+               )
+               (block
+                (block
+                 (block
+                  (nop)
+                 )
+                 (block
+                  (br $block$2$break)
+                 )
+                )
+               )
+              )
+              (block
+               (block
+                (block
+                 (nop)
+                 (return)
+                )
+               )
+              )
+             )
+            )
+            (block
+             (block
+              (nop)
+              (return)
+             )
+            )
+           )
+           (block
+            (block
+             (nop)
+             (return)
+            )
+           )
+          )
+          (block
+           (block
+            (nop)
+            (return)
+           )
+          )
+         )
+         (block
+          (block
+           (nop)
+           (return)
+          )
+         )
+        )
+        (block
+         (block
+          (nop)
+          (return)
+         )
+        )
+       )
+       (block
+        (block
+         (nop)
+         (return)
+        )
+       )
+      )
+      (block
+       (block
+        (nop)
+        (return)
+       )
+      )
+     )
+     (block
+      (block
+       (nop)
+       (return)
+      )
+     )
+    )
+    (block
+     (block
+      (nop)
+      (return)
+     )
+    )
+   )
+   (block
+    (block
+     (nop)
+     (return)
+    )
+   )
+  )
+  (block
+   (block
+    (nop)
+    (return)
+   )
+  )
+ )
+)
