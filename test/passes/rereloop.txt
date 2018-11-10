@@ -241,25 +241,16 @@
  )
  (func $empty-blocks (; 8 ;) (type $3) (param $x i32)
   (local $1 i32)
-  (block $block$2$break
+  (block $block$3$break
    (block
    )
    (block
-    (br $block$2$break)
+    (br $block$3$break)
    )
   )
   (block
-   (block $block$3$break
-    (block
-    )
-    (block
-     (br $block$3$break)
-    )
-   )
    (block
-    (block
-     (return)
-    )
+    (return)
    )
   )
  )
@@ -416,22 +407,13 @@
            (if
             (get_local $x)
             (block
-             (block $block$15$break
-              (block
-               (call $before-and-after
-                (i32.const 16)
-               )
-              )
-              (block
-               (br $block$15$break)
+             (block
+              (call $before-and-after
+               (i32.const 16)
               )
              )
              (block
-              (block
-              )
-              (block
-               (br $block$16$break)
-              )
+              (br $block$16$break)
              )
             )
             (br $block$16$break)
@@ -466,7 +448,7 @@
              )
             )
             (block
-             (block $block$20$break
+             (block $block$19$break
               (block
                (call $before-and-after
                 (i32.const 21)
@@ -476,47 +458,29 @@
                )
               )
               (block
-               (br $block$20$break)
+               (br $block$19$break)
               )
              )
              (block
-              (block $block$19$break
+              (block $block$21$break
                (block
+                (call $before-and-after
+                 (i32.const 23)
+                )
+                (call $before-and-after
+                 (i32.const 24)
+                )
                )
                (block
-                (br $block$19$break)
+                (br $block$21$break)
                )
               )
               (block
-               (block $block$22$break
-                (block
-                 (call $before-and-after
-                  (i32.const 23)
-                 )
-                 (call $before-and-after
-                  (i32.const 24)
-                 )
-                )
-                (block
-                 (br $block$22$break)
-                )
-               )
                (block
-                (block $block$21$break
-                 (block
-                 )
-                 (block
-                  (br $block$21$break)
-                 )
+                (call $before-and-after
+                 (i32.const 25)
                 )
-                (block
-                 (block
-                  (call $before-and-after
-                   (i32.const 25)
-                  )
-                  (return)
-                 )
-                )
+                (return)
                )
               )
              )

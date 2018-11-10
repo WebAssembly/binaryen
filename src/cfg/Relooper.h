@@ -194,6 +194,11 @@ struct InsertOrderedMap
     erase(position->first);
   }
 
+  void clear() {
+    Map.clear();
+    List.clear();
+  }
+
   size_t size() const { return Map.size(); }
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }

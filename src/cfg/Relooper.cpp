@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -468,9 +469,70 @@ struct Liveness : public RelooperRecursor {
   }
 };
 
+struct Optimizer : public RelooperRecursor {
+  Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
+    SkipEmptyBlocks();
+  }
+
+  void SkipEmptyBlocks() {
+    // If a block has one target, and the target is empty and itself
+    // has one target, and there is no phi or switch to worry us,
+    // just skip through
+    for (auto* Block : Parent->Blocks) {
+      if (Block->BranchesOut.size() == 1) {
+        auto iter = Block->BranchesOut.begin();
+        auto* Next = iter->first;
+        auto* NextBranch = iter->second;
+        if (Next->BranchesOut.size() == 1 &&
+            !NextBranch->Code && !NextBranch->SwitchValues &&
+            IsEmpty(Next)) {
+          assert(!NextBranch->Condition);
+          auto iter = Next->BranchesOut.begin();
+          auto* NextNext = iter->first;
+          auto* NextNextBranch = iter->second;
+          if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
+            assert(!NextNextBranch->Condition);
+            // We can skip through!
+            Block->BranchesOut.clear();
+            Block->AddBranchTo(NextNext, nullptr);
+          }
+        }
+      }
+    }
+    // TODO: if >1 targets, but all to the same place, or effectively the
+    //       same place (all a return; or unreachable)
+  }
+
+private:
+  bool IsEmpty(Block* Curr) {
+    if (Curr->SwitchCondition) {
+      // This is non-trivial, so treat it as a non-empty block.
+      return false;
+    }
+    auto* Code = Curr->Code;
+    if (Code->is<wasm::Nop>()) {
+      return true; // a nop
+    }
+    if (auto* WasmBlock = Code->dynCast<wasm::Block>()) {
+      auto& List = WasmBlock->list;
+      if (List.empty()) {
+        return true; // an empty block
+      }
+      if (List.size() == 1 && List[0]->is<wasm::Nop>()) {
+        return true; // a block with a nop
+      }
+    }
+    // std::cout << *Curr->Code << '\n';
+    return false;
+  }
+};
+
 } // namespace
 
 void Relooper::Calculate(Block* Entry) {
+  // Optimize.
+  Optimizer(this);
+
   // Find live blocks.
   Liveness Live(this);
   Live.FindLive(Entry);
