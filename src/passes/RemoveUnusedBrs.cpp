@@ -24,6 +24,7 @@
 #include <ir/utils.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/manipulation.h>
 #include <wasm-builder.h>
 
 namespace wasm {
@@ -504,21 +505,41 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             }
           }
         } else if (list.size() == 2) {
-          // if this block has two children, a child-block and a simple jump, then jumps to child-block can be replaced with jumps to the new target
+          // if this block has two children, a child-block and a simple jump or such, then jumps to child-block can be replaced with jumps to the new target
           auto* child = list[0]->dynCast<Block>();
-          auto* jump = list[1]->dynCast<Break>();
-          if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
-            auto& breaks = breaksToBlock[child];
-            for (auto* br : breaks) {
-              newNames[br] = jump->name;
-            }
-            // if the jump is to another block then we can update the list, and maybe push it even more later
-            if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
-              for (auto* br : breaks) {
-                breaksToBlock[newTarget].push_back(br);
+          if (child && child->name.is()) {
+            auto* second = list[1];
+            if (second && second->type == unreachable) {
+              if (auto* jump = second->dynCast<Break>()) {
+                if (ExpressionAnalyzer::isSimple(jump)) {
+                  auto& breaks = breaksToBlock[child];
+                  for (auto* br : breaks) {
+                    newNames[br] = jump->name;
+                  }
+                  // if the jump is to another block then we can update the list, and maybe push it even more later
+                  if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
+                    for (auto* br : breaks) {
+                      breaksToBlock[newTarget].push_back(br);
+                    }
+                  }
+                  breaksToBlock.erase(child);
+                }
+              } else if (auto* ret = second->dynCast<Return>()) {
+                if (!ret->value) {
+                  auto& breaks = breaksToBlock[child];
+                  for (auto* br : breaks) {
+                    auto* newReturn = ExpressionManipulator::convert<Break, Return>(br);
+                    newReturn->value = nullptr;
+                    newReturn->finalize();
+                  }
+                }
+              } else if (second->is<Unreachable>()) {
+                auto& breaks = breaksToBlock[child];
+                for (auto* br : breaks) {
+                  ExpressionManipulator::convert<Break, Unreachable>(br);
+                }
               }
             }
-            breaksToBlock.erase(child);
           }
         }
       }
