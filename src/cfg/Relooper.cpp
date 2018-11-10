@@ -126,11 +126,11 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block* Target, bool S
 Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(nullptr), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
 
 Block::~Block() {
-  for (auto iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
-    delete iter->second;
+  for (auto& iter : ProcessedBranchesOut) {
+    delete iter.second;
   }
-  for (auto iter = BranchesOut.begin(); iter != BranchesOut.end(); iter++) {
-    delete iter->second;
+  for (auto& iter : BranchesOut) {
+    delete iter.second;
   }
 }
 
@@ -197,10 +197,10 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   Block* DefaultTarget = nullptr; // The block we branch to without checking the condition, if none of the other conditions held.
 
   // Find the default target, the one without a condition
-  for (auto iter = ProcessedBranchesOut.begin(); iter != ProcessedBranchesOut.end(); iter++) {
-    if ((!SwitchCondition && !iter->second->Condition) || (SwitchCondition && !iter->second->SwitchValues)) {
+  for (auto& iter : ProcessedBranchesOut) {
+    if ((!SwitchCondition && !iter.second->Condition) || (SwitchCondition && !iter.second->SwitchValues)) {
       assert(!DefaultTarget && "block has branches without a default (nullptr for the condition)"); // Must be exactly one default // nullptr
-      DefaultTarget = iter->first;
+      DefaultTarget = iter.first;
     }
   }
   assert(DefaultTarget); // Since each Block* must* branch somewhere, this must be set
@@ -387,10 +387,10 @@ wasm::Expression* MultipleShape::Render(RelooperBuilder& Builder, bool InLoop) {
   wasm::If* FirstIf = nullptr;
   wasm::If* CurrIf = nullptr;
   std::vector<wasm::If*> finalizeStack;
-  for (auto iter = InnerMap.begin(); iter != InnerMap.end(); iter++) {
+  for (auto& iter : InnerMap) {
     auto* Now = Builder.makeIf(
-      Builder.makeCheckLabel(iter->first),
-      iter->second->Render(Builder, InLoop)
+      Builder.makeCheckLabel(iter.first),
+      iter.second->Render(Builder, InLoop)
     );
     finalizeStack.push_back(Now);
     if (!CurrIf) {
@@ -461,8 +461,8 @@ struct Liveness : public RelooperRecursor {
       ToInvestigate.pop_front();
       if (contains(Live, Curr)) continue;
       Live.insert(Curr);
-      for (auto iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end(); iter++) {
-        ToInvestigate.push_back(iter->first);
+      for (auto& iter : Curr->BranchesOut) {
+        ToInvestigate.push_back(iter.first);
       }
     }
   }
@@ -479,8 +479,8 @@ void Relooper::Calculate(Block* Entry) {
   for (unsigned i = 0; i < Blocks.size(); i++) {
     Block* Curr = Blocks[i];
     if (!contains(Live.Live, Curr)) continue;
-    for (auto iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end(); iter++) {
-      iter->first->BranchesIn.insert(Curr);
+    for (auto& iter : Curr->BranchesOut) {
+      iter.first->BranchesIn.insert(Curr);
     }
   }
 
@@ -498,9 +498,9 @@ void Relooper::Calculate(Block* Entry) {
     // Create a list of entries from a block. If LimitTo is provided, only results in that set
     // will appear
     void GetBlocksOut(Block* Source, BlockSet& Entries, BlockSet* LimitTo = nullptr) {
-      for (auto iter = Source->BranchesOut.begin(); iter != Source->BranchesOut.end(); iter++) {
-        if (!LimitTo || contains(*LimitTo, iter->first)) {
-          Entries.insert(iter->first);
+      for (auto& iter : Source->BranchesOut) {
+        if (!LimitTo || contains(*LimitTo, iter.first)) {
+          Entries.insert(iter.first);
         }
       }
     }
@@ -538,8 +538,8 @@ void Relooper::Calculate(Block* Entry) {
         GetBlocksOut(Inner, NextEntries, &Blocks);
         BlockSet JustInner;
         JustInner.insert(Inner);
-        for (auto iter = NextEntries.begin(); iter != NextEntries.end(); iter++) {
-          Solipsize(*iter, Branch::Break, Simple, JustInner);
+        for (auto* Next : NextEntries) {
+          Solipsize(Next, Branch::Break, Simple, JustInner);
         }
       }
       return Simple;
@@ -558,8 +558,8 @@ void Relooper::Calculate(Block* Entry) {
           InnerBlocks.insert(Curr);
           Blocks.erase(Curr);
           // Add the elements prior to it
-          for (auto iter = Curr->BranchesIn.begin(); iter != Curr->BranchesIn.end(); iter++) {
-            Queue.insert(*iter);
+          for (auto* Prev : Curr->BranchesIn) {
+            Queue.insert(Prev);
           }
 #if 0
           // Add elements it leads to, if they are dead ends. There is no reason not to hoist dead ends
@@ -575,10 +575,9 @@ void Relooper::Calculate(Block* Entry) {
       }
       assert(InnerBlocks.size() > 0);
 
-      for (auto iter = InnerBlocks.begin(); iter != InnerBlocks.end(); iter++) {
-        Block* Curr = *iter;
-        for (auto iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end(); iter++) {
-          Block* Possible = iter->first;
+      for (auto* Curr : InnerBlocks) {
+        for (auto& iter : Curr->BranchesOut) {
+          Block* Possible = iter.first;
           if (!contains(InnerBlocks, Possible)) {
             NextEntries.insert(Possible);
           }
@@ -644,12 +643,12 @@ void Relooper::Calculate(Block* Entry) {
 
       // Solipsize the loop, replacing with break/continue and marking branches as Processed (will not affect later calculations)
       // A. Branches to the loop entries become a continue to this shape
-      for (auto iter = Entries.begin(); iter != Entries.end(); iter++) {
-        Solipsize(*iter, Branch::Continue, Loop, InnerBlocks);
+      for (auto* Entry : Entries) {
+        Solipsize(Entry, Branch::Continue, Loop, InnerBlocks);
       }
       // B. Branches to outside the loop (a next entry) become breaks on this shape
-      for (auto iter = NextEntries.begin(); iter != NextEntries.end(); iter++) {
-        Solipsize(*iter, Branch::Break, Loop, InnerBlocks);
+      for (auto* Next : NextEntries) {
+        Solipsize(Next, Branch::Break, Loop, InnerBlocks);
       }
       // Finish up
       Shape* Inner = Process(InnerBlocks, Entries);
@@ -682,8 +681,8 @@ void Relooper::Calculate(Block* Entry) {
             }
             if (Ownership[Invalidatee]) { // may have been seen before and invalidated already
               Ownership[Invalidatee] = nullptr;
-              for (auto iter = Invalidatee->BranchesOut.begin(); iter != Invalidatee->BranchesOut.end(); iter++) {
-                Block* Target = iter->first;
+              for (auto& iter : Invalidatee->BranchesOut) {
+                Block* Target = iter.first;
                 auto Known = Ownership.find(Target);
                 if (Known != Ownership.end()) {
                   Block* TargetOwner = Known->second;
@@ -705,8 +704,7 @@ void Relooper::Calculate(Block* Entry) {
       // visited.
 
       BlockList Queue; // Being in the queue means we just added this item, and we need to add its children
-      for (auto iter = Entries.begin(); iter != Entries.end(); iter++) {
-        Block* Entry = *iter;
+      for (auto* Entry : Entries) {
         Helper.Ownership[Entry] = Entry;
         IndependentGroups[Entry].insert(Entry);
         Queue.push_back(Entry);
@@ -717,8 +715,8 @@ void Relooper::Calculate(Block* Entry) {
         Block* Owner = Helper.Ownership[Curr]; // Curr must be in the ownership map if we are in the queue
         if (!Owner) continue; // we have been invalidated meanwhile after being reached from two entries
         // Add all children
-        for (auto iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end(); iter++) {
-          Block* New = iter->first;
+        for (auto& iter : Curr->BranchesOut) {
+          Block* New = iter.first;
           auto Known = Helper.Ownership.find(New);
           if (Known == Helper.Ownership.end()) {
             // New node. Add it, and put it in the queue
@@ -743,13 +741,11 @@ void Relooper::Calculate(Block* Entry) {
       // if an element has a parent which does *not* have the same owner, we must remove it
       // and all its children.
 
-      for (auto iter = Entries.begin(); iter != Entries.end(); iter++) {
-        BlockSet &CurrGroup = IndependentGroups[*iter];
+      for (auto* Entry : Entries) {
+        BlockSet &CurrGroup = IndependentGroups[Entry];
         BlockList ToInvalidate;
-        for (auto iter = CurrGroup.begin(); iter != CurrGroup.end(); iter++) {
-          Block* Child = *iter;
-          for (auto iter = Child->BranchesIn.begin(); iter != Child->BranchesIn.end(); iter++) {
-            Block* Parent = *iter;
+        for (auto* Child : CurrGroup) {
+          for (auto* Parent : Child->BranchesIn) {
             if (Ignore && contains(*Ignore, Parent)) continue;
             if (Helper.Ownership[Parent] != Helper.Ownership[Child]) {
               ToInvalidate.push_back(Child);
@@ -764,16 +760,16 @@ void Relooper::Calculate(Block* Entry) {
       }
 
       // Remove empty groups
-      for (auto iter = Entries.begin(); iter != Entries.end(); iter++) {
-        if (IndependentGroups[*iter].size() == 0) {
-          IndependentGroups.erase(*iter);
+      for (auto* Entry : Entries) {
+        if (IndependentGroups[Entry].size() == 0) {
+          IndependentGroups.erase(Entry);
         }
       }
 
 #ifdef RELOOPER_DEBUG
       PrintDebug("Investigated independent groups:\n");
-      for (auto iter = IndependentGroups.begin(); iter != IndependentGroups.end(); iter++) {
-        DebugDump(iter->second, " group: ");
+      for (auto& iter : IndependentGroups) {
+        DebugDump(iter.second, " group: ");
       }
 #endif
     }
@@ -783,16 +779,15 @@ void Relooper::Calculate(Block* Entry) {
       MultipleShape* Multiple = new MultipleShape();
       Notice(Multiple);
       BlockSet CurrEntries;
-      for (auto iter = IndependentGroups.begin(); iter != IndependentGroups.end(); iter++) {
-        Block* CurrEntry = iter->first;
-        BlockSet &CurrBlocks = iter->second;
+      for (auto& iter : IndependentGroups) {
+        Block* CurrEntry = iter.first;
+        BlockSet &CurrBlocks = iter.second;
         PrintDebug("  multiple group with entry %d:\n", CurrEntry->Id);
         DebugDump(CurrBlocks, "    ");
         // Create inner block
         CurrEntries.clear();
         CurrEntries.insert(CurrEntry);
-        for (auto iter = CurrBlocks.begin(); iter != CurrBlocks.end(); iter++) {
-          Block* CurrInner = *iter;
+        for (auto* CurrInner : CurrBlocks) {
           // Remove the block from the remaining blocks
           Blocks.erase(CurrInner);
           // Find new next entries and fix branches to them
@@ -814,8 +809,7 @@ void Relooper::Calculate(Block* Entry) {
       }
       DebugDump(Blocks, "  remaining blocks after multiple:");
       // Add entries not handled as next entries, they are deferred
-      for (auto iter = Entries.begin(); iter != Entries.end(); iter++) {
-        Block* Entry = *iter;
+      for (auto* Entry : Entries) {
         if (!contains(IndependentGroups, Entry)) {
           NextEntries.insert(Entry);
         }
@@ -917,10 +911,9 @@ void Relooper::Calculate(Block* Entry) {
               // Check if dead end
               bool DeadEnd = true;
               BlockSet &SmallGroup = IndependentGroups[SmallEntry];
-              for (auto iter = SmallGroup.begin(); iter != SmallGroup.end(); iter++) {
-                Block* Curr = *iter;
-                for (auto iter = Curr->BranchesOut.begin(); iter != Curr->BranchesOut.end(); iter++) {
-                  Block* Target = iter->first;
+              for (auto* Curr : SmallGroup) {
+                for (auto& iter : Curr->BranchesOut) {
+                  Block* Target = iter.first;
                   if (!contains(SmallGroup, Target)) {
                     DeadEnd = false;
                     break;
@@ -962,8 +955,7 @@ void Relooper::Calculate(Block* Entry) {
   // Main
 
   BlockSet AllBlocks;
-  for (auto iter = Live.Live.begin(); iter != Live.Live.end(); iter++) {
-    Block* Curr = *iter;
+  for (auto* Curr : Live.Live) {
     AllBlocks.insert(Curr);
 #ifdef RELOOPER_DEBUG
     PrintDebug("Adding block %d (%s)\n", Curr->Id, Curr->Code);
@@ -989,8 +981,7 @@ wasm::Expression* Relooper::Render(RelooperBuilder& Builder) {
 
 void Debugging::Dump(BlockSet &Blocks, const char *prefix) {
   if (prefix) printf("%s ", prefix);
-  for (auto iter = Blocks.begin(); iter != Blocks.end(); iter++) {
-    Block* Curr = *iter;
+  for (auto* Curr : Blocks) {
     printf("%d:\n", Curr->Id);
     for (auto iter2 = Curr->BranchesOut.begin(); iter2 != Curr->BranchesOut.end(); iter2++) {
       Block* Other = iter2->first;
@@ -1011,8 +1002,8 @@ void Debugging::Dump(Shape* S, const char *prefix) {
     printf("<< Simple with block %d\n", Simple->Inner->Id);
   } else if (MultipleShape* Multiple = Shape::IsMultiple(S)) {
     printf("<< Multiple\n");
-    for (auto iter = Multiple->InnerMap.begin(); iter != Multiple->InnerMap.end(); iter++) {
-      printf("     with entry %d\n", iter->first);
+    for (auto& iter : Multiple->InnerMap) {
+      printf("     with entry %d\n", iter.first);
     }
   } else if (Shape::IsLoop(S)) {
     printf("<< Loop\n");
