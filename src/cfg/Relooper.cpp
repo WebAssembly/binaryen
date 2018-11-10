@@ -479,24 +479,29 @@ struct Optimizer : public RelooperRecursor {
     // has one target, and there is no phi or switch to worry us,
     // just skip through
     for (auto* Block : Parent->Blocks) {
-      if (Block->BranchesOut.size() == 1) {
-        auto iter = Block->BranchesOut.begin();
-        auto* Next = iter->first;
-        auto* NextBranch = iter->second;
-        if (Next->BranchesOut.size() == 1 &&
-            !NextBranch->Code && !NextBranch->SwitchValues &&
-            IsEmpty(Next)) {
-          assert(!NextBranch->Condition);
-          auto iter = Next->BranchesOut.begin();
-          auto* NextNext = iter->first;
-          auto* NextNextBranch = iter->second;
-          if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
-            assert(!NextNextBranch->Condition);
-            // We can skip through!
-            Block->BranchesOut.clear();
-            Block->AddBranchTo(NextNext, nullptr);
+      // Loop in order to skip multiple empty blocks
+      while (1) {
+        if (Block->BranchesOut.size() == 1) {
+          auto iter = Block->BranchesOut.begin();
+          auto* Next = iter->first;
+          auto* NextBranch = iter->second;
+          if (Next->BranchesOut.size() == 1 &&
+              !NextBranch->Code && !NextBranch->SwitchValues &&
+              IsEmpty(Next)) {
+            assert(!NextBranch->Condition);
+            auto iter = Next->BranchesOut.begin();
+            auto* NextNext = iter->first;
+            auto* NextNextBranch = iter->second;
+            if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
+              assert(!NextNextBranch->Condition);
+              // We can skip through!
+              Block->BranchesOut.clear();
+              Block->AddBranchTo(NextNext, nullptr);
+              continue; // perhaps we can skip the new Next
+            }
           }
         }
+        break; // nothing more to do
       }
     }
     // TODO: if >1 targets, but all to the same place, or effectively the
