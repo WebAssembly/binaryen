@@ -24,7 +24,6 @@
 #include <stack>
 #include <string>
 
-#include "ir/hashed.h"
 #include "ir/utils.h"
 #include "parsing.h"
 
@@ -528,57 +527,33 @@ std::cout << "skip empty!\n";
 std::cout << "at " << *Block->Code << " : " << Block->BranchesOut.size() << '\n';
       if (Block->BranchesOut.size() >= 2) {
         std::unordered_map<HashType, std::vector<BranchBlock>> HashedBranchesOut;
+        std::vector<Block*> BlocksToErase;
         for (auto& iter : Block->BranchesOut) {
-          auto BranchOut = BranchBlock(iter.first, iter.second);
-          auto HashValue = Hash(BranchOut);
-Brancwasm::rehash(
-            Hash(iter.first)
-            wasm::rehash(iter.
-
-
-
-
-        auto* FirstBlock = iter->first;
-        auto* FirstBranch = iter->second;
-        bool AllEquivalent = true;
-        while (1) {
-          iter++;
-          if (iter == Block->BranchesOut.end()) {
-            break;
+          Block* CurrBlock = iter.first;
+          Branch* CurrBranch = iter.second;
+          if (CurrBranch->Code) {
+            continue; // TODO: handle code on branches
           }
-          auto* CurrBlock = iter->first;
-          auto* CurrBranch = iter->second;
-          if (!HaveEquivalentContents(CurrBlock, FirstBlock) ||
-              !HaveEquivalentContents(CurrBranch, FirstBranch)) {
-            AllEquivalent = false;
-            break;
+          auto HashValue = Hash(CurrBlock);
+          auto& HashedSiblings = HashedBranchesOut[HashValue];
+          // Check if we are equivalent to any of them - if so, merge us.
+          bool Merged = false;
+          for (auto& Curr : HashedSiblings) {
+            Block* SiblingBlock = iter.first;
+            Branch* SiblingBranch = iter.second;
+            if (HaveEquivalentContents(CurrBlock, SiblingBlock)) {
+              MergeBranchInto(CurrBranch, SiblingBranch);
+              BlocksToErase.push_back(CurrBranch);
+              Merged = true;
+              Worked = true;
+            }
+          }
+          if (!Merged) {
+            HashedSiblings.emplace_back(CurrBranch, CurrBlock);
           }
         }
-        if (AllEquivalent) {
-          // They are all equivalent! Fold them all into one branch.
-          // Note that the conditions may have side effects. Execute
-          // them at the end of the block; other optimizations can
-          // remove them if possible later.
-          wasm::Builder Builder(*Parent->Module);
-          wasm::If* Root = nullptr;
-          wasm::If* Last = nullptr;
-          for (auto& iter : Block->BranchesOut) {
-            auto* Condition = iter.second->Condition;
-            auto* CurrIf = Builder.makeIf(Condition, Builder.makeNop());
-            if (!Root) {
-              Root = CurrIf;
-            } else {
-              Last->ifFalse = CurrIf;
-            }
-            Last = CurrIf;
-          }
-          Block->Code = Builder.makeSequence(Block->Code, Root);
-          // The conditions are accounted for; replace all the branches
-          // with a single unconditional one.
-          auto* SingleTarget = Block->BranchesOut.begin()->first;
-          Block->BranchesOut.clear();
-          Block->AddBranchTo(SingleTarget, nullptr);
-          Worked = true;
+        for (auto* Curr : BlocksToErase) {
+          Block->BranchesOut.erase(Curr);
         }
       }
     }
@@ -627,6 +602,7 @@ private:
   // means that on a Branch we check the Condition/SwitchValues and the Code,
   // but none of the internal fields the Relooper uses late in the process like
   // the Ancestor, etc.
+// XXX needed?
   bool HaveEquivalentContents(Branch* A, Branch* B) {
     if (A->SwitchValues) {
       std::vector<unsigned int>& AValues = *A->SwitchValues;
@@ -667,7 +643,7 @@ std::cout << "            diff branchesout :(\n";
     }
     return true;
   }
-
+              
   // Checks if code is equivalent, allowing the code to also be nullptr
   static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
     if (A != B) {
@@ -682,6 +658,35 @@ std::cout << "            diff branchesout :(\n";
     return true;
   }
 
+  // Merges one branch into another. Valid under the assumption that the
+  // blocks they reach are identical, and so one branch is enough for both
+  // with a unified condition.
+  void MergeBranchInto(Branch* Curr, Branch* Into) {
+    assert(!Curr->Code && !Into->Code);
+    if (Curr->SwitchValues) {
+      assert(Into->SwitchValues);
+      Into->SwitchValues->insert(
+        Into->SwitchValues->end(),
+        Curr->SwitchValues->begin(), Curr->SwitchValues->end());
+    } else {
+      if (!Curr->Condition) {
+        // This is now the new default.
+        assert(Into->Condition);
+        Into->Condition = nullptr;
+      } else if (!Into->Condition) {
+        // Nothing to do, already the default.
+      } else {
+        // Merge them, checking both.
+        Into->Condition = wasm::Builder(*Parent->Module).makeBinary(
+          wasm::OrInt32,
+          Into->Condition,
+          Curr->Condition
+        );
+      }
+    }
+  }
+
+#if 0
   HashType Hash(BranchBlock Pair) {
     return wasm::rehash(
       Hash(Pair.first),
@@ -689,11 +694,45 @@ std::cout << "            diff branchesout :(\n";
     );
   }
 
+  // Hashes the direct block contents, but not Relooper internals
+  // (like Shapes).
   HashType Hash(Branch* Curr) {
-    return wasm::rehash(
-      Hash(Pair.first),
-      Hash(Pair.second)
-    );
+    HashType Ret = 0;
+    if (Curr->SwitchValues) {
+      for (auto i : *Curr->SwitchValues) {
+        Ret = wasm::rehash(Ret, i); // TODO hash i
+      }
+    } else {
+      if (Curr->Condition) {
+        Ret = wasm::ExpressionAnalyzer::hash(Curr->Condition);
+      }
+    }
+    Ret = wasm::rehash(Ret, 1);
+    if (Curr->Code) {
+      Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
+    }
+    return Ret;
+  }
+#endif
+
+  // Hashes the direct block contents, but not Relooper internals
+  // (like Shapes). Only partially hashes the branches out, no
+  // recursion: hashes the branch infos, looks at raw pointers
+  // for the blocks.
+  HashType Hash(Block* Curr) {
+    HashType Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
+    Ret = wasm::rehash(Ret, 1);
+    if (Curr->SwitchCondition) {
+      Ret = wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition);
+    }
+    Ret = wasm::rehash(Ret, 2);
+    for (auto& Pair : Block->BranchesOut) {
+      // Hash the Block* as a pointer
+      Ret = wasm::rehash(Ret, HashType(Pair.first));
+      // Hash the Branch info properly
+      Ret = wasm::rehash(Ret, Hash(Pair.second));
+    }
+    return Ret;
   }
 };
 
