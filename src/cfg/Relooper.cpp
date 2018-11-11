@@ -101,7 +101,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
 
 Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Code(CodeInit) {
+Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(nullptr), Code(CodeInit) {
   if (ValuesInit.size() > 0) {
     SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
@@ -524,7 +524,7 @@ std::cout << "skip empty!\n";
   bool MergeEquivalentBranches() {
     bool Worked = false;
     for (auto* ParentBlock : Parent->Blocks) {
-std::cout << "at " << *ParentBlock->Code << " : " << ParentBlock->BranchesOut.size() << '\n';
+std::cout << "at " << *ParentBlock->Code << " : " << ParentBlock->BranchesOut.size() << " switch? " << !!ParentBlock->SwitchCondition << '\n';
       if (ParentBlock->BranchesOut.size() >= 2) {
         std::unordered_map<wasm::HashType, std::vector<BranchBlock>> HashedBranchesOut;
         std::vector<Block*> BlocksToErase;
@@ -608,17 +608,17 @@ private:
       std::vector<unsigned int>& AValues = *A->SwitchValues;
       std::vector<unsigned int>& BValues = *B->SwitchValues;
       if (AValues != BValues) {
-std::cout << "            diff switch :(\n";
+//std::cout << "            diff switch :(\n";
         return false;
       }
     } else {
       if (!IsPossibleCodeEquivalent(A->Condition, B->Condition)) {
-std::cout << "            diff condition :(\n";
+//std::cout << "            diff condition :(\n";
         return false;
       }
     }
     if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
-std::cout << "            diff code :(\n";
+//std::cout << "            diff code :(\n";
       return false;
     }
     return true;
@@ -630,15 +630,15 @@ std::cout << "            diff code :(\n";
   // be equivalent.
   bool HaveEquivalentContents(Block* A, Block* B) {
     if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
-std::cout << "            diff switch :(\n";
+//std::cout << "            diff switch :(\n";
       return false;
     }
     if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
-std::cout << "            diff code :(\n";
+//std::cout << "            diff code :(\n";
       return false;
     }
     if (A->BranchesOut != B->BranchesOut) {
-std::cout << "            diff branchesout :(\n";
+//std::cout << "            diff branchesout :(\n";
       return false;
     }
     return true;
@@ -662,20 +662,28 @@ std::cout << "            diff branchesout :(\n";
   // blocks they reach are identical, and so one branch is enough for both
   // with a unified condition.
   void MergeBranchInto(Branch* Curr, Branch* Into) {
+    assert(Curr != Into);
+std::cout << !!Curr->SwitchValues << !!Into->SwitchValues << !!Curr->Condition << !!Into->Condition << '\n';
     assert(!Curr->Code && !Into->Code);
     if (Curr->SwitchValues) {
-      assert(Into->SwitchValues);
-      Into->SwitchValues->insert(
-        Into->SwitchValues->end(),
-        Curr->SwitchValues->begin(), Curr->SwitchValues->end());
+      if (!Into->SwitchValues) {
+        assert(!Into->Condition);
+        // Merging into the already-default, nothing to do.
+      } else {
+        Into->SwitchValues->insert(
+          Into->SwitchValues->end(),
+          Curr->SwitchValues->begin(), Curr->SwitchValues->end());
+      }
     } else {
       if (!Curr->Condition) {
-        // This is now the new default.
-        assert(Into->Condition);
+        // This is now the new default. Whether Into has a condition
+        // or switch values, remove them all to make us the default.
         Into->Condition = nullptr;
+        Into->SwitchValues.reset();
       } else if (!Into->Condition) {
         // Nothing to do, already the default.
       } else {
+        assert(!Into->SwitchValues);
         // Merge them, checking both.
         Into->Condition = wasm::Builder(*Parent->Module).makeBinary(
           wasm::OrInt32,

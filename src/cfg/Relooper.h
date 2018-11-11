@@ -90,7 +90,9 @@ struct Branch {
   // branch taken when no other condition is true)
   // A condition must not have side effects, as the Relooper can reorder or eliminate condition checking.
   wasm::Expression* Condition;
-  std::unique_ptr<std::vector<wasm::Index>> SwitchValues; // switches are rare, so have just a pointer here
+  // Switches are rare, so have just a pointer for their values. This contains the values
+  // for which the branch will be taken, or for the default it is simply not present.
+  std::unique_ptr<std::vector<wasm::Index>> SwitchValues;
 
   wasm::Expression* Code; // If provided, code that is run right before the branch is taken. This is useful for phis
 
