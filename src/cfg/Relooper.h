@@ -86,7 +86,8 @@ struct Branch {
   Branch::FlowType Type; // If Ancestor is not NULL, this says whether to break or continue
 
   // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then a list of indexes, which
-  // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression.
+  // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression (or nullptr for the
+  // branch taken when no other condition is true)
   wasm::Expression* Condition;
   std::unique_ptr<std::vector<wasm::Index>> SwitchValues; // switches are rare, so have just a pointer here
 
@@ -98,6 +99,11 @@ struct Branch {
 
   // Emits code for branch
   wasm::Expression* Render(RelooperBuilder& Builder, Block* Target, bool SetLabel);
+
+  // This compares the IR contents to another branch, to see if they are equivalent. That
+  // means we check the Condition/SwitchValues and the code, but none of the internal
+  // fields the Relooper uses late in the process like the Ancestor.
+  bool HasEquivalentContents(Branch* Other);
 };
 
 // like std::set, except that begin() -> end() iterates in the
@@ -254,6 +260,11 @@ struct Block {
 
   // Emit code for the block, including its contents and branchings out
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop);
+
+  // This compares the IR contents to another block, to see if they are equivalent. That
+  // means we check the Code, SwitchCondition, and branches out??? XXX, but none of the internal
+  // fields the Relooper uses late in the process like the Parent.
+  bool HasEquivalentContents(Block* Other);
 };
 
 // Represents a structured control flow shape, one of

@@ -122,6 +122,33 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block* Target, bool S
   return Ret;
 }
 
+static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+  if (A != B) {
+    if (!wasm::ExpressionAnalyzer::equal(A, B)) {
+      return false;
+    }
+  } else {
+    assert(A == nullptr);
+  }
+  return true;
+}
+
+bool Branch::HasEquivalentContents(Branch* Other) {
+  if (SwitchValues) {
+    if (**SwitchValues != **Other->SwitchValues) {
+      return false;
+    }
+  } else {
+    if (!IsPossibleCodeEquivalent(Condition, Other->Condition)) {
+      return false;
+    }
+  }
+  if (!IsPossibleCodeEquivalent(Code, Other->Code)) {
+    return false;
+  }
+  return true;
+}
+
 // Block
 
 Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(nullptr), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
@@ -368,6 +395,16 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   return Ret;
 }
 
+bool Block::HasEquivalentContents(Block* Other) {
+  if (!IsPossibleCodeEquivalent(SwitchCondition, Other->SwitchCondition)) {
+    return false;
+  }
+  if (!IsPossibleCodeEquivalent(Code, Other->Code)) {
+    return false;
+  }
+  return true;
+}
+
 // SimpleShape
 
 wasm::Expression* SimpleShape::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -521,6 +558,26 @@ struct Optimizer : public RelooperRecursor {
     bool Worked = false;
     for (auto* Block : Parent->Blocks) {
       if (Block->BranchesOut.size() >= 2) {
+        auto iter = Block->BranchesOut.begin();
+        auto* FirstBlock = iter->first;
+        auto* FirstBranch = iter->second;
+        bool AllEquivalent = true;
+        while (1) {
+          iter++;
+          if (iter == Block->BranchesOut.end()) {
+            break;
+          }
+          auto* CurrBlock = iter->first;
+          auto* CurrBranch = iter->second;
+          if (!CurrBlock->HasEquivalentContents(FirstBlock) ||
+              !CurrBranch->HasEquivalentContents(FirstBranch)) {
+            AllEquivalent = false;
+            break;
+          }
+        }
+        if (AllEquivalent) {
+          // They are all equivalent! But what about their branches out..?
+        }
       }
     }
     return Worked;
