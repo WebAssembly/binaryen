@@ -80,7 +80,7 @@ struct ExpressionAnalyzer {
   }
 
   // hash an expression, ignoring superficial details like specific internal names
-  static uint32_t hash(Expression* curr);
+  static HashType hash(Expression* curr);
 };
 
 // Re-Finalizes all node types

@@ -305,14 +305,14 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
 
 
 // hash an expression, ignoring superficial details like specific internal names
-uint32_t ExpressionAnalyzer::hash(Expression* curr) {
-  uint32_t digest = 0;
+HashType ExpressionAnalyzer::hash(Expression* curr) {
+  HashType digest = 0;
 
-  auto hash = [&digest](uint32_t hash) {
+  auto hash = [&digest](HashType hash) {
     digest = rehash(digest, hash);
   };
   auto hash64 = [&digest](uint64_t hash) {
-    digest = rehash(rehash(digest, uint32_t(hash >> 32)), uint32_t(hash));
+    digest = rehash(rehash(digest, HashType(hash >> 32)), HashType(hash));
   };
 
   std::vector<Name> nameStack;
@@ -498,7 +498,7 @@ uint32_t ExpressionAnalyzer::hash(Expression* curr) {
         hash(c->type);
         auto bits = c->value.getBits();
         if (getTypeSize(c->type) == 4) {
-          hash(uint32_t(bits));
+          hash(HashType(bits));
         } else {
           hash64(bits);
         }

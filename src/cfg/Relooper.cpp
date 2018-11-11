@@ -24,6 +24,7 @@
 #include <stack>
 #include <string>
 
+#include "ir/hashed.h"
 #include "ir/utils.h"
 #include "parsing.h"
 
@@ -471,15 +472,17 @@ struct Liveness : public RelooperRecursor {
   }
 };
 
+typedef std::pair<Branch*, Block*> BranchBlock;
+
 struct Optimizer : public RelooperRecursor {
   Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
     // TODO: there are likely some rare but possible O(N^2) cases with this looping
     bool More = true;
     while (More) {
       More = false;
-      More = SkipEmptyBlocks() || More;
+if (!getenv("NOSKIP"))      More = SkipEmptyBlocks() || More;
       More = MergeBlocks() || More;
-      More = MergeEquivalentTargets() || More;
+if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
     }
   }
 
@@ -506,6 +509,7 @@ struct Optimizer : public RelooperRecursor {
             Block->BranchesOut.clear();
             Block->AddBranchTo(NextNext, nullptr);
             Worked = true;
+std::cout << "skip empty!\n";
           }
         }
       }
@@ -518,14 +522,22 @@ struct Optimizer : public RelooperRecursor {
   // Our IR has one Branch from each block to one of its targets, so there
   // is nothing to reduce there, but different targets may in fact be
   // equivalent in their *contents*.
-  // Right now we handle the case where *all* outgoing branches
-  // go to an equivalent target, which is always beneficial for both
-  // code size and throughput. TODO look at less obvious cases
-  bool MergeEquivalentTargets() {
+  bool MergeEquivalentBranches() {
     bool Worked = false;
     for (auto* Block : Parent->Blocks) {
+std::cout << "at " << *Block->Code << " : " << Block->BranchesOut.size() << '\n';
       if (Block->BranchesOut.size() >= 2) {
-        auto iter = Block->BranchesOut.begin();
+        std::unordered_map<HashType, std::vector<BranchBlock>> HashedBranchesOut;
+        for (auto& iter : Block->BranchesOut) {
+          auto BranchOut = BranchBlock(iter.first, iter.second);
+          auto HashValue = Hash(BranchOut);
+Brancwasm::rehash(
+            Hash(iter.first)
+            wasm::rehash(iter.
+
+
+
+
         auto* FirstBlock = iter->first;
         auto* FirstBranch = iter->second;
         bool AllEquivalent = true;
@@ -620,14 +632,17 @@ private:
       std::vector<unsigned int>& AValues = *A->SwitchValues;
       std::vector<unsigned int>& BValues = *B->SwitchValues;
       if (AValues != BValues) {
+std::cout << "            diff switch :(\n";
         return false;
       }
     } else {
       if (!IsPossibleCodeEquivalent(A->Condition, B->Condition)) {
+std::cout << "            diff condition :(\n";
         return false;
       }
     }
     if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+std::cout << "            diff code :(\n";
       return false;
     }
     return true;
@@ -639,12 +654,15 @@ private:
   // be equivalent.
   bool HaveEquivalentContents(Block* A, Block* B) {
     if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
+std::cout << "            diff switch :(\n";
       return false;
     }
     if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+std::cout << "            diff code :(\n";
       return false;
     }
     if (A->BranchesOut != B->BranchesOut) {
+std::cout << "            diff branchesout :(\n";
       return false;
     }
     return true;
@@ -662,6 +680,20 @@ private:
       assert(A == nullptr);
     }
     return true;
+  }
+
+  HashType Hash(BranchBlock Pair) {
+    return wasm::rehash(
+      Hash(Pair.first),
+      Hash(Pair.second)
+    );
+  }
+
+  HashType Hash(Branch* Curr) {
+    return wasm::rehash(
+      Hash(Pair.first),
+      Hash(Pair.second)
+    );
   }
 };
 

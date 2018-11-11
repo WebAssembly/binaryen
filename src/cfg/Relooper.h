@@ -88,6 +88,7 @@ struct Branch {
   // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then a list of indexes, which
   // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression (or nullptr for the
   // branch taken when no other condition is true)
+  // A condition must not have side effects, as the Relooper can reorder or eliminate condition checking.
   wasm::Expression* Condition;
   std::unique_ptr<std::vector<wasm::Index>> SwitchValues; // switches are rare, so have just a pointer here
 

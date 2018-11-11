@@ -98,26 +98,9 @@ def update_wasm_opt_tests():
   run_command(cmd)
   open(wast, 'w').write(open('a.wast').read())
 
-  print '\n[ checking wasm-opt binary reading/writing... ]\n'
-  for t in sorted(os.listdir(os.path.join('test', 'print'))):
-    if t.endswith('.wast'):
-      print '..', t
-      wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print']
-      print '    ', ' '.join(cmd)
-      actual = subprocess.check_output(cmd)
-      print cmd, actual
-      with open(os.path.join('test', 'print', wasm + '.txt'), 'w') as o:
-        o.write(actual)
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified']
-      print '    ', ' '.join(cmd)
-      actual = subprocess.check_output(cmd)
-      with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o:
-        o.write(actual)
-
   print '\n[ checking wasm-opt passes... ]\n'
   for t in sorted(os.listdir(os.path.join('test', 'passes'))):
-    if t.endswith(('.wast', '.wasm')):
+    if t.endswith(('.wast', '.wasm')) and 'rereloop' in t:
       print '..', t
       binary = '.wasm' in t
       base = os.path.basename(t).replace('.wast', '').replace('.wasm', '')
@@ -143,28 +126,6 @@ def update_wasm_opt_tests():
         with open('a.wat') as i:
           with open(t + '.wat', 'w') as o:
             o.write(i.read())
-
-  print '\n[ checking wasm-opt testcases... ]\n'
-  for t in os.listdir('test'):
-    if t.endswith('.wast') and not t.startswith('spec'):
-      print '..', t
-      t = os.path.join('test', t)
-      f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
-      actual = run_command(cmd)
-      actual = actual.replace('printing before:\n', '')
-      open(f, 'w').write(actual)
-
-  print '\n[ checking wasm-opt debugInfo read-write... ]\n'
-  for t in os.listdir('test'):
-    if t.endswith('.fromasm') and 'debugInfo' in t:
-      print '..', t
-      t = os.path.join('test', t)
-      f = t + '.read-written'
-      run_command(WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-      run_command(WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-      actual = run_command(WASM_DIS + ['b.wasm', '--source-map=b.map'])
-      open(f, 'w').write(actual)
 
 
 def update_bin_fmt_tests():
@@ -419,18 +380,7 @@ def update_reduce_tests():
 
 
 def main():
-  update_asm_js_tests()
-  update_lld_tests()
   update_wasm_opt_tests()
-  update_bin_fmt_tests()
-  update_example_tests()
-  update_wasm_dis_tests()
-  update_wasm_merge_tests()
-  update_binaryen_js_tests()
-  update_ctor_eval_tests()
-  update_wasm2js_tests()
-  update_metadce_tests()
-  update_reduce_tests()
 
   print '\n[ success! ]'
 
