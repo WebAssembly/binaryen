@@ -122,33 +122,6 @@ wasm::Expression* Branch::Render(RelooperBuilder& Builder, Block* Target, bool S
   return Ret;
 }
 
-static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
-  if (A != B) {
-    if (!wasm::ExpressionAnalyzer::equal(A, B)) {
-      return false;
-    }
-  } else {
-    assert(A == nullptr);
-  }
-  return true;
-}
-
-bool Branch::HasEquivalentContents(Branch* Other) {
-  if (SwitchValues) {
-    if (**SwitchValues != **Other->SwitchValues) {
-      return false;
-    }
-  } else {
-    if (!IsPossibleCodeEquivalent(Condition, Other->Condition)) {
-      return false;
-    }
-  }
-  if (!IsPossibleCodeEquivalent(Code, Other->Code)) {
-    return false;
-  }
-  return true;
-}
-
 // Block
 
 Block::Block(wasm::Expression* CodeInit, wasm::Expression* SwitchConditionInit) : Parent(nullptr), Id(-1), Code(CodeInit), SwitchCondition(SwitchConditionInit), IsCheckedMultipleEntry(false) {}
@@ -395,16 +368,6 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   return Ret;
 }
 
-bool Block::HasEquivalentContents(Block* Other) {
-  if (!IsPossibleCodeEquivalent(SwitchCondition, Other->SwitchCondition)) {
-    return false;
-  }
-  if (!IsPossibleCodeEquivalent(Code, Other->Code)) {
-    return false;
-  }
-  return true;
-}
-
 // SimpleShape
 
 wasm::Expression* SimpleShape::Render(RelooperBuilder& Builder, bool InLoop) {
@@ -465,7 +428,9 @@ wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
 
 // Relooper
 
-Relooper::Relooper() : Root(nullptr), MinSize(false), BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
+Relooper::Relooper(wasm::Module* ModuleInit) :
+  Module(ModuleInit), Root(nullptr), MinSize(false),
+  BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
 }
 
 Relooper::~Relooper() {
@@ -513,6 +478,7 @@ struct Optimizer : public RelooperRecursor {
     while (More) {
       More = false;
       More = SkipEmptyBlocks() || More;
+      More = MergeBlocks() || More;
       More = MergeEquivalentTargets() || More;
     }
   }
@@ -552,9 +518,10 @@ struct Optimizer : public RelooperRecursor {
   // Our IR has one Branch from each block to one of its targets, so there
   // is nothing to reduce there, but different targets may in fact be
   // equivalent in their *contents*.
-  // TODO: right now we handle the case where *all* outgoing branches
-  //       go to an equivalent target, but we could refine that
-  void MergeEquivalentTargets() {
+  // Right now we handle the case where *all* outgoing branches
+  // go to an equivalent target, which is always beneficial for both
+  // code size and throughput. TODO look at less obvious cases
+  bool MergeEquivalentTargets() {
     bool Worked = false;
     for (auto* Block : Parent->Blocks) {
       if (Block->BranchesOut.size() >= 2) {
@@ -569,18 +536,55 @@ struct Optimizer : public RelooperRecursor {
           }
           auto* CurrBlock = iter->first;
           auto* CurrBranch = iter->second;
-          if (!CurrBlock->HasEquivalentContents(FirstBlock) ||
-              !CurrBranch->HasEquivalentContents(FirstBranch)) {
+          if (!HaveEquivalentContents(CurrBlock, FirstBlock) ||
+              !HaveEquivalentContents(CurrBranch, FirstBranch)) {
             AllEquivalent = false;
             break;
           }
         }
         if (AllEquivalent) {
-          // They are all equivalent! But what about their branches out..?
+          // They are all equivalent! Fold them all into one branch.
+          // Note that the conditions may have side effects. Execute
+          // them at the end of the block; other optimizations can
+          // remove them if possible later.
+          wasm::Builder Builder(*Parent->Module);
+          wasm::If* Root = nullptr;
+          wasm::If* Last = nullptr;
+          for (auto& iter : Block->BranchesOut) {
+            auto* Condition = iter.second->Condition;
+            auto* CurrIf = Builder.makeIf(Condition, Builder.makeNop());
+            if (!Root) {
+              Root = CurrIf;
+            } else {
+              Last->ifFalse = CurrIf;
+            }
+            Last = CurrIf;
+          }
+          Block->Code = Builder.makeSequence(Block->Code, Root);
+          // The conditions are accounted for; replace all the branches
+          // with a single unconditional one.
+          auto* SingleTarget = Block->BranchesOut.begin()->first;
+          Block->BranchesOut.clear();
+          Block->AddBranchTo(SingleTarget, nullptr);
+          Worked = true;
         }
       }
     }
     return Worked;
+  }
+
+  // Merges identical blocks. This does not take into account their
+  // position / how they are reached, which means that the merging
+  // may add overhead, so we do it carefully:
+  //  * Merging a large-enough block is good for size, and we do it
+  //    in we are in MinSize mode, which means we can tolerate slightly
+  //    slower throughput.
+  bool MergeBlocks() {
+    // Merging of 
+    if (!Parent->MinSize) {
+      return false;
+    }
+    return false; // TODO
   }
 
 private:
@@ -605,6 +609,59 @@ private:
       return true; // block with no non-empty empty contents
     }
     return false;
+  }
+
+  // These methods compare IR contents to see if they are equivalent. That
+  // means that on a Branch we check the Condition/SwitchValues and the Code,
+  // but none of the internal fields the Relooper uses late in the process like
+  // the Ancestor, etc.
+  bool HaveEquivalentContents(Branch* A, Branch* B) {
+    if (A->SwitchValues) {
+      std::vector<unsigned int>& AValues = *A->SwitchValues;
+      std::vector<unsigned int>& BValues = *B->SwitchValues;
+      if (AValues != BValues) {
+        return false;
+      }
+    } else {
+      if (!IsPossibleCodeEquivalent(A->Condition, B->Condition)) {
+        return false;
+      }
+    }
+    if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+      return false;
+    }
+    return true;
+  }
+
+  // Similar to what we do for a Branch, checks the Code and SwitchCondition.
+  // We also check the branches out, *non-recursively*: that is, we check
+  // that they are literally identical, not that they can be computed to
+  // be equivalent.
+  bool HaveEquivalentContents(Block* A, Block* B) {
+    if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
+      return false;
+    }
+    if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+      return false;
+    }
+    if (A->BranchesOut != B->BranchesOut) {
+      return false;
+    }
+    return true;
+  }
+
+  // Checks if code is equivalent, allowing the code to also be nullptr
+  static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+    if (A != B) {
+      if (!wasm::ExpressionAnalyzer::equal(A, B)) {
+        return false;
+      }
+    } else {
+      // Binaryen IR does not allow the same node to be used in multiple
+      // places - it has full tree structure.
+      assert(A == nullptr);
+    }
+    return true;
   }
 };
 

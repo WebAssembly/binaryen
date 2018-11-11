@@ -99,11 +99,6 @@ struct Branch {
 
   // Emits code for branch
   wasm::Expression* Render(RelooperBuilder& Builder, Block* Target, bool SetLabel);
-
-  // This compares the IR contents to another branch, to see if they are equivalent. That
-  // means we check the Condition/SwitchValues and the code, but none of the internal
-  // fields the Relooper uses late in the process like the Ancestor.
-  bool HasEquivalentContents(Branch* Other);
 };
 
 // like std::set, except that begin() -> end() iterates in the
@@ -216,6 +211,12 @@ struct InsertOrderedMap
   InsertOrderedMap& operator=(const InsertOrderedMap& other) {
     abort(); // TODO, watch out for iterators
   }
+  bool operator==(const InsertOrderedMap& other) {
+    return Map == other.Map && List == other.List;
+  }
+  bool operator!=(const InsertOrderedMap& other) {
+    return !(*this == other);
+  }
 };
 
 
@@ -260,11 +261,6 @@ struct Block {
 
   // Emit code for the block, including its contents and branchings out
   wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop);
-
-  // This compares the IR contents to another block, to see if they are equivalent. That
-  // means we check the Code, SwitchCondition, and branches out??? XXX, but none of the internal
-  // fields the Relooper uses late in the process like the Parent.
-  bool HasEquivalentContents(Block* Other);
 };
 
 // Represents a structured control flow shape, one of
@@ -349,6 +345,7 @@ struct LoopShape : public Shape {
 // Implementation details: The Relooper instance has
 // ownership of the blocks and shapes, and frees them when done.
 struct Relooper {
+  wasm::Module* Module;
   std::deque<Block*> Blocks;
   std::deque<Shape*> Shapes;
   Shape* Root;
@@ -356,7 +353,7 @@ struct Relooper {
   int BlockIdCounter;
   int ShapeIdCounter;
 
-  Relooper();
+  Relooper(wasm::Module* ModuleInit);
   ~Relooper();
 
   void AddBlock(Block* New, int Id=-1);
