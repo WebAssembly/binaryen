@@ -471,41 +471,59 @@ struct Liveness : public RelooperRecursor {
 
 struct Optimizer : public RelooperRecursor {
   Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
-    SkipEmptyBlocks();
+    // TODO: there are likely some rare but possible O(N^2) cases with this looping
+    bool More = true;
+    while (More) {
+      More = false;
+      More = SkipEmptyBlocks() || More;
+      More = MergeEquivalentTargets() || More;
+    }
   }
 
-  void SkipEmptyBlocks() {
-    // If a block has one target, and the target is empty and itself
-    // has one target, and there is no phi or switch to worry us,
-    // just skip through
+  // If a block has one target, and the target is empty and itself
+  // has one target, and there is no phi or switch to worry us,
+  // just skip through.
+  bool SkipEmptyBlocks() {
+    bool Worked = false;
     for (auto* Block : Parent->Blocks) {
-      // Loop in order to skip multiple empty blocks
-      while (1) {
-        if (Block->BranchesOut.size() == 1) {
-          auto iter = Block->BranchesOut.begin();
-          auto* Next = iter->first;
-          auto* NextBranch = iter->second;
-          if (Next->BranchesOut.size() == 1 &&
-              !NextBranch->Code && !NextBranch->SwitchValues &&
-              IsEmpty(Next)) {
-            assert(!NextBranch->Condition);
-            auto iter = Next->BranchesOut.begin();
-            auto* NextNext = iter->first;
-            auto* NextNextBranch = iter->second;
-            if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
-              assert(!NextNextBranch->Condition);
-              // We can skip through!
-              Block->BranchesOut.clear();
-              Block->AddBranchTo(NextNext, nullptr);
-              continue; // perhaps we can skip the new Next
-            }
+      if (Block->BranchesOut.size() == 1) {
+        auto iter = Block->BranchesOut.begin();
+        auto* Next = iter->first;
+        auto* NextBranch = iter->second;
+        if (Next->BranchesOut.size() == 1 &&
+            !NextBranch->Code && !NextBranch->SwitchValues &&
+            IsEmpty(Next)) {
+          assert(!NextBranch->Condition);
+          auto iter = Next->BranchesOut.begin();
+          auto* NextNext = iter->first;
+          auto* NextNextBranch = iter->second;
+          if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
+            assert(!NextNextBranch->Condition);
+            // We can skip through!
+            Block->BranchesOut.clear();
+            Block->AddBranchTo(NextNext, nullptr);
+            Worked = true;
           }
         }
-        break; // nothing more to do
       }
     }
+    return Worked;
     // TODO: if >1 targets, but all to the same place, or effectively the
     //       same place (all a return; or unreachable)
+  }
+
+  // Our IR has one Branch from each block to one of its targets, so there
+  // is nothing to reduce there, but different targets may in fact be
+  // equivalent in their *contents*.
+  // TODO: right now we handle the case where *all* outgoing branches
+  //       go to an equivalent target, but we could refine that
+  void MergeEquivalentTargets() {
+    bool Worked = false;
+    for (auto* Block : Parent->Blocks) {
+      if (Block->BranchesOut.size() >= 2) {
+      }
+    }
+    return Worked;
   }
 
 private:
