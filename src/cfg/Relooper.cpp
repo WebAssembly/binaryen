@@ -514,20 +514,21 @@ private:
       // This is non-trivial, so treat it as a non-empty block.
       return false;
     }
-    auto* Code = Curr->Code;
+    return IsEmpty(Curr->Code);
+  }
+
+  bool IsEmpty(wasm::Expression* Code) {
     if (Code->is<wasm::Nop>()) {
       return true; // a nop
     }
     if (auto* WasmBlock = Code->dynCast<wasm::Block>()) {
-      auto& List = WasmBlock->list;
-      if (List.empty()) {
-        return true; // an empty block
+      for (auto* Item : WasmBlock->list) {
+        if (!IsEmpty(Item)) {
+          return false;
+        }
       }
-      if (List.size() == 1 && List[0]->is<wasm::Nop>()) {
-        return true; // a block with a nop
-      }
+      return true; // block with no non-empty empty contents
     }
-    // std::cout << *Curr->Code << '\n';
     return false;
   }
 };
