@@ -466,19 +466,20 @@ private:
     struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
       Module& wasm;
       Scanner& scanner;
+      TranslateToFuzzReader& parent;
 
-      Modder(Module& wasm, Scanner& scanner) : wasm(wasm), scanner(scanner) {}
+      Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent) : wasm(wasm), scanner(scanner), parent(parent) {}
 
       void visitExpression(Expression* curr) {
-        if (oneIn(10)) {
+        if (parent.oneIn(10)) {
           // Replace it!
           auto& candidates = scanner.exprsByType[curr->type];
           assert(!candidates.empty()); // this expression itself must be there
-          replaceCurrent(ExpressionManipulator::copy(vectorPick(candidates), wasm));
+          replaceCurrent(ExpressionManipulator::copy(parent.vectorPick(candidates), wasm));
         }
       }
     };
-    Modder modder(wasm, scanner);
+    Modder modder(wasm, scanner, *this);
     modder.walk(func->body);
   }
 
@@ -492,11 +493,11 @@ private:
       Modder(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
 
       void visitExpression(Expression* curr) {
-        if (oneIn(10)) {
+        if (parent.oneIn(10)) {
           // Replace it!
           // (This is not always valid due to nesting of labels, but
           // we'll fix that up later.)
-          replaceCurrent(parent->make(curr->type);
+          replaceCurrent(parent.make(curr->type));
         }
       }
     };
@@ -514,7 +515,7 @@ private:
       Fixer(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
 
       // Track seen names to find duplication, which is invalid.
-      std::map<Name> seen;
+      std::set<Name> seen;
 
       void visitBlock(Block* curr) {
         if (curr->name.is() && seen.count(curr->name)) {
@@ -549,7 +550,7 @@ private:
       }
 
       void replace() {
-        replaceCurrent(parent.makeTrivial(getCurrent()->type);
+        replaceCurrent(parent.makeTrivial(getCurrent()->type));
       }
     };
     Fixer fixer(wasm, *this);
