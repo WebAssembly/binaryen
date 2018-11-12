@@ -26,6 +26,7 @@ high chance for set at start of loop
 */
 
 #include <wasm-builder.h>
+#include <ir/find_all.h>
 #include <ir/literal-utils.h>
 
 namespace wasm {
@@ -392,11 +393,16 @@ private:
     } else {
       func->body = make(bodyType);
     }
+    // Recombinations create duplicate code patterns.
+    // TODO recombine(func);
+    // Mutations add random small changes, which can subtly break duplicate code
+    // patterns.
+    // TODO mutate(func);
+    // TODO: liveness operations on gets, with some prob alter a get to one with
+    //       more possible sets
+    // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
-      func->body = builder.makeSequence(
-        makeHangLimitCheck(),
-        func->body
-      );
+      addHangLimitChecks(func);
     }
     assert(breakableStack.empty());
     assert(hangStack.empty());
@@ -418,6 +424,22 @@ private:
     // cleanup
     typeLocals.clear();
     return func;
+  }
+
+  void addHangLimitChecks(Function* func) {
+    // loop limit
+    FindAll<Loop> loops(func->body);
+    for (auto* loop : loops.list) {
+      loop->body = builder.makeSequence(
+        makeHangLimitCheck(),
+        loop->body
+      );
+    }
+    // recursion limit
+    func->body = builder.makeSequence(
+      makeHangLimitCheck(),
+      func->body
+    );
   }
 
   // the fuzzer external interface sends in zeros (simpler to compare
@@ -651,12 +673,6 @@ private:
     }
     breakableStack.pop_back();
     hangStack.pop_back();
-    if (HANG_LIMIT > 0) {
-      ret->body = builder.makeSequence(
-        makeHangLimitCheck(),
-        ret->body
-      );
-    }
     ret->finalize();
     return ret;
   }
