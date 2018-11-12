@@ -28,6 +28,8 @@ high chance for set at start of loop
 #include <wasm-builder.h>
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
+#include <ir/manipulation.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -394,12 +396,14 @@ private:
       func->body = make(bodyType);
     }
     // Recombinations create duplicate code patterns.
-    // TODO recombine(func);
+    recombine(func);
     // Mutations add random small changes, which can subtly break duplicate code
     // patterns.
     // TODO mutate(func);
     // TODO: liveness operations on gets, with some prob alter a get to one with
     //       more possible sets
+    // Recombination, mutation, etc. can break validation; fix things up after.
+    // TODO fixLabels(func);
     // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
       addHangLimitChecks(func);
@@ -440,6 +444,117 @@ private:
       makeHangLimitCheck(),
       func->body
     );
+  }
+
+  void recombine(Function* func) {
+    // Don't always do this.
+    if (oneIn(2)) return;
+    // First, scan and group all expressions by type.
+    struct Scanner : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+      // A map of all expressions, categorized by type.
+      std::map<Type, std::vector<Expression*>> exprsByType;
+
+      void visitExpression(Expression* curr) {
+        exprsByType[curr->type].push_back(curr);
+      }
+    };
+    Scanner scanner;
+    scanner.walk(func->body);
+    // Second, with some probability replace an item with another item having
+    // the same type. (This is not always valid due to nesting of labels, but
+    // we'll fix that up later.)
+    struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+      Module& wasm;
+      Scanner& scanner;
+
+      Modder(Module& wasm, Scanner& scanner) : wasm(wasm), scanner(scanner) {}
+
+      void visitExpression(Expression* curr) {
+        if (oneIn(10)) {
+          // Replace it!
+          auto& candidates = scanner.exprsByType[curr->type];
+          assert(!candidates.empty()); // this expression itself must be there
+          replaceCurrent(ExpressionManipulator::copy(vectorPick(candidates), wasm));
+        }
+      }
+    };
+    Modder modder(wasm, scanner);
+    modder.walk(func->body);
+  }
+
+  void mutate(Function* func) {
+    // Don't always do this.
+    if (oneIn(2)) return;
+    struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Modder(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
+
+      void visitExpression(Expression* curr) {
+        if (oneIn(10)) {
+          // Replace it!
+          // (This is not always valid due to nesting of labels, but
+          // we'll fix that up later.)
+          replaceCurrent(parent->make(curr->type);
+        }
+      }
+    };
+    Modder modder(wasm, *this);
+    modder.walk(func->body);
+  }
+
+  // Fix up changes that may have broken validation - types are correct in our
+  // modding, but not necessarily labels.
+  void fixLabels(Function* func) {
+    struct Fixer : public ControlFlowWalker<Fixer> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Fixer(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
+
+      // Track seen names to find duplication, which is invalid.
+      std::map<Name> seen;
+
+      void visitBlock(Block* curr) {
+        if (curr->name.is() && seen.count(curr->name)) {
+          replace();
+        }
+      }
+
+      void visitLoop(Loop* curr) {
+        if (curr->name.is() && seen.count(curr->name)) {
+          replace();
+        }
+      }
+
+      void visitSwitch(Switch* curr) {
+        for (auto name : curr->targets) {
+          if (replaceIfInvalid(name)) return;
+        }
+        replaceIfInvalid(curr->default_);
+      }
+
+      void visitBreak(Break* curr) {
+        replaceIfInvalid(curr->name);
+      }
+
+      bool replaceIfInvalid(Name target) {
+        if (!findBreakTarget(target)) {
+          // There is no valid parent, replace with something trivially safe.
+          replace();
+          return true;
+        }
+        return false;
+      }
+
+      void replace() {
+        replaceCurrent(parent.makeTrivial(getCurrent()->type);
+      }
+    };
+    Fixer fixer(wasm, *this);
+    fixer.walk(func->body);
+    ReFinalize().walkFunctionInModule(func, &wasm);
   }
 
   // the fuzzer external interface sends in zeros (simpler to compare
