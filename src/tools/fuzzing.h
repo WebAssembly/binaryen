@@ -399,11 +399,11 @@ private:
     recombine(func);
     // Mutations add random small changes, which can subtly break duplicate code
     // patterns.
-    // TODO mutate(func);
+    mutate(func);
     // TODO: liveness operations on gets, with some prob alter a get to one with
     //       more possible sets
     // Recombination, mutation, etc. can break validation; fix things up after.
-    // TODO fixLabels(func);
+    fixLabels(func);
     // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
       addHangLimitChecks(func);
@@ -518,14 +518,22 @@ private:
       std::set<Name> seen;
 
       void visitBlock(Block* curr) {
-        if (curr->name.is() && seen.count(curr->name)) {
-          replace();
+        if (curr->name.is()) {
+          if (seen.count(curr->name)) {
+            replace();
+          } else {
+            seen.insert(curr->name);
+          }
         }
       }
 
       void visitLoop(Loop* curr) {
-        if (curr->name.is() && seen.count(curr->name)) {
-          replace();
+        if (curr->name.is()) {
+          if (seen.count(curr->name)) {
+            replace();
+          } else {
+            seen.insert(curr->name);
+          }
         }
       }
 
@@ -541,7 +549,7 @@ private:
       }
 
       bool replaceIfInvalid(Name target) {
-        if (!findBreakTarget(target)) {
+        if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
           replace();
           return true;
@@ -551,6 +559,24 @@ private:
 
       void replace() {
         replaceCurrent(parent.makeTrivial(getCurrent()->type));
+      }
+
+      bool hasBreakTarget(Name name) {
+        if (controlFlowStack.empty()) return false;
+        Index i = controlFlowStack.size() - 1;
+        while (1) {
+          auto* curr = controlFlowStack[i];
+          if (Block* block = curr->template dynCast<Block>()) {
+            if (name == block->name) return true;
+          } else if (Loop* loop = curr->template dynCast<Loop>()) {
+            if (name == loop->name) return true;
+          } else {
+            // an if, ignorable
+            assert(curr->template is<If>());
+          }
+          if (i == 0) return false;
+          i--;
+        }
       }
     };
     Fixer fixer(wasm, *this);
