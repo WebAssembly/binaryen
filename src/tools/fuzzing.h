@@ -460,6 +460,21 @@ private:
     };
     Scanner scanner;
     scanner.walk(func->body);
+    // Potentially trim the list of possible picks, so replacements are more likely
+    // to collide.
+    for (auto& pair : scanner.exprsByType) {
+      auto& list = pair.second;
+      if (oneIn(2)) continue;
+      std::vector<Expression*> trimmed;
+      size_t num = upToSquared(list.size());
+      for (size_t i = 0; i < num; i++) {
+        trimmed.push_back(vectorPick(list));
+      }
+      if (trimmed.empty()) {
+        trimmed.push_back(vectorPick(list));
+      }
+      list.swap(trimmed);
+    }
     // Second, with some probability replace an item with another item having
     // the same type. (This is not always valid due to nesting of labels, but
     // we'll fix that up later.)
