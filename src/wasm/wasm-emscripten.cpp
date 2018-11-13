@@ -381,6 +381,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
   void process();
 
 private:
+  std::string fixupNameWithSig(Name& name, std::string baseSig);
   Literal idLiteralForCode(std::string code);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig);
@@ -393,19 +394,13 @@ private:
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
   if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    auto baseSig = getSig(curr);
+    auto sig = fixupNameWithSig(curr->target, baseSig);
+
     auto arg = curr->operands[0]->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, arg);
     arg->value = idLiteralForCode(code);
-    auto baseSig = getSig(curr);
-    auto sig = asmConstSig(baseSig);
     sigsForCode[code].insert(sig);
-    auto importName = nameForImportWithSig(sig);
-    curr->target = importName;
-
-    if (allSigs.count(sig) == 0) {
-      allSigs.insert(sig);
-      queueImport(importName, baseSig);
-    }
   }
 }
 
@@ -415,14 +410,7 @@ void AsmConstWalker::visitTable(Table* curr) {
       auto* func = wasm.getFunction(name);
       if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
         std::string baseSig = getSig(func);
-        auto sig = asmConstSig(baseSig);
-        auto importName = nameForImportWithSig(sig);
-        name = importName;
-
-        if (allSigs.count(sig) == 0) {
-          allSigs.insert(sig);
-          queueImport(importName, baseSig);
-        }
+        fixupNameWithSig(name, baseSig);
       }
     }
   }
@@ -434,6 +422,18 @@ void AsmConstWalker::process() {
   // Add them after the walk, to avoid iterator invalidation on
   // the list of functions.
   addImports();
+}
+
+std::string AsmConstWalker::fixupNameWithSig(Name& name, std::string baseSig) {
+  auto sig = asmConstSig(baseSig);
+  auto importName = nameForImportWithSig(sig);
+  name = importName;
+
+  if (allSigs.count(sig) == 0) {
+    allSigs.insert(sig);
+    queueImport(importName, baseSig);
+  }
+  return sig;
 }
 
 Literal AsmConstWalker::idLiteralForCode(std::string code) {
