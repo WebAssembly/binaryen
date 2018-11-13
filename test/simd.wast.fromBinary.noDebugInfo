@@ -1,0 +1,7 @@
+(module
+ (type $0 (func (param v128) (result v128)))
+ (func $0 (; 0 ;) (type $0) (param $0 v128) (result v128)
+  (get_local $0)
+ )
+)
+

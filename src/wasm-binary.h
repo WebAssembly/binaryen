@@ -652,6 +652,7 @@ inline S32LEB binaryType(Type type) {
     case i64: ret = BinaryConsts::EncodedType::i64; break;
     case f32: ret = BinaryConsts::EncodedType::f32; break;
     case f64: ret = BinaryConsts::EncodedType::f64; break;
+    case v128: ret = BinaryConsts::EncodedType::v128; break;
     default: abort();
   }
   return S32LEB(ret);

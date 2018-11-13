@@ -632,6 +632,11 @@ Type SExpressionWasmBuilder::stringToType(const char* str, bool allowError, bool
     if (str[1] == '3' && str[2] == '2' && (prefix || str[3] == 0)) return f32;
     if (str[1] == '6' && str[2] == '4' && (prefix || str[3] == 0)) return f64;
   }
+  if (str[0] == 'v') {
+    if (str[1] == '1' && str[2] == '2' && str[3] == '8' && (prefix || str[4] == 0)) {
+      return v128;
+    }
+  }
   if (allowError) return none;
   throw ParseException("invalid wasm type");
 }
