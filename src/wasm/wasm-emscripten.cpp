@@ -376,6 +376,7 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
   void visitCall(Call* curr);
+  void visitTable(Table* curr);
 
   void process();
 
@@ -404,6 +405,25 @@ void AsmConstWalker::visitCall(Call* curr) {
     if (allSigs.count(sig) == 0) {
       allSigs.insert(sig);
       queueImport(importName, baseSig);
+    }
+  }
+}
+
+void AsmConstWalker::visitTable(Table* curr) {
+  for (auto& segment : curr->segments) {
+    for (auto& name : segment.data) {
+      auto* func = wasm.getFunction(name);
+      if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+        std::string baseSig = getSig(func);
+        auto sig = asmConstSig(baseSig);
+        auto importName = nameForImportWithSig(sig);
+        name = importName;
+
+        if (allSigs.count(sig) == 0) {
+          allSigs.insert(sig);
+          queueImport(importName, baseSig);
+        }
+      }
     }
   }
 }
