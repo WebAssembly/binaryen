@@ -475,6 +475,12 @@ private:
       }
       list.swap(trimmed);
     }
+    // Replace them with copies, to avoid a copy into one altering another copy
+    for (auto& pair : scanner.exprsByType) {
+      for (auto*& item : pair.second) {
+        item = ExpressionManipulator::copy(item, wasm);
+      }
+    }
     // Second, with some probability replace an item with another item having
     // the same type. (This is not always valid due to nesting of labels, but
     // we'll fix that up later.)
