@@ -120,12 +120,14 @@ struct MixedArena {
     index = (index + align - 1) & (-align);
     if (index + size > CHUNK_SIZE || chunks.size() == 0) {
       // Allocate a new chunk.
-      auto numChunks = std::max(size_t(1), size / CHUNK_SIZE);
+      auto numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+      assert(size <= numChunks * CHUNK_SIZE);
       chunks.push_back(new Chunk[numChunks]);
       index = 0;
     }
-    auto* ret = chunks.back() + index;
-    index += size;
+    uint8_t* ret = static_cast<uint8_t*>(static_cast<void*>(chunks.back()));
+    ret += index;
+    index += size; // TODO: if we allocated more than 1 chunk, reuse the remainder, right now we allocate another next time
     return static_cast<void*>(ret);
   }
 
