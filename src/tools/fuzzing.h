@@ -463,8 +463,8 @@ private:
     // Potentially trim the list of possible picks, so replacements are more likely
     // to collide.
     for (auto& pair : scanner.exprsByType) {
-      auto& list = pair.second;
       if (oneIn(2)) continue;
+      auto& list = pair.second;
       std::vector<Expression*> trimmed;
       size_t num = upToSquared(list.size());
       for (size_t i = 0; i < num; i++) {
