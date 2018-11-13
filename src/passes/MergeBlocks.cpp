@@ -189,9 +189,10 @@ static bool hasDeadCode(Block* block) {
 
 // core block optimizer routine
 static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions) {
+  auto& list = curr->list;
+  // Main merging loop.
   bool more = true;
   bool changed = false;
-  auto& list = curr->list;
   while (more) {
     more = false;
     for (size_t i = 0; i < list.size(); i++) {
@@ -334,6 +335,20 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
   Pass* create() override { return new MergeBlocks; }
 
   void visitBlock(Block *curr) {
+    // If the block has a single child which is a loop, and the block is named,
+    // then it is the exit for the loop. It's better to move it into the loop,
+    // where it can be better optimized by other passes.
+    if (curr->name.is() && curr->list.size() == 1) {
+      if (auto* loop = curr->list[0]->dynCast<Loop>()) {
+        if (loop->type == curr->type) {
+          curr->list[0] = loop->body;
+          loop->body = curr;
+          replaceCurrent(loop);
+          // Fall through to optimize the block, which has a new child now.
+        }
+      }
+    }
+    // Otherwise, do the main merging optimizations.
     optimizeBlock(curr, getModule(), getPassOptions());
   }
 
