@@ -342,8 +342,11 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       if (auto* loop = curr->list[0]->dynCast<Loop>()) {
         curr->list[0] = loop->body;
         loop->body = curr;
+        auto oldOuterType = curr->type;
         curr->finalize(curr->type);
         loop->finalize();
+        // After the flip, the outer type must be the same
+        assert(loop->type == oldOuterType);
         replaceCurrent(loop);
         // Fall through to optimize the block, which has a new child now.
       }
