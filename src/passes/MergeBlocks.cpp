@@ -340,12 +340,12 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     // where it can be better optimized by other passes.
     if (curr->name.is() && curr->list.size() == 1) {
       if (auto* loop = curr->list[0]->dynCast<Loop>()) {
-        if (loop->type == curr->type) {
-          curr->list[0] = loop->body;
-          loop->body = curr;
-          replaceCurrent(loop);
-          // Fall through to optimize the block, which has a new child now.
-        }
+        curr->list[0] = loop->body;
+        loop->body = curr;
+        curr->finalize(curr->type);
+        loop->finalize();
+        replaceCurrent(loop);
+        // Fall through to optimize the block, which has a new child now.
       }
     }
     // Otherwise, do the main merging optimizations.
