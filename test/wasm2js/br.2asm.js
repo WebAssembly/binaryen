@@ -539,7 +539,7 @@ function asmFunc(global, env, buffer) {
  }
  
  function $57() {
-  var $0 = 0, $1_1 = 0, $3_1 = 0;
+  var $0 = 0;
   block : {
    $0 = 8;
    break block;
