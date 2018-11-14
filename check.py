@@ -313,7 +313,7 @@ def run_wasm_reduce_tests():
     before = os.stat('a.wasm').st_size
     run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
     after = os.stat('c.wasm').st_size
-    assert after < 0.333 * before, [before, after]
+    assert after < 0.6 * before, [before, after]
 
 
 def run_spec_tests():
