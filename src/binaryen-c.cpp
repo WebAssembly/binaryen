@@ -159,7 +159,7 @@ BinaryenExternalKind BinaryenExternalGlobal(void) { return static_cast<BinaryenE
 
 // Modules
 
-BinaryenModuleRef BinaryenModuleCreate(void) {
+BinaryenModuleRef BinaryenModuleCreate() {
   if (tracing) {
     std::cout << "  the_module = BinaryenModuleCreate();\n";
     std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
@@ -2373,12 +2373,13 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_) {
 // ========== CFG / Relooper ==========
 //
 
-RelooperRef RelooperCreate(void) {
+RelooperRef RelooperCreate(BinaryenModuleRef module) {
   if (tracing) {
     std::cout << "  the_relooper = RelooperCreate();\n";
   }
 
-  return RelooperRef(new CFG::Relooper());
+  auto* wasm = (Module*)module;
+  return RelooperRef(new CFG::Relooper(wasm));
 }
 
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef code) {
@@ -2440,10 +2441,10 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, Bina
   fromBlock->AddSwitchBranchTo(toBlock, std::move(values), (Expression*)code);
 }
 
-BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module) {
+BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper) {
   auto* R = (CFG::Relooper*)relooper;
   R->Calculate((CFG::Block*)entry);
-  CFG::RelooperBuilder builder(*(Module*)module, labelHelper);
+  CFG::RelooperBuilder builder(*R->Module, labelHelper);
   auto* ret = R->Render(builder);
 
   if (tracing) {
