@@ -2375,7 +2375,7 @@ const char* BinaryenExportGetValue(BinaryenExportRef export_) {
 
 RelooperRef RelooperCreate(BinaryenModuleRef module) {
   if (tracing) {
-    std::cout << "  the_relooper = RelooperCreate();\n";
+    std::cout << "  the_relooper = RelooperCreate(the_module);\n";
   }
 
   auto* wasm = (Module*)module;
@@ -2449,7 +2449,7 @@ BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlo
 
   if (tracing) {
     auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = RelooperRenderAndDispose(the_relooper, relooperBlocks[" << relooperBlocks[entry] << "], " << labelHelper << ", the_module);\n";
+    std::cout << "  expressions[" << id << "] = RelooperRenderAndDispose(the_relooper, relooperBlocks[" << relooperBlocks[entry] << "], " << labelHelper << ");\n";
     relooperBlocks.clear();
   }
 
