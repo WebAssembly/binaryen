@@ -166,7 +166,7 @@ void SExpressionParser::parseDebugLocation() {
     return; // no column number
   }
   std::string colStr(++pos, debugLocEnd);
-  void* buf = allocator.allocSpace(sizeof(SourceLocation));
+  void* buf = allocator.allocSpace(sizeof(SourceLocation), alignof(SourceLocation));
   loc = new (buf) SourceLocation(IString(name.c_str(), false), atoi(lineStr.c_str()), atoi(colStr.c_str()));
 }
 
