@@ -495,20 +495,43 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
         auto iter = Block->BranchesOut.begin();
         auto* Next = iter->first;
         auto* NextBranch = iter->second;
-        if (Next->BranchesOut.size() == 1 &&
-            !NextBranch->Code && !NextBranch->SwitchValues &&
-            IsEmpty(Next)) {
-          assert(!NextBranch->Condition);
-          auto iter = Next->BranchesOut.begin();
-          auto* NextNext = iter->first;
-          auto* NextNextBranch = iter->second;
-          if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
-            assert(!NextNextBranch->Condition);
-            // We can skip through!
-            Block->BranchesOut.clear();
-            Block->AddBranchTo(NextNext, nullptr, NextBranch->Code);
-            Worked = true;
+        auto* First = Next;
+        auto* Replacement = First;
+        auto* FirstCode = NextBranch->Code; // we allow code there, but not elsewhere TODO
+        std::unordered_set<decltype(Replacement)> Seen;
+        while (1) {
+          if (Next->BranchesOut.size() == 1 &&
+              !NextBranch->Code && !NextBranch->SwitchValues &&
+              IsEmpty(Next)) {
+            assert(!NextBranch->Condition);
+            auto iter = Next->BranchesOut.begin();
+            auto* NextNext = iter->first;
+            auto* NextNextBranch = iter->second;
+            if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
+              assert(!NextNextBranch->Condition);
+              // We can skip through!
+              Next = Replacement = NextNext;
+              NextBranch = NextNextBranch;
+              // If we've already seen this, stop - it's an infinite loop of empty
+              // blocks we can skip through.
+              if (Seen.count(Replacement)) {
+                // Stop here. Note that if we started from X and ended up with X once
+                // more, then Replacement == First and so lower down we will not
+                // report that we did any work, avoiding an infinite loop.
+                break;
+              } else {
+                // Otherwise, keep going.
+                Seen.insert(Replacement);
+                continue;
+              }
+            }
           }
+          break;
+        }
+        if (Replacement != First) {
+          Block->BranchesOut.clear();
+          Block->AddBranchTo(Replacement, nullptr, FirstCode);
+          Worked = true;
         }
       }
     }
