@@ -83,13 +83,23 @@ struct ExpressionAnalyzer {
   static uint32_t hash(Expression* curr);
 };
 
-// Re-Finalizes all node types
+// Re-Finalizes all node types. This can be run after code was modified in
+// various ways that require propagating types around, and it does such an
+// "incremental" update. This is done under the assumption that there is
+// a valid assignment of types to apply.
 // This removes "unnecessary' block/if/loop types, i.e., that are added
 // specifically, as in
 //  (block (result i32) (unreachable))
 // vs
 //  (block (unreachable))
 // This converts to the latter form.
+// This also removes un-taken branches that would be a problem for
+// refinalization: if a block has been marked unreachable, and has
+// branches to it with values of type unreachable, then we don't
+// know the type for the block: it can't be none since the breaks
+// exist, but the breaks don't declare the type, rather everything
+// depends on the block. To avoid looking at the parent or something
+// else, just remove such un-taken branches.
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
@@ -108,7 +118,6 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       return;
     }
     // do this quickly, without any validation
-    auto old = curr->type;
     // last element determines type
     curr->type = curr->list.back()->type;
     // if concrete, it doesn't matter if we have an unreachable child, and we
@@ -121,14 +130,8 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       if (iter != breakValues.end()) {
         // there is a break to here
         auto type = iter->second;
-        if (type == unreachable) {
-          // all we have are breaks with values of type unreachable, and no
-          // concrete fallthrough either. we must have had an existing type, then
-          curr->type = old;
-          assert(isConcreteType(curr->type));
-        } else {
-          curr->type = type;
-        }
+        assert(type != unreachable); // we would have removed such branches
+        curr->type = type;
         return;
       }
     }
@@ -147,15 +150,24 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitLoop(Loop* curr) { curr->finalize(); }
   void visitBreak(Break* curr) {
     curr->finalize();
-    updateBreakValueType(curr->name, getValueType(curr->value));
+    auto valueType = getValueType(curr->value);
+    if (valueType == unreachable) {
+      replaceUntaken(curr->value, curr->condition);
+    } else {
+      updateBreakValueType(curr->name, valueType);
+    }
   }
   void visitSwitch(Switch* curr) {
     curr->finalize();
     auto valueType = getValueType(curr->value);
-    for (auto target : curr->targets) {
-      updateBreakValueType(target, valueType);
+    if (valueType == unreachable) {
+      replaceUntaken(curr->value, curr->condition);
+    } else {
+      for (auto target : curr->targets) {
+        updateBreakValueType(target, valueType);
+      }
+      updateBreakValueType(curr->default_, valueType);
     }
-    updateBreakValueType(curr->default_, valueType);
   }
   void visitCall(Call* curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
@@ -195,6 +207,7 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
   void visitModule(Module* curr) { WASM_UNREACHABLE(); }
 
+private:
   Type getValueType(Expression* value) {
     return value ? value->type : none;
   }
@@ -203,6 +216,31 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
     if (type != unreachable || breakValues.count(name) == 0) {
       breakValues[name] = type;
     }
+  }
+
+  // Replace an untaken branch/switch with an unreachable value.
+  // A condition may also exist and may or may not be unreachable.
+  void replaceUntaken(Expression* value, Expression* condition) {
+    assert(value->type == unreachable);
+    auto* replacement = value;
+    if (condition) {
+      Builder builder(*getModule());
+      // Even if we have
+      //  (block
+      //   (unreachable)
+      //   (i32.const 1)
+      //  )
+      // we want the block type to be unreachable. That is valid as
+      // the value is unreachable, and necessary since the type of
+      // the condition did not have an impact before (the break/switch
+      // type was unreachable), and might not fit in.
+      if (isConcreteType(condition->type)) {
+        condition = builder.makeDrop(condition);
+      }
+      replacement = builder.makeSequence(value, condition);
+      assert(replacement->type);
+    }
+    replaceCurrent(replacement);
   }
 };
 
