@@ -166,8 +166,8 @@ int main(int argc, const char *argv[]) {
   generator.generateJSCallThunks(numReservedFunctionPointers);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
   if (!dataSegmentFile.empty()) {
-    Output mem_init_file(dataSegmentFile, Flags::Binary, Flags::Release);
-    generator.separateDataSegments(&mem_init_file);
+    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
+    generator.separateDataSegments(&memInitFile);
   }
 
   if (options.debug) {
