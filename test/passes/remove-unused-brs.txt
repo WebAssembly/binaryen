@@ -1934,7 +1934,12 @@
     (tee_local $0
      (loop $label$5
       (br_if $label$5
-       (unreachable)
+       (block
+        (unreachable)
+        (drop
+         (i32.const 0)
+        )
+       )
       )
      )
     )

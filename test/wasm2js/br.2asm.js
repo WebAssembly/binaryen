@@ -523,10 +523,8 @@ function asmFunc(global, env, buffer) {
  function $55() {
   var $0 = 0, $1_1 = 0;
   block : {
-   block1 : {
-    $0 = 8;
-    break block;
-   };
+   $0 = 8;
+   break block;
   };
   return 1 + $0 | 0 | 0;
  }
@@ -541,12 +539,10 @@ function asmFunc(global, env, buffer) {
  }
  
  function $57() {
-  var $0 = 0;
+  var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   block2 : {
-    $0 = 8;
-    break block;
-   };
+   $0 = 8;
+   break block;
   };
   return 1 + $0 | 0 | 0;
  }

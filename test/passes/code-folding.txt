@@ -110,7 +110,10 @@
   (block $label$1
    (drop
     (block $label$2
-     (unreachable)
+     (block
+      (unreachable)
+      (unreachable)
+     )
      (br $label$1)
     )
    )
