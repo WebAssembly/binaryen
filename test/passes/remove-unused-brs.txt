@@ -1160,9 +1160,13 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1195,10 +1199,14 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $x $tablify|0
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1211,9 +1219,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1226,9 +1249,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1241,9 +1279,16 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (i32.sub
+        (get_local $a)
+        (i32.const 15)
+       )
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1256,9 +1301,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 10)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1271,9 +1331,13 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $tablify|0 $tablify|0 $y $tablify|0 $tablify|0 $tablify|0 $tablify|0 $tablify|0 $z $tablify|0
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1289,14 +1353,13 @@
      (block $z
       (nop)
       (br $x)
-      (br_if $x
-       (i32.eq
+      (nop)
+      (nop)
+      (block $tablify|0
+       (br_table $x $y $z $tablify|0
         (get_local $a)
-        (i32.const 0)
        )
       )
-      (unreachable)
-      (unreachable)
       (unreachable)
      )
      (unreachable)
@@ -1321,14 +1384,13 @@
         )
        )
       )
-      (br_if $x
-       (i32.eq
+      (nop)
+      (nop)
+      (block $tablify|0
+       (br_table $x $y $z $tablify|0
         (get_local $a)
-        (i32.const 0)
        )
       )
-      (unreachable)
-      (unreachable)
       (unreachable)
      )
      (unreachable)
@@ -1342,10 +1404,19 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (i32.const 10)
+       (i32.const 0)
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $x $y $z $tablify|0
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1358,12 +1429,23 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $z $y $x $tablify|0
+       (i32.sub
+        (i32.const 10)
+        (i32.const 5)
+       )
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|00
+      (br_table $x $y $z $tablify|00
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1376,9 +1458,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.ne
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const 2)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1391,9 +1488,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1406,9 +1518,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (call $b13)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (call $b13)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (call $b13)
+       (i32.const 2)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1421,9 +1548,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (get_local $a)
+       (i32.const -1)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1436,9 +1578,13 @@
   (block $x
    (block $tablify|0
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (nop)
+     (nop)
+     (block $tablify|1
+      (br_table $x $tablify|0 $z $tablify|1
+       (get_local $a)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1451,9 +1597,24 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (unreachable)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (unreachable)
+       (i32.const 1)
+      )
+     )
+     (br_if $z
+      (i32.eq
+       (unreachable)
+       (i32.const 2)
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1466,11 +1627,28 @@
   (block $x
    (block $y
     (block $z
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
-     (unreachable)
+     (br_if $x
+      (i32.eq
+       (get_local $a)
+       (i32.const 0)
+      )
+     )
+     (br_if $y
+      (i32.eq
+       (get_local $a)
+       (i32.const 1)
+      )
+     )
+     (nop)
+     (nop)
+     (block $tablify|0
+      (br_table $z $x $y $tablify|0
+       (i32.sub
+        (get_local $a)
+        (i32.const 1)
+       )
+      )
+     )
      (unreachable)
     )
     (unreachable)
@@ -1821,49 +1999,49 @@
                                                                   (get_local $x)
                                                                  )
                                                                 )
-                                                                (unreachable)
+                                                                (br $label$1)
                                                                )
-                                                               (unreachable)
+                                                               (br $label$1)
                                                               )
-                                                              (unreachable)
+                                                              (br $label$1)
                                                              )
-                                                             (unreachable)
+                                                             (br $label$1)
                                                             )
-                                                            (unreachable)
+                                                            (br $label$1)
                                                            )
-                                                           (unreachable)
+                                                           (br $label$1)
                                                           )
-                                                          (unreachable)
+                                                          (br $label$1)
                                                          )
-                                                         (unreachable)
+                                                         (br $label$2)
                                                         )
-                                                        (unreachable)
+                                                        (br $label$2)
                                                        )
-                                                       (unreachable)
+                                                       (br $label$2)
                                                       )
-                                                      (unreachable)
+                                                      (br $label$3)
                                                      )
-                                                     (unreachable)
+                                                     (br $label$2)
                                                     )
-                                                    (unreachable)
+                                                    (br $label$2)
                                                    )
-                                                   (unreachable)
+                                                   (br $label$2)
                                                   )
-                                                  (unreachable)
+                                                  (br $label$11)
                                                  )
-                                                 (unreachable)
+                                                 (br $label$11)
                                                 )
-                                                (unreachable)
+                                                (br $label$10)
                                                )
-                                               (unreachable)
+                                               (br $label$10)
                                               )
-                                              (unreachable)
+                                              (br $label$9)
                                              )
-                                             (unreachable)
+                                             (br $label$9)
                                             )
                                             (unreachable)
                                            )
-                                           (unreachable)
+                                           (br $label$3)
                                           )
                                           (unreachable)
                                          )
@@ -1875,23 +2053,23 @@
                                       )
                                       (unreachable)
                                      )
-                                     (unreachable)
+                                     (br $label$8)
                                     )
-                                    (unreachable)
+                                    (br $label$8)
                                    )
-                                   (unreachable)
+                                   (br $label$7)
                                   )
-                                  (unreachable)
+                                  (br $label$7)
                                  )
                                  (unreachable)
                                 )
-                                (unreachable)
+                                (br $label$3)
                                )
-                               (unreachable)
+                               (br $label$4)
                               )
-                              (unreachable)
+                              (br $label$4)
                              )
-                             (unreachable)
+                             (br $label$4)
                             )
                             (unreachable)
                            )
@@ -1901,13 +2079,13 @@
                          )
                          (unreachable)
                         )
-                        (unreachable)
+                        (br $label$6)
                        )
-                       (unreachable)
+                       (br $label$6)
                       )
                       (unreachable)
                      )
-                     (unreachable)
+                     (br $label$3)
                     )
                     (unreachable)
                    )
@@ -1915,13 +2093,13 @@
                   )
                   (unreachable)
                  )
-                 (unreachable)
+                 (br $label$3)
                 )
-                (unreachable)
+                (br $label$5)
                )
-               (unreachable)
+               (br $label$5)
               )
-              (unreachable)
+              (br $label$5)
              )
              (unreachable)
             )
