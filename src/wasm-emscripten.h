@@ -19,6 +19,8 @@
 
 #include "wasm.h"
 #include "wasm-builder.h"
+#include "support/file.h"
+
 
 namespace wasm {
 
@@ -52,6 +54,8 @@ public:
   void fixEmAsmConsts();
 
   void fixInvokeFunctionNames();
+
+  void separateDataSegments(Output* outfile);
 
 private:
   Module& wasm;

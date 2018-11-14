@@ -1922,7 +1922,31 @@
    )
   )
  )
- (func $br-to-unreachable (; 80 ;) (type $1)
+ (func $fuzz-block-unreachable-brs-with-values (; 80 ;) (type $2) (result i32)
+  (local $0 i32)
+  (loop $label$1
+   (block $label$2
+    (br_if $label$1
+     (i32.eqz
+      (get_local $0)
+     )
+    )
+    (tee_local $0
+     (loop $label$5
+      (br_if $label$5
+       (block
+        (unreachable)
+        (drop
+         (i32.const 0)
+        )
+       )
+      )
+     )
+    )
+   )
+  )
+ )
+ (func $br-to-unreachable (; 81 ;) (type $1)
   (block $a
    (block $b
     (block $c
@@ -1931,7 +1955,7 @@
    (unreachable)
   )
  )
- (func $many-br-to-unreachable (; 81 ;) (type $10) (param $x i32) (result i32)
+ (func $many-br-to-unreachable (; 82 ;) (type $10) (param $x i32) (result i32)
   (block $label$1
    (block $label$2
     (block $label$3
@@ -2125,7 +2149,7 @@
   )
   (unreachable)
  )
- (func $br-to-return_b (; 82 ;) (type $1)
+ (func $br-to-return_b (; 83 ;) (type $1)
   (block $a
    (block $b
     (block $c
@@ -2133,7 +2157,7 @@
    )
   )
  )
- (func $many-br-to-return_b (; 83 ;) (type $0) (param $x i32)
+ (func $many-br-to-return_b (; 84 ;) (type $0) (param $x i32)
   (block $label$1
    (block $label$2
     (block $label$3

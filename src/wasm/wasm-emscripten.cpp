@@ -810,4 +810,19 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   return meta.str();
 }
 
+void EmscriptenGlueGenerator::separateDataSegments(Output* outfile) {
+  size_t lastEnd = 0;
+  for (Memory::Segment& seg : wasm.memory.segments) {
+    size_t offset = seg.offset->cast<Const>()->value.geti32();
+    size_t fill = offset - lastEnd;
+    if (fill > 0) {
+      std::vector<char> buf(fill);
+      outfile->write(buf.data(), fill);
+    }
+    outfile->write(seg.data.data(), seg.data.size());
+    lastEnd = offset + seg.data.size();
+  }
+  wasm.memory.segments.clear();
+}
+
 } // namespace wasm

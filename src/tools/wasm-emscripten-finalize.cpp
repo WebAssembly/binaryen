@@ -40,6 +40,7 @@ int main(int argc, const char *argv[]) {
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
+  std::string dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
   bool legalizeJavaScriptFFI = true;
@@ -94,6 +95,9 @@ int main(int argc, const char *argv[]) {
       .add("--output-source-map-url", "-osu", "Emit specified string as source map URL",
            Options::Arguments::One,
            [&outputSourceMapUrl](Options *o, const std::string& argument) { outputSourceMapUrl = argument; })
+      .add("--separate-data-segments", "", "Separate data segments to a file",
+           Options::Arguments::One,
+           [&dataSegmentFile](Options *o, const std::string& argument) { dataSegmentFile = argument;})
       .add_positional("INFILE", Options::Arguments::One,
                       [&infile](Options *o, const std::string& argument) {
                         infile = argument;
@@ -161,6 +165,10 @@ int main(int argc, const char *argv[]) {
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
+  if (!dataSegmentFile.empty()) {
+    Output memInitFile(dataSegmentFile, Flags::Binary, Flags::Release);
+    generator.separateDataSegments(&memInitFile);
+  }
 
   if (options.debug) {
     std::cerr << "Module after:\n";
