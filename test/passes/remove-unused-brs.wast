@@ -1540,5 +1540,26 @@
     (br $label$1)
    )
   )
+  (func $fuzz-block-unreachable-brs-with-values (result i32)
+   (local $0 i32)
+   (loop $label$1 (result i32)
+    (block $label$2 (result i32)
+     (if
+      (get_local $0)
+      (set_local $0
+       (loop $label$5
+        (br_if $label$5
+         (br_if $label$2
+          (unreachable)
+          (i32.const 0)
+         )
+        )
+       )
+      )
+     )
+     (br $label$1)
+    )
+   )
+  )
 )
 

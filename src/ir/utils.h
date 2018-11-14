@@ -123,9 +123,12 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
         auto type = iter->second;
         if (type == unreachable) {
           // all we have are breaks with values of type unreachable, and no
-          // concrete fallthrough either. we must have had an existing type, then
-          curr->type = old;
-          assert(isConcreteType(curr->type));
+          // concrete fallthrough either. we may have had an existing type
+          if (isConcreteType(old)) {
+            curr->type = old;
+          } else {
+            curr->type = unreachable;
+          }
         } else {
           curr->type = type;
         }
