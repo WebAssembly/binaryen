@@ -517,7 +517,8 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
               if (Seen.count(Replacement)) {
                 // Stop here. Note that if we started from X and ended up with X once
                 // more, then Replacement == First and so lower down we will not
-                // report that we did any work, avoiding an infinite loop.
+                // report that we did any work, avoiding an infinite loop due to
+                // always thinking there is more work to do.
                 break;
               } else {
                 // Otherwise, keep going.
