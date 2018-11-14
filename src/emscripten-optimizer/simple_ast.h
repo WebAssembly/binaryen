@@ -80,7 +80,7 @@ class GlobalMixedArena : public MixedArena {
 public:
   template<class T>
   T* alloc() {
-    auto* ret = static_cast<T*>(allocSpace(sizeof(T)));
+    auto* ret = static_cast<T*>(allocSpace(sizeof(T), alignof(T)));
     new (ret) T();
     return ret;
   }
@@ -92,7 +92,7 @@ class ArrayStorage : public ArenaVectorBase<ArrayStorage, Ref> {
 public:
   void allocate(size_t size) {
     allocatedElements = size;
-    data = static_cast<Ref*>(arena.allocSpace(sizeof(Ref) * allocatedElements));
+    data = static_cast<Ref*>(arena.allocSpace(sizeof(Ref) * allocatedElements, alignof(Ref)));
   }
 };
 

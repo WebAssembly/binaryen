@@ -26,7 +26,10 @@ high chance for set at start of loop
 */
 
 #include <wasm-builder.h>
+#include <ir/find_all.h>
 #include <ir/literal-utils.h>
+#include <ir/manipulation.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -392,11 +395,18 @@ private:
     } else {
       func->body = make(bodyType);
     }
+    // Recombinations create duplicate code patterns.
+    recombine(func);
+    // Mutations add random small changes, which can subtly break duplicate code
+    // patterns.
+    mutate(func);
+    // TODO: liveness operations on gets, with some prob alter a get to one with
+    //       more possible sets
+    // Recombination, mutation, etc. can break validation; fix things up after.
+    fixLabels(func);
+    // Add hang limit checks after all other operations on the function body.
     if (HANG_LIMIT > 0) {
-      func->body = builder.makeSequence(
-        makeHangLimitCheck(),
-        func->body
-      );
+      addHangLimitChecks(func);
     }
     assert(breakableStack.empty());
     assert(hangStack.empty());
@@ -418,6 +428,181 @@ private:
     // cleanup
     typeLocals.clear();
     return func;
+  }
+
+  void addHangLimitChecks(Function* func) {
+    // loop limit
+    FindAll<Loop> loops(func->body);
+    for (auto* loop : loops.list) {
+      loop->body = builder.makeSequence(
+        makeHangLimitCheck(),
+        loop->body
+      );
+    }
+    // recursion limit
+    func->body = builder.makeSequence(
+      makeHangLimitCheck(),
+      func->body
+    );
+  }
+
+  void recombine(Function* func) {
+    // Don't always do this.
+    if (oneIn(2)) return;
+    // First, scan and group all expressions by type.
+    struct Scanner : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+      // A map of all expressions, categorized by type.
+      std::map<Type, std::vector<Expression*>> exprsByType;
+
+      void visitExpression(Expression* curr) {
+        exprsByType[curr->type].push_back(curr);
+      }
+    };
+    Scanner scanner;
+    scanner.walk(func->body);
+    // Potentially trim the list of possible picks, so replacements are more likely
+    // to collide.
+    for (auto& pair : scanner.exprsByType) {
+      if (oneIn(2)) continue;
+      auto& list = pair.second;
+      std::vector<Expression*> trimmed;
+      size_t num = upToSquared(list.size());
+      for (size_t i = 0; i < num; i++) {
+        trimmed.push_back(vectorPick(list));
+      }
+      if (trimmed.empty()) {
+        trimmed.push_back(vectorPick(list));
+      }
+      list.swap(trimmed);
+    }
+    // Replace them with copies, to avoid a copy into one altering another copy
+    for (auto& pair : scanner.exprsByType) {
+      for (auto*& item : pair.second) {
+        item = ExpressionManipulator::copy(item, wasm);
+      }
+    }
+    // Second, with some probability replace an item with another item having
+    // the same type. (This is not always valid due to nesting of labels, but
+    // we'll fix that up later.)
+    struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+      Module& wasm;
+      Scanner& scanner;
+      TranslateToFuzzReader& parent;
+
+      Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent) : wasm(wasm), scanner(scanner), parent(parent) {}
+
+      void visitExpression(Expression* curr) {
+        if (parent.oneIn(10)) {
+          // Replace it!
+          auto& candidates = scanner.exprsByType[curr->type];
+          assert(!candidates.empty()); // this expression itself must be there
+          replaceCurrent(ExpressionManipulator::copy(parent.vectorPick(candidates), wasm));
+        }
+      }
+    };
+    Modder modder(wasm, scanner, *this);
+    modder.walk(func->body);
+  }
+
+  void mutate(Function* func) {
+    // Don't always do this.
+    if (oneIn(2)) return;
+    struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Modder(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
+
+      void visitExpression(Expression* curr) {
+        if (parent.oneIn(10)) {
+          // Replace it!
+          // (This is not always valid due to nesting of labels, but
+          // we'll fix that up later.)
+          replaceCurrent(parent.make(curr->type));
+        }
+      }
+    };
+    Modder modder(wasm, *this);
+    modder.walk(func->body);
+  }
+
+  // Fix up changes that may have broken validation - types are correct in our
+  // modding, but not necessarily labels.
+  void fixLabels(Function* func) {
+    struct Fixer : public ControlFlowWalker<Fixer> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Fixer(Module& wasm, TranslateToFuzzReader& parent) : wasm(wasm), parent(parent) {}
+
+      // Track seen names to find duplication, which is invalid.
+      std::set<Name> seen;
+
+      void visitBlock(Block* curr) {
+        if (curr->name.is()) {
+          if (seen.count(curr->name)) {
+            replace();
+          } else {
+            seen.insert(curr->name);
+          }
+        }
+      }
+
+      void visitLoop(Loop* curr) {
+        if (curr->name.is()) {
+          if (seen.count(curr->name)) {
+            replace();
+          } else {
+            seen.insert(curr->name);
+          }
+        }
+      }
+
+      void visitSwitch(Switch* curr) {
+        for (auto name : curr->targets) {
+          if (replaceIfInvalid(name)) return;
+        }
+        replaceIfInvalid(curr->default_);
+      }
+
+      void visitBreak(Break* curr) {
+        replaceIfInvalid(curr->name);
+      }
+
+      bool replaceIfInvalid(Name target) {
+        if (!hasBreakTarget(target)) {
+          // There is no valid parent, replace with something trivially safe.
+          replace();
+          return true;
+        }
+        return false;
+      }
+
+      void replace() {
+        replaceCurrent(parent.makeTrivial(getCurrent()->type));
+      }
+
+      bool hasBreakTarget(Name name) {
+        if (controlFlowStack.empty()) return false;
+        Index i = controlFlowStack.size() - 1;
+        while (1) {
+          auto* curr = controlFlowStack[i];
+          if (Block* block = curr->template dynCast<Block>()) {
+            if (name == block->name) return true;
+          } else if (Loop* loop = curr->template dynCast<Loop>()) {
+            if (name == loop->name) return true;
+          } else {
+            // an if, ignorable
+            assert(curr->template is<If>());
+          }
+          if (i == 0) return false;
+          i--;
+        }
+      }
+    };
+    Fixer fixer(wasm, *this);
+    fixer.walk(func->body);
+    ReFinalize().walkFunctionInModule(func, &wasm);
   }
 
   // the fuzzer external interface sends in zeros (simpler to compare
@@ -651,12 +836,6 @@ private:
     }
     breakableStack.pop_back();
     hangStack.pop_back();
-    if (HANG_LIMIT > 0) {
-      ret->body = builder.makeSequence(
-        makeHangLimitCheck(),
-        ret->body
-      );
-    }
     ret->finalize();
     return ret;
   }

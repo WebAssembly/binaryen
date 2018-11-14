@@ -726,6 +726,25 @@ private:
   }
 };
 
+struct Liveness : public RelooperRecursor {
+  Liveness(Relooper* Parent) : RelooperRecursor(Parent) {}
+  BlockSet Live;
+
+  void FindLive(Block* Root) {
+    BlockList ToInvestigate;
+    ToInvestigate.push_back(Root);
+    while (ToInvestigate.size() > 0) {
+      Block* Curr = ToInvestigate.front();
+      ToInvestigate.pop_front();
+      if (contains(Live, Curr)) continue;
+      Live.insert(Curr);
+      for (auto& iter : Curr->BranchesOut) {
+        ToInvestigate.push_back(iter.first);
+      }
+    }
+  }
+};
+
 } // namespace
 
 void Relooper::Calculate(Block* Entry) {
