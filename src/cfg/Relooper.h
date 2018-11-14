@@ -94,7 +94,8 @@ struct Branch {
   // for which the branch will be taken, or for the default it is simply not present.
   std::unique_ptr<std::vector<wasm::Index>> SwitchValues;
 
-  wasm::Expression* Code; // If provided, code that is run right before the branch is taken. This is useful for phis
+  // If provided, code that is run right before the branch is taken. This is useful for phis.
+  wasm::Expression* Code;
 
   Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit = nullptr);
 

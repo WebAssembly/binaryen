@@ -506,15 +506,13 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
             assert(!NextNextBranch->Condition);
             // We can skip through!
             Block->BranchesOut.clear();
-            Block->AddBranchTo(NextNext, nullptr);
+            Block->AddBranchTo(NextNext, nullptr, NextBranch->Code);
             Worked = true;
           }
         }
       }
     }
     return Worked;
-    // TODO: if >1 targets, but all to the same place, or effectively the
-    //       same place (all a return; or unreachable)
   }
 
   // Our IR has one Branch from each block to one of its targets, so there
