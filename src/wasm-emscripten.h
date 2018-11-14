@@ -48,9 +48,6 @@ public:
       Address staticBump, std::vector<Name> const& initializerFunctions,
       unsigned numReservedFunctionPointers);
 
-  // Replace placeholder emscripten_asm_const functions with *_signature versions.
-  void fixEmAsmConsts();
-
   void fixInvokeFunctionNames();
 
 private:

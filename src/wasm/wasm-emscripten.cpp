@@ -44,6 +44,8 @@ void addExportedFunction(Module& wasm, Function* function) {
 
 Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
   // Assumption: first global is __stack_pointer
+  // TODO(sbc): Once mutable globals are a thing we shouldn't need this
+  // at all since we can simply export __stack_pointer.
   return wasm.globals[0].get();
 }
 
@@ -308,9 +310,14 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
 std::vector<Address> getSegmentOffsets(Module& wasm) {
   std::vector<Address> segmentOffsets;
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
-    auto address = addrConst->value.geti32();
-    segmentOffsets.push_back(address);
+    if (auto* addrConst = wasm.memory.segments[i].offset->dynCast<Const>()) {
+      auto address = addrConst->value.geti32();
+      segmentOffsets.push_back(address);
+    } else {
+      // TODO(sbc): Wasm shared libraries have data segments with non-const
+      // offset.
+      segmentOffsets.push_back(0);
+    }
   }
   return segmentOffsets;
 }
@@ -531,12 +538,6 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
   }
   return walker;
 }
-
-void EmscriptenGlueGenerator::fixEmAsmConsts() {
-  fixEmAsmConstsAndReturnWalker(wasm);
-  fixEmJsFuncsAndReturnWalker(wasm);
-}
-
 
 // Fixes function name hacks caused by LLVM exception & setjmp/longjmp
 // handling pass for wasm.
