@@ -1922,4 +1922,23 @@
    )
   )
  )
+ (func $fuzz-block-unreachable-brs-with-values (; 80 ;) (type $2) (result i32)
+  (local $0 i32)
+  (loop $label$1
+   (block $label$2
+    (br_if $label$1
+     (i32.eqz
+      (get_local $0)
+     )
+    )
+    (tee_local $0
+     (loop $label$5
+      (br_if $label$5
+       (unreachable)
+      )
+     )
+    )
+   )
+  )
+ )
 )

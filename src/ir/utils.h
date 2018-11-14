@@ -90,6 +90,13 @@ struct ExpressionAnalyzer {
 // vs
 //  (block (unreachable))
 // This converts to the latter form.
+// This also removes un-taken branches that would be a problem for
+// refinalization: if a block has been marked unreachable, and has
+// branches to it with values of type unreachable, then we don't
+// know the type for the block: it can't be none since the breaks
+// exist, but the breaks don't declare the type, rather everything
+// depends on the block. To avoid looking at the parent or something
+// else, just remove such un-taken branches.
 struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>> {
   bool isFunctionParallel() override { return true; }
 
@@ -108,7 +115,6 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       return;
     }
     // do this quickly, without any validation
-    auto old = curr->type;
     // last element determines type
     curr->type = curr->list.back()->type;
     // if concrete, it doesn't matter if we have an unreachable child, and we
@@ -121,17 +127,8 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
       if (iter != breakValues.end()) {
         // there is a break to here
         auto type = iter->second;
-        if (type == unreachable) {
-          // all we have are breaks with values of type unreachable, and no
-          // concrete fallthrough either. we may have had an existing type
-          if (isConcreteType(old)) {
-            curr->type = old;
-          } else {
-            curr->type = unreachable;
-          }
-        } else {
-          curr->type = type;
-        }
+        assert(type != unreachable); // we would have removed such branches
+        curr->type = type;
         return;
       }
     }
@@ -150,15 +147,24 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitLoop(Loop* curr) { curr->finalize(); }
   void visitBreak(Break* curr) {
     curr->finalize();
-    updateBreakValueType(curr->name, getValueType(curr->value));
+    auto valueType = getValueType(curr->value);
+    if (valueType == unreachable) {
+      replaceCurrent(curr->value);
+    } else {
+      updateBreakValueType(curr->name, valueType);
+    }
   }
   void visitSwitch(Switch* curr) {
     curr->finalize();
     auto valueType = getValueType(curr->value);
-    for (auto target : curr->targets) {
-      updateBreakValueType(target, valueType);
+    if (valueType == unreachable) {
+      replaceCurrent(curr->value);
+    } else {
+      for (auto target : curr->targets) {
+        updateBreakValueType(target, valueType);
+      }
+      updateBreakValueType(curr->default_, valueType);
     }
-    updateBreakValueType(curr->default_, valueType);
   }
   void visitCall(Call* curr) { curr->finalize(); }
   void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }

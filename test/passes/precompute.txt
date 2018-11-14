@@ -162,31 +162,25 @@
  (func $refinalize-two-breaks-one-unreachable (; 6 ;) (type $2)
   (drop
    (block $label$0 (result i64)
-    (br_if $label$0
-     (select
-      (i64.const 1)
-      (block $block
-       (set_global $global-mut
-        (i32.const 1)
-       )
-       (br $label$0
-        (i64.const -22)
-       )
+    (select
+     (i64.const 1)
+     (block $block
+      (set_global $global-mut
+       (i32.const 1)
       )
-      (i32.const 0)
+      (br $label$0
+       (i64.const -22)
+      )
      )
-     (i32.const 1)
+     (i32.const 0)
     )
    )
   )
  )
  (func $one-break-value-and-it-is-unreachable (; 7 ;) (type $3) (result f64)
   (local $var$0 i32)
-  (block $label$6 (result f64)
-   (br_if $label$6
-    (unreachable)
-    (i32.const 0)
-   )
+  (block $label$6
+   (unreachable)
   )
  )
  (func $global-notprecomputable (; 8 ;) (type $1) (result i32)
