@@ -619,22 +619,54 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // Code size wise, we turn the block into an if (no change), and
           // lose the br_if (-2). .. turns into the body of the if in the binary
           // format. We need to flip the condition, which at worst adds 1.
+          // If the block has a return value, we can do something similar, removing
+          // the drop from the br_if and putting the if on the outside,
+          //   (block $x
+          //     (br_if $x (cond) (value))
+          //     .., no other references to $x
+          //     ..final element..
+          //   )
+          // =>
+          //   (if
+          //     (cond)
+          //     (value)
+          //     (block
+          //       .., no other references to $x
+          //       ..final element..
+          //     )
+          //   )
+          // This is beneficial as the block will likely go away in the binary
+          // format (the if arm is an implicit block), and the drop is removed.
           if (curr->name.is()) {
-            auto* br = list[0]->dynCast<Break>();
-            // we seek a regular br_if; if the type is unreachable that means it is not
-            // actually reached, so ignore
+            Break* br = nullptr;
+            if (auto* drop = list[0]->dynCast<Drop>()) {
+              br = drop->value->dynCast<Break>();
+            } else {
+              br = list[0]->dynCast<Break>();
+            }
+            // Check if the br is conditional and goes to the block. It may or may not have
+            // a value, depending on if it was dropped or not.
+            // If the type is unreachable that means it is not actually reached,
+            // which we can ignore.
             if (br && br->condition && br->name == curr->name && br->type != unreachable) {
-              assert(!br->value); // can't, it would be dropped or last in the block
               if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
                 // no other breaks to that name, so we can do this
-                Builder builder(*getModule());
-                replaceCurrent(builder.makeIf(
-                  builder.makeUnary(EqZInt32, br->condition),
-                  curr
-                ));
-                curr->name = Name();
-                ExpressionManipulator::nop(br);
-                curr->finalize(curr->type);
+                if (!drop) {
+                  assert(!br->value);
+                  Builder builder(*getModule());
+                  replaceCurrent(builder.makeIf(
+                    builder.makeUnary(EqZInt32, br->condition),
+                    curr
+                  ));
+                  curr->name = Name();
+                  ExpressionManipulator::nop(br);
+                  curr->finalize(curr->type);
+                } else {
+                  // If it has side effects, we can't put it behind an if condition.
+                  if (!EffectAnalyzer(passOptions, br->value).hasSideEffects()) {
+                  }
+                  // TODO: we could use a select, if the rest has no side effects
+                }
                 return;
               }
             }
