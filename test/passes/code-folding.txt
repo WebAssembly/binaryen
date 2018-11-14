@@ -109,8 +109,8 @@
  (func $leave-inner-block-type (; 6 ;) (type $1)
   (block $label$1
    (drop
-    (block $label$2 (result i32)
-     (br_if $label$2
+    (block $label$2
+     (block
       (unreachable)
       (unreachable)
      )

@@ -59,6 +59,10 @@ class Output {
     return out;
   }
 
+  std::ostream& write(const char* s, std::streamsize c) {
+    return out.write(s, c);
+  }
+
  private:
   Output() = delete;
   Output(const Output &) = delete;
