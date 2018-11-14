@@ -816,9 +816,8 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile) {
     size_t offset = seg.offset->cast<Const>()->value.geti32();
     size_t fill = offset - lastEnd;
     if (fill > 0) {
-      char buf[fill];
-      memset(buf, 0, fill);
-      outfile->write(buf, fill);
+      std::vector<char> buf(fill);
+      outfile->write(buf.data(), fill);
     }
     outfile->write(seg.data.data(), seg.data.size());
     lastEnd = offset + seg.data.size();
