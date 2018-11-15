@@ -183,5 +183,22 @@
     )
    )
   )
+  (func $restructure-if-outerType-change
+   (loop $label$1
+    (br_if $label$1
+     (block $label$2
+      (block $label$3
+       (if
+        (block $label$4
+         (unreachable)
+        )
+        (br $label$3)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
 )
 

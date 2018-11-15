@@ -380,12 +380,11 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
           if (target) {
             curr->list[0] = *target;
             *target = curr;
-            auto oldOuterType = curr->type;
             curr->finalize(curr->type);
             iff->finalize();
-            // After the flip, the outer type must be the same
-            assert(iff->type == oldOuterType);
             replaceCurrent(iff);
+            // Note that the type might change, e.g. if the if condition is unreachable
+            // but the block that was on the outside had a break.
           }
         }
       }

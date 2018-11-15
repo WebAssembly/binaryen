@@ -220,4 +220,21 @@
    (i32.const 3)
   )
  )
+ (func $restructure-if-outerType-change (; 17 ;) (type $0)
+  (loop $label$1
+   (br_if $label$1
+    (block $label$2
+     (if
+      (block $label$4
+       (unreachable)
+      )
+      (block $label$3
+       (br $label$3)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+ )
 )
