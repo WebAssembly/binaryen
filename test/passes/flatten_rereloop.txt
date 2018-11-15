@@ -7,39 +7,27 @@
   (local $0 f64)
   (local $1 f64)
   (local $2 i32)
-  (block $block$2$break
-   (block
-   )
-   (if
-    (i32.const 0)
-    (br $block$2$break)
-    (block
-     (block
-      (nop)
-      (set_local $0
-       (f64.const -nan:0xfffffd63e4e5a)
-      )
-      (set_local $1
-       (get_local $0)
-      )
-      (return
-       (get_local $1)
-      )
-     )
-    )
-   )
-  )
   (block
-   (block $block$3$break
-    (block
-    )
-    (block
-     (br $block$3$break)
-    )
-   )
+  )
+  (if
+   (i32.const 0)
    (block
     (block
      (unreachable)
+    )
+   )
+   (block
+    (block
+     (nop)
+     (set_local $0
+      (f64.const -nan:0xfffffd63e4e5a)
+     )
+     (set_local $1
+      (get_local $0)
+     )
+     (return
+      (get_local $1)
+     )
     )
    )
   )
@@ -226,35 +214,12 @@
    )
    (block $switch$1$leave
     (block $switch$1$default
-     (block $switch$1$case$3
-      (block $switch$1$case$2
-       (br_table $switch$1$case$2 $switch$1$case$3 $switch$1$case$3 $switch$1$case$3 $switch$1$case$2 $switch$1$case$3 $switch$1$case$3 $switch$1$default
-        (get_local $1)
-       )
-      )
-      (block
-       (br $block$2$break)
-      )
-     )
-     (block
-      (block
-       (block
-        (nop)
-       )
-       (block
-        (br $block$2$break)
-       )
-      )
+     (br_table $switch$1$default
+      (get_local $1)
      )
     )
     (block
-     (block
-      (block
-      )
-      (block
-       (br $block$2$break)
-      )
-     )
+     (br $block$2$break)
     )
    )
   )

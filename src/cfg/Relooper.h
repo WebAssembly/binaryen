@@ -206,6 +206,11 @@ struct InsertOrderedMap
     List.clear();
   }
 
+  void swap(InsertOrderedMap<Key, T>& Other) {
+    Map.swap(Other.Map);
+    List.swap(Other.List);
+  }
+
   size_t size() const { return Map.size(); }
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }

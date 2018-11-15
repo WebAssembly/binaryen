@@ -17,6 +17,7 @@ Current Trunk
 v.55
 ====
 - `RelooperCreate` in the C API now has a Module parameter, and `RelooperRenderAndDispose` does not.
+- Relooper Code and Condition properties on Branches and Blocks must not have side effects.
 
 older
 =====

@@ -499,33 +499,29 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
 #endif
   }
 
-  // If a block has one target, and the target is empty and itself
-  // has one target, and there is no phi or switch to worry us,
-  // just skip through.
+  // If a branch goes to an empty block which has one target,
+  // and there is no phi or switch to worry us, just skip through.
   bool SkipEmptyBlocks() {
     bool Worked = false;
     for (auto* Block : Parent->Blocks) {
-      if (Block->BranchesOut.size() == 1) {
-        auto iter = Block->BranchesOut.begin();
-        auto* Next = iter->first;
-        auto* NextBranch = iter->second;
+      // Generate a new set of branches out TODO optimize
+      BlockBranchMap NewBranchesOut;
+      for (auto& iter : Block->BranchesOut) {
+        auto* Next = iter.first;
+        auto* NextBranch = iter.second;
         auto* First = Next;
         auto* Replacement = First;
-        auto* FirstCode = NextBranch->Code; // we allow code there, but not elsewhere TODO
         std::unordered_set<decltype(Replacement)> Seen;
         while (1) {
-          if (Next->BranchesOut.size() == 1 &&
-              !NextBranch->Code && !NextBranch->SwitchValues &&
-              IsEmpty(Next)) {
-            assert(!NextBranch->Condition);
+          if (IsEmpty(Next) &&
+              Next->BranchesOut.size() == 1) {
             auto iter = Next->BranchesOut.begin();
             auto* NextNext = iter->first;
             auto* NextNextBranch = iter->second;
-            if (!NextNextBranch->Code && !NextNextBranch->SwitchValues) {
-              assert(!NextNextBranch->Condition);
+            assert(!NextNextBranch->Condition && !NextNextBranch->SwitchValues);
+            if (!NextNextBranch->Code) { // TODO: handle extra code too
               // We can skip through!
               Next = Replacement = NextNext;
-              NextBranch = NextNextBranch;
               // If we've already seen this, stop - it's an infinite loop of empty
               // blocks we can skip through.
               if (Seen.count(Replacement)) {
@@ -547,11 +543,20 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
 #if RELOOPER_OPTIMIZER_DEBUG
           std::cout << "  skip to replacement! " << Block->Id << " -> " << Replacement->Id << '\n';
 #endif
-          Block->BranchesOut.clear();
-          Block->AddBranchTo(Replacement, nullptr, FirstCode);
           Worked = true;
         }
+        // Add a branch to the target (which may be the unchanged original) in the set of new branches.
+        // If it's a replacement, it may collide, and we need to merge.
+        if (NewBranchesOut.count(Replacement)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  merge\n";
+#endif
+          MergeBranchInto(NextBranch, NewBranchesOut[Replacement]);
+        } else {
+          NewBranchesOut[Replacement] = NextBranch;
+        }
       }
+      Block->BranchesOut.swap(NewBranchesOut); // FIXME do we leak old unused Branches?
     }
     return Worked;
   }
@@ -733,7 +738,6 @@ private:
   // with a unified condition.
   void MergeBranchInto(Branch* Curr, Branch* Into) {
     assert(Curr != Into);
-    assert(!Curr->Code && !Into->Code);
     if (Curr->SwitchValues) {
       if (!Into->SwitchValues) {
         assert(!Into->Condition);
@@ -760,6 +764,19 @@ private:
           Curr->Condition
         );
       }
+    }
+    if (!Curr->Code) {
+      // No code to merge in.
+    } else if (!Into->Code) {
+      // Just use the code being merged in.
+      Into->Code = Curr->Code;
+    } else {
+      // Properly merge them both. Note how this depends on them not
+      // having side effects.
+      Into->Code = wasm::Builder(*Parent->Module).makeSequence(
+        Into->Code,
+        Curr->Code
+      );
     }
   }
 
