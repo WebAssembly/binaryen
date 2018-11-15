@@ -607,26 +607,62 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               list[i] = builder.makeDrop(br1->condition);
             }
           }
-          // combine adjacent br_ifs that test the same value into a br_table,
-          // when that makes sense
+          // Combine adjacent br_ifs that test the same value into a br_table,
+          // when that makes sense.
           tablify(curr);
-          // Restructuring of ifs: if we have
-          //   (block $x
-          //     (br_if $x (cond))
-          //     .., no other references to $x
-          //   )
-          // then we can turn that into (if (!cond) ..).
-          // Code size wise, we turn the block into an if (no change), and
-          // lose the br_if (-2). .. turns into the body of the if in the binary
-          // format. We need to flip the condition, which at worst adds 1.
-          if (curr->name.is()) {
-            auto* br = list[0]->dynCast<Break>();
-            // we seek a regular br_if; if the type is unreachable that means it is not
-            // actually reached, so ignore
-            if (br && br->condition && br->name == curr->name && br->type != unreachable) {
-              assert(!br->value); // can't, it would be dropped or last in the block
-              if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
-                // no other breaks to that name, so we can do this
+          // Pattern-patch ifs, recreating them when it makes sense.
+          restructureIf(curr);
+        }
+      }
+
+      // Restructuring of ifs: if we have
+      //   (block $x
+      //     (br_if $x (cond))
+      //     .., no other references to $x
+      //   )
+      // then we can turn that into (if (!cond) ..).
+      // Code size wise, we turn the block into an if (no change), and
+      // lose the br_if (-2). .. turns into the body of the if in the binary
+      // format. We need to flip the condition, which at worst adds 1.
+      // If the block has a return value, we can do something similar, removing
+      // the drop from the br_if and putting the if on the outside,
+      //   (block $x
+      //     (br_if $x (value) (cond))
+      //     .., no other references to $x
+      //     ..final element..
+      //   )
+      // =>
+      //   (if
+      //     (cond)
+      //     (value) ;; must not have side effects!
+      //     (block
+      //       .., no other references to $x
+      //       ..final element..
+      //     )
+      //   )
+      // This is beneficial as the block will likely go away in the binary
+      // format (the if arm is an implicit block), and the drop is removed.
+      void restructureIf(Block* curr) {
+        auto& list = curr->list;
+        // We should be called only on potentially-interesting lists.
+        assert(list.size() >= 2);
+        if (curr->name.is()) {
+          Break* br = nullptr;
+          Drop* drop = list[0]->dynCast<Drop>();
+          if (drop) {
+            br = drop->value->dynCast<Break>();
+          } else {
+            br = list[0]->dynCast<Break>();
+          }
+          // Check if the br is conditional and goes to the block. It may or may not have
+          // a value, depending on if it was dropped or not.
+          // If the type is unreachable that means it is not actually reached,
+          // which we can ignore.
+          if (br && br->condition && br->name == curr->name && br->type != unreachable) {
+            if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
+              // no other breaks to that name, so we can do this
+              if (!drop) {
+                assert(!br->value);
                 Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
                   builder.makeUnary(EqZInt32, br->condition),
@@ -635,7 +671,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 curr->name = Name();
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
-                return;
+              } else {
+                // If the items we move around have side effects, we can't do this.
+                // TODO: we could use a select, in some cases..?
+                if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
+                    !EffectAnalyzer(passOptions, br->condition).hasSideEffects()) {
+                  ExpressionManipulator::nop(list[0]);
+                  Builder builder(*getModule());
+                  replaceCurrent(
+                    builder.makeIf(
+                      br->condition,
+                      br->value,
+                      curr
+                    )
+                  );
+                }
               }
             }
           }
