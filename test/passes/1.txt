@@ -45,8 +45,8 @@
     (get_local $0)
    )
   )
-  (block $block$11$break
-   (loop $shape$9$continue
+  (loop $shape$9$continue
+   (block $block$11$break
     (call $trivial)
     (br_if $block$11$break
      (i32.eqz

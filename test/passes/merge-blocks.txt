@@ -90,8 +90,8 @@
   (drop
    (block $label$0 (result i32)
     (drop
-     (block $label$1
-      (loop $label$2
+     (loop $label$2
+      (block $label$1
        (br $label$2)
       )
      )
