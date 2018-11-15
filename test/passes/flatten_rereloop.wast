@@ -82,5 +82,19 @@
    (br $a1)
   )
  )
+ (func $skip-empty-4 (param $x i32)
+  (block $a1
+   (block $a2
+    (block $a3
+     (block $a4
+      (br_table $a1 $a2 $a3 $a4 $a1 $a2 $a3 $a4 (get_local $x))
+     )
+     (br $a3)
+    )
+    (br $a2)
+   )
+   (br $a1)
+  )
+ )
 )
 
