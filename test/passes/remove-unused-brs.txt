@@ -469,7 +469,7 @@
     (i32.eqz
      (i32.const 0)
     )
-    (block
+    (block $out40
      (nop)
      (br_if $in39
       (i32.const 1)
@@ -614,7 +614,7 @@
     (i32.eqz
      (i32.const 0)
     )
-    (block
+    (block $out73
      (nop)
      (call $loops)
      (return)
@@ -897,7 +897,7 @@
    (i32.eqz
     (i32.const 0)
    )
-   (block
+   (block $yes
     (nop)
     (drop
      (i32.const 1)

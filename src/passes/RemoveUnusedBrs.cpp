@@ -668,7 +668,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   builder.makeUnary(EqZInt32, br->condition),
                   curr
                 ));
-                curr->name = Name();
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
               } else {
