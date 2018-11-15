@@ -108,5 +108,15 @@
     )
    )
   )
+  (func $if-block
+   (block $label
+    (if (i32.const 1)
+     (block
+      (drop (i32.const 2))
+      (drop (i32.const 3))
+     )
+    )
+   )
+  )
 )
 

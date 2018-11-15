@@ -539,19 +539,20 @@
   (i32.const 50)
  )
  (func $breakThroughMany (; 32 ;) (; has Stack IR ;) (param $0 i32)
-  (block $label$break$L1
-   (if
-    (get_local $0)
-    (loop $while-in
-     (br_if $label$break$L1
-      (i32.eqz
-       (get_local $0)
+  (if
+   (get_local $0)
+   (loop $while-in
+    (block $label$break$L1
+     (if
+      (get_local $0)
+      (block
+       (call $zeroInit
+        (i32.const 0)
+       )
+       (br $while-in)
       )
+      (nop)
      )
-     (call $zeroInit
-      (i32.const 0)
-     )
-     (br $while-in)
     )
    )
   )

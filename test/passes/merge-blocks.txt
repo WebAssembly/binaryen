@@ -129,4 +129,19 @@
    )
   )
  )
+ (func $if-block (; 9 ;) (type $0)
+  (if
+   (i32.const 1)
+   (block $label
+    (block $block
+     (drop
+      (i32.const 2)
+     )
+     (drop
+      (i32.const 3)
+     )
+    )
+   )
+  )
+ )
 )
