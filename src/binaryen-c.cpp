@@ -159,7 +159,7 @@ BinaryenExternalKind BinaryenExternalGlobal(void) { return static_cast<BinaryenE
 
 // Modules
 
-BinaryenModuleRef BinaryenModuleCreate() {
+BinaryenModuleRef BinaryenModuleCreate(void) {
   if (tracing) {
     std::cout << "  the_module = BinaryenModuleCreate();\n";
     std::cout << "  expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);\n";
