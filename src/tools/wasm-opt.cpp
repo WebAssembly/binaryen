@@ -69,6 +69,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzBinary = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
+  bool fuzzAtomics = true;
   bool fuzzPasses = false;
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
@@ -105,6 +106,9 @@ int main(int argc, const char* argv[]) {
       .add("--translate-to-fuzz", "-ttf", "Translate the input into a valid wasm module *somehow*, useful for fuzzing",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { translateToFuzz = true; })
+      .add("--no-fuzz-atomics", "-nfa", "Disable generation of atomic opcodes with translate-to-fuzz (on by default)",
+           Options::Arguments::Zero,
+           [&](Options *o, const std::string& arguments) { fuzzAtomics = false; })
       .add("--fuzz-passes", "-fp", "Pick a random set of passes to run, useful for fuzzing. this depends on translate-to-fuzz (it picks the passes from the input)",
            Options::Arguments::Zero,
            [&](Options *o, const std::string& arguments) { fuzzPasses = true; })
@@ -165,7 +169,7 @@ int main(int argc, const char* argv[]) {
     if (fuzzPasses) {
       reader.pickPasses(options);
     }
-    reader.build();
+    reader.build(fuzzAtomics);
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, features)) {
         WasmPrinter::printModule(&wasm);
