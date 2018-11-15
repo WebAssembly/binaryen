@@ -44,6 +44,8 @@ void addExportedFunction(Module& wasm, Function* function) {
 
 Global* EmscriptenGlueGenerator::getStackPointerGlobal() {
   // Assumption: first global is __stack_pointer
+  // TODO(sbc): Once mutable globals are a thing we shouldn't need this
+  // at all since we can simply export __stack_pointer.
   return wasm.globals[0].get();
 }
 
@@ -308,9 +310,14 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
 std::vector<Address> getSegmentOffsets(Module& wasm) {
   std::vector<Address> segmentOffsets;
   for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Const* addrConst = wasm.memory.segments[i].offset->cast<Const>();
-    auto address = addrConst->value.geti32();
-    segmentOffsets.push_back(address);
+    if (auto* addrConst = wasm.memory.segments[i].offset->dynCast<Const>()) {
+      auto address = addrConst->value.geti32();
+      segmentOffsets.push_back(address);
+    } else {
+      // TODO(sbc): Wasm shared libraries have data segments with non-const
+      // offset.
+      segmentOffsets.push_back(0);
+    }
   }
   return segmentOffsets;
 }
@@ -376,10 +383,12 @@ struct AsmConstWalker : public PostWalker<AsmConstWalker> {
       segmentOffsets(getSegmentOffsets(wasm)) { }
 
   void visitCall(Call* curr);
+  void visitTable(Table* curr);
 
   void process();
 
 private:
+  std::string fixupNameWithSig(Name& name, std::string baseSig);
   Literal idLiteralForCode(std::string code);
   std::string asmConstSig(std::string baseSig);
   Name nameForImportWithSig(std::string sig);
@@ -392,18 +401,24 @@ private:
 void AsmConstWalker::visitCall(Call* curr) {
   auto* import = wasm.getFunction(curr->target);
   if (import->imported() && import->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+    auto baseSig = getSig(curr);
+    auto sig = fixupNameWithSig(curr->target, baseSig);
+
     auto arg = curr->operands[0]->cast<Const>();
     auto code = codeForConstAddr(wasm, segmentOffsets, arg);
     arg->value = idLiteralForCode(code);
-    auto baseSig = getSig(curr);
-    auto sig = asmConstSig(baseSig);
     sigsForCode[code].insert(sig);
-    auto importName = nameForImportWithSig(sig);
-    curr->target = importName;
+  }
+}
 
-    if (allSigs.count(sig) == 0) {
-      allSigs.insert(sig);
-      queueImport(importName, baseSig);
+void AsmConstWalker::visitTable(Table* curr) {
+  for (auto& segment : curr->segments) {
+    for (auto& name : segment.data) {
+      auto* func = wasm.getFunction(name);
+      if (func->imported() && func->base.hasSubstring(EMSCRIPTEN_ASM_CONST)) {
+        std::string baseSig = getSig(func);
+        fixupNameWithSig(name, baseSig);
+      }
     }
   }
 }
@@ -414,6 +429,18 @@ void AsmConstWalker::process() {
   // Add them after the walk, to avoid iterator invalidation on
   // the list of functions.
   addImports();
+}
+
+std::string AsmConstWalker::fixupNameWithSig(Name& name, std::string baseSig) {
+  auto sig = asmConstSig(baseSig);
+  auto importName = nameForImportWithSig(sig);
+  name = importName;
+
+  if (allSigs.count(sig) == 0) {
+    allSigs.insert(sig);
+    queueImport(importName, baseSig);
+  }
+  return sig;
 }
 
 Literal AsmConstWalker::idLiteralForCode(std::string code) {
@@ -531,12 +558,6 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
   }
   return walker;
 }
-
-void EmscriptenGlueGenerator::fixEmAsmConsts() {
-  fixEmAsmConstsAndReturnWalker(wasm);
-  fixEmJsFuncsAndReturnWalker(wasm);
-}
-
 
 // Fixes function name hacks caused by LLVM exception & setjmp/longjmp
 // handling pass for wasm.
