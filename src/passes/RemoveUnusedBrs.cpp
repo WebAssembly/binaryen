@@ -668,7 +668,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   builder.makeUnary(EqZInt32, br->condition),
                   curr
                 ));
-                curr->name = Name(); // no more uses
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
               } else {
@@ -676,7 +675,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 // TODO: we could use a select, in some cases..?
                 if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
                     !EffectAnalyzer(passOptions, br->condition).hasSideEffects()) {
-                  curr->name = Name(); // no more uses
                   ExpressionManipulator::nop(list[0]);
                   Builder builder(*getModule());
                   replaceCurrent(
