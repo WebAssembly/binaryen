@@ -212,15 +212,8 @@
      (get_local $x)
     )
    )
-   (block $switch$1$leave
-    (block $switch$1$default
-     (br_table $switch$1$default
-      (get_local $1)
-     )
-    )
-    (block
-     (br $block$2$break)
-    )
+   (block
+    (br $block$2$break)
    )
   )
   (block

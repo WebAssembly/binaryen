@@ -486,9 +486,10 @@ struct Optimizer : public RelooperRecursor {
 
     while (More) {
       More = false;
-if (!getenv("NOSKIP"))      More = SkipEmptyBlocks() || More;
+      More = SkipEmptyBlocks() || More;
       More = MergeBlocks() || More;
-if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
+      More = MergeEquivalentBranches() || More;
+      More = UnSwitch() || More;
     }
 
 #if RELOOPER_OPTIMIZER_DEBUG
@@ -541,7 +542,7 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
         }
         if (Replacement != First) {
 #if RELOOPER_OPTIMIZER_DEBUG
-          std::cout << "  skip to replacement! " << Block->Id << " -> " << Replacement->Id << '\n';
+          std::cout << "  skip to replacement! " << First->Id << " -> " << Replacement->Id << '\n';
 #endif
           Worked = true;
         }
@@ -613,6 +614,35 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
         }
         for (auto* Curr : BlocksToErase) {
           ParentBlock->BranchesOut.erase(Curr);
+        }
+      }
+    }
+    return Worked;
+  }
+
+  // Removes unneeded switches - if only one branch is left, the default, then
+  // no switch is needed.
+  bool UnSwitch() {
+    bool Worked = false;
+    for (auto* ParentBlock : Parent->Blocks) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "un-switching at " << ParentBlock->Id << ' ' << !!ParentBlock->SwitchCondition << ' ' << ParentBlock->BranchesOut.size() << '\n';
+#endif
+      if (ParentBlock->SwitchCondition) {
+        if (ParentBlock->BranchesOut.size() <= 1) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  un-switching!: " << ParentBlock->Id << '\n';
+#endif
+          ParentBlock->SwitchCondition = nullptr;
+          if (!ParentBlock->BranchesOut.empty()) {
+            assert(!ParentBlock->BranchesOut.begin()->second->SwitchValues);
+          }
+          Worked = true;
+        }
+      } else {
+        // If the block has no switch, the branches must not as well.
+        for (auto& iter : ParentBlock->BranchesOut) {
+          assert(!iter.second->SwitchValues);
         }
       }
     }
