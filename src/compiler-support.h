@@ -37,7 +37,7 @@
 #else
 # include <assert.h>
 # include <stdlib.h>
-# define WASM_UNREACHABLE() do { assert(false); abort() } while (0)
+# define WASM_UNREACHABLE() do { assert(false); abort(); } while (0)
 #endif
 
 #ifdef __GNUC__
