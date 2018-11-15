@@ -6964,56 +6964,27 @@
     (get_local $1)
     (i32.const 20)
    )
-   (block $label$break$L1
-    (block $switch-default
-     (block $switch-case9
-      (block $switch-case8
-       (block $switch-case7
-        (block $switch-case6
-         (block $switch-case5
-          (block $switch-case4
-           (block $switch-case3
-            (block $switch-case2
-             (block $switch-case1
-              (block $switch-case
-               (br_table $switch-case $switch-case1 $switch-case2 $switch-case3 $switch-case4 $switch-case5 $switch-case6 $switch-case7 $switch-case8 $switch-case9 $switch-default
-                (i32.sub
-                 (get_local $1)
-                 (i32.const 9)
-                )
-               )
-              )
-              (set_local $3
-               (i32.load
-                (tee_local $1
-                 (i32.and
-                  (i32.add
-                   (i32.load
-                    (get_local $2)
-                   )
-                   (i32.const 3)
-                  )
-                  (i32.const -4)
-                 )
-                )
-               )
-              )
-              (i32.store
-               (get_local $2)
-               (i32.add
+   (block $switch-default
+    (block $switch-case9
+     (block $switch-case8
+      (block $switch-case7
+       (block $switch-case6
+        (block $switch-case5
+         (block $switch-case4
+          (block $switch-case3
+           (block $switch-case2
+            (block $switch-case1
+             (block $switch-case
+              (br_table $switch-case $switch-case1 $switch-case2 $switch-case3 $switch-case4 $switch-case5 $switch-case6 $switch-case7 $switch-case8 $switch-case9 $switch-default
+               (i32.sub
                 (get_local $1)
-                (i32.const 4)
+                (i32.const 9)
                )
               )
-              (i32.store
-               (get_local $0)
-               (get_local $3)
-              )
-              (br $label$break$L1)
              )
-             (set_local $1
+             (set_local $3
               (i32.load
-               (tee_local $3
+               (tee_local $1
                 (i32.and
                  (i32.add
                   (i32.load
@@ -7029,32 +7000,19 @@
              (i32.store
               (get_local $2)
               (i32.add
-               (get_local $3)
+               (get_local $1)
                (i32.const 4)
               )
              )
              (i32.store
               (get_local $0)
-              (get_local $1)
+              (get_local $3)
              )
-             (i32.store offset=4
-              (get_local $0)
-              (i32.shr_s
-               (i32.shl
-                (i32.lt_s
-                 (get_local $1)
-                 (i32.const 0)
-                )
-                (i32.const 31)
-               )
-               (i32.const 31)
-              )
-             )
-             (br $label$break$L1)
+             (br $switch-default)
             )
-            (set_local $3
+            (set_local $1
              (i32.load
-              (tee_local $1
+              (tee_local $3
                (i32.and
                 (i32.add
                  (i32.load
@@ -7070,110 +7028,99 @@
             (i32.store
              (get_local $2)
              (i32.add
-              (get_local $1)
+              (get_local $3)
               (i32.const 4)
              )
             )
             (i32.store
              (get_local $0)
-             (get_local $3)
+             (get_local $1)
             )
             (i32.store offset=4
              (get_local $0)
-             (i32.const 0)
-            )
-            (br $label$break$L1)
-           )
-           (set_local $5
-            (i32.load
-             (tee_local $3
-              (tee_local $1
-               (i32.and
-                (i32.add
-                 (i32.load
-                  (get_local $2)
-                 )
-                 (i32.const 7)
-                )
-                (i32.const -8)
+             (i32.shr_s
+              (i32.shl
+               (i32.lt_s
+                (get_local $1)
+                (i32.const 0)
                )
+               (i32.const 31)
               )
+              (i32.const 31)
              )
             )
+            (br $switch-default)
            )
            (set_local $3
-            (i32.load offset=4
-             (get_local $3)
+            (i32.load
+             (tee_local $1
+              (i32.and
+               (i32.add
+                (i32.load
+                 (get_local $2)
+                )
+                (i32.const 3)
+               )
+               (i32.const -4)
+              )
+             )
             )
            )
            (i32.store
             (get_local $2)
             (i32.add
              (get_local $1)
-             (i32.const 8)
+             (i32.const 4)
             )
            )
            (i32.store
             (get_local $0)
-            (get_local $5)
+            (get_local $3)
            )
            (i32.store offset=4
             (get_local $0)
-            (get_local $3)
+            (i32.const 0)
            )
-           (br $label$break$L1)
+           (br $switch-default)
           )
-          (set_local $3
+          (set_local $5
            (i32.load
-            (tee_local $1
-             (i32.and
-              (i32.add
-               (i32.load
-                (get_local $2)
+            (tee_local $3
+             (tee_local $1
+              (i32.and
+               (i32.add
+                (i32.load
+                 (get_local $2)
+                )
+                (i32.const 7)
                )
-               (i32.const 3)
+               (i32.const -8)
               )
-              (i32.const -4)
              )
             )
+           )
+          )
+          (set_local $3
+           (i32.load offset=4
+            (get_local $3)
            )
           )
           (i32.store
            (get_local $2)
            (i32.add
             (get_local $1)
-            (i32.const 4)
+            (i32.const 8)
            )
           )
           (i32.store
            (get_local $0)
-           (tee_local $1
-            (i32.shr_s
-             (i32.shl
-              (i32.and
-               (get_local $3)
-               (i32.const 65535)
-              )
-              (i32.const 16)
-             )
-             (i32.const 16)
-            )
-           )
+           (get_local $5)
           )
           (i32.store offset=4
            (get_local $0)
-           (i32.shr_s
-            (i32.shl
-             (i32.lt_s
-              (get_local $1)
-              (i32.const 0)
-             )
-             (i32.const 31)
-            )
-            (i32.const 31)
-           )
+           (get_local $3)
           )
-          (br $label$break$L1)
+          (br $switch-default)
          )
          (set_local $3
           (i32.load
@@ -7199,16 +7146,33 @@
          )
          (i32.store
           (get_local $0)
-          (i32.and
-           (get_local $3)
-           (i32.const 65535)
+          (tee_local $1
+           (i32.shr_s
+            (i32.shl
+             (i32.and
+              (get_local $3)
+              (i32.const 65535)
+             )
+             (i32.const 16)
+            )
+            (i32.const 16)
+           )
           )
          )
          (i32.store offset=4
           (get_local $0)
-          (i32.const 0)
+          (i32.shr_s
+           (i32.shl
+            (i32.lt_s
+             (get_local $1)
+             (i32.const 0)
+            )
+            (i32.const 31)
+           )
+           (i32.const 31)
+          )
          )
-         (br $label$break$L1)
+         (br $switch-default)
         )
         (set_local $3
          (i32.load
@@ -7234,33 +7198,16 @@
         )
         (i32.store
          (get_local $0)
-         (tee_local $1
-          (i32.shr_s
-           (i32.shl
-            (i32.and
-             (get_local $3)
-             (i32.const 255)
-            )
-            (i32.const 24)
-           )
-           (i32.const 24)
-          )
+         (i32.and
+          (get_local $3)
+          (i32.const 65535)
          )
         )
         (i32.store offset=4
          (get_local $0)
-         (i32.shr_s
-          (i32.shl
-           (i32.lt_s
-            (get_local $1)
-            (i32.const 0)
-           )
-           (i32.const 31)
-          )
-          (i32.const 31)
-         )
+         (i32.const 0)
         )
-        (br $label$break$L1)
+        (br $switch-default)
        )
        (set_local $3
         (i32.load
@@ -7286,28 +7233,45 @@
        )
        (i32.store
         (get_local $0)
-        (i32.and
-         (get_local $3)
-         (i32.const 255)
+        (tee_local $1
+         (i32.shr_s
+          (i32.shl
+           (i32.and
+            (get_local $3)
+            (i32.const 255)
+           )
+           (i32.const 24)
+          )
+          (i32.const 24)
+         )
         )
        )
        (i32.store offset=4
         (get_local $0)
-        (i32.const 0)
+        (i32.shr_s
+         (i32.shl
+          (i32.lt_s
+           (get_local $1)
+           (i32.const 0)
+          )
+          (i32.const 31)
+         )
+         (i32.const 31)
+        )
        )
-       (br $label$break$L1)
+       (br $switch-default)
       )
-      (set_local $4
-       (f64.load
+      (set_local $3
+       (i32.load
         (tee_local $1
          (i32.and
           (i32.add
            (i32.load
             (get_local $2)
            )
-           (i32.const 7)
+           (i32.const 3)
           )
-          (i32.const -8)
+          (i32.const -4)
          )
         )
        )
@@ -7316,14 +7280,21 @@
        (get_local $2)
        (i32.add
         (get_local $1)
-        (i32.const 8)
+        (i32.const 4)
        )
       )
-      (f64.store
+      (i32.store
        (get_local $0)
-       (get_local $4)
+       (i32.and
+        (get_local $3)
+        (i32.const 255)
+       )
       )
-      (br $label$break$L1)
+      (i32.store offset=4
+       (get_local $0)
+       (i32.const 0)
+      )
+      (br $switch-default)
      )
      (set_local $4
       (f64.load
@@ -7351,6 +7322,33 @@
       (get_local $0)
       (get_local $4)
      )
+     (br $switch-default)
+    )
+    (set_local $4
+     (f64.load
+      (tee_local $1
+       (i32.and
+        (i32.add
+         (i32.load
+          (get_local $2)
+         )
+         (i32.const 7)
+        )
+        (i32.const -8)
+       )
+      )
+     )
+    )
+    (i32.store
+     (get_local $2)
+     (i32.add
+      (get_local $1)
+      (i32.const 8)
+     )
+    )
+    (f64.store
+     (get_local $0)
+     (get_local $4)
     )
    )
   )

@@ -4212,7 +4212,7 @@
                          )
                         )
                         (get_local $7)
-                        (block $do-once57 (result i32)
+                        (block (result i32)
                          (i32.store8
                           (get_local $7)
                           (i32.const 46)
