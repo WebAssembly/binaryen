@@ -30,5 +30,19 @@
   )
   (i32.const 2)
  )
+ (func $skip-empty
+  (block $a1
+   (block $a2
+    (block $a3
+     (block $a4
+      (br $a4)
+     )
+     (br $a3)
+    )
+    (br $a2)
+   )
+   (br $a1)
+  )
+ )
 )
 
