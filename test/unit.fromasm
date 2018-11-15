@@ -549,9 +549,7 @@
       )
       (br $while-in)
      )
-     (block $label$break$L1
-      (nop)
-     )
+     (nop)
     )
    )
   )
