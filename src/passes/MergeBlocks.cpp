@@ -338,6 +338,24 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     // If the block has a single child which is a loop, and the block is named,
     // then it is the exit for the loop. It's better to move it into the loop,
     // where it can be better optimized by other passes.
+    // Similar logic for ifs: if the block is an exit for the if, we can
+    // move the block in, consider for example:
+    //    (block $label
+    //     (if (..condition1..)
+    //      (block
+    //       (br_if $label (..condition2..))
+    //       (..code..)
+    //      )
+    //     )
+    //    )
+    // After also merging the blocks, we have
+    //    (if (..condition1..)
+    //     (block $label
+    //      (br_if $label (..condition2..))
+    //      (..code..)
+    //     )
+    //    )
+    // which can be further optimized by other passes.
     if (curr->name.is() && curr->list.size() == 1) {
       if (auto* loop = curr->list[0]->dynCast<Loop>()) {
         curr->list[0] = loop->body;
@@ -348,8 +366,29 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
         // After the flip, the outer type must be the same
         assert(loop->type == oldOuterType);
         replaceCurrent(loop);
-        // Fall through to optimize the block, which has a new child now.
+      } else if (auto* iff = curr->list[0]->dynCast<If>()) {
+        // The label can't be used in the condition.
+        if (BranchUtils::BranchSeeker::countNamed(iff->condition, curr->name) == 0) {
+          // We can move the block into either arm, if there are no uses in the other.
+          Expression** target = nullptr;
+          if (!iff->ifFalse ||
+              BranchUtils::BranchSeeker::countNamed(iff->ifFalse, curr->name) == 0) {
+            target = &iff->ifTrue;
+          } else if (BranchUtils::BranchSeeker::countNamed(iff->ifTrue, curr->name) == 0) {
+            target = &iff->ifFalse;
+          }
+          if (target) {
+            curr->list[0] = *target;
+            *target = curr;
+            curr->finalize(curr->type);
+            iff->finalize();
+            replaceCurrent(iff);
+            // Note that the type might change, e.g. if the if condition is unreachable
+            // but the block that was on the outside had a break.
+          }
+        }
       }
+      // Always fall through to optimize the block, which has a new child now.
     }
     // Otherwise, do the main merging optimizations.
     optimizeBlock(curr, getModule(), getPassOptions());
