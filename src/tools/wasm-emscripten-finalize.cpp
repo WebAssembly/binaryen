@@ -130,19 +130,30 @@ int main(int argc, const char *argv[]) {
     WasmPrinter::printModule(&wasm, std::cerr);
   }
 
-  Export* dataEndExport = wasm.getExport("__data_end");
-  if (dataEndExport == nullptr) {
-    Fatal() << "__data_end export not found";
+  bool isSideModule = false;
+  for (const UserSection& section : wasm.userSections) {
+    if (section.name == BinaryConsts::UserSections::Dylink) {
+      isSideModule = true;
+    }
   }
-  Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-  if (dataEnd == nullptr) {
-    Fatal() << "__data_end global not found";
+
+  uint32_t dataSize = 0;
+
+  if (!isSideModule) {
+    Export* dataEndExport = wasm.getExport("__data_end");
+    if (dataEndExport == nullptr) {
+      Fatal() << "__data_end export not found";
+    }
+    Global* dataEnd = wasm.getGlobal(dataEndExport->value);
+    if (dataEnd == nullptr) {
+      Fatal() << "__data_end global not found";
+    }
+    if (dataEnd->type != Type::i32) {
+      Fatal() << "__data_end global has wrong type";
+    }
+    Const* dataEndConst = dataEnd->init->cast<Const>();
+    dataSize = dataEndConst->value.geti32() - globalBase;
   }
-  if (dataEnd->type != Type::i32) {
-    Fatal() << "__data_end global has wrong type";
-  }
-  Const* dataEndConst = dataEnd->init->cast<Const>();
-  uint32_t dataSize = dataEndConst->value.geti32() - globalBase;
 
   std::vector<Name> initializerFunctions;
   if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
@@ -160,8 +171,10 @@ int main(int argc, const char *argv[]) {
     passRunner.run();
   }
 
-  generator.generateRuntimeFunctions();
-  generator.generateMemoryGrowthFunction();
+  if (!isSideModule) {
+    generator.generateRuntimeFunctions();
+    generator.generateMemoryGrowthFunction();
+  }
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);

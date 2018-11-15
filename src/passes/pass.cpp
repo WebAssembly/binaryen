@@ -184,7 +184,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("code-folding");
   }
   add("merge-blocks"); // makes remove-unused-brs more effective
-  add("remove-unused-brs"); // coalesce-locals opens opportunities for optimizations
+  add("remove-unused-brs"); // coalesce-locals opens opportunities
+  add("remove-unused-names"); // remove-unused-brs opens opportunities
   add("merge-blocks"); // clean up remove-unused-brs new blocks
   add("optimize-instructions");
   // late propagation
