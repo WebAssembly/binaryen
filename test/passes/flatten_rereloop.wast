@@ -60,5 +60,27 @@
    (br $a1)
   )
  )
+ (func $skip-empty-3
+  (block $a1
+   (block $a2
+    (block $a3
+     (block $a4
+      (nop)
+      (br $a4)
+      (nop)
+     )
+     (nop)
+     (call $skip-empty)
+     (nop)
+     (br $a3)
+    )
+    (nop)
+    (call $skip-empty)
+    (nop)
+    (br $a2)
+   )
+   (br $a1)
+  )
+ )
 )
 
