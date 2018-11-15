@@ -36,7 +36,8 @@
 # define WASM_UNREACHABLE() do { __sanitizer_print_stack_trace(); __builtin_trap(); } while (0)
 #else
 # include <assert.h>
-# define WASM_UNREACHABLE() assert(false)
+# include <stdlib.h>
+# define WASM_UNREACHABLE() assert(false); abort()
 #endif
 
 #ifdef __GNUC__
