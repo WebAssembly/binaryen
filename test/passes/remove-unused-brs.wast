@@ -1561,5 +1561,61 @@
     )
    )
   )
+  (func $drop-restructure-if (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-final (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (func $drop-restructure-if-middle (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (nop) ;; the middle
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-bad (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (tee_local $y (get_local $x))
+      (get_local $y)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-bad-2 (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $y)
+      (tee_local $y (get_local $x))
+     )
+    )
+    (i32.const 0)
+   )
+  )
 )
 
