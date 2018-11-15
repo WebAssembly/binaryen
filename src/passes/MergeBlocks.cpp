@@ -367,15 +367,26 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
         assert(loop->type == oldOuterType);
         replaceCurrent(loop);
       } else if (auto* iff = curr->list[0]->dynCast<If>()) {
-        if (!iff->ifFalse) {
-          curr->list[0] = iff->ifTrue;
-          iff->ifTrue = curr;
-          auto oldOuterType = curr->type;
-          curr->finalize(curr->type);
-          iff->finalize();
-          // After the flip, the outer type must be the same
-          assert(iff->type == oldOuterType);
-          replaceCurrent(iff);
+        // The label can't be used in the condition.
+        if (BranchUtils::BranchSeeker::countNamed(iff->condition, curr->name) == 0) {
+          // We can move the block into either arm, if there are no uses in the other.
+          Expression** target = nullptr;
+          if (!iff->ifFalse ||
+              BranchUtils::BranchSeeker::countNamed(iff->ifFalse, curr->name) == 0) {
+            target = &iff->ifTrue;
+          } else if (BranchUtils::BranchSeeker::countNamed(iff->ifTrue, curr->name) == 0) {
+            target = &iff->ifFalse;
+          }
+          if (target) {
+            curr->list[0] = *target;
+            *target = curr;
+            auto oldOuterType = curr->type;
+            curr->finalize(curr->type);
+            iff->finalize();
+            // After the flip, the outer type must be the same
+            assert(iff->type == oldOuterType);
+            replaceCurrent(iff);
+          }
         }
       }
       // Always fall through to optimize the block, which has a new child now.

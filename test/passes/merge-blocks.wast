@@ -110,11 +110,76 @@
   )
   (func $if-block
    (block $label
-    (if (i32.const 1)
+    (if
+     (i32.const 1)
      (block
       (drop (i32.const 2))
       (drop (i32.const 3))
      )
+    )
+   )
+  )
+  (func $if-block-bad
+   (block $label
+    (if
+     (br $label) ;; use outside of arm
+     (block
+      (drop (i32.const 2))
+      (drop (i32.const 3))
+     )
+    )
+   )
+  )
+  (func $if-block-br
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-1
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+     (drop (i32.const 3))
+    )
+   )
+  )
+  (func $if-block-br-2
+   (block $label
+    (if
+     (i32.const 1)
+     (drop (i32.const 3))
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-3
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-4-eithre
+   (block $label
+    (if
+     (i32.const 1)
+     (drop (i32.const 2))
+     (drop (i32.const 3))
+    )
+   )
+  )
+  (func $if-block-br-5-value (result i32)
+   (block $label (result i32)
+    (if (result i32)
+     (i32.const 1)
+     (i32.const 2)
+     (i32.const 3)
     )
    )
   )
