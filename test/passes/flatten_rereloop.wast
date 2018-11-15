@@ -44,5 +44,21 @@
    (br $a1)
   )
  )
+ (func $skip-empty-2
+  (block $a1
+   (block $a2
+    (block $a3
+     (block $a4
+      (br $a4)
+     )
+     (call $skip-empty)
+     (br $a3)
+    )
+    (call $skip-empty)
+    (br $a2)
+   )
+   (br $a1)
+  )
+ )
 )
 
