@@ -477,12 +477,26 @@ struct Optimizer : public RelooperRecursor {
   Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
     // TODO: there are likely some rare but possible O(N^2) cases with this looping
     bool More = true;
+#if RELOOPER_OPTIMIZER_DEBUG
+    std::cout << "pre-optimize\n";
+    for (auto* Block : Parent->Blocks) {
+      DebugDump(Block, "pre-block");
+    }
+#endif
+
     while (More) {
       More = false;
 if (!getenv("NOSKIP"))      More = SkipEmptyBlocks() || More;
       More = MergeBlocks() || More;
 if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
     }
+
+#if RELOOPER_OPTIMIZER_DEBUG
+    std::cout << "post-optimize\n";
+    for (auto* Block : Parent->Blocks) {
+      DebugDump(Block, "post-block");
+    }
+#endif
   }
 
   // If a block has one target, and the target is empty and itself
@@ -530,6 +544,9 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
           break;
         }
         if (Replacement != First) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  skip to replacement! " << Block->Id << " -> " << Replacement->Id << '\n';
+#endif
           Block->BranchesOut.clear();
           Block->AddBranchTo(Replacement, nullptr, FirstCode);
           Worked = true;
@@ -545,13 +562,22 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
   bool MergeEquivalentBranches() {
     bool Worked = false;
     for (auto* ParentBlock : Parent->Blocks) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "at parent " << ParentBlock->Id << '\n';
+#endif
       if (ParentBlock->BranchesOut.size() >= 2) {
         std::unordered_map<wasm::HashType, std::vector<BranchBlock>> HashedBranchesOut;
         std::vector<Block*> BlocksToErase;
         for (auto& iter : ParentBlock->BranchesOut) {
           Block* CurrBlock = iter.first;
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  consider child " << CurrBlock->Id << '\n';
+#endif
           Branch* CurrBranch = iter.second;
           if (CurrBranch->Code) {
+#if RELOOPER_OPTIMIZER_DEBUG
+            std::cout << "    child has phi\n";
+#endif
             continue; // TODO: handle code on branches
           }
           auto HashValue = Hash(CurrBlock);
@@ -562,11 +588,19 @@ if (!getenv("NOMERGE"))     More = MergeEquivalentBranches() || More;
             Branch* SiblingBranch = Pair.first;
             Block* SiblingBlock = Pair.second;
             if (HaveEquivalentContents(CurrBlock, SiblingBlock)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+              std::cout << "    equiv! to " << SiblingBlock->Id << '\n';
+#endif
               MergeBranchInto(CurrBranch, SiblingBranch);
               BlocksToErase.push_back(CurrBlock);
               Merged = true;
               Worked = true;
             }
+#if RELOOPER_OPTIMIZER_DEBUG
+            else {
+              std::cout << "    same hash, but not equiv to " << SiblingBlock->Id << '\n';
+            }
+#endif
           }
           if (!Merged) {
             HashedSiblings.emplace_back(CurrBranch, CurrBlock);
@@ -617,42 +651,57 @@ private:
     return false;
   }
 
-  // These methods compare IR contents to see if they are equivalent. That
-  // means that on a Branch we check the Condition/SwitchValues and the Code,
-  // but none of the internal fields the Relooper uses late in the process like
-  // the Ancestor, etc.
-// XXX needed?
-  bool HaveEquivalentContents(Branch* A, Branch* B) {
-    if (A->SwitchValues) {
-      std::vector<unsigned int>& AValues = *A->SwitchValues;
-      std::vector<unsigned int>& BValues = *B->SwitchValues;
-      if (AValues != BValues) {
-        return false;
-      }
-    } else {
-      if (!IsPossibleCodeEquivalent(A->Condition, B->Condition)) {
-        return false;
-      }
-    }
-    if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
-      return false;
-    }
-    return true;
-  }
-
   // Similar to what we do for a Branch, checks the Code and SwitchCondition.
   // We also check the branches out, *non-recursively*: that is, we check
   // that they are literally identical, not that they can be computed to
   // be equivalent.
   bool HaveEquivalentContents(Block* A, Block* B) {
     if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "    HEC: different SC\n";
+#endif
       return false;
     }
     if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "    HEC: different Code\n";
+#endif
       return false;
     }
-    if (A->BranchesOut != B->BranchesOut) {
+    if (A->BranchesOut.size() != B->BranchesOut.size()) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "    HEC: different BranchesOut sizes\n";
+#endif
       return false;
+    }
+    for (auto& aiter : A->BranchesOut) {
+      auto* ABlock = aiter.first;
+      auto* ABranch = aiter.second;
+      if (B->BranchesOut.count(ABlock) == 0) {
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << "    HEC: different BranchesOut block targets\n";
+#endif
+        return false;
+      }
+      auto* BBranch = B->BranchesOut[ABlock];
+      if (!IsPossibleCodeEquivalent(ABranch->Condition, BBranch->Condition)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << "    HEC: different BranchesOut branch conditions\n";
+#endif
+        return false;
+      }
+      if (!IsPossibleUniquePtrEquivalent(ABranch->SwitchValues, BBranch->SwitchValues)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << "    HEC: different BranchesOut branch switchValues\n";
+#endif
+        return false;
+      }
+      if (!IsPossibleCodeEquivalent(ABranch->Code, BBranch->Code)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << "    HEC: different BranchesOut branch codes\n";
+#endif
+        return false;
+      }
     }
     return true;
   }
@@ -669,6 +718,14 @@ private:
       assert(A == nullptr);
     }
     return true;
+  }
+
+  // Checks if values referred to by pointers are identical, allowing the code to also be nullptr
+  template<typename T>
+  static bool IsPossibleUniquePtrEquivalent(std::unique_ptr<T>& A, std::unique_ptr<T>& B) {
+    if (A == B) return true;
+    if (!A || !B) return false;
+    return *A == *B;
   }
 
   // Merges one branch into another. Valid under the assumption that the
@@ -1261,20 +1318,39 @@ wasm::Expression* Relooper::Render(RelooperBuilder& Builder) {
 #ifdef RELOOPER_DEBUG
 // Debugging
 
-void Debugging::Dump(BlockSet &Blocks, const char *prefix) {
-  if (prefix) printf("%s ", prefix);
-  for (auto* Curr : Blocks) {
-    printf("%d:\n", Curr->Id);
-    for (auto iter2 = Curr->BranchesOut.begin(); iter2 != Curr->BranchesOut.end(); iter2++) {
-      Block* Other = iter2->first;
-      printf("  -> %d\n", Other->Id);
-      assert(contains(Other->BranchesIn, Curr));
+void Debugging::Dump(Block* Curr, const char *prefix) {
+  if (prefix) std::cout << prefix << ": ";
+  std::cout << Curr->Id << " [code " << *Curr->Code << "] [switch? " << !!Curr->SwitchCondition << "]\n";
+  for (auto iter2 = Curr->BranchesOut.begin(); iter2 != Curr->BranchesOut.end(); iter2++) {
+    Block* Other = iter2->first;
+    Branch* Br = iter2->second;
+    std::cout << "  -> " << Other->Id << ' ';
+    if (Br->Condition) {
+      std::cout << "[if " << *Br->Condition << "] ";
+    } else if (Br->SwitchValues) {
+      std::cout << "[cases ";
+      for (auto x : *Br->SwitchValues) {
+        std::cout << x << ' ';
+      }
+      std::cout << "] ";
+    } else {
+      std::cout << "[default] ";
     }
+    if (Br->Code) std::cout << "[phi " << *Br->Code << "] ";
+    std::cout << '\n';
+  }
+  std::cout << '\n';
+}
+
+void Debugging::Dump(BlockSet &Blocks, const char *prefix) {
+  if (prefix) std::cout << prefix << ": ";
+  for (auto* Curr : Blocks) {
+    Dump(Curr);
   }
 }
 
 void Debugging::Dump(Shape* S, const char *prefix) {
-  if (prefix) printf("%s ", prefix);
+  if (prefix) std::cout << prefix << ": ";
   if (!S) {
     printf(" (null)\n");
     return;

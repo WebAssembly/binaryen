@@ -2,6 +2,7 @@
  (type $0 (func (result f64)))
  (type $1 (func (result i32)))
  (type $2 (func))
+ (type $3 (func (param i32)))
  (func $0 (; 0 ;) (type $0) (result f64)
   (local $0 f64)
   (local $1 f64)
@@ -113,19 +114,154 @@
   )
   (unreachable)
  )
- (func $br-to-unreachable (; 2 ;) (type $2)
+ (func $skip-empty (; 2 ;) (type $2)
   (local $0 i32)
-  (block $block$3$break
+  (block $block$2$break
    (block
    )
    (block
-    (br $block$3$break)
+    (br $block$2$break)
    )
   )
   (block
    (block
     (nop)
-    (unreachable)
+    (return)
+   )
+  )
+ )
+ (func $skip-empty-2 (; 3 ;) (type $2)
+  (local $0 i32)
+  (block $block$5$break
+   (block
+   )
+   (block
+    (br $block$5$break)
+   )
+  )
+  (block
+   (block $block$4$break
+    (block
+     (nop)
+     (call $skip-empty)
+     (nop)
+    )
+    (block
+     (br $block$4$break)
+    )
+   )
+   (block
+    (block $block$2$break
+     (block
+      (nop)
+      (call $skip-empty)
+      (nop)
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (block
+      (nop)
+      (return)
+     )
+    )
+   )
+  )
+ )
+ (func $skip-empty-3 (; 4 ;) (type $2)
+  (local $0 i32)
+  (block $block$5$break
+   (block
+    (nop)
+   )
+   (block
+    (br $block$5$break)
+   )
+  )
+  (block
+   (block $block$4$break
+    (block
+     (nop)
+     (nop)
+     (call $skip-empty)
+     (nop)
+     (nop)
+    )
+    (block
+     (br $block$4$break)
+    )
+   )
+   (block
+    (block $block$2$break
+     (block
+      (nop)
+      (nop)
+      (call $skip-empty)
+      (nop)
+      (nop)
+     )
+     (block
+      (br $block$2$break)
+     )
+    )
+    (block
+     (block
+      (nop)
+      (return)
+     )
+    )
+   )
+  )
+ )
+ (func $skip-empty-4 (; 5 ;) (type $3) (param $x i32)
+  (local $1 i32)
+  (local $2 i32)
+  (block $block$2$break
+   (block
+    (set_local $1
+     (get_local $x)
+    )
+   )
+   (block $switch$1$leave
+    (block $switch$1$default
+     (block $switch$1$case$3
+      (block $switch$1$case$2
+       (br_table $switch$1$case$2 $switch$1$case$3 $switch$1$case$3 $switch$1$case$3 $switch$1$case$2 $switch$1$case$3 $switch$1$case$3 $switch$1$default
+        (get_local $1)
+       )
+      )
+      (block
+       (br $block$2$break)
+      )
+     )
+     (block
+      (block
+       (block
+        (nop)
+       )
+       (block
+        (br $block$2$break)
+       )
+      )
+     )
+    )
+    (block
+     (block
+      (block
+      )
+      (block
+       (br $block$2$break)
+      )
+     )
+    )
+   )
+  )
+  (block
+   (block
+    (nop)
+    (return)
    )
   )
  )

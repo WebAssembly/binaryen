@@ -1,3 +1,5 @@
+//#define RELOOPER_DEBUG 1
+//#define RELOOPER_OPTIMIZER_DEBUG 1
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -376,6 +378,7 @@ typedef InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
 
 #ifdef RELOOPER_DEBUG
 struct Debugging {
+  static void Dump(Block* Curr, const char *prefix=NULL);
   static void Dump(BlockSet &Blocks, const char *prefix=NULL);
   static void Dump(Shape* S, const char *prefix=NULL);
 };
