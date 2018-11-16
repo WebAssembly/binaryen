@@ -442,7 +442,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       // Try to shorten the list of targets.
       while (sw->targets.size() > 1) {
         auto last = sw->targets.back();
-        sw->targets.resize(sw->targets.size() - 1);
+        sw->targets.pop_back();
         if (!tryToReplaceCurrent(curr)) {
           sw->targets.push_back(last);
           break;
@@ -464,13 +464,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           for (Index j = i; j < list.size() - 1; j++) {
             list[j] = list[j + 1];
           }
-          list.resize(list.size() - 1);
+          list.pop_back();
           if (writeAndTestReduction()) {
             std::cerr << "|      block-nop removed\n";
             noteReduction();
             return;
           }
-          list.resize(list.size() + 1);
+          list.push_back(nullptr);
           // we failed; undo
           for (Index j = list.size() - 1; j > i; j--) {
             list[j] = list[j - 1];
