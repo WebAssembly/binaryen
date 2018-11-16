@@ -18,8 +18,6 @@
 This fuzzes the relooper using the C API.
 '''
 
-# FIXME before landingg
-
 import difflib
 import os
 import random
@@ -100,7 +98,7 @@ int main() {
   BinaryenExpressionRef halter = BinaryenIf(module,
     BinaryenBinary(module,
       BinaryenEqInt32(),
-      BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
+      BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4 * %d)) // jumps of 4 bytes
     ),
@@ -113,11 +111,11 @@ int main() {
     BinaryenConst(module, BinaryenLiteralInt32(4)),
     BinaryenBinary(module,
       BinaryenAddInt32(),
-      BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
+      BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4))
     ),
-    BinaryenInt32()
+    BinaryenTypeInt32()
   );
 
   // optionally, print the return value
@@ -126,37 +124,38 @@ int main() {
       BinaryenSubInt32(),
       BinaryenConst(module, BinaryenLiteralInt32(0)),
       BinaryenLoad(module,
-        4, 0, 4, 0, BinaryenInt32(),
-        BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
+        4, 0, 4, 0, BinaryenTypeInt32(),
+        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
                      BinaryenConst(module, BinaryenLiteralInt32(4)))
       )
     )
   };
   BinaryenExpressionRef debugger;
   if (1) debugger = BinaryenCall(module, "print", args, 1,
-                                 BinaryenNone());
+                                 BinaryenTypeNone());
   else debugger = BinaryenNop(module);
 
   // return the decision. need to subtract 4 that we just added,
   // and add 8 since that's where we start, so overall offset 4
   BinaryenExpressionRef returner = BinaryenLoad(module,
-    4, 0, 4, 0, BinaryenInt32(),
-    BinaryenLoad(module, 4, 0, 0, 0, BinaryenInt32(),
+    4, 0, 4, 0, BinaryenTypeInt32(),
+    BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
     BinaryenConst(module, BinaryenLiteralInt32(4)))
   );
   BinaryenExpressionRef checkBodyList[] = { halter, incer, debugger,
                                             returner };
   BinaryenExpressionRef checkBody = BinaryenBlock(module,
-    NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef)
+    NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
+    BinaryenTypeNone()
   );
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i",
-                                                      BinaryenInt32(),
+                                                      BinaryenTypeInt32(),
                                                       NULL, 0);
   BinaryenAddFunction(module, "check", i, NULL, 0, checkBody);
 
   // contents of main() begin here
 
-  RelooperRef relooper = RelooperCreate();
+  RelooperRef relooper = RelooperCreate(module);
 
 ''' % len(decisions)
 
@@ -179,25 +178,25 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     };
     BinaryenExpressionRef list[] = {
-      BinaryenCall(module, "print", args, 1, BinaryenNone()),
+      BinaryenCall(module, "print", args, 1, BinaryenTypeNone()),
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
-                                               BinaryenInt32()))
+                                               BinaryenTypeInt32()))
     };
 ''' % (i, i)
     if use_switch[i]:
       fast += '''
     b%d = RelooperAddBlockWithSwitch(relooper,
-      BinaryenBlock(module, NULL, list, 2),
+      BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()),
       BinaryenBinary(module,
         BinaryenRemUInt32(),
-        BinaryenGetLocal(module, 0, BinaryenInt32()),
+        BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
         BinaryenConst(module, BinaryenLiteralInt32(%d))
       )
     );
 ''' % (i, len(branches[i]) + 1)
     else:  # non-switch
       fast += '''
-    b%d = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2));
+    b%d = RelooperAddBlock(relooper, BinaryenBlock(module, NULL, list, 2, BinaryenTypeNone()));
 ''' % i
     fast += '''
   }
@@ -223,7 +222,7 @@ int main() {
     BinaryenEqInt32(),
     BinaryenBinary(module,
       BinaryenRemUInt32(),
-      BinaryenGetLocal(module, 0, BinaryenInt32()),
+      BinaryenGetLocal(module, 0, BinaryenTypeInt32()),
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(%d))
@@ -240,8 +239,7 @@ int main() {
 ''' % (i, defaults[i])
 
   fast += '''
-  BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1,
-                                                        module);
+  BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
 
   int decisions[] = { %s };
   int numDecisions = sizeof(decisions)/sizeof(int);
@@ -256,33 +254,34 @@ int main() {
         4, 0, 0,
         BinaryenConst(module, BinaryenLiteralInt32(8 + 4 * i)),
         BinaryenConst(module, BinaryenLiteralInt32(decisions[i])),
-        BinaryenInt32()
+        BinaryenTypeInt32()
       );
     }
   }
   full[numDecisions] = body;
   BinaryenExpressionRef all = BinaryenBlock(module, NULL, full,
-                                            numDecisions + 1);
+                                            numDecisions + 1,
+                                            BinaryenTypeNone());
 
   BinaryenFunctionTypeRef v = BinaryenAddFunctionType(module, "v",
-                                                      BinaryenNone(),
+                                                      BinaryenTypeNone(),
                                                       NULL, 0);
   // locals: state, free-for-label
-  BinaryenType localTypes[] = { BinaryenInt32(), BinaryenInt32() };
+  BinaryenType localTypes[] = { BinaryenTypeInt32(), BinaryenTypeInt32() };
   BinaryenFunctionRef theMain = BinaryenAddFunction(module, "main", v,
                                                     localTypes, 2, all);
   BinaryenSetStart(module, theMain);
 
   // import
 
-  BinaryenType iparams[] = { BinaryenInt32() };
+  BinaryenType iparams[] = { BinaryenTypeInt32() };
   BinaryenFunctionTypeRef vi = BinaryenAddFunctionType(module, "vi",
-                                                       BinaryenNone(),
+                                                       BinaryenTypeNone(),
                                                        iparams, 1);
-  BinaryenAddImport(module, "print", "spectest", "print", vi);
+  BinaryenAddFunctionImport(module, "print", "spectest", "print", vi);
 
   // memory
-  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0);
+  BinaryenSetMemory(module, 1, 1, "mem", NULL, NULL, NULL, 0, 0);
 
   // optionally, optimize
   if (%d) BinaryenModuleOptimize(module);
