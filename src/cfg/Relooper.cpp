@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -488,9 +487,15 @@ struct Optimizer : public RelooperRecursor {
     while (More) {
       More = false;
       More = SkipEmptyBlocks() || More;
-      More = MergeBlocks() || More;
       More = MergeEquivalentBranches() || More;
       More = UnSwitch() || More;
+      // TODO: Merge identical blocks. This would avoid taking into account their
+      // position / how they are reached, which means that the merging
+      // may add overhead, so we do it carefully:
+      //  * Merging a large-enough block is good for size, and we do it
+      //    in we are in MinSize mode, which means we can tolerate slightly
+      //    slower throughput.
+      // TODO: Fuse a non-empty block with a single successor.
     }
 
     // Finally, run passes that do not need looping.
@@ -654,19 +659,6 @@ struct Optimizer : public RelooperRecursor {
       }
     }
     return Worked;
-  }
-
-  // Merges identical blocks. This does not take into account their
-  // position / how they are reached, which means that the merging
-  // may add overhead, so we do it carefully:
-  //  * Merging a large-enough block is good for size, and we do it
-  //    in we are in MinSize mode, which means we can tolerate slightly
-  //    slower throughput.
-  bool MergeBlocks() {
-    if (!Parent->MinSize) {
-      return false;
-    }
-    return false; // TODO
   }
 
 private:
