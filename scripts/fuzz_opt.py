@@ -181,6 +181,8 @@ opt_choices = [
 
 
 def get_multiple_opt_choices():
+  return ["--flatten", "--vacuum", "--rereloop"]
+
   ret = []
   # core opts
   while 1:

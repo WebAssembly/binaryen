@@ -516,6 +516,9 @@ struct Optimizer : public RelooperRecursor {
         auto* NextBranch = iter.second;
         auto* First = Next;
         auto* Replacement = First;
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << " maybeskip from " << Block->Id << " to next=" << Next->Id << '\n';
+#endif
         std::unordered_set<decltype(Replacement)> Seen;
         while (1) {
           if (IsEmpty(Next) &&
@@ -546,7 +549,7 @@ struct Optimizer : public RelooperRecursor {
         }
         if (Replacement != First) {
 #if RELOOPER_OPTIMIZER_DEBUG
-          std::cout << "  skip to replacement! " << First->Id << " -> " << Replacement->Id << '\n';
+          std::cout << "  skip to replacement! " << Block->Id << " -> " << First->Id << " -> " << Replacement->Id << '\n';
 #endif
           Worked = true;
         }
@@ -701,9 +704,7 @@ private:
 #endif
       return false;
     }
-    // FIXME: due to flattening, we may see some extra nops and blocks and such,
-    //        would be good to vacuum here.
-    if (!wasm::ExpressionAnalyzer::equal(A->Code, B->Code)) {
+    if (!IsCodeEquivalent(A->Code, B->Code)) {
 #if RELOOPER_OPTIMIZER_DEBUG
       std::cout << "    HEC: different Code\n";
 #endif
@@ -747,26 +748,23 @@ private:
     return true;
   }
 
-  // Checks if code is equivalent, allowing the code to also be nullptr
-  static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
-    if (A != B) {
-      if (!wasm::ExpressionAnalyzer::equal(A, B)) {
-        return false;
-      }
-    } else {
-      // Binaryen IR does not allow the same node to be used in multiple
-      // places - it has full tree structure.
-      assert(A == nullptr);
-    }
-    return true;
-  }
-
   // Checks if values referred to by pointers are identical, allowing the code to also be nullptr
   template<typename T>
   static bool IsPossibleUniquePtrEquivalent(std::unique_ptr<T>& A, std::unique_ptr<T>& B) {
     if (A == B) return true;
     if (!A || !B) return false;
     return *A == *B;
+  }
+
+  // Checks if code is equivalent, allowing the code to also be nullptr
+  static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+    if (A == B) return true;
+    if (!A || !B) return false;
+    return IsCodeEquivalent(A, B);
+  }
+
+  static bool IsCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+    return wasm::ExpressionAnalyzer::equal(A, B);
   }
 
   // Merges one branch into another. Valid under the assumption that the
