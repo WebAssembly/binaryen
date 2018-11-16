@@ -494,7 +494,7 @@ struct Optimizer : public RelooperRecursor {
     }
 
     // Finally, run passes that do not need looping.
-    SortSwitches();
+    // TODO
 
 #if RELOOPER_OPTIMIZER_DEBUG
     std::cout << "post-optimize\n";
@@ -653,27 +653,6 @@ struct Optimizer : public RelooperRecursor {
     return Worked;
   }
 
-  // The order of switch
-  void SortSwitches() {
-#if 0
-    for (auto* ParentBlock : Parent->Blocks) {
-      if (ParentBlock->SwitchCondition) {
-        if (ParentBlock->BranchesOut.size() <= 1) {
-          ParentBlock->SwitchCondition = nullptr;
-          if (!ParentBlock->BranchesOut.empty()) {
-            assert(!ParentBlock->BranchesOut.begin()->second->SwitchValues);
-          }
-        }
-      } else {
-        // If the block has no switch, the branches must not as well.
-        for (auto& iter : ParentBlock->BranchesOut) {
-          assert(!iter.second->SwitchValues);
-        }
-      }
-    }
-#endif
-  }
-
   // Merges identical blocks. This does not take into account their
   // position / how they are reached, which means that the merging
   // may add overhead, so we do it carefully:
@@ -722,7 +701,9 @@ private:
 #endif
       return false;
     }
-    if (!IsPossibleCodeEquivalent(A->Code, B->Code)) {
+    // FIXME: due to flattening, we may see some extra nops and blocks and such,
+    //        would be good to vacuum here.
+    if (!wasm::ExpressionAnalyzer::equal(A->Code, B->Code)) {
 #if RELOOPER_OPTIMIZER_DEBUG
       std::cout << "    HEC: different Code\n";
 #endif
