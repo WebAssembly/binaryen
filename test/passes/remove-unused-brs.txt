@@ -1685,6 +1685,7 @@
      )
     )
    )
+   (call $trim-switch)
   )
  )
  (func $same-target-br_if-and-br (; 67 ;) (type $1)
@@ -2002,5 +2003,65 @@
    )
    (i32.const 0)
   )
+ )
+ (func $switch-to-br (; 86 ;) (type $1)
+  (block $A
+   (block $y
+    (block
+     (drop
+      (i32.const 0)
+     )
+     (br $A)
+    )
+   )
+  )
+ )
+ (func $switch-to-br-value (; 87 ;) (type $2) (result i32)
+  (block $A (result i32)
+   (block $y (result i32)
+    (block
+     (drop
+      (i32.const 1)
+     )
+     (br $A
+      (i32.const 0)
+     )
+    )
+   )
+  )
+ )
+ (func $switch-threading-multi (; 88 ;) (type $3) (param $x i32) (param $y i32) (result i32)
+  (block $block$5$break
+   (block $block$4$break
+    (loop $shape$1$continue
+     (block $block$3$break
+      (block $switch$2$case$5
+       (block $switch$2$case$4
+        (block $switch$2$default
+         (block $switch$2$case$2
+          (br_table $shape$1$continue $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$5$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$3$break $block$4$break $block$3$break
+           (get_local $x)
+          )
+         )
+         (br $shape$1$continue)
+        )
+        (br $block$3$break)
+       )
+       (br $block$4$break)
+      )
+      (br $block$5$break)
+     )
+    )
+    (unreachable)
+   )
+   (set_local $y
+    (i32.const 1)
+   )
+   (unreachable)
+  )
+  (set_local $y
+   (i32.const 2)
+  )
+  (unreachable)
  )
 )

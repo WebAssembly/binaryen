@@ -3249,19 +3249,19 @@
              (block $__rjti$4
               (block $__rjti$3
                (block $switch-default120
-                (block $switch-case42
+                (block $switch-case119
                  (block $switch-case41
                   (block $switch-case40
                    (block $switch-case39
                     (block $switch-case38
                      (block $switch-case37
                       (block $switch-case36
-                       (block $switch-case34
+                       (block $switch-case35
                         (block $switch-case33
-                         (block $switch-case29
+                         (block $switch-case30
                           (block $switch-case28
                            (block $switch-case27
-                            (br_table $switch-case42 $switch-default120 $switch-case40 $switch-default120 $switch-case42 $switch-case42 $switch-case42 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case41 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case29 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case42 $switch-default120 $switch-case37 $switch-case34 $switch-case42 $switch-case42 $switch-case42 $switch-default120 $switch-case34 $switch-default120 $switch-default120 $switch-default120 $switch-case38 $switch-case27 $switch-case33 $switch-case28 $switch-default120 $switch-default120 $switch-case39 $switch-default120 $switch-case36 $switch-default120 $switch-default120 $switch-case29 $switch-default120
+                            (br_table $switch-case119 $switch-default120 $switch-case40 $switch-default120 $switch-case119 $switch-case119 $switch-case119 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case41 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case30 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-default120 $switch-case119 $switch-default120 $switch-case37 $switch-case35 $switch-case119 $switch-case119 $switch-case119 $switch-default120 $switch-case35 $switch-default120 $switch-default120 $switch-default120 $switch-case38 $switch-case27 $switch-case33 $switch-case28 $switch-default120 $switch-default120 $switch-case39 $switch-default120 $switch-case36 $switch-default120 $switch-default120 $switch-case30 $switch-default120
                              (i32.sub
                               (tee_local $19
                                (select
@@ -6828,7 +6828,7 @@
     (get_local $1)
     (i32.const 20)
    )
-   (block $switch-default
+   (block $label$break$L1
     (block $switch-case9
      (block $switch-case8
       (block $switch-case7
@@ -6839,7 +6839,7 @@
            (block $switch-case2
             (block $switch-case1
              (block $switch-case
-              (br_table $switch-case $switch-case1 $switch-case2 $switch-case3 $switch-case4 $switch-case5 $switch-case6 $switch-case7 $switch-case8 $switch-case9 $switch-default
+              (br_table $switch-case $switch-case1 $switch-case2 $switch-case3 $switch-case4 $switch-case5 $switch-case6 $switch-case7 $switch-case8 $switch-case9 $label$break$L1
                (i32.sub
                 (get_local $1)
                 (i32.const 9)
@@ -6872,7 +6872,7 @@
               (get_local $0)
               (get_local $3)
              )
-             (br $switch-default)
+             (br $label$break$L1)
             )
             (set_local $1
              (i32.load
@@ -6913,7 +6913,7 @@
               (i32.const 31)
              )
             )
-            (br $switch-default)
+            (br $label$break$L1)
            )
            (set_local $3
             (i32.load
@@ -6945,7 +6945,7 @@
             (get_local $0)
             (i32.const 0)
            )
-           (br $switch-default)
+           (br $label$break$L1)
           )
           (set_local $5
            (i32.load
@@ -6984,7 +6984,7 @@
            (get_local $0)
            (get_local $3)
           )
-          (br $switch-default)
+          (br $label$break$L1)
          )
          (set_local $3
           (i32.load
@@ -7036,7 +7036,7 @@
            (i32.const 31)
           )
          )
-         (br $switch-default)
+         (br $label$break$L1)
         )
         (set_local $3
          (i32.load
@@ -7071,7 +7071,7 @@
          (get_local $0)
          (i32.const 0)
         )
-        (br $switch-default)
+        (br $label$break$L1)
        )
        (set_local $3
         (i32.load
@@ -7123,7 +7123,7 @@
          (i32.const 31)
         )
        )
-       (br $switch-default)
+       (br $label$break$L1)
       )
       (set_local $3
        (i32.load
@@ -7158,7 +7158,7 @@
        (get_local $0)
        (i32.const 0)
       )
-      (br $switch-default)
+      (br $label$break$L1)
      )
      (set_local $4
       (f64.load
@@ -7186,7 +7186,7 @@
       (get_local $0)
       (get_local $4)
      )
-     (br $switch-default)
+     (br $label$break$L1)
     )
     (set_local $4
      (f64.load

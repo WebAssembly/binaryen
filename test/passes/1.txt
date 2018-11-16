@@ -196,12 +196,9 @@
     (i32.const 1)
    )
    (block $switch$3$default
-    (block $switch$3$case$6
-     (br_table $switch$3$case$6 $switch$3$case$6 $switch$3$case$6 $switch$3$default
-      (get_local $0)
-     )
+    (br_table $block$6$break $block$6$break $block$6$break $switch$3$default
+     (get_local $0)
     )
-    (br $block$6$break)
    )
    (call $switch
     (i32.const 2)
