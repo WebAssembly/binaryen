@@ -18,6 +18,8 @@
 This fuzzes the relooper using the C API.
 '''
 
+# FIXME before landingg
+
 import difflib
 import os
 import random

@@ -1,5 +1,5 @@
-//#define RELOOPER_DEBUG 1
-//#define RELOOPER_OPTIMIZER_DEBUG 1
+#define RELOOPER_DEBUG 1
+#define RELOOPER_OPTIMIZER_DEBUG 1
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *

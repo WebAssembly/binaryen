@@ -429,6 +429,25 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       handleCondition(select->condition);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       handleCondition(sw->condition);
+      // Try to replace switch targets with the default
+      for (auto& target : sw->targets) {
+        if (target != sw->default_) {
+          auto old = target;
+          target = sw->default_;
+          if (!tryToReplaceCurrent(curr)) {
+            target = old;
+          }
+        }
+      }
+      // Try to shorten the list of targets.
+      while (sw->targets.size() > 1) {
+        auto last = sw->targets.back();
+        sw->targets.resize(sw->targets.size() - 1);
+        if (!tryToReplaceCurrent(curr)) {
+          sw->targets.push_back(last);
+          break;
+        }
+      }
     } else if (auto* block = curr->dynCast<Block>()) {
       if (!shouldTryToReduce()) return;
       // replace a singleton

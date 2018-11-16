@@ -484,6 +484,7 @@ struct Optimizer : public RelooperRecursor {
     }
 #endif
 
+    // Loop over passes that allow further reduction.
     while (More) {
       More = false;
       More = SkipEmptyBlocks() || More;
@@ -491,6 +492,9 @@ struct Optimizer : public RelooperRecursor {
       More = MergeEquivalentBranches() || More;
       More = UnSwitch() || More;
     }
+
+    // Finally, run passes that do not need looping.
+    SortSwitches();
 
 #if RELOOPER_OPTIMIZER_DEBUG
     std::cout << "post-optimize\n";
@@ -647,6 +651,27 @@ struct Optimizer : public RelooperRecursor {
       }
     }
     return Worked;
+  }
+
+  // The order of switch
+  void SortSwitches() {
+#if 0
+    for (auto* ParentBlock : Parent->Blocks) {
+      if (ParentBlock->SwitchCondition) {
+        if (ParentBlock->BranchesOut.size() <= 1) {
+          ParentBlock->SwitchCondition = nullptr;
+          if (!ParentBlock->BranchesOut.empty()) {
+            assert(!ParentBlock->BranchesOut.begin()->second->SwitchValues);
+          }
+        }
+      } else {
+        // If the block has no switch, the branches must not as well.
+        for (auto& iter : ParentBlock->BranchesOut) {
+          assert(!iter.second->SwitchValues);
+        }
+      }
+    }
+#endif
   }
 
   // Merges identical blocks. This does not take into account their
