@@ -295,13 +295,13 @@ function test_relooper() {
   }
 
   { // trivial: just one block
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block = relooper.addBlock(makeCallCheck(1337));
     var body = relooper.renderAndDispose(block, 0, module);
     module.addFunction("just-one-block", v, localTypes, body);
   }
   { // two blocks
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1); // no condition, no code on branch
@@ -309,7 +309,7 @@ function test_relooper() {
     module.addFunction("two-blocks", v, localTypes, body);
   }
   { // two blocks with code between them
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1, null, makeDroppedInt32(77)); // code on branch
@@ -317,7 +317,7 @@ function test_relooper() {
     module.addFunction("two-blocks-plus-code", v, localTypes, body);
   }
   { // two blocks in a loop
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1, null, null);
@@ -326,7 +326,7 @@ function test_relooper() {
     module.addFunction("loop", v, localTypes, body);
   }
   { // two blocks in a loop with codes
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     relooper.addBranch(block0, block1, null, makeDroppedInt32(33));
@@ -335,7 +335,7 @@ function test_relooper() {
     module.addFunction("loop-plus-code", v, localTypes, body);
   }
   { // split
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -345,7 +345,7 @@ function test_relooper() {
     module.addFunction("split", v, localTypes, body);
   }
   { // split + code
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -356,7 +356,7 @@ function test_relooper() {
     module.addFunction("split-plus-code", v, localTypes, body);
   }
   { // if
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -367,7 +367,7 @@ function test_relooper() {
     module.addFunction("if", v, localTypes, body);
   }
   { // if + code
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -379,7 +379,7 @@ function test_relooper() {
     module.addFunction("if-plus-code", v, localTypes, body);
   }
   { // if-else
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -392,7 +392,7 @@ function test_relooper() {
     module.addFunction("if-else", v, localTypes, body);
   }
   { // loop+tail
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -403,7 +403,7 @@ function test_relooper() {
     module.addFunction("loop-tail", v, localTypes, body);
   }
   { // nontrivial loop + phi to head
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -424,7 +424,7 @@ function test_relooper() {
     module.addFunction("nontrivial-loop-plus-phi-to-head", v, localTypes, body);
   }
   { // switch
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     temp = makeInt32(-99);
     var block0 = relooper.addBlockWithSwitch(makeCallCheck(0), temp);
     var block1 = relooper.addBlock(makeCallCheck(1));
@@ -437,7 +437,7 @@ function test_relooper() {
     module.addFunction("switch", v, localTypes, body);
   }
   { // duff's device
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var block0 = relooper.addBlock(makeCallCheck(0));
     var block1 = relooper.addBlock(makeCallCheck(1));
     var block2 = relooper.addBlock(makeCallCheck(2));
@@ -452,7 +452,7 @@ function test_relooper() {
   var i = module.addFunctionType("i", Binaryen.i32, []);
 
   { // return in a block
-    var relooper = new Binaryen.Relooper();
+    var relooper = new Binaryen.Relooper(module);
     var list = module.block("the-list", [ makeCallCheck(42), module.return(makeInt32(1337)) ]);
     var block = relooper.addBlock(list);
     var body = relooper.renderAndDispose(block, 0, module);
