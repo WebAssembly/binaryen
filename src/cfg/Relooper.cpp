@@ -23,6 +23,7 @@
 #include <stack>
 #include <string>
 
+#include "ir/branch-utils.h"
 #include "ir/utils.h"
 #include "parsing.h"
 
@@ -483,6 +484,9 @@ struct Optimizer : public RelooperRecursor {
     }
 #endif
 
+    // First, run one-time preparatory passes.
+    CanonicalizeCode();
+
     // Loop over passes that allow further reduction.
     while (More) {
       More = false;
@@ -498,7 +502,7 @@ struct Optimizer : public RelooperRecursor {
       // TODO: Fuse a non-empty block with a single successor.
     }
 
-    // Finally, run passes that do not need looping.
+    // Finally, run one-time final passes.
     // TODO
 
 #if RELOOPER_OPTIMIZER_DEBUG
@@ -507,6 +511,20 @@ struct Optimizer : public RelooperRecursor {
       DebugDump(Block, "post-block");
     }
 #endif
+  }
+
+  // We will be performing code comparisons, so do some basic canonicalization
+  // to avoid things being unequal for silly reasons.
+  void CanonicalizeCode() {
+    for (auto* Block : Parent->Blocks) {
+      Block->Code = Canonicalize(Block->Code);
+      for (auto& iter : Block->BranchesOut) {
+        auto* Branch = iter.second;
+        if (Branch->Code) {
+          Branch->Code = Canonicalize(Branch->Code);
+        }
+      }
+    }
   }
 
   // If a branch goes to an empty block which has one target,
@@ -662,6 +680,66 @@ struct Optimizer : public RelooperRecursor {
   }
 
 private:
+  wasm::Expression* Canonicalize(wasm::Expression* Curr) {
+    wasm::Builder Builder(*Parent->Module);
+    // Our preferred form is a block with no name and a flat list
+    // with Nops removed, and extra Unreachables removed as well.
+    wasm::Block* Outer = Curr->dynCast<wasm::Block>();
+    if (!Outer) {
+      Outer = Builder.makeBlock(Curr);
+    } else if (Outer->name.is()) {
+      // Perhaps the name can be removed.
+      if (!wasm::BranchUtils::BranchSeeker::hasNamed(Outer, Outer->name)) {
+        Outer->name = wasm::Name();
+      } else {
+        Outer = Builder.makeBlock(Curr);
+      }
+    }
+    Flatten(Outer);
+    return Outer;
+  }
+
+  void Flatten(wasm::Block* Outer) {
+    wasm::ExpressionList NewList(Parent->Module->allocator);
+    bool SeenUnreachableType = false;
+    auto Add = [&](wasm::Expression* Curr) {
+      if (Curr->is<wasm::Nop>()) {
+        // Do nothing with it.
+        return;
+      } else if (Curr->is<wasm::Unreachable>()) {
+        // If we already saw an unreachable-typed item, emit no
+        // Unreachable nodes after it.
+        if (SeenUnreachableType) {
+          return;
+        }
+      }
+      NewList.push_back(Curr);
+      if (Curr->type == wasm::unreachable) {
+        SeenUnreachableType = true;
+      }
+    };
+    std::function<void (wasm::Block*)> FlattenIntoNewList = [&](wasm::Block* Curr) {
+      assert(!Curr->name.is());
+      for (auto* Item : Curr->list) {
+        if (auto* Block = Item->dynCast<wasm::Block>()) {
+          if (Block->name.is()) {
+            // Leave it whole, it's not a trivial block.
+            Add(Block);
+          } else {
+            FlattenIntoNewList(Block);
+            Block->list.clear();
+          }
+        } else {
+          // A random item.
+          Add(Item);
+        }
+      }
+    };
+    FlattenIntoNewList(Outer);
+    assert(Outer->list.empty());
+    Outer->list.swap(NewList);
+  }
+
   bool IsEmpty(Block* Curr) {
     if (Curr->SwitchCondition) {
       // This is non-trivial, so treat it as a non-empty block.
