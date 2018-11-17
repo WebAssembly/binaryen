@@ -166,7 +166,7 @@ struct BinaryenLiteral {
     int64_t i64;
     float f32;
     double f64;
-    uint8_t v128 __attribute__((vector_size(16)));
+    uint8_t v128[16];
   };
 };
 
@@ -174,6 +174,7 @@ struct BinaryenLiteral BinaryenLiteralInt32(int32_t x);
 struct BinaryenLiteral BinaryenLiteralInt64(int64_t x);
 struct BinaryenLiteral BinaryenLiteralFloat32(float x);
 struct BinaryenLiteral BinaryenLiteralFloat64(double x);
+struct BinaryenLiteral BinaryenLiteralVec128(uint8_t x[16]);
 struct BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x);
 struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 

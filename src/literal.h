@@ -49,6 +49,9 @@ public:
   explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
   explicit Literal(vec128_t init) : type(Type::v128), v128(init) {}
+  explicit Literal(uint8_t init[16]) : type(Type::v128) {
+    memcpy(&v128, &init, 16);
+  }
 
   bool isConcrete() { return type != none; }
   bool isNull() { return type == none; }
@@ -60,6 +63,7 @@ public:
 
   int32_t geti32() const { assert(type == Type::i32); return i32; }
   int64_t geti64() const { assert(type == Type::i64); return i64; }
+  vec128_t getv128() const { assert(type == Type::v128); return v128; }
   float   getf32() const { assert(type == Type::f32); return bit_cast<float>(i32); }
   double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
 

@@ -49,6 +49,11 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::i64: ret.i64 = x.geti64(); break;
     case Type::f32: ret.i32 = x.reinterpreti32(); break;
     case Type::f64: ret.i64 = x.reinterpreti64(); break;
+    case Type::v128: {
+      vec128_t v = x.getv128();
+      memcpy(&ret.v128, &v, 16);
+      break;
+    }
     default: abort();
   }
   return ret;
@@ -60,6 +65,10 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::i64: return Literal(x.i64);
     case Type::f32: return Literal(x.i32).castToF32();
     case Type::f64: return Literal(x.i64).castToF64();
+    case Type::v128:
+      vec128_t v;
+      memcpy(&v, &x.v128, 16);
+      return Literal(v);
     default: abort();
   }
 }
@@ -249,6 +258,7 @@ BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Liter
 BinaryenLiteral BinaryenLiteralInt64(int64_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32(float x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat64(double x) { return toBinaryenLiteral(Literal(x)); }
+BinaryenLiteral BinaryenLiteralVec128(uint8_t x[16]) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) { return toBinaryenLiteral(Literal(x).castToF32()); }
 BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) { return toBinaryenLiteral(Literal(x).castToF64()); }
 
