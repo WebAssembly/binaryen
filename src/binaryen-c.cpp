@@ -65,10 +65,11 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::i64: return Literal(x.i64);
     case Type::f32: return Literal(x.i32).castToF32();
     case Type::f64: return Literal(x.i64).castToF64();
-    case Type::v128:
+    case Type::v128: {
       vec128_t v;
       memcpy(&v, &x.v128, 16);
       return Literal(v);
+    }
     default: abort();
   }
 }

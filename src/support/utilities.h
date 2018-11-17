@@ -30,9 +30,10 @@
 
 namespace wasm {
 
-typedef struct {
+struct vec128_t {
   uint8_t v[16];
-} vec128_t;
+  vec128_t() : v{0} {}
+};
 
 // Type punning needs to be done through this function to avoid undefined
 // behavior: unions and reinterpret_cast aren't valid approaches.
