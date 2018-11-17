@@ -167,8 +167,8 @@ public:
 
 private:
   Expression* makeExpression(Element& s);
-  Expression* makeBinary(Element& s, BinaryOp op, Type type);
-  Expression* makeUnary(Element& s, UnaryOp op, Type type);
+  Expression* makeBinary(Element& s, BinaryOp op);
+  Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
   Expression* makeDrop(Element& s);
   Expression* makeHost(Element& s, HostOp op);
