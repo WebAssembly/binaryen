@@ -206,7 +206,8 @@ Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
 
 // 'Module' interface
 Module['Module'] = function(module) {
-  if (!module) module = Module['_BinaryenModuleCreate']();
+  assert(!module); // old API supported passing in the module
+  var module = Module['_BinaryenModuleCreate']();
   this['ptr'] = module;
 
   // 'Expression' creation
@@ -1246,8 +1247,9 @@ Module['Module'] = function(module) {
 };
 
 // 'Relooper' interface
-Module['Relooper'] = function(relooper) {
-  if (!relooper) relooper = Module['_RelooperCreate']();
+Module['Relooper'] = function(module) {
+  assert(module && typeof module === 'object' && module.ptr && module.block && module.if); // must pass in a Module object
+  var relooper = Module['_RelooperCreate'](module);
   this.ptr = relooper;
 
   this['addBlock'] = function(code) {
@@ -1264,8 +1266,8 @@ Module['Relooper'] = function(relooper) {
       return Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code);
     });
   };
-  this['renderAndDispose'] = function(entry, labelHelper, module) {
-    return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module['ptr']);
+  this['renderAndDispose'] = function(entry, labelHelper) {
+    return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper);
   };
 };
 
