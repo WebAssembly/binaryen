@@ -400,7 +400,7 @@ def generate_with_guard(generator, guard):
 
 
 def main():
-  print_header();
+  print_header()
   generate_with_guard(instruction_parser, "INSTRUCTION_PARSER")
 
 
