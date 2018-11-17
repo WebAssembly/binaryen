@@ -146,7 +146,7 @@ int main() {
                                             returner };
   BinaryenExpressionRef checkBody = BinaryenBlock(module,
     NULL, checkBodyList, sizeof(checkBodyList) / sizeof(BinaryenExpressionRef),
-    BinaryenTypeNone()
+    BinaryenTypeInt32()
   );
   BinaryenFunctionTypeRef i = BinaryenAddFunctionType(module, "i",
                                                       BinaryenTypeInt32(),
