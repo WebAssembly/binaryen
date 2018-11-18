@@ -684,6 +684,7 @@ private:
     wasm::Builder Builder(*Parent->Module);
     // Our preferred form is a block with no name and a flat list
     // with Nops removed, and extra Unreachables removed as well.
+    // If the block would contain one item, return just the item.
     wasm::Block* Outer = Curr->dynCast<wasm::Block>();
     if (!Outer) {
       Outer = Builder.makeBlock(Curr);
@@ -696,7 +697,11 @@ private:
       }
     }
     Flatten(Outer);
-    return Outer;
+    if (Outer->list.size() == 1) {
+      return Outer->list[0];
+    } else {
+      return Outer;
+    }
   }
 
   void Flatten(wasm::Block* Outer) {
@@ -727,13 +732,14 @@ private:
             Add(Block);
           } else {
             FlattenIntoNewList(Block);
-            Block->list.clear();
           }
         } else {
           // A random item.
           Add(Item);
         }
       }
+      // All the items have been moved out.
+      Curr->list.clear();
     };
     FlattenIntoNewList(Outer);
     assert(Outer->list.empty());

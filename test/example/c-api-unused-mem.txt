@@ -20,7 +20,7 @@
    )
   )
   (block
-   (block $bb1
+   (block
     (i32.store
      (i32.const 0)
      (get_local $0)
