@@ -35,7 +35,7 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 50) # 250
+  num = random.randint(2, 50)  # 250
   density = random.random() * random.random()
   code_likelihood = random.random()
   code_max = random.randint(0, num if random.random() < 0.5 else 3)
@@ -43,12 +43,14 @@ while True:
   decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
   defaults = [0] * num
-  branch_codes = [0] * num # code on the branch, which may alter the global state
+  branch_codes = [0] * num  # code on the branch, which may alter the global state
+
   def random_code():
     if code_max == 0 or random.random() > code_likelihood:
-      return 0 # no code
-    # a random number to perturb the global state
+      return 0  # no code
+    # A random number to perturb/increment the global state
     return random.randint(1, code_max)
+
   for i in range(num):
     b = set([])
     bs = random.randint(1, max(1,
@@ -59,7 +61,7 @@ while True:
     defaults[i] = random.choice(b)
     b.remove(defaults[i])
     branches[i] = b
-    branch_codes[i] = [random_code() for item in range(len(b) + 1)] # one for each branch, plus the default
+    branch_codes[i] = [random_code() for item in range(len(b) + 1)]  # one for each branch, plus the default
   optimize = random.random() < 0.5
   print counter, ':', num, density, optimize, code_likelihood, code_max
   counter += 1
@@ -176,11 +178,13 @@ int main() {
             i, i)
     b = branches[i]
     bc = branch_codes[i]
+
     def get_phi(j):
       phi = ''
       if bc[j]:
         phi = 'index += %d; ' % bc[j]
       return phi
+
     for j in range(len(b)):
       slow += '    if (state %% %d == %d) { %s label = %d; break }\n' % (
               len(b) + 1, j, get_phi(j), b[j])  # TODO: split range 1-n into these options
@@ -223,6 +227,7 @@ int main() {
   for i in range(num):
     b = branches[i]
     bc = branch_codes[i]
+
     def get_phi(j):
       phi = 'NULL'
       if bc[j]:
@@ -240,6 +245,7 @@ int main() {
       BinaryenTypeInt32()
     )''' % bc[j]
       return phi
+
     for j in range(len(b)):
       if use_switch[i]:
         total = len(b) + 1
