@@ -764,12 +764,12 @@ private:
           return false;
         }
       }
-      return true; // block with no non-empty empty contents
+      return true; // block with no non-empty contents
     }
     return false;
   }
 
-  // Similar to what we do for a Branch, checks the Code and SwitchCondition.
+  // Checks functional equivalence, namely: the Code and SwitchCondition.
   // We also check the branches out, *non-recursively*: that is, we check
   // that they are literally identical, not that they can be computed to
   // be equivalent.
@@ -846,6 +846,9 @@ private:
   // Merges one branch into another. Valid under the assumption that the
   // blocks they reach are identical, and so one branch is enough for both
   // with a unified condition.
+  // Only one is allowed to have code, as the code may have side effects,
+  // and we don't have a way to order or resolve those, unless the code
+  // is equivalent.
   void MergeBranchInto(Branch* Curr, Branch* Into) {
     assert(Curr != Into);
     if (Curr->SwitchValues) {
@@ -881,12 +884,8 @@ private:
       // Just use the code being merged in.
       Into->Code = Curr->Code;
     } else {
-      // Properly merge them both. Note how this depends on them not
-      // having side effects.
-      Into->Code = wasm::Builder(*Parent->Module).makeSequence(
-        Into->Code,
-        Curr->Code
-      );
+      assert(IsCodeEquivalent(Into->Code, Curr->Code));
+      // Keep the code already there, either is fine.
     }
   }
 

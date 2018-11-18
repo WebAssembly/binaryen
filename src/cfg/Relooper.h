@@ -89,6 +89,7 @@ struct Branch {
   // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression (or nullptr for the
   // branch taken when no other condition is true)
   // A condition must not have side effects, as the Relooper can reorder or eliminate condition checking.
+  // This must not have side effects.
   wasm::Expression* Condition;
   // Switches are rare, so have just a pointer for their values. This contains the values
   // for which the branch will be taken, or for the default it is simply not present.

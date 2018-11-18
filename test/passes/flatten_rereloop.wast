@@ -152,5 +152,27 @@
    (f32.const 65505)
   )
  )
+ (func $branch-merge-vs-replace
+  (if
+   (i32.const 0)
+   (unreachable)
+  )
+ )
+ (func $unswitch-amount
+  (block $label$1
+   (if
+    (i32.const -23)
+    (nop)
+    (block
+     (block $label$4
+      (br_table $label$1 $label$4
+       (i32.const 44064)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+ )
 )
-
+;; manual TODO: merge branches, all the parts

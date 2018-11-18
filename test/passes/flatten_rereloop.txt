@@ -309,34 +309,25 @@
    (if
     (i32.const 0)
     (block
-     (block $block$4$break
-      (block
+     (block $block$3$break
+      (set_local $0
+       (f32.const 9223372036854775808)
       )
       (block
-       (br $block$4$break)
+       (br $block$3$break)
       )
      )
      (block
-      (block $block$3$break
-       (set_local $0
-        (f32.const 9223372036854775808)
+      (block
+       (set_local $1
+        (get_local $0)
        )
-       (block
-        (br $block$3$break)
+       (set_local $2
+        (get_local $1)
        )
       )
       (block
-       (block
-        (set_local $1
-         (get_local $0)
-        )
-        (set_local $2
-         (get_local $1)
-        )
-       )
-       (block
-        (br $block$7$break)
-       )
+       (br $block$7$break)
       )
      )
     )
@@ -359,6 +350,58 @@
      (get_local $3)
     )
    )
+  )
+ )
+ (func $branch-merge-vs-replace (; 12 ;) (type $2)
+  (local $0 i32)
+  (block
+  )
+  (if
+   (i32.const 0)
+   (block
+    (unreachable)
+   )
+   (block
+    (return)
+   )
+  )
+ )
+ (func $unswitch-amount (; 13 ;) (type $2)
+  (local $0 i32)
+  (block $block$2$break
+   (block
+   )
+   (if
+    (i32.const -23)
+    (br $block$2$break)
+    (block
+     (block $block$6$break
+      (block
+      )
+      (block $switch$4$leave
+       (block $switch$4$default
+        (block $switch$4$case$2
+         (br_table $switch$4$case$2 $switch$4$default
+          (i32.const 44064)
+         )
+        )
+        (block
+         (br $block$2$break)
+        )
+       )
+       (block
+        (br $block$6$break)
+       )
+      )
+     )
+     (block
+      (unreachable)
+     )
+    )
+   )
+  )
+  (block
+   (return)
   )
  )
 )
