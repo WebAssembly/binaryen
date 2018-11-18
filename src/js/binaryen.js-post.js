@@ -1262,9 +1262,9 @@ function wrapModule(module, self) {
 
 // 'Relooper' interface
 Module['Relooper'] = function(module) {
-  assert(module && typeof module === 'object' && module.ptr && module.block && module.if); // guard against incorrect old API usage
-  var relooper = Module['_RelooperCreate'](module.ptr);
-  this.ptr = relooper;
+  assert(module && typeof module === 'object' && module['ptr'] && module['block'] && module['if']); // guard against incorrect old API usage
+  var relooper = Module['_RelooperCreate'](module['ptr']);
+  this['ptr'] = relooper;
 
   this['addBlock'] = function(code) {
     return Module['_RelooperAddBlock'](relooper, code);
