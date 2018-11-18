@@ -1048,7 +1048,7 @@ raw:
  )
  (func $return (; 15 ;) (type $i) (result i32)
   (local $0 i32)
-  (block $the-list
+  (block
    (call $check
     (i32.const 42)
    )
@@ -2966,7 +2966,7 @@ raw:
  )
  (func $return (; 15 ;) (type $i) (result i32)
   (local $0 i32)
-  (block $the-list
+  (block
    (call $check
     (i32.const 42)
    )
