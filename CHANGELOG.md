@@ -18,7 +18,7 @@ v.55
 ====
 - `RelooperCreate` in the C API now has a Module parameter, and `RelooperRenderAndDispose` does not.
   - The JS API now has the `Relooper` constructor receive the `Module`.
-- Relooper Code and Condition properties on Branches and Blocks must not have side effects.
+- Relooper: Condition properties on Branches must not have side effects.
 
 older
 =====
