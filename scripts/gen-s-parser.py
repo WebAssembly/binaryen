@@ -15,8 +15,8 @@
 # limitations under the License.
 
 instructions = [
-    ("unreachable",    "allocator.alloc<Unreachable>()"),
-    ("nop",            "allocator.alloc<Nop>()"),
+    ("unreachable",    "makeUnreachable()"),
+    ("nop",            "makeNop()"),
     ("block",          "makeBlock(s)"),
     ("loop",           "makeLoop(s)"),
     ("if",             "makeIf(s)"),

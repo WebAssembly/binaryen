@@ -657,7 +657,7 @@ switch (op[0]) {
     }
   }
   case 'l': return makeLoop(s); // loop
-  case 'n': return allocator.alloc<Nop>(); // nop
+  case 'n': return makeNop(); // nop
   case 'r': return makeReturn(s); // return
   case 's': {
     switch (op[2]) {
@@ -679,7 +679,7 @@ switch (op[0]) {
       default: goto parse_error;
     }
   }
-  case 'u': return allocator.alloc<Unreachable>(); // unreachable
+  case 'u': return makeUnreachable(); // unreachable
   case 'w': return makeAtomicWake(s); // wake
   default: goto parse_error;
 }

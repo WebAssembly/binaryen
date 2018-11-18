@@ -662,6 +662,14 @@ Expression* SExpressionWasmBuilder::makeExpression(Element& s) {
 #include "gen-s-parser.inc"
 }
 
+Expression* SExpressionWasmBuilder::makeUnreachable() {
+  return allocator.alloc<Unreachable>();
+}
+
+Expression* SExpressionWasmBuilder::makeNop() {
+  return allocator.alloc<Nop>();
+}
+
 Expression* SExpressionWasmBuilder::makeBinary(Element& s, BinaryOp op) {
   auto ret = allocator.alloc<Binary>();
   ret->op = op;

@@ -167,6 +167,8 @@ public:
 
 private:
   Expression* makeExpression(Element& s);
+  Expression* makeUnreachable();
+  Expression* makeNop();
   Expression* makeBinary(Element& s, BinaryOp op);
   Expression* makeUnary(Element& s, UnaryOp op);
   Expression* makeSelect(Element& s);
