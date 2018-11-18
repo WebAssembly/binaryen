@@ -268,7 +268,7 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       // to the first item that branches to the block.
       if (childBlock->name.is()) {
         auto childName = childBlock->name;
-        for (size_t j = 0; j < childSize - 1; j++) {
+        for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];
           if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
             // We can't remove this from the child.
