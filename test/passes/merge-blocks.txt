@@ -4,10 +4,8 @@
  (type $2 (func (result i32)))
  (func $drop-block (; 0 ;) (type $0)
   (block $block
-   (block $x
-    (drop
-     (i32.const 0)
-    )
+   (drop
+    (i32.const 0)
    )
   )
  )
@@ -25,10 +23,10 @@
  )
  (func $drop-block-br-if (; 2 ;) (type $0)
   (block $block
+   (drop
+    (i32.const 1)
+   )
    (block $x
-    (drop
-     (i32.const 1)
-    )
     (br_if $x
      (i32.const 2)
     )
@@ -133,13 +131,11 @@
   (if
    (i32.const 1)
    (block $label
-    (block $block
-     (drop
-      (i32.const 2)
-     )
-     (drop
-      (i32.const 3)
-     )
+    (drop
+     (i32.const 2)
+    )
+    (drop
+     (i32.const 3)
     )
    )
   )

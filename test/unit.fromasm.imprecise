@@ -178,13 +178,13 @@
     (i32.const 51)
    )
   )
-  (block $switch-case4
-   (drop
-    (i32.add
-     (get_local $0)
-     (i32.const -5)
-    )
+  (drop
+   (i32.add
+    (get_local $0)
+    (i32.const -5)
    )
+  )
+  (block $switch-case4
    (br $switch-case4)
   )
   (loop $label$continue$L1
