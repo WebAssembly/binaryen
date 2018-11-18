@@ -252,55 +252,89 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
           // TODO: handle (loop (loop - the bodies of loops may not be blocks
         }
       }
-      // If no block, or a block that might be broken out of, we can't do anything.
-      if (!childBlock || childBlock->name.is()) continue;
+      // If no block, we can't do anything.
+      if (!childBlock) continue;
       auto& childList = childBlock->list;
       auto childSize = childList.size();
       if (childSize == 0) continue;
       // If the child has items after an unreachable, ignore it - dce should have
       // been run, and we prefer to not handle the complexity here.
       if (hasDeadCode(childBlock)) continue;
-      // If this is a loop, we may be removing only the tail.
-      Index start = 0;
-      Index end = childSize;
+      // In some cases we can remove only the head or the tail of the block,
+      // and must keep some things in the child block.
+      Index keepStart = childSize;
+      Index keepEnd = 0;
+      // For a block with a name, we may only be able to remove a head, up
+      // to the first item that branches to the block.
+      if (childBlock->name.is()) {
+        auto childName = childBlock->name;
+        for (size_t j = 0; j < childSize - 1; j++) {
+          auto* item = childList[j];
+          if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
+            // We can't remove this from the child.
+            keepStart = j;
+            keepEnd = childSize;
+            break;
+          }
+        }
+      }
+      // For a loop, we may only be able to remove a tail
       if (loop) {
         auto childName = loop->name;
         for (auto j = int(childSize - 1); j >= 0; j--) {
           auto* item = childList[j];
           if (BranchUtils::BranchSeeker::hasNamed(item, childName)) {
             // We can't remove this from the child.
-            start = j + 1;
+            keepStart = 0;
+            keepEnd = std::max(Index(j + 1), keepEnd);
             break;
           }
         }
-        // Maybe there's nothing to do.
-        if (start == end) continue;
         // If we can only do part of the block, and if the block has a flowing value, we
         // would need special handling for that - not worth it, probably TODO
-        if (start > 0 && isConcreteType(childList.back()->type)) {
+        // FIXME is this not handled by the drop later down?
+        if (keepEnd < childSize && isConcreteType(childList.back()->type)) {
           continue;
         }
       }
+      // Maybe there's nothing to do, if we must keep it all in the
+      // child anyhow.
+      if (keepStart == 0 && keepEnd == childSize) continue;
+      // There is something to do!
+      bool keepingPart = keepStart < keepEnd;
+      // Create a new merged list, and fill in the code before the
+      // child block we are merging in. TODO better efficiency
       ExpressionList merged(module->allocator);
       for (size_t j = 0; j < i; j++) {
         merged.push_back(list[j]);
       }
-      // If we can't merge it all, keep the child.
-      if (start > 0) {
-        merged.push_back(child);
-      }
-      for (Index j = start; j < end; j++) {
+      // Add the head of the block - the things at the start we do
+      // not need to keep.
+      for (Index j = 0; j < keepStart; j++) {
         merged.push_back(childList[j]);
       }
-      // If we didn't merge it all, update the child.
-      if (start > 0) {
-        childList.resize(start);
+      // If we can't merge it all, keep and filter the child.
+      if (keepingPart) {
+        merged.push_back(child);
+        // Filter the child.
+        ExpressionList filtered(module->allocator);
+        for (Index j = keepStart; j < keepEnd; j++) {
+          filtered.push_back(childList[j]);
+        }
+        // Add the tail of the block - the things at the end we do
+        // not need to keep.
+        for (Index j = keepEnd; j < childSize; j++) {
+          merged.push_back(childList[j]);
+        }
+        // Update the child.
+        childList.swap(filtered);
         // We may have removed unreachable items.
         childBlock->finalize();
-        if (auto* loop = child->dynCast<Loop>()) {
+        if (loop) {
           loop->finalize();
         }
       }
+      // Add the rest of the parent block after the child.
       for (size_t j = i + 1; j < list.size(); j++) {
         merged.push_back(list[j]);
       }
