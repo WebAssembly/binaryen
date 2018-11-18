@@ -35,10 +35,10 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 25) # 250
+  num = random.randint(2, 50) # 250
   density = random.random() * random.random()
   code_likelihood = random.random()
-  code_max = random.randint(0, (num + 5) if random.random() < 0.5 else 3)
+  code_max = random.randint(0, num if random.random() < 0.5 else 3)
   max_decision = num * 20
   decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
