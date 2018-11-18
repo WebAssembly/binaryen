@@ -96,5 +96,28 @@
    (br $a1)
   )
  )
+ (func $skipping (param $0 i32) (result f32)
+  (if
+   (i32.const 0)
+   (unreachable)
+  ) ;; branches joining here lead to skip opportunities
+  (loop $label$2 (result f32)
+   (f32.const 1)
+  )
+ )
+ (func $merging
+  (if
+   (i32.const 0)
+   (return)
+   ;; no else, but the else ends up with a return too, and we can merge them
+  )
+ )
+ (func $unswitch
+  (block $label$1
+   (br_table $label$1 $label$1
+    (i32.const 0)
+   )
+  )
+ )
 )
 
