@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 #
 # Copyright 2018 WebAssembly Community Group participants
 #
@@ -276,7 +276,7 @@ class CodePrinter:
     return self
 
   def print_line(self, line):
-    print(f"{'  '*CodePrinter.indents}{line}")
+    print("  " * CodePrinter.indents + line)
 
 
 class Node:
@@ -344,7 +344,7 @@ class Node:
       return
     # do prune
     self.expr = exprs.pop()
-    self.inst = " | ".join(c.inst for c in self.children.values())
+    self.inst = " | ".join(sorted(c.inst for c in self.children.values()))
     self.children = {}
 
 
@@ -359,26 +359,26 @@ def instruction_parser():
 
   printer = CodePrinter()
 
-  printer.print_line(f"char op[{inst_length} + 1] = {{'\\0'}};")
-  printer.print_line(f"strncpy(op, s[0]->c_str(), {inst_length});")
+  printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
+  printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
   def emit(node, idx=0):
     assert node.children
-    printer.print_line(f"switch (op[{idx}]) {{")
+    printer.print_line("switch (op[{}]) {{".format(idx))
     with printer.indent():
       if node.expr:
-        printer.print_line(f"case '\\0': return {node.expr}; // {node.inst}")
+        printer.print_line("case '\\0': return {}; // {}".format(node.expr, node.inst))
       children = sorted(node.children.items(), key=lambda pair: pair[0])
       for prefix, child in children:
         if child.children:
-          printer.print_line(f"case '{prefix[0]}': {{")
+          printer.print_line("case '{}': {{".format(prefix[0]))
           with printer.indent():
             emit(child, idx + len(prefix))
           printer.print_line("}")
         else:
           assert child.expr
-          printer.print_line(f"case '{prefix[0]}': return {child.expr}; "
-                             f"// {child.inst}")
+          printer.print_line("case '{}': return {}; // {}"
+                             .format(prefix[0], child.expr, child.inst))
       printer.print_line("default: goto parse_error;")
     printer.print_line("}")
 
@@ -393,10 +393,10 @@ def print_header():
 
 
 def generate_with_guard(generator, guard):
-  print(f"#ifdef {guard}")
-  print(f"#undef {guard}")
+  print("#ifdef {}".format(guard))
+  print("#undef {}".format(guard))
   generator()
-  print(f"#endif // {guard}")
+  print("#endif // {}".format(guard))
 
 
 def main():

@@ -2,7 +2,7 @@
 
 #ifdef INSTRUCTION_PARSER
 #undef INSTRUCTION_PARSER
-char op[26 + 1] = {'\0'};
+char op[27] = {'\0'};
 strncpy(op, s[0]->c_str(), 26);
 switch (op[0]) {
   case 'b': {
@@ -268,7 +268,7 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'r': return makeAtomicRMWOrCmpxchg(s, i32); // i32.atomic.rmw8_u.sub | i32.atomic.rmw8_u.add | i32.atomic.rmw8_u.and | i32.atomic.rmw8_u.or | i32.atomic.rmw8_u.xor | i32.atomic.rmw8_u.xchg | i32.atomic.rmw8_u.cmpxchg | i32.atomic.rmw16_u.sub | i32.atomic.rmw16_u.add | i32.atomic.rmw16_u.and | i32.atomic.rmw16_u.or | i32.atomic.rmw16_u.xor | i32.atomic.rmw16_u.xchg | i32.atomic.rmw16_u.cmpxchg | i32.atomic.rmw.sub | i32.atomic.rmw.add | i32.atomic.rmw.and | i32.atomic.rmw.or | i32.atomic.rmw.xor | i32.atomic.rmw.xchg | i32.atomic.rmw.cmpxchg
+                  case 'r': return makeAtomicRMWOrCmpxchg(s, i32); // i32.atomic.rmw.add | i32.atomic.rmw.and | i32.atomic.rmw.cmpxchg | i32.atomic.rmw.or | i32.atomic.rmw.sub | i32.atomic.rmw.xchg | i32.atomic.rmw.xor | i32.atomic.rmw16_u.add | i32.atomic.rmw16_u.and | i32.atomic.rmw16_u.cmpxchg | i32.atomic.rmw16_u.or | i32.atomic.rmw16_u.sub | i32.atomic.rmw16_u.xchg | i32.atomic.rmw16_u.xor | i32.atomic.rmw8_u.add | i32.atomic.rmw8_u.and | i32.atomic.rmw8_u.cmpxchg | i32.atomic.rmw8_u.or | i32.atomic.rmw8_u.sub | i32.atomic.rmw8_u.xchg | i32.atomic.rmw8_u.xor
                   case 's': {
                     switch (op[16]) {
                       case '\0': return makeStore(s, i32, /*isAtomic=*/true); // i32.atomic.store
@@ -466,7 +466,7 @@ switch (op[0]) {
                       default: goto parse_error;
                     }
                   }
-                  case 'r': return makeAtomicRMWOrCmpxchg(s, i64); // i64.atomic.rmw8_u.sub | i64.atomic.rmw8_u.add | i64.atomic.rmw8_u.and | i64.atomic.rmw8_u.or | i64.atomic.rmw8_u.xor | i64.atomic.rmw8_u.xchg | i64.atomic.rmw8_u.cmpxchg | i64.atomic.rmw16_u.sub | i64.atomic.rmw16_u.add | i64.atomic.rmw16_u.and | i64.atomic.rmw16_u.or | i64.atomic.rmw16_u.xor | i64.atomic.rmw16_u.xchg | i64.atomic.rmw16_u.cmpxchg | i64.atomic.rmw32_u.sub | i64.atomic.rmw32_u.add | i64.atomic.rmw32_u.and | i64.atomic.rmw32_u.or | i64.atomic.rmw32_u.xor | i64.atomic.rmw32_u.xchg | i64.atomic.rmw32_u.cmpxchg | i64.atomic.rmw.sub | i64.atomic.rmw.add | i64.atomic.rmw.and | i64.atomic.rmw.or | i64.atomic.rmw.xor | i64.atomic.rmw.xchg | i64.atomic.rmw.cmpxchg
+                  case 'r': return makeAtomicRMWOrCmpxchg(s, i64); // i64.atomic.rmw.add | i64.atomic.rmw.and | i64.atomic.rmw.cmpxchg | i64.atomic.rmw.or | i64.atomic.rmw.sub | i64.atomic.rmw.xchg | i64.atomic.rmw.xor | i64.atomic.rmw16_u.add | i64.atomic.rmw16_u.and | i64.atomic.rmw16_u.cmpxchg | i64.atomic.rmw16_u.or | i64.atomic.rmw16_u.sub | i64.atomic.rmw16_u.xchg | i64.atomic.rmw16_u.xor | i64.atomic.rmw32_u.add | i64.atomic.rmw32_u.and | i64.atomic.rmw32_u.cmpxchg | i64.atomic.rmw32_u.or | i64.atomic.rmw32_u.sub | i64.atomic.rmw32_u.xchg | i64.atomic.rmw32_u.xor | i64.atomic.rmw8_u.add | i64.atomic.rmw8_u.and | i64.atomic.rmw8_u.cmpxchg | i64.atomic.rmw8_u.or | i64.atomic.rmw8_u.sub | i64.atomic.rmw8_u.xchg | i64.atomic.rmw8_u.xor
                   case 's': {
                     switch (op[16]) {
                       case '\0': return makeStore(s, i64, /*isAtomic=*/true); // i64.atomic.store
