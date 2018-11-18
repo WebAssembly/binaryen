@@ -22,6 +22,9 @@ import difflib
 import os
 import random
 import subprocess
+import time
+
+random.seed(time.time())
 
 if os.environ.get('LD_LIBRARY_PATH'):
   os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib'
@@ -32,17 +35,17 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 2) # 250
+  num = random.randint(2, 25) # 250
   density = random.random() * random.random()
   code_likelihood = random.random()
-  code_max = random.randint(0, num)
+  code_max = random.randint(0, (num + 5) if random.random() < 0.5 else 3)
   max_decision = num * 20
   decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
   defaults = [0] * num
   branch_codes = [0] * num # code on the branch, which may alter the global state
   def random_code():
-    if random.random() > code_likelihood:
+    if code_max == 0 or random.random() > code_likelihood:
       return 0 # no code
     # a random number to perturb the global state
     return random.randint(1, code_max)
@@ -58,7 +61,7 @@ while True:
     branches[i] = b
     branch_codes[i] = [random_code() for item in range(len(b) + 1)] # one for each branch, plus the default
   optimize = random.random() < 0.5
-  print counter, ':', num, density, optimize
+  print counter, ':', num, density, optimize, code_likelihood, code_max
   counter += 1
 
   for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
@@ -106,7 +109,7 @@ int main() {
   // if the end, halt
   BinaryenExpressionRef halter = BinaryenIf(module,
     BinaryenBinary(module,
-      BinaryenEqInt32(),
+      BinaryenGeUInt32(),
       BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
                    BinaryenConst(module, BinaryenLiteralInt32(4))),
       BinaryenConst(module, BinaryenLiteralInt32(4 * %d)) // jumps of 4 bytes
