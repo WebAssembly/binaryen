@@ -32,12 +32,20 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 250)
+  num = random.randint(2, 2) # 250
   density = random.random() * random.random()
+  code_likelihood = random.random()
+  code_max = random.randint(0, num)
   max_decision = num * 20
   decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
   defaults = [0] * num
+  branch_codes = [0] * num # code on the branch, which may alter the global state
+  def random_code():
+    if random.random() > code_likelihood:
+      return 0 # no code
+    # a random number to perturb the global state
+    return random.randint(1, code_max)
   for i in range(num):
     b = set([])
     bs = random.randint(1, max(1,
@@ -48,6 +56,7 @@ while True:
     defaults[i] = random.choice(b)
     b.remove(defaults[i])
     branches[i] = b
+    branch_codes[i] = [random_code() for item in range(len(b) + 1)] # one for each branch, plus the default
   optimize = random.random() < 0.5
   print counter, ':', num, density, optimize
   counter += 1
@@ -66,7 +75,7 @@ var state;
 var decisions = %s;
 var index = 0;
 function check() {
-  if (index == decisions.length) throw 'HALT';
+  if (index >= decisions.length) throw 'HALT';
   console.log('(i32.const ' + (-decisions[index]) + ')');
   return decisions[index++];
 }
@@ -159,14 +168,20 @@ int main() {
 
 ''' % len(decisions)
 
-  for i in range(0, num):
+  for i in range(num):
     slow += '  case %d: console.log("(i32.const %d)"); state = check(); \n' % (
             i, i)
     b = branches[i]
+    bc = branch_codes[i]
+    def get_phi(j):
+      phi = ''
+      if bc[j]:
+        phi = 'index += %d; ' % bc[j]
+      return phi
     for j in range(len(b)):
-      slow += '    if (state %% %d == %d) { label = %d; break }\n' % (
-              len(b) + 1, j, b[j])  # TODO: split range 1-n into these options
-    slow += '    label = %d; break\n' % defaults[i]
+      slow += '    if (state %% %d == %d) { %s label = %d; break }\n' % (
+              len(b) + 1, j, get_phi(j), b[j])  # TODO: split range 1-n into these options
+    slow += '    %slabel = %d; break\n' % (get_phi(-1), defaults[i])
 
   use_switch = [random.random() < 0.5 for i in range(num)]
 
@@ -204,6 +219,24 @@ int main() {
 
   for i in range(num):
     b = branches[i]
+    bc = branch_codes[i]
+    def get_phi(j):
+      phi = 'NULL'
+      if bc[j]:
+        # increment the index of global state
+        phi = '''
+    BinaryenStore(module,
+      4, 0, 0,
+      BinaryenConst(module, BinaryenLiteralInt32(4)),
+      BinaryenBinary(module,
+        BinaryenAddInt32(),
+        BinaryenLoad(module, 4, 0, 0, 0, BinaryenTypeInt32(),
+                     BinaryenConst(module, BinaryenLiteralInt32(4))),
+        BinaryenConst(module, BinaryenLiteralInt32(4 * %d))
+      ),
+      BinaryenTypeInt32()
+    )''' % bc[j]
+      return phi
     for j in range(len(b)):
       if use_switch[i]:
         total = len(b) + 1
@@ -213,9 +246,9 @@ int main() {
   {
     BinaryenIndex values[] = { %s };
     RelooperAddBranchForSwitch(b%d, b%d, values,
-                               sizeof(values) / sizeof(BinaryenIndex), NULL);
+                               sizeof(values) / sizeof(BinaryenIndex), %s);
   }
-''' % (values, i, b[j])
+''' % (values, i, b[j], get_phi(j))
       else:  # non-switch
         fast += '''
   RelooperAddBranch(b%d, b%d, BinaryenBinary(module,
@@ -226,17 +259,17 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(%d))
     ),
     BinaryenConst(module, BinaryenLiteralInt32(%d))
-  ), NULL);
-''' % (i, b[j], len(b) + 1, j)
+  ), %s);
+''' % (i, b[j], len(b) + 1, j, get_phi(j))
     # default branch
     if use_switch[i]:
       fast += '''
-  RelooperAddBranchForSwitch(b%d, b%d, NULL, 0, NULL);
-''' % (i, defaults[i])
+  RelooperAddBranchForSwitch(b%d, b%d, NULL, 0, %s);
+''' % (i, defaults[i], get_phi(-1))
     else:
       fast += '''
-  RelooperAddBranch(b%d, b%d, NULL, NULL);
-''' % (i, defaults[i])
+  RelooperAddBranch(b%d, b%d, NULL, %s);
+''' % (i, defaults[i], get_phi(-1))
 
   fast += '''
   BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
