@@ -39,11 +39,21 @@ while True:
   density = random.random() * random.random()
   code_likelihood = random.random()
   code_max = random.randint(0, num if random.random() < 0.5 else 3)
+  max_printed = random.randint(1, num if random.random() < 0.5 else 3)
   max_decision = num * 20
   decisions = [random.randint(1, max_decision) for x in range(num * 3)]
   branches = [0] * num
   defaults = [0] * num
   branch_codes = [0] * num  # code on the branch, which may alter the global state
+
+  # with some probability print the same id for different blocks,
+  # as the printing is the block contents - allow merging etc. opts
+  def printed_id(i):
+    if random.random() < 0.5:
+      return i
+    return i % max_printed
+
+  printed_ids = [printed_id(i) for i in range(num)]
 
   def random_code():
     if code_max == 0 or random.random() > code_likelihood:
@@ -63,7 +73,7 @@ while True:
     branches[i] = b
     branch_codes[i] = [random_code() for item in range(len(b) + 1)]  # one for each branch, plus the default
   optimize = random.random() < 0.5
-  print counter, ':', num, density, optimize, code_likelihood, code_max
+  print counter, ':', num, density, optimize, code_likelihood, code_max, max_printed
   counter += 1
 
   for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
@@ -175,7 +185,7 @@ int main() {
 
   for i in range(num):
     slow += '  case %d: console.log("(i32.const %d)"); state = check(); \n' % (
-            i, i)
+            i, printed_ids[i])
     b = branches[i]
     bc = branch_codes[i]
 
@@ -204,7 +214,7 @@ int main() {
       BinaryenSetLocal(module, 0, BinaryenCall(module, "check", NULL, 0,
                                                BinaryenTypeInt32()))
     };
-''' % (i, i)
+''' % (i, printed_ids[i])
     if use_switch[i]:
       fast += '''
     b%d = RelooperAddBlockWithSwitch(relooper,
