@@ -1,4 +1,5 @@
 (module
+ (global $global (mut i32) (i32.const 0))
  (func $0 (result f64)
   (if
    (i32.const 0)
@@ -117,6 +118,38 @@
    (br_table $label$1 $label$1
     (i32.const 0)
    )
+  )
+ )
+ (func $skip-only-empty
+  (if
+   (i32.const 1)
+   (set_global $global
+    (i32.const 0)
+   )
+  )
+ )
+ (func $skip-only-one-branch-out (result i32)
+  (block $label$1
+   (nop)
+  )
+  (if
+   (i32.const 1)
+   (unreachable) ;; blocks a path through
+  )
+  (i32.const 0)
+ )
+ (func $multipass-for-skips (result f32)
+  (if (result f32)
+   (i32.const 0)
+   (block (result f32)
+    (block $label$2
+     (br_if $label$2
+      (i32.const 536870912)
+     )
+    )
+    (f32.const 9223372036854775808)
+   )
+   (f32.const 65505)
   )
  )
 )
