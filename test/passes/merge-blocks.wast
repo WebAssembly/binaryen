@@ -200,5 +200,14 @@
     )
    )
   )
+  (func $if-arm-unreachable
+   (block $label$1
+    (if
+     (unreachable) ;; unreachable condition
+     (nop)
+     (unreachable)
+    )
+   )
+  )
 )
 

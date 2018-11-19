@@ -380,7 +380,10 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
           if (target) {
             curr->list[0] = *target;
             *target = curr;
-            curr->finalize(curr->type);
+            // The block used to contain the if, and may have changed type from unreachable
+            // to none, for example, if the if has an unreachable condition but the arm
+            // is not unreachable.
+            curr->finalize();
             iff->finalize();
             replaceCurrent(iff);
             // Note that the type might change, e.g. if the if condition is unreachable

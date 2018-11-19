@@ -237,4 +237,13 @@
    )
   )
  )
+ (func $if-arm-unreachable (; 18 ;) (type $0)
+  (if
+   (unreachable)
+   (block $label$1
+    (nop)
+   )
+   (unreachable)
+  )
+ )
 )
