@@ -327,26 +327,6 @@ class Node:
   def insert(self, inst, expr):
     self.do_insert(inst, inst, expr)
 
-  def prune(self):
-    """Deduplicate siblings that would lead to the same expression."""
-    if not self.children:
-      return
-    for child in self.children.values():
-      child.prune()
-    exprs = set(self.expr) if self.expr else set()
-    for child in self.children.values():
-      # only prune if all children are terminal
-      if child.children:
-        return
-      exprs.add(child.expr)
-    if len(exprs) != 1:
-      # children have different expressions, can't prune
-      return
-    # do prune
-    self.expr = exprs.pop()
-    self.inst = " | ".join(sorted(c.inst for c in self.children.values()))
-    self.children = {}
-
 
 def instruction_parser():
   """Build a trie out of all the instructions, then emit it as C++ code."""
@@ -355,30 +335,38 @@ def instruction_parser():
   for inst, expr in instructions:
     inst_length = max(inst_length, len(inst))
     trie.insert(inst, expr)
-  trie.prune()
 
   printer = CodePrinter()
 
   printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
   printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
+  def make_leaf(expr, inst):
+    return ("if (strcmp(op, \"{inst}\") == 0) return {expr};"
+            .format(inst=inst, expr=expr))
+
   def emit(node, idx=0):
     assert node.children
     printer.print_line("switch (op[{}]) {{".format(idx))
     with printer.indent():
       if node.expr:
-        printer.print_line("case '\\0': return {}; // {}".format(node.expr, node.inst))
+        printer.print_line(
+            "case '\\0': {}"
+            .format(make_leaf(node.expr, node.inst)))
       children = sorted(node.children.items(), key=lambda pair: pair[0])
       for prefix, child in children:
         if child.children:
+          printer.print_line("// fall through")
           printer.print_line("case '{}': {{".format(prefix[0]))
           with printer.indent():
             emit(child, idx + len(prefix))
           printer.print_line("}")
         else:
           assert child.expr
-          printer.print_line("case '{}': return {}; // {}"
-                             .format(prefix[0], child.expr, child.inst))
+          printer.print_line("// fall through")
+          printer.print_line(
+              "case '{}': {}"
+              .format(prefix[0], make_leaf(child.expr, child.inst)))
       printer.print_line("default: goto parse_error;")
     printer.print_line("}")
 
