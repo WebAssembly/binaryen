@@ -15,7 +15,9 @@ jobs:
     - &test-ubuntu
       stage: test
       compiler: clang
-      python: 2.7
+      python:
+        - 2.7
+        - 3.6
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -33,6 +35,8 @@ jobs:
       script:
         - set -o errexit
         - flake8
+        # ensure generated parser is up to date
+        - ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
         - BUILD_SUBDIR=${BUILD_SUBDIR:-.}
         - mkdir -p ${BUILD_SUBDIR} && cd ${BUILD_SUBDIR}
         - cmake ${TRAVIS_BUILD_DIR} -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_INSTALL_PREFIX=install
