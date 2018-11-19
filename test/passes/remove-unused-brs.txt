@@ -242,12 +242,12 @@
   )
   (if
    (i32.const 0)
-   (drop
-    (i32.const 1)
-   )
    (block $a7
-    (block $block6
+    (drop
+     (i32.const 1)
     )
+   )
+   (block $block6
    )
   )
   (if
@@ -262,13 +262,13 @@
   )
   (if
    (i32.const 0)
-   (block $b
-    (block $block11
+   (block $c
+    (block $b
+     (block $block11
+     )
     )
    )
-   (block $c
-    (block $block13
-    )
+   (block $block13
    )
   )
  )
@@ -937,19 +937,17 @@
  (func $loop-if (; 33 ;) (type $2) (result i32)
   (loop $typed (result i32)
    (block $outer (result i32)
-    (block
-     (if
+    (block (result i32)
+     (if (result i32)
       (i32.const 2)
-      (block $block
+      (block $block (result i32)
        (drop
         (call $loop-if)
        )
-       (br $outer
-        (i32.const 0)
-       )
+       (i32.const 0)
       )
+      (br $typed)
      )
-     (br $typed)
     )
    )
   )
@@ -2044,11 +2042,12 @@
  (func $if-block-br-2 (; 90 ;) (type $1)
   (if
    (i32.const 1)
-   (drop
-    (i32.const 3)
-   )
    (block $label
+    (drop
+     (i32.const 3)
+    )
    )
+   (nop)
   )
  )
  (func $if-block-br-3 (; 91 ;) (type $1)
