@@ -24,7 +24,9 @@ import random
 import subprocess
 import time
 
-random.seed(time.time())
+seed_init = long(time.time())
+seed_init *= seed_init
+seed_init %= (2**32)
 
 if os.environ.get('LD_LIBRARY_PATH'):
   os.environ['LD_LIBRARY_PATH'] += os.pathsep + 'lib'
@@ -35,7 +37,10 @@ counter = 0
 
 while True:
   # Random decisions
-  num = random.randint(2, 50)  # 250
+  seed = seed_init
+  random.seed(seed)
+  seed_init += 1
+  num = random.randint(2, 10)  # 250
   density = random.random() * random.random()
   code_likelihood = random.random()
   code_max = random.randint(0, num if random.random() < 0.5 else 3)
@@ -73,7 +78,7 @@ while True:
     branches[i] = b
     branch_codes[i] = [random_code() for item in range(len(b) + 1)]  # one for each branch, plus the default
   optimize = random.random() < 0.5
-  print counter, ':', num, density, optimize, code_likelihood, code_max, max_printed
+  print counter, ':', num, density, optimize, code_likelihood, code_max, max_printed, ', seed =', seed
   counter += 1
 
   for temp in ['fuzz.wasm', 'fuzz.wast', 'fast.txt', 'fuzz.slow.js',
