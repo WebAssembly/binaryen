@@ -267,6 +267,11 @@ static void optimizeBlock(Block* curr, Module* module, PassOptions& passOptions)
       // For a block with a name, we may only be able to remove a head, up
       // to the first item that branches to the block.
       if (childBlock->name.is()) {
+        // If it has a concrete value, then breaks may be sending it a value,
+        // and we'd need to handle that. TODO
+        if (isConcreteType(childBlock->type)) {
+          continue;
+        }
         auto childName = childBlock->name;
         for (size_t j = 0; j < childSize; j++) {
           auto* item = childList[j];

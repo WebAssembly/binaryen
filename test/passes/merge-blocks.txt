@@ -2,6 +2,8 @@
  (type $0 (func))
  (type $1 (func (param i32)))
  (type $2 (func (result i32)))
+ (type $3 (func (result f32)))
+ (global $global$0 (mut i32) (i32.const 10))
  (func $drop-block (; 0 ;) (type $0)
   (block $block
    (drop
@@ -230,6 +232,20 @@
      )
      (unreachable)
     )
+   )
+  )
+ )
+ (func $br-value-blocktypechange (; 18 ;) (type $3) (result f32)
+  (set_global $global$0
+   (i32.const 0)
+  )
+  (block $label$1 (result f32)
+   (set_global $global$0
+    (i32.const 0)
+   )
+   (br_if $label$1
+    (unreachable)
+    (i32.const 0)
    )
   )
  )
