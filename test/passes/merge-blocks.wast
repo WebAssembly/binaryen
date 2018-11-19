@@ -209,5 +209,28 @@
     )
    )
   )
+  (func $propagate-type-if-we-optimize
+   (if
+    (i32.const 1)
+    (nop)
+    (block
+     (drop
+      (loop $label$3 (result i64)
+       (br_if $label$3
+        (block $label$4 (result i32)
+         (if
+          (i32.const 0)
+          (unreachable)
+          (unreachable)
+         )
+        )
+       )
+       (i64.const -9)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
 )
 

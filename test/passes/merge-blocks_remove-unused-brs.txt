@@ -3,13 +3,12 @@
  (func $func (; 0 ;) (type $0) (param $x i32)
   (loop $loop
    (block $out
-    (if
-     (get_local $x)
-     (nop)
-     (block
-      (nop)
-      (br $loop)
+    (block
+     (br_if $out
+      (get_local $x)
      )
+     (nop)
+     (br $loop)
     )
    )
   )

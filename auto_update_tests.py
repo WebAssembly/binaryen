@@ -29,6 +29,7 @@ from scripts.test.wasm2js import tests, spec_tests, extra_wasm2js_tests, assert_
 
 
 def update_asm_js_tests():
+  return
   print '[ processing and updating testcases... ]\n'
   for asm in sorted(os.listdir('test')):
     if asm.endswith('.asm.js'):
