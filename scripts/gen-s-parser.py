@@ -342,7 +342,7 @@ def instruction_parser():
   printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
   def make_leaf(expr, inst):
-    return ("if (strcmp(op, \"{inst}\") == 0) return {expr};"
+    return ("if (strcmp(op, \"{inst}\") == 0) return {expr}; else break;"
             .format(inst=inst, expr=expr))
 
   def emit(node, idx=0):
@@ -356,24 +356,20 @@ def instruction_parser():
       children = sorted(node.children.items(), key=lambda pair: pair[0])
       for prefix, child in children:
         if child.children:
-          printer.print_line("// fall through")
           printer.print_line("case '{}': {{".format(prefix[0]))
           with printer.indent():
             emit(child, idx + len(prefix))
           printer.print_line("}")
         else:
           assert child.expr
-          printer.print_line("// fall through")
           printer.print_line(
               "case '{}': {}"
               .format(prefix[0], make_leaf(child.expr, child.inst)))
-      printer.print_line("default: goto parse_error;")
+      printer.print_line("default: break;")
     printer.print_line("}")
 
   emit(trie)
-  printer.print_line("parse_error:")
-  with printer.indent():
-    printer.print_line("throw ParseException(std::string(op));")
+  printer.print_line("throw ParseException(std::string(op));")
 
 
 def print_header():
