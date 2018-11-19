@@ -611,10 +611,8 @@ struct Optimizer : public RelooperRecursor {
 #endif
           Branch* CurrBranch = iter.second;
           if (CurrBranch->Code) {
-#if RELOOPER_OPTIMIZER_DEBUG
-            std::cout << "    child has phi\n";
-#endif
-            continue; // TODO: handle code on branches
+            // We can't merge code; ignore
+            continue;
           }
           auto HashValue = Hash(CurrBlock);
           auto& HashedSiblings = HashedBranchesOut[HashValue];
@@ -775,49 +773,28 @@ private:
   // be equivalent.
   bool HaveEquivalentContents(Block* A, Block* B) {
     if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
-#if RELOOPER_OPTIMIZER_DEBUG
-      std::cout << "    HEC: different SC\n";
-#endif
       return false;
     }
     if (!IsCodeEquivalent(A->Code, B->Code)) {
-#if RELOOPER_OPTIMIZER_DEBUG
-      std::cout << "    HEC: different Code\n";
-#endif
       return false;
     }
     if (A->BranchesOut.size() != B->BranchesOut.size()) {
-#if RELOOPER_OPTIMIZER_DEBUG
-      std::cout << "    HEC: different BranchesOut sizes\n";
-#endif
       return false;
     }
     for (auto& aiter : A->BranchesOut) {
       auto* ABlock = aiter.first;
       auto* ABranch = aiter.second;
       if (B->BranchesOut.count(ABlock) == 0) {
-#if RELOOPER_OPTIMIZER_DEBUG
-        std::cout << "    HEC: different BranchesOut block targets\n";
-#endif
         return false;
       }
       auto* BBranch = B->BranchesOut[ABlock];
       if (!IsPossibleCodeEquivalent(ABranch->Condition, BBranch->Condition)) {
-#if RELOOPER_OPTIMIZER_DEBUG
-        std::cout << "    HEC: different BranchesOut branch conditions\n";
-#endif
         return false;
       }
       if (!IsPossibleUniquePtrEquivalent(ABranch->SwitchValues, BBranch->SwitchValues)) {
-#if RELOOPER_OPTIMIZER_DEBUG
-        std::cout << "    HEC: different BranchesOut branch switchValues\n";
-#endif
         return false;
       }
       if (!IsPossibleCodeEquivalent(ABranch->Code, BBranch->Code)) {
-#if RELOOPER_OPTIMIZER_DEBUG
-        std::cout << "    HEC: different BranchesOut branch codes\n";
-#endif
         return false;
       }
     }

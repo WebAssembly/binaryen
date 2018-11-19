@@ -40,7 +40,7 @@ while True:
   seed = seed_init
   random.seed(seed)
   seed_init += 1
-  num = random.randint(2, 10)  # 250
+  num = random.randint(2, 250)
   density = random.random() * random.random()
   code_likelihood = random.random()
   code_max = random.randint(0, num if random.random() < 0.5 else 3)
