@@ -85,9 +85,9 @@
   (local $var$6 i32)
   (local $var$7 i32)
   (local $var$8 i32)
-  (block $label$3
-   (if
-    (get_local $var$4)
+  (if
+   (get_local $var$4)
+   (block $label$3
     (block
      (if
       (i32.eqz

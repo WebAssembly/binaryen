@@ -102,9 +102,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // if without else stops the flow of values
         self->stopValueFlow();
       }
-    } else if (curr->is<Block>()) {
+    } else if (auto* block = curr->dynCast<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
-      auto* block = curr->cast<Block>();
       auto name = block->name;
       if (name.is()) {
         size_t size = flows.size();
@@ -436,6 +435,76 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
   }
 
+  void sinkBlocks(Function* func) {
+    struct Sinker : public PostWalker<Sinker> {
+      bool worked = false;
+
+      void visitBlock(Block* curr) {
+        // If the block has a single child which is a loop, and the block is named,
+        // then it is the exit for the loop. It's better to move it into the loop,
+        // where it can be better optimized by other passes.
+        // Similar logic for ifs: if the block is an exit for the if, we can
+        // move the block in, consider for example:
+        //    (block $label
+        //     (if (..condition1..)
+        //      (block
+        //       (br_if $label (..condition2..))
+        //       (..code..)
+        //      )
+        //     )
+        //    )
+        // After also merging the blocks, we have
+        //    (if (..condition1..)
+        //     (block $label
+        //      (br_if $label (..condition2..))
+        //      (..code..)
+        //     )
+        //    )
+        // which can be further optimized later.
+        if (curr->name.is() && curr->list.size() == 1) {
+          if (auto* loop = curr->list[0]->dynCast<Loop>()) {
+            curr->list[0] = loop->body;
+            loop->body = curr;
+            curr->finalize(curr->type);
+            loop->finalize();
+            replaceCurrent(loop);
+            worked = true;
+          } else if (auto* iff = curr->list[0]->dynCast<If>()) {
+            // The label can't be used in the condition.
+            if (BranchUtils::BranchSeeker::countNamed(iff->condition, curr->name) == 0) {
+              // We can move the block into either arm, if there are no uses in the other.
+              Expression** target = nullptr;
+              if (!iff->ifFalse ||
+                  BranchUtils::BranchSeeker::countNamed(iff->ifFalse, curr->name) == 0) {
+                target = &iff->ifTrue;
+              } else if (BranchUtils::BranchSeeker::countNamed(iff->ifTrue, curr->name) == 0) {
+                target = &iff->ifFalse;
+              }
+              if (target) {
+                curr->list[0] = *target;
+                *target = curr;
+                // The block used to contain the if, and may have changed type from unreachable
+                // to none, for example, if the if has an unreachable condition but the arm
+                // is not unreachable.
+                curr->finalize();
+                iff->finalize();
+                replaceCurrent(iff);
+                worked = true;
+                // Note that the type might change, e.g. if the if condition is unreachable
+                // but the block that was on the outside had a break.
+              }
+            }
+          }
+        }
+      }
+    } sinker;
+
+    sinker.doWalkFunction(func);
+    if (sinker.worked) {
+      anotherCycle = true;
+    }
+  }
+
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
     bool worked = false;
@@ -463,6 +532,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         anotherCycle |= optimizeLoop(loop);
       }
       loops.clear();
+      // sink blocks
+      sinkBlocks(func);
       if (anotherCycle) worked = true;
     } while (anotherCycle);
 

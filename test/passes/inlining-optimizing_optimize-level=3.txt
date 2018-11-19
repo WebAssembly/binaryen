@@ -556,29 +556,26 @@
   (local $2 i32)
   (if
    (get_local $0)
-   (block $do-once
-    (if
-     (i32.le_s
-      (i32.load offset=76
-       (get_local $0)
+   (set_local $0
+    (block $do-once (result i32)
+     (if
+      (i32.le_s
+       (i32.load offset=76
+        (get_local $0)
+       )
+       (i32.const -1)
       )
-      (i32.const -1)
-     )
-     (block
-      (set_local $0
+      (br $do-once
        (call $___fflush_unlocked
         (get_local $0)
        )
       )
-      (br $do-once)
      )
-    )
-    (set_local $1
-     (call $___fflush_unlocked
-      (get_local $0)
+     (set_local $1
+      (call $___fflush_unlocked
+       (get_local $0)
+      )
      )
-    )
-    (set_local $0
      (get_local $1)
     )
    )

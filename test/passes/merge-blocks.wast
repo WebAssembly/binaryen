@@ -201,6 +201,38 @@
     )
    )
   )
+  (func $if-arm-unreachable
+   (block $label$1
+    (if
+     (unreachable) ;; unreachable condition
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+  (func $propagate-type-if-we-optimize
+   (if
+    (i32.const 1)
+    (nop)
+    (block
+     (drop
+      (loop $label$3 (result i64)
+       (br_if $label$3
+        (block $label$4 (result i32)
+         (if
+          (i32.const 0)
+          (unreachable)
+          (unreachable)
+         )
+        )
+       )
+       (i64.const -9)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
   (func $br-value-blocktypechange (result f32)
    (set_global $global$0
     (i32.const 0)
