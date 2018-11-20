@@ -217,7 +217,7 @@ Module['Module'] = function(module) {
 // This is meant for internal use only, and is necessary as we
 // want to access Module from JS that were perhaps not created
 // from JS.
-function wrapModule(module, self) {
+Module['wrapModule'] = function wrapModule(module, self) {
   assert(module); // guard against incorrect old API usage
   if (!self) self = {};
 
