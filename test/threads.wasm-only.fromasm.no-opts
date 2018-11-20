@@ -1,15 +1,14 @@
 (module
+ (type $FUNCSIG$vi (func (param i32)))
  (import "env" "memory" (memory $memory (shared 256 256)))
  (import "env" "table" (table $table 0 0 anyfunc))
  (import "env" "__memory_base" (global $__memory_base i32))
  (import "env" "__table_base" (global $__table_base i32))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (global $STACKTOP (mut i32) (get_global $STACKTOP$asm2wasm$import))
- (global $tempRet0 (mut i32) (i32.const 0))
  (export "test64" (func $legalstub$test64))
- (export "getTempRet0" (func $getTempRet0))
- (export "setTempRet0" (func $setTempRet0))
- (func $test64 (; 0 ;) (result i64)
+ (func $test64 (; 1 ;) (result i64)
   (local $x i64)
   (local $y i64)
   (local $z i32)
@@ -72,12 +71,12 @@
    (get_local $x)
   )
  )
- (func $legalstub$test64 (; 1 ;) (result i32)
+ (func $legalstub$test64 (; 2 ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $test64)
   )
-  (set_global $tempRet0
+  (call $setTempRet0
    (i32.wrap/i64
     (i64.shr_u
      (get_local $0)
@@ -86,14 +85,6 @@
    )
   )
   (i32.wrap/i64
-   (get_local $0)
-  )
- )
- (func $getTempRet0 (; 2 ;) (result i32)
-  (get_global $tempRet0)
- )
- (func $setTempRet0 (; 3 ;) (param $0 i32)
-  (set_global $tempRet0
    (get_local $0)
   )
  )
