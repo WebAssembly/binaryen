@@ -50,7 +50,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::f32: ret.i32 = x.reinterpreti32(); break;
     case Type::f64: ret.i64 = x.reinterpreti64(); break;
     case Type::none:
-    case Type::unreachable: abort();
+    case Type::unreachable: WASM_UNREACHABLE();
   }
   return ret;
 }
@@ -62,9 +62,9 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::f32: return Literal(x.i32).castToF32();
     case Type::f64: return Literal(x.i64).castToF64();
     case Type::none:
-    case Type::unreachable: abort();
+    case Type::unreachable: break;
   }
-  abort();
+  WASM_UNREACHABLE();
 }
 
 // Mutexes (global for now; in theory if multiple modules

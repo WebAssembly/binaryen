@@ -55,9 +55,9 @@ char getSig(Type type) {
     case f32:  return 'f';
     case f64:  return 'd';
     case none: return 'v';
-    case unreachable: WASM_UNREACHABLE();
+    case unreachable: break;
   }
-  abort();
+  WASM_UNREACHABLE();
 }
 
 std::string getSig(const FunctionType *type) {
