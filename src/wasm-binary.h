@@ -643,7 +643,7 @@ enum MemoryFlags {
 
 
 inline S32LEB binaryType(Type type) {
-  int ret;
+  int ret = 0;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
     case none: ret = BinaryConsts::EncodedType::Empty; break;
