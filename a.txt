@@ -1,0 +1,2 @@
+subprocess.CalledProcessError: Command '['bin/wasm-opt', 'a.wasm', '-o', 'b.wasm', '--merge-blocks', '--pick-load-signs', '-O1']' returned non-zero exit status -6
+
