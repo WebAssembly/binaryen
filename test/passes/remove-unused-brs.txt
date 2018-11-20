@@ -2190,4 +2190,22 @@
   )
   (unreachable)
  )
+ (func $fuzz-type-changes-in-our-cycles (; 100 ;) (type $2) (result i32)
+  (loop $label$1
+   (if
+    (i32.const 0)
+    (if
+     (i32.const 0)
+     (block $label$3
+      (block $block
+      )
+     )
+     (return
+      (i32.const -8192)
+     )
+    )
+   )
+   (br $label$1)
+  )
+ )
 )

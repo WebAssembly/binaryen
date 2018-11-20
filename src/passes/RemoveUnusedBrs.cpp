@@ -435,7 +435,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
   }
 
-  void sinkBlocks(Function* func) {
+  bool sinkBlocks(Function* func) {
     struct Sinker : public PostWalker<Sinker> {
       bool worked = false;
 
@@ -501,13 +501,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     sinker.doWalkFunction(func);
     if (sinker.worked) {
-      anotherCycle = true;
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
     }
+    return false;
   }
 
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
-    bool worked = false;
     do {
       anotherCycle = false;
       super::doWalkFunction(func);
@@ -532,15 +533,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         anotherCycle |= optimizeLoop(loop);
       }
       loops.clear();
+      if (anotherCycle) {
+        ReFinalize().walkFunctionInModule(func, getModule());
+      }
       // sink blocks
-      sinkBlocks(func);
-      if (anotherCycle) worked = true;
+      if (sinkBlocks(func)) {
+        anotherCycle = true;
+      }
     } while (anotherCycle);
-
-    if (worked) {
-      // Our work may alter block and if types, they may now return values that we made flow through them
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // thread trivial jumps
     struct JumpThreader : public ControlFlowWalker<JumpThreader> {
