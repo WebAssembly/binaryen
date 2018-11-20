@@ -531,10 +531,10 @@ struct Optimizer : public RelooperRecursor {
   // and there is no phi or switch to worry us, just skip through.
   bool SkipEmptyBlocks() {
     bool Worked = false;
-    for (auto* Block : Parent->Blocks) {
+    for (auto* CurrBlock : Parent->Blocks) {
       // Generate a new set of branches out TODO optimize
       BlockBranchMap NewBranchesOut;
-      for (auto& iter : Block->BranchesOut) {
+      for (auto& iter : CurrBlock->BranchesOut) {
         auto* Next = iter.first;
         auto* NextBranch = iter.second;
         auto* First = Next;
@@ -547,8 +547,8 @@ struct Optimizer : public RelooperRecursor {
           if (IsEmpty(Next) &&
               Next->BranchesOut.size() == 1) {
             auto iter = Next->BranchesOut.begin();
-            auto* NextNext = iter->first;
-            auto* NextNextBranch = iter->second;
+            Block* NextNext = iter->first;
+            Branch* NextNextBranch = iter->second;
             assert(!NextNextBranch->Condition && !NextNextBranch->SwitchValues);
             if (!NextNextBranch->Code) { // TODO: handle extra code too
               // We can skip through!
@@ -572,7 +572,7 @@ struct Optimizer : public RelooperRecursor {
         }
         if (Replacement != First) {
 #if RELOOPER_OPTIMIZER_DEBUG
-          std::cout << "  skip to replacement! " << Block->Id << " -> " << First->Id << " -> " << Replacement->Id << '\n';
+          std::cout << "  skip to replacement! " << CurrBlock->Id << " -> " << First->Id << " -> " << Replacement->Id << '\n';
 #endif
           Worked = true;
         }
@@ -587,7 +587,7 @@ struct Optimizer : public RelooperRecursor {
           NewBranchesOut[Replacement] = NextBranch;
         }
       }
-      Block->BranchesOut.swap(NewBranchesOut); // FIXME do we leak old unused Branches?
+      CurrBlock->BranchesOut.swap(NewBranchesOut); // FIXME do we leak old unused Branches?
     }
     return Worked;
   }
@@ -782,8 +782,8 @@ private:
       return false;
     }
     for (auto& aiter : A->BranchesOut) {
-      auto* ABlock = aiter.first;
-      auto* ABranch = aiter.second;
+      Block* ABlock = aiter.first;
+      Branch* ABranch = aiter.second;
       if (B->BranchesOut.count(ABlock) == 0) {
         return false;
       }
