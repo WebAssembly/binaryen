@@ -344,7 +344,7 @@ def instruction_parser():
   def print_leaf(expr, inst):
     printer.print_line("if (strcmp(op, \"{inst}\") == 0) return {expr};"
                        .format(inst=inst, expr=expr))
-    printer.print_line("break;")
+    printer.print_line("goto parse_error;")
 
   def emit(node, idx=0):
     assert node.children
@@ -366,11 +366,13 @@ def instruction_parser():
           printer.print_line("case '{}':".format(prefix[0]))
           with printer.indent():
             print_leaf(child.expr, child.inst)
-      printer.print_line("default: break;")
+      printer.print_line("default: goto parse_error;")
     printer.print_line("}")
 
   emit(trie)
-  printer.print_line("throw ParseException(std::string(op));")
+  printer.print_line("parse_error:")
+  with printer.indent():
+    printer.print_line("throw ParseException(std::string(op));")
 
 
 def print_header():

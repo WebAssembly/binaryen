@@ -9,27 +9,27 @@ switch (op[0]) {
     switch (op[1]) {
       case 'l':
         if (strcmp(op, "block") == 0) return makeBlock(s);
-        break;
+        goto parse_error;
       case 'r': {
         switch (op[2]) {
           case '\0':
             if (strcmp(op, "br") == 0) return makeBreak(s);
-            break;
+            goto parse_error;
           case '_': {
             switch (op[3]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) return makeBreak(s);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "br_table") == 0) return makeBreakTable(s);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
-          default: break;
+          default: goto parse_error;
         }
       }
-      default: break;
+      default: goto parse_error;
     }
   }
   case 'c': {
@@ -38,25 +38,25 @@ switch (op[0]) {
         switch (op[4]) {
           case '\0':
             if (strcmp(op, "call") == 0) return makeCall(s);
-            break;
+            goto parse_error;
           case '_':
             if (strcmp(op, "call_indirect") == 0) return makeCallIndirect(s);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
       case 'u':
         if (strcmp(op, "current_memory") == 0) return makeHost(s, HostOp::CurrentMemory);
-        break;
-      default: break;
+        goto parse_error;
+      default: goto parse_error;
     }
   }
   case 'd':
     if (strcmp(op, "drop") == 0) return makeDrop(s);
-    break;
+    goto parse_error;
   case 'e':
     if (strcmp(op, "else") == 0) return makeThenOrElse(s);
-    break;
+    goto parse_error;
   case 'f': {
     switch (op[1]) {
       case '3': {
@@ -65,155 +65,155 @@ switch (op[0]) {
             switch (op[5]) {
               case 'b':
                 if (strcmp(op, "f32.abs") == 0) return makeUnary(s, UnaryOp::AbsFloat32);
-                break;
+                goto parse_error;
               case 'd':
                 if (strcmp(op, "f32.add") == 0) return makeBinary(s, BinaryOp::AddFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'c': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f32.ceil") == 0) return makeUnary(s, UnaryOp::CeilFloat32);
-                break;
+                goto parse_error;
               case 'o': {
                 switch (op[6]) {
                   case 'n': {
                     switch (op[7]) {
                       case 's':
                         if (strcmp(op, "f32.const") == 0) return makeConst(s, f32);
-                        break;
+                        goto parse_error;
                       case 'v': {
                         switch (op[12]) {
                           case 's': {
                             switch (op[15]) {
                               case '3':
                                 if (strcmp(op, "f32.convert_s/i32") == 0) return makeUnary(s, UnaryOp::ConvertSInt32ToFloat32);
-                                break;
+                                goto parse_error;
                               case '6':
                                 if (strcmp(op, "f32.convert_s/i64") == 0) return makeUnary(s, UnaryOp::ConvertSInt64ToFloat32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'u': {
                             switch (op[15]) {
                               case '3':
                                 if (strcmp(op, "f32.convert_u/i32") == 0) return makeUnary(s, UnaryOp::ConvertUInt32ToFloat32);
-                                break;
+                                goto parse_error;
                               case '6':
                                 if (strcmp(op, "f32.convert_u/i64") == 0) return makeUnary(s, UnaryOp::ConvertUInt64ToFloat32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
-                      default: break;
+                      default: goto parse_error;
                     }
                   }
                   case 'p':
                     if (strcmp(op, "f32.copysign") == 0) return makeBinary(s, BinaryOp::CopySignFloat32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'd': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f32.demote/f64") == 0) return makeUnary(s, UnaryOp::DemoteFloat64);
-                break;
+                goto parse_error;
               case 'i':
                 if (strcmp(op, "f32.div") == 0) return makeBinary(s, BinaryOp::DivFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'e':
             if (strcmp(op, "f32.eq") == 0) return makeBinary(s, BinaryOp::EqFloat32);
-            break;
+            goto parse_error;
           case 'f':
             if (strcmp(op, "f32.floor") == 0) return makeUnary(s, UnaryOp::FloorFloat32);
-            break;
+            goto parse_error;
           case 'g': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f32.ge") == 0) return makeBinary(s, BinaryOp::GeFloat32);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f32.gt") == 0) return makeBinary(s, BinaryOp::GtFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'l': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f32.le") == 0) return makeBinary(s, BinaryOp::LeFloat32);
-                break;
+                goto parse_error;
               case 'o':
                 if (strcmp(op, "f32.load") == 0) return makeLoad(s, f32, /*isAtomic=*/false);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f32.lt") == 0) return makeBinary(s, BinaryOp::LtFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'm': {
             switch (op[5]) {
               case 'a':
                 if (strcmp(op, "f32.max") == 0) return makeBinary(s, BinaryOp::MaxFloat32);
-                break;
+                goto parse_error;
               case 'i':
                 if (strcmp(op, "f32.min") == 0) return makeBinary(s, BinaryOp::MinFloat32);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "f32.mul") == 0) return makeBinary(s, BinaryOp::MulFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'n': {
             switch (op[6]) {
               case '\0':
                 if (strcmp(op, "f32.ne") == 0) return makeBinary(s, BinaryOp::NeFloat32);
-                break;
+                goto parse_error;
               case 'a':
                 if (strcmp(op, "f32.nearest") == 0) return makeUnary(s, UnaryOp::NearestFloat32);
-                break;
+                goto parse_error;
               case 'g':
                 if (strcmp(op, "f32.neg") == 0) return makeUnary(s, UnaryOp::NegFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'r':
             if (strcmp(op, "f32.reinterpret/i32") == 0) return makeUnary(s, UnaryOp::ReinterpretInt32);
-            break;
+            goto parse_error;
           case 's': {
             switch (op[5]) {
               case 'q':
                 if (strcmp(op, "f32.sqrt") == 0) return makeUnary(s, UnaryOp::SqrtFloat32);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f32.store") == 0) return makeStore(s, f32, /*isAtomic=*/false);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "f32.sub") == 0) return makeBinary(s, BinaryOp::SubFloat32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 't':
             if (strcmp(op, "f32.trunc") == 0) return makeUnary(s, UnaryOp::TruncFloat32);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
       case '6': {
@@ -222,153 +222,153 @@ switch (op[0]) {
             switch (op[5]) {
               case 'b':
                 if (strcmp(op, "f64.abs") == 0) return makeUnary(s, UnaryOp::AbsFloat64);
-                break;
+                goto parse_error;
               case 'd':
                 if (strcmp(op, "f64.add") == 0) return makeBinary(s, BinaryOp::AddFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'c': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f64.ceil") == 0) return makeUnary(s, UnaryOp::CeilFloat64);
-                break;
+                goto parse_error;
               case 'o': {
                 switch (op[6]) {
                   case 'n': {
                     switch (op[7]) {
                       case 's':
                         if (strcmp(op, "f64.const") == 0) return makeConst(s, f64);
-                        break;
+                        goto parse_error;
                       case 'v': {
                         switch (op[12]) {
                           case 's': {
                             switch (op[15]) {
                               case '3':
                                 if (strcmp(op, "f64.convert_s/i32") == 0) return makeUnary(s, UnaryOp::ConvertSInt32ToFloat64);
-                                break;
+                                goto parse_error;
                               case '6':
                                 if (strcmp(op, "f64.convert_s/i64") == 0) return makeUnary(s, UnaryOp::ConvertSInt64ToFloat64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'u': {
                             switch (op[15]) {
                               case '3':
                                 if (strcmp(op, "f64.convert_u/i32") == 0) return makeUnary(s, UnaryOp::ConvertUInt32ToFloat64);
-                                break;
+                                goto parse_error;
                               case '6':
                                 if (strcmp(op, "f64.convert_u/i64") == 0) return makeUnary(s, UnaryOp::ConvertUInt64ToFloat64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
-                      default: break;
+                      default: goto parse_error;
                     }
                   }
                   case 'p':
                     if (strcmp(op, "f64.copysign") == 0) return makeBinary(s, BinaryOp::CopySignFloat64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'd':
             if (strcmp(op, "f64.div") == 0) return makeBinary(s, BinaryOp::DivFloat64);
-            break;
+            goto parse_error;
           case 'e':
             if (strcmp(op, "f64.eq") == 0) return makeBinary(s, BinaryOp::EqFloat64);
-            break;
+            goto parse_error;
           case 'f':
             if (strcmp(op, "f64.floor") == 0) return makeUnary(s, UnaryOp::FloorFloat64);
-            break;
+            goto parse_error;
           case 'g': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f64.ge") == 0) return makeBinary(s, BinaryOp::GeFloat64);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f64.gt") == 0) return makeBinary(s, BinaryOp::GtFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'l': {
             switch (op[5]) {
               case 'e':
                 if (strcmp(op, "f64.le") == 0) return makeBinary(s, BinaryOp::LeFloat64);
-                break;
+                goto parse_error;
               case 'o':
                 if (strcmp(op, "f64.load") == 0) return makeLoad(s, f64, /*isAtomic=*/false);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f64.lt") == 0) return makeBinary(s, BinaryOp::LtFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'm': {
             switch (op[5]) {
               case 'a':
                 if (strcmp(op, "f64.max") == 0) return makeBinary(s, BinaryOp::MaxFloat64);
-                break;
+                goto parse_error;
               case 'i':
                 if (strcmp(op, "f64.min") == 0) return makeBinary(s, BinaryOp::MinFloat64);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "f64.mul") == 0) return makeBinary(s, BinaryOp::MulFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'n': {
             switch (op[6]) {
               case '\0':
                 if (strcmp(op, "f64.ne") == 0) return makeBinary(s, BinaryOp::NeFloat64);
-                break;
+                goto parse_error;
               case 'a':
                 if (strcmp(op, "f64.nearest") == 0) return makeUnary(s, UnaryOp::NearestFloat64);
-                break;
+                goto parse_error;
               case 'g':
                 if (strcmp(op, "f64.neg") == 0) return makeUnary(s, UnaryOp::NegFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'p':
             if (strcmp(op, "f64.promote/f32") == 0) return makeUnary(s, UnaryOp::PromoteFloat32);
-            break;
+            goto parse_error;
           case 'r':
             if (strcmp(op, "f64.reinterpret/i64") == 0) return makeUnary(s, UnaryOp::ReinterpretInt64);
-            break;
+            goto parse_error;
           case 's': {
             switch (op[5]) {
               case 'q':
                 if (strcmp(op, "f64.sqrt") == 0) return makeUnary(s, UnaryOp::SqrtFloat64);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "f64.store") == 0) return makeStore(s, f64, /*isAtomic=*/false);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "f64.sub") == 0) return makeBinary(s, BinaryOp::SubFloat64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 't':
             if (strcmp(op, "f64.trunc") == 0) return makeUnary(s, UnaryOp::TruncFloat64);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
-      default: break;
+      default: goto parse_error;
     }
   }
   case 'g': {
@@ -377,17 +377,17 @@ switch (op[0]) {
         switch (op[4]) {
           case 'g':
             if (strcmp(op, "get_global") == 0) return makeGetGlobal(s);
-            break;
+            goto parse_error;
           case 'l':
             if (strcmp(op, "get_local") == 0) return makeGetLocal(s);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
       case 'r':
         if (strcmp(op, "grow_memory") == 0) return makeHost(s, HostOp::GrowMemory);
-        break;
-      default: break;
+        goto parse_error;
+      default: goto parse_error;
     }
   }
   case 'i': {
@@ -398,24 +398,24 @@ switch (op[0]) {
             switch (op[5]) {
               case 'd':
                 if (strcmp(op, "i32.add") == 0) return makeBinary(s, BinaryOp::AddInt32);
-                break;
+                goto parse_error;
               case 'n':
                 if (strcmp(op, "i32.and") == 0) return makeBinary(s, BinaryOp::AndInt32);
-                break;
+                goto parse_error;
               case 't': {
                 switch (op[11]) {
                   case 'l': {
                     switch (op[15]) {
                       case '\0':
                         if (strcmp(op, "i32.atomic.load") == 0) return makeLoad(s, i32, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '1':
                         if (strcmp(op, "i32.atomic.load16_u") == 0) return makeLoad(s, i32, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '8':
                         if (strcmp(op, "i32.atomic.load8_u") == 0) return makeLoad(s, i32, /*isAtomic=*/true);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
                   case 'r': {
@@ -426,34 +426,34 @@ switch (op[0]) {
                             switch (op[16]) {
                               case 'd':
                                 if (strcmp(op, "i32.atomic.rmw.add") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i32.atomic.rmw.and") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i32.atomic.rmw.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i32.atomic.rmw.or") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i32.atomic.rmw.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[16]) {
                               case 'c':
                                 if (strcmp(op, "i32.atomic.rmw.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i32.atomic.rmw.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
                       case '1': {
@@ -462,34 +462,34 @@ switch (op[0]) {
                             switch (op[20]) {
                               case 'd':
                                 if (strcmp(op, "i32.atomic.rmw16_u.add") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i32.atomic.rmw16_u.and") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i32.atomic.rmw16_u.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i32.atomic.rmw16_u.or") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i32.atomic.rmw16_u.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[20]) {
                               case 'c':
                                 if (strcmp(op, "i32.atomic.rmw16_u.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i32.atomic.rmw16_u.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
                       case '8': {
@@ -498,82 +498,82 @@ switch (op[0]) {
                             switch (op[19]) {
                               case 'd':
                                 if (strcmp(op, "i32.atomic.rmw8_u.add") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i32.atomic.rmw8_u.and") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i32.atomic.rmw8_u.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i32.atomic.rmw8_u.or") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i32.atomic.rmw8_u.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[19]) {
                               case 'c':
                                 if (strcmp(op, "i32.atomic.rmw8_u.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i32.atomic.rmw8_u.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i32);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
-                      default: break;
+                      default: goto parse_error;
                     }
                   }
                   case 's': {
                     switch (op[16]) {
                       case '\0':
                         if (strcmp(op, "i32.atomic.store") == 0) return makeStore(s, i32, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '1':
                         if (strcmp(op, "i32.atomic.store16") == 0) return makeStore(s, i32, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '8':
                         if (strcmp(op, "i32.atomic.store8") == 0) return makeStore(s, i32, /*isAtomic=*/true);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'c': {
             switch (op[5]) {
               case 'l':
                 if (strcmp(op, "i32.clz") == 0) return makeUnary(s, UnaryOp::ClzInt32);
-                break;
+                goto parse_error;
               case 'o':
                 if (strcmp(op, "i32.const") == 0) return makeConst(s, i32);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "i32.ctz") == 0) return makeUnary(s, UnaryOp::CtzInt32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'd': {
             switch (op[8]) {
               case 's':
                 if (strcmp(op, "i32.div_s") == 0) return makeBinary(s, BinaryOp::DivSInt32);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "i32.div_u") == 0) return makeBinary(s, BinaryOp::DivUInt32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'e': {
@@ -582,25 +582,25 @@ switch (op[0]) {
                 switch (op[6]) {
                   case '\0':
                     if (strcmp(op, "i32.eq") == 0) return makeBinary(s, BinaryOp::EqInt32);
-                    break;
+                    goto parse_error;
                   case 'z':
                     if (strcmp(op, "i32.eqz") == 0) return makeUnary(s, UnaryOp::EqZInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'x': {
                 switch (op[10]) {
                   case '1':
                     if (strcmp(op, "i32.extend16_s") == 0) return makeUnary(s, UnaryOp::ExtendS16Int32);
-                    break;
+                    goto parse_error;
                   case '8':
                     if (strcmp(op, "i32.extend8_s") == 0) return makeUnary(s, UnaryOp::ExtendS8Int32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'g': {
@@ -609,25 +609,25 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i32.ge_s") == 0) return makeBinary(s, BinaryOp::GeSInt32);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i32.ge_u") == 0) return makeBinary(s, BinaryOp::GeUInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i32.gt_s") == 0) return makeBinary(s, BinaryOp::GtSInt32);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i32.gt_u") == 0) return makeBinary(s, BinaryOp::GtUInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'l': {
@@ -636,102 +636,102 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i32.le_s") == 0) return makeBinary(s, BinaryOp::LeSInt32);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i32.le_u") == 0) return makeBinary(s, BinaryOp::LeUInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'o': {
                 switch (op[8]) {
                   case '\0':
                     if (strcmp(op, "i32.load") == 0) return makeLoad(s, i32, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '1': {
                     switch (op[11]) {
                       case 's':
                         if (strcmp(op, "i32.load16_s") == 0) return makeLoad(s, i32, /*isAtomic=*/false);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i32.load16_u") == 0) return makeLoad(s, i32, /*isAtomic=*/false);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
                   case '8': {
                     switch (op[10]) {
                       case 's':
                         if (strcmp(op, "i32.load8_s") == 0) return makeLoad(s, i32, /*isAtomic=*/false);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i32.load8_u") == 0) return makeLoad(s, i32, /*isAtomic=*/false);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i32.lt_s") == 0) return makeBinary(s, BinaryOp::LtSInt32);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i32.lt_u") == 0) return makeBinary(s, BinaryOp::LtUInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'm':
             if (strcmp(op, "i32.mul") == 0) return makeBinary(s, BinaryOp::MulInt32);
-            break;
+            goto parse_error;
           case 'n':
             if (strcmp(op, "i32.ne") == 0) return makeBinary(s, BinaryOp::NeInt32);
-            break;
+            goto parse_error;
           case 'o':
             if (strcmp(op, "i32.or") == 0) return makeBinary(s, BinaryOp::OrInt32);
-            break;
+            goto parse_error;
           case 'p':
             if (strcmp(op, "i32.popcnt") == 0) return makeUnary(s, UnaryOp::PopcntInt32);
-            break;
+            goto parse_error;
           case 'r': {
             switch (op[5]) {
               case 'e': {
                 switch (op[6]) {
                   case 'i':
                     if (strcmp(op, "i32.reinterpret/f32") == 0) return makeUnary(s, UnaryOp::ReinterpretFloat32);
-                    break;
+                    goto parse_error;
                   case 'm': {
                     switch (op[8]) {
                       case 's':
                         if (strcmp(op, "i32.rem_s") == 0) return makeBinary(s, BinaryOp::RemSInt32);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i32.rem_u") == 0) return makeBinary(s, BinaryOp::RemUInt32);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 'o': {
                 switch (op[7]) {
                   case 'l':
                     if (strcmp(op, "i32.rotl") == 0) return makeBinary(s, BinaryOp::RotLInt32);
-                    break;
+                    goto parse_error;
                   case 'r':
                     if (strcmp(op, "i32.rotr") == 0) return makeBinary(s, BinaryOp::RotRInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 's': {
@@ -740,39 +740,39 @@ switch (op[0]) {
                 switch (op[6]) {
                   case 'l':
                     if (strcmp(op, "i32.shl") == 0) return makeBinary(s, BinaryOp::ShlInt32);
-                    break;
+                    goto parse_error;
                   case 'r': {
                     switch (op[8]) {
                       case 's':
                         if (strcmp(op, "i32.shr_s") == 0) return makeBinary(s, BinaryOp::ShrSInt32);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i32.shr_u") == 0) return makeBinary(s, BinaryOp::ShrUInt32);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[9]) {
                   case '\0':
                     if (strcmp(op, "i32.store") == 0) return makeStore(s, i32, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '1':
                     if (strcmp(op, "i32.store16") == 0) return makeStore(s, i32, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '8':
                     if (strcmp(op, "i32.store8") == 0) return makeStore(s, i32, /*isAtomic=*/false);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'u':
                 if (strcmp(op, "i32.sub") == 0) return makeBinary(s, BinaryOp::SubInt32);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 't': {
@@ -781,42 +781,42 @@ switch (op[0]) {
                 switch (op[13]) {
                   case '3':
                     if (strcmp(op, "i32.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt32);
-                    break;
+                    goto parse_error;
                   case '6':
                     if (strcmp(op, "i32.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'u': {
                 switch (op[13]) {
                   case '3':
                     if (strcmp(op, "i32.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt32);
-                    break;
+                    goto parse_error;
                   case '6':
                     if (strcmp(op, "i32.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt32);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'w': {
             switch (op[5]) {
               case 'a':
                 if (strcmp(op, "i32.wait") == 0) return makeAtomicWait(s, i32);
-                break;
+                goto parse_error;
               case 'r':
                 if (strcmp(op, "i32.wrap/i64") == 0) return makeUnary(s, UnaryOp::WrapInt64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'x':
             if (strcmp(op, "i32.xor") == 0) return makeBinary(s, BinaryOp::XorInt32);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
       case '6': {
@@ -825,27 +825,27 @@ switch (op[0]) {
             switch (op[5]) {
               case 'd':
                 if (strcmp(op, "i64.add") == 0) return makeBinary(s, BinaryOp::AddInt64);
-                break;
+                goto parse_error;
               case 'n':
                 if (strcmp(op, "i64.and") == 0) return makeBinary(s, BinaryOp::AndInt64);
-                break;
+                goto parse_error;
               case 't': {
                 switch (op[11]) {
                   case 'l': {
                     switch (op[15]) {
                       case '\0':
                         if (strcmp(op, "i64.atomic.load") == 0) return makeLoad(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '1':
                         if (strcmp(op, "i64.atomic.load16_u") == 0) return makeLoad(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '3':
                         if (strcmp(op, "i64.atomic.load32_u") == 0) return makeLoad(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '8':
                         if (strcmp(op, "i64.atomic.load8_u") == 0) return makeLoad(s, i64, /*isAtomic=*/true);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
                   case 'r': {
@@ -856,34 +856,34 @@ switch (op[0]) {
                             switch (op[16]) {
                               case 'd':
                                 if (strcmp(op, "i64.atomic.rmw.add") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i64.atomic.rmw.and") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i64.atomic.rmw.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i64.atomic.rmw.or") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i64.atomic.rmw.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[16]) {
                               case 'c':
                                 if (strcmp(op, "i64.atomic.rmw.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i64.atomic.rmw.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
                       case '1': {
@@ -892,34 +892,34 @@ switch (op[0]) {
                             switch (op[20]) {
                               case 'd':
                                 if (strcmp(op, "i64.atomic.rmw16_u.add") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i64.atomic.rmw16_u.and") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i64.atomic.rmw16_u.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i64.atomic.rmw16_u.or") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i64.atomic.rmw16_u.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[20]) {
                               case 'c':
                                 if (strcmp(op, "i64.atomic.rmw16_u.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i64.atomic.rmw16_u.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
                       case '3': {
@@ -928,34 +928,34 @@ switch (op[0]) {
                             switch (op[20]) {
                               case 'd':
                                 if (strcmp(op, "i64.atomic.rmw32_u.add") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i64.atomic.rmw32_u.and") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i64.atomic.rmw32_u.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i64.atomic.rmw32_u.or") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i64.atomic.rmw32_u.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[20]) {
                               case 'c':
                                 if (strcmp(op, "i64.atomic.rmw32_u.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i64.atomic.rmw32_u.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
                       case '8': {
@@ -964,85 +964,85 @@ switch (op[0]) {
                             switch (op[19]) {
                               case 'd':
                                 if (strcmp(op, "i64.atomic.rmw8_u.add") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'n':
                                 if (strcmp(op, "i64.atomic.rmw8_u.and") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
                           case 'c':
                             if (strcmp(op, "i64.atomic.rmw8_u.cmpxchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'o':
                             if (strcmp(op, "i64.atomic.rmw8_u.or") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 's':
                             if (strcmp(op, "i64.atomic.rmw8_u.sub") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                            break;
+                            goto parse_error;
                           case 'x': {
                             switch (op[19]) {
                               case 'c':
                                 if (strcmp(op, "i64.atomic.rmw8_u.xchg") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
+                                goto parse_error;
                               case 'o':
                                 if (strcmp(op, "i64.atomic.rmw8_u.xor") == 0) return makeAtomicRMWOrCmpxchg(s, i64);
-                                break;
-                              default: break;
+                                goto parse_error;
+                              default: goto parse_error;
                             }
                           }
-                          default: break;
+                          default: goto parse_error;
                         }
                       }
-                      default: break;
+                      default: goto parse_error;
                     }
                   }
                   case 's': {
                     switch (op[16]) {
                       case '\0':
                         if (strcmp(op, "i64.atomic.store") == 0) return makeStore(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '1':
                         if (strcmp(op, "i64.atomic.store16") == 0) return makeStore(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '3':
                         if (strcmp(op, "i64.atomic.store32") == 0) return makeStore(s, i64, /*isAtomic=*/true);
-                        break;
+                        goto parse_error;
                       case '8':
                         if (strcmp(op, "i64.atomic.store8") == 0) return makeStore(s, i64, /*isAtomic=*/true);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'c': {
             switch (op[5]) {
               case 'l':
                 if (strcmp(op, "i64.clz") == 0) return makeUnary(s, UnaryOp::ClzInt64);
-                break;
+                goto parse_error;
               case 'o':
                 if (strcmp(op, "i64.const") == 0) return makeConst(s, i64);
-                break;
+                goto parse_error;
               case 't':
                 if (strcmp(op, "i64.ctz") == 0) return makeUnary(s, UnaryOp::CtzInt64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'd': {
             switch (op[8]) {
               case 's':
                 if (strcmp(op, "i64.div_s") == 0) return makeBinary(s, BinaryOp::DivSInt64);
-                break;
+                goto parse_error;
               case 'u':
                 if (strcmp(op, "i64.div_u") == 0) return makeBinary(s, BinaryOp::DivUInt64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 'e': {
@@ -1051,39 +1051,39 @@ switch (op[0]) {
                 switch (op[6]) {
                   case '\0':
                     if (strcmp(op, "i64.eq") == 0) return makeBinary(s, BinaryOp::EqInt64);
-                    break;
+                    goto parse_error;
                   case 'z':
                     if (strcmp(op, "i64.eqz") == 0) return makeUnary(s, UnaryOp::EqZInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'x': {
                 switch (op[10]) {
                   case '1':
                     if (strcmp(op, "i64.extend16_s") == 0) return makeUnary(s, UnaryOp::ExtendS16Int64);
-                    break;
+                    goto parse_error;
                   case '3':
                     if (strcmp(op, "i64.extend32_s") == 0) return makeUnary(s, UnaryOp::ExtendS32Int64);
-                    break;
+                    goto parse_error;
                   case '8':
                     if (strcmp(op, "i64.extend8_s") == 0) return makeUnary(s, UnaryOp::ExtendS8Int64);
-                    break;
+                    goto parse_error;
                   case '_': {
                     switch (op[11]) {
                       case 's':
                         if (strcmp(op, "i64.extend_s/i32") == 0) return makeUnary(s, UnaryOp::ExtendSInt32);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.extend_u/i32") == 0) return makeUnary(s, UnaryOp::ExtendUInt32);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'g': {
@@ -1092,25 +1092,25 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i64.ge_s") == 0) return makeBinary(s, BinaryOp::GeSInt64);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i64.ge_u") == 0) return makeBinary(s, BinaryOp::GeUInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i64.gt_s") == 0) return makeBinary(s, BinaryOp::GtSInt64);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i64.gt_u") == 0) return makeBinary(s, BinaryOp::GtUInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'l': {
@@ -1119,113 +1119,113 @@ switch (op[0]) {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i64.le_s") == 0) return makeBinary(s, BinaryOp::LeSInt64);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i64.le_u") == 0) return makeBinary(s, BinaryOp::LeUInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'o': {
                 switch (op[8]) {
                   case '\0':
                     if (strcmp(op, "i64.load") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '1': {
                     switch (op[11]) {
                       case 's':
                         if (strcmp(op, "i64.load16_s") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.load16_u") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
                   case '3': {
                     switch (op[11]) {
                       case 's':
                         if (strcmp(op, "i64.load32_s") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.load32_u") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
                   case '8': {
                     switch (op[10]) {
                       case 's':
                         if (strcmp(op, "i64.load8_s") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.load8_u") == 0) return makeLoad(s, i64, /*isAtomic=*/false);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[7]) {
                   case 's':
                     if (strcmp(op, "i64.lt_s") == 0) return makeBinary(s, BinaryOp::LtSInt64);
-                    break;
+                    goto parse_error;
                   case 'u':
                     if (strcmp(op, "i64.lt_u") == 0) return makeBinary(s, BinaryOp::LtUInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'm':
             if (strcmp(op, "i64.mul") == 0) return makeBinary(s, BinaryOp::MulInt64);
-            break;
+            goto parse_error;
           case 'n':
             if (strcmp(op, "i64.ne") == 0) return makeBinary(s, BinaryOp::NeInt64);
-            break;
+            goto parse_error;
           case 'o':
             if (strcmp(op, "i64.or") == 0) return makeBinary(s, BinaryOp::OrInt64);
-            break;
+            goto parse_error;
           case 'p':
             if (strcmp(op, "i64.popcnt") == 0) return makeUnary(s, UnaryOp::PopcntInt64);
-            break;
+            goto parse_error;
           case 'r': {
             switch (op[5]) {
               case 'e': {
                 switch (op[6]) {
                   case 'i':
                     if (strcmp(op, "i64.reinterpret/f64") == 0) return makeUnary(s, UnaryOp::ReinterpretFloat64);
-                    break;
+                    goto parse_error;
                   case 'm': {
                     switch (op[8]) {
                       case 's':
                         if (strcmp(op, "i64.rem_s") == 0) return makeBinary(s, BinaryOp::RemSInt64);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.rem_u") == 0) return makeBinary(s, BinaryOp::RemUInt64);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 'o': {
                 switch (op[7]) {
                   case 'l':
                     if (strcmp(op, "i64.rotl") == 0) return makeBinary(s, BinaryOp::RotLInt64);
-                    break;
+                    goto parse_error;
                   case 'r':
                     if (strcmp(op, "i64.rotr") == 0) return makeBinary(s, BinaryOp::RotRInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 's': {
@@ -1234,42 +1234,42 @@ switch (op[0]) {
                 switch (op[6]) {
                   case 'l':
                     if (strcmp(op, "i64.shl") == 0) return makeBinary(s, BinaryOp::ShlInt64);
-                    break;
+                    goto parse_error;
                   case 'r': {
                     switch (op[8]) {
                       case 's':
                         if (strcmp(op, "i64.shr_s") == 0) return makeBinary(s, BinaryOp::ShrSInt64);
-                        break;
+                        goto parse_error;
                       case 'u':
                         if (strcmp(op, "i64.shr_u") == 0) return makeBinary(s, BinaryOp::ShrUInt64);
-                        break;
-                      default: break;
+                        goto parse_error;
+                      default: goto parse_error;
                     }
                   }
-                  default: break;
+                  default: goto parse_error;
                 }
               }
               case 't': {
                 switch (op[9]) {
                   case '\0':
                     if (strcmp(op, "i64.store") == 0) return makeStore(s, i64, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '1':
                     if (strcmp(op, "i64.store16") == 0) return makeStore(s, i64, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '3':
                     if (strcmp(op, "i64.store32") == 0) return makeStore(s, i64, /*isAtomic=*/false);
-                    break;
+                    goto parse_error;
                   case '8':
                     if (strcmp(op, "i64.store8") == 0) return makeStore(s, i64, /*isAtomic=*/false);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'u':
                 if (strcmp(op, "i64.sub") == 0) return makeBinary(s, BinaryOp::SubInt64);
-                break;
-              default: break;
+                goto parse_error;
+              default: goto parse_error;
             }
           }
           case 't': {
@@ -1278,88 +1278,89 @@ switch (op[0]) {
                 switch (op[13]) {
                   case '3':
                     if (strcmp(op, "i64.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt64);
-                    break;
+                    goto parse_error;
                   case '6':
                     if (strcmp(op, "i64.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
               case 'u': {
                 switch (op[13]) {
                   case '3':
                     if (strcmp(op, "i64.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt64);
-                    break;
+                    goto parse_error;
                   case '6':
                     if (strcmp(op, "i64.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt64);
-                    break;
-                  default: break;
+                    goto parse_error;
+                  default: goto parse_error;
                 }
               }
-              default: break;
+              default: goto parse_error;
             }
           }
           case 'w':
             if (strcmp(op, "i64.wait") == 0) return makeAtomicWait(s, i64);
-            break;
+            goto parse_error;
           case 'x':
             if (strcmp(op, "i64.xor") == 0) return makeBinary(s, BinaryOp::XorInt64);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
       case 'f':
         if (strcmp(op, "if") == 0) return makeIf(s);
-        break;
-      default: break;
+        goto parse_error;
+      default: goto parse_error;
     }
   }
   case 'l':
     if (strcmp(op, "loop") == 0) return makeLoop(s);
-    break;
+    goto parse_error;
   case 'n':
     if (strcmp(op, "nop") == 0) return makeNop();
-    break;
+    goto parse_error;
   case 'r':
     if (strcmp(op, "return") == 0) return makeReturn(s);
-    break;
+    goto parse_error;
   case 's': {
     switch (op[2]) {
       case 'l':
         if (strcmp(op, "select") == 0) return makeSelect(s);
-        break;
+        goto parse_error;
       case 't': {
         switch (op[4]) {
           case 'g':
             if (strcmp(op, "set_global") == 0) return makeSetGlobal(s);
-            break;
+            goto parse_error;
           case 'l':
             if (strcmp(op, "set_local") == 0) return makeSetLocal(s);
-            break;
-          default: break;
+            goto parse_error;
+          default: goto parse_error;
         }
       }
-      default: break;
+      default: goto parse_error;
     }
   }
   case 't': {
     switch (op[1]) {
       case 'e':
         if (strcmp(op, "tee_local") == 0) return makeTeeLocal(s);
-        break;
+        goto parse_error;
       case 'h':
         if (strcmp(op, "then") == 0) return makeThenOrElse(s);
-        break;
-      default: break;
+        goto parse_error;
+      default: goto parse_error;
     }
   }
   case 'u':
     if (strcmp(op, "unreachable") == 0) return makeUnreachable();
-    break;
+    goto parse_error;
   case 'w':
     if (strcmp(op, "wake") == 0) return makeAtomicWake(s);
-    break;
-  default: break;
+    goto parse_error;
+  default: goto parse_error;
 }
-throw ParseException(std::string(op));
+parse_error:
+  throw ParseException(std::string(op));
 #endif // INSTRUCTION_PARSER
