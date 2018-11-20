@@ -77,7 +77,7 @@ private:
   bool worthHoisting(Literal value, Index num) {
     if (num < MIN_USES) return false;
     // measure the size of the constant
-    Index size;
+    Index size = 0;
     switch (value.type) {
       case i32: {
         size = getWrittenSize(S32LEB(value.geti32()));
