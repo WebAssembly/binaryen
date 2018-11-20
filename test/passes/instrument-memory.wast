@@ -39,7 +39,7 @@
     (i32.store (i32.const 0) (i32.const 3))
     (i64.store8 (i32.const 0) (i64.const 4))
     (i64.store16 (i32.const 0) (i64.const 5))
-    (i64.store326 (i32.const 0) (i64.const 6))
+    (i64.store32 (i32.const 0) (i64.const 6))
     (i64.store (i32.const 0) (i64.const 7))
     (f32.store (i32.const 0) (f32.const 8))
     (f64.store (i32.const 0) (f64.const 9))
@@ -55,4 +55,3 @@
     (f64.store align=2 offset=9 (i32.const 0) (f64.const 9))
   )
 )
-

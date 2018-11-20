@@ -615,7 +615,7 @@
     (drop
       (i32.shr_s
         (i32.shl
-          (get-local $0) ;; who knows...
+          (get_local $0) ;; who knows...
           (i32.const 24)
         )
         (i32.const 24)
@@ -3571,4 +3571,3 @@
    )
   )
 )
-
