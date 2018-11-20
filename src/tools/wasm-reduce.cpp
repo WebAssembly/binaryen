@@ -496,7 +496,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       for (auto* child : ChildIterator(curr)) {
         if (child->type == curr->type) continue; // already tried
         if (!isConcreteType(child->type)) continue; // no conversion
-        Expression* fixed;
+        Expression* fixed = nullptr;
         switch (curr->type) {
           case i32: {
             switch (child->type) {
