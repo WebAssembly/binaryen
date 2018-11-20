@@ -341,18 +341,19 @@ def instruction_parser():
   printer.print_line("char op[{}] = {{'\\0'}};".format(inst_length + 1))
   printer.print_line("strncpy(op, s[0]->c_str(), {});".format(inst_length))
 
-  def make_leaf(expr, inst):
-    return ("if (strcmp(op, \"{inst}\") == 0) return {expr}; else break;"
-            .format(inst=inst, expr=expr))
+  def print_leaf(expr, inst):
+    printer.print_line("if (strcmp(op, \"{inst}\") == 0) return {expr};"
+                       .format(inst=inst, expr=expr))
+    printer.print_line("break;")
 
   def emit(node, idx=0):
     assert node.children
     printer.print_line("switch (op[{}]) {{".format(idx))
     with printer.indent():
       if node.expr:
-        printer.print_line(
-            "case '\\0': {}"
-            .format(make_leaf(node.expr, node.inst)))
+        printer.print_line("case '\\0':")
+        with printer.indent():
+          print_leaf(node.expr, node.inst)
       children = sorted(node.children.items(), key=lambda pair: pair[0])
       for prefix, child in children:
         if child.children:
@@ -362,9 +363,9 @@ def instruction_parser():
           printer.print_line("}")
         else:
           assert child.expr
-          printer.print_line(
-              "case '{}': {}"
-              .format(prefix[0], make_leaf(child.expr, child.inst)))
+          printer.print_line("case '{}':".format(prefix[0]))
+          with printer.indent():
+            print_leaf(child.expr, child.inst)
       printer.print_line("default: break;")
     printer.print_line("}")
 
