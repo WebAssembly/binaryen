@@ -602,7 +602,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
         self->pushTask(SubType::doVisitUnreachable, currp);
         break;
       }
-      default: WASM_UNREACHABLE();
+      case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
     }
   }
 };

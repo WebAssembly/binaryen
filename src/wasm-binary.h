@@ -651,7 +651,7 @@ inline S32LEB binaryType(Type type) {
     case i64: ret = BinaryConsts::EncodedType::i64; break;
     case f32: ret = BinaryConsts::EncodedType::f32; break;
     case f64: ret = BinaryConsts::EncodedType::f64; break;
-    default: abort();
+    case unreachable: WASM_UNREACHABLE();
   }
   return S32LEB(ret);
 }

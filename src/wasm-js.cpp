@@ -250,10 +250,12 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
       switch (type) {
         case none: return Literal();
         case i32: return Literal((int32_t)ret);
+        case i64: WASM_UNREACHABLE();
         case f32: return Literal((float)ret);
         case f64: return Literal((double)ret);
-        default: abort();
+        case unreachable: break;
       }
+      WASM_UNREACHABLE();
     }
 
     void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {

@@ -126,7 +126,8 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
           case i64: globals[import->name] = Literal(int64_t(666)); break;
           case f32: globals[import->name] = Literal(float(666.6)); break;
           case f64: globals[import->name] = Literal(double(666.6)); break;
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: WASM_UNREACHABLE();
         }
       }
     });

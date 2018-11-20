@@ -92,7 +92,10 @@ private:
         size = getTypeSize(value.type);
         break;
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: {
+        WASM_UNREACHABLE();
+      }
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use

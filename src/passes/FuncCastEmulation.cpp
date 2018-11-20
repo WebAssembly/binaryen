@@ -76,10 +76,6 @@ static Expression* toABI(Expression* value, Module* module) {
       // can leave it, the call isn't taken anyhow
       break;
     }
-    default: {
-      // SIMD may be interesting some day
-      WASM_UNREACHABLE();
-    }
   }
   return value;
 }
@@ -113,10 +109,6 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     case unreachable: {
       // can leave it, the call isn't taken anyhow
       break;
-    }
-    default: {
-      // SIMD may be interesting some day
-      WASM_UNREACHABLE();
     }
   }
   return value;

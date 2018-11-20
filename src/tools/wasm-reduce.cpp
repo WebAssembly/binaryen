@@ -50,7 +50,7 @@ std::string GetLastErrorStdStr() {
   if (error) {
     LPVOID lpMsgBuf;
     DWORD bufLen = FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
@@ -500,19 +500,23 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
         switch (curr->type) {
           case i32: {
             switch (child->type) {
+              case i32: WASM_UNREACHABLE();
               case i64: fixed = builder->makeUnary(WrapInt64, child); break;
               case f32: fixed = builder->makeUnary(TruncSFloat32ToInt32, child); break;
               case f64: fixed = builder->makeUnary(TruncSFloat64ToInt32, child); break;
-              default: WASM_UNREACHABLE();
+              case none:
+              case unreachable: WASM_UNREACHABLE();
             }
             break;
           }
           case i64: {
             switch (child->type) {
               case i32: fixed = builder->makeUnary(ExtendSInt32, child); break;
+              case i64: WASM_UNREACHABLE();
               case f32: fixed = builder->makeUnary(TruncSFloat32ToInt64, child); break;
               case f64: fixed = builder->makeUnary(TruncSFloat64ToInt64, child); break;
-              default: WASM_UNREACHABLE();
+              case none:
+              case unreachable: WASM_UNREACHABLE();
             }
             break;
           }
@@ -520,8 +524,10 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
             switch (child->type) {
               case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat32, child); break;
               case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat32, child); break;
+              case f32: WASM_UNREACHABLE();
               case f64: fixed = builder->makeUnary(DemoteFloat64, child); break;
-              default: WASM_UNREACHABLE();
+              case none:
+              case unreachable: WASM_UNREACHABLE();
             }
             break;
           }
@@ -530,11 +536,14 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
               case i32: fixed = builder->makeUnary(ConvertSInt32ToFloat64, child); break;
               case i64: fixed = builder->makeUnary(ConvertSInt64ToFloat64, child); break;
               case f32: fixed = builder->makeUnary(PromoteFloat32, child); break;
-              default: WASM_UNREACHABLE();
+              case f64: WASM_UNREACHABLE();
+              case none:
+              case unreachable: WASM_UNREACHABLE();
             }
             break;
           }
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: WASM_UNREACHABLE();
         }
         assert(fixed->type == curr->type);
         if (tryToReplaceCurrent(fixed)) return;
@@ -1036,4 +1045,3 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|finished, final size: " << file_size(working) << "\n";
   copy_file(working, test); // just to avoid confusion
 }
-

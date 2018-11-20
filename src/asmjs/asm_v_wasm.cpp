@@ -27,19 +27,23 @@ Type asmToWasmType(AsmType asmType) {
     case ASM_FLOAT: return Type::f32;
     case ASM_INT64: return Type::i64;
     case ASM_NONE: return Type::none;
-    default: {}
+    case ASM_FLOAT32X4:
+    case ASM_FLOAT64X2:
+    case ASM_INT8X16:
+    case ASM_INT16X8:
+    case ASM_INT32X4: WASM_UNREACHABLE();
   }
   abort();
 }
 
 AsmType wasmToAsmType(Type type) {
   switch (type) {
-    case Type::i32: return ASM_INT;
-    case Type::f32: return ASM_FLOAT;
-    case Type::f64: return ASM_DOUBLE;
-    case Type::i64: return ASM_INT64;
-    case Type::none: return ASM_NONE;
-    default: {}
+    case i32: return ASM_INT;
+    case f32: return ASM_FLOAT;
+    case f64: return ASM_DOUBLE;
+    case i64: return ASM_INT64;
+    case none: return ASM_NONE;
+    case unreachable: {}
   }
   abort();
 }
@@ -51,8 +55,9 @@ char getSig(Type type) {
     case f32:  return 'f';
     case f64:  return 'd';
     case none: return 'v';
-    default: abort();
+    case unreachable: WASM_UNREACHABLE();
   }
+  abort();
 }
 
 std::string getSig(const FunctionType *type) {

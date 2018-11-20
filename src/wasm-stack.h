@@ -628,7 +628,7 @@ void StackWriter<Mode, Parent>::visitLoad(Load* curr) {
       case f32: o << int8_t(BinaryConsts::F32LoadMem); break;
       case f64: o << int8_t(BinaryConsts::F64LoadMem); break;
       case unreachable: return; // the pointer is unreachable, so we are never reached; just don't emit a load
-      default: WASM_UNREACHABLE();
+      case none: WASM_UNREACHABLE();
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -693,7 +693,8 @@ void StackWriter<Mode, Parent>::visitStore(Store* curr) {
       }
       case f32: o << int8_t(BinaryConsts::F32StoreMem); break;
       case f64: o << int8_t(BinaryConsts::F64StoreMem); break;
-      default: abort();
+      case none:
+      case unreachable: WASM_UNREACHABLE();
     }
   } else {
     o << int8_t(BinaryConsts::AtomicPrefix);
@@ -882,7 +883,8 @@ void StackWriter<Mode, Parent>::visitConst(Const* curr) {
       o << int8_t(BinaryConsts::F64Const) << curr->value.reinterpreti64();
       break;
     }
-    default: abort();
+    case none:
+    case unreachable: WASM_UNREACHABLE();
   }
   if (debug) std::cerr << "zz const node done.\n";
 }
@@ -949,7 +951,7 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case ExtendS8Int64:          o << int8_t(BinaryConsts::I64ExtendS8); break;
     case ExtendS16Int64:         o << int8_t(BinaryConsts::I64ExtendS16); break;
     case ExtendS32Int64:         o << int8_t(BinaryConsts::I64ExtendS32); break;
-    default: abort();
+    case InvalidUnary: WASM_UNREACHABLE();
   }
 }
 
@@ -1043,7 +1045,7 @@ void StackWriter<Mode, Parent>::visitBinary(Binary* curr) {
     case LeFloat64:       o << int8_t(BinaryConsts::F64Le); break;
     case GtFloat64:       o << int8_t(BinaryConsts::F64Gt); break;
     case GeFloat64:       o << int8_t(BinaryConsts::F64Ge); break;
-    default: abort();
+    case InvalidBinary: WASM_UNREACHABLE();
   }
 }
 
@@ -1083,7 +1085,6 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
       visitChild(curr->operands[0]);
       break;
     }
-    default: WASM_UNREACHABLE();
   }
   if (justAddToStack(curr)) return;
   switch (curr->op) {
@@ -1095,7 +1096,6 @@ void StackWriter<Mode, Parent>::visitHost(Host* curr) {
       o << int8_t(BinaryConsts::GrowMemory);
       break;
     }
-    default: WASM_UNREACHABLE();
   }
   o << U32LEB(0); // Reserved flags field
 }
@@ -1191,4 +1191,3 @@ StackInst* StackWriter<Mode, Parent>::makeStackInst(StackInst::Op op, Expression
 } // namespace wasm
 
 #endif // wasm_stack_h
-
