@@ -435,7 +435,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
   }
 
-  void sinkBlocks(Function* func) {
+  bool sinkBlocks(Function* func) {
     struct Sinker : public PostWalker<Sinker> {
       bool worked = false;
 
@@ -501,13 +501,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     sinker.doWalkFunction(func);
     if (sinker.worked) {
-      anotherCycle = true;
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
     }
+    return false;
   }
 
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
-    bool worked = false;
     do {
       anotherCycle = false;
       super::doWalkFunction(func);
@@ -532,32 +533,39 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         anotherCycle |= optimizeLoop(loop);
       }
       loops.clear();
+      if (anotherCycle) {
+        ReFinalize().walkFunctionInModule(func, getModule());
+      }
       // sink blocks
-      sinkBlocks(func);
-      if (anotherCycle) worked = true;
+      if (sinkBlocks(func)) {
+        anotherCycle = true;
+      }
     } while (anotherCycle);
-
-    if (worked) {
-      // Our work may alter block and if types, they may now return values that we made flow through them
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // thread trivial jumps
     struct JumpThreader : public ControlFlowWalker<JumpThreader> {
-      // map of all value-less breaks going to a block (and not a loop)
-      std::map<Block*, std::vector<Break*>> breaksToBlock;
+      // map of all value-less breaks and switches going to a block (and not a loop)
+      std::map<Block*, std::vector<Expression*>> branchesToBlock;
 
-      // the names to update
-      std::map<Break*, Name> newNames;
+      bool worked = false;
 
       void visitBreak(Break* curr) {
         if (!curr->value) {
           if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
-            breaksToBlock[target].push_back(curr);
+            branchesToBlock[target].push_back(curr);
           }
         }
       }
-      // TODO: Switch?
+      void visitSwitch(Switch* curr) {
+        if (!curr->value) {
+          auto names = BranchUtils::getUniqueTargets(curr);
+          for (auto name : names) {
+            if (auto* target = findBreakTarget(name)->dynCast<Block>()) {
+              branchesToBlock[target].push_back(curr);
+            }
+          }
+        }
+      }
       void visitBlock(Block* curr) {
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
@@ -566,12 +574,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // the two blocks must have the same type for us to update the branch, as otherwise
             // one block may be unreachable and the other concrete, so one might lack a value
             if (child->name.is() && child->name != curr->name && child->type == curr->type) {
-              auto& breaks = breaksToBlock[child];
-              for (auto* br : breaks) {
-                newNames[br] = curr->name;
-                breaksToBlock[curr].push_back(br); // update the list - we may push it even more later
-              }
-              breaksToBlock.erase(child);
+              redirectBranches(child, curr->name);
             }
           }
         } else if (list.size() == 2) {
@@ -579,28 +582,28 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* child = list[0]->dynCast<Block>();
           auto* jump = list[1]->dynCast<Break>();
           if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
-            auto& breaks = breaksToBlock[child];
-            for (auto* br : breaks) {
-              newNames[br] = jump->name;
-            }
-            // if the jump is to another block then we can update the list, and maybe push it even more later
-            if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
-              for (auto* br : breaks) {
-                breaksToBlock[newTarget].push_back(br);
-              }
-            }
-            breaksToBlock.erase(child);
+            redirectBranches(child, jump->name);
+          }
+        }
+      }
+
+      void redirectBranches(Block* from, Name to) {
+        auto& branches = branchesToBlock[from];
+        for (auto* branch : branches) {
+          if (BranchUtils::replacePossibleTarget(branch, from->name, to)) {
+            worked = true;
+          }
+        }
+        // if the jump is to another block then we can update the list, and maybe push it even more later
+        if (auto* newTarget = findBreakTarget(to)->dynCast<Block>()) {
+          for (auto* branch : branches) {
+            branchesToBlock[newTarget].push_back(branch);
           }
         }
       }
 
       void finish(Function* func) {
-        for (auto& iter : newNames) {
-          auto* br = iter.first;
-          auto name = iter.second;
-          br->name = name;
-        }
-        if (newNames.size() > 0) {
+        if (worked) {
           // by changing where brs go, we may change block types etc.
           ReFinalize().walkFunctionInModule(func, getModule());
         }
@@ -683,6 +686,19 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           tablify(curr);
           // Pattern-patch ifs, recreating them when it makes sense.
           restructureIf(curr);
+        }
+      }
+
+      void visitSwitch(Switch* curr) {
+        if (BranchUtils::getUniqueTargets(curr).size() == 1) {
+          // This switch has just one target no matter what; replace with a br.
+          Builder builder(*getModule());
+          replaceCurrent(
+            builder.makeSequence(
+              builder.makeDrop(curr->condition), // might have side effects
+              builder.makeBreak(curr->default_, curr->value)
+            )
+          );
         }
       }
 

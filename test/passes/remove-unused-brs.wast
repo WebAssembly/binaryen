@@ -1355,6 +1355,7 @@
           (i32.const 0)
         )
       )
+      (call $trim-switch)
     )
   )
   (func $same-target-br_if-and-br
@@ -1739,6 +1740,79 @@
      )
      (unreachable)
     )
+   )
+  )
+  (func $switch-to-br
+    (block $A
+      (block $y
+        (br_table $y $y $A $A
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $switch-to-br-value (result i32)
+    (block $A (result i32)
+      (block $y (result i32)
+        (br_table $A $A $A
+          (i32.const 0)
+          (i32.const 1)
+        )
+      )
+    )
+  )
+  (func $switch-threading-multi (param $x i32) (param $y i32) (result i32)
+   (block $block$5$break
+    (block $block$4$break
+     (loop $shape$1$continue
+      (block $block$3$break
+       (block $switch$2$case$5
+        (block $switch$2$case$4
+         (block $switch$2$default
+          (block $switch$2$case$2
+           (br_table $switch$2$case$2 $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$case$5 $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$case$4 $switch$2$default
+            (get_local $x)
+           )
+          )
+          (br $shape$1$continue)
+         )
+         (br $block$3$break)
+        ) ;; switch$2$case$4
+        (br $block$4$break)
+       )
+       (br $block$5$break)
+      )
+     )
+     (unreachable)
+    ) ;; block$4$break
+    (set_local $y
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+   (set_local $y
+    (i32.const 2)
+   )
+   (unreachable)
+  )
+  (func $fuzz-type-changes-in-our-cycles (result i32)
+   (loop $label$1
+    (if
+     (i32.const 0)
+     (block $label$3
+      (if
+       (i32.const 0)
+       (block
+        (nop)
+        (br $label$3)
+       )
+       (return
+        (i32.const -8192)
+       )
+      )
+     )
+    )
+    (br $label$1)
    )
   )
 )

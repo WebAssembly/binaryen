@@ -178,37 +178,16 @@
     (i32.const 51)
    )
   )
-  (block $switch-case4
-   (drop
-    (i32.add
-     (get_local $0)
-     (i32.const -5)
-    )
-   )
-   (br $switch-case4)
-  )
   (loop $label$continue$L1
    (block $label$break$L1
     (loop $label$continue$L3
      (block $label$break$L3
-      (block $switch-default
-       (block $switch-case13
-        (block $switch-case12
-         (block $switch-case11
-          (br_table $switch-case11 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case13 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case12 $switch-default
-           (i32.sub
-            (get_local $0)
-            (i32.const -1)
-           )
-          )
-         )
-         (br $label$break$L1)
-        )
-        (br $label$continue$L3)
+      (br_table $label$break$L3 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$continue$L3 $label$break$L1
+       (i32.add
+        (get_local $0)
+        (i32.const -110)
        )
-       (br $label$break$L3)
       )
-      (br $label$break$L1)
      )
     )
     (call $h
