@@ -296,7 +296,7 @@ public:
       case ReinterpretFloat64:   return value.castToI64();
       case DemoteFloat64:        return value.demote();
 
-      case InvalidUnary: break;
+      case InvalidUnary: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -419,7 +419,7 @@ public:
       case MaxFloat32:
       case MaxFloat64:      return left.max(right);
 
-      case InvalidBinary: break;
+      case InvalidBinary: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -579,7 +579,7 @@ public:
         case f32: return Literal(load32u(addr)).castToF32();
         case f64: return Literal(load64u(addr)).castToF64();
         case none:
-        case unreachable: break;
+        case unreachable: WASM_UNREACHABLE();
       }
       WASM_UNREACHABLE();
     }

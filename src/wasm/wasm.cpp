@@ -102,7 +102,7 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::AtomicRMWId: return "atomic_rmw";
     case Expression::Id::AtomicWaitId: return "atomic_wait";
     case Expression::Id::AtomicWakeId: return "atomic_wake";
-    case Expression::Id::NumExpressionIds: break;
+    case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }

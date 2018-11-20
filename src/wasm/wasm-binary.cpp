@@ -816,9 +816,9 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::f32: return f32;
     case BinaryConsts::EncodedType::f64: return f64;
     case BinaryConsts::EncodedType::AnyFunc:
-    case BinaryConsts::EncodedType::Func: break;
+    case BinaryConsts::EncodedType::Func:
+      throwError("invalid wasm type: " + std::to_string(type));
   }
-  throwError("invalid wasm type: " + std::to_string(type));
   WASM_UNREACHABLE();
 }
 

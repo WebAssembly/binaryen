@@ -43,7 +43,7 @@ AsmType wasmToAsmType(Type type) {
     case f64: return ASM_DOUBLE;
     case i64: return ASM_INT64;
     case none: return ASM_NONE;
-    case unreachable: break;
+    case unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
@@ -55,7 +55,7 @@ char getSig(Type type) {
     case f32:  return 'f';
     case f64:  return 'd';
     case none: return 'v';
-    case unreachable: break;
+    case unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }

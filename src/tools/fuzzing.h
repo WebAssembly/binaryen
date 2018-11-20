@@ -1088,7 +1088,7 @@ private:
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
       case none:
-      case unreachable: break;
+      case unreachable: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -1150,7 +1150,7 @@ private:
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
       case none:
-      case unreachable: break;
+      case unreachable: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }

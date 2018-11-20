@@ -30,7 +30,7 @@ inline Literal makeLiteralFromInt32(int32_t x, Type type) {
     case f32: return Literal(float(x)); break;
     case f64: return Literal(double(x)); break;
     case none:
-    case unreachable: break;
+    case unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }

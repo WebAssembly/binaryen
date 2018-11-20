@@ -62,7 +62,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::f32: return Literal(x.i32).castToF32();
     case Type::f64: return Literal(x.i64).castToF64();
     case Type::none:
-    case Type::unreachable: break;
+    case Type::unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }

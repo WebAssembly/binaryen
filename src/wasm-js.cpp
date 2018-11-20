@@ -253,7 +253,7 @@ extern "C" void EMSCRIPTEN_KEEPALIVE instantiate() {
         case i64: WASM_UNREACHABLE();
         case f32: return Literal((float)ret);
         case f64: return Literal((double)ret);
-        case unreachable: break;
+        case unreachable: WASM_UNREACHABLE();
       }
       WASM_UNREACHABLE();
     }

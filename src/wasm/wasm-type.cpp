@@ -40,7 +40,7 @@ unsigned getTypeSize(Type type) {
     case Type::i64: return 8;
     case Type::f32: return 4;
     case Type::f64: return 8;
-    case Type::unreachable: break;
+    case Type::unreachable: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
 }
