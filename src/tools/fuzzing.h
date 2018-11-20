@@ -665,7 +665,7 @@ private:
       return makeTrivial(type);
     }
     nesting++;
-    Expression* ret;
+    Expression* ret = nullptr;
     switch (type) {
       case i32:
       case i64:

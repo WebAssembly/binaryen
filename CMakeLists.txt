@@ -121,6 +121,7 @@ ELSE()
   ADD_COMPILE_FLAG("-Wextra")
   ADD_COMPILE_FLAG("-Wno-unused-parameter")
   ADD_COMPILE_FLAG("-fno-omit-frame-pointer")
+  ADD_COMPILE_FLAG("-Wswitch") # we explicitly expect this in the code
   IF(WIN32)
     ADD_COMPILE_FLAG("-D_GNU_SOURCE")
     ADD_LINK_FLAG("-Wl,--stack,8388608")
