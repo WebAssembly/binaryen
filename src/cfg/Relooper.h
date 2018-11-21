@@ -86,11 +86,17 @@ struct Branch {
   Branch::FlowType Type; // If Ancestor is not NULL, this says whether to break or continue
 
   // A branch either has a condition expression if the block ends in ifs, or if the block ends in a switch, then a list of indexes, which
-  // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression.
+  // becomes the indexes in the table of the switch. If not a switch, the condition can be any expression (or nullptr for the
+  // branch taken when no other condition is true)
+  // A condition must not have side effects, as the Relooper can reorder or eliminate condition checking.
+  // This must not have side effects.
   wasm::Expression* Condition;
-  std::unique_ptr<std::vector<wasm::Index>> SwitchValues; // switches are rare, so have just a pointer here
+  // Switches are rare, so have just a pointer for their values. This contains the values
+  // for which the branch will be taken, or for the default it is simply not present.
+  std::unique_ptr<std::vector<wasm::Index>> SwitchValues;
 
-  wasm::Expression* Code; // If provided, code that is run right before the branch is taken. This is useful for phis
+  // If provided, code that is run right before the branch is taken. This is useful for phis.
+  wasm::Expression* Code;
 
   Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit = nullptr);
 
@@ -194,6 +200,16 @@ struct InsertOrderedMap
     erase(position->first);
   }
 
+  void clear() {
+    Map.clear();
+    List.clear();
+  }
+
+  void swap(InsertOrderedMap<Key, T>& Other) {
+    Map.swap(Other.Map);
+    List.swap(Other.List);
+  }
+
   size_t size() const { return Map.size(); }
   bool empty() const { return Map.empty(); }
   size_t count(const Key& k) const { return Map.count(k); }
@@ -204,6 +220,12 @@ struct InsertOrderedMap
   }
   InsertOrderedMap& operator=(const InsertOrderedMap& other) {
     abort(); // TODO, watch out for iterators
+  }
+  bool operator==(const InsertOrderedMap& other) {
+    return Map == other.Map && List == other.List;
+  }
+  bool operator!=(const InsertOrderedMap& other) {
+    return !(*this == other);
   }
 };
 
@@ -333,6 +355,7 @@ struct LoopShape : public Shape {
 // Implementation details: The Relooper instance has
 // ownership of the blocks and shapes, and frees them when done.
 struct Relooper {
+  wasm::Module* Module;
   std::deque<Block*> Blocks;
   std::deque<Shape*> Shapes;
   Shape* Root;
@@ -340,7 +363,7 @@ struct Relooper {
   int BlockIdCounter;
   int ShapeIdCounter;
 
-  Relooper();
+  Relooper(wasm::Module* ModuleInit);
   ~Relooper();
 
   void AddBlock(Block* New, int Id=-1);
@@ -359,6 +382,7 @@ typedef InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
 
 #ifdef RELOOPER_DEBUG
 struct Debugging {
+  static void Dump(Block* Curr, const char *prefix=NULL);
   static void Dump(BlockSet &Blocks, const char *prefix=NULL);
   static void Dump(Shape* S, const char *prefix=NULL);
 };

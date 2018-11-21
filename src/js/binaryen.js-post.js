@@ -206,35 +206,48 @@ Module['AtomicRMWXchg'] = Module['_BinaryenAtomicRMWXchg']();
 
 // 'Module' interface
 Module['Module'] = function(module) {
-  if (!module) module = Module['_BinaryenModuleCreate']();
-  this['ptr'] = module;
+  assert(!module); // guard against incorrect old API usage
+  var module = Module['_BinaryenModuleCreate']();
+
+  wrapModule(module, this);
+};
+
+// Receives a C pointer to a C Module and a JS object, and creates
+// the JS wrappings on the object to access the C data.
+// This is meant for internal use only, and is necessary as we
+// want to access Module from JS that were perhaps not created
+// from JS.
+function wrapModule(module, self) {
+  assert(module); // guard against incorrect old API usage
+  if (!self) self = {};
+
+  self['ptr'] = module;
 
   // 'Expression' creation
-  this['block'] = function(name, children, type) {
+  self['block'] = function(name, children, type) {
     return preserveStack(function() {
       return Module['_BinaryenBlock'](module, name ? strToStack(name) : 0,
                                       i32sToStack(children), children.length,
                                       typeof type !== 'undefined' ? type : Module['none']);
     });
   };
-  this['if'] = function(condition, ifTrue, ifFalse) {
+  self['if'] = function(condition, ifTrue, ifFalse) {
     return Module['_BinaryenIf'](module, condition, ifTrue, ifFalse);
   };
-  this['loop'] = function(label, body) {
+  self['loop'] = function(label, body) {
     return preserveStack(function() {
       return Module['_BinaryenLoop'](module, strToStack(label), body);
     });
   };
-  this['break'] = this['br'] = function(label, condition, value) {
+  self['break'] = self['br'] = function(label, condition, value) {
     return preserveStack(function() {
       return Module['_BinaryenBreak'](module, strToStack(label), condition, value);
     });
   };
-  this['br_if'] = function(label, condition, value) {
-    assert(condition);
-    return this['br'](label, condition, value);
+  self['br_if'] = function(label, condition, value) {
+    return self['br'](label, condition, value);
   };
-  this['switch'] = function(names, defaultName, condition, value) {
+  self['switch'] = function(names, defaultName, condition, value) {
     return preserveStack(function() {
       var namei32s = [];
       names.forEach(function(name) {
@@ -244,35 +257,35 @@ Module['Module'] = function(module) {
                                        strToStack(defaultName), condition, value);
     });
   };
-  this['call'] = function(name, operands, type) {
+  self['call'] = function(name, operands, type) {
     return preserveStack(function() {
       return Module['_BinaryenCall'](module, strToStack(name), i32sToStack(operands), operands.length, type);
     });
   };
-  this['callIndirect'] = this['call_indirect'] = function(target, operands, type) {
+  self['callIndirect'] = self['call_indirect'] = function(target, operands, type) {
     return preserveStack(function() {
       return Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, strToStack(type));
     });
   };
-  this['getLocal'] = this['get_local'] = function(index, type) {
+  self['getLocal'] = self['get_local'] = function(index, type) {
     return Module['_BinaryenGetLocal'](module, index, type);
   };
-  this['setLocal'] = this['set_local'] = this['set_local'] = function(index, value) {
+  self['setLocal'] = self['set_local'] = self['set_local'] = function(index, value) {
     return Module['_BinaryenSetLocal'](module, index, value);
   };
-  this['teeLocal'] = this['tee_local'] = function(index, value) {
+  self['teeLocal'] = self['tee_local'] = function(index, value) {
     return Module['_BinaryenTeeLocal'](module, index, value);
   };
-  this['getGlobal'] = this['get_global'] = function(name, type) {
+  self['getGlobal'] = self['get_global'] = function(name, type) {
     return Module['_BinaryenGetGlobal'](module, strToStack(name), type);
   }
-  this['setGlobal'] = this['set_global'] = function(name, value) {
+  self['setGlobal'] = self['set_global'] = function(name, value) {
     return Module['_BinaryenSetGlobal'](module, strToStack(name), value);
   }
-  this['currentMemory'] = this['current_memory'] = function() {
+  self['currentMemory'] = self['current_memory'] = function() {
     return Module['_BinaryenHost'](module, Module['CurrentMemory']);
   }
-  this['growMemory'] = this['grow_memory'] = function(value) {
+  self['growMemory'] = self['grow_memory'] = function(value) {
     return Module['_BinaryenHost'](module, Module['GrowMemory'], null, i32sToStack([value]), 1);
   }
 
@@ -283,7 +296,7 @@ Module['Module'] = function(module) {
   var temp = _malloc(16); // a single literal in memory. the LLVM C ABI
                           // makes us pass pointers to this.
 
-  this['i32'] = {
+  self['i32'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['i32'], ptr);
     },
@@ -521,7 +534,7 @@ Module['Module'] = function(module) {
     },
   };
 
-  this['i64'] = {
+  self['i64'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['i64'], ptr);
     },
@@ -803,7 +816,7 @@ Module['Module'] = function(module) {
     },
   };
 
-  this['f32'] = {
+  self['f32'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 4, true, offset, align, Module['f32'], ptr);
     },
@@ -902,7 +915,7 @@ Module['Module'] = function(module) {
     },
   };
 
-  this['f64'] = {
+  self['f64'] = {
     'load': function(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 8, true, offset, align, Module['f64'], ptr);
     },
@@ -1001,123 +1014,123 @@ Module['Module'] = function(module) {
     },
   };
 
-  this['select'] = function(condition, ifTrue, ifFalse) {
+  self['select'] = function(condition, ifTrue, ifFalse) {
     return Module['_BinaryenSelect'](module, condition, ifTrue, ifFalse);
   };
-  this['drop'] = function(value) {
+  self['drop'] = function(value) {
     return Module['_BinaryenDrop'](module, value);
   };
-  this['return'] = function(value) {
+  self['return'] = function(value) {
     return Module['_BinaryenReturn'](module, value);
   };
-  this['host'] = function(op, name, operands) {
+  self['host'] = function(op, name, operands) {
     if (!operands) operands = [];
     return preserveStack(function() {
       return Module['_BinaryenHost'](module, op, strToStack(name), i32sToStack(operands), operands.length);
     });
   };
-  this['nop'] = function() {
+  self['nop'] = function() {
     return Module['_BinaryenNop'](module);
   };
-  this['unreachable'] = function() {
+  self['unreachable'] = function() {
     return Module['_BinaryenUnreachable'](module);
   };
-  this['wake'] = function(ptr, wakeCount) {
+  self['wake'] = function(ptr, wakeCount) {
     return Module['_BinaryenAtomicWake'](module, ptr, wakeCount);
   };
 
   // 'Module' operations
-  this['addFunctionType'] = function(name, result, paramTypes) {
+  self['addFunctionType'] = function(name, result, paramTypes) {
     if (!paramTypes) paramTypes = [];
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionType'](module, strToStack(name), result,
                                                 i32sToStack(paramTypes), paramTypes.length);
     });
   };
-  this['getFunctionTypeBySignature'] = function(result, paramTypes) {
+  self['getFunctionTypeBySignature'] = function(result, paramTypes) {
     if (!paramTypes) paramTypes = [];
     return preserveStack(function() {
       return Module['_BinaryenGetFunctionTypeBySignature'](module, result,
                                                            i32sToStack(paramTypes), paramTypes.length);
     });
   };
-  this['removeFunctionType'] = function(name) {
+  self['removeFunctionType'] = function(name) {
     return preserveStack(function () {
       return Module['_BinaryenRemoveFunctionType'](module, strToStack(name));
     });
   };
-  this['addFunction'] = function(name, functionType, varTypes, body) {
+  self['addFunction'] = function(name, functionType, varTypes, body) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunction'](module, strToStack(name), functionType, i32sToStack(varTypes), varTypes.length, body);
     });
   };
-  this['getFunction'] = function(name) {
+  self['getFunction'] = function(name) {
     return preserveStack(function() {
       return Module['_BinaryenGetFunction'](module, strToStack(name));
     });
   };
-  this['removeFunction'] = function(name) {
+  self['removeFunction'] = function(name) {
     return preserveStack(function() {
       return Module['_BinaryenRemoveFunction'](module, strToStack(name));
     });
   };
-  this['addGlobal'] = function(name, type, mutable, init) {
+  self['addGlobal'] = function(name, type, mutable, init) {
     return preserveStack(function() {
       return Module['_BinaryenAddGlobal'](module, strToStack(name), type, mutable, init);
     });
   }
-  this['removeGlobal'] = function(name) {
+  self['removeGlobal'] = function(name) {
     return preserveStack(function () {
       return Module['_BinaryenRemoveGlobal'](module, strToStack(name));
     });
   }
-  this['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
+  self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, functionType) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), functionType);
     });
   };
-  this['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
+  self['addTableImport'] = function(internalName, externalModuleName, externalBaseName) {
     return preserveStack(function() {
       return Module['_BinaryenAddTableImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName));
     });
   };
-  this['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName, shared) {
+  self['addMemoryImport'] = function(internalName, externalModuleName, externalBaseName, shared) {
     return preserveStack(function() {
       return Module['_BinaryenAddMemoryImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared);
     });
   };
-  this['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
+  self['addGlobalImport'] = function(internalName, externalModuleName, externalBaseName, globalType) {
     return preserveStack(function() {
       return Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType);
     });
   };
-  this['addExport'] = // deprecated
-  this['addFunctionExport'] = function(internalName, externalName) {
+  self['addExport'] = // deprecated
+  self['addFunctionExport'] = function(internalName, externalName) {
     return preserveStack(function() {
       return Module['_BinaryenAddFunctionExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
-  this['addTableExport'] = function(internalName, externalName) {
+  self['addTableExport'] = function(internalName, externalName) {
     return preserveStack(function() {
       return Module['_BinaryenAddTableExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
-  this['addMemoryExport'] = function(internalName, externalName) {
+  self['addMemoryExport'] = function(internalName, externalName) {
     return preserveStack(function() {
       return Module['_BinaryenAddMemoryExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
-  this['addGlobalExport'] = function(internalName, externalName) {
+  self['addGlobalExport'] = function(internalName, externalName) {
     return preserveStack(function() {
       return Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName));
     });
   };
-  this['removeExport'] = function(externalName) {
+  self['removeExport'] = function(externalName) {
     return preserveStack(function() {
       return Module['_BinaryenRemoveExport'](module, strToStack(externalName));
     });
   };
-  this['setFunctionTable'] = function(initial, maximum, funcNames) {
+  self['setFunctionTable'] = function(initial, maximum, funcNames) {
     return preserveStack(function() {
       return Module['_BinaryenSetFunctionTable'](module, initial, maximum,
         i32sToStack(funcNames.map(strToStack)),
@@ -1125,7 +1138,7 @@ Module['Module'] = function(module) {
       );
     });
   };
-  this['setMemory'] = function(initial, maximum, exportName, segments, shared) {
+  self['setMemory'] = function(initial, maximum, exportName, segments, shared) {
     // segments are assumed to be { offset: expression ref, data: array of 8-bit data }
     if (!segments) segments = [];
     return preserveStack(function() {
@@ -1151,10 +1164,10 @@ Module['Module'] = function(module) {
       );
     });
   };
-  this['setStart'] = function(start) {
+  self['setStart'] = function(start) {
     return Module['_BinaryenSetStart'](module, start);
   };
-  this['emitText'] = function() {
+  self['emitText'] = function() {
     var old = out;
     var ret = '';
     out = function(x) { ret += x + '\n' };
@@ -1162,17 +1175,17 @@ Module['Module'] = function(module) {
     out = old;
     return ret;
   };
-  this['emitStackIR'] = function(optimize) {
-    this['runPasses'](['generate-stack-ir']);
-    if (optimize) this['runPasses'](['optimize-stack-ir']);
+  self['emitStackIR'] = function(optimize) {
+    self['runPasses'](['generate-stack-ir']);
+    if (optimize) self['runPasses'](['optimize-stack-ir']);
     var old = out;
     var ret = '';
     out = function(x) { ret += x + '\n' };
-    this['runPasses'](['print-stack-ir']);
+    self['runPasses'](['print-stack-ir']);
     out = old;
     return ret;
   };
-  this['emitAsmjs'] = function() {
+  self['emitAsmjs'] = function() {
     var old = out;
     var ret = '';
     out = function(x) { ret += x + '\n' };
@@ -1180,38 +1193,38 @@ Module['Module'] = function(module) {
     out = old;
     return ret;
   };
-  this['validate'] = function() {
+  self['validate'] = function() {
     return Module['_BinaryenModuleValidate'](module);
   };
-  this['optimize'] = function() {
+  self['optimize'] = function() {
     return Module['_BinaryenModuleOptimize'](module);
   };
-  this['optimizeFunction'] = function(func) {
-    if (typeof func === 'string') func = this['getFunction'](func);
+  self['optimizeFunction'] = function(func) {
+    if (typeof func === 'string') func = self['getFunction'](func);
     return Module['_BinaryenFunctionOptimize'](func, module);
   };
-  this['runPasses'] = function(passes) {
+  self['runPasses'] = function(passes) {
     return preserveStack(function() {
       return Module['_BinaryenModuleRunPasses'](module, i32sToStack(
         passes.map(strToStack)
       ), passes.length);
     });
   };
-  this['runPassesOnFunction'] = function(func, passes) {
-    if (typeof func === 'string') func = this['getFunction'](func);
+  self['runPassesOnFunction'] = function(func, passes) {
+    if (typeof func === 'string') func = self['getFunction'](func);
     return preserveStack(function() {
       return Module['_BinaryenFunctionRunPasses'](func, module, i32sToStack(
         passes.map(strToStack)
       ), passes.length);
     });
   };
-  this['autoDrop'] = function() {
+  self['autoDrop'] = function() {
     return Module['_BinaryenModuleAutoDrop'](module);
   };
-  this['dispose'] = function() {
+  self['dispose'] = function() {
     Module['_BinaryenModuleDispose'](module);
   };
-  this['emitBinary'] = function(sourceMapUrl) {
+  self['emitBinary'] = function(sourceMapUrl) {
     return preserveStack(function() {
       Module['_BinaryenModuleAllocateAndWrite'](temp, module, strToStack(sourceMapUrl));
       var binaryPtr    = HEAPU32[ temp >>> 2     ];
@@ -1229,26 +1242,30 @@ Module['Module'] = function(module) {
       }
     });
   };
-  this['interpret'] = function() {
+  self['interpret'] = function() {
     return Module['_BinaryenModuleInterpret'](module);
   };
-  this['addDebugInfoFileName'] = function(filename) {
+  self['addDebugInfoFileName'] = function(filename) {
     return preserveStack(function() {
       return Module['_BinaryenModuleAddDebugInfoFileName'](module, strToStack(filename));
     });
   };
-  this['getDebugInfoFileName'] = function(index) {
+  self['getDebugInfoFileName'] = function(index) {
     return Pointer_stringify(Module['_BinaryenModuleGetDebugInfoFileName'](module, index));
   };
-  this['setDebugLocation'] = function(func, expr, fileIndex, lineNumber, columnNumber) {
+  self['setDebugLocation'] = function(func, expr, fileIndex, lineNumber, columnNumber) {
     return Module['_BinaryenFunctionSetDebugLocation'](func, expr, fileIndex, lineNumber, columnNumber);
   };
-};
+
+  return self;
+}
+Module['wrapModule'] = wrapModule;
 
 // 'Relooper' interface
-Module['Relooper'] = function(relooper) {
-  if (!relooper) relooper = Module['_RelooperCreate']();
-  this.ptr = relooper;
+Module['Relooper'] = function(module) {
+  assert(module && typeof module === 'object' && module['ptr'] && module['block'] && module['if']); // guard against incorrect old API usage
+  var relooper = Module['_RelooperCreate'](module['ptr']);
+  this['ptr'] = relooper;
 
   this['addBlock'] = function(code) {
     return Module['_RelooperAddBlock'](relooper, code);
@@ -1264,8 +1281,8 @@ Module['Relooper'] = function(relooper) {
       return Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code);
     });
   };
-  this['renderAndDispose'] = function(entry, labelHelper, module) {
-    return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper, module['ptr']);
+  this['renderAndDispose'] = function(entry, labelHelper) {
+    return Module['_RelooperRenderAndDispose'](relooper, entry, labelHelper);
   };
 };
 
@@ -1558,7 +1575,7 @@ Module['readBinary'] = function(data) {
   var buffer = allocate(data, 'i8', ALLOC_NORMAL);
   var ptr = Module['_BinaryenModuleRead'](buffer, data.length);
   _free(buffer);
-  return new Module['Module'](ptr);
+  return wrapModule(ptr);
 };
 
 // Parses text format to a module
@@ -1567,7 +1584,7 @@ Module['parseText'] = function(text) {
   writeAsciiToMemory(text, buffer);
   var ptr = Module['_BinaryenModuleParse'](buffer);
   _free(buffer);
-  return new Module['Module'](ptr);
+  return wrapModule(ptr);
 };
 
 // Gets the currently set optimize level. 0, 1, 2 correspond to -O0, -O1, -O2, etc.

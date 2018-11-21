@@ -19,7 +19,7 @@ int main() {
     BinaryenIndex segmentSizes[] = { 0 };
     BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentOffsets, segmentSizes, 0, 0);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   {
     BinaryenExpressionRef children[] = { 0 };
     expressions[1] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
@@ -44,7 +44,7 @@ int main() {
   expressions[9] = BinaryenSetLocal(the_module, 0, expressions[8]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[9]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[10] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 1, the_module);
+  expressions[10] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "main", functionTypes[0], varTypes, 3, expressions[10]);

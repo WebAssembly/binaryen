@@ -41,7 +41,7 @@ struct ReReloop final : public Pass {
 
   Pass* create() override { return new ReReloop; }
 
-  CFG::Relooper relooper;
+  std::unique_ptr<CFG::Relooper> relooper;
   std::unique_ptr<Builder> builder;
 
   // block handling
@@ -50,7 +50,7 @@ struct ReReloop final : public Pass {
 
   CFG::Block* makeCFGBlock() {
     auto* ret = new CFG::Block(builder->makeBlock());
-    relooper.AddBlock(ret);
+    relooper->AddBlock(ret);
     return ret;
   }
 
@@ -301,6 +301,7 @@ struct ReReloop final : public Pass {
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow
     builder = make_unique<Builder>(*module);
+    relooper = make_unique<CFG::Relooper>(module);
     auto* entry = startCFGBlock();
     stack.push_back(TaskPtr(new TriageTask(*this, function->body)));
     // main loop
@@ -314,7 +315,7 @@ struct ReReloop final : public Pass {
     // blocks that do not have any exits are dead ends in the relooper. we need
     // to make sure that are in fact dead ends, and do not flow control anywhere.
     // add a return as needed
-    for (auto* cfgBlock : relooper.Blocks) {
+    for (auto* cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != unreachable) {
         block->list.push_back(
@@ -326,7 +327,7 @@ struct ReReloop final : public Pass {
     }
 #ifdef RERELOOP_DEBUG
     std::cout << "rerelooping " << function->name << '\n';
-    for (auto* block : relooper.Blocks) {
+    for (auto* block : relooper->Blocks) {
       std::cout << block << " block:\n" << block->Code << '\n';
       for (auto& pair : block->BranchesOut) {
         auto* target = pair.first;
@@ -339,12 +340,12 @@ struct ReReloop final : public Pass {
     }
 #endif
     // run the relooper to recreate control flow
-    relooper.Calculate(entry);
+    relooper->Calculate(entry);
     // render
     {
       auto temp = builder->addVar(function, i32);
       CFG::RelooperBuilder builder(*module, temp);
-      function->body = relooper.Render(builder);
+      function->body = relooper->Render(builder);
       // if the function has a result, and the relooper emitted
       // something that seems like it flows out without a value
       // (but that path is never reached; it just has a br to it

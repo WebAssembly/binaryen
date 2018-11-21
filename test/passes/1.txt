@@ -34,26 +34,21 @@
  (func $loops (; 5 ;) (type $3) (param $0 i32)
   (if
    (get_local $0)
-   (loop $shape$3$continue
+   (loop $shape$2$continue
     (call $trivial)
-    (br $shape$3$continue)
+    (br $shape$2$continue)
+   )
+  )
+  (loop $shape$4$continue
+   (call $trivial)
+   (br_if $shape$4$continue
+    (get_local $0)
    )
   )
   (loop $shape$6$continue
    (call $trivial)
    (br_if $shape$6$continue
     (get_local $0)
-   )
-  )
-  (loop $shape$9$continue
-   (block $block$11$break
-    (call $trivial)
-    (br_if $block$11$break
-     (i32.eqz
-      (get_local $0)
-     )
-    )
-    (br $shape$9$continue)
    )
   )
  )
@@ -187,10 +182,6 @@
   )
  )
  (func $switch (; 10 ;) (type $3) (param $0 i32)
-  (if
-   (get_local $0)
-   (nop)
-  )
   (block $block$6$break
    (call $switch
     (i32.const 1)
@@ -221,9 +212,8 @@
     (call $if-br-wat
      (i32.const 1)
     )
-    (if
+    (br_if $block$2$break
      (get_local $0)
-     (br $block$2$break)
     )
    )
    (call $if-br-wat

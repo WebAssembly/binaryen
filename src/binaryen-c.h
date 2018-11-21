@@ -806,7 +806,7 @@ typedef void* RelooperRef;
 typedef void* RelooperBlockRef;
 
 // Create a relooper instance
-RelooperRef RelooperCreate(void);
+RelooperRef RelooperCreate(BinaryenModuleRef module);
 
 // Create a basic block that ends with nothing, or with some simple branching
 RelooperBlockRef RelooperAddBlock(RelooperRef relooper, BinaryenExpressionRef code);
@@ -827,7 +827,7 @@ void RelooperAddBranchForSwitch(RelooperBlockRef from, RelooperBlockRef to, Bina
 //   @param labelHelper To render irreducible control flow, we may need a helper variable to
 //                      guide us to the right target label. This value should be an index of
 //                      an i32 local variable that is free for us to use.
-BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper, BinaryenModuleRef module);
+BinaryenExpressionRef RelooperRenderAndDispose(RelooperRef relooper, RelooperBlockRef entry, BinaryenIndex labelHelper);
 
 //
 // ========= Other APIs =========
