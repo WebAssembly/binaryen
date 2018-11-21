@@ -493,6 +493,7 @@ struct Optimizer : public RelooperRecursor {
       More = SkipEmptyBlocks() || More;
       More = MergeEquivalentBranches() || More;
       More = UnSwitch() || More;
+      More = MergeConsecutiveBlocks() || More;
       // TODO: Merge identical blocks. This would avoid taking into account their
       // position / how they are reached, which means that the merging
       // may add overhead, so we do it carefully:
@@ -642,6 +643,45 @@ struct Optimizer : public RelooperRecursor {
         }
         for (auto* Curr : BlocksToErase) {
           ParentBlock->BranchesOut.erase(Curr);
+        }
+      }
+    }
+    return Worked;
+  }
+
+  // Merge consecutive blocks, that is, A -> B where no other branches go to B.
+  // In that case we are guaranteed to not increase code size.
+  bool MergeConsecutiveBlocks() {
+    bool Worked = false;
+    // First, count predecessors.
+    std::map<Block*, size_t> NumPredecessors;
+    for (auto* CurrBlock : Parent->Blocks) {
+      for (auto& iter : CurrBlock->BranchesOut) {
+        auto* NextBlock = iter.first;
+        NumPredecessors[NextBlock]++;
+      }
+    }
+    for (auto* CurrBlock : Parent->Blocks) {
+      if (CurrBlock->BranchesOut.size() == 1) {
+        auto iter = CurrBlock->BranchesOut.begin();
+        auto* NextBlock = iter->first;
+        auto* NextBranch = iter->second;
+        assert(NumPredecessors[NextBlock] > 0);
+        if (NextBlock != CurrBlock && NumPredecessors[NextBlock] == 1) {
+          // Good to merge!
+          wasm::Builder Builder(*Parent->Module);
+          // Merge in code on the branch as well, if any.
+          if (NextBranch->Code) {
+            CurrBlock->Code = Builder.makeSequence(CurrBlock->Code, NextBranch->Code);
+          }
+          CurrBlock->Code = Builder.makeSequence(CurrBlock->Code, NextBlock->Code);
+          // Use the next block's branching behavior
+          CurrBlock->BranchesOut.swap(NextBlock->BranchesOut);
+          NextBlock->BranchesOut.clear();
+          CurrBlock->SwitchCondition = NextBlock->SwitchCondition;
+          // The next block now has no predecessors.
+          NumPredecessors[NextBlock] = 0;
+          Worked = true;
         }
       }
     }

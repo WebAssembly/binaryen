@@ -115,11 +115,11 @@
   (call $before-and-after
    (i32.const 8)
   )
-  (loop $shape$7$continue
+  (loop $shape$4$continue
    (call $before-and-after
     (i32.const 9)
    )
-   (br_if $shape$7$continue
+   (br_if $shape$4$continue
     (get_local $0)
    )
   )
