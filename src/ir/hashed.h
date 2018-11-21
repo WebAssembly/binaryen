@@ -26,7 +26,7 @@ namespace wasm {
 // An expression with a cached hash value
 struct HashedExpression {
   Expression* expr;
-  size_t hash;
+  HashType hash;
 
   HashedExpression(Expression* expr) : expr(expr) {
     if (expr) {
@@ -38,7 +38,7 @@ struct HashedExpression {
 };
 
 struct ExpressionHasher {
-  size_t operator()(const HashedExpression value) const {
+  HashType operator()(const HashedExpression value) const {
     return value.hash;
   }
 };

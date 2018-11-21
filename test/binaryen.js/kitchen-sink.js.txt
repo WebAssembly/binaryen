@@ -1048,7 +1048,7 @@ raw:
  )
  (func $return (; 15 ;) (type $i) (result i32)
   (local $0 i32)
-  (block $the-list
+  (block
    (call $check
     (i32.const 42)
    )
@@ -2046,19 +2046,19 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     functionTypes[1] = BinaryenAddFunctionType(the_module, "vi", 0, paramTypes, 1);
   }
   BinaryenAddFunctionImport(the_module, "check", "module", "check", functionTypes[1]);
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[1] = BinaryenConst(the_module, BinaryenLiteralInt32(1337));
   {
     BinaryenExpressionRef operands[] = { expressions[1] };
     expressions[2] = BinaryenCall(the_module, "check", operands, 1, 0);
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[2]);
-  expressions[3] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[3] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[0] = BinaryenAddFunction(the_module, "just-one-block", functionTypes[0], varTypes, 1, expressions[3]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[4] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[4] };
@@ -2072,12 +2072,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   }
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[7]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
-  expressions[8] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[8] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[1] = BinaryenAddFunction(the_module, "two-blocks", functionTypes[0], varTypes, 1, expressions[8]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[9] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[9] };
@@ -2093,12 +2093,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[13] = BinaryenConst(the_module, BinaryenLiteralInt32(77));
   expressions[14] = BinaryenDrop(the_module, expressions[13]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[14]);
-  expressions[15] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[15] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[2] = BinaryenAddFunction(the_module, "two-blocks-plus-code", functionTypes[0], varTypes, 1, expressions[15]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[16] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[16] };
@@ -2113,12 +2113,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[19]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[20] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[20] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[3] = BinaryenAddFunction(the_module, "loop", functionTypes[0], varTypes, 1, expressions[20]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[21] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[21] };
@@ -2137,12 +2137,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[27] = BinaryenConst(the_module, BinaryenLiteralInt32(-66));
   expressions[28] = BinaryenDrop(the_module, expressions[27]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[28]);
-  expressions[29] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[29] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[4] = BinaryenAddFunction(the_module, "loop-plus-code", functionTypes[0], varTypes, 1, expressions[29]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[30] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[30] };
@@ -2164,12 +2164,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[36] = BinaryenConst(the_module, BinaryenLiteralInt32(55));
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[36], expressions[0]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
-  expressions[37] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[37] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[5] = BinaryenAddFunction(the_module, "split", functionTypes[0], varTypes, 1, expressions[37]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[38] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[38] };
@@ -2195,12 +2195,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[47] = BinaryenConst(the_module, BinaryenLiteralInt32(20));
   expressions[48] = BinaryenDrop(the_module, expressions[47]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[48]);
-  expressions[49] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[49] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[6] = BinaryenAddFunction(the_module, "split-plus-code", functionTypes[0], varTypes, 1, expressions[49]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[50] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[50] };
@@ -2223,12 +2223,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[1], expressions[56], expressions[0]);
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
-  expressions[57] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[57] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[7] = BinaryenAddFunction(the_module, "if", functionTypes[0], varTypes, 1, expressions[57]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[58] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[58] };
@@ -2257,12 +2257,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[69] = BinaryenConst(the_module, BinaryenLiteralInt32(-3));
   expressions[70] = BinaryenDrop(the_module, expressions[69]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[70]);
-  expressions[71] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[71] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[8] = BinaryenAddFunction(the_module, "if-plus-code", functionTypes[0], varTypes, 1, expressions[71]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[72] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[72] };
@@ -2292,12 +2292,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[3], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[3], expressions[0], expressions[0]);
-  expressions[81] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[81] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[9] = BinaryenAddFunction(the_module, "if-else", functionTypes[0], varTypes, 1, expressions[81]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[82] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[82] };
@@ -2320,12 +2320,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[88] = BinaryenConst(the_module, BinaryenLiteralInt32(10));
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[88], expressions[0]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
-  expressions[89] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[89] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[10] = BinaryenAddFunction(the_module, "loop-tail", functionTypes[0], varTypes, 1, expressions[89]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[90] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[90] };
@@ -2388,12 +2388,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   expressions[113] = BinaryenConst(the_module, BinaryenLiteralInt32(40));
   expressions[114] = BinaryenDrop(the_module, expressions[113]);
   RelooperAddBranch(relooperBlocks[5], relooperBlocks[6], expressions[0], expressions[114]);
-  expressions[115] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[115] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[11] = BinaryenAddFunction(the_module, "nontrivial-loop-plus-phi-to-head", functionTypes[0], varTypes, 1, expressions[115]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[116] = BinaryenConst(the_module, BinaryenLiteralInt32(-99));
   expressions[117] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
@@ -2433,12 +2433,12 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     BinaryenIndex indexes[] = { 0 };
     RelooperAddBranchForSwitch(relooperBlocks[0], relooperBlocks[3], indexes, 0, expressions[0]);
   }
-  expressions[127] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[127] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[12] = BinaryenAddFunction(the_module, "switch", functionTypes[0], varTypes, 1, expressions[127]);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[128] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   {
     BinaryenExpressionRef operands[] = { expressions[128] };
@@ -2462,7 +2462,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   RelooperAddBranch(relooperBlocks[0], relooperBlocks[2], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[2], expressions[0], expressions[0]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[1], expressions[0], expressions[0]);
-  expressions[135] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 3, the_module);
+  expressions[135] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 3);
   {
     BinaryenType varTypes[] = { 1, 1, 2, 1, 3, 4, 1 };
     functions[13] = BinaryenAddFunction(the_module, "duffs-device", functionTypes[0], varTypes, 7, expressions[135]);
@@ -2471,7 +2471,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     BinaryenType paramTypes[] = { 0 };
     functionTypes[2] = BinaryenAddFunctionType(the_module, "i", 1, paramTypes, 0);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[136] = BinaryenConst(the_module, BinaryenLiteralInt32(42));
   {
     BinaryenExpressionRef operands[] = { expressions[136] };
@@ -2484,7 +2484,7 @@ getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
     expressions[140] = BinaryenBlock(the_module, "the-list", children, 2, 0);
   }
   relooperBlocks[0] = RelooperAddBlock(the_relooper, expressions[140]);
-  expressions[141] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0, the_module);
+  expressions[141] = RelooperRenderAndDispose(the_relooper, relooperBlocks[0], 0);
   {
     BinaryenType varTypes[] = { 1 };
     functions[14] = BinaryenAddFunction(the_module, "return", functionTypes[2], varTypes, 1, expressions[141]);
@@ -2966,7 +2966,7 @@ raw:
  )
  (func $return (; 15 ;) (type $i) (result i32)
   (local $0 i32)
-  (block $the-list
+  (block
    (call $check
     (i32.const 42)
    )

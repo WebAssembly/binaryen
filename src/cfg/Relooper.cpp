@@ -23,6 +23,7 @@
 #include <stack>
 #include <string>
 
+#include "ir/branch-utils.h"
 #include "ir/utils.h"
 #include "parsing.h"
 
@@ -100,7 +101,7 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret, Shape* P
 
 Branch::Branch(wasm::Expression* ConditionInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(ConditionInit), Code(CodeInit) {}
 
-Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Code(CodeInit) {
+Branch::Branch(std::vector<wasm::Index>&& ValuesInit, wasm::Expression* CodeInit) : Ancestor(nullptr), Condition(nullptr), Code(CodeInit) {
   if (ValuesInit.size() > 0) {
     SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
@@ -427,7 +428,9 @@ wasm::Expression* LoopShape::Render(RelooperBuilder& Builder, bool InLoop) {
 
 // Relooper
 
-Relooper::Relooper() : Root(nullptr), MinSize(false), BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
+Relooper::Relooper(wasm::Module* ModuleInit) :
+  Module(ModuleInit), Root(nullptr), MinSize(false),
+  BlockIdCounter(1), ShapeIdCounter(0) { // block ID 0 is reserved for clearings
 }
 
 Relooper::~Relooper() {
@@ -468,9 +471,448 @@ struct Liveness : public RelooperRecursor {
   }
 };
 
+typedef std::pair<Branch*, Block*> BranchBlock;
+
+struct Optimizer : public RelooperRecursor {
+  Optimizer(Relooper* Parent) : RelooperRecursor(Parent) {
+    // TODO: there are likely some rare but possible O(N^2) cases with this looping
+    bool More = true;
+#if RELOOPER_OPTIMIZER_DEBUG
+    std::cout << "pre-optimize\n";
+    for (auto* Block : Parent->Blocks) {
+      DebugDump(Block, "pre-block");
+    }
+#endif
+
+    // First, run one-time preparatory passes.
+    CanonicalizeCode();
+
+    // Loop over passes that allow further reduction.
+    while (More) {
+      More = false;
+      More = SkipEmptyBlocks() || More;
+      More = MergeEquivalentBranches() || More;
+      More = UnSwitch() || More;
+      // TODO: Merge identical blocks. This would avoid taking into account their
+      // position / how they are reached, which means that the merging
+      // may add overhead, so we do it carefully:
+      //  * Merging a large-enough block is good for size, and we do it
+      //    in we are in MinSize mode, which means we can tolerate slightly
+      //    slower throughput.
+      // TODO: Fuse a non-empty block with a single successor.
+    }
+
+    // Finally, run one-time final passes.
+    // TODO
+
+#if RELOOPER_OPTIMIZER_DEBUG
+    std::cout << "post-optimize\n";
+    for (auto* Block : Parent->Blocks) {
+      DebugDump(Block, "post-block");
+    }
+#endif
+  }
+
+  // We will be performing code comparisons, so do some basic canonicalization
+  // to avoid things being unequal for silly reasons.
+  void CanonicalizeCode() {
+    for (auto* Block : Parent->Blocks) {
+      Block->Code = Canonicalize(Block->Code);
+      for (auto& iter : Block->BranchesOut) {
+        auto* Branch = iter.second;
+        if (Branch->Code) {
+          Branch->Code = Canonicalize(Branch->Code);
+        }
+      }
+    }
+  }
+
+  // If a branch goes to an empty block which has one target,
+  // and there is no phi or switch to worry us, just skip through.
+  bool SkipEmptyBlocks() {
+    bool Worked = false;
+    for (auto* CurrBlock : Parent->Blocks) {
+      // Generate a new set of branches out TODO optimize
+      BlockBranchMap NewBranchesOut;
+      for (auto& iter : CurrBlock->BranchesOut) {
+        auto* Next = iter.first;
+        auto* NextBranch = iter.second;
+        auto* First = Next;
+        auto* Replacement = First;
+#if RELOOPER_OPTIMIZER_DEBUG
+        std::cout << " maybeskip from " << Block->Id << " to next=" << Next->Id << '\n';
+#endif
+        std::unordered_set<decltype(Replacement)> Seen;
+        while (1) {
+          if (IsEmpty(Next) &&
+              Next->BranchesOut.size() == 1) {
+            auto iter = Next->BranchesOut.begin();
+            Block* NextNext = iter->first;
+            Branch* NextNextBranch = iter->second;
+            assert(!NextNextBranch->Condition && !NextNextBranch->SwitchValues);
+            if (!NextNextBranch->Code) { // TODO: handle extra code too
+              // We can skip through!
+              Next = Replacement = NextNext;
+              // If we've already seen this, stop - it's an infinite loop of empty
+              // blocks we can skip through.
+              if (Seen.count(Replacement)) {
+                // Stop here. Note that if we started from X and ended up with X once
+                // more, then Replacement == First and so lower down we will not
+                // report that we did any work, avoiding an infinite loop due to
+                // always thinking there is more work to do.
+                break;
+              } else {
+                // Otherwise, keep going.
+                Seen.insert(Replacement);
+                continue;
+              }
+            }
+          }
+          break;
+        }
+        if (Replacement != First) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  skip to replacement! " << CurrBlock->Id << " -> " << First->Id << " -> " << Replacement->Id << '\n';
+#endif
+          Worked = true;
+        }
+        // Add a branch to the target (which may be the unchanged original) in the set of new branches.
+        // If it's a replacement, it may collide, and we need to merge.
+        if (NewBranchesOut.count(Replacement)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  merge\n";
+#endif
+          MergeBranchInto(NextBranch, NewBranchesOut[Replacement]);
+        } else {
+          NewBranchesOut[Replacement] = NextBranch;
+        }
+      }
+      CurrBlock->BranchesOut.swap(NewBranchesOut); // FIXME do we leak old unused Branches?
+    }
+    return Worked;
+  }
+
+  // Our IR has one Branch from each block to one of its targets, so there
+  // is nothing to reduce there, but different targets may in fact be
+  // equivalent in their *contents*.
+  bool MergeEquivalentBranches() {
+    bool Worked = false;
+    for (auto* ParentBlock : Parent->Blocks) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "at parent " << ParentBlock->Id << '\n';
+#endif
+      if (ParentBlock->BranchesOut.size() >= 2) {
+        std::unordered_map<wasm::HashType, std::vector<BranchBlock>> HashedBranchesOut;
+        std::vector<Block*> BlocksToErase;
+        for (auto& iter : ParentBlock->BranchesOut) {
+          Block* CurrBlock = iter.first;
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  consider child " << CurrBlock->Id << '\n';
+#endif
+          Branch* CurrBranch = iter.second;
+          if (CurrBranch->Code) {
+            // We can't merge code; ignore
+            continue;
+          }
+          auto HashValue = Hash(CurrBlock);
+          auto& HashedSiblings = HashedBranchesOut[HashValue];
+          // Check if we are equivalent to any of them - if so, merge us.
+          bool Merged = false;
+          for (auto& Pair : HashedSiblings) {
+            Branch* SiblingBranch = Pair.first;
+            Block* SiblingBlock = Pair.second;
+            if (HaveEquivalentContents(CurrBlock, SiblingBlock)) {
+#if RELOOPER_OPTIMIZER_DEBUG
+              std::cout << "    equiv! to " << SiblingBlock->Id << '\n';
+#endif
+              MergeBranchInto(CurrBranch, SiblingBranch);
+              BlocksToErase.push_back(CurrBlock);
+              Merged = true;
+              Worked = true;
+            }
+#if RELOOPER_OPTIMIZER_DEBUG
+            else {
+              std::cout << "    same hash, but not equiv to " << SiblingBlock->Id << '\n';
+            }
+#endif
+          }
+          if (!Merged) {
+            HashedSiblings.emplace_back(CurrBranch, CurrBlock);
+          }
+        }
+        for (auto* Curr : BlocksToErase) {
+          ParentBlock->BranchesOut.erase(Curr);
+        }
+      }
+    }
+    return Worked;
+  }
+
+  // Removes unneeded switches - if only one branch is left, the default, then
+  // no switch is needed.
+  bool UnSwitch() {
+    bool Worked = false;
+    for (auto* ParentBlock : Parent->Blocks) {
+#if RELOOPER_OPTIMIZER_DEBUG
+      std::cout << "un-switching at " << ParentBlock->Id << ' ' << !!ParentBlock->SwitchCondition << ' ' << ParentBlock->BranchesOut.size() << '\n';
+#endif
+      if (ParentBlock->SwitchCondition) {
+        if (ParentBlock->BranchesOut.size() <= 1) {
+#if RELOOPER_OPTIMIZER_DEBUG
+          std::cout << "  un-switching!: " << ParentBlock->Id << '\n';
+#endif
+          ParentBlock->SwitchCondition = nullptr;
+          if (!ParentBlock->BranchesOut.empty()) {
+            assert(!ParentBlock->BranchesOut.begin()->second->SwitchValues);
+          }
+          Worked = true;
+        }
+      } else {
+        // If the block has no switch, the branches must not as well.
+        for (auto& iter : ParentBlock->BranchesOut) {
+          assert(!iter.second->SwitchValues);
+        }
+      }
+    }
+    return Worked;
+  }
+
+private:
+  wasm::Expression* Canonicalize(wasm::Expression* Curr) {
+    wasm::Builder Builder(*Parent->Module);
+    // Our preferred form is a block with no name and a flat list
+    // with Nops removed, and extra Unreachables removed as well.
+    // If the block would contain one item, return just the item.
+    wasm::Block* Outer = Curr->dynCast<wasm::Block>();
+    if (!Outer) {
+      Outer = Builder.makeBlock(Curr);
+    } else if (Outer->name.is()) {
+      // Perhaps the name can be removed.
+      if (!wasm::BranchUtils::BranchSeeker::hasNamed(Outer, Outer->name)) {
+        Outer->name = wasm::Name();
+      } else {
+        Outer = Builder.makeBlock(Curr);
+      }
+    }
+    Flatten(Outer);
+    if (Outer->list.size() == 1) {
+      return Outer->list[0];
+    } else {
+      return Outer;
+    }
+  }
+
+  void Flatten(wasm::Block* Outer) {
+    wasm::ExpressionList NewList(Parent->Module->allocator);
+    bool SeenUnreachableType = false;
+    auto Add = [&](wasm::Expression* Curr) {
+      if (Curr->is<wasm::Nop>()) {
+        // Do nothing with it.
+        return;
+      } else if (Curr->is<wasm::Unreachable>()) {
+        // If we already saw an unreachable-typed item, emit no
+        // Unreachable nodes after it.
+        if (SeenUnreachableType) {
+          return;
+        }
+      }
+      NewList.push_back(Curr);
+      if (Curr->type == wasm::unreachable) {
+        SeenUnreachableType = true;
+      }
+    };
+    std::function<void (wasm::Block*)> FlattenIntoNewList = [&](wasm::Block* Curr) {
+      assert(!Curr->name.is());
+      for (auto* Item : Curr->list) {
+        if (auto* Block = Item->dynCast<wasm::Block>()) {
+          if (Block->name.is()) {
+            // Leave it whole, it's not a trivial block.
+            Add(Block);
+          } else {
+            FlattenIntoNewList(Block);
+          }
+        } else {
+          // A random item.
+          Add(Item);
+        }
+      }
+      // All the items have been moved out.
+      Curr->list.clear();
+    };
+    FlattenIntoNewList(Outer);
+    assert(Outer->list.empty());
+    Outer->list.swap(NewList);
+  }
+
+  bool IsEmpty(Block* Curr) {
+    if (Curr->SwitchCondition) {
+      // This is non-trivial, so treat it as a non-empty block.
+      return false;
+    }
+    return IsEmpty(Curr->Code);
+  }
+
+  bool IsEmpty(wasm::Expression* Code) {
+    if (Code->is<wasm::Nop>()) {
+      return true; // a nop
+    }
+    if (auto* WasmBlock = Code->dynCast<wasm::Block>()) {
+      for (auto* Item : WasmBlock->list) {
+        if (!IsEmpty(Item)) {
+          return false;
+        }
+      }
+      return true; // block with no non-empty contents
+    }
+    return false;
+  }
+
+  // Checks functional equivalence, namely: the Code and SwitchCondition.
+  // We also check the branches out, *non-recursively*: that is, we check
+  // that they are literally identical, not that they can be computed to
+  // be equivalent.
+  bool HaveEquivalentContents(Block* A, Block* B) {
+    if (!IsPossibleCodeEquivalent(A->SwitchCondition, B->SwitchCondition)) {
+      return false;
+    }
+    if (!IsCodeEquivalent(A->Code, B->Code)) {
+      return false;
+    }
+    if (A->BranchesOut.size() != B->BranchesOut.size()) {
+      return false;
+    }
+    for (auto& aiter : A->BranchesOut) {
+      Block* ABlock = aiter.first;
+      Branch* ABranch = aiter.second;
+      if (B->BranchesOut.count(ABlock) == 0) {
+        return false;
+      }
+      auto* BBranch = B->BranchesOut[ABlock];
+      if (!IsPossibleCodeEquivalent(ABranch->Condition, BBranch->Condition)) {
+        return false;
+      }
+      if (!IsPossibleUniquePtrEquivalent(ABranch->SwitchValues, BBranch->SwitchValues)) {
+        return false;
+      }
+      if (!IsPossibleCodeEquivalent(ABranch->Code, BBranch->Code)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Checks if values referred to by pointers are identical, allowing the code to also be nullptr
+  template<typename T>
+  static bool IsPossibleUniquePtrEquivalent(std::unique_ptr<T>& A, std::unique_ptr<T>& B) {
+    if (A == B) return true;
+    if (!A || !B) return false;
+    return *A == *B;
+  }
+
+  // Checks if code is equivalent, allowing the code to also be nullptr
+  static bool IsPossibleCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+    if (A == B) return true;
+    if (!A || !B) return false;
+    return IsCodeEquivalent(A, B);
+  }
+
+  static bool IsCodeEquivalent(wasm::Expression* A, wasm::Expression* B) {
+    return wasm::ExpressionAnalyzer::equal(A, B);
+  }
+
+  // Merges one branch into another. Valid under the assumption that the
+  // blocks they reach are identical, and so one branch is enough for both
+  // with a unified condition.
+  // Only one is allowed to have code, as the code may have side effects,
+  // and we don't have a way to order or resolve those, unless the code
+  // is equivalent.
+  void MergeBranchInto(Branch* Curr, Branch* Into) {
+    assert(Curr != Into);
+    if (Curr->SwitchValues) {
+      if (!Into->SwitchValues) {
+        assert(!Into->Condition);
+        // Merging into the already-default, nothing to do.
+      } else {
+        Into->SwitchValues->insert(
+          Into->SwitchValues->end(),
+          Curr->SwitchValues->begin(), Curr->SwitchValues->end());
+      }
+    } else {
+      if (!Curr->Condition) {
+        // This is now the new default. Whether Into has a condition
+        // or switch values, remove them all to make us the default.
+        Into->Condition = nullptr;
+        Into->SwitchValues.reset();
+      } else if (!Into->Condition) {
+        // Nothing to do, already the default.
+      } else {
+        assert(!Into->SwitchValues);
+        // Merge them, checking both.
+        Into->Condition = wasm::Builder(*Parent->Module).makeBinary(
+          wasm::OrInt32,
+          Into->Condition,
+          Curr->Condition
+        );
+      }
+    }
+    if (!Curr->Code) {
+      // No code to merge in.
+    } else if (!Into->Code) {
+      // Just use the code being merged in.
+      Into->Code = Curr->Code;
+    } else {
+      assert(IsCodeEquivalent(Into->Code, Curr->Code));
+      // Keep the code already there, either is fine.
+    }
+  }
+
+  // Hashes the direct block contents, but not Relooper internals
+  // (like Shapes). Only partially hashes the branches out, no
+  // recursion: hashes the branch infos, looks at raw pointers
+  // for the blocks.
+  wasm::HashType Hash(Block* Curr) {
+    wasm::HashType Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
+    Ret = wasm::rehash(Ret, 1);
+    if (Curr->SwitchCondition) {
+      Ret = wasm::ExpressionAnalyzer::hash(Curr->SwitchCondition);
+    }
+    Ret = wasm::rehash(Ret, 2);
+    for (auto& Pair : Curr->BranchesOut) {
+      // Hash the Block* as a pointer TODO: full hash?
+      Ret = wasm::rehash(Ret, wasm::HashType(reinterpret_cast<size_t>(Pair.first)));
+      // Hash the Branch info properly
+      Ret = wasm::rehash(Ret, Hash(Pair.second));
+    }
+    return Ret;
+  }
+
+  // Hashes the direct block contents, but not Relooper internals
+  // (like Shapes).
+  wasm::HashType Hash(Branch* Curr) {
+    wasm::HashType Ret = 0;
+    if (Curr->SwitchValues) {
+      for (auto i : *Curr->SwitchValues) {
+        Ret = wasm::rehash(Ret, i); // TODO hash i
+      }
+    } else {
+      if (Curr->Condition) {
+        Ret = wasm::ExpressionAnalyzer::hash(Curr->Condition);
+      }
+    }
+    Ret = wasm::rehash(Ret, 1);
+    if (Curr->Code) {
+      Ret = wasm::ExpressionAnalyzer::hash(Curr->Code);
+    }
+    return Ret;
+  }
+};
+
 } // namespace
 
 void Relooper::Calculate(Block* Entry) {
+  // Optimize.
+  Optimizer(this);
+
   // Find live blocks.
   Liveness Live(this);
   Live.FindLive(Entry);
@@ -979,20 +1421,39 @@ wasm::Expression* Relooper::Render(RelooperBuilder& Builder) {
 #ifdef RELOOPER_DEBUG
 // Debugging
 
-void Debugging::Dump(BlockSet &Blocks, const char *prefix) {
-  if (prefix) printf("%s ", prefix);
-  for (auto* Curr : Blocks) {
-    printf("%d:\n", Curr->Id);
-    for (auto iter2 = Curr->BranchesOut.begin(); iter2 != Curr->BranchesOut.end(); iter2++) {
-      Block* Other = iter2->first;
-      printf("  -> %d\n", Other->Id);
-      assert(contains(Other->BranchesIn, Curr));
+void Debugging::Dump(Block* Curr, const char *prefix) {
+  if (prefix) std::cout << prefix << ": ";
+  std::cout << Curr->Id << " [code " << *Curr->Code << "] [switch? " << !!Curr->SwitchCondition << "]\n";
+  for (auto iter2 = Curr->BranchesOut.begin(); iter2 != Curr->BranchesOut.end(); iter2++) {
+    Block* Other = iter2->first;
+    Branch* Br = iter2->second;
+    std::cout << "  -> " << Other->Id << ' ';
+    if (Br->Condition) {
+      std::cout << "[if " << *Br->Condition << "] ";
+    } else if (Br->SwitchValues) {
+      std::cout << "[cases ";
+      for (auto x : *Br->SwitchValues) {
+        std::cout << x << ' ';
+      }
+      std::cout << "] ";
+    } else {
+      std::cout << "[default] ";
     }
+    if (Br->Code) std::cout << "[phi " << *Br->Code << "] ";
+    std::cout << '\n';
+  }
+  std::cout << '\n';
+}
+
+void Debugging::Dump(BlockSet &Blocks, const char *prefix) {
+  if (prefix) std::cout << prefix << ": ";
+  for (auto* Curr : Blocks) {
+    Dump(Curr);
   }
 }
 
 void Debugging::Dump(Shape* S, const char *prefix) {
-  if (prefix) printf("%s ", prefix);
+  if (prefix) std::cout << prefix << ": ";
   if (!S) {
     printf(" (null)\n");
     return;

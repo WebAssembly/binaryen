@@ -1,10 +1,12 @@
 (module
- (type $legaltype$illegalImportResult (func (result i32)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (type $FUNCSIG$i (func (result i32)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
  (import "env" "illegalImportResult" (func $legalimport$illegalImportResult (result i32)))
- (global $tempRet0 (mut i32) (i32.const 0))
  (export "illegalResult" (func $legalstub$illegalResult))
  (export "imports" (func $imports))
- (func $imports (; 1 ;) (; has Stack IR ;) (result i32)
+ (func $imports (; 3 ;) (; has Stack IR ;) (result i32)
   (i32.wrap/i64
    (i64.or
     (i64.extend_u/i32
@@ -12,15 +14,15 @@
     )
     (i64.shl
      (i64.extend_u/i32
-      (get_global $tempRet0)
+      (call $getTempRet0)
      )
      (i64.const 32)
     )
    )
   )
  )
- (func $legalstub$illegalResult (; 2 ;) (; has Stack IR ;) (result i32)
-  (set_global $tempRet0
+ (func $legalstub$illegalResult (; 4 ;) (; has Stack IR ;) (result i32)
+  (call $setTempRet0
    (i32.const 2)
   )
   (i32.const 1)

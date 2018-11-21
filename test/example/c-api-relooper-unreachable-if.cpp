@@ -18,7 +18,7 @@ int main() {
     BinaryenIndex segmentSizes[] = { 0 };
     BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentOffsets, segmentSizes, 0, 0);
   }
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[1] = BinaryenGetLocal(the_module, 0, 1);
   expressions[2] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[3] = BinaryenStore(the_module, 4, 0, 0, expressions[2], expressions[1], 1);
@@ -37,13 +37,13 @@ int main() {
   expressions[8] = BinaryenSetLocal(the_module, 0, expressions[7]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[8]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[9] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1, the_module);
+  expressions[9] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[0] = BinaryenAddFunction(the_module, "tinycore::eh_personality", functionTypes[0], varTypes, 3, expressions[9]);
   }
   BinaryenAddFunctionExport(the_module, "tinycore::eh_personality", "tinycore::eh_personality");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[10] = BinaryenGetLocal(the_module, 0, 1);
   expressions[11] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[12] = BinaryenStore(the_module, 4, 0, 0, expressions[11], expressions[10], 1);
@@ -58,13 +58,13 @@ int main() {
   expressions[17] = BinaryenSetLocal(the_module, 0, expressions[16]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[17]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[18] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1, the_module);
+  expressions[18] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[1] = BinaryenAddFunction(the_module, "tinycore::eh_unwind_resume", functionTypes[0], varTypes, 3, expressions[18]);
   }
   BinaryenAddFunctionExport(the_module, "tinycore::eh_unwind_resume", "tinycore::eh_unwind_resume");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   {
     BinaryenExpressionRef children[] = { 0 };
     expressions[19] = BinaryenBlock(the_module, "bb0", children, 0, BinaryenTypeAuto());
@@ -86,13 +86,13 @@ int main() {
   expressions[23] = BinaryenSetLocal(the_module, 0, expressions[22]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[23]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[24] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 1, the_module);
+  expressions[24] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[2] = BinaryenAddFunction(the_module, "tinycore::panic_fmt", functionTypes[1], varTypes, 3, expressions[24]);
   }
   BinaryenAddFunctionExport(the_module, "tinycore::panic_fmt", "tinycore::panic_fmt");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[25] = BinaryenGetLocal(the_module, 0, 1);
   expressions[26] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[27] = BinaryenStore(the_module, 4, 0, 0, expressions[26], expressions[25], 1);
@@ -107,13 +107,13 @@ int main() {
   expressions[32] = BinaryenSetLocal(the_module, 0, expressions[31]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[32]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[33] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1, the_module);
+  expressions[33] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[3] = BinaryenAddFunction(the_module, "tinycore::rust_eh_register_frames", functionTypes[0], varTypes, 3, expressions[33]);
   }
   BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_register_frames", "tinycore::rust_eh_register_frames");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[34] = BinaryenGetLocal(the_module, 0, 1);
   expressions[35] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
   expressions[36] = BinaryenStore(the_module, 4, 0, 0, expressions[35], expressions[34], 1);
@@ -128,13 +128,13 @@ int main() {
   expressions[41] = BinaryenSetLocal(the_module, 0, expressions[40]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[41]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[42] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1, the_module);
+  expressions[42] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 1);
   {
     BinaryenType varTypes[] = { 1, 1, 2 };
     functions[4] = BinaryenAddFunction(the_module, "tinycore::rust_eh_unregister_frames", functionTypes[0], varTypes, 3, expressions[42]);
   }
   BinaryenAddFunctionExport(the_module, "tinycore::rust_eh_unregister_frames", "tinycore::rust_eh_unregister_frames");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[43] = BinaryenGetLocal(the_module, 0, 1);
   expressions[44] = BinaryenSetLocal(the_module, 1, expressions[43]);
   expressions[45] = BinaryenGetLocal(the_module, 1, 1);
@@ -173,13 +173,13 @@ int main() {
   expressions[57] = BinaryenSetLocal(the_module, 3, expressions[56]);
   relooperBlocks[2] = RelooperAddBlock(the_relooper, expressions[57]);
   RelooperAddBranch(relooperBlocks[2], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[58] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 4, the_module);
+  expressions[58] = RelooperRenderAndDispose(the_relooper, relooperBlocks[2], 4);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 2 };
     functions[5] = BinaryenAddFunction(the_module, "wasm::print_i32", functionTypes[3], varTypes, 5, expressions[58]);
   }
   BinaryenAddFunctionExport(the_module, "wasm::print_i32", "wasm::print_i32");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[59] = BinaryenConst(the_module, BinaryenLiteralInt32(1));
   expressions[60] = BinaryenSetLocal(the_module, 0, expressions[59]);
   expressions[61] = BinaryenGetLocal(the_module, 0, 1);
@@ -242,13 +242,13 @@ int main() {
   expressions[103] = BinaryenSetLocal(the_module, 6, expressions[102]);
   relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[103]);
   RelooperAddBranch(relooperBlocks[3], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[104] = RelooperRenderAndDispose(the_relooper, relooperBlocks[3], 7, the_module);
+  expressions[104] = RelooperRenderAndDispose(the_relooper, relooperBlocks[3], 7);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[6] = BinaryenAddFunction(the_module, "real_main", functionTypes[4], varTypes, 9, expressions[104]);
   }
   BinaryenAddFunctionExport(the_module, "real_main", "real_main");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[105] = BinaryenGetLocal(the_module, 0, 1);
   expressions[106] = BinaryenSetLocal(the_module, 2, expressions[105]);
   {
@@ -333,7 +333,7 @@ int main() {
   expressions[155] = BinaryenSetLocal(the_module, 9, expressions[154]);
   relooperBlocks[5] = RelooperAddBlock(the_relooper, expressions[155]);
   RelooperAddBranch(relooperBlocks[5], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[156] = RelooperRenderAndDispose(the_relooper, relooperBlocks[5], 10, the_module);
+  expressions[156] = RelooperRenderAndDispose(the_relooper, relooperBlocks[5], 10);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[7] = BinaryenAddFunction(the_module, "main", functionTypes[5], varTypes, 10, expressions[156]);
@@ -369,7 +369,7 @@ int main() {
     functions[8] = BinaryenAddFunction(the_module, "__wasm_start", functionTypes[6], varTypes, 0, expressions[164]);
   }
   BinaryenSetStart(the_module, functions[8]);
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[165] = BinaryenGetLocal(the_module, 0, 1);
   expressions[166] = BinaryenSetLocal(the_module, 2, expressions[165]);
   expressions[167] = BinaryenGetLocal(the_module, 1, 1);
@@ -432,13 +432,13 @@ int main() {
   expressions[209] = BinaryenSetLocal(the_module, 8, expressions[208]);
   relooperBlocks[3] = RelooperAddBlock(the_relooper, expressions[209]);
   RelooperAddBranch(relooperBlocks[3], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[210] = RelooperRenderAndDispose(the_relooper, relooperBlocks[3], 9, the_module);
+  expressions[210] = RelooperRenderAndDispose(the_relooper, relooperBlocks[3], 9);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[9] = BinaryenAddFunction(the_module, "_isize_as_tinycore::Add_::add", functionTypes[7], varTypes, 9, expressions[210]);
   }
   BinaryenAddFunctionExport(the_module, "_isize_as_tinycore::Add_::add", "_isize_as_tinycore::Add_::add");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[211] = BinaryenGetLocal(the_module, 0, 1);
   expressions[212] = BinaryenSetLocal(the_module, 1, expressions[211]);
   expressions[213] = BinaryenGetLocal(the_module, 1, 1);
@@ -465,13 +465,13 @@ int main() {
   expressions[226] = BinaryenSetLocal(the_module, 4, expressions[225]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[226]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[227] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 5, the_module);
+  expressions[227] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 5);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 2 };
     functions[10] = BinaryenAddFunction(the_module, "_bool_as_tinycore::Not_::not", functionTypes[8], varTypes, 6, expressions[227]);
   }
   BinaryenAddFunctionExport(the_module, "_bool_as_tinycore::Not_::not", "_bool_as_tinycore::Not_::not");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[228] = BinaryenGetLocal(the_module, 0, 1);
   expressions[229] = BinaryenSetLocal(the_module, 2, expressions[228]);
   expressions[230] = BinaryenGetLocal(the_module, 1, 1);
@@ -503,13 +503,13 @@ int main() {
   expressions[248] = BinaryenSetLocal(the_module, 7, expressions[247]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[248]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[249] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 8, the_module);
+  expressions[249] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 8);
   {
     BinaryenType varTypes[] = { 1, 1, 1, 1, 1, 1, 1, 2 };
     functions[11] = BinaryenAddFunction(the_module, "_i16_as_tinycore::PartialEq_::eq", functionTypes[9], varTypes, 8, expressions[249]);
   }
   BinaryenAddFunctionExport(the_module, "_i16_as_tinycore::PartialEq_::eq", "_i16_as_tinycore::PartialEq_::eq");
-  the_relooper = RelooperCreate();
+  the_relooper = RelooperCreate(the_module);
   expressions[250] = BinaryenGetLocal(the_module, 0, 1);
   expressions[251] = BinaryenSetLocal(the_module, 2, expressions[250]);
   expressions[252] = BinaryenGetLocal(the_module, 1, 1);
@@ -541,7 +541,7 @@ int main() {
   expressions[270] = BinaryenSetLocal(the_module, 7, expressions[269]);
   relooperBlocks[1] = RelooperAddBlock(the_relooper, expressions[270]);
   RelooperAddBranch(relooperBlocks[1], relooperBlocks[0], expressions[0], expressions[0]);
-  expressions[271] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 8, the_module);
+  expressions[271] = RelooperRenderAndDispose(the_relooper, relooperBlocks[1], 8);
   {
     BinaryenType varTypes[] = { 1, 1, 2, 2, 1, 1, 1, 2 };
     functions[12] = BinaryenAddFunction(the_module, "_i64_as_tinycore::PartialEq_::eq", functionTypes[10], varTypes, 8, expressions[271]);

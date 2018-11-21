@@ -5,10 +5,7 @@
  (type $3 (func (param i32)))
  (func $trivial (; 0 ;) (type $0)
   (local $0 i32)
-  (block
-   (nop)
-   (return)
-  )
+  (return)
  )
  (func $trivial2 (; 1 ;) (type $0)
   (local $0 i32)
@@ -20,16 +17,12 @@
  )
  (func $return-void (; 2 ;) (type $0)
   (local $0 i32)
-  (block
-   (return)
-  )
+  (return)
  )
  (func $return-val (; 3 ;) (type $1) (result i32)
   (local $0 i32)
-  (block
-   (return
-    (i32.const 1)
-   )
+  (return
+   (i32.const 1)
   )
  )
  (func $ifs (; 4 ;) (type $2) (param $x i32) (result i32)
@@ -44,17 +37,13 @@
     (if
      (get_local $x)
      (block
-      (block
-       (return
-        (i32.const 2)
-       )
+      (return
+       (i32.const 2)
       )
      )
      (block
-      (block
-       (return
-        (i32.const 3)
-       )
+      (return
+       (i32.const 3)
       )
      )
     )
@@ -65,17 +54,13 @@
     (if
      (get_local $x)
      (block
-      (block
-       (return
-        (i32.const 4)
-       )
+      (return
+       (i32.const 4)
       )
      )
      (block
-      (block
-       (return
-        (i32.const 5)
-       )
+      (return
+       (i32.const 5)
       )
      )
     )
@@ -84,88 +69,44 @@
  )
  (func $loops (; 5 ;) (type $3) (param $x i32)
   (local $1 i32)
-  (block $block$5$break
+  (block $block$6$break
    (block
    )
    (if
     (get_local $x)
-    (block
-     (block $block$3$break
-      (block
-      )
-      (block
-       (br $block$3$break)
-      )
-     )
-     (loop $shape$3$continue
-      (block
-       (call $trivial)
-      )
-      (block
-       (br $shape$3$continue)
-      )
+    (loop $shape$2$continue
+     (call $trivial)
+     (block
+      (br $shape$2$continue)
      )
     )
-    (br $block$5$break)
+    (br $block$6$break)
    )
   )
   (block
-   (block $block$6$break
-    (block
-    )
-    (block
-     (br $block$6$break)
+   (block $block$8$break
+    (loop $shape$4$continue
+     (call $trivial)
+     (if
+      (get_local $x)
+      (br $shape$4$continue)
+      (br $block$8$break)
+     )
     )
    )
    (block
-    (block $block$7$break
+    (block $block$11$break
      (loop $shape$6$continue
-      (block
-       (call $trivial)
-      )
+      (call $trivial)
       (if
        (get_local $x)
        (br $shape$6$continue)
-       (br $block$7$break)
+       (br $block$11$break)
       )
      )
     )
     (block
-     (block $block$8$break
-      (block
-      )
-      (block
-       (br $block$8$break)
-      )
-     )
-     (block
-      (block $block$11$break
-       (loop $shape$9$continue
-        (block $block$9$break
-         (block
-          (call $trivial)
-         )
-         (if
-          (get_local $x)
-          (br $block$9$break)
-          (br $block$11$break)
-         )
-        )
-        (block
-         (block
-         )
-         (block
-          (br $shape$9$continue)
-         )
-        )
-       )
-      )
-      (block
-       (block
-        (return)
-       )
-      )
-     )
+     (return)
     )
    )
   )
@@ -173,19 +114,15 @@
  (func $br-out (; 6 ;) (type $3) (param $x i32)
   (local $1 i32)
   (block $block$2$break
-   (block
-    (call $br-out
-     (i32.const 5)
-    )
+   (call $br-out
+    (i32.const 5)
    )
    (block
     (br $block$2$break)
    )
   )
   (block
-   (block
-    (return)
-   )
+   (return)
   )
  )
  (func $unreachable (; 7 ;) (type $3) (param $x i32)
@@ -198,19 +135,15 @@
     (br $block$2$break)
     (block
      (block $block$11$break
-      (block
-       (call $unreachable
-        (i32.const 5)
-       )
+      (call $unreachable
+       (i32.const 5)
       )
       (block
        (br $block$11$break)
       )
      )
      (block
-      (block
-       (return)
-      )
+      (return)
      )
     )
    )
@@ -241,26 +174,15 @@
  )
  (func $empty-blocks (; 8 ;) (type $3) (param $x i32)
   (local $1 i32)
-  (block $block$2$break
+  (block $block$3$break
    (block
    )
    (block
-    (br $block$2$break)
+    (br $block$3$break)
    )
   )
   (block
-   (block $block$3$break
-    (block
-    )
-    (block
-     (br $block$3$break)
-    )
-   )
-   (block
-    (block
-     (return)
-    )
-   )
+   (return)
   )
  )
  (func $before-and-after (; 9 ;) (type $3) (param $x i32)
@@ -292,10 +214,8 @@
      (get_local $x)
      (br $block$3$break)
      (block
-      (block
-       (call $before-and-after
-        (i32.const 5)
-       )
+      (call $before-and-after
+       (i32.const 5)
       )
       (block
        (br $block$3$break)
@@ -305,10 +225,8 @@
    )
    (block
     (block $block$5$break
-     (block
-      (call $before-and-after
-       (i32.const 6)
-      )
+     (call $before-and-after
+      (i32.const 6)
      )
      (block
       (br $block$5$break)
@@ -316,11 +234,8 @@
     )
     (block
      (block $block$6$break
-      (block
-       (nop)
-       (call $before-and-after
-        (i32.const 7)
-       )
+      (call $before-and-after
+       (i32.const 7)
       )
       (block
        (br $block$6$break)
@@ -328,11 +243,8 @@
      )
      (block
       (block $block$7$break
-       (block
-        (nop)
-        (call $before-and-after
-         (i32.const 8)
-        )
+       (call $before-and-after
+        (i32.const 8)
        )
        (block
         (br $block$7$break)
@@ -341,10 +253,8 @@
       (block
        (block $block$8$break
         (loop $shape$7$continue
-         (block
-          (call $before-and-after
-           (i32.const 9)
-          )
+         (call $before-and-after
+          (i32.const 9)
          )
          (if
           (get_local $x)
@@ -366,10 +276,8 @@
          (if
           (get_local $x)
           (block
-           (block
-            (call $before-and-after
-             (i32.const 12)
-            )
+           (call $before-and-after
+            (i32.const 12)
            )
            (block
             (br $block$10$break)
@@ -380,28 +288,22 @@
         )
         (block
          (block $block$13$break
-          (block
-           (call $before-and-after
-            (i32.const 13)
-           )
+          (call $before-and-after
+           (i32.const 13)
           )
           (if
            (get_local $x)
            (block
-            (block
-             (call $before-and-after
-              (i32.const 14)
-             )
+            (call $before-and-after
+             (i32.const 14)
             )
             (block
              (br $block$13$break)
             )
            )
            (block
-            (block
-             (call $before-and-after
-              (i32.const 15)
-             )
+            (call $before-and-after
+             (i32.const 15)
             )
             (block
              (br $block$13$break)
@@ -416,22 +318,11 @@
            (if
             (get_local $x)
             (block
-             (block $block$15$break
-              (block
-               (call $before-and-after
-                (i32.const 16)
-               )
-              )
-              (block
-               (br $block$15$break)
-              )
+             (call $before-and-after
+              (i32.const 16)
              )
              (block
-              (block
-              )
-              (block
-               (br $block$16$break)
-              )
+              (br $block$16$break)
              )
             )
             (br $block$16$break)
@@ -456,17 +347,15 @@
            )
            (block
             (block $block$17$break
-             (block
-              (call $before-and-after
-               (i32.const 20)
-              )
+             (call $before-and-after
+              (i32.const 20)
              )
              (block
               (br $block$17$break)
              )
             )
             (block
-             (block $block$20$break
+             (block $block$19$break
               (block
                (call $before-and-after
                 (i32.const 21)
@@ -476,47 +365,29 @@
                )
               )
               (block
-               (br $block$20$break)
+               (br $block$19$break)
               )
              )
              (block
-              (block $block$19$break
+              (block $block$21$break
                (block
+                (call $before-and-after
+                 (i32.const 23)
+                )
+                (call $before-and-after
+                 (i32.const 24)
+                )
                )
                (block
-                (br $block$19$break)
+                (br $block$21$break)
                )
               )
               (block
-               (block $block$22$break
-                (block
-                 (call $before-and-after
-                  (i32.const 23)
-                 )
-                 (call $before-and-after
-                  (i32.const 24)
-                 )
-                )
-                (block
-                 (br $block$22$break)
-                )
-               )
                (block
-                (block $block$21$break
-                 (block
-                 )
-                 (block
-                  (br $block$21$break)
-                 )
+                (call $before-and-after
+                 (i32.const 25)
                 )
-                (block
-                 (block
-                  (call $before-and-after
-                   (i32.const 25)
-                  )
-                  (return)
-                 )
-                )
+                (return)
                )
               )
              )
@@ -537,34 +408,14 @@
   (block $block$3$break
    (block
    )
-   (block $switch$1$leave
-    (block $switch$1$default
-     (block $switch$1$case$3
-      (br_table $switch$1$case$3 $switch$1$default
-       (get_local $x)
-      )
-     )
-     (block
-      (br $block$3$break)
-     )
-    )
-    (block
-     (block
-      (block
-      )
-      (block
-       (br $block$3$break)
-      )
-     )
-    )
+   (block
+    (br $block$3$break)
    )
   )
   (block
    (block $block$6$break
-    (block
-     (call $switch
-      (i32.const 1)
-     )
+    (call $switch
+     (i32.const 1)
     )
     (block $switch$3$leave
      (block $switch$3$default
@@ -579,10 +430,8 @@
      )
      (block
       (block
-       (block
-        (call $switch
-         (i32.const 2)
-        )
+       (call $switch
+        (i32.const 2)
        )
        (block
         (br $block$6$break)
@@ -593,19 +442,15 @@
    )
    (block
     (block $block$2$break
-     (block
-      (call $switch
-       (i32.const 3)
-      )
+     (call $switch
+      (i32.const 3)
      )
      (block
       (br $block$2$break)
      )
     )
     (block
-     (block
-      (return)
-     )
+     (return)
     )
    )
   )
@@ -618,20 +463,16 @@
    (if
     (i32.const 1)
     (block
-     (block
-      (drop
-       (i32.const 2)
-      )
+     (drop
+      (i32.const 2)
      )
      (block
       (br $block$4$break)
      )
     )
     (block
-     (block
-      (drop
-       (i32.const 3)
-      )
+     (drop
+      (i32.const 3)
      )
      (block
       (br $block$4$break)
@@ -640,27 +481,21 @@
    )
   )
   (block
-   (block
-    (return)
-   )
+   (return)
   )
  )
  (func $if-br-wat (; 12 ;) (type $3) (param $x i32)
   (local $1 i32)
   (block $block$2$break
    (block $block$8$break
-    (block
-     (call $if-br-wat
-      (i32.const 0)
-     )
+    (call $if-br-wat
+     (i32.const 0)
     )
     (if
      (get_local $x)
      (block
-      (block
-       (call $if-br-wat
-        (i32.const 1)
-       )
+      (call $if-br-wat
+       (i32.const 1)
       )
       (block
        (br $block$8$break)
@@ -671,29 +506,15 @@
       )
       (if
        (get_local $x)
-       (block
-        (block
-        )
-        (block
-         (br $block$2$break)
-        )
-       )
-       (block
-        (block
-        )
-        (block
-         (br $block$8$break)
-        )
-       )
+       (br $block$2$break)
+       (br $block$8$break)
       )
      )
     )
    )
    (block
-    (block
-     (call $if-br-wat
-      (i32.const 2)
-     )
+    (call $if-br-wat
+     (i32.const 2)
     )
     (block
      (br $block$2$break)
@@ -724,30 +545,24 @@
       )
       (block
        (block
-        (block
-         (return
-          (i32.const 1)
-         )
+        (return
+         (i32.const 1)
         )
        )
       )
      )
      (block
       (block
-       (block
-        (return
-         (i32.const 2)
-        )
+       (return
+        (i32.const 2)
        )
       )
      )
     )
     (block
      (block
-      (block
-       (return
-        (i32.const 3)
-       )
+      (return
+       (i32.const 3)
       )
      )
     )
@@ -770,37 +585,29 @@
    (if
     (i32.const 1)
     (block
-     (block
-      (return)
-     )
+     (return)
     )
     (br $block$4$break)
    )
   )
   (block
    (block $block$3$break
-    (block
-     (set_global $global$0
-      (i32.const 0)
-     )
+    (set_global $global$0
+     (i32.const 0)
     )
     (block
      (br $block$3$break)
     )
    )
    (block
-    (block
-     (unreachable)
-    )
+    (unreachable)
    )
   )
  )
  (func $1 (; 1 ;) (type $1) (result i32)
   (local $0 i32)
-  (block
-   (return
-    (get_global $global$0)
-   )
+  (return
+   (get_global $global$0)
   )
  )
 )
