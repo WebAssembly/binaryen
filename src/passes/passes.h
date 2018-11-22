@@ -51,6 +51,7 @@ Pass* createMemoryPackingPass();
 Pass* createMergeBlocksPass();
 Pass* createMergeLocalsPass();
 Pass* createMinifiedPrinterPass();
+Pass* createMinifyImportsPass();
 Pass* createMinifyImportsAndExportsPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();

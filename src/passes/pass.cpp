@@ -95,7 +95,8 @@ void PassRegistry::registerPasses() {
   registerPass("merge-blocks", "merges blocks to their parents", createMergeBlocksPass);
   registerPass("merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics", "reports metrics", createMetricsPass);
-  registerPass("minify-imports-and-exports", "minifies import and export names, and emits a mapping to the minified ones", createMinifyImportsAndExportsPass);
+  registerPass("minify-imports", "minifies import names (only those, and not export names), and emits a mapping to the minified ones", createMinifyImportsPass);
+  registerPass("minify-imports-and-exports", "minifies both import and export names, and emits a mapping to the minified ones", createMinifyImportsAndExportsPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
