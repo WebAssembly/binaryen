@@ -404,6 +404,14 @@
   )
   (drop
    (i32.and
+    (tee_local $x
+     (i32.const -4)
+    )
+    (get_local $y)
+   )
+  )
+  (drop
+   (i32.and
     (block $block (result i32)
      (i32.const -5)
     )

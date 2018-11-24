@@ -751,7 +751,7 @@ private:
     if (binary->right->is<Const>()) return;
     // Prefer a get on the right.
     if (binary->left->is<GetLocal>() && !binary->right->is<GetLocal>()) {
-      return swap();
+      return maybeSwap();
     }
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {

@@ -13,8 +13,8 @@
       (tee_local $5
        (f64.convert_s/i32
         (i32.mul
-         (get_local $1)
          (get_local $0)
+         (get_local $1)
         )
        )
       )
@@ -36,8 +36,8 @@
       (tee_local $5
        (f64.convert_s/i32
         (i32.mul
-         (get_local $3)
          (get_local $2)
+         (get_local $3)
         )
        )
       )

@@ -294,6 +294,7 @@
     (drop (i32.and (i32.const 4) (get_local $x)))
     (drop (i32.and (get_local $x) (get_local $y)))
     (drop (i32.and (get_local $y) (get_local $x)))
+    (drop (i32.and (get_local $y) (tee_local $x (i32.const -4))))
     (drop (i32.and
       (block (result i32)
         (i32.const -5)
