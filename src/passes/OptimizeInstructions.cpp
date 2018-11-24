@@ -516,12 +516,6 @@ struct OptimizeInstructions : public WalkerPass<PostWalker<OptimizeInstructions,
           return ret;
         }
       }
-      // for or, we can potentially combine
-      if (binary->op == OrInt32) {
-        if (auto* ret = combineOr(binary)) {
-          return ret;
-        }
-      }
       // relation/comparisons allow for math optimizations
       if (binary->isRelational()) {
         if (auto* ret = optimizeRelational(binary)) {
@@ -983,34 +977,6 @@ private:
     } else { // &
       return builder.makeIf(left, right, builder.makeConst(Literal(int32_t(0))));
     }
-  }
-
-  // We can combine `or` operations, e.g.
-  //   (x > y) | (x == y)    ==>    x >= y
-  Expression* combineOr(Binary* binary) {
-    assert(binary->op == OrInt32);
-    if (auto* left = binary->left->dynCast<Binary>()) {
-      if (auto* right = binary->right->dynCast<Binary>()) {
-        if (left->op != right->op &&
-            ExpressionAnalyzer::equal(left->left, right->left) &&
-            ExpressionAnalyzer::equal(left->right, right->right) &&
-            !EffectAnalyzer(getPassOptions(), left->left).hasSideEffects() &&
-            !EffectAnalyzer(getPassOptions(), left->right).hasSideEffects()) {
-          switch (left->op) {
-            //   (x > y) | (x == y)    ==>    x >= y
-            case GtSInt32: {
-              if (right->op == EqInt32) {
-                left->op = GeSInt32;
-                return left;
-              }
-              break;
-            }
-            default: {}
-          }
-        }
-      }
-    }
-    return nullptr;
   }
 
   // fold constant factors into the offset
