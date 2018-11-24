@@ -296,6 +296,18 @@
     (drop (i32.and (get_local $y) (get_local $x)))
     (drop (i32.and
       (block (result i32)
+        (i32.const -5)
+      )
+      (get_local $x)
+    ))
+    (drop (i32.and
+      (get_local $x)
+      (block (result i32)
+        (i32.const -6)
+      )
+    ))
+    (drop (i32.and
+      (block (result i32)
         (i32.const 5)
       )
       (loop (result i32)
@@ -340,6 +352,16 @@
     ))
     (drop (i32.and
       (block (result i32)
+        (call $and-pos1)
+        (i32.const 14)
+      )
+      (loop (result i32)
+        (call $and-pos1)
+        (i32.const 13)
+      )
+    ))
+    (drop (i32.and
+      (block (result i32)
         (i32.const 15)
       )
       (get_local $x)
@@ -351,29 +373,29 @@
       )
     ))
     (drop (i32.and
-      (i32.add
+      (i32.gt_s
         (i32.const 16)
         (i32.const 17)
       )
-      (i32.sub
+      (i32.gt_u
         (i32.const 18)
         (i32.const 19)
       )
     ))
     (drop (i32.and
-      (i32.sub
+      (i32.gt_u
         (i32.const 20)
         (i32.const 21)
       )
-      (i32.add
+      (i32.gt_s
         (i32.const 22)
         (i32.const 23)
       )
     ))
-    (drop (f64.add (f64.abs (get_local $fx)) (f64.abs (get_local $fy))))
-    (drop (f64.add (f64.abs (get_local $fy)) (f64.abs (get_local $fx))))
-    (drop (f64.add (f64.abs (get_local $fx)) (f64.neg (get_local $fy))))
-    (drop (f64.add (f64.neg (get_local $fx)) (f64.abs (get_local $fy))))
+    (drop (i32.add (i32.ctz (get_local $x)) (i32.ctz (get_local $y))))
+    (drop (i32.add (i32.ctz (get_local $y)) (i32.ctz (get_local $x))))
+    (drop (i32.add (i32.ctz (get_local $x)) (i32.eqz (get_local $y))))
+    (drop (i32.add (i32.eqz (get_local $x)) (i32.ctz (get_local $y))))
   )
   (func $ne0 (result i32)
     (if (i32.ne (call $ne0) (i32.const 0))

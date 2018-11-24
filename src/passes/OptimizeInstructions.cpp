@@ -753,12 +753,12 @@ private:
     if (binary->left->is<GetLocal>() && !binary->right->is<GetLocal>()) {
       return swap();
     }
-    if (binary->right->is<GetLocal>()) return;
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {
       if (binary->left->_id > binary->right->_id) {
         return maybeSwap();
       }
+      return;
     }
     // If the children have the same node id, we have to go deeper.
     if (auto* left = binary->left->dynCast<Unary>()) {
