@@ -652,7 +652,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module);
 
 // Gets the currently set optimize level. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
-int BinaryenGetOptimizeLevel();
+int BinaryenGetOptimizeLevel(void);
 
 // Sets the optimization level to use. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -O1, -O2 (default), etc.
@@ -660,7 +660,7 @@ void BinaryenSetOptimizeLevel(int level);
 
 // Gets the currently set shrink level. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -Os (default), -Oz.
-int BinaryenGetShrinkLevel();
+int BinaryenGetShrinkLevel(void);
 
 // Sets the shrink level to use. Applies to all modules, globally.
 // 0, 1, 2 correspond to -O0, -Os (default), -Oz.
@@ -668,7 +668,7 @@ void BinaryenSetShrinkLevel(int level);
 
 // Gets whether generating debug information is currently enabled or not.
 // Applies to all modules, globally.
-int BinaryenGetDebugInfo();
+int BinaryenGetDebugInfo(void);
 
 // Enables or disables debug information in emitted binaries.
 // Applies to all modules, globally.

@@ -1946,7 +1946,7 @@ void BinaryenModuleOptimize(BinaryenModuleRef module) {
   passRunner.run();
 }
 
-int BinaryenGetOptimizeLevel() {
+int BinaryenGetOptimizeLevel(void) {
   if (tracing) {
     std::cout << "  BinaryenGetOptimizeLevel();\n";
   }
@@ -1962,7 +1962,7 @@ void BinaryenSetOptimizeLevel(int level) {
   globalPassOptions.optimizeLevel = level;
 }
 
-int BinaryenGetShrinkLevel() {
+int BinaryenGetShrinkLevel(void) {
   if (tracing) {
     std::cout << "  BinaryenGetShrinkLevel();\n";
   }
@@ -1978,7 +1978,7 @@ void BinaryenSetShrinkLevel(int level) {
   globalPassOptions.shrinkLevel = level;
 }
 
-int BinaryenGetDebugInfo() {
+int BinaryenGetDebugInfo(void) {
   if (tracing) {
     std::cout << "  BinaryenGetDebugInfo();\n";
   }
