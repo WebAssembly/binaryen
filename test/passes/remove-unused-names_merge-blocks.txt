@@ -289,12 +289,12 @@
    (i32.const 30)
   )
   (drop
-   (i32.add
-    (unreachable)
-    (block (result i32)
-     (drop
-      (i32.const 10)
-     )
+   (block
+    (drop
+     (i32.const 10)
+    )
+    (i32.add
+     (unreachable)
      (i32.const 20)
     )
    )
