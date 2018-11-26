@@ -32,7 +32,9 @@ Compilers built using Binaryen include
  * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
  * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
- * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
+ * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to 
+ https://github.com/oscarg933/Laravel-langs.git
+ WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
