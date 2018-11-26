@@ -182,38 +182,16 @@
     (i32.const 51)
    )
   )
-  (block $switch-case9
-   (block $switch-case4
-    (br_table $switch-case4 $switch-case9 $switch-case9 $switch-case9 $switch-case9 $switch-case4 $switch-case9 $switch-case4 $switch-case9
-     (i32.add
-      (get_local $0)
-      (i32.const -5)
-     )
-    )
-   )
-  )
   (loop $label$continue$L1
    (block $label$break$L1
     (loop $label$continue$L3
      (block $label$break$L3
-      (block $switch-default
-       (block $switch-case13
-        (block $switch-case12
-         (block $switch-case11
-          (br_table $switch-case11 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case13 $switch-default $switch-default $switch-default $switch-default $switch-default $switch-case12 $switch-default
-           (i32.sub
-            (get_local $0)
-            (i32.const -1)
-           )
-          )
-         )
-         (br $label$break$L1)
-        )
-        (br $label$continue$L3)
+      (br_table $label$break$L3 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$break$L1 $label$continue$L3 $label$break$L1
+       (i32.add
+        (get_local $0)
+        (i32.const -110)
        )
-       (br $label$break$L3)
       )
-      (br $label$break$L1)
      )
     )
     (call $h
@@ -539,19 +517,17 @@
   (i32.const 50)
  )
  (func $breakThroughMany (; 32 ;) (; has Stack IR ;) (param $0 i32)
-  (block $label$break$L1
-   (if
-    (get_local $0)
-    (loop $while-in
-     (br_if $label$break$L1
-      (i32.eqz
-       (get_local $0)
+  (if
+   (get_local $0)
+   (loop $while-in
+    (if
+     (get_local $0)
+     (block
+      (call $zeroInit
+       (i32.const 0)
       )
+      (br $while-in)
      )
-     (call $zeroInit
-      (i32.const 0)
-     )
-     (br $while-in)
     )
    )
   )
@@ -975,27 +951,25 @@
  )
  (func $relooperJumpThreading__ZN4game14preloadweaponsEv (; 45 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32)
   (loop $while-in
-   (block $__rjto$1
-    (block $__rjti$1
-     (if
-      (get_local $1)
-      (br_if $__rjti$1
-       (i32.eqz
-        (get_local $2)
-       )
-      )
-      (br_if $__rjti$1
-       (i32.eqz
-        (get_local $3)
-       )
+   (block $__rjti$1
+    (if
+     (get_local $1)
+     (br_if $__rjti$1
+      (i32.eqz
+       (get_local $2)
       )
      )
-     (br $while-in)
+     (br_if $__rjti$1
+      (i32.eqz
+       (get_local $3)
+      )
+     )
     )
-    (i32.store
-     (get_local $4)
-     (get_local $5)
-    )
+    (br $while-in)
+   )
+   (i32.store
+    (get_local $4)
+    (get_local $5)
    )
    (br $while-in)
   )

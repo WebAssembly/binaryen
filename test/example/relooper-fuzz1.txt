@@ -432,11 +432,11 @@
    (i32.const 124)
    (i32.const 3)
   )
+  (call $print
+   (i32.const 0)
+  )
   (block $block$10$break
    (block $block$4$break
-    (call $print
-     (i32.const 0)
-    )
     (if
      (i32.and
       (tee_local $0

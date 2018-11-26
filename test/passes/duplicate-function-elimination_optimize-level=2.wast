@@ -733,7 +733,7 @@
   (memory 10)
   (type $0 (func))
   (func $keep2 (type $0)
-    (i32.store32 offset=3
+    (i32.store offset=3
       (i32.const 0)
       (i32.const 100)
     )

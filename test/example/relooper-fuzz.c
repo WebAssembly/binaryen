@@ -62,7 +62,7 @@ int main() {
 
   // contents of main() begin here
 
-  RelooperRef relooper = RelooperCreate();
+  RelooperRef relooper = RelooperCreate(module);
 
 
   RelooperBlockRef b0;
@@ -223,7 +223,7 @@ int main() {
 
   RelooperAddBranch(b8, b4, NULL, NULL);
 
-  BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1, module);
+  BinaryenExpressionRef body = RelooperRenderAndDispose(relooper, b0, 1);
 
   int decisions[] = { 89, 12, 78, 149, 118, 179, 127, 80, 21, 34, 119, 98, 38, 29, 36, 147, 13, 55, 166, 16, 143, 52, 130, 150, 176, 91, 34 };
   int numDecisions = sizeof(decisions)/sizeof(int);

@@ -45,6 +45,40 @@ inline bool isBranchReachable(Expression* expr) {
   WASM_UNREACHABLE();
 }
 
+inline std::set<Name> getUniqueTargets(Switch* sw) {
+  std::set<Name> ret;
+  for (auto target : sw->targets) {
+    ret.insert(target);
+  }
+  ret.insert(sw->default_);
+  return ret;
+}
+
+// If we branch to 'from', change that to 'to' instead.
+inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
+  bool worked = false;
+  if (auto* br = branch->dynCast<Break>()) {
+    if (br->name == from) {
+      br->name = to;
+      worked = true;
+    }
+  } else if (auto* sw = branch->dynCast<Switch>()) {
+    for (auto& target : sw->targets) {
+      if (target == from) {
+        target = to;
+        worked = true;
+      }
+    }
+    if (sw->default_ == from) {
+      sw->default_ = to;
+      worked = true;
+    }
+  } else {
+    WASM_UNREACHABLE();
+  }
+  return worked;
+}
+
 // returns the set of targets to which we branch that are
 // outside of a node
 inline std::set<Name> getExitingBranches(Expression* ast) {

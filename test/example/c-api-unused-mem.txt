@@ -9,32 +9,23 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i64)
-  (block $block$1$break
+  (block $block$2$break
    (set_local $0
     (i32.load
      (i32.const 0)
     )
    )
    (block
-    (br $block$1$break)
+    (br $block$2$break)
    )
   )
   (block
-   (block $block$2$break
-    (block $bb0
-    )
-    (block
-     (br $block$2$break)
-    )
-   )
    (block
-    (block $bb1
-     (i32.store
-      (i32.const 0)
-      (get_local $0)
-     )
-     (return)
+    (i32.store
+     (i32.const 0)
+     (get_local $0)
     )
+    (return)
    )
   )
  )
@@ -46,7 +37,7 @@
   (call $main)
  )
 )
-169
+151
 (module
  (type $0 (func))
  (type $1 (func))
@@ -70,22 +61,13 @@
   )
   (block $label$3
    (block $label$4
-    (block $label$5
+    (i32.store
+     (i32.const 0)
+     (get_local $0)
     )
-    (block $label$6
-     (br $label$4)
-    )
+    (return)
    )
-   (block $label$7
-    (block $label$8
-     (i32.store
-      (i32.const 0)
-      (get_local $0)
-     )
-     (return)
-    )
-    (unreachable)
-   )
+   (unreachable)
   )
  )
  (func $__wasm_start (; 1 ;) (type $1)

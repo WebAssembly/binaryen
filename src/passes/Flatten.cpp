@@ -53,8 +53,9 @@
 #include <wasm.h>
 #include <pass.h>
 #include <wasm-builder.h>
-#include <ir/utils.h>
+#include <ir/branch-utils.h>
 #include <ir/effects.h>
+#include <ir/utils.h>
 
 namespace wasm {
 
@@ -232,11 +233,7 @@ struct Flatten : public WalkerPass<ExpressionStackWalker<Flatten, UnifiedExpress
             Index temp = builder.addVar(getFunction(), type);
             ourPreludes.push_back(builder.makeSetLocal(temp, sw->value));
             // we don't know which break target will be hit - assign to them all
-            std::set<Name> names;
-            for (auto target : sw->targets) {
-              names.insert(target);
-            }
-            names.insert(sw->default_);
+            auto names = BranchUtils::getUniqueTargets(sw);
             for (auto name : names) {
               ourPreludes.push_back(builder.makeSetLocal(
                 getTempForBreakTarget(name, type),

@@ -36,10 +36,10 @@ static bool isFullForced() {
 
 static std::ostream& printName(Name name, std::ostream& o) {
   // we need to quote names if they have tricky chars
-  if (strpbrk(name.str, "()")) {
-    o << '"' << name << '"';
-  } else {
+  if (!name.str || !strpbrk(name.str, "()")) {
     o << name;
+  } else {
+    o << '"' << name << '"';
   }
   return o;
 }

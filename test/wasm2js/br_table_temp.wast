@@ -1057,7 +1057,7 @@
   )
 
   (func (export "as-unary-operand") (result i32)
-    (block i32 (i32.neg (br_table 0 (i32.const 3) (i32.const 0))))
+    (block i32 (i32.ctz (br_table 0 (i32.const 3) (i32.const 0))))
   )
 
   (func (export "as-binary-left") (result i32)

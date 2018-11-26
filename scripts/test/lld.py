@@ -24,13 +24,14 @@ from shared import (
 def test_wasm_emscripten_finalize():
   print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
 
-  extension_arg_map = {
-      '.out': [],
-      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
-  }
-
   for wast_path in files_with_pattern(options.binaryen_test, 'lld', '*.wast'):
     print '..', wast_path
+    mem_file = wast_path + '.mem'
+    extension_arg_map = {
+      '.out': [],
+      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
+      '.mem.out': ['--separate-data-segments', mem_file],
+    }
     for ext, ext_args in extension_arg_map.items():
       expected_file = wast_path + ext
       if ext != '.out' and not os.path.exists(expected_file):
@@ -44,6 +45,11 @@ def test_wasm_emscripten_finalize():
         print actual
         fail_with_error('output ' + expected_file + ' does not exist')
       fail_if_not_identical_to_file(actual, expected_file)
+      if ext == '.mem.out':
+        with open(mem_file) as mf:
+          mem = mf.read()
+          fail_if_not_identical_to_file(mem, wast_path + '.mem.mem')
+        os.remove(mem_file)
 
 
 if __name__ == '__main__':
