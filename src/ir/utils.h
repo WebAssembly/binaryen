@@ -112,136 +112,48 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
 
   std::map<Name, Type> breakValues;
 
-  void visitBlock(Block* curr) {
-    if (curr->list.size() == 0) {
-      curr->type = none;
-      return;
-    }
-    // do this quickly, without any validation
-    // last element determines type
-    curr->type = curr->list.back()->type;
-    // if concrete, it doesn't matter if we have an unreachable child, and we
-    // don't need to look at breaks
-    if (isConcreteType(curr->type)) return;
-    // otherwise, we have no final fallthrough element to determine the type,
-    // could be determined by breaks
-    if (curr->name.is()) {
-      auto iter = breakValues.find(curr->name);
-      if (iter != breakValues.end()) {
-        // there is a break to here
-        auto type = iter->second;
-        assert(type != unreachable); // we would have removed such branches
-        curr->type = type;
-        return;
-      }
-    }
-    if (curr->type == unreachable) return;
-    // type is none, but we might be unreachable
-    if (curr->type == none) {
-      for (auto* child : curr->list) {
-        if (child->type == unreachable) {
-          curr->type = unreachable;
-          break;
-        }
-      }
-    }
-  }
-  void visitIf(If* curr) { curr->finalize(); }
-  void visitLoop(Loop* curr) { curr->finalize(); }
-  void visitBreak(Break* curr) {
-    curr->finalize();
-    auto valueType = getValueType(curr->value);
-    if (valueType == unreachable) {
-      replaceUntaken(curr->value, curr->condition);
-    } else {
-      updateBreakValueType(curr->name, valueType);
-    }
-  }
-  void visitSwitch(Switch* curr) {
-    curr->finalize();
-    auto valueType = getValueType(curr->value);
-    if (valueType == unreachable) {
-      replaceUntaken(curr->value, curr->condition);
-    } else {
-      for (auto target : curr->targets) {
-        updateBreakValueType(target, valueType);
-      }
-      updateBreakValueType(curr->default_, valueType);
-    }
-  }
-  void visitCall(Call* curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
-  void visitGetLocal(GetLocal* curr) { curr->finalize(); }
-  void visitSetLocal(SetLocal* curr) { curr->finalize(); }
-  void visitGetGlobal(GetGlobal* curr) { curr->finalize(); }
-  void visitSetGlobal(SetGlobal* curr) { curr->finalize(); }
-  void visitLoad(Load* curr) { curr->finalize(); }
-  void visitStore(Store* curr) { curr->finalize(); }
-  void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
-  void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-  void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
-  void visitConst(Const* curr) { curr->finalize(); }
-  void visitUnary(Unary* curr) { curr->finalize(); }
-  void visitBinary(Binary* curr) { curr->finalize(); }
-  void visitSelect(Select* curr) { curr->finalize(); }
-  void visitDrop(Drop* curr) { curr->finalize(); }
-  void visitReturn(Return* curr) { curr->finalize(); }
-  void visitHost(Host* curr) { curr->finalize(); }
-  void visitNop(Nop* curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
+  void visitBlock(Block* curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
+  void visitBreak(Break* curr);
+  void visitSwitch(Switch* curr);
+  void visitCall(Call* curr);
+  void visitCallIndirect(CallIndirect* curr);
+  void visitGetLocal(GetLocal* curr);
+  void visitSetLocal(SetLocal* curr);
+  void visitGetGlobal(GetGlobal* curr);
+  void visitSetGlobal(SetGlobal* curr);
+  void visitLoad(Load* curr);
+  void visitStore(Store* curr);
+  void visitAtomicRMW(AtomicRMW* curr);
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
+  void visitAtomicWait(AtomicWait* curr);
+  void visitAtomicWake(AtomicWake* curr);
+  void visitConst(Const* curr);
+  void visitUnary(Unary* curr);
+  void visitBinary(Binary* curr);
+  void visitSelect(Select* curr);
+  void visitDrop(Drop* curr);
+  void visitReturn(Return* curr);
+  void visitHost(Host* curr);
+  void visitNop(Nop* curr);
+  void visitUnreachable(Unreachable* curr);
 
-  void visitFunction(Function* curr) {
-    // we may have changed the body from unreachable to none, which might be bad
-    // if the function has a return value
-    if (curr->result != none && curr->body->type == none) {
-      Builder builder(*getModule());
-      curr->body = builder.blockify(curr->body, builder.makeUnreachable());
-    }
-  }
+  void visitFunction(Function* curr);
 
-  void visitFunctionType(FunctionType* curr) { WASM_UNREACHABLE(); }
-  void visitExport(Export* curr) { WASM_UNREACHABLE(); }
-  void visitGlobal(Global* curr) { WASM_UNREACHABLE(); }
-  void visitTable(Table* curr) { WASM_UNREACHABLE(); }
-  void visitMemory(Memory* curr) { WASM_UNREACHABLE(); }
-  void visitModule(Module* curr) { WASM_UNREACHABLE(); }
+  void visitFunctionType(FunctionType* curr);
+  void visitExport(Export* curr);
+  void visitGlobal(Global* curr);
+  void visitTable(Table* curr);
+  void visitMemory(Memory* curr);
+  void visitModule(Module* curr);
 
 private:
-  Type getValueType(Expression* value) {
-    return value ? value->type : none;
-  }
-
-  void updateBreakValueType(Name name, Type type) {
-    if (type != unreachable || breakValues.count(name) == 0) {
-      breakValues[name] = type;
-    }
-  }
+  void updateBreakValueType(Name name, Type type);
 
   // Replace an untaken branch/switch with an unreachable value.
   // A condition may also exist and may or may not be unreachable.
-  void replaceUntaken(Expression* value, Expression* condition) {
-    assert(value->type == unreachable);
-    auto* replacement = value;
-    if (condition) {
-      Builder builder(*getModule());
-      // Even if we have
-      //  (block
-      //   (unreachable)
-      //   (i32.const 1)
-      //  )
-      // we want the block type to be unreachable. That is valid as
-      // the value is unreachable, and necessary since the type of
-      // the condition did not have an impact before (the break/switch
-      // type was unreachable), and might not fit in.
-      if (isConcreteType(condition->type)) {
-        condition = builder.makeDrop(condition);
-      }
-      replacement = builder.makeSequence(value, condition);
-      assert(replacement->type);
-    }
-    replaceCurrent(replacement);
-  }
+  void replaceUntaken(Expression* value, Expression* condition);
 };
 
 // Re-finalize a single node. This is slow, if you want to refinalize
