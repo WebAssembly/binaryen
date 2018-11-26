@@ -148,6 +148,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     add("flatten");
+    add("simplify-locals-nonesting");
     add("dfo");
     add("local-cse");
     add("rereloop");
