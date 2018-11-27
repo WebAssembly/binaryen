@@ -296,8 +296,9 @@ public:
       case ReinterpretFloat64:   return value.castToI64();
       case DemoteFloat64:        return value.demote();
 
-      default: WASM_UNREACHABLE();
+      case InvalidUnary: WASM_UNREACHABLE();
     }
+    WASM_UNREACHABLE();
   }
   Flow visitBinary(Binary *curr) {
     NOTE_ENTER("Binary");
@@ -417,8 +418,10 @@ public:
       case MinFloat64:      return left.min(right);
       case MaxFloat32:
       case MaxFloat64:      return left.max(right);
-      default: WASM_UNREACHABLE();
+
+      case InvalidBinary: WASM_UNREACHABLE();
     }
+    WASM_UNREACHABLE();
   }
   Flow visitSelect(Select *curr) {
     NOTE_ENTER("Select");
@@ -575,8 +578,10 @@ public:
         }
         case f32: return Literal(load32u(addr)).castToF32();
         case f64: return Literal(load64u(addr)).castToF64();
-        default: WASM_UNREACHABLE();
+        case none:
+        case unreachable: WASM_UNREACHABLE();
       }
+      WASM_UNREACHABLE();
     }
     virtual void store(Store* store, Address addr, Literal value) {
       switch (store->valueType) {
@@ -602,7 +607,8 @@ public:
         // write floats carefully, ensuring all bits reach memory
         case f32: store32(addr, value.reinterpreti32()); break;
         case f64: store64(addr, value.reinterpreti64()); break;
-        default: WASM_UNREACHABLE();
+        case none:
+        case unreachable: WASM_UNREACHABLE();
       }
     }
 
@@ -862,7 +868,6 @@ public:
           case Or:   computed = computed.or_(value.value);  break;
           case Xor:  computed = computed.xor_(value.value); break;
           case Xchg: computed = value.value;               break;
-          default: WASM_UNREACHABLE();
         }
         instance.doAtomicStore(addr, curr->bytes, computed);
         return loaded;
@@ -939,8 +944,8 @@ public:
             instance.memorySize = newSize;
             return Literal(int32_t(ret));
           }
-          default: WASM_UNREACHABLE();
         }
+        WASM_UNREACHABLE();
       }
 
       void trap(const char* why) override {

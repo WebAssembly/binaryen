@@ -62,7 +62,10 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
-    default: return InvalidUnary;
+    case none:
+    case unreachable: {
+      return InvalidUnary;
+    }
   }
   WASM_UNREACHABLE();
 }
@@ -137,7 +140,10 @@ inline BinaryOp getBinary(Type type, Op op) {
       }
       break;
     }
-    default: return InvalidBinary;
+    case none:
+    case unreachable: {
+      return InvalidBinary;
+    }
   }
   WASM_UNREACHABLE();
 }
@@ -147,4 +153,3 @@ inline BinaryOp getBinary(Type type, Op op) {
 } // namespace wasm
 
 #endif // wasm_ir_abstract_h
-

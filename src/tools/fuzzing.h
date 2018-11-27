@@ -665,7 +665,7 @@ private:
       return makeTrivial(type);
     }
     nesting++;
-    Expression* ret;
+    Expression* ret = nullptr;
     switch (type) {
       case i32:
       case i64:
@@ -673,7 +673,6 @@ private:
       case f64: ret = _makeConcrete(type); break;
       case none: ret = _makenone(); break;
       case unreachable: ret = _makeunreachable(); break;
-      default: WASM_UNREACHABLE();
     }
     assert(ret->type == type); // we should create the right type of thing
     nesting--;
@@ -1088,8 +1087,10 @@ private:
       case f64: {
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: WASM_UNREACHABLE();
     }
+    WASM_UNREACHABLE();
   }
 
   Expression* makeLoad(Type type) {
@@ -1148,8 +1149,10 @@ private:
       case f64: {
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: WASM_UNREACHABLE();
     }
+    WASM_UNREACHABLE();
   }
 
   Store* makeStore(Type type) {
@@ -1173,7 +1176,8 @@ private:
           case i64: value = Literal(get64()); break;
           case f32: value = Literal(getFloat()); break;
           case f64: value = Literal(getDouble()); break;
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: WASM_UNREACHABLE();
         }
         break;
       }
@@ -1194,7 +1198,8 @@ private:
           case i64: value = Literal(int64_t(small)); break;
           case f32: value = Literal(float(small)); break;
           case f64: value = Literal(double(small)); break;
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: WASM_UNREACHABLE();
         }
         break;
       }
@@ -1230,7 +1235,10 @@ private:
                                                  std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
                                                  std::numeric_limits<uint32_t>::max(),
                                                  std::numeric_limits<uint64_t>::max())); break;
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: {
+            WASM_UNREACHABLE();
+          }
         }
         // tweak around special values
         if (oneIn(3)) { // +- 1
@@ -1248,7 +1256,8 @@ private:
           case i64: value = Literal(int64_t(1) << upTo(64)); break;
           case f32: value = Literal(float(int64_t(1) << upTo(64))); break;
           case f64: value = Literal(double(int64_t(1) << upTo(64))); break;
-          default: WASM_UNREACHABLE();
+          case none:
+          case unreachable: WASM_UNREACHABLE();
         }
         // maybe negative
         if (oneIn(2)) {
@@ -1325,7 +1334,10 @@ private:
         }
         WASM_UNREACHABLE();
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: {
+        WASM_UNREACHABLE();
+      }
     }
     WASM_UNREACHABLE();
   }
@@ -1361,7 +1373,8 @@ private:
       case f64: {
         return makeDeNanOp(makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: WASM_UNREACHABLE();
     }
     WASM_UNREACHABLE();
   }
@@ -1619,4 +1632,3 @@ private:
 // XXX Switch class has a condition?! is it real? should the node type be the value type if it exists?!
 
 // TODO copy an existing function and replace just one node in it
-

@@ -75,8 +75,9 @@ int64_t Literal::getBits() const {
   switch (type) {
     case Type::i32: case Type::f32: return i32;
     case Type::i64: case Type::f64: return i64;
-    default: abort();
+    case Type::none: case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 bool Literal::operator==(const Literal& other) const {
@@ -158,12 +159,12 @@ void Literal::printDouble(std::ostream& o, double d) {
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   prepareMinorColor(o) << printType(literal.type) << ".const ";
   switch (literal.type) {
-    case none: o << "?"; break;
+    case Type::none: o << "?"; break;
     case Type::i32: o << literal.i32; break;
     case Type::i64: o << literal.i64; break;
     case Type::f32: literal.printFloat(o, literal.getf32()); break;
     case Type::f64: literal.printDouble(o, literal.getf64()); break;
-    default: WASM_UNREACHABLE();
+    case Type::unreachable: WASM_UNREACHABLE();
   }
   restoreNormalColor(o);
   return o;
@@ -259,8 +260,10 @@ Literal Literal::eqz() const {
     case Type::i64: return eq(Literal(int64_t(0)));
     case Type::f32: return eq(Literal(float(0)));
     case Type::f64: return eq(Literal(double(0)));
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::neg() const {
@@ -269,8 +272,10 @@ Literal Literal::neg() const {
     case Type::i64: return Literal(-uint64_t(i64));
     case Type::f32: return Literal(i32 ^ 0x80000000).castToF32();
     case Type::f64: return Literal(int64_t(i64 ^ 0x8000000000000000ULL)).castToF64();
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::abs() const {
@@ -279,8 +284,10 @@ Literal Literal::abs() const {
     case Type::i64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL));
     case Type::f32: return Literal(i32 & 0x7fffffff).castToF32();
     case Type::f64: return Literal(int64_t(i64 & 0x7fffffffffffffffULL)).castToF64();
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::ceil() const {
@@ -344,8 +351,10 @@ Literal Literal::add(const Literal& other) const {
     case Type::i64: return Literal(uint64_t(i64) + uint64_t(other.i64));
     case Type::f32: return Literal(getf32() + other.getf32());
     case Type::f64: return Literal(getf64() + other.getf64());
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::sub(const Literal& other) const {
@@ -354,8 +363,10 @@ Literal Literal::sub(const Literal& other) const {
     case Type::i64: return Literal(uint64_t(i64) - uint64_t(other.i64));
     case Type::f32: return Literal(getf32() - other.getf32());
     case Type::f64: return Literal(getf64() - other.getf64());
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::mul(const Literal& other) const {
@@ -364,8 +375,10 @@ Literal Literal::mul(const Literal& other) const {
     case Type::i64: return Literal(uint64_t(i64) * uint64_t(other.i64));
     case Type::f32: return Literal(getf32() * other.getf32());
     case Type::f64: return Literal(getf64() * other.getf64());
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::div(const Literal& other) const {
@@ -516,8 +529,10 @@ Literal Literal::eq(const Literal& other) const {
     case Type::i64: return Literal(i64 == other.i64);
     case Type::f32: return Literal(getf32() == other.getf32());
     case Type::f64: return Literal(getf64() == other.getf64());
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::ne(const Literal& other) const {
@@ -526,8 +541,10 @@ Literal Literal::ne(const Literal& other) const {
     case Type::i64: return Literal(i64 != other.i64);
     case Type::f32: return Literal(getf32() != other.getf32());
     case Type::f64: return Literal(getf64() != other.getf64());
-    default: WASM_UNREACHABLE();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 Literal Literal::ltS(const Literal& other) const {
