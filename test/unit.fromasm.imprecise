@@ -360,10 +360,10 @@
   (i32.add
    (i32.add
     (i32.add
-     (get_local $0)
      (call $lb
       (i32.const 3)
      )
+     (get_local $0)
     )
     (block (result i32)
      (drop
@@ -702,13 +702,13 @@
     )
     (br_if $while-in
      (i32.eq
+      (get_local $1)
       (tee_local $0
        (i32.add
         (get_local $0)
         (i32.const 1)
        )
       )
-      (get_local $1)
      )
     )
    )

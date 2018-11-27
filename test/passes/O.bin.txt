@@ -13,13 +13,13 @@
    )
    (i64.const 1)
    (i64.mul
-    (get_local $0)
     (call $0
      (i64.sub
       (get_local $0)
       (i64.const 1)
      )
     )
+    (get_local $0)
    )
   )
  )
@@ -31,13 +31,13 @@
    )
    (i64.const 1)
    (i64.mul
-    (get_local $0)
     (call $1
      (i64.sub
       (get_local $0)
       (i64.const 1)
      )
     )
+    (get_local $0)
    )
   )
  )
@@ -87,8 +87,8 @@
    (loop $label$3
     (set_local $1
      (i64.mul
-      (get_local $1)
       (get_local $0)
+      (get_local $1)
      )
     )
     (br_if $label$3

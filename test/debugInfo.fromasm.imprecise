@@ -96,8 +96,8 @@
    )
    (if
     (i32.ne
-     (get_local $2)
      (get_local $0)
+     (get_local $2)
     )
     (block
      (set_local $4
