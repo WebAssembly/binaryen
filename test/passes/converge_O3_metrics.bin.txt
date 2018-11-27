@@ -96,31 +96,31 @@ total
     )
    )
   )
-  (block $label$2
-   (if
-    (block (result i32)
-     (set_local $0
-      (i32.const 10888)
-     )
-     (loop $label$3
-      (br_if $label$3
-       (i32.load8_s
-        (tee_local $0
-         (i32.add
-          (get_local $0)
-          (i32.const 1)
-         )
+  (if
+   (block (result i32)
+    (set_local $0
+     (i32.const 10888)
+    )
+    (loop $label$3
+     (br_if $label$3
+      (i32.load8_s
+       (tee_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const 1)
         )
        )
       )
      )
-     (tee_local $0
-      (i32.sub
-       (get_local $0)
-       (i32.const 10888)
-      )
+    )
+    (tee_local $0
+     (i32.sub
+      (get_local $0)
+      (i32.const 10888)
      )
     )
+   )
+   (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
       (get_local $1)
@@ -338,31 +338,31 @@ total
     )
    )
   )
-  (block $label$2
-   (if
-    (block (result i32)
-     (set_local $0
-      (i32.const 10888)
-     )
-     (loop $label$3
-      (br_if $label$3
-       (i32.load8_s
-        (tee_local $0
-         (i32.add
-          (get_local $0)
-          (i32.const 1)
-         )
+  (if
+   (block (result i32)
+    (set_local $0
+     (i32.const 10888)
+    )
+    (loop $label$3
+     (br_if $label$3
+      (i32.load8_s
+       (tee_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const 1)
         )
        )
       )
      )
-     (tee_local $0
-      (i32.sub
-       (get_local $0)
-       (i32.const 10888)
-      )
+    )
+    (tee_local $0
+     (i32.sub
+      (get_local $0)
+      (i32.const 10888)
      )
     )
+   )
+   (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
       (get_local $1)
@@ -580,31 +580,31 @@ total
     )
    )
   )
-  (block $label$2
-   (if
-    (block (result i32)
-     (set_local $0
-      (i32.const 10888)
-     )
-     (loop $label$3
-      (br_if $label$3
-       (i32.load8_s
-        (tee_local $0
-         (i32.add
-          (get_local $0)
-          (i32.const 1)
-         )
+  (if
+   (block (result i32)
+    (set_local $0
+     (i32.const 10888)
+    )
+    (loop $label$3
+     (br_if $label$3
+      (i32.load8_s
+       (tee_local $0
+        (i32.add
+         (get_local $0)
+         (i32.const 1)
         )
        )
       )
      )
-     (tee_local $0
-      (i32.sub
-       (get_local $0)
-       (i32.const 10888)
-      )
+    )
+    (tee_local $0
+     (i32.sub
+      (get_local $0)
+      (i32.const 10888)
      )
     )
+   )
+   (block $label$2
     (br_if $label$2
      (call_indirect (type $1)
       (get_local $1)

@@ -35,8 +35,9 @@
 # include "sanitizer/common_interface_defs.h"
 # define WASM_UNREACHABLE() do { __sanitizer_print_stack_trace(); __builtin_trap(); } while (0)
 #else
+# include <assert.h>
 # include <stdlib.h>
-# define WASM_UNREACHABLE() abort()
+# define WASM_UNREACHABLE() do { assert(false); abort(); } while (0)
 #endif
 
 #ifdef __GNUC__

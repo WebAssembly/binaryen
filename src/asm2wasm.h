@@ -1458,6 +1458,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
     // autodrop can add some garbage
     passRunner.add("vacuum");
     passRunner.add("remove-unused-brs");
+    passRunner.add("remove-unused-names");
     passRunner.add("merge-blocks");
     passRunner.add("optimize-instructions");
     passRunner.add("post-emscripten");

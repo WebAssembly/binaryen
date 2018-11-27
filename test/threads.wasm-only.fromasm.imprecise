@@ -1,10 +1,9 @@
 (module
+ (type $FUNCSIG$vi (func (param i32)))
  (import "env" "memory" (memory $memory (shared 256 256)))
- (global $tempRet0 (mut i32) (i32.const 0))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (export "test64" (func $legalstub$test64))
- (export "getTempRet0" (func $getTempRet0))
- (export "setTempRet0" (func $setTempRet0))
- (func $test64 (; 0 ;) (; has Stack IR ;) (result i64)
+ (func $test64 (; 1 ;) (; has Stack IR ;) (result i64)
   (local $0 i64)
   (local $1 i64)
   (local $2 i32)
@@ -48,12 +47,12 @@
   )
   (get_local $1)
  )
- (func $legalstub$test64 (; 1 ;) (; has Stack IR ;) (result i32)
+ (func $legalstub$test64 (; 2 ;) (; has Stack IR ;) (result i32)
   (local $0 i64)
   (set_local $0
    (call $test64)
   )
-  (set_global $tempRet0
+  (call $setTempRet0
    (i32.wrap/i64
     (i64.shr_u
      (get_local $0)
@@ -62,14 +61,6 @@
    )
   )
   (i32.wrap/i64
-   (get_local $0)
-  )
- )
- (func $getTempRet0 (; 2 ;) (; has Stack IR ;) (result i32)
-  (get_global $tempRet0)
- )
- (func $setTempRet0 (; 3 ;) (; has Stack IR ;) (param $0 i32)
-  (set_global $tempRet0
    (get_local $0)
   )
  )

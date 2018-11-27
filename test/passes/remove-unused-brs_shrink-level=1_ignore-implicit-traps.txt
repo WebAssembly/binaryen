@@ -109,7 +109,7 @@
      (i32.const 0)
     )
    )
-   (block
+   (block $out8
     (nop)
     (nop)
    )

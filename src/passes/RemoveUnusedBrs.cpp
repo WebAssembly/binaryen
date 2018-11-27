@@ -102,9 +102,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // if without else stops the flow of values
         self->stopValueFlow();
       }
-    } else if (curr->is<Block>()) {
+    } else if (auto* block = curr->dynCast<Block>()) {
       // any breaks flowing to here are unnecessary, as we get here anyhow
-      auto* block = curr->cast<Block>();
       auto name = block->name;
       if (name.is()) {
         size_t size = flows.size();
@@ -436,9 +435,80 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
   }
 
+  bool sinkBlocks(Function* func) {
+    struct Sinker : public PostWalker<Sinker> {
+      bool worked = false;
+
+      void visitBlock(Block* curr) {
+        // If the block has a single child which is a loop, and the block is named,
+        // then it is the exit for the loop. It's better to move it into the loop,
+        // where it can be better optimized by other passes.
+        // Similar logic for ifs: if the block is an exit for the if, we can
+        // move the block in, consider for example:
+        //    (block $label
+        //     (if (..condition1..)
+        //      (block
+        //       (br_if $label (..condition2..))
+        //       (..code..)
+        //      )
+        //     )
+        //    )
+        // After also merging the blocks, we have
+        //    (if (..condition1..)
+        //     (block $label
+        //      (br_if $label (..condition2..))
+        //      (..code..)
+        //     )
+        //    )
+        // which can be further optimized later.
+        if (curr->name.is() && curr->list.size() == 1) {
+          if (auto* loop = curr->list[0]->dynCast<Loop>()) {
+            curr->list[0] = loop->body;
+            loop->body = curr;
+            curr->finalize(curr->type);
+            loop->finalize();
+            replaceCurrent(loop);
+            worked = true;
+          } else if (auto* iff = curr->list[0]->dynCast<If>()) {
+            // The label can't be used in the condition.
+            if (BranchUtils::BranchSeeker::countNamed(iff->condition, curr->name) == 0) {
+              // We can move the block into either arm, if there are no uses in the other.
+              Expression** target = nullptr;
+              if (!iff->ifFalse ||
+                  BranchUtils::BranchSeeker::countNamed(iff->ifFalse, curr->name) == 0) {
+                target = &iff->ifTrue;
+              } else if (BranchUtils::BranchSeeker::countNamed(iff->ifTrue, curr->name) == 0) {
+                target = &iff->ifFalse;
+              }
+              if (target) {
+                curr->list[0] = *target;
+                *target = curr;
+                // The block used to contain the if, and may have changed type from unreachable
+                // to none, for example, if the if has an unreachable condition but the arm
+                // is not unreachable.
+                curr->finalize();
+                iff->finalize();
+                replaceCurrent(iff);
+                worked = true;
+                // Note that the type might change, e.g. if the if condition is unreachable
+                // but the block that was on the outside had a break.
+              }
+            }
+          }
+        }
+      }
+    } sinker;
+
+    sinker.doWalkFunction(func);
+    if (sinker.worked) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
+  }
+
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
-    bool worked = false;
     do {
       anotherCycle = false;
       super::doWalkFunction(func);
@@ -463,30 +533,39 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         anotherCycle |= optimizeLoop(loop);
       }
       loops.clear();
-      if (anotherCycle) worked = true;
+      if (anotherCycle) {
+        ReFinalize().walkFunctionInModule(func, getModule());
+      }
+      // sink blocks
+      if (sinkBlocks(func)) {
+        anotherCycle = true;
+      }
     } while (anotherCycle);
-
-    if (worked) {
-      // Our work may alter block and if types, they may now return values that we made flow through them
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
 
     // thread trivial jumps
     struct JumpThreader : public ControlFlowWalker<JumpThreader> {
-      // map of all value-less breaks going to a block (and not a loop)
-      std::map<Block*, std::vector<Break*>> breaksToBlock;
+      // map of all value-less breaks and switches going to a block (and not a loop)
+      std::map<Block*, std::vector<Expression*>> branchesToBlock;
 
-      // the names to update
-      std::map<Break*, Name> newNames;
+      bool worked = false;
 
       void visitBreak(Break* curr) {
         if (!curr->value) {
           if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
-            breaksToBlock[target].push_back(curr);
+            branchesToBlock[target].push_back(curr);
           }
         }
       }
-      // TODO: Switch?
+      void visitSwitch(Switch* curr) {
+        if (!curr->value) {
+          auto names = BranchUtils::getUniqueTargets(curr);
+          for (auto name : names) {
+            if (auto* target = findBreakTarget(name)->dynCast<Block>()) {
+              branchesToBlock[target].push_back(curr);
+            }
+          }
+        }
+      }
       void visitBlock(Block* curr) {
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
@@ -495,12 +574,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // the two blocks must have the same type for us to update the branch, as otherwise
             // one block may be unreachable and the other concrete, so one might lack a value
             if (child->name.is() && child->name != curr->name && child->type == curr->type) {
-              auto& breaks = breaksToBlock[child];
-              for (auto* br : breaks) {
-                newNames[br] = curr->name;
-                breaksToBlock[curr].push_back(br); // update the list - we may push it even more later
-              }
-              breaksToBlock.erase(child);
+              redirectBranches(child, curr->name);
             }
           }
         } else if (list.size() == 2) {
@@ -508,28 +582,28 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* child = list[0]->dynCast<Block>();
           auto* jump = list[1]->dynCast<Break>();
           if (child && child->name.is() && jump && ExpressionAnalyzer::isSimple(jump)) {
-            auto& breaks = breaksToBlock[child];
-            for (auto* br : breaks) {
-              newNames[br] = jump->name;
-            }
-            // if the jump is to another block then we can update the list, and maybe push it even more later
-            if (auto* newTarget = findBreakTarget(jump->name)->dynCast<Block>()) {
-              for (auto* br : breaks) {
-                breaksToBlock[newTarget].push_back(br);
-              }
-            }
-            breaksToBlock.erase(child);
+            redirectBranches(child, jump->name);
+          }
+        }
+      }
+
+      void redirectBranches(Block* from, Name to) {
+        auto& branches = branchesToBlock[from];
+        for (auto* branch : branches) {
+          if (BranchUtils::replacePossibleTarget(branch, from->name, to)) {
+            worked = true;
+          }
+        }
+        // if the jump is to another block then we can update the list, and maybe push it even more later
+        if (auto* newTarget = findBreakTarget(to)->dynCast<Block>()) {
+          for (auto* branch : branches) {
+            branchesToBlock[newTarget].push_back(branch);
           }
         }
       }
 
       void finish(Function* func) {
-        for (auto& iter : newNames) {
-          auto* br = iter.first;
-          auto name = iter.second;
-          br->name = name;
-        }
-        if (newNames.size() > 0) {
+        if (worked) {
           // by changing where brs go, we may change block types etc.
           ReFinalize().walkFunctionInModule(func, getModule());
         }
@@ -607,35 +681,97 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               list[i] = builder.makeDrop(br1->condition);
             }
           }
-          // combine adjacent br_ifs that test the same value into a br_table,
-          // when that makes sense
+          // Combine adjacent br_ifs that test the same value into a br_table,
+          // when that makes sense.
           tablify(curr);
-          // Restructuring of ifs: if we have
-          //   (block $x
-          //     (br_if $x (cond))
-          //     .., no other references to $x
-          //   )
-          // then we can turn that into (if (!cond) ..).
-          // Code size wise, we turn the block into an if (no change), and
-          // lose the br_if (-2). .. turns into the body of the if in the binary
-          // format. We need to flip the condition, which at worst adds 1.
-          if (curr->name.is()) {
-            auto* br = list[0]->dynCast<Break>();
-            // we seek a regular br_if; if the type is unreachable that means it is not
-            // actually reached, so ignore
-            if (br && br->condition && br->name == curr->name && br->type != unreachable) {
-              assert(!br->value); // can't, it would be dropped or last in the block
-              if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
-                // no other breaks to that name, so we can do this
+          // Pattern-patch ifs, recreating them when it makes sense.
+          restructureIf(curr);
+        }
+      }
+
+      void visitSwitch(Switch* curr) {
+        if (BranchUtils::getUniqueTargets(curr).size() == 1) {
+          // This switch has just one target no matter what; replace with a br.
+          Builder builder(*getModule());
+          replaceCurrent(
+            builder.makeSequence(
+              builder.makeDrop(curr->condition), // might have side effects
+              builder.makeBreak(curr->default_, curr->value)
+            )
+          );
+        }
+      }
+
+      // Restructuring of ifs: if we have
+      //   (block $x
+      //     (br_if $x (cond))
+      //     .., no other references to $x
+      //   )
+      // then we can turn that into (if (!cond) ..).
+      // Code size wise, we turn the block into an if (no change), and
+      // lose the br_if (-2). .. turns into the body of the if in the binary
+      // format. We need to flip the condition, which at worst adds 1.
+      // If the block has a return value, we can do something similar, removing
+      // the drop from the br_if and putting the if on the outside,
+      //   (block $x
+      //     (br_if $x (value) (cond))
+      //     .., no other references to $x
+      //     ..final element..
+      //   )
+      // =>
+      //   (if
+      //     (cond)
+      //     (value) ;; must not have side effects!
+      //     (block
+      //       .., no other references to $x
+      //       ..final element..
+      //     )
+      //   )
+      // This is beneficial as the block will likely go away in the binary
+      // format (the if arm is an implicit block), and the drop is removed.
+      void restructureIf(Block* curr) {
+        auto& list = curr->list;
+        // We should be called only on potentially-interesting lists.
+        assert(list.size() >= 2);
+        if (curr->name.is()) {
+          Break* br = nullptr;
+          Drop* drop = list[0]->dynCast<Drop>();
+          if (drop) {
+            br = drop->value->dynCast<Break>();
+          } else {
+            br = list[0]->dynCast<Break>();
+          }
+          // Check if the br is conditional and goes to the block. It may or may not have
+          // a value, depending on if it was dropped or not.
+          // If the type is unreachable that means it is not actually reached,
+          // which we can ignore.
+          if (br && br->condition && br->name == curr->name && br->type != unreachable) {
+            if (BranchUtils::BranchSeeker::countNamed(curr, curr->name) == 1) {
+              // no other breaks to that name, so we can do this
+              if (!drop) {
+                assert(!br->value);
                 Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
                   builder.makeUnary(EqZInt32, br->condition),
                   curr
                 ));
-                curr->name = Name();
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
-                return;
+              } else {
+                // If the items we move around have side effects, we can't do this.
+                // TODO: we could use a select, in some cases..?
+                if (!EffectAnalyzer(passOptions, br->value).hasSideEffects() &&
+                    !EffectAnalyzer(passOptions, br->condition).hasSideEffects()) {
+                  ExpressionManipulator::nop(list[0]);
+                  Builder builder(*getModule());
+                  replaceCurrent(
+                    builder.makeIf(
+                      br->condition,
+                      br->value,
+                      curr
+                    )
+                  );
+                }
               }
             }
           }

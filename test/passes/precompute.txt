@@ -162,7 +162,7 @@
  (func $refinalize-two-breaks-one-unreachable (; 6 ;) (type $2)
   (drop
    (block $label$0 (result i64)
-    (br_if $label$0
+    (block
      (select
       (i64.const 1)
       (block $block
@@ -175,17 +175,21 @@
       )
       (i32.const 0)
      )
-     (i32.const 1)
+     (drop
+      (i32.const 1)
+     )
     )
    )
   )
  )
  (func $one-break-value-and-it-is-unreachable (; 7 ;) (type $3) (result f64)
   (local $var$0 i32)
-  (block $label$6 (result f64)
-   (br_if $label$6
+  (block $label$6
+   (block
     (unreachable)
-    (i32.const 0)
+    (drop
+     (i32.const 0)
+    )
    )
   )
  )

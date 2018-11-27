@@ -50,6 +50,7 @@
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <pass.h>
+#include <ir/branch-utils.h>
 #include <ir/count.h>
 #include <ir/effects.h>
 #include "ir/equivalent_sets.h"
@@ -128,10 +129,10 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       assert(!curr->cast<If>()->ifFalse); // if-elses are handled by doNoteIfElse* methods
     } else if (curr->is<Switch>()) {
       auto* sw = curr->cast<Switch>();
-      for (auto target : sw->targets) {
+      auto targets = BranchUtils::getUniqueTargets(sw);
+      for (auto target : targets) {
         self->unoptimizableBlocks.insert(target);
       }
-      self->unoptimizableBlocks.insert(sw->default_);
       // TODO: we could use this info to stop gathering data on these blocks
     }
     self->sinkables.clear();

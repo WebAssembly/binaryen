@@ -429,6 +429,25 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       handleCondition(select->condition);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       handleCondition(sw->condition);
+      // Try to replace switch targets with the default
+      for (auto& target : sw->targets) {
+        if (target != sw->default_) {
+          auto old = target;
+          target = sw->default_;
+          if (!tryToReplaceCurrent(curr)) {
+            target = old;
+          }
+        }
+      }
+      // Try to shorten the list of targets.
+      while (sw->targets.size() > 1) {
+        auto last = sw->targets.back();
+        sw->targets.pop_back();
+        if (!tryToReplaceCurrent(curr)) {
+          sw->targets.push_back(last);
+          break;
+        }
+      }
     } else if (auto* block = curr->dynCast<Block>()) {
       if (!shouldTryToReduce()) return;
       // replace a singleton
@@ -445,13 +464,13 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
           for (Index j = i; j < list.size() - 1; j++) {
             list[j] = list[j + 1];
           }
-          list.resize(list.size() - 1);
+          list.pop_back();
           if (writeAndTestReduction()) {
             std::cerr << "|      block-nop removed\n";
             noteReduction();
             return;
           }
-          list.resize(list.size() + 1);
+          list.push_back(nullptr);
           // we failed; undo
           for (Index j = list.size() - 1; j > i; j--) {
             list[j] = list[j - 1];

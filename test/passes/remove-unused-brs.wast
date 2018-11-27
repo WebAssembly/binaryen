@@ -1355,6 +1355,7 @@
           (i32.const 0)
         )
       )
+      (call $trim-switch)
     )
   )
   (func $same-target-br_if-and-br
@@ -1533,6 +1534,280 @@
        (nop)
        (return
         (i32.const 0)
+       )
+      )
+     )
+    )
+    (br $label$1)
+   )
+  )
+  (func $fuzz-block-unreachable-brs-with-values (result i32)
+   (local $0 i32)
+   (loop $label$1 (result i32)
+    (block $label$2 (result i32)
+     (if
+      (get_local $0)
+      (set_local $0
+       (loop $label$5
+        (br_if $label$5
+         (br_if $label$2
+          (unreachable)
+          (i32.const 0)
+         )
+        )
+       )
+      )
+     )
+     (br $label$1)
+    )
+   )
+  )
+  (func $drop-restructure-if (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-final (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (unreachable)
+   )
+  )
+  (func $drop-restructure-if-middle (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $x)
+      (get_local $y)
+     )
+    )
+    (nop) ;; the middle
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-bad (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (tee_local $y (get_local $x))
+      (get_local $y)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (func $drop-restructure-if-bad-2 (param $x i32) (param $y i32) (result i32)
+   (block $label$2 (result i32)
+    (drop
+     (br_if $label$2
+      (get_local $y)
+      (tee_local $y (get_local $x))
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (func $if-block
+   (block $label
+    (if
+     (i32.const 1)
+     (block
+      (drop (i32.const 2))
+      (drop (i32.const 3))
+     )
+    )
+   )
+  )
+  (func $if-block-bad
+   (block $label
+    (if
+     (br $label) ;; use outside of arm
+     (block
+      (drop (i32.const 2))
+      (drop (i32.const 3))
+     )
+    )
+   )
+  )
+  (func $if-block-br
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-1
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+     (drop (i32.const 3))
+    )
+   )
+  )
+  (func $if-block-br-2
+   (block $label
+    (if
+     (i32.const 1)
+     (drop (i32.const 3))
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-3
+   (block $label
+    (if
+     (i32.const 1)
+     (br $label)
+     (br $label)
+    )
+   )
+  )
+  (func $if-block-br-4-eithre
+   (block $label
+    (if
+     (i32.const 1)
+     (drop (i32.const 2))
+     (drop (i32.const 3))
+    )
+   )
+  )
+  (func $if-block-br-5-value (result i32)
+   (block $label (result i32)
+    (if (result i32)
+     (i32.const 1)
+     (i32.const 2)
+     (i32.const 3)
+    )
+   )
+  )
+  (func $restructure-if-outerType-change
+   (loop $label$1
+    (br_if $label$1
+     (block $label$2
+      (block $label$3
+       (if
+        (block $label$4
+         (unreachable)
+        )
+        (br $label$3)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
+  )
+  (func $if-arm-unreachable
+   (block $label$1
+    (if
+     (unreachable) ;; unreachable condition
+     (nop)
+     (unreachable)
+    )
+   )
+  )
+  (func $propagate-type-if-we-optimize
+   (if
+    (i32.const 1)
+    (nop)
+    (block
+     (drop
+      (loop $label$3 (result i64)
+       (br_if $label$3
+        (block $label$4 (result i32)
+         (if
+          (i32.const 0)
+          (unreachable)
+          (unreachable)
+         )
+        )
+       )
+       (i64.const -9)
+      )
+     )
+     (unreachable)
+    )
+   )
+  )
+  (func $switch-to-br
+    (block $A
+      (block $y
+        (br_table $y $y $A $A
+          (i32.const 0)
+        )
+      )
+    )
+  )
+  (func $switch-to-br-value (result i32)
+    (block $A (result i32)
+      (block $y (result i32)
+        (br_table $A $A $A
+          (i32.const 0)
+          (i32.const 1)
+        )
+      )
+    )
+  )
+  (func $switch-threading-multi (param $x i32) (param $y i32) (result i32)
+   (block $block$5$break
+    (block $block$4$break
+     (loop $shape$1$continue
+      (block $block$3$break
+       (block $switch$2$case$5
+        (block $switch$2$case$4
+         (block $switch$2$default
+          (block $switch$2$case$2
+           (br_table $switch$2$case$2 $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$case$5 $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$default $switch$2$case$4 $switch$2$default
+            (get_local $x)
+           )
+          )
+          (br $shape$1$continue)
+         )
+         (br $block$3$break)
+        ) ;; switch$2$case$4
+        (br $block$4$break)
+       )
+       (br $block$5$break)
+      )
+     )
+     (unreachable)
+    ) ;; block$4$break
+    (set_local $y
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+   (set_local $y
+    (i32.const 2)
+   )
+   (unreachable)
+  )
+  (func $fuzz-type-changes-in-our-cycles (result i32)
+   (loop $label$1
+    (if
+     (i32.const 0)
+     (block $label$3
+      (if
+       (i32.const 0)
+       (block
+        (nop)
+        (br $label$3)
+       )
+       (return
+        (i32.const -8192)
        )
       )
      )
