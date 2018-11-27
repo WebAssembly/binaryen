@@ -721,6 +721,7 @@ public:
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
 
+  void initializeDebugInfo();
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);

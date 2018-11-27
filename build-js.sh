@@ -88,6 +88,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/ir/ExpressionAnalyzer.cpp \
   $BINARYEN_SRC/ir/ExpressionManipulator.cpp \
   $BINARYEN_SRC/ir/LocalGraph.cpp \
+  $BINARYEN_SRC/ir/ReFinalize.cpp \
   $BINARYEN_SRC/passes/pass.cpp \
   $BINARYEN_SRC/passes/CoalesceLocals.cpp \
   $BINARYEN_SRC/passes/DeadArgumentElimination.cpp \

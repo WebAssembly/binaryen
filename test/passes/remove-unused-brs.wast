@@ -1815,5 +1815,27 @@
     (br $label$1)
    )
   )
+  (func $refinalize-need-br-value (result i32)
+   (loop $label$3 (result i32)
+    (block $label$6 (result i32)
+     (block $label$10
+      (unreachable)
+      (block $label$503 ;; this block will get a value flowing out
+       (br_if $label$3
+        (block $label$530 (result i32)
+         (br_if $label$503 ;; while this br does not send a value
+          (i32.const 0)
+         )
+         (i32.const 0)
+        )
+       )
+       (return
+        (i32.const 127)
+       )
+      )
+     )
+    )
+   )
+  )
 )
 

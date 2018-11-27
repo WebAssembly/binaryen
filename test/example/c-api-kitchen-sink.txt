@@ -563,15 +563,10 @@ raw:
  )
  (func $two-blocks (; 2 ;) (type $v)
   (local $0 i32)
-  (block $block$2$break
+  (block
    (call $check
     (i32.const 0)
    )
-   (block
-    (br $block$2$break)
-   )
-  )
-  (block
    (call $check
     (i32.const 1)
    )
@@ -579,18 +574,15 @@ raw:
  )
  (func $two-blocks-plus-code (; 3 ;) (type $v)
   (local $0 i32)
-  (block $block$2$break
-   (call $check
-    (i32.const 0)
-   )
+  (block
    (block
+    (call $check
+     (i32.const 0)
+    )
     (drop
      (i32.const 77)
     )
-    (br $block$2$break)
    )
-  )
-  (block
    (call $check
     (i32.const 1)
    )
@@ -599,48 +591,40 @@ raw:
  (func $loop (; 4 ;) (type $v)
   (local $0 i32)
   (loop $shape$0$continue
-   (block $block$2$break
+   (block
     (call $check
      (i32.const 0)
     )
-    (block
-     (br $block$2$break)
-    )
-   )
-   (block
     (call $check
      (i32.const 1)
     )
-    (block
-     (br $shape$0$continue)
-    )
+   )
+   (block
+    (br $shape$0$continue)
    )
   )
  )
  (func $loop-plus-code (; 5 ;) (type $v)
   (local $0 i32)
   (loop $shape$0$continue
-   (block $block$2$break
-    (call $check
-     (i32.const 0)
-    )
+   (block
     (block
+     (call $check
+      (i32.const 0)
+     )
      (drop
       (i32.const 33)
      )
-     (br $block$2$break)
     )
-   )
-   (block
     (call $check
      (i32.const 1)
     )
-    (block
-     (drop
-      (i32.const -66)
-     )
-     (br $shape$0$continue)
+   )
+   (block
+    (drop
+     (i32.const -66)
     )
+    (br $shape$0$continue)
    )
   )
  )
@@ -791,23 +775,18 @@ raw:
   (local $0 i32)
   (block $block$3$break
    (loop $shape$0$continue
-    (block $block$2$break
+    (block
      (call $check
       (i32.const 0)
      )
-     (block
-      (br $block$2$break)
-     )
-    )
-    (block
      (call $check
       (i32.const 1)
      )
-     (if
-      (i32.const 10)
-      (br $shape$0$continue)
-      (br $block$3$break)
-     )
+    )
+    (if
+     (i32.const 10)
+     (br $shape$0$continue)
+     (br $block$3$break)
     )
    )
   )
@@ -2438,15 +2417,10 @@ raw:
  )
  (func $two-blocks (; 2 ;) (type $v)
   (local $0 i32)
-  (block $block$2$break
+  (block
    (call $check
     (i32.const 0)
    )
-   (block
-    (br $block$2$break)
-   )
-  )
-  (block
    (call $check
     (i32.const 1)
    )
@@ -2454,18 +2428,15 @@ raw:
  )
  (func $two-blocks-plus-code (; 3 ;) (type $v)
   (local $0 i32)
-  (block $block$2$break
-   (call $check
-    (i32.const 0)
-   )
+  (block
    (block
+    (call $check
+     (i32.const 0)
+    )
     (drop
      (i32.const 77)
     )
-    (br $block$2$break)
    )
-  )
-  (block
    (call $check
     (i32.const 1)
    )
@@ -2474,48 +2445,40 @@ raw:
  (func $loop (; 4 ;) (type $v)
   (local $0 i32)
   (loop $shape$0$continue
-   (block $block$2$break
+   (block
     (call $check
      (i32.const 0)
     )
-    (block
-     (br $block$2$break)
-    )
-   )
-   (block
     (call $check
      (i32.const 1)
     )
-    (block
-     (br $shape$0$continue)
-    )
+   )
+   (block
+    (br $shape$0$continue)
    )
   )
  )
  (func $loop-plus-code (; 5 ;) (type $v)
   (local $0 i32)
   (loop $shape$0$continue
-   (block $block$2$break
-    (call $check
-     (i32.const 0)
-    )
+   (block
     (block
+     (call $check
+      (i32.const 0)
+     )
      (drop
       (i32.const 33)
      )
-     (br $block$2$break)
     )
-   )
-   (block
     (call $check
      (i32.const 1)
     )
-    (block
-     (drop
-      (i32.const -66)
-     )
-     (br $shape$0$continue)
+   )
+   (block
+    (drop
+     (i32.const -66)
     )
+    (br $shape$0$continue)
    )
   )
  )
@@ -2666,23 +2629,18 @@ raw:
   (local $0 i32)
   (block $block$3$break
    (loop $shape$0$continue
-    (block $block$2$break
+    (block
      (call $check
       (i32.const 0)
      )
-     (block
-      (br $block$2$break)
-     )
-    )
-    (block
      (call $check
       (i32.const 1)
      )
-     (if
-      (i32.const 10)
-      (br $shape$0$continue)
-      (br $block$3$break)
-     )
+    )
+    (if
+     (i32.const 10)
+     (br $shape$0$continue)
+     (br $block$3$break)
     )
    )
   )
