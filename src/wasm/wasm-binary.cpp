@@ -44,6 +44,7 @@ void WasmBinaryWriter::write() {
 
   writeEarlyUserSections();
 
+  initializeDebugInfo();
   if (sourceMap) {
     writeSourceMapProlog();
   }
@@ -484,8 +485,11 @@ void WasmBinaryWriter::writeSymbolMap() {
   file.close();
 }
 
-void WasmBinaryWriter::writeSourceMapProlog() {
+void WasmBinaryWriter::initializeDebugInfo() {
   lastDebugLocation = { 0, /* lineNumber = */ 1, 0 };
+}
+
+void WasmBinaryWriter::writeSourceMapProlog() {
   *sourceMap << "{\"version\":3,\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
     if (i > 0) *sourceMap << ",";

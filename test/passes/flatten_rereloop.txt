@@ -216,14 +216,9 @@
  )
  (func $merging (; 7 ;) (type $2)
   (local $0 i32)
-  (block $block$2$break
-   (block
-   )
-   (block
-    (br $block$2$break)
-   )
-  )
   (block
+   (block
+   )
    (return)
   )
  )
@@ -266,32 +261,27 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
-  (block $block$2$break
-   (block
-   )
-   (block
-    (br $block$2$break)
-   )
-  )
   (block
    (block
    )
-   (if
-    (i32.const 1)
+   (block
+   )
+  )
+  (if
+   (i32.const 1)
+   (block
+    (unreachable)
+   )
+   (block
     (block
-     (unreachable)
-    )
-    (block
-     (block
-      (set_local $0
-       (i32.const 0)
-      )
-      (set_local $1
-       (get_local $0)
-      )
-      (return
-       (get_local $1)
-      )
+     (set_local $0
+      (i32.const 0)
+     )
+     (set_local $1
+      (get_local $0)
+     )
+     (return
+      (get_local $1)
      )
     )
    )
@@ -309,15 +299,10 @@
    (if
     (i32.const 0)
     (block
-     (block $block$3$break
+     (block
       (set_local $0
        (f32.const 9223372036854775808)
       )
-      (block
-       (br $block$3$break)
-      )
-     )
-     (block
       (block
        (set_local $1
         (get_local $0)
@@ -326,9 +311,9 @@
         (get_local $1)
        )
       )
-      (block
-       (br $block$7$break)
-      )
+     )
+     (block
+      (br $block$7$break)
      )
     )
     (block

@@ -29,6 +29,7 @@
 
 #include "pass.h"
 #include "support/command-line.h"
+#include "support/colors.h"
 #include "support/file.h"
 #include "support/path.h"
 #include "support/timing.h"
@@ -220,11 +221,11 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command, test, working;
-  bool verbose, debugInfo;
+  bool binary, verbose, debugInfo;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
-  Reducer(std::string command, std::string test, std::string working, bool verbose, bool debugInfo) : command(command), test(test), working(working), verbose(verbose), debugInfo(debugInfo) {}
+  Reducer(std::string command, std::string test, std::string working, bool binary, bool verbose, bool debugInfo) : command(command), test(test), working(working), binary(binary), verbose(verbose), debugInfo(debugInfo) {}
 
   // runs passes in order to reduce, until we can't reduce any more
   // the criterion here is wasm binary size
@@ -340,7 +341,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
   bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
     ModuleWriter writer;
-    writer.setBinary(true);
+    writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
     writer.write(*getModule(), test);
     // note that it is ok for the destructively-reduced module to be bigger
@@ -848,7 +849,8 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
 
 int main(int argc, const char* argv[]) {
   std::string input, test, working, command;
-  bool verbose = false,
+  bool binary = true,
+       verbose = false,
        debugInfo = false,
        force = false;
   Options options("wasm-reduce", "Reduce a wasm file to a smaller one that has the same behavior on a given command");
@@ -876,6 +878,11 @@ int main(int argc, const char* argv[]) {
            [&](Options* o, const std::string& argument) {
              // Add separator just in case
              Path::setBinaryenBinDir(argument + Path::getPathSeparator());
+           })
+      .add("--text", "-S", "Emit intermediate files as text, instead of binary (also make sure the test and working files have a .wat or .wast suffix)",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             binary = false;
            })
       .add("--verbose", "-v", "Verbose output mode",
            Options::Arguments::Zero,
@@ -906,6 +913,10 @@ int main(int argc, const char* argv[]) {
 
   if (test.size() == 0) Fatal() << "test file not provided\n";
   if (working.size() == 0) Fatal() << "working file not provided\n";
+
+  if (!binary) {
+    Colors::disable();
+  }
 
   std::cerr << "|wasm-reduce\n";
   std::cerr << "|input: " << input << '\n';
@@ -945,7 +956,9 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|checking that command has expected behavior on canonicalized (read-written) binary\n";
   {
     // read and write it
-    ProgramResult readWrite(Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test);
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
+    if (!binary) cmd += " -S";
+    ProgramResult readWrite(cmd);
     if (readWrite.failed()) {
       stopIfNotForced("failed to read and write the binary", readWrite);
     } else {
@@ -969,7 +982,7 @@ int main(int argc, const char* argv[]) {
   bool stopping = false;
 
   while (1) {
-    Reducer reducer(command, test, working, verbose, debugInfo);
+    Reducer reducer(command, test, working, binary, verbose, debugInfo);
 
     // run binaryen optimization passes to reduce. passes are fast to run
     // and can often reduce large amounts of code efficiently, as opposed

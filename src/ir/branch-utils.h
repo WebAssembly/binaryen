@@ -45,6 +45,12 @@ inline bool isBranchReachable(Expression* expr) {
   WASM_UNREACHABLE();
 }
 
+inline std::set<Name> getUniqueTargets(Break* br) {
+  std::set<Name> ret;
+  ret.insert(br->name);
+  return ret;
+}
+
 inline std::set<Name> getUniqueTargets(Switch* sw) {
   std::set<Name> ret;
   for (auto target : sw->targets) {

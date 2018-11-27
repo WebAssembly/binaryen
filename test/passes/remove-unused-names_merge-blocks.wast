@@ -1379,3 +1379,180 @@
    )
  )
 )
+(module
+ (func $merge-some-block
+  (block $b1
+   (drop (i32.const 1))
+   (br_if $b1 (i32.const 0))
+  )
+  (block $b2
+   (br_if $b2 (i32.const 0))
+   (drop (i32.const 2))
+  )
+  (block $b3
+   (drop (i32.const 3))
+   (br_if $b3 (i32.const 0))
+   (drop (i32.const 4))
+  )
+  (block $b3-dead-code-so-ignore
+   (drop (i32.const 3))
+   (br $b3-dead-code-so-ignore)
+   (drop (i32.const 4))
+  )
+  (block $b4
+   (drop (i32.const 5))
+   (br_if $b4 (i32.const 0))
+   (drop (i32.const 6))
+   (br_if $b4 (i32.const 0))
+  )
+  (block $b5
+   (br_if $b5 (i32.const 0))
+   (drop (i32.const 7))
+   (br_if $b5 (i32.const 0))
+   (drop (i32.const 8))
+  )
+  (block $b6
+   (drop (i32.const 9))
+   (drop (i32.const 10))
+   (br_if $b6 (i32.const 0))
+  )
+ )
+ (func $merge-some-loop
+  (loop $l1
+   (block $b1
+    (drop (i32.const 1))
+    (br_if $b1 (i32.const 0))
+   )
+  )
+  (loop $l2
+   (block $b2
+    (br_if $b2 (i32.const 0))
+    (drop (i32.const 2))
+   )
+  )
+  (loop $l3
+   (block $b3
+    (drop (i32.const 3))
+    (br_if $b3 (i32.const 0))
+    (drop (i32.const 4))
+   )
+  )
+  (loop $l4
+   (block $b4
+    (drop (i32.const 5))
+    (br_if $b4 (i32.const 0))
+    (drop (i32.const 6))
+    (br_if $b4 (i32.const 0))
+   )
+  )
+  (loop $l5
+   (block $b5
+    (br_if $b5 (i32.const 0))
+    (drop (i32.const 7))
+    (br_if $b5 (i32.const 0))
+    (drop (i32.const 8))
+   )
+  )
+  (loop $l6
+   (block $b6
+    (drop (i32.const 9))
+    (drop (i32.const 10))
+    (br_if $b6 (i32.const 0))
+   )
+  )
+ )
+ (func $merge-some-loop-taken
+  (loop $l1
+   (block $b1
+    (drop (i32.const 1))
+    (br_if $l1 (i32.const 0))
+    (drop (i32.const 2))
+    (br_if $b1 (i32.const 0))
+    (drop (i32.const 3))
+   )
+  )
+  (loop $l2
+   (block $b2
+    (drop (i32.const 4))
+    (br_if $b2 (i32.const 0))
+    (drop (i32.const 5))
+    (br_if $l2 (i32.const 0))
+    (drop (i32.const 6))
+   )
+  )
+  (loop $l3
+   (block $b3
+    (drop (i32.const 7))
+    (br_if $b3 (i32.const 0))
+    (drop (i32.const 8))
+    (br_if $l3 (i32.const 0))
+   )
+  )
+  (loop $l4
+   (block $b4
+    (br_if $l4 (i32.const 0))
+    (drop (i32.const 9))
+    (br_if $b4 (i32.const 0))
+    (drop (i32.const 10))
+   )
+  )
+  (loop $l5
+   (block $b5
+    (drop (i32.const 7))
+    (br_if $b5 (i32.const 0))
+    (br_if $l5 (i32.const 0))
+   )
+  )
+  (loop $l6
+   (block $b6
+    (br_if $l6 (i32.const 0))
+    (br_if $b6 (i32.const 0))
+    (drop (i32.const 10))
+   )
+  )
+  (loop $l7
+   (block $b7
+    (drop (i32.const 11))
+    (br_if $l7 (i32.const 0))
+    (br_if $b7 (i32.const 0))
+    (drop (i32.const 13))
+   )
+  )
+  (loop $l8
+   (block $b8
+    (drop (i32.const 14))
+    (br_if $b8 (i32.const 0))
+    (br_if $l8 (i32.const 0))
+    (drop (i32.const 16))
+   )
+  )
+  (loop $l9
+   (block $b9
+    (drop (i32.const 17))
+    (br_if $l9 (i32.const 0))
+    (drop (i32.const 18))
+    (br_if $l9 (i32.const 0))
+    (drop (i32.const 19))
+   )
+  )
+  (loop $l10
+   (block $b10
+    (drop (i32.const 20))
+    (br_if $l10 (i32.const 0))
+    (drop (i32.const 21))
+   )
+  )
+  (loop $l11
+   (block $b11
+    (br_if $l11 (i32.const 0))
+    (drop (i32.const 23))
+   )
+  )
+  (loop $l12
+   (block $b12
+    (drop (i32.const 24))
+    (br_if $l12 (i32.const 0))
+   )
+  )
+ )
+)
