@@ -1,4 +1,5 @@
 (module
+  (global $global$0 (mut i32) (i32.const 10))
   (func $drop-block
     (block
       (drop
@@ -232,5 +233,18 @@
     )
    )
   )
+  (func $br-value-blocktypechange (result f32)
+   (set_global $global$0
+    (i32.const 0)
+   )
+   (block $label$1 (result f32)
+    (set_global $global$0
+     (i32.const 0)
+    )
+    (br_if $label$1
+     (unreachable)
+     (i32.const 0)
+    )
+   )
+  )
 )
-
