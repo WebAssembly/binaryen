@@ -76,6 +76,7 @@ void test_types() {
   printf("BinaryenTypeInt64: %d\n", BinaryenTypeInt64());
   printf("BinaryenTypeFloat32: %d\n", BinaryenTypeFloat32());
   printf("BinaryenTypeFloat64: %d\n", BinaryenTypeFloat64());
+  printf("BinaryenTypeVec128: %d\n", BinaryenTypeVec128());
   printf("BinaryenTypeUnreachable: %d\n", BinaryenTypeUnreachable());
   printf("BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 }

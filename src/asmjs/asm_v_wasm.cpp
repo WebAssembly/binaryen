@@ -31,7 +31,7 @@ Type asmToWasmType(AsmType asmType) {
     case ASM_FLOAT64X2:
     case ASM_INT8X16:
     case ASM_INT16X8:
-    case ASM_INT32X4: WASM_UNREACHABLE();
+    case ASM_INT32X4: return Type::v128;
   }
   WASM_UNREACHABLE();
 }
@@ -42,6 +42,7 @@ AsmType wasmToAsmType(Type type) {
     case f32: return ASM_FLOAT;
     case f64: return ASM_DOUBLE;
     case i64: return ASM_INT64;
+    case v128: assert(false && "v128 not implemented yet");
     case none: return ASM_NONE;
     case unreachable: WASM_UNREACHABLE();
   }
@@ -54,6 +55,7 @@ char getSig(Type type) {
     case i64:  return 'j';
     case f32:  return 'f';
     case f64:  return 'd';
+    case v128: return 'V';
     case none: return 'v';
     case unreachable: WASM_UNREACHABLE();
   }
@@ -84,6 +86,7 @@ Type sigToType(char sig) {
     case 'j': return i64;
     case 'f': return f32;
     case 'd': return f64;
+    case 'V': return v128;
     case 'v': return none;
     default: abort();
   }

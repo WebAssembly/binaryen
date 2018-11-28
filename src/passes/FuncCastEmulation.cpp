@@ -64,6 +64,10 @@ static Expression* toABI(Expression* value, Module* module) {
       value = builder.makeUnary(ReinterpretFloat64, value);
       break;
     }
+    case v128: {
+      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
+    }
     case none: {
       // the value is none, but we need a value here
       value = builder.makeSequence(
@@ -102,6 +106,10 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     case f64: {
       value = builder.makeUnary(ReinterpretInt64, value);
       break;
+    }
+    case v128: {
+      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
     }
     case none: {
       value = builder.makeDrop(value);

@@ -578,6 +578,7 @@ public:
         }
         case f32: return Literal(load32u(addr)).castToF32();
         case f64: return Literal(load64u(addr)).castToF64();
+        case v128: assert(false && "v128 not implemented yet");
         case none:
         case unreachable: WASM_UNREACHABLE();
       }
@@ -607,6 +608,7 @@ public:
         // write floats carefully, ensuring all bits reach memory
         case f32: store32(addr, value.reinterpreti32()); break;
         case f64: store64(addr, value.reinterpreti64()); break;
+        case v128: assert(false && "v128 not implemented yet");
         case none:
         case unreachable: WASM_UNREACHABLE();
       }
@@ -925,7 +927,6 @@ public:
         // TODO: add threads support!
         return Literal(int32_t(0)); // none woken up
       }
-
       Flow visitHost(Host *curr) {
         NOTE_ENTER("Host");
         switch (curr->op) {

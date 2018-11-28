@@ -213,6 +213,7 @@ inline Expression* parseConst(cashew::IString s, Type type, MixedArena& allocato
       ret->value = Literal(strtod(str, &end));
       break;
     }
+    case v128: WASM_UNREACHABLE();
     case none:
     case unreachable: {
       return nullptr;

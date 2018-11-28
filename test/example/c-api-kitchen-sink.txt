@@ -3,7 +3,8 @@ BinaryenTypeInt32: 1
 BinaryenTypeInt64: 2
 BinaryenTypeFloat32: 3
 BinaryenTypeFloat64: 4
-BinaryenTypeUnreachable: 5
+BinaryenTypeVec128: 5
+BinaryenTypeUnreachable: 6
 BinaryenTypeAuto: -1
 (f32.neg
  (f32.const -33.61199951171875)

@@ -92,6 +92,10 @@ private:
         size = getTypeSize(value.type);
         break;
       }
+      case v128: {
+        assert(false && "v128 not implemented yet");
+        WASM_UNREACHABLE();
+      }
       case none:
       case unreachable: {
         WASM_UNREACHABLE();

@@ -671,6 +671,7 @@ private:
       case i64:
       case f32:
       case f64: ret = _makeConcrete(type); break;
+      case v128: assert(false && "v128 not implemented yet");
       case none: ret = _makenone(); break;
       case unreachable: ret = _makeunreachable(); break;
     }
@@ -1087,6 +1088,7 @@ private:
       case f64: {
         return builder.makeLoad(8, false, offset, pick(1, 2, 4, 8), ptr, type);
       }
+      case v128: assert(false && "v128 not implemented yet");
       case none:
       case unreachable: WASM_UNREACHABLE();
     }
@@ -1149,6 +1151,7 @@ private:
       case f64: {
         return builder.makeStore(8, offset, pick(1, 2, 4, 8), ptr, value, type);
       }
+      case v128: assert(false && "v128 not implemented yet");
       case none:
       case unreachable: WASM_UNREACHABLE();
     }
@@ -1176,6 +1179,7 @@ private:
           case i64: value = Literal(get64()); break;
           case f32: value = Literal(getFloat()); break;
           case f64: value = Literal(getDouble()); break;
+          case v128: assert(false && "v128 not implemented yet");
           case none:
           case unreachable: WASM_UNREACHABLE();
         }
@@ -1198,6 +1202,7 @@ private:
           case i64: value = Literal(int64_t(small)); break;
           case f32: value = Literal(float(small)); break;
           case f64: value = Literal(double(small)); break;
+          case v128: assert(false && "v128 not implemented yet");
           case none:
           case unreachable: WASM_UNREACHABLE();
         }
@@ -1235,6 +1240,7 @@ private:
                                                  std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(),
                                                  std::numeric_limits<uint32_t>::max(),
                                                  std::numeric_limits<uint64_t>::max())); break;
+          case v128: assert(false && "v128 not implemented yet");
           case none:
           case unreachable: {
             WASM_UNREACHABLE();
@@ -1256,6 +1262,7 @@ private:
           case i64: value = Literal(int64_t(1) << upTo(64)); break;
           case f32: value = Literal(float(int64_t(1) << upTo(64))); break;
           case f64: value = Literal(double(int64_t(1) << upTo(64))); break;
+          case v128: assert(false && "v128 not implemented yet");
           case none:
           case unreachable: WASM_UNREACHABLE();
         }
@@ -1334,6 +1341,7 @@ private:
         }
         WASM_UNREACHABLE();
       }
+      case v128: assert(false && "v128 not implemented yet");
       case none:
       case unreachable: {
         WASM_UNREACHABLE();
@@ -1373,6 +1381,7 @@ private:
       case f64: {
         return makeDeNanOp(makeBinary({ pick(AddFloat64, SubFloat64, MulFloat64, DivFloat64, CopySignFloat64, MinFloat64, MaxFloat64), make(f64), make(f64) }));
       }
+      case v128: assert(false && "v128 not implemented yet");
       case none:
       case unreachable: WASM_UNREACHABLE();
     }
