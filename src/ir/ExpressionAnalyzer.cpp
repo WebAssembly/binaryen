@@ -294,7 +294,10 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left, Expression* right, Expr
       case Expression::Id::UnreachableId: {
         break;
       }
-      default: WASM_UNREACHABLE();
+      case Expression::Id::InvalidId:
+      case Expression::Id::NumExpressionIds: {
+        WASM_UNREACHABLE();
+      }
     }
     #undef CHECK
     #undef PUSH
@@ -544,7 +547,10 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       case Expression::Id::UnreachableId: {
         break;
       }
-      default: WASM_UNREACHABLE();
+      case Expression::Id::InvalidId:
+      case Expression::Id::NumExpressionIds: {
+        WASM_UNREACHABLE();
+      }
     }
     #undef HASH
     #undef PUSH

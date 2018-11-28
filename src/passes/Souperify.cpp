@@ -688,4 +688,3 @@ Pass *createSouperifySingleUsePass() {
 }
 
 } // namespace wasm
-

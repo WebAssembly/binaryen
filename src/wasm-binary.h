@@ -643,7 +643,7 @@ enum MemoryFlags {
 
 
 inline S32LEB binaryType(Type type) {
-  int ret;
+  int ret = 0;
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
     case none: ret = BinaryConsts::EncodedType::Empty; break;
@@ -651,7 +651,7 @@ inline S32LEB binaryType(Type type) {
     case i64: ret = BinaryConsts::EncodedType::i64; break;
     case f32: ret = BinaryConsts::EncodedType::f32; break;
     case f64: ret = BinaryConsts::EncodedType::f64; break;
-    default: abort();
+    case unreachable: WASM_UNREACHABLE();
   }
   return S32LEB(ret);
 }

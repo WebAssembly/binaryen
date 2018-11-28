@@ -72,7 +72,8 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case i64: return; // TODO
       case f32: import = get_f32; break;
       case f64: import = get_f64; break;
-      default: WASM_UNREACHABLE();
+      case none: WASM_UNREACHABLE();
+      case unreachable: WASM_UNREACHABLE();
     }
     replaceCurrent(
       builder.makeCall(
@@ -96,7 +97,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case f32: import = set_f32; break;
       case f64: import = set_f64; break;
       case unreachable: return; // nothing to do here
-      default: WASM_UNREACHABLE();
+      case none: WASM_UNREACHABLE();
     }
     curr->value = builder.makeCall(
       import,

@@ -102,8 +102,9 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::AtomicRMWId: return "atomic_rmw";
     case Expression::Id::AtomicWaitId: return "atomic_wait";
     case Expression::Id::AtomicWakeId: return "atomic_wake";
-    default: WASM_UNREACHABLE();
+    case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 // core AST type checking
@@ -480,7 +481,7 @@ void Unary::finalize() {
     case ConvertUInt32ToFloat64:
     case ConvertSInt64ToFloat64:
     case ConvertUInt64ToFloat64: type = f64; break;
-    default: std::cerr << "waka " << op << '\n'; WASM_UNREACHABLE();
+    case InvalidUnary: WASM_UNREACHABLE();
   }
 }
 
@@ -565,7 +566,6 @@ void Host::finalize() {
       }
       break;
     }
-    default: WASM_UNREACHABLE();
   }
 }
 

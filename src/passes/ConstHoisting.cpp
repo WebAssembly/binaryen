@@ -77,7 +77,7 @@ private:
   bool worthHoisting(Literal value, Index num) {
     if (num < MIN_USES) return false;
     // measure the size of the constant
-    Index size;
+    Index size = 0;
     switch (value.type) {
       case i32: {
         size = getWrittenSize(S32LEB(value.geti32()));
@@ -92,7 +92,10 @@ private:
         size = getTypeSize(value.type);
         break;
       }
-      default: WASM_UNREACHABLE();
+      case none:
+      case unreachable: {
+        WASM_UNREACHABLE();
+      }
     }
     // compute the benefit, of replacing the uses with
     // one use + a set and then a get for each use

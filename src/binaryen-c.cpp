@@ -49,7 +49,8 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::i64: ret.i64 = x.geti64(); break;
     case Type::f32: ret.i32 = x.reinterpreti32(); break;
     case Type::f64: ret.i64 = x.reinterpreti64(); break;
-    default: abort();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
   return ret;
 }
@@ -60,8 +61,10 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::i64: return Literal(x.i64);
     case Type::f32: return Literal(x.i32).castToF32();
     case Type::f64: return Literal(x.i64).castToF64();
-    default: abort();
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
   }
+  WASM_UNREACHABLE();
 }
 
 // Mutexes (global for now; in theory if multiple modules
@@ -657,7 +660,8 @@ BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral va
         std::cout << "));\n";
         break;
       }
-      default: WASM_UNREACHABLE();
+      case Type::none:
+      case Type::unreachable: WASM_UNREACHABLE();
     }
   }
   return static_cast<Expression*>(ret);
