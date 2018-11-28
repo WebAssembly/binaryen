@@ -93,8 +93,8 @@ private:
         break;
       }
       case v128: {
-        assert(false && "v128 not implemented yet");
-        WASM_UNREACHABLE();
+        // v128 not implemented yet
+        return false;
       }
       case none:
       case unreachable: {
