@@ -203,6 +203,18 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
   add("vacuum"); // just to be safe
+  if (options.optimizeLevel >= 4) {
+    // -O4 optimizations, in particular flattening and relooping, are "one step
+    // back two steps forward" in that they make the IR more verbose and less
+    // optimized, but more optimizeable. Our main passes need to optimize such
+    // code more than once to avoid -O4 being less effective than -O3 in some
+    // cases, so queue them to run again.
+    auto old = options.optimizeLevel;
+    options.optimizeLevel = 3;
+    addDefaultFunctionOptimizationPasses();
+    addDefaultFunctionOptimizationPasses();
+    options.optimizeLevel = old;
+  }
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
