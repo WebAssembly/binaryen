@@ -28,6 +28,7 @@ Module['i32'] = Module['_BinaryenTypeInt32']();
 Module['i64'] = Module['_BinaryenTypeInt64']();
 Module['f32'] = Module['_BinaryenTypeFloat32']();
 Module['f64'] = Module['_BinaryenTypeFloat64']();
+Module['v128'] = Module['_BinaryenTypeVec128']();
 Module['unreachable'] = Module['_BinaryenTypeUnreachable']();
 Module['auto'] = /* deprecated */ Module['undefined'] = Module['_BinaryenTypeAuto']();
 
@@ -1629,4 +1630,3 @@ Module['exit'] = function(status) {
   // a stack trace, for debuggability.
   if (status != 0) throw new Error('exiting due to error: ' + status);
 };
-
