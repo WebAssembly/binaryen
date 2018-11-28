@@ -29,7 +29,11 @@ inline Literal makeLiteralFromInt32(int32_t x, Type type) {
     case i64: return Literal(int64_t(x)); break;
     case f32: return Literal(float(x)); break;
     case f64: return Literal(double(x)); break;
-    case v128: assert(false && "v128 not implemented yet");
+    case v128: return Literal(
+      std::array<Literal, 4>{
+        Literal(x), Literal(int32_t(0)), Literal(int32_t(0)), Literal(int32_t(0))
+      }
+    );
     case none:
     case unreachable: WASM_UNREACHABLE();
   }

@@ -499,12 +499,7 @@ HashType ExpressionAnalyzer::hash(Expression* curr) {
       case Expression::Id::ConstId: {
         auto* c = curr->cast<Const>();
         hash(c->type);
-        auto bits = c->value.getBits();
-        if (getTypeSize(c->type) == 4) {
-          hash(HashType(bits));
-        } else {
-          hash64(bits);
-        }
+        hash(std::hash<Literal>()(c->value));
         break;
       }
       case Expression::Id::UnaryId: {
