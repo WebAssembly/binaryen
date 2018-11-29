@@ -258,7 +258,16 @@ instructions = [
     ("i64.atomic.rmw8_u.cmpxchg",  "makeAtomicRMWOrCmpxchg(s, i64)"),
     ("i64.atomic.rmw16_u.cmpxchg", "makeAtomicRMWOrCmpxchg(s, i64)"),
     ("i64.atomic.rmw32_u.cmpxchg", "makeAtomicRMWOrCmpxchg(s, i64)"),
-    ("i64.atomic.rmw.cmpxchg",     "makeAtomicRMWOrCmpxchg(s, i64)")
+    ("i64.atomic.rmw.cmpxchg",     "makeAtomicRMWOrCmpxchg(s, i64)"),
+    # nontrapping float-to-int instructions
+    ("i32.trunc_s:sat/f32", "makeUnary(s, UnaryOp::TruncSatSFloat32ToInt32)"),
+    ("i32.trunc_u:sat/f32", "makeUnary(s, UnaryOp::TruncSatUFloat32ToInt32)"),
+    ("i32.trunc_s:sat/f64", "makeUnary(s, UnaryOp::TruncSatSFloat64ToInt32)"),
+    ("i32.trunc_u:sat/f64", "makeUnary(s, UnaryOp::TruncSatUFloat64ToInt32)"),
+    ("i64.trunc_s:sat/f32", "makeUnary(s, UnaryOp::TruncSatSFloat32ToInt64)"),
+    ("i64.trunc_u:sat/f32", "makeUnary(s, UnaryOp::TruncSatUFloat32ToInt64)"),
+    ("i64.trunc_s:sat/f64", "makeUnary(s, UnaryOp::TruncSatSFloat64ToInt64)"),
+    ("i64.trunc_u:sat/f64", "makeUnary(s, UnaryOp::TruncSatUFloat64ToInt64)"),
 ]
 
 

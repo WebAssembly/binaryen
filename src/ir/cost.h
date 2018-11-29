@@ -141,7 +141,15 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case ExtendS16Int32:
       case ExtendS8Int64:
       case ExtendS16Int64:
-      case ExtendS32Int64: ret = 1; break;
+      case ExtendS32Int64:
+      case TruncSatSFloat32ToInt32:
+      case TruncSatUFloat32ToInt32:
+      case TruncSatSFloat64ToInt32:
+      case TruncSatUFloat64ToInt32:
+      case TruncSatSFloat32ToInt64:
+      case TruncSatUFloat32ToInt64:
+      case TruncSatSFloat64ToInt64:
+      case TruncSatUFloat64ToInt64: ret = 1; break;
       case SqrtFloat32:
       case SqrtFloat64: ret = 2; break;
       case InvalidUnary: WASM_UNREACHABLE();

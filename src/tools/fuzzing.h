@@ -1322,8 +1322,22 @@ private:
             break;
           }
           case 1: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
-          case 2: return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
-          case 3: return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
+          case 2: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32, TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32), make(f32) });
+            } else {
+              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
+            }
+            break;
+          }
+          case 3: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32), make(f64) });
+            } else {
+              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
+            }
+            break;
+          }
         }
         WASM_UNREACHABLE();
       }
@@ -1338,8 +1352,22 @@ private:
             break;
           }
           case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
-          case 2: return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
-          case 3: return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
+          case 2: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64, TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64), make(f32) });
+            } else {
+              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
+            }
+            break;
+          }
+          case 3: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64), make(f64) });
+            } else {
+              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
+            }
+            break;
+          }
         }
         WASM_UNREACHABLE();
       }

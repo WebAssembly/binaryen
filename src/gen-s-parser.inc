@@ -778,24 +778,56 @@ switch (op[0]) {
           case 't': {
             switch (op[10]) {
               case 's': {
-                switch (op[13]) {
-                  case '3':
-                    if (strcmp(op, "i32.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt32);
-                    goto parse_error;
-                  case '6':
-                    if (strcmp(op, "i32.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt32);
-                    goto parse_error;
+                switch (op[11]) {
+                  case '/': {
+                    switch (op[13]) {
+                      case '3':
+                        if (strcmp(op, "i32.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt32);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i32.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt32);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case ':': {
+                    switch (op[17]) {
+                      case '3':
+                        if (strcmp(op, "i32.trunc_s:sat/f32") == 0) return makeUnary(s, UnaryOp::TruncSatSFloat32ToInt32);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i32.trunc_s:sat/f64") == 0) return makeUnary(s, UnaryOp::TruncSatSFloat64ToInt32);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
               case 'u': {
-                switch (op[13]) {
-                  case '3':
-                    if (strcmp(op, "i32.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt32);
-                    goto parse_error;
-                  case '6':
-                    if (strcmp(op, "i32.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt32);
-                    goto parse_error;
+                switch (op[11]) {
+                  case '/': {
+                    switch (op[13]) {
+                      case '3':
+                        if (strcmp(op, "i32.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt32);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i32.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt32);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case ':': {
+                    switch (op[17]) {
+                      case '3':
+                        if (strcmp(op, "i32.trunc_u:sat/f32") == 0) return makeUnary(s, UnaryOp::TruncSatUFloat32ToInt32);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i32.trunc_u:sat/f64") == 0) return makeUnary(s, UnaryOp::TruncSatUFloat64ToInt32);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
@@ -1275,24 +1307,56 @@ switch (op[0]) {
           case 't': {
             switch (op[10]) {
               case 's': {
-                switch (op[13]) {
-                  case '3':
-                    if (strcmp(op, "i64.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt64);
-                    goto parse_error;
-                  case '6':
-                    if (strcmp(op, "i64.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt64);
-                    goto parse_error;
+                switch (op[11]) {
+                  case '/': {
+                    switch (op[13]) {
+                      case '3':
+                        if (strcmp(op, "i64.trunc_s/f32") == 0) return makeUnary(s, UnaryOp::TruncSFloat32ToInt64);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i64.trunc_s/f64") == 0) return makeUnary(s, UnaryOp::TruncSFloat64ToInt64);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case ':': {
+                    switch (op[17]) {
+                      case '3':
+                        if (strcmp(op, "i64.trunc_s:sat/f32") == 0) return makeUnary(s, UnaryOp::TruncSatSFloat32ToInt64);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i64.trunc_s:sat/f64") == 0) return makeUnary(s, UnaryOp::TruncSatSFloat64ToInt64);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
               case 'u': {
-                switch (op[13]) {
-                  case '3':
-                    if (strcmp(op, "i64.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt64);
-                    goto parse_error;
-                  case '6':
-                    if (strcmp(op, "i64.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt64);
-                    goto parse_error;
+                switch (op[11]) {
+                  case '/': {
+                    switch (op[13]) {
+                      case '3':
+                        if (strcmp(op, "i64.trunc_u/f32") == 0) return makeUnary(s, UnaryOp::TruncUFloat32ToInt64);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i64.trunc_u/f64") == 0) return makeUnary(s, UnaryOp::TruncUFloat64ToInt64);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
+                  case ':': {
+                    switch (op[17]) {
+                      case '3':
+                        if (strcmp(op, "i64.trunc_u:sat/f32") == 0) return makeUnary(s, UnaryOp::TruncSatUFloat32ToInt64);
+                        goto parse_error;
+                      case '6':
+                        if (strcmp(op, "i64.trunc_u:sat/f64") == 0) return makeUnary(s, UnaryOp::TruncSatUFloat64ToInt64);
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   default: goto parse_error;
                 }
               }
