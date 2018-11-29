@@ -33,10 +33,13 @@ struct LoggingExternalInterface : public ShellExternalInterface {
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literal callImport(Function* import, LiteralList& arguments) override {
+    std::cout << "[LoggingExternalInterface logging";
     loggings.push_back(Literal()); // buffer with a None between calls
     for (auto argument : arguments) {
+      std::cout << ' ' << argument;
       loggings.push_back(argument);
     }
+    std::cout << "]\n";
     return Literal();
   }
 };
