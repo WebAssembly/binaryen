@@ -15,7 +15,8 @@
  */
 
 //
-// Similar to strip-ing a native binary, this removes debug info.
+// Similar to strip-ing a native binary, this removes debug info
+// and related things like source map URLs, names section, etc.
 //
 
 #include "wasm.h"
