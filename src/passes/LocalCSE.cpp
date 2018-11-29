@@ -92,12 +92,33 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     equivalences.clear();
   }
 
-  void checkInvalidations(EffectAnalyzer& effects) {
+  // Checks invalidations due to a set of effects. Also optionally receive
+  // an expression that was just post-visited, and that also needs to be
+  // taken into account.
+  void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
     // TODO: this is O(bad)
     std::vector<HashedExpression> invalidated;
     for (auto& sinkable : usables) {
+      // Check invalidations of the values we may want to use.
       if (effects.invalidates(sinkable.second.effects)) {
         invalidated.push_back(sinkable.first);
+      }
+    }
+    if (curr) {
+      // If we are a set, we have more to check: each of the usable
+      // values was from a set, and we did not consider the set in
+      // the loop above - just the values. So here we must check that
+      // sets do not interfere. (Note that due to flattening we
+      // have no risk of tees etc.)
+      if (auto* set = curr->dynCast<SetLocal>()) {
+        for (auto& sinkable : usables) {
+          // Check if the index is the same. Make sure to ignore
+          // our own value, which we may have just added!
+          if (sinkable.second.index == set->index &&
+              sinkable.second.value != set->value) {
+            invalidated.push_back(sinkable.first);
+          }
+        }
       }
     }
     for (auto index : invalidated) {
@@ -129,7 +150,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
     EffectAnalyzer effects(self->getPassOptions());
     if (effects.checkPost(curr)) {
-      self->checkInvalidations(effects);
+      self->checkInvalidations(effects, curr);
     }
 
     self->expressionStack.pop_back();

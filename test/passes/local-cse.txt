@@ -1,0 +1,22 @@
+(module
+ (type $0 (func (result i64)))
+ (func $i64-shifts (; 0 ;) (type $0) (result i64)
+  (local $temp i64)
+  (set_local $temp
+   (i64.add
+    (i64.const 1)
+    (i64.const 2)
+   )
+  )
+  (set_local $temp
+   (i64.const 9999)
+  )
+  (set_local $temp
+   (i64.add
+    (i64.const 1)
+    (i64.const 2)
+   )
+  )
+  (get_local $temp)
+ )
+)
