@@ -37,6 +37,7 @@ SET(passes_SOURCES
   Print.cpp
   PrintCallGraph.cpp
   StackIR.cpp
+  Strip.cpp
   RedundantSetElimination.cpp
   RelooperJumpThreading.cpp
   ReReloop.cpp

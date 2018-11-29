@@ -641,6 +641,9 @@ public:
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
+
+  void clearNames();
+  void clearDebugInfo();
 };
 
 // The kind of an import or export.
@@ -791,6 +794,8 @@ public:
   void removeGlobal(Name name);
 
   void updateMaps();
+
+  void clearDebugInfo();
 };
 
 } // namespace wasm
