@@ -16,16 +16,24 @@ Current Trunk
 
 v.55
 ====
-- `RelooperCreate` in the C API now has a Module parameter, and `RelooperRenderAndDispose` does not.
+
+- `RelooperCreate` in the C API now has a Module parameter, and
+  `RelooperRenderAndDispose` does not.
   - The JS API now has the `Relooper` constructor receive the `Module`.
 - Relooper: Condition properties on Branches must not have side effects.
 
 older
 =====
 
-- `BinaryenSetFunctionTable` in the C API no longer accepts an array of functions, instead it accepts an array of function names, `const char** funcNames`. Previously, you could not include imported functions because they are of type `BinaryenImportRef` instead of `BinaryenFunctionRef`. #1650
+- `BinaryenSetFunctionTable` in the C API no longer accepts an array of
+  functions, instead it accepts an array of function names, `const char**
+  funcNames`. Previously, you could not include imported functions because they
+  are of type `BinaryenImportRef` instead of `BinaryenFunctionRef`. #1650
 
-- `BinaryenSetFunctionTable` in the C API now expects the initial and maximum table size as additional parameters, like `BinaryenSetMemory` does for pages, so tables can be grown dynamically. #1687
+- `BinaryenSetFunctionTable` in the C API now expects the initial and maximum
+  table size as additional parameters, like `BinaryenSetMemory` does for pages,
+  so tables can be grown dynamically. #1687
 
-- Add `shared` parameters to `BinaryenAddMemoryImport` and `BinaryenSetMemory`, to support a shared memory. #1686
+- Add `shared` parameters to `BinaryenAddMemoryImport` and `BinaryenSetMemory`,
+  to support a shared memory. #1686
 
