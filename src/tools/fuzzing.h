@@ -128,6 +128,7 @@ public:
     setupMemory();
     setupTable();
     setupGlobals();
+    addImportLoggingSupport();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       auto* func = addFunction();
@@ -298,6 +299,19 @@ private:
     export_->value = func->name;
     export_->kind = ExternalKind::Function;
     wasm.addExport(export_);
+  }
+
+  void addImportLoggingSupport() {
+    for (auto type : { i32, i64, f32, f64 }) {
+      auto* func = new Function;
+      Name name = std::string("log-") + printType(type);
+      func->name = name;
+      func->module = "fuzzing-support";
+      func->base = name;
+      func->params.push_back(type);
+      func->result = none;
+      wasm.addFunction(func);
+    }
   }
 
   Expression* makeHangLimitCheck() {
