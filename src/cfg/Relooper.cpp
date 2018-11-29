@@ -29,7 +29,7 @@
 
 namespace CFG {
 
-template <class T, class U> static bool contains(const T& container, const U& contained) {
+template<class T, class U> static bool contains(const T& container, const U& contained) {
   return !!container.count(contained);
 }
 

@@ -31,7 +31,7 @@
 namespace wasm {
 
 // Print anything that can be streamed to an ostream
-template <typename T,
+template<typename T,
   typename std::enable_if<
     !std::is_base_of<Expression, typename std::remove_pointer<T>::type>::value
   >::type* = nullptr>
@@ -75,7 +75,7 @@ struct ValidationInfo {
 
   // printing and error handling support
 
-  template <typename T, typename S>
+  template<typename T, typename S>
   std::ostream& fail(S text, T curr, Function* func) {
     valid.store(false);
     auto& stream = getStream(func);

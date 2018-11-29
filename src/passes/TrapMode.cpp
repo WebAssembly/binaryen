@@ -125,7 +125,7 @@ Function* generateBinaryFunc(Module& wasm, Binary *curr) {
   return func;
 }
 
-template <typename IntType, typename FloatType>
+template<typename IntType, typename FloatType>
 void makeClampLimitLiterals(Literal& iMin, Literal& fMin, Literal& fMax) {
   IntType minVal = std::numeric_limits<IntType>::min();
   IntType maxVal = std::numeric_limits<IntType>::max();

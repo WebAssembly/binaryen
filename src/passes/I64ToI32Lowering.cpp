@@ -236,7 +236,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
 
   // If and Select have identical code
-  template <typename T>
+  template<typename T>
   void visitBranching(T* curr) {
     if (!hasOutParam(curr->ifTrue)) return;
     assert(curr->ifFalse != nullptr && "Nullable ifFalse found");
@@ -323,10 +323,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     replaceCurrent(result);
   }
 
-  template <typename T>
+  template<typename T>
   using BuilderFunc = std::function<T*(std::vector<Expression*>&, Type)>;
 
-  template <typename T>
+  template<typename T>
   void visitGenericCall(T* curr, BuilderFunc<T> callBuilder) {
     std::vector<Expression*> args;
     for (auto* e : curr->operands) {

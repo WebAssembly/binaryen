@@ -157,13 +157,13 @@ struct IString {
 
 namespace std {
 
-template <> struct hash<cashew::IString> : public unary_function<cashew::IString, size_t> {
+template<> struct hash<cashew::IString> : public unary_function<cashew::IString, size_t> {
   size_t operator()(const cashew::IString& str) const {
     return std::hash<size_t>{}(size_t(str.str));
   }
 };
 
-template <> struct equal_to<cashew::IString> : public binary_function<cashew::IString, cashew::IString, bool> {
+template<> struct equal_to<cashew::IString> : public binary_function<cashew::IString, cashew::IString, bool> {
   bool operator()(const cashew::IString& x, const cashew::IString& y) const {
     return x == y;
   }

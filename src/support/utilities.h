@@ -32,7 +32,7 @@ namespace wasm {
 
 // Type punning needs to be done through this function to avoid undefined
 // behavior: unions and reinterpret_cast aren't valid approaches.
-template <class Destination, class Source>
+template<class Destination, class Source>
 inline Destination bit_cast(const Source& source) {
   static_assert(sizeof(Destination) == sizeof(Source),
                 "bit_cast needs to be between types of the same size");

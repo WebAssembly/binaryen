@@ -158,7 +158,7 @@ struct MixedArena {
 //
 // TODO: specialize on the initial size of the array
 
-template <typename SubType, typename T>
+template<typename SubType, typename T>
 class ArenaVectorBase {
 protected:
   T* data = nullptr;
@@ -321,7 +321,7 @@ public:
 //       passed in when needed, would make this (and thus Blocks etc.
 //       smaller)
 
-template <typename T>
+template<typename T>
 class ArenaVector : public ArenaVectorBase<ArenaVector<T>, T> {
 private:
   MixedArena& allocator;
