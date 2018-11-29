@@ -570,7 +570,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   // see https://github.com/WebAssembly/spec/pull/301
   if (type.isNull()) {
     // if no function type name provided, then we generated one
-    std::unique_ptr<FunctionType> functionType = std::unique_ptr<FunctionType>(sigToFunctionType(getSigFromStructs(result, params)));
+    auto functionType = make_unique<FunctionType>(sigToFunctionType(getSigFromStructs(result, params)));
     for (auto& existing : wasm.functionTypes) {
       if (existing->structuralComparison(*functionType)) {
         type = existing->name;

@@ -66,7 +66,7 @@ std::string getSigFromStructs(Type result, const ListType& operands) {
 
 Type sigToType(char sig);
 
-FunctionType* sigToFunctionType(std::string sig);
+FunctionType sigToFunctionType(std::string sig);
 
 FunctionType* ensureFunctionType(std::string sig, Module* wasm);
 
