@@ -724,7 +724,8 @@ private:
 
   Expression* _makenone() {
     auto choice = upTo(100);
-    if (choice < 50) return makeSetLocal(none);
+    if (choice < 40) return makeSetLocal(none);
+    if (choice < 50) return makeLogging();
     if (choice < 60) return makeBlock(none);
     if (choice < 70) return makeIf(none);
     if (choice < 80) return makeLoop(none);
@@ -1499,6 +1500,13 @@ private:
       auto* replacement = make(type);
       return builder.makeAtomicCmpxchg(bytes, offset, ptr, expected, replacement, type);
     }
+  }
+
+  // special makers
+
+  Expression* makeLogging() {
+    auto type = pick(i32, i64, f32, f64);
+    return builder.makeCall(std::string("log-") + printType(type), { make(type) }, none);
   }
 
   // special getters
