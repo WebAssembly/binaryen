@@ -259,6 +259,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
+      "--strip",
       "--vacuum"
     };
     auto oldSize = file_size(working);
