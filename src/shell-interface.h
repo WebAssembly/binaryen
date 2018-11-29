@@ -33,7 +33,7 @@ namespace wasm {
 struct ExitException {};
 struct TrapException {};
 
-struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
+struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
   // isn't well-behaved in C++. WebAssembly nonetheless expects it to behave
   // properly. Avoid emitting unaligned load/store by checking for alignment
