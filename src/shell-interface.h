@@ -44,7 +44,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
   class Memory {
     // Use char because it doesn't run afoul of aliasing rules.
     std::vector<char> memory;
-    template <typename T>
+    template<typename T>
     static bool aligned(const char* address) {
       static_assert(!(sizeof(T) & (sizeof(T) - 1)), "must be a power of 2");
       return 0 == (reinterpret_cast<uintptr_t>(address) & (sizeof(T) - 1));
@@ -68,7 +68,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
         std::memset(&memory[newSize], 0, minSize - newSize);
       }
     }
-    template <typename T>
+    template<typename T>
     void set(size_t address, T value) {
       if (aligned<T>(&memory[address])) {
         *reinterpret_cast<T*>(&memory[address]) = value;
@@ -76,7 +76,7 @@ struct ShellExternalInterface final : ModuleInstance::ExternalInterface {
         std::memcpy(&memory[address], &value, sizeof(T));
       }
     }
-    template <typename T>
+    template<typename T>
     T get(size_t address) {
       if (aligned<T>(&memory[address])) {
         return *reinterpret_cast<T*>(&memory[address]);

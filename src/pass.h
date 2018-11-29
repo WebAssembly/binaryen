@@ -262,7 +262,7 @@ protected:
 // Core pass class that uses AST walking. This class can be parameterized by
 // different types of AST walkers.
 //
-template <typename WalkerType>
+template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
   PassRunner *runner;
 

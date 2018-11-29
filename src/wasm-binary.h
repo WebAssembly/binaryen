@@ -289,7 +289,7 @@ public:
     return x.writeAt(this, i);
   }
 
-  template <typename T>
+  template<typename T>
   void writeTo(T& o) {
     for (auto c : *this) o << c;
   }

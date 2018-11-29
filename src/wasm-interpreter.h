@@ -1001,7 +1001,7 @@ protected:
     }
   }
 
-  template <class LS>
+  template<class LS>
   Address getFinalAddress(LS* curr, Literal ptr) {
     Address memorySizeBytes = memorySize * Memory::kPageSize;
     uint64_t addr = ptr.type == i32 ? ptr.geti32() : ptr.geti64();

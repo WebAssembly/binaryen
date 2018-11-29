@@ -60,7 +60,7 @@ struct Name : public cashew::IString {
 
 namespace std {
 
-template <> struct hash<wasm::Name> : hash<cashew::IString> {};
+template<> struct hash<wasm::Name> : hash<cashew::IString> {};
 
 } // namespace std
 

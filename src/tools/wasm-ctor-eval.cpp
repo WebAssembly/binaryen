@@ -263,7 +263,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 private:
   // TODO: handle unaligned too, see shell-interface
 
-  template <typename T>
+  template<typename T>
   T* getMemory(Address address) {
     // if memory is on the stack, use the stack
     if (address >= STACK_START) {
@@ -295,13 +295,13 @@ private:
     return (T*)(&data[address]);
   }
 
-  template <typename T>
+  template<typename T>
   void doStore(Address address, T value) {
     // do a memcpy to avoid undefined behavior if unaligned
     memcpy(getMemory<T>(address), &value, sizeof(T));
   }
 
-  template <typename T>
+  template<typename T>
   T doLoad(Address address) {
     // do a memcpy to avoid undefined behavior if unaligned
     T ret;

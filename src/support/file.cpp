@@ -21,7 +21,7 @@
 #include <cstdint>
 #include <limits>
 
-template <typename T>
+template<typename T>
 T wasm::read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug) {
   if (debug == Flags::Debug) std::cerr << "Loading '" << filename << "'..." << std::endl;
   std::ifstream infile;

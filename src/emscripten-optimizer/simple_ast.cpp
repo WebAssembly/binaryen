@@ -195,7 +195,7 @@ struct TraverseInfo {
   int index;
 };
 
-template <class T, int init>
+template<class T, int init>
 struct StackedStack { // a stack, on the stack
   T stackStorage[init];
   T* storage;

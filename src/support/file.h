@@ -39,7 +39,7 @@ namespace Flags {
   };
 }
 
-template <typename T>
+template<typename T>
 T read_file(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
 // Declare the valid explicit specializations.
 extern template std::string read_file<>(const std::string& , Flags::BinaryOption, Flags::DebugOption);
@@ -50,7 +50,7 @@ class Output {
   // An empty filename will open stdout instead.
   Output(const std::string& filename, Flags::BinaryOption binary, Flags::DebugOption debug);
   ~Output() = default;
-  template <typename T>
+  template<typename T>
   std::ostream &operator<<(const T &v) {
     return out << v;
   }
