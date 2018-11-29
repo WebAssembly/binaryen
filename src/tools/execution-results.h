@@ -51,10 +51,6 @@ struct ExecutionResults {
 
   // get results of execution
   void get(Module& wasm) {
-    if (ImportInfo(wasm).getNumImports() > 0) {
-      std::cout << "[fuzz-exec] imports, so quitting\n";
-      return;
-    }
     LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
