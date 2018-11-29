@@ -102,6 +102,10 @@ struct ExecutionResults {
         abort();
       }
     }
+    if (loggings != other.loggings) {
+      std::cout << "logging not identical!\n";
+      abort();
+    }
     return true;
   }
 
