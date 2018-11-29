@@ -29,6 +29,7 @@
 #include "wasm.h"
 #include "pass.h"
 #include "asm_v_wasm.h"
+#include "shared-constants.h"
 #include "asmjs/shared-constants.h"
 #include "wasm-builder.h"
 #include "ir/function-type-utils.h"
@@ -37,9 +38,6 @@
 #include "ir/utils.h"
 
 namespace wasm {
-
-Name GET_TEMP_RET_0("getTempRet0");
-Name SET_TEMP_RET_0("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
   void run(PassRunner* runner, Module* module) override {
@@ -146,7 +144,7 @@ private:
     }
 
     if (func->result == i64) {
-      Function* f = getFunctionOrImport(module, SET_TEMP_RET_0, "vi");
+      Function* f = getFunctionOrImport(module, SET_TEMP_RET0, "vi");
       legal->result = i32;
       auto index = builder.addVar(legal, Name(), i64);
       auto* block = builder.makeBlock();
@@ -205,7 +203,7 @@ private:
     }
 
     if (imFunctionType->result == i64) {
-      Function* f = getFunctionOrImport(module, GET_TEMP_RET_0, "i");
+      Function* f = getFunctionOrImport(module, GET_TEMP_RET0, "i");
       call->type = i32;
       Expression* get = builder.makeCall(f->name, {}, call->type);
       func->body = I64Utilities::recreateI64(builder, call, get);

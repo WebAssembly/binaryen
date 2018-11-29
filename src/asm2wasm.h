@@ -130,6 +130,7 @@ Name I32_CTTZ("i32_cttz"),
      I64_ATOMICS_SUB("i64_atomics_sub"),
      I64_ATOMICS_EXCHANGE("i64_atomics_exchange"),
      I64_ATOMICS_COMPAREEXCHANGE("i64_atomics_compareExchange"),
+     TEMP_DOUBLE_PTR("tempDoublePtr"),
      EMSCRIPTEN_DEBUGINFO("emscripten_debuginfo");
 
 // Utilities

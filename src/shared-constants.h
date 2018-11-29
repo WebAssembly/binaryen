@@ -24,6 +24,8 @@ namespace wasm {
 extern Name GROW_WASM_MEMORY,
             MEMORY_BASE,
             TABLE_BASE,
+            GET_TEMP_RET0,
+            SET_TEMP_RET0,
             NEW_SIZE,
             MODULE,
             START,
