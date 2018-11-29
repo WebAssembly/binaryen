@@ -22,6 +22,7 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
+#include "ir/import-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include "ir/function-type-utils.h"
@@ -32,7 +33,10 @@ namespace wasm {
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
-static constexpr const char* dummyFunction = "__wasm_nullptr";
+static Name STACK_SAVE("__stackSave"),
+            STACK_RESTORE("stackRestore"),
+            STACK_ALLOC("stackAlloc"),
+            DUMMY_FUNC("__wasm_nullptr");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -80,10 +84,9 @@ Expression* EmscriptenGlueGenerator::generateStoreStackPointer(Expression* value
 }
 
 void EmscriptenGlueGenerator::generateStackSaveFunction() {
-  Name name("stackSave");
   std::vector<NameType> params { };
   Function* function = builder.makeFunction(
-    name, std::move(params), i32, {}
+    STACK_SAVE, std::move(params), i32, {}
   );
 
   function->body = generateLoadStackPointer();
@@ -92,10 +95,9 @@ void EmscriptenGlueGenerator::generateStackSaveFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackAllocFunction() {
-  Name name("stackAlloc");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
-    name, std::move(params), i32, { { "1", i32 } }
+    STACK_ALLOC, std::move(params), i32, { { "1", i32 } }
   );
   Expression* loadStack = generateLoadStackPointer();
   GetLocal* getSizeArg = builder.makeGetLocal(0, i32);
@@ -118,10 +120,9 @@ void EmscriptenGlueGenerator::generateStackAllocFunction() {
 }
 
 void EmscriptenGlueGenerator::generateStackRestoreFunction() {
-  Name name("stackRestore");
   std::vector<NameType> params { { "0", i32 } };
   Function* function = builder.makeFunction(
-    name, std::move(params), none, {}
+    STACK_RESTORE, std::move(params), none, {}
   );
   GetLocal* getArg = builder.makeGetLocal(0, i32);
   Expression* store = generateStoreStackPointer(getArg);
@@ -182,7 +183,7 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     tableSegmentData = wasm.table.segments[0].data;
   }
   for (const auto& indirectFunc : tableSegmentData) {
-    if (indirectFunc == dummyFunction) {
+    if (indirectFunc == DUMMY_FUNC) {
       continue;
     }
     std::string sig = getSig(wasm.getFunction(indirectFunc));
@@ -205,6 +206,59 @@ void EmscriptenGlueGenerator::generateDynCallThunks() {
     wasm.addFunction(f);
     exportFunction(wasm, f->name, true);
   }
+}
+
+static Function* ensureFunctionImport(Module* module, Name name, std::string sig) {
+  // Then see if its already imported
+  ImportInfo info(*module);
+  if (Function* f = info.getImportedFunction(ENV, name)) {
+    return f;
+  }
+  // Failing that create a new function import.
+  auto import = new Function;
+  import->name = name;
+  import->module = ENV;
+  import->base = name;
+  auto* functionType = ensureFunctionType(sig, module);
+  import->type = functionType->name;
+  FunctionTypeUtils::fillFunction(import, functionType);
+  module->addFunction(import);
+  return import;
+}
+
+struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
+  RemoveStackPointer(Global* StackPointer) : StackPointer(StackPointer) {}
+
+  void visitGetGlobal(GetGlobal* curr) {
+    if (getModule()->getGlobalOrNull(curr->name) == StackPointer) {
+      ensureFunctionImport(getModule(), STACK_SAVE, "i");
+      if (!builder) builder = make_unique<Builder>(*getModule());
+      replaceCurrent(builder->makeCall(STACK_SAVE, {}, i32));
+    }
+  }
+
+  void visitSetGlobal(SetGlobal* curr) {
+    if (getModule()->getGlobalOrNull(curr->name) == StackPointer) {
+      ensureFunctionImport(getModule(), STACK_RESTORE, "vi");
+      if (!builder) builder = make_unique<Builder>(*getModule());
+      replaceCurrent(builder->makeCall(STACK_RESTORE, {curr->value}, none));
+    }
+  }
+
+  std::unique_ptr<Builder> builder;
+  Global* StackPointer;
+};
+
+void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
+  Global* stackPointer = getStackPointerGlobal();
+
+  // Replace all uses of stack pointer global
+  RemoveStackPointer walker(stackPointer);
+  walker.walkModule(&wasm);
+
+  // Finally remove the stack pointer global itself. This avoid importing
+  // a mutable global.
+  wasm.removeGlobal(stackPointer->name);
 }
 
 struct JSCallWalker : public PostWalker<JSCallWalker> {
