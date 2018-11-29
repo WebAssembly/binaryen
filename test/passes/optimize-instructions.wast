@@ -3663,6 +3663,81 @@
     (i32.const 2)
    )
   )
+  (func $pre-combine-or (param $x i32) (param $y i32)
+    (drop (i32.or
+      (i32.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
+      (i32.eq
+        (get_local $y) ;; ordering should not stop us
+        (get_local $x)
+      )
+    ))
+    (drop (i32.or
+      (i32.eq ;; ordering should not stop us
+        (get_local $y)
+        (get_local $x)
+      )
+      (i32.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
+    ))
+    (drop (i32.or
+      (i32.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
+      (i32.eq
+        (get_local $x)
+        (i32.const 1) ;; not equal
+      )
+    ))
+    (drop (i32.or
+      (i32.gt_s
+        (get_local $x)
+        (i32.const 1) ;; not equal
+      )
+      (i32.eq
+        (get_local $x)
+        (get_local $y)
+      )
+    ))
+    (drop (i32.or
+      (i32.gt_s
+        (call $ne0) ;; side effects
+        (get_local $y)
+      )
+      (i32.eq
+        (call $ne0)
+        (get_local $y)
+      )
+    ))
+    (drop (i32.or
+      (i32.gt_s
+        (get_local $y)
+        (call $ne0) ;; side effects
+      )
+      (i32.eq
+        (get_local $y)
+        (call $ne0)
+      )
+    ))
+  )
+  (func $combine-or (param $x i32) (param $y i32)
+    (drop (i32.or
+      (i32.gt_s
+        (get_local $x)
+        (get_local $y)
+      )
+      (i32.eq
+        (get_local $x)
+        (get_local $y)
+      )
+    ))
+    ;; TODO: more stuff here
+  )
 )
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))

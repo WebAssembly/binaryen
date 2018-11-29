@@ -3223,6 +3223,76 @@
    (i32.const 2)
   )
  )
+ (func $pre-combine-or (; 75 ;) (type $5) (param $x i32) (param $y i32)
+  (drop
+   (i32.ge_s
+    (get_local $x)
+    (get_local $y)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (get_local $x)
+    (get_local $y)
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (get_local $x)
+     (i32.const 1)
+    )
+    (i32.gt_s
+     (get_local $x)
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.eq
+     (get_local $x)
+     (get_local $y)
+    )
+    (i32.gt_s
+     (get_local $x)
+     (i32.const 1)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.gt_s
+     (call $ne0)
+     (get_local $y)
+    )
+    (i32.eq
+     (call $ne0)
+     (get_local $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.gt_s
+     (get_local $y)
+     (call $ne0)
+    )
+    (i32.eq
+     (call $ne0)
+     (get_local $y)
+    )
+   )
+  )
+ )
+ (func $combine-or (; 76 ;) (type $5) (param $x i32) (param $y i32)
+  (drop
+   (i32.ge_s
+    (get_local $x)
+    (get_local $y)
+   )
+  )
+ )
 )
 (module
  (type $0 (func))
