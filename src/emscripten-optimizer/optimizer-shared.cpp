@@ -27,7 +27,8 @@ IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check"),
         SIMD_INT16X8_CHECK("SIMD_Int16x8_check"),
         SIMD_INT32X4_CHECK("SIMD_Int32x4_check"),
         SIMD_FLOAT32X4_CHECK("SIMD_Float32x4_check"),
-        SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check");
+        SIMD_FLOAT64X2_CHECK("SIMD_Float64x2_check"),
+        TEMP_RET0("tempRet0");
 
 int parseInt(const char *str) {
   int ret = *str - '0';
