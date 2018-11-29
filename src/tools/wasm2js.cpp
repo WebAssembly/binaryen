@@ -43,6 +43,11 @@ int main(int argc, const char *argv[]) {
              builderFlags.allowAsserts = true;
              o->extra["asserts"] = "1";
            })
+      .add("--asmjs-tables", "", "Prefer multiple function tables: one per function signature",
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& argument) {
+             builderFlags.asmjsTables = true;
+           })
       .add("--pedantic", "", "Emulate WebAssembly trapping behavior",
            Options::Arguments::Zero,
            [&](Options* o, const std::string& argument) {
