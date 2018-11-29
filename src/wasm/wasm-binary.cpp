@@ -199,7 +199,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(global);
     o << U32LEB(int32_t(ExternalKind::Global));
     o << binaryType(global->type);
-    o << U32LEB(0); // Mutable globals can't be imported for now.
+    o << U32LEB(global->mutable_);
   });
   if (wasm->memory.imported()) {
     if (debug) std::cerr << "write one memory" << std::endl;
@@ -1009,7 +1009,6 @@ void WasmBinaryBuilder::readImports() {
         auto name = Name(std::string("gimport$") + std::to_string(i));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
-        assert(!mutable_); // for now, until mutable globals
         auto* curr = builder.makeGlobal(name, type, nullptr, mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;

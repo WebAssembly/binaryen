@@ -923,6 +923,11 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
     }
   });
+  if (!(info.features & Feature::MutableGlobals)) {
+    ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
+      info.shouldBeFalse(curr->mutable_, curr->name, "Imported global cannot be mutable");
+    });
+  }
 }
 
 static void validateExports(Module& module, ValidationInfo& info) {
@@ -935,6 +940,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
           info.shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
         }
       }
+    } else if (curr->kind == ExternalKind::Global && !(info.features & Feature::MutableGlobals)) {
+      Global* g = module.getGlobalOrNull(curr->value);
+      info.shouldBeFalse(g->mutable_, g->name, "Exported global cannot be mutable");
     }
   }
   std::unordered_set<Name> exportNames;
