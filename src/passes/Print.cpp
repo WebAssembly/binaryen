@@ -877,6 +877,9 @@ struct PrintSExpression : public Visitor<PrintSExpression> {
     emitImportHeader(curr);
     if (curr->type.is()) {
       visitFunctionType(currModule->getFunctionType(curr->type), &curr->name);
+    } else {
+      auto functionType = sigToFunctionType(getSig(curr));
+      visitFunctionType(&functionType, &curr->name);
     }
     o << ')';
     o << maybeNewLine;
