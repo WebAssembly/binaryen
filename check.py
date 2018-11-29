@@ -106,7 +106,7 @@ def run_wasm_opt_tests():
         assert len(asserts) == 0
         with open('split.wast', "wb" if binary else 'w') as o:
           o.write(module)
-        cmd = WASM_OPT + opts + ['split.wast', '--print']
+        cmd = WASM_OPT + opts + ['split.wast', '--print', '--all-features']
         curr = run_command(cmd)
         actual += curr
         # also check debug mode output is valid
@@ -136,12 +136,12 @@ def run_wasm_opt_tests():
     if t.endswith('.wast'):
       print '..', t
       wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print', '--all-features']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       expected_file = os.path.join(options.binaryen_test, 'print', wasm + '.txt')
       fail_if_not_identical_to_file(actual, expected_file)
-      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified']
+      cmd = WASM_OPT + [os.path.join(options.binaryen_test, 'print', t), '--print-minified', '--all-features']
       print '    ', ' '.join(cmd)
       actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
       fail_if_not_identical(actual.strip(), open(os.path.join(options.binaryen_test, 'print', wasm + '.minified.txt')).read().strip())
@@ -153,7 +153,7 @@ def run_wasm_opt_tests():
       print '..', t
       t = os.path.join(options.binaryen_test, t)
       f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
+      cmd = WASM_OPT + [t, '--print', '--all-features']
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
 
@@ -193,7 +193,7 @@ def run_wasm_dis_tests():
 
       # also verify there are no validation errors
       def check():
-        cmd = WASM_OPT + [t]
+        cmd = WASM_OPT + [t, '--all-features']
         run_command(cmd)
 
       with_pass_debug(check)
@@ -309,7 +309,7 @@ def run_wasm_reduce_tests():
   if 'fsanitize=thread' not in str(os.environ):
     print '\n[ checking wasm-reduce fuzz testcase ]\n'
 
-    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '-ttf', '-Os', '-o', 'a.wasm'])
+    run_command(WASM_OPT + [os.path.join(options.binaryen_test, 'unreachable-import_wasm-only.asm.js'), '--all-features', '-ttf', '-Os', '-o', 'a.wasm'])
     before = os.stat('a.wasm').st_size
     run_command(WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm'])
     after = os.stat('c.wasm').st_size
@@ -337,7 +337,7 @@ def run_spec_tests():
         continue
 
       def run_spec_test(wast):
-        cmd = WASM_SHELL + [wast]
+        cmd = WASM_SHELL + [wast, '--all-features']
         # we must skip the stack machine portions of spec tests or apply other extra args
         extra = {
         }
@@ -346,7 +346,7 @@ def run_spec_tests():
 
       def run_opt_test(wast):
         # check optimization validation
-        cmd = WASM_OPT + [wast, '-O']
+        cmd = WASM_OPT + [wast, '-O', '--all-features']
         run_command(cmd)
 
       def check_expected(actual, expected):

@@ -57,7 +57,7 @@ struct WasmValidator {
   };
   typedef uint32_t Flags;
 
-  bool validate(Module& module, FeatureSet features = MVP, Flags flags = Globally);
+  bool validate(Module& module, FeatureSet features = FeatureSet::MVP, Flags flags = Globally);
 };
 
 } // namespace wasm

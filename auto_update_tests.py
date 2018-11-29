@@ -34,7 +34,7 @@ def update_asm_js_tests():
     if asm.endswith('.asm.js'):
       for precise in [0, 1, 2]:
         for opts in [1, 0]:
-          cmd = ASM2WASM + [os.path.join('test', asm), '--enable-threads']
+          cmd = ASM2WASM + [os.path.join('test', asm), '--all-features']
           wasm = asm.replace('.asm.js', '.fromasm')
           if not precise:
             cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
@@ -103,13 +103,13 @@ def update_wasm_opt_tests():
     if t.endswith('.wast'):
       print '..', t
       wasm = os.path.basename(t).replace('.wast', '')
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print']
+      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print', '--all-features']
       print '    ', ' '.join(cmd)
       actual = subprocess.check_output(cmd)
       print cmd, actual
       with open(os.path.join('test', 'print', wasm + '.txt'), 'w') as o:
         o.write(actual)
-      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified']
+      cmd = WASM_OPT + [os.path.join('test', 'print', t), '--print-minified', '--all-features']
       print '    ', ' '.join(cmd)
       actual = subprocess.check_output(cmd)
       with open(os.path.join('test', 'print', wasm + '.minified.txt'), 'w') as o:
@@ -131,7 +131,7 @@ def update_wasm_opt_tests():
         assert len(asserts) == 0
         with open('split.wast', 'w') as o:
           o.write(module)
-        cmd = WASM_OPT + opts + ['split.wast', '--print']
+        cmd = WASM_OPT + opts + ['split.wast', '--print', '--all-features']
         actual += run_command(cmd)
       with open(os.path.join('test', 'passes', base + ('.bin' if binary else '') + '.txt'), 'w') as o:
         o.write(actual)
@@ -150,7 +150,7 @@ def update_wasm_opt_tests():
       print '..', t
       t = os.path.join('test', t)
       f = t + '.from-wast'
-      cmd = WASM_OPT + [t, '--print']
+      cmd = WASM_OPT + [t, '--print', '--all-features']
       actual = run_command(cmd)
       actual = actual.replace('printing before:\n', '')
       open(f, 'w').write(actual)

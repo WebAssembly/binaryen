@@ -349,7 +349,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
   assert os.path.exists('ab.wast')
 
   # make sure it is a valid wast
-  cmd = WASM_OPT + ['ab.wast']
+  cmd = WASM_OPT + ['ab.wast', '--all-features']
   print '      ', ' '.join(cmd)
   subprocess.check_call(cmd, stdout=subprocess.PIPE)
 
@@ -367,11 +367,11 @@ def minify_check(wast, verify_final_result=True):
   cmd = WASM_OPT + [wast, '--print-minified']
   print '      ', ' '.join(cmd)
   subprocess.check_call(
-      WASM_OPT + [wast, '--print-minified'],
+      WASM_OPT + [wast, '--print-minified', '--all-features'],
       stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('a.wast')
   subprocess.check_call(
-      WASM_OPT + ['a.wast', '--print-minified'],
+      WASM_OPT + ['a.wast', '--print-minified', '--all-features'],
       stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
   assert os.path.exists('b.wast')
   if verify_final_result:

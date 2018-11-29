@@ -497,7 +497,7 @@ void FunctionValidator::visitSetGlobal(SetGlobal* curr) {
 }
 
 void FunctionValidator::visitLoad(Load* curr) {
-  if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -509,7 +509,7 @@ void FunctionValidator::visitLoad(Load* curr) {
 }
 
 void FunctionValidator::visitStore(Store* curr) {
-  if (curr->isAtomic) shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  if (curr->isAtomic) shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(curr->isAtomic && !getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->valueType, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
@@ -522,7 +522,7 @@ void FunctionValidator::visitStore(Store* curr) {
 }
 
 void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
-  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicRMW pointer type must be i32");
@@ -531,7 +531,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
 }
 
 void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "cmpxchg pointer type must be i32");
@@ -544,7 +544,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
 }
 
 void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
-  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWait pointer type must be i32");
@@ -554,7 +554,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
 }
 
 void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
-  shouldBeTrue(info.features & Feature::Atomics, curr, "Atomic operation (atomics are disabled)");
+  shouldBeTrue(info.features.hasAtomics(), curr, "Atomic operation (atomics are disabled)");
   shouldBeFalse(!getModule()->memory.shared, curr, "Atomic operation with non-shared memory");
   shouldBeEqualOrFirstIsUnreachable(curr->type, i32, curr, "AtomicWake must have type i32");
   shouldBeEqualOrFirstIsUnreachable(curr->ptr->type, i32, curr, "AtomicWake pointer type must be i32");
@@ -923,7 +923,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
       }
     }
   });
-  if (!(info.features & Feature::MutableGlobals)) {
+  if (!info.features.hasMutableGlobals()) {
     ModuleUtils::iterImportedGlobals(module, [&](Global* curr) {
       info.shouldBeFalse(curr->mutable_, curr->name, "Imported global cannot be mutable");
     });
@@ -940,7 +940,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
           info.shouldBeUnequal(param, i64, f->name, "Exported function must not have i64 parameters");
         }
       }
-    } else if (curr->kind == ExternalKind::Global && !(info.features & Feature::MutableGlobals)) {
+    } else if (curr->kind == ExternalKind::Global && !info.features.hasMutableGlobals()) {
       if (Global* g = module.getGlobalOrNull(curr->value)) {
         info.shouldBeFalse(g->mutable_, g->name, "Exported global cannot be mutable");
       }
@@ -981,7 +981,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   info.shouldBeFalse(curr.initial > curr.max, "memory", "memory max >= initial");
   info.shouldBeTrue(!curr.hasMax() || curr.max <= Memory::kMaxSize, "memory", "max memory must be <= 4GB, or unlimited");
   info.shouldBeTrue(!curr.shared || curr.hasMax(), "memory", "shared memory must have max size");
-  if (curr.shared) info.shouldBeTrue(info.features & Feature::Atomics, "memory", "memory is shared, but atomics are disabled");
+  if (curr.shared) info.shouldBeTrue(info.features.hasAtomics(), "memory", "memory is shared, but atomics are disabled");
   for (auto& segment : curr.segments) {
     if (!info.shouldBeEqual(segment.offset->type, i32, segment.offset, "segment offset should be i32")) continue;
     info.shouldBeTrue(checkOffset(segment.offset, segment.data.size(), curr.initial * Memory::kPageSize), segment.offset, "segment offset should be reasonable");

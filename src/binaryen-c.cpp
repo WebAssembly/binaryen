@@ -1936,7 +1936,7 @@ int BinaryenModuleValidate(BinaryenModuleRef module) {
 
   Module* wasm = (Module*)module;
   // TODO add feature selection support to C API
-  FeatureSet features = Feature::Atomics;
+  FeatureSet features = FeatureSet::All;
   return WasmValidator().validate(*wasm, features) ? 1 : 0;
 }
 
