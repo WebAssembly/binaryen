@@ -92,6 +92,10 @@ private:
         size = getTypeSize(value.type);
         break;
       }
+      case v128: {
+        // v128 not implemented yet
+        return false;
+      }
       case none:
       case unreachable: {
         WASM_UNREACHABLE();

@@ -50,6 +50,7 @@ function test_types() {
   console.log("BinaryenTypeInt64: " + Binaryen.i64);
   console.log("BinaryenTypeFloat32: " + Binaryen.f32);
   console.log("BinaryenTypeFloat64: " + Binaryen.f64);
+  console.log("BinaryenTypeVec128: " + Binaryen.v128);
   console.log("BinaryenTypeUnreachable: " + Binaryen.unreachable);
   console.log("BinaryenTypeAuto: " + Binaryen.auto);
 }
@@ -585,4 +586,3 @@ function main() {
 }
 
 main();
-

@@ -345,4 +345,3 @@ Pass *createPrecomputePropagatePass() {
 }
 
 } // namespace wasm
-

@@ -862,6 +862,7 @@ void FunctionValidator::validateAlignment(size_t align, Type type, Index bytes,
       shouldBeTrue(align <= 8, curr, "alignment must not exceed natural");
       break;
     }
+    case v128: assert(false && "v128 not implemented yet");
     case none:
     case unreachable: {}
   }

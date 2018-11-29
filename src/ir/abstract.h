@@ -62,6 +62,10 @@ inline UnaryOp getUnary(Type type, Op op) {
       }
       break;
     }
+    case v128: {
+      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
+    }
     case none:
     case unreachable: {
       return InvalidUnary;
@@ -139,6 +143,10 @@ inline BinaryOp getBinary(Type type, Op op) {
         default:   return InvalidBinary;
       }
       break;
+    }
+    case v128: {
+      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE();
     }
     case none:
     case unreachable: {

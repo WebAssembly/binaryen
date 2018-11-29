@@ -72,6 +72,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case i64: return; // TODO
       case f32: import = get_f32; break;
       case f64: import = get_f64; break;
+      case v128: assert(false && "v128 not implemented yet");
       case none: WASM_UNREACHABLE();
       case unreachable: WASM_UNREACHABLE();
     }
@@ -96,6 +97,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case i64: return; // TODO
       case f32: import = set_f32; break;
       case f64: import = set_f64; break;
+      case v128: assert(false && "v128 not implemented yet");
       case unreachable: return; // nothing to do here
       case none: WASM_UNREACHABLE();
     }

@@ -49,6 +49,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
     case Type::i64: ret.i64 = x.geti64(); break;
     case Type::f32: ret.i32 = x.reinterpreti32(); break;
     case Type::f64: ret.i64 = x.reinterpreti64(); break;
+    case Type::v128: assert(false && "v128 not implemented yet");
     case Type::none:
     case Type::unreachable: WASM_UNREACHABLE();
   }
@@ -113,6 +114,7 @@ BinaryenType BinaryenTypeInt32(void) { return i32; }
 BinaryenType BinaryenTypeInt64(void) { return i64; }
 BinaryenType BinaryenTypeFloat32(void) { return f32; }
 BinaryenType BinaryenTypeFloat64(void) { return f64; }
+BinaryenType BinaryenTypeVec128(void) { return v128; }
 BinaryenType BinaryenTypeUnreachable(void) { return unreachable; }
 BinaryenType BinaryenTypeAuto(void) { return uint32_t(-1); }
 
