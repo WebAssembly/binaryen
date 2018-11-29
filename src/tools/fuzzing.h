@@ -185,10 +185,13 @@ private:
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
 
-  // after we finish the input, we start going through it again, but xoring
+  // After we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
 
+  // The chance to emit a logging operation for a none expression. We
+  // randomize this in each function.
+  unsigned LOGGING_PERCENT = 0;
 
   void readData(std::vector<char> input) {
     bytes.swap(input);
@@ -378,6 +381,7 @@ private:
   std::map<Type, std::vector<Index>> typeLocals; // type => list of locals with that type
 
   Function* addFunction() {
+    LOGGING_PERCENT = upToSquared(100);
     Index num = wasm.functions.size();
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
@@ -724,8 +728,9 @@ private:
 
   Expression* _makenone() {
     auto choice = upTo(100);
-    if (choice < 40) return makeSetLocal(none);
-    if (choice < 50) return makeLogging();
+    if (choice < LOGGING_PERCENT) return makeLogging();
+    choice = upTo(100);
+    if (choice < 50) return makeSetLocal(none);
     if (choice < 60) return makeBlock(none);
     if (choice < 70) return makeIf(none);
     if (choice < 80) return makeLoop(none);
