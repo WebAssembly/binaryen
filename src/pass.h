@@ -201,7 +201,7 @@ private:
 //
 class Pass {
 public:
-  virtual ~Pass() {};
+  virtual ~Pass() = default;
 
   // Override this to perform preparation work before the pass runs.
   // This will be called before the pass is run on a module.
