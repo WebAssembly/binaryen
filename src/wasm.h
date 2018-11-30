@@ -40,6 +40,7 @@ namespace wasm {
 enum Feature : uint32_t {
   MVP = 0,
   Atomics = 1 << 0,
+  MutableGlobals = 1 << 1,
   All = 0xffffffff,
 };
 typedef uint32_t FeatureSet;
