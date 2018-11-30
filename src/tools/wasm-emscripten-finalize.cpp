@@ -158,7 +158,6 @@ int main(int argc, const char *argv[]) {
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
-
   if (legalizeJavaScriptFFI) {
     PassRunner passRunner(&wasm);
     passRunner.setDebug(options.debug);
