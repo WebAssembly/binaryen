@@ -257,7 +257,7 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   RemoveStackPointer walker(stackPointer);
   walker.walkModule(&wasm);
 
-  // Finally remove the stack pointer global itself. This avoid importing
+  // Finally remove the stack pointer global itself. This avoids importing
   // a mutable global.
   wasm.removeGlobal(stackPointer->name);
 }
