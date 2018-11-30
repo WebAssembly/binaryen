@@ -157,7 +157,7 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = which('nodejs') or which('node')
+NODEJS = os.getenv('NODE', which('nodejs') or which('node'))
 MOZJS = which('mozjs') or which('spidermonkey')
 EMCC = which('emcc')
 
