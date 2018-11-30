@@ -41,6 +41,10 @@ public:
   // signature in the indirect function table.
   void generateDynCallThunks();
 
+  // Convert stack pointer access from get_global/set_global to calling save
+  // and restore functions.
+  void replaceStackPointerGlobal();
+
   // Create thunks to support emscripten's addFunction functionality. Creates (#
   // of reserved function pointers) thunks for each indirectly called function
   // signature.

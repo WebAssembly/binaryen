@@ -155,11 +155,6 @@ int main(int argc, const char *argv[]) {
     dataSize = dataEndConst->value.geti32() - globalBase;
   }
 
-  std::vector<Name> initializerFunctions;
-  if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
-    initializerFunctions.push_back("__wasm_call_ctors");
-  }
-
   EmscriptenGlueGenerator generator(wasm);
   generator.fixInvokeFunctionNames();
 
@@ -171,10 +166,24 @@ int main(int argc, const char *argv[]) {
     passRunner.run();
   }
 
-  if (!isSideModule) {
+  std::vector<Name> initializerFunctions;
+
+  if (isSideModule) {
+    generator.replaceStackPointerGlobal();
+    // rename __wasm_call_ctors to __post_instantiate which is what
+    // emscripten expects.
+    // TODO(sbc): Unify these two names
+    if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
+      ex->name = "__post_instantiate";
+    }
+  } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
+    if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
+      initializerFunctions.push_back("__wasm_call_ctors");
+    }
   }
+
   generator.generateDynCallThunks();
   generator.generateJSCallThunks(numReservedFunctionPointers);
   std::string metadata = generator.generateEmscriptenMetadata(dataSize, initializerFunctions, numReservedFunctionPointers);
