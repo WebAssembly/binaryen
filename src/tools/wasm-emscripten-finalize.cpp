@@ -170,8 +170,8 @@ int main(int argc, const char *argv[]) {
 
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
-    // rename __wasm_call_ctors to __post_instanciate which is what
-    // emscripten expectes.
+    // rename __wasm_call_ctors to __post_instantiate which is what
+    // emscripten expects.
     // TODO(sbc): Unify these two names
     if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
       ex->name = "__post_instantiate";

@@ -22,10 +22,10 @@
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include "wasm-builder.h"
-#include "ir/import-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 #include "ir/function-type-utils.h"
+#include "ir/import-utils.h"
 #include "ir/module-utils.h"
 
 namespace wasm {
@@ -33,7 +33,7 @@ namespace wasm {
 cashew::IString EMSCRIPTEN_ASM_CONST("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
-static Name STACK_SAVE("__stackSave"),
+static Name STACK_SAVE("stackSave"),
             STACK_RESTORE("stackRestore"),
             STACK_ALLOC("stackAlloc"),
             DUMMY_FUNC("__wasm_nullptr");
@@ -245,6 +245,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
     }
   }
 
+private:
   std::unique_ptr<Builder> builder;
   Global* StackPointer;
 };
