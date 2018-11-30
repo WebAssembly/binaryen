@@ -372,7 +372,8 @@ int main() {
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE).communicate()[0]
   print '-'
-  slow_out = subprocess.Popen(['nodejs', 'fuzz.slow.js'],
+  node = os.getenv('NODE', 'nodejs')
+  slow_out = subprocess.Popen([node, 'fuzz.slow.js'],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE).communicate()[0]
   print '_'
