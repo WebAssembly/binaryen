@@ -91,6 +91,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   std::vector<Name> table;
 
   ShellExternalInterface() : memory() {}
+  virtual ~ShellExternalInterface() = default;
 
   void init(Module& wasm, ModuleInstance& instance) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
