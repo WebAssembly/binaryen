@@ -24,20 +24,37 @@
 
 namespace wasm {
 
+typedef std::vector<Literal> Loggings;
+
+// Logs every single import call parameter.
+struct LoggingExternalInterface : public ShellExternalInterface {
+  Loggings& loggings;
+
+  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
+
+  Literal callImport(Function* import, LiteralList& arguments) override {
+    std::cout << "[LoggingExternalInterface logging";
+    loggings.push_back(Literal()); // buffer with a None between calls
+    for (auto argument : arguments) {
+      std::cout << ' ' << argument;
+      loggings.push_back(argument);
+    }
+    std::cout << "]\n";
+    return Literal();
+  }
+};
+
 // gets execution results from a wasm module. this is useful for fuzzing
 //
 // we can only get results when there are no imports. we then call each method
 // that has a result, with some values
 struct ExecutionResults {
   std::map<Name, Literal> results;
+  Loggings loggings;
 
   // get results of execution
   void get(Module& wasm) {
-    if (ImportInfo(wasm).getNumImports() > 0) {
-      std::cout << "[fuzz-exec] imports, so quitting\n";
-      return;
-    }
-    ShellExternalInterface interface;
+    LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through opts)
@@ -84,6 +101,10 @@ struct ExecutionResults {
         abort();
       }
     }
+    if (loggings != other.loggings) {
+      std::cout << "logging not identical!\n";
+      abort();
+    }
     return true;
   }
 
@@ -92,7 +113,7 @@ struct ExecutionResults {
   }
 
   Literal run(Function* func, Module& wasm) {
-    ShellExternalInterface interface;
+    LoggingExternalInterface interface(loggings);
     try {
       ModuleInstance instance(wasm, &interface);
       return run(func, wasm, instance);

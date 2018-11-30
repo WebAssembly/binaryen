@@ -92,11 +92,11 @@ Type sigToType(char sig) {
   }
 }
 
-FunctionType* sigToFunctionType(std::string sig) {
-  auto ret = new FunctionType;
-  ret->result = sigToType(sig[0]);
+FunctionType sigToFunctionType(std::string sig) {
+  FunctionType ret;
+  ret.result = sigToType(sig[0]);
   for (size_t i = 1; i < sig.size(); i++) {
-    ret->params.push_back(sigToType(sig[i]));
+    ret.params.push_back(sigToType(sig[i]));
   }
   return ret;
 }

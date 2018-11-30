@@ -128,6 +128,7 @@ public:
     setupMemory();
     setupTable();
     setupGlobals();
+    addImportLoggingSupport();
     // keep adding functions until we run out of input
     while (!finishedInput) {
       auto* func = addFunction();
@@ -184,10 +185,13 @@ private:
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
 
-  // after we finish the input, we start going through it again, but xoring
+  // After we finish the input, we start going through it again, but xoring
   // so it's not identical
   int xorFactor = 0;
 
+  // The chance to emit a logging operation for a none expression. We
+  // randomize this in each function.
+  unsigned LOGGING_PERCENT = 0;
 
   void readData(std::vector<char> input) {
     bytes.swap(input);
@@ -300,6 +304,19 @@ private:
     wasm.addExport(export_);
   }
 
+  void addImportLoggingSupport() {
+    for (auto type : { i32, i64, f32, f64 }) {
+      auto* func = new Function;
+      Name name = std::string("log-") + printType(type);
+      func->name = name;
+      func->module = "fuzzing-support";
+      func->base = name;
+      func->params.push_back(type);
+      func->result = none;
+      wasm.addFunction(func);
+    }
+  }
+
   Expression* makeHangLimitCheck() {
     return builder.makeSequence(
       builder.makeIf(
@@ -364,6 +381,7 @@ private:
   std::map<Type, std::vector<Index>> typeLocals; // type => list of locals with that type
 
   Function* addFunction() {
+    LOGGING_PERCENT = upToSquared(100);
     Index num = wasm.functions.size();
     func = new Function;
     func->name = std::string("func_") + std::to_string(num);
@@ -711,6 +729,8 @@ private:
 
   Expression* _makenone() {
     auto choice = upTo(100);
+    if (choice < LOGGING_PERCENT) return makeLogging();
+    choice = upTo(100);
     if (choice < 50) return makeSetLocal(none);
     if (choice < 60) return makeBlock(none);
     if (choice < 70) return makeIf(none);
@@ -1494,6 +1514,13 @@ private:
       auto* replacement = make(type);
       return builder.makeAtomicCmpxchg(bytes, offset, ptr, expected, replacement, type);
     }
+  }
+
+  // special makers
+
+  Expression* makeLogging() {
+    auto type = pick(i32, i64, f32, f64);
+    return builder.makeCall(std::string("log-") + printType(type), { make(type) }, none);
   }
 
   // special getters
