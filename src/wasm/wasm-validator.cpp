@@ -941,8 +941,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
         }
       }
     } else if (curr->kind == ExternalKind::Global && !(info.features & Feature::MutableGlobals)) {
-      Global* g = module.getGlobalOrNull(curr->value);
-      info.shouldBeFalse(g->mutable_, g->name, "Exported global cannot be mutable");
+      if (Global* g = module.getGlobalOrNull(curr->value)) {
+        info.shouldBeFalse(g->mutable_, g->name, "Exported global cannot be mutable");
+      }
     }
   }
   std::unordered_set<Name> exportNames;
