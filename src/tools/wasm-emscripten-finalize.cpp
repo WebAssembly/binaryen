@@ -168,8 +168,8 @@ int main(int argc, const char *argv[]) {
 
   std::vector<Name> initializerFunctions;
 
-  // The shared library ABI produced by lld doesn't quite match that expected
-  // by emscripten.
+  // The names of standard imports/exports used by lld doesn't quite match that
+  // expected by emscripten.
   // TODO(sbc): Unify these
   if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
     ex->name = "__post_instantiate";
@@ -186,7 +186,8 @@ int main(int argc, const char *argv[]) {
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    // emscripten calls this by default for side libraryies
+    // emscripten calls this by default for side libraries so we only need
+    // to include in as a static ctor for main module case.
     if (wasm.getFunctionOrNull("__post_instantiate")) {
       initializerFunctions.push_back("__post_instantiate");
     }
