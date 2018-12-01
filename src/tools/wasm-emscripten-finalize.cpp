@@ -168,25 +168,27 @@ int main(int argc, const char *argv[]) {
 
   std::vector<Name> initializerFunctions;
 
+  // The shared library ABI produced by lld doesn't quite match that expected
+  // by emscripten.
+  // TODO(sbc): Unify these
+  if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
+    ex->name = "__post_instantiate";
+  }
+  if (wasm.table.imported()) {
+    if (wasm.table.base != "table") wasm.table.base = Name("table");
+  }
+  if (wasm.memory.imported()) {
+    if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
+  }
+
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
-    // The shared library ABI produced by lld doesn't quite match that expected
-    // by emscripten.
-    // TODO(sbc): Unify these
-    if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
-      ex->name = "__post_instantiate";
-    }
-    if (wasm.table.imported()) {
-      if (wasm.table.base != "table") wasm.table.base = Name("table");
-    }
-    if (wasm.memory.imported()) {
-      if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
-    }
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
-      initializerFunctions.push_back("__wasm_call_ctors");
+    // emscripten calls this by default for side libraryies
+    if (wasm.getFunctionOrNull("__post_instantiate")) {
+      initializerFunctions.push_back("__post_instantiate");
     }
   }
 
