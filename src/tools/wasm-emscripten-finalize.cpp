@@ -170,11 +170,17 @@ int main(int argc, const char *argv[]) {
 
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
-    // rename __wasm_call_ctors to __post_instantiate which is what
-    // emscripten expects.
-    // TODO(sbc): Unify these two names
+    // The shared library ABI produced by lld doesn't quite match that expected
+    // by emscripten.
+    // TODO(sbc): Unify these
     if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
       ex->name = "__post_instantiate";
+    }
+    if (wasm.table.imported()) {
+      if (wasm.table.base != "table") wasm.table.base = Name("table");
+    }
+    if (wasm.memory.imported()) {
+      if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
     }
   } else {
     generator.generateRuntimeFunctions();
