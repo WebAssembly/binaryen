@@ -804,53 +804,150 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void visitSetLocal(SetLocal* curr) {
-        // Undo an if return value into a local, if one arm is a br, as we
-        // prefer a br_if:
-        //  (set_local $x
-        //    (if (result i32)
-        //      (..condition..)
-        //      (br $somewhere)
-        //      (..result)
-        //    )
-        //  )
-        // =>
-        //  (br_if $somewhere
-        //    (..condition..)
-        //  )
-        //  (set_local $x
-        //    (..result)
-        //  )
-        // TODO: handle a condition in the br? need to watch for side effects
-        auto* iff = curr->value->dynCast<If>();
-        if (!iff) return;
-        if (!isConcreteType(iff->type) || !isConcreteType(iff->condition->type)) return;
+        // Sets of an if can be optimized in various ways that remove part of
+        // the if branching, or all of it.
+        // The optimizations we can do here can recurse and call each
+        // other, so pass around a pointer to the output.
+        optimizeSetIf(getCurrentPointer());
+      }
+
+      void optimizeSetIf(Expression** currp) {
+        if (optimizeSetIfWithBrArm(currp)) return;
+        if (optimizeSetIfWithCopyArm(currp)) return;
+      }
+
+      // If one arm is a br, we prefer a br_if and the set later:
+      //  (set_local $x
+      //    (if (result i32)
+      //      (..condition..)
+      //      (br $somewhere)
+      //      (..result)
+      //    )
+      //  )
+      // =>
+      //  (br_if $somewhere
+      //    (..condition..)
+      //  )
+      //  (set_local $x
+      //    (..result)
+      //  )
+      // TODO: handle a condition in the br? need to watch for side effects
+      bool optimizeSetIfWithBrArm(Expression** currp) {
+        auto* set = (*currp)->cast<SetLocal>();
+        auto* iff = set->value->dynCast<If>();
+        if (!iff ||
+            !isConcreteType(iff->type) ||
+            !isConcreteType(iff->condition->type)) {
+          return false;
+        }
         auto tryToOptimize = [&](Expression* one, Expression* two, bool flipCondition) {
           if (one->type == unreachable && two->type != unreachable) {
             if (auto* br = one->dynCast<Break>()) {
               if (ExpressionAnalyzer::isSimple(br)) {
                 // Wonderful, do it!
                 Builder builder(*getModule());
-                br->condition = iff->condition;
                 if (flipCondition) {
-                  br->condition = builder.makeUnary(EqZInt32, br->condition);
+                  builder.flip(iff);
                 }
+                br->condition = iff->condition;
                 br->finalize();
-                curr->value = two;
-                replaceCurrent(
-                  builder.makeSequence(
-                    br,
-                    curr
-                  )
-                );
+                set->value = two;
+                auto* block = builder.makeSequence(br, set);
+                *currp = block;
+                // Recurse on the set, which now has a new value.
+                optimizeSetIf(&block->list[1]);
                 return true;
               }
             }
           }
           return false;
         };
-        if (!tryToOptimize(iff->ifTrue, iff->ifFalse, false)) {
-          tryToOptimize(iff->ifFalse, iff->ifTrue, true);
+        return tryToOptimize(iff->ifTrue, iff->ifFalse, false) ||
+               tryToOptimize(iff->ifFalse, iff->ifTrue, true);
+      }
+
+      // If one arm is a get of the same outer set, it is a copy which
+      // we can remove. If this is not a tee, then we remove the get
+      // as well as the if-else opcode in the binary format, which is
+      // great:
+      //  (set_local $x
+      //    (if (result i32)
+      //      (..condition..)
+      //      (..result)
+      //      (get_local $x)
+      //    )
+      //  )
+      // =>
+      //  (if
+      //    (..condition..)
+      //    (set_local $x
+      //      (..result)
+      //    )
+      //  )
+      // If this is a tee, then we can do the same operation but
+      // inside a block, and keep the get:
+      //  (tee_local $x
+      //    (if (result i32)
+      //      (..condition..)
+      //      (..result)
+      //      (get_local $x)
+      //    )
+      //  )
+      // =>
+      //  (block (result i32)
+      //    (if
+      //      (..condition..)
+      //      (set_local $x
+      //        (..result)
+      //      )
+      //    )
+      //    (get_local $x)
+      //  )
+      // We save the if-else opcode, and add the block's opcodes.
+      // This may be detrimental, however, often the block can be
+      // merged or eliminated given the outside scope, and we
+      // removed one of the if branches.
+      bool optimizeSetIfWithCopyArm(Expression** currp) {
+        auto* set = (*currp)->cast<SetLocal>();
+        auto* iff = set->value->dynCast<If>();
+        if (!iff ||
+            !isConcreteType(iff->type) ||
+            !isConcreteType(iff->condition->type)) {
+          return false;
         }
+        Builder builder(*getModule());
+        GetLocal* get = iff->ifTrue->dynCast<GetLocal>();
+        if (get && get->index == set->index) {
+          builder.flip(iff);
+        } else {
+          get = iff->ifFalse->dynCast<GetLocal>();
+          if (get && get->index != set->index) {
+            get = nullptr;
+          }
+        }
+        if (!get) return false;
+        // We can do it!
+        bool tee = set->isTee();
+        assert(set->index == get->index);
+        assert(iff->ifFalse == get);
+        set->value = iff->ifTrue;
+        set->finalize();
+        iff->ifTrue = set;
+        iff->ifFalse = nullptr;
+        iff->finalize();
+        Expression* replacement = iff;
+        if (tee) {
+          set->setTee(false);
+          // We need a block too.
+          replacement = builder.makeSequence(
+            iff,
+            get // reuse the get
+          );
+        }
+        *currp = replacement;
+        // Recurse on the set, which now has a new value.
+        optimizeSetIf(&iff->ifTrue);
+        return true;
       }
 
       // (br_if)+ => br_table

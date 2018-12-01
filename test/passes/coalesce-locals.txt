@@ -1010,11 +1010,10 @@
   (local $0 i32)
   (local $1 i32)
   (loop $top
-   (if
-    (i32.eqz
+   (set_local $0
+    (if (result i32)
      (i32.const 1)
-    )
-    (set_local $0
+     (get_local $0)
      (get_local $1)
     )
    )
@@ -1031,10 +1030,11 @@
   (local $0 i32)
   (local $1 i32)
   (loop $top
-   (if
-    (i32.const 1)
-    (set_local $1
+   (set_local $1
+    (if (result i32)
+     (i32.const 1)
      (get_local $0)
+     (get_local $1)
     )
    )
    (drop
@@ -1050,10 +1050,11 @@
   (local $0 i32)
   (local $1 i32)
   (loop $top
-   (if
-    (i32.const 1)
-    (tee_local $0
+   (set_local $0
+    (if (result i32)
+     (i32.const 1)
      (unreachable)
+     (get_local $0)
     )
    )
    (drop
@@ -1090,10 +1091,10 @@
   (local $1 i32)
   (loop $top
    (drop
-    (if (result i32)
-     (i32.const 1)
-     (get_local $0)
-     (tee_local $0
+    (tee_local $0
+     (if (result i32)
+      (i32.const 1)
+      (get_local $0)
       (i32.const 2)
      )
     )
@@ -1127,10 +1128,10 @@
  )
  (func $tee_if_with_unreachable_else (; 50 ;) (type $8) (param $0 f64) (param $1 i32) (result i64)
   (call $tee_if_with_unreachable_else
-   (if (result f64)
-    (get_local $1)
-    (get_local $0)
-    (tee_local $0
+   (tee_local $0
+    (if (result f64)
+     (get_local $1)
+     (get_local $0)
      (unreachable)
     )
    )
@@ -1142,12 +1143,12 @@
  )
  (func $tee_if_with_unreachable_true (; 51 ;) (type $8) (param $0 f64) (param $1 i32) (result i64)
   (call $tee_if_with_unreachable_else
-   (if (result f64)
-    (get_local $1)
-    (tee_local $0
+   (tee_local $0
+    (if (result f64)
+     (get_local $1)
      (unreachable)
+     (get_local $0)
     )
-    (get_local $0)
    )
    (f64.lt
     (f64.const -128)
