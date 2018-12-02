@@ -179,8 +179,7 @@
   )
  )
  (func $b14 (; 14 ;) (type $2) (result i32)
-  (if (result i32)
-   (i32.const 1)
+  (select
    (block $topmost (result i32)
     (block $block1 (result i32)
      (i32.const 12)
@@ -189,6 +188,7 @@
    (block $block3 (result i32)
     (i32.const 27)
    )
+   (i32.const 1)
   )
  )
  (func $b15 (; 15 ;) (type $1)
@@ -726,10 +726,10 @@
      (i32.const 6)
     )
    )
-   (if (result i32)
-    (i32.const 6)
+   (select
     (i32.const 7)
     (i32.const 8)
+    (i32.const 6)
    )
   )
  )
@@ -1861,10 +1861,10 @@
   (i32.const 0)
  )
  (func $if-flow-1 (; 75 ;) (type $2) (result i32)
-  (if (result i32)
-   (i32.const 0)
+  (select
    (i32.const 1)
    (i32.const 2)
+   (i32.const 0)
   )
  )
  (func $if-flow-2 (; 76 ;) (type $2) (result i32)
@@ -2073,12 +2073,12 @@
   )
  )
  (func $if-block-br-5-value (; 93 ;) (type $2) (result i32)
-  (if (result i32)
-   (i32.const 1)
+  (select
    (block $label (result i32)
     (i32.const 2)
    )
    (i32.const 3)
+   (i32.const 1)
   )
  )
  (func $restructure-if-outerType-change (; 94 ;) (type $1)
@@ -2249,40 +2249,40 @@
    )
   )
   (drop
-   (if (result i32)
+   (select
+    (i32.add
+     (i32.const 2)
+     (i32.const 3)
+    )
+    (i32.add
+     (i32.const 2)
+     (i32.const 3)
+    )
     (i32.eq
      (get_local $x)
      (i32.const 1)
-    )
-    (i32.add
-     (i32.const 2)
-     (i32.const 3)
-    )
-    (i32.add
-     (i32.const 2)
-     (i32.const 3)
     )
    )
   )
  )
  (func $if-one-side (; 103 ;) (type $2) (result i32)
   (local $x i32)
-  (if
-   (i32.const 1)
-   (set_local $x
+  (set_local $x
+   (select
     (i32.const 2)
+    (get_local $x)
+    (i32.const 1)
    )
   )
   (get_local $x)
  )
  (func $if-one-side-b (; 104 ;) (type $2) (result i32)
   (local $x i32)
-  (if
-   (i32.eqz
-    (i32.const 1)
-   )
-   (set_local $x
+  (set_local $x
+   (select
+    (get_local $x)
     (i32.const 2)
+    (i32.const 1)
    )
   )
   (get_local $x)
@@ -2297,14 +2297,12 @@
   (local $z i32)
   (drop
    (call $if-one-side-tee-etc
-    (block (result i32)
-     (if
+    (tee_local $x
+     (select
+      (i32.const -4)
+      (get_local $x)
       (i32.const -3)
-      (set_local $x
-       (i32.const -4)
-      )
      )
-     (get_local $x)
     )
    )
   )
@@ -2313,13 +2311,15 @@
  (func $ifs-copies-recursive (; 106 ;) (type $10) (param $20 i32) (result i32)
   (if
    (i32.const 1)
-   (if
-    (i32.const 2)
-    (if
-     (i32.const 3)
-     (set_local $20
+   (set_local $20
+    (select
+     (select
       (i32.const 4)
+      (get_local $20)
+      (i32.const 3)
      )
+     (get_local $20)
+     (i32.const 2)
     )
    )
   )
@@ -2329,12 +2329,11 @@
   (local $x i32)
   (local $y i32)
   (loop $top
-   (if
-    (i32.eqz
-     (i32.const 1)
-    )
-    (set_local $x
+   (set_local $x
+    (select
+     (get_local $x)
      (get_local $y)
+     (i32.const 1)
     )
    )
    (br $top)
@@ -2372,16 +2371,12 @@
   (local $y i32)
   (loop $top
    (drop
-    (block (result i32)
-     (if
-      (i32.eqz
-       (i32.const 1)
-      )
-      (set_local $x
-       (i32.const 2)
-      )
+    (tee_local $x
+     (select
+      (get_local $x)
+      (i32.const 2)
+      (i32.const 1)
      )
-     (get_local $x)
     )
    )
    (br $top)

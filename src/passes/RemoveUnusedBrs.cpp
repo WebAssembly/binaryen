@@ -21,9 +21,10 @@
 #include <wasm.h>
 #include <pass.h>
 #include <parsing.h>
-#include <ir/utils.h>
 #include <ir/branch-utils.h>
+#include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/utils.h>
 #include <wasm-builder.h>
 
 namespace wasm {
@@ -780,27 +781,44 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       void visitIf(If* curr) {
         // we may have simplified ifs enough to turn them into selects
-        // this is helpful for code size, but can be a tradeoff with performance as we run both code paths
-        if (!shrink) return;
-        if (curr->ifFalse && isConcreteType(curr->ifTrue->type) && isConcreteType(curr->ifFalse->type)) {
-          // if with else, consider turning it into a select if there is no control flow
-          // TODO: estimate cost
-          EffectAnalyzer condition(passOptions, curr->condition);
-          if (!condition.hasSideEffects()) {
-            EffectAnalyzer ifTrue(passOptions, curr->ifTrue);
-            if (!ifTrue.hasSideEffects()) {
-              EffectAnalyzer ifFalse(passOptions, curr->ifFalse);
-              if (!ifFalse.hasSideEffects()) {
-                auto* select = getModule()->allocator.alloc<Select>();
-                select->condition = curr->condition;
-                select->ifTrue = curr->ifTrue;
-                select->ifFalse = curr->ifFalse;
-                select->finalize();
-                replaceCurrent(select);
-              }
+        if (auto* select = selectify(curr)) {
+          replaceCurrent(select);
+        }
+      }
+
+      // Convert an if into a select, if possible and beneficial to do so.
+      Select* selectify(If* iff) {
+        if (!iff->ifFalse ||
+            !isConcreteType(iff->ifTrue->type) ||
+            !isConcreteType(iff->ifFalse->type)) {
+          return nullptr;
+        }
+        // This is always helpful for code size, but can be a tradeoff with performance
+        // as we run both code paths. So when shrinking we always try to do this, but
+        // otherwise must consider more carefully.
+        if (!passOptions.shrinkLevel) {
+          // Consider the cost of executing all the code unconditionally
+          const auto MAX_COST = 7;
+          auto total = CostAnalyzer(iff->ifTrue).cost +
+                       CostAnalyzer(iff->ifFalse).cost;
+          if (total >= MAX_COST) return nullptr;
+        }
+        // Check if side effects allow this.
+        EffectAnalyzer condition(passOptions, iff->condition);
+        if (!condition.hasSideEffects()) {
+          EffectAnalyzer ifTrue(passOptions, iff->ifTrue);
+          if (!ifTrue.hasSideEffects()) {
+            EffectAnalyzer ifFalse(passOptions, iff->ifFalse);
+            if (!ifFalse.hasSideEffects()) {
+              return Builder(*getModule()).makeSelect(
+                iff->condition,
+                iff->ifTrue,
+                iff->ifFalse
+              );
             }
           }
         }
+        return nullptr;
       }
 
       void visitSetLocal(SetLocal* curr) {
