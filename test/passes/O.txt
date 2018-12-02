@@ -5,6 +5,8 @@
  (export "ret" (func $ret))
  (export "waka" (func $if-0-unreachable-to-none))
  (export "many-selects" (func $many-selects))
+ (export "end-if-else" (func $end-if-else))
+ (export "end-if-else-call" (func $end-if-else-call))
  (func $ret (; 0 ;) (; has Stack IR ;) (type $0) (result i32)
   (drop
    (call $ret)
@@ -21,22 +23,34 @@
   (unreachable)
  )
  (func $many-selects (; 2 ;) (; has Stack IR ;) (type $2) (param $0 i32) (result i32)
-  (tee_local $0
+  (select
+   (i32.const -1073741824)
    (select
-    (i32.const -1073741824)
-    (select
+    (i32.const 1073741823)
+    (get_local $0)
+    (i32.gt_s
+     (get_local $0)
      (i32.const 1073741823)
-     (get_local $0)
-     (i32.gt_s
-      (get_local $0)
-      (i32.const 1073741823)
-     )
-    )
-    (i32.lt_s
-     (get_local $0)
-     (i32.const -1073741824)
     )
    )
+   (i32.lt_s
+    (get_local $0)
+    (i32.const -1073741824)
+   )
+  )
+ )
+ (func $end-if-else (; 3 ;) (; has Stack IR ;) (type $2) (param $0 i32) (result i32)
+  (select
+   (i32.const 1)
+   (get_local $0)
+   (get_local $0)
+  )
+ )
+ (func $end-if-else-call (; 4 ;) (; has Stack IR ;) (type $2) (param $0 i32) (result i32)
+  (if (result i32)
+   (get_local $0)
+   (call $ret)
+   (get_local $0)
   )
  )
 )

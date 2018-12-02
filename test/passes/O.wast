@@ -45,5 +45,23 @@
    )
    (get_local $0)
   )
+  (func $end-if-else (export "end-if-else") (param $x i32) (result i32)
+    (if
+      (get_local $x)
+      (set_local $x
+        (i32.const 1)
+      )
+    )
+    (get_local $x)
+  )
+  (func $end-if-else-call (export "end-if-else-call") (param $x i32) (result i32)
+    (if
+      (get_local $x)
+      (set_local $x
+        (call $ret)
+      )
+    )
+    (get_local $x)
+  )
 )
 
