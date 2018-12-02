@@ -24,5 +24,26 @@
     )
    )
   )
+  (func $many-selects (export "many-selects") (param $0 i32) (result i32)
+   (if
+    (i32.lt_s
+     (get_local $0)
+     (i32.const -1073741824)
+    )
+    (set_local $0
+     (i32.const -1073741824)
+    )
+    (if
+     (i32.gt_s
+      (get_local $0)
+      (i32.const 1073741823)
+     )
+     (set_local $0
+      (i32.const 1073741823)
+     )
+    )
+   )
+   (get_local $0)
+  )
 )
 
