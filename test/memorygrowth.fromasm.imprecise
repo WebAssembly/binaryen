@@ -1571,7 +1571,7 @@
                (get_local $2)
               )
               (block
-               (set_local $29
+               (set_local $30
                 (get_local $13)
                )
                (set_local $28
@@ -1823,7 +1823,7 @@
            )
           )
           (block
-           (set_local $29
+           (set_local $30
             (get_local $36)
            )
            (set_local $28
@@ -1868,13 +1868,13 @@
               (get_local $0)
              )
             )
-            (get_local $29)
+            (get_local $30)
            )
           )
           (set_local $6
            (select
             (get_local $9)
-            (get_local $29)
+            (get_local $30)
             (get_local $3)
            )
           )
@@ -1892,7 +1892,7 @@
             )
            )
            (block
-            (set_local $29
+            (set_local $30
              (get_local $6)
             )
             (set_local $28
@@ -1912,7 +1912,7 @@
              )
             )
             (block
-             (set_local $29
+             (set_local $30
               (get_local $6)
              )
              (set_local $32
@@ -3516,14 +3516,14 @@
         )
        )
        (block
-        (set_local $20
-         (get_local $4)
-        )
         (set_local $26
          (get_local $12)
         )
         (set_local $8
          (i32.const 191)
+        )
+        (set_local $20
+         (get_local $4)
         )
        )
       )
@@ -3781,7 +3781,7 @@
            )
           )
          )
-         (set_local $30
+         (set_local $29
           (i32.const 1656)
          )
         )
@@ -3791,7 +3791,7 @@
          (get_local $8)
          (i32.const 209)
         )
-        (set_local $30
+        (set_local $29
          (if (result i32)
           (i32.and
            (i32.load offset=12
@@ -4949,7 +4949,7 @@
           (i32.le_u
            (tee_local $1
             (i32.load
-             (get_local $30)
+             (get_local $29)
             )
            )
            (get_local $12)
@@ -4959,7 +4959,7 @@
             (tee_local $16
              (i32.add
               (i32.load offset=4
-               (get_local $30)
+               (get_local $29)
               )
               (get_local $1)
              )
@@ -4974,9 +4974,9 @@
            )
           )
          )
-         (set_local $30
+         (set_local $29
           (i32.load offset=8
-           (get_local $30)
+           (get_local $29)
           )
          )
          (br $while-in66)
@@ -7851,10 +7851,10 @@
       (i32.const 0)
      )
      (block
-      (set_local $16
+      (set_local $15
        (get_local $5)
       )
-      (set_local $17
+      (set_local $16
        (get_local $3)
       )
       (set_local $1
@@ -7963,12 +7963,15 @@
     (br $while-in)
    )
   )
-  (if
+  (set_global $r
+   (get_local $12)
+  )
+  (if (result i32)
    (i32.eq
     (get_local $1)
     (i32.const 6)
    )
-   (block
+   (block (result i32)
     (i32.store offset=16
      (get_local $0)
      (i32.add
@@ -7992,16 +7995,14 @@
      (get_local $13)
      (get_local $4)
     )
-    (set_local $15
-     (get_local $2)
-    )
+    (get_local $2)
    )
-   (if
+   (if (result i32)
     (i32.eq
      (get_local $1)
      (i32.const 8)
     )
-    (block
+    (block (result i32)
      (i32.store offset=16
       (get_local $0)
       (i32.const 0)
@@ -8023,28 +8024,23 @@
        (i32.const 32)
       )
      )
-     (set_local $15
-      (select
-       (i32.const 0)
-       (i32.sub
-        (get_local $2)
-        (i32.load offset=4
-         (get_local $16)
-        )
+     (select
+      (i32.const 0)
+      (i32.sub
+       (get_local $2)
+       (i32.load offset=4
+        (get_local $15)
        )
-       (i32.eq
-        (get_local $17)
-        (i32.const 2)
-       )
+      )
+      (i32.eq
+       (get_local $16)
+       (i32.const 2)
       )
      )
     )
+    (get_local $17)
    )
   )
-  (set_global $r
-   (get_local $12)
-  )
-  (get_local $15)
  )
  (func $Wa (; 16 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
@@ -8309,84 +8305,82 @@
     )
    )
   )
-  (if
-   (i32.eq
-    (get_local $2)
-    (i32.const 4)
-   )
-   (block
-    (set_local $2
-     (get_local $1)
+  (i32.sub
+   (if (result i32)
+    (i32.eq
+     (get_local $2)
+     (i32.const 4)
     )
-    (set_local $0
-     (loop $while-in1 (result i32)
-      (if (result i32)
-       (i32.and
-        (i32.add
-         (tee_local $1
-          (i32.load
-           (get_local $2)
+    (block (result i32)
+     (set_local $2
+      (get_local $1)
+     )
+     (set_local $0
+      (loop $while-in1 (result i32)
+       (if (result i32)
+        (i32.and
+         (i32.add
+          (tee_local $1
+           (i32.load
+            (get_local $2)
+           )
           )
+          (i32.const -16843009)
          )
-         (i32.const -16843009)
-        )
-        (i32.xor
-         (i32.and
-          (get_local $1)
+         (i32.xor
+          (i32.and
+           (get_local $1)
+           (i32.const -2139062144)
+          )
           (i32.const -2139062144)
          )
-         (i32.const -2139062144)
         )
-       )
-       (get_local $2)
-       (block
-        (set_local $2
-         (i32.add
-          (get_local $2)
-          (i32.const 4)
-         )
-        )
-        (br $while-in1)
-       )
-      )
-     )
-    )
-    (if
-     (i32.and
-      (get_local $1)
-      (i32.const 255)
-     )
-     (block
-      (set_local $1
-       (get_local $0)
-      )
-      (loop $while-in3
-       (if
-        (i32.load8_s
-         (tee_local $0
+        (get_local $2)
+        (block
+         (set_local $2
           (i32.add
-           (get_local $1)
-           (i32.const 1)
+           (get_local $2)
+           (i32.const 4)
           )
          )
-        )
-        (block
-         (set_local $1
-          (get_local $0)
-         )
-         (br $while-in3)
+         (br $while-in1)
         )
        )
       )
      )
-    )
-    (set_local $5
+     (if
+      (i32.and
+       (get_local $1)
+       (i32.const 255)
+      )
+      (block
+       (set_local $1
+        (get_local $0)
+       )
+       (loop $while-in3
+        (if
+         (i32.load8_s
+          (tee_local $0
+           (i32.add
+            (get_local $1)
+            (i32.const 1)
+           )
+          )
+         )
+         (block
+          (set_local $1
+           (get_local $0)
+          )
+          (br $while-in3)
+         )
+        )
+       )
+      )
+     )
      (get_local $0)
     )
+    (get_local $5)
    )
-  )
-  (i32.sub
-   (get_local $5)
    (get_local $3)
   )
  )
@@ -9052,6 +9046,7 @@
   (local $0 i32)
   (local $1 i32)
   (local $2 i32)
+  (local $3 i32)
   (drop
    (i32.load offset=76
     (tee_local $0
@@ -9063,70 +9058,84 @@
   )
   (i32.shr_s
    (i32.shl
-    (tee_local $1
-     (if (result i32)
-      (i32.lt_s
-       (i32.add
-        (call $bb
-         (i32.const 1144)
-         (call $Za
-          (i32.const 1144)
-         )
-         (get_local $0)
-        )
-        (i32.const -1)
-       )
-       (i32.const 0)
-      )
-      (i32.const 1)
-      (block $do-once (result i32)
-       (if
-        (i32.ne
-         (i32.load8_s offset=75
-          (get_local $0)
-         )
-         (i32.const 10)
-        )
-        (if
-         (i32.lt_u
-          (tee_local $1
-           (i32.load
-            (tee_local $2
-             (i32.add
-              (get_local $0)
-              (i32.const 20)
+    (if (result i32)
+     (i32.lt_s
+      (i32.add
+       (select
+        (i32.div_u
+         (tee_local $3
+          (call $Wa
+           (i32.const 1144)
+           (tee_local $2
+            (tee_local $1
+             (call $Za
+              (i32.const 1144)
              )
             )
            )
-          )
-          (i32.load offset=16
            (get_local $0)
           )
          )
-         (block
-          (i32.store
-           (get_local $2)
-           (i32.add
-            (get_local $1)
-            (i32.const 1)
+         (get_local $1)
+        )
+        (i32.const 1)
+        (i32.ne
+         (get_local $2)
+         (get_local $3)
+        )
+       )
+       (i32.const -1)
+      )
+      (i32.const 0)
+     )
+     (i32.const 1)
+     (block $do-once (result i32)
+      (if
+       (i32.ne
+        (i32.load8_s offset=75
+         (get_local $0)
+        )
+        (i32.const 10)
+       )
+       (if
+        (i32.lt_u
+         (tee_local $1
+          (i32.load
+           (tee_local $2
+            (i32.add
+             (get_local $0)
+             (i32.const 20)
+            )
            )
           )
-          (i32.store8
+         )
+         (i32.load offset=16
+          (get_local $0)
+         )
+        )
+        (block
+         (i32.store
+          (get_local $2)
+          (i32.add
            (get_local $1)
-           (i32.const 10)
+           (i32.const 1)
           )
-          (br $do-once
-           (i32.const 0)
-          )
+         )
+         (i32.store8
+          (get_local $1)
+          (i32.const 10)
+         )
+         (br $do-once
+          (i32.const 0)
          )
         )
        )
-       (i32.lt_s
-        (call $ab
-         (get_local $0)
-        )
-        (i32.const 0)
+      )
+      (i32.lt_s
+       (call $ab
+        (get_local $0)
        )
+       (i32.const 0)
       )
      )
     )
@@ -9213,36 +9222,7 @@
    )
   )
  )
- (func $bb (; 26 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (local $3 i32)
-  (local $4 i32)
-  (set_local $4
-   (i32.const 1)
-  )
-  (set_local $3
-   (get_local $1)
-  )
-  (if
-   (i32.ne
-    (get_local $3)
-    (tee_local $0
-     (call $Wa
-      (get_local $0)
-      (get_local $3)
-      (get_local $2)
-     )
-    )
-   )
-   (set_local $4
-    (i32.div_u
-     (get_local $0)
-     (get_local $1)
-    )
-   )
-  )
-  (get_local $4)
- )
- (func $Ua (; 27 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Ua (; 26 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9311,7 +9291,7 @@
   )
   (get_local $0)
  )
- (func $Va (; 28 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $Va (; 27 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (local $4 i32)
   (set_local $4
@@ -9381,7 +9361,7 @@
   )
   (get_local $3)
  )
- (func $Oa (; 29 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $Oa (; 28 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (get_global $r)
@@ -9411,7 +9391,7 @@
   )
   (get_local $0)
  )
- (func $Pa (; 30 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $Pa (; 29 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (if (result i32)
    (i32.gt_u
     (get_local $0)
@@ -9430,7 +9410,7 @@
    (get_local $0)
   )
  )
- (func $Qa (; 31 ;) (; has Stack IR ;) (result i32)
+ (func $Qa (; 30 ;) (; has Stack IR ;) (result i32)
   (select
    (i32.load
     (i32.const 64)
@@ -9441,7 +9421,7 @@
    )
   )
  )
- (func $lb (; 32 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
+ (func $lb (; 31 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call_indirect (type $FUNCSIG$iiii)
    (get_local $1)
    (get_local $2)
@@ -9455,7 +9435,7 @@
    )
   )
  )
- (func $Ea (; 33 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $Ea (; 32 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (local $1 i32)
   (set_local $1
    (get_global $r)
@@ -9477,13 +9457,13 @@
   )
   (get_local $1)
  )
- (func $ob (; 34 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $ob (; 33 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (call $ja
    (i32.const 1)
   )
   (i32.const 0)
  )
- (func $Ia (; 35 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
+ (func $Ia (; 34 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
     (get_global $v)
@@ -9498,7 +9478,7 @@
    )
   )
  )
- (func $kb (; 36 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ (func $kb (; 35 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   (call_indirect (type $FUNCSIG$ii)
    (get_local $1)
    (i32.and
@@ -9507,10 +9487,10 @@
    )
   )
  )
- (func $Sa (; 37 ;) (; has Stack IR ;) (param $0 i32)
+ (func $Sa (; 36 ;) (; has Stack IR ;) (param $0 i32)
   (nop)
  )
- (func $mb (; 38 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
+ (func $mb (; 37 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (call_indirect (type $FUNCSIG$vi)
    (get_local $1)
    (i32.add
@@ -9522,7 +9502,7 @@
    )
   )
  )
- (func $Ha (; 39 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
+ (func $Ha (; 38 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32)
   (set_global $r
    (get_local $0)
   )
@@ -9530,40 +9510,40 @@
    (get_local $1)
   )
  )
- (func $nb (; 40 ;) (; has Stack IR ;) (param $0 i32) (result i32)
+ (func $nb (; 39 ;) (; has Stack IR ;) (param $0 i32) (result i32)
   (call $ja
    (i32.const 0)
   )
   (i32.const 0)
  )
- (func $Na (; 41 ;) (; has Stack IR ;) (result i32)
+ (func $Na (; 40 ;) (; has Stack IR ;) (result i32)
   (drop
    (call $db)
   )
   (i32.const 0)
  )
- (func $pb (; 42 ;) (; has Stack IR ;) (param $0 i32)
+ (func $pb (; 41 ;) (; has Stack IR ;) (param $0 i32)
   (call $ja
    (i32.const 2)
   )
  )
- (func $La (; 43 ;) (; has Stack IR ;) (param $0 i32)
+ (func $La (; 42 ;) (; has Stack IR ;) (param $0 i32)
   (set_global $K
    (get_local $0)
   )
  )
- (func $Ga (; 44 ;) (; has Stack IR ;) (param $0 i32)
+ (func $Ga (; 43 ;) (; has Stack IR ;) (param $0 i32)
   (set_global $r
    (get_local $0)
   )
  )
- (func $Ma (; 45 ;) (; has Stack IR ;) (result i32)
+ (func $Ma (; 44 ;) (; has Stack IR ;) (result i32)
   (get_global $K)
  )
- (func $Fa (; 46 ;) (; has Stack IR ;) (result i32)
+ (func $Fa (; 45 ;) (; has Stack IR ;) (result i32)
   (get_global $r)
  )
- (func $ib (; 47 ;) (; has Stack IR ;) (result i32)
+ (func $ib (; 46 ;) (; has Stack IR ;) (result i32)
   (i32.const 0)
  )
 )
