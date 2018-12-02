@@ -232,7 +232,7 @@
   )
  )
  (func $smallCompare (; 18 ;) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-  (if
+  (if (result i32)
    (i32.lt_u
     (tee_local $0
      (select
@@ -249,14 +249,12 @@
     )
     (get_local $1)
    )
-   (set_local $0
-    (i32.add
-     (get_local $0)
-     (i32.const 1)
-    )
+   (i32.add
+    (get_local $0)
+    (i32.const 1)
    )
+   (get_local $0)
   )
-  (get_local $0)
  )
  (func $cneg_nosemicolon (; 19 ;) (; has Stack IR ;)
   (call_indirect (type $FUNCSIG$vi)

@@ -179,8 +179,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   add("coalesce-locals");
   add("simplify-locals");
-  add("vacuum"); // previous pass creates garbage
+  add("vacuum");
   add("reorder-locals");
+  add("coalesce-locals");
+  add("reorder-locals");
+  add("vacuum");
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     add("code-folding");
   }
