@@ -1241,4 +1241,70 @@
    )
    (get_local $var$2)
   )
+  (func $loop-value (result i32)
+   (local $0 i32)
+   (local $1 i32)
+   (local $2 i32)
+   (local $3 f32)
+   (local $4 f32)
+   (local $5 f32)
+   (local $6 f32)
+   (local $7 f32)
+   (local $8 f32)
+   (local $9 f32)
+   (local $10 f32)
+   (block $label$1
+    (loop $label$2
+     (block $label$3
+      (set_global $global$0
+       (i32.const -1)
+      )
+      (block $label$4
+       (set_local $0
+        (call $0)
+       )
+       (if
+        (get_local $0)
+        (set_local $5
+         (f32.const -2048)
+        )
+        (block
+         (call $fimport$0
+          (i32.const -25732)
+         )
+         (br $label$2)
+        )
+       )
+      )
+      (set_local $6
+       (get_local $5)
+      )
+      (set_local $7
+       (get_local $6)
+      )
+     )
+     (set_local $8
+      (get_local $7)
+     )
+     (set_local $9
+      (get_local $8)
+     )
+    )
+    (set_local $10
+     (get_local $9)
+    )
+    (call $fimport$1
+     (get_local $10)
+    )
+    (set_local $1
+     (i32.const -5417091)
+    )
+   )
+   (set_local $2
+    (get_local $1)
+   )
+   (return
+    (get_local $2)
+   )
+  )
 )
