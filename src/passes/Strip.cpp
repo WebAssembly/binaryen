@@ -39,8 +39,7 @@ struct Strip : public Pass {
           return curr.name == BinaryConsts::UserSections::Name ||
                  curr.name == BinaryConsts::UserSections::SourceMapUrl ||
                  curr.name.find(".debug") == 0 ||
-                 curr.name == "reloc..debug_info" ||
-                 curr.name == "reloc..debug_line";
+                 curr.name.find("reloc..debug") == 0;
         }
       ),
       sections.end()

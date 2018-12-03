@@ -11,5 +11,5 @@
    (get_local $0)
   )
  )
- ;; custom section "linking", size 28
+ ;; custom section "zinking", size 28
 )
