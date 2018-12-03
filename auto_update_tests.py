@@ -34,7 +34,7 @@ def update_asm_js_tests():
     if asm.endswith('.asm.js'):
       for precise in [0, 1, 2]:
         for opts in [1, 0]:
-          cmd = ASM2WASM + [os.path.join('test', asm), '--enable-threads']
+          cmd = ASM2WASM + [os.path.join('test', asm)]
           wasm = asm.replace('.asm.js', '.fromasm')
           if not precise:
             cmd += ['--trap-mode=allow', '--ignore-implicit-traps']
