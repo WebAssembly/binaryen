@@ -1,0 +1,15 @@
+(module
+ (type $0 (func (result i32)))
+ (import "env" "__linear_memory" (memory $0 0))
+ (import "env" "__indirect_function_table" (table $timport$1 0 anyfunc))
+ (func $0 (; 0 ;) (type $0) (result i32)
+  (local $0 i32)
+  (set_local $0
+   (i32.const 1)
+  )
+  (return
+   (get_local $0)
+  )
+ )
+ ;; custom section "zinking", size 28
+)

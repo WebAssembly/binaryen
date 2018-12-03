@@ -131,6 +131,7 @@ void PassRegistry::registerPasses() {
   registerPass("souperify-single-use", "emit Souper IR in text form (single-use nodes only)", createSouperifySingleUsePass);
   registerPass("spill-pointers", "spill pointers to the C stack (useful for Boehm-style GC)", createSpillPointersPass);
   registerPass("ssa", "ssa-ify variables so that they have a single assignment", createSSAifyPass);
+  registerPass("strip", "strip debug info (including the names section)", createStripPass);
   registerPass("trap-mode-clamp", "replace trapping operations with clamping semantics", createTrapModeClamp);
   registerPass("trap-mode-js", "replace trapping operations with js semantics", createTrapModeJS);
   registerPass("untee", "removes tee_locals, replacing them with sets and gets", createUnteePass);

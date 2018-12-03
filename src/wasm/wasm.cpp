@@ -638,6 +638,17 @@ Type Function::getLocalType(Index index) {
   }
 }
 
+void Function::clearNames() {
+  localNames.clear();
+}
+
+void Function::clearDebugInfo() {
+  localIndices.clear();
+  debugLocations.clear();
+  prologLocation.clear();
+  epilogLocation.clear();
+}
+
 FunctionType* Module::getFunctionType(Name name) {
   auto iter = functionTypesMap.find(name);
   if (iter == functionTypesMap.end()) {
@@ -809,6 +820,10 @@ void Module::updateMaps() {
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+}
+
+void Module::clearDebugInfo() {
+  debugInfoFileNames.clear();
 }
 
 } // namespace wasm
