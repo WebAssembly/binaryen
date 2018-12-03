@@ -341,8 +341,8 @@ enum EncodedType {
 namespace UserSections {
 extern const char* Name;
 extern const char* SourceMapUrl;
-
 extern const char* Dylink;
+extern const char* Linking;
 
 enum Subsection {
   NameFunction = 1,

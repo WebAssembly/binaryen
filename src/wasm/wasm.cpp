@@ -29,8 +29,8 @@ namespace BinaryConsts {
 namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
-
 const char* Dylink = "dylink";
+const char* Linking = "linking";
 }
 }
 
