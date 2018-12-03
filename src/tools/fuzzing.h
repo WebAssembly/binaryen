@@ -123,8 +123,8 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build(FeatureSet feats) {
-    features = feats;
+  void build(FeatureSet features_) {
+    features = features_;
     setupMemory();
     setupTable();
     setupGlobals();
@@ -180,7 +180,7 @@ private:
   static const bool DE_NAN = true;
 
   // Features allowed to be emitted
-  FeatureSet features = FeatureSet::MVP;
+  FeatureSet features = FeatureSet::All;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
