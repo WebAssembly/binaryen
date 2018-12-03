@@ -74,12 +74,14 @@ def update_asm_js_tests():
 def update_lld_tests():
   print '\n[ checking wasm-emscripten-finalize testcases... ]\n'
 
-  extension_arg_map = {
-    '.out': [],
-    '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
-  }
   for wast_path in files_with_pattern('test', 'lld', '*.wast'):
     print '..', wast_path
+    mem_file = wast_path + '.mem'
+    extension_arg_map = {
+      '.out': [],
+      '.jscall.out': ['--emscripten-reserved-function-pointers=3'],
+      '.mem.out': ['--separate-data-segments', mem_file],
+    }
     for ext, ext_args in extension_arg_map.items():
       out_path = wast_path + ext
       if ext != '.out' and not os.path.exists(out_path):
