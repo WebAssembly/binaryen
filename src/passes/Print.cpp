@@ -1184,7 +1184,7 @@ Pass* createPrintStackIRPass() {
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
   PassRunner passRunner(module);
-  passRunner.setFeatures(Feature::All);
+  passRunner.setFeatures(FeatureSet::All);
   passRunner.setIsNested(true);
   passRunner.add<Printer>(&o);
   passRunner.run();
