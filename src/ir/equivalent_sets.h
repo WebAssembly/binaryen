@@ -25,8 +25,8 @@ namespace wasm {
 // A map of each index to all those it is equivalent to, and some helpers.
 //
 struct EquivalentSets {
-  // A set of indexes.
-  typedef std::unordered_set<Index> Set;
+  // A set of indexes. This is ordered for deterministic iteration.
+  typedef std::set<Index> Set;
 
   std::unordered_map<Index, std::shared_ptr<Set>> indexSets;
 

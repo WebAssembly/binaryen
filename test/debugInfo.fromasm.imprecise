@@ -118,40 +118,35 @@
   (set_local $1
    (block $__rjto$0 (result i32)
     (block $__rjti$0
-     (br $__rjto$0
-      (if (result i32)
-       (i32.lt_s
-        (tee_local $1
-         (i32.add
-          (get_local $0)
-          (i32.const 52)
-         )
+     (if
+      (i32.lt_s
+       (tee_local $1
+        (i32.add
+         (get_local $0)
+         (i32.const 52)
         )
-        (i32.const 1369188723)
        )
-       (block (result i32)
-        (br_if $__rjti$0
-         (i32.eqz
-          (i32.sub
-           (get_local $1)
-           (i32.const -1108210269)
-          )
-         )
+       (i32.const 1369188723)
+      )
+      (br_if $__rjti$0
+       (i32.eqz
+        (i32.sub
+         (get_local $1)
+         (i32.const -1108210269)
         )
-        (i32.const 0)
-       )
-       (block (result i32)
-        (br_if $__rjti$0
-         (i32.eqz
-          (i32.sub
-           (get_local $1)
-           (i32.const 1369188723)
-          )
-         )
-        )
-        (i32.const 0)
        )
       )
+      (br_if $__rjti$0
+       (i32.eqz
+        (i32.sub
+         (get_local $1)
+         (i32.const 1369188723)
+        )
+       )
+      )
+     )
+     (br $__rjto$0
+      (i32.const 0)
      )
     )
     (call $switch_reach

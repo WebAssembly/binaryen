@@ -37,13 +37,41 @@
 
 namespace wasm {
 
-enum Feature : uint32_t {
-  MVP = 0,
-  Atomics = 1 << 0,
-  MutableGlobals = 1 << 1,
-  All = 0xffffffff,
+struct FeatureSet {
+  enum Feature : uint32_t {
+    MVP = 0,
+    Atomics = 1 << 0,
+    MutableGlobals = 1 << 1,
+    TruncSat = 1 << 2,
+    All = Atomics | MutableGlobals | TruncSat
+  };
+
+  FeatureSet() : features(MVP) {}
+  FeatureSet(uint32_t features) : features(features) {}
+
+  bool isMVP() const { return features == MVP; }
+  bool hasAtomics() const { return features & Atomics; }
+  bool hasMutableGlobals() const { return features & MutableGlobals; }
+  bool hasTruncSat() const { return features & TruncSat; }
+  bool hasAll() const { return features & (Atomics | MutableGlobals | TruncSat); }
+
+  void makeMVP() { features = MVP; }
+  void setAtomics(bool v = true) {
+    features = v ? (features | Atomics) : (features & ~Atomics);
+  }
+  void setMutableGlobals(bool v = true) {
+    features = v ? (features | MutableGlobals) : (features & ~MutableGlobals);
+  }
+  void setTruncSat(bool v = true) {
+    features = v ? (features | TruncSat) : (features & ~TruncSat);
+  }
+  void setAll(bool v = true) {
+    features = v ? All : MVP;
+  }
+
+ private:
+  uint32_t features;
 };
-typedef uint32_t FeatureSet;
 
 // An index in a wasm module
 typedef uint32_t Index;
@@ -642,6 +670,9 @@ public:
   Name getLocalNameOrGeneric(Index index);
 
   bool hasLocalName(Index index) const;
+
+  void clearNames();
+  void clearDebugInfo();
 };
 
 // The kind of an import or export.
@@ -792,6 +823,8 @@ public:
   void removeGlobal(Name name);
 
   void updateMaps();
+
+  void clearDebugInfo();
 };
 
 } // namespace wasm

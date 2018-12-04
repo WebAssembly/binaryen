@@ -93,7 +93,7 @@ int main(int argc, const char *argv[]) {
 
   if (options.extra["validate"] != "none") {
     if (options.debug) std::cerr << "Validating..." << std::endl;
-    if (!wasm::WasmValidator().validate(wasm, Feature::All,
+    if (!wasm::WasmValidator().validate(wasm, FeatureSet::All,
          WasmValidator::Globally | (options.extra["validate"] == "web" ? WasmValidator::Web : 0))) {
       WasmPrinter::printModule(&wasm);
       Fatal() << "Error: input module is not valid.\n";

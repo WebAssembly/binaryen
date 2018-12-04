@@ -259,6 +259,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
       "--reorder-functions",
       "--reorder-locals",
       "--simplify-locals --vacuum",
+      "--strip",
       "--vacuum"
     };
     auto oldSize = file_size(working);
@@ -796,7 +797,7 @@ struct Reducer : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<
     FunctionReferenceRemover referenceRemover(names);
     referenceRemover.walkModule(module.get());
 
-    if (WasmValidator().validate(*module, Feature::All, WasmValidator::Globally | WasmValidator::Quiet) &&
+    if (WasmValidator().validate(*module, FeatureSet::All, WasmValidator::Globally | WasmValidator::Quiet) &&
         writeAndTestReduction()) {
       std::cerr << "|      removed " << names.size() << " functions\n";
       return true;
