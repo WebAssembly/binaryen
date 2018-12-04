@@ -15,6 +15,7 @@
   (drop (i64.load (i32.const 11)))
   (drop (f32.load (i32.const 12)))
   (drop (f64.load (i32.const 13)))
+  (drop (v128.load (i32.const 14)))
  )
  (func $stores
   (i32.store (i32.const 1) (i32.const 100))
@@ -31,6 +32,7 @@
   (i64.store (i32.const 11) (i64.const 1100))
   (f32.store (i32.const 12) (f32.const 1200))
   (f64.store (i32.const 13) (f64.const 1300))
+  (v128.store (i32.const 14) (v128.const i32 1 2 3 4))
  )
 )
 ;; not shared
@@ -52,4 +54,3 @@
   (i32.store (i32.const 1) (i32.const 100))
  )
 )
-
