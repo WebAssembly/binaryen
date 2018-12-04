@@ -92,6 +92,7 @@
 (module (memory 0) (func (drop (i32.load16_u align=2 (i32.const 0)))))
 (module (memory 0) (func (drop (i32.load align=4 (i32.const 0)))))
 (module (memory 0) (func (drop (f32.load align=4 (i32.const 0)))))
+(module (memory 0) (func (drop (v128.load align=16 (i32.const 0)))))
 
 (assert_invalid
   (module (memory 0) (func (drop (i64.load align=0 (i32.const 0)))))
@@ -113,7 +114,6 @@
   (module (memory 0) (func (drop (i64.load align=7 (i32.const 0)))))
   "alignment must be a power of two"
 )
-
 (assert_invalid
   (module (memory 0) (func (drop (i64.load align=16 (i32.const 0)))))
   "alignment must not be larger than natural"
@@ -135,6 +135,10 @@
   "alignment must not be larger than natural"
 )
 (assert_invalid
+  (module (memory 0) (func (v128.load align=128 (i32.const 0))))
+  "alignment must not be larget than natural"
+)
+(assert_invalid
   (module (memory 0) (func (i32.store8 align=2 (i32.const 0) (i32.const 0))))
   "alignment must not be larger than natural"
 )
@@ -150,32 +154,45 @@
   (module (memory 0) (func (i32.store8 align=2 (i32.const 0) (i32.const 0))))
   "alignment must not be larger than natural"
 )
+(assert_invalid
+  (module (memory 0) (func (v128.store align=128 (i32.const 0))))
+  "alignment must not be larget than natural"
+)
 
 (module
   (memory 1)
   (data (i32.const 0) "ABC\a7D") (data (i32.const 20) "WASM")
+  (data (i32.const 128) "WASMSIMDGOESFAST")
 
   ;; Data section
   (func (export "data") (result i32)
     (i32.and
       (i32.and
         (i32.and
-          (i32.eq (i32.load8_u (i32.const 0)) (i32.const 65))
-          (i32.eq (i32.load8_u (i32.const 3)) (i32.const 167))
+          (i32.and
+            (i32.eq (i32.load8_u (i32.const 0)) (i32.const 65))
+            (i32.eq (i32.load8_u (i32.const 3)) (i32.const 167))
+          )
+          (i32.and
+            (i32.eq (i32.load8_u (i32.const 6)) (i32.const 0))
+            (i32.eq (i32.load8_u (i32.const 19)) (i32.const 0))
+          )
         )
         (i32.and
-          (i32.eq (i32.load8_u (i32.const 6)) (i32.const 0))
-          (i32.eq (i32.load8_u (i32.const 19)) (i32.const 0))
+          (i32.and
+            (i32.eq (i32.load8_u (i32.const 20)) (i32.const 87))
+            (i32.eq (i32.load8_u (i32.const 23)) (i32.const 77))
+          )
+          (i32.and
+            (i32.eq (i32.load8_u (i32.const 24)) (i32.const 0))
+            (i32.eq (i32.load8_u (i32.const 1023)) (i32.const 0))
+          )
         )
       )
-      (i32.and
-        (i32.and
-          (i32.eq (i32.load8_u (i32.const 20)) (i32.const 87))
-          (i32.eq (i32.load8_u (i32.const 23)) (i32.const 77))
-        )
-        (i32.and
-          (i32.eq (i32.load8_u (i32.const 24)) (i32.const 0))
-          (i32.eq (i32.load8_u (i32.const 1023)) (i32.const 0))
+      (i8x16.all_true
+        (i8x16.eq
+          (v128.load (i32.const 128))
+          (v128.const i32 87 65 83 77 83 73 77 68 71 79 69 83 70 65 83 84)
         )
       )
     )
@@ -285,6 +302,12 @@
 	(i64.store32 (i32.const 8) (get_local $i))
 	(i64.load32_u (i32.const 8))
   )
+
+  ;; SIMD loads and stores
+  (func (export "v128_load") (param $v v128) (result v128)
+        (v128.store (i32.const 16) (get_local $v))
+        (v128.load (i32.const 16))
+  )
 )
 
 (assert_return (invoke "data") (i32.const 1))
@@ -315,3 +338,5 @@
 (assert_return (invoke "i64_load16_u" (i64.const 40000)) (i64.const 40000))
 (assert_return (invoke "i64_load32_s" (i64.const 20000)) (i64.const 20000))
 (assert_return (invoke "i64_load32_u" (i64.const 40000)) (i64.const 40000))
+
+(assert_return (invoke "v128_load" (v128.const i32 1 2 3 4)) (v128.const i32 1 2 3 4))
