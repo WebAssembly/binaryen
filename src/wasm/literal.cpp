@@ -28,14 +28,14 @@
 
 namespace wasm {
 
-template <int N>
+template<int N>
 using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, &init, 16);
 }
 
-template <typename LaneT, int Lanes>
+template<typename LaneT, int Lanes>
 static void extract_bytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
   std::array<uint8_t, 16> bytes;
   const size_t lane_width = 16 / Lanes;
@@ -510,6 +510,43 @@ Literal Literal::sub(const Literal& other) const {
   WASM_UNREACHABLE();
 }
 
+template<typename LaneT, Literal (Literal::*Op)(const Literal&) const>
+static Literal sat_arith(const Literal& val, const Literal& other) {
+  assert(val.type == Type::i32 && other.type == Type::i32);
+  Literal sum = val.add(other);
+  if (sum.geti32() > std::numeric_limits<LaneT>::max()) {
+    return Literal(std::numeric_limits<LaneT>::max());
+  } else if (sum.geti32() < std::numeric_limits<LaneT>::min()) {
+    return Literal(std::numeric_limits<LaneT>::min());
+  }
+  return sum;
+}
+
+Literal Literal::addSatSI8(const Literal& other) const {
+  return sat_arith<int8_t, &Literal::add>(*this, other);
+}
+Literal Literal::addSatUI8(const Literal& other) const {
+  return sat_arith<uint8_t, &Literal::add>(*this, other);
+}
+Literal Literal::addSatSI16(const Literal& other) const {
+  return sat_arith<int16_t, &Literal::add>(*this, other);
+}
+Literal Literal::addSatUI16(const Literal& other) const {
+  return sat_arith<uint16_t, &Literal::add>(*this, other);
+}
+Literal Literal::subSatSI8(const Literal& other) const {
+  return sat_arith<int8_t, &Literal::sub>(*this, other);
+}
+Literal Literal::subSatUI8(const Literal& other) const {
+  return sat_arith<uint8_t, &Literal::sub>(*this, other);
+}
+Literal Literal::subSatSI16(const Literal& other) const {
+  return sat_arith<int16_t, &Literal::sub>(*this, other);
+}
+Literal Literal::subSatUI16(const Literal& other) const {
+  return sat_arith<uint16_t, &Literal::sub>(*this, other);
+}
+
 Literal Literal::mul(const Literal& other) const {
   switch (type) {
     case Type::i32: return Literal(uint32_t(i32) * uint32_t(other.i32));
@@ -844,7 +881,7 @@ Literal Literal::copysign(const Literal& other) const {
   }
 }
 
-template <typename LaneT, int Lanes>
+template<typename LaneT, int Lanes>
 static LaneArray<Lanes> getLanes(const Literal& val) {
   assert(val.type == Type::v128);
   const size_t lane_width = 16 / Lanes;
@@ -902,7 +939,7 @@ Literal Literal::shuffleV8x16(const Literal& other, const std::array<uint8_t, 16
   return Literal(bytes);
 }
 
-template <Type Ty, int Lanes>
+template<Type Ty, int Lanes>
 static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
@@ -926,7 +963,7 @@ Literal Literal::extractLaneI64x2(uint8_t idx) const { return getLanesI64x2().at
 Literal Literal::extractLaneF32x4(uint8_t idx) const { return getLanesF32x4().at(idx); }
 Literal Literal::extractLaneF64x2(uint8_t idx) const { return getLanesF64x2().at(idx); }
 
-template <int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal replace(const Literal& val, const Literal& other, uint8_t idx) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   lanes.at(idx) = other;
@@ -953,7 +990,173 @@ Literal Literal::replaceLaneF64x2(const Literal& other, uint8_t idx) const {
   return replace<2, &Literal::getLanesF64x2>(*this, other, idx);
 }
 
-template <int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
+         Literal (Literal::*UnaryOp)(void) const>
+static Literal unary(const Literal& val) {
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    lanes[i] = (lanes[i].*UnaryOp)();
+  }
+  return Literal(lanes);
+}
+
+Literal Literal::notV128() const {
+  std::array<uint8_t, 16> ones;
+  ones.fill(0xff);
+  return xorV128(Literal(ones.data()));
+}
+Literal Literal::negI8x16() const {
+  return unary<16, &Literal::getLanesUI8x16, &Literal::neg>(*this);
+}
+Literal Literal::negI16x8() const {
+  return unary<8, &Literal::getLanesUI16x8, &Literal::neg>(*this);
+}
+Literal Literal::negI32x4() const {
+  return unary<4, &Literal::getLanesI32x4, &Literal::neg>(*this);
+}
+Literal Literal::negI64x2() const {
+  return unary<2, &Literal::getLanesI64x2, &Literal::neg>(*this);
+}
+Literal Literal::absF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::abs>(*this);
+}
+Literal Literal::negF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::neg>(*this);
+}
+Literal Literal::sqrtF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::sqrt>(*this);
+}
+Literal Literal::absF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::abs>(*this);
+}
+Literal Literal::negF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::neg>(*this);
+}
+Literal Literal::sqrtF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::sqrt>(*this);
+}
+Literal Literal::truncSatToSI32x4() const {
+  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToSI32>(*this);
+}
+Literal Literal::truncSatToUI32x4() const {
+  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToUI32>(*this);
+}
+Literal Literal::truncSatToSI64x2() const {
+  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToSI64>(*this);
+}
+Literal Literal::truncSatToUI64x2() const {
+  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToUI64>(*this);
+}
+Literal Literal::convertSToF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::convertSIToF32>(*this);
+}
+Literal Literal::convertUToF32x4() const {
+  return unary<4, &Literal::getLanesF32x4, &Literal::convertUIToF32>(*this);
+}
+Literal Literal::convertSToF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::convertSIToF64>(*this);
+}
+Literal Literal::convertUToF64x2() const {
+  return unary<2, &Literal::getLanesF64x2, &Literal::convertUIToF64>(*this);
+}
+
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
+static Literal any_true(const Literal& val) {
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    if (lanes[i] != Literal::makeLiteralZero(lanes[i].type)) {
+      return Literal(int32_t(1));
+    }
+  }
+  return Literal(int32_t(0));
+}
+
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
+static Literal all_true(const Literal& val) {
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    if (lanes[i] == Literal::makeLiteralZero(lanes[i].type)) {
+      return Literal(int32_t(0));
+    }
+  }
+  return Literal(int32_t(1));
+}
+
+Literal Literal::anyTrueI8x16() const {
+  return any_true<16, &Literal::getLanesUI8x16>(*this);
+}
+Literal Literal::allTrueI8x16() const {
+  return all_true<16, &Literal::getLanesUI8x16>(*this);
+}
+Literal Literal::anyTrueI16x8() const {
+  return any_true<8, &Literal::getLanesUI16x8>(*this);
+}
+Literal Literal::allTrueI16x8() const {
+  return all_true<8, &Literal::getLanesUI16x8>(*this);
+}
+Literal Literal::anyTrueI32x4() const {
+  return any_true<4, &Literal::getLanesI32x4>(*this);
+}
+Literal Literal::allTrueI32x4() const {
+  return all_true<4, &Literal::getLanesI32x4>(*this);
+}
+Literal Literal::anyTrueI64x2() const {
+  return any_true<2, &Literal::getLanesI64x2>(*this);
+}
+Literal Literal::allTrueI64x2() const {
+  return all_true<2, &Literal::getLanesI64x2>(*this);
+}
+
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
+         Literal (Literal::*ShiftOp)(const Literal&) const>
+static Literal shift(const Literal& val, const Literal& other) {
+  assert(other.type == Type::i32);
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    lanes[i] = (lanes[i].*ShiftOp)(other);
+  }
+  return Literal(lanes);
+}
+
+Literal Literal::shlI8x16(const Literal& other) const {
+  return shift<16, &Literal::getLanesUI8x16, &Literal::shl>(*this, other);
+}
+Literal Literal::shrSI8x16(const Literal& other) const {
+  return shift<16, &Literal::getLanesSI8x16, &Literal::shrS>(*this, other);
+}
+Literal Literal::shrUI8x16(const Literal& other) const {
+  return shift<16, &Literal::getLanesUI8x16, &Literal::shrU>(*this, other);
+}
+Literal Literal::shlI16x8(const Literal& other) const {
+  return shift<8, &Literal::getLanesUI16x8, &Literal::shl>(*this, other);
+}
+Literal Literal::shrSI16x8(const Literal& other) const {
+  return shift<8, &Literal::getLanesSI16x8, &Literal::shrS>(*this, other);
+}
+Literal Literal::shrUI16x8(const Literal& other) const {
+  return shift<8, &Literal::getLanesUI16x8, &Literal::shrU>(*this, other);
+}
+Literal Literal::shlI32x4(const Literal& other) const {
+  return shift<4, &Literal::getLanesI32x4, &Literal::shl>(*this, other);
+}
+Literal Literal::shrSI32x4(const Literal& other) const {
+  return shift<4, &Literal::getLanesI32x4, &Literal::shrS>(*this, other);
+}
+Literal Literal::shrUI32x4(const Literal& other) const {
+  return shift<4, &Literal::getLanesI32x4, &Literal::shrU>(*this, other);
+}
+Literal Literal::shlI64x2(const Literal& other) const {
+  return shift<2, &Literal::getLanesI64x2, &Literal::shl>(*this, other);
+}
+Literal Literal::shrSI64x2(const Literal& other) const {
+  return shift<2, &Literal::getLanesI64x2, &Literal::shrS>(*this, other);
+}
+Literal Literal::shrUI64x2(const Literal& other) const {
+  return shift<2, &Literal::getLanesI64x2, &Literal::shrU>(*this, other);
+}
+
+
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
           Literal (Literal::*BinaryOp)(const Literal&) const>
 static Literal binary(const Literal& val, const Literal& other) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
@@ -1102,8 +1305,20 @@ Literal Literal::xorV128(const Literal& other) const {
 Literal Literal::addI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::add>(*this, other);
 }
+Literal Literal::addSaturateSI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesUI8x16, &Literal::addSatSI8>(*this, other);
+}
+Literal Literal::addSaturateUI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesSI8x16, &Literal::addSatUI8>(*this, other);
+}
 Literal Literal::subI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::sub>(*this, other);
+}
+Literal Literal::subSaturateSI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesUI8x16, &Literal::subSatSI8>(*this, other);
+}
+Literal Literal::subSaturateUI8x16(const Literal& other) const {
+  return binary<16, &Literal::getLanesSI8x16, &Literal::subSatUI8>(*this, other);
 }
 Literal Literal::mulI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::mul>(*this, other);
@@ -1111,8 +1326,20 @@ Literal Literal::mulI8x16(const Literal& other) const {
 Literal Literal::addI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::add>(*this, other);
 }
+Literal Literal::addSaturateSI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesUI16x8, &Literal::addSatSI16>(*this, other);
+}
+Literal Literal::addSaturateUI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesSI16x8, &Literal::addSatUI16>(*this, other);
+}
 Literal Literal::subI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::sub>(*this, other);
+}
+Literal Literal::subSaturateSI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesUI16x8, &Literal::subSatSI16>(*this, other);
+}
+Literal Literal::subSaturateUI16x8(const Literal& other) const {
+  return binary<8, &Literal::getLanesSI16x8, &Literal::subSatUI16>(*this, other);
 }
 Literal Literal::mulI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::mul>(*this, other);
@@ -1169,191 +1396,8 @@ Literal Literal::maxF64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesF64x2, &Literal::max>(*this, other);
 }
 
-template <int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
-          Literal (Literal::*UnaryOp)(void) const>
-static Literal unary(const Literal& val) {
-  LaneArray<Lanes> lanes = (val.*IntoLanes)();
-  for (size_t i = 0; i < Lanes; ++i) {
-    lanes[i] = (lanes[i].*UnaryOp)();
-  }
-  return Literal(lanes);
-}
-
-Literal Literal::notV128() const {
-  WASM_UNREACHABLE();
-}
-Literal Literal::negI8x16() const {
-  return unary<16, &Literal::getLanesUI8x16, &Literal::neg>(*this);
-}
-Literal Literal::negI16x8() const {
-  return unary<8, &Literal::getLanesUI16x8, &Literal::neg>(*this);
-}
-Literal Literal::negI32x4() const {
-  return unary<4, &Literal::getLanesI32x4, &Literal::neg>(*this);
-}
-Literal Literal::negI64x2() const {
-  return unary<2, &Literal::getLanesI64x2, &Literal::neg>(*this);
-}
-Literal Literal::absF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::abs>(*this);
-}
-Literal Literal::negF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::neg>(*this);
-}
-Literal Literal::sqrtF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::sqrt>(*this);
-}
-Literal Literal::absF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::abs>(*this);
-}
-Literal Literal::negF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::neg>(*this);
-}
-Literal Literal::sqrtF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::sqrt>(*this);
-}
-Literal Literal::truncSatToSI32x4() const {
-  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToSI32>(*this);
-}
-Literal Literal::truncSatToUI32x4() const {
-  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToUI32>(*this);
-}
-Literal Literal::truncSatToSI64x2() const {
-  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToSI64>(*this);
-}
-Literal Literal::truncSatToUI64x2() const {
-  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToUI64>(*this);
-}
-Literal Literal::convertSToF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::convertSIToF32>(*this);
-}
-Literal Literal::convertUToF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::convertUIToF32>(*this);
-}
-Literal Literal::convertSToF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::convertSIToF64>(*this);
-}
-Literal Literal::convertUToF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::convertUIToF64>(*this);
-}
-
 Literal Literal::bitselectV128(const Literal& left, const Literal& right) const {
-  WASM_UNREACHABLE();
+  return andV128(left).orV128(notV128().andV128(right));
 }
-
-
-
-Literal Literal::anyTrueI8x16() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::allTrueI8x16() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shlI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrSI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrUI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::addSaturateSI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::addSaturateUI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::subSaturateSI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::subSaturateUI8x16(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::anyTrueI16x8() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::allTrueI16x8() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shlI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrUI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::addSaturateSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::addSaturateUI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::subSaturateSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::subSaturateUI16x8(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::anyTrueI32x4() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::allTrueI32x4() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shlI32x4(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrSI32x4(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrUI32x4(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::anyTrueI64x2() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::allTrueI64x2() const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shlI64x2(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrSI64x2(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
-Literal Literal::shrUI64x2(const Literal& other) const {
-  WASM_UNREACHABLE();
-}
-
 
 } // namespace wasm

@@ -337,6 +337,16 @@ public:
   Literal convertUToF32x4() const;
   Literal convertSToF64x2() const;
   Literal convertUToF64x2() const;
+
+ private:
+  Literal addSatSI8(const Literal& other) const;
+  Literal addSatUI8(const Literal& other) const;
+  Literal addSatSI16(const Literal& other) const;
+  Literal addSatUI16(const Literal& other) const;
+  Literal subSatSI8(const Literal& other) const;
+  Literal subSatUI8(const Literal& other) const;
+  Literal subSatSI16(const Literal& other) const;
+  Literal subSatUI16(const Literal& other) const;
 };
 
 } // namespace wasm
