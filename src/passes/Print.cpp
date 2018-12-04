@@ -255,7 +255,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ReplaceLaneVecI16x8: o << "i16x8.replace_lane"; break;
       case ReplaceLaneVecI32x4: o << "i32x4.replace_lane"; break;
       case ReplaceLaneVecI64x2: o << "i64x2.replace_lane"; break;
-      case ReplaceLaneVecF32x4: o << "i32x4.replace_lane"; break;
+      case ReplaceLaneVecF32x4: o << "f32x4.replace_lane"; break;
       case ReplaceLaneVecF64x2: o << "f64x2.replace_lane"; break;
     }
     o << " " << int(curr->idx);
