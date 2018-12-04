@@ -104,6 +104,11 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::AtomicRMWId: return "atomic_rmw";
     case Expression::Id::AtomicWaitId: return "atomic_wait";
     case Expression::Id::AtomicWakeId: return "atomic_wake";
+    case Expression::Id::SIMDExtractId: return "simd_extract";
+    case Expression::Id::SIMDReplaceId: return "simd_replace";
+    case Expression::Id::SIMDShuffleId: return "simd_shuffle";
+    case Expression::Id::SIMDBitselectId: return "simd_bitselect";
+    case Expression::Id::SIMDShiftId: return "simd_shift";
     case Expression::Id::NumExpressionIds: WASM_UNREACHABLE();
   }
   WASM_UNREACHABLE();
@@ -416,6 +421,56 @@ void AtomicWake::finalize() {
   }
 }
 
+void SIMDExtract::finalize() {
+  assert(vec);
+  switch (op) {
+    case ExtractLaneSVecI8x16:
+    case ExtractLaneUVecI8x16:
+    case ExtractLaneSVecI16x8:
+    case ExtractLaneUVecI16x8:
+    case ExtractLaneVecI32x4: type = i32; break;
+    case ExtractLaneVecI64x2: type = i64; break;
+    case ExtractLaneVecF32x4: type = f32; break;
+    case ExtractLaneVecF64x2: type = f64; break;
+    default: WASM_UNREACHABLE();
+  }
+  if (vec->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDReplace::finalize() {
+  assert(vec && value);
+  type = v128;
+  if (vec->type == unreachable || value->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDShuffle::finalize() {
+  assert(left && right);
+  type = v128;
+  if (left->type == unreachable || right->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDBitselect::finalize() {
+  assert(left && right && cond);
+  type = v128;
+  if (left->type == unreachable || right->type == unreachable || cond->type == unreachable) {
+    type = unreachable;
+  }
+}
+
+void SIMDShift::finalize() {
+  assert(vec && shift);
+  type = v128;
+  if (vec->type == unreachable || shift->type == unreachable) {
+    type = unreachable;
+  }
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
@@ -491,6 +546,39 @@ void Unary::finalize() {
     case ConvertUInt32ToFloat64:
     case ConvertSInt64ToFloat64:
     case ConvertUInt64ToFloat64: type = f64; break;
+    case SplatVecI8x16:
+    case SplatVecI16x8:
+    case SplatVecI32x4:
+    case SplatVecI64x2:
+    case SplatVecF32x4:
+    case SplatVecF64x2:
+    case NotVec128:
+    case NegVecI8x16:
+    case NegVecI16x8:
+    case NegVecI32x4:
+    case NegVecI64x2:
+    case AbsVecF32x4:
+    case NegVecF32x4:
+    case SqrtVecF32x4:
+    case AbsVecF64x2:
+    case NegVecF64x2:
+    case SqrtVecF64x2:
+    case TruncSatSVecF32x4ToVecI32x4:
+    case TruncSatUVecF32x4ToVecI32x4:
+    case TruncSatSVecF64x2ToVecI64x2:
+    case TruncSatUVecF64x2ToVecI64x2:
+    case ConvertSVecI32x4ToVecF32x4:
+    case ConvertUVecI32x4ToVecF32x4:
+    case ConvertSVecI64x2ToVecF64x2:
+    case ConvertUVecI64x2ToVecF64x2: type = v128; break;
+    case AnyTrueVecI8x16:
+    case AllTrueVecI8x16:
+    case AnyTrueVecI16x8:
+    case AllTrueVecI16x8:
+    case AnyTrueVecI32x4:
+    case AllTrueVecI32x4:
+    case AnyTrueVecI64x2:
+    case AllTrueVecI64x2: type = i32; break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }

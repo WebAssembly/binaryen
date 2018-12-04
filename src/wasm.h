@@ -43,7 +43,8 @@ struct FeatureSet {
     Atomics = 1 << 0,
     MutableGlobals = 1 << 1,
     TruncSat = 1 << 2,
-    All = Atomics | MutableGlobals | TruncSat
+    SIMD = 1 << 3,
+    All = Atomics | MutableGlobals | TruncSat | SIMD
   };
 
   FeatureSet() : features(MVP) {}
@@ -53,7 +54,8 @@ struct FeatureSet {
   bool hasAtomics() const { return features & Atomics; }
   bool hasMutableGlobals() const { return features & MutableGlobals; }
   bool hasTruncSat() const { return features & TruncSat; }
-  bool hasAll() const { return features & (Atomics | MutableGlobals | TruncSat); }
+  bool hasSIMD() const { return features & SIMD; }
+  bool hasAll() const { return features & All; }
 
   void makeMVP() { features = MVP; }
   void setAtomics(bool v = true) {
@@ -64,6 +66,9 @@ struct FeatureSet {
   }
   void setTruncSat(bool v = true) {
     features = v ? (features | TruncSat) : (features & ~TruncSat);
+  }
+  void setSIMD(bool v = true) {
+    features = v ? (features | SIMD) : (features & ~SIMD);
   }
   void setAll(bool v = true) {
     features = v ? All : MVP;
@@ -122,6 +127,15 @@ enum UnaryOp {
   // Saturating float-to-int
   TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32,
   TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64,
+  // SIMD splats
+  SplatVecI8x16, SplatVecI16x8, SplatVecI32x4, SplatVecI64x2, SplatVecF32x4, SplatVecF64x2,
+  // SIMD arithmetic
+  NotVec128,
+  NegVecI8x16, AnyTrueVecI8x16, AllTrueVecI8x16, NegVecI16x8, AnyTrueVecI16x8, AllTrueVecI16x8,
+  NegVecI32x4, AnyTrueVecI32x4, AllTrueVecI32x4, NegVecI64x2, AnyTrueVecI64x2, AllTrueVecI64x2,
+  AbsVecF32x4, NegVecF32x4, SqrtVecF32x4, AbsVecF64x2, NegVecF64x2, SqrtVecF64x2,
+  TruncSatSVecF32x4ToVecI32x4, TruncSatUVecF32x4ToVecI32x4, TruncSatSVecF64x2ToVecI64x2, TruncSatUVecF64x2ToVecI64x2,
+  ConvertSVecI32x4ToVecF32x4, ConvertUVecI32x4ToVecF32x4, ConvertSVecI64x2ToVecF64x2, ConvertUVecI64x2ToVecF64x2,
 
   InvalidUnary
 };
@@ -150,6 +164,19 @@ enum BinaryOp {
   // relational ops
   EqFloat64, NeFloat64, // int or float
   LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
+  // SIMD relational ops (return vectors)
+  EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GtSVecI8x16, GtUVecI8x16, GeSVecI8x16, GeUVecI8x16,
+  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GtSVecI16x8, GtUVecI16x8, GeSVecI16x8, GeUVecI16x8,
+  EqVecI32x4, NeVecI32x4, LtSVecI32x4, LtUVecI32x4, LeSVecI32x4, LeUVecI32x4, GtSVecI32x4, GtUVecI32x4, GeSVecI32x4, GeUVecI32x4,
+  EqVecF32x4, NeVecF32x4, LtVecF32x4, LeVecF32x4, GtVecF32x4, GeVecF32x4,
+  EqVecF64x2, NeVecF64x2, LtVecF64x2, LeVecF64x2, GtVecF64x2, GeVecF64x2,
+  // SIMD arithmetic
+  AndVec128, OrVec128, XorVec128,
+  AddVecI8x16, AddSatSVecI8x16, AddSatUVecI8x16, SubVecI8x16, SubSatSVecI8x16, SubSatUVecI8x16, MulVecI8x16,
+  AddVecI16x8, AddSatSVecI16x8, AddSatUVecI16x8, SubVecI16x8, SubSatSVecI16x8, SubSatUVecI16x8, MulVecI16x8,
+  AddVecI32x4, SubVecI32x4, MulVecI32x4, AddVecI64x2, SubVecI64x2,
+  AddVecF32x4, SubVecF32x4, MulVecF32x4, DivVecF32x4, MinVecF32x4, MaxVecF32x4,
+  AddVecF64x2, SubVecF64x2, MulVecF64x2, DivVecF64x2, MinVecF64x2, MaxVecF64x2,
 
   InvalidBinary
 };
@@ -160,6 +187,20 @@ enum HostOp {
 
 enum AtomicRMWOp {
   Add, Sub, And, Or, Xor, Xchg
+};
+
+enum SIMDExtractOp {
+  ExtractLaneSVecI8x16, ExtractLaneUVecI8x16, ExtractLaneSVecI16x8, ExtractLaneUVecI16x8,
+  ExtractLaneVecI32x4, ExtractLaneVecI64x2, ExtractLaneVecF32x4, ExtractLaneVecF64x2
+};
+
+enum SIMDReplaceOp {
+  ReplaceLaneVecI8x16, ReplaceLaneVecI16x8, ReplaceLaneVecI32x4, ReplaceLaneVecI64x2, ReplaceLaneVecF32x4, ReplaceLaneVecF64x2
+};
+
+enum SIMDShiftOp {
+  ShlVecI8x16, ShrSVecI8x16, ShrUVecI8x16, ShlVecI16x8, ShrSVecI16x8, ShrUVecI16x8,
+  ShlVecI32x4, ShrSVecI32x4, ShrUVecI32x4, ShlVecI64x2, ShrSVecI64x2, ShrUVecI64x2
 };
 
 //
@@ -212,6 +253,11 @@ public:
     AtomicCmpxchgId,
     AtomicWaitId,
     AtomicWakeId,
+    SIMDExtractId,
+    SIMDReplaceId,
+    SIMDShuffleId,
+    SIMDBitselectId,
+    SIMDShiftId,
     NumExpressionIds
   };
   Id _id;
@@ -504,6 +550,67 @@ class AtomicWake : public SpecificExpression<Expression::AtomicWakeId> {
   Address offset;
   Expression* ptr;
   Expression* wakeCount;
+
+  void finalize();
+};
+
+class SIMDExtract : public SpecificExpression<Expression::SIMDExtractId> {
+ public:
+  SIMDExtract() = default;
+  SIMDExtract(MixedArena& allocator) : SIMDExtract() {}
+
+  SIMDExtractOp op;
+  Expression* vec;
+  uint8_t idx;
+
+  void finalize();
+};
+
+class SIMDReplace : public SpecificExpression<Expression::SIMDReplaceId> {
+ public:
+  SIMDReplace() = default;
+  SIMDReplace(MixedArena& allocator) : SIMDReplace() {}
+
+  SIMDReplaceOp op;
+  Expression* vec;
+  uint8_t idx;
+  Expression* value;
+
+  void finalize();
+};
+
+class SIMDShuffle : public SpecificExpression<Expression::SIMDShuffleId> {
+ public:
+  SIMDShuffle() = default;
+  SIMDShuffle(MixedArena& allocator) : SIMDShuffle() {}
+
+  Expression* left;
+  Expression* right;
+  std::array<uint8_t, 16> mask;
+
+  void finalize();
+};
+
+class SIMDBitselect : public SpecificExpression<Expression::SIMDBitselectId> {
+ public:
+  SIMDBitselect() = default;
+  SIMDBitselect(MixedArena& allocator) : SIMDBitselect() {}
+
+  Expression* left;
+  Expression* right;
+  Expression* cond;
+
+  void finalize();
+};
+
+class SIMDShift : public SpecificExpression<Expression::SIMDShiftId> {
+ public:
+  SIMDShift() = default;
+  SIMDShift(MixedArena& allocator) : SIMDShift() {}
+
+  SIMDShiftOp op;
+  Expression* vec;
+  Expression* shift;
 
   void finalize();
 };

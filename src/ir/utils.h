@@ -129,6 +129,11 @@ struct ReFinalize : public WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<R
   void visitAtomicCmpxchg(AtomicCmpxchg* curr);
   void visitAtomicWait(AtomicWait* curr);
   void visitAtomicWake(AtomicWake* curr);
+  void visitSIMDExtract(SIMDExtract* curr);
+  void visitSIMDReplace(SIMDReplace* curr);
+  void visitSIMDShuffle(SIMDShuffle* curr);
+  void visitSIMDBitselect(SIMDBitselect* curr);
+  void visitSIMDShift(SIMDShift* curr);
   void visitConst(Const* curr);
   void visitUnary(Unary* curr);
   void visitBinary(Binary* curr);
@@ -176,6 +181,11 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
   void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
   void visitAtomicWake(AtomicWake* curr) { curr->finalize(); }
+  void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
+  void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
+  void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
+  void visitSIMDBitselect(SIMDBitselect* curr) { curr->finalize(); }
+  void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
   void visitConst(Const* curr) { curr->finalize(); }
   void visitUnary(Unary* curr) { curr->finalize(); }
   void visitBinary(Binary* curr) { curr->finalize(); }

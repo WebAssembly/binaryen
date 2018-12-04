@@ -474,7 +474,12 @@ public:
       case i64: value = Literal(int64_t(0)); break;
       case f32: value = Literal(float(0)); break;
       case f64: value = Literal(double(0)); break;
-      case v128: assert(false && "v128 not implemented yet");
+      case v128: {
+        std::array<uint8_t, 16> bytes;
+        bytes.fill(0);
+        value = Literal(bytes.data());
+        break;
+      }
       case none: return ExpressionManipulator::nop(curr);
       case unreachable: return ExpressionManipulator::convert<T, Unreachable>(curr);
     }
