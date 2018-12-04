@@ -63,7 +63,7 @@ struct PassOptions {
   int shrinkLevel = 0;   // 0, 1, 2 correspond to -O0, -Os, -Oz
   bool ignoreImplicitTraps = false; // optimize assuming things like div by 0, bad load/store, will not trap
   bool debugInfo = false; // whether to try to preserve debug info through, which are special calls
-  FeatureSet features = Feature::MVP; // Which wasm features to accept, and be allowed to use
+  FeatureSet features = FeatureSet::All; // Which wasm features to accept, and be allowed to use
 
   void setDefaultOptimizationOptions() {
     // -Os is our default
@@ -201,7 +201,7 @@ private:
 //
 class Pass {
 public:
-  virtual ~Pass() {};
+  virtual ~Pass() = default;
 
   // Override this to perform preparation work before the pass runs.
   // This will be called before the pass is run on a module.

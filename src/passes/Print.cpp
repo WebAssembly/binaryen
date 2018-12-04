@@ -292,6 +292,14 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ExtendS8Int64:          o << "i64.extend8_s"; break;
       case ExtendS16Int64:         o << "i64.extend16_s"; break;
       case ExtendS32Int64:         o << "i64.extend32_s"; break;
+      case TruncSatSFloat32ToInt32: o << "i32.trunc_s:sat/f32"; break;
+      case TruncSatUFloat32ToInt32: o << "i32.trunc_u:sat/f32"; break;
+      case TruncSatSFloat64ToInt32: o << "i32.trunc_s:sat/f64"; break;
+      case TruncSatUFloat64ToInt32: o << "i32.trunc_u:sat/f64"; break;
+      case TruncSatSFloat32ToInt64: o << "i64.trunc_s:sat/f32"; break;
+      case TruncSatUFloat32ToInt64: o << "i64.trunc_u:sat/f32"; break;
+      case TruncSatSFloat64ToInt64: o << "i64.trunc_s:sat/f64"; break;
+      case TruncSatUFloat64ToInt64: o << "i64.trunc_u:sat/f64"; break;
       case InvalidUnary: WASM_UNREACHABLE();
     }
   }
@@ -1184,7 +1192,7 @@ Pass* createPrintStackIRPass() {
 
 std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
   PassRunner passRunner(module);
-  passRunner.setFeatures(Feature::All);
+  passRunner.setFeatures(FeatureSet::All);
   passRunner.setIsNested(true);
   passRunner.add<Printer>(&o);
   passRunner.run();

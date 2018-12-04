@@ -123,8 +123,8 @@ public:
     std::cout << "shrink level: " << options.passOptions.shrinkLevel << '\n';
   }
 
-  void build(bool initEmitAtomics = true) {
-    emitAtomics = initEmitAtomics;
+  void build(FeatureSet features_) {
+    features = features_;
     setupMemory();
     setupTable();
     setupGlobals();
@@ -179,8 +179,8 @@ private:
   // cross-VM comparisons harder)
   static const bool DE_NAN = true;
 
-  // Whether to emit atomics
-  bool emitAtomics = true;
+  // Features allowed to be emitted
+  FeatureSet features = FeatureSet::All;
 
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
@@ -1118,7 +1118,7 @@ private:
   Expression* makeLoad(Type type) {
     auto* ret = makeNonAtomicLoad(type);
     if (type != i32 && type != i64) return ret;
-    if (!emitAtomics || oneIn(2)) return ret;
+    if (!features.hasAtomics() || oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
@@ -1181,7 +1181,7 @@ private:
   Store* makeStore(Type type) {
     auto* ret = makeNonAtomicStore(type);
     if (ret->value->type != i32 && ret->value->type != i64) return ret;
-    if (!emitAtomics || oneIn(2)) return ret;
+    if (!features.hasAtomics() || oneIn(2)) return ret;
     // make it atomic
     wasm.memory.shared = true;
     ret->isAtomic = true;
@@ -1314,7 +1314,7 @@ private:
       case i32: {
         switch (upTo(4)) {
           case 0: {
-            if (emitAtomics) {
+            if (features.hasAtomics()) {
               return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32, ExtendS8Int32, ExtendS16Int32), make(i32) });
             } else {
               return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32) });
@@ -1322,15 +1322,29 @@ private:
             break;
           }
           case 1: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
-          case 2: return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
-          case 3: return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
+          case 2: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32, TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32), make(f32) });
+            } else {
+              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
+            }
+            break;
+          }
+          case 3: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32), make(f64) });
+            } else {
+              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
+            }
+            break;
+          }
         }
         WASM_UNREACHABLE();
       }
       case i64: {
         switch (upTo(4)) {
           case 0: {
-            if (emitAtomics) {
+            if (features.hasAtomics()) {
               return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64), make(i64) });
             } else {
               return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64), make(i64) });
@@ -1338,8 +1352,22 @@ private:
             break;
           }
           case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
-          case 2: return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
-          case 3: return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
+          case 2: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64, TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64), make(f32) });
+            } else {
+              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
+            }
+            break;
+          }
+          case 3: {
+            if (features.hasTruncSat()) {
+              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64), make(f64) });
+            } else {
+              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
+            }
+            break;
+          }
         }
         WASM_UNREACHABLE();
       }
@@ -1465,7 +1493,7 @@ private:
   }
 
   Expression* makeAtomic(Type type) {
-    if (!emitAtomics || (type != i32 && type != i64)) return makeTrivial(type);
+    if (!features.hasAtomics() || (type != i32 && type != i64)) return makeTrivial(type);
     wasm.memory.shared = true;
     if (type == i32 && oneIn(2)) {
       if (ATOMIC_WAITS && oneIn(2)) {

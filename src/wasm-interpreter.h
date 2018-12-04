@@ -256,13 +256,13 @@ public:
       case ExtendUInt32:           return value.extendToUI64();
       case WrapInt64:              return value.truncateToI32();
       case ConvertUInt32ToFloat32:
-      case ConvertUInt64ToFloat32: return value.convertUToF32();
+      case ConvertUInt64ToFloat32: return value.truncUIToF32();
       case ConvertUInt32ToFloat64:
-      case ConvertUInt64ToFloat64: return value.convertUToF64();
+      case ConvertUInt64ToFloat64: return value.truncUIToF64();
       case ConvertSInt32ToFloat32:
-      case ConvertSInt64ToFloat32: return value.convertSToF32();
+      case ConvertSInt64ToFloat32: return value.truncSIToF32();
       case ConvertSInt32ToFloat64:
-      case ConvertSInt64ToFloat64: return value.convertSToF64();
+      case ConvertSInt64ToFloat64: return value.truncSIToF64();
       case ExtendS8Int32:
       case ExtendS8Int64:          return value.extendS8();
       case ExtendS16Int32:
@@ -291,6 +291,14 @@ public:
       case TruncUFloat64ToInt32:
       case TruncUFloat32ToInt64:
       case TruncUFloat64ToInt64: return truncUFloat(curr, value);
+      case TruncSatSFloat32ToInt32:
+      case TruncSatSFloat64ToInt32: return value.truncSatToSI32();
+      case TruncSatSFloat32ToInt64:
+      case TruncSatSFloat64ToInt64: return value.truncSatToSI64();
+      case TruncSatUFloat32ToInt32:
+      case TruncSatUFloat64ToInt32: return value.truncSatToUI32();
+      case TruncSatUFloat32ToInt64:
+      case TruncSatUFloat64ToInt64: return value.truncSatToUI64();
       case ReinterpretFloat32:   return value.castToI32();
       case PromoteFloat32:       return value.extendToF64();
       case ReinterpretFloat64:   return value.castToI64();

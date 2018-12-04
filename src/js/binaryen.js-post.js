@@ -101,6 +101,14 @@ Module['TruncSFloat64ToInt32'] = Module['_BinaryenTruncSFloat64ToInt32']();
 Module['TruncSFloat64ToInt64'] = Module['_BinaryenTruncSFloat64ToInt64']();
 Module['TruncUFloat64ToInt32'] = Module['_BinaryenTruncUFloat64ToInt32']();
 Module['TruncUFloat64ToInt64'] = Module['_BinaryenTruncUFloat64ToInt64']();
+Module['TruncSatSFloat32ToInt32'] = Module['_BinaryenTruncSatSFloat32ToInt32']();
+Module['TruncSatSFloat32ToInt64'] = Module['_BinaryenTruncSatSFloat32ToInt64']();
+Module['TruncSatUFloat32ToInt32'] = Module['_BinaryenTruncSatUFloat32ToInt32']();
+Module['TruncSatUFloat32ToInt64'] = Module['_BinaryenTruncSatUFloat32ToInt64']();
+Module['TruncSatSFloat64ToInt32'] = Module['_BinaryenTruncSatSFloat64ToInt32']();
+Module['TruncSatSFloat64ToInt64'] = Module['_BinaryenTruncSatSFloat64ToInt64']();
+Module['TruncSatUFloat64ToInt32'] = Module['_BinaryenTruncSatUFloat64ToInt32']();
+Module['TruncSatUFloat64ToInt64'] = Module['_BinaryenTruncSatUFloat64ToInt64']();
 Module['ReinterpretFloat32'] = Module['_BinaryenReinterpretFloat32']();
 Module['ReinterpretFloat64'] = Module['_BinaryenReinterpretFloat64']();
 Module['ConvertSInt32ToFloat32'] = Module['_BinaryenConvertSInt32ToFloat32']();
@@ -354,6 +362,22 @@ function wrapModule(module, self) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt32'], value);
       },
     },
+    'trunc_s_sat': {
+      'f32': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatSFloat32ToInt32'], value);
+      },
+      'f64': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatSFloat64ToInt32'], value);
+      },
+    },
+    'trunc_u_sat': {
+      'f32': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatUFloat32ToInt32'], value);
+      },
+      'f64': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatUFloat64ToInt32'], value);
+      },
+    },
     'reinterpret': function(value) {
       return Module['_BinaryenUnary'](module, Module['ReinterpretFloat32'], value);
     },
@@ -599,6 +623,22 @@ function wrapModule(module, self) {
       },
       'f64': function(value) {
         return Module['_BinaryenUnary'](module, Module['TruncUFloat64ToInt64'], value);
+      },
+    },
+    'trunc_s_sat': {
+      'f32': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatSFloat32ToInt64'], value);
+      },
+      'f64': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatSFloat64ToInt64'], value);
+      },
+    },
+    'trunc_u_sat': {
+      'f32': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatUFloat32ToInt64'], value);
+      },
+      'f64': function(value) {
+        return Module['_BinaryenUnary'](module, Module['TruncSatUFloat64ToInt64'], value);
       },
     },
     'reinterpret': function(value) {

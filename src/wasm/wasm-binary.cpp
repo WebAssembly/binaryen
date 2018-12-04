@@ -713,6 +713,9 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     readNames(payloadLen - (pos - oldPos));
   } else {
     // an unfamiliar custom section
+    if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
+      std::cerr << "warning: linking section is present, which binaryen cannot handle yet - relocations will be invalidated!\n";
+    }
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
@@ -1692,6 +1695,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       throwError("invalid code after atomic prefix: " + std::to_string(code));
       break;
     }
+    case BinaryConsts::TruncSatPrefix: {
+      uint32_t code = getU32LEB();
+      if (maybeVisitTruncSat(curr, code)) break;
+      throwError("invalid code after nontrapping float-to-int prefix: " + std::to_string(code));
+      break;
+    }
     default: {
       // otherwise, the code is a subcode TODO: optimize
       if (maybeVisitBinary(curr, code)) break;
@@ -2270,6 +2279,26 @@ bool WasmBinaryBuilder::maybeVisitUnary(Expression*& out, uint8_t code) {
     default: return false;
   }
   if (debug) std::cerr << "zz node: Unary" << std::endl;
+  curr->value = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitTruncSat(Expression*& out, uint32_t code) {
+  Unary* curr;
+  switch (code) {
+    case BinaryConsts::I32STruncSatF32: curr = allocator.alloc<Unary>(); curr->op = TruncSatSFloat32ToInt32; break;
+    case BinaryConsts::I32UTruncSatF32: curr = allocator.alloc<Unary>(); curr->op = TruncSatUFloat32ToInt32; break;
+    case BinaryConsts::I32STruncSatF64: curr = allocator.alloc<Unary>(); curr->op = TruncSatSFloat64ToInt32; break;
+    case BinaryConsts::I32UTruncSatF64: curr = allocator.alloc<Unary>(); curr->op = TruncSatUFloat64ToInt32; break;
+    case BinaryConsts::I64STruncSatF32: curr = allocator.alloc<Unary>(); curr->op = TruncSatSFloat32ToInt64; break;
+    case BinaryConsts::I64UTruncSatF32: curr = allocator.alloc<Unary>(); curr->op = TruncSatUFloat32ToInt64; break;
+    case BinaryConsts::I64STruncSatF64: curr = allocator.alloc<Unary>(); curr->op = TruncSatSFloat64ToInt64; break;
+    case BinaryConsts::I64UTruncSatF64: curr = allocator.alloc<Unary>(); curr->op = TruncSatUFloat64ToInt64; break;
+    default: return false;
+  }
+  if (debug) std::cerr << "zz node: Unary (nontrapping float-to-int)" << std::endl;
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;

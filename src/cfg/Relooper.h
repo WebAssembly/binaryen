@@ -308,7 +308,7 @@ struct Shape {
   ShapeType Type;
 
   Shape(ShapeType TypeInit) : Id(-1), Next(NULL), Type(TypeInit) {}
-  virtual ~Shape() {}
+  virtual ~Shape() = default;
 
   virtual wasm::Expression* Render(RelooperBuilder& Builder, bool InLoop) = 0;
 

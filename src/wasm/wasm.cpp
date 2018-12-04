@@ -29,8 +29,8 @@ namespace BinaryConsts {
 namespace UserSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
-
 const char* Dylink = "dylink";
+const char* Linking = "linking";
 }
 }
 
@@ -467,11 +467,19 @@ void Unary::finalize() {
     case TruncUFloat32ToInt32:
     case TruncSFloat64ToInt32:
     case TruncUFloat64ToInt32:
+    case TruncSatSFloat32ToInt32:
+    case TruncSatUFloat32ToInt32:
+    case TruncSatSFloat64ToInt32:
+    case TruncSatUFloat64ToInt32:
     case ReinterpretFloat32: type = i32; break;
     case TruncSFloat32ToInt64:
     case TruncUFloat32ToInt64:
     case TruncSFloat64ToInt64:
     case TruncUFloat64ToInt64:
+    case TruncSatSFloat32ToInt64:
+    case TruncSatUFloat32ToInt64:
+    case TruncSatSFloat64ToInt64:
+    case TruncSatUFloat64ToInt64:
     case ReinterpretFloat64: type = i64; break;
     case ReinterpretInt32:
     case ConvertSInt32ToFloat32:
@@ -636,6 +644,17 @@ Type Function::getLocalType(Index index) {
   } else {
     WASM_UNREACHABLE();
   }
+}
+
+void Function::clearNames() {
+  localNames.clear();
+}
+
+void Function::clearDebugInfo() {
+  localIndices.clear();
+  debugLocations.clear();
+  prologLocation.clear();
+  epilogLocation.clear();
 }
 
 FunctionType* Module::getFunctionType(Name name) {
@@ -809,6 +828,10 @@ void Module::updateMaps() {
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+}
+
+void Module::clearDebugInfo() {
+  debugInfoFileNames.clear();
 }
 
 } // namespace wasm

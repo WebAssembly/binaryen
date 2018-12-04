@@ -961,6 +961,14 @@ void StackWriter<Mode, Parent>::visitUnary(Unary* curr) {
     case ExtendS8Int64:          o << int8_t(BinaryConsts::I64ExtendS8); break;
     case ExtendS16Int64:         o << int8_t(BinaryConsts::I64ExtendS16); break;
     case ExtendS32Int64:         o << int8_t(BinaryConsts::I64ExtendS32); break;
+    case TruncSatSFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF32); break;
+    case TruncSatUFloat32ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF32); break;
+    case TruncSatSFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32STruncSatF64); break;
+    case TruncSatUFloat64ToInt32: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I32UTruncSatF64); break;
+    case TruncSatSFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF32); break;
+    case TruncSatUFloat32ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF32); break;
+    case TruncSatSFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64STruncSatF64); break;
+    case TruncSatUFloat64ToInt64: o << int8_t(BinaryConsts::TruncSatPrefix) << U32LEB(BinaryConsts::I64UTruncSatF64); break;
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }

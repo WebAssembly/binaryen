@@ -10,7 +10,7 @@
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 581))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (export "__post_instantiate" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
@@ -58,4 +58,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 13, "initializers": ["__wasm_call_ctors"], "declares": ["puts"], "externs": [], "implementedFunctions": ["___wasm_call_ctors","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__wasm_call_ctors","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 13, "initializers": [], "declares": ["puts"], "externs": [], "implementedFunctions": ["___post_instantiate","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__post_instantiate","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": [] }

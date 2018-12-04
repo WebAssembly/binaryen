@@ -138,6 +138,7 @@ echo "building shared bitcode"
   $BINARYEN_SRC/passes/SpillPointers.cpp \
   $BINARYEN_SRC/passes/SSAify.cpp \
   $BINARYEN_SRC/passes/StackIR.cpp \
+  $BINARYEN_SRC/passes/Strip.cpp \
   $BINARYEN_SRC/passes/TrapMode.cpp \
   $BINARYEN_SRC/passes/Untee.cpp \
   $BINARYEN_SRC/passes/Vacuum.cpp \
@@ -262,6 +263,14 @@ export_function "_BinaryenTruncSFloat64ToInt32"
 export_function "_BinaryenTruncSFloat64ToInt64"
 export_function "_BinaryenTruncUFloat64ToInt32"
 export_function "_BinaryenTruncUFloat64ToInt64"
+export_function "_BinaryenTruncSatSFloat32ToInt32"
+export_function "_BinaryenTruncSatSFloat32ToInt64"
+export_function "_BinaryenTruncSatUFloat32ToInt32"
+export_function "_BinaryenTruncSatUFloat32ToInt64"
+export_function "_BinaryenTruncSatSFloat64ToInt32"
+export_function "_BinaryenTruncSatSFloat64ToInt64"
+export_function "_BinaryenTruncSatUFloat64ToInt32"
+export_function "_BinaryenTruncSatUFloat64ToInt64"
 export_function "_BinaryenReinterpretFloat32"
 export_function "_BinaryenReinterpretFloat64"
 export_function "_BinaryenConvertSInt32ToFloat32"

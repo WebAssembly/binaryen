@@ -168,19 +168,28 @@ int main(int argc, const char *argv[]) {
 
   std::vector<Name> initializerFunctions;
 
+  // The names of standard imports/exports used by lld doesn't quite match that
+  // expected by emscripten.
+  // TODO(sbc): Unify these
+  if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
+    ex->name = "__post_instantiate";
+  }
+  if (wasm.table.imported()) {
+    if (wasm.table.base != "table") wasm.table.base = Name("table");
+  }
+  if (wasm.memory.imported()) {
+    if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
+  }
+
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
-    // rename __wasm_call_ctors to __post_instantiate which is what
-    // emscripten expects.
-    // TODO(sbc): Unify these two names
-    if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
-      ex->name = "__post_instantiate";
-    }
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
-    if (wasm.getFunctionOrNull("__wasm_call_ctors")) {
-      initializerFunctions.push_back("__wasm_call_ctors");
+    // emscripten calls this by default for side libraries so we only need
+    // to include in as a static ctor for main module case.
+    if (wasm.getFunctionOrNull("__post_instantiate")) {
+      initializerFunctions.push_back("__post_instantiate");
     }
   }
 
