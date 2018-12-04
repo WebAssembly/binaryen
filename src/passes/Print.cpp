@@ -243,7 +243,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case ExtractLaneUVecI16x8: o << "i16x8.extract_lane_u"; break;
       case ExtractLaneVecI32x4: o << "i32x4.extract_lane"; break;
       case ExtractLaneVecI64x2: o << "i64x2.extract_lane"; break;
-      case ExtractLaneVecF32x4: o << "i32x4.extract_lane"; break;
+      case ExtractLaneVecF32x4: o << "f32x4.extract_lane"; break;
       case ExtractLaneVecF64x2: o << "f64x2.extract_lane"; break;
     }
     o << " " << int(curr->idx);

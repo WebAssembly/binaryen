@@ -32,7 +32,7 @@ template<int N>
 using LaneArray = std::array<Literal, N>;
 
 Literal::Literal(uint8_t init[16]) : type(Type::v128) {
-  memcpy(&v128, &init, 16);
+  memcpy(&v128, init, 16);
 }
 
 template<typename LaneT, int Lanes>
@@ -212,7 +212,7 @@ void Literal::printDouble(std::ostream& o, double d) {
 void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
   o << std::hex;
   for (auto i = 0; i < 16; ++i) {
-    o << uint32_t(v[i]);
+    o << "0x" << uint32_t(v[i]);
     if (i < 15) o << " ";
   }
   o << std::dec;

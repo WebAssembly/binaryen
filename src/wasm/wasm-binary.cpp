@@ -2655,8 +2655,8 @@ bool WasmBinaryBuilder::maybeVisitSIMDShift(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2ShrU: curr = allocator.alloc<SIMDShift>(); curr->op = ShrUVecI64x2; break;
     default: return false;
   }
-  curr->vec = popNonVoidExpression();
   curr->shift = popNonVoidExpression();
+  curr->vec = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

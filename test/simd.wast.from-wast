@@ -27,7 +27,7 @@
   )
  )
  (func $v128.const (; 2 ;) (type $2) (result v128)
-  (v128.const i32 1 0 0 0 2 0 0 0 3 0 0 0 4 0 0 0)
+  (v128.const i32 0x1 0x0 0x0 0x0 0x2 0x0 0x0 0x0 0x3 0x0 0x0 0x0 0x4 0x0 0x0 0x0)
  )
  (func $v128.shuffle (; 3 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (v8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31
@@ -110,7 +110,7 @@
   )
  )
  (func $f32x4.extract_lane (; 18 ;) (type $9) (param $0 v128) (result f32)
-  (i32x4.extract_lane 0
+  (f32x4.extract_lane 0
    (get_local $0)
   )
  )
