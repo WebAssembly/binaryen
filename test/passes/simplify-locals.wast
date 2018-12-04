@@ -1095,6 +1095,10 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
+  (import "fuzzing-support" "log1" (func $fimport$0 (result i32)))
+  (import "fuzzing-support" "log2" (func $fimport$1 (param i32)))
+  (import "fuzzing-support" "log3" (func $fimport$2 (param f32)))
+  (global $global$0 (mut i32) (i32.const 10))
   (func $nonatomics (result i32) ;; loads are reordered
     (local $x i32)
     (set_local $x (i32.load (i32.const 1024)))
@@ -1444,7 +1448,7 @@
    )
    (get_local $var$2)
   )
-  (func $loop-value (result i32)
+  (func $loop-value-harder (result i32)
    (local $0 i32)
    (local $1 i32)
    (local $2 i32)
@@ -1464,7 +1468,7 @@
       )
       (block $label$4
        (set_local $0
-        (call $0)
+        (call $fimport$0)
        )
        (if
         (get_local $0)
@@ -1472,7 +1476,7 @@
          (f32.const -2048)
         )
         (block
-         (call $fimport$0
+         (call $fimport$1
           (i32.const -25732)
          )
          (br $label$2)
@@ -1496,7 +1500,7 @@
     (set_local $10
      (get_local $9)
     )
-    (call $fimport$1
+    (call $fimport$2
      (get_local $10)
     )
     (set_local $1
