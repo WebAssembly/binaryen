@@ -22,6 +22,7 @@
 #include "emscripten-optimizer/simple_ast.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "support/utilities.h"
 #include "ir/bits.h"
 
 
@@ -232,27 +233,105 @@ Literal Literal::truncateToF32() const {
   return Literal(float(getf64()));
 }
 
-Literal Literal::convertSToF32() const {
+Literal Literal::truncSIToF32() const {
   if (type == Type::i32) return Literal(float(i32));
   if (type == Type::i64) return Literal(float(i64));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::convertUToF32() const {
+Literal Literal::truncUIToF32() const {
   if (type == Type::i32) return Literal(float(uint32_t(i32)));
   if (type == Type::i64) return Literal(float(uint64_t(i64)));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::convertSToF64() const {
+Literal Literal::truncSIToF64() const {
   if (type == Type::i32) return Literal(double(i32));
   if (type == Type::i64) return Literal(double(i64));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::convertUToF64() const {
+Literal Literal::truncUIToF64() const {
   if (type == Type::i32) return Literal(double(uint32_t(i32)));
   if (type == Type::i64) return Literal(double(uint64_t(i64)));
+  WASM_UNREACHABLE();
+}
+
+template<typename F>
+struct AsInt {
+  using type = void;
+};
+template<> struct AsInt<float> { using type = int32_t; };
+template<> struct AsInt<double> { using type = int64_t; };
+
+template<typename F, typename I, bool (*RangeCheck)(typename AsInt<F>::type)>
+static Literal saturating_trunc(typename AsInt<F>::type val) {
+  if (std::isnan(bit_cast<F>(val))) {
+    return Literal(I(0));
+  }
+  if (!RangeCheck(val)) {
+    if (std::signbit(bit_cast<F>(val))) {
+      return Literal(std::numeric_limits<I>::min());
+    } else {
+      return Literal(std::numeric_limits<I>::max());
+    }
+  }
+  return Literal(I(std::trunc(bit_cast<F>(val))));
+}
+
+Literal Literal::truncSatToSI32() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, int32_t, isInRangeI32TruncS>(
+      Literal(*this).castToI32().geti32()
+    );
+  }
+  if (type == Type::f64) {
+    return saturating_trunc<double, int32_t, isInRangeI32TruncS>(
+      Literal(*this).castToI64().geti64()
+    );
+  }
+  WASM_UNREACHABLE();
+}
+
+Literal Literal::truncSatToSI64() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, int64_t, isInRangeI64TruncS>(
+      Literal(*this).castToI32().geti32()
+    );
+  }
+  if (type == Type::f64) {
+    return saturating_trunc<double, int64_t, isInRangeI64TruncS>(
+      Literal(*this).castToI64().geti64()
+    );
+  }
+  WASM_UNREACHABLE();
+}
+
+Literal Literal::truncSatToUI32() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, uint32_t, isInRangeI32TruncU>(
+      Literal(*this).castToI32().geti32()
+    );
+  }
+  if (type == Type::f64) {
+    return saturating_trunc<double, uint32_t, isInRangeI32TruncU>(
+      Literal(*this).castToI64().geti64()
+    );
+  }
+  WASM_UNREACHABLE();
+}
+
+Literal Literal::truncSatToUI64() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, uint64_t, isInRangeI64TruncU>(
+      Literal(*this).castToI32().geti32()
+    );
+  }
+  if (type == Type::f64) {
+    return saturating_trunc<double, uint64_t, isInRangeI64TruncU>(
+      Literal(*this).castToI64().geti64()
+    );
+  }
   WASM_UNREACHABLE();
 }
 

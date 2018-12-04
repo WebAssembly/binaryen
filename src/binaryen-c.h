@@ -324,6 +324,14 @@ BinaryenOp BinaryenAtomicRMWAnd(void);
 BinaryenOp BinaryenAtomicRMWOr(void);
 BinaryenOp BinaryenAtomicRMWXor(void);
 BinaryenOp BinaryenAtomicRMWXchg(void);
+BinaryenOp BinaryenTruncSatSFloat32ToInt32(void);
+BinaryenOp BinaryenTruncSatSFloat32ToInt64(void);
+BinaryenOp BinaryenTruncSatUFloat32ToInt32(void);
+BinaryenOp BinaryenTruncSatUFloat32ToInt64(void);
+BinaryenOp BinaryenTruncSatSFloat64ToInt32(void);
+BinaryenOp BinaryenTruncSatSFloat64ToInt64(void);
+BinaryenOp BinaryenTruncSatUFloat64ToInt32(void);
+BinaryenOp BinaryenTruncSatUFloat64ToInt64(void);
 
 typedef void* BinaryenExpressionRef;
 

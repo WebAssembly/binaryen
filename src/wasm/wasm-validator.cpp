@@ -723,36 +723,87 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ExtendUInt32:
     case ExtendS8Int32:
     case ExtendS16Int32: {
-      shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct"); break;
+      shouldBeEqual(curr->value->type, i32, curr, "extend type must be correct");
+      break;
     }
     case ExtendS8Int64:
     case ExtendS16Int64:
     case ExtendS32Int64: {
-      shouldBeEqual(curr->value->type, i64, curr, "extend type must be correct"); break;
+      shouldBeEqual(curr->value->type, i64, curr, "extend type must be correct");
+      break;
     }
-    case WrapInt64:              shouldBeEqual(curr->value->type, i64, curr, "wrap type must be correct"); break;
-    case TruncSFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
-    case TruncSFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
-    case TruncUFloat32ToInt32:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
-    case TruncUFloat32ToInt64:   shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct"); break;
-    case TruncSFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
-    case TruncSFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
-    case TruncUFloat64ToInt32:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
-    case TruncUFloat64ToInt64:   shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct"); break;
-    case ReinterpretFloat32:     shouldBeEqual(curr->value->type, f32, curr, "reinterpret/f32 type must be correct"); break;
-    case ReinterpretFloat64:     shouldBeEqual(curr->value->type, f64, curr, "reinterpret/f64 type must be correct"); break;
-    case ConvertUInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
-    case ConvertUInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
-    case ConvertSInt32ToFloat32: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
-    case ConvertSInt32ToFloat64: shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct"); break;
-    case ConvertUInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
-    case ConvertUInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
-    case ConvertSInt64ToFloat32: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
-    case ConvertSInt64ToFloat64: shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct"); break;
-    case PromoteFloat32:         shouldBeEqual(curr->value->type, f32, curr, "promote type must be correct"); break;
-    case DemoteFloat64:          shouldBeEqual(curr->value->type, f64, curr, "demote type must be correct"); break;
-    case ReinterpretInt32:       shouldBeEqual(curr->value->type, i32, curr, "reinterpret/i32 type must be correct"); break;
-    case ReinterpretInt64:       shouldBeEqual(curr->value->type, i64, curr, "reinterpret/i64 type must be correct"); break;
+    case WrapInt64: {
+      shouldBeEqual(curr->value->type, i64, curr, "wrap type must be correct");
+      break;
+    }
+    case TruncSFloat32ToInt32:
+    case TruncSFloat32ToInt64:
+    case TruncUFloat32ToInt32:
+    case TruncUFloat32ToInt64: {
+      shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct");
+      break;
+    }
+    case TruncSatSFloat32ToInt32:
+    case TruncSatSFloat32ToInt64:
+    case TruncSatUFloat32ToInt32:
+    case TruncSatUFloat32ToInt64: {
+      shouldBeTrue(info.features.hasTruncSat(), curr, "nontrapping float-to-int conversions are disabled");
+      shouldBeEqual(curr->value->type, f32, curr, "trunc type must be correct");
+      break;
+    }
+    case TruncSFloat64ToInt32:
+    case TruncSFloat64ToInt64:
+    case TruncUFloat64ToInt32:
+    case TruncUFloat64ToInt64: {
+      shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct");
+      break;
+    }
+    case TruncSatSFloat64ToInt32:
+    case TruncSatSFloat64ToInt64:
+    case TruncSatUFloat64ToInt32:
+    case TruncSatUFloat64ToInt64: {
+      shouldBeTrue(info.features.hasTruncSat(), curr, "nontrapping float-to-int conversions are disabled");
+      shouldBeEqual(curr->value->type, f64, curr, "trunc type must be correct");
+      break;
+    }
+    case ReinterpretFloat32: {
+      shouldBeEqual(curr->value->type, f32, curr, "reinterpret/f32 type must be correct");
+      break;
+    }
+    case ReinterpretFloat64: {
+      shouldBeEqual(curr->value->type, f64, curr, "reinterpret/f64 type must be correct");
+      break;
+    }
+    case ConvertUInt32ToFloat32:
+    case ConvertUInt32ToFloat64:
+    case ConvertSInt32ToFloat32:
+    case ConvertSInt32ToFloat64: {
+      shouldBeEqual(curr->value->type, i32, curr, "convert type must be correct");
+      break;
+    }
+    case ConvertUInt64ToFloat32:
+    case ConvertUInt64ToFloat64:
+    case ConvertSInt64ToFloat32:
+    case ConvertSInt64ToFloat64: {
+      shouldBeEqual(curr->value->type, i64, curr, "convert type must be correct");
+      break;
+    }
+    case PromoteFloat32: {
+      shouldBeEqual(curr->value->type, f32, curr, "promote type must be correct");
+      break;
+    }
+    case DemoteFloat64: {
+      shouldBeEqual(curr->value->type, f64, curr, "demote type must be correct");
+      break;
+    }
+    case ReinterpretInt32: {
+      shouldBeEqual(curr->value->type, i32, curr, "reinterpret/i32 type must be correct");
+      break;
+    }
+    case ReinterpretInt64: {
+      shouldBeEqual(curr->value->type, i64, curr, "reinterpret/i64 type must be correct");
+      break;
+    }
     case InvalidUnary: WASM_UNREACHABLE();
   }
 }

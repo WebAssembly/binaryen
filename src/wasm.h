@@ -119,6 +119,9 @@ enum UnaryOp {
   // Extend signed subword-sized integer. This differs from e.g. ExtendSInt32
   // because the input integer is in an i64 value insetad of an i32 value.
   ExtendS8Int32, ExtendS16Int32, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64,
+  // Saturating float-to-int
+  TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32,
+  TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64,
 
   InvalidUnary
 };

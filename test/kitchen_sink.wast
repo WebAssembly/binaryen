@@ -557,6 +557,26 @@
         )
       )
       (drop
+        (i32.trunc_s:sat/f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i32.trunc_u:sat/f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i32.trunc_s:sat/f64
+          (f64.const 10)
+        )
+      )
+      (drop
+        (i32.trunc_u:sat/f64
+          (f64.const 10)
+        )
+      )
+      (drop
         (i32.wrap/i64
           (i64.const 100)
         )
@@ -578,6 +598,26 @@
       )
       (drop
         (i64.trunc_u/f64
+          (f64.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_s:sat/f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_u:sat/f32
+          (f32.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_s:sat/f64
+          (f64.const 10)
+        )
+      )
+      (drop
+        (i64.trunc_u:sat/f64
           (f64.const 10)
         )
       )

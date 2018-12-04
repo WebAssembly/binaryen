@@ -100,10 +100,15 @@ public:
   Literal truncateToI32() const;
   Literal truncateToF32() const;
 
-  Literal convertSToF32() const;
-  Literal convertUToF32() const;
-  Literal convertSToF64() const;
-  Literal convertUToF64() const;
+  Literal truncSIToF32() const;
+  Literal truncUIToF32() const;
+  Literal truncSIToF64() const;
+  Literal truncUIToF64() const;
+
+  Literal truncSatToSI32() const;
+  Literal truncSatToSI64() const;
+  Literal truncSatToUI32() const;
+  Literal truncSatToUI64() const;
 
   Literal eqz() const;
   Literal neg() const;

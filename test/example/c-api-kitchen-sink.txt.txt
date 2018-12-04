@@ -133,6 +133,46 @@
        )
       )
       (drop
+       (i32.trunc_s:sat/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_s:sat/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_u:sat/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i64.trunc_u:sat/f32
+        (f32.const -33.61199951171875)
+       )
+      )
+      (drop
+       (i32.trunc_s:sat/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i64.trunc_s:sat/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i32.trunc_u:sat/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
+       (i64.trunc_u:sat/f64
+        (f64.const -9005.84)
+       )
+      )
+      (drop
        (i32.reinterpret/f32
         (f32.const -33.61199951171875)
        )

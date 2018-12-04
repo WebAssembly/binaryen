@@ -548,6 +548,7 @@ enum ASTNodes {
   I64ExtendS16 = 0xc3,
   I64ExtendS32 = 0xc4,
 
+  TruncSatPrefix = 0xfc,
   AtomicPrefix = 0xfe
 };
 
@@ -627,6 +628,16 @@ enum AtomicOpcodes {
   AtomicCmpxchgOps_End = 0x4e
 };
 
+enum TruncSatOpcodes {
+  I32STruncSatF32 = 0x00,
+  I32UTruncSatF32 = 0x01,
+  I32STruncSatF64 = 0x02,
+  I32UTruncSatF64 = 0x03,
+  I64STruncSatF32 = 0x04,
+  I64UTruncSatF32 = 0x05,
+  I64STruncSatF64 = 0x06,
+  I64UTruncSatF64 = 0x07,
+};
 
 enum MemoryAccess {
   Offset = 0x10,     // bit 4
@@ -944,6 +955,7 @@ public:
   bool maybeVisitConst(Expression*& out, uint8_t code);
   bool maybeVisitUnary(Expression*& out, uint8_t code);
   bool maybeVisitBinary(Expression*& out, uint8_t code);
+  bool maybeVisitTruncSat(Expression*& out, uint32_t code);
   void visitSelect(Select* curr);
   void visitReturn(Return* curr);
   bool maybeVisitHost(Expression*& out, uint8_t code);
