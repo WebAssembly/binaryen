@@ -262,7 +262,7 @@ switch (op[0]) {
                     if (strcmp(op, "f32x4.ge") == 0) return makeBinary(s, BinaryOp::GeVecF32x4);
                     goto parse_error;
                   case 't':
-                    if (strcmp(op, "f32x4.gt") == 0) return makeBinary(s, BinaryOp::LeVecF32x4);
+                    if (strcmp(op, "f32x4.gt") == 0) return makeBinary(s, BinaryOp::GtVecF32x4);
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -270,7 +270,7 @@ switch (op[0]) {
               case 'l': {
                 switch (op[7]) {
                   case 'e':
-                    if (strcmp(op, "f32x4.le") == 0) return makeBinary(s, BinaryOp::GtVecF32x4);
+                    if (strcmp(op, "f32x4.le") == 0) return makeBinary(s, BinaryOp::LeVecF32x4);
                     goto parse_error;
                   case 't':
                     if (strcmp(op, "f32x4.lt") == 0) return makeBinary(s, BinaryOp::LtVecF32x4);
@@ -524,7 +524,7 @@ switch (op[0]) {
                     if (strcmp(op, "f64x2.ge") == 0) return makeBinary(s, BinaryOp::GeVecF64x2);
                     goto parse_error;
                   case 't':
-                    if (strcmp(op, "f64x2.gt") == 0) return makeBinary(s, BinaryOp::LeVecF64x2);
+                    if (strcmp(op, "f64x2.gt") == 0) return makeBinary(s, BinaryOp::GtVecF64x2);
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -532,7 +532,7 @@ switch (op[0]) {
               case 'l': {
                 switch (op[7]) {
                   case 'e':
-                    if (strcmp(op, "f64x2.le") == 0) return makeBinary(s, BinaryOp::GtVecF64x2);
+                    if (strcmp(op, "f64x2.le") == 0) return makeBinary(s, BinaryOp::LeVecF64x2);
                     goto parse_error;
                   case 't':
                     if (strcmp(op, "f64x2.lt") == 0) return makeBinary(s, BinaryOp::LtVecF64x2);
@@ -679,10 +679,10 @@ switch (op[0]) {
               case 't': {
                 switch (op[9]) {
                   case 's':
-                    if (strcmp(op, "i16x8.gt_s") == 0) return makeBinary(s, BinaryOp::LeSVecI16x8);
+                    if (strcmp(op, "i16x8.gt_s") == 0) return makeBinary(s, BinaryOp::GtSVecI16x8);
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "i16x8.gt_u") == 0) return makeBinary(s, BinaryOp::LeUVecI16x8);
+                    if (strcmp(op, "i16x8.gt_u") == 0) return makeBinary(s, BinaryOp::GtUVecI16x8);
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -695,10 +695,10 @@ switch (op[0]) {
               case 'e': {
                 switch (op[9]) {
                   case 's':
-                    if (strcmp(op, "i16x8.le_s") == 0) return makeBinary(s, BinaryOp::GtSVecI16x8);
+                    if (strcmp(op, "i16x8.le_s") == 0) return makeBinary(s, BinaryOp::LeSVecI16x8);
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "i16x8.le_u") == 0) return makeBinary(s, BinaryOp::GtUVecI16x8);
+                    if (strcmp(op, "i16x8.le_u") == 0) return makeBinary(s, BinaryOp::LeUVecI16x8);
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -1287,10 +1287,10 @@ switch (op[0]) {
                   case 't': {
                     switch (op[9]) {
                       case 's':
-                        if (strcmp(op, "i32x4.gt_s") == 0) return makeBinary(s, BinaryOp::LeSVecI32x4);
+                        if (strcmp(op, "i32x4.gt_s") == 0) return makeBinary(s, BinaryOp::GtSVecI32x4);
                         goto parse_error;
                       case 'u':
-                        if (strcmp(op, "i32x4.gt_u") == 0) return makeBinary(s, BinaryOp::LeUVecI32x4);
+                        if (strcmp(op, "i32x4.gt_u") == 0) return makeBinary(s, BinaryOp::GtUVecI32x4);
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -1303,10 +1303,10 @@ switch (op[0]) {
                   case 'e': {
                     switch (op[9]) {
                       case 's':
-                        if (strcmp(op, "i32x4.le_s") == 0) return makeBinary(s, BinaryOp::GtSVecI32x4);
+                        if (strcmp(op, "i32x4.le_s") == 0) return makeBinary(s, BinaryOp::LeSVecI32x4);
                         goto parse_error;
                       case 'u':
-                        if (strcmp(op, "i32x4.le_u") == 0) return makeBinary(s, BinaryOp::GtUVecI32x4);
+                        if (strcmp(op, "i32x4.le_u") == 0) return makeBinary(s, BinaryOp::LeUVecI32x4);
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -2051,10 +2051,10 @@ switch (op[0]) {
               case 't': {
                 switch (op[9]) {
                   case 's':
-                    if (strcmp(op, "i8x16.gt_s") == 0) return makeBinary(s, BinaryOp::LeSVecI8x16);
+                    if (strcmp(op, "i8x16.gt_s") == 0) return makeBinary(s, BinaryOp::GtSVecI8x16);
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "i8x16.gt_u") == 0) return makeBinary(s, BinaryOp::LeUVecI8x16);
+                    if (strcmp(op, "i8x16.gt_u") == 0) return makeBinary(s, BinaryOp::GtUVecI8x16);
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -2067,10 +2067,10 @@ switch (op[0]) {
               case 'e': {
                 switch (op[9]) {
                   case 's':
-                    if (strcmp(op, "i8x16.le_s") == 0) return makeBinary(s, BinaryOp::GtSVecI8x16);
+                    if (strcmp(op, "i8x16.le_s") == 0) return makeBinary(s, BinaryOp::LeSVecI8x16);
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "i8x16.le_u") == 0) return makeBinary(s, BinaryOp::GtUVecI8x16);
+                    if (strcmp(op, "i8x16.le_u") == 0) return makeBinary(s, BinaryOp::LeUVecI8x16);
                     goto parse_error;
                   default: goto parse_error;
                 }
