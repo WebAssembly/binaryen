@@ -223,35 +223,35 @@ Literal Literal::extendS32() const {
   WASM_UNREACHABLE();
 }
 
-Literal Literal::truncateToI32() const {
+Literal Literal::wrapToI32() const {
   assert(type == Type::i64);
   return Literal((int32_t)i64);
 }
 
-Literal Literal::truncateToF32() const {
+Literal Literal::demoteToF32() const {
   assert(type == Type::f64);
   return Literal(float(getf64()));
 }
 
-Literal Literal::truncSIToF32() const {
+Literal Literal::convertSIToF32() const {
   if (type == Type::i32) return Literal(float(i32));
   if (type == Type::i64) return Literal(float(i64));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::truncUIToF32() const {
+Literal Literal::convertUIToF32() const {
   if (type == Type::i32) return Literal(float(uint32_t(i32)));
   if (type == Type::i64) return Literal(float(uint64_t(i64)));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::truncSIToF64() const {
+Literal Literal::convertSIToF64() const {
   if (type == Type::i32) return Literal(double(i32));
   if (type == Type::i64) return Literal(double(i64));
   WASM_UNREACHABLE();
 }
 
-Literal Literal::truncUIToF64() const {
+Literal Literal::convertUIToF64() const {
   if (type == Type::i32) return Literal(double(uint32_t(i32)));
   if (type == Type::i64) return Literal(double(uint64_t(i64)));
   WASM_UNREACHABLE();
@@ -426,7 +426,7 @@ Literal Literal::demote() const {
   // when we must convert to infinity, do that
   if (f64 < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
   if (f64 > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
-  return truncateToF32();
+  return demoteToF32();
 }
 
 Literal Literal::add(const Literal& other) const {

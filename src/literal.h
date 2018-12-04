@@ -97,13 +97,13 @@ public:
   Literal extendS8() const;
   Literal extendS16() const;
   Literal extendS32() const;
-  Literal truncateToI32() const;
-  Literal truncateToF32() const;
+  Literal wrapToI32() const;
+  Literal demoteToF32() const;
 
-  Literal truncSIToF32() const;
-  Literal truncUIToF32() const;
-  Literal truncSIToF64() const;
-  Literal truncUIToF64() const;
+  Literal convertSIToF32() const;
+  Literal convertUIToF32() const;
+  Literal convertSIToF64() const;
+  Literal convertUIToF64() const;
 
   Literal truncSatToSI32() const;
   Literal truncSatToSI64() const;
