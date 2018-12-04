@@ -713,6 +713,9 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     readNames(payloadLen - (pos - oldPos));
   } else {
     // an unfamiliar custom section
+    if (sectionName.equals(BinaryConsts::UserSections::Linking)) {
+      std::cerr << "warning: linking section is present, which binaryen cannot handle yet - relocations will be invalidated!\n";
+    }
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
