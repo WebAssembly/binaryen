@@ -780,7 +780,7 @@ public:
         }
         case f32: return Literal(load32u(addr)).castToF32();
         case f64: return Literal(load64u(addr)).castToF64();
-        case v128: assert(false && "v128 not implemented yet");
+        case v128: return Literal(load128(addr).data());
         case none:
         case unreachable: WASM_UNREACHABLE();
       }
@@ -824,11 +824,13 @@ public:
     virtual uint32_t load32u(Address addr) { WASM_UNREACHABLE(); }
     virtual int64_t load64s(Address addr) { WASM_UNREACHABLE(); }
     virtual uint64_t load64u(Address addr) { WASM_UNREACHABLE(); }
+    virtual std::array<uint8_t, 16> load128(Address addr) { WASM_UNREACHABLE(); }
 
     virtual void store8(Address addr, int8_t value) { WASM_UNREACHABLE(); }
     virtual void store16(Address addr, int16_t value) { WASM_UNREACHABLE(); }
     virtual void store32(Address addr, int32_t value) { WASM_UNREACHABLE(); }
     virtual void store64(Address addr, int64_t value) { WASM_UNREACHABLE(); }
+    virtual void store128(Address addr, const std::array<uint8_t, 16>&) { WASM_UNREACHABLE(); }
   };
 
   SubType* self() {
