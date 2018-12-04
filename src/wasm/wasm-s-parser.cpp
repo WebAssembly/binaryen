@@ -864,8 +864,69 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
-  auto ret = parseConst(s[1]->str(), type, allocator);
-  if (!ret) throw ParseException("bad const");
+  if (type != v128) {
+    auto ret = parseConst(s[1]->str(), type, allocator);
+    if (!ret) throw ParseException("bad const");
+    return ret;
+  }
+
+  auto ret = allocator.alloc<Const>();
+  auto getLiteral = [](Expression* expr) {
+                      if (expr == nullptr) {
+                        throw ParseException("Could not parse v128 lane");
+                      }
+                      return expr->cast<Const>()->value;
+                    };
+  Type lane_t = stringToType(s[1]->str());
+  size_t lanes = s.size() - 2;
+  switch (lanes) {
+    case 2: {
+      if (lane_t != i64 && lane_t != f64) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 2> lanes;
+      for (size_t i = 0; i < 2; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 4: {
+      if (lane_t != i32 && lane_t != f32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 4> lanes;
+      for (size_t i = 0; i < 4; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 8: {
+      if (lane_t != i32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 8> lanes;
+      for (size_t i = 0; i < 8; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    case 16: {
+      if (lane_t != i32) {
+        throw ParseException("Unexpected v128 literal lane type");
+      }
+      std::array<Literal, 16> lanes;
+      for (size_t i = 0; i < 16; ++i) {
+        lanes[i] = getLiteral(parseConst(s[i+2]->str(), lane_t, allocator));
+      }
+      ret->value = Literal(lanes);
+      break;
+    }
+    default: throw ParseException("Unexpected number of lanes in v128 literal");
+  }
+  ret->finalize();
   return ret;
 }
 
