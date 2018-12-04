@@ -83,6 +83,11 @@ function test_ids() {
   console.log("BinaryenAtomicRMWId: " + Binaryen.AtomicRMWId);
   console.log("BinaryenAtomicWaitId: " + Binaryen.AtomicWaitId);
   console.log("BinaryenAtomicWakeId: " + Binaryen.AtomicWakeId);
+  console.log("BinaryenSIMDExtractId: " + Binaryen.SIMDExtractId);
+  console.log("BinaryenSIMDReplaceId: " + Binaryen.SIMDReplaceId);
+  console.log("BinaryenSIMDShuffleId: " + Binaryen.SIMDShuffleId);
+  console.log("BinaryenSIMDBitselectId: " + Binaryen.SIMDBitselectId);
+  console.log("BinaryenSIMDShiftId: " + Binaryen.SIMDShiftId);
 }
 
 function test_core() {

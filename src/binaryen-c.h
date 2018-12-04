@@ -117,6 +117,11 @@ BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
 BinaryenExpressionId BinaryenAtomicRMWId(void);
 BinaryenExpressionId BinaryenAtomicWaitId(void);
 BinaryenExpressionId BinaryenAtomicWakeId(void);
+BinaryenExpressionId BinaryenSIMDExtractId(void);
+BinaryenExpressionId BinaryenSIMDReplaceId(void);
+BinaryenExpressionId BinaryenSIMDShuffleId(void);
+BinaryenExpressionId BinaryenSIMDBitselectId(void);
+BinaryenExpressionId BinaryenSIMDShiftId(void);
 
 // External kinds (call to get the value of each; you can cache them)
 

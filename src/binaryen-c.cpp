@@ -230,6 +230,11 @@ BinaryenExpressionId BinaryenAtomicCmpxchgId(void) { return Expression::Id::Atom
 BinaryenExpressionId BinaryenAtomicRMWId(void) { return Expression::Id::AtomicRMWId; }
 BinaryenExpressionId BinaryenAtomicWaitId(void) { return Expression::Id::AtomicWaitId; }
 BinaryenExpressionId BinaryenAtomicWakeId(void) { return Expression::Id::AtomicWakeId; }
+BinaryenExpressionId BinaryenSIMDExtractId(void) { return Expression::Id::SIMDExtractId; }
+BinaryenExpressionId BinaryenSIMDReplaceId(void) { return Expression::Id::SIMDReplaceId; }
+BinaryenExpressionId BinaryenSIMDShuffleId(void) { return Expression::Id::SIMDShuffleId; }
+BinaryenExpressionId BinaryenSIMDBitselectId(void) { return Expression::Id::SIMDBitselectId; }
+BinaryenExpressionId BinaryenSIMDShiftId(void) { return Expression::Id::SIMDShiftId; }
 
 // External kinds
 

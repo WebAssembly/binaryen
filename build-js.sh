@@ -214,6 +214,11 @@ export_function "_BinaryenAtomicCmpxchgId"
 export_function "_BinaryenAtomicRMWId"
 export_function "_BinaryenAtomicWaitId"
 export_function "_BinaryenAtomicWakeId"
+export_function "_BinaryenSIMDExtractId"
+export_function "_BinaryenSIMDReplaceId"
+export_function "_BinaryenSIMDShuffleId"
+export_function "_BinaryenSIMDBitselectId"
+export_function "_BinaryenSIMDShiftId"
 
 # External kinds
 export_function "_BinaryenExternalFunction"

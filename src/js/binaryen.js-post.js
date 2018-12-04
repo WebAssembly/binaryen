@@ -60,6 +60,11 @@ Module['AtomicCmpxchgId'] = Module['_BinaryenAtomicCmpxchgId']();
 Module['AtomicRMWId'] = Module['_BinaryenAtomicRMWId']();
 Module['AtomicWaitId'] = Module['_BinaryenAtomicWaitId']();
 Module['AtomicWakeId'] = Module['_BinaryenAtomicWakeId']();
+Module['SIMDExtractId'] = Module['_BinaryenSIMDExtractId']();
+Module['SIMDReplaceId'] = Module['_BinaryenSIMDReplaceId']();
+Module['SIMDShuffleId'] = Module['_BinaryenSIMDShuffleId']();
+Module['SIMDBitselectId'] = Module['_BinaryenSIMDBitselectId']();
+Module['SIMDShift'] = Module['_BinarySIMDShiftId']();
 
 // External kinds
 Module['ExternalFunction'] = Module['_BinaryenExternalFunction']();
