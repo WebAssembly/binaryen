@@ -57,6 +57,27 @@ public:
   bool isConcrete() { return type != none; }
   bool isNull() { return type == none; }
 
+  inline static Literal makeLiteralFromInt32(int32_t x, Type type) {
+    switch (type) {
+      case Type::i32: return Literal(int32_t(x)); break;
+      case Type::i64: return Literal(int64_t(x)); break;
+      case Type::f32: return Literal(float(x)); break;
+      case Type::f64: return Literal(double(x)); break;
+      case Type::v128: return Literal(
+        std::array<Literal, 4>{
+          Literal(x), Literal(int32_t(0)), Literal(int32_t(0)), Literal(int32_t(0))
+        }
+      );
+      case none:
+      case unreachable: WASM_UNREACHABLE();
+    }
+    WASM_UNREACHABLE();
+  }
+
+  inline static Literal makeLiteralZero(Type type) {
+    return makeLiteralFromInt32(0, type);
+  }
+
   Literal castToF32();
   Literal castToF64();
   Literal castToI32();
