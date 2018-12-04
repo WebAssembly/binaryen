@@ -634,8 +634,8 @@ void FunctionValidator::validateMemBytes(uint8_t bytes, Type type, Expression* c
   switch (type) {
     case i32: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4, curr, "expected i32 operation to touch 1, 2, or 4 bytes"); break;
     case i64: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4 || bytes == 8, curr, "expected i64 operation to touch 1, 2, 4, or 8 bytes"); break;
-    case f32: shouldBeEqual(bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes"); break;
-    case f64: shouldBeEqual(bytes, uint8_t(8), curr, "expected f64 operation to touch 8 bytes"); break;
+    case f32: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4, curr, "expected f32 operation to touch 1, 2, or 4 bytes"); break;
+    case f64: shouldBeTrue(bytes == 1 || bytes == 2 || bytes == 4 || bytes == 8, curr, "expected f64 operation to touch 1, 2, 4, or 8 bytes"); break;
     case v128: shouldBeEqual(bytes, uint8_t(16), curr, "expected v128 operation to touch 16 bytes"); break;
     case none: WASM_UNREACHABLE();
     case unreachable: break;
