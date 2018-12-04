@@ -633,7 +633,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         auto& list = curr->list;
         for (Index i = 0; i < list.size(); i++) {
           auto* iff = list[i]->dynCast<If>();
-          if (!iff || !iff->ifFalse || isConcreteType(iff->type)) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
+          if (!iff || !iff->ifFalse) continue; // if it lacked an if-false, it would already be a br_if, as that's the easy case
           auto* ifTrueBreak = iff->ifTrue->dynCast<Break>();
           if (ifTrueBreak && !ifTrueBreak->condition && canTurnIfIntoBrIf(iff->condition, ifTrueBreak->value, passOptions)) {
             // we are an if-else where the ifTrue is a break without a condition, so we can do this

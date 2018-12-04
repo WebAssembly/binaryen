@@ -938,15 +938,16 @@
   (loop $typed (result i32)
    (block $outer (result i32)
     (block (result i32)
-     (if (result i32)
-      (i32.const 2)
-      (block $block (result i32)
-       (drop
-        (call $loop-if)
-       )
-       (i32.const 0)
+     (br_if $typed
+      (i32.eqz
+       (i32.const 2)
       )
-      (br $typed)
+     )
+     (block $block (result i32)
+      (drop
+       (call $loop-if)
+      )
+      (i32.const 0)
      )
     )
    )
@@ -2380,6 +2381,27 @@
     )
    )
    (br $top)
+  )
+ )
+ (func $loop-end-set (; 111 ;) (type $10) (param $x i32) (result i32)
+  (loop $loop
+   (nop)
+   (br_if $loop
+    (get_local $x)
+   )
+   (set_local $x
+    (i32.const 1)
+   )
+  )
+  (get_local $x)
+ )
+ (func $loop-end-value (; 112 ;) (type $10) (param $x i32) (result i32)
+  (loop $loop (result i32)
+   (nop)
+   (br_if $loop
+    (get_local $x)
+   )
+   (i32.const 1)
   )
  )
 )
