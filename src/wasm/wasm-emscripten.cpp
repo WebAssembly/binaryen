@@ -706,31 +706,11 @@ struct FixInvokeFunctionNamesWalker : public PostWalker<FixInvokeFunctionNamesWa
     }
   }
 
-  void visitTable(Table* curr) {
-    for (auto& segment : curr->segments) {
-      for (size_t i = 0; i < segment.data.size(); i++) {
-        auto it = importRenames.find(segment.data[i]);
-        if (it != importRenames.end()) {
-          segment.data[i] = it->second;
-        }
-      }
-    }
-  }
-
-  void visitCall(Call* curr) {
-    if (wasm.getFunction(curr->target)->imported()) {
-      auto it = importRenames.find(curr->target);
-      if (it != importRenames.end()) {
-        curr->target = it->second;
-      }
-    }
-  }
-
   void visitModule(Module* curr) {
     for (auto importName : toRemove) {
       wasm.removeFunction(importName);
     }
-    wasm.updateMaps();
+    ModuleUtils::renameFunctions(wasm, importRenames);
   }
 };
 
