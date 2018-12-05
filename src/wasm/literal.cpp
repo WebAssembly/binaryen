@@ -890,7 +890,7 @@ static LaneArray<Lanes> getLanes(const Literal& val) {
   for (size_t lane_idx = 0; lane_idx < Lanes; ++lane_idx) {
     LaneT lane(0);
     for (size_t offset = 0; offset < lane_width; ++offset) {
-      lane |= bytes.at(lane_idx * lane_width + offset) << (8 * offset);
+      lane |= LaneT(bytes.at(lane_idx * lane_width + offset)) << LaneT(8 * offset);
     }
     lanes.at(lane_idx) = Literal(lane);
   }
@@ -898,16 +898,16 @@ static LaneArray<Lanes> getLanes(const Literal& val) {
 }
 
 LaneArray<16> Literal::getLanesSI8x16() const {
-  return getLanes<int32_t, 16>(*this);
+  return getLanes<int8_t, 16>(*this);
 }
 LaneArray<16> Literal::getLanesUI8x16() const {
-  return getLanes<uint32_t, 16>(*this);
+  return getLanes<uint8_t, 16>(*this);
 }
 LaneArray<8> Literal::getLanesSI16x8() const {
-  return getLanes<int32_t, 8>(*this);
+  return getLanes<int16_t, 8>(*this);
 }
 LaneArray<8> Literal::getLanesUI16x8() const {
-  return getLanes<uint32_t, 8>(*this);
+  return getLanes<uint16_t, 8>(*this);
 }
 LaneArray<4> Literal::getLanesI32x4() const {
   return getLanes<int32_t, 4>(*this);
@@ -934,7 +934,7 @@ Literal Literal::shuffleV8x16(const Literal& other, const std::array<uint8_t, 16
   assert(type == Type::v128);
   uint8_t bytes[16];
   for (size_t i = 0; i < mask.size(); ++i) {
-    bytes[i] = (mask[i] < 16) ? v128[i] : other.v128[i - 16];
+    bytes[i] = (mask[i] < 16) ? v128[mask[i]] : other.v128[mask[i] - 16];
   }
   return Literal(bytes);
 }

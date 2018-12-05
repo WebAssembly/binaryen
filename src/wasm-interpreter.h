@@ -810,7 +810,7 @@ public:
         // write floats carefully, ensuring all bits reach memory
         case f32: store32(addr, value.reinterpreti32()); break;
         case f64: store64(addr, value.reinterpreti64()); break;
-        case v128: assert(false && "v128 not implemented yet");
+        case v128: store128(addr, value.getv128()); break;
         case none:
         case unreachable: WASM_UNREACHABLE();
       }
