@@ -71,7 +71,8 @@
   )
  )
 )
-(;--BEGIN METADATA --
+(;
+--BEGIN METADATA --
 {
   "staticBump": 8,
   "initializers": [

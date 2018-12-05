@@ -155,7 +155,8 @@
   )
  )
 )
-(;--BEGIN METADATA --
+(;
+--BEGIN METADATA --
 {
   "staticBump": 0,
   "initializers": [

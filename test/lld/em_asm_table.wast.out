@@ -61,7 +61,8 @@
   )
  )
 )
-(;--BEGIN METADATA --
+(;
+--BEGIN METADATA --
 {
   "staticBump": 480,
   "declares": [

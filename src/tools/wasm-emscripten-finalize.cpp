@@ -222,7 +222,7 @@ int main(int argc, const char *argv[]) {
   if (emitBinary) {
     std::cout << metadata;
   } else {
-    output << "(;";
+    output << "(;\n";
     output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
     output << ";)\n";
   }
