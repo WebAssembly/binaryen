@@ -303,31 +303,31 @@
        )
       )
      )
-     (loop $while-in5
-      (br_if $label$break$L8
-       (i32.eqz
-        (i32.load8_u
-         (get_local $1)
-        )
-       )
-      )
-      (set_local $1
-       (i32.add
-        (get_local $1)
-        (i32.const 1)
-       )
-      )
-      (br_if $while-in5
-       (tee_local $0
-        (i32.add
-         (get_local $0)
-         (i32.const -1)
-        )
-       )
-      )
-     )
      (set_local $0
-      (i32.const 0)
+      (loop $while-in5 (result i32)
+       (br_if $label$break$L8
+        (i32.eqz
+         (i32.load8_u
+          (get_local $1)
+         )
+        )
+       )
+       (set_local $1
+        (i32.add
+         (get_local $1)
+         (i32.const 1)
+        )
+       )
+       (br_if $while-in5
+        (tee_local $0
+         (i32.add
+          (get_local $0)
+          (i32.const -1)
+         )
+        )
+       )
+       (i32.const 0)
+      )
      )
     )
    )
