@@ -71,4 +71,38 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 8, "initializers": ["__post_instantiate"], "declares": [], "externs": [], "implementedFunctions": ["___post_instantiate","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__post_instantiate","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": [] }
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 8,
+  "initializers": [
+    "__post_instantiate"
+  ],
+  "declares": [
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "___post_instantiate",
+    "_main",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory"
+  ],
+  "exports": [
+    "memory",
+    "__post_instantiate",
+    "main",
+    "__heap_base",
+    "__data_end",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory"
+  ],
+  "invokeFuncs": [
+  ]
+}
+-- END METADATA --
+;)
