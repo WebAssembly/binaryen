@@ -1,4 +1,5 @@
 (module
+ (memory 1)
  (global $global (mut i32) (i32.const 0))
  (func $0 (result f64)
   (if

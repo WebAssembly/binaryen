@@ -1,4 +1,5 @@
 (module
+  (memory 1)
   (func $loop1
     (loop $loop
       (drop (i32.const 10))

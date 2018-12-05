@@ -1,4 +1,5 @@
 (module
+ (memory 1)
  (func "if-select"
   (local $var$0 i32)
   (nop)

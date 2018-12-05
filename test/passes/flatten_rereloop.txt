@@ -5,6 +5,7 @@
  (type $3 (func (param i32)))
  (type $4 (func (param i32) (result f32)))
  (type $5 (func (result f32)))
+ (memory $0 1)
  (global $global (mut i32) (i32.const 0))
  (func $0 (; 0 ;) (type $0) (result f64)
   (local $0 f64)
