@@ -160,9 +160,11 @@ inline void renameFunctions(Module& wasm, T& map) {
   // Update call instructions.
   for (auto& func : wasm.functions) {
     // TODO: parallelize
-    FindAll<Call> calls(func->body);
-    for (auto* call : calls.list) {
-      maybeUpdate(call->target);
+    if (!func->imported()) {
+      FindAll<Call> calls(func->body);
+      for (auto* call : calls.list) {
+        maybeUpdate(call->target);
+      }
     }
   }
 }
