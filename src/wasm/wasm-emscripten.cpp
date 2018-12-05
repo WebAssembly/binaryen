@@ -262,6 +262,56 @@ void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
   wasm.removeGlobal(stackPointer->name);
 }
 
+struct AddUnderscoresWalker : public PostWalker<AddUnderscoresWalker> {
+  bool isUserSymbol(Name name) {
+    if (name.startsWith("__")) {
+      return false;
+    }
+    if (name.startsWith("g$")) {
+      return false;
+    }
+    return true;
+  }
+
+  void visitExport(Export* curr) {
+    // Fixup function export names
+    if (curr->kind != ExternalKind::Function)
+      return;
+    if (!isUserSymbol(curr->name))
+      return;
+    std::string new_name = std::string("_") + curr->name.c_str();
+    curr->name = Name(new_name);
+  }
+
+  void visitFunction(Function* curr) {
+    // Fixup function import names
+    if (!curr->imported())
+      return;
+    if (!isUserSymbol(curr->base))
+      return;
+    std::string new_name = std::string("_") + curr->base.c_str();
+    curr->base = Name(new_name);
+  }
+};
+
+void EmscriptenGlueGenerator::fixImportExportNames() {
+  AddUnderscoresWalker walker;
+  walker.walkModule(&wasm);
+
+  // The names of standard imports/exports used by lld doesn't quite match that
+  // expected by emscripten.
+  // TODO(sbc): Unify these
+  if (Export* ex = wasm.getExportOrNull("__wasm_call_ctors")) {
+    ex->name = "__post_instantiate";
+  }
+  if (wasm.table.imported()) {
+    if (wasm.table.base != "table") wasm.table.base = Name("table");
+  }
+  if (wasm.memory.imported()) {
+    if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
+  }
+}
+
 struct JSCallWalker : public PostWalker<JSCallWalker> {
   Module &wasm;
   JSCallWalker(Module &_wasm) : wasm(_wasm) {
@@ -850,7 +900,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << ", \"externs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    meta << maybeComma() << "\"_" << import->base.str << '"';
+    meta << maybeComma() << '"' << import->base.str << '"';
   });
   meta << "]";
 
@@ -858,7 +908,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   commaFirst = true;
   for (const auto& ex : wasm.exports) {
     if (ex->kind == ExternalKind::Function) {
-      meta << maybeComma() << "\"_" << ex->name.str << '"';
+      meta << maybeComma() << '"' << ex->name.str << '"';
     }
   }
   meta << "]";

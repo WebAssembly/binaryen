@@ -18,7 +18,7 @@
  (type $FUNCSIG$v (func))
  (type $FUNCSIG$vii (func (param i32 i32)))
  (type $FUNCSIG$viiii (func (param i32 i32 i32 i32)))
- (import "env" "_Z4atoiPKc" (func $_Z4atoiPKc (param i32) (result i32)))
+ (import "env" "__Z4atoiPKc" (func $_Z4atoiPKc (param i32) (result i32)))
  (import "env" "jsCall_ddi" (func $jsCall_ddi (param i32 f64 i32) (result f64)))
  (import "env" "jsCall_fffi" (func $jsCall_fffi (param i32 f32 f32 i32) (result f32)))
  (import "env" "jsCall_iii" (func $jsCall_iii (param i32 i32 i32) (result i32)))
@@ -33,7 +33,7 @@
  (global $global$2 i32 (i32.const 568))
  (export "memory" (memory $0))
  (export "__post_instantiate" (func $__wasm_call_ctors))
- (export "main" (func $main))
+ (export "_main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "stackSave" (func $stackSave))
@@ -294,4 +294,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"], "declares": ["_Z4atoiPKc"], "externs": [], "implementedFunctions": ["___post_instantiate","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory","_dynCall_viii"], "exports": ["memory","__post_instantiate","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_viii"], "invokeFuncs": [] }
+;; METADATA: { "asmConsts": {},"staticBump": 0, "initializers": [], "jsCallStartIndex": 3, "jsCallFuncType": ["ddi","fffi","iii","v","vi","viii"], "declares": ["__Z4atoiPKc"], "externs": [], "implementedFunctions": ["__post_instantiate","_main","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_viii"], "exports": ["memory","__post_instantiate","_main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_viii"], "invokeFuncs": [] }

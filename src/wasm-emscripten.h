@@ -45,6 +45,11 @@ public:
   // and restore functions.
   void replaceStackPointerGlobal();
 
+  // Update the names of imports/exports to match emscripten's expectations.
+  // Primarily this prepends underscores to user symbols are imported or
+  // exported.  It also updates the names of the memory/table imports/exports.
+  void fixImportExportNames();
+
   // Create thunks to support emscripten's addFunction functionality. Creates (#
   // of reserved function pointers) thunks for each indirectly called function
   // signature.
