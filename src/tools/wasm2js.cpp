@@ -58,6 +58,7 @@ int main(int argc, const char *argv[]) {
   Element* root = nullptr;
   Module wasm;
   Ref asmjs;
+  std::unique_ptr<SExpressionParser> sexprParser;
   std::unique_ptr<SExpressionWasmBuilder> sexprBuilder;
 
   auto &input = options.extra["infile"];
@@ -83,8 +84,8 @@ int main(int argc, const char *argv[]) {
       auto input(
           read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
       if (options.debug) std::cerr << "s-parsing..." << std::endl;
-      SExpressionParser parser(input.data());
-      root = parser.root;
+      sexprParser = make_unique<SExpressionParser>(input.data());
+      root = sexprParser->root;
 
       if (options.debug) std::cerr << "w-parsing..." << std::endl;
       sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
