@@ -101,4 +101,4 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 13, "initializers": [], "declares": ["puts"], "externs": [], "implementedFunctions": ["___post_instantiate","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__post_instantiate","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": ["invoke_ffd"] }
+;; METADATA: { "asmConsts": {},"staticBump": 13, "initializers": ["__post_instantiate"], "declares": ["puts"], "externs": [], "implementedFunctions": ["___post_instantiate","_main","_stackSave","_stackAlloc","_stackRestore","___growWasmMemory"], "exports": ["memory","__post_instantiate","main","__heap_base","__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory"], "invokeFuncs": ["invoke_ffd"] }
