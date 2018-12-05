@@ -1155,6 +1155,146 @@ Literal Literal::shrUI64x2(const Literal& other) const {
   return shift<2, &Literal::getLanesI64x2, &Literal::shrU>(*this, other);
 }
 
+template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
+         Literal (Literal::*CompareOp)(const Literal&) const,
+         typename LaneT = int32_t>
+static Literal compare(const Literal& val, const Literal& other) {
+  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  LaneArray<Lanes> other_lanes = (other.*IntoLanes)();
+  for (size_t i = 0; i < Lanes; ++i) {
+    lanes[i] = (lanes[i].*CompareOp)(other_lanes[i]) == Literal(int32_t(1))
+               ? Literal(LaneT(-1))
+               : Literal(LaneT(0));
+  }
+  return Literal(lanes);
+}
+
+Literal Literal::eqI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::eq>(*this, other);
+}
+Literal Literal::neI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::ne>(*this, other);
+}
+Literal Literal::ltSI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesSI8x16, &Literal::ltS>(*this, other);
+}
+Literal Literal::ltUI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::ltU>(*this, other);
+}
+Literal Literal::gtSI8x16(const Literal& other) const  {
+  return compare<16, &Literal::getLanesSI8x16, &Literal::gtS>(*this, other);
+}
+Literal Literal::gtUI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::gtU>(*this, other);
+}
+Literal Literal::leSI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesSI8x16, &Literal::leS>(*this, other);
+}
+Literal Literal::leUI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::leU>(*this, other);
+}
+Literal Literal::geSI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesSI8x16, &Literal::geS>(*this, other);
+}
+Literal Literal::geUI8x16(const Literal& other) const {
+  return compare<16, &Literal::getLanesUI8x16, &Literal::geU>(*this, other);
+}
+Literal Literal::eqI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::eq>(*this, other);
+}
+Literal Literal::neI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::ne>(*this, other);
+}
+Literal Literal::ltSI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesSI16x8, &Literal::ltS>(*this, other);
+}
+Literal Literal::ltUI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::ltU>(*this, other);
+}
+Literal Literal::gtSI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesSI16x8, &Literal::gtS>(*this, other);
+}
+Literal Literal::gtUI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::gtU>(*this, other);
+}
+Literal Literal::leSI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesSI16x8, &Literal::leS>(*this, other);
+}
+Literal Literal::leUI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::leU>(*this, other);
+}
+Literal Literal::geSI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesSI16x8, &Literal::geS>(*this, other);
+}
+Literal Literal::geUI16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesUI16x8, &Literal::geU>(*this, other);
+}
+Literal Literal::eqI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::eq>(*this, other);
+}
+Literal Literal::neI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::ne>(*this, other);
+}
+Literal Literal::ltSI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::ltS>(*this, other);
+}
+Literal Literal::ltUI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::ltU>(*this, other);
+}
+Literal Literal::gtSI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::gtS>(*this, other);
+}
+Literal Literal::gtUI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::gtU>(*this, other);
+}
+Literal Literal::leSI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::leS>(*this, other);
+}
+Literal Literal::leUI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::leU>(*this, other);
+}
+Literal Literal::geSI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::geS>(*this, other);
+}
+Literal Literal::geUI32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
+}
+Literal Literal::eqF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
+}
+Literal Literal::neF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::ne>(*this, other);
+}
+Literal Literal::ltF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::lt>(*this, other);
+}
+Literal Literal::gtF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::gt>(*this, other);
+}
+Literal Literal::leF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::le>(*this, other);
+}
+Literal Literal::geF32x4(const Literal& other) const {
+  return compare<4, &Literal::getLanesF32x4, &Literal::ge>(*this, other);
+}
+Literal Literal::eqF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::eq, int64_t>(*this, other);
+}
+Literal Literal::neF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::ne, int64_t>(*this, other);
+}
+Literal Literal::ltF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::lt, int64_t>(*this, other);
+}
+Literal Literal::gtF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::gt, int64_t>(*this, other);
+}
+Literal Literal::leF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::le, int64_t>(*this, other);
+}
+Literal Literal::geF64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesF64x2, &Literal::ge, int64_t>(*this, other);
+}
 
 template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
           Literal (Literal::*BinaryOp)(const Literal&) const>
@@ -1167,132 +1307,6 @@ static Literal binary(const Literal& val, const Literal& other) {
   return Literal(lanes);
 }
 
-Literal Literal::eqI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::eq>(*this, other);
-}
-Literal Literal::neI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::ne>(*this, other);
-}
-Literal Literal::ltSI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesSI8x16, &Literal::ltS>(*this, other);
-}
-Literal Literal::ltUI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::ltU>(*this, other);
-}
-Literal Literal::gtSI8x16(const Literal& other) const  {
-  return binary<16, &Literal::getLanesSI8x16, &Literal::gtS>(*this, other);
-}
-Literal Literal::gtUI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::gtU>(*this, other);
-}
-Literal Literal::leSI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesSI8x16, &Literal::leS>(*this, other);
-}
-Literal Literal::leUI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::leU>(*this, other);
-}
-Literal Literal::geSI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesSI8x16, &Literal::geS>(*this, other);
-}
-Literal Literal::geUI8x16(const Literal& other) const {
-  return binary<16, &Literal::getLanesUI8x16, &Literal::geU>(*this, other);
-}
-Literal Literal::eqI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::eq>(*this, other);
-}
-Literal Literal::neI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::ne>(*this, other);
-}
-Literal Literal::ltSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::ltS>(*this, other);
-}
-Literal Literal::ltUI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::ltU>(*this, other);
-}
-Literal Literal::gtSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::gtS>(*this, other);
-}
-Literal Literal::gtUI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::gtU>(*this, other);
-}
-Literal Literal::leSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::leS>(*this, other);
-}
-Literal Literal::leUI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::leU>(*this, other);
-}
-Literal Literal::geSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::geS>(*this, other);
-}
-Literal Literal::geUI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesUI16x8, &Literal::geU>(*this, other);
-}
-Literal Literal::eqI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::eq>(*this, other);
-}
-Literal Literal::neI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::ne>(*this, other);
-}
-Literal Literal::ltSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::ltS>(*this, other);
-}
-Literal Literal::ltUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::ltU>(*this, other);
-}
-Literal Literal::gtSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::gtS>(*this, other);
-}
-Literal Literal::gtUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::gtU>(*this, other);
-}
-Literal Literal::leSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::leS>(*this, other);
-}
-Literal Literal::leUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::leU>(*this, other);
-}
-Literal Literal::geSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::geS>(*this, other);
-}
-Literal Literal::geUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
-}
-Literal Literal::eqF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
-}
-Literal Literal::neF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::ne>(*this, other);
-}
-Literal Literal::ltF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::lt>(*this, other);
-}
-Literal Literal::gtF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::gt>(*this, other);
-}
-Literal Literal::leF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::le>(*this, other);
-}
-Literal Literal::geF32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesF32x4, &Literal::ge>(*this, other);
-}
-Literal Literal::eqF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::eq>(*this, other);
-}
-Literal Literal::neF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::ne>(*this, other);
-}
-Literal Literal::ltF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::lt>(*this, other);
-}
-Literal Literal::gtF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::gt>(*this, other);
-}
-Literal Literal::leF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::le>(*this, other);
-}
-Literal Literal::geF64x2(const Literal& other) const {
-  return binary<2, &Literal::getLanesF64x2, &Literal::ge>(*this, other);
-}
 Literal Literal::andV128(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::and_>(*this, other);
 }
