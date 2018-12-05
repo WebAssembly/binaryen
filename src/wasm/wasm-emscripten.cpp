@@ -755,12 +755,12 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     Address staticBump, std::vector<Name> const& initializerFunctions,
     unsigned numReservedFunctionPointers) {
   bool commaFirst;
-  auto maybeComma = [&commaFirst]() {
+  auto nextElement = [&commaFirst]() {
     if (commaFirst) {
       commaFirst = false;
-      return "\n  ";
+      return "\n    ";
     } else {
-      return ",\n  ";
+      return ",\n    ";
     }
   };
 
@@ -772,11 +772,11 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // print
   commaFirst = true;
   if (!emAsmWalker.sigsForCode.empty()) {
-    meta << "\"asmConsts\": {";
+    meta << "  \"asmConsts\": {";
     for (auto& pair : emAsmWalker.sigsForCode) {
       auto& code = pair.first;
       auto& sigs = pair.second;
-      meta << maybeComma();
+      meta << nextElement();
       meta << '"' << emAsmWalker.ids[code] << "\": [\"" << code << "\", ";
       printSet(meta, sigs);
       meta << ", ";
@@ -787,44 +787,44 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
       meta << "]";
     }
-    meta << "\n},\n";
+    meta << "\n  },\n";
   }
 
   EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
   if (!emJsWalker.codeByName.empty()) {
-    meta << "\"emJsFuncs\": {";
+    meta << "\"  emJsFuncs\": {";
     commaFirst = true;
     for (auto& pair : emJsWalker.codeByName) {
       auto& name = pair.first;
       auto& code = pair.second;
-      meta << maybeComma();
+      meta << nextElement();
       meta << '"' << name << "\": \"" << code << '"';
     }
-    meta << "\n},\n";
+    meta << "\n  },\n";
   }
 
-  meta << "\"staticBump\": " << staticBump << ",\n";
+  meta << "  \"staticBump\": " << staticBump << ",\n";
 
   if (!initializerFunctions.empty()) {
-    meta << "\"initializers\": [";
+    meta << "  \"initializers\": [";
     commaFirst = true;
     for (const auto& func : initializerFunctions) {
-      meta << maybeComma();
+      meta << nextElement();
       meta << "\"" << func.c_str() << "\"";
     }
-    meta << "\n],\n";
+    meta << "\n  ],\n";
   }
 
   if (numReservedFunctionPointers) {
     JSCallWalker jsCallWalker = getJSCallWalker(wasm);
-    meta << "\"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ",\n";
-    meta << "\"jsCallFuncType\": [";
+    meta << "  \"jsCallStartIndex\": " << jsCallWalker.jsCallStartIndex << ",\n";
+    meta << "  \"jsCallFuncType\": [";
     commaFirst = true;
     for (std::string sig : jsCallWalker.indirectlyCallableSigs) {
-      meta << maybeComma();
+      meta << nextElement();
       meta << "\"" << sig << "\"";
     }
-    meta << "\n],\n";
+    meta << "\n  ],\n";
   }
 
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
@@ -836,7 +836,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   // We use the `base` rather than the `name` of the imports here and below
   // becasue this is the externally visible name that the embedder (JS) will
   // see.
-  meta << "\"declares\": [";
+  meta << "  \"declares\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (emJsWalker.codeByName.count(import->base.str) == 0 &&
@@ -844,47 +844,47 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
         !import->base.startsWith("invoke_") &&
         !import->base.startsWith("jsCall_")) {
       if (declares.insert(import->base.str).second) {
-        meta << maybeComma() << '"' << import->base.str << '"';
+        meta << nextElement() << '"' << import->base.str << '"';
       }
     }
   });
-  meta << "\n],\n";
+  meta << "\n  ],\n";
 
-  meta << "\"externs\": [";
+  meta << "  \"externs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    meta << maybeComma() << "\"_" << import->base.str << '"';
+    meta << nextElement() << "\"_" << import->base.str << '"';
   });
-  meta << "\n],\n";
+  meta << "\n  ],\n";
 
   if (!wasm.exports.empty()) {
-    meta << "\"implementedFunctions\": [";
+    meta << "  \"implementedFunctions\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
       if (ex->kind == ExternalKind::Function) {
-        meta << maybeComma() << "\"_" << ex->name.str << '"';
+        meta << nextElement() << "\"_" << ex->name.str << '"';
       }
     }
-    meta << "\n],\n";
+    meta << "\n  ],\n";
 
-    meta << "\"exports\": [";
+    meta << "  \"exports\": [";
     commaFirst = true;
     for (const auto& ex : wasm.exports) {
-      meta << maybeComma() << '"' << ex->name.str << '"';
+      meta << nextElement() << '"' << ex->name.str << '"';
     }
-    meta << "\n],\n";
+    meta << "\n  ],\n";
   }
 
-  meta << "\"invokeFuncs\": [";
+  meta << "  \"invokeFuncs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base.startsWith("invoke_")) {
       if (invokeFuncs.insert(import->base.str).second) {
-        meta << maybeComma() << '"' << import->base.str << '"';
+        meta << nextElement() << '"' << import->base.str << '"';
       }
     }
   });
-  meta << "\n]\n";
+  meta << "\n  ]\n";
   meta << "}\n";
 
   return meta.str();

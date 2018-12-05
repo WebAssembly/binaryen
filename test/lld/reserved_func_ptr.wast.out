@@ -157,38 +157,38 @@
 )
 (;--BEGIN METADATA --
 {
-"staticBump": 0,
-"initializers": [
-  "__post_instantiate"
-],
-"declares": [
-  "_Z4atoiPKc"
-],
-"externs": [
-],
-"implementedFunctions": [
-  "___post_instantiate",
-  "_main",
-  "_stackSave",
-  "_stackAlloc",
-  "_stackRestore",
-  "___growWasmMemory",
-  "_dynCall_viii"
-],
-"exports": [
-  "memory",
-  "__post_instantiate",
-  "main",
-  "__heap_base",
-  "__data_end",
-  "stackSave",
-  "stackAlloc",
-  "stackRestore",
-  "__growWasmMemory",
-  "dynCall_viii"
-],
-"invokeFuncs": [
-]
+  "staticBump": 0,
+  "initializers": [
+    "__post_instantiate"
+  ],
+  "declares": [
+    "_Z4atoiPKc"
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "___post_instantiate",
+    "_main",
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory",
+    "_dynCall_viii"
+  ],
+  "exports": [
+    "memory",
+    "__post_instantiate",
+    "main",
+    "__heap_base",
+    "__data_end",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory",
+    "dynCall_viii"
+  ],
+  "invokeFuncs": [
+  ]
 }
 -- END METADATA --
 ;)
