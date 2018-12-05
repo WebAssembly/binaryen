@@ -18,6 +18,7 @@
 #define wasm_ir_module_h
 
 #include "wasm.h"
+#include "ir/find_all.h"
 #include "ir/manipulation.h"
 
 namespace wasm {
@@ -126,6 +127,52 @@ inline void copyModule(Module& in, Module& out) {
   out.start = in.start;
   out.userSections = in.userSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+}
+
+// Renaming
+
+template<typename T>
+inline void renameFunctions(Module& wasm, T& map) {
+  // Update the function itself.
+  for (auto& pair : map) {
+    assert(!wasm.getFunctionOrNull(pair.second));
+    wasm.getFunction(pair.first)->name = pair.second;
+  }
+  wasm.updateMaps();
+  // Update other global things.
+  auto maybeUpdate = [&](Name& name) {
+    auto iter = map.find(name);
+    if (iter != map.end()) {
+      name = iter->second;
+    }
+  };
+  maybeUpdate(wasm.start);
+  for (auto& segment : wasm.table.segments) {
+    for (auto& name : segment.data) {
+      maybeUpdate(name);
+    }
+  }
+  for (auto& exp : wasm.exports) {
+    if (exp->kind == ExternalKind::Function) {
+      maybeUpdate(exp->value);
+    }
+  }
+  // Update call instructions.
+  for (auto& func : wasm.functions) {
+    // TODO: parallelize
+    if (!func->imported()) {
+      FindAll<Call> calls(func->body);
+      for (auto* call : calls.list) {
+        maybeUpdate(call->target);
+      }
+    }
+  }
+}
+
+inline void renameFunction(Module& wasm, Name oldName, Name newName) {
+  std::map<Name, Name> map;
+  map[oldName] = newName;
+  renameFunctions(wasm, map);
 }
 
 // Convenient iteration over imported/non-imported module elements
