@@ -1092,28 +1092,28 @@ Literal Literal::sqrtF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::sqrt>(*this);
 }
 Literal Literal::truncSatToSI32x4() const {
-  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToSI32>(*this);
+  return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToSI32>(*this);
 }
 Literal Literal::truncSatToUI32x4() const {
-  return unary<4, &Literal::getLanesI32x4, &Literal::truncSatToUI32>(*this);
+  return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToUI32>(*this);
 }
 Literal Literal::truncSatToSI64x2() const {
-  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToSI64>(*this);
+  return unary<2, &Literal::getLanesF64x2, &Literal::truncSatToSI64>(*this);
 }
 Literal Literal::truncSatToUI64x2() const {
-  return unary<2, &Literal::getLanesI64x2, &Literal::truncSatToUI64>(*this);
+  return unary<2, &Literal::getLanesF64x2, &Literal::truncSatToUI64>(*this);
 }
 Literal Literal::convertSToF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::convertSIToF32>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::convertSIToF32>(*this);
 }
 Literal Literal::convertUToF32x4() const {
-  return unary<4, &Literal::getLanesF32x4, &Literal::convertUIToF32>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::convertUIToF32>(*this);
 }
 Literal Literal::convertSToF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::convertSIToF64>(*this);
+  return unary<2, &Literal::getLanesI64x2, &Literal::convertSIToF64>(*this);
 }
 Literal Literal::convertUToF64x2() const {
-  return unary<2, &Literal::getLanesF64x2, &Literal::convertUIToF64>(*this);
+  return unary<2, &Literal::getLanesI64x2, &Literal::convertUIToF64>(*this);
 }
 
 template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
