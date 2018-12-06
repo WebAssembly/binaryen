@@ -165,11 +165,11 @@ enum BinaryOp {
   EqFloat64, NeFloat64, // int or float
   LtFloat64, LeFloat64, GtFloat64, GeFloat64, // float
   // SIMD relational ops (return vectors)
-  EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GtSVecI8x16, GtUVecI8x16, GeSVecI8x16, GeUVecI8x16,
-  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GtSVecI16x8, GtUVecI16x8, GeSVecI16x8, GeUVecI16x8,
-  EqVecI32x4, NeVecI32x4, LtSVecI32x4, LtUVecI32x4, LeSVecI32x4, LeUVecI32x4, GtSVecI32x4, GtUVecI32x4, GeSVecI32x4, GeUVecI32x4,
-  EqVecF32x4, NeVecF32x4, LtVecF32x4, LeVecF32x4, GtVecF32x4, GeVecF32x4,
-  EqVecF64x2, NeVecF64x2, LtVecF64x2, LeVecF64x2, GtVecF64x2, GeVecF64x2,
+  EqVecI8x16, NeVecI8x16, LtSVecI8x16, LtUVecI8x16, GtSVecI8x16, GtUVecI8x16, LeSVecI8x16, LeUVecI8x16, GeSVecI8x16, GeUVecI8x16,
+  EqVecI16x8, NeVecI16x8, LtSVecI16x8, LtUVecI16x8, GtSVecI16x8, GtUVecI16x8, LeSVecI16x8, LeUVecI16x8, GeSVecI16x8, GeUVecI16x8,
+  EqVecI32x4, NeVecI32x4, LtSVecI32x4, LtUVecI32x4, GtSVecI32x4, GtUVecI32x4, LeSVecI32x4, LeUVecI32x4, GeSVecI32x4, GeUVecI32x4,
+  EqVecF32x4, NeVecF32x4, LtVecF32x4, GtVecF32x4, LeVecF32x4, GeVecF32x4,
+  EqVecF64x2, NeVecF64x2, LtVecF64x2, GtVecF64x2, LeVecF64x2, GeVecF64x2,
   // SIMD arithmetic
   AndVec128, OrVec128, XorVec128,
   AddVecI8x16, AddSatSVecI8x16, AddSatUVecI8x16, SubVecI8x16, SubSatSVecI8x16, SubSatUVecI8x16, MulVecI8x16,

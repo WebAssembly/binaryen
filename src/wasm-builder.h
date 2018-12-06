@@ -293,6 +293,47 @@ public:
     ret->finalize();
     return ret;
   }
+  SIMDExtract* makeSIMDExtract(SIMDExtractOp op, Expression* vec, uint8_t idx) {
+    auto* ret = allocator.alloc<SIMDExtract>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->idx = idx;
+    ret->finalize();
+    return ret;
+  }
+  SIMDReplace* makeSIMDReplace(SIMDReplaceOp op, Expression* vec, uint8_t idx, Expression* value) {
+    auto* ret = allocator.alloc<SIMDReplace>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->idx = idx;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShuffle* makeSIMDShuffle(Expression* left, Expression* right, const std::array<uint8_t, 16>& mask) {
+    auto* ret = allocator.alloc<SIMDShuffle>();
+    ret->left = left;
+    ret->right = right;
+    ret->mask = mask;
+    ret->finalize();
+    return ret;
+  }
+  SIMDBitselect* makeSIMDBitselect(Expression* left, Expression* right, Expression* cond) {
+    auto* ret = allocator.alloc<SIMDBitselect>();
+    ret->left = left;
+    ret->right = right;
+    ret->cond = cond;
+    ret->finalize();
+    return ret;
+  }
+  SIMDShift* makeSIMDShift(SIMDShiftOp op, Expression* vec, Expression* shift) {
+    auto* ret = allocator.alloc<SIMDShift>();
+    ret->op = op;
+    ret->vec = vec;
+    ret->shift = shift;
+    ret->finalize();
+    return ret;
+  }
   Const* makeConst(Literal value) {
     assert(isConcreteType(value.type));
     auto* ret = allocator.alloc<Const>();
