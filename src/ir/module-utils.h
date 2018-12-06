@@ -133,11 +133,10 @@ inline void copyModule(Module& in, Module& out) {
 
 template<typename T>
 inline void renameFunctions(Module& wasm, T& map) {
-  // Update the function itself.
+  // Update the function itself.  In some cases the function might have been
+  // removed already and we just want to rename all its (now invalid) uses.
   for (auto& pair : map) {
     if (Function* F = wasm.getFunctionOrNull(pair.first)) {
-      // In some cases t he function itself might have been removed already
-      // and we just want to rename all its (now invalid) uses.
       assert(!wasm.getFunctionOrNull(pair.second));
       F->name = pair.second;
     }
