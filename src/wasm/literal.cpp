@@ -510,41 +510,97 @@ Literal Literal::sub(const Literal& other) const {
   WASM_UNREACHABLE();
 }
 
-template<typename LaneT, Literal (Literal::*Op)(const Literal&) const>
-static Literal sat_arith(const Literal& val, const Literal& other) {
-  assert(val.type == Type::i32 && other.type == Type::i32);
-  Literal sum = val.add(other);
-  if (sum.geti32() > std::numeric_limits<LaneT>::max()) {
-    return Literal(std::numeric_limits<LaneT>::max());
-  } else if (sum.geti32() < std::numeric_limits<LaneT>::min()) {
-    return Literal(std::numeric_limits<LaneT>::min());
+template<typename T>
+static T sat_add(T a, T b) {
+  using UT = typename std::make_unsigned<T>::type;
+  using ST = typename std::make_signed<T>::type;
+  UT ua = static_cast<UT>(a);
+  UT ub = static_cast<UT>(b);
+  UT ures = ua + ub;
+  if (std::is_signed<T>::value) {
+    // overflow if sign of result is different from sign of a and b
+    if (static_cast<ST>((ures ^ ua) & (ures ^ ub)) < 0) {
+      return (a < 0)
+          ? std::numeric_limits<ST>::min()
+          : std::numeric_limits<ST>::max();
+    }
+    return static_cast<ST>(ures);
+  } else {
+    return (ures >= ub) ? ures : 0;
   }
-  return sum;
+}
+
+template<typename T>
+static T add_sat_s(T a, T b) {
+  static_assert(std::is_signed<T>::value);
+  using UT = typename std::make_unsigned<T>::type;
+  UT ua = static_cast<UT>(a);
+  UT ub = static_cast<UT>(b);
+  UT ures = ua + ub;
+  // overflow if sign of result is different from sign of a and b
+  if (static_cast<T>((ures ^ ua) & (ures ^ ub)) < 0) {
+    return (a < 0)
+        ? std::numeric_limits<T>::min()
+        : std::numeric_limits<T>::max();
+  }
+  return static_cast<T>(ures);
+}
+
+template<typename T>
+static T sub_sat_s(T a, T b) {
+  static_assert(std::is_signed<T>::value);
+  using UT = typename std::make_unsigned<T>::type;
+  UT ua = static_cast<UT>(a);
+  UT ub = static_cast<UT>(b);
+  UT ures = ua - ub;
+  // overflow if a and b have different signs and result and a differ in sign
+  if (static_cast<T>((ua ^ ub) & (ures ^ ua)) < 0) {
+    return (a < 0)
+        ? std::numeric_limits<T>::min()
+        : std::numeric_limits<T>::max();
+  }
+  return static_cast<T>(ures);
+}
+
+template<typename T>
+static T add_sat_u(T a, T b) {
+  static_assert(std::is_unsigned<T>::value);
+  T res = a + b;
+  // overflow if result is less than arguments
+  return (res < a) ? std::numeric_limits<T>::max() : res;
+}
+
+template<typename T>
+static T sub_sat_u(T a, T b) {
+  static_assert(std::is_unsigned<T>::value);
+  T res = a - b;
+  // overflow if result is greater than a
+  return (res > a) ? 0 : res;
 }
 
 Literal Literal::addSatSI8(const Literal& other) const {
-  return sat_arith<int8_t, &Literal::add>(*this, other);
+  return Literal(add_sat_s<int8_t>(geti32(), other.geti32()));
 }
 Literal Literal::addSatUI8(const Literal& other) const {
-  return sat_arith<uint8_t, &Literal::add>(*this, other);
+  return Literal(add_sat_u<uint8_t>(geti32(), other.geti32()));
 }
 Literal Literal::addSatSI16(const Literal& other) const {
-  return sat_arith<int16_t, &Literal::add>(*this, other);
+  return Literal(add_sat_s<int16_t>(geti32(), other.geti32()));
 }
 Literal Literal::addSatUI16(const Literal& other) const {
-  return sat_arith<uint16_t, &Literal::add>(*this, other);
+  return Literal(add_sat_u<uint16_t>(geti32(), other.geti32()));
 }
 Literal Literal::subSatSI8(const Literal& other) const {
-  return sat_arith<int8_t, &Literal::sub>(*this, other);
+  return Literal(sub_sat_s<int8_t>(geti32(), other.geti32()));
 }
 Literal Literal::subSatUI8(const Literal& other) const {
-  return sat_arith<uint8_t, &Literal::sub>(*this, other);
+  return Literal(sub_sat_u<uint8_t>(geti32(), other.geti32()));
 }
 Literal Literal::subSatSI16(const Literal& other) const {
-  return sat_arith<int16_t, &Literal::sub>(*this, other);
+  return Literal(sub_sat_s<int16_t>(geti32(), other.geti32()));
 }
 Literal Literal::subSatUI16(const Literal& other) const {
-  return sat_arith<uint16_t, &Literal::sub>(*this, other);
+  return Literal(sub_sat_u<uint16_t>(geti32(), other.geti32()));
 }
 
 Literal Literal::mul(const Literal& other) const {
