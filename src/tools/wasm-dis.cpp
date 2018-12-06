@@ -29,6 +29,7 @@ using namespace wasm;
 
 int main(int argc, const char *argv[]) {
   std::string sourceMapFilename;
+  std::string singleFunctionName;
   Options options("wasm-dis", "Un-assemble a .wasm (WebAssembly binary format) into a .wast (WebAssembly text format)");
   options.add("--output", "-o", "Output file (stdout if not specified)",
               Options::Arguments::One,
@@ -39,6 +40,11 @@ int main(int argc, const char *argv[]) {
       .add("--source-map", "-sm", "Consume source map from the specified file to add location information",
            Options::Arguments::One,
            [&sourceMapFilename](Options *o, const std::string& argument) { sourceMapFilename = argument; })
+      .add("--func", "-f", "Only disassemble a single function",
+           Options::Arguments::One,
+           [&singleFunctionName](Options *o, const std::string& argument) {
+             singleFunctionName = argument;
+           })
       .add_positional("INFILE", Options::Arguments::One,
                       [](Options *o, const std::string& argument) {
                         o->extra["infile"] = argument;
@@ -61,7 +67,11 @@ int main(int argc, const char *argv[]) {
 
   if (options.debug) std::cerr << "Printing..." << std::endl;
   Output output(options.extra["output"], Flags::Text, options.debug ? Flags::Debug : Flags::Release);
-  WasmPrinter::printModule(&wasm, output.getStream());
+  if (singleFunctionName == "") {
+    WasmPrinter::printModule(&wasm, output.getStream());
+  } else {
+    WasmPrinter::printSingleFunction(&wasm, Name(singleFunctionName.c_str()), output.getStream());
+  }
   output << '\n';
 
   if (options.debug) std::cerr << "Done." << std::endl;

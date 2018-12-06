@@ -21,6 +21,7 @@
 
 #include "wasm.h"
 #include "pass.h"
+#include "support/name.h"
 
 namespace wasm {
 
@@ -28,6 +29,8 @@ struct WasmPrinter {
   static std::ostream& printModule(Module* module, std::ostream& o);
 
   static std::ostream& printModule(Module* module);
+
+  static std::ostream& printSingleFunction(Module* module, Name const& name, std::ostream& o);
 
   static std::ostream& printExpression(Expression* expression, std::ostream& o, bool minify = false, bool full = false);
 
