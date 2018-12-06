@@ -55,9 +55,17 @@ int main(int argc, const char *argv[]) {
   options.parse(argc, argv);
   if (options.debug) builderFlags.debug = true;
 
-  Element* root;
+  Element* root = nullptr;
   Module wasm;
   Ref asmjs;
+  std::unique_ptr<SExpressionParser> sexprParser;
+  std::unique_ptr<SExpressionWasmBuilder> sexprBuilder;
+
+  auto &input = options.extra["infile"];
+  std::string suffix(".wasm");
+  bool binaryInput =
+      input.size() >= suffix.size() &&
+      input.compare(input.size() - suffix.size(), suffix.size(), suffix) == 0;
 
   try {
     // If the input filename ends in `.wasm`, then parse it in binary form,
@@ -68,42 +76,36 @@ int main(int argc, const char *argv[]) {
     // `--allow-asserts` flag which means we need to parse the extra
     // s-expressions that come at the end of the `*.wast` file after the module
     // is defined.
-    auto &input = options.extra["infile"];
-    std::string suffix(".wasm");
-    if (input.size() >= suffix.size() &&
-        input.compare(input.size() - suffix.size(), suffix.size(), suffix) == 0) {
+    if (binaryInput) {
       ModuleReader reader;
       reader.setDebug(options.debug);
       reader.read(input, wasm, "");
-
-      if (options.debug) std::cerr << "asming..." << std::endl;
-      Wasm2JSBuilder wasm2js(builderFlags);
-      asmjs = wasm2js.processWasm(&wasm);
-
     } else {
       auto input(
           read_file<std::vector<char>>(options.extra["infile"], Flags::Text, options.debug ? Flags::Debug : Flags::Release));
       if (options.debug) std::cerr << "s-parsing..." << std::endl;
-      SExpressionParser parser(input.data());
-      root = parser.root;
+      sexprParser = make_unique<SExpressionParser>(input.data());
+      root = sexprParser->root;
 
       if (options.debug) std::cerr << "w-parsing..." << std::endl;
-      SExpressionWasmBuilder builder(wasm, *(*root)[0]);
-
-      if (options.debug) std::cerr << "asming..." << std::endl;
-      Wasm2JSBuilder wasm2js(builderFlags);
-      asmjs = wasm2js.processWasm(&wasm);
-
-      if (options.extra["asserts"] == "1") {
-        if (options.debug) std::cerr << "asserting..." << std::endl;
-        flattenAppend(asmjs, wasm2js.processAsserts(&wasm, *root, builder));
-      }
+      sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   } catch (std::bad_alloc&) {
     Fatal() << "error in building module, std::bad_alloc (possibly invalid request for silly amounts of memory)";
+  }
+
+  if (options.debug) std::cerr << "asming..." << std::endl;
+  Wasm2JSBuilder wasm2js(builderFlags);
+  asmjs = wasm2js.processWasm(&wasm);
+
+  if (!binaryInput) {
+    if (options.extra["asserts"] == "1") {
+      if (options.debug) std::cerr << "asserting..." << std::endl;
+      flattenAppend(asmjs, wasm2js.processAsserts(&wasm, *root, *sexprBuilder));
+    }
   }
 
   if (options.debug) {
