@@ -135,8 +135,12 @@ template<typename T>
 inline void renameFunctions(Module& wasm, T& map) {
   // Update the function itself.
   for (auto& pair : map) {
-    assert(!wasm.getFunctionOrNull(pair.second));
-    wasm.getFunction(pair.first)->name = pair.second;
+    if (Function* F = wasm.getFunctionOrNull(pair.first)) {
+      // In some cases t he function itself might have been removed already
+      // and we just want to rename all its (now invalid) uses.
+      assert(!wasm.getFunctionOrNull(pair.second));
+      F->name = pair.second;
+    }
   }
   wasm.updateMaps();
   // Update other global things.
