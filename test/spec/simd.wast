@@ -509,3 +509,71 @@
   )
   (v128.const i32 0 230 255 0 255 6 106 237 230 52 223 76 0 6 127 126)
 )
+
+;; i16x8 arithmetic
+(assert_return (invoke "i16x8.neg" (v128.const i32 0 1 42 -3 -56 32767 -32768 32766))
+  (v128.const i32 0 -1 -42 3 56 -32767 -32768 -32766)
+)
+(assert_return (invoke "i16x8.any_true" (v128.const i32 0 0 0 0 0 0 0 0)) (i32.const 0))
+(assert_return (invoke "i16x8.any_true" (v128.const i32 0 0 1 0 0 0 0 0)) (i32.const 1))
+(assert_return (invoke "i16x8.any_true" (v128.const i32 1 1 1 1 1 0 1 1)) (i32.const 1))
+(assert_return (invoke "i16x8.any_true" (v128.const i32 1 1 1 1 1 1 1 1)) (i32.const 1))
+(assert_return (invoke "i16x8.all_true" (v128.const i32 0 0 0 0 0 0 0 0)) (i32.const 0))
+(assert_return (invoke "i16x8.all_true" (v128.const i32 0 0 1 0 0 0 0 0)) (i32.const 0))
+(assert_return (invoke "i16x8.all_true" (v128.const i32 1 1 1 1 1 0 1 1)) (i32.const 0))
+(assert_return (invoke "i16x8.all_true" (v128.const i32 1 1 1 1 1 1 1 1)) (i32.const 1))
+(assert_return (invoke "i16x8.shl" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 1)) (v128.const i32 0 16 32 256 512 4096 8192 0))
+(assert_return (invoke "i16x8.shl" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 16)) (v128.const i32 0 0 0 0 0 0 0 0))
+(assert_return (invoke "i16x8.shr_u" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 1)) (v128.const i32 0 4 8 64 128 1024 2048 16384))
+(assert_return (invoke "i16x8.shr_u" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 16)) (v128.const i32 0 0 0 0 0 0 0 0))
+(assert_return (invoke "i16x8.shr_s" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 1)) (v128.const i32 0 4 8 64 128 1024 2048 -16384))
+(assert_return (invoke "i16x8.shr_s" (v128.const i32 0 8 16 128 256 2048 4096 -32768) (i32.const 16)) (v128.const i32 0 0 0 0 0 0 0 -1))
+(assert_return
+  (invoke "i16x8.add"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 768 65281 0 0 34560 12288 63744 32768)
+)
+(assert_return
+  (invoke "i16x8.add_saturate_s"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 768 65281 32768 0 34560 12288 63744 32767)
+)
+(assert_return
+  (invoke "i16x8.add_saturate_u"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 768 65281 65535 65535 34560 65535 65535 32768)
+)
+(assert_return
+  (invoke "i16x8.sub"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 64768 65279 0 65024 31488 40448 64256 32764)
+)
+(assert_return
+  (invoke "i16x8.sub_saturate_s"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 64768 65279 0 32767 32768 40448 64256 32764)
+)
+(assert_return
+  (invoke "i16x8.sub_saturate_u"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 0 65279 0 0 31488 40448 0 32764)
+)
+(assert_return
+  (invoke "i16x8.mul"
+    (v128.const i32 0   65280 32768 32512 33024 59136 64000 32766)
+    (v128.const i32 768     1 32768 33024  1536 18688 65280     2)
+  )
+  (v128.const i32 0 65280 0 0 0 0 0 65532)
+)
