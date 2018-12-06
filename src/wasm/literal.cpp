@@ -1167,9 +1167,10 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
          Literal (Literal::*ShiftOp)(const Literal&) const>
 static Literal shift(const Literal& val, const Literal& other) {
   assert(other.type == Type::i32);
+  size_t lane_bits = 128 / Lanes;
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    lanes[i] = (lanes[i].*ShiftOp)(other);
+    lanes[i] = (lanes[i].*ShiftOp)(Literal(other.geti32() % lane_bits));
   }
   return Literal(lanes);
 }
