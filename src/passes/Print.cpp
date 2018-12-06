@@ -357,7 +357,7 @@ struct PrintExpressionContents : public Visitor<PrintExpressionContents> {
       case SplatVecI8x16:           o << "i8x16.splat";         break;
       case SplatVecI16x8:           o << "i16x8.splat";         break;
       case SplatVecI32x4:           o << "i32x4.splat";         break;
-      case SplatVecI64x2:           o << "i63x2.splat";         break;
+      case SplatVecI64x2:           o << "i64x2.splat";         break;
       case SplatVecF32x4:           o << "f32x4.splat";         break;
       case SplatVecF64x2:           o << "f64x2.splat";         break;
       case NotVec128:               o << "v128.not";            break;
