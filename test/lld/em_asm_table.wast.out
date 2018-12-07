@@ -61,4 +61,34 @@
   )
  )
 )
-;; METADATA: { "asmConsts": {},"staticBump": 480, "initializers": [], "declares": ["emscripten_log"], "externs": [], "implementedFunctions": ["_stackSave","_stackAlloc","_stackRestore","___growWasmMemory","_dynCall_vii","_dynCall_iiii"], "exports": ["__data_end","stackSave","stackAlloc","stackRestore","__growWasmMemory","dynCall_vii","dynCall_iiii"], "invokeFuncs": [] }
+(;
+--BEGIN METADATA --
+{
+  "staticBump": 480,
+  "declares": [
+    "emscripten_log"
+  ],
+  "externs": [
+  ],
+  "implementedFunctions": [
+    "_stackSave",
+    "_stackAlloc",
+    "_stackRestore",
+    "___growWasmMemory",
+    "_dynCall_vii",
+    "_dynCall_iiii"
+  ],
+  "exports": [
+    "__data_end",
+    "stackSave",
+    "stackAlloc",
+    "stackRestore",
+    "__growWasmMemory",
+    "dynCall_vii",
+    "dynCall_iiii"
+  ],
+  "invokeFuncs": [
+  ]
+}
+-- END METADATA --
+;)

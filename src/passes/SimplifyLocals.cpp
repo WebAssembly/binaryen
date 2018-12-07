@@ -195,9 +195,7 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   void visitLoop(Loop* curr) {
     if (allowStructure) {
-      if (canUseLoopReturnValue(curr)) {
-        loops.push_back(this->getCurrentPointer());
-      }
+      optimizeLoopReturn(curr);
     }
   }
 
@@ -335,7 +333,37 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
 
   std::vector<Block*> blocksToEnlarge;
   std::vector<If*> ifsToEnlarge;
-  std::vector<Expression**> loops;
+  std::vector<Loop*> loopsToEnlarge;
+
+  void optimizeLoopReturn(Loop* loop) {
+    // If there is a sinkable thing in an eligible loop, we can optimize
+    // it in a trivial way to the outside of the loop.
+    if (loop->type != none) return;
+    if (sinkables.empty()) return;
+    Index goodIndex = sinkables.begin()->first;
+    // Ensure we have a place to write the return values for, if not, we
+    // need another cycle.
+    auto* block = loop->body->dynCast<Block>();
+    if (!block || block->name.is() || block->list.size() == 0  || !block->list.back()->is<Nop>()) {
+      loopsToEnlarge.push_back(loop);
+      return;
+    }
+    Builder builder(*this->getModule());
+    auto** item = sinkables.at(goodIndex).item;
+    auto* set = (*item)->template cast<SetLocal>();
+    block->list[block->list.size() - 1] = set->value;
+    *item = builder.makeNop();
+    block->finalize();
+    assert(block->type != none);
+    loop->finalize();
+    set->value = loop;
+    set->finalize();
+    this->replaceCurrent(set);
+    // We moved things around, clear all tracking; we'll do another cycle
+    // anyhow.
+    sinkables.clear();
+    anotherCycle = true;
+  }
 
   void optimizeBlockReturn(Block* block) {
     if (!block->name.is() || unoptimizableBlocks.count(block->name) > 0) {
@@ -685,23 +713,18 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
       ifsToEnlarge.clear();
       anotherCycle = true;
     }
-    // handle loops. note that a lot happens in this pass, and we can't just modify
-    // set_locals when we see a loop - it might be tracked - and we can't also just
-    // assume our loop didn't move either (might be in a block now). So we do this
-    // when all other work is done - as loop return values are rare, that is fine.
-    if (!anotherCycle) {
-      for (auto* currp : loops) {
-        auto* curr = (*currp)->template cast<Loop>();
-        assert(canUseLoopReturnValue(curr));
-        auto* set = curr->body->template cast<SetLocal>();
-        curr->body = set->value;
-        set->value = curr;
-        curr->finalize(curr->body->type);
-        *currp = set;
-        anotherCycle = true;
+    // enlarge loops that were marked, for the next round
+    if (loopsToEnlarge.size() > 0) {
+      for (auto* loop : loopsToEnlarge) {
+        auto block = Builder(*this->getModule()).blockifyWithName(loop->body, Name());
+        loop->body = block;
+        if (block->list.size() == 0 || !block->list.back()->template is<Nop>()) {
+          block->list.push_back(this->getModule()->allocator.template alloc<Nop>());
+        }
       }
+      loopsToEnlarge.clear();
+      anotherCycle = true;
     }
-    loops.clear();
     // clean up
     sinkables.clear();
     blockBreaks.clear();
@@ -846,17 +869,6 @@ struct SimplifyLocals : public WalkerPass<LinearExecutionWalker<SimplifyLocals<a
     setRemover.walkFunction(func);
 
     return eqOpter.anotherCycle || setRemover.anotherCycle;
-  }
-
-  bool canUseLoopReturnValue(Loop* curr) {
-    // Optimizing a loop return value is trivial: just see if it contains
-    // a set_local, and pull that out.
-    if (auto* set = curr->body->template dynCast<SetLocal>()) {
-      if (isConcreteType(set->value->type)) {
-        return true;
-      }
-    }
-    return false;
   }
 };
 
