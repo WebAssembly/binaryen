@@ -772,7 +772,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
   if (!emJsWalker.codeByName.empty()) {
-    meta << "\"  emJsFuncs\": {";
+    meta << "  \"emJsFuncs\": {";
     commaFirst = true;
     for (auto& pair : emJsWalker.codeByName) {
       auto& name = pair.first;
