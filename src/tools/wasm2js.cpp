@@ -58,6 +58,7 @@ int main(int argc, const char *argv[]) {
   Element* root = nullptr;
   Module wasm;
   Ref asmjs;
+  std::unique_ptr<SExpressionParser> sexprParser;
   std::unique_ptr<SExpressionWasmBuilder> sexprBuilder;
 
   auto &input = options.extra["infile"];
