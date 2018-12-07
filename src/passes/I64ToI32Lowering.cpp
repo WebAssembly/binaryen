@@ -614,6 +614,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     );
     setOutParam(result, std::move(highBits));
     replaceCurrent(result);
+    ensureMinimalMemory();
   }
 
   void lowerReinterpretInt64(Unary* curr) {
@@ -626,6 +627,17 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       builder->makeLoad(8, true, 0, 8, builder->makeConst(Literal(int32_t(0))), f64)
     );
     replaceCurrent(result);
+    ensureMinimalMemory();
+  }
+
+  // Ensure memory exists with a minimal size, enough for round-tripping operations on
+  // address 0, which we need for reinterpret operations.
+  void ensureMinimalMemory() {
+    auto& memory = getModule()->memory;
+    if (!memory.exists) {
+      memory.exists = true;
+      memory.initial = memory.max = 1;
+    }
   }
 
   void lowerTruncFloatToInt(Unary *curr) {
