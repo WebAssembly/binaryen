@@ -180,6 +180,7 @@ int main(int argc, const char *argv[]) {
   if (wasm.memory.imported()) {
     if (wasm.table.base != "memory") wasm.memory.base = Name("memory");
   }
+  wasm.updateMaps();
 
   if (isSideModule) {
     generator.replaceStackPointerGlobal();
@@ -188,7 +189,7 @@ int main(int argc, const char *argv[]) {
     generator.generateMemoryGrowthFunction();
     // emscripten calls this by default for side libraries so we only need
     // to include in as a static ctor for main module case.
-    if (wasm.getFunctionOrNull("__post_instantiate")) {
+    if (wasm.getExportOrNull("__post_instantiate")) {
       initializerFunctions.push_back("__post_instantiate");
     }
   }
@@ -221,7 +222,9 @@ int main(int argc, const char *argv[]) {
   if (emitBinary) {
     std::cout << metadata;
   } else {
-    output << ";; METADATA: " << metadata;
+    output << "(;\n";
+    output << "--BEGIN METADATA --\n" << metadata << "-- END METADATA --\n";
+    output << ";)\n";
   }
 
   return 0;
