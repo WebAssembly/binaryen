@@ -1365,12 +1365,12 @@ int main() {
   expressions[219] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-  expressions[220] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
+    expressions[220] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
   }
   expressions[221] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-  expressions[222] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[221], expressions[0]);
+    expressions[222] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[221], expressions[0]);
   }
   expressions[223] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
   expressions[224] = BinaryenConst(the_module, BinaryenLiteralInt64(37));

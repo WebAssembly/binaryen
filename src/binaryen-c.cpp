@@ -542,7 +542,7 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** name
       std::cout << "\"" << names[i] << "\"";
     }
     if (numNames == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
+    std::cout << " };\n  ";
     traceExpression(ret, "BinaryenSwitch", "names", numNames, StringLit(defaultName), condition, value);
     std::cout << "  }\n";
   }

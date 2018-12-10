@@ -1343,12 +1343,12 @@ int main() {
   expressions[229] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-  expressions[230] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[24], expressions[25]);
+    expressions[230] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[24], expressions[25]);
   }
   expressions[231] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-  expressions[232] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[231], expressions[0]);
+    expressions[232] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[231], expressions[0]);
   }
   {
     BinaryenExpressionRef operands[] = { expressions[9], expressions[10], expressions[11], expressions[12] };
