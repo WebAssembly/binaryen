@@ -349,11 +349,11 @@ struct Inlining : public Pass {
   }
 };
 
-Pass *createInliningPass() {
+Pass* createInliningPass() {
   return new Inlining();
 }
 
-Pass *createInliningOptimizingPass() {
+Pass* createInliningOptimizingPass() {
   auto* ret = new Inlining();
   ret->optimize = true;
   return ret;

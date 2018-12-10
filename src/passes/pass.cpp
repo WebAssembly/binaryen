@@ -98,6 +98,7 @@ void PassRegistry::registerPasses() {
   registerPass("minify-imports", "minifies import names (only those, and not export names), and emits a mapping to the minified ones", createMinifyImportsPass);
   registerPass("minify-imports-and-exports", "minifies both import and export names, and emits a mapping to the minified ones", createMinifyImportsAndExportsPass);
   registerPass("nm", "name list", createNameListPass);
+  registerPass("no-exit-runtime", "removes calls to atexit(), which is valid if the C runtime will never be exited", createNoExitRuntimePass);
   registerPass("optimize-instructions", "optimizes instruction combinations", createOptimizeInstructionsPass);
   registerPass("optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs", "pick load signs based on their uses", createPickLoadSignsPass);

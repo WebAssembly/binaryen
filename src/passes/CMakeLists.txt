@@ -30,6 +30,7 @@ SET(passes_SOURCES
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NoExitRuntime.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
   PostEmscripten.cpp
