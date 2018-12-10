@@ -1351,26 +1351,26 @@ int main() {
     BinaryenExpressionRef children[] = { 0 };
     expressions[207] = BinaryenBlock(the_module, NULL, children, 0, 0);
   }
-    expressions[208] = BinaryenIf(the_module, expressions[7], expressions[8], expressions[9]);
-    expressions[209] = BinaryenIf(the_module, expressions[10], expressions[11], expressions[0]);
+  expressions[208] = BinaryenIf(the_module, expressions[7], expressions[8], expressions[9]);
+  expressions[209] = BinaryenIf(the_module, expressions[10], expressions[11], expressions[0]);
   expressions[210] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[211] = BinaryenLoop(the_module, "in", expressions[210]);
+  expressions[211] = BinaryenLoop(the_module, "in", expressions[210]);
   expressions[212] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[213] = BinaryenLoop(the_module, NULL, expressions[212]);
-    expressions[214] = BinaryenBreak(the_module, "the-value", expressions[12], expressions[13]);
+  expressions[213] = BinaryenLoop(the_module, NULL, expressions[212]);
+  expressions[214] = BinaryenBreak(the_module, "the-value", expressions[12], expressions[13]);
   expressions[215] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-    expressions[216] = BinaryenBreak(the_module, "the-nothing", expressions[215], expressions[0]);
+  expressions[216] = BinaryenBreak(the_module, "the-nothing", expressions[215], expressions[0]);
   expressions[217] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-    expressions[218] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[217]);
-    expressions[219] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
+  expressions[218] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[217]);
+  expressions[219] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
-    expressions[220] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
+  expressions[220] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[14], expressions[15]);
   }
   expressions[221] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
   {
     const char* names[] = { "the-nothing" };
-    expressions[222] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[221], expressions[0]);
+  expressions[222] = BinaryenSwitch(the_module, names, 1, "the-nothing", expressions[221], expressions[0]);
   }
   expressions[223] = BinaryenConst(the_module, BinaryenLiteralInt32(13));
   expressions[224] = BinaryenConst(the_module, BinaryenLiteralInt64(37));
