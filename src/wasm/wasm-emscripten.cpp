@@ -36,6 +36,7 @@ cashew::IString EM_JS_PREFIX("__em_js__");
 static Name STACK_SAVE("stackSave"),
             STACK_RESTORE("stackRestore"),
             STACK_ALLOC("stackAlloc"),
+            STACK_INIT("stack$init"),
             DUMMY_FUNC("__wasm_nullptr");
 
 void addExportedFunction(Module& wasm, Function* function) {
@@ -155,6 +156,21 @@ Function* EmscriptenGlueGenerator::generateMemoryGrowthFunction() {
   return growFunction;
 }
 
+void EmscriptenGlueGenerator::generateStackInitialization() {
+  // Replace a global with a constant initial value with an imported
+  // initial value, which emscripten JS will send us.
+  // TODO: with mutable imported globals, we can avoid adding another
+  //       global for the import.
+  Builder builder(wasm);
+  auto* import = builder.makeGlobal(STACK_INIT, i32, nullptr, Builder::Immutable);
+  import->module = ENV;
+  import->base = STACKTOP;
+  wasm.addGlobal(import);
+  auto* stackPointer = getStackPointerGlobal();
+  assert(stackPointer->init->is<Const>());
+  stackPointer->init = builder.makeGetGlobal(import->name, i32);
+}
+
 static bool hasI64ResultOrParam(FunctionType* ft) {
   if (ft->result == i64) return true;
   for (auto ty : ft->params) {
@@ -227,10 +243,10 @@ static Function* ensureFunctionImport(Module* module, Name name, std::string sig
 }
 
 struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
-  RemoveStackPointer(Global* StackPointer) : StackPointer(StackPointer) {}
+  RemoveStackPointer(Global* stackPointer) : stackPointer(stackPointer) {}
 
   void visitGetGlobal(GetGlobal* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == StackPointer) {
+    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       ensureFunctionImport(getModule(), STACK_SAVE, "i");
       if (!builder) builder = make_unique<Builder>(*getModule());
       replaceCurrent(builder->makeCall(STACK_SAVE, {}, i32));
@@ -238,7 +254,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
   }
 
   void visitSetGlobal(SetGlobal* curr) {
-    if (getModule()->getGlobalOrNull(curr->name) == StackPointer) {
+    if (getModule()->getGlobalOrNull(curr->name) == stackPointer) {
       ensureFunctionImport(getModule(), STACK_RESTORE, "vi");
       if (!builder) builder = make_unique<Builder>(*getModule());
       replaceCurrent(builder->makeCall(STACK_RESTORE, {curr->value}, none));
@@ -247,7 +263,7 @@ struct RemoveStackPointer : public PostWalker<RemoveStackPointer> {
 
 private:
   std::unique_ptr<Builder> builder;
-  Global* StackPointer;
+  Global* stackPointer;
 };
 
 void EmscriptenGlueGenerator::replaceStackPointerGlobal() {
@@ -833,7 +849,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   meta << "  \"externs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    meta << nextElement() << "\"_" << import->base.str << '"';
+    if (!(import->module == ENV && import->name == STACK_INIT)) {
+      meta << nextElement() << "\"_" << import->base.str << '"';
+    }
   });
   meta << "\n  ],\n";
 

@@ -187,6 +187,7 @@ int main(int argc, const char *argv[]) {
   } else {
     generator.generateRuntimeFunctions();
     generator.generateMemoryGrowthFunction();
+    generator.generateStackInitialization();
     // emscripten calls this by default for side libraries so we only need
     // to include in as a static ctor for main module case.
     if (wasm.getExportOrNull("__post_instantiate")) {
