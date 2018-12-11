@@ -113,12 +113,17 @@ public:
   }
 };
 
-enum {
-  // put the stack in some ridiculously high location
-  STACK_START = 0x40000000,
-  // use a ridiculously large stack size
-  STACK_SIZE = 32 * 1024 * 1024
-};
+// Use a ridiculously large stack size.
+static Index STACK_SIZE = 32 * 1024 * 1024;
+
+// Start the stack at a ridiculously large location, and do so in
+// a way that works regardless if the stack goes up or down.
+static Index STACK_START = 1024 * 1024 * 1024 + STACK_SIZE;
+
+// Bound the stack location in both directions, so we have bounds
+// that do not depend on the direction it grows.
+static Index STACK_LOWER_LIMIT = STACK_START - STACK_SIZE;
+static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
 
 class EvallingModuleInstance : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
@@ -151,7 +156,7 @@ public:
   // but it should not be read afterwards, doing so would be undefined behavior
   void setupEnvironment() {
     // prepare scratch memory
-    stack.resize(STACK_SIZE);
+    stack.resize(2 * STACK_SIZE);
     // tell the module to accept writes up to the stack end
     auto total = STACK_START + STACK_SIZE;
     memorySize = total / Memory::kPageSize;
@@ -266,11 +271,11 @@ private:
   template<typename T>
   T* getMemory(Address address) {
     // if memory is on the stack, use the stack
-    if (address >= STACK_START) {
-      Address relative = address - STACK_START;
-      if (relative + sizeof(T) > STACK_SIZE) {
+    if (address >= STACK_LOWER_LIMIT) {
+      if (address >= STACK_UPPER_LIMIT) {
         throw FailToEvalException("stack usage too high");
       }
+      Address relative = address - STACK_LOWER_LIMIT;
       // in range, all is good, use the stack
       return (T*)(&instance->stack[relative]);
     }
