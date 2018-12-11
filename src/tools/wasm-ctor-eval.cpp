@@ -131,9 +131,9 @@ public:
         if (auto* get = global->init->dynCast<GetGlobal>()) {
           auto name = get->name;
           auto* import = wasm.getGlobal(name);
-          if (import->module == Name("env") && (
-            import->base == Name("STACKTOP") || // stack constants are special, we handle them
-            import->base == Name("STACK_MAX")
+          if (import->module == Name(ENV) && (
+            import->base == STACKTOP || // stack constants are special, we handle them
+            import->base == STACK_MAX
           )) {
             return; // this is fine
           }
@@ -175,15 +175,15 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     // fill usable values for stack imports, and globals initialized to them
     ImportInfo imports(wasm_);
-    if (auto* stackTop = imports.getImportedGlobal("env", "STACKTOP")) {
+    if (auto* stackTop = imports.getImportedGlobal(ENV, STACKTOP)) {
       globals[stackTop->name] = Literal(int32_t(STACK_START));
-      if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACKTOP")) {
+      if (auto* stackTop = GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACKTOP)) {
         globals[stackTop->name] = Literal(int32_t(STACK_START));
       }
     }
-    if (auto* stackMax = imports.getImportedGlobal("env", "STACK_MAX")) {
+    if (auto* stackMax = imports.getImportedGlobal(ENV, STACK_MAX)) {
       globals[stackMax->name] = Literal(int32_t(STACK_START));
-      if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, "env", "STACK_MAX")) {
+      if (auto* stackMax = GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACK_MAX)) {
         globals[stackMax->name] = Literal(int32_t(STACK_START));
       }
     }
@@ -202,7 +202,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
   Literal callImport(Function* import, LiteralList& arguments) override {
     std::string extra;
-    if (import->module == "env" && import->base == "___cxa_atexit") {
+    if (import->module == ENV && import->base == "___cxa_atexit") {
       extra = "\nrecommendation: build with -s NO_EXIT_RUNTIME=1 so that calls to atexit are not emitted";
     }
     throw FailToEvalException(std::string("call import: ") + import->module.str + "." + import->base.str + extra);
