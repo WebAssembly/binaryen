@@ -1329,18 +1329,18 @@ int main() {
     BinaryenExpressionRef children[] = { 0 };
     expressions[217] = BinaryenBlock(the_module, NULL, children, 0, BinaryenTypeAuto());
   }
-    expressions[218] = BinaryenIf(the_module, expressions[17], expressions[18], expressions[19]);
-    expressions[219] = BinaryenIf(the_module, expressions[20], expressions[21], expressions[0]);
+  expressions[218] = BinaryenIf(the_module, expressions[17], expressions[18], expressions[19]);
+  expressions[219] = BinaryenIf(the_module, expressions[20], expressions[21], expressions[0]);
   expressions[220] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[221] = BinaryenLoop(the_module, "in", expressions[220]);
+  expressions[221] = BinaryenLoop(the_module, "in", expressions[220]);
   expressions[222] = BinaryenConst(the_module, BinaryenLiteralInt32(0));
-    expressions[223] = BinaryenLoop(the_module, NULL, expressions[222]);
-    expressions[224] = BinaryenBreak(the_module, "the-value", expressions[22], expressions[23]);
+  expressions[223] = BinaryenLoop(the_module, NULL, expressions[222]);
+  expressions[224] = BinaryenBreak(the_module, "the-value", expressions[22], expressions[23]);
   expressions[225] = BinaryenConst(the_module, BinaryenLiteralInt32(2));
-    expressions[226] = BinaryenBreak(the_module, "the-nothing", expressions[225], expressions[0]);
+  expressions[226] = BinaryenBreak(the_module, "the-nothing", expressions[225], expressions[0]);
   expressions[227] = BinaryenConst(the_module, BinaryenLiteralInt32(3));
-    expressions[228] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[227]);
-    expressions[229] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
+  expressions[228] = BinaryenBreak(the_module, "the-value", expressions[0], expressions[227]);
+  expressions[229] = BinaryenBreak(the_module, "the-nothing", expressions[0], expressions[0]);
   {
     const char* names[] = { "the-value" };
     expressions[230] = BinaryenSwitch(the_module, names, 1, "the-value", expressions[24], expressions[25]);

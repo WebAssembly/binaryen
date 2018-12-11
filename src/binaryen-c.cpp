@@ -101,6 +101,78 @@ size_t noteExpression(BinaryenExpressionRef expression) {
   return id;
 }
 
+template<typename T>
+void printArg(T arg) {
+  std::cout << arg;
+}
+
+template<>
+void printArg(void* arg) {
+  std::cout << "expressions[" << expressions[arg] << "]";
+}
+
+struct StringLit {
+  const char* name;
+  StringLit(const char* name) : name(name) {};
+};
+
+template<>
+void printArg(StringLit arg) {
+  traceNameOrNULL(arg.name);
+}
+
+template<>
+void printArg(BinaryenType arg) {
+  if (arg == BinaryenTypeAuto()) {
+    std::cout << "BinaryenTypeAuto()";
+  } else {
+    std::cout << arg;
+  }
+}
+
+template<>
+void printArg(BinaryenLiteral arg) {
+  switch (arg.type) {
+    case Type::i32: std::cout << "BinaryenLiteralInt32(" << arg.i32 << ")"; break;
+    case Type::i64: std::cout << "BinaryenLiteralInt64(" << arg.i64 << ")"; break;
+    case Type::f32:
+      if (std::isnan(arg.f32)) {
+        std::cout << "BinaryenLiteralFloat32(NAN)"; break;
+      } else {
+        std::cout << "BinaryenLiteralFloat32(" << arg.f32 << ")"; break;
+      }
+    case Type::f64:
+      if (std::isnan(arg.f64)) {
+        std::cout << "BinaryenLiteralFloat64(NAN)"; break;
+      } else {
+        std::cout << "BinaryenLiteralFloat64(" << arg.f64 << ")"; break;
+      }
+    case Type::v128:
+    case Type::none:
+    case Type::unreachable: WASM_UNREACHABLE();
+  }
+}
+
+template<typename T>
+void traceArgs(T arg) {
+  printArg(arg);
+}
+
+template<typename T, typename S, typename ...Ts>
+void traceArgs(T arg, S next, Ts... rest) {
+  printArg(arg);
+  std::cout << ", ";
+  traceArgs(next, rest...);
+}
+
+template<typename ...Ts>
+void traceExpression(BinaryenExpressionRef expr, const char* constructor, Ts... args) {
+  auto id = noteExpression(expr);
+  std::cout << "  expressions[" << id << "] = " << constructor << "(";
+  traceArgs("the_module", args...);
+  std::cout << ");\n";
+}
+
 extern "C" {
 
 //
@@ -421,14 +493,8 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module, const char* name, 
       std::cout << "expressions[" << expressions[children[i]] << "]";
     }
     if (numChildren == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenBlock(the_module, ";
-    traceNameOrNULL(name);
-    std::cout << ", children, " << numChildren << ", ";
-    if (type == BinaryenTypeAuto()) std::cout << "BinaryenTypeAuto()";
-    else std::cout << type;
-    std::cout <<  ");\n";
+    std::cout << " };\n  ";
+    traceExpression(ret, "BinaryenBlock", StringLit(name), "children", numChildren, type);
     std::cout << "  }\n";
   }
 
@@ -442,8 +508,7 @@ BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module, BinaryenExpressionRef
   ret->finalize();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenIf(the_module, expressions[" << expressions[condition] << "], expressions[" << expressions[ifTrue] << "], expressions[" << expressions[ifFalse] << "]);\n";
+    traceExpression(ret, "BinaryenIf", condition, ifTrue, ifFalse);
   }
 
   return static_cast<Expression*>(ret);
@@ -452,10 +517,7 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module, const char* name, B
   auto* ret = Builder(*((Module*)module)).makeLoop(name ? Name(name) : Name(), (Expression*)body);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenLoop(the_module, ";
-    traceNameOrNULL(name);
-    std::cout << ", expressions[" << expressions[body] << "]);\n";
+    traceExpression(ret, "BinaryenLoop", StringLit(name), body);
   }
 
   return static_cast<Expression*>(ret);
@@ -464,8 +526,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module, const char* name, 
   auto* ret = Builder(*((Module*)module)).makeBreak(name, (Expression*)value, (Expression*)condition);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenBreak(the_module, \"" << name << "\", expressions[" << expressions[condition] << "], expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenBreak", StringLit(name), condition, value);
   }
 
   return static_cast<Expression*>(ret);
@@ -481,9 +542,8 @@ BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module, const char** name
       std::cout << "\"" << names[i] << "\"";
     }
     if (numNames == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenSwitch(the_module, names, " << numNames << ", \"" << defaultName << "\", expressions[" << expressions[condition] << "], expressions[" << expressions[value] << "]);\n";
+    std::cout << " };\n  ";
+    traceExpression(ret, "BinaryenSwitch", "names", numNames, StringLit(defaultName), condition, value);
     std::cout << "  }\n";
   }
 
@@ -507,9 +567,8 @@ BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module, const char* target,
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     if (numOperands == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenCall(the_module, \"" << target << "\", operands, " << numOperands << ", " << returnType << ");\n";
+    std::cout << " };\n  ";
+    traceExpression(ret, "BinaryenCall", StringLit(target), "operands", numOperands, returnType);
     std::cout << "  }\n";
   }
 
@@ -533,9 +592,8 @@ BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module, BinaryenExp
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     if (numOperands == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "    expressions[" << id << "] = BinaryenCallIndirect(the_module, expressions[" << expressions[target] << "], operands, " << numOperands << ", \"" << type << "\");\n";
+    std::cout << " };\n  ";
+    traceExpression(ret, "BinaryenCallIndirect", target, "operands", numOperands, StringLit(type));
     std::cout << "  }\n";
   }
 
@@ -552,8 +610,7 @@ BinaryenExpressionRef BinaryenGetLocal(BinaryenModuleRef module, BinaryenIndex i
   auto* ret = ((Module*)module)->allocator.alloc<GetLocal>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenGetLocal(the_module, " << index << ", " << type << ");\n";
+    traceExpression(ret, "BinaryenGetLocal", index, type);
   }
 
   ret->index = index;
@@ -565,8 +622,7 @@ BinaryenExpressionRef BinaryenSetLocal(BinaryenModuleRef module, BinaryenIndex i
   auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenSetLocal(the_module, " << index << ", expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenSetLocal", index, value);
   }
 
   ret->index = index;
@@ -579,8 +635,7 @@ BinaryenExpressionRef BinaryenTeeLocal(BinaryenModuleRef module, BinaryenIndex i
   auto* ret = ((Module*)module)->allocator.alloc<SetLocal>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenTeeLocal(the_module, " << index << ", expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenTeeLocal", index, value);
   }
 
   ret->index = index;
@@ -593,8 +648,7 @@ BinaryenExpressionRef BinaryenGetGlobal(BinaryenModuleRef module, const char* na
   auto* ret = ((Module*)module)->allocator.alloc<GetGlobal>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenGetGlobal(the_module, \"" << name << "\", " << type << ");\n";
+    traceExpression(ret, "BinaryenGetGlobal", StringLit(name), type);
   }
 
   ret->name = name;
@@ -606,8 +660,7 @@ BinaryenExpressionRef BinaryenSetGlobal(BinaryenModuleRef module, const char* na
   auto* ret = ((Module*)module)->allocator.alloc<SetGlobal>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenSetGlobal(the_module, \"" << name << "\", expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenSetGlobal", StringLit(name), value);
   }
 
   ret->name = name;
@@ -619,8 +672,7 @@ BinaryenExpressionRef BinaryenLoad(BinaryenModuleRef module, uint32_t bytes, int
   auto* ret = ((Module*)module)->allocator.alloc<Load>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenLoad(the_module, " << bytes << ", " << int(signed_) << ", " << offset << ", " << align << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
+    traceExpression(ret, "BinaryenLoad", bytes, int(signed_), offset, align, type, ptr);
   }
   ret->isAtomic = false;
   ret->bytes = bytes;
@@ -636,8 +688,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
   auto* ret = ((Module*)module)->allocator.alloc<Store>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenStore(the_module, " << bytes << ", " << offset << ", " << align << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
+    traceExpression(ret, "BinaryenStore", bytes, offset, align, ptr, value, type);
   }
   ret->isAtomic = false;
   ret->bytes = bytes;
@@ -652,27 +703,7 @@ BinaryenExpressionRef BinaryenStore(BinaryenModuleRef module, uint32_t bytes, ui
 BinaryenExpressionRef BinaryenConst(BinaryenModuleRef module, BinaryenLiteral value) {
   auto* ret = Builder(*((Module*)module)).makeConst(fromBinaryenLiteral(value));
   if (tracing) {
-    auto id = noteExpression(ret);
-    switch (value.type) {
-      case Type::i32: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt32(" << value.i32 << "));\n"; break;
-      case Type::i64: std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralInt64(" << value.i64 << "));\n"; break;
-      case Type::f32: {
-        std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralFloat32(";
-        if (std::isnan(value.f32)) std::cout << "NAN";
-        else std::cout << value.f32;
-        std::cout << "));\n";
-        break;
-      }
-      case Type::f64: {
-        std::cout << "  expressions[" << id << "] = BinaryenConst(the_module, BinaryenLiteralFloat64(";
-        if (std::isnan(value.f64)) std::cout << "NAN";
-        else std::cout << value.f64;
-        std::cout << "));\n";
-        break;
-      }
-      case Type::none:
-      case Type::unreachable: WASM_UNREACHABLE();
-    }
+    traceExpression(ret, "BinaryenConst", value);
   }
   return static_cast<Expression*>(ret);
 }
@@ -680,8 +711,7 @@ BinaryenExpressionRef BinaryenUnary(BinaryenModuleRef module, BinaryenOp op, Bin
   auto* ret = Builder(*((Module*)module)).makeUnary(UnaryOp(op), (Expression*)value);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenUnary(the_module, " << op << ", expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenUnary", op, value);
   }
 
   return static_cast<Expression*>(ret);
@@ -690,8 +720,7 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module, BinaryenOp op, Bi
   auto* ret = Builder(*((Module*)module)).makeBinary(BinaryOp(op), (Expression*)left, (Expression*)right);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenBinary(the_module, " << op << ", expressions[" << expressions[left] << "], expressions[" << expressions[right] << "]);\n";
+    traceExpression(ret, "BinaryenBinary", op, left, right);
   }
 
   return static_cast<Expression*>(ret);
@@ -700,8 +729,7 @@ BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module, BinaryenExpressio
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenSelect(the_module, expressions[" << expressions[condition] << "], expressions[" << expressions[ifTrue] << "], expressions[" << expressions[ifFalse] << "]);\n";
+    traceExpression(ret, "BinaryenSelect", condition, ifTrue, ifFalse);
   }
 
   ret->condition = (Expression*)condition;
@@ -714,8 +742,7 @@ BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module, BinaryenExpressionR
   auto* ret = ((Module*)module)->allocator.alloc<Drop>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenDrop(the_module, expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenDrop", value);
   }
 
   ret->value = (Expression*)value;
@@ -726,8 +753,7 @@ BinaryenExpressionRef BinaryenReturn(BinaryenModuleRef module, BinaryenExpressio
   auto* ret = Builder(*((Module*)module)).makeReturn((Expression*)value);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenReturn(the_module, expressions[" << expressions[value] << "]);\n";
+    traceExpression(ret, "BinaryenReturn", value);
   }
 
   return static_cast<Expression*>(ret);
@@ -743,9 +769,8 @@ BinaryenExpressionRef BinaryenHost(BinaryenModuleRef module, BinaryenOp op, cons
       std::cout << "expressions[" << expressions[operands[i]] << "]";
     }
     if (numOperands == 0) std::cout << "0"; // ensure the array is not empty, otherwise a compiler error on VS
-    std::cout << " };\n";
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenHost(the_module, " << op << ", \"" << name << "\", operands, " << numOperands << ");\n";
+    std::cout << " };\n  ";
+    traceExpression(ret, "BinaryenHost", StringLit(name), "operands", numOperands);
     std::cout << "  }\n";
   }
 
@@ -761,8 +786,7 @@ BinaryenExpressionRef BinaryenNop(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Nop>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenNop(the_module);\n";
+    traceExpression(ret, "BinaryenNop");
   }
 
   return static_cast<Expression*>(ret);
@@ -771,8 +795,7 @@ BinaryenExpressionRef BinaryenUnreachable(BinaryenModuleRef module) {
   auto* ret = ((Module*)module)->allocator.alloc<Unreachable>();
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenUnreachable(the_module);\n";
+    traceExpression(ret, "BinaryenUnreachable");
   }
 
   return static_cast<Expression*>(ret);
@@ -781,8 +804,7 @@ BinaryenExpressionRef BinaryenAtomicLoad(BinaryenModuleRef module, uint32_t byte
   auto* ret = Builder(*((Module*)module)).makeAtomicLoad(bytes, offset, (Expression*)ptr, Type(type));
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicLoad(the_module, " << bytes << ", " << offset << ", " << type << ", expressions[" << expressions[ptr] << "]);\n";
+    traceExpression(ret, "BinaryenAtomicLoad", bytes, offset, type, ptr);
   }
 
   return static_cast<Expression*>(ret);
@@ -791,8 +813,7 @@ BinaryenExpressionRef BinaryenAtomicStore(BinaryenModuleRef module, uint32_t byt
   auto* ret = Builder(*((Module*)module)).makeAtomicStore(bytes, offset, (Expression*)ptr, (Expression*)value, Type(type));
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicStore(the_module, " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
+    traceExpression(ret, "BinaryenAtomicStore", bytes, offset, ptr, value, type);
   }
 
   return static_cast<Expression*>(ret);
@@ -801,8 +822,7 @@ BinaryenExpressionRef BinaryenAtomicRMW(BinaryenModuleRef module, BinaryenOp op,
   auto* ret = Builder(*((Module*)module)).makeAtomicRMW(AtomicRMWOp(op), bytes, offset, (Expression*)ptr, (Expression*)value, Type(type));
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicRMW(the_module, " << op << ", " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[value] << "], " << type << ");\n";
+    traceExpression(ret, "BinaryenAtomicRMW", op, bytes, offset, ptr, value, type);
   }
 
   return static_cast<Expression*>(ret);
@@ -811,8 +831,7 @@ BinaryenExpressionRef BinaryenAtomicCmpxchg(BinaryenModuleRef module, BinaryenIn
   auto* ret = Builder(*((Module*)module)).makeAtomicCmpxchg(bytes, offset, (Expression*)ptr, (Expression*)expected, (Expression*)replacement, Type(type));
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicCmpxchg(the_module, " << bytes << ", " << offset << ", expressions[" << expressions[ptr] << "], expressions[" << expressions[expected] << "], expressions[" << expressions[replacement] << "], " << type << ");\n";
+    traceExpression(ret, "BinaryenAtomicCmpxchg", bytes, offset, ptr, expected, replacement, type);
   }
 
   return static_cast<Expression*>(ret);
@@ -821,8 +840,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpre
   auto* ret = Builder(*((Module*)module)).makeAtomicWait((Expression*)ptr, (Expression*)expected, (Expression*)timeout, Type(expectedType), 0);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicWait(the_module, expressions[" << expressions[ptr] << "], expressions[" << expressions[expected] << "], expressions[" << expressions[timeout] << "], " << expectedType << ");\n";
+    traceExpression(ret, "BinaryenAtomicWait", ptr, expected, timeout, expectedType);
   }
 
   return static_cast<Expression*>(ret);
@@ -831,8 +849,7 @@ BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpre
   auto* ret = Builder(*((Module*)module)).makeAtomicWake((Expression*)ptr, (Expression*)wakeCount, 0);
 
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenAtomicWake(the_module, expressions[" << expressions[ptr] << "], expressions[" << expressions[wakeCount] << "]);\n";
+    traceExpression(ret, "BinaryenAtomicWake", ptr, wakeCount);
   }
 
   return static_cast<Expression*>(ret);
