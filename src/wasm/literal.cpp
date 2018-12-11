@@ -31,7 +31,7 @@ namespace wasm {
 template<int N>
 using LaneArray = std::array<Literal, N>;
 
-Literal::Literal(uint8_t init[16]) : type(Type::v128) {
+Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 

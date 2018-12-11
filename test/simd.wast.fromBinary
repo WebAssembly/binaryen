@@ -161,25 +161,25 @@
   )
  )
  (func $i8x16.gt_s (; 27 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.le_s
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i8x16.gt_u (; 28 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i8x16.le_u
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i8x16.le_s (; 29 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i8x16.gt_s
    (get_local $0)
    (get_local $1)
   )
  )
- (func $i8x16.le_u (; 30 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+ (func $i8x16.gt_u (; 28 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i8x16.gt_u
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i8x16.le_s (; 29 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.le_s
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i8x16.le_u (; 30 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i8x16.le_u
    (get_local $0)
    (get_local $1)
   )
@@ -221,25 +221,25 @@
   )
  )
  (func $i16x8.gt_s (; 37 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.le_s
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i16x8.gt_u (; 38 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i16x8.le_u
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i16x8.le_s (; 39 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i16x8.gt_s
    (get_local $0)
    (get_local $1)
   )
  )
- (func $i16x8.le_u (; 40 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+ (func $i16x8.gt_u (; 38 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i16x8.gt_u
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i16x8.le_s (; 39 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.le_s
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i16x8.le_u (; 40 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.le_u
    (get_local $0)
    (get_local $1)
   )
@@ -281,25 +281,25 @@
   )
  )
  (func $i32x4.gt_s (; 47 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i32x4.le_s
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i32x4.gt_u (; 48 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (i32x4.le_u
-   (get_local $0)
-   (get_local $1)
-  )
- )
- (func $i32x4.le_s (; 49 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i32x4.gt_s
    (get_local $0)
    (get_local $1)
   )
  )
- (func $i32x4.le_u (; 50 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+ (func $i32x4.gt_u (; 48 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
   (i32x4.gt_u
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i32x4.le_s (; 49 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.le_s
+   (get_local $0)
+   (get_local $1)
+  )
+ )
+ (func $i32x4.le_u (; 50 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.le_u
    (get_local $0)
    (get_local $1)
   )
@@ -335,13 +335,13 @@
   )
  )
  (func $f32x4.gt (; 56 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (f32x4.le
+  (f32x4.gt
    (get_local $0)
    (get_local $1)
   )
  )
  (func $f32x4.le (; 57 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (f32x4.gt
+  (f32x4.le
    (get_local $0)
    (get_local $1)
   )
@@ -371,13 +371,13 @@
   )
  )
  (func $f64x2.gt (; 62 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (f64x2.le
+  (f64x2.gt
    (get_local $0)
    (get_local $1)
   )
  )
  (func $f64x2.le (; 63 ;) (type $3) (param $0 v128) (param $1 v128) (result v128)
-  (f64x2.gt
+  (f64x2.le
    (get_local $0)
    (get_local $1)
   )

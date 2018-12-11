@@ -179,7 +179,7 @@ struct BinaryenLiteral BinaryenLiteralInt32(int32_t x);
 struct BinaryenLiteral BinaryenLiteralInt64(int64_t x);
 struct BinaryenLiteral BinaryenLiteralFloat32(float x);
 struct BinaryenLiteral BinaryenLiteralFloat64(double x);
-struct BinaryenLiteral BinaryenLiteralVec128(uint8_t x[16]);
+struct BinaryenLiteral BinaryenLiteralVec128(const uint8_t x[16]);
 struct BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x);
 struct BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x);
 
@@ -537,7 +537,7 @@ BinaryenExpressionRef BinaryenAtomicWait(BinaryenModuleRef module, BinaryenExpre
 BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpressionRef ptr, BinaryenExpressionRef wakeCount);
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx);
 BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx, BinaryenExpressionRef value);
-BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, uint8_t mask[16]);
+BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask[16]);
 BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenExpressionRef cond);
 BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, BinaryenExpressionRef shift);
 

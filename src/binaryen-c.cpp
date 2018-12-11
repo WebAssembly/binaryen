@@ -86,9 +86,9 @@ static PassOptions globalPassOptions = PassOptions::getWithDefaultOptimizationOp
 
 static int tracing = 0;
 
-void traceNameOrNULL(const char* name) {
-  if (name) std::cout << "\"" << name << "\"";
-  else std::cout << "NULL";
+void traceNameOrNULL(const char* name, std::ostream &out = std::cout) {
+  if (name) out << "\"" << name << "\"";
+  else out << "NULL";
 }
 
 std::map<BinaryenFunctionTypeRef, size_t> functionTypes;
@@ -105,14 +105,19 @@ size_t noteExpression(BinaryenExpressionRef expression) {
   return id;
 }
 
+std::string getTemp() {
+  static size_t n = 0;
+  return "t" + std::to_string(n++);
+}
+
 template<typename T>
-void printArg(T arg) {
-  std::cout << arg;
+void printArg(std::ostream &setup, std::ostream& out, T arg) {
+  out << arg;
 }
 
 template<>
-void printArg(void* arg) {
-  std::cout << "expressions[" << expressions[arg] << "]";
+void printArg(std::ostream &setup, std::ostream& out, BinaryenExpressionRef arg) {
+  out << "expressions[" << expressions[arg] << "]";
 }
 
 struct StringLit {
@@ -121,60 +126,83 @@ struct StringLit {
 };
 
 template<>
-void printArg(StringLit arg) {
-  traceNameOrNULL(arg.name);
+void printArg(std::ostream &setup, std::ostream& out, StringLit arg) {
+  traceNameOrNULL(arg.name, out);
 }
 
 template<>
-void printArg(BinaryenType arg) {
+void printArg(std::ostream &setup, std::ostream &out, BinaryenType arg) {
   if (arg == BinaryenTypeAuto()) {
-    std::cout << "BinaryenTypeAuto()";
+    out << "BinaryenTypeAuto()";
   } else {
-    std::cout << arg;
+    out << arg;
   }
 }
 
 template<>
-void printArg(BinaryenLiteral arg) {
+void printArg(std::ostream &setup, std::ostream &out, BinaryenLiteral arg) {
   switch (arg.type) {
-    case Type::i32: std::cout << "BinaryenLiteralInt32(" << arg.i32 << ")"; break;
-    case Type::i64: std::cout << "BinaryenLiteralInt64(" << arg.i64 << ")"; break;
+    case Type::i32: out << "BinaryenLiteralInt32(" << arg.i32 << ")"; break;
+    case Type::i64: out << "BinaryenLiteralInt64(" << arg.i64 << ")"; break;
     case Type::f32:
       if (std::isnan(arg.f32)) {
-        std::cout << "BinaryenLiteralFloat32(NAN)"; break;
+        out << "BinaryenLiteralFloat32(NAN)"; break;
       } else {
-        std::cout << "BinaryenLiteralFloat32(" << arg.f32 << ")"; break;
+        out << "BinaryenLiteralFloat32(" << arg.f32 << ")"; break;
       }
     case Type::f64:
       if (std::isnan(arg.f64)) {
-        std::cout << "BinaryenLiteralFloat64(NAN)"; break;
+        out << "BinaryenLiteralFloat64(NAN)"; break;
       } else {
-        std::cout << "BinaryenLiteralFloat64(" << arg.f64 << ")"; break;
+        out << "BinaryenLiteralFloat64(" << arg.f64 << ")"; break;
       }
-    case Type::v128:
+    case Type::v128: {
+      std::string array = getTemp();
+      setup << "uint8_t " << array << "[] = {";
+      for (size_t i = 0; i < 16; ++i) {
+        setup << int(arg.v128[i]);
+        if (i < 15) {
+          setup << ", ";
+        }
+      }
+      setup << "};\n";
+      out << "BinaryenLiteralVec128(" << array << ")";
+      break;
+    }
     case Type::none:
     case Type::unreachable: WASM_UNREACHABLE();
   }
 }
 
 template<typename T>
-void traceArgs(T arg) {
-  printArg(arg);
+void traceArgs(std::ostream &setup, std::ostream &out, T arg) {
+  printArg(setup, out, arg);
 }
 
 template<typename T, typename S, typename ...Ts>
-void traceArgs(T arg, S next, Ts... rest) {
-  printArg(arg);
-  std::cout << ", ";
-  traceArgs(next, rest...);
+void traceArgs(std::ostream &setup, std::ostream &out, T arg, S next, Ts... rest) {
+  printArg(setup, out, arg);
+  out << ", ";
+  traceArgs(setup, out, next, rest...);
 }
 
 template<typename ...Ts>
 void traceExpression(BinaryenExpressionRef expr, const char* constructor, Ts... args) {
   auto id = noteExpression(expr);
-  std::cout << "  expressions[" << id << "] = " << constructor << "(";
-  traceArgs("the_module", args...);
-  std::cout << ");\n";
+  std::stringstream setup, out;
+  out << "expressions[" << id << "] = " << constructor << "(";
+  traceArgs(setup, out, "the_module", args...);
+  out << ");\n";
+  if (!setup.str().empty()) {
+    std::cout << "  {\n";
+    for (std::string line; getline(setup, line);) {
+      std::cout << "    " << line << "\n";
+    }
+    std::cout << "    " << out.str();
+    std::cout << "  }\n";
+  } else {
+    std::cout << "  " << out.str();
+  }
 }
 
 extern "C" {
@@ -334,7 +362,7 @@ BinaryenLiteral BinaryenLiteralInt32(int32_t x) { return toBinaryenLiteral(Liter
 BinaryenLiteral BinaryenLiteralInt64(int64_t x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32(float x) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat64(double x) { return toBinaryenLiteral(Literal(x)); }
-BinaryenLiteral BinaryenLiteralVec128(uint8_t x[16]) { return toBinaryenLiteral(Literal(x)); }
+BinaryenLiteral BinaryenLiteralVec128(const uint8_t x[16]) { return toBinaryenLiteral(Literal(x)); }
 BinaryenLiteral BinaryenLiteralFloat32Bits(int32_t x) { return toBinaryenLiteral(Literal(x).castToF32()); }
 BinaryenLiteral BinaryenLiteralFloat64Bits(int64_t x) { return toBinaryenLiteral(Literal(x).castToF64()); }
 
@@ -1002,39 +1030,47 @@ BinaryenExpressionRef BinaryenAtomicWake(BinaryenModuleRef module, BinaryenExpre
 BinaryenExpressionRef BinaryenSIMDExtract(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx) {
   auto* ret = Builder(*((Module*)module)).makeSIMDExtract(SIMDExtractOp(op), (Expression*) vec, idx);
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenSIMDExtract(the_module, " << op << ", expressions[" << expressions[vec] << "], " << int(idx) << ");\n";
+    traceExpression(ret, "BinaryenSIMDExtract", op, vec, int(idx));
   }
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenSIMDReplace(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, uint8_t idx, BinaryenExpressionRef value) {
   auto* ret = Builder(*((Module*)module)).makeSIMDReplace(SIMDReplaceOp(op), (Expression*) vec, idx, (Expression*)value);
   if (tracing) {
-    auto id = noteExpression(ret);
-    std::cout << "  expressions[" << id << "] = BinaryenSIMDReplace(the_module, " << op << ", expressions[" << expressions[vec] << "], " << int(idx) << ", expression);\n";
+    traceExpression(ret, "BinaryenSIMDReplace", op, vec, int(idx), value);
   }
   return static_cast<Expression*>(ret);
 }
-BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, uint8_t mask_[16]) {
+BinaryenExpressionRef BinaryenSIMDShuffle(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, const uint8_t mask_[16]) {
   std::array<uint8_t, 16> mask;
   memcpy(mask.data(), mask_, 16);
   auto* ret = Builder(*((Module*)module)).makeSIMDShuffle((Expression*)left, (Expression*)right, mask);
   if (tracing) {
-    WASM_UNREACHABLE();
+    std::cout << "  {\n";
+    std::cout << "    uint8_t mask[] = {";
+    for (size_t i = 0; i < mask.size(); ++i) {
+      std::cout << int(mask[i]);
+      if (i < mask.size() - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "};\n  ";
+    traceExpression(ret, "BinaryenSIMDShuffle", left, right, "mask");
+    std::cout << "  }\n";
   }
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenSIMDBitselect(BinaryenModuleRef module, BinaryenExpressionRef left, BinaryenExpressionRef right, BinaryenExpressionRef cond) {
   auto* ret = Builder(*((Module*)module)).makeSIMDBitselect((Expression*)left, (Expression*)right, (Expression*)cond);
   if (tracing) {
-    WASM_UNREACHABLE();
+    traceExpression(ret, "BinaryenSIMDBitselect", left, right, cond);
   }
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenSIMDShift(BinaryenModuleRef module, BinaryenOp op, BinaryenExpressionRef vec, BinaryenExpressionRef shift) {
   auto* ret = Builder(*((Module*)module)).makeSIMDShift(SIMDShiftOp(op), (Expression*)vec, (Expression*)shift);
   if (tracing) {
-    WASM_UNREACHABLE();
+    traceExpression(ret, "BinaryenSIMDShift", op, vec, shift);
   }
   return static_cast<Expression*>(ret);
 }

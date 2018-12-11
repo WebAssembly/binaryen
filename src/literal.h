@@ -48,7 +48,7 @@ public:
   explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
   explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
-  explicit Literal(uint8_t init[16]);
+  explicit Literal(const uint8_t init[16]);
   explicit Literal(const std::array<Literal, 16>&);
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
