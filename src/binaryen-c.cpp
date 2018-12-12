@@ -1824,6 +1824,155 @@ BinaryenExpressionRef BinaryenAtomicWakeGetWakeCount(BinaryenExpressionRef expr)
   assert(expression->is<AtomicWake>());
   return static_cast<AtomicWake*>(expression)->wakeCount;
 }
+// SIMDExtract
+BinaryenOp BinaryenSIMDExtractGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDExtractGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDExtract>());
+  return static_cast<SIMDExtract*>(expression)->op;
+}
+BinaryenExpressionRef BinaryenSIMDExtractGetVec(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDExtractGetVec(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDExtract>());
+  return static_cast<SIMDExtract*>(expression)->vec;
+}
+uint8_t BinaryenSIMDExtractGetIdx(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDExtractGetIdx(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDExtract>());
+  return static_cast<SIMDExtract*>(expression)->idx;
+}
+// SIMDReplace
+BinaryenOp BinaryenSIMDReplaceGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDReplaceGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDReplace>());
+  return static_cast<SIMDReplace*>(expression)->op;
+}
+BinaryenExpressionRef BinaryenSIMDReplaceGetVec(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDReplaceGetVec(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDReplace>());
+  return static_cast<SIMDReplace*>(expression)->vec;
+}
+uint8_t BinaryenSIMDReplaceGetIdx(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDReplaceGetIdx(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDReplace>());
+  return static_cast<SIMDReplace*>(expression)->idx;
+}
+BinaryenExpressionRef BinaryenSIMDReplaceGetValue(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDReplaceGetValue(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDReplace>());
+  return static_cast<SIMDReplace*>(expression)->value;
+}
+// SIMDShuffle
+BinaryenExpressionRef BinaryenSIMDShuffleGetLeft(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShuffleGetLeft(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShuffle>());
+  return static_cast<SIMDShuffle*>(expression)->left;
+}
+BinaryenExpressionRef BinaryenSIMDShuffleGetRight(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShuffleGetRight(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShuffle>());
+  return static_cast<SIMDShuffle*>(expression)->right;
+}
+void BinaryenSIMDShuffleGetMask(BinaryenExpressionRef expr, uint8_t *mask) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShuffleGetMask(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShuffle>());
+  memcpy(mask, static_cast<SIMDShuffle*>(expression)->mask.data(), 16);
+}
+// SIMDBitselect
+BinaryenExpressionRef BinaryenSIMDBitselectGetLeft(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDBitselectGetLeft(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDBitselect>());
+  return static_cast<SIMDBitselect*>(expression)->left;
+}
+BinaryenExpressionRef BinaryenSIMDBitselectGetRight(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDBitselectGetRight(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDBitselect>());
+  return static_cast<SIMDBitselect*>(expression)->right;
+}
+BinaryenExpressionRef BinaryenSIMDBitselectGetCond(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDBitselectGetCond(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDBitselect>());
+  return static_cast<SIMDBitselect*>(expression)->cond;
+}
+// SIMDShift
+BinaryenOp BinaryenSIMDShiftGetOp(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShiftGetOp(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShift>());
+  return static_cast<SIMDShift*>(expression)->op;
+}
+BinaryenExpressionRef BinaryenSIMDShiftGetVec(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShiftGetVec(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShift>());
+  return static_cast<SIMDShift*>(expression)->vec;
+}
+BinaryenExpressionRef BinaryenSIMDShiftGetShift(BinaryenExpressionRef expr) {
+  if (tracing) {
+    std::cout << "  BinaryenSIMDShiftGetShift(expressions[" << expressions[expr] << "]);\n";
+  }
+
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDShift>());
+  return static_cast<SIMDShift*>(expression)->shift;
+}
 
 // Functions
 

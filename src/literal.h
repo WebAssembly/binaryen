@@ -18,6 +18,7 @@
 #define wasm_literal_h
 
 #include <iostream>
+#include <array>
 
 #include "support/hash.h"
 #include "support/utilities.h"

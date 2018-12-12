@@ -532,7 +532,7 @@ static T sat_add(T a, T b) {
 
 template<typename T>
 static T add_sat_s(T a, T b) {
-  static_assert(std::is_signed<T>::value);
+  static_assert(std::is_signed<T>::value, "Trying to instantiate add_sat_s with unsigned type");
   using UT = typename std::make_unsigned<T>::type;
   UT ua = static_cast<UT>(a);
   UT ub = static_cast<UT>(b);
@@ -548,7 +548,7 @@ static T add_sat_s(T a, T b) {
 
 template<typename T>
 static T sub_sat_s(T a, T b) {
-  static_assert(std::is_signed<T>::value);
+  static_assert(std::is_signed<T>::value, "Trying to instantiate sub_sat_s with unsigned type");
   using UT = typename std::make_unsigned<T>::type;
   UT ua = static_cast<UT>(a);
   UT ub = static_cast<UT>(b);
@@ -564,7 +564,7 @@ static T sub_sat_s(T a, T b) {
 
 template<typename T>
 static T add_sat_u(T a, T b) {
-  static_assert(std::is_unsigned<T>::value);
+  static_assert(std::is_unsigned<T>::value, "Trying to instantiate add_sat_u with signed type");
   T res = a + b;
   // overflow if result is less than arguments
   return (res < a) ? std::numeric_limits<T>::max() : res;
@@ -572,7 +572,7 @@ static T add_sat_u(T a, T b) {
 
 template<typename T>
 static T sub_sat_u(T a, T b) {
-  static_assert(std::is_unsigned<T>::value);
+  static_assert(std::is_unsigned<T>::value, "Trying to instantiate sub_sat_u with signed type");
   T res = a - b;
   // overflow if result is greater than a
   return (res > a) ? 0 : res;
@@ -1165,12 +1165,12 @@ Literal Literal::allTrueI64x2() const {
 
 template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const,
          Literal (Literal::*ShiftOp)(const Literal&) const>
-static Literal shift(const Literal& val, const Literal& other) {
-  assert(other.type == Type::i32);
+static Literal shift(const Literal& vec, const Literal& shift) {
+  assert(shift.type == Type::i32);
   size_t lane_bits = 128 / Lanes;
-  LaneArray<Lanes> lanes = (val.*IntoLanes)();
+  LaneArray<Lanes> lanes = (vec.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    lanes[i] = (lanes[i].*ShiftOp)(Literal(other.geti32() % lane_bits));
+    lanes[i] = (lanes[i].*ShiftOp)(Literal(int32_t(shift.geti32() % lane_bits)));
   }
   return Literal(lanes);
 }
