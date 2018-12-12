@@ -128,7 +128,6 @@ void test_core() {
 
   // Literals and consts
 
-
   BinaryenExpressionRef constI32 = BinaryenConst(module, BinaryenLiteralInt32(1)),
                         constI64 = BinaryenConst(module, BinaryenLiteralInt64(2)),
                         constF32 = BinaryenConst(module, BinaryenLiteralFloat32(3.14f)),
