@@ -571,8 +571,8 @@ void FunctionValidator::visitAtomicWake(AtomicWake* curr) {
 void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
   shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "extract_lane must operate on a v128");
-  Type lane_t;
-  size_t lanes;
+  Type lane_t = none;
+  size_t lanes = 0;
   switch (curr->op) {
     case ExtractLaneSVecI8x16:
     case ExtractLaneUVecI8x16: lane_t = i32; lanes = 16; break;
@@ -591,8 +591,8 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
   shouldBeTrue(info.features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(curr->type, v128, curr, "replace_lane must have type v128");
   shouldBeEqualOrFirstIsUnreachable(curr->vec->type, v128, curr, "replace_lane must operate on a v128");
-  Type lane_t;
-  size_t lanes;
+  Type lane_t = none;
+  size_t lanes = 0;
   switch (curr->op) {
     case ReplaceLaneVecI8x16: lane_t = i32; lanes = 16; break;
     case ReplaceLaneVecI16x8: lane_t = i32; lanes = 8; break;
