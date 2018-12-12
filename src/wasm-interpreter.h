@@ -254,15 +254,15 @@ public:
       case ReinterpretInt64:       return value.castToF64();
       case ExtendSInt32:           return value.extendToSI64();
       case ExtendUInt32:           return value.extendToUI64();
-      case WrapInt64:              return value.truncateToI32();
+      case WrapInt64:              return value.wrapToI32();
       case ConvertUInt32ToFloat32:
-      case ConvertUInt64ToFloat32: return value.truncUIToF32();
+      case ConvertUInt64ToFloat32: return value.convertUIToF32();
       case ConvertUInt32ToFloat64:
-      case ConvertUInt64ToFloat64: return value.truncUIToF64();
+      case ConvertUInt64ToFloat64: return value.convertUIToF64();
       case ConvertSInt32ToFloat32:
-      case ConvertSInt64ToFloat32: return value.truncSIToF32();
+      case ConvertSInt64ToFloat32: return value.convertSIToF32();
       case ConvertSInt32ToFloat64:
-      case ConvertSInt64ToFloat64: return value.truncSIToF64();
+      case ConvertSInt64ToFloat64: return value.convertSIToF64();
       case ExtendS8Int32:
       case ExtendS8Int64:          return value.extendS8();
       case ExtendS16Int32:
