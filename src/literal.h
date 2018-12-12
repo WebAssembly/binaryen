@@ -65,9 +65,9 @@ public:
       case Type::f32: return Literal(float(x)); break;
       case Type::f64: return Literal(double(x)); break;
       case Type::v128: return Literal(
-        std::array<Literal, 4>{
+        std::array<Literal, 4>{{
           Literal(x), Literal(int32_t(0)), Literal(int32_t(0)), Literal(int32_t(0))
-        }
+        }}
       );
       case none:
       case unreachable: WASM_UNREACHABLE();
