@@ -98,7 +98,6 @@ public:
   Literal extendS16() const;
   Literal extendS32() const;
   Literal wrapToI32() const;
-  Literal demoteToF32() const;
 
   Literal convertSIToF32() const;
   Literal convertUIToF32() const;

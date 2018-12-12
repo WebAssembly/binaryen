@@ -228,11 +228,6 @@ Literal Literal::wrapToI32() const {
   return Literal((int32_t)i64);
 }
 
-Literal Literal::demoteToF32() const {
-  assert(type == Type::f64);
-  return Literal(float(getf64()));
-}
-
 Literal Literal::convertSIToF32() const {
   if (type == Type::i32) return Literal(float(i32));
   if (type == Type::i64) return Literal(float(i64));
@@ -426,7 +421,7 @@ Literal Literal::demote() const {
   // when we must convert to infinity, do that
   if (f64 < -std::numeric_limits<float>::max()) return Literal(-std::numeric_limits<float>::infinity());
   if (f64 > std::numeric_limits<float>::max()) return Literal(std::numeric_limits<float>::infinity());
-  return demoteToF32();
+  return Literal(float(getf64()));
 }
 
 Literal Literal::add(const Literal& other) const {
