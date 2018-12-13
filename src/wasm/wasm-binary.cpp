@@ -1081,14 +1081,6 @@ void WasmBinaryBuilder::readFunctions() {
     for (size_t t = 0; t < numLocalTypes; t++) {
       auto num = getU32LEB();
       auto type = getConcreteType();
-      if (num > WebLimitations::MaxFunctionLocals) {
-        // In general for Web limitations we try to just warn, but not actually
-        // enforce the limit ourselves (as we may be looking at wasm not intended
-        // to run on the Web). However, too many locals will simply cause us to
-        // OOM, so some arbitrary limit makes sense - and if so, why not use
-        // the arbitrary Web limit, for consistency.
-        throwError("too many locals, wasm VMs would not accept this binary");
-      }
       while (num > 0) {
         func->vars.push_back(type);
         num--;
