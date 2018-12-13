@@ -109,7 +109,7 @@ struct SafeHeap : public Pass {
     instrumenter.add<AccessInstrumenter>();
     instrumenter.run();
     // add helper checking funcs and imports
-    addGlobals(module);
+    addGlobals(module, runner->options.features);
   }
 
   Name dynamicTopPtr, segfault, alignfault;
@@ -156,10 +156,11 @@ struct SafeHeap : public Pass {
     return align == bytes && shared && isIntegerType(type);
   }
 
-  void addGlobals(Module* module) {
+  void addGlobals(Module* module, FeatureSet features) {
     // load funcs
     Load load;
     for (auto type : { i32, i64, f32, f64, v128 }) {
+      if (type == v128 && !features.hasSIMD()) continue;
       load.type = type;
       for (Index bytes : { 1, 2, 4, 8, 16 }) {
         load.bytes = bytes;
@@ -188,6 +189,7 @@ struct SafeHeap : public Pass {
     // store funcs
     Store store;
     for (auto valueType : { i32, i64, f32, f64, v128 }) {
+      if (valueType == v128 && !features.hasSIMD()) continue;
       store.valueType = valueType;
       store.type = none;
       for (Index bytes : { 1, 2, 4, 8, 16 }) {
