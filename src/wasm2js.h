@@ -140,7 +140,6 @@ public:
     bool debug = false;
     bool pedantic = false;
     bool allowAsserts = false;
-    bool asmjsTables = false;
   };
 
   Wasm2JSBuilder(Flags f) : flags(f) {}
@@ -277,7 +276,6 @@ private:
   void addBasics(Ref ast);
   void addFunctionImport(Ref ast, Function* import);
   void addTables(Ref ast, Module* wasm);
-  void addAsmjsTables(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
   void setNeedsAlmostASM(const char *reason);
@@ -403,11 +401,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     wasm->addExport(e);
   }
 
-  if (flags.asmjsTables) {
-    addAsmjsTables(asmFunc[3], wasm);
-  } else {
-    addTables(asmFunc[3], wasm);
-  }
+  addTables(asmFunc[3], wasm);
   // memory XXX
   addExports(asmFunc[3], wasm);
   return ret;
@@ -725,41 +719,6 @@ void Wasm2JSBuilder::addTables(Ref ast, Module* wasm) {
   }
 }
 
-void Wasm2JSBuilder::addAsmjsTables(Ref ast, Module* wasm) {
-  std::map<std::string, std::vector<IString>> tables; // asm.js tables, sig => contents of table
-  for (Table::Segment& seg : wasm->table.segments) {
-    for (size_t i = 0; i < seg.data.size(); i++) {
-      Name name = seg.data[i];
-      auto func = wasm->getFunction(name);
-      std::string sig = getSig(func);
-      auto& table = tables[sig];
-      if (table.size() == 0) {
-        // fill it with the first of its type seen. we have to fill with something; and for asm2wasm output, the first is the null anyhow
-        table.resize(tableSize);
-        for (size_t j = 0; j < tableSize; j++) {
-          table[j] = fromName(name, NameScope::Top);
-        }
-      } else {
-        table[i + constOffset(seg)] = fromName(name, NameScope::Top);
-      }
-    }
-  }
-  for (auto& pair : tables) {
-    auto& sig = pair.first;
-    auto& table = pair.second;
-    std::string stable = std::string("FUNCTION_TABLE_") + sig;
-    IString asmName = IString(stable.c_str(), false);
-    // add to asm module
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    Ref theArray = ValueBuilder::makeArray();
-    ValueBuilder::appendToVar(theVar, asmName, theArray);
-    for (auto& name : table) {
-      ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
-    }
-  }
-}
-
 void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
   Ref exports = ValueBuilder::makeObject();
   for (auto& export_ : wasm->exports) {
@@ -771,54 +730,50 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
       );
     }
     if (export_->kind == ExternalKind::Table) {
-      if (flags.asmjsTables) {
-        std::cerr << "Ignoring table export since asm.js tables are forced" << std::endl;
-      } else {
-        setNeedsAlmostASM("table export");
-        Ref descs = ValueBuilder::makeObject();
-        Ref getDesc = ValueBuilder::makeObject();
-        Ref getTableFunc = ValueBuilder::makeFunction(IString(""));
-        ValueBuilder::appendArgumentToFunction(getTableFunc, IString("index"));
-        getTableFunc[3]->push_back(
-          ValueBuilder::makeReturn(
-            ValueBuilder::makeSub(
-              ValueBuilder::makeName(FUNCTION_TABLE),
-              ValueBuilder::makeName(IString("index"))
-            )
+      setNeedsAlmostASM("table export");
+      Ref descs = ValueBuilder::makeObject();
+      Ref getDesc = ValueBuilder::makeObject();
+      Ref getTableFunc = ValueBuilder::makeFunction(IString(""));
+      ValueBuilder::appendArgumentToFunction(getTableFunc, IString("index"));
+      getTableFunc[3]->push_back(
+        ValueBuilder::makeReturn(
+          ValueBuilder::makeSub(
+            ValueBuilder::makeName(FUNCTION_TABLE),
+            ValueBuilder::makeName(IString("index"))
           )
-        );
-        ValueBuilder::appendToObject(
-          descs,
-          IString("get"),
-          getDesc);
-        ValueBuilder::appendToObject(
-          getDesc,
-          IString("value"),
-          getTableFunc);
-        Ref lengthDesc = ValueBuilder::makeObject();
-        Ref lengthGetter = ValueBuilder::makeFunction(IString(""));
-        lengthGetter[3]->push_back(ValueBuilder::makeReturn(
-          ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE), ValueBuilder::makeName(LENGTH))
-        ));
-        ValueBuilder::appendToObject(
-          lengthDesc,
-          IString("get"),
-          lengthGetter);
-        ValueBuilder::appendToObject(
-          descs,
-          IString("length"),
-          lengthDesc);
-        Ref table = ValueBuilder::makeCall(
-          ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("create")),
-          ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("prototype")));
-        ValueBuilder::appendToCall(
-          table,
-          descs);
-        ValueBuilder::appendToObject(
-          exports,
-          fromName(export_->name, NameScope::Top),
-          table);
-      }
+        )
+      );
+      ValueBuilder::appendToObject(
+        descs,
+        IString("get"),
+        getDesc);
+      ValueBuilder::appendToObject(
+        getDesc,
+        IString("value"),
+        getTableFunc);
+      Ref lengthDesc = ValueBuilder::makeObject();
+      Ref lengthGetter = ValueBuilder::makeFunction(IString(""));
+      lengthGetter[3]->push_back(ValueBuilder::makeReturn(
+        ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE), ValueBuilder::makeName(LENGTH))
+      ));
+      ValueBuilder::appendToObject(
+        lengthDesc,
+        IString("get"),
+        lengthGetter);
+      ValueBuilder::appendToObject(
+        descs,
+        IString("length"),
+        lengthDesc);
+      Ref table = ValueBuilder::makeCall(
+        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("create")),
+        ValueBuilder::makeDot(ValueBuilder::makeName(IString("Object")), IString("prototype")));
+      ValueBuilder::appendToCall(
+        table,
+        descs);
+      ValueBuilder::appendToObject(
+        exports,
+        fromName(export_->name, NameScope::Top),
+        table);
     }
     if (export_->kind == ExternalKind::Memory) {
       setNeedsAlmostASM("memory export");
@@ -1080,9 +1035,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
     Function* func;
     Module* module;
     MixedArena allocator;
-    Flags& flags;
-    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func, Flags& flags)
-      : parent(parent), func(func), module(m), flags(flags) {}
+    ExpressionProcessor(Wasm2JSBuilder* parent, Module* m, Function* func)
+      : parent(parent), func(func), module(m) {}
 
     // A scoped temporary variable.
     struct ScopedTemp {
@@ -1337,9 +1291,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       // looks like. Eventually if necessary this should be tightened up in the
       // case that the argument expression don't have any side effects.
       assert(isStatement(curr));
-      std::string stable = flags.asmjsTables ? std::string("FUNCTION_TABLE_") +
-        getSig(module->getFunctionType(curr->fullType)) :
-        std::string("FUNCTION_TABLE");
+      std::string stable = std::string("FUNCTION_TABLE");
       IString table = IString(stable.c_str(), false);
       Ref ret = ValueBuilder::makeBlock();
       ScopedTemp idx(i32, parent, func);
@@ -2115,7 +2067,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m, Function* func, IString resul
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
   };
-  return ExpressionProcessor(this, m, func, flags).visit(func->body, result);
+  return ExpressionProcessor(this, m, func).visit(func->body, result);
 }
 
 static void makeHelpers(Ref ret, Name funcName, Name moduleName, bool first) {

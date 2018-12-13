@@ -21,7 +21,7 @@ function asmFunc(global, env, buffer) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0() {
+ function f() {
   
  }
  
@@ -31,7 +31,7 @@ function asmFunc(global, env, buffer) {
   FUNCTION_TABLE[wasm2js_i32$0 & 1]();
  }
  
- var FUNCTION_TABLE = [$0, $0];
+ var FUNCTION_TABLE = [f, f];
  function __wasm_grow_memory(pagesToAdd) {
   pagesToAdd = pagesToAdd | 0;
   var oldPages = __wasm_current_memory() | 0;

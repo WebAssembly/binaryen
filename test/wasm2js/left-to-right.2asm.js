@@ -491,7 +491,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$1 = i32_left() | 0;
   wasm2js_i32$2 = i32_right() | 0;
   wasm2js_i32$0 = i32_callee() | 0;
-  FUNCTION_TABLE_iii[wasm2js_i32$0 & 7](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0) | 0;
+  FUNCTION_TABLE[wasm2js_i32$0 & 7](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0) | 0;
   return get() | 0 | 0;
  }
  
@@ -1056,7 +1056,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_i32$3 = $1;
   wasm2js_i32$4 = i64toi32_i32$1;
   wasm2js_i32$0 = i64_callee() | 0;
-  FUNCTION_TABLE_iiiii[wasm2js_i32$0 & 7](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0) | 0;
+  FUNCTION_TABLE[wasm2js_i32$0 & 7](wasm2js_i32$1 | 0, wasm2js_i32$2 | 0, wasm2js_i32$3 | 0, wasm2js_i32$4 | 0) | 0;
   return get() | 0 | 0;
  }
  
@@ -1178,7 +1178,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_f32$0 = Math_fround(f32_left());
   wasm2js_f32$1 = Math_fround(f32_right());
   wasm2js_i32$0 = f32_callee() | 0;
-  FUNCTION_TABLE_iff[wasm2js_i32$0 & 7](Math_fround(wasm2js_f32$0), Math_fround(wasm2js_f32$1)) | 0;
+  FUNCTION_TABLE[wasm2js_i32$0 & 7](Math_fround(wasm2js_f32$0), Math_fround(wasm2js_f32$1)) | 0;
   return get() | 0 | 0;
  }
  
@@ -1323,7 +1323,7 @@ function asmFunc(global, env, buffer) {
   wasm2js_f64$0 = +f64_left();
   wasm2js_f64$1 = +f64_right();
   wasm2js_i32$0 = f64_callee() | 0;
-  FUNCTION_TABLE_idd[wasm2js_i32$0 & 7](+wasm2js_f64$0, +wasm2js_f64$1) | 0;
+  FUNCTION_TABLE[wasm2js_i32$0 & 7](+wasm2js_f64$0, +wasm2js_f64$1) | 0;
   return get() | 0 | 0;
  }
  
@@ -2233,10 +2233,7 @@ function asmFunc(global, env, buffer) {
   return 32 | 0;
  }
  
- var FUNCTION_TABLE_idd = [f64_t0, f64_t0, f64_t0, f64_t0, f64_t0, f64_t0, f64_t0, f64_t1];
- var FUNCTION_TABLE_iff = [f32_t0, f32_t0, f32_t0, f32_t0, f32_t0, f32_t1, f32_t0, f32_t0];
- var FUNCTION_TABLE_iii = [i32_t0, i32_t1, i32_t0, i32_t0, i32_t0, i32_t0, i32_t0, i32_t0];
- var FUNCTION_TABLE_iiiii = [i64_t0, i64_t0, i64_t0, i64_t1, i64_t0, i64_t0, i64_t0, i64_t0];
+ var FUNCTION_TABLE = [i32_t0, i32_t1, i64_t0, i64_t1, f32_t0, f32_t1, f64_t0, f64_t1];
  return {
   i32_add: $35, 
   i32_sub: $36, 

@@ -50249,7 +50249,7 @@ function asmFunc(global, env, buffer) {
   return i64toi32_i32$4 | 0;
  }
  
- var FUNCTION_TABLE_iiii = [f];
+ var FUNCTION_TABLE = [f];
  return {
   type_i32: $1, 
   type_i64: $2, 
