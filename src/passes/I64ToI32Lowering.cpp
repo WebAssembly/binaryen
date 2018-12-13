@@ -1525,27 +1525,30 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       return;
     }
     assert(hasOutParam(curr->ifFalse));
-    TempVar trueBits = fetchOutParam(curr->ifTrue);
-    TempVar falseBits = fetchOutParam(curr->ifFalse);
-    TempVar tmpTrue = getTemp();
-    TempVar tmpFalse = getTemp();
+    TempVar highBits = getTemp();
+    TempVar lowBits = getTemp();
+    TempVar cond = getTemp();
     Block* result = builder->blockify(
-      builder->makeSetLocal(tmpTrue, curr->ifTrue),
-      builder->makeSetLocal(tmpFalse, curr->ifFalse),
-      builder->makeIf(
-        curr->condition,
-        builder->blockify(
-          builder->makeSetLocal(
-            falseBits,
-            builder->makeGetLocal(trueBits, i32)
-          ),
-          builder->makeGetLocal(tmpTrue, i32)
-        ),
-        builder->makeGetLocal(tmpFalse, i32)
-      )
+      builder->makeSetLocal(
+        lowBits,
+        builder->makeSelect(
+          builder->makeTeeLocal(cond, curr->condition),
+          curr->ifTrue,
+          curr->ifFalse
+        )
+      ),
+      builder->makeSetLocal(
+        highBits,
+        builder->makeSelect(
+          builder->makeGetLocal(cond, i32),
+          builder->makeGetLocal(fetchOutParam(curr->ifTrue), i32),
+          builder->makeGetLocal(fetchOutParam(curr->ifFalse), i32)
+        )
+      ),
+      builder->makeGetLocal(lowBits, i32)
     );
+    setOutParam(result, std::move(highBits));
     replaceCurrent(result);
-    setOutParam(result, std::move(falseBits));
   }
 
   void visitDrop(Drop* curr) {

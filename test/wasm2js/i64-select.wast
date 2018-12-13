@@ -1,7 +1,7 @@
 ;; Testing i64 select
 
 (module
- (import "env" "p" (func $p (param i32) (result i64)))
+ (func $p (param $i i32) (result i32) (get_local $i))
  (func (param i32) (result i64)
   (return
    (select
@@ -11,7 +11,6 @@
    )
   )
  )
-
  (func (result i64)
   (return
    (select
