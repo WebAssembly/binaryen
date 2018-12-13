@@ -118,7 +118,8 @@ double Literal::getFloat() const {
   }
 }
 
-void Literal::getBits(void* buf) const {
+void Literal::getBits(uint8_t (&buf)[16]) const {
+  memset(buf, 0, 16);
   switch (type) {
     case Type::i32:
     case Type::f32: memcpy(buf, &i32, sizeof(i32)); break;
@@ -133,7 +134,7 @@ void Literal::getBits(void* buf) const {
 bool Literal::operator==(const Literal& other) const {
   if (type != other.type) return false;
   if (type == none) return true;
-  uint8_t bits[16] = {}, other_bits[16] = {};
+  uint8_t bits[16], other_bits[16];
   getBits(bits);
   other.getBits(other_bits);
   return memcmp(bits, other_bits, 16) == 0;

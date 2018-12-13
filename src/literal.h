@@ -104,7 +104,7 @@ public:
 
   int64_t getInteger() const;
   double getFloat() const;
-  void getBits(void* buf) const;
+  void getBits(uint8_t (&buf)[16]) const;
   // Equality checks for the type and the bits, so a nan float would
   // be compared bitwise (which means that a Literal containing a nan
   // would be equal to itself, if the bits are equal).
@@ -357,7 +357,7 @@ public:
 namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
-    uint8_t bytes[16] = {};
+    uint8_t bytes[16];
     a.getBits(bytes);
     int64_t chunks[2];
     memcpy(chunks, bytes, sizeof(chunks));
@@ -375,23 +375,11 @@ template<> struct less<wasm::Literal> {
     if (a.type < b.type) return true;
     if (a.type > b.type) return false;
     switch (a.type) {
-      case wasm::Type::i32:
-      case wasm::Type::f32: {
-        int32_t ai, bi;
-        a.getBits(&ai);
-        b.getBits(&bi);
-        return ai < bi;
-      }
-      case wasm::Type::i64:
-      case wasm::Type::f64: {
-        int64_t ai, bi;
-        a.getBits(&ai);
-        b.getBits(&bi);
-        return ai < bi;
-      }
-      case wasm::Type::v128: {
-        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      }
+      case wasm::Type::i32: return a.geti32() < b.geti32();
+      case wasm::Type::f32: return a.reinterpreti32() < b.reinterpreti32();
+      case wasm::Type::i64: return a.geti64() < b.geti64();
+      case wasm::Type::f64: return a.reinterpreti64() < b.reinterpreti64();
+      case wasm::Type::v128: return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::none:
       case wasm::Type::unreachable: return false;
     }
