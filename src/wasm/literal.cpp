@@ -511,26 +511,6 @@ Literal Literal::sub(const Literal& other) const {
 }
 
 template<typename T>
-static T sat_add(T a, T b) {
-  using UT = typename std::make_unsigned<T>::type;
-  using ST = typename std::make_signed<T>::type;
-  UT ua = static_cast<UT>(a);
-  UT ub = static_cast<UT>(b);
-  UT ures = ua + ub;
-  if (std::is_signed<T>::value) {
-    // overflow if sign of result is different from sign of a and b
-    if (static_cast<ST>((ures ^ ua) & (ures ^ ub)) < 0) {
-      return (a < 0)
-          ? std::numeric_limits<ST>::min()
-          : std::numeric_limits<ST>::max();
-    }
-    return static_cast<ST>(ures);
-  } else {
-    return (ures >= ub) ? ures : 0;
-  }
-}
-
-template<typename T>
 static T add_sat_s(T a, T b) {
   static_assert(std::is_signed<T>::value, "Trying to instantiate add_sat_s with unsigned type");
   using UT = typename std::make_unsigned<T>::type;
