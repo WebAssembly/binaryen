@@ -29,12 +29,12 @@ struct FeatureOptions : public Options {
   FeatureOptions(const std::string& command, const std::string& description)
       : Options(command, description) {
     (*this)
-        .add("--mvp-features", "-mvp", "Disable all non-MVP features (default)",
+        .add("--mvp-features", "-mvp", "Disable all non-MVP features",
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
                passOptions.features = FeatureSet::MVP;
              })
-        .add("--all-features", "-all", "Enable all features",
+        .add("--all-features", "-all", "Enable all features (default)",
              Options::Arguments::Zero,
              [this](Options *o, const std::string& arguments) {
                passOptions.features = FeatureSet::All;

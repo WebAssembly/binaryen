@@ -114,6 +114,21 @@ Expression* flexibleCopy(Expression* original, Module& wasm, CustomCopier custom
     Expression* visitAtomicWake(AtomicWake* curr) {
       return builder.makeAtomicWake(copy(curr->ptr), copy(curr->wakeCount), curr->offset);
     }
+    Expression* visitSIMDExtract(SIMDExtract* curr) {
+      return builder.makeSIMDExtract(curr->op, copy(curr->vec), curr->idx);
+    }
+    Expression* visitSIMDReplace(SIMDReplace* curr) {
+      return builder.makeSIMDReplace(curr->op, copy(curr->vec), curr->idx, copy(curr->value));
+    }
+    Expression* visitSIMDShuffle(SIMDShuffle* curr) {
+      return builder.makeSIMDShuffle(copy(curr->left), copy(curr->right), curr->mask);
+    }
+    Expression* visitSIMDBitselect(SIMDBitselect* curr) {
+      return builder.makeSIMDBitselect(copy(curr->left), copy(curr->right), copy(curr->cond));
+    }
+    Expression* visitSIMDShift(SIMDShift* curr) {
+      return builder.makeSIMDShift(curr->op, copy(curr->vec), copy(curr->shift));
+    }
     Expression* visitConst(Const *curr) {
       return builder.makeConst(curr->value);
     }

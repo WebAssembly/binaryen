@@ -2544,6 +2544,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   curr->type = v128;
   curr->bytes = 16;
   readMemoryAccess(curr->align, curr->offset);
+  curr->isAtomic = false;
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -2558,6 +2559,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   curr->bytes = 16;
   curr->valueType = v128;
   readMemoryAccess(curr->align, curr->offset);
+  curr->isAtomic = false;
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();

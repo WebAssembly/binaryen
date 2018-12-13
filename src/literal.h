@@ -42,7 +42,7 @@ private:
 
 public:
   Literal() : type(Type::none), v128() {}
-  explicit Literal(Type type) : type(type), i64(0) {}
+  explicit Literal(Type type) : type(type), v128() {}
   explicit Literal(int32_t  init) : type(Type::i32), i32(init) {}
   explicit Literal(uint32_t init) : type(Type::i32), i32(init) {}
   explicit Literal(int64_t  init) : type(Type::i64), i64(init) {}

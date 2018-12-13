@@ -381,6 +381,7 @@ void SetGlobal::finalize() {
 }
 
 void Load::finalize() {
+  assert(!isAtomic || type == i32 || type == i64 || type == unreachable);
   if (ptr->type == unreachable) {
     type = unreachable;
   }
@@ -388,6 +389,7 @@ void Load::finalize() {
 
 void Store::finalize() {
   assert(valueType != none); // must be set
+  assert(!isAtomic || valueType == i32 || valueType == i64 || valueType == unreachable);
   if (ptr->type == unreachable || value->type == unreachable) {
     type = unreachable;
   } else {
