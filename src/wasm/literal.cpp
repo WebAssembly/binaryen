@@ -36,7 +36,7 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 template<typename LaneT, int Lanes>
-static void extract_bytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
+static void extractBytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
   std::array<uint8_t, 16> bytes;
   const size_t lane_width = 16 / Lanes;
   for (size_t lane_idx = 0; lane_idx < Lanes; ++lane_idx) {
@@ -52,19 +52,19 @@ static void extract_bytes(uint8_t (&dest)[16], const LaneArray<Lanes>& lanes) {
 }
 
 Literal::Literal(const LaneArray<16>& lanes) : type(Type::v128) {
-  extract_bytes<uint8_t, 16>(v128, lanes);
+  extractBytes<uint8_t, 16>(v128, lanes);
 }
 
 Literal::Literal(const LaneArray<8>& lanes) : type(Type::v128) {
-  extract_bytes<uint16_t, 8>(v128, lanes);
+  extractBytes<uint16_t, 8>(v128, lanes);
 }
 
 Literal::Literal(const LaneArray<4>& lanes) : type(Type::v128) {
-  extract_bytes<uint32_t, 4>(v128, lanes);
+  extractBytes<uint32_t, 4>(v128, lanes);
 }
 
 Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
-  extract_bytes<uint64_t, 2>(v128, lanes);
+  extractBytes<uint64_t, 2>(v128, lanes);
 }
 
 std::array<uint8_t, 16> Literal::getv128() const {
@@ -118,7 +118,7 @@ double Literal::getFloat() const {
   }
 }
 
-void Literal::getBits(uint8_t (&buf)[16]) const {
+void Literal::getBits(void* buf) const {
   switch (type) {
     case Type::i32:
     case Type::f32: memcpy(buf, &i32, sizeof(i32)); break;
@@ -1100,7 +1100,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal any_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] != Literal::makeLiteralZero(lanes[i].type)) {
+    if (lanes[i] != Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(1));
     }
   }
@@ -1111,7 +1111,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal all_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] == Literal::makeLiteralZero(lanes[i].type)) {
+    if (lanes[i] == Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(0));
     }
   }

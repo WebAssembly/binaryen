@@ -49,7 +49,9 @@ public:
   explicit Literal(uint64_t init) : type(Type::i64), i64(init) {}
   explicit Literal(float    init) : type(Type::f32), i32(bit_cast<int32_t>(init)) {}
   explicit Literal(double   init) : type(Type::f64), i64(bit_cast<int64_t>(init)) {}
+  // v128 literal from bytes
   explicit Literal(const uint8_t init[16]);
+  // v128 literal from lane value literals
   explicit Literal(const std::array<Literal, 16>&);
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
@@ -58,7 +60,7 @@ public:
   bool isConcrete() { return type != none; }
   bool isNull() { return type == none; }
 
-  inline static Literal makeLiteralFromInt32(int32_t x, Type type) {
+  inline static Literal makeFromInt32(int32_t x, Type type) {
     switch (type) {
       case Type::i32: return Literal(int32_t(x)); break;
       case Type::i64: return Literal(int64_t(x)); break;
@@ -75,8 +77,8 @@ public:
     WASM_UNREACHABLE();
   }
 
-  inline static Literal makeLiteralZero(Type type) {
-    return makeLiteralFromInt32(0, type);
+  inline static Literal makeZero(Type type) {
+    return makeFromInt32(0, type);
   }
 
   Literal castToF32();
@@ -90,8 +92,8 @@ public:
   double  getf64() const { assert(type == Type::f64); return bit_cast<double>(i64); }
   std::array<uint8_t, 16> getv128() const;
 
-
-  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; } // careful!
+  // careful!
+  int32_t* geti32Ptr() { assert(type == Type::i32); return &i32; }
   uint8_t* getv128Ptr() { assert(type == Type::v128); return v128; }
   const uint8_t* getv128Ptr() const { assert(type == Type::v128); return v128; }
 
@@ -102,7 +104,7 @@ public:
 
   int64_t getInteger() const;
   double getFloat() const;
-  void getBits(uint8_t (&buf)[16]) const;
+  void getBits(void* buf) const;
   // Equality checks for the type and the bits, so a nan float would
   // be compared bitwise (which means that a Literal containing a nan
   // would be equal to itself, if the bits are equal).
@@ -373,10 +375,20 @@ template<> struct less<wasm::Literal> {
     if (a.type < b.type) return true;
     if (a.type > b.type) return false;
     switch (a.type) {
-      case wasm::Type::i32: return a.geti32() < b.geti32();
-      case wasm::Type::f32: return a.getf32() < b.getf32();
-      case wasm::Type::i64: return a.geti64() < b.geti64();
-      case wasm::Type::f64: return b.getf64() < b.getf64();
+      case wasm::Type::i32:
+      case wasm::Type::f32: {
+        int32_t ai, bi;
+        a.getBits(&ai);
+        b.getBits(&bi);
+        return ai < bi;
+      }
+      case wasm::Type::i64:
+      case wasm::Type::f64: {
+        int64_t ai, bi;
+        a.getBits(&ai);
+        b.getBits(&bi);
+        return ai < bi;
+      }
       case wasm::Type::v128: {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       }

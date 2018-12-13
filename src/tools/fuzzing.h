@@ -1268,10 +1268,10 @@ private:
         }
         // tweak around special values
         if (oneIn(3)) { // +- 1
-          value = value.add(Literal::makeLiteralFromInt32(upTo(3) - 1, type));
+          value = value.add(Literal::makeFromInt32(upTo(3) - 1, type));
         }
         if (oneIn(2)) { // flip sign
-          value = value.mul(Literal::makeLiteralFromInt32(-1, type));
+          value = value.mul(Literal::makeFromInt32(-1, type));
         }
         break;
       }
@@ -1288,7 +1288,7 @@ private:
         }
         // maybe negative
         if (oneIn(2)) {
-          value = value.mul(Literal::makeLiteralFromInt32(-1, type));
+          value = value.mul(Literal::makeFromInt32(-1, type));
         }
       }
     }

@@ -872,11 +872,11 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
 
   auto ret = allocator.alloc<Const>();
   auto getLiteral = [](Expression* expr) {
-                      if (expr == nullptr) {
-                        throw ParseException("Could not parse v128 lane");
-                      }
-                      return expr->cast<Const>()->value;
-                    };
+    if (expr == nullptr) {
+      throw ParseException("Could not parse v128 lane");
+    }
+    return expr->cast<Const>()->value;
+  };
   Type lane_t = stringToType(s[1]->str());
   size_t lanes = s.size() - 2;
   switch (lanes) {

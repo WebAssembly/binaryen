@@ -1716,13 +1716,13 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
     case BinaryConsts::TruncSatPrefix: {
-      uint32_t code = getU32LEB();
-      if (maybeVisitTruncSat(curr, code)) break;
+      auto opcode = getU32LEB();
+      if (maybeVisitTruncSat(curr, opcode)) break;
       throwError("invalid code after nontrapping float-to-int prefix: " + std::to_string(code));
       break;
     }
     case BinaryConsts::SIMDPrefix: {
-      uint32_t opcode = getU32LEB();
+      auto opcode = getU32LEB();
       if (maybeVisitSIMDBinary(curr, opcode)) break;
       if (maybeVisitSIMDUnary(curr, opcode)) break;
       if (maybeVisitSIMDConst(curr, opcode)) break;

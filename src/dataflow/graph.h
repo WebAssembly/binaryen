@@ -153,7 +153,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
   }
 
   Node* makeZero(wasm::Type type) {
-    return makeConst(Literal::makeLiteralZero(type));
+    return makeConst(Literal::makeZero(type));
   }
 
   // Add a new node to our list of owned nodes.

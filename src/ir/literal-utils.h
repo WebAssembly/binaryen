@@ -25,7 +25,7 @@ namespace LiteralUtils {
 
 inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   auto* ret = wasm.allocator.alloc<Const>();
-  ret->value = Literal::makeLiteralFromInt32(x, type);
+  ret->value = Literal::makeFromInt32(x, type);
   ret->type = type;
   return ret;
 }
