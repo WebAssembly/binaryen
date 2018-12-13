@@ -104,7 +104,8 @@ BinaryenExpressionRef makeSIMDReplace(BinaryenModuleRef module, BinaryenOp op, B
 }
 
 BinaryenExpressionRef makeSIMDShift(BinaryenModuleRef module, BinaryenOp op) {
-  return BinaryenSIMDShift(module, op, makeVec128(module, v128_bytes), makeInt32(module, 1));
+  BinaryenExpressionRef vec = makeVec128(module, v128_bytes);
+  return BinaryenSIMDShift(module, op, vec, makeInt32(module, 1));
 }
 
 // tests
