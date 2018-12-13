@@ -3213,26 +3213,26 @@ getExpressionInfo={"id":15,"type":3,"op":6}
  (f32.const -33.61199951171875)
 )
 
-  expressions[263] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
-  BinaryenExpressionGetId(expressions[263]);
-  BinaryenExpressionGetType(expressions[263]);
-  BinaryenConstGetValueI32(expressions[263]);
+  expressions[634] = BinaryenConst(the_module, BinaryenLiteralInt32(5));
+  BinaryenExpressionGetId(expressions[634]);
+  BinaryenExpressionGetType(expressions[634]);
+  BinaryenConstGetValueI32(expressions[634]);
 getExpressionInfo(i32.const)={"id":14,"type":1,"value":5}
-  expressions[264] = BinaryenConst(the_module, BinaryenLiteralInt64(30064771078));
-  BinaryenExpressionGetId(expressions[264]);
-  BinaryenExpressionGetType(expressions[264]);
-  BinaryenConstGetValueI64Low(expressions[264]);
-  BinaryenConstGetValueI64High(expressions[264]);
+  expressions[635] = BinaryenConst(the_module, BinaryenLiteralInt64(30064771078));
+  BinaryenExpressionGetId(expressions[635]);
+  BinaryenExpressionGetType(expressions[635]);
+  BinaryenConstGetValueI64Low(expressions[635]);
+  BinaryenConstGetValueI64High(expressions[635]);
 getExpressionInfo(i64.const)={"id":14,"type":2,"value":{"low":6,"high":7}}
-  expressions[265] = BinaryenConst(the_module, BinaryenLiteralFloat32(8.5));
-  BinaryenExpressionGetId(expressions[265]);
-  BinaryenExpressionGetType(expressions[265]);
-  BinaryenConstGetValueF32(expressions[265]);
+  expressions[636] = BinaryenConst(the_module, BinaryenLiteralFloat32(8.5));
+  BinaryenExpressionGetId(expressions[636]);
+  BinaryenExpressionGetType(expressions[636]);
+  BinaryenConstGetValueF32(expressions[636]);
 getExpressionInfo(f32.const)={"id":14,"type":3,"value":8.5}
-  expressions[266] = BinaryenConst(the_module, BinaryenLiteralFloat64(9.5));
-  BinaryenExpressionGetId(expressions[266]);
-  BinaryenExpressionGetType(expressions[266]);
-  BinaryenConstGetValueF64(expressions[266]);
+  expressions[637] = BinaryenConst(the_module, BinaryenLiteralFloat64(9.5));
+  BinaryenExpressionGetId(expressions[637]);
+  BinaryenExpressionGetType(expressions[637]);
+  BinaryenConstGetValueF64(expressions[637]);
 getExpressionInfo(f64.const)={"id":14,"type":4,"value":9.5}
   {
     BinaryenExpressionRef children[] = { expressions[24], expressions[26], expressions[28], expressions[30], expressions[32], 
