@@ -1672,16 +1672,14 @@ private:
 
   template<typename T>
   struct FeatureOptions {
-    FeatureOptions() = default;
-
-    FeatureOptions<T>& add(FeatureSet::Feature feature) {
-      return *this;
-    }
-
     template<typename ...Ts>
     FeatureOptions<T>& add(FeatureSet::Feature feature, T option, Ts... rest) {
       options[feature].push_back(option);
       return add(feature, rest...);
+    }
+
+    FeatureOptions<T>& add(FeatureSet::Feature feature) {
+      return *this;
     }
 
     std::map<FeatureSet::Feature, std::vector<T>> options;
@@ -1694,9 +1692,6 @@ private:
       if (features.has(item.first)) {
         matches.reserve(matches.size() + item.second.size());
         matches.insert(matches.end(), item.second.begin(), item.second.end());
-      }
-      else {
-        assert(false);
       }
     }
     return vectorPick(matches);
