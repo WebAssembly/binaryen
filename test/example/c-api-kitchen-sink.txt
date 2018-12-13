@@ -3112,7 +3112,7 @@ int main() {
   }
   {
     uint8_t mask[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    expressions[587] = BinaryenSIMDShuffle(the_module, expressions[586], expressions[585], mask);
+    expressions[587] = BinaryenSIMDShuffle(the_module, expressions[585], expressions[586], mask);
   }
   {
     uint8_t t209[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
@@ -3126,7 +3126,7 @@ int main() {
     uint8_t t211[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     expressions[590] = BinaryenConst(the_module, BinaryenLiteralVec128(t211));
   }
-  expressions[591] = BinaryenSIMDBitselect(the_module, expressions[590], expressions[589], expressions[588]);
+  expressions[591] = BinaryenSIMDBitselect(the_module, expressions[588], expressions[589], expressions[590]);
   {
     BinaryenExpressionRef children[] = { 0 };
     expressions[592] = BinaryenBlock(the_module, NULL, children, 0, BinaryenTypeAuto());

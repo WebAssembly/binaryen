@@ -103,6 +103,19 @@ BinaryenExpressionRef makeSIMDReplace(BinaryenModuleRef module, BinaryenOp op, B
   return BinaryenSIMDReplace(module, op, makeVec128(module, v128_bytes), 0, val);
 }
 
+BinaryenExpressionRef makeSIMDShuffle(BinaryenModuleRef module) {
+  BinaryenExpressionRef left = makeVec128(module, v128_bytes);
+  BinaryenExpressionRef right = makeVec128(module, v128_bytes);
+  return BinaryenSIMDShuffle(module, left, right, (uint8_t[16]) {});
+}
+
+BinaryenExpressionRef makeSIMDBitselect(BinaryenModuleRef module) {
+  BinaryenExpressionRef left = makeVec128(module, v128_bytes);
+  BinaryenExpressionRef right = makeVec128(module, v128_bytes);
+  BinaryenExpressionRef cond = makeVec128(module, v128_bytes);
+  return BinaryenSIMDBitselect(module, left, right, cond);
+}
+
 BinaryenExpressionRef makeSIMDShift(BinaryenModuleRef module, BinaryenOp op) {
   BinaryenExpressionRef vec = makeVec128(module, v128_bytes);
   return BinaryenSIMDShift(module, op, vec, makeInt32(module, 1));
@@ -373,8 +386,8 @@ void test_core() {
     makeSIMDShift(module, BinaryenShrSVecI64x2()),
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
     // Other SIMD
-    BinaryenSIMDShuffle(module, makeVec128(module, v128_bytes), makeVec128(module, v128_bytes), (uint8_t[16]) {}),
-    BinaryenSIMDBitselect(module, makeVec128(module, v128_bytes), makeVec128(module, v128_bytes), makeVec128(module, v128_bytes)),
+    makeSIMDShuffle(module),
+    makeSIMDBitselect(module),
     // All the rest
     BinaryenBlock(module, NULL, NULL, 0, -1), // block with no name and no type
     BinaryenIf(module, temp1, temp2, temp3),
