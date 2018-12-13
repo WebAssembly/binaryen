@@ -194,11 +194,11 @@ struct Metrics : public WalkerPass<PostWalker<Metrics, UnifiedExpressionVisitor<
   }
 };
 
-Pass *createMetricsPass() {
+Pass* createMetricsPass() {
   return new Metrics(false);
 }
 
-Pass *createFunctionMetricsPass() {
+Pass* createFunctionMetricsPass() {
   return new Metrics(true);
 }
 
