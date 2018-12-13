@@ -74,6 +74,9 @@ IF(MSVC)
   ADD_NONDEBUG_COMPILE_FLAG("/O2")
   ADD_COMPILE_FLAG("/D_CRT_SECURE_NO_WARNINGS")
   ADD_COMPILE_FLAG("/D_SCL_SECURE_NO_WARNINGS")
+  # Visual Studio 2018 15.8 implemented conformant support for std::aligned_storage, but the conformant support is only enabled when the following flag is passed, to avoid
+  # breaking backwards compatibility with code that relied on the non-conformant behavior (the old nonconformant behavior is not used with Binaryen)
+  ADD_COMPILE_FLAG("/D_ENABLE_EXTENDED_ALIGNED_STORAGE")
   # Don't warn about using "strdup" as a reserved name.
   ADD_COMPILE_FLAG("/D_CRT_NONSTDC_NO_DEPRECATE")
 
