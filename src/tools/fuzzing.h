@@ -1314,29 +1314,29 @@ private:
       case i32: {
         switch (upTo(4)) {
           case 0: {
-            if (features.hasAtomics()) {
-              return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32, ExtendS8Int32, ExtendS16Int32), make(i32) });
-            } else {
-              return makeUnary({ pick(EqZInt32, ClzInt32, CtzInt32, PopcntInt32), make(i32) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, EqZInt32, ClzInt32, CtzInt32, PopcntInt32)
+              .add(FeatureSet::Atomics, ExtendS8Int32, ExtendS16Int32)
+            );
+            return makeUnary({ op, make(i32) });
           }
           case 1: return makeUnary({ pick(EqZInt64, WrapInt64), make(i64) });
           case 2: {
-            if (features.hasTruncSat()) {
-              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32, TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32), make(f32) });
-            } else {
-              return makeUnary({ pick(TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32), make(f32) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, TruncSFloat32ToInt32, TruncUFloat32ToInt32, ReinterpretFloat32)
+              .add(FeatureSet::TruncSat, TruncSatSFloat32ToInt32, TruncSatUFloat32ToInt32)
+            );
+            return makeUnary({ op, make(f32) });
           }
           case 3: {
-            if (features.hasTruncSat()) {
-              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32), make(f64) });
-            } else {
-              return makeUnary({ pick(TruncSFloat64ToInt32, TruncUFloat64ToInt32), make(f64) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, TruncSFloat64ToInt32, TruncUFloat64ToInt32)
+              .add(FeatureSet::TruncSat, TruncSatSFloat64ToInt32, TruncSatUFloat64ToInt32)
+            );
+            return makeUnary({ op, make(f64) });
           }
         }
         WASM_UNREACHABLE();
@@ -1344,29 +1344,29 @@ private:
       case i64: {
         switch (upTo(4)) {
           case 0: {
-            if (features.hasAtomics()) {
-              return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64), make(i64) });
-            } else {
-              return makeUnary({ pick(ClzInt64, CtzInt64, PopcntInt64), make(i64) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, ClzInt64, CtzInt64, PopcntInt64)
+              .add(FeatureSet::Atomics, ExtendS8Int64, ExtendS16Int64, ExtendS32Int64)
+            );
+            return makeUnary({ op, make(i64) });
           }
           case 1: return makeUnary({ pick(ExtendSInt32, ExtendUInt32), make(i32) });
           case 2: {
-            if (features.hasTruncSat()) {
-              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64, TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64), make(f32) });
-            } else {
-              return makeUnary({ pick(TruncSFloat32ToInt64, TruncUFloat32ToInt64), make(f32) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, TruncSFloat32ToInt64, TruncUFloat32ToInt64)
+              .add(FeatureSet::TruncSat, TruncSatSFloat32ToInt64, TruncSatUFloat32ToInt64)
+            );
+            return makeUnary({ op, make(f32) });
           }
           case 3: {
-            if (features.hasTruncSat()) {
-              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64), make(f64) });
-            } else {
-              return makeUnary({ pick(TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64), make(f64) });
-            }
-            break;
+            auto op = pick(
+              FeatureOptions<UnaryOp>()
+              .add(FeatureSet::MVP, TruncSFloat64ToInt64, TruncUFloat64ToInt64, ReinterpretFloat64)
+              .add(FeatureSet::TruncSat, TruncSatSFloat64ToInt64, TruncSatUFloat64ToInt64)
+            );
+            return makeUnary({ op, make(f64) });
           }
         }
         WASM_UNREACHABLE();
@@ -1669,6 +1669,33 @@ private:
   #if GCC_VERSION > 70000 && GCC_VERSION < 70300
     #pragma GCC diagnostic pop
   #endif
+
+  template<typename T>
+  struct FeatureOptions {
+    template<typename ...Ts>
+    FeatureOptions<T>& add(FeatureSet::Feature feature, T option, Ts... rest) {
+      options[feature].push_back(option);
+      return add(feature, rest...);
+    }
+
+    FeatureOptions<T>& add(FeatureSet::Feature feature) {
+      return *this;
+    }
+
+    std::map<FeatureSet::Feature, std::vector<T>> options;
+  };
+
+  template<typename T>
+  const T pick(FeatureOptions<T>& picker) {
+    std::vector<T> matches;
+    for (const auto& item : picker.options) {
+      if (features.has(item.first)) {
+        matches.reserve(matches.size() + item.second.size());
+        matches.insert(matches.end(), item.second.begin(), item.second.end());
+      }
+    }
+    return vectorPick(matches);
+  }
 
   // utilities
 

@@ -50,24 +50,18 @@ struct FeatureSet {
   FeatureSet(uint32_t features) : features(features) {}
 
   bool isMVP() const { return features == MVP; }
+  bool has(Feature f) { return (features & f) == f; }
   bool hasAtomics() const { return features & Atomics; }
   bool hasMutableGlobals() const { return features & MutableGlobals; }
   bool hasTruncSat() const { return features & TruncSat; }
   bool hasAll() const { return features & (Atomics | MutableGlobals | TruncSat); }
 
   void makeMVP() { features = MVP; }
-  void setAtomics(bool v = true) {
-    features = v ? (features | Atomics) : (features & ~Atomics);
-  }
-  void setMutableGlobals(bool v = true) {
-    features = v ? (features | MutableGlobals) : (features & ~MutableGlobals);
-  }
-  void setTruncSat(bool v = true) {
-    features = v ? (features | TruncSat) : (features & ~TruncSat);
-  }
-  void setAll(bool v = true) {
-    features = v ? All : MVP;
-  }
+  void set(Feature f, bool v = true) { features = v ? (features | f) : (features & ~f); }
+  void setAtomics(bool v = true) { set(Atomics, v); }
+  void setMutableGlobals(bool v = true) { set(MutableGlobals, v); }
+  void setTruncSat(bool v = true) { set(TruncSat, v); }
+  void setAll(bool v = true) { features = v ? All : MVP; }
 
  private:
   uint32_t features;
