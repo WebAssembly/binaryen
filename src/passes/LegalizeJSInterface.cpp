@@ -48,9 +48,9 @@
 namespace wasm {
 
 struct LegalizeJSInterface : public Pass {
-  bool minimally;
+  bool full;
 
-  LegalizeJSInterface(bool minimally) : minimally(minimally) {}
+  LegalizeJSInterface(bool full) : full(full) {}
 
   void run(PassRunner* runner, Module* module) override {
     // for each illegal export, we must export a legalized stub instead
@@ -64,7 +64,7 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    if (!minimally) {
+    if (full) {
       // Avoid iterator invalidation later.
       std::vector<Function*> originalFunctions;
       for (auto& func : module->functions) {
@@ -133,7 +133,7 @@ private:
   }
 
   bool isRelevant(Export* ex, Function* func) {
-    if (!minimally) return true;
+    if (full) return true;
     // We are doing minimal legalization - just what JS needs.
     return ex->name.startsWith("dynCall_");
   }
@@ -275,11 +275,11 @@ private:
 };
 
 Pass *createLegalizeJSInterfacePass() {
-  return new LegalizeJSInterface(false);
+  return new LegalizeJSInterface(true);
 }
 
 Pass *createLegalizeJSInterfaceMinimallyPass() {
-  return new LegalizeJSInterface(true);
+  return new LegalizeJSInterface(false);
 }
 
 } // namespace wasm

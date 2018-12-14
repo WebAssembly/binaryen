@@ -30,6 +30,7 @@
 #include "wasm-io.h"
 #include "wasm-printing.h"
 #include "wasm-validator.h"
+#include "abi/js.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -162,7 +163,7 @@ int main(int argc, const char *argv[]) {
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
   passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::Full : ABI::Partial
+    legalizeJavaScriptFFI ? ABI::Full : ABI::Minimal
   ));
   passRunner.run();
 

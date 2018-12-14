@@ -85,7 +85,7 @@ void PassRegistry::registerPasses() {
   registerPass("inlining", "inline functions (you probably want inlining-optimizing)", createInliningPass);
   registerPass("inlining-optimizing", "inline functions and optimizes where we inlined", createInliningOptimizingPass);
   registerPass("legalize-js-interface", "legalizes i64 types on the import/export boundary", createLegalizeJSInterfacePass);
-  registerPass("legalize-js-interface-minimally", "legalizes i64 types on the import/export boundary in a minimal manner, only on things only JS will call", createLegalizeJSInterfacePass);
+  registerPass("legalize-js-interface-minimally", "legalizes i64 types on the import/export boundary in a minimal manner, only on things only JS will call", createLegalizeJSInterfaceMinimallyPass);
   registerPass("local-cse", "common subexpression elimination inside basic blocks", createLocalCSEPass);
   registerPass("log-execution", "instrument the build with logging of where execution goes", createLogExecutionPass);
   registerPass("i64-to-i32-lowering", "lower all uses of i64s to use i32s instead", createI64ToI32LoweringPass);

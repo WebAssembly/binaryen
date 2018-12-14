@@ -41,6 +41,7 @@
 #include "wasm-builder.h"
 #include "wasm-emscripten.h"
 #include "wasm-module-building.h"
+#include "abi/js.h"
 
 namespace wasm {
 
@@ -1453,7 +1454,7 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // so that the output of the first pass is valid
   passRunner.add<FinalizeCalls>(this);
   passRunner.add(ABI::getLegalizationPass(
-    legalizeJavaScriptFFI ? ABI::Full : ABI::Partial
+    legalizeJavaScriptFFI ? ABI::Full : ABI::Minimal
   ));
   if (runOptimizationPasses) {
     // autodrop can add some garbage

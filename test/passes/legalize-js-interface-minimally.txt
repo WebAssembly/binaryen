@@ -1,0 +1,39 @@
+(module
+ (type $FUNCSIG$j (func (result i64)))
+ (type $FUNCSIG$vi (func (param i32)))
+ (import "env" "imported" (func $imported (result i64)))
+ (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+ (export "func" (func $func))
+ (export "dynCall_foo" (func $legalstub$dyn))
+ (func $func (; 2 ;) (type $FUNCSIG$j) (result i64)
+  (drop
+   (call $imported)
+  )
+  (unreachable)
+ )
+ (func $dyn (; 3 ;) (type $FUNCSIG$j) (result i64)
+  (drop
+   (call $imported)
+  )
+  (unreachable)
+ )
+ (func $legalstub$dyn (; 4 ;) (result i32)
+  (local $0 i64)
+  (set_local $0
+   (call $dyn)
+  )
+  (call $setTempRet0
+   (i32.wrap/i64
+    (i64.shr_u
+     (get_local $0)
+     (i64.const 32)
+    )
+   )
+  )
+  (i32.wrap/i64
+   (get_local $0)
+  )
+ )
+)
+(module
+)
