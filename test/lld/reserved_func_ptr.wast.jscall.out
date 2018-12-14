@@ -299,6 +299,7 @@
 --BEGIN METADATA --
 {
   "staticBump": 0,
+  "tableSize": 21,
   "initializers": [
     "__post_instantiate"
   ],
