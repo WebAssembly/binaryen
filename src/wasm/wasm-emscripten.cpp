@@ -331,6 +331,7 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
 
   JSCallWalker walker = getJSCallWalker(wasm);
   auto& tableSegmentData = wasm.table.segments[0].data;
+  unsigned num_entries_added = 0;
   for (std::string sig : walker.indirectlyCallableSigs) {
     // Add imports for jsCall_sig (e.g. jsCall_vi).
     // Imported jsCall_sig functions have their first parameter as an index to
@@ -371,11 +372,12 @@ void EmscriptenGlueGenerator::generateJSCallThunks(
       f->body = call;
       wasm.addFunction(f);
       tableSegmentData.push_back(f->name);
+      num_entries_added++;
     }
   }
-  wasm.table.initial = wasm.table.max =
-      wasm.table.segments[0].offset->cast<Const>()->value.getInteger() +
-      tableSegmentData.size();
+  wasm.table.initial.addr += num_entries_added;
+  if (wasm.table.max != Table::kUnlimitedSize)
+    wasm.table.max.addr += num_entries_added;
 }
 
 std::vector<Address> getSegmentOffsets(Module& wasm) {

@@ -419,6 +419,8 @@ void WasmBinaryWriter::writeFunctionTableDeclaration() {
   auto start = startSection(BinaryConsts::Section::Table);
   o << U32LEB(1); // Declare 1 table.
   o << S32LEB(BinaryConsts::EncodedType::AnyFunc);
+  std::cerr << "== writeTable" << wasm->table.hasMax() << std::endl;
+
   writeResizableLimits(wasm->table.initial, wasm->table.max, wasm->table.hasMax(), /*shared=*/false);
   finishSection(start);
 }
