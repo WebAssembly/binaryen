@@ -24,12 +24,11 @@
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
-// (wasm will never call them, as it can share the table directly. E.g.
+// (wasm will never call them, as it can share the table directly). E.g.
 // is dynamic linking, where we can avoid legalizing wasm=>wasm calls
-// across modules, but still legalize dynCalls so JS can call into the
+// across modules, we still want to legalize dynCalls so JS can call into the
 // table even to a signature that is not legal.
 //
-// An exception
 // This pass also legalizes according to asm.js FFI rules, which
 // disallow f32s. TODO: an option to not do that, if it matters?
 //
