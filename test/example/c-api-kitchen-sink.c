@@ -378,7 +378,6 @@ void test_core() {
     makeSIMDShift(module, BinaryenShlVecI16x8()),
     makeSIMDShift(module, BinaryenShrSVecI16x8()),
     makeSIMDShift(module, BinaryenShrUVecI16x8()),
-    makeSIMDShift(module, BinaryenAddVecI16x8()),
     makeSIMDShift(module, BinaryenShlVecI32x4()),
     makeSIMDShift(module, BinaryenShrSVecI32x4()),
     makeSIMDShift(module, BinaryenShrUVecI32x4()),
