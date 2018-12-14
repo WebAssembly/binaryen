@@ -800,6 +800,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
   }
 
   meta << "  \"staticBump\": " << staticBump << ",\n";
+  meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
 
   if (!initializerFunctions.empty()) {
     meta << "  \"initializers\": [";

@@ -160,6 +160,7 @@
 --BEGIN METADATA --
 {
   "staticBump": 0,
+  "tableSize": 3,
   "initializers": [
     "__post_instantiate"
   ],
