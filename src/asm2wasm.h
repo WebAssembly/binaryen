@@ -1452,11 +1452,9 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   // finalizeCalls also does autoDrop, which is crucial for the non-optimizing case,
   // so that the output of the first pass is valid
   passRunner.add<FinalizeCalls>(this);
-  if (legalizeJavaScriptFFI) {
-    passRunner.add("legalize-js-interface");
-  } else {
-    passRunner.add("legalize-js-interface-minimally");
-  }
+  passRunner.add(ABI::getLegalizationPass(
+    legalizeJavaScriptFFI ? ABI::Full : ABI::Partial
+  ));
   if (runOptimizationPasses) {
     // autodrop can add some garbage
     passRunner.add("vacuum");

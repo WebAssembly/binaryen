@@ -161,11 +161,9 @@ int main(int argc, const char *argv[]) {
   PassRunner passRunner(&wasm);
   passRunner.setDebug(options.debug);
   passRunner.setDebugInfo(debugInfo);
-  if (legalizeJavaScriptFFI) {
-    passRunner.add("legalize-js-interface");
-  } else {
-    passRunner.add("legalize-js-interface-minimally");
-  }
+  passRunner.add(ABI::getLegalizationPass(
+    legalizeJavaScriptFFI ? ABI::Full : ABI::Partial
+  ));
   passRunner.run();
 
   std::vector<Name> initializerFunctions;
