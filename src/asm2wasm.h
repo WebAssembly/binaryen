@@ -1454,6 +1454,8 @@ void Asm2WasmBuilder::processAsm(Ref ast) {
   passRunner.add<FinalizeCalls>(this);
   if (legalizeJavaScriptFFI) {
     passRunner.add("legalize-js-interface");
+  } else {
+    passRunner.add("legalize-js-interface-minimally");
   }
   if (runOptimizationPasses) {
     // autodrop can add some garbage

@@ -96,7 +96,7 @@ int main(int argc, const char *argv[]) {
            [&wasmOnly](Options *o, const std::string& ) {
              wasmOnly = true;
            })
-      .add("--no-legalize-javascript-ffi", "-nj", "Do not legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
+      .add("--no-legalize-javascript-ffi", "-nj", "Do not fully legalize (i64->i32, f32->f64) the imports and exports for interfacing with JS", Options::Arguments::Zero,
            [&legalizeJavaScriptFFI](Options *o, const std::string& ) {
              legalizeJavaScriptFFI = false;
            })
